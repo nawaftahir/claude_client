@@ -25,7 +25,6 @@ void Scr_CalcLocalVarsStatementList( sval_u val, scr_block_s *block );
 void Scr_CalcLocalVarsDeveloperStatementList( sval_u val, scr_block_s *block, sval_u *devStatBlock );
 void EmitDeveloperStatementList( sval_u val, sval_u sourcePos, scr_block_s *block, sval_u *devStatBlock );
 void AddRefToValue( VariableValue *value );
-void RemoveRefToValue( VariableValue *value );
 
 /*
 ============
@@ -5879,12 +5878,3 @@ void AddRefToValue( VariableValue *value )
 	AddRefToValue(value->type, value->u);
 }
 
-/*
-============
-AddRefToValue
-============
-*/
-void RemoveRefToValue( VariableValue *value )
-{
-	RemoveRefToValue(value->type, value->u);
-}

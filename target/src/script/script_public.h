@@ -1127,8 +1127,10 @@ void RemoveArrayVariable(unsigned int parentId, unsigned int unsignedValue);
 void RemoveObjectVariable(unsigned int parentId, unsigned int id);
 void RemoveRefToObject(unsigned int id);
 void RemoveRefToValue(int type, VariableUnion u);
-void RemoveRefToValue(VariableValue *value);
-void RemoveRefToValue(int type, VariableUnion u);
+inline void RemoveRefToValue(VariableValue *value)
+{
+	RemoveRefToValue(value->type, value->u);
+}
 unsigned int FindArrayVariable(unsigned int parentId, unsigned int index);
 unsigned int GetParentLocalId(unsigned int threadId);
 unsigned int GetSafeParentLocalId(unsigned int threadId);
