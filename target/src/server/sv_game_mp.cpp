@@ -940,7 +940,7 @@ void SV_InitGameVM( qboolean restart, qboolean registerDvars )
 
 	if ( com_dedicated->current.integer )
 	{
-		Com_DvarDump(CON_CHANNEL_LOGFILEONLY);
+		Com_DvarDump(PMSG_LOGFILE);
 	}
 }
 

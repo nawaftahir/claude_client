@@ -1183,7 +1183,7 @@ negative_wait:
 			if ( scrVmGlob.loading )
 			{
 				Com_Printf("script runtime warning: potential infinite loop in script.\n");
-				Scr_PrintPrevCodePos(CON_CHANNEL_DONT_FILTER, fs.pos, 0);
+				Scr_PrintPrevCodePos(PMSG_CONSOLE, fs.pos, 0);
 				jumpOffset = Scr_ReadUnsignedShort(&fs.pos);
 				fs.pos -= jumpOffset;
 				Scr_ResetTimeout();
@@ -1192,7 +1192,7 @@ negative_wait:
 			if ( !scrVmPub.abort_on_error )
 			{
 				Com_Printf("script runtime error: potential infinite loop in script - killing thread.\n");
-				Scr_PrintPrevCodePos(CON_CHANNEL_DONT_FILTER, fs.pos, 0);
+				Scr_PrintPrevCodePos(PMSG_CONSOLE, fs.pos, 0);
 				Scr_ResetTimeout();
 				goto kill_thread;
 			}

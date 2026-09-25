@@ -137,7 +137,7 @@ Bool Com_IsMapProfilerActive(void);
 void Com_BeginRedirect(char *buffer, int buffersize, void (*flush)(char *));
 void Com_EndRedirect(void);
 void Com_Printf(const char *fmt, ...);
-void Com_PrintMessage(print_msg_type_t type, const char *msg);
+void Com_PrintMessage( print_msg_type_t channel, const char *msg );
 void Com_DPrintf(const char *fmt, ...);
 void Com_Error(errorParm_t code, const char *fmt, ...);
 qboolean Com_SafeMode(void);

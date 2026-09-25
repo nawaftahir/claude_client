@@ -147,13 +147,13 @@ void Com_EndRedirect( void )
 Com_PrintMessage
 ===================
 */
-void Com_PrintMessage( conChannel_t channel, const char *msg )
+void Com_PrintMessage( print_msg_type_t channel, const char *msg )
 {
 	static qboolean opening_qconsole = qfalse;
 
 	if ( rd_buffer )
 	{
-		if (channel == CON_CHANNEL_LOGFILEONLY)
+		if (channel == PMSG_LOGFILE)
 		{
 			return;
 		}
@@ -171,18 +171,16 @@ void Com_PrintMessage( conChannel_t channel, const char *msg )
 		return;
 	}
 
-#ifndef DEDICATED
 	// echo to console if we're not a dedicated server
-	if ( com_dedicated && !com_dedicated->current.integer )
+	if ( channel != PMSG_LOGFILE && com_dedicated && !com_dedicated->current.integer )
 	{
-		CL_ConsolePrint( msg );
+		CL_ConsolePrint(channel, msg, 0, 0);
 	}
-#endif
 
 	if ( msg[0] == '^' && msg[1] )
 		msg += 2;
 
-	if ( channel != CON_CHANNEL_LOGFILEONLY )
+	if ( channel != PMSG_LOGFILE )
 	{
 		// echo to dedicated console and early console
 		Sys_Print( msg );
@@ -243,7 +241,7 @@ void Com_Printf( const char *fmt, ... )
 	va_end (argptr);
 
 	msg[MAXPRINTMSG - 1] = 0;
-	Com_PrintMessage(CON_CHANNEL_DONT_FILTER, msg);
+	Com_PrintMessage(PMSG_CONSOLE, msg);
 }
 
 /*

@@ -705,7 +705,7 @@ bool Dvar_IsAtDefaultValue(const dvar_t *dvar)
 
 static void Dvar_SetVariant(dvar_t *dvar, DvarValue value, DvarSetSource source)
 {
-	Com_PrintMessage(CON_CHANNEL_LOGFILEONLY, va("      dvar set %s %s\n", dvar->name, Dvar_ValueToString(dvar, value)));
+	Com_PrintMessage(PMSG_LOGFILE, va("      dvar set %s %s\n", dvar->name, Dvar_ValueToString(dvar, value)));
 
 	if ( !Dvar_ValueInDomain(dvar->type, value, dvar->domain) )
 	{

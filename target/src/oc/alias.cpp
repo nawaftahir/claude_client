@@ -9,7 +9,6 @@
 #pragma comment(linker, "/alternatename:?Com_Error@@YAXHPBDZZ=?Com_Error@@YAXW4errorParm_t@@PBDZZ")
 #pragma comment(linker, "/alternatename:?Com_GetSoundFileMem@@YAPAXPBX@Z=?Com_GetSoundFileMem@@YAPAXPBUsnd_alias_t@@@Z")
 #pragma comment(linker, "/alternatename:?Com_GetSoundFileName@@YAPBDPBX@Z=?Com_GetSoundFileName@@YAPBDPBUsnd_alias_t@@@Z")
-#pragma comment(linker, "/alternatename:?Com_PrintMessage@@YAXHPBD@Z=?Com_PrintMessage@@YAXW4conChannel_t@@PBD@Z")
 #pragma comment(linker, "/alternatename:?Com_UnloadSoundAliases@@YAXH@Z=?Com_UnloadSoundAliases@@YAXW4snd_alias_system_t@@@Z")
 #pragma comment(linker, "/alternatename:?DObjCalcSkel@@YAXPBUDObj_s@@PAH@Z=?DObjCalcSkel@@YAXPAUDObj_s@@PAH@Z")
 #pragma comment(linker, "/alternatename:?DObjCreateSkel@@YAXPBUDObj_s@@PADH@Z=?DObjCreateSkel@@YAXPAUDObj_s@@PAUDSkel_t@@H@Z")

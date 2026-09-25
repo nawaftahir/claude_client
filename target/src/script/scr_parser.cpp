@@ -807,7 +807,7 @@ unsigned int Scr_GetLineInfo( const char *buf, unsigned int sourcePos, int *col,
 Scr_PrintSourcePos
 ==============
 */
-void Scr_PrintSourcePos( conChannel_t channel, const char *filename, const char *buf, unsigned int sourcePos )
+void Scr_PrintSourcePos( print_msg_type_t channel, const char *filename, const char *buf, unsigned int sourcePos )
 {
 	char line[MAX_STRING_CHARS];
 	unsigned int lineNum;
@@ -879,7 +879,7 @@ unsigned int Scr_GetSourceBuffer( const char *codePos )
 Scr_PrintPrevCodePos
 ==============
 */
-void Scr_PrintPrevCodePos( conChannel_t channel, const char *codePos, unsigned int index )
+void Scr_PrintPrevCodePos( print_msg_type_t channel, const char *codePos, unsigned int index )
 {
 	unsigned int bufferIndex;
 
@@ -994,7 +994,7 @@ void CompileError( unsigned int sourcePos, const char *format, ... )
 		else
 		{
 			Com_Printf("%s: ", text);
-			Scr_PrintSourcePos(CON_CHANNEL_DONT_FILTER, scrParserPub.scriptfilename, scrParserPub.sourceBuf, sourcePos);
+			Scr_PrintSourcePos(PMSG_CONSOLE, scrParserPub.scriptfilename, scrParserPub.sourceBuf, sourcePos);
 		}
 
 		Com_Printf("************************************\n");
@@ -1023,7 +1023,7 @@ void CompileError2( const char *codePos, const char *msg, ... )
 	va_end( argptr );
 
 	Com_Printf("%s: ", text);
-	Scr_PrintPrevCodePos(CON_CHANNEL_DONT_FILTER, codePos, 0);
+	Scr_PrintPrevCodePos(PMSG_CONSOLE, codePos, 0);
 
 	Com_Printf("************************************\n");
 	Com_Error(ERR_SCRIPT_DROP, "\x15" "script compile error\n(see console for details)");
@@ -1034,7 +1034,7 @@ void CompileError2( const char *codePos, const char *msg, ... )
 RuntimeErrorInternal
 ==============
 */
-void RuntimeErrorInternal( conChannel_t channel, const char *codePos, unsigned int index, const char *msg )
+void RuntimeErrorInternal( print_msg_type_t channel, const char *codePos, unsigned int index, const char *msg )
 {
 	int i;
 	function_frame_t *frame;
@@ -1088,7 +1088,7 @@ void RuntimeError( const char *codePos, unsigned int index, const char *msg, con
 				abort_on_error = true;
 			}
 
-			RuntimeErrorInternal(abort_on_error ? CON_CHANNEL_DONT_FILTER : CON_CHANNEL_LOGFILEONLY, codePos, index, msg);
+			RuntimeErrorInternal(abort_on_error ? PMSG_CONSOLE : PMSG_LOGFILE, codePos, index, msg);
 
 			if ( !abort_on_error )
 			{

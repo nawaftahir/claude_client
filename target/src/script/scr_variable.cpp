@@ -237,12 +237,12 @@ void Scr_DumpScriptThreads()
 		while ( i < num && !ThreadInfoCompare(pInfo, &infoArray[i]) );
 
 		Com_Printf("count: %d, var usage: %d, endon usage: %d\n", count, (int)info.varUsage, (int)info.endonUsage);
-		Scr_PrintPrevCodePos(CON_CHANNEL_DONT_FILTER, pInfo->pos[0], 0);
+		Scr_PrintPrevCodePos(PMSG_CONSOLE, pInfo->pos[0], 0);
 
 		for ( j = 1; j < pInfo->posSize; j++ )
 		{
 			Com_Printf("called from:\n");
-			Scr_PrintPrevCodePos(CON_CHANNEL_DONT_FILTER, pInfo->pos[j], 0);
+			Scr_PrintPrevCodePos(PMSG_CONSOLE, pInfo->pos[j], 0);
 		}
 	}
 

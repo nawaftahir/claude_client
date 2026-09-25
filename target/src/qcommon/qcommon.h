@@ -168,13 +168,13 @@ void NET_Restart( void );
 void NET_Config( qboolean enableNetworking );
 void NET_Sleep(int msec);
 
-enum conChannel_t
+enum print_msg_type_t
 {
-	CON_CHANNEL_DONT_FILTER = 0x0,
-	CON_CHANNEL_ERROR = 0x1,
-	CON_CHANNEL_GAMENOTIFY = 0x2,
-	CON_CHANNEL_BOLDGAME = 0x3,
-	CON_CHANNEL_LOGFILEONLY = 0x4,
+	PMSG_CONSOLE = 0x0,
+	PMSG_GAME = 0x1,
+	PMSG_BOLDGAME = 0x2,
+	PMSG_SUBTITLE = 0x3,
+	PMSG_LOGFILE = 0x4,
 };
 
 // Edit fields and command line history/completion
@@ -492,7 +492,8 @@ int Com_HashKey( const char *string, int maxlen );
 
 void Com_InitDvars();
 void Com_StartupVariable( const char *match );
-void Com_PrintMessage( conChannel_t channel, const char *msg );
+void Com_PrintMessage( print_msg_type_t channel, const char *msg );
+void CL_ConsolePrint( print_msg_type_t type, const char *txt, int duration, int linewidth );
 void Com_Printf( const char *fmt, ...);
 void Com_DPrintf( const char *fmt, ...);
 void Com_Error(errorParm_t code, const char *fmt, ...);
@@ -501,7 +502,7 @@ void Com_WriteConfigToFile(const char *contents);
 qboolean Com_SafeMode( void );
 int Com_Milliseconds( void );
 
-void Com_DvarDump(conChannel_t channel);
+void Com_DvarDump(print_msg_type_t channel);
 
 int Sys_MillisecondsRaw( void );
 

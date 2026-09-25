@@ -134,7 +134,7 @@ extern void UI_DrawConnectScreen(void);
 extern void Cbuf_Execute(void);
 extern void Cbuf_ExecuteText(int, const char *);
 extern void Com_DPrintf(const char *fmt, ...);
-extern void Com_PrintMessage(int, const char *);
+extern void Com_PrintMessage( print_msg_type_t channel, const char *msg );
 extern void Com_Restart(void);
 extern const dvar_t *Dvar_RegisterBool_mac(const char *name, int defaultValue, int flags);
 extern dvar_t *Dvar_RegisterInt(const char *dvarName, int value, int min, int max, unsigned short flags);
@@ -2219,7 +2219,7 @@ Bool CL_ConnectionlessPacket(netadr_t from, msg_t *msg, int time)
 
         I_strncpyz(conn->serverMessage, text, sizeof(conn->serverMessage));
         Com_sprintf(printBuf, 0x4000, (const char *)"%s", text);
-        Com_PrintMessage(0, printBuf);
+        Com_PrintMessage((print_msg_type_t)0, printBuf);
         result = 1;
         goto finish;
     }

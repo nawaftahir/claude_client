@@ -532,7 +532,7 @@ static void Dvar_List_f(void)
 	Com_Printf("\n%i total dvars\n", dvarCount);
 }
 
-void Com_DvarDump(conChannel_t channel)
+void Com_DvarDump(print_msg_type_t channel)
 {
 	dvar_t *dvar;
 	int count;
@@ -544,7 +544,7 @@ void Com_DvarDump(conChannel_t channel)
 	else
 		match = NULL;
 
-	if (channel != CON_CHANNEL_DONT_FILTER || (com_logfile && com_logfile->current.integer))
+	if (channel != PMSG_CONSOLE || (com_logfile && com_logfile->current.integer))
 	{
 		count = 0;
 
@@ -572,7 +572,7 @@ void Com_DvarDump(conChannel_t channel)
 
 static void Dvar_Dump_f(void)
 {
-	Com_DvarDump(CON_CHANNEL_DONT_FILTER);
+	Com_DvarDump(PMSG_CONSOLE);
 }
 
 void SV_SetConfig(int start, int max, int bit)

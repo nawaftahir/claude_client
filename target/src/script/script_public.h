@@ -976,7 +976,7 @@ void Scr_DecTime();
 
 void VM_TerminateTime(unsigned int timeId);
 void Scr_TerminateThread(unsigned int localId);
-void RuntimeErrorInternal(conChannel_t channel, const char *codePos, unsigned int index, const char *errorMessage);
+void RuntimeErrorInternal(print_msg_type_t channel, const char *codePos, unsigned int index, const char *errorMessage);
 void RuntimeError(const char *codePos, unsigned int index, const char *errorMsg, const char *format);
 void Scr_ResetTimeout();
 void Scr_TerminateRunningThread(unsigned int localId);
@@ -1269,7 +1269,7 @@ void Scr_ClearOutParams();
 const char* Scr_GetDebugString(unsigned int index);
 void Scr_CastDebugString(VariableValue *value);
 
-void Scr_PrintPrevCodePos(conChannel_t channel, const char *codePos, unsigned int index);
+void Scr_PrintPrevCodePos(print_msg_type_t channel, const char *codePos, unsigned int index);
 extern "C" void CompileError(unsigned int sourcePos, const char *format, ...);
 void CompileError2(const char *codePos, const char *format, ...);
 extern "C" int Scr_ScanFile(char *buf, int max_size);
@@ -1360,7 +1360,7 @@ unsigned int Scr_GetLineNumInternal(const char *buf, unsigned int sourcePos, con
 OpcodeLookup* Scr_GetPrevSourcePosOpcodeLookup(const char *codePos);
 unsigned int Scr_GetLineInfo(const char *buf, unsigned int sourcePos, int *col, char *line);
 OpcodeLookup* Scr_GetSourcePosOpcodeLookup( const char *codePos );
-void Scr_PrintSourcePos(conChannel_t channel, const char *filename, const char *buf, unsigned int sourcePos);
+void Scr_PrintSourcePos(print_msg_type_t channel, const char *filename, const char *buf, unsigned int sourcePos);
 char* Scr_ReadFile(const char *filename, const char *extFilename, const char *codePos, bool archive);
 void Scr_AddSourceBufferInternal(const char *extFilename, const char *codePos, char *sourceBuf, int len, bool doEolFixup, bool archive);
 
