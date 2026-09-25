@@ -619,7 +619,7 @@ void FireWeapon( gentity_t *ent, int gametime )
 	aimSpreadScale = ent->client->currentAimSpreadScale;
 	BG_GetSpreadForWeapon(&ent->client->ps, ent->s.weapon, &minSpread, &maxSpread);
 
-	if ( ent->client->ps.fWeaponPosFrac == 1.0 )
+	if ( ent->client->ps.fWeaponPosFrac == 1.0f )
 		fAimSpreadAmount = wp.weapDef->adsSpread + (maxSpread - wp.weapDef->adsSpread) * aimSpreadScale;
 	else
 		fAimSpreadAmount = minSpread + (maxSpread - minSpread) * aimSpreadScale;

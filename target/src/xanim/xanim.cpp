@@ -940,7 +940,7 @@ void XAnim_CalcDeltaForTime(const XAnimParts_s *anim, const float time, float *r
 
 	animDelta = anim->deltaPart;
 	numFrames = anim->numframes;
-	isComplete = time == 1.0 || !numFrames;
+	isComplete = time == 1.0f || !numFrames;
 
 	if ( isComplete )
 	{
@@ -1347,12 +1347,12 @@ void XAnimUpdateInfoSyncInternal(const XAnimTree_s *tree, unsigned int index, bo
 		info = &g_xAnimInfo[childIndex];
 		infoState = &info->state;
 
-		if ( infoState->weight == 0.0 )
+		if ( infoState->weight == 0.0f )
 		{
 		}
 		else
 		{
-			if ( infoState->goalWeight == 0.0 )
+			if ( infoState->goalWeight == 0.0f )
 				update = 0;
 
 			entry = &tree->anims->entries[index];
@@ -1638,7 +1638,7 @@ void XAnimUpdateOldTime(XAnimTree_s *tree, unsigned int infoIndex, XAnimState *s
 		state = &info->state;
 		bWeight = 0;
 
-		if ( parentHasWeight && state->weight != 0.0 )
+		if ( parentHasWeight && state->weight != 0.0f )
 			bWeight = 1;
 
 		childHasWeight = bWeight;
@@ -1646,7 +1646,7 @@ void XAnimUpdateOldTime(XAnimTree_s *tree, unsigned int infoIndex, XAnimState *s
 		if ( !parentHasWeight || state->goalTime <= dtime )
 		{
 			state->weight = state->goalWeight;
-			state->goalTime = 0.0;
+			state->goalTime = 0.0f;
 		}
 		else
 		{
@@ -1660,7 +1660,7 @@ void XAnimUpdateOldTime(XAnimTree_s *tree, unsigned int infoIndex, XAnimState *s
 
 		bTime = 0;
 
-		if ( childHasWeight || state->goalWeight != 0.0 )
+		if ( childHasWeight || state->goalWeight != 0.0f )
 			bTime = 1;
 
 		parentHasTime = bTime;
@@ -1670,7 +1670,7 @@ void XAnimUpdateOldTime(XAnimTree_s *tree, unsigned int infoIndex, XAnimState *s
 		if ( !numAnims )
 		{
 			parts = entry->u.parts;
-			childHasTime = 0.0 != parts->frequency;
+			childHasTime = 0.0f != parts->frequency;
 		}
 		else
 		{
@@ -1753,7 +1753,7 @@ float XAnimGetServerNotifyFracSyncTotal(const XAnimTree_s *tree, XAnimInfo *info
 
 		info = &g_xAnimInfo[animIndex];
 
-		if ( info->state.weight == 0.0 || info->state.goalWeight == 0.0 )
+		if ( info->state.weight == 0.0f || info->state.goalWeight == 0.0f )
 		{
 			continue;
 		}
@@ -1796,7 +1796,7 @@ float XAnimFindServerNoteTrack(const XAnimTree_s *anim, unsigned int infoIndex, 
 	info = &g_xAnimInfo[childIndex];
 	animState = &info->state;
 
-	if ( animState->weight == 0.0 || animState->goalWeight == 0.0 )
+	if ( animState->weight == 0.0f || animState->goalWeight == 0.0f )
 		return 1.0f;
 
 	animEntry = &anim->anims->entries[infoIndex];
@@ -1807,7 +1807,7 @@ float XAnimFindServerNoteTrack(const XAnimTree_s *anim, unsigned int infoIndex, 
 		animParts = animEntry->u.parts;
 		dtime = animState->rate * animParts->frequency * dtime;
 
-		if ( dtime == 0.0 )
+		if ( dtime == 0.0f )
 			return 1.0f;
 
 		newAnimTime = animState->oldTime + dtime;
@@ -1842,7 +1842,7 @@ float XAnimFindServerNoteTrack(const XAnimTree_s *anim, unsigned int infoIndex, 
 	{
 		dtime = XAnimGetAverageRateFrequency(anim, infoIndex) * animState->rate * dtime;
 
-		if ( dtime == 0.0 )
+		if ( dtime == 0.0f )
 			return 1.0f;
 
 		newAnimTime = animState->oldTime + dtime;
@@ -1875,7 +1875,7 @@ float XAnimFindServerNoteTrack(const XAnimTree_s *anim, unsigned int infoIndex, 
 
 	dtime = dtime * animState->rate;
 
-	if ( dtime == 0.0 )
+	if ( dtime == 0.0f )
 		return 1.0f;
 
 	rate = 1.0f;
@@ -1908,7 +1908,7 @@ void XAnimProcessServerNotify(const XAnimTree_s *tree, XAnimInfo *info, const XA
 	}
 
 	{
-		if ( info->state.time == 1.0 )
+		if ( info->state.time == 1.0f )
 		{
 			Scr_AddConstString(g_end);
 			Scr_NotifyNum(tree->entnum - 1, 0, info->notifyName, 1u);
@@ -1917,7 +1917,7 @@ void XAnimProcessServerNotify(const XAnimTree_s *tree, XAnimInfo *info, const XA
 
 		if ( info->notifyIndex < 0 && (XAnimSetNotifyIndex(tree, info, entry), info->notifyIndex < 0) )
 		{
-			if ( dtime < info->state.time || dtime == 1.0 )
+			if ( dtime < info->state.time || dtime == 1.0f )
 			{
 				Scr_AddConstString(g_end);
 				Scr_NotifyNum(tree->entnum - 1, 0, info->notifyName, 1u);
@@ -1963,7 +1963,7 @@ void XAnimProcessServerNotify(const XAnimTree_s *tree, XAnimInfo *info, const XA
 			}
 			else
 			{
-				if ( dtime == 1.0 )
+				if ( dtime == 1.0f )
 				{
 					if ( !(info->state.time > notify->time) )
 					{
@@ -2775,13 +2775,13 @@ void XAnimCalcDelta(XAnimTree_s *tree, unsigned int animIndex, float *rot, float
 
 	XAnimCalcDeltaTree(tree, animIndex, 1.0, 1, 0, &rotPos);
 
-	if ( rotPos.rot[0] != 0.0 && rotPos.rot[1] != 0.0 )
+	if ( rotPos.rot[0] != 0.0f && rotPos.rot[1] != 0.0f )
 	{
 		Vector2Copy(rotPos.rot, rot);
 	}
 	else
 	{
-		rot[0] = 0.0;
+		rot[0] = 0.0f;
 		rot[1] = 1.0;
 	}
 
@@ -2798,13 +2798,13 @@ void XAnimCalcAbsDelta(XAnimTree_s *tree, unsigned int animIndex, float *rot, fl
 
 	XAnimCalcDeltaTree(tree, animIndex, 1.0, 1, 0, &rotPos);
 
-	if ( rotPos.rot[0] != 0.0 || rotPos.rot[1] != 0.0 )
+	if ( rotPos.rot[0] != 0.0f || rotPos.rot[1] != 0.0f )
 	{
 		Vector2Copy(rotPos.rot, rot);
 	}
 	else
 	{
-		rot[0] = 0.0;
+		rot[0] = 0.0f;
 		rot[1] = 1.0;
 	}
 
@@ -2825,17 +2825,17 @@ void XAnimGetRelDelta(const XAnim_s *anims, unsigned int animIndex, float *rot, 
 	if ( !numAnims && (parts = entry->u.parts, parts->bDelta) )
 	{
 		Vector2Clear(rotPos.rot);
-		rotPos.posWeight = 0.0;
+		rotPos.posWeight = 0.0f;
 		VectorClear(rotPos.pos);
 		XAnimCalcRelDeltaParts(parts, 1.0, time1, time2, &rotPos, 0);
 
-		if ( rotPos.rot[0] != 0.0 || rotPos.rot[1] != 0.0 )
+		if ( rotPos.rot[0] != 0.0f || rotPos.rot[1] != 0.0f )
 		{
 			Vector2Copy(rotPos.rot, rot);
 		}
 		else
 		{
-			rot[0] = 0.0;
+			rot[0] = 0.0f;
 			rot[1] = 1.0;
 		}
 
@@ -2843,7 +2843,7 @@ void XAnimGetRelDelta(const XAnim_s *anims, unsigned int animIndex, float *rot, 
 	}
 	else
 	{
-		rot[0] = 0.0;
+		rot[0] = 0.0f;
 		rot[1] = 1.0;
 		VectorClear(trans);
 	}
@@ -2863,17 +2863,17 @@ void XAnimGetAbsDelta(const XAnim_s *anims, unsigned int animIndex, float *rot, 
 	if ( !numAnims && (parts = entry->u.parts, parts->bDelta) )
 	{
 		Vector2Clear(rotPos.rot);
-		rotPos.posWeight = 0.0;
+		rotPos.posWeight = 0.0f;
 		VectorClear(rotPos.pos);
 		XAnimCalcAbsDeltaParts(parts, 1.0, time, &rotPos);
 
-		if ( rotPos.rot[0] != 0.0 || rotPos.rot[1] != 0.0 )
+		if ( rotPos.rot[0] != 0.0f || rotPos.rot[1] != 0.0f )
 		{
 			Vector2Copy(rotPos.rot, rot);
 		}
 		else
 		{
-			rot[0] = 0.0;
+			rot[0] = 0.0f;
 			rot[1] = 1.0;
 		}
 
@@ -2881,7 +2881,7 @@ void XAnimGetAbsDelta(const XAnim_s *anims, unsigned int animIndex, float *rot, 
 	}
 	else
 	{
-		rot[0] = 0.0;
+		rot[0] = 0.0f;
 		rot[1] = 1.0;
 		VectorClear(trans);
 	}
@@ -2924,7 +2924,7 @@ void XAnimClearGoalWeight(XAnimTree_s *tree, unsigned int animIndex, float blend
 		info = &g_xAnimInfo[childIndex];
 		state = &info->state;
 
-		if ( state->goalWeight != 0.0 )
+		if ( state->goalWeight != 0.0f )
 		{
 			state->goalTime = blendTime;
 		}
@@ -2934,10 +2934,10 @@ void XAnimClearGoalWeight(XAnimTree_s *tree, unsigned int animIndex, float blend
 				state->goalTime = blendTime;
 		}
 
-		state->goalWeight = 0.0;
+		state->goalWeight = 0.0f;
 
-		if ( blendTime == 0.0 )
-			state->weight = 0.0;
+		if ( blendTime == 0.0f )
+			state->weight = 0.0f;
 
 		XAnimFreeNotifyStrings(info);
 	}
@@ -3200,7 +3200,7 @@ int XAnimSetGoalWeightInternal(XAnimTree_s *tree, unsigned int animIndex, float 
 
 	if ( !infoIndex )
 	{
-		if ( goalWeight == 0.0 )
+		if ( goalWeight == 0.0f )
 		{
 			if ( !useGoalWeight )
 				return 0;
@@ -3218,22 +3218,22 @@ retry:
 	if ( !animIndex )
 	{
 		goalWeight = 1.0;
-		goalTime = 0.0;
+		goalTime = 0.0f;
 		rate = 1.0;
 	}
 
 	state = &info->state;
 
-	if ( goalTime == 0.0 )
+	if ( goalTime == 0.0f )
 	{
 		state->weight = goalWeight;
 	}
-	else if ( state->weight == 0.0 )
+	else if ( state->weight == 0.0f )
 	{
 		state->weight = goalWeight * 0.001f;
 	}
 
-	if ( goalWeight != 0.0 )
+	if ( goalWeight != 0.0f )
 	{
 		if ( goalWeight >= state->weight )
 		{
@@ -3246,7 +3246,7 @@ retry:
 	}
 	else
 	{
-		if ( state->goalWeight != 0.0 )
+		if ( state->goalWeight != 0.0f )
 		{
 			state->goalTime = goalTime;
 		}
@@ -3588,7 +3588,7 @@ void XAnimSetCompleteGoalWeight(XAnimTree_s *tree, unsigned int animIndex, float
 		childIndex = tree->anims->entries[childIndex].parent;
 		info = tree->infoArray[childIndex];
 
-		if ( info && g_xAnimInfo[info].state.goalWeight != 0.0 )
+		if ( info && g_xAnimInfo[info].state.goalWeight != 0.0f )
 		{
 		}
 		else

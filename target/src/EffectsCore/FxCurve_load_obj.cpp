@@ -21,15 +21,15 @@ const FxCurve *FxCurve_AllocAndCreateWithKeys( const float *keyArray, int dimens
 	int keySize;
 
 	keySize = dimensionCount + 1;
-	needStartKey = 0.0 != keyArray[0];
-	needEndKey = 1.0 != keyArray[( keyCount - 1 ) * keySize];
+	needStartKey = 0.0f != keyArray[0];
+	needEndKey = 1.0f != keyArray[( keyCount - 1 ) * keySize];
 	totalKeys = keyCount + ( needStartKey != 0 ) + ( needEndKey != 0 );
 	newCurve = (FxCurve *)Hunk_AllocAlignInternal( keySize * totalKeys * 4 + 8, 4 );
 	newCurve->dimensionCount = dimensionCount;
 	keyIndex = 0;
 	if ( needStartKey )
 	{
-		newCurve->keys[keyIndex * keySize] = 0.0;
+		newCurve->keys[keyIndex * keySize] = 0.0f;
 		for ( dimensionId = 0; dimensionId != dimensionCount; dimensionId++ )
 			newCurve->keys[keyIndex * keySize + dimensionId + 1] = keyArray[dimensionId + 1];
 		keyIndex++;
@@ -38,7 +38,7 @@ const FxCurve *FxCurve_AllocAndCreateWithKeys( const float *keyArray, int dimens
 	keyIndex += keyCount;
 	if ( needEndKey )
 	{
-		newCurve->keys[keyIndex * keySize] = 1.0;
+		newCurve->keys[keyIndex * keySize] = 1.0f;
 		for ( dimensionId = 0; dimensionId != dimensionCount; dimensionId++ )
 			newCurve->keys[keyIndex * keySize + dimensionId + 1] = keyArray[dimensionId + 1];
 		keyIndex++;
