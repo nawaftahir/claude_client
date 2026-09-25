@@ -245,7 +245,7 @@ void G_PlayerTurretPositionAndBlend( gentity_t *ent, gentity_t *pTurretEnt )
 
 	weapDef = BG_GetWeaponDef(pTurretEnt->s.weapon);
 	pAnimTree = ci->pXAnimTree;
-	pXAnims = level_bgs.animData.animScriptData.animTree.anims;
+	pXAnims = level_bgs.animScriptData.animTree.anims;
 
 	baseAnim = pLerpAnim->animationNumber & ~ANIM_TOGGLEBIT;
 

@@ -2097,17 +2097,17 @@ void BG_SetNewAnimation( clientInfo_t *ci, lerpFrame_t *lf, int newAnimation, qb
 	lf->animationNumber = newAnimation;
 	newAnimation &= ~ANIM_TOGGLEBIT;
 
-	if ( (unsigned)newAnimation >= (unsigned int)bgs->animData.animScriptData.numAnimations )
+	if ( (unsigned)newAnimation >= (unsigned int)bgs->animScriptData.numAnimations )
 	{
-		Com_Error(ERR_DROP, "\x15" "Player animation index out of range (%i): %i", bgs->animData.animScriptData.numAnimations, newAnimation);
+		Com_Error(ERR_DROP, "\x15" "Player animation index out of range (%i): %i", bgs->animScriptData.numAnimations, newAnimation);
 	}
 
 	pAnimTree = ci->pXAnimTree;
-	pXAnims = bgs->animData.animScriptData.animTree.anims;
+	pXAnims = bgs->animScriptData.animTree.anims;
 
 	if ( newAnimation )
 	{
-		anim = &bgs->animData.animScriptData.animations[newAnimation];
+		anim = &bgs->animScriptData.animations[newAnimation];
 
 		lf->animation = anim;
 		lf->animationTime = anim->initialLerp;
@@ -2213,7 +2213,7 @@ void BG_SetNewAnimation( clientInfo_t *ci, lerpFrame_t *lf, int newAnimation, qb
 			}
 			else
 			{
-				XAnimSetCompleteGoalWeightKnobAll(pAnimTree, newAnimation, bgs->animData.generic_human.root.index, 1.0, 0.0, 1.0, 0, 0);
+				XAnimSetCompleteGoalWeightKnobAll(pAnimTree, newAnimation, bgs->generic_human.root.index, 1.0, 0.0, 1.0, 0, 0);
 				XAnimSetTime(pAnimTree, newAnimation, 1.0);
 			}
 		}
@@ -2231,14 +2231,14 @@ void BG_SetNewAnimation( clientInfo_t *ci, lerpFrame_t *lf, int newAnimation, qb
 
 		if ( !bLegs )
 		{
-			XAnimSetCompleteGoalWeight(pAnimTree, bgs->animData.animScriptData.torsoAnim, 1.0, lf->animationTime * 0.001f, 1.0, 0, anim->noteType, 0);
-			XAnimSetCompleteGoalWeight(pAnimTree, bgs->animData.animScriptData.legsAnim, 0.0099999998, lf->animationTime * 0.001f, 1.0, 0, anim->noteType, 0);
+			XAnimSetCompleteGoalWeight(pAnimTree, bgs->animScriptData.torsoAnim, 1.0, lf->animationTime * 0.001f, 1.0, 0, anim->noteType, 0);
+			XAnimSetCompleteGoalWeight(pAnimTree, bgs->animScriptData.legsAnim, 0.0099999998, lf->animationTime * 0.001f, 1.0, 0, anim->noteType, 0);
 		}
 	}
 	else if ( !bLegs )
 	{
-		XAnimSetCompleteGoalWeight(pAnimTree, bgs->animData.animScriptData.torsoAnim, 0.0, lf->animationTime * 0.001f, 1.0, 0, 0, 0);
-		XAnimSetCompleteGoalWeight(pAnimTree, bgs->animData.animScriptData.legsAnim, 1.0, lf->animationTime * 0.001f, 1.0, 0, 0, 0);
+		XAnimSetCompleteGoalWeight(pAnimTree, bgs->animScriptData.torsoAnim, 0.0, lf->animationTime * 0.001f, 1.0, 0, 0, 0);
+		XAnimSetCompleteGoalWeight(pAnimTree, bgs->animScriptData.legsAnim, 1.0, lf->animationTime * 0.001f, 1.0, 0, 0, 0);
 	}
 }
 
@@ -2270,7 +2270,7 @@ void BG_RunLerpFrameRate( clientInfo_t *ci, lerpFrame_t *lf, int newAnimation, c
 	isLadderAnim = wasLadderAnim;
 	oldAnim = lf->animation;
 	pAnimTree = ci->pXAnimTree;
-	pXAnims = bgs->animData.animScriptData.animTree.anims;
+	pXAnims = bgs->animScriptData.animTree.anims;
 
 	if ( newAnimation != lf->animationNumber || !lf->animation && ( newAnimation & ~ANIM_TOGGLEBIT ) )
 	{
@@ -2369,7 +2369,7 @@ BG_PlayerAnimation_VerifyAnim
 */
 void BG_PlayerAnimation_VerifyAnim( XAnimTree *pAnimTree, lerpFrame_t *lf )
 {
-	struct XAnim_s *animTree = bgs->animData.animScriptData.animTree.anims;
+	struct XAnim_s *animTree = bgs->animScriptData.animTree.anims;
 
 	if ( lf->animationNumber )
 	{
@@ -2597,7 +2597,7 @@ void BG_PlayerAngles( const entityState_s *es, clientInfo_t *ci ) // not sure ab
 		ci->legs.yawing = qfalse;
 		ci->legs.yawAngle = vHeadAngles[YAW] + moveDir;
 	}
-	else if ( bgs->animData.animScriptData.animations[es->legsAnim & ~ANIM_TOGGLEBIT].flags & 0x30 )
+	else if ( bgs->animScriptData.animations[es->legsAnim & ~ANIM_TOGGLEBIT].flags & 0x30 )
 	{
 		ci->legs.yawing = qfalse; // set it if they really need to swing
 		vLegsAngles[YAW] = vHeadAngles[YAW];
@@ -2685,19 +2685,19 @@ void BG_AnimPlayerConditions( entityState_t *es, clientInfo_t *ci )
 
 	legsAnim = es->legsAnim & ~ANIM_TOGGLEBIT;
 
-	if ( bgs->animData.animScriptData.animations[legsAnim].movetype )
+	if ( bgs->animScriptData.animations[legsAnim].movetype )
 	{
-		if ( BG_GetConditionValue(ci, ANIM_COND_MOVETYPE, qfalse) != bgs->animData.animScriptData.animations[legsAnim].movetype )
+		if ( BG_GetConditionValue(ci, ANIM_COND_MOVETYPE, qfalse) != bgs->animScriptData.animations[legsAnim].movetype )
 		{
-			BG_UpdateConditionValue( es->clientNum, ANIM_COND_MOVETYPE, bgs->animData.animScriptData.animations[legsAnim].movetype, qfalse);
+			BG_UpdateConditionValue( es->clientNum, ANIM_COND_MOVETYPE, bgs->animScriptData.animations[legsAnim].movetype, qfalse);
 		}
 	}
 
-	if ( bgs->animData.animScriptData.animations[legsAnim].flags & 0x10 )
+	if ( bgs->animScriptData.animations[legsAnim].flags & 0x10 )
 	{
 		BG_UpdateConditionValue(es->clientNum, ANIM_COND_STRAFING, LEANING_LEFT, qtrue);
 	}
-	else if ( bgs->animData.animScriptData.animations[legsAnim].flags & 0x20 )
+	else if ( bgs->animScriptData.animations[legsAnim].flags & 0x20 )
 	{
 		BG_UpdateConditionValue(es->clientNum, ANIM_COND_STRAFING, LEANING_RIGHT, qtrue);
 	}
@@ -3095,10 +3095,10 @@ BG_FindAnims
 */
 void BG_FindAnims()
 {
-	Scr_FindAnim(DEFAULT_ANIM_TREE_NAME, "root", &bgs->animData.generic_human.root, bgs->anim_user);
-	Scr_FindAnim(DEFAULT_ANIM_TREE_NAME, "torso", &bgs->animData.generic_human.torso, bgs->anim_user);
-	Scr_FindAnim(DEFAULT_ANIM_TREE_NAME, "legs", &bgs->animData.generic_human.legs, bgs->anim_user);
-	Scr_FindAnim(DEFAULT_ANIM_TREE_NAME, "turning", &bgs->animData.generic_human.turning, bgs->anim_user);
+	Scr_FindAnim(DEFAULT_ANIM_TREE_NAME, "root", &bgs->generic_human.root, bgs->anim_user);
+	Scr_FindAnim(DEFAULT_ANIM_TREE_NAME, "torso", &bgs->generic_human.torso, bgs->anim_user);
+	Scr_FindAnim(DEFAULT_ANIM_TREE_NAME, "legs", &bgs->generic_human.legs, bgs->anim_user);
+	Scr_FindAnim(DEFAULT_ANIM_TREE_NAME, "turning", &bgs->generic_human.turning, bgs->anim_user);
 }
 
 /*
@@ -3130,12 +3130,12 @@ BG_FindAnimTrees
 */
 void BG_FindAnimTrees()
 {
-	bgs->animData.generic_human.tree = BG_FindAnimTree( DEFAULT_ANIM_TREE_NAME, qtrue );
+	bgs->generic_human.tree = BG_FindAnimTree( DEFAULT_ANIM_TREE_NAME, qtrue );
 
-	bgs->animData.animScriptData.animTree = bgs->animData.generic_human.tree;
-	bgs->animData.animScriptData.torsoAnim = bgs->animData.generic_human.torso.index;
-	bgs->animData.animScriptData.legsAnim = bgs->animData.generic_human.legs.index;
-	bgs->animData.animScriptData.turningAnim = bgs->animData.generic_human.turning.index;
+	bgs->animScriptData.animTree = bgs->generic_human.tree;
+	bgs->animScriptData.torsoAnim = bgs->generic_human.torso.index;
+	bgs->animScriptData.legsAnim = bgs->generic_human.legs.index;
+	bgs->animScriptData.turningAnim = bgs->generic_human.turning.index;
 }
 
 /*
@@ -3151,7 +3151,7 @@ void BG_LoadAnim()
 
 	iNumPlayerAnims = 0;
 	BG_FindAnims();
-	BG_AnimParseAnimScript(&bgs->animData.animScriptData, pPlayerAnims, &iNumPlayerAnims);
+	BG_AnimParseAnimScript(&bgs->animScriptData, pPlayerAnims, &iNumPlayerAnims);
 	Scr_PrecacheAnimTrees(bgs->AllocXAnim, bgs->anim_user);
 	BG_FindAnimTrees();
 	Scr_EndLoadAnimTrees();

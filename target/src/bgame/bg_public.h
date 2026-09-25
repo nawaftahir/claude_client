@@ -328,7 +328,7 @@ struct corpseInfo_t
 	byte falling;
 };
 
-struct bgsAnim_t
+typedef struct ALIGNED(8) bgs_s
 {
 	animScriptData_t animScriptData;
 	struct
@@ -339,11 +339,6 @@ struct bgsAnim_t
 		scr_anim_s     legs;
 		scr_anim_s     turning;
 	} generic_human;
-};
-
-typedef struct ALIGNED(8) bgs_s
-{
-	bgsAnim_t animData;
 	int time;
 	int latestSnapshotTime;
 	int frametime;

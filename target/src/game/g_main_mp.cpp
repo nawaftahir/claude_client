@@ -339,7 +339,7 @@ void G_LoadAnimTreeInstances( void )
 	int i;
 	XAnim *anims;
 
-	anims = level_bgs.animData.generic_human.tree.anims;
+	anims = level_bgs.generic_human.tree.anims;
 	assert(anims);
 
 	for ( i = 0; i < MAX_CLIENTS; i++ )
@@ -476,9 +476,9 @@ void G_InitGame( int levelTime, int randomSeed, int restart, int savepersist )
 	if ( !restart )
 	{
 		// RF, init the anim scripting
-		memset(&bgs->animData.animScriptData, 0, sizeof(bgs->animData.animScriptData));
-		bgs->animData.animScriptData.soundAlias = Com_FindSoundAlias;
-		bgs->animData.animScriptData.playSoundAlias = G_AnimScriptSound;
+		memset(&bgs->animScriptData, 0, sizeof(bgs->animScriptData));
+		bgs->animScriptData.soundAlias = Com_FindSoundAlias;
+		bgs->animScriptData.playSoundAlias = G_AnimScriptSound;
 		GScr_LoadScripts();
 		BG_LoadAnim();
 		G_LoadAnimTreeInstances();
