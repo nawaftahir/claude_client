@@ -16,7 +16,8 @@ public class DecompileAll extends GhidraScript {
             DecompileResults r = di.decompileFunction(fn, 60, monitor);
             if (r == null || r.getDecompiledFunction() == null)
                 continue;
-            String name = String.format("%08x_%s.c", fn.getEntryPoint().getOffset(), fn.getName());
+            String s = fn.getName().replaceAll("[^A-Za-z0-9_]", "_");
+            String name = String.format("%08x_%s.c", fn.getEntryPoint().getOffset(), s.length() > 80 ? s.substring(0, 80) : s);
             Files.writeString(out.resolve(name), r.getDecompiledFunction().getC());
             n++;
         }
