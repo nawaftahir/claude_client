@@ -1,7 +1,6 @@
 #include "../qcommon/qcommon.h"
 
 static void SV_MapRestart_f( void );
-static void SV_AddDedicatedCommands( void );
 
 /*
 ==================
@@ -957,7 +956,7 @@ void SV_RemoveOperatorCommands( void )
 SV_AddDedicatedCommands
 ==================
 */
-static void SV_AddDedicatedCommands( void )
+void SV_AddDedicatedCommands( void )
 {
 	Cmd_AddCommand("say", SV_ConSay_f);
 	Cmd_AddCommand("tell", SV_ConTell_f);

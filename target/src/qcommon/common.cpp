@@ -1373,10 +1373,10 @@ int Com_ModifyMsec( int msec )
 
 /*
 ==================
-Com_DedicatedModified
+Com_ViewLogModified
 ==================
 */
-void Com_DedicatedModified()
+static void Com_ViewLogModified()
 {
 	if ( !com_viewlog->modified )
 		return;
@@ -1385,6 +1385,31 @@ void Com_DedicatedModified()
 		Sys_ShowConsole( com_viewlog->current.integer, qfalse );
 
 	Dvar_ClearModified( com_viewlog );
+}
+
+/*
+==================
+Com_DedicatedModified
+==================
+*/
+void Com_DedicatedModified()
+{
+	if ( com_dedicated->flags & DVAR_ROM )
+		return;
+
+	if ( com_dedicated->latched.integer == com_dedicated->current.integer )
+		return;
+
+	com_dedicated = Dvar_RegisterInt("dedicated", 0, 0, 2, DVAR_LATCH | DVAR_CHANGEABLE_RESET);
+
+	if ( com_dedicated->current.integer )
+		Dvar_RegisterInt("dedicated", 0, 0, 2, DVAR_ROM | DVAR_CHANGEABLE_RESET);
+
+	Dvar_ClearModified( com_dedicated );
+	CL_Shutdown();
+	Sys_ShowConsole( 1, qtrue );
+	Sys_NormalExit();
+	SV_AddDedicatedCommands();
 }
 
 /*
@@ -1398,7 +1423,7 @@ static void Com_Frame_Try_Block_Function()
 	int msec, minMsec, unusedMsec;
 
 	Com_WriteConfiguration();
-	Com_DedicatedModified();
+	Com_ViewLogModified();
 	SetAnimCheck(com_animCheck->current.boolean);
 
 	// we may want to spin here if things are going too fast
@@ -1430,6 +1455,19 @@ done:
 	msec = Com_ModifyMsec( msec );
 	CL_SwitchToLocalClient( 0 );
 	SV_Frame( msec );
+	Com_DedicatedModified();
+
+	if ( com_dedicated->current.integer )
+		return;
+
+	CL_RunOncePerClientFrame( msec );
+	Com_EventLoop();
+	Cbuf_Execute();
+	SND_UpdateLoopingSounds();
+	SND_Update();
+	CL_Frame();
+	SCR_UpdateScreen();
+	SCR_RunCinematic();
 }
 
 

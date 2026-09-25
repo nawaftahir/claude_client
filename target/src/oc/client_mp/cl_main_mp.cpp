@@ -348,7 +348,7 @@ Bool CL_ConnectionlessPacket(netadr_t from, msg_t *msg, int time);
 Bool CL_PacketEvent(netadr_t from, msg_t *msg, int time);
 void CL_Init(void);
 void CL_ShutdownAll(void);
-void CL_Frame(int msec);
+void CL_Frame(void);
 void CL_Vid_Restart_f(void);
 void CL_Snd_Restart_f(void);
 void CL_Disconnect(void);
@@ -2401,7 +2401,7 @@ void CL_ShutdownAll(void)
 
 extern void *imp_sv_paused;
 
-void CL_Frame(int msec)
+void CL_Frame(void)
 {
 
     clientConnection_t *clc_p = &clientConnections[0];

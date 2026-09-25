@@ -236,6 +236,8 @@ oc/win32/cinematics.cpp
 oc/win32/gfx_dll_v60.cpp
 oc/win32/gfx_v60_threads.cpp
 oc/win32/snd_driver.cpp
+win32/win_main.cpp
+win32/win_net.cpp
 oc/win32/win_localize.cpp
 oc/win32/win_shared.cpp
 oc/win32/win_syscon.cpp

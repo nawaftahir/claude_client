@@ -10,6 +10,8 @@ extern clientStatic_t cls;
 #define stricmp strcasecmp
 
 extern qboolean scr_initialized;
+extern int com_errorEntered;
+extern int g_cginit_loading;
 extern Bool updateScreenCalled;
 
 __attribute__((used, packed, aligned(4)))
@@ -274,7 +276,7 @@ static void SCR_UpdateFrame(void)
     }
 
     {
-        extern int g_cginit_loading;
+        extern qboolean com_errorEntered;
         clientConnection_t *clc_check = clientConnections;
         clientActive_t *cl_check = clients;
         int cs = clc_check->state;
@@ -495,42 +497,27 @@ void SCR_UpdateScreenInternal(void)
     if (updateScreenCalled)
         return;
 
-    clientConnection_t *clc_tmp = clientConnections;
-    if (clc_tmp->state == 6) {
+    if (clientConnections[0].state == 6)
         Sys_LoadingKeepAlive();
+
+    if (scr_initialized && !com_errorEntered) {
+        updateScreenCalled = 1;
+        SCR_UpdateFrame();
+        updateScreenCalled = 0;
     }
-
-    if (!scr_initialized)
-        return;
-
-    byte *guard = ptr_195eea4;
-    if (*(int *)guard)
-        return;
-
-    updateScreenCalled = 1;
-    SCR_UpdateFrame();
-    updateScreenCalled = 0;
 }
 
-extern int g_cginit_loading;
 void SCR_UpdateScreen(void)
 {
-    if (g_cginit_loading || updateScreenCalled)
+    if (updateScreenCalled)
         return;
 
-    clientConnection_t *clc_tmp = clientConnections;
-    if (clc_tmp->state == 6) {
+    if (clientConnections[0].state == 6)
         Sys_LoadingKeepAlive();
+
+    if (scr_initialized && !com_errorEntered) {
+        updateScreenCalled = 1;
+        SCR_UpdateFrame();
+        updateScreenCalled = 0;
     }
-
-    if (!scr_initialized)
-        return;
-
-    byte *guard = ptr_195eea4;
-    if (*(int *)guard)
-        return;
-
-    updateScreenCalled = 1;
-    SCR_UpdateFrame();
-    updateScreenCalled = 0;
 }
