@@ -383,15 +383,17 @@ int CL_GetLocalClientActiveCount(void)
 
 Bool CL_AllLocalClientsDisconnected(void)
 {
+    int client;
+
     if (!Sys_IsMainThread())
         return 1;
     if (UI_IsFullscreen())
         return 1;
-    if (*(byte *)&clients[0] == 0)
-        return 1;
-    if (*(int *)&clientConnections[0] <= 2)
-        return 1;
-    return 0;
+    for (client = 0; client < 1; client++) {
+        if (clients[client].active && clientConnections[client].state >= CA_CONNECTING)
+            return 0;
+    }
+    return 1;
 }
 
 qboolean CL_AnyLocalClientChallenging(void)

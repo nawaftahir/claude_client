@@ -94,6 +94,8 @@ char *frenchNumberKeysMap[10] = {
     "\xff" "fd",
 };
 
+#define COMMAND_HISTORY 32
+
 static char tinystr[5];
 static const char *completionString;
 static Bool hasExactMatch;
@@ -116,6 +118,8 @@ enum {
     K_PGUP = 0xa4,
     K_HOME = 0xa5,
     K_END = 0xa6,
+    K_KP_UPARROW = 0xb7,
+    K_KP_DOWNARROW = 0xbd,
     K_KP_ENTER = 0xbf,
     K_KP_INS = 0xc0,
     K_MWHEELDOWN = 0xcd,
@@ -713,11 +717,6 @@ void CL_CharEvent(int key)
     }
 }
 
-static qboolean Key_IsDown(int key)
-{
-    return keys && key >= 0 && key < 256 && keys[key].down;
-}
-
 void Field_KeyDownEvent(field_t *edit, int key)
 {
 	int len;
@@ -805,95 +804,6 @@ void Message_Key(int key)
     }
 
     Field_KeyDownEvent(chatField, key);
-}
-
-static int Console_HistoryIndex(int line)
-{
-    int index = line % 32;
-    return index < 0 ? index + 32 : index;
-}
-
-static void Console_UpdateFieldCursor(void)
-{
-    g_consoleField.cursor = (int)strlen(g_consoleField.buffer);
-    if (g_consoleField.cursor > 255)
-        g_consoleField.cursor = 255;
-    Field_AdjustScroll(&g_consoleField);
-}
-
-static void Console_SaveHistory(void)
-{
-    if (!g_consoleField.buffer[0])
-        return;
-
-    memcpy(&historyEditLines[Console_HistoryIndex(nextHistoryLine)],
-           &g_consoleField,
-           sizeof(g_consoleField));
-    nextHistoryLine++;
-    historyLine = nextHistoryLine;
-}
-
-static void Console_ResetField(void)
-{
-    Field_Clear(&g_consoleField);
-    g_consoleField.widthInPixels = g_console_field_width;
-    g_consoleField.charHeight = g_console_char_height;
-    g_consoleField.fixedSize = 1;
-
-    if (CL_AllLocalClientsDisconnected())
-        SCR_UpdateScreen();
-}
-
-static void Console_ExecuteLine(void)
-{
-    clientConnection_t *clc = clientConnections;
-
-    if ((!clc || clc->state != 8) &&
-        g_consoleField.buffer[0] != 0x5c &&
-        g_consoleField.buffer[0] != 0x2f) {
-        char temp[1024];
-        I_strncpyz(temp, g_consoleField.buffer, sizeof(temp));
-        Com_sprintf(g_consoleField.buffer, sizeof(g_consoleField.buffer), "\\%s", temp);
-        g_consoleField.cursor++;
-    }
-
-    Com_Printf("]%s\n", g_consoleField.buffer);
-
-    if (g_consoleField.buffer[0] == 0x5c || g_consoleField.buffer[0] == 0x2f) {
-        Cbuf_AddText(g_consoleField.buffer + 1);
-        Cbuf_AddText("\n");
-    } else if (g_consoleField.buffer[0] && I_strncmp(g_consoleField.buffer, "rcon", 4) != 0) {
-        Cbuf_AddText("cmd say ");
-        Cbuf_AddText(g_consoleField.buffer);
-        Cbuf_AddText("\n");
-    }
-
-    Console_SaveHistory();
-    Console_ResetField();
-}
-
-static void Console_HistoryUp(void)
-{
-    if (nextHistoryLine - historyLine > 31 || historyLine <= 0)
-        return;
-
-    historyLine--;
-    memcpy(&g_consoleField,
-           &historyEditLines[Console_HistoryIndex(historyLine)],
-           sizeof(g_consoleField));
-    Field_AdjustScroll(&g_consoleField);
-}
-
-static void Console_HistoryDown(void)
-{
-    if (historyLine == nextHistoryLine)
-        return;
-
-    historyLine++;
-    memcpy(&g_consoleField,
-           &historyEditLines[Console_HistoryIndex(historyLine)],
-           sizeof(g_consoleField));
-    Field_AdjustScroll(&g_consoleField);
 }
 
 static void ConcatRemaining(const char *src, const char *start)
@@ -1026,59 +936,137 @@ static void CompleteCommand(void)
 	Dvar_ForEach(PrintMatches);
 }
 
+bool Console_IsRconCmd(const char *commandString)
+{
+    return I_strncmp(commandString, "rcon", strlen("rcon")) == 0;
+}
+
 void Console_Key(int key)
 {
-    if (tolower(key) == 0x6c && Key_IsDown(K_CTRL)) {
+    // ctrl-L clears screen
+    if (key == 'l' && keys[K_CTRL].down) {
         Cbuf_AddText("clear\n");
         return;
     }
 
+    // enter finishes the line
     if (key == K_ENTER || key == K_KP_ENTER) {
-        Console_ExecuteLine();
+        // if not in the game explicitly prepend a slash if needed
+        if (clientConnections[0].state != CA_ACTIVE && g_consoleField.buffer[0] != '\\' && g_consoleField.buffer[0] != '/') {
+            char temp[1024];
+
+            I_strncpyz(temp, g_consoleField.buffer, sizeof(temp));
+            Com_sprintf(g_consoleField.buffer, sizeof(g_consoleField.buffer), "\\%s", temp);
+            g_consoleField.cursor++;
+        }
+
+        Com_Printf("]%s\n", g_consoleField.buffer);
+
+        // leading slash is an explicit command
+        if (g_consoleField.buffer[0] == '\\' || g_consoleField.buffer[0] == '/') {
+            Cbuf_AddText(g_consoleField.buffer + 1);
+            Cbuf_AddText("\n");
+        } else {
+            // other text will be chat messages
+            if (!g_consoleField.buffer[0]) {
+                return;
+            }
+            if (!Console_IsRconCmd(g_consoleField.buffer)) {
+                Cbuf_AddText("cmd say ");
+                Cbuf_AddText(g_consoleField.buffer);
+                Cbuf_AddText("\n");
+            }
+        }
+
+        // copy line to history buffer
+        if (g_consoleField.buffer[0]) {
+            historyEditLines[nextHistoryLine % COMMAND_HISTORY] = g_consoleField;
+            nextHistoryLine++;
+            historyLine = nextHistoryLine;
+        }
+
+        Field_Clear(&g_consoleField);
+        g_consoleField.widthInPixels = g_console_field_width;
+        g_consoleField.charHeight = g_console_char_height;
+        g_consoleField.fixedSize = 1;
+
+        if (CL_AllLocalClientsDisconnected()) {
+            SCR_UpdateScreen(); // the command may take some time
+        }
         return;
     }
 
+    // command completion
     if (key == K_TAB) {
         CompleteCommand();
         return;
     }
 
-    if (key == K_UPARROW || (tolower(key) == 0x70 && Key_IsDown(K_CTRL)) ||
-        (key == K_MWHEELUP && Key_IsDown(K_SHIFT))) {
-        Console_HistoryUp();
+    // command history (ctrl-p ctrl-n for unix style)
+    if ((key == K_MWHEELUP && keys[K_SHIFT].down) || key == K_UPARROW || key == K_KP_UPARROW
+        || (tolower(key) == 'p' && keys[K_CTRL].down)) {
+        if (nextHistoryLine - historyLine < COMMAND_HISTORY && historyLine > 0) {
+            historyLine--;
+        }
+        g_consoleField = historyEditLines[historyLine % COMMAND_HISTORY];
+        Field_AdjustScroll(&g_consoleField);
         return;
     }
 
-    if (key == K_DOWNARROW || (tolower(key) == 0x6e && Key_IsDown(K_CTRL)) ||
-        (key == K_MWHEELDOWN && Key_IsDown(K_SHIFT))) {
-        Console_HistoryDown();
+    if ((key == K_MWHEELDOWN && keys[K_SHIFT].down) || key == K_DOWNARROW || key == K_KP_DOWNARROW
+        || (tolower(key) == 'n' && keys[K_CTRL].down)) {
+        if (historyLine == nextHistoryLine) {
+            return;
+        }
+        historyLine++;
+        g_consoleField = historyEditLines[historyLine % COMMAND_HISTORY];
+        Field_AdjustScroll(&g_consoleField);
         return;
     }
 
-    if (key == K_PGUP || key == K_MWHEELUP) {
+    // console scrolling
+    if (key == K_PGUP) {
         Con_PageUp();
-        if (key == K_MWHEELUP && Key_IsDown(K_CTRL))
-            Con_PageUp();
         return;
     }
 
-    if (key == K_PGDN || key == K_MWHEELDOWN) {
+    if (key == K_PGDN) {
         Con_PageDown();
-        if (key == K_MWHEELDOWN && Key_IsDown(K_CTRL))
-            Con_PageDown();
         return;
     }
 
-    if (key == K_HOME && Key_IsDown(K_CTRL)) {
+    if (key == K_MWHEELUP) {
+        Con_PageUp();
+        // hold <ctrl> to accelerate scrolling
+        if (keys[K_CTRL].down) {
+            Con_PageUp();
+            Con_PageUp();
+        }
+        return;
+    }
+
+    if (key == K_MWHEELDOWN) {
+        Con_PageDown();
+        if (keys[K_CTRL].down) {
+            Con_PageDown();
+            Con_PageDown();
+        }
+        return;
+    }
+
+    // ctrl-home = top of console
+    if (key == K_HOME && keys[K_CTRL].down) {
         Con_Top();
         return;
     }
 
-    if (key == K_END && Key_IsDown(K_CTRL)) {
+    // ctrl-end = bottom of console
+    if (key == K_END && keys[K_CTRL].down) {
         Con_Bottom();
         return;
     }
 
+    // pass to the normal editline routine
     Field_KeyDownEvent(&g_consoleField, key);
 }
 
