@@ -201,7 +201,7 @@ static void Dvar_SetResetStringValue(dvar_t *dvar, const char *string)
 		dvar->reset.string = Dvar_InternString(string);
 }
 
-static const char *Dvar_EnumToString(const dvar_t *dvar)
+const char *Dvar_EnumToString(const dvar_t *dvar)
 {
 	if ( !dvar->domain.enumeration.stringCount )
 		return "";
