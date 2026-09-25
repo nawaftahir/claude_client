@@ -243,3 +243,4 @@ oc/win32/win_threads.cpp
 oc/win32/win_voice.cpp
 oc/alias.cpp
 oc/globals.cpp
+compat/imports.cpp
