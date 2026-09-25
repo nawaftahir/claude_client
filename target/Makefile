@@ -51,8 +51,15 @@ build/obj/%.obj: src/%.c
 	@mkdir -p $(dir $@)
 	@cd src && $(CL) $(CFLAGS) $(call tuflags,$*.c) /Fo..\\$(call win,$@) .\\$(call win,$*.c) > ../$@.log 2>&1 || (cat ../$@.log; false)
 
-$(OUT): $(OBJS)
+IMPLIBS := build/lib/mss32.lib build/lib/d3d9.lib
+LIBS   := winmm.lib wsock32.lib $(call win,$(IMPLIBS)) dsound.lib libcmt.lib kernel32.lib user32.lib gdi32.lib advapi32.lib shell32.lib
+
+build/lib/%.lib: src/lib/%.def
+	@mkdir -p $(dir $@)
+	@wine /opt/msvc710/Vc7/bin/lib.exe /nologo /machine:x86 /def:$(call win,$<) /out:$(call win,$@) > $@.log 2>&1 || (cat $@.log; false)
+
+$(OUT): $(OBJS) $(IMPLIBS)
 	@printf '%s\n' $(call win,$(OBJS)) > build/objs.rsp
-	$(LINK) $(LFLAGS) /OUT:$(call win,$@) @build\\objs.rsp libcmt.lib kernel32.lib user32.lib > build/link.log 2>&1; tail -1 build/link.log
+	$(LINK) $(LFLAGS) /OUT:$(call win,$@) @build\\objs.rsp $(LIBS) > build/link.log 2>&1; tail -1 build/link.log
 
 endif
