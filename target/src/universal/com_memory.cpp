@@ -35,7 +35,7 @@ static void Z_FreeRaw( void *ptr )
 
 static void Z_MallocFailed( int size )
 {
-	Sys_OutOfMemErrorInternal( "universal/com_memory.cpp", 228 );
+	Sys_OutOfMemErrorInternal( ".\\universal\\com_memory.cpp", 220 );
 }
 
 static void *Z_MallocRaw( int size )

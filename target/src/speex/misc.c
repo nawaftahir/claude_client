@@ -123,19 +123,22 @@ void speex_memset_bytes(char *dst, char src, int nbytes)
 }
 #endif
 
+extern "C" void *Z_MallocInternal( int size );
+extern "C" void Z_FreeInternal( void *ptr );
+
 void *speex_alloc (int size)
 {
-   return calloc(size,1);
+   return Z_MallocInternal(size);
 }
 
 void *speex_realloc (void *ptr, int size)
 {
-   return realloc(ptr, size);
+   return 0;
 }
 
 void speex_free (void *ptr)
 {
-   free(ptr);
+   Z_FreeInternal(ptr);
 }
 
 void *speex_move (void *dest, void *src, int n)

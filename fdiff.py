@@ -14,7 +14,9 @@ def section(path):
 
 syms = sorted((int(m.group(2), 16), m.group(1)) for m in
               (re.match(r'\s*0001:\S+\s+(\S+)\s+([0-9a-f]{8}) f', l) for l in open(mapf, errors='replace')) if m)
-i = next(k for k, s in enumerate(syms) if pat in s[1])
+i = next((k for k, s in enumerate(syms) if s[1] == pat), None)
+if i is None:
+    i = next(k for k, s in enumerate(syms) if pat in s[1])
 va, name = syms[i]
 d, base = section(img)
 ours = d[va - base:syms[i + 1][0] - base].rstrip(b'\xcc')

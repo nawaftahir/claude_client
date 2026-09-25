@@ -10,16 +10,18 @@ ANCHOR ?= ../../cod2engineold/binaries/windows/1.0/CoD2MP_s.exe
 ifndef IN_IMAGE
 
 $(OUT) all:
-	docker run --rm -v $(CURDIR):/w -w /w $(IMAGE) sh -c 'make -j4 IN_IMAGE=1 $(OUT); s=$$?; chown -R $(shell id -u):$(shell id -g) build; exit $$s'
+	docker run --rm -v $(CURDIR):/w -w /w $(IMAGE) sh -c 'make -j4 -k IN_IMAGE=1 $(OUT); s=$$?; chown -R $(shell id -u):$(shell id -g) build; exit $$s'
 
 measure: all
 	python3 ../cmp.py $(OUT) build/CoD2MP_s.map $(ANCHOR) build/cmp.json >/dev/null
 	python3 ../cov.py build/cmp.json
+	@prev=$$(ls ../runs | tail -1); python3 ../delta.py ../runs/$$prev build/cmp.json 10
+	@cp build/cmp.json ../runs/r$$(printf %03d $$(($$(ls ../runs | wc -l) + 1))).json
 
 clean:
 	rm -rf build
 
-.PHONY: all measure clean
+.PHONY: $(OUT) all measure clean
 
 else
 
