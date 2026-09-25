@@ -251,20 +251,20 @@ static inline void CM_TracePointThroughTriangle( traceWork_t *tw, CollisionTrian
 
 	projTriAreaScaledByTraceLenX2 = DotProduct(tw->extents.end, tri->plane) - tri->plane[3];
 
-	if ( projTriAreaScaledByTraceLenX2 >= 0.0 )
+	if ( projTriAreaScaledByTraceLenX2 >= 0.0f )
 	{
 		return;
 	}
 
 	t = DotProduct(tw->extents.start, tri->plane) - tri->plane[3];
 
-	if ( t <= 0.0 )
+	if ( t <= 0.0f )
 	{
 		return;
 	}
 
 	frac = (t - (float)SURFACE_CLIP_EPSILON) / (t - projTriAreaScaledByTraceLenX2);
-	frac = I_fmax(frac, 0.0);
+	frac = I_fmax(frac, 0.0f);
 
 	if ( frac >= trace->fraction )
 	{
@@ -865,7 +865,7 @@ static void CM_TraceThroughAabbTree_r( traceWork_t *tw, CollisionAabbTree_t *aab
 		tri = &partition->tris[i];
 		CM_TraceCapsuleThroughTriangle(tw, tri, tw->offsetZ, trace);
 
-		if ( !( tri->plane[2] < 0.0 ) )
+		if ( !( tri->plane[2] < 0.0f ) )
 		{
 			continue;
 		}
@@ -874,7 +874,7 @@ static void CM_TraceThroughAabbTree_r( traceWork_t *tw, CollisionAabbTree_t *aab
 	}
 	}
 
-	if ( (tw->delta[0] || tw->delta[1] ) && tw->offsetZ != 0.0 )
+	if ( (tw->delta[0] || tw->delta[1] ) && tw->offsetZ != 0.0f )
 	{
 		for ( borderIndex = 0; borderIndex < partition->borderCount; borderIndex++ )
 		{

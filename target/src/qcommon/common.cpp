@@ -1330,7 +1330,7 @@ int Com_ModifyMsec( int msec )
 		msec = com_fixedtime->current.integer;
 		useTimescale = true;
 	}
-	else if ( com_timescale->current.decimal != 1.0 || com_codeTimeScale != 1.0 )
+	else if ( com_timescale->current.decimal != 1.0f || com_codeTimeScale != 1.0f )
 	{
 		msec = I_fround( msec * com_timescale->current.decimal * com_codeTimeScale );
 		useTimescale = true;
@@ -1372,7 +1372,7 @@ int Com_ModifyMsec( int msec )
 	if ( msec > clampTime )
 		msec = clampTime;
 
-	com_timescaleValue = useTimescale && originalMsec ? (float)msec / (float)originalMsec : 1.0;
+	com_timescaleValue = useTimescale && originalMsec ? (float)msec / (float)originalMsec : 1.0f;
 
 	return msec;
 }

@@ -712,7 +712,7 @@ unsigned int G_GetNonPVSFriendlyInfo( 	gentity_t *pSelf, vec3_t vPosition, int i
 		fScale[1] = -1022.0f / iPos[1];
 	}
 
-	if ( fScale[0] < 1.0 || fScale[1] < 1.0 )
+	if ( fScale[0] < 1.0f || fScale[1] < 1.0f )
 	{
 		if ( fScale[0] < fScale[1] )
 		{

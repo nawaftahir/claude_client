@@ -798,7 +798,7 @@ void turret_think_init( gentity_t *self )
 
 		G_LocationalTrace(&trace, start, end, self->s.number, CONTENTS_SOLID | CONTENTS_GLASS | CONTENTS_SKY, bulletPriorityMap);
 
-		if ( trace.fraction < 1.0 )
+		if ( trace.fraction < 1.0f )
 		{
 			pTurretInfo->dropPitch = angles[0];
 			return;

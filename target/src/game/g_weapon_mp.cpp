@@ -347,7 +347,7 @@ void Bullet_Fire_Extended( const gentity_t *source, gentity_t *attacker,
 	VectorMA(reflect, dot, tr.normal, reflect);
 
 	// send bullet impact
-	if ( !( tr.surfaceFlags & SURF_SKY ) && !traceEnt->client && tr.fraction < 1.0 )
+	if ( !( tr.surfaceFlags & SURF_SKY ) && !traceEnt->client && tr.fraction < 1.0f )
 	{
 		// legacy?
 		if ( wp->weapDef->weaponClass == WEAPCLASS_SPREAD )

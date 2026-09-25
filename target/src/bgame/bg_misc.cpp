@@ -929,7 +929,7 @@ static qboolean BG_CheckProneValid( int passEntityNum, const vec3_t vPos, float 
 
 	traceFunc(&trace, vEnd, vMins, vMaxs, vForward, passEntityNum, contentMask);
 
-	if ( trace.fraction < 1.0 )
+	if ( trace.fraction < 1.0f )
 	{
 		if ( !bOnGround )
 		{
@@ -954,7 +954,7 @@ static qboolean BG_CheckProneValid( int passEntityNum, const vec3_t vPos, float 
 
 			traceFunc(&trace, vEnd, vMins, vMaxs, vForward, passEntityNum, contentMask);
 
-			if ( trace.fraction < 1.0 )
+			if ( trace.fraction < 1.0f )
 			{
 				bFirstTraceHit = qtrue;
 				fWaistDistance = trace.fraction * dist + 6.0f;
@@ -985,7 +985,7 @@ static qboolean BG_CheckProneValid( int passEntityNum, const vec3_t vPos, float 
 
 	traceFunc(&trace, vEnd, vMins, vMaxs, vForward, passEntityNum, contentMask);
 
-	if ( trace.fraction == 1.0 )
+	if ( trace.fraction == 1.0f )
 	{
 		goto fail;
 	}
@@ -1019,7 +1019,7 @@ static qboolean BG_CheckProneValid( int passEntityNum, const vec3_t vPos, float 
 
 		traceFunc(&trace, vEnd, vMins, vMaxs, vForward, passEntityNum, contentMask);
 
-		if ( trace.fraction < 1.0 )
+		if ( trace.fraction < 1.0f )
 		{
 			Vec3Lerp(vEnd, vForward, trace.fraction, vEnd);
 
@@ -1028,7 +1028,7 @@ static qboolean BG_CheckProneValid( int passEntityNum, const vec3_t vPos, float 
 
 			traceFunc(&trace, vEnd, vMins, vMaxs, vForward, passEntityNum, contentMask);
 
-			if ( trace.fraction < 1.0 )
+			if ( trace.fraction < 1.0f )
 			{
 				goto fail;
 			}
@@ -1044,7 +1044,7 @@ static qboolean BG_CheckProneValid( int passEntityNum, const vec3_t vPos, float 
 
 	traceFunc(&trace, vEnd, vMins, vMaxs, vForward, passEntityNum, contentMask);
 
-	if ( trace.fraction == 1.0 )
+	if ( trace.fraction == 1.0f )
 	{
 		goto fail;
 	}
@@ -1082,7 +1082,7 @@ static qboolean BG_CheckProneValid( int passEntityNum, const vec3_t vPos, float 
 
 	traceFunc(&trace, vEnd, vMins, vMaxs, vForward, passEntityNum, contentMask);
 
-	if ( trace.fraction < 1.0 )
+	if ( trace.fraction < 1.0f )
 	{
 		bLocational = qfalse;
 	}
@@ -1093,7 +1093,7 @@ static qboolean BG_CheckProneValid( int passEntityNum, const vec3_t vPos, float 
 
 	traceFunc(&trace, vEnd, vMins, vMaxs, vForward, passEntityNum, contentMask);
 
-	if ( trace.fraction < 1.0 )
+	if ( trace.fraction < 1.0f )
 	{
 		bLocational = qfalse;
 	}

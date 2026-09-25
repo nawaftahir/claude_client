@@ -624,7 +624,7 @@ int SV_PointSightTraceToEntity( sightpointtrace_t *clip, svEntity_t *check )
 
 		CM_CalcTraceEntents(&extents);
 
-		if ( CM_TraceBox(&extents, absmin, absmax, 1.0) )
+		if ( CM_TraceBox(&extents, absmin, absmax, 1.0f) )
 		{
 			return 0;
 		}
@@ -635,10 +635,10 @@ int SV_PointSightTraceToEntity( sightpointtrace_t *clip, svEntity_t *check )
 		MatrixTransposeTransformVector43(extents.start, entAxis, localStart);
 		MatrixTransposeTransformVector43(extents.end, entAxis, localEnd);
 
-		objTrace.fraction = 1.0;
+		objTrace.fraction = 1.0f;
 		DObjGeomTraceline(obj, localStart, localEnd, clip->contentmask, &objTrace);
 
-		if ( objTrace.fraction < 1.0 )
+		if ( objTrace.fraction < 1.0f )
 		{
 			return -1;
 		}

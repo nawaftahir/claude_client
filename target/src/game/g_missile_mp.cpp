@@ -333,7 +333,7 @@ void G_ExplodeMissile( gentity_t *ent )
 		Server_SwitchToValidFxScheduler();
 		fx = FX_RegisterEffect(weapDef->projExplosionEffect);
 		ent->s.time = level.time;
-		ent->s.time2 = level.time + (int)(FX_GetEffectLength(fx) + 1.0);
+		ent->s.time2 = level.time + (int)(FX_GetEffectLength(fx) + 1.0f);
 	}
 	else
 	{
@@ -502,7 +502,7 @@ void G_RunMissile( gentity_t *ent )
 		origin[2] -= 1.5f;
 		G_MissileTrace(&tr, ent->r.currentOrigin, origin, ent->r.ownerNum, ent->clipmask);
 
-		if ( tr.fraction == 1.0 )
+		if ( tr.fraction == 1.0f )
 		{
 			ent->s.pos.trType = TR_GRAVITY;
 			ent->s.pos.trTime = level.time;
@@ -554,14 +554,14 @@ void G_RunMissile( gentity_t *ent )
 
 	if ( ent->s.eFlags & EF_BOUNCE )
 	{
-		if ( tr.fraction == 1.0 || tr.fraction < 1.0 && tr.normal[2] > (float)MIN_WALK_NORMAL )
+		if ( tr.fraction == 1.0f || tr.fraction < 1.0f && tr.normal[2] > (float)MIN_WALK_NORMAL )
 		{
 			VectorCopy(ent->r.currentOrigin, origin);
 			origin[2] -= 1.5f;
 
 			G_MissileTrace(&trDown, ent->r.currentOrigin, origin, ent->r.ownerNum, ent->clipmask);
 
-			if ( trDown.fraction != 1.0 && trDown.entityNum == ENTITYNUM_WORLD )
+			if ( trDown.fraction != 1.0f && trDown.entityNum == ENTITYNUM_WORLD )
 			{
 				tr = trDown;
 				Vec3Lerp(ent->r.currentOrigin, origin, tr.fraction, endpos);
@@ -584,7 +584,7 @@ void G_RunMissile( gentity_t *ent )
 		G_GrenadeTouchTriggerDamage(ent, vOldOrigin, ent->r.currentOrigin, weapDef->explosionInnerDamage, mod);
 	}
 
-	if ( tr.fraction != 1.0 )
+	if ( tr.fraction != 1.0f )
 	{
 		if ( tr.surfaceFlags & SURF_NOIMPACT )
 		{

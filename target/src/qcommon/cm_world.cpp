@@ -742,7 +742,7 @@ static void CM_PointTraceStaticModels_r( locTraceWork_t *tw, unsigned short node
 		t1 = p1[node->tree.axis] - node->tree.dist;
 		t2 = p2[node->tree.axis] - node->tree.dist;
 
-		if ( (float)(t1 * t2) >= 0.0 )
+		if ( (float)(t1 * t2) >= 0.0f )
 		{
 			nodeIndex = node->tree.child[1 - I_side(I_fmin(t1, t2))];
 			continue;
@@ -855,7 +855,7 @@ static qboolean CM_PointTraceStaticModelsComplete_r( staticmodeltrace_t *clip, u
 			t1 = p1[node->tree.axis] - node->tree.dist;
 			t2 = p2[node->tree.axis] - node->tree.dist;
 
-			if ( !((float)(t1 * t2) >= 0.0) )
+			if ( !((float)(t1 * t2) >= 0.0f) )
 			{
 				break;
 			}
@@ -995,7 +995,7 @@ static void CM_ClipMoveToEntities_r( moveclip_t *clip, unsigned short nodeIndex,
 
 		diff = t2 - t1;
 
-		if ( diff != 0.0 )
+		if ( diff != 0.0f )
 		{
 			absDiff = I_fabs(diff);
 			sideDist = I_fsel(diff, -t1, t1);
@@ -1008,7 +1008,7 @@ static void CM_ClipMoveToEntities_r( moveclip_t *clip, unsigned short nodeIndex,
 		{
 			side = 0;
 			frac = 1.0;
-			frac2 = 0.0;
+			frac2 = 0.0f;
 		}
 
 		frac = I_fmin(frac, 1.0);
@@ -1020,7 +1020,7 @@ static void CM_ClipMoveToEntities_r( moveclip_t *clip, unsigned short nodeIndex,
 
 		CM_ClipMoveToEntities_r(clip, node->tree.child[side], p, mid, trace);
 
-		frac2 = I_fmax(frac2, 0.0);
+		frac2 = I_fmax(frac2, 0.0f);
 
 		p[0] = p[0] + (float)((float)(p2[0] - p[0]) * frac2);
 		p[1] = p[1] + (float)((float)(p2[1] - p[1]) * frac2);
@@ -1129,7 +1129,7 @@ static int CM_ClipSightTraceToEntities_r( sightclip_t *clip, unsigned short node
 
 		diff = t2 - t1;
 
-		if ( diff != 0.0 )
+		if ( diff != 0.0f )
 		{
 			absDiff = I_fabs(diff);
 			sideDist = I_fsel(diff, -t1, t1);
@@ -1142,7 +1142,7 @@ static int CM_ClipSightTraceToEntities_r( sightclip_t *clip, unsigned short node
 		{
 			side = 0;
 			frac = 1.0;
-			frac2 = 0.0;
+			frac2 = 0.0f;
 		}
 
 		frac = I_fmin(frac, 1.0);
@@ -1158,7 +1158,7 @@ static int CM_ClipSightTraceToEntities_r( sightclip_t *clip, unsigned short node
 			return hitNum;
 		}
 
-		frac2 = I_fmax(frac2, 0.0);
+		frac2 = I_fmax(frac2, 0.0f);
 
 		p[0] = p[0] + (float)((float)(p2[0] - p[0]) * frac2);
 		p[1] = p[1] + (float)((float)(p2[1] - p[1]) * frac2);
@@ -1218,7 +1218,7 @@ static void CM_PointTraceToEntities_r( pointtrace_t *clip, unsigned short nodeIn
 		t1 = p[node->tree.axis] - node->tree.dist;
 		t2 = p2[node->tree.axis] - node->tree.dist;
 
-		if ( (float)(t1 * t2) >= 0.0 )
+		if ( (float)(t1 * t2) >= 0.0f )
 		{
 			nodeIndex = node->tree.child[1 - I_side(I_fmin(t1, t2))];
 			continue;
@@ -1297,7 +1297,7 @@ static int CM_PointSightTraceToEntities_r( sightpointtrace_t *clip, unsigned sho
 	t1 = p1[node->tree.axis] - node->tree.dist;
 	t2 = p2[node->tree.axis] - node->tree.dist;
 
-	if ( (float)(t1 * t2) >= 0.0 )
+	if ( (float)(t1 * t2) >= 0.0f )
 	{
 		hitNum = CM_PointSightTraceToEntities_r(clip, node->tree.child[1 - I_side(I_fmin(t1, t2))], p1, p2);
 

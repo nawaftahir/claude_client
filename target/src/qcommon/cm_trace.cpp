@@ -823,7 +823,7 @@ loop:
 
 	CM_TraceThroughLeafBrushNode_r(tw, &node[node->data.children.childOffset[side]], p1, mid, trace);
 
-	frac2 = I_fmax(frac2, 0.0);
+	frac2 = I_fmax(frac2, 0.0f);
 
 	p1[0] = p1[0] + (p2[0] - p1[0]) * frac2;
 	p1[1] = p1[1] + (p2[1] - p1[1]) * frac2;
@@ -1288,7 +1288,7 @@ void CM_TraceThroughTree( traceWork_t *tw, int num, const vec4_t p1_, const vec4
 
 		CM_TraceThroughTree(tw, node->children[side], p1, mid, trace);
 
-		frac2 = I_fmax(frac2, 0.0);
+		frac2 = I_fmax(frac2, 0.0f);
 
 		p1[0] = p1[0] + (p2[0] - p1[0]) * frac2;
 		p1[1] = p1[1] + (p2[1] - p1[1]) * frac2;
@@ -1603,7 +1603,7 @@ int CM_SightTraceThroughBrush( traceWork_t *tw, cbrush_t *brush )
 	assert(!IS_NAN((tw->extents.start)[0]) && !IS_NAN((tw->extents.start)[1]) && !IS_NAN((tw->extents.start)[2]));
 	assert(!IS_NAN((tw->extents.end)[0]) && !IS_NAN((tw->extents.end)[1]) && !IS_NAN((tw->extents.end)[2]));
 
-	enterFrac = 0.0;
+	enterFrac = 0.0f;
 	leaveFrac = 1.0;
 
 	sign = -1.0;
@@ -1835,7 +1835,7 @@ loop:
 		return hitNum;
 	}
 
-	frac2 = I_fmax(frac2, 0.0);
+	frac2 = I_fmax(frac2, 0.0f);
 
 	p1[0] = p1[0] + (p2[0] - p1[0]) * frac2;
 	p1[1] = p1[1] + (p2[1] - p1[1]) * frac2;
@@ -2244,7 +2244,7 @@ int CM_SightTraceThroughTree( traceWork_t *tw, int num, const vec3_t p1_, const 
 			return hitNum;
 		}
 
-		frac2 = I_fmax(frac2, 0.0);
+		frac2 = I_fmax(frac2, 0.0f);
 
 		p1[0] = p1[0] + (p2[0] - p1[0]) * frac2;
 		p1[1] = p1[1] + (p2[1] - p1[1]) * frac2;
@@ -2344,7 +2344,7 @@ int CM_BoxSightTrace( int oldHitNum, const vec3_t start, const vec3_t end, const
 	assert(tw.size[2] >= 0);
 
 	// check for point special case
-	tw.isPoint = 0.0 == tw.size[0] + tw.size[1] + tw.size[2];
+	tw.isPoint = 0.0f == tw.size[0] + tw.size[1] + tw.size[2];
 
 	assert(tw.offsetZ >= 0);
 

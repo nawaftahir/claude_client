@@ -267,7 +267,7 @@ void Mantle_CalcEndPos( pmove_t *pm, MantleResults *mresults )
 
 	PM_trace(pm, &trace, start, mins, maxs, end, ps->clientNum, pm->tracemask);
 
-	if ( trace.startsolid || trace.fraction < 1.0 )
+	if ( trace.startsolid || trace.fraction < 1.0f )
 	{
 		mresults->flags &= ~1;
 		VectorCopy(mresults->ledgePos, mresults->endPos);
@@ -342,7 +342,7 @@ bool Mantle_CheckLedge( pmove_t *pmove, pml_t *pml, MantleResults *mresults, flo
 	VectorMA(start, 16.0, mresults->dir, end);
 	PM_trace(pmove, &trace, start, mins, maxs, end, ps->clientNum, pmove->tracemask);
 
-	if ( trace.startsolid || trace.fraction < 1.0 )
+	if ( trace.startsolid || trace.fraction < 1.0f )
 	{
 		Mantle_DebugPrint("Mantle Failed: Ledge is too far away");
 		return false;
@@ -353,7 +353,7 @@ bool Mantle_CheckLedge( pmove_t *pmove, pml_t *pml, MantleResults *mresults, flo
 
 	PM_trace(pmove, &trace, start, mins, maxs, end, ps->clientNum, pmove->tracemask);
 
-	if ( trace.startsolid || trace.fraction == 1.0 )
+	if ( trace.startsolid || trace.fraction == 1.0f )
 	{
 		Mantle_DebugPrint("Mantle Failed: Can't find ledge");
 		return false;

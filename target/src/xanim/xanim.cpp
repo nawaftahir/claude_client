@@ -1786,13 +1786,13 @@ float XAnimFindServerNoteTrack(const XAnimTree_s *anim, unsigned int infoIndex, 
 	childIndex = anim->infoArray[infoIndex];
 
 	if ( !childIndex )
-		return 1.0;
+		return 1.0f;
 
 	info = &g_xAnimInfo[childIndex];
 	animState = &info->state;
 
 	if ( animState->weight == 0.0 || animState->goalWeight == 0.0 )
-		return 1.0;
+		return 1.0f;
 
 	animEntry = &anim->anims->entries[infoIndex];
 	numAnims = animEntry->numAnims;
@@ -1803,19 +1803,19 @@ float XAnimFindServerNoteTrack(const XAnimTree_s *anim, unsigned int infoIndex, 
 		dtime = animState->rate * animParts->frequency * dtime;
 
 		if ( dtime == 0.0 )
-			return 1.0;
+			return 1.0f;
 
 		newAnimTime = animState->oldTime + dtime;
 		newCycleCount = animState->oldCycleCount;
 
 		if ( !animParts->bLoop )
 		{
-			if ( newAnimTime >= 1.0 )
-				newAnimTime = 1.0;
+			if ( newAnimTime >= 1.0f )
+				newAnimTime = 1.0f;
 		}
 		else
 		{
-			while ( newAnimTime >= 1.0 )
+			while ( newAnimTime >= 1.0f )
 			{
 				newAnimTime = newAnimTime - 1.0f;
 				++newCycleCount;
@@ -1823,7 +1823,7 @@ float XAnimFindServerNoteTrack(const XAnimTree_s *anim, unsigned int infoIndex, 
 		}
 
 		if ( (float)(newCycleCount - animState->cycleCount) < animState->time - newAnimTime )
-			return 1.0;
+			return 1.0f;
 
 		localState.oldTime = animState->time;
 		localState.oldCycleCount = animState->cycleCount;
@@ -1838,19 +1838,19 @@ float XAnimFindServerNoteTrack(const XAnimTree_s *anim, unsigned int infoIndex, 
 		dtime = XAnimGetAverageRateFrequency(anim, infoIndex) * animState->rate * dtime;
 
 		if ( dtime == 0.0 )
-			return 1.0;
+			return 1.0f;
 
 		newAnimTime = animState->oldTime + dtime;
 		newCycleCount = animState->oldCycleCount;
 
 		if ( (animEntry->u.animParent.flags & 2) != 0 )
 		{
-			if ( newAnimTime >= 1.0 )
-				newAnimTime = 1.0;
+			if ( newAnimTime >= 1.0f )
+				newAnimTime = 1.0f;
 		}
 		else
 		{
-			while ( newAnimTime >= 1.0 )
+			while ( newAnimTime >= 1.0f )
 			{
 				newAnimTime = newAnimTime - 1.0f;
 				++newCycleCount;
@@ -1858,7 +1858,7 @@ float XAnimFindServerNoteTrack(const XAnimTree_s *anim, unsigned int infoIndex, 
 		}
 
 		if ( (float)(newCycleCount - animState->cycleCount) < animState->time - newAnimTime )
-			return 1.0;
+			return 1.0f;
 
 		localState.oldTime = animState->time;
 		localState.oldCycleCount = animState->cycleCount;
@@ -1871,9 +1871,9 @@ float XAnimFindServerNoteTrack(const XAnimTree_s *anim, unsigned int infoIndex, 
 	dtime = dtime * animState->rate;
 
 	if ( dtime == 0.0 )
-		return 1.0;
+		return 1.0f;
 
-	rate = 1.0;
+	rate = 1.0f;
 
 	for ( i = 0; i < numAnims; ++i )
 	{
@@ -2993,13 +2993,13 @@ void XAnimClearGoalWeightKnobInternal(XAnimTree_s *tree, unsigned int infoIndex,
 	selfEntry = &tree->anims->entries[infoIndex];
 	entry = &tree->anims->entries[parentIndex];
 
-	newGoalWeight = 0.0;
+	newGoalWeight = 0.0f;
 	numAnims = entry->numAnims;
 
 	for ( i = 0; i < numAnims; ++i )
 	{
 		childIndex = tree->infoArray[i + entry->u.animParent.children];
-		weight = childIndex ? g_xAnimInfo[childIndex].state.weight : 0.0;
+		weight = childIndex ? g_xAnimInfo[childIndex].state.weight : 0.0f;
 		absWeight = i + entry->u.animParent.children == infoIndex ? I_fabs(goalWeight - weight) : weight;
 
 		if ( absWeight > newGoalWeight )

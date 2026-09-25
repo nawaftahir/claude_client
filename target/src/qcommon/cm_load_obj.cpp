@@ -280,9 +280,9 @@ cLeafBrushNode_s* CMod_PartionLeafBrushes_r(uint16_t *leafBrushes, int numLeafBr
 
 	node = CMod_AllocLeafBrushNode();
 
-	bestScore = 0.0;
+	bestScore = 0.0f;
 	axis = -1;
-	dist = 0.0;
+	dist = 0.0f;
 
 	for ( i = 0; i <= 2; i++ )
 	{

@@ -687,10 +687,10 @@ static void BG_CheckWeaponDamageRanges( WeaponDef *weapDef )
 {
 	const int MAX_DAMAGE_RANGE = 999999;
 
-	if ( weapDef->maxDamageRange <= 0.0 )
+	if ( weapDef->maxDamageRange <= 0.0f )
 		weapDef->maxDamageRange = MAX_DAMAGE_RANGE;
 
-	if ( weapDef->minDamageRange <= 0.0 )
+	if ( weapDef->minDamageRange <= 0.0f )
 		weapDef->minDamageRange = 999999.12;
 }
 

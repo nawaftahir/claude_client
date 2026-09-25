@@ -252,9 +252,9 @@ void Com_LoadSoundAliasMasterSlave( const char *token, const char *sourceFile, s
 		alias->master = false;
 		alias->slave = true;
 		alias->slavePercentage = atof(token);
-		if ( alias->slavePercentage < 0.0 || alias->slavePercentage > 1.0 )
+		if ( alias->slavePercentage < 0.0f || alias->slavePercentage > 1.0f )
 		{
-			Com_Printf("^1ERROR: Sound alias file %s: SlavePercentage'%f' is not within the range of '%f'-'%f'.\n", sourceFile, alias->slavePercentage, 0.0, 1.0);
+			Com_Printf("^1ERROR: Sound alias file %s: SlavePercentage'%f' is not within the range of '%f'-'%f'.\n", sourceFile, alias->slavePercentage, 0.0f, 1.0f);
 			alias->error = true;
 		}
 	}

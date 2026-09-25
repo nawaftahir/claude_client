@@ -3075,7 +3075,7 @@ void PM_Weapon_StartFiring( playerState_t *ps, qboolean delayedAction )
 
 		if ( ps->weaponstate != WEAPON_FIRING )
 		{
-			if ( ps->fWeaponPosFrac >= 1.0 )
+			if ( ps->fWeaponPosFrac >= 1.0f )
 				ps->weaponRestrictKickTime = weapDef->fireTime * weapDef->adsGunKickReducedKickBullets + weapDef->fireDelay;
 			else
 				ps->weaponRestrictKickTime = weapDef->fireTime * weapDef->hipGunKickReducedKickBullets + weapDef->fireDelay;
@@ -4423,7 +4423,7 @@ void BG_CalculateWeaponPosition_BasePosition_angles( weaponState_t *ws, vec3_t a
 	{
 		if ( ps->fWeaponPosFrac < 0.5f )
 		{
-			speedFrac = 1.0 - ps->fWeaponPosFrac * 2.0;
+			speedFrac = 1.0f - ps->fWeaponPosFrac * 2.0;
 			VectorMA(angles, speedFrac, ws->vLastMoveAng, angles);
 		}
 	}
@@ -4621,7 +4621,7 @@ qboolean BG_CalculateWeaponPosition_GunRecoil_SingleAngle( float *fOffset, float
 
 	bCanStop = qfalse;
 
-	if ( I_fabs(*fOffset) < 0.25f && I_fabs(*speed) < 1.0 )
+	if ( I_fabs(*fOffset) < 0.25f && I_fabs(*speed) < 1.0f )
 	{
 		*fOffset = 0;
 		*speed = 0;

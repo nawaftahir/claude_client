@@ -60,7 +60,7 @@ void XAnimLoadNotifyInfo(const char *name, const unsigned char **pos, XAnimParts
 		notify->name = SL_GetString_((const char *)*pos, 0, 3);
 		*pos = *pos + strlen((const char *)*pos) + 1;
 		frame = XModelDataReadUnsignedShort(pos);
-		notify->time = parts->numframes ? (float)frame / parts->numframes : 0.0;
+		notify->time = parts->numframes ? (float)frame / parts->numframes : 0.0f;
 	}
 
 	notify->name = SL_GetString_("end", 0, 3);

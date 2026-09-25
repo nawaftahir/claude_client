@@ -1204,7 +1204,7 @@ void DObjTraceline(DObj_s *obj, float *start, float *end, unsigned char *priorit
 	VectorSubtract(end, start, delta);
 	deltaLengthSq = VectorLengthSquared(delta);
 
-	if ( deltaLengthSq == 0.0 )
+	if ( deltaLengthSq == 0.0f )
 		return;
 
 	boneMatrix = DObjGetRotTransArray(obj);
@@ -1219,7 +1219,7 @@ void DObjTraceline(DObj_s *obj, float *start, float *end, unsigned char *priorit
 	globalBoneIndex = 0;
 	hitT = -1;
 	traceHitT = -1;
-	hitSign = 0.0;
+	hitSign = 0.0f;
 	hitBoneMatrix = 0;
 	solidHitFrac = trace->fraction;
 	modelIter = 0;
@@ -1280,7 +1280,7 @@ start:
 
 			boneInfo = &model->boneInfo[localBoneIndex];
 
-			if ( boneInfo->radiusSquared == 0.0 )
+			if ( boneInfo->radiusSquared == 0.0f )
 				goto out;
 			if ( lowestPriority > currentPriority )
 				goto out;
@@ -1319,7 +1319,7 @@ start:
 				{
 					InvMatrixTransformVectorQuatTrans(start, boneMatrix, localStart);
 					InvMatrixTransformVectorQuatTrans(end, boneMatrix, localEnd);
-					enterFrac = 0.0;
+					enterFrac = 0.0f;
 
 					if ( lowestPriority == currentPriority )
 						fraction = trace->fraction;
@@ -1337,9 +1337,9 @@ start:
 							dist1 = (localStart[i] - bounds[i]) * sign;
 							dist2 = (localEnd[i] - bounds[i]) * sign;
 
-							if ( dist1 > 0.0 )
+							if ( dist1 > 0.0f )
 							{
-								if ( dist2 > 0.0 )
+								if ( dist2 > 0.0f )
 									goto out;
 
 								bStartSolid = 0;
@@ -1357,7 +1357,7 @@ start:
 							}
 							else
 							{
-								if ( dist2 > 0.0 )
+								if ( dist2 > 0.0f )
 								{
 									bEndSolid = 0;
 									dist = dist1 - dist2;
@@ -1383,14 +1383,14 @@ start:
 					{
 						if ( bEndSolid == 0 )
 							goto out;
-						if ( Dot2Product(delta, start) > 0.0 )
+						if ( Dot2Product(delta, start) > 0.0f )
 							goto out;
 
-						trace->fraction = 0.0;
+						trace->fraction = 0.0f;
 						trace->partName = name[localBoneIndex];
 						trace->partGroup = classification;
 
-						if ( delta[0] != 0.0 || delta[1] != 0.0 )
+						if ( delta[0] != 0.0f || delta[1] != 0.0f )
 						{
 							Vector2Copy(start, trace->normal);
 							Vec2Normalize(trace->normal);

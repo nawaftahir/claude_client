@@ -89,12 +89,12 @@ static bool Dvar_ToggleSimple(dvar_t *dvar)
 		return true;
 
 	case DVAR_TYPE_FLOAT:
-		if (dvar->domain.decimal.min <= 0.0 && dvar->domain.decimal.max >= 1.0)
+		if (dvar->domain.decimal.min <= 0.0f && dvar->domain.decimal.max >= 1.0f)
 		{
-			if (dvar->current.decimal != 0.0)
-				Dvar_SetFloatFromSource(dvar, 0.0, DVAR_SOURCE_EXTERNAL);
+			if (dvar->current.decimal != 0.0f)
+				Dvar_SetFloatFromSource(dvar, 0.0f, DVAR_SOURCE_EXTERNAL);
 			else
-				Dvar_SetFloatFromSource(dvar, 1.0, DVAR_SOURCE_EXTERNAL);
+				Dvar_SetFloatFromSource(dvar, 1.0f, DVAR_SOURCE_EXTERNAL);
 		}
 		else if (dvar->current.decimal == dvar->domain.decimal.min)
 			Dvar_SetFloatFromSource(dvar, dvar->domain.decimal.max, DVAR_SOURCE_EXTERNAL);

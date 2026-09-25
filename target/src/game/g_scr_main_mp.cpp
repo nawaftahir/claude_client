@@ -2681,7 +2681,7 @@ void Scr_BulletTrace()
 
 	Scr_AddArrayStringIndexed(scr_const.entity);
 
-	if ( trace.fraction < 1.0 )
+	if ( trace.fraction < 1.0f )
 	{
 		Scr_AddVector(trace.normal);
 		Scr_AddArrayStringIndexed(scr_const.normal);
