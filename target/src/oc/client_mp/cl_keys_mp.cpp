@@ -550,14 +550,15 @@ void Key_Unbindall_f(void)
 
 void Key_Bind_f(void)
 {
-    int argc;
+    bool hasSpace;
     int keynum;
     int argIndex;
-    char cmd[1024];
     const char *binding;
+    int argc;
+    char cmd[1024];
 
     argc = Cmd_Argc();
-    if (argc <= 1) {
+    if (argc < 2) {
         Com_Printf("bind <key> [command] : attach a command to a key\n");
         return;
     }
@@ -570,8 +571,8 @@ void Key_Bind_f(void)
 
     keynum = tolower(keynum);
     if (argc == 2) {
-        binding = Key_GetBindingInternal(keynum);
-        if (binding != NULL) {
+        binding = keys[keynum].binding;
+        if (binding) {
             Com_Printf("\"%s\" = \"%s\"\n", Cmd_Argv(1), binding);
         } else {
             Com_Printf("\"%s\" is not bound\n", Cmd_Argv(1));
@@ -581,17 +582,9 @@ void Key_Bind_f(void)
 
     cmd[0] = '\0';
     for (argIndex = 2; argIndex < argc; ++argIndex) {
-        qboolean hasSpace;
-
-        if (argc != 3) {
-            if (strchr(Cmd_Argv(argIndex), ' ') != NULL) {
-                I_strncat(cmd, sizeof(cmd), "\"");
-                hasSpace = 1;
-            } else {
-                hasSpace = 0;
-            }
-        } else {
-            hasSpace = 0;
+        hasSpace = argc > 3 && strchr(Cmd_Argv(argIndex), ' ');
+        if (hasSpace) {
+            I_strncat(cmd, sizeof(cmd), "\"");
         }
 
         I_strncat(cmd, sizeof(cmd), Cmd_Argv(argIndex));
