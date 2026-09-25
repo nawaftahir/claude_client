@@ -435,7 +435,7 @@ static qboolean __attribute_regparm__(3) CG_CalcMuzzlePoint(int entityNum, vec_t
     muzzle[1] = cent->nextState.pos.trBase[1];
     muzzle[2] = cent->nextState.pos.trBase[2];
 
-    if (entityNum > 63)
+    if (entityNum >= 64)
         return 1;
 
     Com_DPrintf("No %s in CG_CalcMuzzlePoint on entity %d.\n", SL_ConvertToString(flashTag), entityNum);

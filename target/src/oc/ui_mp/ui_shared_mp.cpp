@@ -2487,7 +2487,7 @@ void Item_TextColor(displayContextDef_t *dc, itemDef_t *item, vec4_t *newColor)
                 float alpha = ((itemDef_t *)it)->window.foreColor[3];
                 alpha -= fadeAmount;
                 ((itemDef_t *)it)->window.foreColor[3] = alpha;
-                if (alpha <= 0.0f) {
+                if (alpha <= 0.0) {
                     flags &= ~0x14;
                 }
             } else {
@@ -2519,8 +2519,8 @@ void Item_TextColor(displayContextDef_t *dc, itemDef_t *item, vec4_t *newColor)
             float hi = *(float *)(((char *)parent + offsetof(menuDef_t, focusColor[0])) + i * 4);
             float lo = lowLight[i];
             out[i] = hi + (lo - hi) * t;
-            if (out[i] < 0.0f)
-                out[i] = 0.0f;
+            if (out[i] < 0.0)
+                out[i] = 0.0;
             else if (out[i] > 1.0f)
                 out[i] = 1.0f;
         }
@@ -2545,8 +2545,8 @@ void Item_TextColor(displayContextDef_t *dc, itemDef_t *item, vec4_t *newColor)
                 float hi = ((itemDef_t *)it)->window.foreColor[i];
                 float lo = lowLight[i];
                 out[i] = hi + (lo - hi) * t;
-                if (out[i] < 0.0f)
-                    out[i] = 0.0f;
+                if (out[i] < 0.0)
+                    out[i] = 0.0;
                 else if (out[i] > 1.0f)
                     out[i] = 1.0f;
             }

@@ -634,7 +634,7 @@ ByteToDir
 */
 void ByteToDir( const int b, vec3_t dir )
 {
-	if ( b < 0 || b > 161 )
+	if ( b < 0 || b >= 162 )
 	{
 		VectorCopy(vec3_origin, dir);
 	}

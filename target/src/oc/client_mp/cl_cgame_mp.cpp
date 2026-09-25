@@ -284,7 +284,7 @@ qboolean CL_GetSnapshot(int snapshotNumber, snapshot_t *snapshot)
         Com_Error(ERR_DROP, "CL_GetSnapshot: snapshotNumber > cl.snap.messageNum");
     }
 
-    if (cl->snap.messageNum - snapshotNumber > 0x1f) {
+    if (cl->snap.messageNum - snapshotNumber >= 0x20) {
         return 0;
     }
 
@@ -295,10 +295,10 @@ qboolean CL_GetSnapshot(int snapshotNumber, snapshot_t *snapshot)
         return 0;
     }
 
-    if (cl->parseEntitiesNum - clSnap->parseEntitiesNum > 0x7ff) {
+    if (cl->parseEntitiesNum - clSnap->parseEntitiesNum >= 0x800) {
         return 0;
     }
-    if (cl->parseClientsNum - clSnap->parseClientsNum > 0x7ff) {
+    if (cl->parseClientsNum - clSnap->parseClientsNum >= 0x800) {
         return 0;
     }
 
@@ -488,7 +488,7 @@ restart:
         Cmd_TokenizeString2(s, 3);
         {
             const char *arg2 = Cmd_Argv(2);
-            if (strlen(bigConfigString) + strlen(arg2) > 0x1fff) {
+            if (strlen(bigConfigString) + strlen(arg2) >= 0x2000) {
                 Com_Error(ERR_DROP, "BCS overflow");
             }
             strcat(bigConfigString, arg2);
@@ -498,7 +498,7 @@ restart:
         Cmd_TokenizeString2(s, 3);
         {
             const char *arg2 = Cmd_Argv(2);
-            if (strlen(bigConfigString) + strlen(arg2) + 1 > 0x1fff) {
+            if (strlen(bigConfigString) + strlen(arg2) + 1 >= 0x2000) {
                 Com_Error(ERR_DROP, "BCS overflow");
             }
             strcat(bigConfigString, arg2);
