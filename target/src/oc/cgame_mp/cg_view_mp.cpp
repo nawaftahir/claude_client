@@ -3,6 +3,7 @@
 #include "imports.h"
 #include "headers/PC/cgame_mp/cg_local.h"
 #include <math.h>
+extern displayContextDef_t cgDC;
 
 vec3_t maxs = { 4.0f, 4.0f, 4.0f };
 
@@ -354,7 +355,7 @@ static void CG_CalcViewValues(void)
 
     menuBlur = CL_GetMenuBlurRadius();
     {
-        float cgBlur = *(float *)((char *)imp_cgDC + 0x28);
+        float cgBlur = *(float *)((char *)&cgDC + 0x28);
         cg->refdef.blurRadius = __builtin_sqrtf(cgBlur * cgBlur + menuBlur * menuBlur);
     }
 

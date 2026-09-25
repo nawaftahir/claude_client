@@ -4,6 +4,8 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
+extern clientActive_t clients[1];
+extern clientConnection_t clientConnections[1];
 extern clientStatic_t cls;
 
 extern int I_stricmp(const char *s1, const char *s2);
@@ -60,13 +62,13 @@ int LAN_CompareServers(int source, int sortKey, int sortDir, int s1, int s2);
 
 void GetClientState(uiClientState_t *state)
 {
-    clientConnection_t *clc_local = *(clientConnection_t **)imp_clc;
+    clientConnection_t *clc_local = clientConnections;
 
     state->connectPacketCount = clc_local->connectPacketCount;
     state->connState = clc_local->state;
     I_strncpyz(state->servername, cls.servername, 0x400);
     I_strncpyz(state->messageString, clc_local->serverMessage, 0x400);
-    state->clientNum = (*(clientActive_t **)imp_cl)->snap.ps.clientNum;
+    state->clientNum = (clients)->snap.ps.clientNum;
 }
 
 void LAN_ResetPings(int source)
@@ -310,18 +312,17 @@ void Key_GetBindingBuf(int keynum, char *buf, int buflen)
 
 int Key_GetCatcher(void)
 {
-    return (*(clientActive_t **)imp_cl)->keyCatchers;
+    return (clients)->keyCatchers;
 }
 
 void Key_SetCatcher(int catcher)
 {
-    clientActive_t **pp = (clientActive_t **)imp_cl;
-    clientActive_t *ptr = *pp;
+    clientActive_t *ptr = clients;
     if (ptr->keyCatchers & 1)
         ptr->keyCatchers = catcher | 1;
     else
         ptr->keyCatchers = catcher;
-    ptr = *pp;
+    ptr = clients;
     if (!(ptr->keyCatchers & 8))
         ptr->displayHUDWithKeycatchUI = 0;
 }
@@ -366,7 +367,7 @@ int GetClientname(int index, char *buf, int size)
 
     *buf = '\0';
 
-    cl = *(clientActive_t **)imp_cl;
+    cl = clients;
     if (!cl->snap.valid)
         return 0;
 
@@ -401,7 +402,7 @@ int UI_PlayLocalSoundAliasByName(const char *aliasname)
 
 qboolean UI_ClientIsInGame(void)
 {
-    clientConnection_t *clc_local = *(clientConnection_t **)imp_clc;
+    clientConnection_t *clc_local = clientConnections;
     return clc_local->state == 8;
 }
 
@@ -416,7 +417,7 @@ qboolean CL_ShutdownUI(void)
 
     Com_UnloadSoundAliases(0);
 
-    cl = *(clientActive_t **)imp_cl;
+    cl = clients;
     cl->keyCatchers &= ~8;
     cl->displayHUDWithKeycatchUI = 0;
 

@@ -2,6 +2,11 @@
 #include "imports.h"
 #include <ctype.h>
 #include <string.h>
+extern clientActive_t clients[1];
+extern clientConnection_t clientConnections[1];
+extern int dvar_modifiedFlags;
+extern int g_console_field_width;
+extern float g_console_char_height;
 
 extern keyname_t keynames[99];
 extern keyname_t keynames_localized[100];
@@ -379,7 +384,7 @@ static inline __attribute__((always_inline)) void Key_SetBindingInternal(int key
     if (keynum == -1)
         return;
     ReplaceStringInternal((char **)&keys[keynum].binding, binding);   /* was keynum*12+8 (x86 qkey_t stride) */
-    *(int *)imp_dvar_modifiedFlags |= 1;
+    dvar_modifiedFlags |= 1;
 }
 
 static inline __attribute__((always_inline)) char *Key_GetBindingInternal(int keynum)
@@ -536,7 +541,7 @@ void Key_Unbind_f(void)
 void Key_Unbindall_f(void)
 {
     int keynum;
-    int *modifiedFlags = (int *)imp_dvar_modifiedFlags;
+    int *modifiedFlags = (&dvar_modifiedFlags);
 
     for (keynum = 0; keynum < 256; ++keynum) {
         if (keys[keynum].binding != NULL && keynum != -1) {
@@ -697,7 +702,7 @@ void CL_CharEvent(int key)
     if (key == '`' || key == '~')
         return;
 
-    keyCatchers = (*(clientActive_t **)imp_cl)->keyCatchers;
+    keyCatchers = (clients)->keyCatchers;
 
     if (keyCatchers & 1) {
         Field_CharEvent(&g_consoleField, key);
@@ -712,7 +717,7 @@ void CL_CharEvent(int key)
         return;
     }
 
-    if (!**(int **)imp_clc) {
+    if (!*((int *)clientConnections)) {
         Field_CharEvent(&g_consoleField, key);
         return;
     }
@@ -779,7 +784,7 @@ void Field_KeyDownEvent(field_t *edit, int key)
 
 static inline __attribute__((always_inline)) void Message_Close(void)
 {
-    (*(clientActive_t **)imp_cl)->keyCatchers &= ~0x10;
+    (clients)->keyCatchers &= ~0x10;
     Field_Clear(chatField);
 }
 
@@ -792,7 +797,7 @@ void Message_Key(int key)
 
     if (key == K_ENTER || key == K_KP_ENTER) {
         if (chatField->buffer[0]) {
-            if ((*(clientConnection_t **)imp_clc)->state == 8) {
+            if ((clientConnections)->state == 8) {
                 char buffer[1024];
 
                 if (*chat_team) {
@@ -841,8 +846,8 @@ static void Console_SaveHistory(void)
 static void Console_ResetField(void)
 {
     Field_Clear(&g_consoleField);
-    g_consoleField.widthInPixels = *(int *)imp_g_console_field_width;
-    g_consoleField.charHeight = *(float *)imp_g_console_char_height;
+    g_consoleField.widthInPixels = g_console_field_width;
+    g_consoleField.charHeight = g_console_char_height;
     g_consoleField.fixedSize = 1;
 
     if (CL_AllLocalClientsDisconnected())
@@ -851,7 +856,7 @@ static void Console_ResetField(void)
 
 static void Console_ExecuteLine(void)
 {
-    clientConnection_t *clc = *(clientConnection_t **)imp_clc;
+    clientConnection_t *clc = clientConnections;
 
     if ((!clc || clc->state != 8) &&
         g_consoleField.buffer[0] != 0x5c &&
@@ -1183,7 +1188,7 @@ static inline __attribute__((always_inline)) void CL_HandleEscapeKey(qboolean do
     if (!down)
         return;
 
-    cl = *(clientActive_t **)imp_cl;
+    cl = clients;
     if (cl->keyCatchers & 1) {
         Con_ToggleConsole_f();
         return;
@@ -1198,7 +1203,7 @@ static inline __attribute__((always_inline)) void CL_HandleEscapeKey(qboolean do
         return;
     }
 
-    clc = *(clientConnection_t **)imp_clc;
+    clc = clientConnections;
     switch (clc->state) {
     case CA_CINEMATIC:
     case CA_LOGO:
@@ -1226,7 +1231,7 @@ static inline __attribute__((always_inline)) void CL_HandleConsoleToggleKey(qboo
     if (!down)
         return;
 
-    cl = *(clientActive_t **)imp_cl;
+    cl = clients;
     if (!(cl->keyCatchers & 1) &&
         !CL_DvarEnabledFromImport(imp_com_sv_running) &&
         CL_DvarEnabledFromImport(imp_sv_disableClientConsole)) {
@@ -1257,8 +1262,8 @@ void CL_KeyEvent(int key, const qboolean down, const unsigned int time)
     if (key < 0 || key >= 256)
         return;
 
-    cl = *(clientActive_t **)imp_cl;
-    clc = *(clientConnection_t **)imp_clc;
+    cl = clients;
+    clc = clientConnections;
     keyState = &keys[key];
 
     keyState->down = down;

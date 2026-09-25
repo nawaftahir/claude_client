@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+extern clientActive_t clients[1];
 extern cg_t cgArray[1];
 /* see cg_local.h: `cg` is a const pointer to the real object, so `cg->field` folds
  * into a single absolute access. */
@@ -1534,7 +1535,7 @@ qboolean UI_SetActiveMenu(int menu)
         uiInfo->uiDC.cursorx = 0x27f;
         uiInfo->uiDC.cursory = 0x1df;
         Key_SetCatcher(8);
-        (*(clientActive_t **)imp_cl)->displayHUDWithKeycatchUI = 1;
+        (clients)->displayHUDWithKeycatchUI = 1;
         Menus_CloseAll(&uiInfo->uiDC);
         Menus_OpenByName(&uiInfo->uiDC, "quickmessage");
         return 1;
@@ -1571,7 +1572,7 @@ qboolean UI_SetActiveMenu(int menu)
         }
 
         Key_SetCatcher(8);
-        (*(clientActive_t **)imp_cl)->displayHUDWithKeycatchUI = 1;
+        (clients)->displayHUDWithKeycatchUI = 1;
         Menus_CloseAll(&uiInfo->uiDC);
 
         strcpy(((LegacyHacks *)legacyBase)->ui_scriptMenu, ((LegacyHacks *)legacyBase)->ui_newScriptMenu);
@@ -2650,7 +2651,7 @@ void UI_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAli
     const char *text;
     clientActive_t *clBase;
 
-    clBase = *(clientActive_t **)imp_cl;
+    clBase = clients;
     if (clBase->cgameInitialized != 0) {
         CG_OwnerDraw(x, y, w, h, horzAlign, vertAlign, text_x, text_y, ownerDraw, ownerDrawFlags, align, special, font, scale, color, material, textStyle);
     }
@@ -3223,7 +3224,7 @@ void UI_Refresh(void)
             int i;
             fprintf(f, "ui[%d] active=%d menuCount=%d openCount=%d keyCatchers=0x%x\n",
                     fileTraceCount, uiInfo->currentMenuType, uiInfo->uiDC.menuCount,
-                    uiInfo->uiDC.openMenuCount, (*(clientActive_t **)imp_cl)->keyCatchers);
+                    uiInfo->uiDC.openMenuCount, (clients)->keyCatchers);
             for (i = 0; i < uiInfo->uiDC.openMenuCount && i < 16; i++) {
                 menuDef_t *menu = uiInfo->uiDC.menuStack[i];
                 fprintf(f, "  stack[%d]=%s flags=0x%x full=%d\n",
@@ -4424,7 +4425,7 @@ void UI_DrawConnectScreen(void)
         return;
 
     {
-        clientActive_t *cl = *(clientActive_t **)imp_cl;
+        clientActive_t *cl = clients;
         int loading = 0;
         if ((*(unsigned char *)&((LegacyHacks *)legacyBase)->cl_serverloadmap[0]) != 0 || (*(unsigned char *)&((LegacyHacks *)legacyBase)->cl_serverloadgametype[0]) != 0)
             loading = 1;
@@ -5570,7 +5571,7 @@ qboolean UI_SetActiveMenu(int menu)
         uiInfo->uiDC.cursorx = 0x27f;
         uiInfo->uiDC.cursory = 0x1df;
         Key_SetCatcher(8);
-        (*(clientActive_t **)imp_cl)->displayHUDWithKeycatchUI = 1;
+        (clients)->displayHUDWithKeycatchUI = 1;
         Menus_CloseAll(&uiInfo->uiDC);
         Menus_OpenByName(&uiInfo->uiDC, "quickmessage");
         return 1;

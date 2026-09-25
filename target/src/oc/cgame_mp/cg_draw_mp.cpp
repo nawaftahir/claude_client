@@ -3,6 +3,7 @@ extern void Com_Printf(const char *fmt, ...);
 #include "imports.h"
 #include "bytematch.h"
 #include "headers/PC/cgame_mp/cg_local.h"
+extern displayContextDef_t cgDC;
 
 extern clientStatic_t cls;
 extern const dvar_t *cg_centerPrintY;
@@ -606,7 +607,7 @@ unsigned int CG_CheckTimedMenus(void)
         serverTime = cg->time;
         if (serverTime - timedMenuTime > 2500) {
 
-            Menus_CloseByName( (displayContextDef_t *)((void *)imp_cgDC), (const char *)"voiceMenu");
+            Menus_CloseByName( (displayContextDef_t *)(((void *)&cgDC)), (const char *)"voiceMenu");
             cg->voiceTime = 0;
         }
     }
@@ -701,9 +702,9 @@ after_buttons:
             if ((float)(serverTime - showTime) > fadeVal * 1000.0f) {
 
                 if (CL_GetLocalClientActiveCount() == 1) {
-                    menu = Menus_FindByName((displayContextDef_t *)imp_cgDC, (const char *)"Health");
+                    menu = Menus_FindByName((&cgDC), (const char *)"Health");
                 } else {
-                    menu = Menus_FindByName((displayContextDef_t *)imp_cgDC, (const char *)"Health_mp");
+                    menu = Menus_FindByName((&cgDC), (const char *)"Health_mp");
                 }
 
                 if (menu)
@@ -727,9 +728,9 @@ after_buttons:
             if ((float)(serverTime - showTime) > fadeVal * 1000.0f) {
 
                 if (CL_GetLocalClientActiveCount() == 1) {
-                    menu = Menus_FindByName((displayContextDef_t *)imp_cgDC, (const char *)"weaponinfo");
+                    menu = Menus_FindByName((&cgDC), (const char *)"weaponinfo");
                 } else {
-                    menu = Menus_FindByName((displayContextDef_t *)imp_cgDC, (const char *)"weaponinfo_mp");
+                    menu = Menus_FindByName((&cgDC), (const char *)"weaponinfo_mp");
                 }
 
                 if (menu)
@@ -748,9 +749,9 @@ after_buttons:
             if ((float)(serverTime - showTime) > fadeVal * 1000.0f) {
 
                 if (CL_GetLocalClientActiveCount() == 1) {
-                    menu = Menus_FindByName((displayContextDef_t *)imp_cgDC, (const char *)"Compass");
+                    menu = Menus_FindByName((&cgDC), (const char *)"Compass");
                 } else {
-                    menu = Menus_FindByName((displayContextDef_t *)imp_cgDC, (const char *)"Compass_mp");
+                    menu = Menus_FindByName((&cgDC), (const char *)"Compass_mp");
                 }
 
                 if (menu)
@@ -780,9 +781,9 @@ after_buttons:
             if ((float)(serverTime - showTime) > fadeVal * 1000.0f) {
 
                 if (CL_GetLocalClientActiveCount() == 1) {
-                    menu = Menus_FindByName((displayContextDef_t *)imp_cgDC, (const char *)"stance");
+                    menu = Menus_FindByName((&cgDC), (const char *)"stance");
                 } else {
-                    menu = Menus_FindByName((displayContextDef_t *)imp_cgDC, (const char *)"stance_mp");
+                    menu = Menus_FindByName((&cgDC), (const char *)"stance_mp");
                 }
 
                 if (menu)
@@ -801,9 +802,9 @@ after_buttons:
             if ((float)(serverTime - showTime) > fadeVal * 1000.0f) {
 
                 if (CL_GetLocalClientActiveCount() == 1) {
-                    menu = Menus_FindByName((displayContextDef_t *)imp_cgDC, (const char *)"offhandinfo");
+                    menu = Menus_FindByName((&cgDC), (const char *)"offhandinfo");
                 } else {
-                    menu = Menus_FindByName((displayContextDef_t *)imp_cgDC, (const char *)"offhandinfo_mp");
+                    menu = Menus_FindByName((&cgDC), (const char *)"offhandinfo_mp");
                 }
 
                 if (menu)
@@ -823,7 +824,7 @@ after_buttons:
         return serverTime;
     }
 
-    menu = Menus_FindByName((displayContextDef_t *)imp_cgDC, (const char *)"objectiveinfo");
+    menu = Menus_FindByName((&cgDC), (const char *)"objectiveinfo");
     if (!menu) {
         return 0;
     }
@@ -1643,7 +1644,7 @@ unsigned int CG_Draw2D(void)
     qboolean drewScoreboard;
     float debugY = 0.0f;
     int pm_type;
-    byte *cls = (byte *)imp_cls;
+    byte *cls = ((byte *)&::cls);
     float screenWidth = (float)((clientStatic_t *)cls)->vidConfig.width;
     float screenHeight = (float)((clientStatic_t *)cls)->vidConfig.height;
 
@@ -1714,7 +1715,7 @@ unsigned int CG_Draw2D(void)
         if (drawHudElems)
             CG_Draw2dHudElems(0);
         if (drawHudMenus)
-            Menu_PaintAll((displayContextDef_t *)imp_cgDC);
+            Menu_PaintAll((&cgDC));
         CG_Draw2dHudElems(1);
     }
 

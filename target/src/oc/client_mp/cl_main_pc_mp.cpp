@@ -1,5 +1,7 @@
 #include "common_types.h"
 #include "imports.h"
+extern clientActive_t clients[1];
+extern clientConnection_t clientConnections[1];
 /* dvar globals */
 extern const dvar_t *cl_serverStatusResendTime;
 extern const dvar_t *com_sv_running;
@@ -141,7 +143,7 @@ void CL_SetServerInfoByAddress(netadr_t from, const char *info, int ping)
     int compare;
 
     Com_PumpMessageLoop();
-    cls = (clientStatic_t *)imp_cls;
+    cls = (&::cls);
 
     for (i = 0; i < 128; ++i) {
         if (NET_CompareAdr(from, cls->localServers[i].adr)) {
@@ -247,7 +249,7 @@ void CL_ServerInfoPacket(netadr_t from, msg_t *msg, int time)
         return;
     }
 
-    cls = (clientStatic_t *)imp_cls;
+    cls = (&::cls);
 
     if (cls->waitglobalserverresponse)
         return;
@@ -326,7 +328,7 @@ qboolean CL_CDKeyValidate(const char *key, const char *checksum)
 
 void CL_SortGlobalServers(void)
 {
-    clientStatic_t *cls = (clientStatic_t *)imp_cls;
+    clientStatic_t *cls = (&::cls);
     int count = cls->numglobalservers;
     qsort(cls->globalServers, count, sizeof(serverInfo_t), CL_CompareAdrSigned);
 }
@@ -420,7 +422,7 @@ void CL_Rcon_f(void)
     message[offset] = '\0';
 
     {
-        clientConnection_t *clcLocal = *(clientConnection_t **)imp_clc;
+        clientConnection_t *clcLocal = clientConnections;
         if (clcLocal->state > 4) {
 
             sendAdr = clcLocal->netchan.remoteAddress;
@@ -649,7 +651,7 @@ void CL_ServersResponsePacket(netadr_t from, msg_t *msg)
 
     Com_Printf((const char *)"CL_ServersResponsePacket\n");
 
-    cls = (clientStatic_t *)imp_cls;
+    cls = (&::cls);
     cls->waitglobalserverresponse = 0;
 
     buffptr = msg->data;
@@ -700,7 +702,7 @@ void CL_ServersResponsePacket(netadr_t from, msg_t *msg)
         continue;
     }
 
-    cls = (clientStatic_t *)imp_cls;
+    cls = (&::cls);
     count = cls->numglobalservers;
 
     for (i = 0; i < numservers && count <= 0x4e1f; i++) {
@@ -718,12 +720,12 @@ void CL_ServersResponsePacket(netadr_t from, msg_t *msg)
         adr.ip[3] = ip[3];
         adr.port = port;
 
-        cls = (clientStatic_t *)imp_cls;
+        cls = (&::cls);
         high = cls->numglobalservers;
         if (high > 0) {
             low = 0;
             while (low < high) {
-                cls = (clientStatic_t *)imp_cls;
+                cls = (&::cls);
                 mid = (low + high) / 2;
                 compare = NET_CompareAdrSigned(&adr, &cls->globalServers[mid].adr);
                 if (compare < 0) {
@@ -741,7 +743,7 @@ void CL_ServersResponsePacket(netadr_t from, msg_t *msg)
 
                     {
                         clientStatic_t *clsStatic;
-                        cls = (clientStatic_t *)imp_cls;
+                        cls = (&::cls);
                         clsStatic = (clientStatic_t *)cls;
                         while (1) {
                             serverInfo_t *srv = &clsStatic->globalServers[j];
@@ -769,7 +771,7 @@ void CL_ServersResponsePacket(netadr_t from, msg_t *msg)
                             if (j >= cls->numglobalservers)
                                 break;
                             if (NET_CompareAdrSigned(&adr, &clsStatic->globalServers[j].adr) != 0) {
-                                cls = (clientStatic_t *)imp_cls;
+                                cls = (&::cls);
                                 break;
                             }
                         }
@@ -777,7 +779,7 @@ void CL_ServersResponsePacket(netadr_t from, msg_t *msg)
                     goto next_server;
                 }
             }
-            cls = (clientStatic_t *)imp_cls;
+            cls = (&::cls);
         }
 
         {
@@ -907,7 +909,7 @@ void CL_Connect_f(void)
 
     SND_StopSounds((snd_stopsounds_arg_t)0);
 
-    clc = *(clientConnection_t **)imp_clc;
+    clc = clientConnections;
     clc->serverMessage[0] = 0;
 
     server = Cmd_Argv(1);
@@ -939,7 +941,7 @@ void CL_Connect_f(void)
     cls_servername = (byte *)cls.servername;
     I_strncpyz((char *)cls_servername, server, sizeof(((clientStatic_t *)0)->servername));
 
-    clc = *(clientConnection_t **)imp_clc;
+    clc = clientConnections;
     {
         clientConnection_t *clcConn = (clientConnection_t *)clc;
         if (!NET_StringToAdr((const char *)cls_servername, &clcConn->serverAddress)) {
@@ -998,20 +1000,20 @@ void CL_Connect_f(void)
 
     {
         clientConnection_t *clcConn;
-        clc = *(clientConnection_t **)imp_clc;
+        clc = clientConnections;
         clcConn = (clientConnection_t *)clc;
 
         if (NET_IsLocalAddress(clcConn->serverAddress)) {
             clcConn->state = (connstate_t)(4);
         } else {
-            clcConn = *(clientConnection_t **)imp_clc;
+            clcConn = clientConnections;
             clcConn->state = (connstate_t)(3);
             clc = clcConn;
         }
     }
 
     {
-        clientActive_t *clActive = *(clientActive_t **)imp_cl;
+        clientActive_t *clActive = clients;
         clActive->keyCatchers = 0;
         clActive->displayHUDWithKeycatchUI = 0;
     }
@@ -1148,7 +1150,7 @@ void CL_ServerStatus_f(void)
         serverAddr = Cmd_Argv(1);
     } else {
 
-        clientConnection_t *clcConn = *(clientConnection_t **)imp_clc;
+        clientConnection_t *clcConn = clientConnections;
         if (clcConn->state != 8)
             goto not_connected;
         if (clcConn->demoplaying != 0)

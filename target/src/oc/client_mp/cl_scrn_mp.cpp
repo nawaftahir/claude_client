@@ -4,6 +4,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
+extern clientActive_t clients[1];
+extern clientConnection_t clientConnections[1];
+extern clientStatic_t cls;
 #define stricmp strcasecmp
 
 extern qboolean scr_initialized;
@@ -21,9 +24,7 @@ const char *szShotName[] = {
 };
 
 #define re_ptr_195eca8 ((refexport_t *)imp_re)
-#define cls_ptr_195ecac ((byte *)imp_cls)
-#define dvar_ptr_195ee78 ((byte *)imp_cl)
-#define clc_ptr_195ee8c ((byte *)imp_clc)
+#define cls_ptr_195ecac (((byte *)&::cls))
 #define ptr_195eea4 ((byte *)imp_com_errorEntered)
 #define ptr_195f58c ((byte *)imp_colorBlack)
 #define ptr_195f5e0 ((byte *)imp_net_showprofile)
@@ -125,7 +126,7 @@ void SCR_Init(void)
 
 float CL_GetMenuBlurRadius(void)
 {
-    clientActive_t *cl_local = *(clientActive_t **)dvar_ptr_195ee78;
+    clientActive_t *cl_local = clients;
     if (!(cl_local->keyCatchers & 8))
         return 0.0f;
 
@@ -133,7 +134,7 @@ float CL_GetMenuBlurRadius(void)
     if ((((clientStatic_t *)(cls))->uiStarted) == 0)
         return 0.0f;
 
-    clientConnection_t *clc = *(clientConnection_t **)clc_ptr_195ee8c;
+    clientConnection_t *clc = clientConnections;
     if (clc->state == 1)
         return 0.0f;
 
@@ -162,7 +163,7 @@ void CL_CubemapShot_f(void)
     byte isLightingShot;
     int side;
 
-    clientActive_t *cl_local = *(clientActive_t **)dvar_ptr_195ee78;
+    clientActive_t *cl_local = clients;
     if (cl_local->cgameInitialized == 0) {
         Com_Printf("must be in a map to use this command\n");
         return;
@@ -239,9 +240,9 @@ void CL_CubemapShot_f(void)
         RE_FUNC(re, 0xa8, re_void_func)();
         CL_ClearScene();
 
-        clientConnection_t *clc_local = *(clientConnection_t **)clc_ptr_195ee8c;
+        clientConnection_t *clc_local = clientConnections;
         int needRender = clc_local->demoplaying != 0;
-        clientActive_t *dv = *(clientActive_t **)dvar_ptr_195ee78;
+        clientActive_t *dv = clients;
         int serverTime = dv->serverTime;
 
         CG_DrawActiveFrame(serverTime, needRender, side, size, 0);
@@ -274,8 +275,8 @@ static void SCR_UpdateFrame(void)
 
     {
         extern int g_cginit_loading;
-        clientConnection_t *clc_check = *(clientConnection_t **)clc_ptr_195ee8c;
-        clientActive_t *cl_check = *(clientActive_t **)dvar_ptr_195ee78;
+        clientConnection_t *clc_check = clientConnections;
+        clientActive_t *cl_check = clients;
         int cs = clc_check->state;
         if (g_cginit_loading)
             return;
@@ -305,7 +306,7 @@ static void SCR_UpdateFrame(void)
         goto end_frame;
     }
 
-    clientConnection_t *clc = *(clientConnection_t **)clc_ptr_195ee8c;
+    clientConnection_t *clc = clientConnections;
     int connstate = clc->state;
     if (connstate != 8 && connstate != 1) {
         re->ClearScreen(1, (const vec_t *)ptr_195f58c, 0.0f, 0);
@@ -321,7 +322,7 @@ static void SCR_UpdateFrame(void)
 
     if (UI_IsFullscreen()) {
 
-        clc = *(clientConnection_t **)clc_ptr_195ee8c;
+        clc = clientConnections;
         connstate = clc->state;
 
         if (connstate < 0) {
@@ -331,7 +332,7 @@ static void SCR_UpdateFrame(void)
         } else if (connstate == 8) {
 
             int needRender = clc->demoplaying != 0;
-            clientActive_t *dv = *(clientActive_t **)dvar_ptr_195ee78;
+            clientActive_t *dv = clients;
             int serverTime = dv->serverTime;
 
             int result = CG_DrawActiveFrame(serverTime, needRender, 0, 0, 0);
@@ -345,7 +346,7 @@ static void SCR_UpdateFrame(void)
         }
     } else {
 
-        clc = *(clientConnection_t **)clc_ptr_195ee8c;
+        clc = clientConnections;
         connstate = clc->state;
 
         if ((unsigned int)connstate > 8) {
@@ -369,7 +370,7 @@ static void SCR_UpdateFrame(void)
 
         case 2:
             CL_DrawLogo();
-            clc = *(clientConnection_t **)clc_ptr_195ee8c;
+            clc = clientConnections;
             if (clc->state != 2) {
                 goto end_frame_draw;
             }
@@ -387,13 +388,13 @@ static void SCR_UpdateFrame(void)
         case 8:
         {
             int needRender = clc->demoplaying != 0;
-            clientActive_t *dv = *(clientActive_t **)dvar_ptr_195ee78;
+            clientActive_t *dv = clients;
             int serverTime = dv->serverTime;
 
             CG_DrawActiveFrame(serverTime, needRender, 0, 0, 1);
             endViewBeforeUi = 1;
 
-            clc = *(clientConnection_t **)clc_ptr_195ee8c;
+            clc = clientConnections;
             if (clc->demorecording) {
                 int pos = FS_FTell(clc->demofile);
                 int posKB = (pos + 0x3ff) >> 10;
@@ -431,7 +432,7 @@ check_ui:
     }
 
     {
-        clientActive_t *dv = *(clientActive_t **)dvar_ptr_195ee78;
+        clientActive_t *dv = clients;
         static int uiTraceCount;
         int activeMenu = UI_GetActiveMenu();
 
@@ -440,7 +441,7 @@ check_ui:
             if (!diagOnce) {
                 diagOnce = 1;
                 Com_Printf("[diag] check_ui REACHED state=%d activeMenu=%d keyCatchers=0x%x displayHUD=%d\n",
-                           (*(clientConnection_t **)clc_ptr_195ee8c)->state, activeMenu,
+                           (clientConnections)->state, activeMenu,
                            dv->keyCatchers, dv->displayHUDWithKeycatchUI);
             }
         }
@@ -449,7 +450,7 @@ check_ui:
             if (getenv("MTRACE"))
                 Com_Printf("[menu-trace] SCR check_ui active=%d keyCatchers=0x%x displayHUD=%d state=%d\n",
                            activeMenu, dv->keyCatchers, dv->displayHUDWithKeycatchUI,
-                           (*(clientConnection_t **)clc_ptr_195ee8c)->state);
+                           (clientConnections)->state);
             ++uiTraceCount;
         }
 
@@ -494,7 +495,7 @@ void SCR_UpdateScreenInternal(void)
     if (updateScreenCalled)
         return;
 
-    clientConnection_t *clc_tmp = *(clientConnection_t **)clc_ptr_195ee8c;
+    clientConnection_t *clc_tmp = clientConnections;
     if (clc_tmp->state == 6) {
         Sys_LoadingKeepAlive();
     }
@@ -517,7 +518,7 @@ void SCR_UpdateScreen(void)
     if (g_cginit_loading || updateScreenCalled)
         return;
 
-    clientConnection_t *clc_tmp = *(clientConnection_t **)clc_ptr_195ee8c;
+    clientConnection_t *clc_tmp = clientConnections;
     if (clc_tmp->state == 6) {
         Sys_LoadingKeepAlive();
     }

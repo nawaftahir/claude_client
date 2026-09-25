@@ -4,6 +4,10 @@
 #include "cod2_feature_config.h"
 #include "pb_public.h"
 #include "www_download.h"
+extern int dvar_modifiedFlags;
+extern int g_console_field_width;
+extern float g_console_char_height;
+extern field_t g_consoleField;
 extern LegacyHacks *legacyHacks;
 extern int com_frameTime;
 extern float com_timescaleValue;
@@ -779,12 +783,12 @@ void CL_InitRenderer(void)
     cls.consoleFont = re.RegisterFont("fonts/consoleFont", 3);
 
     fieldWidth = cls.vidConfig.width - 0x20;
-    *(int *)imp_g_console_field_width = fieldWidth;
+    g_console_field_width = fieldWidth;
 
     {
-        field_t *cf = (field_t *)imp_g_consoleField;
+        field_t *cf = (&g_consoleField);
         cf->widthInPixels = fieldWidth;
-        *(float *)&cf->charHeight = *(float *)imp_g_console_char_height;
+        *(float *)&cf->charHeight = g_console_char_height;
         cf->fixedSize = 1;
     }
 
@@ -1851,7 +1855,7 @@ void CL_CheckForResend(void)
     data[10 + infoLen] = '\0';
 
     NET_OutOfBandData(NS_CLIENT1, conn->serverAddress, (unsigned char *)data, infoLen + 10);
-    *(int *)imp_dvar_modifiedFlags &= ~2;
+    dvar_modifiedFlags &= ~2;
 }
 
 void CL_LocalServers_f(void)
@@ -2070,7 +2074,7 @@ int Client_SendVoiceData(int bytes, char *enc_buffer)
     int voiceIdx, newIdx;
 
     if (bytes > 0) {
-        c = *(clientActive_t **)imp_cl;
+        c = clients;
         voiceIdx = c->voicePacketCount;
 
         memcpy(c->voicePackets[voiceIdx].data, enc_buffer, bytes);
@@ -2082,7 +2086,7 @@ int Client_SendVoiceData(int bytes, char *enc_buffer)
         if (newIdx > 0) {
             if (c->serverTime - c->voicePacketLastTransmit > 199 || newIdx > 9) {
                 CL_WriteVoicePacket();
-                c = *(clientActive_t **)imp_cl;
+                c = clients;
                 c->voicePacketCount = 0;
                 c->voicePacketLastTransmit = c->serverTime;
             }
@@ -2412,7 +2416,7 @@ void CL_Frame(int msec)
     Voice_Playback();
     CL_UpdateColor();
 
-    cl_p = *(clientActive_t **)imp_cl;
+    cl_p = clients;
 
     if (clc_p->state <= 3)
         goto Lc6;
@@ -2442,7 +2446,7 @@ Lc6:
     goto Lmain1;
 
 L137:
-    if (*(int *)imp_dvar_modifiedFlags & 2)
+    if (dvar_modifiedFlags & 2)
         goto Luserinfo;
     goto Lc6;
 
@@ -2480,7 +2484,7 @@ L183:
     goto Lmain1;
 
 Luserinfo:
-    *(int *)imp_dvar_modifiedFlags &= ~2;
+    dvar_modifiedFlags &= ~2;
     info = Dvar_InfoString(2);
     info = va("userinfo \"%s\"", info);
     if (clc_p->reliableSequence - clc_p->reliableAcknowledge - 0x80 > 0)

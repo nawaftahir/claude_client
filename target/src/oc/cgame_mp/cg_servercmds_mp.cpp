@@ -5,6 +5,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+extern displayContextDef_t cgDC;
 
 extern const dvar_t *cg_chatHeight;
 extern const dvar_t *cg_chatTime;
@@ -406,9 +407,9 @@ void CG_MenuShowNotify(int menuToShow)
         }
         cg->healthFadeTime = cg->time;
         if (CL_GetLocalClientActiveCount() == 1) {
-            menu = Menus_FindByName((displayContextDef_t *)imp_cgDC,(const char *)"Health");
+            menu = Menus_FindByName((&cgDC),(const char *)"Health");
         } else {
-            menu = Menus_FindByName((displayContextDef_t *)imp_cgDC,(const char *)"Health_mp");
+            menu = Menus_FindByName((&cgDC),(const char *)"Health_mp");
         }
         break;
     case 1:
@@ -418,9 +419,9 @@ void CG_MenuShowNotify(int menuToShow)
         }
         cg->ammoFadeTime = cg->time;
         if (CL_GetLocalClientActiveCount() == 1) {
-            menu = Menus_FindByName((displayContextDef_t *)imp_cgDC,(const char *)"weaponinfo");
+            menu = Menus_FindByName((&cgDC),(const char *)"weaponinfo");
         } else {
-            menu = Menus_FindByName((displayContextDef_t *)imp_cgDC,(const char *)"weaponinfo_mp");
+            menu = Menus_FindByName((&cgDC),(const char *)"weaponinfo_mp");
         }
         break;
     case 2:
@@ -429,9 +430,9 @@ void CG_MenuShowNotify(int menuToShow)
         }
         cg->compassFadeTime = cg->time;
         if (CL_GetLocalClientActiveCount() == 1) {
-            menu = Menus_FindByName((displayContextDef_t *)imp_cgDC,(const char *)"Compass");
+            menu = Menus_FindByName((&cgDC),(const char *)"Compass");
         } else {
-            menu = Menus_FindByName((displayContextDef_t *)imp_cgDC,(const char *)"Compass_mp");
+            menu = Menus_FindByName((&cgDC),(const char *)"Compass_mp");
         }
         break;
     case 3:
@@ -440,9 +441,9 @@ void CG_MenuShowNotify(int menuToShow)
         }
         cg->stanceFadeTime = cg->time;
         if (CL_GetLocalClientActiveCount() == 1) {
-            menu = Menus_FindByName((displayContextDef_t *)imp_cgDC,(const char *)"stance");
+            menu = Menus_FindByName((&cgDC),(const char *)"stance");
         } else {
-            menu = Menus_FindByName((displayContextDef_t *)imp_cgDC,(const char *)"stance_mp");
+            menu = Menus_FindByName((&cgDC),(const char *)"stance_mp");
         }
         break;
     case 4:
@@ -451,9 +452,9 @@ void CG_MenuShowNotify(int menuToShow)
         }
         cg->offhandFadeTime = cg->time;
         if (CL_GetLocalClientActiveCount() == 1) {
-            menu = Menus_FindByName((displayContextDef_t *)imp_cgDC,(const char *)"offhandinfo");
+            menu = Menus_FindByName((&cgDC),(const char *)"offhandinfo");
         } else {
-            menu = Menus_FindByName((displayContextDef_t *)imp_cgDC,(const char *)"offhandinfo_mp");
+            menu = Menus_FindByName((&cgDC),(const char *)"offhandinfo_mp");
         }
         break;
     case 5:
@@ -461,7 +462,7 @@ void CG_MenuShowNotify(int menuToShow)
             return;
         }
         cg->scoreFadeTime = cg->time;
-        menu = Menus_FindByName((displayContextDef_t *)imp_cgDC,(const char *)"objectiveinfo");
+        menu = Menus_FindByName((&cgDC),(const char *)"objectiveinfo");
         break;
     default:
         return;

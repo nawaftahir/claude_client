@@ -1,6 +1,8 @@
 #include "common_types.h"
 #include "imports.h"
 #include "bytematch.h"
+extern clientActive_t clients[1];
+extern field_t g_consoleField;
 /* dvar globals */
 extern const dvar_t *cg_hudSayPosition;
 extern const dvar_t *cl_noprint;
@@ -10,7 +12,6 @@ float g_console_char_height = 16.0f;
 extern float ceilf(float x);
 extern float floorf(float x);
 
-extern clientActive_t clients;
 
 extern void Field_Clear(field_t *field);
 extern bool Dvar_GetBool(const char *dvarName);
@@ -99,7 +100,7 @@ static const char *hudMsgIconMaterials[256];
 
 static inline __attribute__((always_inline)) clientActive_t *Con_GetClientActive(void)
 {
-    clientActive_t *cl = *(clientActive_t **)imp_cl;
+    clientActive_t *cl = clients;
 
     return cl ? cl : (clientActive_t *)imp_clients;
 }
@@ -215,17 +216,17 @@ void Con_ToggleConsole_f(void)
     if (con_restricted->current.enabled) {
         if (*(int *)((char *)*(void **)imp_keys + 0x780))
             goto toggle;
-        if (!((*(clientActive_t **)imp_cl)->keyCatchers & 1))
+        if (!((clients)->keyCatchers & 1))
             return;
     }
 toggle:
-    field = (char *)imp_g_consoleField;
+    field = (char *)&g_consoleField;
     Field_Clear((field_t *)(field));
     ((field_t *)field)->widthInPixels = g_console_field_width;
     ((field_t *)field)->charHeight = g_console_char_height;
     ((field_t *)field)->fixedSize = 1;
     con.outputVisible = 0;
-    clients.keyCatchers ^= 1;
+    clients[0].keyCatchers ^= 1;
 }
 
 static void Con_ChatModePublic_f(void)
@@ -238,7 +239,7 @@ static void Con_ChatModePublic_f(void)
     (*field)->widthInPixels = 0x24c;
     (*field)->charHeight = 10.0f;
     (*field)->fixedSize = 0;
-    (*(clientActive_t **)imp_cl)->keyCatchers ^= 0x10;
+    (clients)->keyCatchers ^= 0x10;
 }
 
 static void Con_ChatModeTeam_f(void)
@@ -251,7 +252,7 @@ static void Con_ChatModeTeam_f(void)
     (*field)->widthInPixels = 0x21f;
     (*field)->charHeight = 10.0f;
     (*field)->fixedSize = 0;
-    (*(clientActive_t **)imp_cl)->keyCatchers ^= 0x10;
+    (clients)->keyCatchers ^= 0x10;
 }
 
 void Con_Bottom(void)
@@ -335,7 +336,7 @@ static void Con_UpdateMessageWindowLine_impl(MessageWindow *msgwnd, qboolean lin
 
     line = &msgwnd->lines[msgwnd->current_line];
 
-    serverTime = (*(clientActive_t **)imp_cl)->serverTime;
+    serverTime = (clients)->serverTime;
     line->startTime = serverTime;
 
     line->endTime = duration + serverTime;
@@ -387,7 +388,7 @@ static void Con_UpdateMessageWindowLine_impl(MessageWindow *msgwnd, qboolean lin
 
         endTime = otherLine->endTime;
         fadeout = msgwnd->fadeout;
-        cl_ptr = (char *)*(void **)imp_cl;
+        cl_ptr = (char *)((void *)clients);
         curTime = ((clientActive_t *)cl_ptr)->serverTime;
 
         if (endTime - fadeout > curTime) {
@@ -395,7 +396,7 @@ static void Con_UpdateMessageWindowLine_impl(MessageWindow *msgwnd, qboolean lin
             int lineDuration = endTime - otherLine->startTime;
             otherLine->startTime = fadeout + (curTime - lineDuration);
 
-            otherLine->endTime = (*(clientActive_t **)imp_cl)->serverTime + msgwnd->fadeout;
+            otherLine->endTime = (clients)->serverTime + msgwnd->fadeout;
         }
     }
 }
@@ -528,7 +529,7 @@ static void Con_DrawStringOnHUD(int x, int y, int charHeight, int horzAlign, int
 
 void Con_DrawSay(int y)
 {
-    clientActive_t *cl = *(clientActive_t **)imp_cl;
+    clientActive_t *cl = clients;
     const dvar_t *hudSayPosition;
     const char *label;
     const char *string;
@@ -678,7 +679,7 @@ void Con_Top(void)
 
 Bool Con_IsActive(void)
 {
-    return (*(int *)((char *)*(void **)imp_cl + 4) & 1) != 0;
+    return (*(int *)((char *)((void *)clients) + 4) & 1) != 0;
 }
 
 static void Con_Clear_f(void)
@@ -734,7 +735,7 @@ static MessageLine *Con_MessageLineForIndex(MessageWindow *msgwnd, int lineIndex
 
 static qboolean Con_MessageWindowVisible(void)
 {
-    clientActive_t *cl = *(clientActive_t **)imp_cl;
+    clientActive_t *cl = clients;
 
     if (!cl)
         return 0;
@@ -798,7 +799,7 @@ static qboolean Con_MessageLineAlpha(MessageWindow *msgwnd, MessageLine *line, i
 
 static void Con_DrawMessageWindowTopDown(MessageWindow *msgwnd, int x, int y, int charHeight, int horzAlign, int vertAlign, float alpha, float msgwndScale, qboolean reversed)
 {
-    clientActive_t *cl = *(clientActive_t **)imp_cl;
+    clientActive_t *cl = clients;
     int serverTime = cl ? cl->serverTime : 0;
     int lineIndex;
     int endLine;
@@ -850,7 +851,7 @@ static void Con_DrawMessageWindowTopDown(MessageWindow *msgwnd, int x, int y, in
 
 static void Con_DrawMessageWindowBottomUp(MessageWindow *msgwnd, int x, int y, int charHeight, int horzAlign, int vertAlign, float alpha, float msgwndScale, qboolean centered)
 {
-    clientActive_t *cl = *(clientActive_t **)imp_cl;
+    clientActive_t *cl = clients;
     int serverTime = cl ? cl->serverTime : 0;
     int lineIndex;
     int lineHeight;
@@ -979,7 +980,7 @@ const char *Con_TokenizeInput(void)
     const char *cmd;
     unsigned char first;
 
-    Cmd_TokenizeString((const char *)imp_g_consoleField + 0x18);
+    Cmd_TokenizeString((const char *)&g_consoleField + 0x18);
     cmd = Cmd_Argv(0);
 
     first = (unsigned char)cmd[0];
@@ -996,7 +997,7 @@ const char *Con_TokenizeInput(void)
 
 Bool Con_AnySpaceAfterCommand(void)
 {
-    const char *p = (const char *)imp_g_consoleField;
+    const char *p = (const char *)&g_consoleField;
     int offset = 0;
 
     while (isPunctChar((signed char)p[0x18 + offset]))
@@ -1354,9 +1355,9 @@ void Con_Close(void)
     if (!active)
         return;
 
-    Field_Clear((field_t *)(imp_g_consoleField));
+    Field_Clear((&g_consoleField));
     Con_ClearAllMessageWindows();
-    clients.keyCatchers &= ~1;
+    clients[0].keyCatchers &= ~1;
 }
 
 static inline __attribute__((always_inline)) void ConDrawInput_DrawText(const char *text, int maxChars, const vec_t *color)
@@ -1516,8 +1517,8 @@ static void ConDrawInput_DetailedCmdMatch(const char *str)
 
 static BM_NOINLINE void Con_DrawInput(void)
 {
-    clientActive_t *cl = *(clientActive_t **)imp_cl;
-    field_t *consoleField = (field_t *)imp_g_consoleField;
+    clientActive_t *cl = clients;
+    field_t *consoleField = (&g_consoleField);
     FontHandle font;
     const char *prompt;
     const char *cmd;
@@ -1591,7 +1592,7 @@ static BM_NOINLINE void Con_DrawInput(void)
 void Con_DrawConsole(void)
 {
     Con_CheckResize();
-    if (!((*(clientActive_t **)imp_cl)->keyCatchers & 1))
+    if (!((clients)->keyCatchers & 1))
         return;
     if (con.outputVisible)
         Con_DrawOuputWindow();
@@ -1606,7 +1607,7 @@ void Con_Init(void)
 
     con_restricted = Dvar_RegisterBool_mac("con_restricted", 0, 0x1001);
 
-    consoleField = (field_t *)imp_g_consoleField;
+    consoleField = (&g_consoleField);
     Field_Clear((field_t *)(consoleField));
     consoleField->widthInPixels = g_console_field_width;
     consoleField->charHeight = g_console_char_height;
@@ -2153,7 +2154,7 @@ void Con_Init(void)
 
     con_restricted = Dvar_RegisterBool_mac("con_restricted", 0, 0x1001);
 
-    consoleField = (field_t *)imp_g_consoleField;
+    consoleField = (&g_consoleField);
     Field_Clear((field_t *)(consoleField));
     consoleField->widthInPixels = g_console_field_width;
     consoleField->charHeight = g_console_char_height;
@@ -2188,7 +2189,7 @@ void Con_Close(void)
     if (!legacyHacks[1])
         return;
 
-    Field_Clear((field_t *)(imp_g_consoleField));
+    Field_Clear((&g_consoleField));
     Con_ClearAllMessageWindows();
     Con_GetClientActive()->keyCatchers &= ~1;
 }

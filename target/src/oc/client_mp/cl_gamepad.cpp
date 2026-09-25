@@ -18,11 +18,11 @@ extern dvar_t *Dvar_RegisterFloat(const char *dvarName, float value, float min, 
 extern void Cmd_AddCommand(const char *cmd, void (*func)(void));
 extern void Com_Printf(const char *fmt, ...);
 
-extern void *imp_cl;
+extern clientActive_t clients[1];
 
 static int Gamepad_KeyCatchers(void)
 {
-    clientActive_t *cl = imp_cl ? *(clientActive_t **)imp_cl : NULL;
+    clientActive_t *cl = clients;
     return cl ? cl->keyCatchers : 0;
 }
 

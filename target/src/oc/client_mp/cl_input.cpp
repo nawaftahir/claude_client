@@ -3,6 +3,8 @@
 #include "bytematch.h"
 #include "cod2_feature_config.h"
 #include <math.h>
+extern clientActive_t clients[1];
+extern clientConnection_t clientConnections[1];
 /* dvar globals */
 extern LegacyHacks *legacyHacks;
 extern const dvar_t *cl_nodelta;
@@ -318,7 +320,7 @@ void IN_MLookDown(void)
 
 void IN_CenterView(void)
 {
-    clientActive_t *cl = *(clientActive_t **)imp_cl;
+    clientActive_t *cl = clients;
     cl->viewangles[0] = (float)cl->snap.ps.delta_angles[0] * -0.0054931640625f;
 }
 
@@ -661,7 +663,7 @@ void IN_Stance_Down(void)
         return;
     }
 
-    cl = *(clientActive_t **)imp_cl;
+    cl = clients;
     cl->stanceHeld = 1;
     cl->stancePosition = legacyHacks->cl_stance;
     cl->stanceTime = *(int *)imp_com_frameTime;
@@ -672,27 +674,25 @@ void IN_Stance_Down(void)
 
 void IN_Stance_Up(void)
 {
-    clientActive_t **clp;
     clientActive_t *ptr;
     if (kb[25].active || kb[11].active )
         return;
-    clp = (clientActive_t **)imp_cl;
-    ptr = *clp;
+    ptr = clients;
     if (ptr->stanceHeld && ptr->stancePosition == 1) {
         legacyHacks->cl_stance = 0;
     }
-    (*clp)->stanceHeld = 0;
+    ptr->stanceHeld = 0;
 }
 
 void IN_ToggleADS(void)
 {
-    clientActive_t *p = *(clientActive_t **)imp_cl;
+    clientActive_t *p = clients;
     p->usingAds = (p->usingAds == 0) ? 1 : 0;
 }
 
 void IN_LeaveADS(void)
 {
-    (*(clientActive_t **)imp_cl)->usingAds = 0;
+    (clients)->usingAds = 0;
 }
 
 void IN_LowerStance(void)
@@ -791,7 +791,7 @@ Bool IsTalking(void)
 
 void CL_MouseEvent(const int dx_in, const int dy_in)
 {
-    clientActive_t *ptr = *(clientActive_t **)imp_cl;
+    clientActive_t *ptr = clients;
     int dx = dx_in, dy = dy_in;
     int index;
     if (!(ptr->keyCatchers & 8) || cl_bypassMouseInput->current.enabled) {
@@ -805,7 +805,7 @@ void CL_MouseEvent(const int dx_in, const int dy_in)
 
 void CL_MouseEventAbsolute(const int x, const int y, const int dx_in, const int dy_in)
 {
-    clientActive_t *ptr = *(clientActive_t **)imp_cl;
+    clientActive_t *ptr = clients;
     int dx = dx_in, dy = dy_in;
     int index;
 
@@ -826,7 +826,7 @@ void CL_WriteVoicePacket(void)
     byte data[MAX_MSGLEN];
     int voicePacket;
 
-    clc = *(clientConnection_t **)imp_clc;
+    clc = clientConnections;
     if (clc->demoplaying || (clc->state != CA_ACTIVE && clc->state != CA_LOADING)) {
         return;
     }
@@ -835,7 +835,7 @@ void CL_WriteVoicePacket(void)
     MSG_WriteString(&msg, (const char *)"v");
     MSG_WriteShort(&msg, clc->qport);
 
-    cl = *(clientActive_t **)imp_cl;
+    cl = clients;
     MSG_WriteByte(&msg, (byte)cl->voicePacketCount);
 
     for (voicePacket = 0; voicePacket < cl->voicePacketCount; ++voicePacket) {
@@ -847,7 +847,7 @@ void CL_WriteVoicePacket(void)
         Com_Printf((const char *)"voice: %i\n", msg.cursize);
     }
 
-    clc = *(clientConnection_t **)imp_clc;
+    clc = clientConnections;
     NET_OutOfBandVoiceData(clc->netchan.sock, clc->serverAddress, msg.data, msg.cursize);
 }
 
@@ -864,14 +864,14 @@ void CL_WritePacket(void)
     int key;
     usercmd_t *lastCmd;
 
-    clc_ptr = *(clientConnection_t **)imp_clc;
+    clc_ptr = clientConnections;
 
     if (clc_ptr->demoplaying)
         return;
     if (clc_ptr->state == 1 || clc_ptr->state == 2)
         return;
 
-    cl_ptr = *(clientActive_t **)imp_cl;
+    cl_ptr = clients;
 
     MSG_SetDefaultUserCmd(&cl_ptr->snap.ps, &nullcmd);
 
@@ -898,7 +898,7 @@ void CL_WritePacket(void)
     }
 
     {
-        clientActive_t *cl2 = *(clientActive_t **)imp_cl;
+        clientActive_t *cl2 = clients;
         const dvar_t *packetdup = cl_packetdup;
         int cmdNum = clc_ptr->netchan.outgoingSequence;
         int dupIdx = (cmdNum - packetdup->current.integer - 1) & 0x1f;
@@ -924,13 +924,13 @@ void CL_WritePacket(void)
 
     {
         const dvar_t *nodelta = cl_nodelta;
-        clientActive_t *cl3 = *(clientActive_t **)imp_cl;
+        clientActive_t *cl3 = clients;
         int snap = cl3->snap.valid;
 
         if (nodelta->current.enabled || !snap) {
             goto write_nodelta;
         } else {
-            clientConnection_t *clc2 = *(clientConnection_t **)imp_clc;
+            clientConnection_t *clc2 = clientConnections;
             if (clc2->demowaiting || clc2->serverMessageSequence != cl3->snap.messageNum) {
                 goto write_nodelta;
             }
@@ -948,7 +948,7 @@ write_cmdcount:
     MSG_WriteByte(&buf, compressedSize);
 
     {
-        clientConnection_t *clc3 = *(clientConnection_t **)imp_clc;
+        clientConnection_t *clc3 = clientConnections;
         key = clc3->serverMessageSequence;
         key ^= clc3->checksumFeed;
         {
@@ -958,7 +958,7 @@ write_cmdcount:
 
     if (compressedSize > 0) {
         usercmd_t *prevCmd = &nullcmd;
-        clientActive_t *cl4 = *(clientActive_t **)imp_cl;
+        clientActive_t *cl4 = clients;
         for (i = 0; i != compressedSize; i++) {
             int idx = (cl4->cmdNumber - compressedSize + 1 + i) & 0x7f;
 
@@ -982,8 +982,8 @@ write_footer:
     }
 
     {
-        clientConnection_t *clc4 = *(clientConnection_t **)imp_clc;
-        clientActive_t *cl5 = *(clientActive_t **)imp_cl;
+        clientConnection_t *clc4 = clientConnections;
+        clientActive_t *cl5 = clients;
         int slot = clc4->netchan.outgoingSequence & 0x1f;
 
         cl5->outPackets[slot].p_realtime = cls.realtime;
@@ -1003,7 +1003,7 @@ write_footer:
         if (clc4->netchan.unsentFragments) {
             do {
                 CL_Netchan_TransmitNextFragment(&clc4->netchan);
-            } while ((*(clientConnection_t **)imp_clc)->netchan.unsentFragments);
+            } while ((clientConnections)->netchan.unsentFragments);
         }
     }
 }
@@ -1171,7 +1171,7 @@ void CL_ShutdownInput(void)
 
 void CL_CmdButtons(usercmd_t *cmd)
 {
-    clientActive_t **clp = (clientActive_t **)imp_cl;
+    clientActive_t *cl_ = clients;
 #define KB_AT(index) (&kb[(index)])
 #define CONSUME(index, bit)                          \
     do {                                             \
@@ -1197,15 +1197,15 @@ void CL_CmdButtons(usercmd_t *cmd)
     CONSUME(26, 0x200);
     CONSUME(10, 0x400);
 
-    if ((*clp)->keyCatchers && !cl_bypassMouseInput->current.enabled) {
+    if (cl_->keyCatchers && !cl_bypassMouseInput->current.enabled) {
         cmd->buttons |= 0x40000;
     }
 
-    if ((int)((*clp)->snap.ps.pm_type - 2) <= 2 && CL_ConsumeButtonPress(KB_AT(12))) {
+    if ((int)(cl_->snap.ps.pm_type - 2) <= 2 && CL_ConsumeButtonPress(KB_AT(12))) {
         cmd->buttons |= 0x400;
     }
 
-    if ((*clp)->cgameInShellshock) {
+    if (cl_->cgameInShellshock) {
         cmd->buttons |= 0x800;
     }
 
@@ -1229,7 +1229,7 @@ void CL_MouseMove(usercmd_t *cmd)
 
 #define KB_AT(index) (&kb[(index)])
 
-    cl = *(clientActive_t **)imp_cl;
+    cl = clients;
     if (m_filter->current.enabled) {
         mx = (float)(cl->mouseDx[0] + cl->mouseDx[1]) * 0.5f;
         my = (float)(cl->mouseDy[0] + cl->mouseDy[1]) * 0.5f;
@@ -1346,7 +1346,7 @@ void IN_MLookUp(void)
 {
     kb[13].active = 0;
     if ((cl_freelook)->current.enabled == 0) {
-        clientActive_t *cl = *(clientActive_t **)imp_cl;
+        clientActive_t *cl = clients;
         cl->viewangles[0] = (float)cl->snap.ps.delta_angles[0] * -0.0054931640625f;
     }
 }
@@ -1364,17 +1364,17 @@ void CL_AdjustAngles(void)
     }
 
     if (!KB_AT(8)->active) {
-        cl = *(clientActive_t **)imp_cl;
+        cl = clients;
         cl->viewangles[1] -= CL_KeyState(KB_AT(1)) * (speed * cl_yawspeed->current.value);
 
-        cl = *(clientActive_t **)imp_cl;
+        cl = clients;
         cl->viewangles[1] += CL_KeyState(KB_AT(0)) * (speed * cl_yawspeed->current.value);
     }
 
-    cl = *(clientActive_t **)imp_cl;
+    cl = clients;
     cl->viewangles[0] -= CL_KeyState(KB_AT(4)) * (speed * cl_pitchspeed->current.value);
 
-    cl = *(clientActive_t **)imp_cl;
+    cl = clients;
     cl->viewangles[0] += CL_KeyState(KB_AT(5)) * (speed * cl_pitchspeed->current.value);
 
 #undef KB_AT
@@ -1389,7 +1389,7 @@ void CL_KeyMove(usercmd_t *cmd)
 
 #define KB_AT(index) (&kb[(index)])
 
-    cl = *(clientActive_t **)imp_cl;
+    cl = clients;
 
     (void)cl;
 
@@ -1438,7 +1438,7 @@ usercmd_t CL_CreateCmd(void)
     int currentCmdTime;
     int i;
 
-    cl = *(clientActive_t **)imp_cl;
+    cl = clients;
     oldPitch = cl->viewangles[0];
 
     CL_AdjustAngles();
@@ -1479,9 +1479,9 @@ void CL_SendCmdInternal(void)
     outPacket_t *outPacket;
     int connectElapsed;
 
-    clc = *(clientConnection_t **)imp_clc;
+    clc = clientConnections;
     if (clc->state > CA_LOADING) {
-        cl = *(clientActive_t **)imp_cl;
+        cl = clients;
         ++cl->cmdNumber;
         cl->cmds[cl->cmdNumber & 127] = CL_CreateCmd();
     }
@@ -1506,7 +1506,7 @@ void CL_SendCmdInternal(void)
         return;
     }
 
-    cl = *(clientActive_t **)imp_cl;
+    cl = clients;
     outPacket = &cl->outPackets[(clc->netchan.outgoingSequence - 1) & 31];
     if (cls.realtime - outPacket->p_realtime >= 1000 / cl_maxpackets->current.integer) {
         CL_WritePacket();
@@ -1521,7 +1521,7 @@ not_ready:
 
 void CL_Input(void)
 {
-    if ((*(clientConnection_t **)imp_clc)->state != 8)
+    if ((clientConnections)->state != 8)
         return;
     CL_SyncGpu();
     CL_SendCmdInternal();
@@ -1529,7 +1529,7 @@ void CL_Input(void)
 
 void CL_SendCmd(void)
 {
-    int state = (*(clientConnection_t **)imp_clc)->state;
+    int state = (clientConnections)->state;
     if (state <= 4 || state == 8)
         return;
     CL_SendCmdInternal();

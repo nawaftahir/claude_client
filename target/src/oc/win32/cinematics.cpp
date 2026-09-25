@@ -1,12 +1,14 @@
 #include "common_types.h"
 #include "imports.h"
+extern snd_local_t g_snd;
+extern clientConnection_t clientConnections[1];
 extern clientStatic_t cls;
 
 /* imp_clc holds the address of the `clc` POINTER, not of the connection itself, so
    reaching the connection state needs two indirections -- the same form the rest of the
-   client code uses (`*(clientConnection_t **)imp_clc`). Treating imp_clc as if it pointed
+   client code uses (`clientConnections`). Treating imp_clc as if it pointed
    straight at the connection would read and, worse, WRITE the clc pointer itself. */
-#define CLC_CONN ((clientConnection_t *)*(void **)imp_clc)
+#define CLC_CONN (clientConnections)
 
 extern const dvar_t *nextmap;
 extern const dvar_t *cl_inGameVideo;
@@ -71,7 +73,7 @@ void ROQ_PlayCinematic_f(void);
 
 static qboolean ROQ_SoundEnabled(void)
 {
-    byte *sndGlob = (byte *)(snd_local_t *)imp_g_snd;
+    byte *sndGlob = (byte *)&g_snd;
     return sndGlob != NULL && *sndGlob != 0;
 }
 
@@ -740,7 +742,7 @@ void ROQ_DrawCinematicFromHandle(int handle)
     aspect = (float)cinTable[handle].width / (float)cinTable[handle].height;
     CL_LookupColor(0x30, clearColor);
 
-    cls = (clientStatic_t *)imp_cls;
+    cls = (&::cls);
     screenAspect = cls->vidConfig.aspectRatioWindow;
 
     if (aspect == screenAspect) {
@@ -779,7 +781,7 @@ void ROQ_DrawCinematicFromHandle(int handle)
 
     if (cinTable[handle].letterBox) {
 
-        cls = (clientStatic_t *)imp_cls;
+        cls = (&::cls);
         barSize = (float)cls->vidConfig.height / 480.0f * 105.0f;
         barSizeCeil = (int)ceilf(barSize);
         xf = (float)x;

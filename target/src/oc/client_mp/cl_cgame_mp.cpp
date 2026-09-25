@@ -5,6 +5,8 @@
 #    include <mmintrin.h>
 #endif
 #include <string.h>
+extern clientConnection_t clientConnections[1];
+extern clientStatic_t cls;
 extern const dvar_t *cl_activeAction;
 /* dvar globals */
 extern const dvar_t *cl_showServerCommands;
@@ -105,9 +107,9 @@ extern const vec4_t g_color_table[];
 extern clientActive_t clients[1];
 
 #define RE (&re)
-#define CLS ((clientStatic_t *)imp_cls)
-#define CL_LOCAL ((clientActive_t *)*(void **)imp_cl)
-#define CLUI_STATE ((clientConnection_t *)*(void **)imp_clc)
+#define CLS ((&::cls))
+#define CL_LOCAL ((clientActive_t *)((void *)clients))
+#define CLUI_STATE (clientConnections)
 
 static const dvar_t *CL_DvarFromImport(void *importPtr)
 {
