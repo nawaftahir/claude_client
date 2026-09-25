@@ -46,7 +46,7 @@ extern qboolean CL_DObjCreateSkelForBone(struct DObj_s *obj, int boneIndex, int 
 extern qboolean CL_DObjCreateSkelForBones(const struct DObj_s *obj, int *partBits, int localClientNum);
 extern DObjAnimMat* DObjGetRotTransArray(const DObj_s *obj);
 extern void DObjGetHierarchyBits(struct DObj_s *obj, int boneIndex, int *partBits);
-extern void DObjCompleteHierarchyBits(const struct DObj_s *obj, int *partBits);
+extern void DObjCompleteHierarchyBits(DObj_s *obj, int *partBits);
 extern void DObjCalcAnim(const DObj *obj, int *partBits);
 extern void DObjCalcSkel(const DObj *obj, int *partBits);
 extern void AxisCopy( const vec3_t in[3], vec3_t out[3] );
@@ -563,7 +563,7 @@ void CG_DObjCalcPose(const centity_t *cent, const struct DObj_s *obj, int *partB
     completePartBits[2] = partBits[2];
     completePartBits[3] = partBits[3];
 
-    DObjCompleteHierarchyBits(obj, completePartBits);
+    DObjCompleteHierarchyBits((DObj_s *)obj, completePartBits);
     if (CL_DObjCreateSkelForBones(obj, completePartBits, cent->localClientNum))
         return;
 

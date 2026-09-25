@@ -19,7 +19,7 @@ static char menuBuf1[4096];
 void UI_MapLoadInfo(const char *filename);
 void PC_SourceError(int handle, char *format, ...);
 qboolean PC_Script_Parse(int handle, const char **out);
-void Window_SetStaticFlags(void *item, int flags);
+void Window_SetStaticFlags(Window *w, const int flags);
 void Window_SetDynamicFlags(Window *w, const int flags);
 qboolean PC_ReadTokenHandle(int handle, void *token);
 int PC_ReadLineHandle(int handle, pc_token_t *pc_token);
@@ -49,7 +49,7 @@ extern void Com_SetCSV(int csv);
 extern char *Com_ParseOnLine( const char *( *data_p ) );
 extern int Com_sprintf(char *dest, size_t size, const char *format, ...);
 extern MaterialHandle CL_Material_Duplicate(MaterialHandle mtlCopy, const char *name);
-void Window_SetRect(menuDef_t *menu, rectDef_t *rect);
+void Window_SetRect(Window *w, const UiRectangle *rect);
 void Menu_UpdatePosition(menuDef_t *menu);
 void Item_InitControls(const char (*item)[4]);
 qboolean MenuParse_onOpen(const char (*item)[4], int handle);
@@ -578,7 +578,7 @@ qboolean ItemParse_noScrollBars(const char (*item)[4], int handle)
 
 qboolean ItemParse_horizontalscroll(const char (*item)[4], int handle)
 {
-    Window_SetStaticFlags((void *)item, ((itemDef_t *)item)->window.staticFlags | 0x200000);
+    Window_SetStaticFlags((Window *)((void *)item), ((itemDef_t *)item)->window.staticFlags | 0x200000);
     return 1;
 }
 
@@ -754,44 +754,44 @@ void Menu_PostParse(menuDef_t *menu)
         rect.y = 0.0f;
         rect.w = 640.0f;
         rect.h = 480.0f;
-        Window_SetRect(menu, &rect);
+        Window_SetRect((Window *)menu, &rect);
     }
     Menu_UpdatePosition(menu);
 }
 
 qboolean MenuParse_popup(const char (*item)[4], int handle)
 {
-    Window_SetStaticFlags((void *)item, ((itemDef_t *)item)->window.staticFlags | 0x1000000);
+    Window_SetStaticFlags((Window *)((void *)item), ((itemDef_t *)item)->window.staticFlags | 0x1000000);
     return 1;
 }
 
 qboolean MenuParse_outOfBounds(const char (*item)[4], int handle)
 {
-    Window_SetStaticFlags((void *)item, ((itemDef_t *)item)->window.staticFlags | 0x2000000);
+    Window_SetStaticFlags((Window *)((void *)item), ((itemDef_t *)item)->window.staticFlags | 0x2000000);
     return 1;
 }
 
 qboolean MenuParse_legacySplitScreenScale(const char (*item)[4], int handle)
 {
-    Window_SetStaticFlags((void *)item, ((itemDef_t *)item)->window.staticFlags | 0x4000000);
+    Window_SetStaticFlags((Window *)((void *)item), ((itemDef_t *)item)->window.staticFlags | 0x4000000);
     return 1;
 }
 
 qboolean ItemParse_decoration(const char (*item)[4], int handle)
 {
-    Window_SetStaticFlags((void *)item, ((itemDef_t *)item)->window.staticFlags | 0x100000);
+    Window_SetStaticFlags((Window *)((void *)item), ((itemDef_t *)item)->window.staticFlags | 0x100000);
     return 1;
 }
 
 qboolean ItemParse_wrapped(const char (*item)[4], int handle)
 {
-    Window_SetStaticFlags((void *)item, ((itemDef_t *)item)->window.staticFlags | 0x400000);
+    Window_SetStaticFlags((Window *)((void *)item), ((itemDef_t *)item)->window.staticFlags | 0x400000);
     return 1;
 }
 
 qboolean ItemParse_autowrapped(const char (*item)[4], int handle)
 {
-    Window_SetStaticFlags((void *)item, ((itemDef_t *)item)->window.staticFlags | 0x800000);
+    Window_SetStaticFlags((Window *)((void *)item), ((itemDef_t *)item)->window.staticFlags | 0x800000);
     return 1;
 }
 
@@ -1226,7 +1226,7 @@ qboolean MenuParse_rect(const char (*item)[4], int handle)
     if (!PC_Rect_Parse(handle, &rect))
         return 0;
 
-    Window_SetRect((menuDef_t *)item, &rect);
+    Window_SetRect((Window *)((menuDef_t *)item), &rect);
     return 1;
 }
 

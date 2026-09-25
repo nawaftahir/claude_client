@@ -301,7 +301,7 @@ int Item_GetCursorPosOffset(const itemDef_t *item, const char *text, int delta);
 void ListBox_SetCursorPos(listBoxDef_t *listBox, int cursorPos);
 void ListBox_SetStartPos(listBoxDef_t *listBox, int startPos);
 void ListBox_SetEndPos(listBoxDef_t *listBox, int endPos);
-Bool ListBox_HasValidCursorPos(const listBoxDef_t *listBox);
+qboolean ListBox_HasValidCursorPos(const listBoxDef_t *listBox);
 void Window_AddDynamicFlags(Window *w, const int newFlags);
 void Window_RemoveDynamicFlags(Window *w, const int newFlags);
 editFieldDef_t *Item_GetEditFieldDef(itemDef_t *item);

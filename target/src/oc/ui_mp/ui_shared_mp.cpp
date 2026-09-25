@@ -65,7 +65,7 @@ extern const char *UI_SafeTranslateString(const char *key);
 extern int UI_OwnerDrawWidth(int ownerDraw, float scale);
 extern qboolean UI_OwnerDrawVisible(int flags);
 extern void UI_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAlign, float text_x, float text_y, int ownerDraw, int ownerDrawFlags, int align, float special, FontHandle font, float scale, vec_t *color, MaterialHandle shader, int textStyle);
-extern qboolean UI_OwnerDrawHandleKey(int ownerDraw, int flags, int *special, int key);
+extern qboolean UI_OwnerDrawHandleKey(int ownerDraw, int flags, float *special, int key);
 extern int UI_FeederCount(float feederID);
 extern MaterialHandle UI_FeederItemImage(const float feederID, int index);
 extern const char *UI_FeederItemText(float feederID, int index, int column, MaterialHandle *handle);
@@ -99,16 +99,16 @@ extern void Item_SetCursorPos(itemDef_t *item, int cursorPos);
 extern void Item_SetScreenCoords(itemDef_t *item, float x, float y, int horzAlign, int vertAlign);
 extern void Item_SetTextRect(itemDef_t *item, const rectDef_t *textRect);
 extern void Item_SetupKeywordHash(void);
-extern qboolean ListBox_HasValidCursorPos(itemDef_t *item);
-extern void ListBox_SetCursorPos(itemDef_t *item, int cursorPos);
-extern void ListBox_SetEndPos(itemDef_t *item, int endPos);
-extern void ListBox_SetStartPos(itemDef_t *item, int startPos);
+extern qboolean ListBox_HasValidCursorPos(const listBoxDef_t *listBox);
+extern void ListBox_SetCursorPos(listBoxDef_t *listBox, int cursorPos);
+extern void ListBox_SetEndPos(listBoxDef_t *listBox, int endPos);
+extern void ListBox_SetStartPos(listBoxDef_t *listBox, int startPos);
 extern void Menu_SetCursorItem(menuDef_t *menu, int cursorItem);
 extern void Menu_SetupKeywordHash(void);
 extern void Menu_UpdatePosition(menuDef_t *menu);
-extern void Window_AddDynamicFlags(itemDef_t *item, int flags);
-extern void Window_RemoveDynamicFlags(itemDef_t *item, int flags);
-extern void Window_SetDynamicFlags(itemDef_t *item, int flags);
+extern void Window_AddDynamicFlags(Window *w, const int newFlags);
+extern void Window_RemoveDynamicFlags(Window *w, const int newFlags);
+extern void Window_SetDynamicFlags(Window *w, const int flags);
 extern void Window_SetOffsetTime(Window *w, int offsetTime);
 extern void Window_SetRect(Window *w, const UiRectangle *rect);
 extern void Window_SetRectClient(Window *w, const UiRectangle *rectClient);
@@ -384,10 +384,10 @@ void Script_SetColor(displayContextDef_t *dc, itemDef_t *item, const char **args
 
     if (I_stricmp(name, "backcolor") == 0) {
         out = item->window.backColor;
-        Window_AddDynamicFlags( (itemDef_t *)((void *)item), 0x8000);
+        Window_AddDynamicFlags( (Window *)((itemDef_t *)((void *)item)), 0x8000);
     } else if (I_stricmp(name, "forecolor") == 0) {
         out = item->window.foreColor;
-        Window_AddDynamicFlags( (itemDef_t *)((void *)item), 0x10000);
+        Window_AddDynamicFlags( (Window *)((itemDef_t *)((void *)item)), 0x10000);
     } else if (I_stricmp(name, "bordercolor") == 0) {
         out = item->window.borderColor;
     }
@@ -422,9 +422,9 @@ void Menu_ShowItemByName(menuDef_t *menu, const char *p, qboolean bShow)
         if (!item)
             continue;
         if (bShow) {
-            Window_AddDynamicFlags( (itemDef_t *)((void *)item), 4);
+            Window_AddDynamicFlags( (Window *)((itemDef_t *)((void *)item)), 4);
         } else {
-            Window_RemoveDynamicFlags( (itemDef_t *)((void *)item), 4);
+            Window_RemoveDynamicFlags( (Window *)((itemDef_t *)((void *)item)), 4);
             int cinHandle = ((itemDef_t *)item)->window.cinematic;
             if (cinHandle >= 0) {
                 CIN_StopCinematic(cinHandle);
@@ -443,11 +443,11 @@ void Menu_FadeItemByName(menuDef_t *menu, const char *p, qboolean fadeOut)
         if (!item)
             continue;
         if (fadeOut) {
-            Window_AddDynamicFlags( (itemDef_t *)((void *)item), 0x14);
-            Window_RemoveDynamicFlags( (itemDef_t *)((void *)item), 0x20);
+            Window_AddDynamicFlags( (Window *)((itemDef_t *)((void *)item)), 0x14);
+            Window_RemoveDynamicFlags( (Window *)((itemDef_t *)((void *)item)), 0x20);
         } else {
-            Window_AddDynamicFlags( (itemDef_t *)((void *)item), 0x24);
-            Window_RemoveDynamicFlags( (itemDef_t *)((void *)item), 0x10);
+            Window_AddDynamicFlags( (Window *)((itemDef_t *)((void *)item)), 0x24);
+            Window_RemoveDynamicFlags( (Window *)((itemDef_t *)((void *)item)), 0x10);
         }
     }
 }
@@ -891,11 +891,11 @@ void Item_MouseLeave(displayContextDef_t *dc, itemDef_t *item)
     if ((*(byte *)&((itemDef_t *)it)->window.dynamicFlags[0]) & 0x40) {
 
         Item_RunScript(dc, item, ((itemDef_t *)it)->mouseExitText);
-        Window_RemoveDynamicFlags( (itemDef_t *)((void *)item), 0x40);
+        Window_RemoveDynamicFlags( (Window *)((itemDef_t *)((void *)item)), 0x40);
     }
 
     Item_RunScript(dc, item, ((itemDef_t *)it)->mouseExit);
-    Window_RemoveDynamicFlags( (itemDef_t *)((void *)item), 0x300);
+    Window_RemoveDynamicFlags( (Window *)((itemDef_t *)((void *)item)), 0x300);
 }
 
 float Item_Slider_ThumbPosition(itemDef_t *item)
@@ -1164,13 +1164,13 @@ void Menus_Close(displayContextDef_t *dc, menuDef_t *menu)
         for (i = menuNum; i >= 0; i--) {
             byte *m = *(byte **)((char *)&((displayContextDef_s *)d)->menuStack[i]);
             if ((*(byte *)&((menuDef_t *)m)->window.dynamicFlags[0]) & 4) {
-                Window_AddDynamicFlags( (itemDef_t *)((void *)m), 2);
+                Window_AddDynamicFlags( (Window *)((itemDef_t *)((void *)m)), 2);
                 break;
             }
         }
     }
 
-    Window_RemoveDynamicFlags( (itemDef_t *)((void *)menu), 6);
+    Window_RemoveDynamicFlags( (Window *)((itemDef_t *)((void *)menu)), 6);
 }
 
 void Menus_CloseAll(displayContextDef_t *dc)
@@ -1521,7 +1521,7 @@ void Item_ListBox_Paint(displayContextDef_t *dc, itemDef_t *item)
             thumbX, hy_bottom, 16.0f, 16.0f,
             horzAlign, vertAlign, 0, ((sharedUiInfo_t*)uiInfo)->assets.scrollBarThumb);
 
-        ListBox_SetEndPos( (itemDef_t *)((void *)listPtr), *(int *)listPtr);
+        ListBox_SetEndPos( (listBoxDef_t *)((itemDef_t *)((void *)listPtr)), *(int *)listPtr);
 
         float size = (((rectDef_t*)(it))->w) - 2.0f;
 
@@ -1560,7 +1560,7 @@ void Item_ListBox_Paint(displayContextDef_t *dc, itemDef_t *item)
             }
 
             x += (((listBoxDef_s*)(listPtr))->elementWidth);
-            ListBox_SetEndPos( (itemDef_t *)((void *)listPtr), (((listBoxDef_s*)(listPtr))->endPos[0]) + 1);
+            ListBox_SetEndPos( (listBoxDef_t *)((itemDef_t *)((void *)listPtr)), (((listBoxDef_s*)(listPtr))->endPos[0]) + 1);
             i++;
         }
         return;
@@ -1585,7 +1585,7 @@ void Item_ListBox_Paint(displayContextDef_t *dc, itemDef_t *item)
 
         float trackY = scrollY + 15.0f;
 
-        ListBox_SetEndPos( (itemDef_t *)((void *)listPtr), *(int *)listPtr);
+        ListBox_SetEndPos( (listBoxDef_t *)((itemDef_t *)((void *)listPtr)), *(int *)listPtr);
 
         float trackH = (((rectDef_t*)(it))->h) - 32.0f;
         UI_DrawHandlePic(
@@ -1641,7 +1641,7 @@ void Item_ListBox_Paint(displayContextDef_t *dc, itemDef_t *item)
                             ((itemDef_t *)it)->window.borderColor);
             }
 
-            ListBox_SetEndPos( (itemDef_t *)((void *)listPtr), (((listBoxDef_s*)(listPtr))->endPos[0]) + 1);
+            ListBox_SetEndPos( (listBoxDef_t *)((itemDef_t *)((void *)listPtr)), (((listBoxDef_s*)(listPtr))->endPos[0]) + 1);
             sizeH -= (((listBoxDef_s*)(listPtr))->elementWidth);
             if ((((listBoxDef_s*)(listPtr))->elementHeight) > sizeH) {
                 (((listBoxDef_s*)(listPtr))->drawPadding) = (int)((((listBoxDef_s*)(listPtr))->elementHeight) - sizeH);
@@ -1742,7 +1742,7 @@ void Item_ListBox_Paint(displayContextDef_t *dc, itemDef_t *item)
                 return;
             }
 
-            ListBox_SetEndPos( (itemDef_t *)((void *)listPtr), (((listBoxDef_s*)(listPtr))->endPos[0]) + 1);
+            ListBox_SetEndPos( (listBoxDef_t *)((itemDef_t *)((void *)listPtr)), (((listBoxDef_s*)(listPtr))->endPos[0]) + 1);
             y += (((listBoxDef_s*)(listPtr))->elementHeight);
 
             i++;
@@ -1784,7 +1784,7 @@ void Script_SetItemColor(displayContextDef_t *dc, itemDef_t *item, const char **
             out = (float *)(item2 + 0x1dc);
         } else if (I_stricmp(name, "forecolor") == 0) {
             out = (float *)(item2 + 0x1cc);
-            Window_AddDynamicFlags( (itemDef_t *)((void *)item2), 0x10000);
+            Window_AddDynamicFlags( (Window *)((itemDef_t *)((void *)item2)), 0x10000);
         } else if (I_stricmp(name, "bordercolor") == 0) {
             out = (float *)(item2 + 0x1ec);
         }
@@ -1877,7 +1877,7 @@ void Window_Paint(displayContextDef_t *dc, float (*w_param)[4][32], float fadeAm
                     }
                 }
 
-                Window_SetDynamicFlags((itemDef_t *)w, dynFlags);
+                Window_SetDynamicFlags((Window *)((itemDef_t *)w), dynFlags);
             }
 
             UI_DrawHandlePic(
@@ -2064,10 +2064,10 @@ void Menu_SetFeederSelection(displayContextDef_t *dc, menuDef_t *menu, int feede
             continue;
 
         if (index == 0) {
-            ListBox_SetCursorPos((itemDef_t *)listPtr, 0);
-            ListBox_SetStartPos((itemDef_t *)listPtr, 0);
+            ListBox_SetCursorPos((listBoxDef_t *)((itemDef_t *)listPtr), 0);
+            ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), 0);
         } else if (index < *(int *)listPtr) {
-            ListBox_SetStartPos((itemDef_t *)listPtr, index);
+            ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), index);
         }
     }
 }
@@ -2092,7 +2092,7 @@ void Menu_TransitionItemByName(menuDef_t *menu, const char *p, rectDef_t rectFro
         if (!item)
             continue;
 
-        Window_AddDynamicFlags( (itemDef_t *)((void *)item), 0x84);
+        Window_AddDynamicFlags( (Window *)((itemDef_t *)((void *)item)), 0x84);
         Window_SetOffsetTime( (Window *)((itemDef_t *)item), time);
         Window_SetRectClient( (Window *)(item), &rectFrom);
         Window_SetRectEffects0((Window *)item, &rectTo);
@@ -2155,7 +2155,7 @@ void Menu_OrbitItemByName(menuDef_t *menu, const char *p, float x, float y, floa
         if (!item)
             continue;
 
-        Window_AddDynamicFlags( (itemDef_t *)((void *)item), 0x2004);
+        Window_AddDynamicFlags( (Window *)((itemDef_t *)((void *)item)), 0x2004);
         Window_SetOffsetTime( (Window *)((itemDef_t *)item), time);
 
         rectDef_t newRect;
@@ -2246,7 +2246,7 @@ void Menus_Open(displayContextDef_t *dc, menuDef_t *menu)
 
     openCount = (((displayContextDef_s*)(d))->openMenuCount);
     for (i = openCount - 1; i >= 0; i--)
-        Window_RemoveDynamicFlags( (itemDef_t *)(*(void **)((char *)&((displayContextDef_s *)d)->menuStack[i])), 2);
+        Window_RemoveDynamicFlags( (Window *)((itemDef_t *)(*(void **)((char *)&((displayContextDef_s *)d)->menuStack[i]))), 2);
     openCount = (((displayContextDef_s*)(d))->openMenuCount);
 
     int removeIdx = -1;
@@ -2266,7 +2266,7 @@ void Menus_Open(displayContextDef_t *dc, menuDef_t *menu)
     int idx = (((displayContextDef_s*)(d))->openMenuCount);
     *(void **)((char *)&((displayContextDef_s *)d)->menuStack[idx]) = menu;
     (((displayContextDef_s*)(d))->openMenuCount) = idx + 1;
-    Window_AddDynamicFlags( (itemDef_t *)((void *)menu), 6);
+    Window_AddDynamicFlags( (Window *)((itemDef_t *)((void *)menu)), 6);
     if ((*(void **)&((menuDef_t *)m)->onOpen)) {
         *(void **)&(*(unsigned char *)&((itemDef_t *)tempItem)->parent) = menu;
         Item_RunScript(dc, (itemDef_t *)tempItem, ((menuDef_t *)m)->onOpen);
@@ -2503,7 +2503,7 @@ void Item_TextColor(displayContextDef_t *dc, itemDef_t *item, vec4_t *newColor)
         }
     }
 
-    Window_SetDynamicFlags(item, flags);
+    Window_SetDynamicFlags((Window *)item, flags);
 
     int visFlags = ((itemDef_t *)it)->window.dynamicFlags[0];
     if ((visFlags & 4) && (visFlags & 2)) {
@@ -3108,7 +3108,7 @@ void Item_OwnerDraw_Paint(displayContextDef_t *dc, itemDef_t *item)
         }
     }
 
-    Window_SetDynamicFlags(item, flags);
+    Window_SetDynamicFlags((Window *)item, flags);
 
     for (i = 0; i < 4; i++)
         color[i] = ((itemDef_t *)it)->window.foreColor[i];
@@ -3362,7 +3362,7 @@ check_dvar:;
             int sf = ((Window *)sibling)->dynamicFlags[0];
             if ((sf & 4) && (sf & 2))
                 oldFocus = sibling;
-            Window_RemoveDynamicFlags( (itemDef_t *)((void *)sibling), 2);
+            Window_RemoveDynamicFlags( (Window *)((itemDef_t *)((void *)sibling)), 2);
 
             byte *reloaded = *(byte **)((char *)&((menuDef_t *)menu)->items[i]);
             if (((itemDef_t *)reloaded)->leaveFocus)   /* was reloaded + 0x2bc (x86) */
@@ -3389,7 +3389,7 @@ check_dvar:;
         if (tcy < ty || tcy > ty + th)
             goto fail;
 
-        Window_AddDynamicFlags( (itemDef_t *)((void *)it), 2);
+        Window_AddDynamicFlags( (Window *)((itemDef_t *)((void *)it)), 2);
         snd_alias_list_t *itemSound = ((itemDef_t *)it)->focusSound;
         if (itemSound) {
             UI_PlayLocalSoundAlias(itemSound);
@@ -3399,7 +3399,7 @@ check_dvar:;
         goto set_cursor;
     }
 
-    Window_AddDynamicFlags( (itemDef_t *)((void *)it), 2);
+    Window_AddDynamicFlags( (Window *)((itemDef_t *)((void *)it)), 2);
 
     if ((*(void **)&((itemDef_t *)it)->onFocus))
         Item_RunScript(dc, item, ((itemDef_t *)it)->onFocus);
@@ -3427,7 +3427,7 @@ set_cursor:;
 fail:
 
     if (oldFocus) {
-        Window_AddDynamicFlags( (itemDef_t *)(oldFocus), 2);
+        Window_AddDynamicFlags( (Window *)((itemDef_t *)(oldFocus)), 2);
         if ((*(void **)&((itemDef_t *)oldFocus)->onFocus))
             Item_RunScript(dc, (itemDef_t *)oldFocus, ((itemDef_t *)oldFocus)->onFocus);
     }
@@ -3726,13 +3726,13 @@ qboolean Item_ListBox_HandleKey(displayContextDef_t *dc, itemDef_t *item, int ke
 
                 goto scroll_start_dec;
             }
-            ListBox_SetCursorPos((itemDef_t *)listPtr, (((listBoxDef_s*)(listPtr))->cursorPos[0]) - 1);
+            ListBox_SetCursorPos((listBoxDef_t *)((itemDef_t *)listPtr), (((listBoxDef_s*)(listPtr))->cursorPos[0]) - 1);
             if ((((listBoxDef_s*)(listPtr))->cursorPos[0]) < 0)
-                ListBox_SetCursorPos((itemDef_t *)listPtr, 0);
+                ListBox_SetCursorPos((listBoxDef_t *)((itemDef_t *)listPtr), 0);
             if ((((listBoxDef_s*)(listPtr))->cursorPos[0]) < *(int *)listPtr)
-                ListBox_SetStartPos((itemDef_t *)listPtr, (((listBoxDef_s*)(listPtr))->cursorPos[0]));
+                ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), (((listBoxDef_s*)(listPtr))->cursorPos[0]));
             if ((((listBoxDef_s*)(listPtr))->cursorPos[0]) >= viewmax + *(int *)listPtr)
-                ListBox_SetStartPos((itemDef_t *)listPtr, (((listBoxDef_s*)(listPtr))->cursorPos[0]) - viewmax + 1);
+                ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), (((listBoxDef_s*)(listPtr))->cursorPos[0]) - viewmax + 1);
             Item_SetCursorPos(item, (((listBoxDef_s*)(listPtr))->cursorPos[0]));
             goto do_feeder_selection;
         }
@@ -3741,19 +3741,19 @@ qboolean Item_ListBox_HandleKey(displayContextDef_t *dc, itemDef_t *item, int ke
 
             if ((((listBoxDef_s*)(listPtr))->notselectable)) {
 
-                ListBox_SetStartPos((itemDef_t *)listPtr, *(int *)listPtr + 1);
+                ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), *(int *)listPtr + 1);
                 if (count > *(int *)listPtr)
                     return 1;
-                ListBox_SetStartPos((itemDef_t *)listPtr, count - 1);
+                ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), count - 1);
                 return 1;
             }
-            ListBox_SetCursorPos((itemDef_t *)listPtr, (((listBoxDef_s*)(listPtr))->cursorPos[0]) + 1);
+            ListBox_SetCursorPos((listBoxDef_t *)((itemDef_t *)listPtr), (((listBoxDef_s*)(listPtr))->cursorPos[0]) + 1);
             if ((((listBoxDef_s*)(listPtr))->cursorPos[0]) < *(int *)listPtr)
-                ListBox_SetStartPos((itemDef_t *)listPtr, (((listBoxDef_s*)(listPtr))->cursorPos[0]));
+                ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), (((listBoxDef_s*)(listPtr))->cursorPos[0]));
             if (count <= (((listBoxDef_s*)(listPtr))->cursorPos[0]))
-                ListBox_SetCursorPos((itemDef_t *)listPtr, count - 1);
+                ListBox_SetCursorPos((listBoxDef_t *)((itemDef_t *)listPtr), count - 1);
             if ((((listBoxDef_s*)(listPtr))->cursorPos[0]) >= viewmax + *(int *)listPtr)
-                ListBox_SetStartPos((itemDef_t *)listPtr, (((listBoxDef_s*)(listPtr))->cursorPos[0]) - viewmax + 1);
+                ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), (((listBoxDef_s*)(listPtr))->cursorPos[0]) - viewmax + 1);
             Item_SetCursorPos(item, (((listBoxDef_s*)(listPtr))->cursorPos[0]));
             goto do_feeder_selection;
         }
@@ -3772,9 +3772,9 @@ qboolean Item_ListBox_HandleKey(displayContextDef_t *dc, itemDef_t *item, int ke
             if (((itemDef_t *)it)->cursorPos[0] < 0)
                 Item_SetCursorPos(item, 0);
             if (((itemDef_t *)it)->cursorPos[0] < *(int *)listPtr)
-                ListBox_SetStartPos((itemDef_t *)listPtr, ((itemDef_t *)it)->cursorPos[0]);
+                ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), ((itemDef_t *)it)->cursorPos[0]);
             if (((itemDef_t *)it)->cursorPos[0] >= viewmax + *(int *)listPtr)
-                ListBox_SetStartPos((itemDef_t *)listPtr, ((itemDef_t *)it)->cursorPos[0] - viewmax + 1);
+                ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), ((itemDef_t *)it)->cursorPos[0] - viewmax + 1);
             UI_FeederSelection(((itemDef_t *)it)->special, ((itemDef_t *)it)->cursorPos[0]);
             return 1;
         }
@@ -3787,13 +3787,13 @@ qboolean Item_ListBox_HandleKey(displayContextDef_t *dc, itemDef_t *item, int ke
             }
             Item_SetCursorPos(item, ((itemDef_t *)it)->cursorPos[0] + 1);
             if (((itemDef_t *)it)->cursorPos[0] < *(int *)listPtr)
-                ListBox_SetStartPos((itemDef_t *)listPtr, ((itemDef_t *)it)->cursorPos[0]);
+                ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), ((itemDef_t *)it)->cursorPos[0]);
             if (count <= ((itemDef_t *)it)->cursorPos[0])
                 Item_SetCursorPos(item, count - 1);
             if (((itemDef_t *)it)->cursorPos[0] < 0)
                 Item_SetCursorPos(item, 0);
             if (((itemDef_t *)it)->cursorPos[0] >= viewmax + *(int *)listPtr) {
-                ListBox_SetStartPos((itemDef_t *)listPtr, ((itemDef_t *)it)->cursorPos[0] - viewmax + 1);
+                ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), ((itemDef_t *)it)->cursorPos[0] - viewmax + 1);
             }
             goto do_feeder_selection;
         }
@@ -3833,7 +3833,7 @@ qboolean Item_ListBox_HandleKey(displayContextDef_t *dc, itemDef_t *item, int ke
             if (curTime < lastListBoxClickTime &&
                 ((listBoxDef_t *)listPtr)->doubleClick != NULL &&
                 ((itemDef_t *)it)->cursorPos[0] == (((listBoxDef_s*)(listPtr))->cursorPos[0])) {
-                if (ListBox_HasValidCursorPos((itemDef_t *)listPtr)) {
+                if (ListBox_HasValidCursorPos((const listBoxDef_t *)((itemDef_t *)listPtr))) {
                     Item_RunScript(dc, item, ((listBoxDef_t *)listPtr)->doubleClick);
                     curTime = (((displayContextDef_s*)(d))->realTime);
                 }
@@ -3860,12 +3860,12 @@ qboolean Item_ListBox_HandleKey(displayContextDef_t *dc, itemDef_t *item, int ke
 
         if ((((listBoxDef_s*)(listPtr))->notselectable)) {
 
-            ListBox_SetStartPos((itemDef_t *)listPtr, 0);
+            ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), 0);
             return 1;
         }
         Item_SetCursorPos(item, 0);
-        ListBox_SetCursorPos((itemDef_t *)listPtr, 0);
-        ListBox_SetStartPos((itemDef_t *)listPtr, 0);
+        ListBox_SetCursorPos((listBoxDef_t *)((itemDef_t *)listPtr), 0);
+        ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), 0);
         goto do_feeder_selection;
     }
 
@@ -3873,16 +3873,16 @@ qboolean Item_ListBox_HandleKey(displayContextDef_t *dc, itemDef_t *item, int ke
 
         if ((((listBoxDef_s*)(listPtr))->notselectable)) {
 
-            ListBox_SetStartPos((itemDef_t *)listPtr, max);
+            ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), max);
             return 1;
         }
         Item_SetCursorPos(item, count - 1);
-        ListBox_SetCursorPos((itemDef_t *)listPtr, count - 1);
+        ListBox_SetCursorPos((listBoxDef_t *)((itemDef_t *)listPtr), count - 1);
         if (((itemDef_t *)it)->cursorPos[0] >= viewmax + *(int *)listPtr)
-            ListBox_SetStartPos((itemDef_t *)listPtr, ((itemDef_t *)it)->cursorPos[0] - viewmax + 1);
+            ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), ((itemDef_t *)it)->cursorPos[0] - viewmax + 1);
         if (((itemDef_t *)it)->cursorPos[0] < 0) {
             Item_SetCursorPos(item, 0);
-            ListBox_SetCursorPos((itemDef_t *)listPtr, 0);
+            ListBox_SetCursorPos((listBoxDef_t *)((itemDef_t *)listPtr), 0);
         }
         goto do_feeder_selection;
     }
@@ -3892,13 +3892,13 @@ qboolean Item_ListBox_HandleKey(displayContextDef_t *dc, itemDef_t *item, int ke
         if ((((listBoxDef_s*)(listPtr))->notselectable)) {
             goto scroll_start_pgup;
         }
-        ListBox_SetCursorPos((itemDef_t *)listPtr, (((listBoxDef_s*)(listPtr))->cursorPos[0]) - viewmax);
+        ListBox_SetCursorPos((listBoxDef_t *)((itemDef_t *)listPtr), (((listBoxDef_s*)(listPtr))->cursorPos[0]) - viewmax);
         if ((((listBoxDef_s*)(listPtr))->cursorPos[0]) < 0)
-            ListBox_SetCursorPos((itemDef_t *)listPtr, 0);
+            ListBox_SetCursorPos((listBoxDef_t *)((itemDef_t *)listPtr), 0);
         if ((((listBoxDef_s*)(listPtr))->cursorPos[0]) < *(int *)listPtr)
-            ListBox_SetStartPos((itemDef_t *)listPtr, (((listBoxDef_s*)(listPtr))->cursorPos[0]));
+            ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), (((listBoxDef_s*)(listPtr))->cursorPos[0]));
         if ((((listBoxDef_s*)(listPtr))->cursorPos[0]) >= viewmax + *(int *)listPtr)
-            ListBox_SetStartPos((itemDef_t *)listPtr, (((listBoxDef_s*)(listPtr))->cursorPos[0]) - viewmax + 1);
+            ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), (((listBoxDef_s*)(listPtr))->cursorPos[0]) - viewmax + 1);
         Item_SetCursorPos(item, (((listBoxDef_s*)(listPtr))->cursorPos[0]));
         goto do_feeder_selection;
     }
@@ -3908,15 +3908,15 @@ qboolean Item_ListBox_HandleKey(displayContextDef_t *dc, itemDef_t *item, int ke
         if ((((listBoxDef_s*)(listPtr))->notselectable)) {
             goto scroll_start_pgdn;
         }
-        ListBox_SetCursorPos((itemDef_t *)listPtr, (((listBoxDef_s*)(listPtr))->cursorPos[0]) + viewmax);
+        ListBox_SetCursorPos((listBoxDef_t *)((itemDef_t *)listPtr), (((listBoxDef_s*)(listPtr))->cursorPos[0]) + viewmax);
         if ((((listBoxDef_s*)(listPtr))->cursorPos[0]) < *(int *)listPtr)
-            ListBox_SetStartPos((itemDef_t *)listPtr, (((listBoxDef_s*)(listPtr))->cursorPos[0]));
+            ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), (((listBoxDef_s*)(listPtr))->cursorPos[0]));
         if (count <= (((listBoxDef_s*)(listPtr))->cursorPos[0]))
-            ListBox_SetCursorPos((itemDef_t *)listPtr, count - 1);
+            ListBox_SetCursorPos((listBoxDef_t *)((itemDef_t *)listPtr), count - 1);
         if ((((listBoxDef_s*)(listPtr))->cursorPos[0]) < 0)
-            ListBox_SetCursorPos((itemDef_t *)listPtr, 0);
+            ListBox_SetCursorPos((listBoxDef_t *)((itemDef_t *)listPtr), 0);
         if ((((listBoxDef_s*)(listPtr))->cursorPos[0]) >= viewmax + *(int *)listPtr)
-            ListBox_SetStartPos((itemDef_t *)listPtr, (((listBoxDef_s*)(listPtr))->cursorPos[0]) - viewmax + 1);
+            ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), (((listBoxDef_s*)(listPtr))->cursorPos[0]) - viewmax + 1);
         Item_SetCursorPos(item, (((listBoxDef_s*)(listPtr))->cursorPos[0]));
         goto do_feeder_selection;
     }
@@ -3925,33 +3925,33 @@ qboolean Item_ListBox_HandleKey(displayContextDef_t *dc, itemDef_t *item, int ke
 
 scroll_start_dec: {
     int newStart = *(int *)listPtr - 1;
-    ListBox_SetStartPos((itemDef_t *)listPtr, newStart);
+    ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), newStart);
     if (*(int *)listPtr < 0)
-        ListBox_SetStartPos((itemDef_t *)listPtr, 0);
+        ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), 0);
     return 1;
 }
 
 scroll_start_inc: {
     int newStart = *(int *)listPtr + 1;
-    ListBox_SetStartPos((itemDef_t *)listPtr, newStart);
+    ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), newStart);
     if (max < *(int *)listPtr)
-        ListBox_SetStartPos((itemDef_t *)listPtr, max);
+        ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), max);
     return 1;
 }
 
 scroll_start_pgup: {
     int newStart = *(int *)listPtr - viewmax;
-    ListBox_SetStartPos((itemDef_t *)listPtr, newStart);
+    ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), newStart);
     if (*(int *)listPtr < 0)
-        ListBox_SetStartPos((itemDef_t *)listPtr, 0);
+        ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), 0);
     return 1;
 }
 
 scroll_start_pgdn: {
     int newStart = *(int *)listPtr + viewmax;
-    ListBox_SetStartPos((itemDef_t *)listPtr, newStart);
+    ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), newStart);
     if (max < *(int *)listPtr)
-        ListBox_SetStartPos((itemDef_t *)listPtr, max);
+        ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), max);
     return 1;
 }
 
@@ -3986,7 +3986,7 @@ static void Scroll_ListBox_ThumbFunc(displayContextDef_t *dc, void *p)
             newStart = 0;
         else if (newStart > maxScroll)
             newStart = maxScroll;
-        ListBox_SetStartPos((itemDef_t *)listPtr, newStart);
+        ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), newStart);
         (((scrollInfo_s*)(scroll))->xStart) = cursorX;
     } else {
 
@@ -4003,7 +4003,7 @@ static void Scroll_ListBox_ThumbFunc(displayContextDef_t *dc, void *p)
             newStart = 0;
         else if (newStart > maxScroll)
             newStart = maxScroll;
-        ListBox_SetStartPos((itemDef_t *)listPtr, newStart);
+        ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), newStart);
         (((scrollInfo_s*)(scroll))->yStart) = cursorY;
     }
 
@@ -4245,7 +4245,7 @@ qboolean Item_HandleKey(displayContextDef_t *dc, itemDef_t *item, int key, qbool
 
     case 8:
         return UI_OwnerDrawHandleKey(((itemDef_t *)it)->window.ownerDraw, ((itemDef_t *)it)->window.ownerDrawFlags,
-                                     (int *)(((char *)it + offsetof(itemDef_t, special))), key);
+                                     (float *)(((char *)it + offsetof(itemDef_t, special))), key);
 
     case 0xa:
         return Item_Slider_HandleKey(dc, item, key, down);
@@ -4415,9 +4415,9 @@ void Item_ListBox_MouseEnter(itemDef_t *item, float x, float y)
     byte *listPtr = (byte *)Item_GetListBoxDef(item);
     if (!listPtr)
         return;
-    Window_RemoveDynamicFlags( (itemDef_t *)((void *)it), 0x1f00);
+    Window_RemoveDynamicFlags( (Window *)((itemDef_t *)((void *)it)), 0x1f00);
     int overLB = Item_ListBox_OverLB(item, x, y);
-    Window_AddDynamicFlags( (itemDef_t *)((void *)it), overLB);
+    Window_AddDynamicFlags( (Window *)((itemDef_t *)((void *)it)), overLB);
     int horzAlign = (((rectDef_t*)(it))->horzAlign);
     int vertAlign = (((rectDef_t*)(it))->vertAlign);
     if ((((Window *)it)->staticFlags & 0x200000)) {
@@ -4436,9 +4436,9 @@ void Item_ListBox_MouseEnter(itemDef_t *item, float x, float y)
             if (cx < rx || cx > rx + rw || cy < ry || cy > ry + rh)
                 return;
             int cursorPos = (int)((x - itemX) / (((listBoxDef_s*)(listPtr))->elementWidth)) + *(int *)listPtr;
-            ListBox_SetCursorPos((itemDef_t *)listPtr, cursorPos);
+            ListBox_SetCursorPos((listBoxDef_t *)((itemDef_t *)listPtr), cursorPos);
             if ((((listBoxDef_s*)(listPtr))->cursorPos[0]) >= (((listBoxDef_s*)(listPtr))->endPos[0]))
-                ListBox_SetCursorPos((itemDef_t *)listPtr, (((listBoxDef_s*)(listPtr))->endPos[0]));
+                ListBox_SetCursorPos((listBoxDef_t *)((itemDef_t *)listPtr), (((listBoxDef_s*)(listPtr))->endPos[0]));
         }
     } else {
         if (((itemDef_t *)it)->window.dynamicFlags[0] & 0x1f00)
@@ -4455,9 +4455,9 @@ void Item_ListBox_MouseEnter(itemDef_t *item, float x, float y)
         if (cx < rx || cx > rx + rw || cy < ry || cy > ry + rh)
             return;
         int cursorPos = (int)((y - 2.0f - itemY) / (((listBoxDef_s*)(listPtr))->elementHeight)) + *(int *)listPtr;
-        ListBox_SetCursorPos((itemDef_t *)listPtr, cursorPos);
+        ListBox_SetCursorPos((listBoxDef_t *)((itemDef_t *)listPtr), cursorPos);
         if ((((listBoxDef_s*)(listPtr))->cursorPos[0]) > (((listBoxDef_s*)(listPtr))->endPos[0]))
-            ListBox_SetCursorPos((itemDef_t *)listPtr, (((listBoxDef_s*)(listPtr))->endPos[0]));
+            ListBox_SetCursorPos((listBoxDef_t *)((itemDef_t *)listPtr), (((listBoxDef_s*)(listPtr))->endPos[0]));
     }
 }
 
@@ -4490,20 +4490,20 @@ void Item_MouseEnter(displayContextDef_t *dc, itemDef_t *item, float x, float y)
     if (inside) {
         if (!(flags & 0x40)) {
             Item_RunScript(dc, item, ((itemDef_t *)it)->mouseEnterText);
-            Window_AddDynamicFlags( (itemDef_t *)((void *)it), 0x40);
+            Window_AddDynamicFlags( (Window *)((itemDef_t *)((void *)it)), 0x40);
         }
         if (!(flags & 1)) {
             Item_RunScript(dc, item, ((itemDef_t *)it)->mouseEnter);
-            Window_AddDynamicFlags( (itemDef_t *)((void *)it), 1);
+            Window_AddDynamicFlags( (Window *)((itemDef_t *)((void *)it)), 1);
         }
     } else {
         if (flags & 0x40) {
             Item_RunScript(dc, item, ((itemDef_t *)it)->mouseExitText);
-            Window_RemoveDynamicFlags( (itemDef_t *)((void *)it), 0x40);
+            Window_RemoveDynamicFlags( (Window *)((itemDef_t *)((void *)it)), 0x40);
         }
         if (!(flags & 1)) {
             Item_RunScript(dc, item, ((itemDef_t *)it)->mouseEnter);
-            Window_AddDynamicFlags( (itemDef_t *)((void *)it), 1);
+            Window_AddDynamicFlags( (Window *)((itemDef_t *)((void *)it)), 1);
         }
     }
     if ((((itemDef_s*)(it))->type) == 6)
@@ -4567,7 +4567,7 @@ qboolean Menu_HandleMouseMove(displayContextDef_t *dc, menuDef_t *menu, float x,
                     Item_MouseLeave(dc, (itemDef_t *)orig);
                     orig = *(byte **)((char *)&((menuDef_t *)m)->items[i]);
                     if (orig)
-                        Window_RemoveDynamicFlags( (itemDef_t *)((void *)orig), 1);
+                        Window_RemoveDynamicFlags( (Window *)((itemDef_t *)((void *)orig)), 1);
                 }
                 goto next_item;
             }
@@ -4621,7 +4621,7 @@ qboolean Menu_HandleMouseMove(displayContextDef_t *dc, menuDef_t *menu, float x,
             int itemCount = (((menuDef_t*)(m))->itemCount);
             for (i = 0; i < itemCount; i++) {
                 byte *it = *(byte **)((char *)&((menuDef_t *)m)->items[i]);
-                Window_RemoveDynamicFlags( (itemDef_t *)((void *)it), 2);
+                Window_RemoveDynamicFlags( (Window *)((itemDef_t *)((void *)it)), 2);
                 if ((*(void **)&((itemDef_t *)it)->leaveFocus))
                     Item_RunScript(dc, (itemDef_t *)it, ((itemDef_t *)it)->leaveFocus);
             }
@@ -5198,7 +5198,7 @@ void Item_Paint(displayContextDef_t *dc, itemDef_t *item)
             }
 
             if (done == 4) {
-                Window_RemoveDynamicFlags(item, 0x80);
+                Window_RemoveDynamicFlags((Window *)item, 0x80);
             }
         }
     }
@@ -5212,9 +5212,9 @@ void Item_Paint(displayContextDef_t *dc, itemDef_t *item)
                         Com_Printf("[menu-trace] Item_Paint skip owner parent=%s item=%s owner=0x%x\n",
                                    ((menuDef_t *)parent)->window.name,
                                    item->window.name ? item->window.name : "<null>", ownerDraw);
-                Window_RemoveDynamicFlags(item, 4);
+                Window_RemoveDynamicFlags((Window *)item, 4);
             } else {
-                Window_AddDynamicFlags(item, 4);
+                Window_AddDynamicFlags((Window *)item, 4);
             }
         }
     }
@@ -5447,7 +5447,7 @@ void Menu_Paint(displayContextDef_t *dc, menuDef_t *menu, qboolean forcePaint)
         goto paint_content;
     }
 
-    Window_AddDynamicFlags( (itemDef_t *)((void *)m), 0x4000);
+    Window_AddDynamicFlags( (Window *)((itemDef_t *)((void *)m)), 0x4000);
 
     byte *d = (byte *)dc;
     int openCount = (((displayContextDef_s*)(d))->openMenuCount);
@@ -5581,7 +5581,7 @@ void Menus_HandleOOBClick(displayContextDef_t *dc, menuDef_t *menu, int key, qbo
                 *(void **)&(*(unsigned char *)&((itemDef_t *)tempItem)->parent) = menu;
                 Item_RunScript(dc, (itemDef_t *)tempItem, ((menuDef_t *)m)->onClose);
             }
-            Window_RemoveDynamicFlags( (itemDef_t *)((void *)menu), 6);
+            Window_RemoveDynamicFlags( (Window *)((itemDef_t *)((void *)menu)), 6);
         }
 
     }
@@ -5662,9 +5662,9 @@ found:;
 
     openCount = (((displayContextDef_s*)(d))->openMenuCount);
     for (i = openCount - 1; i >= 0; i--)
-        Window_RemoveDynamicFlags( (itemDef_t *)(*(void **)((char *)&((displayContextDef_s *)d)->menuStack[i])), 2);
+        Window_RemoveDynamicFlags( (Window *)((itemDef_t *)(*(void **)((char *)&((displayContextDef_s *)d)->menuStack[i]))), 2);
 
-    Window_AddDynamicFlags( (itemDef_t *)(*(void **)((char *)&((displayContextDef_s *)d)->menuStack[targetIdx])), 6);
+    Window_AddDynamicFlags( (Window *)((itemDef_t *)(*(void **)((char *)&((displayContextDef_s *)d)->menuStack[targetIdx]))), 6);
     Display_MouseMove(dc, NULL, ((displayContextDef_t *)d)->cursorx, (((displayContextDef_s*)(d))->cursory));
     Menu_HandleMouseMove(dc, *(menuDef_t **)((char *)&((displayContextDef_s *)d)->menuStack[targetIdx]), (float)((displayContextDef_t *)d)->cursorx, (float)(((displayContextDef_s*)(d))->cursory));
     Menu_HandleKey(dc, *(menuDef_t **)((char *)&((displayContextDef_s *)d)->menuStack[targetIdx]), key, down);

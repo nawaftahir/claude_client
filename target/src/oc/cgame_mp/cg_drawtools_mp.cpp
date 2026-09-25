@@ -22,7 +22,7 @@ extern char **compPointerConfig;
 extern const vec_t *colorWhite;
 
 extern FontHandle UI_GetFontHandle(int type, float scale);
-extern void UI_DrawText(const char *text, int maxChars, FontHandle font, float x, float y, int horzAlign, int vertAlign, float fontScale, const vec_t *color, int style);
+extern void UI_DrawText(const char *text, int maxChars, FontHandle font, float x, float y, int horzAlign, int vertAlign, float scale, const vec_t *color, int style);
 extern int CL_TextWidth(const char *text, int maxChars, FontHandle font);
 extern int CL_TextHeight(FontHandle font);
 extern void CL_DrawText(const char *text, int maxChars, FontHandle font, float x, float y, int horzAlign, int vertAlign, float xScale, float yScale, const vec_t *color, int style);

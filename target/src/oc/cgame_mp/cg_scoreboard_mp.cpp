@@ -11,7 +11,7 @@ extern MaterialHandle CL_RegisterMaterialNoMip(const char *name, int imageTrack)
 extern const char* Dvar_GetString(const char *dvarName);
 extern void Dvar_GetUnpackedColorByName(const char *dvarName, vec_t *color);
 extern void UI_DrawHandlePic(float x, float y, float w, float h, int horzAlign, int vertAlign, const vec_t *color, MaterialHandle hMaterial);
-extern void UI_DrawText(const char *text, int maxChars, void *font, float x, float y, int horzAlign, int vertAlign, float scale, float *color, int style);
+extern void UI_DrawText(const char *text, int maxChars, FontHandle font, float x, float y, int horzAlign, int vertAlign, float scale, const vec_t *color, int style);
 extern int UI_TextWidth(const char *text, int maxChars, struct Font_s *font, float scale);
 extern int UI_TextHeight(struct Font_s *font, float scale);
 extern FontHandle UI_GetFontHandle(int fontEnum, float scale);
@@ -224,7 +224,7 @@ static void CG_Scoreboard_DrawColumnString(const char *text, void *font, float x
         textX += columnWidth - (float)UI_TextWidth(text, 0x7fffffff, (struct Font_s *)font, scale);
 
     CG_Scoreboard_SetColor(textColor, 1.0f, 1.0f, 1.0f, alpha);
-    UI_DrawText(text, 0x7fffffff, font, textX, y + 10.08f, 0, 0, scale, textColor, style);
+    UI_DrawText(text, 0x7fffffff, (FontHandle)font, textX, y + 10.08f, 0, 0, scale, textColor, style);
 }
 
 static float CG_DrawClientScore(vec_t *color, float y, score_t *score, float listWidth, qboolean selection, int *piDrawLine, const int numDrawn)
@@ -372,7 +372,7 @@ static float CG_DrawScoreboard_ListBanner(vec_t *color, float y, float listWidth
     CG_Scoreboard_CopyColor(teamColor, bannerColor, bannerColor[3]);
     CG_DrawScoreboard_GetTeamColor(team, teamColor);
     bannerFont = UI_GetFontHandle(0, 0.32f);
-    UI_DrawText(displayString, 0x7fffffff, bannerFont, 133.0f, y + bannerLineHeight * 0.84f, 0, 0, 0.32f, teamColor, 3);
+    UI_DrawText(displayString, 0x7fffffff, (FontHandle)bannerFont, 133.0f, y + bannerLineHeight * 0.84f, 0, 0, 0.32f, teamColor, 3);
 
     if (team != 1 && team != 2)
         return y + h;
@@ -392,7 +392,7 @@ static float CG_DrawScoreboard_ListBanner(vec_t *color, float y, float listWidth
             float textX = x;
             if (column->iAlignment == 2)
                 textX += columnWidth - (float)UI_TextWidth(text, 0, (struct Font_s *)bannerFont, 0.32f);
-            UI_DrawText(text, 0x7fffffff, bannerFont, textX, y + bannerLineHeight * 0.84f, 0, 0, 0.32f, teamColor, 3);
+            UI_DrawText(text, 0x7fffffff, (FontHandle)bannerFont, textX, y + bannerLineHeight * 0.84f, 0, 0, 0.32f, teamColor, 3);
         }
 
         x += columnWidth;
@@ -567,7 +567,7 @@ static float CG_Scoreboard_DrawHeader(vec_t *color, float y, float listWidth)
             float textX = x;
             if (column->iAlignment == 2)
                 textX += columnWidth - (float)UI_TextWidth(translation, 0, (struct Font_s *)font, 0.3f);
-            UI_DrawText(translation, 0x7fffffff, font, textX, y + 11.76f, 0, 0, 0.3f, color, 3);
+            UI_DrawText(translation, 0x7fffffff, (FontHandle)font, textX, y + 11.76f, 0, 0, 0.3f, color, 3);
         }
 
         x += columnWidth;
@@ -862,7 +862,7 @@ qboolean CG_DrawScoreboard(void)
             textHeight = UI_TextHeight((struct Font_s *)headerFont, headerScale);
             {
                 float yPos = 51.0f + (float)(24 - textHeight) * -0.5f;
-                UI_DrawText(gameType, 0x7fffffff, headerFont, 129.0f, yPos, 0, 0, headerScale, color, 3);
+                UI_DrawText(gameType, 0x7fffffff, (FontHandle)headerFont, 129.0f, yPos, 0, 0, headerScale, color, 3);
             }
         }
 
@@ -933,7 +933,7 @@ qboolean CG_DrawScoreboard(void)
             int textHeight2 = UI_TextHeight((struct Font_s *)headerFont, fontScale);
             float yPos2 = 51.0f + (float)(24 - textHeight2) * -0.5f;
             float xPos = 511.0f - (float)(mapWidth + 4);
-            UI_DrawText(map, 0x7fffffff, headerFont, xPos, yPos2, 0, 0, fontScale, color, 3);
+            UI_DrawText(map, 0x7fffffff, (FontHandle)headerFont, xPos, yPos2, 0, 0, fontScale, color, 3);
         }
     }
 
@@ -976,12 +976,12 @@ qboolean CG_DrawScoreboard(void)
             y = 447.0f + (float)(14 - textHeight3) * -0.5f;
         }
 
-        UI_DrawText(serverName, 0x7fffffff, footerFont, 129.0f, y, 0, 0, footerFontScale, color, 3);
+        UI_DrawText(serverName, 0x7fffffff, (FontHandle)footerFont, 129.0f, y, 0, 0, footerFontScale, color, 3);
 
         {
             int ipWidth = UI_TextWidth(serverIP, 0, (struct Font_s *)footerFont, footerFontScale);
             float xPos = 511.0f - (float)(ipWidth + 4);
-            UI_DrawText(serverIP, 0x7fffffff, footerFont, xPos, y, 0, 0, footerFontScale, color, 3);
+            UI_DrawText(serverIP, 0x7fffffff, (FontHandle)footerFont, xPos, y, 0, 0, footerFontScale, color, 3);
         }
     }
 

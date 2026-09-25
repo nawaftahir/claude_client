@@ -239,7 +239,7 @@ extern int FS_GetFileList(const char *path, const char *ext, int flags, char *bu
 extern char *Com_Parse( const char *( *data_p ) );
 extern const char *String_Alloc(const char *s);
 extern void String_Init(void);
-extern void CL_GetScreenDimensions(int *w, int *h, int *aspect);
+extern void CL_GetScreenDimensions(int *width, int *height, float *aspect);
 extern dvar_t *Dvar_RegisterInt(const char *dvarName, int value, int min, int max, unsigned short flags);
 extern dvar_t *Dvar_RegisterFloat(const char *dvarName, float value, float min, float max, unsigned short flags);
 extern const void *Dvar_RegisterBool_mac(const char *name, int value, int flags);
@@ -257,9 +257,9 @@ extern const char *SEH_LocalizeTextMessage(const char *msg, const char *fmt, con
 extern void LerpColor(vec_t *a, vec_t *b, vec_t *c, float t);
 extern void Item_SetCursorPos(itemDef_t *item, int pos);
 extern int Item_ListBox_MaxScroll(itemDef_t *item);
-extern void ListBox_SetStartPos(listBoxDef_t *listPtr, int pos);
-extern void ListBox_SetEndPos(listBoxDef_t *listPtr, int pos);
-extern void ListBox_SetCursorPos(listBoxDef_t *listPtr, int pos);
+extern void ListBox_SetStartPos(listBoxDef_t *listBox, int startPos);
+extern void ListBox_SetEndPos(listBoxDef_t *listBox, int endPos);
+extern void ListBox_SetCursorPos(listBoxDef_t *listBox, int cursorPos);
 extern Bool CL_IsPlayerTalking(int clientIndex);
 extern Bool CL_IsPlayerMuted(int clientIndex);
 extern void CL_MutePlayer(int clientIndex);
@@ -1308,7 +1308,7 @@ void UI_Init(void)
     String_Init();
     Menu_Setup(&uiInfo->uiDC);
 
-    CL_GetScreenDimensions(&uiInfo->uiDC.screenWidth, &uiInfo->uiDC.screenHeight, (int *)&uiInfo->uiDC.screenAspect);
+    CL_GetScreenDimensions(&uiInfo->uiDC.screenWidth, &uiInfo->uiDC.screenHeight, (float *)((int *)&uiInfo->uiDC.screenAspect));
 
     width = uiInfo->uiDC.screenWidth;
     height = uiInfo->uiDC.screenHeight;

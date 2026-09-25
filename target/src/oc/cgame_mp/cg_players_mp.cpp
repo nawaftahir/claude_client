@@ -19,7 +19,7 @@ extern void XAnimSetCompleteGoalWeight(struct XAnimTree_s *pAnimTree, unsigned i
 extern void Com_Printf(const char *fmt, ...);
 extern void AnglesToAxis( const vec3_t angles, vec3_t axis[3] );
 extern void CG_AddCEntityToScene(const GfxEntity *body, const struct DObj_s *obj, const centity_t *cent);
-extern void CG_AddPlayerWeapon(byte *body, int unused, centity_t *cent, int flag);
+extern void CG_AddPlayerWeapon(GfxEntity *parent, playerState_t *ps, centity_t *cent, qboolean bDrawGun);
 extern qboolean CG_DObjGetWorldTagPos(const centity_t *cent, struct DObj_s *obj, unsigned int tag, float *origin);
 extern void CL_DrawSprite(MaterialHandle material, const byte *rgbaColor, const float *origin,
                           float radius, float minScreenRadius, int flags);
@@ -38,7 +38,7 @@ extern void YawToAxis(float yaw, float *axis);
 extern void MatrixMultiply43(const float in1[4][3], const float in2[4][3], float out[4][3]);
 extern void AxisToAngles( vec3_t axis[3], vec3_t angles );
 extern void VectorAngleMultiply(float *trans, float yaw);
-extern void CG_TraceCapsule(byte *trace, float *start, float *mins, float *maxs, float *end, int entityNum, int contentMask);
+extern void CG_TraceCapsule(trace_t *result, const vec_t *start, const vec_t *mins, const vec_t *maxs, const vec_t *end, int skipNumber, int mask);
 extern DObjAnimMat *CG_DObjGetLocalTagMatrix(const centity_t *cent, struct DObj_s *obj, unsigned int tagName);
 extern const char *CL_GetConfigString(int index);
 extern MaterialHandle CL_RegisterMaterial(const char *name, int flags);
@@ -572,7 +572,7 @@ static void CG_PlayerTurretPositionAndBlend(centity_t *cent)
             end[1] = cent->lerpOrigin[1];
             end[2] = cent->lerpOrigin[2];
 
-            CG_TraceCapsule(trace, start, traceBounds, traceBounds,
+            CG_TraceCapsule((trace_t *)trace, start, traceBounds, traceBounds,
                             end, cent->nextState.number, 0x2810011);
 
             if (*(float *)trace < 1.0f) {
@@ -674,7 +674,7 @@ void CG_Player(centity_t *cent)
     if (es->eFlags & 0x2)
         return;
 
-    CG_AddPlayerWeapon(body, 0, cent, 1);
+    CG_AddPlayerWeapon((GfxEntity *)body, 0, cent, 1);
 }
 
 void CG_Corpse(centity_t *cent)

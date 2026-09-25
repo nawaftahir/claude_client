@@ -66,7 +66,7 @@ extern snd_alias_t *CL_PickSoundAlias(const char *aliasname);
 extern int CG_PlayClientSoundAliasByName(const char *aliasname);
 extern int CL_GetLocalClientActiveCount(void);
 extern menuDef_t *Menus_FindByName(displayContextDef_t *dc, const char *name);
-extern void Window_AddDynamicFlags(void *window, int flags);
+extern void Window_AddDynamicFlags(Window *w, const int newFlags);
 extern void CG_SetEquippedOffHand(int offHandIndex);
 extern void CG_SelectWeaponIndex(int weaponIndex);
 extern void CL_ResetPlayerMuting(int clientIndex);
@@ -469,7 +469,7 @@ void CG_MenuShowNotify(int menuToShow)
     }
 
     if (menu != NULL) {
-        Window_AddDynamicFlags(menu, 4);
+        Window_AddDynamicFlags((Window *)menu, 4);
     }
 }
 

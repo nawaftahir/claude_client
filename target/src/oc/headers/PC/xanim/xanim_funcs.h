@@ -38,7 +38,7 @@ void DObjSetModel(DObj *obj, const XModel *model);
 void DObjGetBounds(const DObj *obj, vec_t *mins, vec_t *maxs);
 void DObjGeomTraceline(DObj *obj, vec_t *localStart, vec_t *localEnd, int contentmask, DObjTrace *results);
 int DObjGetSurfaces(const DObj *obj, DSurface *surfaces, int *partBits, char *lods);
-void DObjCompleteHierarchyBits(const DObj *obj, int *partBits);
+void DObjCompleteHierarchyBits(DObj_s *obj, int *partBits);
 void DObjGetHierarchyBits(DObj *obj, int boneIndex, int *partBits);
 void DObjSetLocalTagInternal(const DObj *obj, const vec_t *trans, const vec_t *angles, int boneIndex);
 qboolean DObjSetLocalTag(const DObj *obj, int *partBits, unsigned int tagName, const vec_t *trans, const vec_t *angles);

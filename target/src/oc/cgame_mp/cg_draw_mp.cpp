@@ -153,11 +153,11 @@ extern const vec_t colorBlue[4];
 
 extern void Menus_CloseByName(displayContextDef_t *dc, const char *p);
 extern menuDef_t *Menus_FindByName(displayContextDef_t *dc, const char *name);
-extern void Window_AddDynamicFlags(Window *window, int flags);
+extern void Window_AddDynamicFlags(Window *w, const int newFlags);
 /* Declared int here, but the real function returns void and takes a Window*. A caller
    does `return Window_RemoveDynamicFlags(..)`, so correcting the signature would change
    that caller's return value -- needs care. */
-extern int Window_RemoveDynamicFlags(void *window, int flags);
+extern void Window_RemoveDynamicFlags(Window *w, const int newFlags);
 extern void CG_MenuShowNotify(int menuToShow);
 extern float CG_CalcPlayerHealth(void);
 extern Bool CG_CheckPlayerForLowAmmo(void);
@@ -174,7 +174,7 @@ void CG_PriorityCenterPrint(const char *str, float charWidth, int priority);
 qboolean CG_GetWeapReticleZoom(float *pfZoom);
 void CG_DrawFrameOverlay(float innerLeft, float innerRight, float innerTop, float innerBottom, const vec_t *color, MaterialHandle material);
 static unsigned int CG_DrawCrosshairNames(void);
-unsigned int CG_CheckTimedMenus(void);
+void CG_CheckTimedMenus(void);
 static void CG_DrawSoundOverlay(void);
 static unsigned int CG_DrawMaterial(void);
 unsigned int CG_ShakeCamera(void);
@@ -585,7 +585,7 @@ unsigned int CG_DrawCrosshairNames(void)
     return 0;
 }
 
-unsigned int CG_CheckTimedMenus(void)
+void CG_CheckTimedMenus(void)
 {
     int serverTime;
     int timedMenuTime;
@@ -708,7 +708,7 @@ after_buttons:
                 }
 
                 if (menu)
-                    Window_RemoveDynamicFlags(menu, 4);
+                    Window_RemoveDynamicFlags((Window *)menu, 4);
 
                 cg->healthFadeTime = 0;
             }
@@ -734,7 +734,7 @@ after_buttons:
                 }
 
                 if (menu)
-                    Window_RemoveDynamicFlags(menu, 4);
+                    Window_RemoveDynamicFlags((Window *)menu, 4);
 
                 cg->ammoFadeTime = 0;
             }
@@ -755,7 +755,7 @@ after_buttons:
                 }
 
                 if (menu)
-                    Window_RemoveDynamicFlags(menu, 4);
+                    Window_RemoveDynamicFlags((Window *)menu, 4);
 
                 cg->compassFadeTime = 0;
             }
@@ -787,7 +787,7 @@ after_buttons:
                 }
 
                 if (menu)
-                    Window_RemoveDynamicFlags(menu, 4);
+                    Window_RemoveDynamicFlags((Window *)menu, 4);
 
                 cg->stanceFadeTime = 0;
             }
@@ -808,7 +808,7 @@ after_buttons:
                 }
 
                 if (menu)
-                    Window_RemoveDynamicFlags(menu, 4);
+                    Window_RemoveDynamicFlags((Window *)menu, 4);
 
                 cg->offhandFadeTime = 0;
             }
@@ -816,19 +816,19 @@ after_buttons:
     }
 
     if (!CG_ScoreboardDisplayed()) {
-        return 0;
+        return;
     }
 
     serverTime = cg->time - cg->scoreFadeTime;
     if (serverTime <= 100) {
-        return serverTime;
+        return;
     }
 
     menu = Menus_FindByName((&cgDC), (const char *)"objectiveinfo");
     if (!menu) {
-        return 0;
+        return;
     }
-    return Window_RemoveDynamicFlags(menu, 4);
+    Window_RemoveDynamicFlags((Window *)menu, 4);
 }
 
 static void CG_DrawSoundOverlay(void)

@@ -20,7 +20,7 @@ extern int Sys_Milliseconds(void);
 extern FontHandle UI_GetFontHandle(int fontEnum, float scale);
 extern int UI_TextWidth(const char *text, int maxChars, struct Font_s *font, float scale);
 extern const char *UI_SafeTranslateString(const char *ref);
-extern void UI_DrawText(const char *text, int maxChars, void *font, float x, float y, int horzAlign, int vertAlign, float scale, const float *color, int style);
+extern void UI_DrawText(const char *text, int maxChars, FontHandle font, float x, float y, int horzAlign, int vertAlign, float scale, const vec_t *color, int style);
 extern void UI_DrawLoadBar(float x, float y, float w, float h, int horzAlign, int vertAlign, const vec_t *color, MaterialHandle material);
 extern void UI_FillRect(float x, float y, float width, float height, int horzAlign, int vertAlign, const vec_t *color);
 
@@ -157,5 +157,5 @@ void CG_DrawInformation(qboolean serverLoading)
     translated = UI_SafeTranslateString("CGAME_WAITINGFORSERVERLOAD");
     textWidth = UI_TextWidth(translated, 0x7fffffff, (struct Font_s *)font, 0.5f);
     x = (640.0f - (float)textWidth) * 0.5f;
-    UI_DrawText(va("%s%s", translated, dots), 0x7fffffff, font, x, 452.0f, 0, 0, 0.5f, (const vec_t *)imp_colorWhite, 3);
+    UI_DrawText(va("%s%s", translated, dots), 0x7fffffff, (FontHandle)font, x, 452.0f, 0, 0, 0.5f, (const vec_t *)imp_colorWhite, 3);
 }

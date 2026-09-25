@@ -49,7 +49,7 @@ extern void FX_FreeSystem(void);
 extern void Scr_ShutdownGameStrings(void);
 extern void *Hunk_AllocAlignInternal(int size, int alignment);
 extern void *Hunk_AllocInternal(int size);
-extern void CL_ConsolePrint(int channel, const char *msg, int duration, int width);
+extern void CL_ConsolePrint(print_msg_type_t type, const char *txt, int duration, int linewidth);
 extern void SCR_UpdateScreen(void);
 extern void Com_Printf(const char *fmt, ...);
 extern void FX_InitSystem( bool rendererExists );
@@ -390,12 +390,12 @@ int CG_CrosshairPlayer(void)
 
 void CG_GameMessage(const char *msg)
 {
-    CL_ConsolePrint(1, msg, 0, cg_gameMessageWidth->current.integer);
+    CL_ConsolePrint((print_msg_type_t)1, msg, 0, cg_gameMessageWidth->current.integer);
 }
 
 void CG_BoldGameMessage(const char *msg)
 {
-    CL_ConsolePrint(2, msg, 0, cg_gameBoldMessageWidth->current.integer);
+    CL_ConsolePrint((print_msg_type_t)2, msg, 0, cg_gameBoldMessageWidth->current.integer);
 }
 
 const char *CG_Argv(int arg)

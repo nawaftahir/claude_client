@@ -54,7 +54,7 @@ extern void CL_StartHunkUsers(void);
 extern void CL_ReadDemoMessage(void);
 extern int CL_GetSkelTimeStamp(int localClientNum);
 extern char *CL_AllocSkelMemory(int localClientNum, unsigned int size);
-extern void CL_ConsolePrint(int channel, const char *text, int duration, int lineWidth);
+extern void CL_ConsolePrint(print_msg_type_t type, const char *txt, int duration, int linewidth);
 extern int DObjSkelExists(const struct DObj_s *obj, int timeStamp);
 extern int DObjSkelIsBoneUpToDate(DObj_s *obj, int boneIndex);
 extern qboolean DObjSkelAreBonesUpToDate(const struct DObj_s *obj, int *partBits);
@@ -641,12 +641,12 @@ void CL_SubtitlePrint(const char *pszText, int iDuration, int iLineWidth)
     const char *translated = SEH_StringEd_GetString(pszText);
 
     if (translated) {
-        CL_ConsolePrint(3, translated, iDuration, iLineWidth);
+        CL_ConsolePrint((print_msg_type_t)3, translated, iDuration, iLineWidth);
         return;
     }
 
     if (!CL_DvarCurrentBool(imp_loc_warnings)) {
-        CL_ConsolePrint(3, pszText, iDuration, iLineWidth);
+        CL_ConsolePrint((print_msg_type_t)3, pszText, iDuration, iLineWidth);
         return;
     }
 
@@ -656,7 +656,7 @@ void CL_SubtitlePrint(const char *pszText, int iDuration, int iLineWidth)
         Com_Printf("^3WARNING: Could not translate subtitle text: \"%s\"\n", pszText);
     }
 
-    CL_ConsolePrint(3, va("^1UNLOCALIZED(^7%s^1)^7", pszText), iDuration, iLineWidth);
+    CL_ConsolePrint((print_msg_type_t)3, va("^1UNLOCALIZED(^7%s^1)^7", pszText), iDuration, iLineWidth);
 }
 
 const char *CL_GetConfigString(int index)

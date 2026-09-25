@@ -32,7 +32,7 @@ void CG_PriorityCenterPrint(const char *str, float charWidth, int priority);
 qboolean CG_GetWeapReticleZoom(float *pfZoom);  /* qboolean(int), not Bool: callers read full eax (see cg_draw_mp.c) */
 void CG_DrawFrameOverlay(float innerLeft, float innerRight, float innerTop, float innerBottom, const vec_t *color, MaterialHandle material);
 unsigned int CG_DrawCrosshairNames(void);
-unsigned int CG_CheckTimedMenus(void);
+void CG_CheckTimedMenus(void);
 unsigned int CG_DrawMaterial(void);
 unsigned int CG_ShakeCamera(void);
 qboolean CG_DrawFollow(void);
@@ -220,7 +220,7 @@ void CG_UpdateHandViewmodels(const char *handModel);
 void CG_SpawnTracer(vec_t *pstart, vec_t *pend);
 void CG_WhizbySound(vec_t *vStart, vec_t *vEnd);
 void CG_BulletHitClientEvent(int sourceEntityNum, vec_t *position, int surfType, int event);
-void CG_AddPlayerWeapon(GfxEntity *parent, weapProjExposion_t (*ps)[8], centity_t *cent, qboolean bDrawGun);
+void CG_AddPlayerWeapon(GfxEntity *parent, playerState_t *ps, centity_t *cent, qboolean bDrawGun);
 void CG_AddViewWeapon(weapProjExposion_t (*ps)[8]);
 void CG_BulletHitEvent(int sourceEntityNum, vec_t *position, vec_t *normal, vec_t *reflected, int surfType, int event);
 void CG_DrawTracer(vec_t *start, vec_t *finish);

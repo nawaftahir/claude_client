@@ -9,7 +9,7 @@ extern dvar_t *Dvar_RegisterFloat(const char *dvarName, float value, float min, 
 extern int BG_GetFirstAvailableOffhand(const playerState_t *ps, int offhandClass);
 extern int BG_GetFirstEquippedOffhand(const playerState_t *ps, int offhandClass);
 extern float CG_FadeHudMenu(const dvar_t *fadeDvar, int displayStartTime, int duration);
-extern void UI_DrawText(const char *text, int maxChars, void *font, float x, float y, int horzAlign, int vertAlign, float scale, const float *color, int textStyle);
+extern void UI_DrawText(const char *text, int maxChars, FontHandle font, float x, float y, int horzAlign, int vertAlign, float scale, const vec_t *color, int style);
 extern const char *UI_SafeTranslateString(const char *str);
 extern int CG_PlayEntitySoundAlias(int entNum, snd_alias_list_t *aliasList);
 extern int CG_PlaySoundAlias(int entNum, const float *origin, snd_alias_list_t *aliasList);
