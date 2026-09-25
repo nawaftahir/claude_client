@@ -80,7 +80,7 @@ extern const char *SEH_SafeTranslateString(const char *text);
 extern const char *SEH_StringEd_GetString(const char *text);
 extern const char *UI_ReplaceConversionString(const char *base, const char *replacement);
 extern qboolean UI_SetActiveMenu(int menu);
-extern int UI_GetActiveMenu(void);
+extern uiMenuCommand_t UI_GetActiveMenu(void);
 extern qboolean UI_IsFullscreen(void);
 extern void UI_CloseFocusedMenu(void);
 extern void UI_KeyEvent(int key, int down);

@@ -13,7 +13,7 @@ void Sys_InitMainThread(void)
     Com_InitThreadData(0);
 }
 
-Bool Sys_IsMainThread(void)
+qboolean Sys_IsMainThread(void)
 {
     return GetCurrentThreadId() == threadId[0];
 }

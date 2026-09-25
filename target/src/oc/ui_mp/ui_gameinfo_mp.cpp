@@ -15,7 +15,7 @@ extern int FS_Read(void *buffer, int len, int f);
 extern void FS_FCloseFile(fileHandle_t f);
 extern const char *Info_ValueForKey( const char *s, const char *key );
 extern const char *String_Alloc(const char *str);
-extern MaterialHandle CL_RegisterMaterialNoMip(const char *name, int user);
+extern MaterialHandle CL_RegisterMaterialNoMip(const char *name, int imageTrack);
 extern void Com_BeginParseSession(const char *name);
 extern void Com_EndParseSession(void);
 extern int I_stricmp(const char *s1, const char *s2);

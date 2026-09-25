@@ -27,7 +27,7 @@ const char *String_Alloc(const char *str);
 void I_strncpyz(char *dest, const char *src, int destsize);
 char *I_strlwr(char *str);
 void I_strncat(char *dest, int destsize, const char *src);
-void *CL_RegisterMaterialNoMip(const char *name, int imageTrack);
+MaterialHandle CL_RegisterMaterialNoMip(const char *name, int imageTrack);
 snd_alias_list_t *Com_FindSoundAlias( const char *name );
 void *UI_Alloc(int size, int align);
 int PC_LoadSourceHandle(const char *filename);

@@ -82,7 +82,7 @@ extern void FS_FCloseFile(fileHandle_t f);
 extern void MSG_WriteReliableCommandToBuffer(const char *cmd, char *buf, int bufSize);
 extern int FS_Write(const void *buffer, int len, int f);
 extern void CL_ShutdownCGame(void);
-extern void CL_ShutdownUI(void);
+extern qboolean CL_ShutdownUI(void);
 extern void Dvar_SetInt(const dvar_t *dvar, int value);
 extern void Dvar_SetBool(const dvar_t *dvar, int value);
 extern void Dvar_SetString(const dvar_t *dvar, const char *value);
@@ -610,7 +610,7 @@ void CL_Clientinfo_f(void)
 extern int MSG_ReadByte(msg_t *msg);
 extern void MSG_ReadData(msg_t *msg, void *data, int len);
 extern Bool CL_IsPlayerMuted(int clientNum);
-extern void Voice_IncomingVoiceData(int talker, const byte *data, int dataLen);
+extern void Voice_IncomingVoiceData(int talker, unsigned char *data, int packetDataSize);
 void CL_VoicePacket(msg_t *msg)
 {
     byte voiceData[256];

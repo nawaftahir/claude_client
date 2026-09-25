@@ -60,7 +60,7 @@ extern void FX_WarpTime(int time);
 extern void FX_PlayEffect(EffectTemplate *fx, const vec_t *org, const vec_t *fwd);
 extern void CG_LoadingString(const char *str);
 extern MaterialHandle CL_RegisterMaterial(const char *name, int flags);
-extern MaterialHandle CL_RegisterMaterialNoMip(const char *name, int flags);
+extern MaterialHandle CL_RegisterMaterialNoMip(const char *name, int imageTrack);
 extern void CG_RegisterScoreboardGraphics(void);
 extern void CG_RegisterItems(void);
 extern int CM_NumInlineModels(void);

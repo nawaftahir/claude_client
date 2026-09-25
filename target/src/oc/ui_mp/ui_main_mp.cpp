@@ -152,7 +152,7 @@ extern char *Cmd_Args(int startIndex);
 static void UI_DrawCenteredText(const char *text, FontHandle font, float scale, float y, const vec_t *color, int style);
 extern Bool IsTalking(void);
 
-extern MaterialHandle CL_RegisterMaterialNoMip(const char *name, int flags);   /* was int -> truncated MaterialHandle on x64 */
+extern MaterialHandle CL_RegisterMaterialNoMip(const char *name, int imageTrack);   /* was int -> truncated MaterialHandle on x64 */
 extern FontHandle CL_RegisterFont(const char *name, int flags);   /* was int -> truncated FontHandle on x64 */
 extern snd_alias_list_t *Com_FindSoundAlias( const char *name );
 extern void CL_DrawStretchPic(float x, float y, float w, float h, int horzAlign, int vertAlign, float s0, float t0, float s1, float t1, const vec_t *color, MaterialHandle material);
@@ -180,7 +180,7 @@ extern void Com_Printf(const char *fmt, ...);
 extern MenuList *UI_LoadMenu(const char *name, int imageTrack);
 extern void UI_AddMenuList(displayContextDef_t *dc, MenuList *menuList);
 extern void UI_MapLoadInfo(const char *csv);
-extern void UI_FillRect(float x, float y, float w, float h, int horzAlign, int vertAlign, const vec_t *color);
+extern void UI_FillRect(float x, float y, float width, float height, int horzAlign, int vertAlign, const vec_t *color);
 extern menuDef_t *Menus_FindByName(displayContextDef_t *dc, const char *name);
 extern void Menu_Paint(displayContextDef_t *dc, menuDef_t *menu, qboolean full);
 extern void Dvar_SetInt(const dvar_t *dvar, int value);
@@ -213,7 +213,7 @@ extern void LAN_MarkServerDirty(int source, int index, int dirty);
 extern int LAN_UpdateDirtyPings(int source);
 extern void LAN_GetServerAddressString(int source, int index, char *addr, int addrSize);
 extern void LAN_RemoveServer(int source, const char *addr);
-extern int LAN_LoadCachedServers(void);
+extern void LAN_LoadCachedServers(void);
 extern e_status CIN_StopCinematic(int handle);
 extern int CIN_PlayCinematic(const char *name, int x, int y, int w, int h, int flags);
 extern e_status CIN_RunCinematic(int handle);

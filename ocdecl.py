@@ -12,6 +12,13 @@ for p in glob.glob('**/*.[ch]*', recursive=True):
         m = re.match(r'^(?:extern\s+)?(?:"C"\s+)?([\w][\w\s\*]*?\b(\w+)\s*\([^;{]*\))\s*;', l)
         if m and m.group(2) in names and m.group(2) not in found:
             found[m.group(2)] = m.group(1)
+# functions only the draft defines: take the prototype from the one-line definition
+for p in glob.glob('oc/**/*.cpp', recursive=True):
+    ls = open(p, errors='replace').read().split('\n')
+    for i, l in enumerate(ls[:-1]):
+        m = re.match(r'^((?!static\b|return\b|else\b)[\w][\w\s\*]*?\b(\w+)\s*\([^;{()]*\))\s*$', l)
+        if m and ls[i + 1].strip() == '{' and m.group(2) in names and m.group(2) not in found:
+            found[m.group(2)] = m.group(1)
 # the draft's call sites need these as they are (enum/int args, const-ness, other return types)
 SKIP = {'BG_GetEmptySlotForWeapon', 'BG_Player_DoControllers', 'Com_Error', 'Com_PrintMessage', 'Com_UnloadSoundAliases',
         'DObjCalcSkel', 'DObjCreateSkel', 'DObjSkelExists', 'Dvar_SetBool', 'Dvar_SetInt', 'Dvar_SetString',

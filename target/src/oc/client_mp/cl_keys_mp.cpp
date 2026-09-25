@@ -42,7 +42,7 @@ extern void Con_PageDown(void);
 extern void Con_Top(void);
 extern void Con_Bottom(void);
 extern cmd_function_t *Cmd_FindCommand(const char *cmdName);
-extern char **FS_ListFilteredFiles(searchpath_t *searchPath, const char *path, const char *extension, const char *filter, FsListBehavior behavior, int *numfiles, int allocType);
+extern char **FS_ListFilteredFiles( searchpath_t *searchPath, const char *path, const char *extension, const char *filter, FsListBehavior behavior, int *numfiles, int allocType );
 extern void FS_FreeFileList(char **list, int allocType);
 extern searchpath_t *fs_searchpaths;
 extern void Com_StripExtension(const char *in, char *out);

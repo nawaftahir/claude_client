@@ -41,7 +41,7 @@ extern void SND_PlayMusicAlias(const snd_alias_t *pAlias, snd_alias_system_t sys
 extern void SND_StopMusic(int fadetime);
 extern void SND_FadeAllSounds(float volume, int fadetime);
 extern int Load_ScriptMenu(const char *name, int flags);
-extern MaterialHandle CL_RegisterMaterialNoMip(const char *name, int flags);
+extern MaterialHandle CL_RegisterMaterialNoMip(const char *name, int imageTrack);
 extern MaterialHandle CL_RegisterMaterial(const char *name, int flags);
 extern struct XModel *CL_RegisterModel(const char *name);
 extern struct EffectTemplate *FX_RegisterEffect(const char *fileName);

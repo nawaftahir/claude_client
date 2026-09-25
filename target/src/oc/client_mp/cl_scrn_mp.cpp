@@ -63,7 +63,7 @@ extern int CG_DrawActiveFrame(int serverTime, int needRender, int side, int size
 extern float UI_GetBlurRadius(void);
 extern void UI_Refresh(void);
 extern int UI_IsFullscreen(void);
-extern int UI_GetActiveMenu(void);
+extern uiMenuCommand_t UI_GetActiveMenu(void);
 extern void UI_DrawConnectScreen(void);
 extern qboolean UI_SetActiveMenu(int menu);
 extern void UI_UpdateTime(int time);
