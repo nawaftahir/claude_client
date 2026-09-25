@@ -1,0 +1,11058 @@
+[
+{
+"va": 4198560,
+"size": 9633,
+"n": 32,
+"strings": [
+"QuitOnError",
+"r_vc_compile",
+"gfx/2d/warning@snapshotents.jpg",
+"CL_GetSnapshot: truncated %i entities to %i\n",
+".\\universal\\com_memory.cpp",
+"===== CL_GetServerCommand =====\n",
+"serverCommandNumber: %d\n",
+"cmd %5d: %s\n",
+"serverCommand: %i : %s\n",
+"EXE_SERVERDISCONNECTREASON",
+"EXE_SERVER_DISCONNECTED",
+"%c %s %s",
+"hunkusage.dat",
+".\\universal\\com_memory.cpp",
+"snd_list",
+"^3WARNING: CL_SKEL_MEMORY_SIZE exceeded - not calculating skeleton\n",
+"^3WARNING: CL_SKEL_MEMORY_SIZE exceeded - not calculating skeleton\n",
+"Could not translate subtitle text: \"%s\"",
+"^3WARNING: Could not translate subtitle text: \"%s\"\n",
+"^1UNLOCALIZED(^7%s^1)^7",
+"all_mp",
+"UIMENU_WM_QUICKMESSAGE",
+"UIMENU_WM_AUTOUPDATE",
+"UIMENU_SCRIPT_POPUP",
+"UIMENU_SCRIPT_POPUP_NO_MOUSE",
+"UIMENU_SCRIPT_POPUP_NO_MOUSE",
+"UIMENU_SCRIPT_POPUP",
+"hunkusage.dat",
+".\\universal\\com_memory.cpp",
+"EXE_ERR_HUNGUSAGE_CORRUPT",
+"hunkusage.dat",
+"hunkusage.dat",
+"hunkusage.dat",
+"EXE_ERR_HUNKUSAGE_CANT_WRITE",
+"%s %i\n",
+"hunkusage.dat",
+"mapname",
+"maps/mp/%s.%s",
+"QSUVWj",
+"CL_InitCGame: %5.2f seconds\n",
+"<RESET> ",
+"<FAST> ",
+"client time: %i, server time: %i\n",
+"snapshot delta: %i, time delta: %i\n",
+"r_mode",
+"demos/timedemo_%s_mode_%i.csv",
+"%i,%i\n",
+"localhost",
+"Extrapolating snapshot!\n",
+"g_TeamColor_Allies",
+"g_TeamColor_Axis"
+]
+},
+{
+"va": 4208368,
+"size": 48,
+"matched": "PC_client_mp_cl_console_mp.obj"
+},
+{
+"va": 4208416,
+"size": 383,
+"n": 3,
+"strings": []
+},
+{
+"va": 4209536,
+"size": 94,
+"matched": "PC_client_mp_cl_console_mp.obj"
+},
+{
+"va": 4209760,
+"size": 5071,
+"n": 18,
+"strings": [
+"con_restricted",
+"toggleconsole",
+"chatmodepublic",
+"chatmodeteam",
+"clear",
+"condump",
+"killiconcrush",
+"killicondied",
+"killiconfalling",
+"killiconheadshot",
+"killiconmelee",
+"killiconsuicide",
+"con_inputBoxColor",
+"con_inputHintBoxColor",
+"con_outputBarColor",
+"con_outputSliderColor",
+"con_outputWindowColor",
+"con_gamemessagetime",
+"con_boldgamemessagetime",
+"con_minicontime",
+"con_miniconlines",
+"con_miniconlines"
+]
+},
+{
+"va": 4214832,
+"size": 63,
+"matched": "PC_client_mp_cl_console_mp.obj"
+},
+{
+"va": 4214960,
+"size": 95,
+"n": 1,
+"strings": []
+},
+{
+"va": 4215056,
+"size": 284,
+"matched": "PC_client_mp_cl_console_mp.obj"
+},
+{
+"va": 4215344,
+"size": 6019,
+"n": 12,
+"strings": [
+"CoD2 MP",
+"%s: %s> ",
+"%i matches (too many to show)",
+"EXE_SAYTEAM",
+"EXE_SAY",
+"Thu Oct 06 2005 07:13:42PM",
+"crc6_v1",
+"%s %s",
+"win-x86",
+"Build %s %s"
+]
+},
+{
+"va": 4221472,
+"size": 43,
+"matched": "PC_client_mp_cl_console_mp.obj"
+},
+{
+"va": 4221520,
+"size": 11225,
+"n": 25,
+"strings": [
+"Three keys down for a button!\n",
+"%f : %f\n",
+"voice: %i\n",
+"MAX_PACKET_USERCMDS\n",
+"centerview",
+"+moveup",
+"-moveup",
+"+movedown",
+"-movedown",
+"+left",
+"-left",
+"+right",
+"-right",
+"+forward",
+"-forward",
+"+back",
+"-back",
+"+lookup",
+"-lookup",
+"+lookdown",
+"-lookdown",
+"+strafe",
+"-strafe",
+"+moveleft",
+"-moveleft",
+"+moveright",
+"-moveright",
+"+speed",
+"-speed",
+"+attack",
+"-attack",
+"+melee",
+"-melee",
+"+holdbreath",
+"-holdbreath",
+"+melee_breath",
+"-melee_breath",
+"+frag",
+"-frag",
+"+smoke",
+"-smoke",
+"+binoculars",
+"-binoculars",
+"+breath_binoculars",
+"-breath_binoculars",
+"+activate",
+"-activate",
+"+reload",
+"-reload",
+"+usereload",
+"-usereload",
+"+leanleft",
+"-leanleft",
+"+leanright",
+"-leanright",
+"+prone",
+"-prone",
+"+stance",
+"-stance",
+"+mlook",
+"-mlook",
+"toggleads",
+"leaveads",
+"lowerstance",
+"raisestance",
+"togglecrouch",
+"toggleprone",
+"goprone",
+"gocrouch",
+"+gostand",
+"-gostand",
+"+talk",
+"-talk",
+"cl_analog_attack_threshold",
+"cl_stanceHoldTime",
+"cl_stanceHoldTime",
+"cl_nodelta",
+"centerview",
+"+moveup",
+"-moveup",
+"+movedown",
+"-movedown",
+"+left",
+"-left",
+"+right",
+"-right",
+"+forward",
+"-forward",
+"+back",
+"-back",
+"+lookup",
+"-lookup",
+"+lookdown",
+"-lookdown",
+"+strafe",
+"-strafe",
+"+moveleft",
+"-moveleft",
+"+moveright",
+"-moveright",
+"+speed",
+"-speed",
+"+attack",
+"-attack",
+"+melee",
+"-melee",
+"+holdbreath",
+"-holdbreath",
+"+melee_breath",
+"-melee_breath",
+"+frag",
+"-frag",
+"+smoke",
+"-smoke",
+"+binoculars",
+"-binoculars",
+"+breath_binoculars",
+"-breath_binoculars",
+"+activate",
+"-activate",
+"+reload",
+"-reload",
+"+usereload",
+"-usereload",
+"+leanleft",
+"-leanleft",
+"+leanright",
+"-leanright",
+"+prone",
+"-prone",
+"+stance",
+"-stance",
+"+mlook",
+"-mlook",
+"toggleads",
+"leaveads",
+"lowerstance",
+"raisestance",
+"togglecrouch",
+"toggleprone",
+"goprone",
+"gocrouch",
+"+gostand",
+"-gostand",
+"+talk",
+"-talk"
+]
+},
+{
+"va": 4232752,
+"size": 70,
+"matched": "PC_client_mp_cl_keys_mp.obj"
+},
+{
+"va": 4232832,
+"size": 4154,
+"n": 15,
+"strings": [
+"clear\n",
+"cmd say ",
+"<KEY NOT FOUND>",
+"<OUT OF RANGE>"
+]
+},
+{
+"va": 4237856,
+"size": 366,
+"matched": "PC_client_mp_cl_keys_mp.obj"
+},
+{
+"va": 4238576,
+"size": 38823,
+"n": 102,
+"strings": [
+"devgui",
+"-%s %i %i\n",
+"<KEY NOT FOUND>",
+"%s is unbound, use controls menu to set.\n",
+"%s is unbound, use controls menu to set.\n",
+"%s is unbound, use controls menu to set.\n",
+"<OUT OF RANGE>",
+"%s is unbound, use controls menu to set.\n",
+"%s %i %i\n",
+"devgui",
+"-%s %i %i\n",
+"EXE_ERR_CLIENT_CMD_OVERFLOW",
+"Not recording a demo.\n",
+"Stopped demo.\n",
+"record <demoname>\n",
+"Already recording.\n",
+"You must be in a level to record.\n",
+"demos/%s.dm_%d",
+"Sh|:V",
+"demo%04i",
+"demos/%s.dm_%d",
+"Sh|:V",
+"recording to %s.\n",
+"ERROR: couldn't open.\n",
+"%i frames, %3.1f seconds: %3.1f fps\n",
+"Demo file was truncated.\n",
+"localhost",
+"localhost",
+"disconnect",
+"PhP9V",
+"PhP9V",
+"PhP9V",
+"Unknown command \"%s\"\n",
+"                                ",
+"EXE_ERR_INVALID_CD_KEY",
+"cod2master.activision.com",
+"Resolving %s\n",
+"cod2master.activision.com",
+"Couldn't resolve address\n",
+"cod2master.activision.com",
+"%s resolved to %i.%i.%i.%i:%i\n",
+"fs_restrict",
+"                                ",
+"                                ",
+"cl_anonymous",
+"getKeyAuthorize %i %s",
+"EXE_DISCONNECTED_FROM_SERVER",
+"EXE_ERR_CLIENT_CMD_OVERFLOW",
+"Listen server cannot video restart.\n",
+".\\universal\\com_memory.cpp",
+"loc_language",
+"loc_language",
+"loc_translate",
+"fs_ignoreLocalized",
+"ni]Zm^l",
+"%s/%s",
+"donedl",
+"mapname",
+"g_gametype",
+"***** CL_BeginDownload *****\nLocalname: %s\nRemotename: %s\n**********************",
+"%s.tmp",
+"download %s",
+"ni]Zm^l",
+"@%s/%s@%s/%s",
+"Need iwds: %s\n",
+"\nWARNING: You are missing some files referenced by the server:\n%sYou might not b",
+"protocol",
+"challenge",
+"qport",
+"connect ",
+"getchallenge",
+"EXE_SERVER_DISCONNECTED",
+"Invalid voice packet - talker was %i\n",
+"Invalid server voice packet of %i bytes\n",
+"challengeResponse",
+"Unwanted challenge response received.  Ignored.\n",
+"challenge: %d\n",
+"connectResponse",
+"Dup connect received.  Ignored.\n",
+"connectResponse packet while not connecting.  Ignored.\n",
+"connectResponse from a different address.  Ignored.\n",
+"%s should have been %s\n",
+"infoResponse",
+"statusResponse",
+"disconnect",
+"keyAuthorize",
+"print",
+"error",
+"updateResponse",
+"getserversResponse",
+"needcdkey",
+"EXE_AWAITINGCDKEYAUTH",
+"need cd key message",
+"EXE_AWAITINGCDKEYAUTH",
+"loadingnewmap",
+"%s: Runt packet\n",
+"%s:sequenced packet without connection\n",
+"ignoring illegible message",
+"EXE_ERR_SERVER_TIMEOUT",
+"userinfo \"%s\"",
+"screenshot silent\n",
+"white",
+"console",
+"fonts/consoleFont",
+"----- Initializing Renderer ----\n",
+"Failed to load renderer.",
+"-------------------------------\n",
+"Failed to initialize renderer: version mismatch.",
+"USAGE: logo <image name> <fadein seconds> <full duration seconds> <fadeout secon",
+"CL_PlayLogo_f\n",
+"cl_paused",
+"SUVWhpv@",
+"cl_noprint",
+"cl_voice",
+"cl_timeout",
+"cl_connectTimeout",
+"cl_shownet",
+"cl_shownet",
+"cl_shownuments",
+"cl_showServerCommands",
+"cl_showSend",
+"cl_showTimeDelta",
+"cl_freezeDemo",
+"activeAction",
+"activeAction",
+"cl_avidemo",
+"cl_avidemo",
+"cl_forceavidemo",
+"cl_yawspeed",
+"cl_pitchspeed",
+"cl_anglespeedkey",
+"cl_maxpackets",
+"cl_maxpackets",
+"cl_packetdup",
+"cl_packetdup",
+"sensitivity",
+"cl_mouseAccel",
+"cl_freelook",
+"cl_showmouserate",
+"cl_allowDownload",
+"cl_talking",
+"r_inGameVideo",
+"cl_serverStatusResendTime",
+"cl_serverStatusResendTime",
+"cl_bypassMouseInput",
+"m_pitch",
+"m_yaw",
+"m_forward",
+"m_side",
+"m_filter",
+"input_viewSensitivity",
+"cg_drawCrosshair",
+"cl_motdString",
+"cl_motdString",
+"cl_ingame",
+"cl_maxPing",
+"cl_maxPing",
+"Unknown Soldier",
+"snaps",
+"snaps",
+"password",
+"password",
+"fx_enable",
+"fx_draw",
+"fx_cull",
+"fx_sort",
+"fx_freeze",
+"fx_debug",
+"fx_debugBolt",
+"fx_count",
+"fx_visMinTraceDist",
+"fx_profile",
+"nextdemo",
+"nextdemo",
+"hud_enable",
+"cg_blood",
+"cl_updateavailable",
+"cl_updatefiles",
+"cl_updatefiles",
+"cl_updateoldversion",
+"cl_updateoldversion",
+"cl_updateversion",
+"cl_updateversion",
+"cod2update.activision.com",
+"cod2update2.activision.com",
+"cod2update3.activision.com",
+"cod2update4.activision.com",
+"cod2update5.activision.com",
+"configstrings",
+"clientinfo",
+"vid_restart",
+"snd_restart",
+"disconnect",
+"record",
+"stoprecord",
+"timedemo",
+"demos",
+"timedemo",
+"cinematic",
+"cinematic",
+"video",
+"connect",
+"reconnect",
+"localservers",
+"globalservers",
+"serverstatus",
+"toggleMenu",
+"setenv",
+"showip",
+"fs_openedList",
+"fs_referencedList",
+"updatehunkusage",
+"updatescreen",
+"startSingleplayer",
+"setRecommended",
+"cubemapShot",
+"openScriptMenu",
+"localizeSoundAliasFiles",
+"openmenu",
+"closemenu",
+"----- Client Initialization -----\n",
+"----- Client Initialization Complete -----\n",
+"----- CL_Shutdown -----\n",
+"recursive shutdown\n",
+"configstrings",
+"clientinfo",
+"vid_restart",
+"snd_restart",
+"disconnect",
+"record",
+"cinematic",
+"stoprecord",
+"connect",
+"reconnect",
+"localservers",
+"globalservers",
+"setenv",
+"serverstatus",
+"showip",
+"fs_openedList",
+"fs_referencedList",
+"updatehunkusage",
+"updatescreen",
+"SaveTranslations",
+"SaveNewTranslations",
+"LoadTranslations",
+"startSingleplayer",
+"buyNow",
+"singlePlayLink",
+"setRecommended",
+"cubemapShot",
+"openScriptMenu",
+"openmenu",
+"closemenu",
+"-----------------------\n",
+"CL_UpdateInfoPacket:  Auto-Updater has bad address\n",
+"Auto-Updater resolved to %i.%i.%i.%i:%i\n",
+"CL_UpdateInfoPacket:  Received packet from %i.%i.%i.%i:%i\n",
+"Scanning for servers on the local network...\n",
+"cl_maxPing",
+"getinfo xxx",
+"%i.%i.%i.%i:%i",
+"Server changing map %s, gametype %s\n",
+"CL_Netchan_SendOOBPacket used to send non-OOB packet.\n",
+"====================",
+"Client Network Profile:",
+"      Source    bps   max   min frag%%",
+"    OOB Sent: %5i %5i %5i    -",
+"OOB Recieved: %5i %5i %5i    -",
+"    OOB Sent:     0     0     0    -",
+"OOB Recieved:     0     0     0    -",
+"        Sent: %5i %5i %5i  %3i%%",
+"    Recieved: %5i %5i %5i  %3i%%",
+"        Sent:     0     0     0    0%",
+"    Recieved:     0     0     0    0%",
+"       Total: %5i",
+"%3i:  unchanged: %i\n",
+"%3i:  delta: %i\n",
+"%3i:  baseline: %i\n",
+"%3i:  unchanged: %i\n",
+"Entities in packet: %i\n",
+"%3i:  unchanged: %i\n",
+"%3i:  delta: %i\n",
+"%3i:  baseline: %i\n",
+"%3i:  unchanged: %i\n",
+"Clients in packet: %i\n",
+"playerstate",
+"%3i:%s\n",
+"Delta from invalid frame (not supposed to happen!).\n",
+"Delta frame too old.\n",
+"Delta parseEntitiesNum too old.\n",
+"Delta parseClientsNum too old.\n",
+"packet entities",
+"%3i:%s\n",
+"packet clients",
+"%3i:%s\n",
+"   snapshot:%i  delta:%i  ping:%i\n",
+"sv_serverid",
+"sv_cheats",
+"sv_iwds",
+"sv_iwdNames",
+"sv_referencedIwds",
+"sv_referencedIwdNames",
+"sv_pure",
+"CL_ParseDownload: Expected block %d, got %d\n",
+"CL_ParseDownload: Sending retransmit request to get the missed block\n",
+"retransdl %d",
+"Server sending download, but no download was requested\n",
+"stopdl",
+"Could not create %s\n",
+"stopdl",
+"nextdl %d",
+"------------------\n",
+"%3i:BAD CMD %i\n",
+"%3i:%s\n",
+"END OF MESSAGE",
+"%3i:%s\n",
+"RECORDING %s: %ik",
+"Syntax: cubemapShot size basefilename [water r0 g0 b0 r90 g90 b90 | fresnel n0 n",
+"size must be a power of 2 >= 4 and <= 1024\n",
+"screenshots will be written to 'env/basefilename_*.tga'\n",
+"basefilename must not exceed %i chars\n",
+"If 'water' is specified, a diffuse water color cubemap is generated using local ",
+"The water has the given colors at the given angles, and blends between them in t",
+"If 'fresnel' is specified, the alpha channel of the cubemap contains the reflect",
+"n0 and n1 are the index of refraction of the 'air' and 'water' surfaces, respect",
+"The index of refraction must always be 1 or greater.\n",
+"This is always calculated, and defaults to air-water interface (n0 = 1, n1 = 1.3",
+"hostname",
+"mapname",
+"clients",
+"sv_maxclients",
+"minping",
+"maxping",
+"gametype",
+"nettype",
+"sv_allowAnonymous",
+"con_disabled",
+"pswrd",
+"voice",
+"fs_game",
+"fs_game",
+"                                ",
+"                            ",
+"                        ",
+"                    ",
+"                                ",
+"                            ",
+"                        ",
+"                    ",
+"                ",
+"snd_list"
+]
+},
+{
+"va": 4277440,
+"size": 87,
+"matched": "qcommon_cm_load.obj"
+},
+{
+"va": 4277584,
+"size": 580,
+"n": 1,
+"strings": [
+"bad bsp version %d",
+".\\universal\\com_memory.cpp",
+"Failed to open file %s for writing"
+]
+},
+{
+"va": 4278560,
+"size": 33,
+"matched": "universal_com_math.obj"
+},
+{
+"va": 4278656,
+"size": 3132,
+"n": 4,
+"strings": []
+},
+{
+"va": 4281792,
+"size": 406,
+"matched": "qcommon_cm_load_obj.obj"
+},
+{
+"va": 4282272,
+"size": 1381,
+"n": 4,
+"strings": []
+},
+{
+"va": 4283664,
+"size": 234,
+"matched": "qcommon_cm_load_obj.obj"
+},
+{
+"va": 4283920,
+"size": 3506,
+"n": 12,
+"strings": [
+"In single player, do not compile the bsp with visibility"
+]
+},
+{
+"va": 4287440,
+"size": 313,
+"matched": "qcommon_cm_load_obj.obj"
+},
+{
+"va": 4288416,
+"size": 37,
+"matched": "xanim_xmodel.obj"
+},
+{
+"va": 4288496,
+"size": 31,
+"matched": "xanim_xmodel_load.obj"
+},
+{
+"va": 4288528,
+"size": 290,
+"matched": "qcommon_cm_mesh.obj"
+},
+{
+"va": 4288832,
+"size": 5054,
+"n": 5,
+"strings": []
+},
+{
+"va": 4293888,
+"size": 200,
+"matched": "qcommon_cm_mesh.obj"
+},
+{
+"va": 4294096,
+"size": 82,
+"matched": "qcommon_cm_mesh.obj"
+},
+{
+"va": 4294240,
+"size": 119,
+"matched": "qcommon_cm_mesh.obj"
+},
+{
+"va": 4294368,
+"size": 5218,
+"n": 7,
+"strings": [
+".\\universal\\com_memory.cpp",
+"classname",
+"misc_model",
+"model",
+"xmodel",
+"classname",
+"misc_model",
+"model",
+"origin",
+"%f %f %f",
+"angles",
+"%f %f %f",
+"modelscale_vec",
+"%f %f %f",
+"modelscale",
+"xmodel"
+]
+},
+{
+"va": 4299600,
+"size": 91,
+"matched": "qcommon_cm_test.obj"
+},
+{
+"va": 4299776,
+"size": 140,
+"n": 1,
+"strings": []
+},
+{
+"va": 4299936,
+"size": 102,
+"matched": "qcommon_cm_test.obj"
+},
+{
+"va": 4300048,
+"size": 281,
+"matched": "qcommon_cm_test.obj"
+},
+{
+"va": 4300352,
+"size": 410,
+"n": 3,
+"strings": []
+},
+{
+"va": 4300832,
+"size": 52,
+"matched": "universal_dvar.obj"
+},
+{
+"va": 4300976,
+"size": 394,
+"n": 2,
+"strings": []
+},
+{
+"va": 4301376,
+"size": 191,
+"matched": "qcommon_cm_trace.obj"
+},
+{
+"va": 4301568,
+"size": 246,
+"matched": "qcommon_cm_trace.obj"
+},
+{
+"va": 4301824,
+"size": 90,
+"matched": "qcommon_cm_trace.obj"
+},
+{
+"va": 4301984,
+"size": 547,
+"n": 1,
+"strings": []
+},
+{
+"va": 4302544,
+"size": 297,
+"matched": "qcommon_cm_trace.obj"
+},
+{
+"va": 4302848,
+"size": 1698,
+"n": 2,
+"strings": []
+},
+{
+"va": 4304560,
+"size": 238,
+"matched": "qcommon_cm_trace.obj"
+},
+{
+"va": 4304800,
+"size": 135,
+"matched": "qcommon_cm_trace.obj"
+},
+{
+"va": 4304944,
+"size": 6039,
+"n": 9,
+"strings": []
+},
+{
+"va": 4310992,
+"size": 138,
+"matched": "qcommon_cm_trace.obj"
+},
+{
+"va": 4311136,
+"size": 138,
+"matched": "qcommon_cm_trace.obj"
+},
+{
+"va": 4311280,
+"size": 3995,
+"n": 8,
+"strings": []
+},
+{
+"va": 4315296,
+"size": 145,
+"matched": "qcommon_cm_world.obj"
+},
+{
+"va": 4315456,
+"size": 225,
+"n": 1,
+"strings": []
+},
+{
+"va": 4315712,
+"size": 453,
+"matched": "qcommon_cm_world.obj"
+},
+{
+"va": 4316192,
+"size": 1243,
+"n": 4,
+"strings": []
+},
+{
+"va": 4317440,
+"size": 190,
+"matched": "qcommon_cm_world.obj"
+},
+{
+"va": 4317632,
+"size": 52,
+"matched": "qcommon_cm_world.obj"
+},
+{
+"va": 4317696,
+"size": 1015,
+"n": 3,
+"strings": [
+"CM_AreaEntities: MAXCOUNT\n"
+]
+},
+{
+"va": 4318720,
+"size": 154,
+"matched": "qcommon_cm_world.obj"
+},
+{
+"va": 4318880,
+"size": 515,
+"n": 1,
+"strings": []
+},
+{
+"va": 4319408,
+"size": 74,
+"matched": "qcommon_cm_world.obj"
+},
+{
+"va": 4319488,
+"size": 708,
+"n": 1,
+"strings": []
+},
+{
+"va": 4320208,
+"size": 81,
+"matched": "qcommon_cm_world.obj"
+},
+{
+"va": 4320304,
+"size": 1167,
+"n": 2,
+"strings": []
+},
+{
+"va": 4321472,
+"size": 80,
+"matched": "qcommon_cm_world.obj"
+},
+{
+"va": 4321552,
+"size": 378,
+"n": 1,
+"strings": []
+},
+{
+"va": 4322080,
+"size": 85,
+"matched": "qcommon_cmd.obj"
+},
+{
+"va": 4322176,
+"size": 116,
+"matched": "qcommon_cmd.obj"
+},
+{
+"va": 4322304,
+"size": 1036,
+"n": 5,
+"strings": []
+},
+{
+"va": 4323344,
+"size": 227,
+"matched": "qcommon_cmd.obj"
+},
+{
+"va": 4323584,
+"size": 30,
+"matched": "qcommon_cmd.obj"
+},
+{
+"va": 4323616,
+"size": 315,
+"matched": "qcommon_cmd.obj"
+},
+{
+"va": 4324032,
+"size": 26,
+"n": 1,
+"strings": []
+},
+{
+"va": 4324064,
+"size": 93,
+"matched": "qcommon_cmd.obj"
+},
+{
+"va": 4324160,
+"size": 253,
+"n": 2,
+"strings": [
+"Cmd_AddCommand: %s already defined\n",
+".\\universal\\com_memory.cpp"
+]
+},
+{
+"va": 4324448,
+"size": 54,
+"matched": "qcommon_cmd.obj"
+},
+{
+"va": 4324512,
+"size": 30,
+"matched": "qcommon_cmd.obj"
+},
+{
+"va": 4324560,
+"size": 847,
+"n": 3,
+"strings": [
+".\\universal\\com_memory.cpp"
+]
+},
+{
+"va": 4325632,
+"size": 51,
+"matched": "universal_com_files.obj"
+},
+{
+"va": 4325824,
+"size": 86,
+"matched": "universal_com_files.obj"
+},
+{
+"va": 4325920,
+"size": 137,
+"matched": "universal_com_files.obj"
+},
+{
+"va": 4326080,
+"size": 79,
+"matched": "universal_com_files.obj"
+},
+{
+"va": 4326224,
+"size": 296,
+"matched": "universal_com_files.obj"
+},
+{
+"va": 4326512,
+"size": 100,
+"matched": "universal_com_files.obj"
+},
+{
+"va": 4326624,
+"size": 202,
+"matched": "universal_com_files.obj"
+},
+{
+"va": 4326848,
+"size": 454,
+"n": 2,
+"strings": []
+},
+{
+"va": 4327312,
+"size": 104,
+"matched": "universal_com_files.obj"
+},
+{
+"va": 4327424,
+"size": 117,
+"matched": "universal_com_files.obj"
+},
+{
+"va": 4327552,
+"size": 205,
+"matched": "universal_com_files.obj"
+},
+{
+"va": 4327760,
+"size": 199,
+"matched": "universal_com_files.obj"
+},
+{
+"va": 4327968,
+"size": 82,
+"matched": "universal_com_files.obj"
+},
+{
+"va": 4328143,
+"size": 287,
+"n": 1,
+"strings": []
+},
+{
+"va": 4328528,
+"size": 79,
+"matched": "universal_com_files.obj"
+},
+{
+"va": 4328672,
+"size": 139,
+"matched": "universal_com_files.obj"
+},
+{
+"va": 4328816,
+"size": 173,
+"matched": "universal_com_files.obj"
+},
+{
+"va": 4328992,
+"size": 1791,
+"n": 2,
+"strings": [
+"Can't find %s\n",
+"FS_FOpenFileRead: %s (found in '%s/%s')\n",
+"WhPWV",
+"FS_FOpenFileRead: %s (found in '%s')\n",
+"%s/%s"
+]
+},
+{
+"va": 4330784,
+"size": 78,
+"matched": "universal_com_files.obj"
+},
+{
+"va": 4330976,
+"size": 2800,
+"n": 10,
+"strings": [
+"Failed to open %s\n",
+"FS_FOpenFileOverWrite: Failed to open %s for writing.  It either does not exist ",
+"FS_FOpenFileOverWrite: %s\n",
+".\\universal\\com_memory.cpp"
+]
+},
+{
+"va": 4333792,
+"size": 91,
+"matched": "universal_com_files.obj"
+},
+{
+"va": 4333888,
+"size": 79,
+"matched": "universal_com_files.obj"
+},
+{
+"va": 4333968,
+"size": 1089,
+"n": 1,
+"strings": [
+".\\universal\\com_memory.cpp"
+]
+},
+{
+"va": 4335152,
+"size": 467,
+"matched": "universal_com_files.obj"
+},
+{
+"va": 4335632,
+"size": 570,
+"n": 3,
+"strings": [
+".\\universal\\com_memory.cpp",
+"$modlist"
+]
+},
+{
+"va": 4336208,
+"size": 29,
+"matched": "universal_com_files.obj"
+},
+{
+"va": 4336240,
+"size": 91,
+"matched": "universal_com_files.obj"
+},
+{
+"va": 4336336,
+"size": 640,
+"n": 2,
+"strings": [
+".\\universal\\com_memory.cpp",
+"Current language: %s\n",
+"    localized assets are being ignored\n",
+"Current search path:\n",
+"%s (%i files)\n",
+"Ph$UV",
+"    localized assets iwd file for %s\n",
+"    not on the pure list\n",
+"    on the pure list\n",
+"%s/%s\n",
+"    localized assets game folder for %s\n",
+"\nFile Handles:\n",
+"handle %i: %s\n"
+]
+},
+{
+"va": 4337008,
+"size": 147,
+"matched": "universal_com_files.obj"
+},
+{
+"va": 4337456,
+"size": 1848,
+"n": 3,
+"strings": [
+"WARNING: Exceeded max number of iwd files in %s/%s (%1/%1)\n",
+"localized_",
+"          ",
+"      ",
+"          ",
+"localized_",
+"lized_",
+"WARNING: Localized assets iwd file %s/%s/%s has invalid name (no language specif",
+"WARNING: Localized assets iwd file %s/%s/%s has invalid name (bad language name ",
+"Supported languages are:\n",
+"    %s\n",
+"%s/%s",
+"localized",
+"non-localized",
+"WARNING: game folder %s/%s added as both localized & non-localized. Using folder",
+"WARNING: game golder %s/%s re-added as localized folder with different language\n",
+".\\universal\\com_memory.cpp"
+]
+},
+{
+"va": 4339312,
+"size": 126,
+"matched": "universal_com_files.obj"
+},
+{
+"va": 4339440,
+"size": 2793,
+"n": 7,
+"strings": [
+"fullpath",
+"touchFile",
+"fs_debug",
+"fs_debug",
+"fs_copyfiles",
+"fs_cdpath",
+"fs_basepath",
+"fs_basegame",
+"fs_useOldAssets",
+"fs_homepath",
+"fs_game",
+"fs_restrict",
+"fs_ignoreLocalized",
+"----- FS_Startup -----\n",
+"tempcod",
+"tempcod",
+"devraw_shared",
+"devraw_shared",
+"devraw",
+"devraw",
+"raw_shared",
+"raw_shared",
+"devraw_shared",
+"devraw_shared",
+"devraw",
+"devraw",
+"raw_shared",
+"raw_shared",
+"devraw_shared",
+"devraw_shared",
+"devraw",
+"devraw",
+"raw_shared",
+"raw_shared",
+"----------------------\n",
+"%d files in iwd files\n",
+"fs_cdpath",
+"fs_basepath",
+"fs_homepath",
+"fs_game",
+"fs_copyfiles",
+"fs_restrict",
+"loc_language",
+"default_mp.cfg",
+"default_mp.cfg",
+"Couldn't load %s.  Make sure Call of Duty is run from the correct folder.",
+".\\universal\\com_memory.cpp",
+"default_mp.cfg",
+".\\universal\\com_memory.cpp",
+"Invalid game folder\n",
+"default_mp.cfg",
+"Couldn't load %s.  Make sure Call of Duty is run from the correct folder.",
+"config_mp.cfg",
+"exec %s\n"
+]
+},
+{
+"va": 4342576,
+"size": 20,
+"matched": "universal_com_files.obj"
+},
+{
+"va": 4342608,
+"size": 85,
+"n": 1,
+"strings": [
+"gfx_driver",
+"%sbsp",
+"d3dbsp"
+]
+},
+{
+"va": 4343088,
+"size": 181,
+"matched": "game_g_misc_mp.obj"
+},
+{
+"va": 4343280,
+"size": 105,
+"matched": "universal_com_math.obj"
+},
+{
+"va": 4343392,
+"size": 2952,
+"n": 20,
+"strings": []
+},
+{
+"va": 4346352,
+"size": 47,
+"matched": "universal_com_math.obj"
+},
+{
+"va": 4346512,
+"size": 5009,
+"n": 21,
+"strings": []
+},
+{
+"va": 4351760,
+"size": 219,
+"matched": "universal_com_math.obj"
+},
+{
+"va": 4351984,
+"size": 3623,
+"n": 6,
+"strings": []
+},
+{
+"va": 4355824,
+"size": 80,
+"matched": "universal_com_math.obj"
+},
+{
+"va": 4355904,
+"size": 4243,
+"n": 22,
+"strings": []
+},
+{
+"va": 4360224,
+"size": 107,
+"matched": "universal_com_math.obj"
+},
+{
+"va": 4360928,
+"size": 107,
+"matched": "universal_com_math.obj"
+},
+{
+"va": 4361120,
+"size": 167,
+"matched": "universal_com_math.obj"
+},
+{
+"va": 4361296,
+"size": 44,
+"matched": "universal_com_math.obj"
+},
+{
+"va": 4361392,
+"size": 53,
+"matched": "universal_com_math.obj"
+},
+{
+"va": 4361520,
+"size": 83,
+"matched": "universal_com_math.obj"
+},
+{
+"va": 4361616,
+"size": 8364,
+"n": 22,
+"strings": [
+".\\universal\\com_memory.cpp",
+".\\universal\\com_memory.cpp",
+".\\universal\\com_memory.cpp",
+"Com_TouchMemory: %i msec. Using sum: %d\n",
+"SUVWh`[V",
+"com_hunkMegs",
+"com_hunkMegs",
+"Minimum com_hunkMegs for a dedicated server is %i, allocating %i megs.\n",
+".\\universal\\com_memory.cpp",
+"meminfo"
+]
+},
+{
+"va": 4370064,
+"size": 56,
+"matched": "universal_com_memory.obj"
+},
+{
+"va": 4370192,
+"size": 113,
+"matched": "universal_com_memory.obj"
+},
+{
+"va": 4370368,
+"size": 83,
+"n": 1,
+"strings": []
+},
+{
+"va": 4370464,
+"size": 98,
+"matched": "universal_com_memory.obj"
+},
+{
+"va": 4370592,
+"size": 84,
+"matched": "universal_com_memory.obj"
+},
+{
+"va": 4370960,
+"size": 290,
+"n": 2,
+"strings": []
+},
+{
+"va": 4371296,
+"size": 140,
+"matched": "universal_com_memory.obj"
+},
+{
+"va": 4371456,
+"size": 204,
+"n": 1,
+"strings": [
+".\\universal\\com_memory.cpp"
+]
+},
+{
+"va": 4371664,
+"size": 112,
+"matched": "universal_com_memory.obj"
+},
+{
+"va": 4372128,
+"size": 1492,
+"n": 10,
+"strings": [
+"players",
+"config_mp.cfg",
+"players/active.txt",
+"disconnect",
+"config_mp.cfg",
+"snd_restart\n",
+"players/active.txt",
+"ui_playerProfileAlreadyChosen",
+"ui_playerProfileAlreadyChosen",
+"com_playerProfile",
+"com_playerProfile",
+"exec default_mp.cfg\n",
+"exec language.cfg\n",
+"exec safemode_mp.cfg\n",
+"players/%s/",
+"players/%s/",
+"Tried to use a player profile before it was set.  This is probably a menu bug.\n",
+"players/%s/",
+"Profile '%s' already exists\n",
+"Unable to create new profile path: %s\n"
+]
+},
+{
+"va": 4373648,
+"size": 85,
+"matched": "universal_com_shared.obj"
+},
+{
+"va": 4373744,
+"size": 506,
+"n": 1,
+"strings": []
+},
+{
+"va": 4374256,
+"size": 135,
+"matched": "universal_com_shared.obj"
+},
+{
+"va": 4374400,
+"size": 57,
+"matched": "universal_com_shared.obj"
+},
+{
+"va": 4374464,
+"size": 91,
+"matched": "universal_com_shared.obj"
+},
+{
+"va": 4374560,
+"size": 1356,
+"n": 6,
+"strings": [
+"%-64s %7.1f KB\n",
+"%-64s FAILED TO LOAD\n",
+"\ntotal usage %7.3f MB\n",
+"%-64s\n",
+"%-64s FILE NOT FOUND\n"
+]
+},
+{
+"va": 4376016,
+"size": 54,
+"matched": "universal_com_sndalias.obj"
+},
+{
+"va": 4376080,
+"size": 67,
+"matched": "universal_com_sndalias.obj"
+},
+{
+"va": 4376208,
+"size": 73,
+"matched": "universal_com_sndalias.obj"
+},
+{
+"va": 4376288,
+"size": 83,
+"matched": "universal_com_sndalias.obj"
+},
+{
+"va": 4376384,
+"size": 1307,
+"n": 4,
+"strings": [
+"vfcurve",
+"soundaliases",
+"maps/mp/",
+"maps/",
+"soundaliases",
+"WARNING: can't find any sound alias files (soundaliases/*.csv)\n",
+"snd_list"
+]
+},
+{
+"va": 4377920,
+"size": 283,
+"matched": "universal_com_sndalias.obj"
+},
+{
+"va": 4378240,
+"size": 87,
+"n": 1,
+"strings": []
+},
+{
+"va": 4378384,
+"size": 84,
+"matched": "universal_com_sndalias_load_obj.obj"
+},
+{
+"va": 4378480,
+"size": 228,
+"matched": "universal_com_sndalias_load_obj.obj"
+},
+{
+"va": 4378720,
+"size": 82,
+"matched": "universal_com_sndalias_load_obj.obj"
+},
+{
+"va": 4378816,
+"size": 189,
+"matched": "universal_com_sndalias_load_obj.obj"
+},
+{
+"va": 4379024,
+"size": 112,
+"n": 1,
+"strings": [
+"streamed",
+"primed",
+"loaded",
+"^1ERROR: Sound alias file %s: Unknown sound type '%s'; should be primed, streame"
+]
+},
+{
+"va": 4379136,
+"size": 84,
+"matched": "universal_com_sndalias_load_obj.obj"
+},
+{
+"va": 4379232,
+"size": 494,
+"n": 2,
+"strings": [
+"^1ERROR: Sound alias file %s: loadspec is > %i characters\n",
+"master",
+"^1ERROR: Sound alias file %s: SlavePercentage'%f' is not within the range of '%f"
+]
+},
+{
+"va": 4379728,
+"size": 51,
+"matched": "universal_com_sndalias_load_obj.obj"
+},
+{
+"va": 4379792,
+"size": 1113,
+"n": 1,
+"strings": [
+"^1ERROR: Sound alias file %s: Duplicate entries for the '%s' column\n",
+"^1ERROR: Sound alias file %s: Alias name '%s' is longer than %i characters\n",
+"^1ERROR: Sound alias file %s: Alias name '%s' is invalid\n",
+"^1ERROR: Sound alias file %s: Secondary Alias name '%s' is longer than %i charac",
+"^1ERROR: Sound alias file %s: Secondary Alias name '%s' is invalid\n",
+"^1ERROR: Sound alias file %s: Sound file '%s' is longer than %i characters\n",
+"^1ERROR: Sound alias file %s: Subtitle '%s' has invalid character '%c' ascii %i\n",
+"^1ERROR: Sound alias file %s: MinVolume '%f' is not within the range of '%f'-'%f",
+"^1ERROR: Sound alias file %s: MaxVolume '%f' is not within the range of '%f'-'%f"
+]
+},
+{
+"va": 4381008,
+"size": 489,
+"matched": "universal_com_sndalias_load_obj.obj"
+},
+{
+"va": 4381504,
+"size": 1771,
+"n": 3,
+"strings": [
+"VOLUMEMODGROUPS",
+"soundaliases/volumemodgroups.def",
+"ERROR: Could not find '%s'\n",
+"ERROR: '%s' is empty\n",
+"VOLUMEMODGROUPS",
+"ERROR: \"%s\" does not appear to be a volumemodgroups file\n",
+"ERROR: \"%s\" Is too long of a volumemodgroups file to parse\n",
+"ERROR: volumemodgroups parse failure on file \"%s\": groups parsed (%d) is greater",
+"ERROR: volumemodgroups parse failure on file \"%s\": groupname '%s' missing a matc",
+"soundaliases/%s",
+"snd_refreshVolumeModGroups",
+"^1ERROR: Sound alias file %s: missing 'name' and/or 'file' columns\n",
+"^1ERROR: Sound alias file %s: alias entry missing name and/or file\n"
+]
+},
+{
+"va": 4383328,
+"size": 409,
+"matched": "universal_com_sndalias_load_obj.obj"
+},
+{
+"va": 4383744,
+"size": 71,
+"matched": "universal_com_sndalias_load_obj.obj"
+},
+{
+"va": 4383824,
+"size": 101,
+"matched": "universal_com_sndalias_load_obj.obj"
+},
+{
+"va": 4383952,
+"size": 7069,
+"n": 11,
+"strings": [
+"^1ERROR: alias '%s' already added - ignoring\n",
+"^1ERROR: sndcurve parse failure on file \"%s\": knot count (%d) is less than 2\n",
+"^1ERROR: sndcurve parse failure on file \"%s\": knot count (%d) is greater than ma",
+"^1ERROR: sndcurve parse failure on file \"%s\": knots parsed (%d) is greater than ",
+"^1ERROR: sndcurve parse failure on file \"%s\": knot x-coord '%f' is not in the ra",
+"^1ERROR: sndcurve parse failure on file \"%s\": knot x-coord '%f' is not in the ra",
+"^1ERROR: sndcurve parse failure on file \"%s\": knot count (%d) does not match kno",
+"^3WARNING^7: sndcurve parse on file \"%s\": the first point must be '0.0000 1.0000",
+"SNDCURVE",
+"soundaliases/%s.vfcurve",
+"^1ERROR: Could not load sndcurve file '%s'\n",
+"^1ERROR: sndcurve file '%s' is empty\n",
+"SNDCURVE",
+"^1ERROR: \"%s\" does not appear to be a sndcurve file\n",
+"^1ERROR: \"%s\" Is too long of a sndcurve file to parse\n",
+"sound/%s",
+"^1ERROR: Streamed sound file '%s' not found\n",
+"SUBTITLE_",
+"soundaliases/subtitle.st",
+"soundaliases/subtitle.st",
+"WARNING: Could not read local copy of StringEd file %s\n",
+"REFERENCE",
+"soundaliases/subtitle.st",
+"soundaliases/subtitle.st",
+"WARNING: Could not read local copy of StringEd file %s\n",
+"soundaliases/subtitle.st",
+"REFERENCE",
+"soundaliases/subtitle.st",
+"LANG_ENGLISH",
+"REFERENCE           ",
+"REFERENCE           ",
+"soundaliases/temp.st",
+"WARNING: Could not open output file %s for writing\n",
+"soundaliases/subtitle.st",
+"soundaliases/subtitle.st",
+"WARNING: Could not read local copy of StringEd file %s\n",
+"ENDMARKER",
+"REFERENCE",
+"REFERENCE",
+"ENDMARKER",
+"soundaliases/temp.st",
+"soundaliases/subtitle.st",
+"soundaliases/%s",
+"Processing sound alias file %s..\n",
+"WARNING: Can not write to sound alias file %s\n",
+"WARNING: Could not read sound alias file %s\n",
+"soundaliases/temp.csv",
+"soundaliases/temp.csv",
+"WARNING: Could not open output file %s for writing\n",
+"SUBTITLE_",
+"SUBTITLE_",
+"SUBTITLE_",
+"%s%s_%s",
+"SUBTITLE_",
+"VhLbV",
+"VhLbV",
+"VhLbV",
+"VhLbV",
+"VhDbV",
+"VhDbV",
+"VhDbV",
+"VhDbV",
+"\"%s\",",
+"soundaliases/temp.csv"
+]
+},
+{
+"va": 4391056,
+"size": 189,
+"matched": "universal_com_sndalias_load_obj.obj"
+},
+{
+"va": 4391840,
+"size": 403,
+"n": 1,
+"strings": [
+"console_mp.log",
+"logfile opened on %s\n"
+]
+},
+{
+"va": 4392256,
+"size": 68,
+"matched": "qcommon_common.obj"
+},
+{
+"va": 4392336,
+"size": 90,
+"matched": "qcommon_common.obj"
+},
+{
+"va": 4392432,
+"size": 1929,
+"n": 7,
+"strings": [
+"com_errorMessage",
+"com_errorMessage",
+"com_errorTitle",
+"com_errorTitle",
+"error message",
+"MENU_ERROR",
+"MENU_ERROR",
+"error message",
+"MENU_NOTICE",
+"MENU_NOTICE",
+"error message",
+"cl_paused",
+"cl_paused",
+"error message",
+"EXE_DISCONNECTEDFROMOWNLISTENSERVER",
+"********************\nERROR: %s\n********************\n",
+"recursive error after: %s",
+"com_errorMessage",
+"error_popmenu",
+"quitting...\n",
+"Vhp*V",
+"EXE_SERVERQUIT"
+]
+},
+{
+"va": 4394368,
+"size": 67,
+"matched": "qcommon_common.obj"
+},
+{
+"va": 4394448,
+"size": 152,
+"matched": "qcommon_common.obj"
+},
+{
+"va": 4394624,
+"size": 290,
+"n": 1,
+"strings": [
+"USAGE: seta <variable> <value>\n"
+]
+},
+{
+"va": 4394928,
+"size": 91,
+"matched": "qcommon_common.obj"
+},
+{
+"va": 4395024,
+"size": 230,
+"matched": "qcommon_common.obj"
+},
+{
+"va": 4395296,
+"size": 153,
+"matched": "qcommon_common.obj"
+},
+{
+"va": 4395456,
+"size": 109,
+"n": 1,
+"strings": []
+},
+{
+"va": 4395568,
+"size": 136,
+"matched": "qcommon_common.obj"
+},
+{
+"va": 4395712,
+"size": 693,
+"n": 1,
+"strings": [
+"Rh8{V",
+"Com_EventLoop: oversize packet\n"
+]
+},
+{
+"va": 4396640,
+"size": 82,
+"matched": "qcommon_common.obj"
+},
+{
+"va": 4396736,
+"size": 136,
+"matched": "qcommon_common.obj"
+},
+{
+"va": 4397040,
+"size": 3402,
+"n": 13,
+"strings": [
+"                ",
+"            ",
+"        ",
+"                                ",
+"                            ",
+"                        ",
+"                    ",
+"                ",
+"SOFTWARE\\Activision\\Call of Duty 2",
+"                ",
+"            ",
+"        ",
+"                                ",
+"                            ",
+"                        ",
+"                    ",
+"                ",
+"codkey",
+"                ",
+"            ",
+"        ",
+"                                ",
+"                            ",
+"                        ",
+"                    ",
+"                ",
+"                                ",
+"                            ",
+"                                ",
+"                        ",
+"                    ",
+"                ",
+"                                ",
+"                ",
+"            ",
+"        ",
+"                                ",
+"                            ",
+"                        ",
+"                    ",
+"                ",
+"SOFTWARE\\Activision\\Call of Duty 2",
+"                        ",
+"                                ",
+"                            ",
+"                    ",
+"codkey",
+"configure_mp.csv",
+"cpu ghz",
+"sys mb",
+"configure_mp.csv: using CPU configuration %.0f GHz %i MB\n",
+"exec configure_mp.cfg",
+"configure_mp.csv: using GPU configuration \"%s\"\n",
+"========= autoconfigure\n",
+"configure_mp.csv",
+"configure_mp.csv",
+"snd_restart\n"
+]
+},
+{
+"va": 4400448,
+"size": 75,
+"matched": "qcommon_common.obj"
+},
+{
+"va": 4400528,
+"size": 109,
+"matched": "qcommon_common.obj"
+},
+{
+"va": 4400640,
+"size": 5584,
+"n": 14,
+"strings": [
+"dedicated",
+"dedicated",
+"dedicated",
+"dedicated",
+"com_maxfps",
+"com_maxfps",
+"developer",
+"developer",
+"developer_script",
+"logfile",
+"logfile",
+"com_statmon",
+"timescale",
+"fixedtime",
+"fixedtime",
+"viewlog",
+"viewlog",
+"sv_paused",
+"sv_paused",
+"cl_paused",
+"cl_paused",
+"sv_running",
+"com_introPlayed",
+"com_animCheck",
+"exec default_mp.cfg\n",
+"exec language.cfg\n",
+"exec %s\n",
+"exec safemode_mp.cfg\n",
+"Oct  6 2005",
+"win-x86",
+"CoD2 MP",
+"%s %s build %s %s\n",
+"cmdlist",
+"developer",
+"unbind",
+"unbindall",
+"bindlist",
+"SUVWhlvV",
+"SUVWh(]V",
+"com_recommendedSet",
+"com_recommendedSet",
+"com_recommendedSet",
+"com_recommendedSet",
+"error",
+"crash",
+"freeze",
+"writeconfig",
+"writedefaults",
+"Thu Oct 06 2005 07:13:42PM",
+"crc6_v1",
+"%s %s",
+"win-x86",
+"CoD2 MP",
+"%s %s build %s %s",
+"version",
+"version",
+"version",
+"version",
+"shortversion",
+"shortversion",
+"shortversion",
+"shortversion",
+"SUVWh",
+"WARNING: Winsock initialization failed, returned %d\n",
+"Winsock Initialized\n",
+"--- Common Initialization Complete ---\n",
+"maps/mp/%s.csv",
+"Error during initialization:\n%s\n",
+"Couldn't write %s.\n",
+"// generated by Call of Duty, do not modify\n",
+"unbindall\n",
+"config_mp.cfg",
+"Hitch warning: %i msec frame time\n",
+"dedicated",
+"dedicated",
+"Vhp*V",
+"gfx/2d/warning@file.jpg",
+"gfx/2d/warning@fps.jpg",
+"com_errorMessage",
+"error_popmenu",
+"Error during initialization"
+]
+},
+{
+"va": 4406416,
+"size": 112,
+"matched": "qcommon_common.obj"
+},
+{
+"va": 4406544,
+"size": 145,
+"n": 2,
+"strings": []
+},
+{
+"va": 4406704,
+"size": 36,
+"matched": "qcommon_dobj_management.obj"
+},
+{
+"va": 4406752,
+"size": 28,
+"matched": "qcommon_dobj_management.obj"
+},
+{
+"va": 4406784,
+"size": 89,
+"matched": "qcommon_dobj_management.obj"
+},
+{
+"va": 4406880,
+"size": 77,
+"n": 1,
+"strings": []
+},
+{
+"va": 4406960,
+"size": 160,
+"matched": "qcommon_dobj_management.obj"
+},
+{
+"va": 4407120,
+"size": 288,
+"n": 3,
+"strings": []
+},
+{
+"va": 4407664,
+"size": 78,
+"matched": "universal_dvar.obj"
+},
+{
+"va": 4407744,
+"size": 58,
+"matched": "universal_dvar.obj"
+},
+{
+"va": 4407840,
+"size": 78,
+"n": 1,
+"strings": [
+".\\universal\\com_memory.cpp"
+]
+},
+{
+"va": 4407968,
+"size": 131,
+"matched": "universal_dvar.obj"
+},
+{
+"va": 4408160,
+"size": 75,
+"matched": "universal_dvar.obj"
+},
+{
+"va": 4408240,
+"size": 75,
+"matched": "universal_dvar.obj"
+},
+{
+"va": 4408320,
+"size": 75,
+"matched": "universal_dvar.obj"
+},
+{
+"va": 4408400,
+"size": 155,
+"matched": "universal_dvar.obj"
+},
+{
+"va": 4408560,
+"size": 155,
+"matched": "universal_dvar.obj"
+},
+{
+"va": 4408720,
+"size": 155,
+"matched": "universal_dvar.obj"
+},
+{
+"va": 4408912,
+"size": 95,
+"matched": "universal_dvar.obj"
+},
+{
+"va": 4409024,
+"size": 385,
+"matched": "universal_dvar.obj"
+},
+{
+"va": 4409504,
+"size": 66,
+"matched": "universal_dvar.obj"
+},
+{
+"va": 4409584,
+"size": 76,
+"matched": "universal_dvar.obj"
+},
+{
+"va": 4409664,
+"size": 90,
+"matched": "universal_dvar.obj"
+},
+{
+"va": 4409760,
+"size": 1565,
+"n": 4,
+"strings": [
+"%g %g %g %g"
+]
+},
+{
+"va": 4411360,
+"size": 248,
+"matched": "universal_dvar.obj"
+},
+{
+"va": 4411648,
+"size": 149,
+"matched": "universal_dvar.obj"
+},
+{
+"va": 4411808,
+"size": 753,
+"matched": "universal_dvar.obj"
+},
+{
+"va": 4412752,
+"size": 214,
+"matched": "universal_dvar.obj"
+},
+{
+"va": 4413008,
+"size": 130,
+"matched": "universal_dvar.obj"
+},
+{
+"va": 4413232,
+"size": 1534,
+"n": 7,
+"strings": [
+"      dvar set %s %s\n",
+"'%s' is not a valid value for dvar '%s'\n",
+"  %s\n",
+"      dvar set %s %s\n",
+"%s is read only.\n",
+"%s is write protected.\n",
+"%s is cheat protected.\n",
+"%s will be changed upon restarting.\n"
+]
+},
+{
+"va": 4414816,
+"size": 323,
+"matched": "universal_dvar.obj"
+},
+{
+"va": 4415152,
+"size": 121,
+"matched": "universal_dvar.obj"
+},
+{
+"va": 4415280,
+"size": 34,
+"matched": "universal_dvar.obj"
+},
+{
+"va": 4415392,
+"size": 130,
+"matched": "universal_dvar.obj"
+},
+{
+"va": 4415568,
+"size": 206,
+"matched": "universal_dvar.obj"
+},
+{
+"va": 4415808,
+"size": 5648,
+"n": 35,
+"strings": [
+"Can't create dvar '%s': %i dvars already exist",
+"%g %g",
+"%g %g %g",
+"%g %g %g %g",
+"%g %g %g %g",
+"'%s' is not a valid value for dvar '%s'\n",
+"  %s\n",
+"%g %g",
+"%g %g %g",
+"%g %g %g %g"
+]
+},
+{
+"va": 4421488,
+"size": 45,
+"matched": "universal_dvar.obj"
+},
+{
+"va": 4421616,
+"size": 51,
+"matched": "universal_dvar.obj"
+},
+{
+"va": 4422192,
+"size": 45,
+"matched": "universal_dvar.obj"
+},
+{
+"va": 4422240,
+"size": 861,
+"n": 2,
+"strings": [
+"%s \"%s\"\n",
+"^3WARNING: unknown dvar '%s' in file '%s'\n",
+"^1ERROR: the following dvars were not specified in file '%s'\n",
+"^1  %s\n"
+]
+},
+{
+"va": 4423104,
+"size": 30,
+"matched": "universal_dvar_cmds.obj"
+},
+{
+"va": 4423152,
+"size": 1603,
+"n": 5,
+"strings": [
+"\"%s\" is: \"%s^7\" default: \"%s^7\"\n",
+"latched: \"%s\"\n",
+"  %s\n",
+"'toggle' with no arguments makes no sense for dvar '%s'\n",
+"USAGE: %s <variable> <optional value sequence>\n",
+"toggle failed: dvar '%s' not found.\n",
+"USAGE: set <variable> <value>\n",
+"invalid variable name: %s\n"
+]
+},
+{
+"va": 4425872,
+"size": 78,
+"matched": "universal_dvar_cmds.obj"
+},
+{
+"va": 4425968,
+"size": 80,
+"matched": "universal_dvar_cmds.obj"
+},
+{
+"va": 4426400,
+"size": 375,
+"n": 1,
+"strings": [
+"=============================== DVAR DUMP ======================================",
+"      %s \"%s\" -- latched \"%s\"\n",
+"      %s \"%s\"\n",
+"\n%i total dvars\n%i dvar indexes\n",
+"=============================== END DVAR DUMP =================================="
+]
+},
+{
+"va": 4426800,
+"size": 62,
+"matched": "universal_dvar_cmds.obj"
+},
+{
+"va": 4426864,
+"size": 394,
+"n": 3,
+"strings": [
+"toggle",
+"togglep",
+"setfromdvar",
+"reset",
+"dvarlist",
+"dvardump",
+"dvar_bool",
+"dvar_int",
+"dvar_float"
+]
+},
+{
+"va": 4427264,
+"size": 109,
+"matched": "universal_com_files_mp.obj"
+},
+{
+"va": 4427376,
+"size": 243,
+"matched": "universal_com_files_mp.obj"
+},
+{
+"va": 4427632,
+"size": 509,
+"matched": "universal_com_files_mp.obj"
+},
+{
+"va": 4428144,
+"size": 216,
+"matched": "universal_com_files_mp.obj"
+},
+{
+"va": 4428368,
+"size": 77,
+"matched": "universal_com_files_mp.obj"
+},
+{
+"va": 4428464,
+"size": 1815,
+"n": 3,
+"strings": [
+".\\universal\\com_memory.cpp",
+"/description.txt",
+"Call of Duty 2 Multiplayer"
+]
+},
+{
+"va": 4430848,
+"size": 244,
+"matched": "universal_com_files_mp.obj"
+},
+{
+"va": 4431104,
+"size": 800,
+"n": 3,
+"strings": [
+"%s.iwd",
+"%s.%08x.iwd",
+"%s.iwd",
+" (local file exists with wrong checksum)",
+"Need iwds: %s\n",
+"fullpath",
+"touchFile",
+"\nRunning in restricted demo mode.\n\n",
+"demomain",
+"Corrupted iw0.iwd: %u"
+]
+},
+{
+"va": 4431904,
+"size": 147,
+"matched": "universal_com_files_mp.obj"
+},
+{
+"va": 4432064,
+"size": 246,
+"matched": "universal_com_files_mp.obj"
+},
+{
+"va": 4432320,
+"size": 147,
+"matched": "universal_com_files_mp.obj"
+},
+{
+"va": 4432480,
+"size": 206,
+"matched": "universal_com_files_mp.obj"
+},
+{
+"va": 4432688,
+"size": 446,
+"matched": "universal_com_files_mp.obj"
+},
+{
+"va": 4433136,
+"size": 529,
+"matched": "universal_com_files_mp.obj"
+},
+{
+"va": 4433680,
+"size": 1070,
+"n": 2,
+"strings": [
+"iwd sum/name mismatch",
+".\\universal\\com_memory.cpp",
+"Connected to a pure server.\n",
+"iwd sum/name mismatch",
+".\\universal\\com_memory.cpp",
+"iwd sum/name mismatch"
+]
+},
+{
+"va": 4434752,
+"size": 139,
+"matched": "universal_com_files_mp.obj"
+},
+{
+"va": 4435184,
+"size": 69,
+"matched": "qcommon_huffman.obj"
+},
+{
+"va": 4435264,
+"size": 83,
+"matched": "qcommon_huffman.obj"
+},
+{
+"va": 4435360,
+"size": 222,
+"matched": "qcommon_huffman.obj"
+},
+{
+"va": 4435584,
+"size": 403,
+"matched": "qcommon_huffman.obj"
+},
+{
+"va": 4436000,
+"size": 89,
+"matched": "qcommon_huffman.obj"
+},
+{
+"va": 4436096,
+"size": 99,
+"matched": "qcommon_huffman.obj"
+},
+{
+"va": 4436208,
+"size": 132,
+"matched": "qcommon_huffman.obj"
+},
+{
+"va": 4436352,
+"size": 414,
+"matched": "qcommon_huffman.obj"
+},
+{
+"va": 4436816,
+"size": 18821,
+"n": 52,
+"strings": [
+".\\universal\\com_memory.cpp",
+".\\universal\\com_memory.cpp",
+"^1Error: file %s, line %d: %s\n",
+"^3Warning: file %s, line %d: %s\n",
+".\\universal\\com_memory.cpp",
+"%s recursively included",
+"EXE_ERR_OUT_OF_MEMORY",
+".\\universal\\com_memory.cpp",
+"missing #endif",
+"define %s missing parms",
+"define with more than %d parameters",
+"define %s missing parms",
+"too many comma's",
+"too few define parms",
+"define %s with too many parms",
+"define %s has too many parms",
+"define %s incomplete",
+"__LINE__",
+"__FILE__",
+"__DATE__",
+"__TIME__",
+".\\universal\\com_memory.cpp",
+"stringizing operator without define parameter",
+"can't stringize tokens",
+"can't merge %s with %s",
+"undef without name",
+"expected name, found %s",
+"can't undef %s",
+"#define without name",
+"expected name after #define, found %s",
+"can't redefine %s",
+"redefinition of %s",
+"expected define parameter",
+"invalid define parameter",
+"two the same define parameters",
+"define parameters not terminated",
+"define not terminated",
+"recursive define (removed recursion)",
+"define with misplaced ##",
+"*extern",
+"*extern",
+".\\universal\\com_memory.cpp",
+"#ifdef without name",
+"expected name after #ifdef, found %s",
+"misplaced #else",
+"#else after #else",
+"misplaced #endif",
+"too many ) in #if/#elsif",
+"! or ~ after value in #if/#elif",
+"++ or -- used in #if/#elif",
+"defined",
+"unknown %s in #if/#elif",
+"misplaced minus sign in #if/#elif",
+"illigal operator %s on floating point operands\n",
+"operator %s after operator in #if/#elif",
+"invalid operator %s in #if/#elif",
+"out of operator space\n",
+"undefined name %s in #if/#elif",
+"out of value space\n",
+"defined without ) in #if/#elif",
+"defined without name in #if/#elif",
+"syntax error in #if/#elif",
+"out of value space\n",
+"trailing operator in #if/#elif",
+"too many ( in #if/#elif",
+"mising values in #if/#elif",
+"divide by zero in #if/#elif\n",
+"divide by zero in #if/#elif\n",
+": without ? in #if/#elif",
+"? after ? in #if/#elif",
+"no value after #if/#elif",
+"defined",
+"can't evaluate %s, not defined",
+"can't evaluate %s",
+"no leading ( after $evalint/$evalfloat",
+"nothing to evaluate",
+"defined",
+"can't evaluate %s, not defined",
+"can't evaluate %s",
+"misplaced #elif",
+"found # without name",
+"found # at end of line",
+"unknown precompiler directive %s",
+"found $ without name",
+"found $ at end of line",
+"unknown precompiler directive %s",
+"string longer than MAX_TOKEN %d\n",
+".\\universal\\com_memory.cpp",
+".\\universal\\com_memory.cpp"
+]
+},
+{
+"va": 4455712,
+"size": 69,
+"matched": "botlib_l_script.obj"
+},
+{
+"va": 4455792,
+"size": 69,
+"matched": "botlib_l_script.obj"
+},
+{
+"va": 4455920,
+"size": 151,
+"matched": "botlib_l_script.obj"
+},
+{
+"va": 4456080,
+"size": 472,
+"matched": "botlib_l_script.obj"
+},
+{
+"va": 4456704,
+"size": 304,
+"matched": "botlib_l_script.obj"
+},
+{
+"va": 4457008,
+"size": 109,
+"matched": "botlib_l_script.obj"
+},
+{
+"va": 4457120,
+"size": 343,
+"matched": "botlib_l_script.obj"
+},
+{
+"va": 4457472,
+"size": 641,
+"matched": "botlib_l_script.obj"
+},
+{
+"va": 4458320,
+"size": 134,
+"matched": "botlib_l_script.obj"
+},
+{
+"va": 4458576,
+"size": 414,
+"matched": "botlib_l_script.obj"
+},
+{
+"va": 4459776,
+"size": 36,
+"matched": "botlib_l_script.obj"
+},
+{
+"va": 4460272,
+"size": 68,
+"matched": "botlib_l_script.obj"
+},
+{
+"va": 4461040,
+"size": 2857,
+"n": 7,
+"strings": []
+},
+{
+"va": 4464080,
+"size": 95,
+"matched": "universal_memfile.obj"
+},
+{
+"va": 4464176,
+"size": 33,
+"matched": "universal_memfile.obj"
+},
+{
+"va": 4464288,
+"size": 109,
+"matched": "universal_memfile.obj"
+},
+{
+"va": 4464400,
+"size": 101,
+"matched": "universal_memfile.obj"
+},
+{
+"va": 4464544,
+"size": 60,
+"matched": "qcommon_msg_mp.obj"
+},
+{
+"va": 4464656,
+"size": 157,
+"n": 2,
+"strings": []
+},
+{
+"va": 4464816,
+"size": 75,
+"matched": "qcommon_msg_mp.obj"
+},
+{
+"va": 4464896,
+"size": 104,
+"matched": "qcommon_msg_mp.obj"
+},
+{
+"va": 4465008,
+"size": 70,
+"matched": "qcommon_msg_mp.obj"
+},
+{
+"va": 4465088,
+"size": 67,
+"matched": "qcommon_msg_mp.obj"
+},
+{
+"va": 4465168,
+"size": 83,
+"matched": "qcommon_msg_mp.obj"
+},
+{
+"va": 4465264,
+"size": 31,
+"matched": "qcommon_msg_mp.obj"
+},
+{
+"va": 4465408,
+"size": 33,
+"matched": "qcommon_msg_mp.obj"
+},
+{
+"va": 4465520,
+"size": 190,
+"matched": "qcommon_msg_mp.obj"
+},
+{
+"va": 4465712,
+"size": 214,
+"matched": "qcommon_msg_mp.obj"
+},
+{
+"va": 4465984,
+"size": 52,
+"matched": "qcommon_msg_mp.obj"
+},
+{
+"va": 4466048,
+"size": 30,
+"matched": "qcommon_msg_mp.obj"
+},
+{
+"va": 4466128,
+"size": 36,
+"matched": "qcommon_msg_mp.obj"
+},
+{
+"va": 4466240,
+"size": 82,
+"matched": "qcommon_msg_mp.obj"
+},
+{
+"va": 4466336,
+"size": 92,
+"matched": "qcommon_msg_mp.obj"
+},
+{
+"va": 4466432,
+"size": 97,
+"matched": "qcommon_msg_mp.obj"
+},
+{
+"va": 4466544,
+"size": 71,
+"matched": "qcommon_msg_mp.obj"
+},
+{
+"va": 4466624,
+"size": 71,
+"matched": "qcommon_msg_mp.obj"
+},
+{
+"va": 4466704,
+"size": 69,
+"matched": "qcommon_msg_mp.obj"
+},
+{
+"va": 4466784,
+"size": 113,
+"matched": "qcommon_msg_mp.obj"
+},
+{
+"va": 4467200,
+"size": 101,
+"matched": "qcommon_msg_mp.obj"
+},
+{
+"va": 4467312,
+"size": 142,
+"matched": "qcommon_msg_mp.obj"
+},
+{
+"va": 4467456,
+"size": 124,
+"matched": "qcommon_msg_mp.obj"
+},
+{
+"va": 4467584,
+"size": 235,
+"matched": "qcommon_msg_mp.obj"
+},
+{
+"va": 4467920,
+"size": 932,
+"matched": "qcommon_msg_mp.obj"
+},
+{
+"va": 4468864,
+"size": 704,
+"matched": "qcommon_msg_mp.obj"
+},
+{
+"va": 4469568,
+"size": 1277,
+"n": 2,
+"strings": [
+"W|%3i: #%-3i remove\n"
+]
+},
+{
+"va": 4470912,
+"size": 58,
+"matched": "qcommon_msg_mp.obj"
+},
+{
+"va": 4470976,
+"size": 648,
+"n": 1,
+"strings": [
+"%s:%i ",
+"%s:%f ",
+"%s:%i ",
+"%s:%f ",
+"%s:%i "
+]
+},
+{
+"va": 4471632,
+"size": 165,
+"matched": "qcommon_msg_mp.obj"
+},
+{
+"va": 4471808,
+"size": 408,
+"n": 1,
+"strings": [
+"%3i: #%-3i remove\n",
+"%3i: #%-3i "
+]
+},
+{
+"va": 4472288,
+"size": 50,
+"matched": "qcommon_msg_mp.obj"
+},
+{
+"va": 4472352,
+"size": 319,
+"matched": "qcommon_msg_mp.obj"
+},
+{
+"va": 4472688,
+"size": 260,
+"matched": "qcommon_msg_mp.obj"
+},
+{
+"va": 4472960,
+"size": 6385,
+"n": 4,
+"strings": [
+"%3i: playerstate ",
+"%s:%f ",
+"%s:%i ",
+"PS_STATS",
+"PS_AMMO",
+"PS_AMMOCLIP",
+"loopback",
+"%i.%i.%i.%i:%i",
+"%02x%02x%02x%02x.%02x%02x%02x%02x%02x%02x:%i"
+]
+},
+{
+"va": 4479360,
+"size": 179,
+"matched": "qcommon_net_chan_mp.obj"
+},
+{
+"va": 4479552,
+"size": 1227,
+"n": 4,
+"strings": [
+" fragment",
+"%s recieve%s: %i\n",
+"showpackets",
+"showdrop",
+"packetDebug",
+"net_profile",
+"net_profile",
+"net_showprofile",
+"net_showprofile",
+"net_lanauthorize",
+"net_dumpprofile"
+]
+},
+{
+"va": 4480784,
+"size": 91,
+"matched": "qcommon_net_chan_mp.obj"
+},
+{
+"va": 4480880,
+"size": 2042,
+"n": 3,
+"strings": [
+" fragment",
+"%s send%s: %i\n",
+"[client %i] %s send %4i : s=%i fragment=%i,%i\n",
+"Adding %i byte payload to packet\n",
+"Sending %i byte packet\n",
+"%s send%s: %i\n",
+"[client %i] %s send %4i : s=%i ack=%i\n",
+"[client %i] %s recv %4i : s=%i fragment=%i,%i\n",
+"[client %i] %s recv %4i : s=%i\n",
+"[client %i] %s:Out of order packet %i at %i\n",
+"[client %i] %s: Dropped %i packets at %i\n",
+"%s:Dropped a message fragment\n",
+"%s:fragmentLength %i > msg->maxsize\n",
+"%s:illegal fragment length\n"
+]
+},
+{
+"va": 4482928,
+"size": 118,
+"matched": "qcommon_net_chan_mp.obj"
+},
+{
+"va": 4483056,
+"size": 19,
+"n": 1,
+"strings": []
+},
+{
+"va": 4483088,
+"size": 149,
+"matched": "qcommon_net_chan_mp.obj"
+},
+{
+"va": 4483248,
+"size": 19,
+"n": 1,
+"strings": []
+},
+{
+"va": 4483328,
+"size": 162,
+"matched": "qcommon_net_chan_mp.obj"
+},
+{
+"va": 4483520,
+"size": 1330,
+"n": 6,
+"strings": [
+"[client %i] send packet %4i\n",
+"OOB Print: %s\n",
+"OOB Packet is %i bytes - too large to send\n",
+"localhost"
+]
+},
+{
+"va": 4484960,
+"size": 213,
+"matched": "universal_q_parse.obj"
+},
+{
+"va": 4485184,
+"size": 31,
+"n": 1,
+"strings": []
+},
+{
+"va": 4485456,
+"size": 144,
+"matched": "universal_q_parse.obj"
+},
+{
+"va": 4485600,
+"size": 140,
+"matched": "universal_q_parse.obj"
+},
+{
+"va": 4485744,
+"size": 82,
+"matched": "universal_q_parse.obj"
+},
+{
+"va": 4485968,
+"size": 67,
+"matched": "universal_q_parse.obj"
+},
+{
+"va": 4486048,
+"size": 139,
+"matched": "universal_q_parse.obj"
+},
+{
+"va": 4486208,
+"size": 197,
+"matched": "universal_q_parse.obj"
+},
+{
+"va": 4486416,
+"size": 940,
+"matched": "universal_q_parse.obj"
+},
+{
+"va": 4487376,
+"size": 68,
+"matched": "universal_q_parse.obj"
+},
+{
+"va": 4487456,
+"size": 75,
+"matched": "universal_q_parse.obj"
+},
+{
+"va": 4487536,
+"size": 181,
+"matched": "universal_q_parse.obj"
+},
+{
+"va": 4487872,
+"size": 57,
+"matched": "universal_q_parse.obj"
+},
+{
+"va": 4487936,
+"size": 222,
+"matched": "universal_q_parse.obj"
+},
+{
+"va": 4488160,
+"size": 275,
+"matched": "universal_q_parse.obj"
+},
+{
+"va": 4488640,
+"size": 133,
+"matched": "universal_q_parse.obj"
+},
+{
+"va": 4488864,
+"size": 302,
+"matched": "universal_q_parse.obj"
+},
+{
+"va": 4489408,
+"size": 44,
+"matched": "universal_q_shared.obj"
+},
+{
+"va": 4489456,
+"size": 68,
+"matched": "universal_q_shared.obj"
+},
+{
+"va": 4489600,
+"size": 108,
+"n": 1,
+"strings": []
+},
+{
+"va": 4489952,
+"size": 255,
+"matched": "universal_q_shared.obj"
+},
+{
+"va": 4490224,
+"size": 39,
+"n": 1,
+"strings": []
+},
+{
+"va": 4490288,
+"size": 40,
+"matched": "universal_q_shared.obj"
+},
+{
+"va": 4490512,
+"size": 164,
+"matched": "universal_q_shared.obj"
+},
+{
+"va": 4490816,
+"size": 19,
+"matched": "universal_q_shared.obj"
+},
+{
+"va": 4490896,
+"size": 49,
+"matched": "universal_q_shared.obj"
+},
+{
+"va": 4490992,
+"size": 83,
+"matched": "universal_q_shared.obj"
+},
+{
+"va": 4491088,
+"size": 53,
+"matched": "universal_q_shared.obj"
+},
+{
+"va": 4491248,
+"size": 122,
+"matched": "universal_q_shared.obj"
+},
+{
+"va": 4491376,
+"size": 38,
+"matched": "universal_q_shared.obj"
+},
+{
+"va": 4491424,
+"size": 38,
+"matched": "universal_q_shared.obj"
+},
+{
+"va": 4491472,
+"size": 76,
+"matched": "universal_q_shared.obj"
+},
+{
+"va": 4491552,
+"size": 48,
+"matched": "universal_q_shared.obj"
+},
+{
+"va": 4491600,
+"size": 292,
+"n": 3,
+"strings": []
+},
+{
+"va": 4492016,
+"size": 241,
+"matched": "universal_q_shared.obj"
+},
+{
+"va": 4492352,
+"size": 241,
+"matched": "universal_q_shared.obj"
+},
+{
+"va": 4492608,
+"size": 244,
+"matched": "universal_q_shared.obj"
+},
+{
+"va": 4492912,
+"size": 928,
+"n": 2,
+"strings": [
+"\\%s\\%s",
+"\\%s\\%s"
+]
+},
+{
+"va": 4493856,
+"size": 349,
+"matched": "universal_q_shared.obj"
+},
+{
+"va": 4494304,
+"size": 357,
+"n": 1,
+"strings": []
+},
+{
+"va": 4494672,
+"size": 80,
+"matched": "universal_q_shared.obj"
+},
+{
+"va": 4494752,
+"size": 72,
+"matched": "universal_q_shared.obj"
+},
+{
+"va": 4494944,
+"size": 80,
+"matched": "universal_q_shared.obj"
+},
+{
+"va": 4495024,
+"size": 72,
+"matched": "universal_q_shared.obj"
+},
+{
+"va": 4496032,
+"size": 1492,
+"n": 3,
+"strings": []
+},
+{
+"va": 4497600,
+"size": 69,
+"matched": "EffectsCore_FxArchive.obj"
+},
+{
+"va": 4497920,
+"size": 22469,
+"n": 61,
+"strings": [
+"Couldn't write %i bytes to %i-byte buffer (only %i bytes free)\n",
+"Couldn't read %i bytes from %i-byte buffer (only %i bytes left)\n",
+"Couldn't read %i bytes from %i-byte buffer (only %i bytes left)\n",
+"level",
+"shellshock",
+"invalid priority string '%s', it must be one of the following strings:\n",
+"  %s\n",
+"invalid roomtype string '%s', it must be one of the following strings:\n",
+"  %s\n",
+"Tried to play sound '%s' from alias '%s', but it was not successfully loaded.\n",
+"attempted to play spatialized alias '%s' while there is no active listener. Most",
+"attempted to play spatialized alias '%s' while there is no active listener. Most",
+"^1Error: a secondaryAlias cannot have a secondary Alias of its own.\nAlias sequen",
+"gfx/2d/warning@soundcpu.jpg",
+"\n------- sound system initialization -------\n",
+"snd_errorOnMissing",
+"snd_khz",
+"snd_khz",
+"snd_bits",
+"snd_bits",
+"snd_stereo",
+"snd_volume",
+"snd_slaveFadeTime",
+"snd_slaveFadeTime",
+"snd_enable2D",
+"snd_enable3D",
+"snd_enableStream",
+"snd_enableReverb",
+"snd_touchStreamFilesOnLoad",
+"snd_setEnvironmentEffects",
+"snd_deactivateEnvironmentEffects",
+"------- sound system successfully initialized -------\n",
+"snd_list",
+"snd_list",
+"snd_setEnvironmentEffects",
+"snd_deactivateEnvironmentEffects",
+"Couldn't write %i bytes to %i-byte buffer (only %i bytes free)\n",
+"Couldn't write %i bytes to %i-byte buffer (only %i bytes free)\n",
+"Couldn't write %i bytes to %i-byte buffer (only %i bytes free)\n",
+"Couldn't write %i bytes to %i-byte buffer (only %i bytes free)\n",
+"Couldn't write %i bytes to %i-byte buffer (only %i bytes free)\n",
+"Couldn't write %i bytes to %i-byte buffer (only %i bytes free)\n",
+"Couldn't read %i bytes from %i-byte buffer (only %i bytes left)\n",
+"Couldn't read %i bytes from %i-byte buffer (only %i bytes left)\n",
+"Couldn't read %i bytes from %i-byte buffer (only %i bytes left)\n",
+"Couldn't read %i bytes from %i-byte buffer (only %i bytes left)\n",
+"Couldn't write %i bytes to %i-byte buffer (only %i bytes free)\n",
+"Couldn't read %i bytes from %i-byte buffer (only %i bytes left)\n",
+"Couldn't read %i bytes from %i-byte buffer (only %i bytes left)\n",
+"Couldn't read %i bytes from %i-byte buffer (only %i bytes left)\n",
+"Couldn't write %i bytes to %i-byte buffer (only %i bytes free)\n",
+"Couldn't write %i bytes to %i-byte buffer (only %i bytes free)\n",
+"Couldn't write %i bytes to %i-byte buffer (only %i bytes free)\n",
+"Couldn't write %i bytes to %i-byte buffer (only %i bytes free)\n",
+"Couldn't write %i bytes to %i-byte buffer (only %i bytes free)\n",
+"Couldn't write %i bytes to %i-byte buffer (only %i bytes free)\n",
+"Couldn't read %i bytes from %i-byte buffer (only %i bytes left)\n",
+"Couldn't read %i bytes from %i-byte buffer (only %i bytes left)\n",
+"Couldn't read %i bytes from %i-byte buffer (only %i bytes left)\n",
+"default"
+]
+},
+{
+"va": 4520432,
+"size": 225,
+"matched": "server_sv_ccmds_mp.obj"
+},
+{
+"va": 4520672,
+"size": 180,
+"matched": "server_sv_ccmds_mp.obj"
+},
+{
+"va": 4521200,
+"size": 638,
+"n": 1,
+"strings": [
+"Server is not running.\n",
+"SV_MapRestart_f: dropped client %i - denied!\n",
+"mapname"
+]
+},
+{
+"va": 4521888,
+"size": 134,
+"matched": "server_sv_ccmds_mp.obj"
+},
+{
+"va": 4522592,
+"size": 374,
+"n": 2,
+"strings": [
+"%c \"EXE_CANNOTKICKHOSTPLAYER\"",
+"EXE_PLAYERKICKED",
+"Server is not running.\n",
+"Usage: %s <player name>\n%s all = kick everyone\n",
+"%c \"EXE_CANNOTKICKHOSTPLAYER\"",
+"EXE_PLAYERKICKED"
+]
+},
+{
+"va": 4522976,
+"size": 94,
+"matched": "server_sv_ccmds_mp.obj"
+},
+{
+"va": 4523072,
+"size": 74,
+"matched": "server_sv_ccmds_mp.obj"
+},
+{
+"va": 4524704,
+"size": 459,
+"n": 1,
+"strings": [
+"heartbeat",
+"onlykick",
+"banUser",
+"banClient",
+"tempBanUser",
+"tempBanClient",
+"unbanUser",
+"clientkick",
+"status",
+"serverinfo",
+"systeminfo",
+"dumpuser",
+"map_restart",
+"fast_restart",
+"map_rotate",
+"maps/mp",
+"d3dbsp",
+"gameCompleteStatus",
+"devmap",
+"devmap",
+"killserver",
+"maps/mp",
+"d3dbsp",
+"scriptUsage",
+"stringUsage"
+]
+},
+{
+"va": 4525264,
+"size": 815,
+"matched": "server_sv_client_mp.obj"
+},
+{
+"va": 4526080,
+"size": 315,
+"n": 1,
+"strings": [
+"fs_game",
+"sending getIpAuthorize for %s\n",
+"sv_allowAnonymous",
+"getIpAuthorize %i %i.%i.%i.%i %s %i"
+]
+},
+{
+"va": 4526400,
+"size": 102,
+"matched": "server_sv_client_mp.obj"
+},
+{
+"va": 4526512,
+"size": 253,
+"n": 1,
+"strings": [
+"ban.txt"
+]
+},
+{
+"va": 4526784,
+"size": 56,
+"matched": "server_sv_client_mp.obj"
+},
+{
+"va": 4526880,
+"size": 4556,
+"n": 6,
+"strings": [
+"%c \"EXE_CANNOTKICKHOSTPLAYER\"",
+"Can't ban user, GUID is 0\n",
+"This GUID (%i) is already banned\n",
+"ban.txt",
+"EXE_PLAYERKICKED",
+"ban.txt",
+"ban.txt",
+"unbanned %i user(s) named %s\n",
+"no banned user has name %s\n",
+"SV_AuthorizeIpPacket: not from authorize server\n",
+"SV_AuthorizeIpPacket: challenge not found\n",
+"fs_restrict",
+"error\nEXE_ERR_NOT_A_DEMO_SERVER",
+"accept",
+"rejected connection from permanently banned GUID %i\n",
+"rejected connection from temporarily banned GUID %i\n",
+"challengeResponse %i",
+"CLIENT_UNKNOWN_TO_AUTH",
+"needcdkey",
+"BAD_CDKEY",
+"needcdkey",
+"INVALID_CDKEY",
+"BANNED_CDKEY",
+"error\nEXE_ERR_BAD_CDKEY",
+"error\nEXE_ERR_BAD_CDKEY",
+"error\nEXE_ERR_CDKEY_IN_USE",
+"error\n%s",
+"error\nEXE_ERR_BAD_CDKEY",
+"SV_DirectConnect()\n",
+"protocol",
+"    rejected connect from protocol version %i (should be %i)\n",
+"challenge",
+"qport",
+"%s:reconnect rejected : too soon\n",
+"error\nEXE_BAD_CHALLENGE",
+"Client %i connecting with %i challenge ping from %s\n",
+"error\nEXE_ERR_HIGH_PING_ONLY",
+"Client %i rejected on a too low ping\n",
+"error\nEXE_ERR_LOW_PING_ONLY",
+"Client %i rejected on a too high ping: %i\n",
+"password",
+"%s:reconnect\n",
+"error\nEXE_SERVERISFULL",
+"Rejected a connection.\n",
+"error\n%s",
+"Game rejected a connection: %s.\n",
+"Going from CS_FREE to CS_CONNECTED for %s (num %i guid %i)\n",
+"connectResponse"
+]
+},
+{
+"va": 4531456,
+"size": 120,
+"matched": "server_sv_client_mp.obj"
+},
+{
+"va": 4531584,
+"size": 1441,
+"n": 4,
+"strings": [
+"Going to CS_ZOMBIE for %s\n",
+"EXE_DISCONNECTED",
+"%i:%s %s\n",
+"%c %d",
+"%c \"%s\"",
+"SV_SendClientGameState() for %s\n",
+"Going from CS_CONNECTED to CS_PRIMED for %s\n",
+"Sending %i bytes in gamestate to client: %i\n",
+"Going from CS_PRIMED to CS_ACTIVE for %s\n"
+]
+},
+{
+"va": 4533040,
+"size": 73,
+"matched": "server_sv_client_mp.obj"
+},
+{
+"va": 4533120,
+"size": 33,
+"matched": "server_sv_client_mp.obj"
+},
+{
+"va": 4533456,
+"size": 55,
+"matched": "server_sv_client_mp.obj"
+},
+{
+"va": 4533520,
+"size": 1393,
+"n": 1,
+"strings": [
+"clientDownload: %d : begining \"%s\"\n",
+"clientDownload: %d : \"%s\" cannot download iwd files\n",
+"clientDownload: %d : \"%s\" download disabled",
+"clientDownload: %d : \"%s\" file not found on server\n",
+".\\universal\\com_memory.cpp",
+"clientDownload: %d : writing block %d\n"
+]
+},
+{
+"va": 4535280,
+"size": 372,
+"matched": "server_sv_client_mp.obj"
+},
+{
+"va": 4535664,
+"size": 91,
+"matched": "server_sv_client_mp.obj"
+},
+{
+"va": 4535936,
+"size": 2586,
+"n": 6,
+"strings": [
+"clientCommand: %i : %s\n",
+"Client %s lost %i clientCommands\n",
+"EXE_LOSTRELIABLECOMMANDS",
+"team ",
+"score ",
+"client text ignored for %s: %s\n",
+"cmdCount < 1\n",
+"cmdCount > MAX_PACKET_USERCMDS\n",
+"EXE_CANNOTVALIDATEPURECLIENT",
+"%s : dropped gamestate, resending\n",
+"EXE_UNPURECLIENTDETECTED",
+"WARNING: bad command byte %i for client %i\n",
+"connect \"\\cg_predictItems\\1\\cl_anonymous\\0\\color\\4\\head\\default\\model\\multi\\snap"
+]
+},
+{
+"va": 4538656,
+"size": 46,
+"matched": "server_sv_game_mp.obj"
+},
+{
+"va": 4538752,
+"size": 70,
+"n": 1,
+"strings": []
+},
+{
+"va": 4538832,
+"size": 35,
+"matched": "server_sv_game_mp.obj"
+},
+{
+"va": 4538880,
+"size": 1452,
+"n": 4,
+"strings": [
+"xmodel"
+]
+},
+{
+"va": 4540336,
+"size": 67,
+"matched": "server_sv_game_mp.obj"
+},
+{
+"va": 4540464,
+"size": 130,
+"matched": "server_sv_game_mp.obj"
+},
+{
+"va": 4540608,
+"size": 2524,
+"n": 4,
+"strings": [
+"maps/mp/%s.%s"
+]
+},
+{
+"va": 4543152,
+"size": 48,
+"matched": "server_sv_game_mp.obj"
+},
+{
+"va": 4543248,
+"size": 126,
+"matched": "server_sv_game_mp.obj"
+},
+{
+"va": 4543376,
+"size": 38,
+"matched": "server_sv_game_mp.obj"
+},
+{
+"va": 4543456,
+"size": 76,
+"matched": "server_sv_game_mp.obj"
+},
+{
+"va": 4543536,
+"size": 1179,
+"n": 5,
+"strings": [
+"QVh@sW",
+"g_gametype",
+"g_gametype",
+"g_gametype %s is not a valid gametype, defaulting to dm\n",
+"QVh@sW",
+"%c %i %s",
+"%c %i %s"
+]
+},
+{
+"va": 4544944,
+"size": 117,
+"matched": "server_sv_init_mp.obj"
+},
+{
+"va": 4545072,
+"size": 128,
+"matched": "server_sv_init_mp.obj"
+},
+{
+"va": 4545296,
+"size": 181,
+"matched": "server_sv_init_mp.obj"
+},
+{
+"va": 4545488,
+"size": 1777,
+"n": 6,
+"strings": [
+"sv_maxclients",
+"sv_maxclients",
+"SUVWhHEV",
+".\\universal\\com_memory.cpp",
+"SUVWhHEV",
+".\\universal\\com_memory.cpp",
+"hunkusage.dat",
+".\\universal\\com_memory.cpp"
+]
+},
+{
+"va": 4547280,
+"size": 125,
+"matched": "server_sv_init_mp.obj"
+},
+{
+"va": 4547408,
+"size": 6022,
+"n": 7,
+"strings": [
+"loadingnewmap\n%s\n%s",
+"mapname",
+"mapname",
+"mapname",
+"------ Server Initialization ------\n",
+"Server: %s\n",
+"gfx_driver",
+"%sbsp",
+"d3dbsp",
+"maps/mp/%s.%s",
+"QSUVj",
+"ui_mp/ingame.txt",
+"map_restart",
+".\\universal\\com_memory.cpp",
+"map_restart",
+"gfx_driver",
+"gfx_driver",
+"d3dbsp",
+"maps/mp/%s.%s",
+"gfx_driver",
+"gfx_driver",
+"%sbsp",
+"d3dbsp",
+"maps/mp/%s.%s",
+"all_mp",
+"misc/missing_fx",
+"^1ERROR: could not load default effect file '%s'",
+"%sbsp",
+"WARNING: sv_pure set but no IWD files loaded\n",
+"-----------------------------------\n",
+"g_gametype",
+"g_gametype",
+"sv_keywords",
+"sv_keywords",
+"protocol",
+"protocol",
+"mapname",
+"mapname",
+"sv_privateClients",
+"sv_privateClients",
+"sv_maxclients",
+"sv_maxclients",
+"sv_hostname",
+"CoD2Host",
+"sv_hostname",
+"sv_maxRate",
+"sv_maxRate",
+"sv_minPing",
+"sv_minPing",
+"sv_maxPing",
+"sv_maxPing",
+"sv_floodProtect",
+"sv_allowAnonymous",
+"sv_showCommands",
+"sv_disableClientConsole",
+"sv_voice",
+"sv_voiceQuality",
+"sv_voiceQuality",
+"sv_cheats",
+"sv_serverid",
+"sv_serverid",
+"sv_pure",
+"sv_iwds",
+"sv_iwds",
+"sv_iwdNames",
+"sv_iwdNames",
+"sv_referencedIwds",
+"sv_referencedIwds",
+"sv_referencedIwdNames",
+"sv_referencedIwdNames",
+"rcon_password",
+"rcon_password",
+"sv_privatePassword",
+"sv_privatePassword",
+"sv_fps",
+"sv_fps",
+"sv_timeout",
+"sv_timeout",
+"sv_zombietime",
+"sv_zombietime",
+"sv_allowDownload",
+"sv_reconnectlimit",
+"sv_reconnectlimit",
+"sv_padPackets",
+"sv_padPackets",
+"sv_allowedClan1",
+"sv_allowedClan1",
+"sv_allowedClan2",
+"sv_allowedClan2",
+"sv_packet_info",
+"sv_showAverageBPS",
+"sv_kickBanTime",
+"sv_mapRotation",
+"sv_mapRotation",
+"sv_mapRotationCurrent",
+"sv_mapRotationCurrent",
+"sv_debugRate",
+"sv_debugReliableCmds",
+"nextmap",
+"nextmap",
+"com_expectedHunkUsage",
+"com_expectedHunkUsage",
+"%c \"%s\"",
+"%c \"%s\"",
+"EXE_DISCONNECTED",
+"----- Server Shutdown -----\n",
+"flatline",
+"---------------------------\n"
+]
+},
+{
+"va": 4553440,
+"size": 75,
+"matched": "server_sv_main_mp.obj"
+},
+{
+"va": 4553520,
+"size": 78,
+"matched": "server_sv_main_mp.obj"
+},
+{
+"va": 4553600,
+"size": 227,
+"n": 1,
+"strings": []
+},
+{
+"va": 4553904,
+"size": 109,
+"matched": "server_sv_main_mp.obj"
+},
+{
+"va": 4554016,
+"size": 462,
+"matched": "server_sv_main_mp.obj"
+},
+{
+"va": 4554480,
+"size": 201,
+"n": 1,
+"strings": [
+"print",
+"broadcast: %s\n"
+]
+},
+{
+"va": 4554688,
+"size": 303,
+"matched": "server_sv_main_mp.obj"
+},
+{
+"va": 4554992,
+"size": 5063,
+"n": 5,
+"strings": [
+"challenge",
+"fs_restrict",
+"sv_keywords",
+"demo %s",
+"sv_keywords",
+"%i %i \"%s\"\n",
+"g_password",
+"g_password",
+"pswrd",
+"fs_game",
+"fs_game",
+"sv_referencedIwdNames",
+"statusResponse\n%s\n%s",
+"challenge",
+"fs_restrict",
+"sv_keywords",
+"demo %s",
+"sv_keywords",
+"%i %i \"%s\"\n",
+"gameCompleteStatus\n%s\n%s",
+"challenge",
+"protocol",
+"hostname",
+"mapname",
+"clients",
+"sv_maxclients",
+"gametype",
+"minPing",
+"maxPing",
+"fs_game",
+"fs_game",
+"sv_allowAnonymous",
+"con_disabled",
+"g_password",
+"g_password",
+"pswrd",
+"scr_friendlyfire",
+"scr_friendlyfire",
+"scr_killcam",
+"scr_killcam",
+"sv_referencedIwdNames",
+"sv_referencedIwdNames",
+"voice",
+"infoResponse\n",
+"SV packet %s : %s\n",
+"getstatus",
+"getinfo",
+"getchallenge",
+"connect",
+"ipAuthorize",
+"disconnect",
+"SV_ReadPackets: fixing up a translated port\n"
+]
+},
+{
+"va": 4560064,
+"size": 258,
+"matched": "server_sv_main_mp.obj"
+},
+{
+"va": 4560368,
+"size": 2129,
+"n": 6,
+"strings": [
+"Going from CS_ZOMBIE to CS_FREE for %s\n",
+"EXE_TIMEDOUT",
+"EXE_SERVERKILLED",
+"EXE_SERVERRESTARTTIMEWRAP",
+"map %s\n",
+"COD-2"
+]
+},
+{
+"va": 4562512,
+"size": 87,
+"matched": "server_sv_net_chan_mp.obj"
+},
+{
+"va": 4562608,
+"size": 108,
+"matched": "server_sv_net_chan_mp.obj"
+},
+{
+"va": 4562736,
+"size": 35,
+"matched": "server_sv_net_chan_mp.obj"
+},
+{
+"va": 4562960,
+"size": 125,
+"matched": "server_sv_net_chan_mp.obj"
+},
+{
+"va": 4563088,
+"size": 3060,
+"n": 4,
+"strings": [
+"====================",
+"Server Network Profile:",
+"                    | Sent To                | Recieved From          | Total So",
+"              Source|   bps|  max|  min|frag%%|   bps|  max|  min|frag%%|   bps|",
+"              Totals:%6i|%5i|%5i| %3i%%|%6i|%5i|%5i| %3i%%|%6i|%5i|%5i| %3i%%|",
+"  OutOfBand Messages: %5i|%5i|%5i| %3i%%| %5i|%5i|%5i| %3i%%| %5i|%5i|%5i| %3i%%",
+"  OutOfBand Messages:     0|    0|    0|   - |     0|    0|    0|   - |     0|  ",
+"#%2i-%16s: %5i|%5i|%5i| %3i%%| %5i|%5i|%5i| %3i%%| %5i|%5i|%5i| %3i%%|",
+"#%2i-%16s:     0|    0|    0|   0%%|     0|    0|    0|   0%%|     0|    0|    0",
+"W|%3i: #%-3i remove\n",
+"W|%3i: #%-3i remove\n"
+]
+},
+{
+"va": 4566160,
+"size": 554,
+"matched": "server_sv_snapshot_mp.obj"
+},
+{
+"va": 4566720,
+"size": 243,
+"matched": "server_sv_snapshot_mp.obj"
+},
+{
+"va": 4566976,
+"size": 167,
+"matched": "server_sv_snapshot_mp.obj"
+},
+{
+"va": 4567152,
+"size": 135,
+"matched": "server_sv_snapshot_mp.obj"
+},
+{
+"va": 4567360,
+"size": 545,
+"matched": "server_sv_snapshot_mp.obj"
+},
+{
+"va": 4567920,
+"size": 534,
+"matched": "server_sv_snapshot_mp.obj"
+},
+{
+"va": 4568464,
+"size": 2407,
+"n": 1,
+"strings": []
+},
+{
+"va": 4570880,
+"size": 166,
+"matched": "server_sv_snapshot_mp.obj"
+},
+{
+"va": 4571056,
+"size": 111,
+"matched": "server_sv_snapshot_mp.obj"
+},
+{
+"va": 4571168,
+"size": 496,
+"matched": "server_sv_snapshot_mp.obj"
+},
+{
+"va": 4571680,
+"size": 6209,
+"n": 7,
+"strings": [
+"It would take %ims to send %i bytes to client %s (rate %i)\n",
+"WARNING: msg overflowed for %s, trying to recover\n",
+"WARNING: client disconnected for msg overflow: %s\n",
+"disconnect",
+"EXE_SERVERMESSAGEOVERFLOW",
+"SV_ArchiveSnapshot: ignoring snapshot because it overflowed.\n",
+"bpspc(%2.0f) bps(%2.0f) pk(%i) ubps(%2.0f) upk(%i) cr(%2.2f) acr(%2.2f)\n"
+]
+},
+{
+"va": 4577904,
+"size": 216,
+"matched": "server_sv_voice_mp.obj"
+},
+{
+"va": 4578128,
+"size": 263,
+"n": 1,
+"strings": [
+"WARNING: voice msg overflowed for %s\n"
+]
+},
+{
+"va": 4578464,
+"size": 121,
+"matched": "server_sv_voice_mp.obj"
+},
+{
+"va": 4578592,
+"size": 291,
+"matched": "server_sv_voice_mp.obj"
+},
+{
+"va": 4578896,
+"size": 385,
+"matched": "server_sv_voice_mp.obj"
+},
+{
+"va": 4579296,
+"size": 47,
+"n": 1,
+"strings": []
+},
+{
+"va": 4579344,
+"size": 58,
+"matched": "server_sv_world_mp.obj"
+},
+{
+"va": 4579408,
+"size": 28392,
+"n": 78,
+"strings": [
+"ui/assets/3_cursor3",
+"ui/assets/sliderbutt_1",
+"%s\\%s",
+"%s\\%s\\*",
+"%s\\%s",
+"%s\\*.%s",
+"kernel32.dll",
+"GlobalMemoryStatusEx",
+"WIN_LOW_MEMORY_TITLE",
+"WIN_LOW_MEMORY_BODY",
+"WIN_LOW_MEMORY_TITLE",
+"WIN_LOW_MEMORY_BODY",
+"Unknown video card",
+"own video card",
+"video card",
+"o card",
+"r_fullscreen",
+"in_mouse",
+"Mouse control not active.\n",
+"ClickToContinue",
+"r_fullscreen",
+"localization.txt",
+"localization",
+"gfx_driver",
+"gfx_%s_mp_x86_s.dll",
+"Failed to load gfx driver %s.",
+"GetRefAPI",
+"Failed to find \"GetRefAPI\" in gfx driver %s.",
+"WIN_CONFIGURE_UPDATED_TITLE",
+"WIN_CONFIGURE_UPDATED_BODY",
+"sys_cpuGHz",
+"sys_sysMB",
+"sys_sysMB",
+"sys_gpu",
+"sys_gpu",
+"sys_configSum",
+"sys_configSum",
+"WIN_CONFIGURE_UPDATED_TITLE",
+"WIN_CONFIGURE_UPDATED_BODY",
+"sys_SSE",
+"WIN_COMPUTER_CHANGE_TITLE",
+"WIN_COMPUTER_CHANGE_BODY",
+"WIN_DIRECTX_INIT_TITLE",
+"WIN_DIRECTX_INIT_BODY",
+"Docs\\TechHelp\\Tech Help\\Information\\DirectX.htm",
+"Out of memory: filename '%s', line %d\n",
+"WIN_OUT_OF_MEM_TITLE",
+"WIN_OUT_OF_MEM_BODY",
+"\"%s\\%s\"",
+"quit\n",
+"WIN_ERROR",
+"Sys_QueEvent: overflow\n",
+"in_restart",
+"net_restart",
+"Couldn't get OS info",
+"Call of Duty 2 Multiplayer requires Windows version 4 or greater",
+"Call of Duty 2 Multiplayer doesn't run on Win32s",
+"Measured CPU speed is %.2lf GHz\n",
+"System memory is %i MB (capped at 1 GB)\n",
+"Video card is \"%s\"\n",
+"Streaming SIMD Extensions (SSE) %ssupported\n",
+"WIN_IMPROPER_QUIT_TITLE",
+"WIN_IMPROPER_QUIT_BODY",
+"EXE_ERR_COULDNT_REGISTER_WINDOW",
+"allowdupe",
+"sv_cheats",
+"Working directory: %s\n",
+"WSAEINTR",
+"WSAEBADF",
+"WSAEACCES",
+"WSAEFAULT",
+"WSAEINVAL",
+"WSAEMFILE",
+"WSAEWOULDBLOCK",
+"WSAEINPROGRESS",
+"WSAEALREADY",
+"WSAENOTSOCK",
+"WSAEDESTADDRREQ",
+"WSAEMSGSIZE",
+"WSAEPROTOTYPE",
+"WSAENOPROTOOPT",
+"WSAEPROTONOSUPPORT",
+"WSAESOCKTNOSUPPORT",
+"WSAEOPNOTSUPP",
+"WSAEPFNOSUPPORT",
+"WSAEAFNOSUPPORT",
+"WSAEADDRINUSE",
+"WSAEADDRNOTAVAIL",
+"WSAENETDOWN",
+"WSAENETUNREACH",
+"WSAENETRESET",
+"WSWSAECONNABORTEDAEINTR",
+"WSAECONNRESET",
+"WSAENOBUFS",
+"WSAEISCONN",
+"WSAENOTCONN",
+"WSAESHUTDOWN",
+"WSAETOOMANYREFS",
+"WSAETIMEDOUT",
+"WSAECONNREFUSED",
+"WSAELOOP",
+"WSAENAMETOOLONG",
+"WSAEHOSTDOWN",
+"WSASYSNOTREADY",
+"WSAEDISCON",
+"WSANOTINITIALISED",
+"WSAVERNOTSUPPORTED",
+"WSAHOST_NOT_FOUND",
+"NO ERROR",
+"WSANO_DATA",
+"WSANO_RECOVERY",
+"WSATRY_AGAIN",
+"NET_GetPacket: %s\n",
+"Oversize packet from %s\n",
+"Sys_SendPacket: %s\n",
+"Opening IP socket: %s:%i\n",
+"Opening IP socket: localhost:%i\n",
+"WARNING: UDP_OpenSocket: socket: %s\n",
+"WARNING: UDP_OpenSocket: ioctl FIONBIO: %s\n",
+"WARNING: UDP_OpenSocket: setsockopt SO_BROADCAST: %s\n",
+"localhost",
+"WARNING: UDP_OpenSocket: bind: %s\n",
+"Opening connection to SOCKS server.\n",
+"WARNING: NET_OpenSocks: socket: %s\n",
+"WARNING: NET_OpenSocks: gethostbyname: %s\n",
+"WARNING: NET_OpenSocks: gethostbyname: address type was not AF_INET\n",
+"NET_OpenSocks: connect: %s\n",
+"NET_OpenSocks: request denied\n",
+"NET_OpenSocks: send: %s\n",
+"NET_OpenSocks: authentication failed\n",
+"NET_OpenSocks: send: %s\n",
+"NET_OpenSocks: recv: %s\n",
+"NET_OpenSocks: request denied: %i\n",
+"NET_OpenSocks: relay address is not IPV4: %i\n",
+"NET_OpenSocks: bad response\n",
+"net_ip",
+"localhost",
+"net_ip",
+"net_port",
+"net_port",
+"WARNING: Couldn't allocate IP port\n",
+"WARNING: IPX_Socket: socket: %s\n",
+"WARNING: IPX_Socket: ioctl FIONBIO: %s\n",
+"WARNING: IPX_Socket: setsockopt SO_BROADCAST: %s\n",
+"WARNING: IPX_Socket: bind: %s\n",
+"net_port",
+"net_port",
+"WARNING: IPX_Socket: socket: %s\n",
+"WARNING: IPX_Socket: ioctl FIONBIO: %s\n",
+"WARNING: IPX_Socket: setsockopt SO_BROADCAST: %s\n",
+"WARNING: IPX_Socket: bind: %s\n",
+"net_port",
+"net_port",
+"net_noudp",
+"net_noipx",
+"net_socksEnabled",
+"net_socksServer",
+"net_socksServer",
+"net_socksPort",
+"net_socksPort",
+"net_socksUsername",
+"net_socksUsername",
+"net_socksPassword",
+"net_socksPassword"
+]
+},
+{
+"va": 4607952,
+"size": 43,
+"matched": "PC_win32_win_shared.obj"
+},
+{
+"va": 4608032,
+"size": 2733,
+"n": 10,
+"strings": [
+"CoD Splash Screen",
+"cod.bmp",
+"Call of Duty 2 Multiplayer",
+"CoD Splash Screen",
+"Static",
+"CoD2 WinConsole",
+"CoD2 Console",
+"CoD2 WinConsole",
+"Courier New",
+"codlogo.bmp",
+"Static"
+]
+},
+{
+"va": 4610832,
+"size": 112,
+"matched": "PC_win32_win_syscon.obj"
+},
+{
+"va": 4610944,
+"size": 42,
+"matched": "PC_win32_win_syscon.obj"
+},
+{
+"va": 4610992,
+"size": 2265,
+"n": 5,
+"strings": [
+"vid_xpos",
+"vid_ypos",
+"r_fullscreen",
+"r_autopriority",
+"MSWHEEL_ROLLMSG",
+"quit\n",
+"developer",
+"vid_restart\n"
+]
+},
+{
+"va": 4613264,
+"size": 246,
+"matched": "script_scr_animtree.obj"
+},
+{
+"va": 4613520,
+"size": 128,
+"matched": "script_scr_animtree.obj"
+},
+{
+"va": 4613696,
+"size": 4082,
+"n": 8,
+"strings": [
+"duplicate animation",
+"FIXME: aliases not yet implemented",
+"bad token",
+"properties cannot be applied to primitive animations",
+"bad token",
+"token not allowed after '{'",
+"no animation specified for this block",
+"unexpected end of file",
+"bad token",
+"bad token",
+"token not allowed after '}'",
+"void_loop",
+"Scr_AnimTreeParse",
+"bad token",
+"animation '%s' not defined in anim tree '%s'"
+]
+},
+{
+"va": 4617792,
+"size": 53,
+"matched": "script_scr_animtree.obj"
+},
+{
+"va": 4617856,
+"size": 3151,
+"n": 15,
+"strings": [
+"animtrees/%s.atr",
+"unknown anim tree '%s'"
+]
+},
+{
+"va": 4621040,
+"size": 66,
+"matched": "script_scr_compiler.obj"
+},
+{
+"va": 4621120,
+"size": 33,
+"matched": "script_scr_compiler.obj"
+},
+{
+"va": 4621168,
+"size": 1274,
+"n": 4,
+"strings": [
+"unreachable code",
+"uninitialised variable '%s'"
+]
+},
+{
+"va": 4622576,
+"size": 81,
+"matched": "script_scr_compiler.obj"
+},
+{
+"va": 4622720,
+"size": 151,
+"n": 1,
+"strings": []
+},
+{
+"va": 4622880,
+"size": 227,
+"matched": "script_scr_compiler.obj"
+},
+{
+"va": 4623120,
+"size": 234,
+"matched": "script_scr_compiler.obj"
+},
+{
+"va": 4623360,
+"size": 936,
+"n": 3,
+"strings": [
+"LOCAL_VAR_STACK_SIZE exceeded"
+]
+},
+{
+"va": 4624304,
+"size": 122,
+"matched": "script_scr_compiler.obj"
+},
+{
+"va": 4624464,
+"size": 63,
+"matched": "script_scr_compiler.obj"
+},
+{
+"va": 4624544,
+"size": 1960,
+"n": 11,
+"strings": []
+},
+{
+"va": 4626512,
+"size": 105,
+"matched": "script_scr_compiler.obj"
+},
+{
+"va": 4626624,
+"size": 96,
+"matched": "script_scr_compiler.obj"
+},
+{
+"va": 4626752,
+"size": 2851,
+"n": 10,
+"strings": [
+"#using_animtree was not specified"
+]
+},
+{
+"va": 4629616,
+"size": 112,
+"matched": "script_scr_compiler.obj"
+},
+{
+"va": 4629728,
+"size": 1083,
+"n": 3,
+"strings": [
+"not an lvalue",
+"not an lvalue",
+"self field in assignment expression not currently supported",
+"self field can only be used in the script debugger"
+]
+},
+{
+"va": 4630336,
+"size": 69,
+"matched": "script_scr_compiler.obj"
+},
+{
+"va": 4630448,
+"size": 45,
+"matched": "script_scr_compiler.obj"
+},
+{
+"va": 4630496,
+"size": 1214,
+"n": 3,
+"strings": [
+"unknown function",
+"normal script cannot reference a function in a /# ... #/ comment"
+]
+},
+{
+"va": 4631712,
+"size": 74,
+"matched": "script_scr_compiler.obj"
+},
+{
+"va": 4631792,
+"size": 443,
+"n": 1,
+"strings": []
+},
+{
+"va": 4632240,
+"size": 417,
+"matched": "script_scr_compiler.obj"
+},
+{
+"va": 4632672,
+"size": 424,
+"n": 1,
+"strings": []
+},
+{
+"va": 4633104,
+"size": 434,
+"matched": "script_scr_compiler.obj"
+},
+{
+"va": 4633632,
+"size": 391,
+"n": 3,
+"strings": []
+},
+{
+"va": 4634032,
+"size": 85,
+"matched": "script_scr_compiler.obj"
+},
+{
+"va": 4634128,
+"size": 169,
+"n": 2,
+"strings": []
+},
+{
+"va": 4634336,
+"size": 85,
+"matched": "script_scr_compiler.obj"
+},
+{
+"va": 4634432,
+"size": 82,
+"matched": "script_scr_compiler.obj"
+},
+{
+"va": 4634528,
+"size": 1208,
+"n": 2,
+"strings": [
+"return value of developer command can not be accessed if not in a /# ... #/ comm",
+"parameter count exceeds 256",
+"return value of developer command can not be accessed if not in a /# ... #/ comm",
+"parameter count exceeds 256"
+]
+},
+{
+"va": 4635744,
+"size": 298,
+"matched": "script_scr_compiler.obj"
+},
+{
+"va": 4636048,
+"size": 659,
+"n": 3,
+"strings": [
+"function '%s' already defined in '%s'",
+"function '%s' already defined"
+]
+},
+{
+"va": 4636720,
+"size": 67,
+"matched": "script_scr_compiler.obj"
+},
+{
+"va": 4636800,
+"size": 931,
+"n": 4,
+"strings": [
+"type %s is not a float",
+"expression list must have 1 or 3 parameters"
+]
+},
+{
+"va": 4637744,
+"size": 67,
+"matched": "script_scr_compiler.obj"
+},
+{
+"va": 4637824,
+"size": 273,
+"n": 1,
+"strings": []
+},
+{
+"va": 4638224,
+"size": 265,
+"matched": "script_scr_compiler.obj"
+},
+{
+"va": 4638656,
+"size": 2144,
+"n": 8,
+"strings": [
+"VALUE_STACK_SIZE exceeded",
+"not an lvalue",
+"$ and self field can only be used in the script debugger"
+]
+},
+{
+"va": 4641024,
+"size": 59,
+"matched": "script_scr_compiler.obj"
+},
+{
+"va": 4641088,
+"size": 800,
+"n": 5,
+"strings": [
+"not an object",
+"not an lvalue",
+"$ and self field can only be used in the script debugger"
+]
+},
+{
+"va": 4641888,
+"size": 50,
+"matched": "script_scr_compiler.obj"
+},
+{
+"va": 4641952,
+"size": 62,
+"matched": "script_scr_compiler.obj"
+},
+{
+"va": 4642016,
+"size": 71,
+"matched": "script_scr_compiler.obj"
+},
+{
+"va": 4642096,
+"size": 32,
+"matched": "script_scr_compiler.obj"
+},
+{
+"va": 4642128,
+"size": 6596,
+"n": 15,
+"strings": [
+"MAX_SWITCH_CASES exceeded",
+"MAX_SWITCH_CASES exceeded",
+"conditional expression cannot be always false",
+"MAX_SWITCH_CASES exceeded",
+"conditional expression cannot be always false",
+"MAX_SWITCH_CASES exceeded",
+"MAX_SWITCH_CASES exceeded"
+]
+},
+{
+"va": 4648736,
+"size": 117,
+"matched": "script_scr_compiler.obj"
+},
+{
+"va": 4648864,
+"size": 93,
+"matched": "script_scr_compiler.obj"
+},
+{
+"va": 4649008,
+"size": 1870,
+"n": 4,
+"strings": []
+},
+{
+"va": 4650928,
+"size": 36,
+"matched": "script_scr_compiler.obj"
+},
+{
+"va": 4650976,
+"size": 138,
+"matched": "script_scr_compiler.obj"
+},
+{
+"va": 4651136,
+"size": 2827,
+"n": 5,
+"strings": [
+"MAX_SWITCH_CASES exceeded",
+"missing case statement",
+"duplicate case expression",
+"illegal break statement",
+"illegal continue statement"
+]
+},
+{
+"va": 4653984,
+"size": 93,
+"matched": "script_scr_compiler.obj"
+},
+{
+"va": 4654080,
+"size": 24,
+"matched": "script_scr_compiler.obj"
+},
+{
+"va": 4654112,
+"size": 24,
+"matched": "script_scr_compiler.obj"
+},
+{
+"va": 4654144,
+"size": 3570,
+"n": 13,
+"strings": [
+"illegal case statement",
+"illegal default statement",
+"cannot recurse /#",
+"#/ has no matching /#",
+"cannot recurse /#",
+"function exceeds operand stack size",
+"cannot put #using_animtree inside /# ... #/ comment"
+]
+},
+{
+"va": 4657744,
+"size": 117,
+"matched": "script_scr_compiler.obj"
+},
+{
+"va": 4657872,
+"size": 1406,
+"n": 2,
+"strings": [
+".\\universal\\com_memory.cpp",
+"Could not find script '%s'",
+"Duplicate #include"
+]
+},
+{
+"va": 4659488,
+"size": 44,
+"matched": "script_scr_compiler.obj"
+},
+{
+"va": 4659600,
+"size": 53,
+"matched": "script_scr_main.obj"
+},
+{
+"va": 4659664,
+"size": 812,
+"n": 4,
+"strings": []
+},
+{
+"va": 4660544,
+"size": 79,
+"matched": "script_scr_main.obj"
+},
+{
+"va": 4660624,
+"size": 100,
+"matched": "script_scr_main.obj"
+},
+{
+"va": 4660736,
+"size": 519,
+"n": 1,
+"strings": [
+"%s.gsc"
+]
+},
+{
+"va": 4661280,
+"size": 366,
+"matched": "script_scr_main.obj"
+},
+{
+"va": 4661696,
+"size": 132,
+"matched": "script_scr_main.obj"
+},
+{
+"va": 4661840,
+"size": 83,
+"matched": "script_scr_main.obj"
+},
+{
+"va": 4661936,
+"size": 249,
+"n": 2,
+"strings": [
+"********************************\n",
+"%d subtree has %d * %d = %d free buckets\n",
+"********************************\n",
+"********************************\n",
+"total memory alloc buckets: %d (%d instances)\n",
+"total memory free buckets: %d\n",
+"********************************\n"
+]
+},
+{
+"va": 4662208,
+"size": 96,
+"matched": "script_scr_memorytree.obj"
+},
+{
+"va": 4662320,
+"size": 67,
+"matched": "script_scr_memorytree.obj"
+},
+{
+"va": 4662400,
+"size": 1078,
+"n": 3,
+"strings": []
+},
+{
+"va": 4663488,
+"size": 124,
+"matched": "script_scr_memorytree.obj"
+},
+{
+"va": 4663696,
+"size": 319,
+"n": 2,
+"strings": [
+"MT_GetSize: max allocation exceeded",
+"%s: failed memory allocation of %d bytes for script usage\n",
+"failed memory allocation for script usage",
+"MT_AllocIndex",
+"%s: failed memory allocation of %d bytes for script usage\n",
+"failed memory allocation for script usage"
+]
+},
+{
+"va": 4664032,
+"size": 115,
+"matched": "script_scr_memorytree.obj"
+},
+{
+"va": 4664160,
+"size": 148,
+"matched": "script_scr_memorytree.obj"
+},
+{
+"va": 4664336,
+"size": 543,
+"n": 3,
+"strings": [
+".\\universal\\com_memory.cpp"
+]
+},
+{
+"va": 4664880,
+"size": 210,
+"matched": "script_scr_parser.obj"
+},
+{
+"va": 4665104,
+"size": 397,
+"n": 1,
+"strings": []
+},
+{
+"va": 4665504,
+"size": 87,
+"matched": "script_scr_parser.obj"
+},
+{
+"va": 4665888,
+"size": 191,
+"n": 1,
+"strings": []
+},
+{
+"va": 4666096,
+"size": 78,
+"matched": "script_scr_parser.obj"
+},
+{
+"va": 4666176,
+"size": 70,
+"matched": "script_scr_parser.obj"
+},
+{
+"va": 4666256,
+"size": 22,
+"matched": "script_scr_parser.obj"
+},
+{
+"va": 4666368,
+"size": 169,
+"matched": "script_scr_parser.obj"
+},
+{
+"va": 4666560,
+"size": 1186,
+"n": 7,
+"strings": [
+".\\universal\\com_memory.cpp",
+".\\universal\\com_memory.cpp",
+" (savegame)",
+"(file '%s'%s, line %d)\n",
+" (savegame)",
+"%s // %s%s, line %d"
+]
+},
+{
+"va": 4667760,
+"size": 41,
+"matched": "script_scr_parser.obj"
+},
+{
+"va": 4667808,
+"size": 702,
+"n": 3,
+"strings": [
+"<frozen thread>\n",
+"@ %d\n",
+"<removed thread>\n",
+"******* script compile error *******\n",
+"************************************\n"
+]
+},
+{
+"va": 4668512,
+"size": 112,
+"matched": "script_scr_parser.obj"
+},
+{
+"va": 4668624,
+"size": 1297,
+"n": 15,
+"strings": [
+"\n******* script runtime error *******\n%s: ",
+"called from:\n",
+"started from:\n",
+"************************************\n"
+]
+},
+{
+"va": 4669984,
+"size": 60,
+"matched": "script_scr_stringlist.obj"
+},
+{
+"va": 4670048,
+"size": 134,
+"matched": "script_scr_stringlist.obj"
+},
+{
+"va": 4670256,
+"size": 320,
+"n": 1,
+"strings": []
+},
+{
+"va": 4670608,
+"size": 118,
+"matched": "script_scr_stringlist.obj"
+},
+{
+"va": 4670816,
+"size": 2022,
+"n": 6,
+"strings": [
+"max string length exceeded: \"%s\""
+]
+},
+{
+"va": 4672944,
+"size": 80,
+"matched": "script_scr_stringlist.obj"
+},
+{
+"va": 4673024,
+"size": 886,
+"n": 4,
+"strings": [
+"(%g, %g, %g)",
+".\\universal\\com_memory.cpp"
+]
+},
+{
+"va": 4673920,
+"size": 106,
+"matched": "script_scr_stringlist.obj"
+},
+{
+"va": 4674032,
+"size": 219,
+"n": 2,
+"strings": []
+},
+{
+"va": 4674304,
+"size": 79,
+"matched": "script_scr_variable.obj"
+},
+{
+"va": 4674384,
+"size": 823,
+"n": 1,
+"strings": [
+"********************************\n",
+"count: %d, var usage: %d, endon usage: %d\n",
+"called from:\n",
+"********************************\n",
+"ent type '%s'... count: %d, var usage: %d\n",
+"********************************\n",
+"Cannot dump script threads: out of memory\n"
+]
+},
+{
+"va": 4675248,
+"size": 99,
+"matched": "script_scr_variable.obj"
+},
+{
+"va": 4675488,
+"size": 119,
+"matched": "script_scr_variable.obj"
+},
+{
+"va": 4675648,
+"size": 1650,
+"n": 4,
+"strings": [
+"exceeded maximum number of script variables",
+"exceeded maximum number of script variables"
+]
+},
+{
+"va": 4677312,
+"size": 161,
+"matched": "script_scr_variable.obj"
+},
+{
+"va": 4677488,
+"size": 54,
+"matched": "script_scr_variable.obj"
+},
+{
+"va": 4677552,
+"size": 29,
+"n": 1,
+"strings": []
+},
+{
+"va": 4677648,
+"size": 78,
+"matched": "script_scr_variable.obj"
+},
+{
+"va": 4677968,
+"size": 48,
+"matched": "script_scr_variable.obj"
+},
+{
+"va": 4678016,
+"size": 761,
+"n": 2,
+"strings": [
+"exceeded maximum number of script variables"
+]
+},
+{
+"va": 4678784,
+"size": 119,
+"matched": "script_scr_variable.obj"
+},
+{
+"va": 4679056,
+"size": 39,
+"n": 1,
+"strings": []
+},
+{
+"va": 4679104,
+"size": 42,
+"matched": "script_scr_variable.obj"
+},
+{
+"va": 4679152,
+"size": 149,
+"n": 2,
+"strings": []
+},
+{
+"va": 4679360,
+"size": 142,
+"matched": "script_scr_variable.obj"
+},
+{
+"va": 4679648,
+"size": 118,
+"n": 2,
+"strings": []
+},
+{
+"va": 4679792,
+"size": 45,
+"matched": "script_scr_variable.obj"
+},
+{
+"va": 4680000,
+"size": 39,
+"n": 1,
+"strings": []
+},
+{
+"va": 4680208,
+"size": 179,
+"matched": "script_scr_variable.obj"
+},
+{
+"va": 4680400,
+"size": 126,
+"n": 1,
+"strings": []
+},
+{
+"va": 4680528,
+"size": 389,
+"matched": "script_scr_variable.obj"
+},
+{
+"va": 4681008,
+"size": 262,
+"n": 2,
+"strings": []
+},
+{
+"va": 4681328,
+"size": 52,
+"matched": "script_scr_variable.obj"
+},
+{
+"va": 4681440,
+"size": 105,
+"n": 2,
+"strings": []
+},
+{
+"va": 4681600,
+"size": 91,
+"matched": "script_scr_variable.obj"
+},
+{
+"va": 4681760,
+"size": 585,
+"n": 3,
+"strings": []
+},
+{
+"va": 4682368,
+"size": 77,
+"matched": "script_scr_variable.obj"
+},
+{
+"va": 4682512,
+"size": 190,
+"matched": "script_scr_variable.obj"
+},
+{
+"va": 4682704,
+"size": 66,
+"matched": "script_scr_variable.obj"
+},
+{
+"va": 4682848,
+"size": 33,
+"matched": "script_scr_variable.obj"
+},
+{
+"va": 4682896,
+"size": 85,
+"matched": "script_scr_variable.obj"
+},
+{
+"va": 4682992,
+"size": 459,
+"n": 3,
+"strings": [
+"size cannot be applied to %s"
+]
+},
+{
+"va": 4683616,
+"size": 64,
+"matched": "script_scr_variable.obj"
+},
+{
+"va": 4683680,
+"size": 68,
+"matched": "script_scr_variable.obj"
+},
+{
+"va": 4683872,
+"size": 1030,
+"n": 5,
+"strings": [
+"~ cannot be applied to \"%s\"",
+"cannot cast %s to bool",
+"cannot cast %s to string",
+"type %s is not a float"
+]
+},
+{
+"va": 4684928,
+"size": 149,
+"matched": "script_scr_variable.obj"
+},
+{
+"va": 4685104,
+"size": 3118,
+"n": 14,
+"strings": [
+"pair '%s' and '%s' has unmatching types '%s' and '%s'",
+"cannot concat \"%s\" and \"%s\" - max string length exceeded",
+"divide by 0",
+"divide by 0"
+]
+},
+{
+"va": 4688144,
+"size": 151,
+"matched": "script_scr_variable.obj"
+},
+{
+"va": 4688304,
+"size": 206,
+"n": 2,
+"strings": []
+},
+{
+"va": 4688688,
+"size": 197,
+"matched": "script_scr_variable.obj"
+},
+{
+"va": 4688896,
+"size": 89,
+"n": 1,
+"strings": []
+},
+{
+"va": 4688992,
+"size": 76,
+"matched": "script_scr_variable.obj"
+},
+{
+"va": 4689072,
+"size": 165,
+"matched": "script_scr_variable.obj"
+},
+{
+"va": 4689248,
+"size": 173,
+"n": 1,
+"strings": [
+"array index %d out of range",
+"%s is not an array index"
+]
+},
+{
+"va": 4689424,
+"size": 202,
+"matched": "script_scr_variable.obj"
+},
+{
+"va": 4689632,
+"size": 1783,
+"n": 3,
+"strings": [
+"%s is not an array, string, or vector",
+"vector index %d out of range",
+"%s is not a vector index",
+"string index %d out of range",
+"%s is not a string index",
+"%s is not an array",
+"read-only array cannot be changed",
+"%s is not an array",
+"vector components cannot be individually changed",
+"string characters cannot be individually changed",
+"%s is not an array",
+"read-only array cannot be changed",
+"%s is not an array",
+"array index %d out of range"
+]
+},
+{
+"va": 4692240,
+"size": 79,
+"matched": "script_scr_variable.obj"
+},
+{
+"va": 4692320,
+"size": 210,
+"n": 1,
+"strings": []
+},
+{
+"va": 4692544,
+"size": 299,
+"matched": "script_scr_variable.obj"
+},
+{
+"va": 4692848,
+"size": 84,
+"matched": "script_scr_variable.obj"
+},
+{
+"va": 4692944,
+"size": 1844,
+"n": 4,
+"strings": [
+"Scr_AddFields",
+"float",
+"string",
+"vector",
+"%s/%s"
+]
+},
+{
+"va": 4695056,
+"size": 182,
+"matched": "script_scr_vm.obj"
+},
+{
+"va": 4695280,
+"size": 121,
+"matched": "script_scr_vm.obj"
+},
+{
+"va": 4695456,
+"size": 316,
+"n": 3,
+"strings": []
+},
+{
+"va": 4695776,
+"size": 78,
+"matched": "script_scr_vm.obj"
+},
+{
+"va": 4695856,
+"size": 11446,
+"n": 3,
+"strings": [
+"function called with too many parameters",
+"%s is not an entity",
+"%s is not an entity",
+"type %s is not a float",
+"wait is too long",
+"negative wait is not allowed",
+"script stack overflow (too many embedded function calls)",
+"script stack overflow (too many embedded function calls)",
+"%s is not a function pointer",
+"%s is not a function pointer",
+"script stack overflow (too many embedded function calls)",
+"script stack overflow (too many embedded function calls)",
+"%s is not a function pointer",
+"%s is not a function pointer",
+"script runtime warning: potential infinite loop in script.\n",
+"script runtime error: potential infinite loop in script - killing thread.\n",
+"potential infinite loop in script",
+"++ must be applied to an int (applied to %s)",
+"-- must be applied to an int (applied to %s)",
+"cannot switch on %s",
+"switch index %d out of range",
+"unknown object",
+"cannot create a new local variable in the debugger",
+"script stack overflow (too many embedded function calls)",
+"%s is not an object",
+"script stack overflow (too many embedded function calls)",
+"script stack overflow (too many embedded function calls)",
+"first parameter of waittill must evaluate to a string",
+"first parameter of notify must evaluate to a string",
+"first parameter of endon must evaluate to a string"
+]
+},
+{
+"va": 4707536,
+"size": 115,
+"matched": "script_scr_vm.obj"
+},
+{
+"va": 4707664,
+"size": 136,
+"matched": "script_scr_vm.obj"
+},
+{
+"va": 4707808,
+"size": 1663,
+"n": 5,
+"strings": []
+},
+{
+"va": 4709488,
+"size": 111,
+"matched": "script_scr_vm.obj"
+},
+{
+"va": 4709600,
+"size": 207,
+"n": 1,
+"strings": []
+},
+{
+"va": 4709808,
+"size": 173,
+"matched": "script_scr_vm.obj"
+},
+{
+"va": 4709984,
+"size": 5295,
+"n": 11,
+"strings": [
+"script stack overflow (too many embedded function calls)"
+]
+},
+{
+"va": 4716304,
+"size": 165,
+"matched": "script_scr_vm.obj"
+},
+{
+"va": 4716480,
+"size": 766,
+"n": 1,
+"strings": []
+},
+{
+"va": 4717264,
+"size": 128,
+"matched": "script_scr_vm.obj"
+},
+{
+"va": 4717392,
+"size": 232,
+"n": 1,
+"strings": [
+"anim '%s' in animtree '%s' does not belong to the entity's animtree '%s'",
+"type %s is not an anim",
+"parameter %d does not exist"
+]
+},
+{
+"va": 4717824,
+"size": 141,
+"matched": "script_scr_vm.obj"
+},
+{
+"va": 4717968,
+"size": 506,
+"n": 3,
+"strings": [
+"parameter %d does not exist",
+"parameter %d does not exist"
+]
+},
+{
+"va": 4718608,
+"size": 128,
+"matched": "script_scr_vm.obj"
+},
+{
+"va": 4718768,
+"size": 141,
+"matched": "script_scr_vm.obj"
+},
+{
+"va": 4719056,
+"size": 252,
+"matched": "script_scr_vm.obj"
+},
+{
+"va": 4719312,
+"size": 128,
+"matched": "script_scr_vm.obj"
+},
+{
+"va": 4719584,
+"size": 129,
+"matched": "script_scr_vm.obj"
+},
+{
+"va": 4719744,
+"size": 159,
+"n": 2,
+"strings": []
+},
+{
+"va": 4719904,
+"size": 79,
+"matched": "script_scr_vm.obj"
+},
+{
+"va": 4720064,
+"size": 67,
+"matched": "script_scr_vm.obj"
+},
+{
+"va": 4720144,
+"size": 95,
+"matched": "script_scr_vm.obj"
+},
+{
+"va": 4720320,
+"size": 781,
+"n": 6,
+"strings": []
+},
+{
+"va": 4721104,
+"size": 23,
+"matched": "script_scr_vm.obj"
+},
+{
+"va": 4721152,
+"size": 35,
+"matched": "script_scr_vm.obj"
+},
+{
+"va": 4721232,
+"size": 33,
+"matched": "script_scr_vm.obj"
+},
+{
+"va": 4721280,
+"size": 10091,
+"n": 7,
+"strings": [
+"unexpected end of file found",
+"bad syntax",
+"unexpected end of file found",
+"bad syntax",
+"max string length exceeded: \"%s\"",
+"bad token '%s'",
+"fatal flex scanner internal error--end of buffer missed",
+"fatal error - scanner input buffer overflow"
+]
+},
+{
+"va": 4731376,
+"size": 185,
+"matched": "script_scr_yacc.obj"
+},
+{
+"va": 4731584,
+"size": 143,
+"matched": "script_scr_yacc.obj"
+},
+{
+"va": 4731744,
+"size": 136,
+"matched": "script_scr_yacc.obj"
+},
+{
+"va": 4732048,
+"size": 128,
+"matched": "script_scr_yacc.obj"
+},
+{
+"va": 4732304,
+"size": 84,
+"matched": "script_scr_yacc.obj"
+},
+{
+"va": 4732672,
+"size": 274,
+"n": 2,
+"strings": []
+},
+{
+"va": 4733104,
+"size": 48,
+"matched": "xanim_dobj.obj"
+},
+{
+"va": 4733232,
+"size": 313,
+"n": 1,
+"strings": [
+"No Dobj\n",
+"\nModels:\n",
+"%d: '%s'\n",
+"\nBones:\n",
+"Bone %d: '%s'\n",
+"\nPart duplicates:\n",
+"%d ('%s') -> %d ('%s')\n",
+"\nNo part duplicates.\n"
+]
+},
+{
+"va": 4733584,
+"size": 107,
+"matched": "xanim_dobj.obj"
+},
+{
+"va": 4733696,
+"size": 140,
+"matched": "xanim_dobj.obj"
+},
+{
+"va": 4733840,
+"size": 140,
+"matched": "xanim_dobj.obj"
+},
+{
+"va": 4733984,
+"size": 98,
+"matched": "xanim_dobj.obj"
+},
+{
+"va": 4734096,
+"size": 2674,
+"n": 5,
+"strings": [
+"WARNING: Attempting to meld model, but root part '%s' of model '%s' not found in"
+]
+},
+{
+"va": 4736864,
+"size": 596,
+"matched": "xanim_dobj.obj"
+},
+{
+"va": 4737472,
+"size": 2241,
+"n": 6,
+"strings": [
+"WARNING: Part '%s' not found in model '%s' or any of its descendants\n"
+]
+},
+{
+"va": 4739808,
+"size": 133,
+"matched": "xanim_dobj.obj"
+},
+{
+"va": 4739952,
+"size": 1797,
+"n": 1,
+"strings": []
+},
+{
+"va": 4741776,
+"size": 220,
+"matched": "xanim_dobj.obj"
+},
+{
+"va": 4742400,
+"size": 42,
+"matched": "xanim_dobj.obj"
+},
+{
+"va": 4742448,
+"size": 829,
+"n": 4,
+"strings": []
+},
+{
+"va": 4743344,
+"size": 33,
+"matched": "xanim_xanim.obj"
+},
+{
+"va": 4743392,
+"size": 72,
+"matched": "xanim_xanim.obj"
+},
+{
+"va": 4743472,
+"size": 85,
+"matched": "xanim_xanim.obj"
+},
+{
+"va": 4743568,
+"size": 164,
+"matched": "xanim_xanim.obj"
+},
+{
+"va": 4743792,
+"size": 87,
+"matched": "xanim_xanim.obj"
+},
+{
+"va": 4744112,
+"size": 1337,
+"n": 7,
+"strings": [
+"^3WARNING: Couldn't find xanim '%s', using default xanim '%s' instead\n",
+".\\universal\\com_memory.cpp",
+".\\universal\\com_memory.cpp"
+]
+},
+{
+"va": 4745488,
+"size": 96,
+"matched": "xanim_xanim.obj"
+},
+{
+"va": 4745616,
+"size": 44,
+"matched": "xanim_xanim.obj"
+},
+{
+"va": 4745728,
+"size": 262,
+"n": 1,
+"strings": []
+},
+{
+"va": 4746160,
+"size": 91,
+"matched": "xanim_xanim.obj"
+},
+{
+"va": 4746256,
+"size": 416,
+"n": 2,
+"strings": []
+},
+{
+"va": 4746752,
+"size": 71,
+"matched": "xanim_xanim.obj"
+},
+{
+"va": 4746896,
+"size": 82,
+"matched": "xanim_xanim.obj"
+},
+{
+"va": 4746992,
+"size": 212,
+"n": 1,
+"strings": []
+},
+{
+"va": 4747216,
+"size": 105,
+"matched": "xanim_xanim.obj"
+},
+{
+"va": 4747328,
+"size": 432,
+"n": 2,
+"strings": []
+},
+{
+"va": 4747792,
+"size": 87,
+"matched": "xanim_xanim.obj"
+},
+{
+"va": 4747888,
+"size": 234,
+"n": 1,
+"strings": []
+},
+{
+"va": 4748128,
+"size": 313,
+"matched": "xanim_xanim.obj"
+},
+{
+"va": 4748448,
+"size": 2445,
+"n": 6,
+"strings": []
+},
+{
+"va": 4750960,
+"size": 230,
+"matched": "xanim_xanim.obj"
+},
+{
+"va": 4751200,
+"size": 4868,
+"n": 9,
+"strings": [
+"MAX_CALC_ANIM_BUFFER exceeded\n",
+"Sh@5V",
+"^3%s (missing)",
+"%s%s: (weight) %.2f -> %.2f, (time) %.2f -> %.2f, (realtimedelta) %.2f, '%s'\n",
+"%s%s: (weight) %.2f -> %.2f, (time) %.2f -> %.2f, (realtimedelta) %.2f\n",
+"%s%s: (weight) %.2f -> %.2f, (time) %.2f -> %.2f, '%s'\n",
+"%s%s: (weight) %.2f -> %.2f, '%s'\n",
+"%s%s: (weight) %.2f -> %.2f, (time) %.2f -> %.2f\n",
+"%s%s: (weight) %.2f -> %.2f\n"
+]
+},
+{
+"va": 4756080,
+"size": 1046,
+"matched": "xanim_xanim.obj"
+},
+{
+"va": 4757200,
+"size": 2360,
+"n": 13,
+"strings": [
+"Ph@5V",
+"^3%s (missing)",
+"NO TREE\n"
+]
+},
+{
+"va": 4759568,
+"size": 85,
+"matched": "xanim_xanim.obj"
+},
+{
+"va": 4759664,
+"size": 63,
+"matched": "xanim_xanim.obj"
+},
+{
+"va": 4759728,
+"size": 500,
+"n": 1,
+"strings": []
+},
+{
+"va": 4760336,
+"size": 213,
+"matched": "xanim_xanim.obj"
+},
+{
+"va": 4760720,
+"size": 354,
+"n": 2,
+"strings": []
+},
+{
+"va": 4761120,
+"size": 121,
+"matched": "xanim_xanim.obj"
+},
+{
+"va": 4761248,
+"size": 449,
+"n": 1,
+"strings": []
+},
+{
+"va": 4761760,
+"size": 320,
+"matched": "xanim_xanim.obj"
+},
+{
+"va": 4762080,
+"size": 155,
+"n": 1,
+"strings": []
+},
+{
+"va": 4762304,
+"size": 50,
+"matched": "xanim_xanim.obj"
+},
+{
+"va": 4762368,
+"size": 288,
+"n": 2,
+"strings": []
+},
+{
+"va": 4762672,
+"size": 64,
+"matched": "xanim_xanim.obj"
+},
+{
+"va": 4762736,
+"size": 102,
+"matched": "xanim_xanim.obj"
+},
+{
+"va": 4762880,
+"size": 25,
+"matched": "xanim_xanim.obj"
+},
+{
+"va": 4762976,
+"size": 4148,
+"n": 17,
+"strings": []
+},
+{
+"va": 4767136,
+"size": 80,
+"matched": "xanim_xanim_load.obj"
+},
+{
+"va": 4767216,
+"size": 4543,
+"n": 4,
+"strings": [
+"xanim/%s",
+"^1ERROR: filename '%s' too long\n",
+"^1ERROR: xanim '%s' not found\n",
+"^1ERROR: xanim '%s' has 0 length\n",
+"^1ERROR: xanim '%s' out of date (version %d, expecting %d)\n"
+]
+},
+{
+"va": 4771856,
+"size": 235,
+"matched": "xanim_xmodel.obj"
+},
+{
+"va": 4772432,
+"size": 3418,
+"n": 5,
+"strings": [
+"^1ERROR: Cannot find xmodel '%s'.\n",
+"xmodelparts/%s",
+"^1ERROR: filename '%s' too long\n",
+"^1ERROR: xmodelparts '%s' not found\n",
+"^1ERROR: xmodelparts '%s' has 0 length\n",
+"^1ERROR: xmodelparts '%s' out of date (version %d, expecting %d).\n",
+"^1ERROR: xmodel '%s' has more than %d bones\n"
+]
+},
+{
+"va": 4775856,
+"size": 287,
+"matched": "xanim_xmodel_load.obj"
+},
+{
+"va": 4776144,
+"size": 4422,
+"n": 13,
+"strings": [
+"^1ERROR: Cannot find xmodelparts '%s'.\n",
+"xmodel/%s",
+"^1ERROR: filename '%s' too long\n",
+"^1ERROR: xmodel '%s' not found\n",
+"^1ERROR: xmodel '%s' has 0 length\n",
+"xmodelsurfs/%s",
+"^1ERROR: filename '%s' too long\n",
+"^1ERROR: xmodelsurf '%s' not found\n",
+"^1ERROR: xmodelsurf '%s' has 0 length\n",
+"^1ERROR: xmodelsurfs '%s' out of date (version %d, expecting %d).\n",
+"^1ERROR: File conflict (between non-iwd and iwd file) on xmodelsurfs '%s' for xm",
+"^1ERROR: Cannot find 'xmodelsurfs '%s'.\n",
+"fx/%s"
+]
+},
+{
+"va": 4780624,
+"size": 341,
+"matched": "EffectsCore_FxArchive.obj"
+},
+{
+"va": 4781056,
+"size": 77,
+"n": 1,
+"strings": []
+},
+{
+"va": 4781136,
+"size": 75,
+"matched": "EffectsCore_FxArchive.obj"
+},
+{
+"va": 4781248,
+"size": 804,
+"matched": "EffectsCore_FxArchive.obj"
+},
+{
+"va": 4782064,
+"size": 32,
+"matched": "EffectsCore_FxArchive.obj"
+},
+{
+"va": 4782096,
+"size": 92,
+"matched": "EffectsCore_FxArchive.obj"
+},
+{
+"va": 4782368,
+"size": 88,
+"matched": "EffectsCore_FxChannel.obj"
+},
+{
+"va": 4782496,
+"size": 105,
+"matched": "EffectsCore_FxChannel.obj"
+},
+{
+"va": 4782608,
+"size": 122,
+"matched": "EffectsCore_FxChannel.obj"
+},
+{
+"va": 4782736,
+"size": 1672,
+"n": 5,
+"strings": []
+},
+{
+"va": 4784544,
+"size": 102,
+"matched": "EffectsCore_Fxexport.obj"
+},
+{
+"va": 4784656,
+"size": 60,
+"matched": "EffectsCore_Fxexport.obj"
+},
+{
+"va": 4784768,
+"size": 43,
+"n": 1,
+"strings": []
+},
+{
+"va": 4784896,
+"size": 153,
+"matched": "EffectsCore_FxMemMgr.obj"
+},
+{
+"va": 4785120,
+"size": 71,
+"matched": "EffectsCore_FxMemMgr.obj"
+},
+{
+"va": 4785264,
+"size": 19,
+"matched": "bgame_bg_pmove.obj"
+},
+{
+"va": 4785376,
+"size": 333,
+"n": 2,
+"strings": []
+},
+{
+"va": 4785776,
+"size": 89,
+"matched": "EffectsCore_FxPrimitives.obj"
+},
+{
+"va": 4785936,
+"size": 92,
+"matched": "EffectsCore_FxPrimitives.obj"
+},
+{
+"va": 4786032,
+"size": 63,
+"matched": "EffectsCore_FxPrimitives.obj"
+},
+{
+"va": 4786144,
+"size": 135,
+"n": 1,
+"strings": []
+},
+{
+"va": 4786288,
+"size": 127,
+"matched": "EffectsCore_FxPrimitives.obj"
+},
+{
+"va": 4786448,
+"size": 54,
+"n": 1,
+"strings": []
+},
+{
+"va": 4787024,
+"size": 34,
+"matched": "EffectsCore_FxPrimitives.obj"
+},
+{
+"va": 4787072,
+"size": 82,
+"n": 2,
+"strings": []
+},
+{
+"va": 4787168,
+"size": 34,
+"matched": "EffectsCore_FxPrimitives.obj"
+},
+{
+"va": 4787216,
+"size": 60,
+"n": 1,
+"strings": []
+},
+{
+"va": 4787296,
+"size": 103,
+"matched": "EffectsCore_FxPrimitives.obj"
+},
+{
+"va": 4787408,
+"size": 59,
+"matched": "EffectsCore_FxPrimitives.obj"
+},
+{
+"va": 4787472,
+"size": 657,
+"n": 4,
+"strings": []
+},
+{
+"va": 4788208,
+"size": 95,
+"matched": "EffectsCore_FxPrimitives.obj"
+},
+{
+"va": 4788400,
+"size": 865,
+"n": 3,
+"strings": []
+},
+{
+"va": 4789856,
+"size": 163,
+"matched": "EffectsCore_FxPrimitives.obj"
+},
+{
+"va": 4790064,
+"size": 785,
+"matched": "EffectsCore_FxPrimitives.obj"
+},
+{
+"va": 4790960,
+"size": 303,
+"n": 1,
+"strings": []
+},
+{
+"va": 4791360,
+"size": 32,
+"matched": "EffectsCore_FxPrimitives.obj"
+},
+{
+"va": 4791392,
+"size": 84,
+"matched": "EffectsCore_FxPrimitives.obj"
+},
+{
+"va": 4791520,
+"size": 3619,
+"n": 10,
+"strings": []
+},
+{
+"va": 4795152,
+"size": 141,
+"matched": "EffectsCore_FxPrimitives.obj"
+},
+{
+"va": 4795296,
+"size": 102,
+"matched": "EffectsCore_FxPrimitives.obj"
+},
+{
+"va": 4795408,
+"size": 140,
+"matched": "EffectsCore_FxPrimitives.obj"
+},
+{
+"va": 4795552,
+"size": 322,
+"n": 1,
+"strings": []
+},
+{
+"va": 4795888,
+"size": 153,
+"matched": "EffectsCore_FxPrimitives.obj"
+},
+{
+"va": 4796048,
+"size": 169,
+"n": 1,
+"strings": []
+},
+{
+"va": 4796240,
+"size": 1867,
+"matched": "EffectsCore_FxPrimitives.obj"
+},
+{
+"va": 4798112,
+"size": 271,
+"matched": "EffectsCore_FxPrimitives.obj"
+},
+{
+"va": 4798432,
+"size": 437,
+"n": 2,
+"strings": []
+},
+{
+"va": 4798880,
+"size": 44,
+"matched": "EffectsCore_FxPrimitives.obj"
+},
+{
+"va": 4798928,
+"size": 470,
+"n": 2,
+"strings": []
+},
+{
+"va": 4799536,
+"size": 89,
+"matched": "EffectsCore_FxPrimitives.obj"
+},
+{
+"va": 4799632,
+"size": 292,
+"n": 1,
+"strings": []
+},
+{
+"va": 4799952,
+"size": 241,
+"matched": "EffectsCore_FxPrimitives.obj"
+},
+{
+"va": 4800208,
+"size": 39,
+"matched": "EffectsCore_FxPrimitives.obj"
+},
+{
+"va": 4800304,
+"size": 561,
+"n": 3,
+"strings": []
+},
+{
+"va": 4801328,
+"size": 143,
+"matched": "EffectsCore_FxPrimitives.obj"
+},
+{
+"va": 4801472,
+"size": 221,
+"n": 1,
+"strings": []
+},
+{
+"va": 4801712,
+"size": 212,
+"matched": "EffectsCore_FxPrimitives.obj"
+},
+{
+"va": 4802032,
+"size": 2898,
+"n": 7,
+"strings": []
+},
+{
+"va": 4804960,
+"size": 330,
+"matched": "EffectsCore_FxPrimitives.obj"
+},
+{
+"va": 4805328,
+"size": 49,
+"n": 1,
+"strings": []
+},
+{
+"va": 4805424,
+"size": 155,
+"matched": "EffectsCore_FxPrimitives.obj"
+},
+{
+"va": 4805808,
+"size": 141,
+"matched": "EffectsCore_FxPrimitives.obj"
+},
+{
+"va": 4805952,
+"size": 101,
+"matched": "EffectsCore_FxPrimitives.obj"
+},
+{
+"va": 4806080,
+"size": 334,
+"matched": "EffectsCore_FxPrimitives.obj"
+},
+{
+"va": 4806480,
+"size": 25,
+"matched": "EffectsCore_FxPrimitives.obj"
+},
+{
+"va": 4806512,
+"size": 2952,
+"n": 24,
+"strings": []
+},
+{
+"va": 4809584,
+"size": 60,
+"matched": "EffectsCore_FxScheduler.obj"
+},
+{
+"va": 4809760,
+"size": 1414,
+"n": 5,
+"strings": [
+"fx/error.efx",
+"FxScheduler::PlayEffect called with invalid effect\n"
+]
+},
+{
+"va": 4811184,
+"size": 207,
+"matched": "EffectsCore_FxScheduler.obj"
+},
+{
+"va": 4811408,
+"size": 2012,
+"n": 9,
+"strings": []
+},
+{
+"va": 4813424,
+"size": 241,
+"matched": "EffectsCore_FxScheduler.obj"
+},
+{
+"va": 4813696,
+"size": 102,
+"matched": "EffectsCore_FxScheduler.obj"
+},
+{
+"va": 4813872,
+"size": 186,
+"n": 1,
+"strings": [
+"Top Level",
+"^1Max effect templates of '%i' exceeded\n"
+]
+},
+{
+"va": 4814064,
+"size": 151,
+"matched": "EffectsCore_FxScheduler.obj"
+},
+{
+"va": 4814256,
+"size": 408,
+"n": 3,
+"strings": []
+},
+{
+"va": 4814752,
+"size": 43,
+"matched": "EffectsCore_FxScheduler_load_obj.obj"
+},
+{
+"va": 4814800,
+"size": 1444,
+"n": 4,
+"strings": [
+"fx/%s.efx",
+"Effect file load failed: %s: file not found\n",
+"Effect file '%s' must start with fx/.\n",
+"particle",
+"cylinder",
+"emitter",
+"decal",
+"orientedparticle",
+"fxrunner",
+"light",
+"cameraShake",
+"flash",
+"cloud",
+"FxScheduler:  Error--too many primitives in an effect\n",
+"^1FX Error, no materials defined for primitive template of type '%i'\n",
+"^1FX Error, invalid primitive template for effect '%s'\n",
+"^1FX Error while parsing segment type '%s'\n",
+".\\universal\\com_memory.cpp"
+]
+},
+{
+"va": 4816384,
+"size": 106,
+"matched": "EffectsCore_FxSystem.obj"
+},
+{
+"va": 4816496,
+"size": 932,
+"n": 4,
+"strings": []
+},
+{
+"va": 4817440,
+"size": 88,
+"matched": "EffectsCore_FxSystem.obj"
+},
+{
+"va": 4817536,
+"size": 122,
+"matched": "EffectsCore_FxSystem.obj"
+},
+{
+"va": 4817664,
+"size": 98,
+"n": 1,
+"strings": []
+},
+{
+"va": 4817824,
+"size": 132,
+"matched": "EffectsCore_FxSystem.obj"
+},
+{
+"va": 4818192,
+"size": 1704,
+"matched": "EffectsCore_FxTemplate.obj"
+},
+{
+"va": 4819904,
+"size": 164,
+"matched": "EffectsCore_FxTemplate.obj"
+},
+{
+"va": 4820080,
+"size": 73,
+"matched": "EffectsCore_FxTemplate.obj"
+},
+{
+"va": 4820160,
+"size": 105,
+"matched": "EffectsCore_FxTemplate.obj"
+},
+{
+"va": 4820320,
+"size": 126,
+"matched": "EffectsCore_FxTemplate.obj"
+},
+{
+"va": 4820448,
+"size": 417,
+"matched": "EffectsCore_FxTemplate.obj"
+},
+{
+"va": 4820880,
+"size": 71,
+"matched": "EffectsCore_FxTemplate.obj"
+},
+{
+"va": 4820960,
+"size": 71,
+"matched": "EffectsCore_FxTemplate.obj"
+},
+{
+"va": 4821040,
+"size": 79,
+"matched": "EffectsCore_FxTemplate.obj"
+},
+{
+"va": 4821120,
+"size": 80,
+"matched": "EffectsCore_FxTemplate.obj"
+},
+{
+"va": 4821200,
+"size": 79,
+"matched": "EffectsCore_FxTemplate.obj"
+},
+{
+"va": 4821360,
+"size": 161,
+"matched": "EffectsCore_FxTemplate.obj"
+},
+{
+"va": 4821536,
+"size": 96,
+"matched": "EffectsCore_FxTemplate.obj"
+},
+{
+"va": 4821632,
+"size": 96,
+"matched": "EffectsCore_FxTemplate.obj"
+},
+{
+"va": 4821728,
+"size": 72,
+"matched": "EffectsCore_FxTemplate.obj"
+},
+{
+"va": 4821808,
+"size": 72,
+"matched": "EffectsCore_FxTemplate.obj"
+},
+{
+"va": 4821888,
+"size": 72,
+"matched": "EffectsCore_FxTemplate.obj"
+},
+{
+"va": 4821968,
+"size": 72,
+"matched": "EffectsCore_FxTemplate.obj"
+},
+{
+"va": 4822080,
+"size": 265,
+"n": 1,
+"strings": []
+},
+{
+"va": 4822352,
+"size": 120,
+"matched": "EffectsCore_FxTemplate.obj"
+},
+{
+"va": 4822480,
+"size": 138,
+"matched": "EffectsCore_FxTemplate.obj"
+},
+{
+"va": 4822624,
+"size": 204,
+"matched": "EffectsCore_FxTemplate.obj"
+},
+{
+"va": 4822832,
+"size": 96,
+"matched": "EffectsCore_FxTemplate.obj"
+},
+{
+"va": 4822928,
+"size": 96,
+"matched": "EffectsCore_FxTemplate.obj"
+},
+{
+"va": 4823024,
+"size": 516,
+"n": 1,
+"strings": []
+},
+{
+"va": 4823552,
+"size": 94,
+"matched": "EffectsCore_FxTemplate.obj"
+},
+{
+"va": 4823648,
+"size": 856,
+"n": 2,
+"strings": []
+},
+{
+"va": 4824512,
+"size": 72,
+"matched": "EffectsCore_FxTemplate.obj"
+},
+{
+"va": 4824592,
+"size": 72,
+"matched": "EffectsCore_FxTemplate.obj"
+},
+{
+"va": 4824672,
+"size": 72,
+"matched": "EffectsCore_FxTemplate.obj"
+},
+{
+"va": 4824752,
+"size": 118,
+"n": 3,
+"strings": []
+},
+{
+"va": 4824880,
+"size": 44,
+"matched": "EffectsCore_FxTemplate.obj"
+},
+{
+"va": 4824928,
+"size": 38,
+"n": 1,
+"strings": []
+},
+{
+"va": 4824976,
+"size": 27,
+"matched": "EffectsCore_FxTemplate.obj"
+},
+{
+"va": 4825008,
+"size": 44,
+"matched": "EffectsCore_FxTemplate.obj"
+},
+{
+"va": 4825056,
+"size": 91,
+"matched": "EffectsCore_FxTemplate.obj"
+},
+{
+"va": 4825168,
+"size": 97,
+"matched": "EffectsCore_FxTemplate.obj"
+},
+{
+"va": 4825280,
+"size": 119,
+"matched": "EffectsCore_FxTemplate.obj"
+},
+{
+"va": 4825408,
+"size": 120,
+"matched": "EffectsCore_FxTemplate.obj"
+},
+{
+"va": 4825536,
+"size": 90,
+"matched": "EffectsCore_FxTemplate.obj"
+},
+{
+"va": 4825632,
+"size": 61,
+"matched": "EffectsCore_FxTemplate.obj"
+},
+{
+"va": 4825696,
+"size": 1357,
+"n": 8,
+"strings": [
+"PrimitiveTemplate::ParseMaterials called with an empty list!\n",
+"xmodel",
+"PrimitiveTemplate::ParseModels, could not register model '%s'\n",
+"PrimitiveTemplate::ParseModels called with an empty list!\n",
+"PrimitiveTemplate::ParseModels, could not register model '%s'\n",
+"FxTemplate: Impact effect file not found.\n",
+"PrimitiveTemplate::ParseImpactFxStrings called with an empty list!\n",
+"FxTemplate: Death effect file not found.\n",
+"PrimitiveTemplate::ParseDeathFxStrings called with an empty list!\n",
+"FxTemplate: Emitter effect file not found.\n",
+"PrimitiveTemplate::ParseEmitterFxStrings called with an empty list!\n",
+"FxTemplate: Effect file not found.\n",
+"PrimitiveTemplate::ParsePlayFxStrings called with an empty list!\n",
+"%f %f %f %f",
+"%f %f"
+]
+},
+{
+"va": 4827056,
+"size": 73,
+"matched": "EffectsCore_FxTemplate.obj"
+},
+{
+"va": 4827136,
+"size": 473,
+"matched": "EffectsCore_FxTemplate.obj"
+},
+{
+"va": 4827616,
+"size": 26,
+"matched": "EffectsCore_FxTemplate.obj"
+},
+{
+"va": 4827648,
+"size": 2954,
+"n": 2,
+"strings": [
+"count",
+"%f %f",
+"shaders",
+"shader",
+"models",
+"model",
+"impactfx",
+"deathfx",
+"emitfx",
+"playfx",
+"cullrange",
+"spawnRange",
+"delay",
+"bounce",
+"intensity",
+"angle",
+"angles",
+"angleDelta",
+"velocity",
+"acceleration",
+"accel",
+"gravity",
+"density",
+"variance",
+"origin",
+"origin2",
+"radius",
+"height",
+"rotation",
+"rotationDelta",
+"flags",
+"spawnFlags",
+"spawnFlag",
+"nonUniformScale",
+"useLength",
+"shaderImpact",
+"sequenceStartFrameMode",
+"sequenceFixedFrameValue",
+"sequencePlayRateMode",
+"sequenceFixedFpsValue",
+"sequenceLoopMode",
+"sequenceLoopTimes",
+"spawnFrustumCullRadius",
+"Unknown key parsing an effect primitive: %s\n",
+"rgbRand",
+"alpha",
+"alphaRand",
+"width",
+"sizeRand",
+"size2",
+"width2",
+"size2Rand",
+"length",
+"height",
+"lengthRand",
+"rotationDelta",
+"rotationDeltaRand",
+"velocityX",
+"velocityY",
+"velocityZ",
+"velocityXRand",
+"velocityYRand",
+"velocityZRand",
+"velocity2X",
+"velocity2Y",
+"velocity2Z",
+"velocity2XRand",
+"velocity2YRand",
+"velocity2ZRand",
+"UhT\nW",
+"Unknown group key parsing a particle: %s\n",
+"^1FX Error while parsing key '%s'\n",
+"^1FX bounding box width or depth is larger than height for effect '%s'\n",
+"^1FX bounding box mins / maxs invalid for effect '%s'\n"
+]
+},
+{
+"va": 4830608,
+"size": 46,
+"matched": "EffectsCore_FxTemplate.obj"
+},
+{
+"va": 4830672,
+"size": 801,
+"n": 3,
+"strings": [
+"xmodel"
+]
+},
+{
+"va": 4832288,
+"size": 52,
+"matched": "EffectsCore_FxUtil.obj"
+},
+{
+"va": 4832496,
+"size": 188,
+"n": 1,
+"strings": []
+},
+{
+"va": 4832688,
+"size": 163,
+"matched": "EffectsCore_FxUtil.obj"
+},
+{
+"va": 4832880,
+"size": 118,
+"matched": "EffectsCore_FxUtil.obj"
+},
+{
+"va": 4833136,
+"size": 1057,
+"n": 3,
+"strings": [
+".\\universal\\com_memory.cpp",
+"gfx/2d/warning@maxeffects.jpg"
+]
+},
+{
+"va": 4834608,
+"size": 121,
+"matched": "EffectsCore_FxUtil.obj"
+},
+{
+"va": 4834752,
+"size": 1555,
+"n": 3,
+"strings": []
+},
+{
+"va": 4836320,
+"size": 256,
+"matched": "EffectsCore_FxUtil.obj"
+},
+{
+"va": 4836640,
+"size": 5484,
+"n": 11,
+"strings": []
+},
+{
+"va": 4842128,
+"size": 85,
+"matched": "EffectsCore_FxUtil.obj"
+},
+{
+"va": 4842224,
+"size": 7319,
+"n": 24,
+"strings": []
+},
+{
+"va": 4849808,
+"size": 400,
+"matched": "EffectsCore_GenericParser2.obj"
+},
+{
+"va": 4850224,
+"size": 1929,
+"n": 7,
+"strings": [
+".\\universal\\com_memory.cpp",
+".\\universal\\com_memory.cpp",
+".\\universal\\com_memory.cpp",
+".\\universal\\com_memory.cpp"
+]
+},
+{
+"va": 4852256,
+"size": 152,
+"matched": "EffectsCore_GenericParser2.obj"
+},
+{
+"va": 4852752,
+"size": 117,
+"matched": "EffectsCore_GenericParser2.obj"
+},
+{
+"va": 4852880,
+"size": 1430,
+"n": 4,
+"strings": [
+".\\universal\\com_memory.cpp",
+".\\universal\\com_memory.cpp",
+".\\universal\\com_memory.cpp",
+".\\universal\\com_memory.cpp"
+]
+},
+{
+"va": 4854320,
+"size": 52,
+"matched": "EffectsCore_GenericParser2.obj"
+},
+{
+"va": 4854464,
+"size": 291,
+"matched": "zlib_adler32.obj"
+},
+{
+"va": 4854768,
+"size": 158,
+"matched": "zlib_compress.obj"
+},
+{
+"va": 4854976,
+"size": 516,
+"matched": "zlib_deflate.obj"
+},
+{
+"va": 4855504,
+"size": 235,
+"matched": "zlib_deflate.obj"
+},
+{
+"va": 4855744,
+"size": 104,
+"matched": "zlib_deflate.obj"
+},
+{
+"va": 4856496,
+"size": 39,
+"matched": "zlib_deflate.obj"
+},
+{
+"va": 4856544,
+"size": 100,
+"matched": "zlib_deflate.obj"
+},
+{
+"va": 4856656,
+"size": 650,
+"matched": "zlib_deflate.obj"
+},
+{
+"va": 4857312,
+"size": 170,
+"matched": "zlib_deflate.obj"
+},
+{
+"va": 4857920,
+"size": 109,
+"matched": "zlib_deflate.obj"
+},
+{
+"va": 4858032,
+"size": 135,
+"matched": "zlib_deflate.obj"
+},
+{
+"va": 4858176,
+"size": 350,
+"matched": "zlib_deflate.obj"
+},
+{
+"va": 4858544,
+"size": 279,
+"matched": "zlib_deflate.obj"
+},
+{
+"va": 4859280,
+"size": 758,
+"matched": "zlib_deflate.obj"
+},
+{
+"va": 4860048,
+"size": 990,
+"matched": "zlib_deflate.obj"
+},
+{
+"va": 4861040,
+"size": 108,
+"matched": "zlib_infblock.obj"
+},
+{
+"va": 4861152,
+"size": 141,
+"matched": "zlib_infblock.obj"
+},
+{
+"va": 4861296,
+"size": 2776,
+"matched": "zlib_infblock.obj"
+},
+{
+"va": 4864160,
+"size": 121,
+"matched": "zlib_infblock.obj"
+},
+{
+"va": 4864352,
+"size": 53,
+"matched": "zlib_infcodes.obj"
+},
+{
+"va": 4864416,
+"size": 1747,
+"matched": "zlib_infcodes.obj"
+},
+{
+"va": 4866224,
+"size": 917,
+"matched": "zlib_inffast.obj"
+},
+{
+"va": 4867152,
+"size": 63,
+"matched": "zlib_inflate.obj"
+},
+{
+"va": 4867216,
+"size": 67,
+"matched": "zlib_inflate.obj"
+},
+{
+"va": 4867296,
+"size": 241,
+"matched": "zlib_inflate.obj"
+},
+{
+"va": 4867584,
+"size": 949,
+"matched": "zlib_inflate.obj"
+},
+{
+"va": 4868976,
+"size": 1243,
+"matched": "zlib_inftrees.obj"
+},
+{
+"va": 4870240,
+"size": 156,
+"matched": "zlib_inftrees.obj"
+},
+{
+"va": 4870400,
+"size": 376,
+"matched": "zlib_inftrees.obj"
+},
+{
+"va": 4870832,
+"size": 310,
+"matched": "zlib_infutil.obj"
+},
+{
+"va": 4871168,
+"size": 96,
+"matched": "zlib_trees.obj"
+},
+{
+"va": 4871264,
+"size": 100,
+"matched": "zlib_trees.obj"
+},
+{
+"va": 4871376,
+"size": 196,
+"matched": "zlib_trees.obj"
+},
+{
+"va": 4871584,
+"size": 560,
+"matched": "zlib_trees.obj"
+},
+{
+"va": 4872160,
+"size": 113,
+"matched": "zlib_trees.obj"
+},
+{
+"va": 4872288,
+"size": 495,
+"matched": "zlib_trees.obj"
+},
+{
+"va": 4872800,
+"size": 216,
+"matched": "zlib_trees.obj"
+},
+{
+"va": 4873024,
+"size": 1278,
+"matched": "zlib_trees.obj"
+},
+{
+"va": 4874320,
+"size": 105,
+"matched": "zlib_trees.obj"
+},
+{
+"va": 4874432,
+"size": 611,
+"matched": "zlib_trees.obj"
+},
+{
+"va": 4875056,
+"size": 155,
+"matched": "zlib_trees.obj"
+},
+{
+"va": 4875216,
+"size": 493,
+"matched": "zlib_trees.obj"
+},
+{
+"va": 4875712,
+"size": 467,
+"matched": "zlib_trees.obj"
+},
+{
+"va": 4876352,
+"size": 1052,
+"matched": "zlib_trees.obj"
+},
+{
+"va": 4877408,
+"size": 129,
+"matched": "zlib_trees.obj"
+},
+{
+"va": 4877584,
+"size": 127,
+"matched": "zlib_trees.obj"
+},
+{
+"va": 4877712,
+"size": 109,
+"matched": "zlib_trees.obj"
+},
+{
+"va": 4877824,
+"size": 130,
+"matched": "zlib_trees.obj"
+},
+{
+"va": 4877968,
+"size": 125,
+"matched": "zlib_uncompr.obj"
+},
+{
+"va": 4878320,
+"size": 292,
+"matched": "zlib_unzip.obj"
+},
+{
+"va": 4878624,
+"size": 69,
+"n": 1,
+"strings": []
+},
+{
+"va": 4878704,
+"size": 398,
+"matched": "zlib_unzip.obj"
+},
+{
+"va": 4879264,
+"size": 955,
+"matched": "zlib_unzip.obj"
+},
+{
+"va": 4880272,
+"size": 64,
+"matched": "zlib_unzip.obj"
+},
+{
+"va": 4880336,
+"size": 101,
+"matched": "zlib_unzip.obj"
+},
+{
+"va": 4880480,
+"size": 58,
+"matched": "zlib_unzip.obj"
+},
+{
+"va": 4880816,
+"size": 426,
+"matched": "zlib_unzip.obj"
+},
+{
+"va": 4881248,
+"size": 275,
+"matched": "zlib_unzip.obj"
+},
+{
+"va": 4881536,
+"size": 396,
+"matched": "zlib_unzip.obj"
+},
+{
+"va": 4882144,
+"size": 84,
+"matched": "zlib_unzip.obj"
+},
+{
+"va": 4882400,
+"size": 802,
+"n": 3,
+"strings": [
+".\\universal\\com_memory.cpp",
+"loc_language",
+"loc_language",
+"loc_forceEnglish",
+"loc_translate",
+"loc_warnings",
+"loc_warningsAsErrors",
+"^1ERROR: No languages available because no localized assets were found\n"
+]
+},
+{
+"va": 4883216,
+"size": 63,
+"matched": "stringed_stringed_hooks.obj"
+},
+{
+"va": 4883424,
+"size": 122,
+"matched": "stringed_stringed_hooks.obj"
+},
+{
+"va": 4883600,
+"size": 416,
+"n": 2,
+"strings": [
+"Could not translate exe string \"%s\"",
+"^3WARNING: Could not translate exe string \"%s\"\n",
+"LOCALIZED(^7",
+"^1UNLOCALIZED(^7",
+"LIZED(^7",
+"^1)^7",
+"Could not translate part of %s: \"%s\"",
+"^1UNLOCALIZED(^7%s^1)^7",
+"^3WARNING: Could not translate part of %s: \"%s\"\n",
+"^1UNLOCALIZED(^7%s^1)^7"
+]
+},
+{
+"va": 4884016,
+"size": 858,
+"matched": "stringed_stringed_hooks.obj"
+},
+{
+"va": 4884880,
+"size": 1458,
+"n": 8,
+"strings": []
+},
+{
+"va": 4886368,
+"size": 23,
+"matched": "stringed_stringed_hooks.obj"
+},
+{
+"va": 4886400,
+"size": 53,
+"matched": "stringed_stringed_hooks.obj"
+},
+{
+"va": 4886656,
+"size": 5490,
+"n": 29,
+"strings": [
+"VERSION",
+"Unexpected version number %d, expecting %d!\n",
+"CONFIG",
+"FILENOTES",
+"NOTES",
+"FLAGS",
+"REFERENCE",
+"ENDMARKER",
+"LANG_",
+"Illegal string format \"%s\"\n",
+"english",
+"Error parsing file: Unexpected \"LANG_\"\n",
+"Unknown keyword at linestart: \"%s\"\n",
+"%s_%s",
+"%s_%s",
+"%s_%s",
+"#same",
+"Unable to load \"%s\"!",
+"ENDMARKER",
+"Truncated file, failed to find \"%s\" at file end!",
+"localizedstrings"
+]
+},
+{
+"va": 4892208,
+"size": 113,
+"matched": "stringed_stringed_interface.obj"
+},
+{
+"va": 4892480,
+"size": 6098,
+"n": 21,
+"strings": [
+"map/set<T> too long"
+]
+},
+{
+"va": 4898578,
+"size": 39,
+"matched": "module"
+},
+{
+"va": 4898626,
+"size": 118,
+"n": 1,
+"strings": []
+},
+{
+"va": 4898744,
+"size": 48,
+"matched": "module"
+},
+{
+"va": 4898880,
+"size": 11021,
+"n": 34,
+"strings": [
+"invalid map/set<T> iterator",
+"%s/%s",
+"%s/%s"
+]
+},
+{
+"va": 4909904,
+"size": 168,
+"matched": "PC_win32_cinematics.obj"
+},
+{
+"va": 4910144,
+"size": 24890,
+"n": 65,
+"strings": [
+"roq_size>65536||roq_id==0x1084 (roq_size=%i,roq_id=%i)\n",
+"finished cinematic\n",
+"trFMV::stop(), closing %s\n",
+"video/%s.roq",
+"SCR_PlayCinematic( %s )\n",
+"play(%s), ROQSize<=0\n",
+"trFMV::play(), playing %s\n",
+"trFMV::play(), invalid RoQ ID\n",
+"clients",
+"hostname",
+"mapname",
+"sv_maxclients",
+"gametype",
+"nettype",
+"minping",
+"maxping",
+"sv_allowAnonymous",
+"con_disabled",
+"pswrd",
+"voice",
+"protocol",
+"debug_protocol",
+"Different protocol info packet: %s\n",
+"MAX_OTHER_SERVERS hit, dropping infoResponse\n",
+"ping time %dms from %s\n",
+"nettype",
+"%s: %s",
+"CL_ServersResponsePacket\n",
+"server: %d ip: %d.%d.%d.%d:%d\n",
+"%d servers parsed (total %d)\n",
+"USAGE: rcon login <password>\n",
+"rcon password must be %i characters or less\n",
+"USAGE: rcon host <address>\n",
+"bad host address\n",
+"getstatus",
+"Not connected to a server.\n",
+"Usage: serverstatus [server]\n",
+"getstatus",
+"Server settings:\n",
+"%-24s",
+"\nPlayers:\n",
+"num: score: ping: name:\n",
+"%d %d",
+"unknown",
+"%-2d   %-3d    %-3d   %s\n",
+"Couldn't resolve an AutoUpdate Server address.\n",
+"Resolving AutoUpdate Server... ",
+"\nCouldn't resolve first address, trying others... ",
+"\nAlternate server address resolved... ",
+"\nFailed to resolve any Auto-update servers.\n",
+"%i.%i.%i.%i:%i\n",
+"win-x86",
+"CoD2 MP",
+"getUpdateInfo2 \"%s\" \"%s\" \"%s\"\n",
+"muteplayer %i",
+"unmuteplayer %i",
+"servercache.dat",
+"servercache.dat",
+"r_vc_compile",
+"Miles sound system initialization failed\n",
+"invalid value %i for snd_khz, using 22 khz instead\n",
+"invalid value %i for snd_bits (should be 8 or 16), using 16 instead\n",
+"stereo",
+"Attempting %i kHz %i bit %s sound\n",
+"couldn't initialize 2D provider: %s\n",
+"available 3D providers:\n",
+"  %s\n",
+"Miles Fast 2D Positional Audio",
+"using 3D provider '%s'\n",
+"couldn't open 3D provider '%s': %s\n",
+"Maximum supported samples",
+"Ph4$W",
+"%i max 3D channels\n",
+"Miles Fast 2D Positional Audio",
+"trying to use 'Miles Fast 2D Positional Audio' instead of '%s'\n",
+"Miles Fast 2D Positional Audio",
+"using 3D provider '%s'\n",
+"Miles Fast 2D Positional Audio",
+"Miles Fast 2D Positional Audio",
+"couldn't open 3D provider '%s': %s\n",
+"mss_q3fs",
+"miles",
+"Miles Fast 2D Positional Audio",
+"mss_3d_provider",
+"Tried to play streamed sound '%s' from alias '%s', but it was not found at load ",
+"sound/%s",
+"Couldn't play stream '%s' from alias '%s' - %s\n",
+"^1ERROR: Sound file '%s' is zero length, invalid\n",
+".\\universal\\com_memory.cpp",
+"^1ERROR: Sound file '%s' is in an invalid or corrupted format\n",
+"^1ERROR: Sound file '%s' is zero length, invalid\n",
+"sound/%s",
+"^1ERROR: Sound file '%s' not found\n"
+]
+},
+{
+"va": 4935056,
+"size": 183,
+"matched": "server_sv_main_pc_mp.obj"
+},
+{
+"va": 4935248,
+"size": 203,
+"matched": "server_sv_main_pc_mp.obj"
+},
+{
+"va": 4935584,
+"size": 265,
+"n": 1,
+"strings": [
+"print\n%s",
+"print\n%s"
+]
+},
+{
+"va": 4935856,
+"size": 677,
+"matched": "server_sv_main_pc_mp.obj"
+},
+{
+"va": 4936560,
+"size": 20605,
+"n": 49,
+"strings": [
+"winvoice_mic_mute",
+"winvoice_mic_reclevel",
+"winvoice_save_voice",
+"winvoice_mic_scaler",
+"Error initializing direct sound instance!  %s\n",
+"Error: Failed to create DirectSound play buffer\n",
+"Error releasing direct sound instance!  %s\n",
+"voice.wav",
+"Unknown bandwidth mode %i\n",
+"Unknown bandwidth mode %i\n",
+"Failed to create sound buffer!\n",
+"DSERR_INVALIDCALL\n",
+"DSERR_INVALIDPARAM\n",
+" Offset : %i, length: %i\n",
+"DSERR_PRIOLEVELNEEDED\n",
+"DSERR_BUFFERLOST\n",
+"Error trying to lock sample!\n",
+"DSERR_INVALIDCALL\n",
+"DSERR_INVALIDPARAM\n",
+"Error trying to unlock sample!\n",
+"Error: Failed to play DirectSound play buffer (%i)!\n",
+"Error: Failed to set current position to %i when playing sound buffer!\n",
+"Error: Failed to get cursor positions \n",
+"Error: Failed to set current position to %i when playing sound buffer!\n",
+"ERROR: [play] failed to initialize DirectSound\n",
+"Error: [play] failure when calling SetCooperativeLevel()\n",
+"Invalid encode frame size of %i\n",
+"Invalid sample length of %i samples\n",
+"Error: Failed to get cursor positions \n",
+"DSERR_INVALIDCALL\n",
+"Error trying to lock sample!\n",
+"DSERR_INVALIDPARAM\n",
+" Offset : %i, length: %i\n",
+"Error trying to lock sample!\n",
+"DSERR_INVALIDCALL\n",
+"Error trying to unlock sample!\n",
+"DSERR_INVALIDPARAM\n",
+" Offset : %i\n",
+"Error trying to unlock sample!\n",
+"INVALIDPARAM\n",
+"error: Failed to allocate Capture Buffer \n",
+"OUTOFMEMORY \n",
+"error: Failed to allocate Capture Buffer \n",
+"GENERIC\n",
+"error: Failed to allocate Capture Buffer \n",
+"BADFORMAT\n",
+"error: Failed to allocate Capture Buffer \n",
+"UNINITIALIZED \n",
+"error: Failed to allocate Capture Buffer \n",
+"NODRIVER \n",
+"error: Failed to allocate Capture Buffer \n",
+"error: Unable to Read to Buffer\n",
+"Error stopping recording buffer\n",
+"Error releasing recording buffer\n",
+"cg_drawGun",
+"cg_cursorHints",
+"cg_cursorHints",
+"cg_hintFadeTime",
+"cg_hintFadeTime",
+"cg_fov",
+"cg_fovScale",
+"cg_fovMin",
+"cg_viewsize",
+"cg_viewsize",
+"cg_draw2D",
+"cg_drawHealth",
+"cg_drawBreathHint",
+"cg_drawMantleHint",
+"cg_drawFPS",
+"cg_drawSoundOverlay",
+"cg_drawScriptUsage",
+"cg_drawMaterial",
+"cg_drawSnapshot",
+"cg_drawTurretCrosshair",
+"cg_drawCrosshairNames",
+"cg_drawCrosshairNamesPosX",
+"cg_drawCrosshairNamesPosX",
+"cg_drawCrosshairNamesPosY",
+"cg_drawCrosshairNamesPosY",
+"cg_hudCompassSize",
+"cg_hudCompassMaxRange",
+"cg_hudCompassMinRange",
+"cg_hudCompassMinRadius",
+"cg_hudCompassSpringyPointers",
+"cg_hudCompassSoundPingFadeTime",
+"cg_hudObjectiveMinHeight",
+"cg_hudObjectiveMaxRange",
+"cg_hudObjectiveMinAlpha",
+"cg_hudStanceFlash",
+"cg_hudStanceHintPrints",
+"cg_hudDamageIconWidth",
+"cg_hudDamageIconHeight",
+"cg_hudDamageIconOffset",
+"cg_hudDamageIconTime",
+"cg_hudDamageIconTime",
+"cg_hudDamageIconInScope",
+"cg_hudGrenadeIconMaxRange",
+"cg_hudGrenadeIconMaxHeight",
+"cg_hudGrenadeIconInScope",
+"cg_hudGrenadeIconOffset",
+"cg_hudGrenadeIconHeight",
+"cg_hudGrenadeIconWidth",
+"cg_hudGrenadePointerHeight",
+"cg_hudGrenadePointerWidth",
+"cg_hudGrenadePointerPivot",
+"cg_hudGrenadePointerPulseFreq",
+"cg_hudGrenadePointerPulseMax",
+"cg_hudGrenadePointerPulseMin",
+"cg_hudChatPosition",
+"cg_hudSayPosition",
+"cg_drawLagometer",
+"cg_centerPrintY",
+"cg_hudProneY",
+"cg_weaponCycleDelay",
+"cg_weaponCycleDelay",
+"cg_crosshairAlpha",
+"cg_crosshairAlphaMin",
+"cg_crosshairDynamic",
+"cg_crosshairEnemyColor",
+"cg_brass",
+"cg_marks",
+"cg_marksLimit",
+"cg_marksLimit",
+"cg_gun_x",
+"cg_gun_y",
+"cg_gun_z",
+"cg_gun_move_f",
+"cg_gun_move_r",
+"cg_gun_move_u",
+"cg_gun_ofs_f",
+"cg_gun_ofs_r",
+"cg_gun_ofs_u",
+"cg_gun_move_rate",
+"cg_gun_move_minspeed",
+"cg_centertime",
+"cg_debugposition",
+"cg_debugevents",
+"cg_errordecay",
+"cg_nopredict",
+"cg_showmiss",
+"cg_showmiss",
+"cg_footsteps",
+"cg_tracerchance",
+"cg_tracerwidth",
+"cg_tracerSpeed",
+"cg_tracerlength",
+"cg_tracerScale",
+"cg_tracerScaleMinDist",
+"cg_tracerScaleDistRange",
+"cg_thirdPersonRange",
+"cg_thirdPersonAngle",
+"cg_thirdPerson",
+"cg_chatTime",
+"cg_chatTime",
+"cg_chatHeight",
+"cg_chatHeight",
+"cg_predictItems",
+"cg_noTaunt",
+"cg_voiceSpriteTime",
+"cg_voiceSpriteTime",
+"cg_teamChatsOnly",
+"cl_paused",
+"cl_paused",
+"g_synchronousClients",
+"cg_dumpAnims",
+"cg_dumpAnims",
+"developer",
+"developer",
+"con_minicon",
+"cg_subtitles",
+"cg_subtitleMinTime",
+"cg_subtitleWidthStandard",
+"cg_subtitleWidthStandard",
+"cg_subtitleWidthWidescreen",
+"cg_subtitleWidthWidescreen",
+"cg_subtitlePosX",
+"cg_subtitlePosX",
+"cg_subtitlePosY",
+"cg_subtitlePosY",
+"cg_subtitleCharHeight",
+"cg_subtitleCharHeight",
+"cg_gameMessageWidth",
+"cg_gameMessageWidth",
+"cg_gameBoldMessageWidth",
+"cg_gameBoldMessageWidth",
+"cg_drawGameMessages",
+"cg_scoreboardScrollStep",
+"cg_scoreboardScrollStep",
+"cg_scoreboardBannerHeight",
+"cg_scoreboardBannerHeight",
+"cg_scoreboardItemHeight",
+"cg_scoreboardItemHeight",
+"cg_descriptiveText",
+"cg_shock_screenBlendTime",
+"cg_shock_screenBlendFadeTime",
+"cg_shock_viewKickPeriod",
+"cg_shock_viewKickRadius",
+"cg_shock_sound",
+"cg_shock_soundFadeInTime",
+"cg_shock_soundFadeOutTime",
+"cg_shock_soundLoopFadeTime",
+"cg_shock_soundLoopEndDelay",
+"cg_shock_soundRoomType",
+"cg_shock_soundDryLevel",
+"cg_shock_soundWetLevel",
+"cg_shock_soundModEndDelay",
+"cg_shock_volume_auto",
+"cg_shock_volume_auto2d",
+"cg_shock_volume_menu",
+"cg_shock_volume_weapon",
+"cg_shock_volume_voice",
+"cg_shock_volume_item",
+"cg_shock_volume_body",
+"cg_shock_volume_local",
+"cg_shock_volume_music",
+"cg_shock_volume_announcer",
+"cg_shock_volume_shellshock",
+"cg_shock_mouse",
+"cg_shock_mouse_maxpitchspeed",
+"cg_shock_mouse_maxyawspeed",
+"cg_shock_mouse_sensitivityscale",
+"cg_shock_mouse_fadeTime",
+"cg_youInKillCamSize",
+"cg_scriptIconSize",
+"cg_connectionIconSize",
+"cg_voiceIconSize",
+"cg_constantSizeHeadIcons",
+"cg_headIconMinScreenRadius",
+"cg_blood",
+"cg_weaponleftbone",
+"tag_weapon_left",
+"cg_weaponleftbone",
+"cg_weaponrightbone",
+"tag_weapon_right",
+"cg_weaponrightbone",
+"hud_flash_time_offhand",
+"hud_flash_period_offhand",
+"default",
+"%s_%s",
+"player_out_of_ammo",
+"land_damage",
+"grenade_bounce",
+"grenade_explode",
+"rocket_explode",
+"bullet_small",
+"bulletspray_small",
+"bullet_large",
+"step_run",
+"step_run_plr",
+"step_walk",
+"step_walk_plr",
+"step_prone",
+"step_prone_plr",
+"land_plr",
+"gear_rattle_run",
+"gear_rattle_plr_run",
+"gear_rattle_walk",
+"gear_rattle_plr_walk",
+"movement_foliage",
+"whizby",
+"melee_swing_large",
+"melee_swing_small",
+"melee_hit",
+"melee_hit_other",
+"weap_sniper_heartbeat",
+"weap_sniper_breathin",
+"weap_sniper_breathout",
+"weap_sniper_breathgasp",
+"weap_offhand_select",
+"^5---------- Fx System Initialization ---------\n",
+"misc/missing_fx",
+"^1ERROR: could not load default effect file '%s'",
+"^5----- Fx System Initialization Complete -----\n",
+" - textures",
+"lagometer",
+"headicondisconnected",
+"headiconyouinkillcam",
+"killiconmelee",
+"killiconsuicide",
+"killiconfalling",
+"killiconcrush",
+"killicondied",
+"gfx/misc/tracer",
+"gfx/icons/hint_usable",
+"hint_health",
+"hint_friendly",
+"stance_stand",
+"stance_crouch",
+"stance_prone",
+"stance_flash",
+"objective",
+"objective_friendly",
+"objective_friendly_chat",
+"hit_direction",
+"hint_mantle",
+"ui/assets/checkbox_clear",
+"ui/assets/checkbox_checked",
+"ui/assets/checkbox_fail",
+"compassping_friendlyfiring",
+"compassping_friendlyyelling",
+"compassping_enemyfiring",
+"compassping_enemyyelling",
+"compassping_grenade",
+"compassping_explosion",
+"hud_grenadeicon",
+"hud_grenadepointer",
+"hudcolorbar",
+" - models",
+"headiconvoicechat",
+"headicontalkballoon",
+" - items",
+" - inline models",
+" - server models",
+"Effect file '%s' must start with fx/.\n",
+"fx/props/american_smoke_grenade.efx",
+"props/american_smoke_grenade.efx",
+"props/american_smoke_grenade.efx",
+"props/american_smoke_grenade.efx",
+"props/american_smoke_grenade.efx",
+"fx/props/american_smoke_grenade.efx",
+"Effect file '%s' must start with fx/.\n",
+"hold_breath",
+"Couldn't find shock file [hold_breath.shock]\n",
+"fx/impacts/flesh_hit_noblood.efx",
+"impacts/flesh_hit_noblood.efx",
+"impacts/flesh_hit_noblood.efx",
+"impacts/flesh_hit_noblood.efx",
+"impacts/flesh_hit_noblood.efx",
+"fx/impacts/flesh_hit_noblood.efx",
+"Effect file '%s' must start with fx/.\n",
+" - game media done",
+"KEY_UNBOUND"
+]
+},
+{
+"va": 4957168,
+"size": 109,
+"matched": "PC_cgame_mp_cg_main_mp.obj"
+},
+{
+"va": 4957280,
+"size": 17047,
+"n": 40,
+"strings": [
+"hudelem string",
+"Playing smoke grenades at time %i\n",
+"Warping FX time to %i to kill off existing effects\n",
+"Warping FX time to %i\n",
+"Playing smoke grenade at time %i\n",
+"Uh@-W",
+"Done with smoke grenades, now warping FX time to current time %i\n",
+"ui_mp/hud.txt",
+"Compass",
+"vote string",
+"ui_mp/ingame.txt",
+"white",
+"hudsoftline",
+"hudsoftlineh",
+"fonts/smallDevFont",
+"fonts/bigDevFont",
+"net_disconnect",
+"killicondied",
+"killiconcrush",
+"killiconfalling",
+"killiconsuicide",
+"killiconheadshot",
+"killiconmelee",
+"collision map",
+"graphics",
+"sound aliases",
+"all_mp",
+"game media",
+"sounds",
+"clients",
+"(%i %i %i) : %i\n",
+"USAGE: cg_shellshock <duration> <filename?>\n",
+"demigod",
+"demigod",
+"notarget",
+"notarget",
+"noclip",
+"noclip",
+"levelshot",
+"levelshot",
+"setviewpos",
+"setviewpos",
+"jumptonode",
+"jumptonode",
+"stats",
+"stats",
+"say_team",
+"say_team",
+"follow",
+"follow",
+"callvote",
+"callvote",
+"follownext",
+"follownext",
+"followprev",
+"followprev",
+"printentities",
+"printentities",
+"muteplayer",
+"muteplayer",
+"unmuteplayer",
+"unmuteplayer",
+".\\universal\\com_memory.cpp",
+"hud_fadeout_speed",
+"hud_enable",
+"hud_fade_ammodisplay",
+"hud_fade_healthbar",
+"hud_fade_compass",
+"hud_fade_stance",
+"hud_fade_offhand",
+"hud_health_startpulse_injured",
+"hud_health_startpulse_critical",
+"hud_health_pulserate_injured",
+"hud_health_pulserate_critical",
+"hud_deathQuoteFadeTime",
+"hud_deathQuoteFadeTime",
+"hud_healthOverlay_regenPauseTime",
+"hud_healthOverlay_regenPauseTime",
+"hud_healthOverlay_pulseStart",
+"hud_healthOverlay_phaseOne_pulseDuration",
+"hud_healthOverlay_phaseOne_pulseDuration",
+"hud_healthOverlay_phaseTwo_toAlphaMultiplier",
+"hud_healthOverlay_phaseTwo_pulseDuration",
+"hud_healthOverlay_phaseTwo_pulseDuration",
+"hud_healthOverlay_phaseThree_toAlphaMultiplier",
+"hud_healthOverlay_phaseThree_pulseDuration",
+"hud_healthOverlay_phaseThree_pulseDuration",
+"hud_healthOverlay_phaseEnd_toAlpha",
+"hud_healthOverlay_phaseEnd_pulseDuration",
+"hud_healthOverlay_phaseEnd_pulseDuration",
+"%s / %s",
+"%s / %s",
+"CGAME_PRONE_BLOCKED",
+"+moveup",
+"toggleprone",
+"raisestance",
+"+gostand",
+"gocrouch",
+"togglecrouch",
+"lowerstance",
+"+movedown",
+"goprone",
+"+prone",
+"goprone",
+"lowerstance",
+"+prone",
+"gocrouch",
+"togglecrouch",
+"+movedown",
+"PLATFORM_STANCEHINT_STAND",
+"PLATFORM_STANCEHINT_CROUCH",
+"PLATFORM_STANCEHINT_PRONE"
+]
+},
+{
+"va": 4974336,
+"size": 98,
+"matched": "PC_cgame_mp_cg_newDraw_mp.obj"
+},
+{
+"va": 4974448,
+"size": 8495,
+"n": 27,
+"strings": [
+"+activate",
+"PLATFORM_SWAPWEAPONS",
+"PLATFORM_PICKUPNEWWEAPON",
+"+activate",
+"KEY_USE",
+"Hint String",
+"+activate",
+"PLATFORM_PICKUPHEALTH",
+"+holdbreath",
+"+melee_breath",
+"+breath_binoculars",
+"PLATFORM_HOLD_BREATH",
+"+gostand",
+"+moveup",
+"PLATFORM_MANTLE",
+"CGAME_UNKNOWN",
+"Could not translate map location string \"%s\"",
+"^3WARNING: Could not translate map location string \"%s\"\n",
+"^1UNLOCALIZED(^7",
+"LOCALIZED(^7",
+"LIZED(^7",
+"^1)^7",
+"Ph@5V",
+"Fragged by %s",
+"Fragged by %s"
+]
+},
+{
+"va": 4983216,
+"size": 101,
+"matched": "PC_cgame_mp_cg_newDraw_mp.obj"
+},
+{
+"va": 4983328,
+"size": 658,
+"n": 4,
+"strings": [
+"VWPh@5V",
+"VWPh@5V",
+"VWPh@5V",
+"VWPh@5V",
+"VWPh@5V",
+"VWPh@5V",
+"VWPh@5V",
+"VWPh@5V",
+"VWPh@5V",
+"VWPh@5V",
+"num vars:    %d",
+"num threads: %d",
+"string usage: %d",
+"time:%i snap:%i cmd:%i"
+]
+},
+{
+"va": 4984000,
+"size": 93,
+"matched": "PC_cgame_mp_cg_draw_mp.obj"
+},
+{
+"va": 4984096,
+"size": 23156,
+"n": 74,
+"strings": [
+"%1.2fmspf(%i-%i)",
+"%ifps(%i-%i,%i)",
+"gfx_driver",
+"gfx_driver",
+"use d3d for stats",
+"scene",
+"view tris          ",
+"shadow tris          ",
+"raw geo tris          ",
+"raw fx tris          ",
+"prim          ",
+"level",
+"tex      ",
+"min pc tex      ",
+"min pc tex (%g)      ",
+"lightmap      ",
+"CGAME_CONNECTIONINTERUPTED",
+"net_disconnect",
+"Center Print",
+"stance",
+"stance",
+"weaponinfo",
+"offhandinfo",
+"Compass",
+"Health",
+"Health",
+"weaponinfo",
+"weaponinfo",
+"Compass",
+"stance",
+"stance",
+"offhandinfo",
+"voiceMenu",
+"objectiveinfo",
+"mss_3d_provider",
+"snd_bits",
+"snd_khz",
+"snd_stereo",
+"CPU: ^3%%%i ^73D provider: ^3%s ^7bits: ^3%i ^7kHz: ^3%i ^7chan: ^3%i",
+"%2i %-50s vol^3%04.2f ^7rvol^3%04.2f ^7dist^3%5i ^7pit^3%04.2f",
+"CGAME_SPECTATOR",
+"vote yes",
+"vote yes",
+"vote no",
+"vote no",
+"CGAME_VOTE",
+"%s(%i):%s",
+"CGAME_NO",
+"CGAME_YES",
+"%s:%i, %s:%i",
+"%s(%i):%s",
+"CGAME_NO",
+"CGAME_YES",
+"%s(%s):%i, %s(%s):%i",
+"+speed",
+"toggleads",
+"+attack",
+"PLATFORM_FOLLOWNEXTPLAYER",
+"PLATFORM_FOLLOWPREVIOUSPLAYER",
+"+melee_breath",
+"+melee",
+"PLATFORM_FOLLOWSTOP",
+"KEY_UNBOUND",
+"spectator follow string"
+]
+},
+{
+"va": 5007264,
+"size": 79,
+"matched": "PC_cgame_mp_cg_ents_mp.obj"
+},
+{
+"va": 5007344,
+"size": 5917,
+"n": 20,
+"strings": [
+"anim_gunhand = \"left\"",
+"anim_gunhand = \"right\"",
+"ERROR: CG_PlayFx called with invalid effect id %i\n"
+]
+},
+{
+"va": 5013264,
+"size": 95,
+"matched": "PC_cgame_mp_cg_marks_mp.obj"
+},
+{
+"va": 5013472,
+"size": 43405,
+"n": 114,
+"strings": [
+"client:\n",
+"client:\n",
+"WARNING: Invalid weaponSelect setting %i (out of range 0 - %i)\n",
+"sv_hostname",
+"g_gametype",
+"g_gametype",
+"g_gametype",
+"sv_maxclients",
+"mapname",
+"maps/mp/%s.%s",
+"vote string",
+"CG_MapRestart\n",
+"Server tried to open a non-loaded script menu index: %i\n",
+"cmd mr %i bad\n",
+"UIMENU_SCRIPT_POPUP_NO_MOUSE",
+"UIMENU_SCRIPT_POPUP",
+"cmd mr %i noop\n",
+"Server tried to open a bad script menu index: %i\n",
+"cmd mr %i bad\n",
+"UIMENU_SCRIPT_POPUP_NO_MOUSE",
+"UIMENU_SCRIPT_POPUP",
+"UIMENU_SCRIPT_POPUP",
+"UIMENU_SCRIPT_POPUP_NO_MOUSE",
+"Health",
+"weaponinfo",
+"Compass",
+"stance",
+"offhandinfo",
+"objectiveinfo",
+"ERROR: CG_ReverbCmd called with %i args (should be 6)\n",
+"ERROR: CG_DeactivateReverbCmd called with %i args (should be 3)\n",
+"ERROR: CG_SetChannelVolCmd called with %i args (should be 4)\n",
+"ERROR: CG_DeactivateChannelVolCmd called with %i args (should be 3)\n",
+"ERROR: CG_LocalSound called with %i args (should be 2)\n",
+"ERROR: CG_LocalSound called with index %i (should be in range[1,%i])\n",
+"cg_objectiveText",
+"cg_drawHud",
+"g_scriptMainMenu",
+"announcement message",
+"game message",
+"bold game message",
+"chat message",
+"team chat message",
+"Unknown client game command: %s\n",
+"Arguments(%i):",
+"\t{%f, %f},\n",
+"shock/%s.shock",
+"shock/%s.shock",
+"^1couldn't open '%s'.\n",
+"shock/default.shock",
+"^1couldn't open 'shock/default.shock'. This is a default shock file that you sho",
+".\\universal\\com_memory.cpp",
+"shellshock_end_abort",
+"shellshock_loop",
+"shellshock_loop_silent",
+"shellshock_end_abort",
+"shellshock_end",
+"LOADING... %s\n",
+"mapname",
+"mapname",
+"com_expectedhunkusage",
+"com_expectedhunkusage",
+"CGAME_WAITINGFORSERVERLOAD",
+"noteTrackSoundA",
+"noteTrackSoundB",
+"noteTrackSoundC",
+"noteTrackSoundD",
+"CG_WeaponRunXModelAnims: Unknown weapon animation %i\n",
+"WARNING: gun and/or hand model file for weapon [%s] could not be found, switchin",
+"xmodel/",
+"xmodel/",
+"xmodel/",
+"tag_weapon",
+"xmodel/",
+"VIEWMODEL",
+"WARNING: Weapon %s could not load world model\n",
+"weap_raise",
+"weap_putaway",
+"weap_pickup",
+"weap_ammo_pickup",
+"Weapon %s: Could not translate display name \"%s\"",
+"^3WARNING: Weapon %s: Could not translate display name \"%s\"\n",
+"Weapon %s: Could not translate mode name \"%s\"",
+"^3WARNING: Weapon %s: Could not translate mode name \"%s\"\n",
+"Weapon %s: Could not translate AI overlay description \"%s\"",
+"^3WARNING: Weapon %s: Could not translate AI overlay description \"%s\"\n",
+"tag_weapon",
+"xmodel/",
+"weaponinfo",
+"SPhpRW",
+"No %s in CG_CalcMuzzlePoint on entity %d.\n",
+"defaultweapon_mp",
+"Couldn't find weapon \"%s\"\n",
+"Weapon index mismatch for '%s'",
+"weaponinfo",
+"offhandinfo",
+"default",
+"no entry for effect type '%s' on surface type '%s'\n",
+"unknown effect type '%s' in first column of file '%s'",
+"missing surface type in second column of file '%s'",
+"unknown surface type '%s' in second column of file '%s'",
+"effect filename '%s' in third column of file '%s' is longer than %i characters",
+"%s/%s",
+"^1ERROR: %s",
+"fx/maps/%s",
+"^1ERROR: %i missing entries in effect CSV files (see console for details)"
+]
+},
+{
+"va": 5056880,
+"size": 62,
+"matched": "PC_cgame_mp_cg_localents_mp.obj"
+},
+{
+"va": 5057024,
+"size": 98078,
+"n": 151,
+"strings": [
+"white",
+"white",
+"0.0.0.0:0",
+"CGAME_LISTENSERVER",
+"scoreboard gametype display",
+"scoreboard objective info",
+"white",
+"g_TeamColor_Allies",
+"g_TeamColor_Axis",
+"scoreboard banner text",
+"g_ScoresBanner_Spectators",
+"scoreboard team name",
+"CGAME_SPECTATORS",
+"%s (%s)",
+"g_ScoresBanner_Allies",
+"g_TeamName_Allies",
+"g_ScoresBanner_Axis",
+"g_TeamName_Axis",
+"scoreboard team name",
+"g_ScoresBanner_None",
+"Ph@5V",
+"white",
+"black",
+"voice_off",
+"voice_on",
+"black",
+"white",
+"hudscoreboardscroll_uparrow",
+"hudscoreboardscroll_upkey",
+"hudscoreboardscroll_downarrow",
+"hudscoreboardscroll_downkey",
+"score",
+"white",
+"white",
+"black",
+"white",
+"white",
+"black",
+"hudscoreboardscroll_uparrow",
+"hudscoreboardscroll_upkey",
+"hudscoreboardscroll_downarrow",
+"hudscoreboardscroll_downkey",
+"g_ScoresBanner_Spectators",
+"g_ScoresBanner_Axis",
+"g_ScoresBanner_Allies",
+"g_ScoresBanner_None",
+"voice_on",
+"voice_off",
+"WARNING: aborting player positioning on turret since 'tag_weapon' does not exist",
+"%i ResetPlayerEntity yaw=%i\n",
+"%i:%02i:%02i",
+"%i:%02i",
+"%i:%02i:%02i.%i",
+"%i:%02i.%i",
+"hudelem string",
+"needle",
+"exceeded PACKET_BACKUP on commands\n",
+"prediction error\n",
+"Prediction miss: %f\n",
+"Double prediction decay: %f\n",
+"[%i : %i] ",
+"no prediction run\n",
+"J_Spine4",
+"offhandinfo",
+"CGAME_PLAYERRENAMES",
+"%s^7 %s %s",
+"WARNING: CG_ReadNextSnapshot: way out of range, %i > %i\n",
+"Health",
+"offhandinfo",
+"killicondied",
+"killiconmelee",
+"killiconheadshot",
+"killiconsuicide",
+"killiconfalling",
+"killiconcrush",
+"CGAME_TEAMMATE",
+"CGAME_TEAMMATE",
+"ERROR: CG_PlayFx called with invalid effect id %i\n",
+"CG_EntityEvent:ZERO EVENT\n",
+"ent:%3i  event:%3i ",
+"CG_EntityEvent:%s\n",
+"Event %s just for client %i was sent to other clients\n",
+"offhandinfo",
+"Unknown wb_mode_query request: ",
+"warning: %s %d\n",
+".\\universal\\com_memory.cpp",
+"Packet if larger than allocated buffer: ",
+"warning: %s %d\n",
+"Could not resize input buffer: truncating input",
+"warning: %s\n",
+"Do not own input buffer: truncating input",
+"warning: %s\n",
+"Buffer too small to pack bits",
+"warning: %s\n",
+"Could not resize input buffer: not packing",
+"warning: %s\n",
+"Do not own input buffer: not packing",
+"Fatal error: %s\n",
+"warning: %s\n",
+".\\universal\\com_memory.cpp",
+".\\universal\\com_memory.cpp",
+".\\universal\\com_memory.cpp",
+".\\universal\\com_memory.cpp",
+".\\universal\\com_memory.cpp",
+"Invalid mode encountered: corrupted stream?",
+"warning: %s\n",
+"Unknown nb_ctl request: ",
+"warning: %s %d\n",
+".\\universal\\com_memory.cpp",
+"No fixed codebook",
+"No pitch prediction, what's wrong",
+"Invalid wideband mode encountered. Corrupted stream?",
+"Invalid wideband mode encountered: corrupted stream?",
+"More than two wideband layers found: corrupted stream?",
+"Invalid mode encountered: corrupted stream?",
+"No fixed codebook",
+"No pitch prediction, what's wrong",
+"Unknown nb_ctl request: "
+]
+},
+{
+"va": 5155632,
+"size": 97,
+"matched": "bgame_bg_weapons.obj"
+},
+{
+"va": 5155744,
+"size": 834,
+"matched": "bgame_bg_weapons.obj"
+},
+{
+"va": 5156592,
+"size": 293,
+"matched": "bgame_bg_weapons.obj"
+},
+{
+"va": 5156896,
+"size": 303,
+"matched": "bgame_bg_weapons.obj"
+},
+{
+"va": 5157216,
+"size": 293,
+"matched": "bgame_bg_weapons.obj"
+},
+{
+"va": 5157520,
+"size": 165,
+"matched": "bgame_bg_weapons.obj"
+},
+{
+"va": 5157696,
+"size": 239,
+"matched": "bgame_bg_weapons.obj"
+},
+{
+"va": 5157984,
+"size": 71,
+"matched": "bgame_bg_weapons.obj"
+},
+{
+"va": 5158208,
+"size": 29,
+"matched": "bgame_bg_weapons.obj"
+},
+{
+"va": 5158240,
+"size": 42,
+"matched": "bgame_bg_weapons.obj"
+},
+{
+"va": 5158304,
+"size": 112,
+"matched": "bgame_bg_weapons.obj"
+},
+{
+"va": 5158720,
+"size": 57,
+"matched": "bgame_bg_weapons.obj"
+},
+{
+"va": 5158784,
+"size": 86,
+"matched": "bgame_bg_weapons.obj"
+},
+{
+"va": 5158896,
+"size": 49,
+"matched": "bgame_bg_weapons.obj"
+},
+{
+"va": 5158960,
+"size": 226,
+"n": 3,
+"strings": []
+},
+{
+"va": 5159296,
+"size": 29,
+"matched": "bgame_bg_weapons.obj"
+},
+{
+"va": 5159328,
+"size": 100,
+"n": 1,
+"strings": []
+},
+{
+"va": 5159440,
+"size": 28,
+"matched": "bgame_bg_weapons.obj"
+},
+{
+"va": 5159472,
+"size": 796,
+"n": 5,
+"strings": []
+},
+{
+"va": 5160272,
+"size": 51,
+"matched": "bgame_bg_weapons.obj"
+},
+{
+"va": 5160336,
+"size": 669,
+"n": 2,
+"strings": []
+},
+{
+"va": 5161024,
+"size": 150,
+"matched": "bgame_bg_weapons.obj"
+},
+{
+"va": 5161184,
+"size": 19,
+"n": 1,
+"strings": []
+},
+{
+"va": 5161216,
+"size": 139,
+"matched": "bgame_bg_weapons.obj"
+},
+{
+"va": 5161392,
+"size": 233,
+"n": 1,
+"strings": []
+},
+{
+"va": 5161632,
+"size": 63,
+"matched": "bgame_bg_weapons.obj"
+},
+{
+"va": 5161696,
+"size": 448,
+"matched": "bgame_bg_weapons.obj"
+},
+{
+"va": 5162176,
+"size": 660,
+"n": 3,
+"strings": []
+},
+{
+"va": 5162896,
+"size": 36,
+"matched": "bgame_bg_weapons.obj"
+},
+{
+"va": 5163152,
+"size": 27,
+"matched": "bgame_bg_weapons.obj"
+},
+{
+"va": 5163232,
+"size": 686,
+"n": 3,
+"strings": []
+},
+{
+"va": 5163920,
+"size": 219,
+"matched": "bgame_bg_weapons.obj"
+},
+{
+"va": 5164144,
+"size": 849,
+"n": 2,
+"strings": []
+},
+{
+"va": 5165872,
+"size": 109,
+"matched": "bgame_bg_weapons.obj"
+},
+{
+"va": 5165984,
+"size": 480,
+"n": 1,
+"strings": []
+},
+{
+"va": 5166304,
+"size": 278,
+"matched": "bgame_bg_weapons.obj"
+},
+{
+"va": 5166592,
+"size": 311,
+"matched": "bgame_bg_weapons.obj"
+},
+{
+"va": 5166960,
+"size": 422,
+"n": 1,
+"strings": []
+},
+{
+"va": 5167408,
+"size": 124,
+"matched": "bgame_bg_weapons.obj"
+},
+{
+"va": 5167536,
+"size": 472,
+"n": 1,
+"strings": []
+},
+{
+"va": 5168016,
+"size": 342,
+"matched": "bgame_bg_weapons.obj"
+},
+{
+"va": 5168368,
+"size": 289,
+"n": 1,
+"strings": []
+},
+{
+"va": 5168672,
+"size": 78,
+"matched": "bgame_bg_weapons.obj"
+},
+{
+"va": 5168752,
+"size": 428,
+"n": 1,
+"strings": []
+},
+{
+"va": 5169200,
+"size": 233,
+"matched": "bgame_bg_weapons.obj"
+},
+{
+"va": 5169440,
+"size": 116,
+"matched": "bgame_bg_weapons.obj"
+},
+{
+"va": 5169568,
+"size": 73,
+"matched": "bgame_bg_weapons.obj"
+},
+{
+"va": 5169648,
+"size": 255,
+"matched": "bgame_bg_weapons.obj"
+},
+{
+"va": 5169904,
+"size": 120,
+"matched": "bgame_bg_weapons.obj"
+},
+{
+"va": 5170080,
+"size": 1993,
+"n": 3,
+"strings": [
+"[%s] Only grenades are currently supported for off hand use\n",
+"[%s] No offhand class set\n"
+]
+},
+{
+"va": 5171760,
+"size": 151,
+"matched": "bgame_bg_weapons.obj"
+},
+{
+"va": 5172048,
+"size": 108,
+"matched": "bgame_bg_weapons.obj"
+},
+{
+"va": 5172352,
+"size": 125,
+"matched": "bgame_bg_weapons.obj"
+},
+{
+"va": 5172512,
+"size": 125,
+"matched": "bgame_bg_weapons.obj"
+},
+{
+"va": 5172800,
+"size": 2089,
+"n": 5,
+"strings": []
+},
+{
+"va": 5174896,
+"size": 76,
+"matched": "bgame_bg_weapons.obj"
+},
+{
+"va": 5174976,
+"size": 704,
+"n": 1,
+"strings": []
+},
+{
+"va": 5175680,
+"size": 86,
+"matched": "bgame_bg_weapons.obj"
+},
+{
+"va": 5175776,
+"size": 439,
+"matched": "bgame_bg_weapons.obj"
+},
+{
+"va": 5176224,
+"size": 475,
+"n": 1,
+"strings": []
+},
+{
+"va": 5176704,
+"size": 298,
+"matched": "bgame_bg_weapons.obj"
+},
+{
+"va": 5177008,
+"size": 757,
+"n": 2,
+"strings": []
+},
+{
+"va": 5177776,
+"size": 136,
+"matched": "bgame_bg_weapons.obj"
+},
+{
+"va": 5177920,
+"size": 263,
+"matched": "bgame_bg_weapons.obj"
+},
+{
+"va": 5178192,
+"size": 409,
+"matched": "bgame_bg_weapons.obj"
+},
+{
+"va": 5178608,
+"size": 630,
+"n": 2,
+"strings": []
+},
+{
+"va": 5179248,
+"size": 51,
+"matched": "bgame_bg_weapons.obj"
+},
+{
+"va": 5179312,
+"size": 813,
+"n": 1,
+"strings": []
+},
+{
+"va": 5180128,
+"size": 72,
+"matched": "bgame_bg_weapons.obj"
+},
+{
+"va": 5180208,
+"size": 67,
+"matched": "bgame_bg_animation_mp.obj"
+},
+{
+"va": 5180288,
+"size": 115,
+"matched": "bgame_bg_animation_mp.obj"
+},
+{
+"va": 5180416,
+"size": 404,
+"n": 1,
+"strings": [
+"BG_AnimationIndexForString: unknown player animation '%s'",
+"multiplayer"
+]
+},
+{
+"va": 5180944,
+"size": 107,
+"matched": "bgame_bg_animation_mp.obj"
+},
+{
+"va": 5181056,
+"size": 85,
+"matched": "bgame_bg_animation_mp.obj"
+},
+{
+"va": 5181296,
+"size": 739,
+"n": 2,
+"strings": [
+"unused"
+]
+},
+{
+"va": 5182048,
+"size": 912,
+"matched": "bgame_bg_animation_mp.obj"
+},
+{
+"va": 5182976,
+"size": 563,
+"matched": "bgame_bg_animation_mp.obj"
+},
+{
+"va": 5183552,
+"size": 4297,
+"n": 2,
+"strings": [
+"BG_ParseCommands: exceeded maximum number of animations (%i)",
+"BG_ParseCommands: expected animation",
+"duration",
+"BG_ParseCommands: expected duration value",
+"turretanim",
+"BG_ParseCommands: Turret animations can only be played on the 'both' body part",
+"blendtime",
+"BG_ParseCommands: expected blendtime value",
+"UngetToken called twice",
+"sound",
+"BG_ParseCommands: expected sound",
+"BG_ParseCommands: wav files not supported, only sound scripts",
+"BG_ParseCommands: unknown parameter '%s'",
+"BG_AnimParseAnimScript",
+"BG_AnimParseAnimScript: unexpected '%s'",
+"BG_AnimParseAnimScript: expected condition type string",
+"BG_AnimParseAnimScript: can not make a define of type '%s'",
+"BG_AnimParseAnimScript: expected condition define string",
+"BG_AnimParseAnimScript: expected '=', found end of line",
+"BG_AnimParseAnimScript: expected '=', found '%s'",
+"BG_AnimParseAnimScript: unexpected '%s'",
+"state",
+"BG_AnimParseAnimScript: expected 'state'",
+"BG_AnimParseAnimScript: expected state type",
+"BG_AnimParseAnimScript: expected '{'",
+"BG_AnimParseAnimScript: internal error",
+"BG_AnimParseAnimScript: exceeded maximum items per script (%i)",
+"BG_AnimParseAnimScript: unexpected '%s'",
+"BG_AnimParseAnimScript: unexpected '%s'",
+"BG_AnimParseAnimScript: unexpected '%s'",
+"BG_AnimParseAnimScript: unexpected '%s'",
+"statechange",
+"BG_AnimParseAnimScript: expected 'statechange', got '%s'",
+"BG_AnimParseAnimScript: expected <state type>",
+"BG_AnimParseAnimScript: expected <state type>",
+"BG_AnimParseAnimScript: expected '{'",
+"BG_AnimParseAnimScript: internal error",
+"BG_AnimParseAnimScript: exceeded maximum items per script (%i)",
+"BG_AnimParseAnimScript: exceeded maximum global items (%i)",
+"BG_AnimParseAnimScript: internal error",
+"BG_AnimParseAnimScript: unexpected end of file: %s"
+]
+},
+{
+"va": 5187888,
+"size": 90,
+"matched": "bgame_bg_animation_mp.obj"
+},
+{
+"va": 5187984,
+"size": 8269,
+"n": 17,
+"strings": [
+"death animation '%s' is looping"
+]
+},
+{
+"va": 5196256,
+"size": 199,
+"matched": "bgame_bg_animation_mp.obj"
+},
+{
+"va": 5196464,
+"size": 4145,
+"n": 7,
+"strings": [
+"multiplayer",
+"multiplayer",
+"torso",
+"multiplayer",
+"multiplayer",
+"turning",
+"multiplayer",
+"multiplayer",
+"sv_cheats",
+"gamename",
+"Call of Duty 2",
+"gamename",
+"gamedate",
+"Oct  6 2005",
+"gamedate",
+"sv_mapname",
+"sv_mapname",
+"g_gametype",
+"g_gametype",
+"sv_maxclients",
+"sv_maxclients",
+"g_synchronousClients",
+"g_log",
+"games_mp.log",
+"g_log",
+"g_logSync",
+"g_password",
+"g_password",
+"g_banIPs",
+"g_banIPs",
+"dedicated",
+"dedicated",
+"dedicated",
+"dedicated",
+"g_speed",
+"g_speed",
+"g_gravity",
+"g_knockback",
+"g_weaponAmmoPools",
+"g_maxDroppedWeapons",
+"g_maxDroppedWeapons",
+"g_inactivity",
+"g_inactivity",
+"g_debugDamage",
+"g_debugBullets",
+"g_debugBullets",
+"g_motd",
+"g_motd",
+"g_playerCollisionEjectSpeed",
+"g_playerCollisionEjectSpeed",
+"g_dropForwardSpeed",
+"g_dropUpSpeedBase",
+"g_dropUpSpeedRand",
+"g_clonePlayerMaxVelocity",
+"voice_global",
+"voice_localEcho",
+"voice_deadChat",
+"g_allowVote",
+"g_listEntity",
+"g_deadChat",
+"g_voiceChatTalkingDuration",
+"g_voiceChatTalkingDuration",
+"g_ScoresBanner_Allies",
+"mpflag_american",
+"g_ScoresBanner_Allies",
+"g_ScoresBanner_Axis",
+"mpflag_german",
+"g_ScoresBanner_Axis",
+"g_ScoresBanner_None",
+"mpflag_none",
+"g_ScoresBanner_None",
+"g_ScoresBanner_Spectators",
+"mpflag_spectator",
+"g_ScoresBanner_Spectators",
+"g_TeamName_Allies",
+"GAME_ALLIES",
+"g_TeamName_Allies",
+"g_TeamName_Axis",
+"GAME_AXIS",
+"g_TeamName_Axis",
+"g_TeamColor_Allies",
+"g_TeamColor_Axis",
+"g_smoothClients",
+"g_antilag",
+"g_oldVoting",
+"g_voteAbstainWeight",
+"g_no_script_spam",
+"g_debugLocDamage",
+"g_friendlyfireDist",
+"g_friendlyNameDist",
+"player_meleeRange",
+"player_meleeWidth",
+"player_meleeHeight",
+"g_dumpAnims",
+"g_dumpAnims",
+"g_useholdtime",
+"g_useholdtime",
+"g_useholdspawndelay",
+"g_useholdspawndelay",
+"g_mantleBlockTimeBuffer",
+"g_mantleBlockTimeBuffer"
+]
+},
+{
+"va": 5200800,
+"size": 108,
+"matched": "game_g_main_mp.obj"
+},
+{
+"va": 5200944,
+"size": 141,
+"matched": "game_g_main_mp.obj"
+},
+{
+"va": 5201088,
+"size": 101,
+"matched": "game_g_main_mp.obj"
+},
+{
+"va": 5201200,
+"size": 17,
+"matched": "game_g_main_mp.obj"
+},
+{
+"va": 5201232,
+"size": 1617,
+"n": 2,
+"strings": [
+"------- Game Initialization -------\n",
+"Call of Duty 2",
+"gamename: %s\n",
+"Oct  6 2005",
+"gamedate: %s\n",
+"SUVWh",
+"WARNING: Couldn't open logfile: %s\n",
+"------------------------------------------------------------\n",
+"InitGame: %s\n",
+"Not logging to disk.\n",
+"winner",
+"-----------------------------------\n",
+"==== ShutdownGame ====\n",
+"ShutdownGame:\n",
+"------------------------------------------------------------\n"
+]
+},
+{
+"va": 5202864,
+"size": 103,
+"matched": "game_g_main_mp.obj"
+},
+{
+"va": 5203136,
+"size": 148,
+"matched": "game_g_main_mp.obj"
+},
+{
+"va": 5203296,
+"size": 159,
+"matched": "game_g_main_mp.obj"
+},
+{
+"va": 5203472,
+"size": 538,
+"n": 2,
+"strings": [
+"%3i:%i%i %s",
+"%c \"GAME_VOTEPASSED\"",
+"%c \"GAME_VOTEPASSED\"",
+"%c \"GAME_VOTEFAILED\""
+]
+},
+{
+"va": 5204016,
+"size": 151,
+"matched": "game_g_main_mp.obj"
+},
+{
+"va": 5204176,
+"size": 81,
+"matched": "game_g_main_mp.obj"
+},
+{
+"va": 5204272,
+"size": 73,
+"matched": "game_g_main_mp.obj"
+},
+{
+"va": 5204416,
+"size": 2473,
+"n": 3,
+"strings": [
+"PWhD7V",
+"%4i: %s\n",
+"server:\n",
+"NO TREE\n"
+]
+},
+{
+"va": 5206944,
+"size": 53,
+"matched": "game_g_main_mp.obj"
+},
+{
+"va": 5207104,
+"size": 1836,
+"n": 4,
+"strings": [
+"UnnamedPlayer"
+]
+},
+{
+"va": 5208944,
+"size": 424,
+"matched": "game_g_client_mp.obj"
+},
+{
+"va": 5209376,
+"size": 476,
+"n": 1,
+"strings": [
+"password",
+"GAME_INVALIDPASSWORD"
+]
+},
+{
+"va": 5209856,
+"size": 74,
+"matched": "game_g_client_mp.obj"
+},
+{
+"va": 5209936,
+"size": 1870,
+"n": 3,
+"strings": [
+"disconnect"
+]
+},
+{
+"va": 5211808,
+"size": 247,
+"matched": "game_g_client_mp.obj"
+},
+{
+"va": 5212064,
+"size": 1488,
+"n": 3,
+"strings": []
+},
+{
+"va": 5213552,
+"size": 377,
+"matched": "game_g_active_mp.obj"
+},
+{
+"va": 5213936,
+"size": 272,
+"matched": "game_g_active_mp.obj"
+},
+{
+"va": 5214256,
+"size": 4347,
+"n": 7,
+"strings": []
+},
+{
+"va": 5218608,
+"size": 138,
+"matched": "game_g_active_mp.obj"
+},
+{
+"va": 5218752,
+"size": 624,
+"matched": "game_g_active_mp.obj"
+},
+{
+"va": 5219408,
+"size": 60,
+"matched": "game_g_active_mp.obj"
+},
+{
+"va": 5219472,
+"size": 3285,
+"n": 6,
+"strings": [
+" %i %i %i %i %i",
+"%c %i %i %i%s",
+"%c \"GAME_CHEATSNOTENABLED\"",
+"%c \"GAME_MUSTBEALIVECOMMAND\""
+]
+},
+{
+"va": 5222768,
+"size": 57,
+"matched": "game_g_cmds_mp.obj"
+},
+{
+"va": 5223264,
+"size": 134,
+"matched": "game_g_cmds_mp.obj"
+},
+{
+"va": 5223440,
+"size": 2667,
+"n": 7,
+"strings": [
+"health",
+"weapons",
+"allammo",
+"health",
+"weapons",
+"allammo",
+"GAME_GODMODE_ON",
+"GAME_GODMODE_OFF",
+"%c \"%s\"",
+"GAME_DEMI_GODMODE_ON",
+"GAME_DEMI_GODMODE_OFF",
+"%c \"%s\"",
+"GAME_NOTARGETOFF",
+"GAME_NOTARGETON",
+"%c \"%s\"",
+"GAME_NOCLIPOFF",
+"GAME_NOCLIPON",
+"%c \"%s\"",
+"GAME_UFOOFF",
+"GAME_UFOON",
+"%c \"%s\""
+]
+},
+{
+"va": 5226112,
+"size": 70,
+"matched": "game_g_cmds_mp.obj"
+},
+{
+"va": 5226192,
+"size": 557,
+"n": 1,
+"strings": []
+},
+{
+"va": 5226752,
+"size": 224,
+"matched": "game_g_cmds_mp.obj"
+},
+{
+"va": 5227008,
+"size": 5041,
+"n": 8,
+"strings": [
+"say;%d;%d;%s;%s\n",
+"%s%s%s: ",
+"%s[%s]%s: ",
+"GAME_AXIS",
+"GAME_ALLIES",
+"sayteam;%d;%d;%s;%s\n",
+"%s%s\n",
+"tell;%d;%d;%s;%d;%d;%s;%s\n",
+"%c \"GAME_VOTINGNOTENABLED\"",
+"%c \"GAME_VOTEALREADYINPROGRESS\"",
+"%c \"GAME_MAXVOTESCALLED\"",
+"%c \"GAME_NOSPECTATORCALLVOTE\"",
+"jehp{W",
+"jehp{W",
+"jehp{W",
+"map_restart",
+"map_rotate",
+"typemap",
+"g_gametype",
+"clientkick",
+"tempBanUser",
+"tempBanClient",
+"typemap",
+"jeh|zW",
+"jehTzW",
+"mapname",
+"%c \"GAME_TYPEMAP_NOCHANGE\"",
+"g_gametype %s; map %s",
+"map %s",
+"g_gametype %s; map_restart",
+"g_gametype",
+"%c \"GAME_INVALIDGAMETYPE\"",
+"%s %s; map_restart",
+"map_restart",
+"fast_restart",
+"GAME_VOTE_MAPRESTART",
+"map_rotate",
+"GAME_VOTE_NEXTMAP",
+"%s %s",
+"clientkick",
+"tempBanUser",
+"tempBanClient",
+"tempBanUser",
+"jehHyW",
+"jehHyW",
+"jehHyW",
+"jehHyW",
+"%c \"GAME_CLIENTNOTONSERVER\"",
+"clientkick",
+"SPh@yW",
+"tempBanClient",
+"%s \"%d\"",
+"%c \"GAME_INVALIDVOTESTRING\"",
+"%c \"GAME_INVALIDVOTESTRING\"",
+"%c \"GAME_NOVOTEINPROGRESS\"",
+"%c \"GAME_VOTEALREADYCAST\"",
+"%c \"GAME_NOSPECTATORVOTE\"",
+"%c \"GAME_VOTECAST\"",
+"%c \"GAME_CHEATSNOTENABLED\""
+]
+},
+{
+"va": 5232064,
+"size": 33,
+"matched": "game_g_cmds_mp.obj"
+},
+{
+"va": 5232112,
+"size": 2873,
+"n": 6,
+"strings": [
+"sv_serverId",
+"say_team",
+"score",
+"demigod",
+"notarget",
+"noclip",
+"follownext",
+"followprev",
+"where",
+"callvote",
+"setviewpos",
+"entitycount",
+"printentities",
+"maps/mp/gametypes/%s",
+"maps/mp/gametypes/_callbacksetup",
+"maps/mp/gametypes/_callbacksetup",
+"CodeCallback_StartGameType",
+"maps/mp/gametypes/_callbacksetup",
+"maps/mp/gametypes/_callbacksetup",
+"CodeCallback_StartGameType",
+"maps/mp/gametypes/_callbacksetup",
+"maps/mp/gametypes/_callbacksetup",
+"CodeCallback_PlayerConnect",
+"maps/mp/gametypes/_callbacksetup",
+"maps/mp/gametypes/_callbacksetup",
+"CodeCallback_PlayerConnect",
+"maps/mp/gametypes/_callbacksetup",
+"maps/mp/gametypes/_callbacksetup",
+"CodeCallback_PlayerDisconnect",
+"maps/mp/gametypes/_callbacksetup",
+"maps/mp/gametypes/_callbacksetup",
+"CodeCallback_PlayerDisconnect",
+"maps/mp/gametypes/_callbacksetup",
+"maps/mp/gametypes/_callbacksetup",
+"CodeCallback_PlayerDamage",
+"maps/mp/gametypes/_callbacksetup",
+"maps/mp/gametypes/_callbacksetup",
+"CodeCallback_PlayerDamage",
+"maps/mp/gametypes/_callbacksetup",
+"maps/mp/gametypes/_callbacksetup",
+"CodeCallback_PlayerKilled",
+"maps/mp/gametypes/_callbacksetup",
+"maps/mp/gametypes/_callbacksetup",
+"CodeCallback_PlayerKilled",
+"mapname",
+"mapname",
+"maps/mp/%s",
+"radiant",
+"codescripts/delete",
+"codescripts/delete",
+"codescripts/delete",
+"codescripts/delete",
+"codescripts/struct",
+"codescripts/struct",
+"initstructs",
+"codescripts/struct",
+"codescripts/struct",
+"initstructs",
+"codescripts/struct",
+"codescripts/struct",
+"createstruct",
+"codescripts/struct",
+"codescripts/struct",
+"createstruct"
+]
+},
+{
+"va": 5234992,
+"size": 56,
+"matched": "game_g_scr_main_mp.obj"
+},
+{
+"va": 5235632,
+"size": 7266,
+"n": 13,
+"strings": [
+"Illegal localized string reference: %s must contain only alpha-numeric character",
+"parameter %d does not exist",
+"%s is too long. Max length is %i\n",
+"Entity is not a player",
+"%s is too long. Max length is %i\n",
+"bad escape character (%i) present in string",
+"non-localized %s strings are not allowed to have letters in them: \"%s\"",
+"^3WARNING: Non-localized %s string is not allowed to have letters in it. Must be",
+"%s is too long. Max length is %i\n",
+"Dvar Value",
+"parameter %d does not exist",
+"Dvar %s has an invalid dvar name",
+"unknown weapon '%s' in getWeaponModel\n",
+"unable to spawn \"%s\" entity",
+"not an entity",
+"model '%s' already attached to tag '%s'",
+"maximum attached models exceeded",
+"not an entity",
+"Current attachments:\n",
+"model: '%s', tag: '%s'\n",
+"failed to detach model '%s' from tag '%s'",
+"not an entity",
+"not an entity",
+"parameter %d does not exist",
+"entity (classname: '%s') does not currently support linkTo",
+"not an entity",
+"failed to link entity since parent has no model",
+"failed to link entity since parent model '%s' is invalid",
+"failed to link entity since tag '%s' does not exist in parent model '%s'",
+"failed to link entity due to link cycle",
+"not an entity"
+]
+},
+{
+"va": 5245792,
+"size": 274,
+"matched": "game_g_scr_main_mp.obj"
+},
+{
+"va": 5246080,
+"size": 6944,
+"n": 9,
+"strings": [
+"not an entity",
+"The setHintString command only works on trigger_use or trigger_use_touch entitie",
+"parameter %d does not exist",
+"Hint String",
+"Too many different hintstring values. Max allowed is %i different strings",
+"Illegal character '%c'(ascii %i) in objective icon name: %s\n",
+"Objective icon name is too long (> %i): %s\n",
+"objective_add needs at least the first two parameters out of its parameter list ",
+"index %i is an illegal objective index. Valid indexes are 0 to %i\n",
+"Illegal objective state \"%s\". Valid states are \"empty\", \"invisible\", \"current\"\n",
+"index %i is an illegal objective index. Valid indexes are 0 to %i\n",
+"Illegal objective state \"%s\". Valid states are \"empty\", \"invisible\", \"current\"\n",
+"index %i is an illegal objective index. Valid indexes are 0 to %i\n",
+"not an entity",
+"parameter %d does not exist",
+"parameter %d does not exist",
+"default",
+"parameter %d does not exist"
+]
+},
+{
+"va": 5253280,
+"size": 153,
+"matched": "game_g_scr_main_mp.obj"
+},
+{
+"va": 5253536,
+"size": 1321,
+"n": 4,
+"strings": [
+"divide by 0"
+]
+},
+{
+"va": 5254864,
+"size": 56,
+"matched": "game_g_scr_main_mp.obj"
+},
+{
+"va": 5254928,
+"size": 54,
+"matched": "game_g_scr_main_mp.obj"
+},
+{
+"va": 5254992,
+"size": 218,
+"n": 1,
+"strings": []
+},
+{
+"va": 5255216,
+"size": 68,
+"matched": "game_g_scr_main_mp.obj"
+},
+{
+"va": 5255296,
+"size": 1216,
+"n": 7,
+"strings": [
+"string too long",
+"string too long",
+"string too long"
+]
+},
+{
+"va": 5257840,
+"size": 207,
+"matched": "game_g_scr_main_mp.obj"
+},
+{
+"va": 5258192,
+"size": 259,
+"matched": "game_g_scr_main_mp.obj"
+},
+{
+"va": 5258464,
+"size": 270,
+"n": 1,
+"strings": [
+"end time must be between 0 and 1",
+"start time must be between 0 and 1"
+]
+},
+{
+"va": 5258912,
+"size": 204,
+"matched": "game_g_scr_main_mp.obj"
+},
+{
+"va": 5259120,
+"size": 12354,
+"n": 5,
+"strings": [
+"Incorrect number of parameters",
+"playFx called with (0 0 0) forward direction",
+"playFx called with (0 0 0) up direction",
+"playFx called an up direction 0 or 180 degrees from forward",
+"Scale must be greater than 0",
+"duration must be greater than 0",
+"Radius must be greater than 0",
+"Dvar Value",
+"parameter %d does not exist"
+]
+},
+{
+"va": 5271488,
+"size": 130,
+"matched": "game_g_scr_main_mp.obj"
+},
+{
+"va": 5271696,
+"size": 108,
+"n": 1,
+"strings": []
+},
+{
+"va": 5271808,
+"size": 90,
+"matched": "game_g_scr_main_mp.obj"
+},
+{
+"va": 5272016,
+"size": 572,
+"n": 1,
+"strings": [
+"maps/mp/gametypes",
+"maps/mp/gametypes/%s.txt",
+"maps/mp/gametypes/%s.txt",
+"WARNING: Could not load GameType description file %s for gametype %s\n",
+"maps/mp/gametypes/%s.txt",
+"WARNING: GameType description file %s is too big to load.\n",
+"Too many game type scripts found! Only loading the first %i\n"
+]
+},
+{
+"va": 5272592,
+"size": 86,
+"matched": "game_g_scr_main_mp.obj"
+},
+{
+"va": 5272832,
+"size": 540,
+"n": 3,
+"strings": [
+"badMOD",
+"badMOD"
+]
+},
+{
+"va": 5273376,
+"size": 36,
+"matched": "game_g_scr_main_mp.obj"
+},
+{
+"va": 5273440,
+"size": 163,
+"matched": "game_g_svcmds_mp.obj"
+},
+{
+"va": 5273616,
+"size": 245,
+"n": 1,
+"strings": [
+"%i.%i.%i.%i "
+]
+},
+{
+"va": 5273872,
+"size": 103,
+"matched": "game_g_svcmds_mp.obj"
+},
+{
+"va": 5273984,
+"size": 137,
+"n": 1,
+"strings": []
+},
+{
+"va": 5274128,
+"size": 95,
+"matched": "game_g_svcmds_mp.obj"
+},
+{
+"va": 5274224,
+"size": 203,
+"matched": "game_g_svcmds_mp.obj"
+},
+{
+"va": 5274432,
+"size": 843,
+"n": 2,
+"strings": [
+"ET_GENERAL          ",
+"ET_PLAYER           ",
+"ET_ITEM             ",
+"ET_MISSILE          ",
+"ET_INVISIBLE        ",
+"ET_SCRIPTMOVER      ",
+"%3i                 ",
+"entitylist",
+"addip",
+"removeip",
+"listip",
+"g_banIPs\n"
+]
+},
+{
+"va": 5275280,
+"size": 196,
+"matched": "game_g_utils_mp.obj"
+},
+{
+"va": 5275488,
+"size": 43,
+"matched": "game_g_utils_mp.obj"
+},
+{
+"va": 5275536,
+"size": 102,
+"matched": "game_g_utils_mp.obj"
+},
+{
+"va": 5275648,
+"size": 818,
+"n": 2,
+"strings": [
+"model '%s' not precached",
+"xmodel"
+]
+},
+{
+"va": 5276480,
+"size": 30,
+"matched": "game_g_utils_mp.obj"
+},
+{
+"va": 5276576,
+"size": 1425,
+"n": 5,
+"strings": []
+},
+{
+"va": 5278144,
+"size": 122,
+"matched": "game_g_utils_mp.obj"
+},
+{
+"va": 5278272,
+"size": 412,
+"n": 1,
+"strings": []
+},
+{
+"va": 5278688,
+"size": 44,
+"matched": "game_g_utils_mp.obj"
+},
+{
+"va": 5278736,
+"size": 791,
+"n": 2,
+"strings": []
+},
+{
+"va": 5279536,
+"size": 59,
+"matched": "game_g_utils_mp.obj"
+},
+{
+"va": 5279680,
+"size": 1057,
+"n": 5,
+"strings": []
+},
+{
+"va": 5280752,
+"size": 89,
+"matched": "game_g_utils_mp.obj"
+},
+{
+"va": 5280848,
+"size": 115,
+"matched": "game_g_utils_mp.obj"
+},
+{
+"va": 5281104,
+"size": 255,
+"n": 2,
+"strings": [
+"%4i: '%s', origin: %f %f %f\n"
+]
+},
+{
+"va": 5281408,
+"size": 192,
+"matched": "game_g_utils_mp.obj"
+},
+{
+"va": 5281680,
+"size": 356,
+"matched": "game_g_utils_mp.obj"
+},
+{
+"va": 5282096,
+"size": 1321,
+"n": 5,
+"strings": []
+},
+{
+"va": 5283440,
+"size": 61,
+"matched": "game_g_utils_mp.obj"
+},
+{
+"va": 5283504,
+"size": 155,
+"matched": "game_g_utils_mp.obj"
+},
+{
+"va": 5283856,
+"size": 64,
+"matched": "game_g_utils_mp.obj"
+},
+{
+"va": 5283920,
+"size": 64,
+"matched": "game_g_utils_mp.obj"
+},
+{
+"va": 5284592,
+"size": 1155,
+"n": 4,
+"strings": [
+"%f %f %f",
+"%f %f %f"
+]
+},
+{
+"va": 5286000,
+"size": 159,
+"matched": "game_g_spawn_mp.obj"
+},
+{
+"va": 5286160,
+"size": 715,
+"n": 4,
+"strings": [
+"classname",
+"G_CallSpawn: NULL classname\n",
+"G_CallSpawnEntity: NULL classname\n",
+"%s doesn't have a spawn function\n",
+"%s doesn't have a spawn function\n"
+]
+},
+{
+"va": 5286880,
+"size": 159,
+"matched": "game_g_spawn_mp.obj"
+},
+{
+"va": 5287072,
+"size": 837,
+"n": 5,
+"strings": []
+},
+{
+"va": 5287920,
+"size": 76,
+"matched": "game_g_spawn_mp.obj"
+},
+{
+"va": 5288288,
+"size": 1201,
+"n": 4,
+"strings": [
+"getent used with more than one entity",
+"classname",
+"worldspawn",
+"ambienttrack",
+"message",
+"gravity",
+"northyaw",
+"spawnflags",
+"classname",
+"script_struct"
+]
+},
+{
+"va": 5289712,
+"size": 31,
+"matched": "bgame_bg_mantle.obj"
+},
+{
+"va": 5289872,
+"size": 69,
+"matched": "bgame_bg_mantle.obj"
+},
+{
+"va": 5289952,
+"size": 290,
+"n": 1,
+"strings": []
+},
+{
+"va": 5290256,
+"size": 237,
+"matched": "bgame_bg_mantle.obj"
+},
+{
+"va": 5290496,
+"size": 7744,
+"n": 10,
+"strings": [
+"Checking for ledge at %f units",
+"Mantle Failed: Ledge is too steep",
+"Mantle Failed: Player can't fit crouched on ledge",
+"Mantle available!",
+"Mantle Failed: Can't find ledge",
+"Mantle Failed: Ledge is too far away",
+"PLAYER_MANTLE",
+"Mantle anim [%s] has X translation %f, should be %f\n",
+"Mantle anim [%s] has Y translation %f, should be %f\n",
+"Mantle anim [%s] has Z translation %f, should be %f\n",
+"Mantle anim [%s] has X translation %f, should be %f\n",
+"Mantle anim [%s] has Y translation %f, should be %f\n",
+"Mantle anim [%s] has Z translation %f, should be %f\n",
+"Mantle Failed: No mantle surface found",
+"Mantle Failed: No mantle surface with MANTLE_ON or MANTLE_OVER found",
+"Mantle Failed: Mantle surface has vertical normal",
+"Mantle Failed: Player is not facing mantle surface",
+"Mantle Failed: Mantle brush is too thick",
+"====== Mantle Debug ======",
+"Mantle Failed: Not enabled",
+"Mantle Failed: Player is dead",
+"Mantle Failed: Player already mantling",
+"Mantle Failed: Player not standing",
+"Mantle Failed: Player using binoculars",
+"allies",
+"current",
+"damage",
+"death",
+"dlight",
+"empty",
+"entity",
+"failed",
+"fraction",
+"grenade",
+"info_notnull",
+"invisible",
+"killanimscript",
+"movedone",
+"noclass",
+"normal",
+"pistol",
+"plane_waypoint",
+"player",
+"position",
+"primary",
+"primaryb",
+"prone",
+"right",
+"rocket",
+"rotatedone",
+"script_brushmodel",
+"script_model",
+"script_origin",
+"spectator",
+"stand",
+"surfacetype",
+"target_script_trigger",
+"tempEntity",
+"touch",
+"trigger",
+"trigger_use",
+"trigger_use_touch",
+"trigger_damage",
+"trigger_lookat",
+"truck_cam",
+"worldspawn",
+"binocular_enter",
+"binocular_exit",
+"binocular_fire",
+"binocular_release",
+"binocular_drop",
+"begin",
+"intermission",
+"menuresponse",
+"playing",
+"auto_change",
+"manual_change",
+"freelook",
+"call_vote",
+"snd_enveffectsprio_level",
+"snd_enveffectsprio_shellshock",
+"snd_channelvolprio_holdbreath",
+"snd_channelvolprio_pain",
+"snd_channelvolprio_shellshock",
+"tag_flash",
+"tag_flash_11",
+"tag_flash_2",
+"tag_flash_22",
+"tag_brass",
+"j_head",
+"tag_weapon",
+"tag_player",
+"tag_camera",
+"tag_aim",
+"tag_aim_animated",
+"tag_origin",
+"tag_butt",
+"tag_weapon_right",
+"back_low",
+"back_mid",
+"back_up",
+"pelvis",
+"player_view_pitch_up",
+"player_view_pitch_down",
+"bg_ladder_yawcap",
+"bg_prone_yawcap",
+"bg_foliagesnd_minspeed",
+"bg_foliagesnd_maxspeed",
+"bg_foliagesnd_slowinterval",
+"bg_foliagesnd_slowinterval",
+"bg_foliagesnd_fastinterval",
+"bg_foliagesnd_fastinterval",
+"bg_foliagesnd_resetinterval",
+"bg_foliagesnd_resetinterval",
+"bg_fallDamageMinHeight",
+"bg_fallDamageMaxHeight",
+"inertiaMax",
+"inertiaDebug",
+"inertiaAngle",
+"friction",
+"stopspeed",
+"bg_swingSpeed",
+"bg_bobAmplitudeStanding",
+"bg_bobAmplitudeDucked",
+"bg_bobAmplitudeProne",
+"bg_bobMax",
+"bg_aimSpreadMoveSpeedThreshold",
+"player_breath_hold_time",
+"player_breath_gasp_time",
+"player_breath_fire_delay",
+"player_breath_gasp_scale",
+"player_breath_hold_lerp",
+"player_breath_gasp_lerp",
+"player_breath_snd_lerp",
+"player_breath_snd_delay",
+"player_toggleBinoculars",
+"player_scopeExitOnDamage",
+"player_adsExitDelay",
+"player_adsExitDelay",
+"player_moveThreshhold",
+"player_footstepsThreshhold",
+"player_strafeSpeedScale",
+"player_backSpeedScale",
+"player_spectateSpeedScale",
+"player_turnAnims",
+"player_dmgtimer_timePerPoint",
+"player_dmgtimer_maxTime",
+"player_dmgtimer_minScale",
+"player_dmgtimer_stumbleTime",
+"player_dmgtimer_stumbleTime",
+"player_dmgtimer_flinchTime",
+"player_dmgtimer_flinchTime"
+]
+},
+{
+"va": 5298256,
+"size": 183,
+"matched": "bgame_bg_misc.obj"
+},
+{
+"va": 5298448,
+"size": 5527,
+"n": 8,
+"strings": []
+},
+{
+"va": 5304000,
+"size": 200,
+"matched": "bgame_bg_misc.obj"
+},
+{
+"va": 5304240,
+"size": 52,
+"matched": "bgame_bg_pmove.obj"
+},
+{
+"va": 5304304,
+"size": 147,
+"matched": "bgame_bg_pmove.obj"
+},
+{
+"va": 5304464,
+"size": 50,
+"matched": "bgame_bg_pmove.obj"
+},
+{
+"va": 5304528,
+"size": 54,
+"matched": "bgame_bg_pmove.obj"
+},
+{
+"va": 5304592,
+"size": 63,
+"matched": "bgame_bg_pmove.obj"
+},
+{
+"va": 5304656,
+"size": 28,
+"matched": "bgame_bg_pmove.obj"
+},
+{
+"va": 5304688,
+"size": 259,
+"matched": "bgame_bg_pmove.obj"
+},
+{
+"va": 5304960,
+"size": 222,
+"n": 1,
+"strings": [
+"angle is %f (oldVel is (%f,%f), vel is (%f, %f))\n",
+"clamping acceleration from %f to %f\n"
+]
+},
+{
+"va": 5305184,
+"size": 96,
+"matched": "bgame_bg_pmove.obj"
+},
+{
+"va": 5305280,
+"size": 503,
+"n": 2,
+"strings": []
+},
+{
+"va": 5305792,
+"size": 164,
+"matched": "bgame_bg_pmove.obj"
+},
+{
+"va": 5305968,
+"size": 586,
+"n": 1,
+"strings": []
+},
+{
+"va": 5306560,
+"size": 68,
+"matched": "bgame_bg_pmove.obj"
+},
+{
+"va": 5306640,
+"size": 3364,
+"n": 7,
+"strings": []
+},
+{
+"va": 5310016,
+"size": 62,
+"matched": "bgame_bg_pmove.obj"
+},
+{
+"va": 5310112,
+"size": 21,
+"matched": "bgame_bg_pmove.obj"
+},
+{
+"va": 5310144,
+"size": 26,
+"matched": "bgame_bg_pmove.obj"
+},
+{
+"va": 5310208,
+"size": 896,
+"n": 1,
+"strings": [
+"bg_fallDamageMaxHeight must be greater than bg_fallDamageMinHeight\n"
+]
+},
+{
+"va": 5311104,
+"size": 356,
+"matched": "bgame_bg_pmove.obj"
+},
+{
+"va": 5311472,
+"size": 1097,
+"n": 3,
+"strings": []
+},
+{
+"va": 5312576,
+"size": 141,
+"matched": "bgame_bg_pmove.obj"
+},
+{
+"va": 5312720,
+"size": 209,
+"matched": "bgame_bg_pmove.obj"
+},
+{
+"va": 5312944,
+"size": 4106,
+"n": 3,
+"strings": []
+},
+{
+"va": 5317056,
+"size": 87,
+"matched": "bgame_bg_pmove.obj"
+},
+{
+"va": 5317152,
+"size": 140,
+"matched": "bgame_bg_pmove.obj"
+},
+{
+"va": 5317296,
+"size": 2108,
+"n": 1,
+"strings": [
+"turn anim end time is %i, time is %i\n"
+]
+},
+{
+"va": 5319408,
+"size": 372,
+"matched": "bgame_bg_pmove.obj"
+},
+{
+"va": 5319792,
+"size": 89,
+"matched": "bgame_bg_pmove.obj"
+},
+{
+"va": 5319888,
+"size": 3978,
+"n": 4,
+"strings": []
+},
+{
+"va": 5323888,
+"size": 84,
+"matched": "bgame_bg_pmove.obj"
+},
+{
+"va": 5324000,
+"size": 22,
+"matched": "bgame_bg_pmove.obj"
+},
+{
+"va": 5324032,
+"size": 3907,
+"n": 3,
+"strings": []
+},
+{
+"va": 5327968,
+"size": 111,
+"matched": "bgame_bg_pmove.obj"
+},
+{
+"va": 5328080,
+"size": 51,
+"matched": "bgame_bg_pmove.obj"
+},
+{
+"va": 5328160,
+"size": 38,
+"matched": "bgame_bg_weapons_load_obj.obj"
+},
+{
+"va": 5328224,
+"size": 54,
+"matched": "bgame_bg_weapons_load_obj.obj"
+},
+{
+"va": 5328288,
+"size": 422,
+"n": 1,
+"strings": [
+"mp/playeranimtypes.txt",
+"mp/playeranimtypes.txt",
+"mp/playeranimtypes.txt",
+"BG_AnimParseAnimScript"
+]
+},
+{
+"va": 5328720,
+"size": 49,
+"matched": "bgame_bg_weapons_load_obj.obj"
+},
+{
+"va": 5329520,
+"size": 83,
+"matched": "bgame_bg_weapons_load_obj.obj"
+},
+{
+"va": 5329616,
+"size": 59,
+"n": 1,
+"strings": []
+},
+{
+"va": 5329680,
+"size": 172,
+"matched": "bgame_bg_weapons_load_obj.obj"
+},
+{
+"va": 5329856,
+"size": 62,
+"matched": "bgame_bg_weapons_load_obj.obj"
+},
+{
+"va": 5329920,
+"size": 18,
+"matched": "bgame_bg_weapons_load_obj.obj"
+},
+{
+"va": 5329952,
+"size": 163,
+"matched": "bgame_bg_weapons_load_obj.obj"
+},
+{
+"va": 5330128,
+"size": 4345,
+"n": 9,
+"strings": [
+"WEAPONFILE",
+"weapons/%s/%s",
+"^3WARNING: Could not load weapon file '%s'\n",
+"WEAPONFILE",
+"^3WARNING: \"%s\" does not appear to be a weapon file\n",
+"^3WARNING: \"%s\" Is too long of a weapon file to parse\n",
+"^3WARNING: \"%s\" is not a valid weapon file\n",
+"Enemy crosshair ranges should be less than %f ",
+"tag_flash",
+"WARNING: aborting player positioning on turret since 'tag_weapon' does not exist"
+]
+},
+{
+"va": 5334480,
+"size": 77,
+"matched": "game_g_misc_mp.obj"
+},
+{
+"va": 5334560,
+"size": 196,
+"matched": "game_g_misc_mp.obj"
+},
+{
+"va": 5334768,
+"size": 4317,
+"n": 7,
+"strings": [
+"Couldn't find weapon \"%s\"\n",
+"G_SpawnTurret: weapon '%s' isn't a turret. This usually indicates that the weapo",
+"turret '%s' not precached",
+"rightarc",
+"leftarc",
+"toparc",
+"bottomarc",
+"damage",
+"playerSpread"
+]
+},
+{
+"va": 5339168,
+"size": 89,
+"matched": "game_g_items_mp.obj"
+},
+{
+"va": 5339264,
+"size": 6213,
+"n": 10,
+"strings": [
+"%c \"%i\"",
+"WARNING: cannot swap out a debug weapon (can result from too many weapons given ",
+"%c \"GAME_CANT_GET_PRIMARY_WEAP_MESSAGE\"",
+"%c \"%i\"",
+"%c \"%i\"",
+"%c \"GAME_CANT_GET_PRIMARY_WEAP_MESSAGE\"",
+"Weapon;%d;%d;%s;%s\n",
+"Item;%d;%d;%s;%s\n",
+"weapon_%s"
+]
+},
+{
+"va": 5346656,
+"size": 265,
+"matched": "game_g_items_mp.obj"
+},
+{
+"va": 5346928,
+"size": 136,
+"n": 1,
+"strings": []
+},
+{
+"va": 5347072,
+"size": 154,
+"matched": "game_g_items_mp.obj"
+},
+{
+"va": 5347552,
+"size": 2867,
+"n": 5,
+"strings": []
+},
+{
+"va": 5350432,
+"size": 91,
+"matched": "game_g_items_mp.obj"
+},
+{
+"va": 5350528,
+"size": 848,
+"n": 1,
+"strings": []
+},
+{
+"va": 5351376,
+"size": 51,
+"matched": "game_g_team_mp.obj"
+},
+{
+"va": 5351440,
+"size": 665,
+"n": 1,
+"strings": []
+},
+{
+"va": 5352112,
+"size": 104,
+"matched": "game_g_team_mp.obj"
+},
+{
+"va": 5352224,
+"size": 2811,
+"n": 5,
+"strings": []
+},
+{
+"va": 5355040,
+"size": 72,
+"matched": "game_g_missile_mp.obj"
+},
+{
+"va": 5355136,
+"size": 3516,
+"n": 6,
+"strings": [
+"LOCDMGTABLE",
+"info/mp_lochit_dmgtable",
+"info/mp_lochit_dmgtable",
+"LOCDMGTABLE",
+"info/mp_lochit_dmgtable",
+"info/mp_lochit_dmgtable",
+"info/mp_lochit_dmgtable",
+"info/mp_lochit_dmgtable"
+]
+},
+{
+"va": 5358672,
+"size": 161,
+"matched": "game_g_combat_mp.obj"
+},
+{
+"va": 5358848,
+"size": 56,
+"matched": "game_g_combat_mp.obj"
+},
+{
+"va": 5358928,
+"size": 793,
+"n": 1,
+"strings": []
+},
+{
+"va": 5359744,
+"size": 38,
+"matched": "game_g_combat_mp.obj"
+},
+{
+"va": 5359792,
+"size": 2744,
+"n": 5,
+"strings": [
+"target:%i health:%i damage:%i\n"
+]
+},
+{
+"va": 5362592,
+"size": 93,
+"matched": "game_g_trigger_mp.obj"
+},
+{
+"va": 5362688,
+"size": 77,
+"matched": "game_g_trigger_mp.obj"
+},
+{
+"va": 5362816,
+"size": 2688,
+"n": 11,
+"strings": [
+"radius",
+"radius not specified for trigger_radius at (%g %g %g)",
+"height",
+"height not specified for trigger_radius at (%g %g %g)",
+"USAGE: spawn( \"trigger_radius\", <origin>, <spawnflags>, <radius>, <height> )",
+"world_hurt_me",
+"sound"
+]
+},
+{
+"va": 5365504,
+"size": 131,
+"matched": "game_g_mover_mp.obj"
+},
+{
+"va": 5365648,
+"size": 3539,
+"n": 5,
+"strings": []
+},
+{
+"va": 5369808,
+"size": 114,
+"matched": "game_g_hudelem_mp.obj"
+},
+{
+"va": 5369936,
+"size": 68,
+"matched": "game_g_hudelem_mp.obj"
+},
+{
+"va": 5370080,
+"size": 102,
+"matched": "game_g_hudelem_mp.obj"
+},
+{
+"va": 5370192,
+"size": 100,
+"matched": "game_g_hudelem_mp.obj"
+},
+{
+"va": 5370768,
+"size": 317,
+"n": 1,
+"strings": []
+},
+{
+"va": 5371088,
+"size": 88,
+"matched": "game_g_hudelem_mp.obj"
+},
+{
+"va": 5371184,
+"size": 3881,
+"n": 5,
+"strings": [
+"team \"%s\" should be \"allies\", \"axis\", or \"spectator\"",
+"out of hudelems",
+"not a hud element",
+"USAGE: <hudelem> %s(time_in_seconds, total_clock_time_in_seconds, shadername[, w",
+"time %g should be > 0",
+"duration %g should be > 0",
+"width %i < 0",
+"height %i < 0"
+]
+},
+{
+"va": 5376560,
+"size": 118,
+"matched": "game_g_hudelem_mp.obj"
+},
+{
+"va": 5376688,
+"size": 626,
+"matched": "game_g_hudelem_mp.obj"
+},
+{
+"va": 5377328,
+"size": 648,
+"n": 2,
+"strings": []
+},
+{
+"va": 5377984,
+"size": 63,
+"matched": "game_g_weapon_mp.obj"
+},
+{
+"va": 5378048,
+"size": 317,
+"n": 2,
+"strings": []
+},
+{
+"va": 5378368,
+"size": 133,
+"matched": "game_g_weapon_mp.obj"
+},
+{
+"va": 5378512,
+"size": 2219,
+"n": 7,
+"strings": [
+"Bullet_Fire_Extended: Too many resursions, bullet aborted\n",
+"scr_friendlyfire"
+]
+},
+{
+"va": 5380736,
+"size": 60,
+"matched": "game_g_weapon_mp.obj"
+},
+{
+"va": 5380800,
+"size": 1051,
+"n": 5,
+"strings": []
+},
+{
+"va": 5381856,
+"size": 122,
+"matched": "game_g_weapon_mp.obj"
+},
+{
+"va": 5381984,
+"size": 2714,
+"n": 7,
+"strings": [
+"%c %i",
+"%c %i"
+]
+},
+{
+"va": 5385008,
+"size": 394,
+"matched": "game_g_scr_mover_mp.obj"
+},
+{
+"va": 5385408,
+"size": 415,
+"n": 4,
+"strings": [
+"total time must be positive",
+"accel time must be nonnegative",
+"decel time must be nonnegative",
+"accel time plus decel time is greater than total time"
+]
+},
+{
+"va": 5387760,
+"size": 118,
+"matched": "game_g_scr_mover_mp.obj"
+},
+{
+"va": 5387888,
+"size": 16230,
+"n": 8,
+"strings": [
+"entity %i is not a player",
+"not an entity",
+"Cannot give %s weapon %s without having an empty weapon slot - player currently ",
+"%c \"%i\"",
+"entity %i is not a player",
+"not an entity",
+"entity %i is not a player",
+"not an entity",
+"parameter %d does not exist",
+"parameter %d does not exist",
+"parameter %d does not exist",
+"parameter %d does not exist",
+"entity %i is not a player",
+"not an entity",
+"Unknown weaponslot name %s. Valid weaponslots are \"primary\" and \"primaryb\"",
+"entity %i is not a player",
+"not an entity",
+"Unknown weaponslot name %s. Valid weaponslots are \"primary\" and \"primaryb\"",
+"Unknown weapon %s.",
+"Weapon %s goes in the %s weaponslot, not the %s weaponslot.",
+"entity %i is not a player",
+"not an entity",
+"Client Dvar Value",
+"parameter %d does not exist",
+"Dvar %s has an invalid dvar name",
+"%c %s \"%s\"",
+"entity %i is not a player",
+"not an entity",
+"priority must be 'snd_enveffectsprio_level' or 'snd_enveffectsprio_shellshock'\n",
+"%c %i \"%s\" %g %g %g",
+"USAGE: player setReverb(\"priority\", \"roomtype\", drylevel = 1.0, wetlevel = 0.5, ",
+"entity %i is not a player",
+"not an entity",
+"USAGE: player setchannelvolumes(\"priority\", \"shock name\", fadetime = 0);\nValid p",
+"priority must be 'snd_channelvolprio_holdbreath', 'snd_channelvolprio_pain', or ",
+"%c %i %i %g"
+]
+},
+{
+"va": 5405904,
+"size": 118,
+"matched": "game_g_client_script_cmd_mp.obj"
+},
+{
+"va": 5406032,
+"size": 193,
+"n": 1,
+"strings": []
+},
+{
+"va": 5406240,
+"size": 125,
+"matched": "game_player_use_mp.obj"
+},
+{
+"va": 5406368,
+"size": 106,
+"n": 1,
+"strings": []
+},
+{
+"va": 5406480,
+"size": 155,
+"matched": "game_player_use_mp.obj"
+},
+{
+"va": 5406672,
+"size": 1576,
+"n": 2,
+"strings": []
+},
+{
+"va": 5408256,
+"size": 101,
+"matched": "game_player_use_mp.obj"
+},
+{
+"va": 5408368,
+"size": 500,
+"matched": "game_player_use_mp.obj"
+},
+{
+"va": 5408880,
+"size": 930,
+"n": 2,
+"strings": []
+},
+{
+"va": 5409936,
+"size": 481,
+"matched": "game_g_load_utils.obj"
+},
+{
+"va": 5410432,
+"size": 123,
+"matched": "game_g_load_utils.obj"
+},
+{
+"va": 5410560,
+"size": 2365,
+"n": 4,
+"strings": [
+"(%i %i %i)",
+"jump_height",
+"jump_stepSize",
+"jump_slowdownEnable",
+"jump_ladderPushVel",
+"jump_spreadAdd"
+]
+},
+{
+"va": 5412944,
+"size": 77,
+"matched": "bgame_bg_jump.obj"
+},
+{
+"va": 5413056,
+"size": 22,
+"matched": "bgame_bg_jump.obj"
+},
+{
+"va": 5413088,
+"size": 140,
+"matched": "bgame_bg_jump.obj"
+},
+{
+"va": 5413296,
+"size": 82,
+"matched": "bgame_bg_jump.obj"
+},
+{
+"va": 5413392,
+"size": 536,
+"n": 4,
+"strings": []
+},
+{
+"va": 5413936,
+"size": 99,
+"matched": "bgame_bg_jump.obj"
+},
+{
+"va": 5414048,
+"size": 453,
+"n": 2,
+"strings": []
+},
+{
+"va": 5414512,
+"size": 173,
+"matched": "bgame_bg_slidemove.obj"
+},
+{
+"va": 5414688,
+"size": 3838,
+"n": 2,
+"strings": []
+},
+{
+"va": 5418528,
+"size": 440,
+"matched": "game_g_weapon_load_obj.obj"
+},
+{
+"va": 5418976,
+"size": 386,
+"n": 1,
+"strings": [
+"WEAPONACCUFILE",
+"accuracy/%s/%s",
+"^3WARNING: Could not load ai weapon accuracy file '%s'\n",
+"WEAPONACCUFILE",
+"^3WARNING: \"%s\" does not appear to be an ai weapon accuracy file\n",
+"^3WARNING: \"%s\" Is too long of an ai weapon accuracy file to parse\n"
+]
+},
+{
+"va": 5419376,
+"size": 178,
+"matched": "game_g_weapon_load_obj.obj"
+},
+{
+"va": 5419664,
+"size": 88779,
+"n": 237,
+"strings": [
+"g_allowvote",
+"cg_brass",
+"cg_marks",
+"server1",
+"server1",
+"server2",
+"server2",
+"server3",
+"server3",
+"server4",
+"server4",
+"server5",
+"server5",
+"server6",
+"server6",
+"server7",
+"server7",
+"server8",
+"server8",
+"server9",
+"server9",
+"server10",
+"server10",
+"server11",
+"server11",
+"server12",
+"server12",
+"server13",
+"server13",
+"server14",
+"server14",
+"server15",
+"server15",
+"server16",
+"server16",
+"ui_netSource",
+"ui_netSource",
+"ui_smallFont",
+"ui_bigFont",
+"ui_extraBigFont",
+"ui_currentMap",
+"ui_currentMap",
+"ui_gametype",
+"ui_gametype",
+"ui_joinGametype",
+"ui_joinGametype",
+"ui_netGametypeName",
+"ui_netGametypeName",
+"ui_dedicated",
+"ui_dedicated",
+"ui_currentNetMap",
+"ui_currentNetMap",
+"ui_browserShowFull",
+"ui_browserShowEmpty",
+"ui_browserShowPassword",
+"ui_browserShowNoPassword",
+"ui_browserShowPure",
+"ui_browserShowDedicated",
+"ui_browserMod",
+"ui_browserMod",
+"ui_browserFriendlyfire",
+"ui_browserFriendlyfire",
+"ui_browserKillcam",
+"ui_browserKillcam",
+"ui_serverStatusTimeOut",
+"ui_serverStatusTimeOut",
+"ui_playerProfileCount",
+"ui_playerProfileCount",
+"ui_playerProfileSelected",
+"ui_playerProfileSelected",
+"ui_playerProfileNameNew",
+"ui_playerProfileNameNew",
+"white",
+"ui/assets/scrollbar.tga",
+"ui/assets/scrollbar_arrow_dwn_a.tga",
+"ui/assets/scrollbar_arrow_up_a.tga",
+"ui/assets/scrollbar_arrow_left.tga",
+"ui/assets/scrollbar_arrow_right.tga",
+"ui/assets/scrollbar_thumb.tga",
+"ui/assets/slider2.tga",
+"ui/assets/sliderbutt_1",
+"$cursor",
+"$bigfont",
+"$smallfont",
+"$consolefont",
+"$boldfont",
+"$font",
+"$extrabigfont",
+"$itemfocussound",
+"^1menu file not found: %s, using default\n",
+"^1menu file too large: %s is %i, max allowed is %i",
+"ui_mp/scriptmenus/",
+"riptmenus/",
+"p/scriptmenus/",
+"menus/",
+".menu",
+"EXE_ALL",
+"EXE_ALL",
+"EXE_ALL",
+"menu/art/unknownmap",
+"menu/art/unknownmap",
+"server filter",
+"net source",
+"net source",
+"server filter",
+"EXE_KEYWAIT",
+"EXE_KEYCHANGE",
+"ui_lastServerRefresh_%i",
+"sv_maxclients",
+"EXE_GETTINGINFOFORSERVERS",
+"EXE_WAITINGFORMASTERSERVERRESPONSE",
+"ui_lastServerRefresh_%i",
+"EXE_REFRESHTIME",
+"EXE_KEYWAIT",
+"EXE_KEYCHANGE",
+"connect",
+"maps/mp/%s.csv",
+"voice_on",
+"voice_on",
+"menu/art/unknownmap",
+"menu/art/unknownmap",
+"$modlist",
+"$modlist",
+"players",
+"profile_create_too_many_popmenu",
+"profile_create_fail_popmenu",
+"profile_exists_popmenu",
+"profile_delete_fail_popmenu",
+"video",
+"ui_SetName",
+"ui_Name",
+"ui_GetName",
+"ui_Name",
+"ui_Name",
+"ui_setRate",
+"cl_maxpackets",
+"cl_packetdup",
+"cl_maxpackets",
+"cl_packetdup",
+"ui_mousePitch",
+"m_pitch",
+"m_pitch",
+"loc_language",
+"ui_language",
+"ui_language",
+"ui_languagechanged",
+"ui_languagechanged",
+"ui_languagechanged",
+"EXE_FAVORITENAMEEMPTY",
+"ui_favorite_message",
+"@EXE_FAVORITENAMEEMPTY",
+"@EXE_FAVORITENAMEEMPTY",
+"ui_favorite_message",
+"EXE_FAVORITEADDRESSEMPTY",
+"ui_favorite_message",
+"@EXE_FAVORITEADDRESSEMPTY",
+"@EXE_FAVORITEADDRESSEMPTY",
+"ui_favorite_message",
+"EXE_FAVORITEINLIST",
+"@EXE_FAVORITEINLIST",
+"ui_favorite_message",
+"EXE_FAVORITELISTFULL",
+"@EXE_FAVORITELISTFULL",
+"ui_favorite_message",
+"EXE_BADSERVERADDRESS",
+"@EXE_BADSERVERADDRESS",
+"ui_favorite_message",
+"EXE_FAVORITEADDED",
+"@EXE_FAVORITEADDED",
+"ui_favorite_message",
+"%s: invalid dvar name.\n",
+"%s: invalid test value.\n",
+"%s: invalid menu name.\n",
+"%s: cannot find dvar %s\n",
+"openMenuOnDvar",
+"closeMenuOnDvar",
+"StartServer",
+"cg_thirdPerson",
+"cg_thirdPerson",
+"dedicated",
+"dedicated",
+"g_gametype",
+"g_gametype",
+"wait ; wait ; map %s\n",
+"resetDefaults",
+"dvar_restart\n",
+"exec default_mp.cfg\n",
+"exec language.cfg\n",
+"setRecommended\n",
+"com_introPlayed",
+"com_introPlayed",
+"com_recommendedSet",
+"vid_restart\n",
+"vid_restart\n",
+"com_recommendedSet",
+"vid_restart\n",
+"getCDKey",
+"cdkey1",
+"cdkey2",
+"cdkey3",
+"cdkey4",
+"cdkey5",
+"cdkey1",
+"cdkey2",
+"cdkey3",
+"cdkey4",
+"cdkey5",
+"verifyCDKey",
+"cdkey1",
+"cdkey2",
+"cdkey3",
+"cdkey4",
+"cdkey5",
+"EXE_CDKEYVALID",
+"ui_cdkeyvalid",
+"EXE_CDKEYINVALID",
+"ui_cdkeyvalid",
+"loadArenas",
+"createserver_maps",
+"loadGameInfo",
+"LoadMods",
+"voteTypeMap",
+"callvote typemap %s %s\n",
+"voteMap",
+"callvote map %s\n",
+"voteGame",
+"callvote g_gametype %s\n",
+"saveControls",
+"loadControls",
+"clearError",
+"com_errorMessage",
+"com_isNotice",
+"com_isNotice",
+"RefreshServers",
+"RefreshFilter",
+"addPlayerProfiles",
+"sortPlayerProfiles",
+"selectActivePlayerProfile",
+"createPlayerProfile",
+"deletePlayerProfile",
+"loadPlayerProfile",
+"LoadMovies",
+"playMovie",
+"cinematic %s 2\n",
+"RunMod",
+"fs_game",
+"vid_restart;",
+"closeJoin",
+"joinserver",
+"StopRefresh",
+"ServerStatus",
+"UpdateFilter",
+"JoinServer",
+"cg_thirdPerson",
+"cg_thirdPerson",
+"connect %s\n",
+"Controls",
+"cl_paused",
+"setup_menu2",
+"Leave",
+"disconnect\n",
+"ServerSort",
+"nextSkirmish",
+"SkirmishStart",
+"closeingame",
+"cl_paused",
+"voteKick",
+"callvote kick \"%s\"\n",
+"voteTempBan",
+"callvote tempBanUser \"%s\"\n",
+"addFavorite",
+"hostname",
+"deleteFavorite",
+"createFavorite",
+"ui_favoriteName",
+"ui_favoriteAddress",
+"update",
+"startSingleplayer",
+"startSingleplayer\n",
+"getLanguage",
+"loc_language",
+"ui_language",
+"verifyLanguage",
+"updateLanguage",
+"ui_language",
+"loc_language",
+"vid_restart\n",
+"mutePlayer",
+"openMenuOnDvar",
+"openMenuOnDvarNot",
+"closeMenuOnDvar",
+"closeMenuOnDvarNot",
+"unknown UI script %s\n",
+"g_gametype",
+"createserver_maps",
+"createserver_maps",
+"mapname",
+"createserver_maps",
+"cl_motdString",
+"EXE_COD_MULTIPLAYER",
+"%s - %s",
+"clients",
+"000.000.000.000",
+"sv_maxclients",
+"pswrd",
+"pswrd",
+"gametype",
+"@EXE_YES",
+"@EXE_NO",
+"address",
+"@EXE_SV_INFO_NUM",
+"@EXE_SV_INFO_SCORE",
+"@EXE_SV_INFO_PING",
+"@EXE_SV_INFO_NAME",
+"searching %d/%d...",
+"hostname",
+"searching %d/%d...",
+"no servers found",
+"%d server%s found with player %s",
+"pswrd",
+"voice",
+"hostname",
+"mapname",
+"sv_maxclients",
+"clients",
+"%s (%s)",
+"gametype",
+"gametype",
+"gametype",
+"MP_MUTED",
+"mapname",
+"levelshots/%s",
+"maps/mp/gametypes",
+"maps/mp/gametypes/%s.txt",
+"Too many game type scripts found! Only loading the first %i\n",
+"all_mp",
+"ui_netGametype",
+"ui_netGametype",
+"ui_netGametype",
+"ui_netGametype",
+"ui_mp/menus.txt",
+"maps/mp/%s.csv",
+"server_hardware_unknown",
+"server_hardware_linux_dedicated",
+"server_hardware_win_dedicated",
+"server_hardware_mac_dedicated",
+"server_hardware_win_listen",
+"server_hardware_mac_listen",
+"m_pitch",
+"m_pitch",
+"ui_mousePitch",
+"ui_mousePitch",
+"ui_mousePitch",
+"ui_mousePitch",
+"ui_multiplayer",
+"ui_multiplayer",
+"ui_multiplayer",
+"ui_multiplayer",
+"cl_bypassMouseInput",
+"cl_paused",
+"cl_paused",
+"com_errorMessage",
+"error_popmenu",
+"needcd",
+"badcd",
+"quickmessage",
+"autoupdate",
+"player_profile",
+"EXE_GIGABYTE",
+".%02d %s",
+"EXE_MEGABYTE",
+".%02d %s",
+"EXE_KILOBYTE",
+"%d %s",
+"EXE_BYTES",
+"%d %s",
+"EXE_MINUTES",
+"EXE_HOURS",
+"%d %s %d %s",
+"EXE_SECONDS",
+"EXE_MINUTES",
+"%d %s %d %s",
+"EXE_SECONDS",
+"%d %s",
+"EXE_DOWNLOADING",
+"EXE_EST_TIME_LEFT",
+"EXE_TRANS_RATE",
+"%s (%d%%)",
+"EXE_COPIED",
+"EXE_OF",
+"(%s %s %s %s)",
+"EXE_ESTIMATING",
+"EXE_COPIED",
+"EXE_OF",
+"(%s %s %s %s)",
+"(%s %s)",
+"EXE_SECONDS",
+"%s/%s",
+"EXE_ESTIMATING",
+"EXE_COPIED",
+"EXE_OF",
+"(%s %s %s %s)"
+]
+},
+{
+"va": 5508448,
+"size": 125,
+"matched": "PC_ui_ui_utils.obj"
+},
+{
+"va": 5508672,
+"size": 48,
+"matched": "PC_ui_ui_utils.obj"
+},
+{
+"va": 5508768,
+"size": 59,
+"matched": "PC_ui_ui_utils.obj"
+},
+{
+"va": 5508880,
+"size": 237,
+"matched": "PC_ui_ui_utils.obj"
+},
+{
+"va": 5509120,
+"size": 97850,
+"n": 552,
+"strings": [
+"<NULL>",
+"Unexpected end of info file\n",
+"Missing { in info file\n",
+"Max infos exceeded\n",
+"^1file not found: %s\n",
+"^1file too large: %s is %i, max allowed is %i",
+"arena",
+"%s/%s",
+"longname",
+"loadscreen_%s",
+"gametype",
+".arena files : %s",
+"SunMonTueWedThuFriSat",
+"JanFebMarAprMayJunJulAugSepOctNovDec",
+"mscoree.dll",
+"CorExitProcess",
+"kernel32.dll",
+"FlsAlloc",
+"FlsGetValue",
+"FlsSetValue",
+"FlsFree",
+"log10",
+"log10",
+"log10",
+"exp10",
+"floor",
+"AuthenticAMD",
+"<program name unknown>",
+"Runtime Error!\n\nProgram: ",
+"Microsoft Visual C++ Runtime Library",
+"am/pm",
+"Norwegian-Nynorsk",
+"e+000",
+"KERNEL32",
+"IsProcessorFeaturePresent",
+"kernel32.dll",
+"InitializeCriticalSectionAndSpinCount",
+"Unknown security failure detected!",
+"A security error of unknown cause has been detected which has\ncorrupted the prog",
+"Buffer overrun detected!",
+"A buffer overrun has been detected which has corrupted the program's\ninternal st",
+"<program name unknown>",
+"Program: ",
+"Microsoft Visual C++ Runtime Library",
+"user32.dll",
+"MessageBoxA",
+"GetActiveWindow",
+"GetLastActivePopup",
+"GetUserObjectInformationA",
+"GetProcessWindowStation",
+"1#SNAN",
+"1#IND",
+"1#INF",
+"1#QNAN",
+"invalid string position",
+"string too long"
+]
+}
+]

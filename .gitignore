@@ -12,3 +12,7 @@ spike/t
 oc/
 core.*
 spike/t*.json
+all2/
+target/build/
+vendor/speex-1.1.9/
+vendor/*.tar.gz

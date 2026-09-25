@@ -1,0 +1,1216 @@
+[
+{
+"name": "_speex_bits_init",
+"obj": "bits.obj",
+"size": 48,
+"hits": []
+},
+{
+"name": "_speex_bits_init_buffer",
+"obj": "bits.obj",
+"size": 25,
+"hits": [
+"0x4db9a0"
+]
+},
+{
+"name": "_speex_bits_destroy",
+"obj": "bits.obj",
+"size": 17,
+"hits": [
+"0x4db9c0"
+]
+},
+{
+"name": "_speex_bits_reset",
+"obj": "bits.obj",
+"size": 19,
+"hits": [
+"0x4db9e0"
+]
+},
+{
+"name": "_speex_bits_rewind",
+"obj": "bits.obj",
+"size": 12,
+"hits": [
+"0x4dba00"
+]
+},
+{
+"name": "_speex_bits_read_from",
+"obj": "bits.obj",
+"size": 165,
+"hits": []
+},
+{
+"name": "_speex_bits_flush",
+"obj": "bits.obj",
+"size": 68,
+"hits": [
+"0x4dbaa0"
+]
+},
+{
+"name": "_speex_bits_read_whole_bytes",
+"obj": "bits.obj",
+"size": 267,
+"hits": []
+},
+{
+"name": "_speex_bits_write",
+"obj": "bits.obj",
+"size": 128,
+"hits": []
+},
+{
+"name": "_speex_bits_write_whole_bytes",
+"obj": "bits.obj",
+"size": 102,
+"hits": [
+"0x4dbc00"
+]
+},
+{
+"name": "_speex_bits_pack",
+"obj": "bits.obj",
+"size": 238,
+"hits": []
+},
+{
+"name": "_speex_bits_unpack_signed",
+"obj": "bits.obj",
+"size": 28,
+"hits": [
+"0x4dbd20"
+]
+},
+{
+"name": "_speex_bits_unpack_unsigned",
+"obj": "bits.obj",
+"size": 123,
+"hits": [
+"0x4dbd40"
+]
+},
+{
+"name": "_speex_bits_peek_unsigned",
+"obj": "bits.obj",
+"size": 90,
+"hits": [
+"0x4dbdc0"
+]
+},
+{
+"name": "_speex_bits_peek",
+"obj": "bits.obj",
+"size": 56,
+"hits": [
+"0x4dbe20"
+]
+},
+{
+"name": "_speex_bits_advance",
+"obj": "bits.obj",
+"size": 63,
+"hits": [
+"0x4dbe60"
+]
+},
+{
+"name": "_speex_bits_remaining",
+"obj": "bits.obj",
+"size": 26,
+"hits": [
+"0x4dbea0"
+]
+},
+{
+"name": "_speex_bits_nbytes",
+"obj": "bits.obj",
+"size": 10,
+"hits": [
+"0x4dbec0"
+]
+},
+{
+"name": "_speex_bits_insert_terminator",
+"obj": "bits.obj",
+"size": 57,
+"hits": []
+},
+{
+"name": "_compute_weighted_codebook",
+"obj": "cb_search.obj",
+"size": 411,
+"hits": [
+"0x4e4160"
+]
+},
+{
+"name": "_split_cb_search_shape_sign_N1",
+"obj": "cb_search.obj",
+"size": 1783,
+"hits": []
+},
+{
+"name": "_split_cb_search_shape_sign",
+"obj": "cb_search.obj",
+"size": 4186,
+"hits": []
+},
+{
+"name": "_split_cb_shape_sign_unquant",
+"obj": "cb_search.obj",
+"size": 548,
+"hits": [
+"0x4e5a50"
+]
+},
+{
+"name": "_noise_codebook_quant",
+"obj": "cb_search.obj",
+"size": 259,
+"hits": []
+},
+{
+"name": "_noise_codebook_unquant",
+"obj": "cb_search.obj",
+"size": 26,
+"hits": [
+"0x4e5d50"
+]
+},
+{
+"name": "_bw_lpc",
+"obj": "filters.obj",
+"size": 153,
+"hits": [
+"0x4e8cb0"
+]
+},
+{
+"name": "_signal_mul",
+"obj": "filters.obj",
+"size": 136,
+"hits": [
+"0x4e8d50"
+]
+},
+{
+"name": "_signal_div",
+"obj": "filters.obj",
+"size": 152,
+"hits": [
+"0x4e8de0"
+]
+},
+{
+"name": "_compute_rms",
+"obj": "filters.obj",
+"size": 126,
+"hits": [
+"0x4e8e80"
+]
+},
+{
+"name": "_filter_mem2",
+"obj": "filters.obj",
+"size": 330,
+"hits": [
+"0x4e8f00"
+]
+},
+{
+"name": "_iir_mem2",
+"obj": "filters.obj",
+"size": 241,
+"hits": [
+"0x4e9050"
+]
+},
+{
+"name": "_fir_mem2",
+"obj": "filters.obj",
+"size": 230,
+"hits": [
+"0x4e9150"
+]
+},
+{
+"name": "_syn_percep_zero",
+"obj": "filters.obj",
+"size": 96,
+"hits": [
+"0x4e9240"
+]
+},
+{
+"name": "_residue_percep_zero",
+"obj": "filters.obj",
+"size": 100,
+"hits": [
+"0x4e92a0"
+]
+},
+{
+"name": "_compute_impulse_response",
+"obj": "filters.obj",
+"size": 732,
+"hits": [
+"0x4e9310"
+]
+},
+{
+"name": "_qmf_decomp",
+"obj": "filters.obj",
+"size": 669,
+"hits": [
+"0x4e95f0"
+]
+},
+{
+"name": "_fir_mem_up",
+"obj": "filters.obj",
+"size": 574,
+"hits": [
+"0x4e9890"
+]
+},
+{
+"name": "_comb_filter_mem_init",
+"obj": "filters.obj",
+"size": 21,
+"hits": [
+"0x4e9ad0"
+]
+},
+{
+"name": "_comb_filter",
+"obj": "filters.obj",
+"size": 1133,
+"hits": [
+"0x4e9af0"
+]
+},
+{
+"name": "_speex_jitter_init",
+"obj": "jitter.obj",
+"size": 158,
+"hits": []
+},
+{
+"name": "_speex_jitter_put",
+"obj": "jitter.obj",
+"size": 591,
+"hits": []
+},
+{
+"name": "_speex_jitter_get",
+"obj": "jitter.obj",
+"size": 1317,
+"hits": []
+},
+{
+"name": "__spx_lpc",
+"obj": "lpc.obj",
+"size": 461,
+"hits": [
+"0x4e9f60"
+]
+},
+{
+"name": "__spx_autocorr",
+"obj": "lpc.obj",
+"size": 195,
+"hits": [
+"0x4ea130"
+]
+},
+{
+"name": "_spx_cos",
+"obj": "lsp.obj",
+"size": 103,
+"hits": [
+"0x4e7f70"
+]
+},
+{
+"name": "_cheb_poly_eva",
+"obj": "lsp.obj",
+"size": 273,
+"hits": [
+"0x4e7fe0"
+]
+},
+{
+"name": "_lpc_to_lsp",
+"obj": "lsp.obj",
+"size": 978,
+"hits": [
+"0x4e8100"
+]
+},
+{
+"name": "_lsp_to_lpc",
+"obj": "lsp.obj",
+"size": 1303,
+"hits": [
+"0x4e84e0"
+]
+},
+{
+"name": "_lsp_enforce_margin",
+"obj": "lsp.obj",
+"size": 426,
+"hits": [
+"0x4e8a00"
+]
+},
+{
+"name": "_lsp_interpolate",
+"obj": "lsp.obj",
+"size": 247,
+"hits": [
+"0x4e8bb0"
+]
+},
+{
+"name": "_inner_prod",
+"obj": "ltp.obj",
+"size": 72,
+"hits": [
+"0x4e6480"
+]
+},
+{
+"name": "_pitch_xcorr",
+"obj": "ltp.obj",
+"size": 49,
+"hits": [
+"0x4e64d0"
+]
+},
+{
+"name": "_open_loop_nbest_pitch",
+"obj": "ltp.obj",
+"size": 1539,
+"hits": []
+},
+{
+"name": "_pitch_gain_search_3tap",
+"obj": "ltp.obj",
+"size": 2856,
+"hits": []
+},
+{
+"name": "_pitch_search_3tap",
+"obj": "ltp.obj",
+"size": 985,
+"hits": []
+},
+{
+"name": "_pitch_unquant_3tap",
+"obj": "ltp.obj",
+"size": 1143,
+"hits": [
+"0x4e7990"
+]
+},
+{
+"name": "_forced_pitch_quant",
+"obj": "ltp.obj",
+"size": 155,
+"hits": [
+"0x4e7e10"
+]
+},
+{
+"name": "_forced_pitch_unquant",
+"obj": "ltp.obj",
+"size": 185,
+"hits": [
+"0x4e7eb0"
+]
+},
+{
+"name": "_print_vec",
+"obj": "misc.obj",
+"size": 63,
+"hits": [
+"0x4dbf50"
+]
+},
+{
+"name": "_be_int",
+"obj": "misc.obj",
+"size": 35,
+"hits": [
+"0x4dbf90"
+]
+},
+{
+"name": "_speex_memcpy_bytes",
+"obj": "misc.obj",
+"size": 23,
+"hits": [
+"0x4dbfd0"
+]
+},
+{
+"name": "_speex_memset_bytes",
+"obj": "misc.obj",
+"size": 36,
+"hits": [
+"0x4dbff0"
+]
+},
+{
+"name": "_speex_alloc",
+"obj": "misc.obj",
+"size": 12,
+"hits": []
+},
+{
+"name": "_speex_realloc",
+"obj": "misc.obj",
+"size": 11,
+"hits": []
+},
+{
+"name": "_speex_free",
+"obj": "misc.obj",
+"size": 8,
+"hits": []
+},
+{
+"name": "_speex_move",
+"obj": "misc.obj",
+"size": 12,
+"hits": []
+},
+{
+"name": "_speex_error",
+"obj": "misc.obj",
+"size": 26,
+"hits": []
+},
+{
+"name": "_speex_warning",
+"obj": "misc.obj",
+"size": 20,
+"hits": []
+},
+{
+"name": "_speex_warning_int",
+"obj": "misc.obj",
+"size": 21,
+"hits": []
+},
+{
+"name": "_speex_rand_vec",
+"obj": "misc.obj",
+"size": 59,
+"hits": [
+"0x4dc0e0"
+]
+},
+{
+"name": "_speex_rand",
+"obj": "misc.obj",
+"size": 38,
+"hits": [
+"0x4dc120"
+]
+},
+{
+"name": "__speex_putc",
+"obj": "misc.obj",
+"size": 16,
+"hits": []
+},
+{
+"name": "_speex_mode_query",
+"obj": "modes.obj",
+"size": 12,
+"hits": [
+"0x4dbf20"
+]
+},
+{
+"name": "_speex_lib_get_mode",
+"obj": "modes.obj",
+"size": 20,
+"hits": [
+"0x4dbf30"
+]
+},
+{
+"name": "_nb_encoder_init",
+"obj": "nb_celp.obj",
+"size": 1190,
+"hits": []
+},
+{
+"name": "_nb_encoder_destroy",
+"obj": "nb_celp.obj",
+"size": 286,
+"hits": [
+"0x4e1080"
+]
+},
+{
+"name": "_nb_encode",
+"obj": "nb_celp.obj",
+"size": 4643,
+"hits": []
+},
+{
+"name": "_nb_decoder_init",
+"obj": "nb_celp.obj",
+"size": 499,
+"hits": []
+},
+{
+"name": "_nb_decoder_destroy",
+"obj": "nb_celp.obj",
+"size": 109,
+"hits": [
+"0x4e2740"
+]
+},
+{
+"name": "_nb_decode_lost",
+"obj": "nb_celp.obj",
+"size": 925,
+"hits": [
+"0x4e27b0"
+]
+},
+{
+"name": "_nb_decode",
+"obj": "nb_celp.obj",
+"size": 3239,
+"hits": [
+"0x4e2b50"
+]
+},
+{
+"name": "_nb_encoder_ctl",
+"obj": "nb_celp.obj",
+"size": 1564,
+"hits": [
+"0x4e3800"
+]
+},
+{
+"name": "_nb_decoder_ctl",
+"obj": "nb_celp.obj",
+"size": 824,
+"hits": [
+"0x4e3e20"
+]
+},
+{
+"name": "_conj_window",
+"obj": "preprocess.obj",
+"size": 189,
+"hits": []
+},
+{
+"name": "_hypergeom_gain",
+"obj": "preprocess.obj",
+"size": 118,
+"hits": []
+},
+{
+"name": "_speex_preprocess_state_init",
+"obj": "preprocess.obj",
+"size": 1479,
+"hits": []
+},
+{
+"name": "_speex_preprocess_state_destroy",
+"obj": "preprocess.obj",
+"size": 291,
+"hits": []
+},
+{
+"name": "_update_noise",
+"obj": "preprocess.obj",
+"size": 210,
+"hits": []
+},
+{
+"name": "_speex_compute_vad",
+"obj": "preprocess.obj",
+"size": 3126,
+"hits": []
+},
+{
+"name": "_speex_compute_agc",
+"obj": "preprocess.obj",
+"size": 1099,
+"hits": []
+},
+{
+"name": "_preprocess_analysis",
+"obj": "preprocess.obj",
+"size": 783,
+"hits": []
+},
+{
+"name": "_update_noise_prob",
+"obj": "preprocess.obj",
+"size": 1645,
+"hits": []
+},
+{
+"name": "_speex_preprocess",
+"obj": "preprocess.obj",
+"size": 5146,
+"hits": []
+},
+{
+"name": "_speex_preprocess_estimate_update",
+"obj": "preprocess.obj",
+"size": 1307,
+"hits": []
+},
+{
+"name": "_speex_preprocess_ctl",
+"obj": "preprocess.obj",
+"size": 292,
+"hits": []
+},
+{
+"name": "_compute_quant_weights",
+"obj": "quant_lsp.obj",
+"size": 466,
+"hits": [
+"0x4dc160"
+]
+},
+{
+"name": "_lsp_quant",
+"obj": "quant_lsp.obj",
+"size": 449,
+"hits": [
+"0x4dc340"
+]
+},
+{
+"name": "_lsp_weight_quant",
+"obj": "quant_lsp.obj",
+"size": 511,
+"hits": [
+"0x4dc510"
+]
+},
+{
+"name": "_lsp_quant_nb",
+"obj": "quant_lsp.obj",
+"size": 983,
+"hits": []
+},
+{
+"name": "_lsp_unquant_nb",
+"obj": "quant_lsp.obj",
+"size": 935,
+"hits": [
+"0x4dcb00"
+]
+},
+{
+"name": "_lsp_quant_lbr",
+"obj": "quant_lsp.obj",
+"size": 839,
+"hits": []
+},
+{
+"name": "_lsp_unquant_lbr",
+"obj": "quant_lsp.obj",
+"size": 637,
+"hits": [
+"0x4dd210"
+]
+},
+{
+"name": "_lsp_quant_high",
+"obj": "quant_lsp.obj",
+"size": 807,
+"hits": []
+},
+{
+"name": "_lsp_unquant_high",
+"obj": "quant_lsp.obj",
+"size": 468,
+"hits": [
+"0x4dd7d0"
+]
+},
+{
+"name": "_mix_and_saturate",
+"obj": "sb_celp.obj",
+"size": 83,
+"hits": [
+"0x4dd9b0"
+]
+},
+{
+"name": "_sb_encoder_init",
+"obj": "sb_celp.obj",
+"size": 1159,
+"hits": []
+},
+{
+"name": "_sb_encoder_destroy",
+"obj": "sb_celp.obj",
+"size": 25,
+"hits": [
+"0x4de1b0"
+]
+},
+{
+"name": "_sb_encode",
+"obj": "sb_celp.obj",
+"size": 3729,
+"hits": []
+},
+{
+"name": "_sb_decoder_init",
+"obj": "sb_celp.obj",
+"size": 384,
+"hits": []
+},
+{
+"name": "_sb_decoder_destroy",
+"obj": "sb_celp.obj",
+"size": 25,
+"hits": [
+"0x4df350"
+]
+},
+{
+"name": "_sb_decode_lost",
+"obj": "sb_celp.obj",
+"size": 574,
+"hits": [
+"0x4df370"
+]
+},
+{
+"name": "_sb_decode",
+"obj": "sb_celp.obj",
+"size": 1957,
+"hits": [
+"0x4df5b0"
+]
+},
+{
+"name": "_sb_encoder_ctl",
+"obj": "sb_celp.obj",
+"size": 2016,
+"hits": [
+"0x4dfd60"
+]
+},
+{
+"name": "_sb_decoder_ctl",
+"obj": "sb_celp.obj",
+"size": 1036,
+"hits": [
+"0x4e0540"
+]
+},
+{
+"name": "_drfti1",
+"obj": "smallft.obj",
+"size": 422,
+"hits": []
+},
+{
+"name": "_fdrffti",
+"obj": "smallft.obj",
+"size": 20,
+"hits": []
+},
+{
+"name": "_dradf2",
+"obj": "smallft.obj",
+"size": 834,
+"hits": []
+},
+{
+"name": "_dradf4",
+"obj": "smallft.obj",
+"size": 2214,
+"hits": []
+},
+{
+"name": "_dradfg",
+"obj": "smallft.obj",
+"size": 6098,
+"hits": []
+},
+{
+"name": "_drftf1",
+"obj": "smallft.obj",
+"size": 484,
+"hits": []
+},
+{
+"name": "_dradb2",
+"obj": "smallft.obj",
+"size": 915,
+"hits": []
+},
+{
+"name": "_dradb3",
+"obj": "smallft.obj",
+"size": 1188,
+"hits": []
+},
+{
+"name": "_dradb4",
+"obj": "smallft.obj",
+"size": 2416,
+"hits": []
+},
+{
+"name": "_dradbg",
+"obj": "smallft.obj",
+"size": 6069,
+"hits": []
+},
+{
+"name": "_drftb1",
+"obj": "smallft.obj",
+"size": 547,
+"hits": []
+},
+{
+"name": "_spx_drft_forward",
+"obj": "smallft.obj",
+"size": 29,
+"hits": []
+},
+{
+"name": "_spx_drft_backward",
+"obj": "smallft.obj",
+"size": 32,
+"hits": []
+},
+{
+"name": "_spx_drft_init",
+"obj": "smallft.obj",
+"size": 60,
+"hits": []
+},
+{
+"name": "_spx_drft_clear",
+"obj": "smallft.obj",
+"size": 41,
+"hits": []
+},
+{
+"name": "_speex_encoder_init",
+"obj": "speex.obj",
+"size": 8,
+"hits": [
+"0x4db640"
+]
+},
+{
+"name": "_speex_decoder_init",
+"obj": "speex.obj",
+"size": 8,
+"hits": [
+"0x4db650"
+]
+},
+{
+"name": "_speex_encoder_destroy",
+"obj": "speex.obj",
+"size": 8,
+"hits": [
+"0x4db660"
+]
+},
+{
+"name": "_speex_decoder_destroy",
+"obj": "speex.obj",
+"size": 8,
+"hits": [
+"0x4db670"
+]
+},
+{
+"name": "_speex_encode_native",
+"obj": "speex.obj",
+"size": 16,
+"hits": [
+"0x4db680",
+"0x4db6a0"
+]
+},
+{
+"name": "_speex_decode_native",
+"obj": "speex.obj",
+"size": 16,
+"hits": [
+"0x4db690",
+"0x4db700"
+]
+},
+{
+"name": "_speex_encode",
+"obj": "speex.obj",
+"size": 16,
+"hits": [
+"0x4db680",
+"0x4db6a0"
+]
+},
+{
+"name": "_speex_encode_int",
+"obj": "speex.obj",
+"size": 77,
+"hits": [
+"0x4db6b0"
+]
+},
+{
+"name": "_speex_decode",
+"obj": "speex.obj",
+"size": 16,
+"hits": [
+"0x4db690",
+"0x4db700"
+]
+},
+{
+"name": "_speex_decode_int",
+"obj": "speex.obj",
+"size": 164,
+"hits": [
+"0x4db710"
+]
+},
+{
+"name": "_speex_encoder_ctl",
+"obj": "speex.obj",
+"size": 16,
+"hits": [
+"0x4db7c0"
+]
+},
+{
+"name": "_speex_decoder_ctl",
+"obj": "speex.obj",
+"size": 16,
+"hits": [
+"0x4db7d0"
+]
+},
+{
+"name": "_nb_mode_query",
+"obj": "speex.obj",
+"size": 101,
+"hits": [
+"0x4db7e0"
+]
+},
+{
+"name": "_wb_mode_query",
+"obj": "speex.obj",
+"size": 104,
+"hits": [
+"0x4db850"
+]
+},
+{
+"name": "_speex_lib_ctl",
+"obj": "speex.obj",
+"size": 116,
+"hits": [
+"0x4db8c0"
+]
+},
+{
+"name": "_speex_inband_handler",
+"obj": "speex_callbacks.obj",
+"size": 174,
+"hits": [
+"0x4ea870"
+]
+},
+{
+"name": "_speex_std_mode_request_handler",
+"obj": "speex_callbacks.obj",
+"size": 33,
+"hits": [
+"0x4ea920"
+]
+},
+{
+"name": "_speex_std_low_mode_request_handler",
+"obj": "speex_callbacks.obj",
+"size": 33,
+"hits": [
+"0x4ea950"
+]
+},
+{
+"name": "_speex_std_high_mode_request_handler",
+"obj": "speex_callbacks.obj",
+"size": 33,
+"hits": [
+"0x4ea980"
+]
+},
+{
+"name": "_speex_std_vbr_request_handler",
+"obj": "speex_callbacks.obj",
+"size": 33,
+"hits": [
+"0x4ea9b0"
+]
+},
+{
+"name": "_speex_std_enh_request_handler",
+"obj": "speex_callbacks.obj",
+"size": 33,
+"hits": [
+"0x4ea9e0"
+]
+},
+{
+"name": "_speex_std_vbr_quality_request_handler",
+"obj": "speex_callbacks.obj",
+"size": 33,
+"hits": [
+"0x4eaa10"
+]
+},
+{
+"name": "_speex_std_char_handler",
+"obj": "speex_callbacks.obj",
+"size": 35,
+"hits": [
+"0x4eaa40"
+]
+},
+{
+"name": "_speex_default_user_handler",
+"obj": "speex_callbacks.obj",
+"size": 86,
+"hits": [
+"0x4eaa70"
+]
+},
+{
+"name": "_speex_init_header",
+"obj": "speex_header.obj",
+"size": 210,
+"hits": []
+},
+{
+"name": "_speex_header_to_packet",
+"obj": "speex_header.obj",
+"size": 42,
+"hits": []
+},
+{
+"name": "_speex_packet_to_header",
+"obj": "speex_header.obj",
+"size": 118,
+"hits": []
+},
+{
+"name": "_speex_encode_stereo",
+"obj": "stereo.obj",
+"size": 643,
+"hits": []
+},
+{
+"name": "_speex_encode_stereo_int",
+"obj": "stereo.obj",
+"size": 399,
+"hits": []
+},
+{
+"name": "_speex_decode_stereo",
+"obj": "stereo.obj",
+"size": 511,
+"hits": []
+},
+{
+"name": "_speex_decode_stereo_int",
+"obj": "stereo.obj",
+"size": 334,
+"hits": []
+},
+{
+"name": "_speex_std_stereo_request_handler",
+"obj": "stereo.obj",
+"size": 105,
+"hits": []
+},
+{
+"name": "_vbr_init",
+"obj": "vbr.obj",
+"size": 115,
+"hits": [
+"0x4e5d70"
+]
+},
+{
+"name": "_vbr_analysis",
+"obj": "vbr.obj",
+"size": 1660,
+"hits": [
+"0x4e5df0"
+]
+},
+{
+"name": "_scal_quant",
+"obj": "vq.obj",
+"size": 132,
+"hits": [
+"0x4ea200",
+"0x4ea290"
+]
+},
+{
+"name": "_scal_quant32",
+"obj": "vq.obj",
+"size": 132,
+"hits": [
+"0x4ea200",
+"0x4ea290"
+]
+},
+{
+"name": "_vq_index",
+"obj": "vq.obj",
+"size": 216,
+"hits": [
+"0x4ea320"
+]
+},
+{
+"name": "_vq_nbest",
+"obj": "vq.obj",
+"size": 529,
+"hits": [
+"0x4ea400"
+]
+},
+{
+"name": "_vq_nbest_sign",
+"obj": "vq.obj",
+"size": 4496,
+"hits": []
+}
+]

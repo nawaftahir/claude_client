@@ -1,0 +1,572 @@
+{
+"_speex_bits_read_from": {
+"addr": "0x4db9f9",
+"votes": 23,
+"size": 165,
+"obj": "bits.obj"
+},
+"_speex_bits_flush": {
+"addr": "0x4dbaa0",
+"votes": 28,
+"size": 68,
+"obj": "bits.obj"
+},
+"_speex_bits_write_whole_bytes": {
+"addr": "0x4dbc00",
+"votes": 45,
+"size": 102,
+"obj": "bits.obj"
+},
+"_speex_bits_pack": {
+"addr": "0x4dbc4f",
+"votes": 9,
+"size": 238,
+"obj": "bits.obj"
+},
+"_speex_bits_unpack_unsigned": {
+"addr": "0x4dbd40",
+"votes": 56,
+"size": 123,
+"obj": "bits.obj"
+},
+"_speex_bits_peek_unsigned": {
+"addr": "0x4dbdc0",
+"votes": 39,
+"size": 90,
+"obj": "bits.obj"
+},
+"_speex_bits_peek": {
+"addr": "0x4dbe20",
+"votes": 22,
+"size": 56,
+"obj": "bits.obj"
+},
+"_speex_bits_advance": {
+"addr": "0x4dbe60",
+"votes": 26,
+"size": 63,
+"obj": "bits.obj"
+},
+"_compute_weighted_codebook": {
+"addr": "0x4e4160",
+"votes": 186,
+"size": 411,
+"obj": "cb_search.obj"
+},
+"_split_cb_search_shape_sign_N1": {
+"addr": "0x4e4300",
+"votes": 377,
+"size": 1783,
+"obj": "cb_search.obj"
+},
+"_split_cb_search_shape_sign": {
+"addr": "0x4e49f0",
+"votes": 1859,
+"size": 4186,
+"obj": "cb_search.obj"
+},
+"_split_cb_shape_sign_unquant": {
+"addr": "0x4e5a50",
+"votes": 203,
+"size": 548,
+"obj": "cb_search.obj"
+},
+"_noise_codebook_quant": {
+"addr": "0x4e47f1",
+"votes": 15,
+"size": 259,
+"obj": "cb_search.obj"
+},
+"_bw_lpc": {
+"addr": "0x4e8cb0",
+"votes": 71,
+"size": 153,
+"obj": "filters.obj"
+},
+"_signal_mul": {
+"addr": "0x4e8d50",
+"votes": 62,
+"size": 136,
+"obj": "filters.obj"
+},
+"_signal_div": {
+"addr": "0x4e8de0",
+"votes": 67,
+"size": 152,
+"obj": "filters.obj"
+},
+"_compute_rms": {
+"addr": "0x4e8e80",
+"votes": 51,
+"size": 126,
+"obj": "filters.obj"
+},
+"_filter_mem2": {
+"addr": "0x4e8f00",
+"votes": 159,
+"size": 330,
+"obj": "filters.obj"
+},
+"_iir_mem2": {
+"addr": "0x4e9050",
+"votes": 115,
+"size": 241,
+"obj": "filters.obj"
+},
+"_fir_mem2": {
+"addr": "0x4e9150",
+"votes": 109,
+"size": 230,
+"obj": "filters.obj"
+},
+"_syn_percep_zero": {
+"addr": "0x4e9240",
+"votes": 30,
+"size": 96,
+"obj": "filters.obj"
+},
+"_residue_percep_zero": {
+"addr": "0x4e92a0",
+"votes": 31,
+"size": 100,
+"obj": "filters.obj"
+},
+"_compute_impulse_response": {
+"addr": "0x4e9310",
+"votes": 360,
+"size": 732,
+"obj": "filters.obj"
+},
+"_qmf_decomp": {
+"addr": "0x4e95f0",
+"votes": 329,
+"size": 669,
+"obj": "filters.obj"
+},
+"_fir_mem_up": {
+"addr": "0x4e9890",
+"votes": 271,
+"size": 574,
+"obj": "filters.obj"
+},
+"_comb_filter": {
+"addr": "0x4e9af0",
+"votes": 333,
+"size": 1133,
+"obj": "filters.obj"
+},
+"_speex_jitter_put": {
+"addr": "0x4a4b8b",
+"votes": 3,
+"size": 591,
+"obj": "jitter.obj"
+},
+"__spx_lpc": {
+"addr": "0x4e9f60",
+"votes": 195,
+"size": 461,
+"obj": "lpc.obj"
+},
+"__spx_autocorr": {
+"addr": "0x4ea130",
+"votes": 80,
+"size": 195,
+"obj": "lpc.obj"
+},
+"_spx_cos": {
+"addr": "0x4e7f70",
+"votes": 3,
+"size": 103,
+"obj": "lsp.obj"
+},
+"_cheb_poly_eva": {
+"addr": "0x4e7fe0",
+"votes": 131,
+"size": 273,
+"obj": "lsp.obj"
+},
+"_lpc_to_lsp": {
+"addr": "0x4e8100",
+"votes": 392,
+"size": 978,
+"obj": "lsp.obj"
+},
+"_lsp_to_lpc": {
+"addr": "0x4e84e0",
+"votes": 356,
+"size": 1303,
+"obj": "lsp.obj"
+},
+"_lsp_enforce_margin": {
+"addr": "0x4e8a00",
+"votes": 162,
+"size": 426,
+"obj": "lsp.obj"
+},
+"_lsp_interpolate": {
+"addr": "0x4e8bb0",
+"votes": 95,
+"size": 247,
+"obj": "lsp.obj"
+},
+"_inner_prod": {
+"addr": "0x4e6480",
+"votes": 27,
+"size": 72,
+"obj": "ltp.obj"
+},
+"_pitch_xcorr": {
+"addr": "0x4e64d0",
+"votes": 11,
+"size": 49,
+"obj": "ltp.obj"
+},
+"_open_loop_nbest_pitch": {
+"addr": "0x4e6510",
+"votes": 68,
+"size": 1539,
+"obj": "ltp.obj"
+},
+"_pitch_gain_search_3tap": {
+"addr": "0x4e6ae0",
+"votes": 395,
+"size": 2856,
+"obj": "ltp.obj"
+},
+"_pitch_search_3tap": {
+"addr": "0x4e75b0",
+"votes": 222,
+"size": 985,
+"obj": "ltp.obj"
+},
+"_pitch_unquant_3tap": {
+"addr": "0x4e7990",
+"votes": 432,
+"size": 1143,
+"obj": "ltp.obj"
+},
+"_forced_pitch_quant": {
+"addr": "0x4e7e10",
+"votes": 57,
+"size": 155,
+"obj": "ltp.obj"
+},
+"_forced_pitch_unquant": {
+"addr": "0x4e7eb0",
+"votes": 72,
+"size": 185,
+"obj": "ltp.obj"
+},
+"_print_vec": {
+"addr": "0x4dbf50",
+"votes": 4,
+"size": 63,
+"obj": "misc.obj"
+},
+"_be_int": {
+"addr": "0x4dbf90",
+"votes": 12,
+"size": 35,
+"obj": "misc.obj"
+},
+"_speex_memset_bytes": {
+"addr": "0x4dbff0",
+"votes": 12,
+"size": 36,
+"obj": "misc.obj"
+},
+"_nb_encoder_init": {
+"addr": "0x4e0bc6",
+"votes": 10,
+"size": 1190,
+"obj": "nb_celp.obj"
+},
+"_nb_encode": {
+"addr": "0x4e11a0",
+"votes": 680,
+"size": 4643,
+"obj": "nb_celp.obj"
+},
+"_nb_decoder_init": {
+"addr": "0x4e252f",
+"votes": 37,
+"size": 499,
+"obj": "nb_celp.obj"
+},
+"_nb_decode_lost": {
+"addr": "0x4e27b0",
+"votes": 297,
+"size": 925,
+"obj": "nb_celp.obj"
+},
+"_nb_decode": {
+"addr": "0x4e2b50",
+"votes": 1030,
+"size": 3239,
+"obj": "nb_celp.obj"
+},
+"_nb_encoder_ctl": {
+"addr": "0x4e3800",
+"votes": 610,
+"size": 1564,
+"obj": "nb_celp.obj"
+},
+"_nb_decoder_ctl": {
+"addr": "0x4e3e20",
+"votes": 311,
+"size": 824,
+"obj": "nb_celp.obj"
+},
+"_speex_compute_vad": {
+"addr": "0x4855ed",
+"votes": 5,
+"size": 3126,
+"obj": "preprocess.obj"
+},
+"_speex_preprocess": {
+"addr": "0x4dfc21",
+"votes": 3,
+"size": 5146,
+"obj": "preprocess.obj"
+},
+"_compute_quant_weights": {
+"addr": "0x4dc160",
+"votes": 112,
+"size": 466,
+"obj": "quant_lsp.obj"
+},
+"_lsp_quant": {
+"addr": "0x4dc340",
+"votes": 212,
+"size": 449,
+"obj": "quant_lsp.obj"
+},
+"_lsp_weight_quant": {
+"addr": "0x4dc510",
+"votes": 242,
+"size": 511,
+"obj": "quant_lsp.obj"
+},
+"_lsp_quant_nb": {
+"addr": "0x4dc710",
+"votes": 107,
+"size": 983,
+"obj": "quant_lsp.obj"
+},
+"_lsp_unquant_nb": {
+"addr": "0x4dcb00",
+"votes": 14,
+"size": 935,
+"obj": "quant_lsp.obj"
+},
+"_lsp_quant_lbr": {
+"addr": "0x4dceb0",
+"votes": 107,
+"size": 839,
+"obj": "quant_lsp.obj"
+},
+"_lsp_unquant_lbr": {
+"addr": "0x4dcb00",
+"votes": 13,
+"size": 637,
+"obj": "quant_lsp.obj"
+},
+"_lsp_quant_high": {
+"addr": "0x4dd490",
+"votes": 107,
+"size": 807,
+"obj": "quant_lsp.obj"
+},
+"_lsp_unquant_high": {
+"addr": "0x4dd7d0",
+"votes": 100,
+"size": 468,
+"obj": "quant_lsp.obj"
+},
+"_mix_and_saturate": {
+"addr": "0x4dd9b0",
+"votes": 21,
+"size": 83,
+"obj": "sb_celp.obj"
+},
+"_sb_encoder_init": {
+"addr": "0x4dda17",
+"votes": 39,
+"size": 1159,
+"obj": "sb_celp.obj"
+},
+"_sb_encode": {
+"addr": "0x4de1d0",
+"votes": 680,
+"size": 3729,
+"obj": "sb_celp.obj"
+},
+"_sb_decoder_init": {
+"addr": "0x4df070",
+"votes": 37,
+"size": 384,
+"obj": "sb_celp.obj"
+},
+"_sb_decode_lost": {
+"addr": "0x4df370",
+"votes": 187,
+"size": 574,
+"obj": "sb_celp.obj"
+},
+"_sb_decode": {
+"addr": "0x4df5b0",
+"votes": 684,
+"size": 1957,
+"obj": "sb_celp.obj"
+},
+"_sb_encoder_ctl": {
+"addr": "0x4dfd60",
+"votes": 811,
+"size": 2016,
+"obj": "sb_celp.obj"
+},
+"_sb_decoder_ctl": {
+"addr": "0x4e0540",
+"votes": 394,
+"size": 1036,
+"obj": "sb_celp.obj"
+},
+"_speex_encode_int": {
+"addr": "0x4db6b0",
+"votes": 33,
+"size": 77,
+"obj": "speex.obj"
+},
+"_speex_decode_int": {
+"addr": "0x4db710",
+"votes": 45,
+"size": 164,
+"obj": "speex.obj"
+},
+"_nb_mode_query": {
+"addr": "0x4db7e0",
+"votes": 30,
+"size": 101,
+"obj": "speex.obj"
+},
+"_wb_mode_query": {
+"addr": "0x4db850",
+"votes": 31,
+"size": 104,
+"obj": "speex.obj"
+},
+"_speex_lib_ctl": {
+"addr": "0x4db8c0",
+"votes": 4,
+"size": 116,
+"obj": "speex.obj"
+},
+"_speex_inband_handler": {
+"addr": "0x4ea870",
+"votes": 75,
+"size": 174,
+"obj": "speex_callbacks.obj"
+},
+"_speex_std_mode_request_handler": {
+"addr": "0x4ea920",
+"votes": 5,
+"size": 33,
+"obj": "speex_callbacks.obj"
+},
+"_speex_std_low_mode_request_handler": {
+"addr": "0x4ea950",
+"votes": 5,
+"size": 33,
+"obj": "speex_callbacks.obj"
+},
+"_speex_std_high_mode_request_handler": {
+"addr": "0x4ea980",
+"votes": 5,
+"size": 33,
+"obj": "speex_callbacks.obj"
+},
+"_speex_std_vbr_request_handler": {
+"addr": "0x4ea9b0",
+"votes": 5,
+"size": 33,
+"obj": "speex_callbacks.obj"
+},
+"_speex_std_enh_request_handler": {
+"addr": "0x4ea9e0",
+"votes": 5,
+"size": 33,
+"obj": "speex_callbacks.obj"
+},
+"_speex_std_vbr_quality_request_handler": {
+"addr": "0x4eaa10",
+"votes": 5,
+"size": 33,
+"obj": "speex_callbacks.obj"
+},
+"_speex_default_user_handler": {
+"addr": "0x4eaa70",
+"votes": 29,
+"size": 86,
+"obj": "speex_callbacks.obj"
+},
+"_speex_encode_stereo": {
+"addr": "0x4e5d3e",
+"votes": 3,
+"size": 643,
+"obj": "stereo.obj"
+},
+"_speex_decode_stereo": {
+"addr": "0x4e5dfd",
+"votes": 12,
+"size": 511,
+"obj": "stereo.obj"
+},
+"_speex_decode_stereo_int": {
+"addr": "0x4e5dde",
+"votes": 11,
+"size": 334,
+"obj": "stereo.obj"
+},
+"_vbr_init": {
+"addr": "0x4e5d70",
+"votes": 21,
+"size": 115,
+"obj": "vbr.obj"
+},
+"_vbr_analysis": {
+"addr": "0x4e5df0",
+"votes": 284,
+"size": 1660,
+"obj": "vbr.obj"
+},
+"_scal_quant": {
+"addr": "0x4ea200",
+"votes": 60,
+"size": 132,
+"obj": "vq.obj"
+},
+"_scal_quant32": {
+"addr": "0x4ea200",
+"votes": 60,
+"size": 132,
+"obj": "vq.obj"
+},
+"_vq_index": {
+"addr": "0x4ea320",
+"votes": 94,
+"size": 216,
+"obj": "vq.obj"
+},
+"_vq_nbest": {
+"addr": "0x4ea400",
+"votes": 243,
+"size": 529,
+"obj": "vq.obj"
+},
+"_vq_nbest_sign": {
+"addr": "0x4ea620",
+"votes": 263,
+"size": 4496,
+"obj": "vq.obj"
+}
+}

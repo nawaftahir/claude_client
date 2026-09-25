@@ -1,0 +1,1032 @@
+[
+{
+"name": "_speex_bits_init",
+"obj": "bits.obj",
+"size": 50,
+"hits": []
+},
+{
+"name": "_speex_bits_init_buffer",
+"obj": "bits.obj",
+"size": 37,
+"hits": []
+},
+{
+"name": "_speex_bits_destroy",
+"obj": "bits.obj",
+"size": 23,
+"hits": []
+},
+{
+"name": "_speex_bits_reset",
+"obj": "bits.obj",
+"size": 23,
+"hits": []
+},
+{
+"name": "_speex_bits_rewind",
+"obj": "bits.obj",
+"size": 16,
+"hits": []
+},
+{
+"name": "_speex_bits_read_from",
+"obj": "bits.obj",
+"size": 151,
+"hits": []
+},
+{
+"name": "_speex_bits_flush",
+"obj": "bits.obj",
+"size": 68,
+"hits": [
+"0x4dbaa0"
+]
+},
+{
+"name": "_speex_bits_read_whole_bytes",
+"obj": "bits.obj",
+"size": 197,
+"hits": []
+},
+{
+"name": "_speex_bits_write_whole_bytes",
+"obj": "bits.obj",
+"size": 114,
+"hits": []
+},
+{
+"name": "_speex_bits_pack",
+"obj": "bits.obj",
+"size": 227,
+"hits": []
+},
+{
+"name": "_speex_bits_unpack_unsigned",
+"obj": "bits.obj",
+"size": 122,
+"hits": []
+},
+{
+"name": "_speex_bits_peek_unsigned",
+"obj": "bits.obj",
+"size": 99,
+"hits": []
+},
+{
+"name": "_speex_bits_peek",
+"obj": "bits.obj",
+"size": 60,
+"hits": []
+},
+{
+"name": "_speex_bits_advance",
+"obj": "bits.obj",
+"size": 69,
+"hits": []
+},
+{
+"name": "_speex_bits_remaining",
+"obj": "bits.obj",
+"size": 30,
+"hits": []
+},
+{
+"name": "_speex_bits_nbytes",
+"obj": "bits.obj",
+"size": 14,
+"hits": []
+},
+{
+"name": "_speex_bits_insert_terminator",
+"obj": "bits.obj",
+"size": 61,
+"hits": []
+},
+{
+"name": "_speex_bits_write",
+"obj": "bits.obj",
+"size": 99,
+"hits": []
+},
+{
+"name": "_speex_bits_unpack_signed",
+"obj": "bits.obj",
+"size": 41,
+"hits": []
+},
+{
+"name": "_compute_weighted_codebook",
+"obj": "cb_search.obj",
+"size": 411,
+"hits": [
+"0x4e4160"
+]
+},
+{
+"name": "_split_cb_search_shape_sign_N1",
+"obj": "cb_search.obj",
+"size": 1719,
+"hits": []
+},
+{
+"name": "_split_cb_search_shape_sign",
+"obj": "cb_search.obj",
+"size": 4168,
+"hits": []
+},
+{
+"name": "_split_cb_shape_sign_unquant",
+"obj": "cb_search.obj",
+"size": 548,
+"hits": []
+},
+{
+"name": "_noise_codebook_quant",
+"obj": "cb_search.obj",
+"size": 210,
+"hits": []
+},
+{
+"name": "_noise_codebook_unquant",
+"obj": "cb_search.obj",
+"size": 24,
+"hits": []
+},
+{
+"name": "_bw_lpc",
+"obj": "filters.obj",
+"size": 153,
+"hits": []
+},
+{
+"name": "_signal_mul",
+"obj": "filters.obj",
+"size": 136,
+"hits": []
+},
+{
+"name": "_signal_div",
+"obj": "filters.obj",
+"size": 152,
+"hits": []
+},
+{
+"name": "_compute_rms",
+"obj": "filters.obj",
+"size": 127,
+"hits": []
+},
+{
+"name": "_filter_mem2",
+"obj": "filters.obj",
+"size": 334,
+"hits": []
+},
+{
+"name": "_iir_mem2",
+"obj": "filters.obj",
+"size": 242,
+"hits": []
+},
+{
+"name": "_fir_mem2",
+"obj": "filters.obj",
+"size": 244,
+"hits": []
+},
+{
+"name": "_syn_percep_zero",
+"obj": "filters.obj",
+"size": 107,
+"hits": []
+},
+{
+"name": "_residue_percep_zero",
+"obj": "filters.obj",
+"size": 107,
+"hits": []
+},
+{
+"name": "_compute_impulse_response",
+"obj": "filters.obj",
+"size": 732,
+"hits": []
+},
+{
+"name": "_qmf_decomp",
+"obj": "filters.obj",
+"size": 668,
+"hits": []
+},
+{
+"name": "_fir_mem_up",
+"obj": "filters.obj",
+"size": 590,
+"hits": []
+},
+{
+"name": "_comb_filter_mem_init",
+"obj": "filters.obj",
+"size": 25,
+"hits": []
+},
+{
+"name": "_comb_filter",
+"obj": "filters.obj",
+"size": 1139,
+"hits": []
+},
+{
+"name": "_speex_jitter_init",
+"obj": "jitter.obj",
+"size": 137,
+"hits": []
+},
+{
+"name": "_speex_jitter_put",
+"obj": "jitter.obj",
+"size": 583,
+"hits": []
+},
+{
+"name": "_speex_jitter_get",
+"obj": "jitter.obj",
+"size": 1344,
+"hits": []
+},
+{
+"name": "_speex_jitter_get_pointer_timestamp",
+"obj": "jitter.obj",
+"size": 8,
+"hits": []
+},
+{
+"name": "__spx_lpc",
+"obj": "lpc.obj",
+"size": 477,
+"hits": []
+},
+{
+"name": "__spx_autocorr",
+"obj": "lpc.obj",
+"size": 194,
+"hits": []
+},
+{
+"name": "_spx_cos",
+"obj": "lsp.obj",
+"size": 103,
+"hits": [
+"0x4e7f70"
+]
+},
+{
+"name": "_cheb_poly_eva",
+"obj": "lsp.obj",
+"size": 273,
+"hits": [
+"0x4e7fe0"
+]
+},
+{
+"name": "_lpc_to_lsp",
+"obj": "lsp.obj",
+"size": 978,
+"hits": []
+},
+{
+"name": "_lsp_to_lpc",
+"obj": "lsp.obj",
+"size": 1302,
+"hits": []
+},
+{
+"name": "_lsp_enforce_margin",
+"obj": "lsp.obj",
+"size": 432,
+"hits": []
+},
+{
+"name": "_lsp_interpolate",
+"obj": "lsp.obj",
+"size": 257,
+"hits": []
+},
+{
+"name": "_inner_prod",
+"obj": "ltp.obj",
+"size": 72,
+"hits": [
+"0x4e6480"
+]
+},
+{
+"name": "_pitch_xcorr",
+"obj": "ltp.obj",
+"size": 49,
+"hits": [
+"0x4e64d0"
+]
+},
+{
+"name": "_open_loop_nbest_pitch",
+"obj": "ltp.obj",
+"size": 1484,
+"hits": []
+},
+{
+"name": "_pitch_gain_search_3tap",
+"obj": "ltp.obj",
+"size": 2680,
+"hits": []
+},
+{
+"name": "_pitch_search_3tap",
+"obj": "ltp.obj",
+"size": 985,
+"hits": []
+},
+{
+"name": "_pitch_unquant_3tap",
+"obj": "ltp.obj",
+"size": 1159,
+"hits": []
+},
+{
+"name": "_forced_pitch_quant",
+"obj": "ltp.obj",
+"size": 155,
+"hits": [
+"0x4e7e10"
+]
+},
+{
+"name": "_forced_pitch_unquant",
+"obj": "ltp.obj",
+"size": 185,
+"hits": [
+"0x4e7eb0"
+]
+},
+{
+"name": "_print_vec",
+"obj": "misc.obj",
+"size": 79,
+"hits": []
+},
+{
+"name": "_be_int",
+"obj": "misc.obj",
+"size": 35,
+"hits": [
+"0x4dbf90"
+]
+},
+{
+"name": "_speex_memcpy_bytes",
+"obj": "misc.obj",
+"size": 31,
+"hits": []
+},
+{
+"name": "_speex_memset_bytes",
+"obj": "misc.obj",
+"size": 44,
+"hits": []
+},
+{
+"name": "_speex_alloc",
+"obj": "misc.obj",
+"size": 16,
+"hits": [
+"0x46d540",
+"0x523100",
+"0x523360"
+]
+},
+{
+"name": "_speex_error",
+"obj": "misc.obj",
+"size": 30,
+"hits": []
+},
+{
+"name": "_speex_warning",
+"obj": "misc.obj",
+"size": 24,
+"hits": []
+},
+{
+"name": "_speex_warning_int",
+"obj": "misc.obj",
+"size": 29,
+"hits": []
+},
+{
+"name": "_speex_rand_vec",
+"obj": "misc.obj",
+"size": 69,
+"hits": []
+},
+{
+"name": "_speex_rand",
+"obj": "misc.obj",
+"size": 38,
+"hits": [
+"0x4dc120"
+]
+},
+{
+"name": "__speex_putc",
+"obj": "misc.obj",
+"size": 24,
+"hits": []
+},
+{
+"name": "_speex_mode_query",
+"obj": "modes.obj",
+"size": 13,
+"hits": []
+},
+{
+"name": "_speex_lib_get_mode",
+"obj": "modes.obj",
+"size": 24,
+"hits": []
+},
+{
+"name": "_nb_encoder_init",
+"obj": "nb_celp.obj",
+"size": 1023,
+"hits": []
+},
+{
+"name": "_nb_encoder_destroy",
+"obj": "nb_celp.obj",
+"size": 298,
+"hits": []
+},
+{
+"name": "_nb_encode",
+"obj": "nb_celp.obj",
+"size": 4580,
+"hits": []
+},
+{
+"name": "_nb_decoder_init",
+"obj": "nb_celp.obj",
+"size": 466,
+"hits": []
+},
+{
+"name": "_nb_decoder_destroy",
+"obj": "nb_celp.obj",
+"size": 109,
+"hits": [
+"0x4e2740"
+]
+},
+{
+"name": "_nb_decode_lost",
+"obj": "nb_celp.obj",
+"size": 878,
+"hits": []
+},
+{
+"name": "_nb_decode",
+"obj": "nb_celp.obj",
+"size": 3133,
+"hits": []
+},
+{
+"name": "_nb_encoder_ctl",
+"obj": "nb_celp.obj",
+"size": 1556,
+"hits": []
+},
+{
+"name": "_nb_decoder_ctl",
+"obj": "nb_celp.obj",
+"size": 812,
+"hits": []
+},
+{
+"name": "_conj_window",
+"obj": "preprocess.obj",
+"size": 189,
+"hits": []
+},
+{
+"name": "_hypergeom_gain",
+"obj": "preprocess.obj",
+"size": 118,
+"hits": []
+},
+{
+"name": "_speex_preprocess_state_init",
+"obj": "preprocess.obj",
+"size": 1378,
+"hits": []
+},
+{
+"name": "_speex_preprocess_state_destroy",
+"obj": "preprocess.obj",
+"size": 262,
+"hits": []
+},
+{
+"name": "_update_noise",
+"obj": "preprocess.obj",
+"size": 210,
+"hits": []
+},
+{
+"name": "_speex_compute_vad",
+"obj": "preprocess.obj",
+"size": 3126,
+"hits": []
+},
+{
+"name": "_speex_compute_agc",
+"obj": "preprocess.obj",
+"size": 1099,
+"hits": []
+},
+{
+"name": "_preprocess_analysis",
+"obj": "preprocess.obj",
+"size": 767,
+"hits": []
+},
+{
+"name": "_update_noise_prob",
+"obj": "preprocess.obj",
+"size": 1645,
+"hits": []
+},
+{
+"name": "_speex_preprocess",
+"obj": "preprocess.obj",
+"size": 5009,
+"hits": []
+},
+{
+"name": "_speex_preprocess_estimate_update",
+"obj": "preprocess.obj",
+"size": 1307,
+"hits": []
+},
+{
+"name": "_speex_preprocess_ctl",
+"obj": "preprocess.obj",
+"size": 400,
+"hits": []
+},
+{
+"name": "_compute_quant_weights",
+"obj": "quant_lsp.obj",
+"size": 466,
+"hits": [
+"0x4dc160"
+]
+},
+{
+"name": "_lsp_quant",
+"obj": "quant_lsp.obj",
+"size": 449,
+"hits": [
+"0x4dc340"
+]
+},
+{
+"name": "_lsp_weight_quant",
+"obj": "quant_lsp.obj",
+"size": 511,
+"hits": [
+"0x4dc510"
+]
+},
+{
+"name": "_lsp_quant_nb",
+"obj": "quant_lsp.obj",
+"size": 983,
+"hits": []
+},
+{
+"name": "_lsp_unquant_nb",
+"obj": "quant_lsp.obj",
+"size": 930,
+"hits": []
+},
+{
+"name": "_lsp_quant_lbr",
+"obj": "quant_lsp.obj",
+"size": 855,
+"hits": []
+},
+{
+"name": "_lsp_unquant_lbr",
+"obj": "quant_lsp.obj",
+"size": 636,
+"hits": []
+},
+{
+"name": "_lsp_quant_high",
+"obj": "quant_lsp.obj",
+"size": 823,
+"hits": []
+},
+{
+"name": "_lsp_unquant_high",
+"obj": "quant_lsp.obj",
+"size": 468,
+"hits": []
+},
+{
+"name": "_mix_and_saturate",
+"obj": "sb_celp.obj",
+"size": 83,
+"hits": [
+"0x4dd9b0"
+]
+},
+{
+"name": "_sb_encoder_init",
+"obj": "sb_celp.obj",
+"size": 1098,
+"hits": []
+},
+{
+"name": "_sb_encoder_destroy",
+"obj": "sb_celp.obj",
+"size": 25,
+"hits": []
+},
+{
+"name": "_sb_encode",
+"obj": "sb_celp.obj",
+"size": 3749,
+"hits": []
+},
+{
+"name": "_sb_decoder_init",
+"obj": "sb_celp.obj",
+"size": 356,
+"hits": []
+},
+{
+"name": "_sb_decoder_destroy",
+"obj": "sb_celp.obj",
+"size": 25,
+"hits": []
+},
+{
+"name": "_sb_decode_lost",
+"obj": "sb_celp.obj",
+"size": 575,
+"hits": []
+},
+{
+"name": "_sb_decode",
+"obj": "sb_celp.obj",
+"size": 1909,
+"hits": []
+},
+{
+"name": "_sb_encoder_ctl",
+"obj": "sb_celp.obj",
+"size": 2008,
+"hits": []
+},
+{
+"name": "_sb_decoder_ctl",
+"obj": "sb_celp.obj",
+"size": 1076,
+"hits": []
+},
+{
+"name": "_drfti1",
+"obj": "smallft.obj",
+"size": 422,
+"hits": []
+},
+{
+"name": "_fdrffti",
+"obj": "smallft.obj",
+"size": 20,
+"hits": []
+},
+{
+"name": "_dradf2",
+"obj": "smallft.obj",
+"size": 834,
+"hits": []
+},
+{
+"name": "_dradf4",
+"obj": "smallft.obj",
+"size": 2214,
+"hits": []
+},
+{
+"name": "_dradfg",
+"obj": "smallft.obj",
+"size": 6098,
+"hits": []
+},
+{
+"name": "_drftf1",
+"obj": "smallft.obj",
+"size": 484,
+"hits": []
+},
+{
+"name": "_dradb2",
+"obj": "smallft.obj",
+"size": 915,
+"hits": []
+},
+{
+"name": "_dradb3",
+"obj": "smallft.obj",
+"size": 1188,
+"hits": []
+},
+{
+"name": "_dradb4",
+"obj": "smallft.obj",
+"size": 2416,
+"hits": []
+},
+{
+"name": "_dradbg",
+"obj": "smallft.obj",
+"size": 6069,
+"hits": []
+},
+{
+"name": "_drftb1",
+"obj": "smallft.obj",
+"size": 547,
+"hits": []
+},
+{
+"name": "_spx_drft_forward",
+"obj": "smallft.obj",
+"size": 39,
+"hits": []
+},
+{
+"name": "_spx_drft_backward",
+"obj": "smallft.obj",
+"size": 38,
+"hits": []
+},
+{
+"name": "_spx_drft_init",
+"obj": "smallft.obj",
+"size": 68,
+"hits": []
+},
+{
+"name": "_spx_drft_clear",
+"obj": "smallft.obj",
+"size": 43,
+"hits": []
+},
+{
+"name": "_speex_encoder_init",
+"obj": "speex.obj",
+"size": 11,
+"hits": []
+},
+{
+"name": "_speex_decoder_init",
+"obj": "speex.obj",
+"size": 11,
+"hits": []
+},
+{
+"name": "_speex_encoder_destroy",
+"obj": "speex.obj",
+"size": 13,
+"hits": []
+},
+{
+"name": "_speex_decoder_destroy",
+"obj": "speex.obj",
+"size": 13,
+"hits": []
+},
+{
+"name": "_speex_encode_native",
+"obj": "speex.obj",
+"size": 13,
+"hits": []
+},
+{
+"name": "_speex_decode_native",
+"obj": "speex.obj",
+"size": 13,
+"hits": []
+},
+{
+"name": "_speex_encode",
+"obj": "speex.obj",
+"size": 13,
+"hits": []
+},
+{
+"name": "_speex_decode",
+"obj": "speex.obj",
+"size": 13,
+"hits": []
+},
+{
+"name": "_speex_encoder_ctl",
+"obj": "speex.obj",
+"size": 13,
+"hits": []
+},
+{
+"name": "_speex_decoder_ctl",
+"obj": "speex.obj",
+"size": 13,
+"hits": []
+},
+{
+"name": "_nb_mode_query",
+"obj": "speex.obj",
+"size": 91,
+"hits": []
+},
+{
+"name": "_wb_mode_query",
+"obj": "speex.obj",
+"size": 94,
+"hits": []
+},
+{
+"name": "_speex_lib_ctl",
+"obj": "speex.obj",
+"size": 140,
+"hits": []
+},
+{
+"name": "_speex_encode_int",
+"obj": "speex.obj",
+"size": 100,
+"hits": []
+},
+{
+"name": "_speex_decode_int",
+"obj": "speex.obj",
+"size": 165,
+"hits": []
+},
+{
+"name": "_speex_inband_handler",
+"obj": "speex_callbacks.obj",
+"size": 177,
+"hits": []
+},
+{
+"name": "_speex_std_mode_request_handler",
+"obj": "speex_callbacks.obj",
+"size": 40,
+"hits": []
+},
+{
+"name": "_speex_std_low_mode_request_handler",
+"obj": "speex_callbacks.obj",
+"size": 40,
+"hits": []
+},
+{
+"name": "_speex_std_high_mode_request_handler",
+"obj": "speex_callbacks.obj",
+"size": 40,
+"hits": []
+},
+{
+"name": "_speex_std_vbr_request_handler",
+"obj": "speex_callbacks.obj",
+"size": 40,
+"hits": []
+},
+{
+"name": "_speex_std_enh_request_handler",
+"obj": "speex_callbacks.obj",
+"size": 40,
+"hits": []
+},
+{
+"name": "_speex_std_vbr_quality_request_handler",
+"obj": "speex_callbacks.obj",
+"size": 40,
+"hits": []
+},
+{
+"name": "_speex_std_char_handler",
+"obj": "speex_callbacks.obj",
+"size": 32,
+"hits": []
+},
+{
+"name": "_speex_default_user_handler",
+"obj": "speex_callbacks.obj",
+"size": 34,
+"hits": []
+},
+{
+"name": "_speex_init_header",
+"obj": "speex_header.obj",
+"size": 202,
+"hits": []
+},
+{
+"name": "_speex_header_to_packet",
+"obj": "speex_header.obj",
+"size": 172,
+"hits": []
+},
+{
+"name": "_speex_packet_to_header",
+"obj": "speex_header.obj",
+"size": 232,
+"hits": []
+},
+{
+"name": "_speex_encode_stereo",
+"obj": "stereo.obj",
+"size": 606,
+"hits": []
+},
+{
+"name": "_speex_encode_stereo_int",
+"obj": "stereo.obj",
+"size": 358,
+"hits": []
+},
+{
+"name": "_speex_decode_stereo",
+"obj": "stereo.obj",
+"size": 526,
+"hits": []
+},
+{
+"name": "_speex_decode_stereo_int",
+"obj": "stereo.obj",
+"size": 350,
+"hits": []
+},
+{
+"name": "_speex_std_stereo_request_handler",
+"obj": "stereo.obj",
+"size": 123,
+"hits": []
+},
+{
+"name": "_vbr_init",
+"obj": "vbr.obj",
+"size": 121,
+"hits": []
+},
+{
+"name": "_vbr_analysis",
+"obj": "vbr.obj",
+"size": 1679,
+"hits": []
+},
+{
+"name": "_scal_quant",
+"obj": "vq.obj",
+"size": 140,
+"hits": []
+},
+{
+"name": "_scal_quant32",
+"obj": "vq.obj",
+"size": 140,
+"hits": []
+},
+{
+"name": "_vq_index",
+"obj": "vq.obj",
+"size": 234,
+"hits": []
+},
+{
+"name": "_vq_nbest",
+"obj": "vq.obj",
+"size": 548,
+"hits": []
+},
+{
+"name": "_vq_nbest_sign",
+"obj": "vq.obj",
+"size": 992,
+"hits": []
+}
+]
