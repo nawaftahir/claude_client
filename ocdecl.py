@@ -12,7 +12,14 @@ for p in glob.glob('**/*.[ch]*', recursive=True):
         m = re.match(r'^(?:extern\s+)?(?:"C"\s+)?([\w][\w\s\*]*?\b(\w+)\s*\([^;{]*\))\s*;', l)
         if m and m.group(2) in names and m.group(2) not in found:
             found[m.group(2)] = m.group(1)
-want = set(sys.argv[1:]) or set(found)
+# the draft's call sites need these as they are (enum/int args, const-ness, other return types)
+SKIP = {'BG_GetEmptySlotForWeapon', 'BG_Player_DoControllers', 'Com_Error', 'Com_PrintMessage', 'Com_UnloadSoundAliases',
+        'DObjCalcSkel', 'DObjCreateSkel', 'DObjSkelExists', 'Dvar_SetBool', 'Dvar_SetInt', 'Dvar_SetString',
+        'FS_FOpenFileByMode', 'FS_FreeFileList', 'FS_GetFileList', 'FS_ListFiles', 'FX_GetEffectLength', 'FX_RegisterEffect',
+        'Mantle_CreateAnims', 'MatrixMultiply', 'PC_ReadTokenHandle', 'PM_UpdateViewAngles', 'ReplaceStringInternal',
+        'SEH_GetLanguageIndexForName', 'XAnimCreateAnims', 'XAnimFreeTree', 'XAnimPrecache', 'XAnimSetCompleteGoalWeightKnobAll',
+        'YawToAxis', 'MSG_ReadDeltaEntity', 'MSG_ReadDeltaClient'}
+want = set(sys.argv[1:]) or set(found) - SKIP
 n = collections.Counter()
 for p in glob.glob('oc/**/*.[ch]*', recursive=True):
     s = open(p, errors='replace').read()
@@ -22,7 +29,8 @@ for p in glob.glob('oc/**/*.[ch]*', recursive=True):
             return m.group(0)
         n[name] += 1
         return '%s%s;' % (m.group(1), found[name])
-    t = re.sub(r'(?m)^(\s*(?:extern\s+)?)((?:const\s+)?[\w][\w\s\*]*?\b(\w+)\s*\([^;{()]*(?:\([^)]*\)[^;{()]*)*\))\s*;', sub, s)
+    # one line only, and never a statement such as 'return f(x);'
+    t = re.sub(r'(?m)^([ \t]*(?:extern[ \t]+)?)((?!return\b|else\b|case\b|goto\b)(?:const[ \t]+)?[\w][\w \t\*]*?\b(\w+)[ \t]*\([^;{()\n]*(?:\([^)\n]*\)[^;{()\n]*)*\))[ \t]*;', sub, s)
     if t != s:
         open(p, 'w').write(t)
 print(len(n), 'names,', sum(n.values()), 'declarations')

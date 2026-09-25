@@ -206,7 +206,7 @@ struct D3DXVECTOR3;
 struct D3DXVECTOR4;
 struct DIR;
 struct DInfo;
-struct DObjAnimMat_s;
+struct DObjAnimMat;
 struct DObjModel_s;
 struct DObjSkelMat_s;
 struct DObjTrace_s;
@@ -792,7 +792,7 @@ struct archivedSnapshot_s;
 struct areaParms_t;
 struct audioSample_t;
 struct backing_store_struct;
-struct bgs_t;
+struct bgs_s;
 struct bidirectional_iterator_tag;
 struct binary_function_UINT32_UINT32_bool;
 struct bind_t;
@@ -826,11 +826,11 @@ struct clSnapshot_t;
 struct clientActive_t;
 struct clientConnection_t;
 struct clientDebug_t;
-struct clientInfo_t;
+struct clientInfo_s;
 struct clientLogo_t;
 struct clientSession_t;
 struct clientSnapshot_t;
-struct clientState_s;
+struct clientState_t;
 struct clientStatic_t;
 struct client_fields_s;
 struct client_s;
@@ -995,7 +995,7 @@ struct my_post_controller;
 struct my_prep_controller;
 struct my_source_mgr;
 struct my_upsampler;
-struct netProfileInfo_t;
+struct netProfileInfo_s;
 struct netProfilePacket_t;
 struct netProfileStream_t;
 struct netadr_t;
@@ -1115,7 +1115,7 @@ union small_pool_struct;
 struct snapshotEntityNumbers_t;
 struct snapshot_t;
 struct snd_alias_build_s;
-struct snd_alias_list_t;
+struct snd_alias_list_s;
 struct snd_alias_t;
 struct snd_background_info_t;
 struct snd_channel_info_t;
@@ -3205,7 +3205,7 @@ typedef struct D3DXVECTOR3 D3DXVECTOR3;
 typedef struct D3DXVECTOR4 D3DXVECTOR4;
 
 typedef struct DInfo DInfo;
-typedef struct DObjAnimMat_s DObjAnimMat_s;
+typedef struct DObjAnimMat DObjAnimMat_s;
 typedef struct DObjModel_s DObjModel_s;
 typedef struct DObjSkelMat_s DObjSkelMat_s;
 typedef struct DObjTrace_s DObjTrace_s;
@@ -3791,7 +3791,7 @@ typedef struct archivedSnapshot_s archivedSnapshot_s;
 typedef struct areaParms_t areaParms_t;
 typedef struct audioSample_t audioSample_t;
 typedef struct backing_store_struct backing_store_struct;
-typedef struct bgs_t bgs_t;
+typedef struct bgs_s bgs_t;
 typedef struct bidirectional_iterator_tag bidirectional_iterator_tag;
 typedef struct binary_function_UINT32_UINT32_bool binary_function_UINT32_UINT32_bool;
 typedef struct bind_t bind_t;
@@ -3825,11 +3825,11 @@ typedef struct clSnapshot_t clSnapshot_t;
 typedef struct clientActive_t clientActive_t;
 typedef struct clientConnection_t clientConnection_t;
 typedef struct clientDebug_t clientDebug_t;
-typedef struct clientInfo_t clientInfo_t;
+typedef struct clientInfo_s clientInfo_t;
 typedef struct clientLogo_t clientLogo_t;
 typedef struct clientSession_t clientSession_t;
 typedef struct clientSnapshot_t clientSnapshot_t;
-typedef struct clientState_s clientState_s;
+typedef struct clientState_t clientState_s;
 typedef struct clientStatic_t clientStatic_t;
 typedef struct client_fields_s client_fields_s;
 typedef struct client_s client_s;
@@ -3997,7 +3997,7 @@ typedef struct my_post_controller my_post_controller;
 typedef struct my_prep_controller my_prep_controller;
 typedef struct my_source_mgr my_source_mgr;
 typedef struct my_upsampler my_upsampler;
-typedef struct netProfileInfo_t netProfileInfo_t;
+typedef struct netProfileInfo_s netProfileInfo_t;
 typedef struct netProfilePacket_t netProfilePacket_t;
 typedef struct netProfileStream_t netProfileStream_t;
 typedef struct netadr_t netadr_t;
@@ -4115,7 +4115,7 @@ typedef union small_pool_struct small_pool_struct;
 typedef struct snapshotEntityNumbers_t snapshotEntityNumbers_t;
 typedef struct snapshot_t snapshot_t;
 typedef struct snd_alias_build_s snd_alias_build_s;
-typedef struct snd_alias_list_t snd_alias_list_t;
+typedef struct snd_alias_list_s snd_alias_list_t;
 typedef struct snd_alias_t snd_alias_t;
 typedef struct snd_background_info_t snd_background_info_t;
 typedef struct snd_channel_info_t snd_channel_info_t;
@@ -4380,7 +4380,7 @@ typedef struct _DDPIXELFORMAT DDPIXELFORMAT;
 typedef struct _DDSCAPS2 DDSCAPS2;
 typedef struct _DDSURFACEDESC2 DDSURFACEDESC2;
 typedef struct DObj_s DObj;
-typedef struct DObjAnimMat_s DObjAnimMat;
+typedef struct DObjAnimMat DObjAnimMat;
 typedef struct DObjModel_s DObjModel;
 typedef struct DObjSkelMat_s DObjSkelMat;
 typedef struct DObjTrace_s DObjTrace;
@@ -4422,7 +4422,7 @@ typedef struct cLeafBrushNode_s cLeafBrushNode_t;
 typedef struct cStaticModel_s cStaticModel_t;
 typedef struct cachedClient_s cachedClient_t;
 typedef struct centity_s centity_t;
-typedef struct clientState_s clientState_t;
+typedef struct clientState_t clientState_t;
 typedef struct client_fields_s client_fields_t;
 typedef struct client_s client_t;
 typedef struct cmd_function_s cmd_function_t;
@@ -5658,7 +5658,7 @@ struct D3DXVECTOR4 {
     FLOAT w;
 };
 
-struct DObjAnimMat_s {
+struct DObjAnimMat {
     float quat[4];
     float trans[3];
     float transWeight;
@@ -9804,7 +9804,7 @@ union XAssetHeader {
     struct XModel *model;
     struct Material *material;
     struct GfxImage *image;
-    struct snd_alias_list_t *sound;
+    struct snd_alias_list_s *sound;
     struct SndCurve *sndCurve;
     struct clipMap_t *clipMap;
     struct GfxWorld *world;
@@ -11147,7 +11147,7 @@ struct clientLogo_t {
     MaterialHandle material[2];
 };
 
-struct clientState_s {
+struct clientState_t {
     int clientIndex;
     team_t team;
     int modelindex;
@@ -12281,7 +12281,7 @@ struct lerpFrame_t {
     int oldFrameSnapshotTime;
 };
 
-struct clientInfo_t {
+struct clientInfo_s {
     qboolean infoValid;
     qboolean nextValid;
     int clientNum;
@@ -12316,7 +12316,7 @@ struct corpseInfo_t {
     struct XAnimTree_s *tree;
     int entnum;
     int time;
-    struct clientInfo_t ci;
+    struct clientInfo_s ci;
     Bool falling;
 };
 
@@ -12674,7 +12674,7 @@ struct IDirect3DBaseTexture9 {
     const D3DRECT recieve;
 };
 
-struct netProfileInfo_t {
+struct netProfileInfo_s {
     struct netProfileStream_t send;
     netProfileStream_t recieve;
 };
@@ -13914,7 +13914,7 @@ struct animScriptData_t {
     int (*playSoundAlias)(int, snd_alias_list_t *);
 };
 
-struct bgs_t {
+struct bgs_s {
     struct animScriptData_t animScriptData;
     struct { scr_animtree_t tree; scr_anim_t root; scr_anim_t torso; scr_anim_t legs; scr_anim_t turning; } generic_human;
     int time;
@@ -14325,7 +14325,7 @@ struct snd_alias_build_s {
     intptr_t pNext;
 };
 
-struct snd_alias_list_t {
+struct snd_alias_list_s {
     const char *aliasName;
     snd_alias_t *head;
     int count;
@@ -15983,7 +15983,7 @@ struct cg_t {
     float holdBreathFrac;
     qboolean adsViewErrorDone;
     qboolean inKillCam;
-    struct bgs_t bgs;
+    struct bgs_s bgs;
     struct MarkPoly activeMarkPolys;
 };
 
