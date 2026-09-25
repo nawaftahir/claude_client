@@ -2,7 +2,7 @@
 """Disassemble a client range with string/float annotations: dis.py <start> <end>"""
 import struct, sys
 import pefile, capstone
-pe = pefile.PE('../cod2engineold/binaries/windows/1.0/CoD2MP_s.exe')
+pe = pefile.PE(__import__('os').path.dirname(__import__('os').path.abspath(__file__)) + '/../cod2engineold/binaries/windows/1.0/CoD2MP_s.exe')
 md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
 a, b = int(sys.argv[1], 16), int(sys.argv[2], 16)
 for i in md.disasm(pe.get_data(a - 0x400000, b - a), a):

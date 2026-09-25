@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Locate every unmatched function of a build in the client and summarize how it differs."""
-import collections, difflib, json, re, sys
+import collections, difflib, json, os, re, sys
 import capstone
 import vote
 
@@ -25,7 +25,7 @@ if __name__ == '__main__':
     matched = {x['name'] for x in json.load(open(cmpf)) if x['hits']}
     pe, cd, cbase = vote.text(target)
     import bisect
-    F = sorted(int(x['addr'], 16) for x in json.load(open('../codex/client/salvage_gemini/data/names_1.0.json'))['functions'])
+    F = sorted(int(x['addr'], 16) for x in json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../codex/client/salvage_gemini/data/names_1.0.json')))['functions'])
     idx = vote.Index(cd)
     res = []
     for name, obj, va, code, mask in vote.functions(img, mapf):

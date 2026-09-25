@@ -142,10 +142,6 @@ void Com_EndRedirect( void )
 }
 
 
-void CL_SwitchToLocalClient( int localClientNum )
-{
-}
-
 /*
 ===================
 Com_PrintMessage
