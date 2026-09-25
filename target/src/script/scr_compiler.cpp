@@ -128,11 +128,13 @@ void EmitOpcode( unsigned int op, int offset, int callType )
 		}
 	}
 
-	scrCompilePub.allowedBreakpoint = false;
-
 	if ( !scrCompileGlob.cumulOffset || callType == CALL_THREAD || callType == CALL_FUNCTION )
 	{
 		scrCompilePub.allowedBreakpoint = true;
+	}
+	else
+	{
+		scrCompilePub.allowedBreakpoint = false;
 	}
 
 	scrCompileGlob.cumulOffset += offset;
