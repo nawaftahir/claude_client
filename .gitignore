@@ -16,3 +16,4 @@ all2/
 target/build/
 vendor/speex-1.1.9/
 vendor/*.tar.gz
+ghidra/out/
