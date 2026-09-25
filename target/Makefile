@@ -42,14 +42,21 @@ OCFLAGS := /nologo /c /O2 /GL /MT /TP /DNDEBUG /FIstdint.h /FImsvc_c89.h \
 LFLAGS := /nologo /LTCG /FORCE /OPT:NOREF /OPT:NOICF /FIXED:NO /SUBSYSTEM:WINDOWS /MAP:build\\CoD2MP_s.map
 
 win = $(subst /,\\,$(1))
+# header dependencies from /showIncludes (system headers skipped)
+deps = awk '/including file:/{sub(/.*including file: */,""); gsub(/\\/,"/"); if ($$0 ~ /^[zZ]:\/opt/) next; \
+	sub(/^[zZ]:\/w\/src\//,"src/"); sub(/^(\.\/)+/,"src/"); print "$@: " $$0; print $$0 ":"}' $@.log > $@.d
+
+-include $(OBJS:=.d)
 
 build/obj/%.obj: src/%.cpp
 	@mkdir -p $(dir $@)
-	@cd src && $(CL) $(if $(filter oc/%,$*),$(OCFLAGS),$(CFLAGS)) $(call tuflags,$*.cpp) /Fo..\\$(call win,$@) .\\$(call win,$*.cpp) > ../$@.log 2>&1 || (cat ../$@.log; false)
+	@cd src && $(CL) $(if $(filter oc/%,$*),$(OCFLAGS),$(CFLAGS)) $(call tuflags,$*.cpp) /showIncludes /Fo..\\$(call win,$@) .\\$(call win,$*.cpp) > ../$@.log 2>&1 || (grep -v including ../$@.log; false)
+	@$(deps)
 
 build/obj/%.obj: src/%.c
 	@mkdir -p $(dir $@)
-	@cd src && $(CL) $(CFLAGS) $(call tuflags,$*.c) /Fo..\\$(call win,$@) .\\$(call win,$*.c) > ../$@.log 2>&1 || (cat ../$@.log; false)
+	@cd src && $(CL) $(CFLAGS) $(call tuflags,$*.c) /showIncludes /Fo..\\$(call win,$@) .\\$(call win,$*.c) > ../$@.log 2>&1 || (grep -v including ../$@.log; false)
+	@$(deps)
 
 IMPLIBS := build/lib/mss32.lib build/lib/d3d9.lib
 LIBS   := winmm.lib wsock32.lib $(call win,$(IMPLIBS)) dsound.lib libcmt.lib kernel32.lib user32.lib gdi32.lib advapi32.lib shell32.lib

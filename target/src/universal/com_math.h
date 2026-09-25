@@ -76,7 +76,7 @@ I_fsel
 */
 TU_STATIC float I_fsel(const float x, const float y, const float z)
 {
-	return x >= 0.0 ? y : z;
+	return x >= 0.0f ? y : z;
 }
 
 /*
@@ -131,7 +131,7 @@ I_side
 */
 TU_STATIC int I_side(const float x)
 {
-	return x >= 0.0;
+	return x >= 0.0f;
 }
 
 /*

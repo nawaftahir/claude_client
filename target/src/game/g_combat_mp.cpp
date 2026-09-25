@@ -620,9 +620,9 @@ qboolean G_RadiusDamage( const vec3_t origin, gentity_t *inflictor, gentity_t *a
 		return qfalse;
 	}
 
-	if ( radius < 1.0 )
+	if ( radius < 1.0f )
 	{
-		radius = 1.0;
+		radius = 1.0f;
 	}
 
 	// radius * sqrt(2) for bounding box enlargement
@@ -685,7 +685,7 @@ qboolean G_RadiusDamage( const vec3_t origin, gentity_t *inflictor, gentity_t *a
 			continue;
 		}
 
-		points = fOuterDamage + (fInnerDamage - fOuterDamage) * (1.0 - dist / radius);
+		points = fOuterDamage + (fInnerDamage - fOuterDamage) * (1.0f - dist / radius);
 		damageAmount = CanDamage(ent, origin);
 
 		if ( damageAmount > 0.0f )
@@ -710,7 +710,7 @@ qboolean G_RadiusDamage( const vec3_t origin, gentity_t *inflictor, gentity_t *a
 
 			G_TraceCapsule(&tr, origin, vec3_origin, vec3_origin, dest, ENTITYNUM_NONE, CONTENTS_SOLID | CONTENTS_GLASS | CONTENTS_SKY);
 
-			if ( tr.fraction < 1.0 )
+			if ( tr.fraction < 1.0f )
 			{
 				VectorSubtract(dest, origin, dest);
 				dist = VectorLength(dest);
