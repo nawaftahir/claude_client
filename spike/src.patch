@@ -1,0 +1,43 @@
+diff -ruN ../cod2engine/targets/lnxded-1.0/src/qcommon/qcommon.h spike/src/qcommon/qcommon.h
+--- ../cod2engine/targets/lnxded-1.0/src/qcommon/qcommon.h	2026-09-25 20:04:13.000000000 +0500
++++ spike/src/qcommon/qcommon.h	2026-09-25 23:01:06.987057644 +0500
+@@ -15,6 +15,7 @@
+ // built against glibc 2.1, whose ctype predicates are macros over the
+ // exported __ctype_b table. Modern headers route them through __ctype_b_loc(),
+ // which emits a call instead of the table lookup the target contains.
++#ifndef _WIN32
+ extern const unsigned short int *__ctype_b;
+ #undef isalnum
+ #undef isdigit
+@@ -30,6 +31,7 @@
+ #define isupper( c )    ( __ctype_b[(int)( c )] & (unsigned short int)_ISupper )
+ #define islower( c )    ( __ctype_b[(int)( c )] & (unsigned short int)_ISlower )
+ #define isprint( c )    ( __ctype_b[(int)( c )] & (unsigned short int)_ISprint )
++#endif
+ 
+ #include "../universal/universal_public.h"
+ 
+diff -ruN ../cod2engine/targets/lnxded-1.0/src/spike/addr_taken.cpp spike/src/spike/addr_taken.cpp
+--- ../cod2engine/targets/lnxded-1.0/src/spike/addr_taken.cpp	1970-01-01 05:00:00.000000000 +0500
++++ spike/src/spike/addr_taken.cpp	2026-09-25 23:05:17.870722670 +0500
+@@ -0,0 +1,8 @@
++// spike: stand-in for client code that passes these by pointer (e.g. to the renderer)
++#include "../qcommon/qcommon.h"
++#include "../server/server.h"
++void G_LogPrintf( const char *fmt, ... );
++void *spike_addr_taken[] = {
++	(void *)va, (void *)Com_sprintf, (void *)Com_DPrintf, (void *)Com_Error, (void *)Com_Printf,
++	(void *)FS_Printf, (void *)G_LogPrintf, (void *)SV_SendServerCommand, (void *)Sys_Error,
++};
+diff -ruN ../cod2engine/targets/lnxded-1.0/src/universal/com_math.cpp spike/src/universal/com_math.cpp
+--- ../cod2engine/targets/lnxded-1.0/src/universal/com_math.cpp	2026-09-25 20:04:13.000000000 +0500
++++ spike/src/universal/com_math.cpp	2026-09-25 23:01:14.469597641 +0500
+@@ -2111,7 +2111,7 @@
+ 	r = zz + rot[1] * rot[1];
+ 	r = 2.0f / r;
+ 
+-	return (float)(atan2(rot[0] * rot[1] * r, 1.0 - zz * r) * DEGINRAD);
++	return (float)(atan2((double)(rot[0] * rot[1] * r), 1.0 - zz * r) * DEGINRAD);
+ }
+ 
+ /*
