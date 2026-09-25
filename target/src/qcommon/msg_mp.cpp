@@ -648,7 +648,7 @@ void MSG_WriteBits( msg_t *msg, int value, int bits )
 {
 	int bit;
 
-	if ( msg->maxsize - msg->cursize <= 3 )
+	if ( msg->maxsize - msg->cursize < 4 )
 	{
 		msg->overflowed = qtrue;
 		return;

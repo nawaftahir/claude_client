@@ -1680,12 +1680,12 @@ void G_RunItem( gentity_t *ent )
 	mask = G_ItemClipMask(ent);
 	if ( Vec3DistanceSq(ent->r.currentOrigin, origin) < 0.1f )
 	{
-		origin[2] -= 1.0;
+		origin[2] -= 1.0f;
 	}
 
 	G_TraceCapsule(&trace, ent->r.currentOrigin, ent->r.mins, ent->r.maxs, origin, ent->r.ownerNum, mask);
 
-	if ( trace.fraction < 1.0 )
+	if ( trace.fraction < 1.0f )
 	{
 		Vec3Lerp(ent->r.currentOrigin, origin, trace.fraction, endpos);
 
@@ -1694,7 +1694,7 @@ void G_RunItem( gentity_t *ent )
 			vec3_t delta;
 
 			VectorSubtract(origin, ent->r.currentOrigin, delta);
-			scale = 1.0 - DotProduct(delta, trace.normal);
+			scale = 1.0f - DotProduct(delta, trace.normal);
 			VectorMA(origin, scale, trace.normal, origin);
 
 			G_TraceCapsule(&trace, endpos, ent->r.mins, ent->r.maxs, origin, ent->r.ownerNum, mask);

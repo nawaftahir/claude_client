@@ -709,7 +709,7 @@ setmodel:
 		{
 			totalBones = numBones + model->parts->numBones;
 
-			if ( totalBones > 127 )
+			if ( totalBones >= 128 )
 			{
 				Com_Error(ERR_DROP, "\x15" "dobj for xmodel '%s' has more than %d bones", dobj->models[0]->name, 127);
 				break;

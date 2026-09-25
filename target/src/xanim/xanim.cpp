@@ -947,7 +947,7 @@ void XAnim_CalcDeltaForTime(const XAnimParts_s *anim, const float time, float *r
 		XAnim_CalcRotDeltaEntire(animDelta, rotDelta);
 		XAnim_CalcPosDeltaEntire(animDelta, posDelta);
 	}
-	else if ( numFrames <= 0xFF )
+	else if ( numFrames < 0x100 )
 	{
 		XAnim_CalcRotDeltaDuring_unsigned_char_(animDelta, time, numFrames, rotDelta);
 		XAnim_CalcPosDeltaDuring_unsigned_char_(animDelta, time, numFrames, posDelta);
@@ -2043,7 +2043,7 @@ void XAnimCalc(const DObj_s *obj, unsigned int entry, float weightScale, DObjAni
 
 		if ( time == 1.0f || !parts->numframes )
 			XAnimCalcNonLoopEnd(parts, animToModel->boneIndex, weightScale, rotTransArray, animInfo->ignorePartBits);
-		else if ( parts->numframes <= 0xFF )
+		else if ( parts->numframes < 0x100 )
 			XAnimCalcParts_unsigned_char_(parts, animToModel->boneIndex, time, weightScale, rotTransArray, animInfo->ignorePartBits);
 		else
 			XAnimCalcParts_unsigned_short_(parts, animToModel->boneIndex, time, weightScale, rotTransArray, animInfo->ignorePartBits);

@@ -364,7 +364,7 @@ void SVC_Status( netadr_t from )
 			Com_sprintf( player, sizeof( player ), "%i %i \"%s\"\n", gameInitialized ? G_GetClientScore(cl - svs.clients) : 0, cl->ping, cl->name );
 
 			playerLength = strlen( player );
-			if ( statusLength + playerLength > 0x3FFF )
+			if ( statusLength + playerLength >= 0x4000 )
 			{
 				break;      // can't hold any more
 			}

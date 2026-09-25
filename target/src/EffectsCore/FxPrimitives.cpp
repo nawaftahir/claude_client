@@ -940,7 +940,7 @@ static void FX_ColorToBytes( const vec3_t rgb, unsigned char *out )
 	int value;
 	int i;
 
-	for ( i = 0; i <= 2; i++ )
+	for ( i = 0; i < 3; i++ )
 	{
 		value = I_clamp( (int)( rgb[i] * 255.0f ), 0, 255 );
 		out[i] = value;

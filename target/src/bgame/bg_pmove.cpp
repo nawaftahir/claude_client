@@ -2547,7 +2547,7 @@ void PM_Footsteps( pmove_t *pm, pml_t *pml )
 		{
 			float fLadderSpeed;
 
-			if ( pm->cmd.serverTime - ps->jumpTime <= 299 )
+			if ( pm->cmd.serverTime - ps->jumpTime < 300 )
 			{
 				return;
 			}
@@ -3046,7 +3046,7 @@ void PM_UpdateLean(playerState_t *ps, float msec, usercmd_t *cmd,
 
 	leaning = 0;
 	leanofs = 0;
-	if ((cmd->buttons & (BUTTON_LEANLEFT | BUTTON_LEANRIGHT)) && !(ps->pm_flags & PMF_FROZEN) && ps->pm_type <= 5
+	if ((cmd->buttons & (BUTTON_LEANLEFT | BUTTON_LEANRIGHT)) && !(ps->pm_flags & PMF_FROZEN) && ps->pm_type < 6
 		&& (ps->groundEntityNum != ENTITYNUM_NONE || ps->pm_type == PM_NORMAL_LINKED))
 	{
 		if (cmd->buttons & BUTTON_LEANLEFT)

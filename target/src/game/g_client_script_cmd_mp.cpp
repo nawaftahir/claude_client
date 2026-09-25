@@ -2279,7 +2279,7 @@ void PlayerCmd_SetClientDvar( scr_entref_t entref )
 		pCh = szOutString;
 		memset(szOutString, 0, sizeof(szOutString));
 
-		for ( i = 0; i <= 0x1fff && pszText[i]; i++, pCh++ )
+		for ( i = 0; i < 0x2000 && pszText[i]; i++, pCh++ )
 		{
 			*pCh = I_CleanChar(pszText[i]);
 

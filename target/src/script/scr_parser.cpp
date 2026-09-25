@@ -787,7 +787,7 @@ unsigned int Scr_GetLineInfo( const char *buf, unsigned int sourcePos, int *col,
 
 	len = strlen(startLine);
 
-	if ( len > 1023 )
+	if ( len >= 1024 )
 		len = 1023;
 
 	for ( i = 0; i <= len; i++ )

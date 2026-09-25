@@ -1856,7 +1856,7 @@ void SV_ArchiveSnapshot()
 				MSG_WriteBit0(&msg);
 			}
 
-			if ( ++svs.nextCachedSnapshotClients > 0x7FFFFFFD )
+			if ( ++svs.nextCachedSnapshotClients >= 0x7ffffffe )
 			{
 				Com_Error(ERR_FATAL, "\x15" "svs.nextCachedSnapshotClients wrapped");
 			}
@@ -1911,7 +1911,7 @@ void SV_ArchiveSnapshot()
 
 			MSG_WriteDeltaArchivedEntity(&msg, &sv.svEntities[ent->s.number].baseline, archEnt, DELTA_FLAGS_FORCE);
 
-			if ( ++svs.nextCachedSnapshotEntities > 0x7FFFFFFD )
+			if ( ++svs.nextCachedSnapshotEntities >= 0x7ffffffe )
 			{
 				Com_Error(ERR_FATAL, "\x15" "svs.nextCachedSnapshotEntities wrapped");
 			}
@@ -1919,7 +1919,7 @@ void SV_ArchiveSnapshot()
 			++cachedFrame->num_entities;
 		}
 
-		if ( ++svs.nextCachedSnapshotFrames > 0x7FFFFFFD )
+		if ( ++svs.nextCachedSnapshotFrames >= 0x7ffffffe )
 		{
 			Com_Error(ERR_FATAL, "\x15" "svs.nextCachedSnapshotFrames wrapped");
 		}
@@ -1942,7 +1942,7 @@ LABEL_70:
 
 		svs.nextArchivedSnapshotBuffer += msg.cursize;
 
-		if ( svs.nextArchivedSnapshotBuffer > 0x7FFFFFFD )
+		if ( svs.nextArchivedSnapshotBuffer >= 0x7ffffffe )
 		{
 			Com_Error(ERR_FATAL, "\x15" "svs.nextArchivedSnapshotBuffer wrapped");
 		}
@@ -1959,7 +1959,7 @@ LABEL_70:
 			memcpy(svs.archivedSnapshotBuffer, &msg.data[v20], msg.cursize - v20);
 		}
 
-		if ( ++svs.nextArchivedSnapshotFrames > 0x7FFFFFFD )
+		if ( ++svs.nextArchivedSnapshotFrames >= 0x7ffffffe )
 		{
 			Com_Error(ERR_FATAL, "\x15" "svs.nextArchivedSnapshotFrames wrapped");
 		}

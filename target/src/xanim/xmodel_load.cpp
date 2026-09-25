@@ -372,7 +372,7 @@ XModel *XModelLoadFile(const char *name, void *(*Alloc)(int), void *(*AllocColl)
 
 	nameLenTotal = 0;
 
-	for ( i = 0; i <= 3; ++i )
+	for ( i = 0; i < 4; ++i )
 	{
 		lodStringLens[i] = I_strlen(config.entries[i].filename) + 1;
 		nameLenTotal += lodStringLens[i];
@@ -385,7 +385,7 @@ XModel *XModelLoadFile(const char *name, void *(*Alloc)(int), void *(*AllocColl)
 	dest = (char *)&model[1];
 	model->numLods = 0;
 
-	for ( i = 0; i <= 3; ++i )
+	for ( i = 0; i < 4; ++i )
 	{
 		strcpy(dest, config.entries[i].filename);
 		model->lodInfo[i].filename = dest;

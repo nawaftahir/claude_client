@@ -3985,7 +3985,7 @@ void Scr_EvalArray( VariableValue *value, VariableValue *index )
 	case VAR_VECTOR:
 		if ( index->type == VAR_INTEGER )
 		{
-			if ( index->u.pointerValue <= 2 )
+			if ( index->u.pointerValue < 3 )
 			{
 				index->type = VAR_FLOAT;
 				index->u.floatValue = value->u.vectorValue[index->u.intValue];

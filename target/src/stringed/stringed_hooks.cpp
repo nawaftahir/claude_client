@@ -378,7 +378,7 @@ unsigned int SEH_TraditionalChineseCharToIndex( unsigned int c )
 	if ( SEH_IsTraditionalChineseChar(c) )
 	{
 		c -= 0xa140;
-		if ( ( c & 0xff ) > 0x5f )
+		if ( ( c & 0xff ) >= 0x60 )
 			c -= 0x20;
 		c = ( c >> 8 ) * 160 + (unsigned char)c;
 		return c;
@@ -408,7 +408,7 @@ unsigned int SEH_JapaneseCharToIndex( unsigned int c )
 	if ( SEH_IsJapaneseChar(c) )
 	{
 		c -= 0x8140;
-		if ( ( c & 0xff ) > 0x3f )
+		if ( ( c & 0xff ) >= 0x40 )
 			c--;
 		if ( ( ( c >> 8 ) & 0xff ) > 0x5e )
 			c -= 0x4000;

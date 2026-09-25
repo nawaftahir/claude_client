@@ -292,7 +292,7 @@ void Com_LoadSoundAliasField( const char *loadspec, const char *loadspecCurGame,
 	switch ( field )
 	{
 	case SA_NAME:
-		if ( strlen(token) > 62 )
+		if ( strlen(token) >= 63 )
 		{
 			Com_Printf("^1ERROR: Sound alias file %s: Alias name '%s' is longer than %i characters\n", sourceFile, token, 63);
 			alias->error = true;
@@ -308,7 +308,7 @@ void Com_LoadSoundAliasField( const char *loadspec, const char *loadspecCurGame,
 		}
 		break;
 	case SA_SECONDARYALIASNAME:
-		if ( strlen(token) > 62 )
+		if ( strlen(token) >= 63 )
 		{
 			Com_Printf("^1ERROR: Sound alias file %s: Secondary Alias name '%s' is longer than %i characters\n", sourceFile, token, 63);
 			alias->error = true;
@@ -327,7 +327,7 @@ void Com_LoadSoundAliasField( const char *loadspec, const char *loadspecCurGame,
 		alias->sequence = atoi(token);
 		break;
 	case SA_FILE:
-		if ( strlen(token) > 62 )
+		if ( strlen(token) >= 63 )
 		{
 			Com_Printf("^1ERROR: Sound alias file %s: Sound file '%s' is longer than %i characters\n", sourceFile, token, 63);
 			alias->error = true;

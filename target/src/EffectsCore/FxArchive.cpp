@@ -163,7 +163,7 @@ FxEffectDef *FxArchive::ReadEffect()
 	char filename[64];
 
 	len = ReadByte();
-	if ( !len || len > 63 )
+	if ( !len || len >= 64 )
 		return 0;
 	ReadData( effectName, len );
 	effectName[len] = 0;

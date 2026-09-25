@@ -177,7 +177,7 @@ void CM_PositionTestCapsuleInTriangle( traceWork_t *tw, CollisionTriangle_t *tri
 		}
 		else
 		{
-			for ( i = 0; i <= 2; i++ )
+			for ( i = 0; i < 3; i++ )
 			{
 				if ( (vertToCheck >> i) & 1 )
 				{

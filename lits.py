@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Float literal suffixes from the client: where our x87 constant operand is a double and the
-client's is a float (or the reverse), add (or drop) the 'f' on that literal in the function body.
-gcc narrows exact double constants in float expressions, so the server source lost this."""
+"""Source forms gcc canonicalized away, recovered from the client, per function body:
+- float literal suffixes: our x87 constant operand is a double where the client's is a float (or
+  the reverse); gcc narrows exact double constants in float expressions.
+- comparison constants: gcc turns 'x < 63' into 'x <= 62'; MSVC keeps the source form."""
 import difflib, glob, json, os, re, struct, sys
 import pefile, capstone
 
@@ -38,6 +39,14 @@ def wants(ours, client, name, va, size, caddr):
         if t not in ('equal', 'replace') or i2 - i1 != j2 - j1:
             continue
         for x, y in zip(a[i1:i2], b[j1:j2]):
+            cx, cy = CMP.match('%s %s' % (x.mnemonic, x.op_str)), CMP.match('%s %s' % (y.mnemonic, y.op_str))
+            if cx and cy and cx.group(1) == cy.group(1):
+                va_, vb_ = int(cx.group(2), 0), int(cy.group(2), 0)
+                if abs(va_ - vb_) == 1:
+                    out.setdefault(('cmp', va_), set()).add(vb_)
+                elif va_ == vb_:
+                    out.setdefault(('cmp', va_), set()).add(va_)
+                continue
             mx, my = CONST.match('%s %s' % (x.mnemonic, x.op_str)), CONST.match('%s %s' % (y.mnemonic, y.op_str))
             if not mx or not my or mx.group(1) != my.group(1):
                 continue
@@ -48,8 +57,25 @@ def wants(ours, client, name, va, size, caddr):
             except Exception:
                 continue  # a global, not a constant
             w = 'f' if my.group(2) == 'dword' else 'd'
-            out.setdefault(v, set()).add(w)
-    return {v: w.pop() for v, w in out.items() if len(w) == 1}
+            out.setdefault(('lit', v), set()).add(w)
+    return {k: w.pop() for k, w in out.items() if len(w) == 1 and not (k[0] == 'cmp' and k[1] in w)}
+
+CMP = re.compile(r'^cmp (.+), (-?(?:0x[0-9a-f]+|\d+))$')
+INT = re.compile(r'(?<![<>=!-])(<=|>=|<(?![<=])|>(?![>=]))(\s*)(0x[0-9a-fA-F]+|\d+)\b(?![.\w])')
+
+def cmpsub(line, want, count):
+    def sub(m):
+        op, sp, lit = m.group(1), m.group(2), m.group(3)
+        v = int(lit, 0)
+        b = want.get(('cmp', v))
+        if b is None:
+            return m.group(0)
+        new = {(1, '<='): '<', (1, '>'): '>=', (-1, '<'): '<=', (-1, '>='): '>'}.get((b - v, op))
+        if not new:
+            return m.group(0)
+        count[0] += 1
+        return new + sp + (hex(b) if lit.lower().startswith('0x') else str(b))
+    return INT.sub(sub, line)
 
 LIT = re.compile(r'(?<![\w.])((?:\d+\.\d*|\.\d+)(?:[eE][+-]?\d+)?|\d+[eE][+-]?\d+)([fF]?)(?![\w.])')
 
@@ -73,7 +99,7 @@ def edit(path, fname, want):
         def sub(m):
             nonlocal n
             v = float(m.group(1))
-            w = want.get(v)
+            w = want.get(('lit', v))
             if w == 'f' and not m.group(2) and struct.unpack('<f', struct.pack('<f', v))[0] == v:
                 n += 1
                 return m.group(1) + 'f'
@@ -82,6 +108,9 @@ def edit(path, fname, want):
                 return m.group(1)
             return m.group(0)
         lines[k] = LIT.sub(sub, lines[k])
+        c = [0]
+        lines[k] = cmpsub(lines[k], want, c)
+        n += c[0]
     if n:
         open(path, 'w').write('\n'.join(lines))
     return n
@@ -106,4 +135,4 @@ if __name__ == '__main__':
             total += n
             fns += 1
             print('%-50s %2d  %s' % (x['name'][:50], n, w))
-    print(total, 'literals in', fns, 'functions')
+    print(total, 'edits in', fns, 'functions')

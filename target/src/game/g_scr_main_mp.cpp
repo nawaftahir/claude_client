@@ -342,7 +342,7 @@ void Scr_ValidateLocalizedStringRef( int parmIndex, const char *token, int token
 	assert(token);
 	assert(tokenLen >= 0);
 
-	if ( tokenLen < 2 )
+	if ( tokenLen <= 1 )
 	{
 		return;
 	}
@@ -744,7 +744,7 @@ void GScr_SetDvar()
 	p = outString;
 	memset(outString, 0, sizeof(outString));
 
-	for ( i = 0; i <= 0x1fff && dvarValue[i]; i++, p++ )
+	for ( i = 0; i < 0x2000 && dvarValue[i]; i++, p++ )
 	{
 		*p = I_CleanChar(dvarValue[i]);
 
@@ -2061,7 +2061,7 @@ void Scr_Objective_Add()
 
 		obj->entNum = ENTITYNUM_NONE;
 
-		if ( numParam > 3 )
+		if ( numParam >= 4 )
 		{
 			SetObjectiveIcon(obj, 3);
 		}
@@ -3782,7 +3782,7 @@ void Scr_PlayFX()
 
 	numParams = Scr_GetNumParam();
 
-	if ( numParams <= 1 || numParams > 4 )
+	if ( numParams < 2 || numParams > 4 )
 	{
 		Scr_Error("Incorrect number of parameters");
 	}
