@@ -1064,11 +1064,11 @@ float Vec3DistanceSq( const vec3_t p1, const vec3_t p2 );
 void Vec3Cross( const float *v0, const float *v1, float *cross );
 void Vec3Lerp( const vec3_t start, const vec3_t end, float fraction, vec3_t endpos );
 void AxisTransformComponents( const vec3_t axis[3], float x, float y, float z, vec3_t out );
-void MakeNormalVectors( const float *forward, float *right, float *up );
-void RotatePointAroundVector( float *dst, const float *dir, const float *point, float degrees );
+void MakeNormalVectors( const vec3_t forward, vec3_t right, vec3_t up );
+void RotatePointAroundVector( vec3_t dst, const vec3_t dir, const vec3_t point, float degrees );
 void vectoangles( const float *value1, float *angles );
-void OrientationPosToLocal( const orientation_t *orient, const vec3_t pos, vec3_t out );
-void OrientationDirToLocal( const orientation_t *orient, const vec3_t dir, vec3_t out );
+void OrientationPosToLocal( const orientation_t *orient, const float *pos, float *out );
+void OrientationDirToLocal( const orientation_t *orient, const float *dir, float *out );
 void FX_InitTemplates();
 void FX_Print( const char *fmt, ... );
 

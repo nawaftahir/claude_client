@@ -59,7 +59,7 @@ FxEffectDef *FX_RegisterEffect( const char *name );
 Material *FX_RegisterMaterial( const char *name );
 XModel *FX_ModelRegister( const char *name );
 const char *XModelGetName( const XModel *model );
-void Com_sprintf( char *dest, size_t size, const char *fmt, ... );
+int Com_sprintf( char *dest, size_t size, const char *fmt, ... );
 
 // Run-length coded stream: a control byte gives a literal count and a
 // following run of zero bytes.

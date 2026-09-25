@@ -2,7 +2,7 @@
 #include "../qcommon/qcommon.h"
 #include "g_shared.h"
 
-void PerpendicularVector( const float *src, float *dst );
+void PerpendicularVector( const vec3_t src, vec3_t dst );
 void G_DebugCircleEx( const float *center, float radius, const float *dir, const float *color, int depthTest, int duration );
 
 void G_DebugLine( const float *start, const float *end, const float *color, int depthTest, int duration )

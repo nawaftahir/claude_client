@@ -26,7 +26,7 @@ int Sys_MillisecondsRaw(void)
     return timeGetTime();
 }
 
-void Sys_SnapVector(float *v)
+void Sys_SnapVector(vec3_t v)
 {
     v[0] = (float)(int)v[0];
     v[1] = (float)(int)v[1];

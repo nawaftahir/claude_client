@@ -919,9 +919,9 @@ void MakeNormalVectors( const vec3_t forward, vec3_t right, vec3_t up );
 void QuatFromAxisAngle( float angle, const vec3_t axis, vec4_t quat );
 void QuatToAxis( const vec4_t quat, vec3_t axis[3] );
 void AnglesToAxis( const vec3_t angles, vec3_t axis[3] );
-void OrientationPosToWorld( const orientation_t *orient, const vec3_t pos, vec3_t out );
-void OrientationDirToWorld( const orientation_t *orient, const vec3_t dir, vec3_t out );
-void OrientationDirToLocal( const orientation_t *orient, const vec3_t dir, vec3_t out );
+void OrientationPosToWorld( const orientation_t *orient, const float *pos, float *out );
+void OrientationDirToWorld( const orientation_t *orient, const float *dir, float *out );
+void OrientationDirToLocal( const orientation_t *orient, const float *dir, float *out );
 
 FxBoltFrame *FxBoltFrame::g_mFrameList;
 FxMemMgr<FxBoltFrame> FxBoltFrame::s_memMgr;

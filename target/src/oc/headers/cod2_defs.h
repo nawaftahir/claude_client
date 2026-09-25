@@ -4012,6 +4012,18 @@ union DvarLimits {
     struct { vec_t min; vec_t max; } vector;
 };
 
+enum DvarType {
+    DVAR_TYPE_BOOL = 0,
+    DVAR_TYPE_FLOAT = 1,
+    DVAR_TYPE_VEC2 = 2,
+    DVAR_TYPE_VEC3 = 3,
+    DVAR_TYPE_VEC4 = 4,
+    DVAR_TYPE_INT = 5,
+    DVAR_TYPE_ENUM = 6,
+    DVAR_TYPE_STRING = 7,
+    DVAR_TYPE_COLOR = 8
+};
+
 union DvarValue {
     Bool enabled;
     int integer;

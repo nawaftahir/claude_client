@@ -87,7 +87,7 @@ void Hunk_ClearHigh(int memory);
 void Hunk_ClearLow(int memory);
 void Hunk_Clear();
 int Hunk_SetMark();
-void Hunk_ClearTempMemoryHigh();
+int Hunk_ClearTempMemoryHigh();
 void Hunk_Shutdown();
 char* TempMalloc(int size);
 char* TempMallocAlign(int size);

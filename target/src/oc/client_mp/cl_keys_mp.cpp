@@ -36,6 +36,13 @@ extern void Con_PageUp(void);
 extern void Con_PageDown(void);
 extern void Con_Top(void);
 extern void Con_Bottom(void);
+extern cmd_function_t *Cmd_FindCommand(const char *cmdName);
+extern char **FS_ListFilteredFiles(searchpath_t *searchPath, const char *path, const char *extension, const char *filter, FsListBehavior behavior, int *numfiles, int allocType);
+extern void FS_FreeFileList(char **list, int allocType);
+extern searchpath_t *fs_searchpaths;
+extern void Com_StripExtension(const char *in, char *out);
+extern dvar_s *Dvar_FindVar(const char *dvarName);
+extern void Con_AutoCompleteFromList(const char **strings, int stringCount, const char *prefix, char *completed, int sizeofCompleted);
 extern const char *Con_TokenizeInput(void);
 extern Bool Con_AnySpaceAfterCommand(void);
 extern qboolean UI_SetActiveMenu(int menu);
@@ -894,34 +901,134 @@ static void Console_HistoryDown(void)
     Field_AdjustScroll(&g_consoleField);
 }
 
-static void Console_CompleteCommand(void)
+static void ConcatRemaining(const char *src, const char *start)
 {
-    completionString = Con_TokenizeInput();
-    matchCount = 0;
-    shortestMatch[0] = 0;
+	const char *str;
 
-    if (!completionString || !completionString[0])
-        return;
+	str = strstr(src, start);
+	if ( !str )
+	{
+		keyConcatArgs();
+		return;
+	}
 
-    Cmd_ForEach(FindMatches);
-    Dvar_ForEach(FindMatches);
+	str += strlen(start);
+	I_strncat(g_consoleField.buffer, sizeof(g_consoleField.buffer), str);
+}
 
-    if (matchCount == 0)
-        return;
+static void ReplaceConsoleInputArgument(int replaceCount, const char *replacement)
+{
+	int cmdLineLen;
 
-    Com_sprintf(g_consoleField.buffer, sizeof(g_consoleField.buffer), "\\%s", shortestMatch);
+	if ( !*replacement )
+		return;
 
-    if (matchCount == 1 || (hasExactMatch && Con_AnySpaceAfterCommand())) {
-        if (Cmd_Argc() == 1)
-            I_strncat(g_consoleField.buffer, sizeof(g_consoleField.buffer), " ");
-        Console_UpdateFieldCursor();
-        return;
-    }
+	cmdLineLen = strlen(g_consoleField.buffer);
+	while ( cmdLineLen && isspace(g_consoleField.buffer[cmdLineLen - 1]) )
+		cmdLineLen--;
 
-    Console_UpdateFieldCursor();
-    Com_Printf("]%s\n", g_consoleField.buffer);
-    Cmd_ForEach(PrintMatches);
-    Dvar_ForEach(PrintMatches);
+	I_strncpyz(&g_consoleField.buffer[cmdLineLen - replaceCount], replacement, sizeof(g_consoleField.buffer) - (cmdLineLen - replaceCount));
+}
+
+static void CompleteCmdArgument(void)
+{
+	const char *cmdName;
+	const char *prefix;
+	cmd_function_t *cmd;
+	char **files;
+	int fileCount;
+	char arg[256];
+
+	cmdName = Con_TokenizeInput();
+	prefix = Cmd_Argv(1);
+	if ( !*prefix )
+		return;
+
+	fileCount = 0;
+	cmd = Cmd_FindCommand(cmdName);
+	if ( !cmd->autoCompleteDir || !cmd->autoCompleteExt )
+		return;
+
+	files = FS_ListFilteredFiles(fs_searchpaths, cmd->autoCompleteDir, cmd->autoCompleteExt, NULL, FS_LIST_PURE_ONLY, &fileCount, 10);
+	if ( !fileCount )
+		return;
+
+	Con_AutoCompleteFromList((const char **)files, fileCount, prefix, arg, sizeof(arg));
+	FS_FreeFileList(files, 10);
+	Com_StripExtension(arg, arg);
+	ReplaceConsoleInputArgument(strlen(prefix), arg);
+}
+
+static void CompleteDvarArgument(void)
+{
+	const dvar_s *dvar;
+	const char *prefix;
+	char value[256];
+
+	dvar = Dvar_FindVar(Con_TokenizeInput());
+	if ( dvar->type != DVAR_TYPE_ENUM )
+		return;
+
+	prefix = Cmd_Argv(1);
+	if ( !*prefix )
+		return;
+
+	Con_AutoCompleteFromList(dvar->domain.enumeration.strings, dvar->domain.enumeration.stringCount, prefix, value, sizeof(value));
+	ReplaceConsoleInputArgument(strlen(prefix), value);
+}
+
+static void CompleteCommand(void)
+{
+	field_t temp;
+	int matchLenAfterCmds;
+	int matchLenAfterDvars;
+
+	completionString = Con_TokenizeInput();
+	shortestMatch[0] = 0;
+	matchCount = 0;
+	if ( !*completionString )
+		return;
+
+	Cmd_ForEach(FindMatches);
+	matchLenAfterCmds = strlen(shortestMatch);
+	Dvar_ForEach(FindMatches);
+	matchLenAfterDvars = strlen(shortestMatch);
+	if ( !matchCount )
+		return;
+
+	temp = g_consoleField;
+
+	if ( matchCount == 1 || hasExactMatch && Con_AnySpaceAfterCommand() )
+	{
+		Com_sprintf(g_consoleField.buffer, sizeof(g_consoleField.buffer), "\\%s", shortestMatch);
+		if ( Cmd_Argc() == 1 )
+		{
+			I_strncat(g_consoleField.buffer, sizeof(g_consoleField.buffer), " ");
+		}
+		else
+		{
+			ConcatRemaining(temp.buffer, completionString);
+			if ( Cmd_Argc() == 2 )
+			{
+				if ( matchLenAfterCmds == matchLenAfterDvars )
+					CompleteCmdArgument();
+				else
+					CompleteDvarArgument();
+			}
+		}
+		g_consoleField.cursor = strlen(g_consoleField.buffer);
+		Field_AdjustScroll(&g_consoleField);
+		return;
+	}
+
+	Com_sprintf(g_consoleField.buffer, sizeof(g_consoleField.buffer), "\\%s", shortestMatch);
+	g_consoleField.cursor = strlen(g_consoleField.buffer);
+	ConcatRemaining(temp.buffer, completionString);
+	Field_AdjustScroll(&g_consoleField);
+
+	Com_Printf("]%s\n", g_consoleField.buffer);
+	Cmd_ForEach(PrintMatches);
+	Dvar_ForEach(PrintMatches);
 }
 
 void Console_Key(int key)
@@ -937,7 +1044,7 @@ void Console_Key(int key)
     }
 
     if (key == K_TAB) {
-        Console_CompleteCommand();
+        CompleteCommand();
         return;
     }
 
