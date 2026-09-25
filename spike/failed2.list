@@ -1,0 +1,11 @@
+script/scr_main.cpp
+universal/com_files.cpp
+qcommon/common.cpp
+botlib/l_precomp.cpp
+script/scr_vm.cpp
+stringed/stringed_ingame.cpp
+universal/com_math.cpp
+universal/com_sndalias_load_obj.cpp
+universal/dvar.cpp
+game/g_scr_main_mp.cpp
+stringed/stringed_hooks.cpp

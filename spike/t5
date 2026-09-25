@@ -1,0 +1,5 @@
+botlib/l_memory.cpp
+botlib/l_precomp.cpp
+botlib/l_script.cpp
+qcommon/buildnumber.c
+qcommon/com_bsp_load_obj.cpp

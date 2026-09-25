@@ -1,0 +1,14 @@
+*.obj
+*.dll
+*.exe
+*.log
+*.map
+*.rsp
+spike/src/
+spike/gl*/
+spike/ga/
+spike/all/
+spike/t
+oc/
+core.*
+spike/t*.json
