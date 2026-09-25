@@ -9,7 +9,7 @@ spike/gl*/
 spike/ga/
 spike/all/
 spike/t
-oc/
+/oc/
 core.*
 spike/t*.json
 all2/
