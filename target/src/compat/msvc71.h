@@ -1,5 +1,6 @@
 /* spike: build gcc-era server source with MSVC 7.1 */
 #define __attribute__(x)
+#define ALIGNED(n) __declspec(align(n))
 #define __inline__ __inline
 #define __asm__ __asm
 #define static_assert(e, m)

@@ -195,7 +195,7 @@ typedef struct cmodel_s
 static_assert((sizeof(cmodel_t) == 72), "ERROR: cmodel_t size is invalid!");
 #endif
 
-typedef struct __attribute__((aligned(16))) cbrush_s
+typedef struct ALIGNED(16) cbrush_s
 {
 	float mins[3];
 	int contents;

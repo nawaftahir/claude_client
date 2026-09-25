@@ -30,7 +30,7 @@ enum
 	MT_NODE_SIZE = 0x10
 };
 
-struct __attribute__((aligned(8))) MemoryNode
+struct ALIGNED(8) MemoryNode
 {
 	unsigned short prev;
 	unsigned short next;
@@ -43,7 +43,7 @@ struct scrMemTreePub_t
 
 extern scrMemTreePub_t scrMemTreePub;
 
-typedef struct __attribute__((aligned(128))) scrMemTreeGlob_s
+typedef struct ALIGNED(128) scrMemTreeGlob_s
 {
 	MemoryNode nodes[MEMORY_NODE_COUNT];
 	char leftBits[256];
@@ -314,7 +314,7 @@ typedef struct scr_anim_s
 	};
 } scr_anim_t;
 
-typedef struct __attribute__((aligned(128))) scrVmPub_s
+typedef struct ALIGNED(128) scrVmPub_s
 {
 	unsigned int *localVars;
 	VariableValue *maxstack;
@@ -915,7 +915,7 @@ extern struct scr_classStruct_t scrClassMap[];
 
 #define SL_MAX_STRING_INDEX 0x10000
 
-typedef struct __attribute__((aligned(64))) scrVarGlob_s
+typedef struct ALIGNED(64) scrVarGlob_s
 {
 	VariableValueInternal variableList[SL_MAX_STRING_INDEX];
 } scrVarGlob_t;
@@ -1008,7 +1008,7 @@ byte* MT_GetRefByIndex(int index);
 int MT_GetIndexByRef(byte* p);
 void MT_DumpTree();
 
-struct __attribute__((aligned(4))) RefString
+struct ALIGNED(4) RefString
 {
 	union
 	{
@@ -1050,7 +1050,7 @@ struct HashEntry
 	};
 };
 
-typedef struct __attribute__((aligned(128))) scrStringGlob_s
+typedef struct ALIGNED(128) scrStringGlob_s
 {
 	HashEntry hashTable[HASH_TABLE_SIZE];
 	bool inited;

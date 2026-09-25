@@ -343,7 +343,7 @@ struct bgsAnim_t
 	} generic_human;
 };
 
-typedef struct __attribute__((aligned(8))) bgs_s
+typedef struct ALIGNED(8) bgs_s
 {
 	bgsAnim_t animData;
 	int time;
