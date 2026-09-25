@@ -1079,8 +1079,8 @@ float XAnimGetAverageRateFrequency(const XAnimTree_s *tree, unsigned int infoInd
 		return parts->frequency;
 	}
 
-	trans = 0.0;
-	rate = 0.0;
+	trans = 0.0f;
+	rate = 0.0f;
 
 	for ( i = 0; i < numAnims; ++i )
 	{
@@ -1094,14 +1094,14 @@ float XAnimGetAverageRateFrequency(const XAnimTree_s *tree, unsigned int infoInd
 		info = &g_xAnimInfo[index];
 		weight = info->state.weight;
 
-		if ( weight == 0.0 )
+		if ( weight == 0.0f )
 		{
 			continue;
 		}
 
 		freq = XAnimGetAverageRateFrequency(tree, i + entry->u.animParent.children);
 
-		if ( freq == 0.0 )
+		if ( freq == 0.0f )
 		{
 			continue;
 		}
@@ -1110,7 +1110,12 @@ float XAnimGetAverageRateFrequency(const XAnimTree_s *tree, unsigned int infoInd
 		rate = freq * weight * info->state.rate + rate;
 	}
 
-	return trans == 0.0 ? 0.0 : rate / trans;
+	if ( trans != 0.0f )
+	{
+		return rate / trans;
+	}
+
+	return 0.0f;
 }
 
 
