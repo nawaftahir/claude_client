@@ -159,7 +159,6 @@ typedef struct
 	int hash;
 } animStringItem_t;
 
-#pragma pack(push, 1)
 typedef struct animation_s
 {
 	char name[MAX_QPATH];
@@ -171,7 +170,6 @@ typedef struct animation_s
 	int64_t movetype;
 	int noteType;
 } animation_t;
-#pragma pack(pop)
 #if defined(__i386__)
 static_assert((sizeof(animation_t) == 0x60), "ERROR: animation_t size is invalid!");
 #endif
