@@ -14,7 +14,7 @@ extern keyname_t keynames_localized[100];
 extern clientStatic_t cls;
 extern refexport_t re;
 
-extern void ReplaceStringInternal(char **dest, const char *src);
+extern void ReplaceStringInternal(const char **str, const char *in);
 extern void Cmd_AddCommand(const char *name, void (*func)(void));
 extern int Cmd_Argc(void);
 extern const char *Cmd_Argv( int arg );
@@ -128,7 +128,7 @@ void Key_SetOverstrikeMode(qboolean state);
 static void FindMatches(const char *s);
 static void PrintMatches(const char *s);
 static void keyConcatArgs(void);
-static __attribute_regparm__(1) int Key_StringToKeynum(const char *str);
+int Key_StringToKeynum(const char *str);
 char *Key_KeynumToString(int keynum, qboolean translate);
 void Key_SetBinding(int keynum, const char *binding);
 char *Key_GetBinding(int keynum);
@@ -268,44 +268,26 @@ static void PrintMatches(const char *s)
 static void keyConcatArgs(void)
 {
     int i;
+    const char *arg;
 
-    for (i = 1; i < Cmd_Argc(); ++i) {
-        const char *arg;
-        const char *scan;
-
-        I_strncat(g_consoleField.buffer, 0x100, " ");
+    for (i = 1; i < Cmd_Argc(); i++) {
+        I_strncat(g_consoleField.buffer, sizeof(g_consoleField.buffer), " ");
         arg = Cmd_Argv(i);
-        scan = arg;
-        while (*scan && *scan != ' ') {
-            ++scan;
+        while (*arg) {
+            if (*arg == ' ') {
+                I_strncat(g_consoleField.buffer, sizeof(g_consoleField.buffer), "\"");
+                break;
+            }
+            arg++;
         }
-
-        if (*scan == ' ') {
-            I_strncat(g_consoleField.buffer, 0x100, "\"");
-        }
-
-        I_strncat(g_consoleField.buffer, 0x100, arg);
-
-        if (*scan == ' ') {
-            I_strncat(g_consoleField.buffer, 0x100, "\"");
+        I_strncat(g_consoleField.buffer, sizeof(g_consoleField.buffer), Cmd_Argv(i));
+        if (*arg == ' ') {
+            I_strncat(g_consoleField.buffer, sizeof(g_consoleField.buffer), "\"");
         }
     }
 }
 
-static inline __attribute__((always_inline)) int Key_HexCharValue(char ch)
-{
-    if (I_isdigit(ch)) {
-        return ch - '0';
-    }
-
-    if ((unsigned int)(ch - 'a') <= 5) {
-        return ch - 'a' + 10;
-    }
-
-    return 0;
-}
-
-static __attribute_regparm__(1) int Key_StringToKeynum(const char *str)
+int Key_StringToKeynum(const char *str)
 {
     keyname_t *name;
 
@@ -318,7 +300,27 @@ static __attribute_regparm__(1) int Key_StringToKeynum(const char *str)
     }
 
     if (str[0] == '0' && str[1] == 'x' && strlen(str) == 4) {
-        return (Key_HexCharValue(str[2]) << 4) + Key_HexCharValue(str[3]);
+        int n1, n2;
+
+        n1 = str[2];
+        if (I_isdigit(n1)) {
+            n1 -= '0';
+        } else if (n1 >= 'a' && n1 <= 'f') {
+            n1 = n1 - 'a' + 10;
+        } else {
+            n1 = 0;
+        }
+
+        n2 = str[3];
+        if (I_isdigit(n2)) {
+            n2 -= '0';
+        } else if (n2 >= 'a' && n2 <= 'f') {
+            n2 = n2 - 'a' + 10;
+        } else {
+            n2 = 0;
+        }
+
+        return n1 * 16 + n2;
     }
 
     for (name = keynames; name->name; ++name) {
@@ -330,7 +332,7 @@ static __attribute_regparm__(1) int Key_StringToKeynum(const char *str)
     return -1;
 }
 
-static inline __attribute__((always_inline)) char *Key_KeynumToStringInternal(int keynum, qboolean translate)
+char *Key_KeynumToString(int keynum, qboolean translate)
 {
     keyname_t *name;
     int upperNibble;
@@ -374,16 +376,11 @@ static inline __attribute__((always_inline)) char *Key_KeynumToStringInternal(in
     return tinystr;
 }
 
-char *Key_KeynumToString(int keynum, qboolean translate)
-{
-    return Key_KeynumToStringInternal(keynum, translate);
-}
-
 static inline __attribute__((always_inline)) void Key_SetBindingInternal(int keynum, const char *binding)
 {
     if (keynum == -1)
         return;
-    ReplaceStringInternal((char **)&keys[keynum].binding, binding);   /* was keynum*12+8 (x86 qkey_t stride) */
+    ReplaceStringInternal((const char **)&keys[keynum].binding, binding);
     dvar_modifiedFlags |= 1;
 }
 
@@ -545,7 +542,7 @@ void Key_Unbindall_f(void)
 
     for (keynum = 0; keynum < 256; ++keynum) {
         if (keys[keynum].binding != NULL && keynum != -1) {
-            ReplaceStringInternal((char **)&keys[keynum].binding, "");   /* was keynum*12+8 (x86 qkey_t stride) */
+            ReplaceStringInternal((const char **)&keys[keynum].binding, "");
             *modifiedFlags |= 1;
         }
     }
@@ -1107,7 +1104,7 @@ void Key_WriteBindings(fileHandle_t f)
             continue;
         }
 
-        FS_Printf(f, "bind %s \"", Key_KeynumToStringInternal(keynum, 0));
+        FS_Printf(f, "bind %s \"", Key_KeynumToString(keynum, 0));
         for (scan = keys[keynum].binding; *scan; ++scan) {
             if (*scan == '"') {
                 FS_Printf(f, "\\\"");
@@ -1123,15 +1120,10 @@ void Key_Bindlist_f(void)
 {
     int keynum;
 
-    for (keynum = 0; keynum < 256; ++keynum) {
-        const char *binding;
-
-        binding = keys[keynum].binding;
-        if (binding == NULL || *binding == '\0') {
-            continue;
+    for (keynum = 0; keynum < 256; keynum++) {
+        if (keys[keynum].binding && keys[keynum].binding[0]) {
+            Com_Printf("%s \"%s\"\n", Key_KeynumToString(keynum, 0), keys[keynum].binding);
         }
-
-        Com_Printf("%s \"%s\"\n", Key_KeynumToStringInternal(keynum, 0), binding);
     }
 }
 

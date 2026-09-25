@@ -57,7 +57,6 @@
 #pragma comment(linker, "/alternatename:?PC_ReadTokenHandle@@YAHHPAX@Z=?PC_ReadTokenHandle@@YAHHPAUpc_token_s@@@Z")
 #pragma comment(linker, "/alternatename:?PM_IsBinocularsADS@@YAEPBUplayerState_s@@@Z=?PM_IsBinocularsADS@@YAHPBUplayerState_s@@@Z")
 #pragma comment(linker, "/alternatename:?PM_UpdateViewAngles@@YAXPAUplayerState_s@@PBUusercmd_s@@HH@Z=?PM_UpdateViewAngles@@YAXPAUplayerState_s@@MPAUusercmd_s@@E@Z")
-#pragma comment(linker, "/alternatename:?ReplaceStringInternal@@YAXPAPADPBD@Z=?ReplaceStringInternal@@YAXPAPBDPBD@Z")
 #pragma comment(linker, "/alternatename:?SEH_GetLanguageIndexForName@@YAHPBDPAW4language_t@@@Z=?SEH_GetLanguageIndexForName@@YAHPBDPAH@Z")
 #pragma comment(linker, "/alternatename:?SEH_LocalizeTextMessage@@YAPBDPBD00@Z=?SEH_LocalizeTextMessage@@YAPBDPBD0W4msgLocErrType_t@@@Z")
 #pragma comment(linker, "/alternatename:?Scr_GetStringUsage@@YAIXZ=?Scr_GetStringUsage@@YAHXZ")
