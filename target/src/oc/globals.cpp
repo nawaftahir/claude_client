@@ -450,7 +450,6 @@ const void *speex_nb_mode_ptr;
 int *speex_quality_ptr;
 const void *speex_uwb_mode_ptr;
 const void *speex_wb_mode_ptr;
-int sys_timeBase;
 uiInfo_t *uiInfo;
 const dvar_t *ui_bigFont;
 const dvar_t *ui_browserFriendlyfire;
