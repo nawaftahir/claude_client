@@ -232,7 +232,6 @@ void Sys_DestroyConsole(void)
         DestroyWindow(s_wcd.hWnd);
         s_wcd.hWnd = 0;
     }
-    gConsoleRunning = 0;
 }
 
 void Sys_ShowConsole(int visLevel, qboolean quitOnClose)

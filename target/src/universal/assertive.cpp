@@ -7,7 +7,7 @@ static bool shouldQuitOnError = false;
 RefreshQuitOnErrorCondition
 ============
 */
-static void RefreshQuitOnErrorCondition()
+void RefreshQuitOnErrorCondition()
 {
 	if ( Dvar_IsSystemActive() )
 		shouldQuitOnError = Dvar_GetBool("QuitOnError") || Dvar_GetInt("r_vc_compile") == 2;
