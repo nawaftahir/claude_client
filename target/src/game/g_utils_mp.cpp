@@ -275,7 +275,7 @@ void G_DObjUpdate( gentity_t *ent )
 		ent->s.index = modelIndex;
 	}
 
-	for ( i = 0; i <= MAX_MODEL_ATTACHMENTS; i++ )
+	for ( i = 0; i < MAX_MODEL_ATTACHMENTS + 1; i++ )
 	{
 		modelIndex = ent->attachModelNames[i];
 
@@ -349,7 +349,7 @@ qboolean G_EntAttach( gentity_t *ent, const char *modelName, unsigned int tagNam
 	assert(tagName);
 	assert(!G_EntDetach( ent, modelName, tagName ));
 
-	for ( i = 0; i <= MAX_MODEL_ATTACHMENTS; i++ )
+	for ( i = 0; i < MAX_MODEL_ATTACHMENTS + 1; i++ )
 	{
 		if ( ent->attachModelNames[i] )
 		{
@@ -387,7 +387,7 @@ qboolean G_EntDetach( gentity_t *ent, const char *modelName, unsigned int tagNam
 
 	assert(tagName);
 
-	for ( i = 0; i <= MAX_MODEL_ATTACHMENTS; i++ )
+	for ( i = 0; i < MAX_MODEL_ATTACHMENTS + 1; i++ )
 	{
 		if ( ent->attachTagNames[i] != tagName )
 		{
@@ -439,7 +439,7 @@ G_EntDetachAll
 */
 void G_EntDetachAll( gentity_t *ent )
 {
-	for ( int i = 0; i <= MAX_MODEL_ATTACHMENTS; i++ )
+	for ( int i = 0; i < MAX_MODEL_ATTACHMENTS + 1; i++ )
 	{
 		ent->attachModelNames[i] = 0;
 		Scr_SetString(&ent->attachTagNames[i], 0);

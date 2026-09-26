@@ -757,7 +757,7 @@ void Scr_FreeEntityConstStrings( gentity_t *ent )
 		}
 	}
 
-	for ( i = 0; i <= MAX_MODEL_ATTACHMENTS; i++ )
+	for ( i = 0; i < MAX_MODEL_ATTACHMENTS + 1; i++ )
 	{
 		ent->attachModelNames[i] = 0;
 		Scr_SetString(&ent->attachTagNames[i], 0);

@@ -1191,7 +1191,7 @@ void AddLeanToPosition( float *position, float fViewYaw, float fLeanFrac, float 
 	vec3_t vRight;
 	vec3_t vAng;
 
-	if ( fLeanFrac != 0.0 )
+	if ( fLeanFrac != 0.0f )
 	{
 		fLean = GetLeanFraction( fLeanFrac );
 		VectorSet( vAng, 0, fViewYaw, fLean * fViewRoll );

@@ -2809,7 +2809,7 @@ static void BG_Player_DoControllersInternal( DObj *obj, const entityState_t *es,
 
 		tag_origin_angles[PITCH] = tag_origin_angles[PITCH] + es->fTorsoPitch;
 
-		FastSinCos(vTorsoAngles[YAW] * RADINDEG, &s, &c);
+		FastSinCos(vTorsoAngles[YAW] * 0.017453292f, &s, &c);
 
 		tag_origin_offset[PITCH] = (1.0f - c) * -24.0f + tag_origin_offset[PITCH];
 		tag_origin_offset[YAW] = s * -12.0f + tag_origin_offset[YAW];
@@ -2833,7 +2833,7 @@ static void BG_Player_DoControllersInternal( DObj *obj, const entityState_t *es,
 		angles[CONTROL_ANGLES_BACK_MID][ROLL] = vTorsoAngles[ROLL] * 0.2f;
 
 		angles[CONTROL_ANGLES_BACK_UP][PITCH] = vTorsoAngles[PITCH];
-		angles[CONTROL_ANGLES_BACK_UP][YAW] = vTorsoAngles[YAW] * 0.80000001f + vTorsoAngles[ROLL];
+		angles[CONTROL_ANGLES_BACK_UP][YAW] = vTorsoAngles[YAW] * 0.80000001f - vTorsoAngles[ROLL] * -1.0f;
 		angles[CONTROL_ANGLES_BACK_UP][ROLL] = vTorsoAngles[ROLL] * -0.2f;
 	}
 	else

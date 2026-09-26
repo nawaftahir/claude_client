@@ -92,7 +92,7 @@ void SEH_UpdateLanguageInfo()
 			g_languages[i].bPresent = 0;
 		}
 	}
-	if ( numLanguages <= 0 )
+	if ( numLanguages < 1 )
 		Com_Printf("^1ERROR: No languages available because no localized assets were found\n");
 	if ( SEH_StringEd_SetLanguageStrings(loc_language->current.integer) )
 		return;

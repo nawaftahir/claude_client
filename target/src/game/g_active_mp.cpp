@@ -668,7 +668,7 @@ void G_PlayerStateToEntityStateExtrapolate( playerState_t *ps, entityState_t *s,
 		}
 		else
 		{
-			if ( fLerpFrac > 1.0 )
+			if ( fLerpFrac > 1.0f )
 			{
 				fLerpFrac = 1.0;
 			}

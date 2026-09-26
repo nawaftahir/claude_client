@@ -2337,7 +2337,7 @@ void PM_FootstepEvent( pmove_t *pm, pml_t *pml, int iOldBobCycle, int iNewBobCyc
 	ps = pm->ps;
 	assert(ps);
 
-	if ( ( (byte)(iOldBobCycle + 64) ^ (byte)(iNewBobCycle + 64) ) & 128 )
+	if ( ( ( iOldBobCycle + 64 ) ^ ( iNewBobCycle + 64 ) ) & 128 )
 	{
 		if ( ps->groundEntityNum == ENTITYNUM_NONE )
 		{

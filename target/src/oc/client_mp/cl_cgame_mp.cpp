@@ -287,7 +287,7 @@ qboolean CL_GetSnapshot(int snapshotNumber, snapshot_t *snapshot)
     int count;
     int i;
 
-    if (cl->snap.messageNum < snapshotNumber) {
+    if (snapshotNumber > cl->snap.messageNum) {
         Com_Error(ERR_DROP, "CL_GetSnapshot: snapshotNumber > cl.snap.messageNum");
     }
 

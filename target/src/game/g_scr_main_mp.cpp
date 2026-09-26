@@ -1044,7 +1044,7 @@ void ScrCmd_detach( scr_entref_t entref )
 
 	Com_Printf("Current attachments:\n");
 
-	for ( int i = 0; i <= MAX_MODEL_ATTACHMENTS; i++ )
+	for ( int i = 0; i < MAX_MODEL_ATTACHMENTS + 1; i++ )
 	{
 		if ( !ent->attachModelNames[i] )
 		{
@@ -1085,7 +1085,7 @@ void ScrCmd_GetAttachSize( scr_entref_t entref )
 	int i;
 	gentity_t *ent = GetEntity(entref);
 
-	for ( i = 0; i <= MAX_MODEL_ATTACHMENTS; i++ )
+	for ( i = 0; i < MAX_MODEL_ATTACHMENTS + 1; i++ )
 	{
 		if ( !ent->attachModelNames[i] )
 		{
@@ -4453,7 +4453,7 @@ void GScr_ShellShock( scr_entref_t entref )
 
 	shock = Scr_GetString(0);
 
-	for ( id = 1; id <= MAX_SHELLSHOCKS - 1; id++ )
+	for ( id = 1; id < MAX_SHELLSHOCKS; id++ )
 	{
 		SV_GetConfigstring(id + CS_SHELLSHOCKS, s, sizeof(s));
 

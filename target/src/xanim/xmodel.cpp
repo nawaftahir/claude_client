@@ -1,8 +1,6 @@
 #include "../qcommon/qcommon.h"
 #include "../script/script_public.h"
 
-#define PATH_SEP '/'
-
 inline void AxisTransformVector(const vec3_t in, const vec3_t mat[3], vec3_t out)
 {
 	out[0] = in[0] * mat[0][0] + in[1] * mat[1][0] + in[2] * mat[2][0];

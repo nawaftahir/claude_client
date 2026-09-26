@@ -1299,7 +1299,7 @@ void PlayerCmd_finishPlayerDamage( scr_entref_t entref )
 		flinchYawDir = flinchYawDir + 360;
 	}
 
-	pSelf->client->ps.flinchYaw -= (int)flinchYawDir;
+	pSelf->client->ps.flinchYaw -= flinchYawDir;
 
 	if ( pSelf->client->ps.damageTimer > max_damage_time )
 	{

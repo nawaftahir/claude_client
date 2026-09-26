@@ -476,7 +476,7 @@ void PM_StepSlideMove( pmove_t *pm, pml_t *pml, qboolean gravity )
 						VectorScale(ps->velocity, fSpeedScale, ps->velocity);
 						iDelta -= 128;
 
-						if (abs(iDelta) >= 4)
+						if (abs(iDelta) > 3)
 						{
 							if (ps->groundEntityNum != ENTITYNUM_NONE)
 							{
