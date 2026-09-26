@@ -259,7 +259,7 @@ qboolean CG_ServerMaterialName(int index, char *materialName, int maxLen)
 {
     const char *configString;
 
-    if ((unsigned int)(index - 1) > 0x7e) {
+    if (index <= 0 || index >= 128) {
         return 0;
     }
 

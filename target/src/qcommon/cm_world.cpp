@@ -68,7 +68,7 @@ void CM_ClearWorld()
 
 	cm_world.freeHead = 2;
 
-	for ( i = 2; (unsigned int)i <= AREA_NODES - 2; i++ )
+	for ( i = 2; (unsigned int)i < AREA_NODES - 1; i++ )
 	{
 		cm_world.sectors[i].tree.parent = i + 1;
 	}

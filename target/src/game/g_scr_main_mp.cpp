@@ -1109,7 +1109,7 @@ void ScrCmd_GetAttachModelName( scr_entref_t entref )
 	ent = GetEntity(entref);
 	i = Scr_GetInt(0);
 
-	if ( i > MAX_MODEL_ATTACHMENTS || !ent->attachModelNames[i] )
+	if ( i >= MAX_MODEL_ATTACHMENTS + 1 || !ent->attachModelNames[i] )
 	{
 		Scr_ParamError(0, "bad index");
 	}
@@ -1130,7 +1130,7 @@ void ScrCmd_GetAttachTagName( scr_entref_t entref )
 	ent = GetEntity(entref);
 	i = Scr_GetInt(0);
 
-	if ( i > MAX_MODEL_ATTACHMENTS || !ent->attachModelNames[i] )
+	if ( i >= MAX_MODEL_ATTACHMENTS + 1 || !ent->attachModelNames[i] )
 	{
 		Scr_ParamError(0, "bad index");
 	}
@@ -1152,7 +1152,7 @@ void ScrCmd_GetAttachIgnoreCollision( scr_entref_t entref )
 	ent = GetEntity(entref);
 	i = Scr_GetInt(0);
 
-	if ( i > MAX_MODEL_ATTACHMENTS || !ent->attachModelNames[i] )
+	if ( i >= MAX_MODEL_ATTACHMENTS + 1 || !ent->attachModelNames[i] )
 	{
 		Scr_ParamError(0, "bad index");
 	}
@@ -2054,7 +2054,7 @@ void Scr_Objective_Add()
 
 	obj->state = state;
 
-	if ( numParam > 2 )
+	if ( numParam >= 3 )
 	{
 		Scr_GetVector(2, obj->origin);
 		SnapVector(obj->origin);
@@ -5208,7 +5208,7 @@ GScr_FPrintln
 */
 void GScr_FPrintln()
 {
-	if ( Scr_GetNumParam() < 2 )
+	if ( Scr_GetNumParam() <= 1 )
 	{
 		Com_Printf("fprintln requires at least 2 parameters (file, output)\n");
 		Scr_AddInt(-1);
@@ -5249,7 +5249,7 @@ GScr_FReadLn
 */
 void GScr_FReadLn()
 {
-	if ( !Scr_GetNumParam() )
+	if ( Scr_GetNumParam() <= 0 )
 	{
 		Com_Printf("freadln requires a parameter - the file to read from\n");
 		Scr_AddInt(-1);

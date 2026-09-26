@@ -521,7 +521,7 @@ bool Com_ValidXModelName(const char *name);
 qboolean Info_Validate( const char *s );
 inline bool Com_BitCheck( const int array[], int bitNum )
 {
-	return (array[bitNum >> 5] >> (bitNum & 31)) & 1;
+	return ( array[bitNum >> 5] & ( 1 << ( bitNum & 31 ) ) ) != 0;
 }
 
 inline void Com_BitSet( int array[], int bitNum )

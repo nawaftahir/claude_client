@@ -764,7 +764,7 @@ void Com_ShutdownEvents( void )
 
 	while ( com_pushedEventsHead > com_pushedEventsTail )
 	{
-		ev = com_pushedEvents[(byte)com_pushedEventsTail];
+		ev = com_pushedEvents[com_pushedEventsTail & ( MAX_PUSHED_EVENTS - 1 )];
 		com_pushedEventsTail++;
 
 		if ( ev.evPtr )

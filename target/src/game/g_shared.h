@@ -746,7 +746,7 @@ typedef struct game_hudelem_field_s
 	int ofs;
 	int type;
 	int size;
-	byte shift;
+	int shift;
 	void (*setter)(game_hudelem_s *, int);
 	void (*getter)(game_hudelem_s *, int);
 } game_hudelem_field_t;

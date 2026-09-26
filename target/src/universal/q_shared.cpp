@@ -27,7 +27,7 @@ int ColorIndex( unsigned char c )
 
 	index = c - '0';
 
-	return index > 9 ? 7 : index;
+	return index >= 10 ? 7 : index;
 }
 
 const char *Com_GetFilenameSubString( const char *pathname )

@@ -3838,7 +3838,7 @@ void SinCosDegrees( float angle, float *pSin, float *pCos )
 	}
 	else
 	{
-		FastSinCos(angle * 0.017453292519943295, pSin, pCos);
+		FastSinCos(angle * 0.017453292f, pSin, pCos);
 	}
 }
 

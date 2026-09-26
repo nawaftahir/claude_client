@@ -516,7 +516,7 @@ qboolean Pickup_Health( gentity_t *ent, gentity_t *other )
 
 		current = 100 * other->health / (float)other->client->ps.stats[STAT_MAX_HEALTH];
 
-		if ( current <= 0 )
+		if ( current < 1 )
 		{
 			current = 1;
 		}
@@ -527,7 +527,7 @@ qboolean Pickup_Health( gentity_t *ent, gentity_t *other )
 
 		old = 100 * oldHealth / (float)other->client->ps.stats[STAT_MAX_HEALTH];
 
-		if ( old <= 0 )
+		if ( old < 1 )
 		{
 			old = 1;
 		}

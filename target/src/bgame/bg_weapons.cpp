@@ -3965,13 +3965,13 @@ void PM_Weapon_CheckForBinoculars( pmove_t *pm )
 	{
 		pressed = ( !( pm->oldcmd.buttons & BUTTON_BINOCULARS ) && pm->cmd.buttons & BUTTON_BINOCULARS );
 		raise = ( pressed && ( ps->weaponstate < WEAPON_BINOCULARS_INIT || ps->weaponstate > WEAPON_BINOCULARS_END ) );
-		drop = ( pressed && ( ps->weaponstate > WEAPON_BINOCULARS_INIT && ps->weaponstate < WEAPON_BINOCULARS_DROP ) );
+		drop = ( pressed && ( ps->weaponstate >= WEAPON_BINOCULARS_RAISE && ps->weaponstate <= WEAPON_BINOCULARS_EXIT_ADS ) );
 	}
 	else
 	{
 		pressed = ( ( pm->cmd.buttons & BUTTON_BINOCULARS ) != 0 );
 		raise = ( pressed && ( ps->weaponstate < WEAPON_BINOCULARS_INIT || ps->weaponstate > WEAPON_BINOCULARS_END ) );
-		drop = ( !pressed && ( ps->weaponstate > WEAPON_BINOCULARS_INIT && ps->weaponstate < WEAPON_BINOCULARS_DROP ) );
+		drop = ( !pressed && ( ps->weaponstate >= WEAPON_BINOCULARS_RAISE && ps->weaponstate <= WEAPON_BINOCULARS_EXIT_ADS ) );
 	}
 
 	if ( raise )
@@ -4756,7 +4756,7 @@ void BG_CalculateWeaponPosition_GunRecoil( weaponState_t *ws, vec3_t angles )
 		}
 	}
 
-	VectorAdd(angles, ws->vGunOffset, angles);
+	VectorAdd(ws->vGunOffset, angles, angles);
 }
 
 /*

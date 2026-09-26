@@ -862,7 +862,7 @@ void NET_SendLoopPacket( int sock, int length, const void *data, netadr_t to )
 
 	port = 0;
 
-	if ( sock <= NS_CLIENT )
+	if ( sock < NS_SERVER )
 	{
 		port = sock;
 		sock = NS_SERVER;

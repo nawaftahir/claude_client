@@ -201,7 +201,7 @@ static void FX_AddPrimitiveToEffect( FxEffectDef *fx, PrimitiveTemplate *primTem
 	int count;
 
 	count = fx->mPrimitiveCount;
-	if ( count > 23 )
+	if ( count >= 24 )
 	{
 		FX_Print("FxScheduler:  Error--too many primitives in an effect\n");
 		return;

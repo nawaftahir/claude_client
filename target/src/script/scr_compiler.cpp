@@ -525,7 +525,7 @@ void EmitGetInteger( int value, sval_u sourcePos )
 			return;
 		}
 
-		if ( value <= UCHAR_MAX )
+		if ( value < UCHAR_MAX + 1 )
 		{
 			EmitOpcode(OP_GetByte, 1, CALL_NONE);
 			AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_BREAKPOINT);
@@ -533,7 +533,7 @@ void EmitGetInteger( int value, sval_u sourcePos )
 			return;
 		}
 
-		if ( value <= USHRT_MAX )
+		if ( value < USHRT_MAX + 1 )
 		{
 			EmitOpcode(OP_GetUnsignedShort, 1, CALL_NONE);
 			AddOpcodePos(sourcePos.sourcePosValue, SOURCE_TYPE_BREAKPOINT);
