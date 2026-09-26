@@ -32,7 +32,7 @@ qcommon/msg_mp.cpp
 qcommon/net_chan_mp.cpp
 universal/q_parse.cpp
 universal/q_shared.cpp
-qcommon/unused_buffer.cpp
+oc/qcommon/statmonitor.cpp
 server/sv_ccmds_mp.cpp
 server/sv_client_mp.cpp
 server/sv_world_mp.cpp
@@ -221,6 +221,7 @@ oc/groupvoice/decode.cpp
 oc/groupvoice/encode.cpp
 oc/groupvoice/play.cpp
 oc/groupvoice/record.cpp
+oc/groupvoice/mixer.cpp
 oc/ui/ui_component.cpp
 oc/ui/ui_shared_obj.cpp
 oc/ui/ui_utils.cpp
@@ -235,12 +236,15 @@ oc/win32/gfx_dll_v60.cpp
 oc/win32/gfx_v60_threads.cpp
 oc/snd.cpp
 oc/win32/snd_driver.cpp
+win32/win_common.cpp
 win32/win_configure.cpp
 win32/win_input.cpp
 win32/win_main.cpp
 win32/win_net.cpp
 oc/win32/win_localize.cpp
 win32/win_shared.cpp
+win32/win_splash.cpp
+win32/win_wndproc.cpp
 oc/win32/win_syscon.cpp
 oc/win32/win_threads.cpp
 oc/win32/win_voice.cpp

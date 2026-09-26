@@ -36,7 +36,7 @@ extern int effectActiveCountNonBolt;
 extern int privateEffectActiveCountBolt;
 extern int privateEffectActiveCountNonBolt;
 
-DObj *Com_GetClientDObjLocal( int handle, int localClientNum );
+DObj *Com_GetClientDObj( int handle, int localClientNum );
 int DObjGetBoneIndex( const DObj *obj, unsigned int name );
 int Net_LocalClientNum();
 int FX_Init( bool rendererExists );
@@ -65,7 +65,7 @@ int FX_GetBoneIndex( int entNum, unsigned int bone )
 {
 	DObj *obj;
 
-	obj = Com_GetClientDObjLocal(entNum, Net_LocalClientNum());
+	obj = Com_GetClientDObj(entNum, Net_LocalClientNum());
 	if ( !obj )
 		return -1;
 	return DObjGetBoneIndex(obj, bone);

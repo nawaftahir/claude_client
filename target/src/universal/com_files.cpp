@@ -1123,10 +1123,10 @@ int FS_TouchFile( const char *filename )
 
 /*
 ==============
-FS_FindOSPathDir
+FS_ShortOSFilePath
 ==============
 */
-const char *FS_FindOSPathDir( const char *qpath )
+const char *FS_ShortOSFilePath( const char *qpath )
 {
 	searchpath_t *search;
 	char netpath[MAX_OSPATH];

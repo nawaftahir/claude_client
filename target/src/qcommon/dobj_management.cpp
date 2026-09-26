@@ -17,7 +17,7 @@ qboolean g_bDObjInited;
 void Com_ShutdownDObj(void);
 
 
-DObj* Com_GetClientDObjLocal( int handle, int localClientNum )
+DObj* Com_GetClientDObj( int handle, int localClientNum )
 {
 	handle += 1152 * localClientNum;
 
@@ -76,7 +76,7 @@ int Com_GetFreeDObjIndex()
 }
 
 
-void Com_ClientDObjCreateLocal( DObjModel_s *dobjModels, unsigned short numModels, XAnimTree_s *tree, int handle )
+void Com_ClientDObjCreate( DObjModel_s *dobjModels, unsigned short numModels, XAnimTree_s *tree, int handle )
 {
 	int index;
 
@@ -89,7 +89,7 @@ void Com_ClientDObjCreateLocal( DObjModel_s *dobjModels, unsigned short numModel
 }
 
 
-void Com_ClientDObjClearAllSkelLocal()
+void Com_ClientDObjClearAllSkel()
 {
 	int handle;
 	int index;

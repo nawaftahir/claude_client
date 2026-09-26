@@ -198,9 +198,6 @@ extern void CL_ServersResponsePacket(netadr_t from, msg_t *msg);
 extern const char *CL_GetConfigString(int index);
 extern void CL_ParseServerMessage(msg_t *msg);
 extern void CL_ArchiveClientState(MemoryFile *memFile);
-extern void LargeLocal_LargeLocal(const LargeLocal *ll, int size);
-extern void *LargeLocal_GetBuf(const LargeLocal *ll);
-extern void ZN10LargeLocalD1Ev(LargeLocal *ll);
 extern void Cmd_TokenizeString(const char *text);
 extern refexport_t *GetRefAPI(int apiVersion, refimport_t *rimp);
 extern void MemFile_InitForWriting(MemoryFile *mf, int size, void *buf, bool flag);
@@ -1699,7 +1696,7 @@ static void CL_BuildMd5StrFromCDKey(char *md5Str)
     md5Str[0] = '\0';
     memset(nums, 0, sizeof(nums));
 
-    key = (const char *)imp_cl_cdkey;
+    key = cl_cdkey;
     len = strlen(key);
     if (len > 0) {
         j = 0;
@@ -1746,7 +1743,7 @@ void CL_RequestAuthorization(void)
     lastUpdateKeyAuthTime = cls.realtime;
 #endif
 
-    if (!CL_CDKeyValidate((const char *)imp_cl_cdkey, (const char *)imp_cl_cdkeychecksum)) {
+    if (!CL_CDKeyValidate(cl_cdkey, cl_cdkeychecksum)) {
         Com_Error(1, (const char *)"EXE_ERR_INVALID_CD_KEY");
         return;
     }
@@ -1774,7 +1771,7 @@ void CL_RequestAuthorization(void)
     if (Dvar_GetBool((const char *)"fs_restrict")) {
         I_strncpyz(nums, (const char *)"demo", sizeof(nums));
     } else {
-        cdkey = (const char *)imp_cl_cdkey;
+        cdkey = cl_cdkey;
         len = strlen(cdkey);
         if (len > 32)
             len = 32;
@@ -2101,13 +2098,12 @@ int Client_SendVoiceData(int bytes, char *enc_buffer)
 Bool CL_ConnectionlessPacket(netadr_t from, msg_t *msg, int time)
 {
     clientConnection_t *conn = &::clc;
-    LargeLocal printBuf_large_local;
     char *printBuf;
     const char *cmd;
     Bool result = 0;
 
-    LargeLocal_LargeLocal(&printBuf_large_local, MAX_MSGLEN);
-    printBuf = (char *)LargeLocal_GetBuf(&printBuf_large_local);
+    LargeLocal printBuf_large_local(MAX_MSGLEN);
+    printBuf = (char *)printBuf_large_local.GetBuf();
 
     MSG_BeginReading(msg);
     MSG_ReadLong(msg);
@@ -2264,7 +2260,6 @@ Bool CL_ConnectionlessPacket(netadr_t from, msg_t *msg, int time)
     }
 
 finish:
-    ZN10LargeLocalD1Ev(&printBuf_large_local);
     return result;
 }
 

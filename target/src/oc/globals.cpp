@@ -365,8 +365,6 @@ void *imp_chatField;
 void *imp_chat_team;
 void *imp_cl;
 void *imp_cl_bypassMouseInput;
-void *imp_cl_cdkey;
-void *imp_cl_cdkeychecksum;
 void *imp_cl_connectedToPureServer;
 void *imp_cl_freezeDemo;
 void *imp_cl_paused;

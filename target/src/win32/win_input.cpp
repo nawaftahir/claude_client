@@ -150,6 +150,21 @@ void IN_DeactivateMouse( void )
 
 /*
 ===========
+IN_Activate
+
+Called when the main window gains or loses focus.
+===========
+*/
+void IN_Activate( qboolean active )
+{
+	in_appactive = active;
+
+	if ( !active )
+		IN_DeactivateMouse();
+}
+
+/*
+===========
 IN_MouseEvent
 ===========
 */

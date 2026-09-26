@@ -33,7 +33,7 @@ extern void *gfxv60_MaterialDup(void *, const char *);
 extern int Hunk_HideTempMemory(void);
 extern void Hunk_ShowTempMemory(int);
 extern void DB_EnumXAssets(int, void (*)(union XAssetHeader, void *), void *, int);
-extern void *CM_GetPlaneNum(int planeNum);
+extern struct cplane_s *CM_GetPlaneNum(int planeNum);
 
 static int gfxv60_RayTriStub(void)
 {

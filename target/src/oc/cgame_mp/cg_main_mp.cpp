@@ -24,7 +24,7 @@ extern MenuList *UI_LoadMenus(const char *menuFile, int imageTrack);
 extern void UI_AddMenuList(displayContextDef_t *dc, MenuList *menuList);
 extern int CL_GetLocalClientActiveCount(void);
 extern menuDef_t *Menus_FindByName(displayContextDef_t *dc, const char *p);
-extern void Com_ClientDObjCreate(DObjModel_s *dobjModels, int numModels, struct XAnimTree_s *tree, int handle);
+extern void Com_ClientDObjCreate(DObjModel_s *dobjModels, unsigned short numModels, struct XAnimTree_s *tree, int handle);
 extern int CG_WeaponDObjHandle(int weaponNum);
 extern void Com_SafeClientDObjFree(int handle);
 extern void XAnimFreeTree(struct XAnimTree_s *tree, void *Free);

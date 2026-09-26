@@ -42,7 +42,7 @@ extern snd_alias_t *Com_PickSoundAlias( const char *aliasName );
 extern const char *Cmd_Argv( int arg );
 extern int Cmd_Argc(void);
 extern void Cmd_TokenizeString(const char *text);
-extern void Cmd_TokenizeString2(const char *text, int flags);
+extern void Cmd_TokenizeStringWithLimit(const char *text_in, int max_tokens);
 extern void Cmd_AddCommand(const char *cmd, void (*func)(void));
 extern int I_stricmp(const char *s1, const char *s2);
 extern int I_strnicmp(const char *s1, const char *s2, int n);
@@ -484,7 +484,7 @@ restart:
         }
 
     case 'B':
-        Cmd_TokenizeString2(s, 3);
+        Cmd_TokenizeStringWithLimit(s, 3);
         {
             const char *arg2 = Cmd_Argv(2);
             const char *arg1 = Cmd_Argv(1);
@@ -492,7 +492,7 @@ restart:
         }
         return 0;
     case 'b':
-        Cmd_TokenizeString2(s, 3);
+        Cmd_TokenizeStringWithLimit(s, 3);
         {
             const char *arg2 = Cmd_Argv(2);
             if (strlen(bigConfigString) + strlen(arg2) >= 0x2000) {
@@ -502,7 +502,7 @@ restart:
         }
         return 0;
     case 'c':
-        Cmd_TokenizeString2(s, 3);
+        Cmd_TokenizeStringWithLimit(s, 3);
         {
             const char *arg2 = Cmd_Argv(2);
             if (strlen(bigConfigString) + strlen(arg2) + 1 >= 0x2000) {
@@ -519,9 +519,9 @@ restart:
         RE->ClearFlares();
         return 1;
     case 'C':
-        Cmd_TokenizeString2(s, 3);
+        Cmd_TokenizeStringWithLimit(s, 3);
         CL_ConfigstringModified();
-        Cmd_TokenizeString2(s, 3);
+        Cmd_TokenizeStringWithLimit(s, 3);
         return 1;
     default:
         return 1;

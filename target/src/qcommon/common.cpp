@@ -576,6 +576,42 @@ void Com_ForceSafeMode()
 	com_safemode = qtrue;
 }
 
+#define CDKEY_REGISTRY_PATH "SOFTWARE\\Activision\\Call of Duty 2"
+
+char cl_cdkey[34] = "                                ";
+char cl_cdkeychecksum[5] = "    ";
+
+qboolean CL_CDKeyValidate( const char *key, const char *checksum );
+
+/*
+=================
+Com_WriteCDKey
+
+Stores a valid key and its checksum in the registry; an invalid key is blanked.
+=================
+*/
+void Com_WriteCDKey( void )
+{
+	HKEY hKey;
+	char buffer[21];
+
+	if ( !CL_CDKeyValidate( cl_cdkey, cl_cdkeychecksum ) )
+	{
+		strcpy( cl_cdkey, "                " );
+		return;
+	}
+
+	if ( RegCreateKeyA( HKEY_LOCAL_MACHINE, CDKEY_REGISTRY_PATH, &hKey ) != ERROR_SUCCESS )
+		return;
+
+	memcpy( buffer, cl_cdkey, 16 );
+	memcpy( buffer + 16, cl_cdkeychecksum, 4 );
+	buffer[20] = 0;
+
+	RegSetValueExA( hKey, "codkey", 0, REG_SZ, (const BYTE *)buffer, sizeof( buffer ) );
+	RegCloseKey( hKey );
+}
+
 /*
 ===============
 Com_StartupVariable

@@ -25,6 +25,8 @@ dvar_t      *net_lanauthorize;
 int qport;
 int net_iProfilingOn;
 
+void CL_Netchan_PrintProfileStats( int bPrintToConsole );
+
 // Unreferenced: a 32-aligned .bss object of up to this size sits between
 // net_iProfilingOn and loopbacks. The binary is stripped, so only its extent is known.
 byte net_chan_unused[0x60];
@@ -305,7 +307,28 @@ static void Net_DumpProfile_f( void )
 		return;
 	}
 
-	SV_Netchan_PrintProfileStats(qtrue);
+	if ( net_iProfilingOn == 1 )
+		CL_Netchan_PrintProfileStats(qtrue);
+	else
+		SV_Netchan_PrintProfileStats(qtrue);
+}
+
+/*
+===============
+Net_DisplayProfile
+================
+*/
+void Net_DisplayProfile( void )
+{
+	if ( !net_iProfilingOn )
+	{
+		return;
+	}
+
+	if ( net_iProfilingOn == 1 )
+		CL_Netchan_PrintProfileStats(qfalse);
+	else
+		SV_Netchan_PrintProfileStats(qfalse);
 }
 
 /*

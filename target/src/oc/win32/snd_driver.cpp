@@ -11,7 +11,7 @@ extern float floorf(float x);
 
 extern void FS_FCloseFile(fileHandle_t f);
 extern int FS_FOpenFileReadStream(const char *filename, int *file, int uniqueFILE);
-extern int FS_Seek(int f, long int offset, int origin);
+extern int FS_SeekInternal(int f, int offset, int origin);
 extern int FS_FTell(int f);
 extern int FS_Read(void *buffer, int len, int f);
 extern int FS_ReadFile(const char *qpath, void **buffer);
@@ -97,7 +97,7 @@ extern "C" __declspec(dllimport) void __stdcall AIL_set_file_callbacks(void *ope
 extern "C" __declspec(dllimport) const char *__stdcall AIL_last_error(void);
 extern "C" void *Z_MallocInternal( int size );
 extern "C" void Z_FreeInternal( void *ptr );
-extern void *Hunk_AllocNoZeroInternal(int size);
+extern void *Hunk_AllocInternal(int size);
 extern void Com_Error(int code, const char *fmt, ...);
 extern void Com_Printf(const char *fmt, ...);
 extern void Com_DPrintf(const char *fmt, ...);
@@ -199,13 +199,13 @@ static long int MSS_FileSeekCallback(long unsigned int hFileHandle, long int off
 {
     switch (type) {
     case 0:
-        FS_Seek((int)hFileHandle, offset, 2);
+        FS_SeekInternal((int)hFileHandle, offset, 2);
         return FS_FTell((int)hFileHandle);
     case 1:
-        FS_Seek((int)hFileHandle, offset, 0);
+        FS_SeekInternal((int)hFileHandle, offset, 0);
         return FS_FTell((int)hFileHandle);
     case 2:
-        FS_Seek((int)hFileHandle, offset, 1);
+        FS_SeekInternal((int)hFileHandle, offset, 1);
         return FS_FTell((int)hFileHandle);
     default:
         return 0;
@@ -990,7 +990,7 @@ void SND_LoadSoundFile(SoundFile *soundFile)
                ((long int)mixinfo.Info.bits <= sndGlob->playback_bits || mixinfo.Info.format == 0x11) &&
                (long int)mixinfo.Info.channels <= sndGlob->playback_channels) {
 
-        sound = (MssSound *)Hunk_AllocNoZeroInternal(totalSize);
+        sound = (MssSound *)Hunk_AllocInternal(totalSize);
         Com_Memcpy(sound->data, (void *)mixinfo.Info.data_ptr, mixinfo.Info.data_len);
         sound->info.format = mixinfo.Info.format;
         sound->info.data_ptr = mixinfo.Info.data_ptr;
@@ -1046,7 +1046,7 @@ void SND_LoadSoundFile(SoundFile *soundFile)
         }
 
         datasize = AIL_size_processed_digital_audio(rate, procFormat, 1, &mixinfo);
-        sound = (MssSound *)Hunk_AllocNoZeroInternal(datasize + 0x24);
+        sound = (MssSound *)Hunk_AllocInternal(datasize + 0x24);
 
         sound->info.format = mixinfo.Info.format;
         sound->info.data_ptr = sound->data;

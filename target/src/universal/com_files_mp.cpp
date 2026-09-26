@@ -936,7 +936,7 @@ reload:
 }
 
 
-void FS_ServerSetReferencedIwds( const char *iwdSums, const char *iwdNames )
+void FS_PureServerSetReferencedIwds( const char *iwdSums, const char *iwdNames )
 {
 	int i;
 	int numIwdSums;

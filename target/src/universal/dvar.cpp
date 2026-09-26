@@ -939,7 +939,7 @@ const char *Dvar_GetVariantString(const char *dvarName)
 	return value;
 }
 
-static void Dvar_UnpackColor(const dvar_t *dvar, float *expandedColor)
+void Dvar_GetUnpackedColor(const dvar_t *dvar, float *expandedColor)
 {
 	unsigned char color[4];
 
@@ -954,13 +954,13 @@ static void Dvar_UnpackColor(const dvar_t *dvar, float *expandedColor)
 	expandedColor[3] = color[3] * (1.0f / 255.0f);
 }
 
-void Dvar_GetUnpackedColor(const char *dvarName, float *expandedColor)
+void Dvar_GetUnpackedColorByName(const char *dvarName, float *expandedColor)
 {
 	dvar_t *dvar;
 
 	dvar = Dvar_FindVar(dvarName);
 	if ( dvar )
-		Dvar_UnpackColor(dvar, expandedColor);
+		Dvar_GetUnpackedColor(dvar, expandedColor);
 	else
 		VectorCopy4(colorWhite, expandedColor);
 }

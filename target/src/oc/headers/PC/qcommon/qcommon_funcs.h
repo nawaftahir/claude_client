@@ -192,7 +192,7 @@ void Com_SafeServerDObjFree(int handle);
 void Com_InitDObj(void);
 void Com_ShutdownDObj(void);
 void Com_AbortDObj(void);
-void Com_ClientDObjCreate(DObjModel_s *dobjModels, int numModels, struct XAnimTree_s *tree, int handle);
+void Com_ClientDObjCreate(DObjModel_s *dobjModels, unsigned short numModels, struct XAnimTree_s *tree, int handle);
 
 void Dvar_ForEach(void (*callback)());
 qboolean Dvar_Command(void);

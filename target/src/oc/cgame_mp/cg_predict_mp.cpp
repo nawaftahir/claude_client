@@ -37,9 +37,6 @@ extern qboolean BG_PlayerTouchesItem(const playerState_s *ps, const entityState_
 extern qboolean BG_CanItemBeGrabbed(const entityState_t *ent, const playerState_t *ps, qboolean bTouched);
 extern void BG_AddPredictableEventToPlayerstate(int newEvent, int eventParm, playerState_t *ps);
 extern void CG_AdjustPositionForMover(const vec_t *in, int moverNum, int fromTime, int toTime, vec_t *out, vec_t *outDeltaAngles);
-extern void LargeLocal_LargeLocal(void *ll, int size);
-extern void *LargeLocal_GetBuf(const LargeLocal *ll);
-extern void ZN10LargeLocalD1Ev(void *ll);
 extern void Com_Printf(const char *fmt, ...);
 
 extern const dvar_t **dvar_nopredict;
@@ -176,7 +173,6 @@ static void CG_InterpolatePlayerState(qboolean grabAngles)
 
 void CG_PredictPlayerState(void)
 {
-    byte ll[32];
     byte *oldPlayerState;
     playerState_t *ps;
     snapshot_t *nextSnap;
@@ -186,8 +182,9 @@ void CG_PredictPlayerState(void)
     WeaponDef *weapDef;
     int cg_time;
 
-    LargeLocal_LargeLocal(ll, REAL_PS_SIZE);
-    oldPlayerState = (byte *)LargeLocal_GetBuf((const LargeLocal *)ll);
+    {
+    LargeLocal ll(REAL_PS_SIZE);
+    oldPlayerState = (byte *)ll.GetBuf();
 
     if (cg->demoType != 0) {
         CG_InterpolatePlayerState(0);
@@ -412,7 +409,8 @@ postPredict:
     CG_TransitionPlayerState(ps, (playerState_t *)oldPlayerState);
 
 cleanup:
-    ZN10LargeLocalD1Ev(ll);
+    ;
+    }
 
     ps = &cg->predictedPlayerState;
 
