@@ -366,7 +366,7 @@ bool Netchan_TransmitNextFragment( netchan_t *chan )
 	MSG_WriteLong( &send, chan->outgoingSequence | FRAGMENT_BIT );
 
 	// send the qport if we are a client
-	if ( chan->sock <= NS_CLIENT )
+	if ( chan->sock < NS_SERVER )
 	{
 		MSG_WriteShort( &send, chan->qport );
 	}

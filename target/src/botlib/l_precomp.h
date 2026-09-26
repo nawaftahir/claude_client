@@ -2,8 +2,13 @@
 #include "l_script.h"
 
 #define MAX_PATH			MAX_QPATH
+#ifdef _WIN32
+#define PATHSEPERATOR_STR "\\"
+#define PATHSEPERATOR_CHAR '\\'
+#else
 #define PATHSEPERATOR_STR "/"
 #define PATHSEPERATOR_CHAR '/'
+#endif
 
 /*
 ===========================================================================

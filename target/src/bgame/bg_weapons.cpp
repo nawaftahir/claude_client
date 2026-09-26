@@ -4285,7 +4285,7 @@ float BG_GetVerticalBobFactor( const playerState_t *ps, float cycle, float speed
 		amplitude = maxAmp;
 	}
 
-	return 0.75f * ((float)sin( cycle * 2 ) + (float)sin( cycle * 4.0f + M_PI * 0.5 ) * 0.2f) * amplitude;
+	return 0.75f * ((float)sin( cycle * 2 ) + (float)sin( cycle * 4.0f + 1.5707964f ) * 0.2f) * amplitude;
 }
 
 /*

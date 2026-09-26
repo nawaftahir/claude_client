@@ -1536,9 +1536,9 @@ void DObjSetLocalTagInternal( const DObj_s *obj, const float *trans, const float
 
 	if ( angles )
 	{
-		FastSinCos(angles[1] * (M_PI / 360.0), &yaw[0], &yaw[1]);
-		FastSinCos(angles[0] * (M_PI / 360.0), &pitch[0], &pitch[1]);
-		FastSinCos(angles[2] * (M_PI / 360.0), &roll[0], &roll[1]);
+		FastSinCos(angles[1] * 0.0087266462f, &yaw[0], &yaw[1]);
+		FastSinCos(angles[0] * 0.0087266462f, &pitch[0], &pitch[1]);
+		FastSinCos(angles[2] * 0.0087266462f, &roll[0], &roll[1]);
 
 		tempQuat[0] = -pitch[0] * yaw[0];
 		tempQuat[1] = pitch[0] * yaw[1];

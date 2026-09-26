@@ -75,7 +75,7 @@ extern void Com_StripExtension(const char *in, char *out);
 extern void qsort(void *base, int nmemb, int size, int (*compar)(const void *, const void *));
 #endif
 extern const char **Cmd_GetAutoCompleteFileList(const char *cmd, int *fileCount, int maxCount);
-extern void FS_FreeFileList(const char **list, int count);
+extern void FS_FreeFileList(char **list, int count);
 extern void LargeLocal_LargeLocal(const LargeLocal *ll, int size);
 extern void *LargeLocal_GetBuf(const LargeLocal *ll);
 extern void ZN10LargeLocalD1Ev(LargeLocal *ll);
@@ -1510,7 +1510,7 @@ static void ConDrawInput_DetailedCmdMatch(const char *str)
         if (fileCount > 0)
             ConDrawInput_AutoCompleteArg(files, fileCount);
         if (files)
-            FS_FreeFileList(files, 10);
+            FS_FreeFileList((char **)files, 10);
     }
 }
 

@@ -394,7 +394,7 @@ void DB_EnumXAssets( XAssetType type, void (*func)(XAssetHeader, void *), void *
 	{
 	case ASSET_TYPE_XMODEL:
 		fileDataType = FILEDATA_XMODEL;
-		for ( i = 0; i <= FILEDATA_HASH_SIZE - 1; ++i )
+		for ( i = 0; i < FILEDATA_HASH_SIZE; ++i )
 		{
 			fileData = com_fileDataHashTable[i];
 			DB_EnumXAssetsFor( fileData, fileDataType, func, inData );

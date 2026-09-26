@@ -239,7 +239,7 @@ extern void SND_FadeAllSounds(float gain, int time);
 extern int Sys_Milliseconds(void);
 extern float Voice_GetVoiceLevel(void);
 extern int Com_RealTime(qtime_t *q);
-extern int FS_GetFileList(const char *path, const char *ext, int flags, char *buf, int bufSize);
+extern int FS_GetFileList(const char *path, const char *ext, FsListBehavior behavior, char *buf, int bufSize);
 extern char *Com_Parse( const char *( *data_p ) );
 extern const char *String_Alloc(const char *s);
 extern void String_Init(void);
@@ -272,8 +272,8 @@ extern void CLUI_GetCDKey(char *buf, int bufSize, char *checksum, int checksumSi
 extern void CLUI_SetCDKey(char *key, char *checksum);
 extern int CL_CDKeyValidate(const char *key1, const char *key2);
 extern void CG_DrawInformation(int loading);
-extern char **FS_ListFiles(const char *path, const char *ext, int flags, int *numFiles, int allocTrackType);
-extern void FS_FreeFileList(const char **list, int allocTrackType);
+extern char **FS_ListFiles(const char *path, const char *ext, FsListBehavior behavior, int *numFiles, int allocTrackType);
+extern void FS_FreeFileList(char **list, int allocTrackType);
 extern char *I_strupr(char *str);
 extern void Com_ChangePlayerProfile(const char *profileName);
 extern unsigned char Com_DeletePlayerProfile(const char *profileName);
@@ -1141,7 +1141,7 @@ static void UI_GetGameTypesList(void)
     }
     sharedUiInfo.numJoinGameTypes += 1;
 
-    iNumGameTypeScripts = FS_GetFileList("maps/mp/gametypes", "gsc", 0, szGameTypeList, 0x1000);
+    iNumGameTypeScripts = FS_GetFileList("maps/mp/gametypes", "gsc", FS_LIST_PURE_ONLY, szGameTypeList, 0x1000);
 
     if (iNumGameTypeScripts > 0) {
         pszFileName = szGameTypeList;
@@ -3465,7 +3465,7 @@ void UI_RunMenuScript(const char **args)
         char *namePtr;
 
         sharedUiInfo.modCount = 0;
-        numFiles = FS_GetFileList("$modlist", "", 1, addr, 0x800);
+        numFiles = FS_GetFileList("$modlist", "", FS_LIST_ALL, addr, 0x800);
         if (numFiles <= 0)
             return;
 
@@ -3564,7 +3564,7 @@ void UI_RunMenuScript(const char **args)
         uiInfo->playerProfileCount = 0;
         uiInfo->playerProfileStatus.sortDir = 1;
 
-        fileList = FS_ListFiles("players", "/", 1, &sortColumn, 0);
+        fileList = FS_ListFiles("players", "/", FS_LIST_ALL, &sortColumn, 0);
 
         if (sortColumn > 0) {
             for (i = 0; i < sortColumn; i++) {
@@ -3574,7 +3574,7 @@ void UI_RunMenuScript(const char **args)
             }
         }
 
-        FS_FreeFileList((const char **)fileList, 0);
+        FS_FreeFileList(fileList, 0);
 
         {
             int numProfiles = uiInfo->playerProfileCount;
@@ -3802,7 +3802,7 @@ void UI_RunMenuScript(const char **args)
         char *filePtr;
         extern int __mh_execute_header;
 
-        numMovies = FS_GetFileList("video", "roq", 0, addr, (int)&__mh_execute_header);
+        numMovies = FS_GetFileList("video", "roq", FS_LIST_PURE_ONLY, addr, (int)&__mh_execute_header);
         sharedUiInfo.movieCount = numMovies;
         if (numMovies == 0)
             return;
@@ -4870,7 +4870,7 @@ static void UI_GetGameTypesList(void)
     }
     sharedUiInfo.numJoinGameTypes += 1;
 
-    iNumGameTypeScripts = FS_GetFileList("maps/mp/gametypes", "gsc", 0, szGameTypeList, 0x1000);
+    iNumGameTypeScripts = FS_GetFileList("maps/mp/gametypes", "gsc", FS_LIST_PURE_ONLY, szGameTypeList, 0x1000);
 
     if (iNumGameTypeScripts > 0) {
         pszFileName = szGameTypeList;

@@ -1577,7 +1577,7 @@ bool XAnimNeedClearState(XAnimInfo *info)
 
 	state = &info->state;
 
-	if ( state->time == 0.0 && !state->cycleCount )
+	if ( state->time == 0.0f && !state->cycleCount )
 		return false;
 
 	state->time = 0.0;

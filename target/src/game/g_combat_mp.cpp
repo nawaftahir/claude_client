@@ -442,7 +442,7 @@ void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker, const
 		damage = 1;
 	}
 
-	if ( targ->flags & FL_DEMI_GODMODE && targ->health - damage < 1 )
+	if ( targ->flags & FL_DEMI_GODMODE && targ->health - damage <= 0 )
 	{
 		damage = targ->health - 1;
 	}

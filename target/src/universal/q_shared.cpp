@@ -570,7 +570,7 @@ char *I_CleanStr( char *string )
 		{
 			s++;
 		}
-		else if ( c >= ' ' && c != 0x7F )
+		else if ( c >= 0x20 && c <= 0x7E )
 		{
 			*d++ = c;
 		}

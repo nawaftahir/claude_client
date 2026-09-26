@@ -9,7 +9,7 @@ extern void Info_SetValueForKey(char *s, const char *key, const char *value);
 extern void Com_Printf(const char *msg, ...);
 extern char *va( const char *format, ... );
 extern void *UI_Alloc(int size, int align);
-extern int FS_GetFileList(const char *path, const char *extension, int flags, char *listBuf, int bufSize);
+extern int FS_GetFileList(const char *path, const char *extension, FsListBehavior behavior, char *listBuf, int bufSize);
 extern int FS_FOpenFileByMode(const char *filename, int *f, int mode);
 extern int FS_Read(void *buffer, int len, int f);
 extern void FS_FCloseFile(fileHandle_t f);
@@ -116,7 +116,7 @@ void UI_LoadArenas(void)
     uiInfo = (byte *)&sharedUiInfo;
     sharedUiInfo.mapCount = 0;
 
-    numdirs = FS_GetFileList("mp", "arena", 0, dirlist, 0x400);
+    numdirs = FS_GetFileList("mp", "arena", FS_LIST_PURE_ONLY, dirlist, 0x400);
 
     if (numdirs > 0) {
         dirptr = dirlist;

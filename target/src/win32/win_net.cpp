@@ -130,10 +130,13 @@ qboolean Sys_StringToSockaddr( const char *s, struct sockaddr *sadr )
 	}
 	else
 	{
+		int c;
+
 		((struct sockaddr_in *)sadr)->sin_family = AF_INET;
 		((struct sockaddr_in *)sadr)->sin_port = 0;
+		c = s[0];
 
-		if ( s[0] >= '0' && s[0] <= '9' )
+		if ( c >= '0' && c <= '9' )
 		{
 			*(int *)&((struct sockaddr_in *)sadr)->sin_addr = inet_addr( s );
 		}

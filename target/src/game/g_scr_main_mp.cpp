@@ -2036,7 +2036,7 @@ void Scr_Objective_Add()
 
 	int objNum = Scr_GetInt(0);
 
-	if ( objNum < 0 || objNum > MAX_OBJECTIVES - 1 )
+	if ( objNum < 0 || objNum >= MAX_OBJECTIVES )
 	{
 		Scr_ParamError(0, va("index %i is an illegal objective index. Valid indexes are 0 to %i\n", objNum, MAX_OBJECTIVES - 1));
 	}
@@ -2079,7 +2079,7 @@ void Scr_Objective_Delete()
 {
 	int objNum = Scr_GetInt(0);
 
-	if ( objNum < 0 || objNum > MAX_OBJECTIVES - 1 )
+	if ( objNum < 0 || objNum >= MAX_OBJECTIVES )
 	{
 		Scr_ParamError(0, va("index %i is an illegal objective index. Valid indexes are 0 to %i\n", objNum, MAX_OBJECTIVES - 1));
 	}
@@ -2102,7 +2102,7 @@ void Scr_Objective_State()
 
 	objNum = Scr_GetInt(0);
 
-	if ( objNum < 0 || objNum > MAX_OBJECTIVES - 1 )
+	if ( objNum < 0 || objNum >= MAX_OBJECTIVES )
 	{
 		Scr_ParamError(0, va("index %i is an illegal objective index. Valid indexes are 0 to %i\n", objNum, MAX_OBJECTIVES - 1));
 	}
@@ -2132,7 +2132,7 @@ void Scr_Objective_Icon()
 {
 	int objNum = Scr_GetInt(0);
 
-	if ( objNum < 0 || objNum > MAX_OBJECTIVES - 1 )
+	if ( objNum < 0 || objNum >= MAX_OBJECTIVES )
 	{
 		Scr_ParamError(0, va("index %i is an illegal objective index. Valid indexes are 0 to %i\n", objNum, MAX_OBJECTIVES - 1));
 	}
@@ -2152,7 +2152,7 @@ void Scr_Objective_Position()
 
 	objNum = Scr_GetInt(0);
 
-	if ( objNum < 0 || objNum > MAX_OBJECTIVES - 1 )
+	if ( objNum < 0 || objNum >= MAX_OBJECTIVES )
 	{
 		Scr_ParamError(0, va("index %i is an illegal objective index. Valid indexes are 0 to %i\n", objNum, MAX_OBJECTIVES - 1));
 	}
@@ -2178,7 +2178,7 @@ void Scr_Objective_OnEntity()
 
 	objNum = Scr_GetInt(0);
 
-	if ( objNum < 0 || objNum > MAX_OBJECTIVES - 1 )
+	if ( objNum < 0 || objNum >= MAX_OBJECTIVES )
 	{
 		Scr_ParamError(0, va("index %i is an illegal objective index. Valid indexes are 0 to %i\n", objNum, MAX_OBJECTIVES - 1));
 	}
@@ -2213,7 +2213,7 @@ void Scr_Objective_Current()
 	{
 		objNum = Scr_GetInt(i);
 
-		if ( objNum < 0 || objNum > MAX_OBJECTIVES - 1 )
+		if ( objNum < 0 || objNum >= MAX_OBJECTIVES )
 		{
 			Scr_ParamError(i, va("index %i is an illegal objective index. Valid indexes are 0 to %i\n", objNum, MAX_OBJECTIVES - 1));
 		}
@@ -2251,7 +2251,7 @@ void GScr_Objective_Team()
 
 	objNum = Scr_GetInt(0);
 
-	if ( objNum < 0 || objNum > MAX_OBJECTIVES - 1 )
+	if ( objNum < 0 || objNum >= MAX_OBJECTIVES )
 	{
 		Scr_ParamError(0, va("index %i is an illegal objective index. Valid indexes are 0 to %i\n", objNum, MAX_OBJECTIVES - 1));
 	}

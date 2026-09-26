@@ -157,7 +157,7 @@ void Bullet_RandomSpread( float spread, vec3_t end, const weaponParms *wp, float
 	assert(end);
 	assert(wp);
 
-	aimAngle = tan( spread * RADINDEG );
+	aimAngle = tan( spread * 0.017453292f );
 	aimOffset = aimAngle * maxRange;
 	assert(!IS_NAN(aimOffset));
 

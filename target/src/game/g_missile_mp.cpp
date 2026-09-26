@@ -392,7 +392,7 @@ float G_RunMissile_GetPerturbation( float destabilizationCurvatureMax )
 {
 	float angle;
 
-	angle = destabilizationCurvatureMax * RADINDEG;
+	angle = destabilizationCurvatureMax * 0.017453292f;
 	return tan(angle);
 }
 

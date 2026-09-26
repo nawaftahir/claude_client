@@ -435,7 +435,7 @@ static float PM_MoveScale( playerState_t *ps, float fmove, float rmove, float um
 	if ( fabs(umove) > max )
 		max = fabs(umove);
 
-	if ( max == 0.0 )
+	if ( max == 0.0f )
 		return 0;
 
 	total = I_sqrt( Square(fmove) + Square(rmove) + Square(umove) );
@@ -1614,7 +1614,7 @@ void PM_GroundTrace( pmove_t *pm, pml_t *pml )
 	}
 
 	// if the trace didn't hit anything, we are in free fall
-	if ( trace.fraction == 1.0f )
+	if ( trace.fraction == 1.0 )
 	{
 		PM_GroundTraceMissed(pm, pml);
 		return;
