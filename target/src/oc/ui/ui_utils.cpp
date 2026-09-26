@@ -143,22 +143,28 @@ qboolean Item_EnableShowViaDvar(const itemDef_t *item, int flag)
 
 qboolean Item_IsEditFieldDef(itemDef_t *item)
 {
-    int type = item->dataType;
-
-    if (type > 0x12)
-        return 0;
-    if ((1 << type) & 0x74e11)
+    switch (item->dataType) {
+    case 0:
+    case 4:
+    case 9:
+    case 10:
+    case 11:
+    case 14:
+    case 16:
+    case 17:
+    case 18:
         return 1;
-    return 0;
+    default:
+        return 0;
+    }
 }
 
 listBoxDef_t *Item_GetListBoxDef(itemDef_t *item)
 {
-    if (item->dataType != 6) {
-        Com_Printf("^1Menu Error: Expecting type: ITEM_TYPE_LISTBOX\n");
-        return NULL;
-    }
-    return item->typeData.listBox;
+    if (item->dataType == 6)
+        return item->typeData.listBox;
+    Com_Printf("^1Menu Error: Expecting type: ITEM_TYPE_LISTBOX\n");
+    return NULL;
 }
 
 multiDef_t *Item_GetMultiDef(itemDef_t *item)
@@ -217,22 +223,22 @@ static inline __attribute__((always_inline)) void CopyRect(byte *dst, const byte
 
 void Window_SetRect(Window *w, const UiRectangle *rect)
 {
-    CopyRect((byte *)w, (const byte *)rect);
+    w->rect[0] = *rect;
 }
 
 void Window_SetRectClient(Window *w, const UiRectangle *rectClient)
 {
-    CopyRect((byte *)w->rectClient, (const byte *)rectClient);
+    w->rectClient[0] = *rectClient;
 }
 
 void Window_SetRectEffects0(Window *w, const UiRectangle *rectEffects0)
 {
-    CopyRect((byte *)w->rectEffects0, (const byte *)rectEffects0);
+    w->rectEffects0[0] = *rectEffects0;
 }
 
 void Window_SetRectEffects1(Window *w, const UiRectangle *rectEffects1)
 {
-    CopyRect((byte *)w->rectEffects1, (const byte *)rectEffects1);
+    w->rectEffects1[0] = *rectEffects1;
 }
 
 void Window_SetDynamicFlags(Window *w, const int flags)
