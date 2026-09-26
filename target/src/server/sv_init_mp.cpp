@@ -1000,7 +1000,7 @@ void SV_DropAllClients()
 
 	for ( i = 0, cl = svs.clients; i < sv_maxclients->current.integer; i++, cl++ )
 	{
-		if ( cl->state > CS_ZOMBIE )
+		if ( cl->state >= CS_CONNECTED )
 			SV_DropClient(cl, "EXE_DISCONNECTED");
 	}
 }

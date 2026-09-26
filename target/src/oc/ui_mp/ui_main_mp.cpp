@@ -469,7 +469,7 @@ char *GetMenuBuffer(const char *filename)
         Com_Printf("^1menu file not found: %s, using default\n", filename);
         return 0;
     }
-    if (len > 0x7fff) {
+    if (len >= 0x8000) {
         Com_Printf("^1menu file too large: %s is %i, max allowed is %i", filename, len, 0x8000);
         FS_FCloseFile(f);
         return 0;

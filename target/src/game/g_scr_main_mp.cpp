@@ -5785,7 +5785,7 @@ void (*Scr_GetFunction( const char **pName, int *type ))( )
 
 	name = *pName;
 
-	for ( i = 0; i <= 143; i++ )
+	for ( i = 0; i < 144; i++ )
 	{
 		if ( !strcmp(name, functions[i].name) )
 		{

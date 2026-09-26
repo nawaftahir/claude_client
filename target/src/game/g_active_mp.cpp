@@ -513,13 +513,7 @@ void G_SetClientContents( gentity_t *pEnt )
 
 	assert(pEnt->client);
 
-	if ( pEnt->client->noclip )
-	{
-		pEnt->r.contents = CONTENTS_NONE;
-		return;
-	}
-
-	if ( pEnt->client->ufo )
+	if ( pEnt->client->noclip || pEnt->client->ufo )
 	{
 		pEnt->r.contents = CONTENTS_NONE;
 		return;

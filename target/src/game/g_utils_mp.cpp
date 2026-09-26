@@ -1300,7 +1300,7 @@ int G_GetPlayerCorpseIndex( gentity_t *ent )
 	int i;
 
 	num = ent->s.number;
-	for ( i = 0; i <= 7; ++i )
+	for ( i = 0; i < 8; ++i )
 	{
 		if ( (&g_scr_data.playerCorpseInfo[0].entnum)[306 * i] == num )
 		{
