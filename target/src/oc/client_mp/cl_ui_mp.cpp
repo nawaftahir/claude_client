@@ -30,7 +30,7 @@ extern void Com_PumpMessageLoop(void);
 extern void Info_SetValueForKey(char *s, const char *key, const char *value);
 extern char *va( const char *format, ... );
 extern const char *NET_AdrToString(netadr_t adr);
-extern void Com_UnloadSoundAliases(int zone);
+extern void Com_UnloadSoundAliases(snd_alias_system_t system);
 extern void UI_Shutdown(void);
 
 void GetClientState(uiClientState_t *state);
@@ -411,7 +411,7 @@ qboolean CL_ShutdownUI(void)
     if (!started)
         return 0;
 
-    Com_UnloadSoundAliases(0);
+    Com_UnloadSoundAliases(SASYS_UI);
 
     cl = clients;
     cl->keyCatchers &= ~8;

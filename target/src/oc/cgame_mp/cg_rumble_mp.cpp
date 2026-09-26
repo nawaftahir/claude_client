@@ -10,7 +10,7 @@
 #    include "common_types.h"
 #    undef __m128
 
-extern int FS_FOpenFileByMode(const char *filename, int *fh, int mode);
+extern int FS_FOpenFileByMode(const char *filename, int *fh, fsMode_t mode);
 extern int FS_Read(void *buffer, int len, int fh);
 extern void FS_FCloseFile(int fh);
 extern char *Com_Parse( const char *( *data_p ) );
@@ -149,7 +149,7 @@ static qboolean CG_ReadRumbleGraph(RumbleGraph *graph, const char *fileName)
 
     Com_DPrintf("Parsing rumble graph file \"%s\"..\n", path);
 
-    len = FS_FOpenFileByMode(path, &fh, 0 );
+    len = FS_FOpenFileByMode(path, &fh, FS_READ );
     if (len <= 0 || !fh) {
         Com_Printf("^1Could not load rumble graph file \"%s\"\n", path);
         if (fh)

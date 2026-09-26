@@ -45,7 +45,7 @@ extern void MatrixMultiply(const float in1[3][3], const float in2[3][3], float o
 extern bool Com_SaveDvarsToBuffer(const char **dvarnames, int numDvars, char *buffer, int bufsize);
 extern qboolean Com_LoadDvarsFromBuffer(const char **dvarnames, int numDvars, const char *buffer, const char *filename);
 extern char *va( const char *format, ... );
-extern int FS_FOpenFileByMode(const char *name, int *fh, int mode);
+extern int FS_FOpenFileByMode(const char *name, int *fh, fsMode_t mode);
 extern int FS_Write(const void *buf, int len, int fh);
 extern int FS_Read(void *buf, int len, int fh);
 extern void FS_FCloseFile(fileHandle_t fh);
@@ -169,7 +169,7 @@ qboolean CG_SaveShellShockDvars(const char *name)
 
     path = va("shock/%s.shock", name);
 
-    if (FS_FOpenFileByMode(path, &fh, 1) < 0) {
+    if (FS_FOpenFileByMode(path, &fh, FS_WRITE) < 0) {
         return 0;
     }
 
@@ -189,12 +189,12 @@ qboolean CG_LoadShellShockDvars(const char *name)
 
     fullpath = va("shock/%s.shock", name);
 
-    filesize = FS_FOpenFileByMode(fullpath, &fh, 0);
+    filesize = FS_FOpenFileByMode(fullpath, &fh, FS_READ);
     if (filesize < 0) {
 
         Com_Printf("^1couldn't open '%s'.\n", fullpath);
 
-        filesize = FS_FOpenFileByMode("shock/default.shock", &fh, 0);
+        filesize = FS_FOpenFileByMode("shock/default.shock", &fh, FS_READ);
         if (filesize < 0) {
 
             Com_Printf("^1couldn't open 'shock/default.shock'.\n");

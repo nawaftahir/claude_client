@@ -10,7 +10,7 @@ extern void Com_Printf(const char *msg, ...);
 extern char *va( const char *format, ... );
 extern void *UI_Alloc(int size, int align);
 extern int FS_GetFileList(const char *path, const char *extension, FsListBehavior behavior, char *listBuf, int bufSize);
-extern int FS_FOpenFileByMode(const char *filename, int *f, int mode);
+extern int FS_FOpenFileByMode(const char *filename, int *f, fsMode_t mode);
 extern int FS_Read(void *buffer, int len, int f);
 extern void FS_FCloseFile(fileHandle_t f);
 extern const char *Info_ValueForKey( const char *s, const char *key );
@@ -125,7 +125,7 @@ void UI_LoadArenas(void)
 
             sprintf(filename, "%s/%s", "mp", dirptr);
 
-            len = FS_FOpenFileByMode(filename, &f, 0);
+            len = FS_FOpenFileByMode(filename, &f, FS_READ);
             if (f == 0) {
                 Com_Printf("^1file not found: %s\n", filename);
             } else if (len > 0x1fff) {

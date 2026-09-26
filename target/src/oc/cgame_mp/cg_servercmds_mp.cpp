@@ -52,7 +52,7 @@ extern void CG_InitMarkPolys(void);
 extern void FX_FreeActive(void);
 extern void SND_StopSounds(snd_stopsounds_arg_t mode);
 extern void CG_StartAmbient(void);
-extern void Dvar_SetBool(void *dvar, int value);
+extern void Dvar_SetBool(dvar_t *dvar, bool value);
 extern void CL_SetADS(int value);
 extern void CL_CloseAllMenus(void);
 extern void CG_ScoresUp_f(void);
@@ -663,7 +663,7 @@ void CG_MapRestart(qboolean savepersist)
     *(int *)&cg->fWeapSelectFrac[2] = 0;
     cg->iWeapSelectLastDrawTime = 0;
 
-    Dvar_SetBool( (void *)(cg_thirdPerson), 0);
+    Dvar_SetBool((dvar_t *)cg_thirdPerson, false);
 
     cgui = CGUI_PTR;
     *(int *)(cgui + 8) = 0;

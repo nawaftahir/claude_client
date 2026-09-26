@@ -177,7 +177,7 @@ extern char *I_CleanStr(char *str);
 extern int I_stricmp(const char *s1, const char *s2);
 extern int I_strnicmp(const char *s1, const char *s2, int n);
 extern void I_strncat(char *dest, int len, const char *src);
-extern int FS_FOpenFileByMode(const char *name, int *f, int mode);
+extern int FS_FOpenFileByMode(const char *name, int *f, fsMode_t mode);
 extern int FS_Read(void *buf, int len, int f);
 extern void FS_FCloseFile(fileHandle_t f);
 extern void Com_Printf(const char *fmt, ...);
@@ -464,7 +464,7 @@ char *GetMenuBuffer(const char *filename)
     int f;
     int len;
 
-    len = FS_FOpenFileByMode(filename, &f, 0);
+    len = FS_FOpenFileByMode(filename, &f, FS_READ);
     if (!f) {
         Com_Printf("^1menu file not found: %s, using default\n", filename);
         return 0;

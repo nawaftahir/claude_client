@@ -36,7 +36,7 @@ extern void Com_TouchMemory(void);
 extern void Com_InitDObj(void);
 extern void Com_SetWeaponInfoMemory(int mode);
 extern void Com_FreeWeaponInfoMemory(int mode);
-extern void Com_UnloadSoundAliases(int mode);
+extern void Com_UnloadSoundAliases(snd_alias_system_t system);
 extern void Com_LoadSoundAliases(const char *loadspec, const char *zone, snd_alias_system_t flag);
 extern snd_alias_t *Com_PickSoundAlias( const char *aliasName );
 extern const char *Cmd_Argv( int arg );
@@ -68,7 +68,7 @@ extern qboolean DObjSkelAreBonesUpToDate(const struct DObj_s *obj, int *partBits
 extern int DObjGetAllocSkelSize(const struct DObj_s *obj);
 extern void DObjCreateSkel(const struct DObj_s *obj, char *mem, int timeStamp);
 extern void FX_AdjustCamera(PrimType (*refdef)[256], float zfar);
-extern int FS_FOpenFileByMode(const char *filename, int *handle, int mode);
+extern int FS_FOpenFileByMode(const char *filename, int *handle, fsMode_t mode);
 extern fileHandle_t FS_FOpenFileWrite(const char *filename);
 extern int FS_Read(void *buffer, int len, int handle);
 extern int FS_Write(const void *buffer, int len, int handle);
@@ -536,7 +536,7 @@ void CL_SetExpectedHunkUsage(const char *mapname)
     const char *buftrav;
     const char *token;
 
-    len = FS_FOpenFileByMode("hunkusage.dat", &handle, 0);
+    len = FS_FOpenFileByMode("hunkusage.dat", &handle, FS_READ);
     if (len < 0) {
         goto set_default;
     }
@@ -586,7 +586,7 @@ void CL_ShutdownCGame(void)
 {
     clientActive_t *cl;
 
-    Com_UnloadSoundAliases(1);
+    Com_UnloadSoundAliases(SASYS_CGAME);
     cl = CL_LOCAL;
     if (cl->cgameInitCalled) {
         CG_Shutdown();
@@ -943,7 +943,7 @@ void CL_UpdateLevelHunkUsage(void)
 
     memusage = Hunk_Used();
 
-    len = FS_FOpenFileByMode("hunkusage.dat", &handle, 0);
+    len = FS_FOpenFileByMode("hunkusage.dat", &handle, FS_READ);
     if (len < 0)
         goto write_new;
 
@@ -1010,7 +1010,7 @@ void CL_UpdateLevelHunkUsage(void)
 
 write_new:
 
-    len = FS_FOpenFileByMode("hunkusage.dat", &handle, 2);
+    len = FS_FOpenFileByMode("hunkusage.dat", &handle, FS_APPEND);
     if (!handle) {
         Com_Error(ERR_DROP, "CL_UpdateLevelHunkUsage: cannot open for append");
     }
@@ -1022,7 +1022,7 @@ write_new:
     FS_Write(outstr, strlen(outstr), handle);
     FS_FCloseFile(handle);
 
-    len = FS_FOpenFileByMode("hunkusage.dat", &handle, 0);
+    len = FS_FOpenFileByMode("hunkusage.dat", &handle, FS_READ);
     if (len >= 0) {
         FS_FCloseFile(handle);
     }
