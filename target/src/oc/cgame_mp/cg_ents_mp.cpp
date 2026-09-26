@@ -28,7 +28,7 @@ extern void CG_SafeDObjFree(int iEntNum);
 extern void CG_RegisterItemVisuals(int itemNum);
 extern void Com_Error(int code, const char *fmt, ...);
 extern float AngleSubtract( float a1, float a2 );
-extern const float LerpAngle(const float from, const float to, const float frac);
+extern float LerpAngle(float from, float to, float frac);
 extern bool DObjSetControlTagAngles(const DObj_s *obj, int *partBits, unsigned int boneIndex, float *angles);
 extern struct XAnimTree_s *DObjGetTree(const struct DObj_s *obj);
 extern void XAnimSetCompleteGoalWeightKnobAll(void *tree, int animIndex, float goalWeight, float goalTime, float rate, int notifyType, int notifyClient);
@@ -52,7 +52,7 @@ extern DObjAnimMat* DObjGetRotTransArray(const DObj_s *obj);
 extern void DObjGetHierarchyBits(struct DObj_s *obj, int boneIndex, int *partBits);
 extern void DObjCompleteHierarchyBits(DObj_s *obj, int *partBits);
 extern void DObjCalcAnim(const DObj *obj, int *partBits);
-extern void DObjCalcSkel(const DObj *obj, int *partBits);
+extern void DObjCalcSkel(DObj *obj, int *partBits);
 extern void AxisCopy( const vec3_t in[3], vec3_t out[3] );
 extern void AnglesToAxis( const vec3_t angles, vec3_t axis[3] );
 extern void MatrixTransformVector43(const vec3_t in1, const float in2[4][3], vec3_t out);
@@ -574,7 +574,7 @@ void CG_DObjCalcPose(const centity_t *cent, const struct DObj_s *obj, int *partB
 
     DObjCalcAnim(obj, completePartBits);
     CG_RunDObjControllers(cent, completePartBits);
-    DObjCalcSkel(obj, completePartBits);
+    DObjCalcSkel((DObj *)obj, completePartBits);
 }
 
 void CG_DObjCalcBone(const centity_t *cent, struct DObj_s *obj, int boneIndex)

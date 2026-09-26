@@ -47,7 +47,7 @@ unsigned int SL_GetCanonicalString(const char *str);
 int MT_IsNodeCovered(int nodeNum);
 int MT_SearchTreeAny(int nodeNum);
 void MT_VerifyNotInTree(int nodeNum);
-unsigned int Scr_GetStringUsage(void);
+int Scr_GetStringUsage(void);
 byte *MT_InitForceAlloc(void);
 void MT_Init(void);
 void MT_DumpTree(void);

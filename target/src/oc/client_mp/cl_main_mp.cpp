@@ -86,9 +86,9 @@ extern void MSG_WriteReliableCommandToBuffer(const char *cmd, char *buf, int buf
 extern int FS_Write(const void *buffer, int len, int f);
 extern void CL_ShutdownCGame(void);
 extern qboolean CL_ShutdownUI(void);
-extern void Dvar_SetInt(const dvar_t *dvar, int value);
+extern void Dvar_SetInt(dvar_t *dvar, int value);
 extern void Dvar_SetBool(dvar_t *dvar, bool value);
-extern void Dvar_SetString(const dvar_t *dvar, const char *value);
+extern void Dvar_SetString(dvar_t *dvar, const char *value);
 extern void UI_SetMap(const char *mapname, const char *gametype);
 extern void SCR_UpdateScreenInternal(void);
 extern void SetScreenScaling(float safeAreaH, float safeAreaV, int vpX, int vpY, int vpW, int vpH);
@@ -160,7 +160,7 @@ extern int NET_CompareBaseAdr(netadr_t a, netadr_t b);
 extern const char *NET_AdrToString(netadr_t a);
 extern qboolean NET_StringToAdr(const char *s, netadr_t *a);
 extern qboolean NET_OutOfBandPrint(netsrc_t sock, netadr_t adr, const char *msg);
-extern Bool NET_OutOfBandData(netsrc_t sock, netadr_t adr, unsigned char *data, int len);
+extern int NET_OutOfBandData(netsrc_t sock, netadr_t adr, unsigned char *data, int len);
 extern int Sys_IsLANAddress(netadr_t adr);
 extern int Sys_Milliseconds(void);
 extern int Sys_MillisecondsRaw(void);
@@ -173,7 +173,7 @@ extern qboolean FS_ConditionalRestart(int checksumFeed);
 extern void FS_Restart(int checksumFeed);
 extern const char *FS_ReferencedIwdPureChecksums(void);
 extern int FS_CompareIwds(char *buf, int bufLen, int flag);
-extern void FS_ShiftStr(const char *name, int shift);
+extern char *FS_ShiftStr(const char *name, int shift);
 extern void MSG_Init(msg_t *msg, byte *data, int length);
 extern void MSG_WriteLong(msg_t *msg, int value);
 extern void MSG_WriteShort(msg_t *msg, int value);
@@ -203,7 +203,7 @@ extern void *LargeLocal_GetBuf(const LargeLocal *ll);
 extern void ZN10LargeLocalD1Ev(LargeLocal *ll);
 extern void Cmd_TokenizeString(const char *text);
 extern refexport_t *GetRefAPI(int apiVersion, refimport_t *rimp);
-extern void MemFile_InitForWriting(MemoryFile *mf, int size, void *buf, int flag);
+extern void MemFile_InitForWriting(MemoryFile *mf, int size, void *buf, bool flag);
 extern void MemFile_InitForReading(MemoryFile *mf, int size, void *buf);
 extern "C" void *Z_MallocInternal( int size );
 extern void *Z_VirtualAllocInternal( unsigned int size );
@@ -661,7 +661,7 @@ void CL_SetupForNewServerMap(const char *pszMapName, const char *pszGametype)
     hacks->cl_serverloadwaiting = 0;
 
     if (!(com_sv_running)->current.enabled) {
-        Dvar_SetInt(com_expectedHunkUsage, 0);
+        Dvar_SetInt((dvar_t *)com_expectedHunkUsage, 0);
         g_waitingForServer = 1;
     }
 
@@ -1028,7 +1028,7 @@ void CL_InitRef(void)
     memcpy(&re, GetRefAPI(0x3b, &ri_local), sizeof(re));
 #endif
 
-    Dvar_SetInt(cl_paused, 0);
+    Dvar_SetInt((dvar_t *)cl_paused, 0);
 }
 
 void CL_startSingleplayer_f(void)
@@ -1541,7 +1541,7 @@ void CL_InitLoad(const char *mapname, const char *gametype)
     if (!legacyHacks->cl_running)
         return;
 
-    Dvar_SetInt(com_expectedHunkUsage, 0);
+    Dvar_SetInt((dvar_t *)com_expectedHunkUsage, 0);
     UI_SetMap(mapname, gametype);
 
     cc = (byte *)&clc;
@@ -2527,7 +2527,7 @@ void CL_Vid_Restart_f(void)
         Z_VirtualFreeInternal(memFile.buffer);
     }
 
-    Dvar_SetInt(com_expectedHunkUsage, 0);
+    Dvar_SetInt((dvar_t *)com_expectedHunkUsage, 0);
     g_waitingForServer = 0;
     SND_StopSounds((snd_stopsounds_arg_t)1);
 
@@ -2544,7 +2544,7 @@ void CL_Vid_Restart_f(void)
 
     FS_ConditionalRestart(conn->checksumFeed);
     SEH_UpdateLanguageInfo();
-    Dvar_SetInt(cl_paused, 0);
+    Dvar_SetInt((dvar_t *)cl_paused, 0);
     CL_InitRef();
     CL_StartHunkUsers();
 
@@ -2751,7 +2751,7 @@ void CL_MapLoading(const char *mapname)
         memset(&active->gameState, 0, sizeof(active->gameState));
         conn->lastPacketSentTime = -9999;
     } else {
-        Dvar_SetString(nextmap, (const char *)"");
+        Dvar_SetString((dvar_t *)nextmap, (const char *)"");
         CL_Disconnect();
         I_strncpyz(cls.servername, (const char *)"localhost", sizeof(cls.servername));
         UI_CloseAll();
@@ -3021,9 +3021,9 @@ void CL_DownloadsComplete(void)
         return;
     }
 
-    Dvar_SetInt(cl_paused, 1);
+    Dvar_SetInt((dvar_t *)cl_paused, 1);
     CL_InitCGame();
-    Dvar_SetInt(cl_paused, 0);
+    Dvar_SetInt((dvar_t *)cl_paused, 0);
 
     {
         const char *checksums = FS_ReferencedIwdPureChecksums();

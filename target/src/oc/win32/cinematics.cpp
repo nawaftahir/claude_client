@@ -24,7 +24,7 @@ extern void FS_FCloseFile(fileHandle_t);
 extern int FS_FOpenFileRead(const char *, fileHandle_t *, int);
 extern char *va( const char *format, ... );
 extern void Cbuf_ExecuteText(int, const char *);
-extern void Dvar_SetString(const dvar_t *, const char *);
+extern void Dvar_SetString(dvar_t *, const char *);
 extern qboolean UI_SetActiveMenu(int);
 extern int CL_ScaledMilliseconds(void);
 extern const char *Cmd_Argv( int arg );
@@ -215,11 +215,11 @@ static void RoQShutdown(void)
                             sAspyrIntroPlayed = 1;
                         } else {
                             Cbuf_ExecuteText(2, va("%s\n", nextMapStr));
-                            Dvar_SetString(nextmap, "");
+                            Dvar_SetString((dvar_t *)nextmap, "");
                         }
                     } else {
                         Cbuf_ExecuteText(2, va("%s\n", nextMapStr));
-                        Dvar_SetString(nextmap, "");
+                        Dvar_SetString((dvar_t *)nextmap, "");
                     }
                     UI_SetActiveMenu(1);
                 } else {

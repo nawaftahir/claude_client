@@ -117,7 +117,7 @@ extern int SND_FindFree3DChannel(int entnum, int channel);
 extern void SND_SetChannelInfo(int index, int entnum, const void *pAlias0, const void *pAlias1, float lerp, const float *org, float volume, float pitch, int channels, int rate, int total_msec, int start_msec, int startDelay, int master, int system);
 extern dvar_t *Dvar_RegisterBool(const char *dvarName, bool value, unsigned short flags);
 extern dvar_t *Dvar_RegisterString(const char *dvarName, const char *value, unsigned short flags);
-extern void Dvar_SetString(const dvar_t *dvar, const char *value);
+extern void Dvar_SetString(dvar_t *dvar, const char *value);
 extern int Dvar_GetInt(const char *name);
 extern int stricmp(const char *a, const char *b);
 
@@ -1726,7 +1726,7 @@ Bool SND_InitDriver(void)
         }
     } else {
         milesGlob.provider_3D = (HPROVIDER)(defaultHandle);
-        Dvar_SetString(mss_3d_provider, (const char *)"Miles Fast 2D Positional Audio");
+        Dvar_SetString((dvar_t *)mss_3d_provider, (const char *)"Miles Fast 2D Positional Audio");
         if (milesGlob.provider_3D == NULL) {
             goto shutdown_and_fail;
         }

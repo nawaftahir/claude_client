@@ -64,7 +64,7 @@ extern void UI_CloseAll(void);
 extern void SCR_UpdateScreen(void);
 extern void Com_Error(int level, const char *fmt, ...);
 extern void Com_Memset(void *dest, const int val, int count);
-extern void Dvar_SetString(const dvar_t *dvar, const char *value);
+extern void Dvar_SetString(dvar_t *dvar, const char *value);
 
 typedef struct rconGlob_s {
     char password[24];

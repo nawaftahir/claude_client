@@ -187,8 +187,8 @@ extern void UI_MapLoadInfo(const char *csv);
 extern void UI_FillRect(float x, float y, float width, float height, int horzAlign, int vertAlign, const vec_t *color);
 extern menuDef_t *Menus_FindByName(displayContextDef_t *dc, const char *name);
 extern void Menu_Paint(displayContextDef_t *dc, menuDef_t *menu, qboolean full);
-extern void Dvar_SetInt(const dvar_t *dvar, int value);
-extern void Dvar_SetString(const dvar_t *dvar, const char *value);
+extern void Dvar_SetInt(dvar_t *dvar, int value);
+extern void Dvar_SetString(dvar_t *dvar, const char *value);
 extern void Dvar_SetIntByName(const char *name, int value);
 extern void Dvar_SetBoolByName(const char *dvarName, bool value);
 extern void Dvar_SetStringByName(const char *name, const char *value);
@@ -515,9 +515,9 @@ static void UI_DrawMapPreview(const rectDef_t *rect, const vec_t *color, int net
     if (map < 0 || map >= mapCount) {
 
         if (net) {
-            Dvar_SetInt(ui_currentNetMap, 0);
+            Dvar_SetInt((dvar_t *)ui_currentNetMap, 0);
         } else {
-            Dvar_SetInt(ui_currentMap, 0);
+            Dvar_SetInt((dvar_t *)ui_currentMap, 0);
         }
         map = 0;
     }
@@ -1079,8 +1079,8 @@ void UI_FeederSelection(float feederID, int index)
         }
         actual = 0;
     map_found:
-        Dvar_SetInt(ui_currentMap, actual);
-        Dvar_SetInt(ui_currentNetMap, actual);
+        Dvar_SetInt((dvar_t *)ui_currentMap, actual);
+        Dvar_SetInt((dvar_t *)ui_currentNetMap, actual);
 
     } else if (feederID == 2.0f) {
 
@@ -1116,7 +1116,7 @@ void UI_FeederSelection(float feederID, int index)
         if (index >= 0 && index < uiInfo->playerProfileCount) {
             int sortedIdx = uiInfo->playerProfileStatus.displayProfile[index];
             const char *profileName = uiInfo->playerProfileName[sortedIdx];
-            Dvar_SetString(ui_playerProfileSelected, profileName);
+            Dvar_SetString((dvar_t *)ui_playerProfileSelected, profileName);
         }
     }
 }
@@ -1361,7 +1361,7 @@ void UI_Init(void)
     sharedUiInfo.previewMovie = -1;
 
     netGameTypeIdx = (ui_netGameType)->current.integer;
-    Dvar_SetString(ui_netGameTypeName, sharedUiInfo.gameTypes[netGameTypeIdx].gameType);
+    Dvar_SetString((dvar_t *)ui_netGameTypeName, sharedUiInfo.gameTypes[netGameTypeIdx].gameType);
 
     Dvar_RegisterBool("ui_multiplayer", 1, 0x1040);
 
@@ -2273,7 +2273,7 @@ static void UI_SelectFirstVisibleMap(int currentMapIdx)
 
     if (firstVisible >= 0) {
         Menu_SetFeederSelection(&uiInfo->uiDC, 0, 4, 0, "createserver_maps");
-        Dvar_SetInt(ui_currentNetMap, firstVisible);
+        Dvar_SetInt((dvar_t *)ui_currentNetMap, firstVisible);
     }
 
     UI_SelectCurrentMap();
@@ -2312,12 +2312,12 @@ qboolean UI_OwnerDrawHandleKey(int ownerDraw, int flags, float *special, int key
                     newGT = 3;
             }
 
-            Dvar_SetInt(ui_gametype, newGT);
+            Dvar_SetInt((dvar_t *)ui_gametype, newGT);
             listIndex = (ui_netGameType)->current.integer;
             newVisCount = UI_UpdateMapVisibility(listIndex);
 
             if (newVisCount != oldVisCount) {
-                Dvar_SetInt(ui_currentMap, 0);
+                Dvar_SetInt((dvar_t *)ui_currentMap, 0);
             }
         }
         return 1;
@@ -2339,7 +2339,7 @@ qboolean UI_OwnerDrawHandleKey(int ownerDraw, int flags, float *special, int key
             }
 
             UI_BuildServerDisplayList(1);
-            Dvar_SetInt(ui_netSource, nextNetSource);
+            Dvar_SetInt((dvar_t *)ui_netSource, nextNetSource);
             if ((ui_netSource)->current.integer != 1) {
                 UI_StartServerRefresh(1);
                 UI_BuildServerDisplayList(1);
@@ -2383,8 +2383,8 @@ qboolean UI_OwnerDrawHandleKey(int ownerDraw, int flags, float *special, int key
                     newVal = 0;
             }
 
-            Dvar_SetInt(ui_netGameType, newVal);
-            Dvar_SetString(ui_netGameTypeName, sharedUiInfo.gameTypes[(ui_netGameType)->current.integer].gameType);
+            Dvar_SetInt((dvar_t *)ui_netGameType, newVal);
+            Dvar_SetString((dvar_t *)ui_netGameTypeName, sharedUiInfo.gameTypes[(ui_netGameType)->current.integer].gameType);
 
             UI_UpdateMapVisibility((ui_netGameType)->current.integer);
             UI_SelectFirstVisibleMap((ui_currentNetMap)->current.integer);
@@ -2408,7 +2408,7 @@ qboolean UI_OwnerDrawHandleKey(int ownerDraw, int flags, float *special, int key
                     newVal = 0;
             }
 
-            Dvar_SetInt(ui_joinGameType, newVal);
+            Dvar_SetInt((dvar_t *)ui_joinGameType, newVal);
             UI_BuildServerDisplayList(1);
         }
         return 1;
@@ -2610,7 +2610,7 @@ int UI_OwnerDrawWidth(int ownerDraw, FontHandle font, float scale)
     case 0xdc: {
         int netSrcVal = (ui_netSource)->current.integer;
         if (netSrcVal > sharedUiInfo.numJoinGameTypes) {
-            Dvar_SetInt(ui_netSource, 0);
+            Dvar_SetInt((dvar_t *)ui_netSource, 0);
             netSrcVal = (ui_netSource)->current.integer;
         }
         s = SEH_LocalizeTextMessage(va("EXE_NETSOURCE\x14%s", netSources[netSrcVal]), "net source", LOCMSG_SAFE);
@@ -2724,8 +2724,8 @@ void UI_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAli
     {
         int gtIdx = (ui_netGameType)->current.integer;
         if (gtIdx > sharedUiInfo.numGameTypes) {
-            Dvar_SetInt(ui_netGameType, 0);
-            Dvar_SetString(ui_netGameTypeName, sharedUiInfo.gameTypes[0].gameType);
+            Dvar_SetInt((dvar_t *)ui_netGameType, 0);
+            Dvar_SetString((dvar_t *)ui_netGameTypeName, sharedUiInfo.gameTypes[0].gameType);
             gtIdx = (ui_netGameType)->current.integer;
         }
         {
@@ -2742,7 +2742,7 @@ void UI_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAli
     {
         int netMap = (ui_currentNetMap)->current.integer;
         if (netMap >= sharedUiInfo.mapCount) {
-            Dvar_SetInt(ui_currentNetMap, 0);
+            Dvar_SetInt((dvar_t *)ui_currentNetMap, 0);
         }
         {
             int cinHandle = sharedUiInfo.serverStatus.currentServerCinematic;
@@ -2848,7 +2848,7 @@ void UI_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAli
     {
         int jgtIdx = (ui_joinGameType)->current.integer;
         if (jgtIdx > sharedUiInfo.numJoinGameTypes) {
-            Dvar_SetInt(ui_joinGameType, 0);
+            Dvar_SetInt((dvar_t *)ui_joinGameType, 0);
             jgtIdx = (ui_joinGameType)->current.integer;
         }
         {
@@ -3428,8 +3428,8 @@ void UI_RunMenuScript(const char **args)
             if (numGT > 0) {
                 for (i = 0; i < numGT; i++) {
                     if (I_stricmp(curGameType, *(const char **)((byte *)&sharedUiInfo + 0x114c + i * 8)) == 0) {
-                        Dvar_SetInt(ui_netGameType, i);
-                        Dvar_SetString(ui_netGameTypeName, sharedUiInfo.gameTypes[i].gameType);
+                        Dvar_SetInt((dvar_t *)ui_netGameType, i);
+                        Dvar_SetString((dvar_t *)ui_netGameTypeName, sharedUiInfo.gameTypes[i].gameType);
                         break;
                     }
                 }
@@ -3595,7 +3595,7 @@ void UI_RunMenuScript(const char **args)
             }
         }
 
-        Dvar_SetInt(ui_playerProfileCount, uiInfo->playerProfileCount);
+        Dvar_SetInt((dvar_t *)ui_playerProfileCount, uiInfo->playerProfileCount);
         return;
     }
 
@@ -3664,7 +3664,7 @@ void UI_RunMenuScript(const char **args)
             return;
 
         I_strncpyz(out, newName, 0x20);
-        Dvar_SetString(ui_playerProfileNameNew, "");
+        Dvar_SetString((dvar_t *)ui_playerProfileNameNew, "");
 
         numProfiles = uiInfo->playerProfileCount;
         if (numProfiles >= 64) {
@@ -3699,7 +3699,7 @@ void UI_RunMenuScript(const char **args)
             }
         }
 
-        Dvar_SetInt(ui_playerProfileCount, uiInfo->playerProfileCount);
+        Dvar_SetInt((dvar_t *)ui_playerProfileCount, uiInfo->playerProfileCount);
 
         {
             int np = uiInfo->playerProfileCount;
@@ -3758,7 +3758,7 @@ void UI_RunMenuScript(const char **args)
             numProfiles = uiInfo->playerProfileCount;
 
             if (numProfiles == 0) {
-                Dvar_SetString(ui_playerProfileSelected, "");
+                Dvar_SetString((dvar_t *)ui_playerProfileSelected, "");
             } else {
 
                 uiInfo->playerProfileName[sortedIdx] =
@@ -3785,7 +3785,7 @@ void UI_RunMenuScript(const char **args)
             }
         }
 
-        Dvar_SetInt(ui_playerProfileCount, uiInfo->playerProfileCount);
+        Dvar_SetInt((dvar_t *)ui_playerProfileCount, uiInfo->playerProfileCount);
         return;
     }
 
@@ -4847,7 +4847,7 @@ void UI_FeederSelection(float feederID, int index)
         if (index >= 0 && index < uiInfo->playerProfileCount) {
             int sortedIdx = uiInfo->playerProfileStatus.displayProfile[index];
             const char *profileName = uiInfo->playerProfileName[sortedIdx];
-            Dvar_SetString(ui_playerProfileSelected, profileName);
+            Dvar_SetString((dvar_t *)ui_playerProfileSelected, profileName);
         }
     }
 }
@@ -5060,7 +5060,7 @@ void UI_Init(void)
     sharedUiInfo.previewMovie = -1;
 
     netGameTypeIdx = (ui_netGameType)->current.integer;
-    Dvar_SetString(ui_netGameTypeName, sharedUiInfo.gameTypes[netGameTypeIdx].gameType);
+    Dvar_SetString((dvar_t *)ui_netGameTypeName, sharedUiInfo.gameTypes[netGameTypeIdx].gameType);
 
     Dvar_RegisterBool("ui_multiplayer", 1, 0x1040);
 }

@@ -78,7 +78,7 @@ extern void CL_LookupColor(int c, vec_t *color);
 extern char *va( const char *format, ... );
 extern unsigned int Scr_GetNumScriptVars(void);
 extern unsigned int Scr_GetNumScriptThreads(void);
-extern unsigned int Scr_GetStringUsage(void);
+extern int Scr_GetStringUsage(void);
 extern int Sys_Milliseconds(void);
 extern int CL_GetCurrentCmdNumber(void);
 extern int CL_GetKeyCatchers(void);

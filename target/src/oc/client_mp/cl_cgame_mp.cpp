@@ -62,7 +62,7 @@ extern void CL_ReadDemoMessage(void);
 extern int CL_GetSkelTimeStamp(int localClientNum);
 extern char *CL_AllocSkelMemory(int localClientNum, unsigned int size);
 extern void CL_ConsolePrint(print_msg_type_t type, const char *txt, int duration, int linewidth);
-extern int DObjSkelExists(const struct DObj_s *obj, int timeStamp);
+extern int DObjSkelExists(struct DObj_s *obj, int timeStamp);
 extern int DObjSkelIsBoneUpToDate(DObj_s *obj, int boneIndex);
 extern qboolean DObjSkelAreBonesUpToDate(const struct DObj_s *obj, int *partBits);
 extern int DObjGetAllocSkelSize(const struct DObj_s *obj);
@@ -95,8 +95,8 @@ extern void SCR_UpdateScreenInternal(void);
 extern void R_AddCmdDrawStretchPic(float x, float y, float w, float h, float s0, float t0, float s1, float t1, const vec_t *color, MaterialHandle material);
 extern void R_AddCmdDrawQuadPic(vec2_t *verts, const vec_t *color, MaterialHandle material);
 extern void Cbuf_AddText(const char *text);
-extern void Dvar_SetString(const dvar_t *dvar, const char *value);
-extern void Dvar_SetInt(const dvar_t *dvar, int value);
+extern void Dvar_SetString(dvar_t *dvar, const char *value);
+extern void Dvar_SetInt(dvar_t *dvar, int value);
 extern int Dvar_GetInt(const char *name);
 extern void Dvar_GetUnpackedColorByName(const char *name, float *color);
 extern void CalcScreenPlacement(float *x, float *y, float *w, float *h, int horzAlign, int vertAlign);
@@ -235,7 +235,7 @@ static inline __attribute__((always_inline)) void CL_FirstSnapshot(void)
         if (*autorecStr) {
             Cbuf_AddText(autorecStr);
             Cbuf_AddText("\n");
-            Dvar_SetString(cl_activeAction, "");
+            Dvar_SetString((dvar_t *)cl_activeAction, "");
         }
     }
 
@@ -559,7 +559,7 @@ void CL_SetExpectedHunkUsage(const char *mapname)
         if (!token || *token == '\0')
             continue;
 
-        Dvar_SetInt( (const dvar_t *)(((void *)com_expectedHunkUsage)), atoi(token));
+        Dvar_SetInt( (dvar_t *)com_expectedHunkUsage, atoi(token));
         Z_FreeInternal(buf);
         return;
     }
@@ -567,7 +567,7 @@ void CL_SetExpectedHunkUsage(const char *mapname)
     Z_FreeInternal(buf);
 
 set_default:
-    Dvar_SetInt( (const dvar_t *)(((void *)com_expectedHunkUsage)), 0);
+    Dvar_SetInt( (dvar_t *)com_expectedHunkUsage, 0);
 }
 
 void CL_CM_LoadMap(const char *mapname)
@@ -602,7 +602,7 @@ qboolean CL_DObjCreateSkelForBone(struct DObj_s *obj, int boneIndex, int localCl
 
     timeStamp = CL_GetSkelTimeStamp(localClientNum);
 
-    if (DObjSkelExists(obj, timeStamp)) {
+    if (DObjSkelExists((DObj_s *)obj, timeStamp)) {
         return DObjSkelIsBoneUpToDate(obj, boneIndex);
     }
 
@@ -626,7 +626,7 @@ qboolean CL_DObjCreateSkelForBones(const struct DObj_s *obj, int *partBits, int 
 
     timeStamp = CL_GetSkelTimeStamp(localClientNum);
 
-    if (DObjSkelExists(obj, timeStamp)) {
+    if (DObjSkelExists((DObj_s *)obj, timeStamp)) {
         return DObjSkelAreBonesUpToDate(obj, partBits);
     }
 

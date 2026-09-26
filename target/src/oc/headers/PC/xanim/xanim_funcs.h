@@ -16,7 +16,7 @@ int DObjSkelIsBoneUpToDate(DObj_s *obj, int boneIndex);
 int DObjSkelAreBonesUpToDate(const DObj *obj, int *partBits);
 void DObjFree(DObj_s *obj);
 int DObjGetAllocSkelSize(const DObj *obj);
-qboolean DObjSkelExists(const DObj *obj, int timeStamp);
+qboolean DObjSkelExists(DObj *obj, int timeStamp);
 void DObjSkelClear(const DObj *obj);
 void DObjCreateSkel(const DObj *obj, char *buf, int timeStamp);
 int DObjGetNumModels(const DObj *obj);
@@ -45,7 +45,7 @@ qboolean DObjSetLocalTag(const DObj *obj, int *partBits, unsigned int tagName, c
 bool DObjSetControlTagAngles(const DObj_s *obj, int *partBits, unsigned int boneIndex, float *angles);
 void DObjDumpInfo(const DObj *obj);
 void DObjCreate(DObjModel_s *dobjModels, unsigned int numModels, XAnimTree_s *tree, char *buf, unsigned int entnum);
-void DObjCalcSkel(const DObj *obj, int *partBits);
+void DObjCalcSkel(DObj *obj, int *partBits);
 void DObjTraceline(DObj *obj, vec_t *start, vec_t *end, unsigned char *priorityMap, DObjTrace *trace);
 
 void XAnimInit(void);

@@ -297,7 +297,7 @@ const char *NET_AdrToString(netadr_t a);
 qboolean NET_StringToAdr(const char *s, netadr_t *a);
 bool NET_SendPacket( netsrc_t sock, int length, const void *data, netadr_t to );
 void NET_OutOfBandVoiceData(netsrc_t sock, netadr_t adr, byte *format, int len);
-Bool NET_OutOfBandData(netsrc_t sock, netadr_t adr, byte *format, int len);
+int NET_OutOfBandData(netsrc_t sock, netadr_t adr, byte *format, int len);
 qboolean NET_OutOfBandPrint(netsrc_t sock, netadr_t adr, const char *msg);
 qboolean NET_CompareAdr(netadr_t a, netadr_t b);
 qboolean NET_CompareBaseAdr(netadr_t a, netadr_t b);

@@ -57,7 +57,7 @@ extern qboolean UI_checkKeyExec(int key);
 extern int CG_KeyInterceptEvent(int key, qboolean down);
 extern void CL_StopLogoOrCinematic(void);
 extern void CL_Disconnect(void);
-extern void Dvar_SetString(const dvar_t *dvar, const char *value);
+extern void Dvar_SetString(dvar_t *dvar, const char *value);
 extern int I_strncmp(const char *s0, const char *s1, int n);
 extern void Cmd_ForEach(void (*callback)(const char *));
 extern void Dvar_ForEach(void (*callback)(const char *));

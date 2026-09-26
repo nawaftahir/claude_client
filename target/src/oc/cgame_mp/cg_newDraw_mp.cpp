@@ -68,7 +68,7 @@ extern qboolean BG_WeaponIsClipOnly(int weapon);
 extern int BG_ClipForWeapon(int weapon);
 extern int BG_GetAmmoClipSize(int iClipIndex);
 extern bool BG_DoesWeaponNeedSlot(int weapon);
-extern int BG_GetEmptySlotForWeapon(const playerState_t *pPS, int iWeaponIndex);
+extern int BG_GetEmptySlotForWeapon(playerState_t *pPS, int iWeaponIndex);
 extern float sinf(float x);
 extern const char *SEH_LocalizeTextMessage(const char *msg, const char *context, msgLocErrType_t errType);
 extern const char *UI_ReplaceConversionString(const char *sourceString, const char *replaceString);
@@ -405,7 +405,7 @@ static void CG_DrawCursorhint(const rectDef_t *rect, struct Font_s *font, float 
             GetKeyBindingLocalizedString("+activate", binding);
 
             if (BG_DoesWeaponNeedSlot(weapIdx)) {
-                int emptySlot = BG_GetEmptySlotForWeapon((const playerState_t *)&cg->predictedPlayerState, weapIdx);
+                int emptySlot = BG_GetEmptySlotForWeapon(&cg->predictedPlayerState, weapIdx);
                 if (emptySlot == 0) {
 
                     WeaponDef *currentWeapDef;

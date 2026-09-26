@@ -69,7 +69,7 @@ extern void FS_PureServerSetReferencedIwds(const char *iwdSums, const char *iwdN
 extern void Dvar_SetFromStringByName(const char *dvarName, const char *string);
 extern bool Dvar_GetBool(const char *dvarName);
 extern void Dvar_SetCheatState(void);
-extern void Dvar_SetInt(const dvar_t *dvar, int value);
+extern void Dvar_SetInt(dvar_t *dvar, int value);
 extern void Con_Close(void);
 extern void CL_ClearState(void);
 extern void CL_SystemInfoChanged(void);
@@ -273,7 +273,7 @@ void CL_ParseGamestate(msg_t *msg)
         if (Sys_IsLANAddress(clc->serverAddress)) {
 
             CL_InitDownloads();
-            Dvar_SetInt(cl_paused, 0);
+            Dvar_SetInt((dvar_t *)cl_paused, 0);
             return;
         }
     }
@@ -282,7 +282,7 @@ void CL_ParseGamestate(msg_t *msg)
 
     CL_InitDownloads();
 
-    Dvar_SetInt(cl_paused, 0);
+    Dvar_SetInt((dvar_t *)cl_paused, 0);
 }
 
 void CL_ParseDownload(msg_t *msg)

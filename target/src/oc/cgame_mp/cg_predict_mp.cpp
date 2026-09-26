@@ -23,7 +23,7 @@ extern float CM_RadiusOfModel(unsigned int model);
 extern int CL_GetCurrentCmdNumber(void);
 extern qboolean CL_GetUserCmd(int cmdNumber, usercmd_t *ucmd);
 extern void PM_UpdateViewAngles(playerState_t *ps, const usercmd_t *cmd, int, int);
-extern const float LerpAngle(const float from, const float to, const float frac);
+extern float LerpAngle(float from, float to, float frac);
 extern void Pmove(pmove_t *pm);
 extern void CG_TransitionPlayerState(playerState_t *ps, playerState_t *ops);
 extern void BG_PlayerStateToEntityState(playerState_s *ps, entityState_s *s, int snap, byte handler);

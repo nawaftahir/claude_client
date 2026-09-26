@@ -10,7 +10,7 @@ extern int CG_CrosshairPlayer(void);
 extern void Cmd_ArgvBuffer(int arg, char *buf, int bufSize);
 extern char *va( const char *format, ... );
 extern void Cbuf_AddText(const char *text);
-extern void Dvar_SetInt(const dvar_t *dvar, int value);
+extern void Dvar_SetInt(dvar_t *dvar, int value);
 extern void Com_Printf(const char *fmt, ...);
 extern int CG_ScoreboardDisplayed(void);
 extern int Cmd_Argc(void);

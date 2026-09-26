@@ -97,7 +97,7 @@ extern void BG_EvaluateTrajectory( const trajectory_t *tr, int atTime, vec3_t re
 extern void CG_CompassAddWeaponPingInfo(centity_t *cent, const vec_t *origin, int msec);
 extern qboolean CL_DObjCreateSkelForBones(const struct DObj_s *obj, int *partBits, int localClientNum);
 extern void DObjCalcAnim(const DObj *obj, int *partBits);
-extern void DObjCalcSkel(const DObj *obj, int *partBits);
+extern void DObjCalcSkel(DObj *obj, int *partBits);
 extern int DObjGetClientNotifyList(XAnimNotify **notifyList);
 extern int CG_PlayClientSoundAlias(snd_alias_list_t *aliasList);
 extern int stricmp(const char *s1, const char *s2);
@@ -2036,7 +2036,7 @@ void CG_UpdateViewWeaponAnim(playerState_t *ps)
 
     if (!CL_DObjCreateSkelForBones(obj, partBits, 0)) {
         DObjCalcAnim(obj, partBits);
-        DObjCalcSkel(obj, partBits);
+        DObjCalcSkel((DObj *)obj, partBits);
     }
 
     weaponIndex = BG_GetViewmodelWeaponIndex(&cg->predictedPlayerState);

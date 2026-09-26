@@ -89,7 +89,7 @@ int BG_GetAmmoTypeMax(int iAmmoIndex);
 int BG_GetAmmoClipSize(int iClipIndex);
 int BG_FindWeaponIndexForName(const char *name);
 qboolean BG_IsAnyEmptyPrimaryWeaponSlot(const playerState_t *ps);
-Bool PM_IsBinocularsADS(const playerState_t *ps);
+int PM_IsBinocularsADS(const playerState_t *ps);
 void PM_ExitAimDownSight(playerState_t *ps);
 float BG_GetBobCycle(const playerState_t *ps);
 float BG_GetVerticalBobFactor(const playerState_t *ps, float cycle, float speed, float maxAmp);
@@ -97,7 +97,7 @@ float BG_GetHorizontalBobFactor(const playerState_t *ps, float cycle, float spee
 qboolean BG_IsAimDownSightWeapon(int iWeapon);
 Bool BG_DoesWeaponRequireSlot(int weaponIndex);
 bool BG_DoesWeaponNeedSlot(int weapon);
-int BG_GetEmptySlotForWeapon(const playerState_t *pPS, int iWeaponIndex);
+int BG_GetEmptySlotForWeapon(playerState_t *pPS, int iWeaponIndex);
 int BG_GetStackSlotForWeapon( const playerState_t *pPS, int iWeaponIndex, unsigned int preferedSlot );
 qboolean BG_IsPlayerWeaponAnAlt(int iWeaponIndex, int iAltIndex);
 void BG_GetSpreadForWeapon(const playerState_t *ps, int weaponIndex, float *minSpread, float *maxSpread);
