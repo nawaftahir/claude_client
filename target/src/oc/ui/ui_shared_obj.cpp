@@ -1937,188 +1937,109 @@ MenuList *UI_LoadMenu(const char *menuFile, int imageTrack)
 }
 
 keywordHash_t itemParseKeywords[67] = {
-    { (char *)&str_002194b4, (qboolean(*)())&ItemParse_name, 0x0 },
-    { (char *)&str_002ace30, (qboolean(*)())&ItemParse_text, 0x0 },
-    { (char *)&str_002b3cb8, (qboolean(*)())&ItemParse_textfile, 0x0 },
-    { (char *)&str_002b3cc4, (qboolean(*)())&ItemParse_textsavegame, 0x0 },
-    { (char *)&str_002b3cd4, (qboolean(*)())&ItemParse_group, 0x0 },
-    { (char *)&str_002b3cdc, (qboolean(*)())&ItemParse_rect, 0x0 },
-    { (char *)&str_0021a570, (qboolean(*)())&ItemParse_origin, 0x0 },
-    { (char *)&str_002b3ce4, (qboolean(*)())&ItemParse_style, 0x0 },
-    { (char *)&str_002b3cec, (qboolean(*)())&ItemParse_decoration, 0x0 },
-    { (char *)&str_002b3cf8, (qboolean(*)())&ItemParse_notselectable, 0x0 },
-    { (char *)&str_002b3d08, (qboolean(*)())&ItemParse_noScrollBars, 0x0 },
-    { (char *)&str_002b3d18, (qboolean(*)())&ItemParse_wrapped, 0x0 },
-    { (char *)&str_002b3d20, (qboolean(*)())&ItemParse_autowrapped, 0x0 },
-    { (char *)&str_002b3d2c, (qboolean(*)())&ItemParse_horizontalscroll, 0x0 },
-    { (char *)&str_0021eb5c, (qboolean(*)())&ItemParse_type, 0x0 },
-    { (char *)&str_002b3d40, (qboolean(*)())&ItemParse_elementwidth, 0x0 },
-    { (char *)&str_002b3d50, (qboolean(*)())&ItemParse_elementheight, 0x0 },
-    { (char *)&str_002b3d60, (qboolean(*)())&ItemParse_feeder, 0x0 },
-    { (char *)&str_002b3d68, (qboolean(*)())&ItemParse_elementtype, 0x0 },
-    { (char *)&str_002b3d74, (qboolean(*)())&ItemParse_columns, 0x0 },
-    { (char *)&str_002b3d7c, (qboolean(*)())&ItemParse_border, 0x0 },
-    { (char *)&str_002b3d84, (qboolean(*)())&ItemParse_bordersize, 0x0 },
-    { (char *)&str_002b3d90, (qboolean(*)())&ItemParse_visible, 0x0 },
-    { (char *)&str_002b3d98, (qboolean(*)())&ItemParse_ownerdraw, 0x0 },
-    { (char *)&str_002b3da4, (qboolean(*)())&ItemParse_align, 0x0 },
-    { (char *)&str_002b3dac, (qboolean(*)())&ItemParse_textalign, 0x0 },
-    { (char *)&str_002b3db8, (qboolean(*)())&ItemParse_textalignx, 0x0 },
-    { (char *)&str_002b3dc4, (qboolean(*)())&ItemParse_textaligny, 0x0 },
-    { (char *)&str_002b3dd0, (qboolean(*)())&ItemParse_textscale, 0x0 },
-    { (char *)&str_002b3ddc, (qboolean(*)())&ItemParse_textstyle, 0x0 },
-    { (char *)&str_002b3de8, (qboolean(*)())&ItemParse_textfont, 0x0 },
-    { (char *)&str_002ac220, (qboolean(*)())&ItemParse_backcolor, 0x0 },
-    { (char *)&str_002ac22c, (qboolean(*)())&ItemParse_forecolor, 0x0 },
-    { (char *)&str_002ac238, (qboolean(*)())&ItemParse_bordercolor, 0x0 },
-    { (char *)&str_002b3df4, (qboolean(*)())&ItemParse_outlinecolor, 0x0 },
-    { (char *)&str_002b3e04, (qboolean(*)())&ItemParse_background, 0x0 },
-    { (char *)&str_002b3e10, (qboolean(*)())&ItemParse_onFocus, 0x0 },
-    { (char *)&str_002b3e18, (qboolean(*)())&ItemParse_leaveFocus, 0x0 },
-    { (char *)&str_002b3e24, (qboolean(*)())&ItemParse_mouseEnter, 0x0 },
-    { (char *)&str_002b3e30, (qboolean(*)())&ItemParse_mouseExit, 0x0 },
-    { (char *)&str_002b3e3c, (qboolean(*)())&ItemParse_mouseEnterText, 0x0 },
-    { (char *)&str_002b3e4c, (qboolean(*)())&ItemParse_mouseExitText, 0x0 },
-    { (char *)&str_002b3e5c, (qboolean(*)())&ItemParse_action, 0x0 },
-    { (char *)&str_002ae014, (qboolean(*)())&ItemParse_accept, 0x0 },
-    { (char *)&str_002b3e64, (qboolean(*)())&ItemParse_special, 0x0 },
-    { (char *)&str_002b3e6c, (qboolean(*)())&ItemParse_dvar, 0x0 },
-    { (char *)&str_002b3e74, (qboolean(*)())&ItemParse_maxChars, 0x0 },
-    { (char *)&str_002b3e80, (qboolean(*)())&Item_Parse_maxCharsGotoNext, 0x0 },
-    { (char *)&str_002b3e94, (qboolean(*)())&ItemParse_maxPaintChars, 0x0 },
-    { (char *)&str_002b3ea4, (qboolean(*)())&ItemParse_focusSound, 0x0 },
-    { (char *)&str_002b3eb0, (qboolean(*)())&ItemParse_dvarFloat, 0x0 },
-    { (char *)&str_002b3ebc, (qboolean(*)())&ItemParse_dvarStrList, 0x0 },
-    { (char *)&str_002b3ec8, (qboolean(*)())&ItemParse_dvarFloatList, 0x0 },
-    { (char *)&str_002b3ed8, (qboolean(*)())&ItemParse_dvarEnumList, 0x0 },
-    { (char *)&str_002b3ee8, (qboolean(*)())&ItemParse_ownerdrawFlag, 0x0 },
-    { (char *)&str_002b3ef8, (qboolean(*)())&ItemParse_enableDvar, 0x0 },
-    { (char *)&str_002b3f04, (qboolean(*)())&ItemParse_dvarTest, 0x0 },
-    { (char *)&str_002b3f10, (qboolean(*)())&ItemParse_disableDvar, 0x0 },
-    { (char *)&str_002b3f1c, (qboolean(*)())&ItemParse_showDvar, 0x0 },
-    { (char *)&str_002b3f28, (qboolean(*)())&ItemParse_hideDvar, 0x0 },
-    { (char *)&str_002b3f34, (qboolean(*)())&ItemParse_focusDvar, 0x0 },
-    { (char *)&str_002a90a4, (qboolean(*)())&ItemParse_cinematic, 0x0 },
-    { (char *)&str_002b3f40, (qboolean(*)())&ItemParse_doubleClick, 0x0 },
-    { (char *)&str_002b3f4c, (qboolean(*)())&ItemParse_execKey, 0x0 },
-    { (char *)&str_002b3f54, (qboolean(*)())&ItemParse_execKeyInt, 0x0 },
+    { (char *)"name", (qboolean(*)())&ItemParse_name, 0x0 },
+    { (char *)"text", (qboolean(*)())&ItemParse_text, 0x0 },
+    { (char *)"textfile", (qboolean(*)())&ItemParse_textfile, 0x0 },
+    { (char *)"textsavegame", (qboolean(*)())&ItemParse_textsavegame, 0x0 },
+    { (char *)"group", (qboolean(*)())&ItemParse_group, 0x0 },
+    { (char *)"rect", (qboolean(*)())&ItemParse_rect, 0x0 },
+    { (char *)"origin", (qboolean(*)())&ItemParse_origin, 0x0 },
+    { (char *)"style", (qboolean(*)())&ItemParse_style, 0x0 },
+    { (char *)"decoration", (qboolean(*)())&ItemParse_decoration, 0x0 },
+    { (char *)"notselectable", (qboolean(*)())&ItemParse_notselectable, 0x0 },
+    { (char *)"noscrollbars", (qboolean(*)())&ItemParse_noScrollBars, 0x0 },
+    { (char *)"wrapped", (qboolean(*)())&ItemParse_wrapped, 0x0 },
+    { (char *)"autowrapped", (qboolean(*)())&ItemParse_autowrapped, 0x0 },
+    { (char *)"horizontalscroll", (qboolean(*)())&ItemParse_horizontalscroll, 0x0 },
+    { (char *)"type", (qboolean(*)())&ItemParse_type, 0x0 },
+    { (char *)"elementwidth", (qboolean(*)())&ItemParse_elementwidth, 0x0 },
+    { (char *)"elementheight", (qboolean(*)())&ItemParse_elementheight, 0x0 },
+    { (char *)"feeder", (qboolean(*)())&ItemParse_feeder, 0x0 },
+    { (char *)"elementtype", (qboolean(*)())&ItemParse_elementtype, 0x0 },
+    { (char *)"columns", (qboolean(*)())&ItemParse_columns, 0x0 },
+    { (char *)"border", (qboolean(*)())&ItemParse_border, 0x0 },
+    { (char *)"bordersize", (qboolean(*)())&ItemParse_bordersize, 0x0 },
+    { (char *)"visible", (qboolean(*)())&ItemParse_visible, 0x0 },
+    { (char *)"ownerdraw", (qboolean(*)())&ItemParse_ownerdraw, 0x0 },
+    { (char *)"align", (qboolean(*)())&ItemParse_align, 0x0 },
+    { (char *)"textalign", (qboolean(*)())&ItemParse_textalign, 0x0 },
+    { (char *)"textalignx", (qboolean(*)())&ItemParse_textalignx, 0x0 },
+    { (char *)"textaligny", (qboolean(*)())&ItemParse_textaligny, 0x0 },
+    { (char *)"textscale", (qboolean(*)())&ItemParse_textscale, 0x0 },
+    { (char *)"textstyle", (qboolean(*)())&ItemParse_textstyle, 0x0 },
+    { (char *)"textfont", (qboolean(*)())&ItemParse_textfont, 0x0 },
+    { (char *)"backcolor", (qboolean(*)())&ItemParse_backcolor, 0x0 },
+    { (char *)"forecolor", (qboolean(*)())&ItemParse_forecolor, 0x0 },
+    { (char *)"bordercolor", (qboolean(*)())&ItemParse_bordercolor, 0x0 },
+    { (char *)"outlinecolor", (qboolean(*)())&ItemParse_outlinecolor, 0x0 },
+    { (char *)"background", (qboolean(*)())&ItemParse_background, 0x0 },
+    { (char *)"onFocus", (qboolean(*)())&ItemParse_onFocus, 0x0 },
+    { (char *)"leaveFocus", (qboolean(*)())&ItemParse_leaveFocus, 0x0 },
+    { (char *)"mouseEnter", (qboolean(*)())&ItemParse_mouseEnter, 0x0 },
+    { (char *)"mouseExit", (qboolean(*)())&ItemParse_mouseExit, 0x0 },
+    { (char *)"mouseEnterText", (qboolean(*)())&ItemParse_mouseEnterText, 0x0 },
+    { (char *)"mouseExitText", (qboolean(*)())&ItemParse_mouseExitText, 0x0 },
+    { (char *)"action", (qboolean(*)())&ItemParse_action, 0x0 },
+    { (char *)"accept", (qboolean(*)())&ItemParse_accept, 0x0 },
+    { (char *)"special", (qboolean(*)())&ItemParse_special, 0x0 },
+    { (char *)"dvar", (qboolean(*)())&ItemParse_dvar, 0x0 },
+    { (char *)"maxChars", (qboolean(*)())&ItemParse_maxChars, 0x0 },
+    { (char *)"maxCharsGotoNext", (qboolean(*)())&Item_Parse_maxCharsGotoNext, 0x0 },
+    { (char *)"maxPaintChars", (qboolean(*)())&ItemParse_maxPaintChars, 0x0 },
+    { (char *)"focusSound", (qboolean(*)())&ItemParse_focusSound, 0x0 },
+    { (char *)"dvarFloat", (qboolean(*)())&ItemParse_dvarFloat, 0x0 },
+    { (char *)"dvarStrList", (qboolean(*)())&ItemParse_dvarStrList, 0x0 },
+    { (char *)"dvarFloatList", (qboolean(*)())&ItemParse_dvarFloatList, 0x0 },
+    { (char *)"dvarEnumList", (qboolean(*)())&ItemParse_dvarEnumList, 0x0 },
+    { (char *)"ownerdrawFlag", (qboolean(*)())&ItemParse_ownerdrawFlag, 0x0 },
+    { (char *)"enableDvar", (qboolean(*)())&ItemParse_enableDvar, 0x0 },
+    { (char *)"dvarTest", (qboolean(*)())&ItemParse_dvarTest, 0x0 },
+    { (char *)"disableDvar", (qboolean(*)())&ItemParse_disableDvar, 0x0 },
+    { (char *)"showDvar", (qboolean(*)())&ItemParse_showDvar, 0x0 },
+    { (char *)"hideDvar", (qboolean(*)())&ItemParse_hideDvar, 0x0 },
+    { (char *)"focusDvar", (qboolean(*)())&ItemParse_focusDvar, 0x0 },
+    { (char *)"cinematic", (qboolean(*)())&ItemParse_cinematic, 0x0 },
+    { (char *)"doubleclick", (qboolean(*)())&ItemParse_doubleClick, 0x0 },
+    { (char *)"execKey", (qboolean(*)())&ItemParse_execKey, 0x0 },
+    { (char *)"execKeyInt", (qboolean(*)())&ItemParse_execKeyInt, 0x0 },
     { 0, 0, 0x0 },
     { 0 }
 };
 keywordHash_t menuParseKeywords[35] = {
-    { (char *)&str_002194b4, (qboolean(*)())&MenuParse_name, 0x0 },
-    { (char *)&str_002b3f60, (qboolean(*)())&MenuParse_fullscreen, 0x0 },
-    { (char *)&str_002b3cdc, (qboolean(*)())&MenuParse_rect, 0x0 },
-    { (char *)&str_002b3ce4, (qboolean(*)())&MenuParse_style, 0x0 },
-    { (char *)&str_002b3d90, (qboolean(*)())&MenuParse_visible, 0x0 },
-    { (char *)&str_002b3f6c, (qboolean(*)())&MenuParse_onOpen, 0x0 },
-    { (char *)&str_002b3f74, (qboolean(*)())&MenuParse_onClose, 0x0 },
-    { (char *)&str_002b3f7c, (qboolean(*)())&MenuParse_onESC, 0x0 },
-    { (char *)&str_002b3d7c, (qboolean(*)())&MenuParse_border, 0x0 },
-    { (char *)&str_002b3f84, (qboolean(*)())&MenuParse_borderSize, 0x0 },
-    { (char *)&str_002ac220, (qboolean(*)())&MenuParse_backcolor, 0x0 },
-    { (char *)&str_002ac22c, (qboolean(*)())&MenuParse_forecolor, 0x0 },
-    { (char *)&str_002ac238, (qboolean(*)())&MenuParse_bordercolor, 0x0 },
-    { (char *)&str_002b3f90, (qboolean(*)())&MenuParse_focuscolor, 0x0 },
-    { (char *)&str_002b3f9c, (qboolean(*)())&MenuParse_disablecolor, 0x0 },
-    { (char *)&str_002b3df4, (qboolean(*)())&MenuParse_outlinecolor, 0x0 },
-    { (char *)&str_002b3e04, (qboolean(*)())&MenuParse_background, 0x0 },
-    { (char *)&str_002b3d98, (qboolean(*)())&MenuParse_ownerdraw, 0x0 },
-    { (char *)&str_002b3ee8, (qboolean(*)())&MenuParse_ownerdrawFlag, 0x0 },
-    { (char *)&str_002b3fac, (qboolean(*)())&MenuParse_outOfBounds, 0x0 },
-    { (char *)&str_002b3fc0, (qboolean(*)())&MenuParse_soundLoop, 0x0 },
-    { (char *)&str_002b3fcc, (qboolean(*)())&MenuParse_itemDef, 0x0 },
-    { (char *)&str_002a90a4, (qboolean(*)())&MenuParse_cinematic, 0x0 },
-    { (char *)&str_002b3fd4, (qboolean(*)())&MenuParse_popup, 0x0 },
-    { (char *)&str_002b3fdc, (qboolean(*)())&MenuParse_fadeClamp, 0x0 },
-    { (char *)&str_002b3fe8, (qboolean(*)())&MenuParse_fadeCycle, 0x0 },
-    { (char *)&str_002b3ff4, (qboolean(*)())&MenuParse_fadeAmount, 0x0 },
-    { (char *)&str_002b4000, (qboolean(*)())&MenuParse_fadeInAmount, 0x0 },
-    { (char *)&str_002b3f4c, (qboolean(*)())&MenuParse_execKey, 0x0 },
-    { (char *)&str_002b3f54, (qboolean(*)())&MenuParse_execKeyInt, 0x0 },
-    { (char *)&str_002b4010, (qboolean(*)())&MenuParse_blurWorld, 0x0 },
-    { (char *)&str_002b401c, (qboolean(*)())&MenuParse_legacySplitScreenScale, 0x0 },
+    { (char *)"name", (qboolean(*)())&MenuParse_name, 0x0 },
+    { (char *)"fullscreen", (qboolean(*)())&MenuParse_fullscreen, 0x0 },
+    { (char *)"rect", (qboolean(*)())&MenuParse_rect, 0x0 },
+    { (char *)"style", (qboolean(*)())&MenuParse_style, 0x0 },
+    { (char *)"visible", (qboolean(*)())&MenuParse_visible, 0x0 },
+    { (char *)"onOpen", (qboolean(*)())&MenuParse_onOpen, 0x0 },
+    { (char *)"onClose", (qboolean(*)())&MenuParse_onClose, 0x0 },
+    { (char *)"onESC", (qboolean(*)())&MenuParse_onESC, 0x0 },
+    { (char *)"border", (qboolean(*)())&MenuParse_border, 0x0 },
+    { (char *)"borderSize", (qboolean(*)())&MenuParse_borderSize, 0x0 },
+    { (char *)"backcolor", (qboolean(*)())&MenuParse_backcolor, 0x0 },
+    { (char *)"forecolor", (qboolean(*)())&MenuParse_forecolor, 0x0 },
+    { (char *)"bordercolor", (qboolean(*)())&MenuParse_bordercolor, 0x0 },
+    { (char *)"focuscolor", (qboolean(*)())&MenuParse_focuscolor, 0x0 },
+    { (char *)"disablecolor", (qboolean(*)())&MenuParse_disablecolor, 0x0 },
+    { (char *)"outlinecolor", (qboolean(*)())&MenuParse_outlinecolor, 0x0 },
+    { (char *)"background", (qboolean(*)())&MenuParse_background, 0x0 },
+    { (char *)"ownerdraw", (qboolean(*)())&MenuParse_ownerdraw, 0x0 },
+    { (char *)"ownerdrawFlag", (qboolean(*)())&MenuParse_ownerdrawFlag, 0x0 },
+    { (char *)"outOfBoundsClick", (qboolean(*)())&MenuParse_outOfBounds, 0x0 },
+    { (char *)"soundLoop", (qboolean(*)())&MenuParse_soundLoop, 0x0 },
+    { (char *)"itemDef", (qboolean(*)())&MenuParse_itemDef, 0x0 },
+    { (char *)"cinematic", (qboolean(*)())&MenuParse_cinematic, 0x0 },
+    { (char *)"popup", (qboolean(*)())&MenuParse_popup, 0x0 },
+    { (char *)"fadeClamp", (qboolean(*)())&MenuParse_fadeClamp, 0x0 },
+    { (char *)"fadeCycle", (qboolean(*)())&MenuParse_fadeCycle, 0x0 },
+    { (char *)"fadeAmount", (qboolean(*)())&MenuParse_fadeAmount, 0x0 },
+    { (char *)"fadeInAmount", (qboolean(*)())&MenuParse_fadeInAmount, 0x0 },
+    { (char *)"execKey", (qboolean(*)())&MenuParse_execKey, 0x0 },
+    { (char *)"execKeyInt", (qboolean(*)())&MenuParse_execKeyInt, 0x0 },
+    { (char *)"blurWorld", (qboolean(*)())&MenuParse_blurWorld, 0x0 },
+    { (char *)"legacySplitScreenScale", (qboolean(*)())&MenuParse_legacySplitScreenScale, 0x0 },
     { 0, 0, 0x0 },
     { 0, 0, 0x0 },
     { 0 }
 };
 
-const char str_002194b4[] = "name";
-const char str_002a90a4[] = "cinematic";
-const char str_002ac220[] = "backcolor";
-const char str_002ac22c[] = "forecolor";
-const char str_002ac238[] = "bordercolor";
-const char str_002ae014[] = "accept";
-const char str_002b3cb8[] = "textfile";
-const char str_002b3cc4[] = "textsavegame";
-const char str_002b3cd4[] = "group";
-const char str_002b3cdc[] = "rect";
-const char str_002b3ce4[] = "style";
-const char str_002b3cec[] = "decoration";
-const char str_002b3cf8[] = "notselectable";
-const char str_002b3d08[] = "noscrollbars";
-const char str_002b3d18[] = "wrapped";
-const char str_002b3d20[] = "autowrapped";
-const char str_002b3d2c[] = "horizontalscroll";
-const char str_002b3d40[] = "elementwidth";
-const char str_002b3d50[] = "elementheight";
-const char str_002b3d60[] = "feeder";
-const char str_002b3d68[] = "elementtype";
-const char str_002b3d74[] = "columns";
-const char str_002b3d7c[] = "border";
-const char str_002b3d84[] = "bordersize";
-const char str_002b3d90[] = "visible";
-const char str_002b3d98[] = "ownerdraw";
-const char str_002b3da4[] = "align";
-const char str_002b3dac[] = "textalign";
-const char str_002b3db8[] = "textalignx";
-const char str_002b3dc4[] = "textaligny";
-const char str_002b3dd0[] = "textscale";
-const char str_002b3ddc[] = "textstyle";
-const char str_002b3de8[] = "textfont";
-const char str_002b3df4[] = "outlinecolor";
-const char str_002b3e04[] = "background";
-const char str_002b3e10[] = "onFocus";
-const char str_002b3e18[] = "leaveFocus";
-const char str_002b3e24[] = "mouseEnter";
-const char str_002b3e30[] = "mouseExit";
-const char str_002b3e3c[] = "mouseEnterText";
-const char str_002b3e4c[] = "mouseExitText";
-const char str_002b3e5c[] = "action";
-const char str_002b3e64[] = "special";
-const char str_002b3e6c[] = "dvar";
-const char str_002b3e74[] = "maxChars";
-const char str_002b3e80[] = "maxCharsGotoNext";
-const char str_002b3e94[] = "maxPaintChars";
-const char str_002b3ea4[] = "focusSound";
-const char str_002b3eb0[] = "dvarFloat";
-const char str_002b3ebc[] = "dvarStrList";
-const char str_002b3ec8[] = "dvarFloatList";
-const char str_002b3ed8[] = "dvarEnumList";
-const char str_002b3ee8[] = "ownerdrawFlag";
-const char str_002b3ef8[] = "enableDvar";
-const char str_002b3f04[] = "dvarTest";
-const char str_002b3f10[] = "disableDvar";
-const char str_002b3f1c[] = "showDvar";
-const char str_002b3f28[] = "hideDvar";
-const char str_002b3f34[] = "focusDvar";
-const char str_002b3f40[] = "doubleclick";
-const char str_002b3f4c[] = "execKey";
-const char str_002b3f54[] = "execKeyInt";
-const char str_002b3f60[] = "fullscreen";
-const char str_002b3f6c[] = "onOpen";
-const char str_002b3f74[] = "onClose";
-const char str_002b3f7c[] = "onESC";
-const char str_002b3f84[] = "borderSize";
-const char str_002b3f90[] = "focuscolor";
-const char str_002b3f9c[] = "disablecolor";
-const char str_002b3fac[] = "outOfBoundsClick";
-const char str_002b3fc0[] = "soundLoop";
-const char str_002b3fcc[] = "itemDef";
-const char str_002b3fd4[] = "popup";
-const char str_002b3fdc[] = "fadeClamp";
-const char str_002b3fe8[] = "fadeCycle";
-const char str_002b3ff4[] = "fadeAmount";
-const char str_002b4000[] = "fadeInAmount";
-const char str_002b4010[] = "blurWorld";
-const char str_002b401c[] = "legacySplitScreenScale";

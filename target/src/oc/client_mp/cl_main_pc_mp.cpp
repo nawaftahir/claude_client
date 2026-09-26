@@ -23,7 +23,7 @@ COD2_ASSERT_FIELD(serverStatusRequest_t, time, 0x2014);
 COD2_ASSERT_FIELD(serverStatusRequest_t, retrieved, 0x2024);
 COD2_ASSERT_SIZE(serverStatusRequest_t, 0x2028);
 
-extern serverStatusRequest_t cl_serverStatusList[16];
+serverStatusRequest_t cl_serverStatusList[16];
 static Bool s_playerMute[64];
 extern int NET_CompareAdrSigned(netadr_t *a, netadr_t *b);
 extern qboolean NET_CompareAdr(netadr_t a, netadr_t b);
