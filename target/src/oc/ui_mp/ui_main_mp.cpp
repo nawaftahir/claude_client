@@ -1547,6 +1547,7 @@ qboolean UI_SetActiveMenu(int menu)
         pFocus = Menu_GetFocused(&uiInfo->uiDC);
         if (pFocus) {
             int activeMenu = uiInfo->currentMenuType;
+#if COD2_TRACE
             static int traceCount;
             if (traceCount++ < 32) {
                 if (getenv("MTRACE"))
@@ -1554,6 +1555,7 @@ qboolean UI_SetActiveMenu(int menu)
                                pFocus->window.name, pFocus->window.dynamicFlags[0],
                                activeMenu, Menu_Count(&uiInfo->uiDC));
             }
+#endif
             if (activeMenu != 9 && activeMenu != 10)
                 return 0;
         }
@@ -3214,12 +3216,15 @@ void UI_Refresh(void)
 {
     int netSource;
     int needRebuild;
+#if COD2_TRACE
     static int refreshTraceCount;
     static int fileTraceCount;
+#endif
 
     if (Menu_Count(&uiInfo->uiDC) <= 0)
         return;
 
+#if COD2_TRACE
     if (fileTraceCount < 40) {
         FILE *f = fopen("x64_ui_trace.txt", fileTraceCount ? "a" : "w");
         if (f) {
@@ -3252,6 +3257,7 @@ void UI_Refresh(void)
         Com_Printf("\n");
         ++refreshTraceCount;
     }
+#endif
 
     Menu_PaintAll(&uiInfo->uiDC);
 

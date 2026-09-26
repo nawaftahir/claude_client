@@ -297,6 +297,7 @@ static void SCR_UpdateFrame(void)
     byte *cls = cls_ptr_195ecac;
     int gameLoaded = (((clientStatic_t *)(cls))->uiStarted);
 
+#if COD2_TRACE
     {
         static int diagOnce2;
         if (!diagOnce2) {
@@ -304,6 +305,7 @@ static void SCR_UpdateFrame(void)
             Com_Printf("[diag] SCR_UpdateFrame REACHED gameLoaded(uiStarted)=%d\n", gameLoaded);
         }
     }
+#endif
 
     if (!gameLoaded) {
         re->ClearScreen(1, (const vec_t *)ptr_195f58c, 0.0f, 0);
@@ -437,9 +439,12 @@ check_ui:
 
     {
         clientActive_t *dv = clients;
+#if COD2_TRACE
         static int uiTraceCount;
         int activeMenu = UI_GetActiveMenu();
+#endif
 
+#if COD2_TRACE
         {
             static int diagOnce;
             if (!diagOnce) {
@@ -449,7 +454,9 @@ check_ui:
                            dv->keyCatchers, dv->displayHUDWithKeycatchUI);
             }
         }
+#endif
 
+#if COD2_TRACE
         if (uiTraceCount < 80 && (activeMenu || (dv->keyCatchers & 8) || dv->displayHUDWithKeycatchUI)) {
             if (getenv("MTRACE"))
                 Com_Printf("[menu-trace] SCR check_ui active=%d keyCatchers=0x%x displayHUD=%d state=%d\n",
@@ -457,6 +464,7 @@ check_ui:
                            (&::clc)->state);
             ++uiTraceCount;
         }
+#endif
 
         if (dv->keyCatchers & 8)
             UI_Refresh();

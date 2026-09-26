@@ -18,3 +18,8 @@
 471180	EmitThread	kmatch
 5033e0	Scr_ToLower	kmatch
 414170	CLUI_GetCDKey	kmatch
+40e7a0	CL_Frame	callgraph
+40e3c0	CL_CheckTimeout	callgraph
+40e480	CL_CheckUserinfo	callgraph
+40e4d0	CL_UpdateInGameState	callgraph
+40d3c0	CL_CheckForResend	callgraph

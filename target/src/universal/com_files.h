@@ -11,7 +11,11 @@
 #define BASEGAME "main"
 #define DEMOGAME "demomain"
 
+#ifdef DEDICATED
 #define CONFIG_NAME "config_mp_server.cfg"
+#else
+#define CONFIG_NAME "config_mp.cfg"
+#endif
 #define DEFAULT_CONFIG "default_mp.cfg"
 
 enum FsThread

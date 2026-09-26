@@ -1820,7 +1820,6 @@ void CL_CheckForResend(void)
 
     conn->connectTime = cls.realtime;
     conn->connectPacketCount++;
-    Com_Printf("[cnx] CL_CheckForResend state=%d count=%d realtime=%d\n", conn->state, conn->connectPacketCount, cls.realtime);
 
     if (conn->state == CA_CONNECTING) {
         const dvar_t *lanAuthorize = net_lanauthorize;
@@ -2116,7 +2115,6 @@ Bool CL_ConnectionlessPacket(netadr_t from, msg_t *msg, int time)
 
     Cmd_TokenizeString(MSG_ReadStringLine(msg));
     cmd = Cmd_Argv(0);
-    Com_Printf("[cnx] CL_ConnectionlessPacket cmd='%s' state=%d\n", cmd, conn->state);
 
 #if COD2_IS_PATCH_13
 
@@ -2401,102 +2399,59 @@ void CL_ShutdownAll(void)
 }
 
 
+void CL_CheckUserinfo(void)
+{
+    if (clc.state < CA_CHALLENGING)
+        return;
+    if (cl_paused->current.integer)
+        return;
+    if (dvar_modifiedFlags & 2) {
+        dvar_modifiedFlags &= ~2;
+        CL_AddReliableCommand(va("userinfo \"%s\"", Dvar_InfoString(2)));
+    }
+}
+
+void CL_CheckTimeout(void)
+{
+    if ((!cl_paused->current.integer || !sv_paused->current.integer)
+        && clc.state >= CA_CONNECTED && clc.state != CA_CINEMATIC && clc.state != CA_LOGO
+        && cls.realtime - clc.connectTime > cl_timeout->current.value * 1000.0f) {
+        if (++clients[0].timeoutcount > 5)
+            Com_Error(1, "EXE_ERR_SERVER_TIMEOUT");
+    } else if ((clc.state == CA_CONNECTING || clc.state == CA_CHALLENGING) && clc.connectTime > 0
+        && cls.realtime - clc.connectTime > cl_connectTimeout->current.value * 1000.0f) {
+        Com_Error(1, "EXE_ERR_SERVER_TIMEOUT");
+    } else {
+        clients[0].timeoutcount = 0;
+    }
+}
+
+void CL_UpdateInGameState(void)
+{
+    if (clc.state == CA_ACTIVE) {
+        if (!cl_ingame->current.enabled)
+            Dvar_SetBool(cl_ingame, 1);
+    } else if (cl_ingame->current.enabled) {
+        Dvar_SetBool(cl_ingame, 0);
+    }
+}
+
 void CL_Frame(void)
 {
-
-    clientConnection_t *clc_p = &::clc;
-    clientActive_t *cl_p;
-    const dvar_t *clp;
-    int state;
-    int t;
-    const char *info;
-
-    if (legacyHacks->cl_running == 0)
+    if (!legacyHacks->cl_running)
         return;
 
     Voice_GetLocalVoiceData((ClientVoicePacket_t *)&clients[0]);
     Voice_Playback();
     CL_UpdateColor();
-
-    cl_p = clients;
-
-    if (clc_p->state <= 3)
-        goto Lc6;
-
-    clp = cl_paused;
-    if (!clp->current.enabled)
-        goto L137;
-    if (!(sv_paused)->current.enabled)
-        goto Lc6;
-    if ((unsigned)(clc_p->state - 3) <= 1)
-        goto L183;
-    goto Lmain0;
-
-Lc6:
-    state = clc_p->state;
-    if (state <= 4) {
-        if ((unsigned)(state - 3) <= 1)
-            goto L183;
-        goto Lmain0;
-    }
-    t = cls.realtime - clc_p->connectTime;
-    if ((float)t <= cl_timeout->current.value * 1000.0f)
-        goto Lmain0;
-    cl_p->timeoutcount += 1;
-    if (cl_p->timeoutcount > 5)
-        Com_Error(1, "EXE_ERR_SERVER_TIMEOUT");
-    goto Lmain1;
-
-L137:
-    if (dvar_modifiedFlags & 2)
-        goto Luserinfo;
-    goto Lc6;
-
-Lmain0:
-    cl_p->timeoutcount = 0;
-Lmain1:
+    CL_CheckUserinfo();
+    CL_CheckTimeout();
 #if COD2_IS_PATCH_13
-
     if (DL_InProgress())
         CL_WWWDownload();
 #endif
     CL_CheckForResend();
-    if (clc_p->state == 8)
-        goto L14a;
-    if (cl_ingame->current.enabled)
-        goto L16e;
-    goto Ltail;
-
-L14a:
-    if (!cl_ingame->current.enabled)
-        Dvar_SetBool(cl_ingame, 1);
-    goto Ltail;
-
-L16e:
-    Dvar_SetBool(cl_ingame, 0);
-    goto Ltail;
-
-L183:
-    if (clc_p->connectTime <= 0)
-        goto Lmain0;
-    t = cls.realtime - clc_p->connectTime;
-    if ((float)t <= cl_connectTimeout->current.value * 1000.0f)
-        goto Lmain0;
-    Com_Error(1, "EXE_ERR_SERVER_TIMEOUT");
-    goto Lmain1;
-
-Luserinfo:
-    dvar_modifiedFlags &= ~2;
-    info = Dvar_InfoString(2);
-    info = va("userinfo \"%s\"", info);
-    if (clc_p->reliableSequence - clc_p->reliableAcknowledge - 0x80 > 0)
-        Com_Error(1, "EXE_ERR_CLIENT_CMD_OVERFLOW");
-    clc_p->reliableSequence += 1;
-    MSG_WriteReliableCommandToBuffer(info,
-                                     (char *)clc_p->reliableCommands[clc_p->reliableSequence & 0x7f], 0x400);
-    goto Lc6;
-
-Ltail:
+    CL_UpdateInGameState();
     CL_SetCGameTime();
     CL_SendCmd();
 }
@@ -2680,7 +2635,7 @@ void CL_Shutdown(void)
     Com_Printf((const char *)"----- CL_Shutdown -----\n");
 
     if (recursive) {
-        puts((const char *)"recursive shutdown");
+        printf("recursive shutdown\n");
         return;
     }
 

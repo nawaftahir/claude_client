@@ -321,7 +321,7 @@ void CG_Weapons_SetToDefault(int weaponNum, DObjModel_s *dobjModels)
 
     CG_SetWeaponDefToDefaultWeapon(weaponNum);
     weapDef = (WeaponDef *)BG_GetWeaponDef(weaponNum);
-    Com_Printf("WARNING: gun and/or hand model file for weapon [%s] could not be found\n",
+    Com_Printf("WARNING: gun and/or hand model file for weapon [%s] could not be found, switching to default weapon.\n",
                weapDef->szDisplayName);
 
     if (!weapDef->szGunXModel || !weapDef->szGunXModel[0] ||
@@ -1140,6 +1140,7 @@ void CG_AddPlayerWeapon(GfxEntity *parent, playerState_t *ps, centity_t *cent, q
 
             model.obj = weapInfo->viewModelDObj;
             skinEnt = R_AddRefEntityToScene(&gun, model, 0);
+#if COD2_TRACE
             {
                 static int apwTrace;
                 if (apwTrace < 8) {
@@ -1152,6 +1153,7 @@ void CG_AddPlayerWeapon(GfxEntity *parent, playerState_t *ps, centity_t *cent, q
                     ++apwTrace;
                 }
             }
+#endif
             if (skinEnt)
                 R_SkinGfxEntityDelayed(skinEnt);
         }
@@ -1317,6 +1319,7 @@ void CG_AddViewWeapon(playerState_t *ps)
         CG_ResetViewWeaponOffsets(cg);
     }
 
+#if COD2_TRACE
     {
         static int vwTrace;
         if (vwTrace < 8) {
@@ -1327,6 +1330,7 @@ void CG_AddViewWeapon(playerState_t *ps)
             ++vwTrace;
         }
     }
+#endif
     CG_AddPlayerWeapon(&hand, playerState, &cg->predictedPlayerEntity, drawGun);
 }
 
@@ -2057,7 +2061,7 @@ void CG_Weapons_SetToDefault(int weaponNum, weaponInfo_s (*dobjModels)[4])
 
     CG_SetWeaponDefToDefaultWeapon(weaponNum);
     weapDef = (byte *)BG_GetWeaponDef(weaponNum);
-    Com_Printf("WARNING: gun and/or hand model file for weapon [%s] could not be found\n",
+    Com_Printf("WARNING: gun and/or hand model file for weapon [%s] could not be found, switching to default weapon.\n",
                *(const char **)(weapDef + 4));
 
     handModel = ((WeaponDef *)weapDef)->szGunXModel;

@@ -427,13 +427,19 @@ qboolean CL_ShutdownUI(void)
 
 void CL_InitUI(void)
 {
+#if COD2_TRACE
     extern void Com_Printf(const char *, ...);
     extern int g_disableRendering;
+#endif
     cls.uiStarted = 1;
     CL_SwitchToLocalClient(0);
+#if COD2_TRACE
     Com_Printf("[disrend] CL_InitUI before UI_Init = %d\n", g_disableRendering);
+#endif
     UI_Init();
+#if COD2_TRACE
     Com_Printf("[disrend] CL_InitUI after UI_Init = %d\n", g_disableRendering);
+#endif
     CL_SwitchToLocalClient(0);
     UI_Component_Init();
 }

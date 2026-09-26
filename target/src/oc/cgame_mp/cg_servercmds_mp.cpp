@@ -261,14 +261,18 @@ static void CG_OpenScriptMenu(void)
     char *cgui;
     int result;
     const char *arg2;
+#if COD2_TRACE
     static int traceCount;
+#endif
 
     menuIndex = atoi(CG_Argv(1));
+#if COD2_TRACE
     if (traceCount < 16) {
         if (getenv("MTRACE"))
             Com_Printf("[menu-trace] client open command indexArg='%s' arg2='%s' argc=%d\n",
                        CG_Argv(1), Cmd_Argc() > 2 ? CG_Argv(2) : "", Cmd_Argc());
     }
+#endif
 
     if ((unsigned int)menuIndex > 31) {
         Com_Printf((const char *)"Server tried to open a bad script menu index: %i\n", menuIndex);
@@ -277,10 +281,12 @@ static void CG_OpenScriptMenu(void)
     }
 
     pszMenu = CL_GetConfigString(menuIndex + 0x4de);
+#if COD2_TRACE
     if (traceCount < 16) {
         if (getenv("MTRACE"))
             Com_Printf("[menu-trace] client menu index=%d configstring='%s'\n", menuIndex, pszMenu);
     }
+#endif
 
     if (*pszMenu == '\0') {
         Com_Printf((const char *)"Server tried to open a non-loaded script menu index: %i\n", menuIndex);
@@ -309,11 +315,13 @@ static void CG_OpenScriptMenu(void)
     } else {
         result = CL_Popup((const char *)"UIMENU_SCRIPT_POPUP");
     }
+#if COD2_TRACE
     if (traceCount++ < 16) {
         if (getenv("MTRACE"))
             Com_Printf("[menu-trace] client popup menu='%s' noMouse=%u result=%d\n",
                        pszMenu, noMouseControl, result);
     }
+#endif
 
     if (result) {
         return;
@@ -340,7 +348,9 @@ void CG_CheckOpenWaitingScriptMenu(void)
     void **cguiSlot = (void **)&::legacyHacks;
     char *cgui;
     int result;
+#if COD2_TRACE
     static int traceCount;
+#endif
 
     cgui = (char *)*cguiSlot;
     if ((*(unsigned char *)&((LegacyHacks *)cgui)->ui_waitingScriptMenu[0]) == '\0') {
@@ -357,6 +367,7 @@ void CG_CheckOpenWaitingScriptMenu(void)
     } else {
         result = CL_Popup((const char *)"UIMENU_SCRIPT_POPUP");
     }
+#if COD2_TRACE
     if (traceCount++ < 32) {
         if (getenv("MTRACE"))
             Com_Printf("[menu-trace] waiting popup menu='%s' index=%d noMouse=%u result=%d\n",
@@ -364,6 +375,7 @@ void CG_CheckOpenWaitingScriptMenu(void)
                        *(int *)((char *)*cguiSlot + 0x4e8),
                        *(unsigned char *)((char *)*cguiSlot + 0x4ec), result);
     }
+#endif
 
     if (result) {
 
@@ -1077,8 +1089,10 @@ void CG_ServerCommand(void)
         CG_LocalSoundCmd();
         return;
     case 't':
+#if COD2_TRACE
         if (getenv("MTRACE"))
             Com_Printf("[menu-trace] client received server command '%s'\n", cmd);
+#endif
         CG_OpenScriptMenu();
         return;
     case 'u':

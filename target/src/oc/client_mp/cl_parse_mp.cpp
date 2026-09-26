@@ -678,6 +678,7 @@ void CL_ParseSnapshot(msg_t *msg)
         MSG_ReadDeltaPlayerstate(msg, NULL, &newSnap->ps);
     }
 
+#if COD2_TRACE
     if (getenv("COD2_SNAPDIAG")) {
         static int c;
         if ((c++ & 0x1f) == 0)
@@ -685,6 +686,7 @@ void CL_ParseSnapshot(msg_t *msg)
                        newSnap->serverTime, newSnap->valid, newSnap->deltaNum, old ? 1 : 0,
                        newSnap->ps.commandTime, newSnap->ps.origin[0], newSnap->ps.origin[1], newSnap->ps.origin[2]);
     }
+#endif
 
     if (CL_ShowNetValue() > 1) {
         Com_Printf("%3i:%s\n", msg->readcount - 1, "packet clients");

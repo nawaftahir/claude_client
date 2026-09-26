@@ -1091,7 +1091,11 @@ void Com_ExecStartupConfigs( const char *configFile )
 
 	if ( Com_SafeMode() )
 	{
+#ifdef DEDICATED
 		Cbuf_AddText("exec safemode_mp_server.cfg\n");
+#else
+		Cbuf_AddText("exec safemode_mp.cfg\n");
+#endif
 	}
 
 	Cbuf_Execute();

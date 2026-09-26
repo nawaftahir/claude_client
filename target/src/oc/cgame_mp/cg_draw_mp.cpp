@@ -334,12 +334,14 @@ void CG_DrawDisconnect(void)
 
     CL_GetUserCmd(CL_GetCurrentCmdNumber() - 127, &cmd);
     snap = cg->nextSnap;
+#if COD2_TRACE
     if (getenv("COD2_CNXDIAG")) {
         static int c;
         if ((c++ & 0x3f) == 0)
             Com_Printf("[cnxdiag] cmd.serverTime=%d snap->ps.commandTime=%d cg->time=%d cmdNum=%d\n",
                        cmd.serverTime, snap->ps.commandTime, cg->time, CL_GetCurrentCmdNumber());
     }
+#endif
     if (cmd.serverTime <= snap->ps.commandTime || cmd.serverTime > cg->time) {
         return;
     }

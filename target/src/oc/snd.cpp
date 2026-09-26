@@ -1452,12 +1452,12 @@ static __attribute_regparm__(3) void SND_StartBackground(int track, const snd_al
     flags = pAlias->flags;
     entchannel = (flags & 0x780) >> 7;
     if (entchannel > 10 || !((1 << entchannel) & 0x786)) {
-        Com_Error(1, "\025alias %s sound %s played as an ambient / music track uses a 3D channel\n", pAlias->pszAliasName, Com_GetSoundFileName(pAlias));
+        Com_Error(1, "\025alias %s sound %s played as an ambient / music track uses a 3D channel type; should probably be channel 'local'\n", pAlias->pszAliasName, Com_GetSoundFileName(pAlias));
         flags = pAlias->flags;
     }
 
     if ((unsigned)((flags & 0x60) >> 5) - 2 > 1) {
-        Com_Error(1, "\025alias %s sound %s played as an ambient / music track is not streamed\n", pAlias->pszAliasName, Com_GetSoundFileName(pAlias));
+        Com_Error(1, "\025alias %s sound %s played as an ambient / music track is not streamed; type must be 'streamed'\n", pAlias->pszAliasName, Com_GetSoundFileName(pAlias));
     }
 
     volume = pAlias->fVolMin + randomf() * (pAlias->fVolMax - pAlias->fVolMin);
@@ -1688,7 +1688,7 @@ void SND_DeactivateEnvironmentEffects_f(void)
     }
 
     if (priority < 0) {
-        Com_Printf("invalid priority string '%s', it must be one of the following:\n", priorityName);
+        Com_Printf("invalid priority string '%s', it must be one of the following strings:\n", priorityName);
         for (i = 1; i < 3; i++) {
             Com_Printf("  %s\n", priorityStrings[i]);
         }

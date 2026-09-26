@@ -120,6 +120,7 @@ extern bool I_isforfilename( int c );
 extern int Sys_Milliseconds(void);
 extern char Com_GetDecimalDelimiter(void);
 
+#if COD2_TRACE
 void diag_item_paint_enter(void *item)
 {
     (void)item;
@@ -133,6 +134,7 @@ void diag_item_paint_draw(void *item)
 {
     (void)item;
 }
+#endif
 
 extern unsigned char updateScreenCalled[];
 extern qboolean g_waitingForKey;
@@ -918,12 +920,14 @@ qboolean Menu_CheckOnKey(displayContextDef_t *dc, menuDef_t *menu, int key)
     byte tempItem[0x2a0];
     int i;
 
+#if COD2_TRACE
     if (getenv("COD2_KEYDIAG")) {
         Com_Printf("[keydiag] menu=%p name=%s key=0x%x onKey(typed)=%p raw8@onKey=%016llx off=%lld\n",
                    (void *)menu, menu->window.name ? menu->window.name : "(null)", key,
                    (void *)menu->onKey, (unsigned long long)*(uintptr_t *)&menu->onKey,
                    (long long)((char *)&menu->onKey - (char *)menu));
     }
+#endif
     ItemKeyHandler *node = menu->onKey;
     while (node && (uintptr_t)node > 0x10000) {
         if (node->key == key) {
@@ -2586,6 +2590,7 @@ void Item_TextColor(displayContextDef_t *dc, itemDef_t *item, vec4_t *newColor)
     }
 }
 
+#if COD2_TRACE
 static const char *UI_TraceScriptItemParentName(itemDef_t *item)
 {
     byte *it;
@@ -2611,6 +2616,7 @@ static const char *UI_TraceScriptItemParentName(itemDef_t *item)
 
     return NULL;
 }
+#endif
 
 void Item_Text_Paint(displayContextDef_t *dc, itemDef_t *item)
 {
@@ -2619,6 +2625,7 @@ void Item_Text_Paint(displayContextDef_t *dc, itemDef_t *item)
     char text[0x400];
     float color[4];
     int width, height;
+#if COD2_TRACE
     const char *traceParent = UI_TraceScriptItemParentName(item);
     int traceText = 0;
 
@@ -2629,9 +2636,11 @@ void Item_Text_Paint(displayContextDef_t *dc, itemDef_t *item)
             ++textTraceCount;
         }
     }
+#endif
 
     if (!textPtr) {
         if (!(*(void **)&((itemDef_t *)it)->dvar)) {
+#if COD2_TRACE
             if (traceText)
                 if (getenv("MTRACE"))
                     Com_Printf("[menu-trace] Item_Text_Paint no text parent=%s item=%s type=%d dvar=%s\n",
@@ -2639,6 +2648,7 @@ void Item_Text_Paint(displayContextDef_t *dc, itemDef_t *item)
                                item->window.name ? item->window.name : "<null>",
                                item->type,
                                item->dvar ? item->dvar : "");
+#endif
             return;
         }
         I_strncpyz(text, Dvar_GetVariantString(item->dvar), 0x400);
@@ -2649,6 +2659,7 @@ void Item_Text_Paint(displayContextDef_t *dc, itemDef_t *item)
         textPtr = UI_SafeTranslateString(textPtr + 1);
 
     if (textPtr[0] == '\0') {
+#if COD2_TRACE
         if (traceText)
             if (getenv("MTRACE"))
                 Com_Printf("[menu-trace] Item_Text_Paint empty parent=%s item=%s type=%d dvar=%s\n",
@@ -2656,6 +2667,7 @@ void Item_Text_Paint(displayContextDef_t *dc, itemDef_t *item)
                            item->window.name ? item->window.name : "<null>",
                            item->type,
                            item->dvar ? item->dvar : "");
+#endif
         return;
     }
 
@@ -2664,6 +2676,7 @@ void Item_Text_Paint(displayContextDef_t *dc, itemDef_t *item)
 
     int staticFlags = ((itemDef_t *)it)->window.staticFlags;
     if (staticFlags & 0x400000) {
+#if COD2_TRACE
         if (traceText)
             if (getenv("MTRACE"))
                 Com_Printf("[menu-trace] Item_Text_Paint wrapped parent=%s item=%s text='%.80s' tr=(%.1f %.1f %.1f %.1f) color=(%.2f %.2f %.2f %.2f) static=0x%x\n",
@@ -2673,10 +2686,12 @@ void Item_Text_Paint(displayContextDef_t *dc, itemDef_t *item)
                            (((itemDef_s*)(it))->textRect[0].x), (((itemDef_s*)(it))->textRect[0].y), (((itemDef_s*)(it))->textRect[0].w), (((itemDef_s*)(it))->textRect[0].h),
                            color[0], color[1], color[2], color[3],
                            staticFlags);
+#endif
         Item_Text_Wrapped_Paint(item, textPtr, color);
         return;
     }
     if (staticFlags & 0x800000) {
+#if COD2_TRACE
         if (traceText)
             if (getenv("MTRACE"))
                 Com_Printf("[menu-trace] Item_Text_Paint autowrap parent=%s item=%s text='%.80s' tr=(%.1f %.1f %.1f %.1f) color=(%.2f %.2f %.2f %.2f) static=0x%x\n",
@@ -2686,11 +2701,13 @@ void Item_Text_Paint(displayContextDef_t *dc, itemDef_t *item)
                            (((itemDef_s*)(it))->textRect[0].x), (((itemDef_s*)(it))->textRect[0].y), (((itemDef_s*)(it))->textRect[0].w), (((itemDef_s*)(it))->textRect[0].h),
                            color[0], color[1], color[2], color[3],
                            staticFlags);
+#endif
         Item_Text_AutoWrapped_Paint(item, textPtr, color);
         return;
     }
 
     FontHandle font = UI_GetFontHandle(((itemDef_t *)it)->fontEnum, ((itemDef_t *)it)->textscale);
+#if COD2_TRACE
     if (traceText)
         if (getenv("MTRACE"))
             Com_Printf("[menu-trace] Item_Text_Paint draw parent=%s item=%s text='%.80s' tr=(%.1f %.1f %.1f %.1f) wh=(%d %d) rectAlign=(%d %d) scale=%.3f style=%d font=%p color=(%.2f %.2f %.2f %.2f) static=0x%x\n",
@@ -2703,6 +2720,7 @@ void Item_Text_Paint(displayContextDef_t *dc, itemDef_t *item)
                        ((itemDef_t *)it)->textscale, (((itemDef_s*)(it))->textStyle), (void *)font,
                        color[0], color[1], color[2], color[3],
                        staticFlags);
+#endif
     UI_DrawText(textPtr, 0x7fffffff, font,
                 (((itemDef_s*)(it))->textRect[0].x), (((itemDef_s*)(it))->textRect[0].y),
                 (((rectDef_t*)(it))->horzAlign), (((rectDef_t*)(it))->vertAlign),
@@ -2763,6 +2781,7 @@ void Item_TextField_Paint(displayContextDef_t *dc, itemDef_t *item)
     int cursorPos;
     int cursorChar;
     float x;
+#if COD2_TRACE
     const char *traceParent = UI_TraceScriptItemParentName(item);
     int traceTextField = 0;
 
@@ -2773,9 +2792,11 @@ void Item_TextField_Paint(displayContextDef_t *dc, itemDef_t *item)
             ++textFieldTraceCount;
         }
     }
+#endif
 
     editPtr = Item_GetEditFieldDef(item);
     if (!editPtr) {
+#if COD2_TRACE
         if (traceTextField)
             if (getenv("MTRACE"))
                 Com_Printf("[menu-trace] Item_TextField_Paint no edit parent=%s item=%s type=%d dvar=%s\n",
@@ -2783,6 +2804,7 @@ void Item_TextField_Paint(displayContextDef_t *dc, itemDef_t *item)
                            item->window.name ? item->window.name : "<null>",
                            item->type,
                            item->dvar ? item->dvar : "");
+#endif
         return;
     }
 
@@ -2826,6 +2848,7 @@ void Item_TextField_Paint(displayContextDef_t *dc, itemDef_t *item)
     text = buff + paintOffset;
     font = UI_GetFontHandle(item->fontEnum, item->textscale);
     if (!font) {
+#if COD2_TRACE
         if (traceTextField)
             if (getenv("MTRACE"))
                 Com_Printf("[menu-trace] Item_TextField_Paint no font parent=%s item=%s text='%.80s' dvar=%s scale=%.3f\n",
@@ -2834,9 +2857,11 @@ void Item_TextField_Paint(displayContextDef_t *dc, itemDef_t *item)
                            text,
                            item->dvar ? item->dvar : "",
                            item->textscale);
+#endif
         return;
     }
 
+#if COD2_TRACE
     if (traceTextField)
         if (getenv("MTRACE"))
             Com_Printf("[menu-trace] Item_TextField_Paint draw parent=%s item=%s text='%.80s' dvar=%s tr=(%.1f %.1f %.1f %.1f) x=%.1f max=%d offset=%d cursor=%d font=%p color=(%.2f %.2f %.2f %.2f)\n",
@@ -2849,6 +2874,7 @@ void Item_TextField_Paint(displayContextDef_t *dc, itemDef_t *item)
                        x, maxChars, paintOffset, item->cursorPos[0],
                        (void *)font,
                        newColor[0], newColor[1], newColor[2], newColor[3]);
+#endif
 
     if (g_editingField && (item->window.staticFlags & 6) == 6) {
         cursorChar = Key_GetOverstrikeMode() == 1 ? '_' : '|';
@@ -5056,9 +5082,12 @@ void Item_Paint(displayContextDef_t *dc, itemDef_t *item)
     byte *parent = (*(byte **)&((itemDef_t *)it)->parent);
     int flags;
     rectDef_t newRect;
+#if COD2_TRACE
     int traceScriptItem = 0;
+#endif
 
     flags = ((itemDef_t *)it)->window.dynamicFlags[0];
+#if COD2_TRACE
     if (parent && ((menuDef_t *)parent)->window.name &&
         (!I_stricmp(((menuDef_t *)parent)->window.name, "serverinfo_dm") ||
          !strncmp(((menuDef_t *)parent)->window.name, "team_", 5) ||
@@ -5077,6 +5106,7 @@ void Item_Paint(displayContextDef_t *dc, itemDef_t *item)
             ++itemTraceCount;
         }
     }
+#endif
 
     if (flags & 0x2000) {
         int dcTime = dc->realTime;
@@ -5222,11 +5252,13 @@ void Item_Paint(displayContextDef_t *dc, itemDef_t *item)
         int ownerDraw = ((itemDef_t *)it)->window.ownerDrawFlags;
         if (ownerDraw) {
             if (!UI_OwnerDrawVisible(ownerDraw)) {
+#if COD2_TRACE
                 if (traceScriptItem)
                     if (getenv("MTRACE"))
                         Com_Printf("[menu-trace] Item_Paint skip owner parent=%s item=%s owner=0x%x\n",
                                    ((menuDef_t *)parent)->window.name,
                                    item->window.name ? item->window.name : "<null>", ownerDraw);
+#endif
                 Window_RemoveDynamicFlags((Window *)item, 4);
             } else {
                 Window_AddDynamicFlags((Window *)item, 4);
@@ -5236,6 +5268,7 @@ void Item_Paint(displayContextDef_t *dc, itemDef_t *item)
 
     if ((*(byte *)&((itemDef_t *)it)->dvarFlags) & 0xc) {
         if (!Item_EnableShowViaDvar(item, 4)) {
+#if COD2_TRACE
             if (traceScriptItem)
                 if (getenv("MTRACE"))
                     Com_Printf("[menu-trace] Item_Paint skip dvar parent=%s item=%s flagsByte=0x%x enable=%s dvar=%s\n",
@@ -5244,6 +5277,7 @@ void Item_Paint(displayContextDef_t *dc, itemDef_t *item)
                                (*(byte *)&((itemDef_t *)it)->dvarFlags),
                                item->enableDvar ? item->enableDvar : "",
                                item->dvar ? item->dvar : "");
+#endif
 
             flags = ((itemDef_t *)it)->window.dynamicFlags[0];
             if ((flags & 4) && (flags & 2)) {
@@ -5255,12 +5289,14 @@ void Item_Paint(displayContextDef_t *dc, itemDef_t *item)
     }
 
     if (!((*(byte *)&((itemDef_t *)it)->window.dynamicFlags[0]) & 4)) {
+#if COD2_TRACE
         if (traceScriptItem)
             if (getenv("MTRACE"))
                 Com_Printf("[menu-trace] Item_Paint skip invisible parent=%s item=%s flags=0x%x\n",
                            ((menuDef_t *)parent)->window.name,
                            item->window.name ? item->window.name : "<null>",
                            ((itemDef_t *)it)->window.dynamicFlags[0]);
+#endif
         return;
     }
 
@@ -5407,11 +5443,14 @@ void Menu_Paint(displayContextDef_t *dc, menuDef_t *menu, qboolean forcePaint)
 {
     byte *m = (byte *)menu;
     int i;
+#if COD2_TRACE
     int traceScriptMenu = 0;
+#endif
 
     if (!menu)
         return;
 
+#if COD2_TRACE
     if (menu->window.name &&
         (!I_stricmp(menu->window.name, "serverinfo_dm") ||
          !strncmp(menu->window.name, "team_", 5) ||
@@ -5427,12 +5466,15 @@ void Menu_Paint(displayContextDef_t *dc, menuDef_t *menu, qboolean forcePaint)
             ++paintTraceCount;
         }
     }
+#endif
 
     if (!((*(byte *)&((menuDef_t *)m)->window.dynamicFlags[0]) & 4)) {
+#if COD2_TRACE
         if (traceScriptMenu)
             if (getenv("MTRACE"))
                 Com_Printf("[menu-trace] Menu_Paint skip invisible name=%s flags=0x%x\n",
                            menu->window.name, ((menuDef_t *)m)->window.dynamicFlags[0]);
+#endif
         if (!forcePaint)
             return;
     }
@@ -5440,10 +5482,12 @@ void Menu_Paint(displayContextDef_t *dc, menuDef_t *menu, qboolean forcePaint)
     int ownerDrawFlags = ((menuDef_t *)m)->window.ownerDrawFlags;
     if (ownerDrawFlags) {
         if (!UI_OwnerDrawVisible(ownerDrawFlags)) {
+#if COD2_TRACE
             if (traceScriptMenu)
                 if (getenv("MTRACE"))
                     Com_Printf("[menu-trace] Menu_Paint skip owner name=%s owner=0x%x\n",
                                menu->window.name, ownerDrawFlags);
+#endif
             return;
         }
     }
@@ -5499,11 +5543,13 @@ paint_content:
                  (((menuDef_t*)(m))->fadeClamp), (float)(((menuDef_t*)(m))->fadeCycle));
 
     int itemCount = (((menuDef_t*)(m))->itemCount);
+#if COD2_TRACE
     if (getenv("COD2_MENUDIAG") && itemCount != 0) {
         Com_Printf("[itemdiag] menu=%p name=%p itemCount=%d items=%p\n",
                    (void *)m, (void *)((menuDef_t *)m)->window.name, itemCount,
                    (void *)((menuDef_t *)m)->items);
     }
+#endif
     if (itemCount > 0) {
         for (i = 0; i < itemCount; i++) {
             itemDef_t *item = *(itemDef_t **)((char *)&((menuDef_t *)m)->items[i]);
@@ -5534,12 +5580,14 @@ void Menu_PaintAll(displayContextDef_t *dc)
     for (i = 0; i < menuCount; i++) {
         void *menu = *(void **)((char *)&((displayContextDef_s *)d)->Menus[i]);
 
+#if COD2_TRACE
         if (getenv("COD2_MENUDIAG")) {
             const char *nm = menu ? ((menuDef_t *)menu)->window.name : (const char *)0;
             Com_Printf("[menudiag] i=%d/%d menu=%p name=%p%s\n", i, menuCount, menu,
                        (void *)nm,
                        ((uintptr_t)nm > 0x10000) ? "" : " <BAD>");
         }
+#endif
 
         int isOpen = 0;
         for (j = openCount - 1; j >= 0; j--) {

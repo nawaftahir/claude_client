@@ -288,7 +288,7 @@ qboolean CL_GetSnapshot(int snapshotNumber, snapshot_t *snapshot)
     int i;
 
     if (snapshotNumber > cl->snap.messageNum) {
-        Com_Error(ERR_DROP, "CL_GetSnapshot: snapshotNumber > cl.snap.messageNum");
+        Com_Error(ERR_DROP, "CL_GetSnapshot: snapshotNumber > cl->snapshot.messageNum");
     }
 
     if (cl->snap.messageNum - snapshotNumber >= 0x20) {
@@ -319,7 +319,7 @@ qboolean CL_GetSnapshot(int snapshotNumber, snapshot_t *snapshot)
     count = clSnap->numEntities;
     if (count > 256) {
         if ((com_statmon)->current.enabled) {
-            StatMon_Warning(4, 3000, "CL_GetSnapshot: truncated entities");
+            StatMon_Warning(4, 3000, "gfx/2d/warning@snapshotents.jpg");
         } else {
             Com_DPrintf("CL_GetSnapshot: truncated %i entities to %i\n", count, 256);
         }
@@ -832,6 +832,7 @@ qboolean CL_Popup(const char *menu)
     clientConnection_t *clui = CLUI_STATE;
     int fullscreen = UI_IsFullscreen();
     int activeMenu = UI_GetActiveMenu();
+#if COD2_TRACE
     static int traceCount;
 
     if (traceCount++ < 32) {
@@ -839,6 +840,7 @@ qboolean CL_Popup(const char *menu)
             Com_Printf("[menu-trace] CL_Popup menu='%s' state=%d demo=%d fullscreen=%d active=%d\n",
                        menu, clui->state, clui->demoplaying, fullscreen, activeMenu);
     }
+#endif
 
     if (clui->state != 8)
         return 0;

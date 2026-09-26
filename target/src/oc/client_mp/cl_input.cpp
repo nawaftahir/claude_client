@@ -67,11 +67,6 @@ extern struct clientStatic_t cls;
 extern int com_frameTime;
 extern unsigned int frame_msec;
 
-void CL_WritePacketDbg(const char *fmt, int serverId)
-{
-    (void)fmt;
-    (void)serverId;
-}
 extern void UI_MouseEvent(int dx, int dy);
 extern void UI_MouseEventAbsolute(int x, int y);
 static kbutton_t playersKb[1][28];
@@ -877,11 +872,7 @@ void CL_WritePacket(void)
 
     MSG_Init(&buf, data, MAX_MSGLEN);
 
-    {
-        int serverId = cl_ptr->serverId;
-        CL_WritePacketDbg("[CL_WritePacket] serverId=%d\n", serverId);
-        MSG_WriteByte(&buf, serverId);
-    }
+    MSG_WriteByte(&buf, cl_ptr->serverId);
 
     MSG_WriteLong(&buf, clc_ptr->serverMessageSequence);
     MSG_WriteLong(&buf, clc_ptr->serverCommandSequence);
