@@ -2,9 +2,9 @@
 #include "imports.h"
 #include "headers/PC/cgame_mp/cg_local.h"
 #include "bytematch.h"
+extern itemInfo_t cg_itemsArray[];
+extern weaponInfo_t cg_weaponsArray[];
 extern gitem_t bg_itemlist[];
-extern const itemInfo_t *cg_items;
-extern const weaponInfo_t *cg_weapons;
 extern const char *eventnames[];
 extern const dvar_t *cg_debugEvents;
 extern const dvar_t *cg_footsteps;
@@ -139,12 +139,12 @@ static int weaponDataOffset(int weapon)
 
 static char *CG_WeaponInfoBase(void)
 {
-    return ((char *)cg_weapons);
+    return ((char *)cg_weaponsArray);
 }
 
 static char *CG_ItemInfoBase(void)
 {
-    return ((char *)cg_items);
+    return ((char *)cg_itemsArray);
 }
 
 static char *BG_ItemListBase(void)

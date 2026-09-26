@@ -3,7 +3,7 @@ extern void Com_Printf(const char *fmt, ...);
 #include "imports.h"
 #include "bytematch.h"
 #include "headers/PC/cgame_mp/cg_local.h"
-extern const weaponInfo_t *cg_weapons;
+extern weaponInfo_t cg_weaponsArray[];
 extern displayContextDef_t cgDC;
 
 extern clientStatic_t cls;
@@ -1377,7 +1377,7 @@ float CG_DrawWeapReticle(void)
 
     CG_CalcCrosshairPosition(&crosshairPos[0], &crosshairPos[1]);
 
-    weaponInfo = &(((weaponInfo_t *)cg_weapons))[weapIndex];
+    weaponInfo = &(cg_weaponsArray)[weapIndex];
     material = weaponInfo->hADSOverlay;
     if (material) {
         drawSize[0] = weapDef->overlayWidth;
@@ -1519,7 +1519,7 @@ unsigned int CG_DrawCrosshair(void)
         }
 
         if (!cg_drawGun->current.enabled && transScale < 1.0f) {
-            weapons = &(((weaponInfo_t *)cg_weapons))[weapIndex];
+            weapons = &(cg_weaponsArray)[weapIndex];
             material = weapons->hReticleCenter;
             if (material) {
                 float size = (float)weapDef->iReticleCenterSize * (1.5f - transScale);
@@ -1538,7 +1538,7 @@ unsigned int CG_DrawCrosshair(void)
         centerY = 0.0f;
     }
 
-    weapons = &(((weaponInfo_t *)cg_weapons))[weapIndex];
+    weapons = &(cg_weaponsArray)[weapIndex];
     material = weapons->hReticleCenter;
     if (material) {
         float centerSize = (float)weapDef->iReticleCenterSize;
@@ -1557,7 +1557,7 @@ unsigned int CG_DrawCrosshair(void)
                           0.0f, 0.0f, 1.0f, 1.0f, color, material);
     }
 
-    weapons = &(((weaponInfo_t *)cg_weapons))[weapIndex];
+    weapons = &(cg_weaponsArray)[weapIndex];
     material = weapons->hReticleSide;
     if (!material)
         return 0;

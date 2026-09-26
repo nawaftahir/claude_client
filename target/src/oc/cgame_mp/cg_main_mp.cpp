@@ -117,8 +117,6 @@ extern void CG_ParseFog(void);
 extern void SND_StopSounds(snd_stopsounds_arg_t which);
 extern unsigned char scrMemTreeGlob[];
 
-extern const weaponInfo_t *cg_weapons;
-extern const itemInfo_t *cg_items;
 
 #define CG_MAX_ITEMS 256
 #define CG_MAX_WEAPONS 128
@@ -286,7 +284,7 @@ extern cg_t cgArray[1];
  * `cgs` must bind to. See cg_local.h. */
 static centityArray_t cg_entitiesArray[1];
 extern weaponInfo_t cg_weaponsArray[CG_MAX_WEAPONS];
-static cg_itemsArray_t cg_itemsArray;
+extern itemInfo_t cg_itemsArray[CG_MAX_ITEMS];
 static Bool g_ambientStarted;
 static Bool g_mapLoaded;
 /* migrated from the ILP32 data blob to typed C (x64 port Stage 2). */
@@ -576,7 +574,7 @@ static void CG_CreateDObj(DObjModel_s *dobjModels, unsigned short numModels, str
 
 void CG_FreeWeapons(void)
 {
-    weaponInfo_t *weapons = (weaponInfo_t *)cg_weapons;
+    weaponInfo_t *weapons = (weaponInfo_t *)cg_weaponsArray;
     int i;
 
     for (i = 1; i <= BG_GetNumWeapons(); ++i) {
@@ -587,8 +585,8 @@ void CG_FreeWeapons(void)
         }
     }
 
-    memset((void *)cg_items, 0, CG_MAX_ITEMS * sizeof(itemInfo_t));
-    memset((void *)cg_weapons, 0, CG_MAX_WEAPONS * sizeof(weaponInfo_t));
+    memset((void *)cg_itemsArray, 0, CG_MAX_ITEMS * sizeof(itemInfo_t));
+    memset((void *)cg_weaponsArray, 0, CG_MAX_WEAPONS * sizeof(weaponInfo_t));
 }
 
 void CG_Shutdown(void)
@@ -1128,8 +1126,8 @@ void CG_Init(int serverMessageNum, int serverCommandSequence, int clientNum)
     memset((void *)cg, 0, sizeof(cg_t));
     memset(&cgDC, 0, sizeof(displayContextDef_t));
     memset((void *)cg_entities, 0, 0x89000);
-    memset((void *)cg_weapons, 0, CG_MAX_WEAPONS * sizeof(weaponInfo_t));
-    memset((void *)cg_items, 0, CG_MAX_ITEMS * sizeof(itemInfo_t));
+    memset((void *)cg_weaponsArray, 0, CG_MAX_WEAPONS * sizeof(weaponInfo_t));
+    memset((void *)cg_itemsArray, 0, CG_MAX_ITEMS * sizeof(itemInfo_t));
 
     CG_RegisterDvars();
 

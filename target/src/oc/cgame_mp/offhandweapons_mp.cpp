@@ -3,6 +3,7 @@
 #include "bytematch.h"
 #include "headers/PC/cgame_mp/cg_local.h"
 #include <string.h>
+extern weaponInfo_t cg_weaponsArray[];
 extern scr_const_t scr_const;
 
 extern dvar_t *Dvar_RegisterFloat(const char *dvarName, float value, float min, float max, unsigned short flags);
@@ -27,7 +28,6 @@ extern float cosf(float x);
 extern char *va( const char *format, ... );
 extern void Com_Printf(const char *fmt, ...);
 
-extern byte *cg_weapons;
 extern const dvar_t *hud_fade_offhand;
 
 /* offhandStrings: migrated from the ILP32 data blob to typed C (re-lays-out per
@@ -104,7 +104,7 @@ void CG_PrepOffHand(entityState_t *ent, int event, int eventParam)
 {
     weaponInfo_s *wi;
 
-    wi = &((((weaponInfo_s *)cg_weapons)))[eventParam];
+    wi = &((cg_weaponsArray))[eventParam];
 
     /* pullbackSound is a snd_alias_list_t*; pass the whole pointer (see the note
      * in CG_UseOffHand -- the `(int)(intptr_t)` truncation crashes on x64). */
@@ -120,7 +120,7 @@ void CG_UseOffHand(centity_t *cent, int event, int eventParam)
     float origin[3];
     struct DObj_s *dobj;
 
-    wi = &((((weaponInfo_s *)cg_weapons)))[eventParam];
+    wi = &((cg_weaponsArray))[eventParam];
 
     /* flashSound is a snd_alias_list_t* -- test the whole pointer (the decomp's
      * `(int)(intptr_t)` truncated it to 32 bits, which both mis-detects NULL and,
@@ -233,7 +233,7 @@ find_weapon:
     }
 
 draw_icon:
-    iconMaterial = ((((weaponInfo_s *)cg_weapons)))[weapon].hHudIcon;
+    iconMaterial = ((cg_weaponsArray))[weapon].hHudIcon;
 
     UI_DrawHandlePic(rect->x, rect->y, rect->w,
                      rect->h, rect->horzAlign, rect->vertAlign,

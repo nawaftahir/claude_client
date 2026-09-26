@@ -41,7 +41,7 @@ char *svc_strings[256] = {
     /* [8 .. 255] implicitly NULL */
 };
 
-extern void *cl;
+extern clientActive_t clients[1];
 extern byte cls_ptr[];
 extern clientConnection_t clc;
 extern dvar_t *com_dedicated;
@@ -130,7 +130,7 @@ void CL_SystemInfoChanged(void)
     LargeLocal_LargeLocal(&value_large_local, 0x2000);
     value = (char *)LargeLocal_GetBuf(&value_large_local);
 
-    cla = (clientActive_t *)cl;
+    cla = clients;
     clc = &::clc;
 
     systemInfo = cla->gameState.stringData + cla->gameState.stringOffsets[1];
@@ -207,7 +207,7 @@ void CL_ParseGamestate(msg_t *msg)
 
     clc->serverCommandSequence = MSG_ReadLong(msg);
 
-    cla = (clientActive_t *)cl;
+    cla = clients;
     cla->gameState.dataCount = 1;
 
     for (;;) {
@@ -229,7 +229,7 @@ void CL_ParseGamestate(msg_t *msg)
 
             len = strlen(s);
 
-            cla = (clientActive_t *)cl;
+            cla = clients;
             if (len + 1 + cla->gameState.dataCount > MAX_GAMESTATE_CHARS) {
                 Com_Error(1, "\x15MAX_GAMESTATE_CHARS exceeded");
             }
@@ -643,7 +643,7 @@ void CL_ParseSnapshot(msg_t *msg)
         old = NULL;
     } else {
 
-        cla = (clientActive_t *)cl;
+        cla = clients;
         old = &cla->snapshots[oldMessageNum & 0x1f];
 
         if (old->valid == 0) {
@@ -690,7 +690,7 @@ void CL_ParseSnapshot(msg_t *msg)
         Com_Printf("%3i:%s\n", msg->readcount - 1, "packet clients");
     }
 
-    cla = (clientActive_t *)cl;
+    cla = clients;
     newSnap->parseEntitiesNum = cla->parseEntitiesNum;
     newSnap->numEntities = 0;
 
@@ -728,7 +728,7 @@ void CL_ParseSnapshot(msg_t *msg)
                 Com_Printf("%3i:  unchanged: %i\n", msg->readcount, oldEntityNum);
             }
 
-            cla = (clientActive_t *)cl;
+            cla = clients;
             memcpy(&cla->parseEntities[cla->parseEntitiesNum & 0x7ff], oldEntitySlot, sizeof(entityState_t));
             cla->parseEntitiesNum += 1;
             newSnap->numEntities += 1;
@@ -748,7 +748,7 @@ void CL_ParseSnapshot(msg_t *msg)
                 Com_Printf("%3i:  delta: %i\n", msg->readcount, oldEntityNum);
             }
 
-            cla = (clientActive_t *)cl;
+            cla = clients;
             if (!MSG_ReadDeltaEntity(msg, (entityState_t *)oldEntitySlot,
                                      &cla->parseEntities[cla->parseEntitiesNum & 0x7ff],
                                      oldEntityNum)) {
@@ -769,7 +769,7 @@ void CL_ParseSnapshot(msg_t *msg)
                 Com_Printf("%3i:  baseline: %i\n", msg->readcount, newnum);
             }
 
-            cla = (clientActive_t *)cl;
+            cla = clients;
             if (!MSG_ReadDeltaEntity(msg,
                                      &cla->entityBaselines[newnum],
                                      &cla->parseEntities[cla->parseEntitiesNum & 0x7ff],
@@ -788,7 +788,7 @@ void CL_ParseSnapshot(msg_t *msg)
             Com_Printf("%3i:  unchanged: %i\n", msg->readcount, oldEntityNum);
         }
 
-        cla = (clientActive_t *)cl;
+        cla = clients;
         memcpy(&cla->parseEntities[cla->parseEntitiesNum & 0x7ff], oldEntitySlot, sizeof(entityState_t));
         cla->parseEntitiesNum += 1;
         newSnap->numEntities += 1;
@@ -809,7 +809,7 @@ void CL_ParseSnapshot(msg_t *msg)
         Com_Printf("%3i:%s\n", msg->readcount - 1, "packet clients");
     }
 
-    cla = (clientActive_t *)cl;
+    cla = clients;
     newSnap->parseClientsNum = cla->parseClientsNum;
     newSnap->numClients = 0;
 
@@ -845,7 +845,7 @@ void CL_ParseSnapshot(msg_t *msg)
                 Com_Printf("%3i:  unchanged: %i\n", msg->readcount, oldClientNum);
             }
 
-            cla = (clientActive_t *)cl;
+            cla = clients;
             memcpy(&cla->parseClients[cla->parseClientsNum & 0x7ff], oldClientSlot, sizeof(clientState_t));
             cla->parseClientsNum += 1;
             newSnap->numClients += 1;
@@ -865,7 +865,7 @@ void CL_ParseSnapshot(msg_t *msg)
                 Com_Printf("%3i:  delta: %i\n", msg->readcount, oldClientNum);
             }
 
-            cla = (clientActive_t *)cl;
+            cla = clients;
             if (!MSG_ReadDeltaClient(msg, (clientState_t *)oldClientSlot,
                                      &cla->parseClients[cla->parseClientsNum & 0x7ff],
                                      oldClientNum)) {
@@ -888,7 +888,7 @@ void CL_ParseSnapshot(msg_t *msg)
 
             memset(&dummy, 0, sizeof(clientState_t));
 
-            cla = (clientActive_t *)cl;
+            cla = clients;
             if (!MSG_ReadDeltaClient(msg, (clientState_t *)&dummy,
                                      &cla->parseClients[cla->parseClientsNum & 0x7ff],
                                      newnum)) {
@@ -906,7 +906,7 @@ void CL_ParseSnapshot(msg_t *msg)
             Com_Printf("%3i:  unchanged: %i\n", msg->readcount, oldClientNum);
         }
 
-        cla = (clientActive_t *)cl;
+        cla = clients;
         memcpy(&cla->parseClients[cla->parseClientsNum & 0x7ff], oldClientSlot, sizeof(clientState_t));
         cla->parseClientsNum += 1;
         newSnap->numClients += 1;
@@ -935,7 +935,7 @@ void CL_ParseSnapshot(msg_t *msg)
         return;
     }
 
-    cla = (clientActive_t *)cl;
+    cla = clients;
     {
         int oldMsg = cla->snap.messageNum + 1;
         int serverMessageSequence = newSnap->messageNum;
@@ -950,7 +950,7 @@ void CL_ParseSnapshot(msg_t *msg)
         }
     }
 
-    cla = (clientActive_t *)cl;
+    cla = clients;
     cla->oldSnapServerTime = cla->snap.serverTime;
 
     memcpy(&cla->snap, newSnap, sizeof(clSnapshot_t));
@@ -972,7 +972,7 @@ void CL_ParseSnapshot(msg_t *msg)
         }
     }
 
-    cla = (clientActive_t *)cl;
+    cla = clients;
     memcpy(&cla->snapshots[cla->snap.messageNum & 0x1f], &cla->snap, sizeof(clSnapshot_t));
 
     if (CL_ShowNetValue() == 3) {

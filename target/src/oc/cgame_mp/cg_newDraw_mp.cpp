@@ -4,7 +4,7 @@
 #include "headers/PC/cgame_mp/cg_local.h"
 #include <math.h>
 #include <string.h>
-extern const weaponInfo_t *cg_weapons;
+extern weaponInfo_t cg_weaponsArray[];
 
 extern const dvar_t *cg_drawHealth;
 extern const dvar_t *cg_hudCompassSize;
@@ -1003,7 +1003,7 @@ static inline __attribute__((always_inline)) weaponInfo_t *CG_GetDrawWeaponInfo(
         return 0;
     }
 
-    weapons = ((weaponInfo_t *)cg_weapons);
+    weapons = cg_weaponsArray;
     if (!weapons) {
         return 0;
     }

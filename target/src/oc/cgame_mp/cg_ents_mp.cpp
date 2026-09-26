@@ -3,10 +3,10 @@
 #include "bytematch.h"
 #include "headers/PC/cgame_mp/cg_local.h"
 #include <string.h>
+extern itemInfo_t cg_itemsArray[];
+extern weaponInfo_t cg_weaponsArray[];
 extern gitem_t bg_itemlist[];
-extern centity_t *cg_entities;
-extern const itemInfo_t *cg_items;
-extern const weaponInfo_t *cg_weapons;
+extern centity_t cg_entities[];
 extern scr_const_t scr_const;
 
 /* File-scope alias: bound where no local can shadow `scr_const`, so uses below
@@ -683,7 +683,7 @@ void CG_Item(centity_t *cent)
         return;
 
     item = &((gitem_t *)((void *)&bg_itemlist))[itemNum];
-    itemInfo = &(((itemInfo_t *)cg_items))[itemNum];
+    itemInfo = &(cg_itemsArray)[itemNum];
     if (!itemInfo->registered) {
         CG_RegisterItemVisuals(itemNum);
         return;
@@ -721,7 +721,7 @@ void CG_Missile(centity_t *cent)
     if (s1->weapon > BG_GetNumWeapons())
         s1->weapon = 0;
 
-    weapInfo = &(((weaponInfo_t *)cg_weapons))[s1->weapon];
+    weapInfo = &(cg_weaponsArray)[s1->weapon];
     if (weapInfo->missileSound)
         CG_PlaySoundAlias(s1->number, cent->lerpOrigin, weapInfo->missileSound);
 

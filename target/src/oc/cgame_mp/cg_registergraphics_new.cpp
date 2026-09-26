@@ -3,6 +3,8 @@
 #include "imports.h"
 #include "headers/PC/cgame_mp/cg_local.h"
 #include <string.h>
+extern itemInfo_t cg_itemsArray[];
+extern weaponInfo_t cg_weaponsArray[];
 
 extern void SCR_UpdateScreen(void);
 extern void Com_Printf(const char *fmt, ...);
@@ -24,8 +26,6 @@ extern int CG_LoadShellShockDvars(const char *name);
 extern void CG_SetShellShockParmsFromDvars(shellshock_parms_t *parms);
 extern FxImpactTable *CG_RegisterImpactEffects(const char *mapname);
 
-extern byte *cg_items;
-extern byte *cg_weapons;
 
 #define CG_MAX_ITEMS 256
 #define CG_MAX_WEAPONS 128
@@ -91,8 +91,8 @@ void __attribute_regparm__(1) CG_RegisterGraphics(const char *mapname)
     cgs->media.balloonMaterial = (MaterialHandle)(CL_RegisterMaterial("headicontalkballoon", 7));
     CG_RegisterScoreboardGraphics();
 
-    memset((void *)cg_items, 0, CG_MAX_ITEMS * sizeof(itemInfo_t));
-    memset((void *)cg_weapons, 0, CG_MAX_WEAPONS * sizeof(weaponInfo_t));
+    memset((void *)cg_itemsArray, 0, CG_MAX_ITEMS * sizeof(itemInfo_t));
+    memset((void *)cg_weaponsArray, 0, CG_MAX_WEAPONS * sizeof(weaponInfo_t));
 
     CG_LoadingString(" - items");
     CG_RegisterItems();

@@ -11,6 +11,6 @@ static cg_t * const cg = &cgArray[0];
 /* same treatment as `cg` above; the shared cgs storage is defined in bss.c. */
 extern unsigned char cgsArray[];
 static cgs_t * const cgs = (cgs_t *)cgsArray;
-extern centity_t *cg_entities;
+extern centity_t cg_entities[];
 
 #endif
