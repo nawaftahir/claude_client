@@ -828,9 +828,11 @@ public:
 
 class FxArchive
 {
-public:
+private:
 	void ReadData( void *p, int byteCount );
 	void WriteData( const void *p, int byteCount );
+
+public:
 	void ArchiveData( void *p, int byteCount );
 	void ArchiveEffect( const FxEffectDef **fx );
 	void ArchiveMaterial( Material **material );

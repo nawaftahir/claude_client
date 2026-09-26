@@ -4836,19 +4836,19 @@ unsigned int Scr_InitStringSet()
 Scr_AddStringSet
 ==============
 */
-int Scr_AddStringSet( unsigned int setId, const char *string )
+bool Scr_AddStringSet( unsigned int setId, const char *string )
 {
 	unsigned int name;
 	VariableValue value;
 	unsigned int id;
-	int result;
+	bool result;
 
 	name = SL_GetLowercaseString(string, 0);
 
 	if ( FindVariable(setId, name) )
 	{
 		SL_RemoveRefToString(name);
-		result = 0;
+		result = false;
 	}
 	else
 	{
@@ -4857,7 +4857,7 @@ int Scr_AddStringSet( unsigned int setId, const char *string )
 		value.type = VAR_INTEGER;
 		value.u.intValue = 0;
 		SetVariableValue(id, &value);
-		result = 1;
+		result = true;
 	}
 
 	return result;

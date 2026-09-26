@@ -27,7 +27,7 @@ void FxCurveIterator_Release( FxCurveIterator *iterator )
 
 static float FxCurve_IntegrateSegment( float t0, float t1, float v0, float v1 )
 {
-	return ( v0 + v1 ) * 0.5f * ( t1 - t0 );
+	return ( ( v0 + v1 ) * 0.5f ) * ( t1 - t0 );
 }
 
 float FxCurve_Integrate( const FxCurve *curve, float normDuration )

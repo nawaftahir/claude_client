@@ -293,8 +293,12 @@ public:
 	FxArchive();
 	void BeginReading( MemoryFile *memFile );
 	void BeginWriting( MemoryFile *memFile );
+
+private:
 	void ReadData( void *p, int byteCount );
 	void WriteData( const void *p, int byteCount );
+
+public:
 
 	unsigned char ReadByte()
 	{
