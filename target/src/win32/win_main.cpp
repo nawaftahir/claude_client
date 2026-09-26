@@ -47,6 +47,158 @@ void Sys_NormalExit( void )
 	DeleteFileA( sys_processSemaphoreFile );
 }
 
+/*
+========================================================================
+
+HARDWARE INFO
+
+========================================================================
+*/
+
+typedef struct
+{
+	double cpuGHz;
+	int sysMB;
+	bool SSE;
+	char gpuDescription[512];
+} SysInfo;
+
+static SysInfo sys_info;
+
+static dvar_t *sys_cpuGHz;
+static dvar_t *sys_sysMB;
+static dvar_t *sys_gpu;
+static dvar_t *sys_configSum;
+
+const char *Win_LocalizeRef( const char *ref );
+double Sys_BenchmarkGHz( void );
+int Sys_SystemMemoryMB( void );
+void Sys_DetectVideoCard( char *description );
+bool Sys_SupportsSSE( void );
+
+/*
+==================
+Sys_ShouldUpdateForConfigChange
+==================
+*/
+bool Sys_ShouldUpdateForConfigChange( void )
+{
+	if ( MessageBoxA( NULL, Win_LocalizeRef( "WIN_CONFIGURE_UPDATED_BODY" ), Win_LocalizeRef( "WIN_CONFIGURE_UPDATED_TITLE" ), MB_YESNO | MB_ICONINFORMATION ) == IDYES )
+		return true;
+
+	return false;
+}
+
+/*
+==================
+Sys_RegisterInfoDvars
+==================
+*/
+void Sys_RegisterInfoDvars( void )
+{
+	sys_cpuGHz = Dvar_RegisterFloat( "sys_cpuGHz", 0.0f, -FLT_MAX, FLT_MAX, DVAR_ARCHIVE | DVAR_INIT | DVAR_CHANGEABLE_RESET );
+	sys_sysMB = Dvar_RegisterInt( "sys_sysMB", 0, INT_MIN, INT_MAX, DVAR_ARCHIVE | DVAR_INIT | DVAR_CHANGEABLE_RESET );
+	sys_gpu = Dvar_RegisterString( "sys_gpu", "", DVAR_ARCHIVE | DVAR_INIT | DVAR_CHANGEABLE_RESET );
+	sys_configSum = Dvar_RegisterInt( "sys_configSum", 0, INT_MIN, INT_MAX, DVAR_ARCHIVE | DVAR_INIT | DVAR_CHANGEABLE_RESET );
+}
+
+/*
+==================
+Sys_HasConfigureChecksumChanged
+==================
+*/
+bool Sys_HasConfigureChecksumChanged( int checksum )
+{
+	bool changed;
+
+	Sys_RegisterInfoDvars();
+
+	changed = false;
+	if ( sys_configSum->current.integer && sys_configSum->current.integer != checksum )
+		changed = Sys_ShouldUpdateForConfigChange();
+
+	if ( !sys_configSum->current.integer || sys_configSum->current.integer != checksum )
+		Dvar_SetInt( sys_configSum, checksum );
+
+	return changed;
+}
+
+/*
+==================
+Sys_FindInfo
+==================
+*/
+void Sys_FindInfo( void )
+{
+	dvar_t *sys_SSE;
+
+	sys_info.cpuGHz = Sys_BenchmarkGHz();
+	sys_info.sysMB = Sys_SystemMemoryMB();
+	Sys_DetectVideoCard( sys_info.gpuDescription );
+	sys_info.SSE = Sys_SupportsSSE();
+
+	sys_SSE = Dvar_RegisterBool( "sys_SSE", false, DVAR_CHANGEABLE_RESET );
+	Dvar_SetBool( sys_SSE, sys_info.SSE );
+
+	_controlfp( _PC_24, _MCW_PC );
+	_controlfp( _MCW_EM, _MCW_EM );
+}
+
+void Sys_ArchiveInfo( int checksum );
+
+/*
+==================
+Sys_ShouldUpdateForInfoChange
+==================
+*/
+bool Sys_ShouldUpdateForInfoChange( void )
+{
+	Sys_ArchiveInfo( 0 );
+	if ( MessageBoxA( NULL, Win_LocalizeRef( "WIN_COMPUTER_CHANGE_BODY" ), Win_LocalizeRef( "WIN_COMPUTER_CHANGE_TITLE" ), MB_YESNO | MB_ICONINFORMATION ) == IDYES )
+		return true;
+
+	return false;
+}
+
+/*
+==================
+Sys_HasInfoChanged
+==================
+*/
+bool Sys_HasInfoChanged( void )
+{
+	Sys_RegisterInfoDvars();
+
+	if ( sys_cpuGHz->current.decimal > sys_info.cpuGHz * 1.1f
+		|| sys_cpuGHz->current.decimal < sys_info.cpuGHz * 0.9f )
+	{
+		return Sys_ShouldUpdateForInfoChange();
+	}
+
+	if ( sys_sysMB->current.integer > sys_info.sysMB + 32
+		|| sys_sysMB->current.integer < sys_info.sysMB - 32
+		|| strcmp( sys_gpu->current.string, sys_info.gpuDescription ) )
+	{
+		return Sys_ShouldUpdateForInfoChange();
+	}
+
+	return false;
+}
+
+/*
+==================
+Sys_ArchiveInfo
+==================
+*/
+void Sys_ArchiveInfo( int checksum )
+{
+	Sys_RegisterInfoDvars();
+	Dvar_SetFloat( sys_cpuGHz, sys_info.cpuGHz );
+	Dvar_SetInt( sys_sysMB, sys_info.sysMB );
+	Dvar_SetString( sys_gpu, sys_info.gpuDescription );
+	Dvar_SetInt( sys_configSum, checksum );
+}
+
 WinVars_t g_wv;
 
 static void Sys_ShutdownEvents( void );

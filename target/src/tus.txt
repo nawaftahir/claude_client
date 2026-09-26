@@ -235,6 +235,7 @@ oc/win32/gfx_dll_v60.cpp
 oc/win32/gfx_v60_threads.cpp
 oc/snd.cpp
 oc/win32/snd_driver.cpp
+win32/win_configure.cpp
 win32/win_input.cpp
 win32/win_main.cpp
 win32/win_net.cpp
