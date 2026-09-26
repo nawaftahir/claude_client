@@ -194,7 +194,7 @@ void G_TouchTriggers( gentity_t *ent )
 	assert(ent->client);
 
 	// dead clients don't activate triggers!
-	if ( ent->client->ps.pm_type >= PM_NOCLIP )
+	if ( ent->client->ps.pm_type > PM_NORMAL_LINKED )
 	{
 		return;
 	}

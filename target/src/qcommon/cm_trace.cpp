@@ -409,7 +409,7 @@ void CM_TestCapsuleInCapsule( traceWork_t *tw, trace_t *trace )
 	fHeightDiff = tw->extents.start[2] - offset[2];
 	fTotalHalfHeight = offs + tw->size[2] - tw->radius;
 	assert(fTotalHalfHeight >= 0);
-	if ( fTotalHalfHeight >= I_fabs(fHeightDiff) )
+	if ( I_fabs(fHeightDiff) <= fTotalHalfHeight )
 	{
 		// 2d coordinates
 		top[2] = p1[2] = 0;

@@ -640,7 +640,7 @@ int turret_UpdateTargetAngles( gentity_t *self, const vec3_t desiredAngles, qboo
 			bComplete = qfalse;
 			fDelta = fSpeed[i];
 		}
-		else if ( -fSpeed[i] > fDelta )
+		else if ( fDelta < -fSpeed[i] )
 		{
 			bComplete = qfalse;
 			fDelta = -fSpeed[i];
@@ -678,7 +678,7 @@ int turret_UpdateTargetAngles( gentity_t *self, const vec3_t desiredAngles, qboo
 		bComplete = qfalse;
 		fDelta = fSpeed[0];
 	}
-	else if ( -fSpeed[0] > fDelta )
+	else if ( fDelta < -fSpeed[0] )
 	{
 		bComplete = qfalse;
 		fDelta = -fSpeed[0];

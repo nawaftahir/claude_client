@@ -543,7 +543,7 @@ void Com_LoadVolumeModGroups( VolumeModGroup *groups )
 		Com_Error(ERR_DROP, "ERROR: \"%s\" does not appear to be a volumemodgroups file\n", path);
 		return;
 	}
-	if ( (int)(fileSize - headerLen) > (int)sizeof(buffer) - 1 )
+	if ( (int)(fileSize - headerLen) >= (int)sizeof(buffer) )
 	{
 		FS_FCloseFile(f);
 		Com_Error(ERR_DROP, "ERROR: \"%s\" Is too long of a volumemodgroups file to parse\n", path);
@@ -1178,7 +1178,7 @@ bool Com_LoadVolumeFalloffCurve( const char *name, SndCurve *curve )
 		Com_Printf("^1ERROR: \"%s\" does not appear to be a sndcurve file\n", path);
 		return false;
 	}
-	if ( fileSize - headerLen > (int)sizeof(buffer) - 1 )
+	if ( fileSize - headerLen >= (int)sizeof(buffer) )
 	{
 		FS_FCloseFile(f);
 		Com_Printf("^1ERROR: \"%s\" Is too long of a sndcurve file to parse\n", path);

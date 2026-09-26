@@ -3081,7 +3081,7 @@ void BG_UpdatePlayerDObj( DObj *pDObj, entityState_t *es, clientInfo_t *ci, qboo
 		dobjModels[iNumModels].model = bgs->GetXModel(ci->attachModelNames[i]);
 		assert(dobjModels[iNumModels].model);
 		dobjModels[iNumModels].boneName = ci->attachTagNames[i];
-		dobjModels[iNumModels].ignoreCollision = (bool)((attachIgnoreCollision >> i) & qtrue);
+		dobjModels[iNumModels].ignoreCollision = (attachIgnoreCollision & (1 << i)) != 0;
 		iNumModels++;
 	}
 

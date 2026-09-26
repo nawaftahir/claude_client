@@ -705,7 +705,7 @@ qboolean G_GivePlayerWeapon( playerState_t *pPS, int iWeaponIndex )
 	WeaponDef *oldWeapDef;
 	int iCurrIndex;
 	int newOffHandIndex;
-	unsigned int weaponSlot;
+	int weaponSlot;
 
 	if ( Com_BitCheck(pPS->weapons, iWeaponIndex) )
 	{
@@ -760,7 +760,7 @@ qboolean G_GivePlayerWeapon( playerState_t *pPS, int iWeaponIndex )
 
 	weaponSlot = weapDef->weaponSlot;
 
-	if ( weaponSlot - 1 <= 1 )
+	if ( weaponSlot > 0 && weaponSlot <= 2 )
 	{
 		if ( !pPS->weaponslots[SLOT_PRIMARY] )
 		{

@@ -171,27 +171,27 @@ void FxHelper::CalcFrustumPlanes( const refdef_t *refdef, float zfar )
 	float c;
 
 	VectorCopy(refdef->viewaxis[0], mCamera.frustum[0]);
-	halfFov = refdef->fov_x * 0.008726646259971648;
+	halfFov = refdef->fov_x * 0.008726646259971648f;
 	FastSinCos(halfFov, &s, &c);
 	VectorScale(refdef->viewaxis[0], s, mCamera.frustum[1]);
 	VectorMA(mCamera.frustum[1], c, refdef->viewaxis[1], mCamera.frustum[1]);
 	VectorScale(refdef->viewaxis[0], s, mCamera.frustum[2]);
 	VectorMA(mCamera.frustum[2], -c, refdef->viewaxis[1], mCamera.frustum[2]);
-	halfFov = refdef->fov_y * 0.008726646259971648;
+	halfFov = refdef->fov_y * 0.008726646259971648f;
 	FastSinCos(halfFov, &s, &c);
 	VectorScale(refdef->viewaxis[0], s, mCamera.frustum[3]);
 	VectorMA(mCamera.frustum[3], c, refdef->viewaxis[2], mCamera.frustum[3]);
 	VectorScale(refdef->viewaxis[0], s, mCamera.frustum[4]);
 	VectorMA(mCamera.frustum[4], -c, refdef->viewaxis[2], mCamera.frustum[4]);
 	mCamera.numPlanes = 5;
-	if ( zfar > 0.0 )
+	if ( zfar > 0.0f )
 	{
 		VectorNegate(refdef->viewaxis[0], mCamera.frustum[5]);
 		mCamera.numPlanes = 6;
 	}
 	for ( i = 0; i < mCamera.numPlanes; i++ )
 		mCamera.frustum[i][3] = DotProduct(mCamera.vieworg, mCamera.frustum[i]);
-	if ( zfar > 0.0 )
+	if ( zfar > 0.0f )
 		mCamera.frustum[5][3] = mCamera.frustum[5][3] - zfar;
 }
 
