@@ -345,8 +345,19 @@ FastSinCos
 */
 TU_STATIC void FastSinCos(const float value, float *pSin, float *pCos)
 {
-	*pSin = sin(value);
-	*pCos = cos(value);
+	__asm
+	{
+		push eax
+		push ecx
+		fld value
+		fsincos
+		mov ecx, pCos
+		mov eax, pSin
+		fstp dword ptr [ecx]
+		fstp dword ptr [eax]
+		pop ecx
+		pop eax
+	}
 }
 
 /*

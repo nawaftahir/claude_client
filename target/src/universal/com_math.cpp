@@ -1323,10 +1323,10 @@ void AngleVectors( const vec3_t angles, vec3_t forward, vec3_t right, vec3_t up 
 	float angle;
 	float sr, sp, sy, cr, cp, cy;
 
-	angle = angles[YAW] * ( M_PI * 2 / 360 );
+	angle = angles[YAW] * (float)( M_PI * 2 / 360 );
 	FastSinCos( angle, &sy, &cy );
 
-	angle = angles[PITCH] * ( M_PI * 2 / 360 );
+	angle = angles[PITCH] * (float)( M_PI * 2 / 360 );
 	FastSinCos( angle, &sp, &cp );
 
 	if ( forward )
@@ -1338,19 +1338,19 @@ void AngleVectors( const vec3_t angles, vec3_t forward, vec3_t right, vec3_t up 
 
 	if ( right || up )
 	{
-		angle = angles[ROLL] * ( M_PI * 2 / 360 );
+		angle = angles[ROLL] * (float)( M_PI * 2 / 360 );
 		FastSinCos( angle, &sr, &cr );
 
 		if ( right )
 		{
-			right[0] = -sr * sp * cy + cr * sy;
-			right[1] = -sr * sp * sy + -cr * cy;
-			right[2] = -sr * cp;
+			right[0] = -1 * sr * sp * cy + -1 * cr * -sy;
+			right[1] = -1 * sr * sp * sy + -1 * cr * cy;
+			right[2] = -1 * sr * cp;
 		}
 
 		if ( up )
 		{
-			up[0] = cr * sp * cy + sr * sy;
+			up[0] = cr * sp * cy + -sr * -sy;
 			up[1] = cr * sp * sy + -sr * cy;
 			up[2] = cr * cp;
 		}
