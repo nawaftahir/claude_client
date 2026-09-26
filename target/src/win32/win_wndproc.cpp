@@ -250,21 +250,24 @@ static byte MapKey( int key, unsigned int wParam )
 	if ( ( ( key >> 16 ) & 0xff ) == 0x29 )
 		return '~';
 
-	if ( wParam && wParam <= 0x91 )
-	{
+	result = 0;
+	if ( wParam > 0 && wParam <= 0x91 )
 		result = virtualKeyConvert[wParam][( key >> 24 ) & 1];
-		if ( result )
-			return result;
-	}
 
-	result = (byte)MapVirtualKeyA( wParam, 2 );
-	if ( result <= 0x7f )
-		return result;
-
-	for ( i = 0; extendedVirtualKeyConvert[i][0]; i++ )
+	if ( !result )
 	{
-		if ( result == extendedVirtualKeyConvert[i][0] )
-			return extendedVirtualKeyConvert[i][1];
+		result = MapVirtualKeyA( wParam, 2 ) & 0xff;
+		if ( result > 0x7f )
+		{
+			for ( i = 0; extendedVirtualKeyConvert[i][0]; i++ )
+			{
+				if ( result == extendedVirtualKeyConvert[i][0] )
+				{
+					result = extendedVirtualKeyConvert[i][1];
+					break;
+				}
+			}
+		}
 	}
 
 	return result;
@@ -354,18 +357,18 @@ LONG WINAPI MainWndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
 		IN_ActivateMouse( qfalse );
 		break;
 
-	case WM_SETFOCUS:
-		if ( r_autopriority->current.boolean )
-		{
-			SetPriorityClass( GetCurrentProcess(), NORMAL_PRIORITY_CLASS );
-			return 0;
-		}
-		break;
-
 	case WM_KILLFOCUS:
 		if ( r_autopriority->current.boolean )
 		{
 			SetPriorityClass( GetCurrentProcess(), IDLE_PRIORITY_CLASS );
+			return 0;
+		}
+		break;
+
+	case WM_SETFOCUS:
+		if ( r_autopriority->current.boolean )
+		{
+			SetPriorityClass( GetCurrentProcess(), NORMAL_PRIORITY_CLASS );
 			return 0;
 		}
 		break;
@@ -420,6 +423,19 @@ LONG WINAPI MainWndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
 			return 0;
 		break;
 
+	case WM_MOUSEWHEEL:
+		if ( (short)HIWORD( wParam ) > 0 )
+		{
+			Sys_QueEvent( g_wv.sysMsgTime, SE_KEY, K_MWHEELUP, qtrue, 0, NULL );
+			Sys_QueEvent( g_wv.sysMsgTime, SE_KEY, K_MWHEELUP, qfalse, 0, NULL );
+		}
+		else
+		{
+			Sys_QueEvent( g_wv.sysMsgTime, SE_KEY, K_MWHEELDOWN, qtrue, 0, NULL );
+			Sys_QueEvent( g_wv.sysMsgTime, SE_KEY, K_MWHEELDOWN, qfalse, 0, NULL );
+		}
+		break;
+
 	case WM_POWERBROADCAST:
 		// refuse suspend requests
 		if ( wParam == PBT_APMQUERYSUSPEND || wParam == PBT_APMQUERYSTANDBY )
@@ -436,7 +452,9 @@ LONG WINAPI MainWndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
 	case WM_MBUTTONUP:
 	case WM_XBUTTONDOWN:
 	case WM_XBUTTONUP:
-		buttons = ( wParam & MK_LBUTTON ) != 0;
+		buttons = 0;
+		if ( wParam & MK_LBUTTON )
+			buttons = 1;
 		if ( wParam & MK_RBUTTON )
 			buttons |= 2;
 		if ( wParam & MK_MBUTTON )
@@ -446,19 +464,6 @@ LONG WINAPI MainWndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
 		if ( wParam & MK_XBUTTON2 )
 			buttons |= 16;
 		IN_MouseEvent( buttons );
-		break;
-
-	case WM_MOUSEWHEEL:
-		if ( (short)HIWORD( wParam ) > 0 )
-		{
-			Sys_QueEvent( g_wv.sysMsgTime, SE_KEY, K_MWHEELUP, qtrue, 0, NULL );
-			Sys_QueEvent( g_wv.sysMsgTime, SE_KEY, K_MWHEELUP, qfalse, 0, NULL );
-		}
-		else
-		{
-			Sys_QueEvent( g_wv.sysMsgTime, SE_KEY, K_MWHEELDOWN, qtrue, 0, NULL );
-			Sys_QueEvent( g_wv.sysMsgTime, SE_KEY, K_MWHEELDOWN, qfalse, 0, NULL );
-		}
 		break;
 	}
 

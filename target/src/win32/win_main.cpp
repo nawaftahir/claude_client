@@ -491,6 +491,16 @@ void Sys_StartProcess( const char *exeName, qboolean doexit )
 		Cbuf_AddText( "quit\n" );
 }
 
+// Retail keeps this as a separate call from Sys_Error (0x4627b0); name unknown.
+static void Sys_ErrorShutdown( void )
+{
+	Sys_DestroySplashWindow();
+	timeEndPeriod( 1 );
+	IN_Shutdown();
+	CL_ShutdownHunkUsers();
+	CL_ShutdownRef();
+}
+
 /*
 ==================
 Sys_Error
@@ -508,12 +518,7 @@ void Sys_Error( const char *error, ... )
 	vsprintf( string, error, argptr );
 	va_end( argptr );
 
-	Sys_DestroySplashWindow();
-	timeEndPeriod( 1 );
-	IN_Shutdown();
-	CL_ShutdownHunkUsers();
-	CL_ShutdownRef();
-
+	Sys_ErrorShutdown();
 	FixWindowsDesktop();
 
 	Conbuf_AppendText( string );
@@ -644,10 +649,7 @@ void Sys_Init( void )
 	Com_Printf( "System memory is %i MB (capped at 1 GB)\n", sys_info.sysMB );
 	Com_Printf( "Video card is \"%s\"\n", sys_info.gpuDescription );
 
-	if ( sys_info.SSE )
-		Com_Printf( "Streaming SIMD Extensions (SSE) %ssupported\n", "" );
-	else
-		Com_Printf( "Streaming SIMD Extensions (SSE) %ssupported\n", "not " );
+	Com_Printf( "Streaming SIMD Extensions (SSE) %ssupported\n", sys_info.SSE ? "" : "not " );
 
 	Com_Printf( "\n" );
 
@@ -680,6 +682,8 @@ static qboolean Sys_IsGameProcess( DWORD id )
 	char *i;
 	qboolean isGame;
 
+	isGame = qfalse;
+
 	process = OpenProcess( PROCESS_ALL_ACCESS, FALSE, id );
 	if ( !process )
 		return qfalse;
@@ -689,7 +693,6 @@ static qboolean Sys_IsGameProcess( DWORD id )
 	if ( snapshot == INVALID_HANDLE_VALUE )
 		return qfalse;
 
-	isGame = qfalse;
 	me.dwSize = sizeof( me );
 
 	if ( Module32First( snapshot, &me ) )
@@ -704,16 +707,15 @@ static qboolean Sys_IsGameProcess( DWORD id )
 				moduleName = i + 1;
 		}
 
-		while ( stricmp( me.szModule, moduleName ) )
+		do
 		{
-			if ( !Module32Next( snapshot, &me ) )
+			if ( !stricmp( me.szModule, moduleName ) )
 			{
-				CloseHandle( snapshot );
-				return qfalse;
+				isGame = qtrue;
+				break;
 			}
 		}
-
-		isGame = qtrue;
+		while ( Module32Next( snapshot, &me ) );
 	}
 
 	CloseHandle( snapshot );

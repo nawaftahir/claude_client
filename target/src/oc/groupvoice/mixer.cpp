@@ -306,6 +306,7 @@ int mixerSetMicrophoneMute( bool mute )
 	MIXERCONTROLDETAILS details;
 	MIXERCONTROLDETAILS_BOOLEAN value;
 	DWORD i;
+	DWORD connections;
 
 	if ( waveInGetNumDevs() < 1 || mixerGetNumDevs() < 1 )
 		return 0;
@@ -317,7 +318,8 @@ int mixerSetMicrophoneMute( bool mute )
 	line.dwComponentType = MIXERLINE_COMPONENTTYPE_DST_SPEAKERS;
 	if ( !mixerGetLineInfoA( (HMIXEROBJ)hMixer, &line, MIXER_GETLINEINFOF_COMPONENTTYPE ) )
 	{
-		for ( i = 0; i < line.cConnections; i++ )
+		connections = line.cConnections;
+		for ( i = 0; i < connections; i++ )
 		{
 			line.dwSource = i;
 			mixerGetLineInfoA( (HMIXEROBJ)hMixer, &line, MIXER_GETLINEINFOF_SOURCE );

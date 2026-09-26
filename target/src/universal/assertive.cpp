@@ -38,8 +38,8 @@ void FixWindowsDesktop()
 {
 	HWND hwndDesktop;
 	HDC hdc;
-	unsigned short ramp[3][256];
-	int i;
+	unsigned short ramp[3 * 256];
+	unsigned short i;
 
 	ChangeDisplaySettingsA( NULL, 0 );
 	EnumThreadWindows( GetCurrentThreadId(), HideWindowCallback, 0 );
@@ -49,9 +49,9 @@ void FixWindowsDesktop()
 
 	for ( i = 0; i < 256; i++ )
 	{
-		ramp[0][i] = i * 257;
-		ramp[1][i] = i * 257;
-		ramp[2][i] = i * 257;
+		ramp[i] = 257 * i;
+		ramp[i + 256] = 257 * i;
+		ramp[i + 512] = 257 * i;
 	}
 
 	SetDeviceGammaRamp( hdc, ramp );
