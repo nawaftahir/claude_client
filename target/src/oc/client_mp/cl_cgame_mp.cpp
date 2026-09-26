@@ -31,7 +31,7 @@ extern void Com_SetWeaponInfoMemory(int mode);
 extern void Com_FreeWeaponInfoMemory(int mode);
 extern void Com_UnloadSoundAliases(int mode);
 extern void Com_LoadSoundAliases(const char *loadspec, const char *zone, snd_alias_system_t flag);
-extern snd_alias_t *Com_PickSoundAlias(const char *aliasname);
+extern snd_alias_t *Com_PickSoundAlias( const char *aliasName );
 extern const char *Cmd_Argv( int arg );
 extern int Cmd_Argc(void);
 extern void Cmd_TokenizeString(const char *text);

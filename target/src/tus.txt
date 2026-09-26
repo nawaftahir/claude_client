@@ -132,7 +132,6 @@ EffectsCore/fx_dvars.cpp
 bgame/bg_misctables.cpp
 botlib/l_precomp.cpp
 cgame/cg_predict_mp.cpp
-client/snd_null.cpp
 game/g_debug_mp.cpp
 game/scr_const_mp.cpp
 qcommon/buildnumber.c
@@ -176,7 +175,6 @@ unknown/after_scr_compiler.cpp
 unknown/after_scr_const_mp.cpp
 unknown/after_scr_tempmemory.cpp
 unknown/after_scr_vm.cpp
-unknown/after_snd_null.cpp
 unknown/after_xmodel_utils.cpp
 
 # client layer (draft, opencod2)
@@ -235,6 +233,7 @@ oc/ui_mp/ui_shared_mp.cpp
 oc/win32/cinematics.cpp
 oc/win32/gfx_dll_v60.cpp
 oc/win32/gfx_v60_threads.cpp
+oc/snd.cpp
 oc/win32/snd_driver.cpp
 win32/win_main.cpp
 win32/win_net.cpp

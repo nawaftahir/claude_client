@@ -60,8 +60,8 @@ extern void SND_SetEnvironmentEffects(int type, const char *name, float drylevel
 extern void SND_DeactivateChannelVolumes(int type, int flags);
 extern void SND_DeactivateEnvironmentEffects(int type, int flags);
 extern snd_alias_t * CL_PickSoundAlias(const char *aliasname);
-extern void SND_PlayBlendedSoundAliases(void *alias0, void *alias1, float fade, int channel, int entity, int flags, int loop);
-extern void SND_PlaySoundAlias(void *alias, int channel, int entity, int duration, int loop);
+extern int SND_PlayBlendedSoundAliases(const snd_alias_t *pAlias0, const snd_alias_t *pAlias1, float fLerp, int entnum, const vec_t *org, int timeshift, snd_alias_system_t system);
+extern int SND_PlaySoundAlias(const snd_alias_t *pAlias, int entnum, const vec_t *org, int timeshift, snd_alias_system_t system);
 extern void CL_CapTurnRate(float min_rate, float max_rate);
 extern void CL_SetUserCmdInShellshock(int inShellshock);
 
@@ -366,7 +366,7 @@ static inline __attribute__((always_inline)) void CG_DeactivateShellShockSound(c
 
         {
             void *alias = CL_PickSoundAlias("shellshock_loop_end");
-            SND_PlaySoundAlias(alias, 0x3ff, _snd_local_listener, 0, 1);
+            SND_PlaySoundAlias((const snd_alias_t *)alias, 0x3ff, (const vec_t *)_snd_local_listener, 0, (snd_alias_system_t)1);
         }
     }
 }
@@ -415,7 +415,7 @@ void CG_UpdateShellShock(const shellshock_parms_t *parms, int start, int duratio
             cgp->shellshock.loopEndTime = 0;
             {
                 void *alias = CL_PickSoundAlias("shellshock_loop_end");
-                SND_PlaySoundAlias(alias, 0x3ff, _snd_local_listener, 0, 1);
+                SND_PlaySoundAlias((const snd_alias_t *)alias, 0x3ff, (const vec_t *)_snd_local_listener, 0, (snd_alias_system_t)1);
             }
         }
         goto check_mouse;
@@ -484,7 +484,7 @@ void CG_UpdateShellShock(const shellshock_parms_t *parms, int start, int duratio
                     fade = 0.0f;
             }
 
-            SND_PlayBlendedSoundAliases(pAlias0, pAlias1, fade, 0x3ff, _snd_local_listener, 0, 1);
+            SND_PlayBlendedSoundAliases((const snd_alias_t *)pAlias0, (const snd_alias_t *)pAlias1, fade, 0x3ff, (const vec_t *)_snd_local_listener, 0, (snd_alias_system_t)1);
 
             loopFadeOutVal = parms->sound.loopEndDelay;
         }
@@ -502,7 +502,7 @@ void CG_UpdateShellShock(const shellshock_parms_t *parms, int start, int duratio
 
                     {
                         void *alias = CL_PickSoundAlias("shellshock_loop_end");
-                        SND_PlaySoundAlias(alias, 0x3ff, _snd_local_listener, 0, 1);
+                        SND_PlaySoundAlias((const snd_alias_t *)alias, 0x3ff, (const vec_t *)_snd_local_listener, 0, (snd_alias_system_t)1);
                     }
                 }
             } else {
@@ -514,7 +514,7 @@ void CG_UpdateShellShock(const shellshock_parms_t *parms, int start, int duratio
                     {
                         int delayMs = cgTime - loopEndTime;
                         void *alias = CL_PickSoundAlias("shellshock_end");
-                        SND_PlaySoundAlias(alias, 0x3ff, _snd_local_listener, delayMs, 1);
+                        SND_PlaySoundAlias((const snd_alias_t *)alias, 0x3ff, (const vec_t *)_snd_local_listener, delayMs, (snd_alias_system_t)1);
                     }
                 }
             }
