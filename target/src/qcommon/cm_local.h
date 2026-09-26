@@ -454,7 +454,8 @@ typedef struct
 	int count;
 	int maxcount;
 	int contentmask;
+	trace_t *results;
 } areaParms_t;
 #if defined(__i386__)
-static_assert((sizeof(areaParms_t) == 0x1C), "ERROR: areaParms_t size is invalid!");
+static_assert((sizeof(areaParms_t) == 0x20), "ERROR: areaParms_t size is invalid!");
 #endif
