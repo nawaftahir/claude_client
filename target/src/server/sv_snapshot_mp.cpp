@@ -790,7 +790,7 @@ cachedSnapshot_t* SV_GetCachedSnapshotInternal( int archivedFrame )
 
 				if ( cachedClient->playerStateExists )
 				{
-					((void (*)(msg_t *, playerState_t *, playerState_t *))MSG_ReadDeltaPlayerstate)(&msg, &oldCachedClient->ps, &cachedClient->ps);
+					MSG_ReadDeltaPlayerstate(&msg, &oldCachedClient->ps, &cachedClient->ps);
 				}
 
 				svs.nextCachedSnapshotClients++;
@@ -825,7 +825,7 @@ cachedSnapshot_t* SV_GetCachedSnapshotInternal( int archivedFrame )
 
 				if ( cachedClient->playerStateExists )
 				{
-					((void (*)(msg_t *, playerState_t *, playerState_t *))MSG_ReadDeltaPlayerstate)(&msg, NULL, &cachedClient->ps);
+					MSG_ReadDeltaPlayerstate(&msg, NULL, &cachedClient->ps);
 				}
 
 				svs.nextCachedSnapshotClients++;
@@ -907,7 +907,7 @@ cachedSnapshot_t* SV_GetCachedSnapshotInternal( int archivedFrame )
 
 		if ( cachedClient->playerStateExists )
 		{
-			((void (*)(msg_t *, playerState_t *, playerState_t *))MSG_ReadDeltaPlayerstate)(&msg, NULL, &cachedClient->ps);
+			MSG_ReadDeltaPlayerstate(&msg, NULL, &cachedClient->ps);
 		}
 
 		svs.nextCachedSnapshotClients++;
@@ -1711,7 +1711,7 @@ void SV_ArchiveSnapshot()
 
 					while ( clientNum < maxClients || newindex < numClients )
 					{
-						if ( clientNum < maxClients && svs.clients[clientNum].state <= CS_ZOMBIE )
+						if ( clientNum < maxClients && svs.clients[clientNum].state < CS_CONNECTED )
 						{
 							++clientNum;
 							continue;
@@ -1743,8 +1743,10 @@ void SV_ArchiveSnapshot()
 
 							++newindex;
 							++clientNum;
+							continue;
 						}
-						else if ( clientNum < newnum )
+
+						if ( clientNum < newnum )
 						{
 							MSG_WriteDeltaClient(&msg, NULL, G_GetClientState(clientNum), qtrue);
 
@@ -1759,8 +1761,10 @@ void SV_ArchiveSnapshot()
 							}
 
 							++clientNum;
+							continue;
 						}
-						else if ( clientNum > newnum )
+
+						if ( clientNum > newnum )
 						{
 							++newindex;
 						}
@@ -1834,7 +1838,7 @@ void SV_ArchiveSnapshot()
 
 		for ( i = 0, cl = svs.clients; i < sv_maxclients->current.integer; i++, cl++ )
 		{
-			if ( cl->state <= CS_ZOMBIE )
+			if ( cl->state < CS_CONNECTED )
 			{
 				continue;
 			}

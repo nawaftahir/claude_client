@@ -2279,6 +2279,10 @@ void MSG_WriteDeltaPlayerstate( msg_t *msg, playerState_t *from, playerState_t *
 	}
 }
 
+extern const dvar_t *cl_shownet;
+
+#define LOG( x ) if ( cl_shownet && cl_shownet->current.integer == 4 ) { Com_Printf( "%s ", x ); }
+
 void MSG_ReadDeltaPlayerstate( msg_t *msg, playerState_t *from, playerState_t *to )
 {
 	int j;
@@ -2303,7 +2307,17 @@ void MSG_ReadDeltaPlayerstate( msg_t *msg, playerState_t *from, playerState_t *t
 	}
 
 	*to = *from;
-	print = qfalse;
+
+	if ( cl_shownet && ( cl_shownet->current.integer >= 2 || cl_shownet->current.integer == -2 ) )
+	{
+		print = qtrue;
+		Com_Printf( "%3i: playerstate ", msg->readcount );
+	}
+	else
+	{
+		print = qfalse;
+	}
+
 	numFields = ARRAY_COUNT( playerStateFields );
 	lc = MSG_ReadByte( msg );
 
@@ -2353,8 +2367,14 @@ void MSG_ReadDeltaPlayerstate( msg_t *msg, playerState_t *from, playerState_t *t
 		}
 		else
 		{
-			isSigned = (unsigned int)field->bits >> 31;
-			bitmask = isSigned ? -field->bits : field->bits;
+			bitmask = field->bits;
+			isSigned = bitmask < 0;
+
+			if ( isSigned )
+			{
+				bitmask = -bitmask;
+			}
+
 			partialBits = bitmask & 7;
 			value = partialBits ? MSG_ReadBits( msg, partialBits ) : 0;
 
@@ -2363,7 +2383,7 @@ void MSG_ReadDeltaPlayerstate( msg_t *msg, playerState_t *from, playerState_t *t
 				value |= MSG_ReadByte( msg ) << i;
 			}
 
-			if ( isSigned && ( ( value >> ( bitmask - 1 ) ) & 1 ) )
+			if ( isSigned && ( value & ( 1 << ( bitmask - 1 ) ) ) )
 			{
 				value |= ~( ( 1 << bitmask ) - 1 );
 			}
@@ -2372,7 +2392,7 @@ void MSG_ReadDeltaPlayerstate( msg_t *msg, playerState_t *from, playerState_t *t
 
 			if ( print )
 			{
-				Com_Printf( "%s:%i ", field->name, *toF );
+				Com_Printf( "%s:%i ", field->name, value );
 			}
 		}
 	}
@@ -2386,6 +2406,7 @@ void MSG_ReadDeltaPlayerstate( msg_t *msg, playerState_t *from, playerState_t *t
 
 	if ( MSG_ReadBit( msg ) )
 	{
+		LOG( "PS_STATS" );
 		bitmask = MSG_ReadBits( msg, MAX_STATS );
 
 		if ( bitmask & 1 )
@@ -2425,6 +2446,7 @@ void MSG_ReadDeltaPlayerstate( msg_t *msg, playerState_t *from, playerState_t *t
 		{
 			if ( MSG_ReadBit( msg ) )
 			{
+				LOG( "PS_AMMO" );
 				bitmask = MSG_ReadShort( msg );
 
 				for ( j = 0; j < 16; ++j )
@@ -2442,6 +2464,7 @@ void MSG_ReadDeltaPlayerstate( msg_t *msg, playerState_t *from, playerState_t *t
 	{
 		if ( MSG_ReadBit( msg ) )
 		{
+			LOG( "PS_AMMOCLIP" );
 			bitmask = MSG_ReadShort( msg );
 
 			for ( j = 0; j < 16; ++j )
