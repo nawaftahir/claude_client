@@ -40,6 +40,9 @@ extern const vec4_t colorLtOrange;
 
 #define IS_NAN isnan
 
+#undef M_PI
+#define M_PI 3.14159265358979323846f
+
 // angle indexes
 #define PITCH               0       // up / down
 #define YAW                 1       // left / right
