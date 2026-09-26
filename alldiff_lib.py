@@ -10,7 +10,7 @@ nxt = {s[1]: (s[0], syms[k+1][0]) for k, s in enumerate(syms[:-1])}
 d, base = section('build/CoD2MP_s.exe')
 cd, cbase = section('../../cod2engineold/binaries/windows/1.0/CoD2MP_s.exe')
 names = {}
-for f in ('../ghidra/names_1.0.tsv', '../ghidra/names_cg.tsv'):
+for f in ('../ghidra/names_k.tsv', '../ghidra/names_1.0.tsv', '../ghidra/names_cg.tsv'):
     for l in open(f):
         r = l.rstrip('\n').split('\t')
         if len(r) >= 2:

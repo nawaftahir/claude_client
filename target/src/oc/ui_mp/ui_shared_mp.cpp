@@ -818,26 +818,26 @@ int GetKeyBindings(const char *command, char (*bindings)[128])
 int GetKeyBindingLocalizedString(const char *command, char *keys)
 {
     char bindings[2][128];
+    const char *translated;
     int bindCount = GetKeyBindings(command, bindings);
 
-    if (bindCount == 0) {
-        I_strncpyz(keys, UI_SafeTranslateString("KEY_UNBOUND"), 0x100);
-        return bindCount;
-    }
-
-    const char *translated = SEH_StringEd_GetString(bindings[0]);
-    if (translated)
-        I_strncpyz(keys, translated, 0x100);
-    else
-        I_strncpyz(keys, bindings[0], 0x100);
-
-    if (bindCount > 1) {
-        I_strncat(keys, 0x100, va(" %s ", UI_SafeTranslateString("KEY_OR")));
-        translated = SEH_StringEd_GetString(bindings[1]);
+    if (bindCount) {
+        translated = SEH_StringEd_GetString(bindings[0]);
         if (translated)
-            I_strncat(keys, 0x100, translated);
+            I_strncpyz(keys, translated, 0x100);
         else
-            I_strncat(keys, 0x100, bindings[1]);
+            I_strncpyz(keys, bindings[0], 0x100);
+
+        if (bindCount > 1) {
+            I_strncat(keys, 0x100, va(" %s ", UI_SafeTranslateString("KEY_OR")));
+            translated = SEH_StringEd_GetString(bindings[1]);
+            if (translated)
+                I_strncat(keys, 0x100, translated);
+            else
+                I_strncat(keys, 0x100, bindings[1]);
+        }
+    } else {
+        I_strncpyz(keys, UI_SafeTranslateString("KEY_UNBOUND"), 0x100);
     }
 
     return bindCount;

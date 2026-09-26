@@ -740,7 +740,7 @@ void Mantle_CapView( playerState_t *ps )
 		return;
 	}
 
-	while ( -mantle_view_yawcap->current.decimal > delta )
+	while ( delta < -mantle_view_yawcap->current.decimal )
 	{
 		delta = delta + mantle_view_yawcap->current.decimal;
 	}

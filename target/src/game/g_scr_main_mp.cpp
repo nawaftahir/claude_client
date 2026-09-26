@@ -3198,7 +3198,7 @@ void Scr_GetSubStr()
 
 	s = Scr_GetString(0);
 	startParam = Scr_GetInt(1);
-	end = Scr_GetNumParam() > 2 ? Scr_GetInt(2) : INT_MAX;
+	end = Scr_GetNumParam() >= 3 ? Scr_GetInt(2) : INT_MAX;
 	start = startParam;
 
 	for ( i = 0; start < end; start++, i++ )

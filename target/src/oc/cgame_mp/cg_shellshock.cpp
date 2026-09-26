@@ -42,7 +42,7 @@ extern vec_t Vec3Normalize( vec3_t v );
 extern void Vec3Cross(const vec3_t v0, const vec3_t v1, vec3_t cross);
 extern void AxisCopy( const vec3_t in[3], vec3_t out[3] );
 extern void MatrixMultiply(const float in1[3][3], const float in2[3][3], float out[3][3]);
-extern bool Com_SaveDvarsToBuffer(const char **dvarnames, int numDvars, char *buffer, int bufsize);
+extern qboolean Com_SaveDvarsToBuffer(const char **dvarnames, int numDvars, char *buffer, int bufsize);
 extern qboolean Com_LoadDvarsFromBuffer(const char **dvarnames, int numDvars, const char *buffer, const char *filename);
 extern char *va( const char *format, ... );
 extern int FS_FOpenFileByMode(const char *name, int *fh, fsMode_t mode);

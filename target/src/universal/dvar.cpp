@@ -1852,7 +1852,7 @@ void Dvar_ResetDvars(int filter, DvarSetSource setSource)
 	}
 }
 
-bool Com_SaveDvarsToBuffer(const char **dvarnames, int numDvars, char *buffer, int bufsize)
+qboolean Com_SaveDvarsToBuffer(const char **dvarnames, int numDvars, char *buffer, int bufsize)
 {
 	int i;
 	int written;
@@ -1865,13 +1865,13 @@ bool Com_SaveDvarsToBuffer(const char **dvarnames, int numDvars, char *buffer, i
 		value = Dvar_DisplayableValue(dvar);
 		written = snprintf(buffer, bufsize, "%s \"%s\"\n", dvar->name, value);
 		if ( written < 0 )
-			return false;
+			return qfalse;
 
 		buffer += written;
 		bufsize -= written;
 	}
 
-	return true;
+	return qtrue;
 }
 
 qboolean Com_LoadDvarsFromBuffer(const char **dvarnames, int numDvars, const char *buffer, const char *filename)
