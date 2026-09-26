@@ -264,76 +264,64 @@ void Menus_HandleOOBClick(displayContextDef_t *dc, menuDef_t *menu, int key, qbo
 void LerpColor(vec_t *a, vec_t *b, vec_t *c, float t)
 {
     int i;
+
     for (i = 0; i < 4; i++) {
-        float v = a[i] + (b[i] - a[i]) * t;
-        float *cp = &c[i];
-        *cp = v;
-        if (0.0f > v)
-            *(int *)cp = 0;
-        else if (v > 1.0)
-            *(int *)cp = 0x3f800000;
+        c[i] = (b[i] - a[i]) * t + a[i];
+        if (c[i] < 0.0f)
+            c[i] = 0.0f;
+        else if (c[i] > 1.0)
+            c[i] = 1.0f;
     }
 }
 
 qboolean String_Parse(const char **p, char *out, int len)
 {
-    const char *token = Com_ParseOnLine(p);
+    const char *token;
+    const char *translated;
 
-    if (!*p)
-        return 0;
-
-    if (token[0] == '@') {
-        const char *translated = SEH_StringEd_GetString(token + 1);
-        if (translated) {
-            I_strncpyz(out, translated, len);
-            return 1;
+    token = Com_ParseOnLine(p);
+    if (*p) {
+        if (token[0] == '@') {
+            translated = SEH_StringEd_GetString(token + 1);
+            if (translated) {
+                I_strncpyz(out, translated, len);
+                return 1;
+            }
+            if (Dvar_GetBool("loc_warnings")) {
+                if (Dvar_GetBool("loc_warningsAsErrors"))
+                    Com_Error(6, "Could not translate menu string reference %s", token);
+                else
+                    Com_Printf("^3WARNING: Could not translate menu string reference %s\n", token);
+            }
         }
-        if (!Dvar_GetBool("loc_warnings")) {
-
-        } else if (Dvar_GetBool("loc_warningsAsErrors")) {
-            Com_Error(6, "Could not translate menu string reference %s", token);
-
-        } else {
-            Com_Printf("^3WARNING: Could not translate menu string reference %s\n", token);
-
-        }
+        I_strncpyz(out, token, len);
+        return 1;
     }
-
-    I_strncpyz(out, token, len);
-    return 1;
+    return 0;
 }
 
 int Menu_ItemsMatchingGroup(menuDef_t *menu, const char *name)
 {
-    int itemCount = menu->itemCount;
-    const char *wc = strchr(name, '*');
-    int wildcard = wc ? (int)(wc - name) : -1;
-    int count = 0;
+    const char *p;
+    int wildcard;
+    int count;
     int i;
 
-    for (i = 0; i < itemCount; i++) {
-        itemDef_t *item = menu->items[i];
-        const char *itemName = item->window.name;
-        const char *itemGroup = item->window.group;
+    count = 0;
+    wildcard = -1;
+    p = strstr(name, "*");
+    if (p)
+        wildcard = p - name;
 
+    for (i = 0; i < menu->itemCount; i++) {
         if (wildcard != -1) {
-            if (itemName && I_strncmp(itemName, name, wildcard) == 0) {
+            if ((menu->items[i]->window.name && !I_strncmp(menu->items[i]->window.name, name, wildcard))
+                || (menu->items[i]->window.group && !I_strncmp(menu->items[i]->window.group, name, wildcard)))
                 count++;
-                continue;
-            }
-            if (itemGroup && I_strncmp(itemGroup, name, wildcard) == 0) {
-                count++;
-                continue;
-            }
         } else {
-            if (itemName && I_stricmp(itemName, name) == 0) {
+            if ((menu->items[i]->window.name && !I_stricmp(menu->items[i]->window.name, name))
+                || (menu->items[i]->window.group && !I_stricmp(menu->items[i]->window.group, name)))
                 count++;
-                continue;
-            }
-            if (itemGroup && I_stricmp(itemGroup, name) == 0) {
-                count++;
-                continue;
-            }
         }
     }
     return count;
@@ -341,32 +329,32 @@ int Menu_ItemsMatchingGroup(menuDef_t *menu, const char *name)
 
 itemDef_t *Menu_GetMatchingItemByNumber(menuDef_t *menu, int index, const char *name)
 {
-    int itemCount = menu->itemCount;
-    const char *wc = strchr(name, '*');
-    int wildcard = wc ? (int)(wc - name) : -1;
-    int count = 0;
+    const char *p;
+    int wildcard;
+    int count;
     int i;
 
-    for (i = 0; i < itemCount; i++) {
-        itemDef_t *item = menu->items[i];
-        const char *itemName = item->window.name;
-        const char *itemGroup = item->window.group;
-        int matched = 0;
+    count = 0;
+    wildcard = -1;
+    p = strstr(name, "*");
+    if (p)
+        wildcard = p - name;
 
+    for (i = 0; i < menu->itemCount; i++) {
         if (wildcard != -1) {
-            if ((itemName && I_strncmp(itemName, name, wildcard) == 0) ||
-                (itemGroup && I_strncmp(itemGroup, name, wildcard) == 0))
-                matched = 1;
+            if ((menu->items[i]->window.name && !I_strncmp(menu->items[i]->window.name, name, wildcard))
+                || (menu->items[i]->window.group && !I_strncmp(menu->items[i]->window.group, name, wildcard))) {
+                if (count == index)
+                    return menu->items[i];
+                count++;
+            }
         } else {
-            if ((itemName && I_stricmp(itemName, name) == 0) ||
-                (itemGroup && I_stricmp(itemGroup, name) == 0))
-                matched = 1;
-        }
-
-        if (matched) {
-            if (count == index)
-                return item;
-            count++;
+            if ((menu->items[i]->window.name && !I_stricmp(menu->items[i]->window.name, name))
+                || (menu->items[i]->window.group && !I_stricmp(menu->items[i]->window.group, name))) {
+                if (count == index)
+                    return menu->items[i];
+                count++;
+            }
         }
     }
     return NULL;
@@ -1120,67 +1108,89 @@ static void Scroll_Slider_ThumbFunc(displayContextDef_t *dc, void *p)
     Scroll_Slider_SetThumbPos_impl((byte *)dc, *(byte **)(scroll + 0x18));
 }
 
+int Menus_RemoveFromStack(displayContextDef_t *dc, menuDef_t *menu)
+{
+    int i;
+
+    for (i = dc->openMenuCount - 1; ; i--) {
+        if (i < 0)
+            return 0;
+        if (dc->menuStack[i] == menu)
+            break;
+    }
+
+    dc->openMenuCount--;
+    for (; i < dc->openMenuCount; i++)
+        dc->menuStack[i] = dc->menuStack[i + 1];
+    return 1;
+}
+
+void Menus_AddToStack(displayContextDef_t *dc, menuDef_t *menu)
+{
+    Menus_RemoveFromStack(dc, menu);
+    if (dc->openMenuCount == 16)
+        Com_Error(1, "\x15Too many menus opened");
+    dc->menuStack[dc->openMenuCount++] = menu;
+}
+
+static bool Window_IsVisible(Window *w)
+{
+    return ((unsigned int)w->dynamicFlags[0] >> 2) & 1;
+}
+
+static bool Window_HasFocus(Window *w)
+{
+    if (!Window_IsVisible(w))
+        return false;
+    return ((unsigned int)w->dynamicFlags[0] >> 1) & 1;
+}
+
+static qboolean Menus_MenuIsInStack(displayContextDef_t *dc, menuDef_t *menu)
+{
+    int i;
+
+    for (i = dc->openMenuCount - 1; i >= 0; i--) {
+        if (dc->menuStack[i] == menu)
+            return 1;
+    }
+    return 0;
+}
+
 void Menus_Close(displayContextDef_t *dc, menuDef_t *menu)
 {
-    byte *d = (byte *)dc;
-    int openCount, i, menuIndex;
-    qboolean wasVisible = 0;
-    byte tempItem[0x2a0];
+    itemDef_t item;
+    bool hadFocus;
+    int i;
 
-    openCount = (((displayContextDef_s*)(d))->openMenuCount);
-    for (i = openCount - 1; i >= 0; i--) {
-        if (*(void **)((char *)&((displayContextDef_s *)d)->menuStack[i]) == menu) {
-            int flags = menu->window.dynamicFlags[0];
-            if (flags & 4)
-                wasVisible = (flags >> 1) & 1;
-            break;
+    if (Menus_MenuIsInStack(dc, menu)) {
+        hadFocus = Window_HasFocus(&menu->window);
+
+        if (Window_IsVisible(&menu->window) && menu->onClose) {
+            item.parent = menu;
+            Item_RunScript(dc, &item, menu->onClose);
         }
-    }
 
-    int flags = menu->window.dynamicFlags[0];
-    if ((flags & 4) && (*(void **)&((menuDef_t *)menu)->onClose)) {
-        *(void **)&(*(unsigned char *)&((itemDef_t *)tempItem)->parent) = menu;
-        Item_RunScript(dc, (itemDef_t *)tempItem, ((menuDef_t *)menu)->onClose);
-        openCount = (((displayContextDef_s*)(d))->openMenuCount);
-    }
+        Menus_RemoveFromStack(dc, menu);
 
-    menuIndex = -1;
-    for (i = openCount - 1; i >= 0; i--) {
-        if (*(void **)((char *)&((displayContextDef_s *)d)->menuStack[i]) == menu) {
-            menuIndex = i;
-            break;
-        }
-    }
-    if (menuIndex >= 0) {
-        (((displayContextDef_s*)(d))->openMenuCount) = openCount - 1;
-
-        for (i = menuIndex; i < (((displayContextDef_s*)(d))->openMenuCount); i++) {
-            *(void **)((char *)&((displayContextDef_s *)d)->menuStack[i]) = *(void **)((char *)&((displayContextDef_s *)d)->menuStack[(i + 1)]);
-        }
-    }
-
-    if (wasVisible && (((displayContextDef_s*)(d))->openMenuCount) > 0) {
-        int menuNum = (((displayContextDef_s*)(d))->openMenuCount) - 1;
-        for (i = menuNum; i >= 0; i--) {
-            byte *m = *(byte **)((char *)&((displayContextDef_s *)d)->menuStack[i]);
-            if ((*(byte *)&((menuDef_t *)m)->window.dynamicFlags[0]) & 4) {
-                Window_AddDynamicFlags( (Window *)((itemDef_t *)((void *)m)), 2);
-                break;
+        if (hadFocus && dc->openMenuCount) {
+            for (i = dc->openMenuCount - 1; i >= 0; i--) {
+                if (Window_IsVisible(&dc->menuStack[i]->window)) {
+                    Window_AddDynamicFlags(&dc->menuStack[i]->window, 2);
+                    break;
+                }
             }
         }
     }
 
-    Window_RemoveDynamicFlags( (Window *)((itemDef_t *)((void *)menu)), 6);
+    Window_RemoveDynamicFlags(&menu->window, 6);
 }
 
 void Menus_CloseAll(displayContextDef_t *dc)
 {
-    byte *d = (byte *)dc;
+    int i;
 
-    while ((((displayContextDef_s*)(d))->openMenuCount) > 0) {
-        int top = (((displayContextDef_s*)(d))->openMenuCount) - 1;
-        Menus_Close(dc, *(menuDef_t **)((char *)&((displayContextDef_s *)d)->menuStack[top]));
-    }
+    for (i = 0; i < dc->menuCount; i++)
+        Menus_Close(dc, dc->Menus[i]);
 }
 
 void Item_SetTextExtents(itemDef_t *item, int *width, int *height, const char *text)
@@ -1752,46 +1762,52 @@ void Item_ListBox_Paint(displayContextDef_t *dc, itemDef_t *item)
     }
 }
 
+static qboolean Color_Parse(const char **p, float (*c)[4])
+{
+    float f;
+    int i;
+
+    for (i = 0; i < 4; i++) {
+        if (!Float_Parse(p, &f))
+            return 0;
+        (*c)[i] = f;
+    }
+    return 1;
+}
+
 void Script_SetItemColor(displayContextDef_t *dc, itemDef_t *item, const char **args)
 {
-    char itemname[0x400];
-    char name[0x400];
+    char itemname[1024];
+    char name[1024];
     float color[4];
-    float f;
+    itemDef_t *item2;
+    float *out;
     int count, i, j;
     (void)dc;
 
-    if (!String_Parse(args, itemname, 0x400))
-        return;
-    if (!String_Parse(args, name, 0x400))
-        return;
-
-    count = Menu_ItemsMatchingGroup(item->parent, itemname);
-
-    for (j = 1; j < 5; j++) {
-        if (!Float_Parse(args, &f))
-            return;
-        color[j - 1] = f;
-    }
-
-    for (i = 0; i < count; i++) {
-        byte *item2 = (byte *)Menu_GetMatchingItemByNumber(item->parent, i, itemname);
-        if (!item2)
-            continue;
-
-        float *out = NULL;
-        if (I_stricmp(name, "backcolor") == 0) {
-            out = (float *)(item2 + 0x1dc);
-        } else if (I_stricmp(name, "forecolor") == 0) {
-            out = (float *)(item2 + 0x1cc);
-            Window_AddDynamicFlags( (Window *)((itemDef_t *)((void *)item2)), 0x10000);
-        } else if (I_stricmp(name, "bordercolor") == 0) {
-            out = (float *)(item2 + 0x1ec);
-        }
-
-        if (out) {
-            for (j = 1; j < 5; j++)
-                out[j - 1] = color[j - 1];
+    if (String_Parse(args, itemname, 1024)) {
+        if (String_Parse(args, name, 1024)) {
+            count = Menu_ItemsMatchingGroup(item->parent, itemname);
+            if (Color_Parse(args, &color)) {
+                for (j = 0; j < count; j++) {
+                    item2 = (itemDef_t *)Menu_GetMatchingItemByNumber(item->parent, j, itemname);
+                    if (item2) {
+                        out = NULL;
+                        if (!I_stricmp(name, "backcolor")) {
+                            out = (float *)((byte *)item2 + 0x1dc);
+                        } else if (!I_stricmp(name, "forecolor")) {
+                            out = (float *)((byte *)item2 + 0x1cc);
+                            Window_AddDynamicFlags((Window *)item2, 0x10000);
+                        } else if (!I_stricmp(name, "bordercolor")) {
+                            out = (float *)((byte *)item2 + 0x1ec);
+                        }
+                        if (out) {
+                            for (i = 0; i < 4; i++)
+                                out[i] = color[i];
+                        }
+                    }
+                }
+            }
         }
     }
 }
