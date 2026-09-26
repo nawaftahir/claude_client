@@ -90,7 +90,7 @@ extern qboolean CG_DrawShellShockSavedScreenBlend(const shellshock_parms_t *parm
 extern void CG_TileClear(void);
 extern const char *UI_SafeTranslateString(const char *ref);
 extern const char *UI_ReplaceConversionString(const char *sourceString, const char *replaceString);
-extern const char *SEH_LocalizeTextMessage(const char *msg, const char *context, int errType);
+extern const char *SEH_LocalizeTextMessage(const char *msg, const char *context, msgLocErrType_t errType);
 extern FontHandle UI_GetFontHandle(int fontEnum, float scale);
 extern int UI_TextWidth(const char *text, int maxChars, FontHandle font, float scale);
 extern int UI_TextHeight(FontHandle font, float fontScale);
@@ -975,7 +975,7 @@ qboolean CG_DrawFollow(void)
         clientName = "?";
     }
 
-    followingString = SEH_LocalizeTextMessage("CGAME_FOLLOWING\x15", "spectator follow string", 0);
+    followingString = SEH_LocalizeTextMessage("CGAME_FOLLOWING\x15", "spectator follow string", (msgLocErrType_t)0);
     scale = CL_IsRenderingSplitScreen() ? 0.5f : (1.0f / 3.0f);
     font = UI_GetFontHandle(0, 1.0f / 3.0f);
 

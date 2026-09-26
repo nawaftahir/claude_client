@@ -69,7 +69,7 @@ extern int BG_GetAmmoClipSize(int iClipIndex);
 extern bool BG_DoesWeaponNeedSlot(int weapon);
 extern int BG_GetEmptySlotForWeapon(const playerState_t *pPS, int iWeaponIndex);
 extern float sinf(float x);
-extern const char *SEH_LocalizeTextMessage(const char *msg, const char *context, int errType);
+extern const char *SEH_LocalizeTextMessage(const char *msg, const char *context, msgLocErrType_t errType);
 extern const char *UI_ReplaceConversionString(const char *sourceString, const char *replaceString);
 extern const char *UI_SafeTranslateString(const char *ref);
 extern void I_strncpyz(char *dest, const char *src, int destsize);
@@ -294,7 +294,7 @@ const char *CG_GetUseString(void)
         I_strncpyz(binding, UI_SafeTranslateString("KEY_USE"), sizeof(binding));
     }
 
-    return UI_ReplaceConversionString(SEH_LocalizeTextMessage(hintString, "Hint String", 0), binding);
+    return UI_ReplaceConversionString(SEH_LocalizeTextMessage(hintString, "Hint String", (msgLocErrType_t)0), binding);
 }
 
 static void CG_DrawCursorhint(const rectDef_t *rect, struct Font_s *font, float fontscale, int textStyle)

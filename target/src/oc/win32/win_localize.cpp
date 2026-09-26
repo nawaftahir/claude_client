@@ -2,10 +2,10 @@
 #include "imports.h"
 #include <stdio.h>
 
-extern FILE *FS_FileOpen(const char *filename, const char *mode);
-extern size_t FS_FileRead(void *buffer, size_t size, size_t count, FILE *stream);
-extern int FS_FileClose(FILE *stream);
-extern int FS_FileSeek(FILE *file, long int offset, int origin);
+extern "C" FILE *FS_FileOpen( const char *filename, const char *mode );
+extern "C" size_t FS_FileRead( void *ptr, size_t size, size_t nmemb, FILE *stream );
+extern "C" void FS_FileClose( FILE *stream );
+extern "C" int FS_FileSeek( FILE *file, int offset, int whence );
 extern qboolean SEH_GetLanguageIndexForName(const char *name, language_t *lang);
 extern void Com_BeginParseSession(const char *name);
 extern void Com_EndParseSession(void);

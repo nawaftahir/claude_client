@@ -202,7 +202,7 @@ extern void Cmd_TokenizeString(const char *text);
 extern refexport_t *GetRefAPI(int apiVersion, refimport_t *rimp);
 extern void MemFile_InitForWriting(MemoryFile *mf, int size, void *buf, int flag);
 extern void MemFile_InitForReading(MemoryFile *mf, int size, void *buf);
-extern void *Z_MallocInternal(int size);
+extern "C" void *Z_MallocInternal( int size );
 extern void *Z_VirtualAllocInternal( unsigned int size );
 extern void Z_VirtualFreeInternal(void *ptr);
 extern void CG_CalculateFPS(void);
@@ -1203,7 +1203,7 @@ void CL_InitOnceForAllClients(void)
     SCR_Init();
 }
 
-extern void Z_FreeInternal(void *ptr);
+extern "C" void Z_FreeInternal( void *ptr );
 void CL_ShutdownDebugData(void)
 {
     void (*shutdownDebug)(void);

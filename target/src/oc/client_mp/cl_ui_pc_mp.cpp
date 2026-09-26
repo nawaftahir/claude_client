@@ -6,7 +6,7 @@ extern qboolean NET_CompareAdr(netadr_t a, netadr_t b);
 extern const char *NET_AdrToString(netadr_t a);
 extern int NET_CompareAdrSigned(netadr_t *a, netadr_t *b);
 extern void I_strncpyz(char *dest, const char *src, int destsize);
-extern void Com_Memcpy(void *dest, const void *src, int count);
+extern "C" void Com_Memcpy( void *dest, const void *src, int count );
 extern int FS_SV_FOpenFileRead(const char *filename, fileHandle_t *fp);
 extern fileHandle_t FS_SV_FOpenFileWrite(const char *filename);
 extern int FS_Read(void *buffer, int len, fileHandle_t h);

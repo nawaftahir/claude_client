@@ -54,7 +54,7 @@ float Com_GetVolumeFalloffCurveValue(SndCurve *volumeFalloffCurve, float fractio
 int stricmp(const char *str1, const char *str2);
 void Com_Printf(const char *fmt, ...);
 void Com_DPrintf(const char *fmt, ...);
-void Z_FreeInternal(void *ptr);
+extern "C" void Z_FreeInternal( void *ptr );
 void AxisCopy( const vec3_t in[3], vec3_t out[3] );
 void Voice_Shutdown(void);
 void Com_UnloadSoundAliases(snd_alias_system_t system);
@@ -124,7 +124,7 @@ void SND_SetStreamChannelFromSaveInfo(int index, snd_save_stream_t *info);
 int SND_StartAlias2DSample(const snd_alias_t *pAlias0, const snd_alias_t *pAlias1, float lerp, int entnum, float volume, float pitch, int timeshift, float fraction, int startDelay, int master, int *pChannel, snd_alias_system_t system);
 int SND_StartAlias3DSample(const snd_alias_t *pAlias0, const snd_alias_t *pAlias1, float lerp, int entnum, const vec_t *org, float volume, float pitch, int timeshift, float fraction, int startDelay, int master, int *pChannel, snd_alias_system_t system);
 int SND_StartAliasStreamOnChannel(const snd_alias_t *pAlias0, const snd_alias_t *pAlias1, float lerp, int entnum, const vec_t *org, float volume, float pitch, int timeshift, float fraction, int startDelay, int master, int index, snd_alias_system_t system);
-int Com_GetSoundFileMem(const snd_alias_t *alias);
+void *Com_GetSoundFileMem(const snd_alias_t *alias);
 float randomf(void);
 void Dvar_ClearModified(dvar_t* var);
 void SND_Update3DChannel(int index, int frametime);

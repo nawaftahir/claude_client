@@ -17,7 +17,7 @@ extern int UI_TextHeight(struct Font_s *font, float scale);
 extern FontHandle UI_GetFontHandle(int fontEnum, float scale);
 extern const char *UI_GetGameTypeDisplayName(const char *gameType);
 extern const char *UI_GetMapDisplayName(const char *mapName);
-extern const char *SEH_LocalizeTextMessage(const char *msg, const char *context, int errType);
+extern const char *SEH_LocalizeTextMessage(const char *msg, const char *context, msgLocErrType_t errType);
 extern const char *CL_GetServerIPAddress(void);
 extern Bool CL_IsPlayerMuted(int clientIndex);
 extern Bool CL_IsPlayerTalking(int clientIndex);
@@ -343,17 +343,17 @@ static float CG_DrawScoreboard_ListBanner(vec_t *color, float y, float listWidth
     playersString = SEH_LocalizeTextMessage(
         va(playerCount == 1 ? (const char *)"CGAME_SB_PLAYER\x15%i" : (const char *)"CGAME_SB_PLAYERS\x15%i", playerCount == 1 ? 1 : playerCount),
         (const char *)"scoreboard banner text",
-        0);
+        LOCMSG_SAFE);
 
     if (team == 1) {
         const char *teamName;
         bannerMaterialName = Dvar_GetString((const char *)"g_ScoresBanner_Axis");
-        teamName = SEH_LocalizeTextMessage(Dvar_GetString((const char *)"g_TeamName_Axis"), (const char *)"scoreboard team name", 0);
+        teamName = SEH_LocalizeTextMessage(Dvar_GetString((const char *)"g_TeamName_Axis"), (const char *)"scoreboard team name", (msgLocErrType_t)0);
         displayString = va((const char *)"%s (%s)", teamName, playersString);
     } else if (team == 2) {
         const char *teamName;
         bannerMaterialName = Dvar_GetString((const char *)"g_ScoresBanner_Allies");
-        teamName = SEH_LocalizeTextMessage(Dvar_GetString((const char *)"g_TeamName_Allies"), (const char *)"scoreboard team name", 0);
+        teamName = SEH_LocalizeTextMessage(Dvar_GetString((const char *)"g_TeamName_Allies"), (const char *)"scoreboard team name", (msgLocErrType_t)0);
         displayString = va((const char *)"%s (%s)", teamName, playersString);
     } else if (team == 0) {
         bannerMaterialName = Dvar_GetString((const char *)"g_ScoresBanner_None");
@@ -361,7 +361,7 @@ static float CG_DrawScoreboard_ListBanner(vec_t *color, float y, float listWidth
     } else {
         const char *teamName;
         bannerMaterialName = Dvar_GetString((const char *)"g_ScoresBanner_Spectators");
-        teamName = SEH_LocalizeTextMessage((const char *)"CGAME_SPECTATORS", (const char *)"scoreboard team name", 0);
+        teamName = SEH_LocalizeTextMessage((const char *)"CGAME_SPECTATORS", (const char *)"scoreboard team name", (msgLocErrType_t)0);
         displayString = va((const char *)"%s (%s)", teamName, playersString);
     }
 
@@ -843,7 +843,7 @@ qboolean CG_DrawScoreboard(void)
 
     gameType = (const char *)SEH_LocalizeTextMessage(
         UI_GetGameTypeDisplayName(cgs->gametype),
-        (const char *)"scoreboard gametype display", 0);
+        (const char *)"scoreboard gametype display", LOCMSG_SAFE);
 
     {
         const vec_t *cw = (const vec_t *)imp_colorWhite;

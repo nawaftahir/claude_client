@@ -4,6 +4,7 @@ usage (from target/src): ocdecl.py [name...]   (default: every aliased name with
 import collections, glob, re, sys
 al = [l.split('alternatename:')[1].split('"')[0] for l in open('oc/alias.cpp') if 'alternatename' in l]
 names = {re.match(r'\?(\w+)@', a.split('=')[0]).group(1) for a in al}
+names |= set(sys.argv[1:])
 found = {}
 for p in glob.glob('**/*.[ch]*', recursive=True):
     if p.startswith('oc/'):

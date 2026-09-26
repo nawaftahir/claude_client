@@ -886,7 +886,7 @@ void ROQ_StopCinematic(void)
     }
 }
 
-extern void Com_Memcpy(void *dest, const void *src, int count);
+extern "C" void Com_Memcpy( void *dest, const void *src, int count );
 
 e_status ROQ_RunCinematicFromHandle(int handle)
 {

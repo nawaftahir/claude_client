@@ -91,13 +91,13 @@ extern "C" __declspec(dllimport) void __stdcall AIL_set_3D_distance_factor(void 
 extern "C" __declspec(dllimport) void __stdcall AIL_set_3D_rolloff_factor(void *provider, float factor);
 extern "C" __declspec(dllimport) void __stdcall AIL_set_file_callbacks(void *open_cb, void *close_cb, void *seek_cb, void *read_cb);
 extern "C" __declspec(dllimport) const char *__stdcall AIL_last_error(void);
-extern void *Z_MallocInternal(int size);
-extern void Z_FreeInternal(void *ptr);
+extern "C" void *Z_MallocInternal( int size );
+extern "C" void Z_FreeInternal( void *ptr );
 extern void *Hunk_AllocNoZeroInternal(int size);
 extern void Com_Error(int code, const char *fmt, ...);
 extern void Com_Printf(const char *fmt, ...);
 extern void Com_DPrintf(const char *fmt, ...);
-extern void Com_Memcpy(void *dest, const void *src, int count);
+extern "C" void Com_Memcpy( void *dest, const void *src, int count );
 extern void *Com_GetSoundFileMem(const void *alias);
 extern const char *Com_GetSoundFileName(const void *alias);
 extern void SND_Update(void);

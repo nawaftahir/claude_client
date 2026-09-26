@@ -27,7 +27,7 @@ extern void Com_Printf(const char *fmt, ...);
 extern void FS_Printf(fileHandle_t f, const char *fmt, ...);
 extern int SEH_GetCurrentLanguage(void);
 extern void CL_SwitchToLocalClient(int localClientNum);
-extern void Z_FreeInternal(void *ptr);
+extern "C" void Z_FreeInternal( void *ptr );
 extern void UI_KeyEvent(int key, int down);
 extern void Field_Clear(field_t *edit);
 extern char *Sys_GetClipboardData(void);

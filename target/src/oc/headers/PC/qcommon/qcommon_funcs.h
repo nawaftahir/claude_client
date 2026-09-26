@@ -118,11 +118,11 @@ void Com_UnloadBsp(void);
 void Com_LoadBsp(const char *filename);
 void Com_CleanupBsp(void);
 
-size_t FS_FileRead(void *ptr, size_t size, size_t nitems, FILE *stream);
+extern "C" size_t FS_FileRead( void *ptr, size_t size, size_t nmemb, FILE *stream );
 size_t FS_FileWrite(const void *ptr, size_t size, size_t nitems, FILE *stream);
-FILE *FS_FileOpen(const char *filename, const char *mode);
-int FS_FileClose(FILE *stream);
-int FS_FileSeek(FILE *file, long int offset, int whence);
+extern "C" FILE *FS_FileOpen( const char *filename, const char *mode );
+extern "C" void FS_FileClose( FILE *stream );
+extern "C" int FS_FileSeek( FILE *file, int offset, int whence );
 
 Bool Com_HasPlayerProfile(void);
 int Com_BuildPlayerProfilePath(char *path, int pathSize, const char *format, ...);

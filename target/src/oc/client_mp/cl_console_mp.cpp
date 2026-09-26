@@ -24,7 +24,7 @@ extern const dvar_t *con_miniconlines;
 extern const dvar_t *con_restricted;
 
 extern char *CopyStringInternal(const char *in);
-extern void Z_FreeInternal(void *ptr);
+extern "C" void Z_FreeInternal( void *ptr );
 extern int ColorIndex(unsigned char c);
 extern int Cmd_Argc(void);
 extern const char *Cmd_Argv( int arg );

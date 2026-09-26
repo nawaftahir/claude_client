@@ -12,7 +12,7 @@ extern void CL_SubtitlePrint(const char *pszText, int iDuration, int iLineWidth)
 extern int atoi(const char *nptr);
 extern int sprintf(char *str, const char *format, ...);
 extern const char *Info_ValueForKey( const char *s, const char *key );
-extern const char *SEH_LocalizeTextMessage(const char *msg, const char *context, int errType);
+extern const char *SEH_LocalizeTextMessage(const char *msg, const char *context, msgLocErrType_t errType);
 extern void SND_PlayAmbientAlias(const snd_alias_t *pAlias, int fadetime, snd_alias_system_t system);
 extern int SND_PlaySoundAliasAsMaster(const snd_alias_t *pAlias, int entnum, const vec_t *org, int timeshift, snd_alias_system_t system);
 extern int SND_PlaySoundAlias(const snd_alias_t *pAlias, int entnum, const vec_t *org, int timeshift, snd_alias_system_t system);
@@ -498,7 +498,7 @@ static inline __attribute__((always_inline)) void CG_LocalizeHudElemString(const
     int searchPos;
     int stringLen;
 
-    localizedString = SEH_LocalizeTextMessage(message, messageType, 0);
+    localizedString = SEH_LocalizeTextMessage(message, messageType, (msgLocErrType_t)0);
     stringLen = (int)strlen(localizedString);
 
     if (stringLen + 1 > 0x100) {
@@ -546,7 +546,7 @@ void CG_InitVote(void)
     m->voteTime = atoi(CL_GetConfigString(0xf));
     m->voteYes = atoi(CL_GetConfigString(0x11));
     m->voteNo = atoi(CL_GetConfigString(0x12));
-    I_strncpyz(m->voteString, SEH_LocalizeTextMessage(CL_GetConfigString(0x10), "vote string", 0), sizeof(m->voteString));
+    I_strncpyz(m->voteString, SEH_LocalizeTextMessage(CL_GetConfigString(0x10), "vote string", (msgLocErrType_t)0), sizeof(m->voteString));
 }
 
 static struct XModel *CG_GetXModel(const char *modelName)

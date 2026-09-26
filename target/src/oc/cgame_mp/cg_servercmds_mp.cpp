@@ -57,7 +57,7 @@ extern void CG_ScoresUp_f(void);
 extern void CL_SyncTimes(void);
 extern int CL_GetServerCommand(int seq);
 extern int stricmp(const char *s1, const char *s2);
-extern const char *SEH_LocalizeTextMessage(const char *msg, const char *context, int errType);
+extern const char *SEH_LocalizeTextMessage(const char *msg, const char *context, msgLocErrType_t errType);
 extern void CG_GameMessage(const char *msg);
 extern void CG_BoldGameMessage(const char *msg);
 extern void CG_TranslateHudElemMessage(const char *message, const char *messageType, char *hudElemString);
@@ -749,7 +749,7 @@ static void CG_ServerCommandChat(const char *context, qboolean addToTeamChat)
     char message[150];
     const char *localized;
 
-    localized = SEH_LocalizeTextMessage(CG_Argv(1), context, 0);
+    localized = SEH_LocalizeTextMessage(CG_Argv(1), context, (msgLocErrType_t)0);
     I_strncpyz(message, localized, sizeof(message));
     CG_CopyCleanChatString(message, sizeof(message), message);
 
@@ -859,7 +859,7 @@ static void CG_SetVoteStringFromConfigString(const char *configString)
     }
 
     converted[outPos] = '\0';
-    I_strncpyz(cgs->voteString, SEH_LocalizeTextMessage(converted, "vote string", 0), sizeof(cgs->voteString));
+    I_strncpyz(cgs->voteString, SEH_LocalizeTextMessage(converted, "vote string", (msgLocErrType_t)0), sizeof(cgs->voteString));
 }
 
 static void CG_ConfigStringModified(int index)
