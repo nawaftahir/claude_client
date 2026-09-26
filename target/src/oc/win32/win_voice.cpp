@@ -25,11 +25,11 @@ extern int Record_Start(recordingSample_t *sample);
 extern int Record_Stop(recordingSample_t *sample);
 extern recordingSample_t *Record_NewSample(void);
 extern int Record_DestroySample(recordingSample_t *sample);
-extern void mixerGetRecordSource(char *source);
-extern void mixerSetRecordSource(const char *source);
+extern int mixerGetRecordSource(char *source);
+extern int mixerSetRecordSource(const char *source);
 extern int mixerGetRecordLevel(const char *source);
-extern void mixerSetRecordLevel(const char *source, int level);
-extern void mixerSetMicrophoneMute(int mute);
+extern int mixerSetRecordLevel(const char *source, unsigned short level);
+extern int mixerSetMicrophoneMute(bool mute);
 extern int Sys_Milliseconds(void);
 extern int Decode_Sample(char *inData, int inSize, short *outData, int maxOutSize);
 

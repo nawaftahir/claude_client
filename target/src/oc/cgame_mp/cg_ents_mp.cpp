@@ -21,7 +21,7 @@ extern void XAnimBlend(XAnim *anims, unsigned int animIndex, const char *name, u
 extern void XAnimPrecache(const char *name, void *Alloc);
 extern void XAnimCreate(struct XAnim_s *anims, unsigned int animIndex, const char *name);
 extern struct DObj_s * Com_GetClientDObj(int handle, int localClientNum);
-extern void Com_ClientDObjCreate(DObjModel_s *dobjModels, int numModels, struct XAnimTree_s *tree, int handle);
+extern void Com_ClientDObjCreate(DObjModel_s *dobjModels, unsigned short numModels, struct XAnimTree_s *tree, int handle);
 extern qboolean CG_CheckDObjInfoMatches(int iEntNum, int iEntType, struct XModel *pXModel);
 extern void CG_SetDObjInfo(int iEntNum, int iEntType, struct XModel *pXModel);
 extern void CG_SafeDObjFree(int iEntNum);

@@ -10,11 +10,14 @@ nxt = {s[1]: (s[0], syms[k+1][0]) for k, s in enumerate(syms[:-1])}
 d, base = section('build/CoD2MP_s.exe')
 cd, cbase = section('../../cod2engineold/binaries/windows/1.0/CoD2MP_s.exe')
 names = {}
+located = set()  # mid-function hits; CRT names are legitimately unaligned
 for f in ('../ghidra/names_k.tsv', '../ghidra/names_1.0.tsv', '../ghidra/names_cg.tsv'):
     for l in open(f):
         r = l.rstrip('\n').split('\t')
         if len(r) >= 2:
-            names.setdefault(r[1], int(r[0], 16))
+            a = int(r[0], 16)  # prefer a 16-aligned (function start) candidate
+            if r[1] not in names or (names[r[1]] % 16 and not a % 16): names[r[1]] = a
+            if len(r) > 2 and r[2] == 'located': located.add(r[1])
 def plain(m):
     if m.startswith('?'): return m[1:].split('@')[0]
     return m.lstrip('_')
@@ -32,3 +35,11 @@ def ours(va, end): return d[va-base:end-base].rstrip(b'\xcc')
 def client(ca, n): return cd[ca-cbase:ca-cbase+n]
 def cstarts():
     return [cbase+k for k in range(16, len(cd), 16) if cd[k-1] in (0xcc, 0xc3) or cd[k-2:k] == b'\xc2\x00']
+
+# mid-function "located" names: snap back to the containing function start
+import bisect
+_cs = cstarts()
+for _k, _a in names.items():
+    if _a % 16 and _k in located:
+        _i = bisect.bisect_right(_cs, _a) - 1
+        if _i >= 0: names[_k] = _cs[_i]

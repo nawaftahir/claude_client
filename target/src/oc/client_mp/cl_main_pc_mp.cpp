@@ -34,7 +34,7 @@ extern void I_strncpyz(char *dest, const char *src, int destsize);
 extern char *va( const char *format, ... );
 extern void Cbuf_ExecuteText(int exec_when, const char *text);
 extern void Com_PumpMessageLoop(void);
-extern char *MSG_ReadString(msg_t *msg);
+extern char *MSG_ReadCommandString(msg_t *msg);
 extern char *MSG_ReadStringLine(msg_t *msg);
 extern void Com_DPrintf(const char *fmt, ...);
 extern const char* Dvar_GetString(const char *dvarName);
@@ -203,7 +203,7 @@ void CL_ServerInfoPacket(netadr_t from, msg_t *msg, int time)
     int len;
     clientStatic_t *cls;
 
-    infoString = MSG_ReadString(msg);
+    infoString = MSG_ReadCommandString(msg);
     prot = atoi(Info_ValueForKey(infoString, (const char *)"protocol"));
 
     protoStr = Dvar_GetString((const char *)"debug_protocol");
@@ -281,7 +281,7 @@ void CL_ServerInfoPacket(netadr_t from, msg_t *msg, int time)
             server->netType = (byte)from.type;
             server->clients = 0;
 
-            I_strncpyz(info, MSG_ReadString(msg), 0x400);
+            I_strncpyz(info, MSG_ReadCommandString(msg), 0x400);
             if (!info[0])
                 return;
 
@@ -972,7 +972,7 @@ void CL_Connect_f(void)
     if (!NET_IsLocalAddress(clc->serverAddress)) {
 
         unsigned int crc = 0;
-        byte *cdkey = (byte *)imp_cl_cdkey;
+        byte *cdkey = (byte *)cl_cdkey;
         byte *cdkeyEnd = cdkey + 16;
         char chs[8];
 
@@ -993,7 +993,7 @@ void CL_Connect_f(void)
 
         sprintf(chs, (const char *)"%04x", crc);
 
-        if (I_strnicmp(chs, (const char *)imp_cl_cdkeychecksum, 4) != 0) {
+        if (I_strnicmp(chs, cl_cdkeychecksum, 4) != 0) {
             Com_Error(1, (const char *)"EXE_ERR_INVALID_CD_KEY");
             return;
         }

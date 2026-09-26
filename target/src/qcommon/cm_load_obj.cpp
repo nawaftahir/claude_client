@@ -1483,10 +1483,10 @@ void CM_Cleanup( void )
 
 /*
 =================
-CM_GetPlane
+CM_GetPlaneNum
 =================
 */
-cplane_t *CM_GetPlane( int planeNum )
+cplane_t *CM_GetPlaneNum( int planeNum )
 {
 	return &cme.planes[planeNum];
 }

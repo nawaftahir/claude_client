@@ -19,7 +19,7 @@ extern void SND_StopSounds(snd_stopsounds_arg_t);
 extern void SND_EndRawSamples(void);
 extern void Sys_EndStreamedFile(fileHandle_t);
 extern void Sys_BeginStreamedFile(fileHandle_t, int);
-extern void Sys_StreamedRead(void *, int, int, fileHandle_t);
+extern int Sys_StreamedRead(void *, int, int, fileHandle_t);
 extern void FS_FCloseFile(fileHandle_t);
 extern int FS_FOpenFileRead(const char *, fileHandle_t *, int);
 extern char *va( const char *format, ... );

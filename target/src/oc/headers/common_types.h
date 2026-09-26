@@ -7211,8 +7211,14 @@ struct LSItemInfoRecord {
     LSKindID kindID;
 };
 
+// same layout and members as the universal/com_memory.h LargeLocal
 struct LargeLocal {
-    int _placeholder;
+    LargeLocal(int size);
+    ~LargeLocal();
+    void *GetBuf();
+private:
+    int pos;
+    int reserved[3];
 };
 
 struct LegacyHacks {

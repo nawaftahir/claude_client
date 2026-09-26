@@ -51,7 +51,7 @@ extern struct XModel *CL_RegisterModel(const char *name);
 extern EffectTemplate * FX_RegisterEffect(const char *fileName);
 extern snd_alias_list_t *Com_FindSoundAlias( const char *name );
 extern const char *SEH_StringEd_GetString(const char *str);
-extern void Com_ClientDObjCreate(DObjModel_s *dobjModels, int numModels, struct XAnimTree_s *tree, int handle);
+extern void Com_ClientDObjCreate(DObjModel_s *dobjModels, unsigned short numModels, struct XAnimTree_s *tree, int handle);
 extern void I_strncpyz(char *dest, const char *src, int destsize);
 extern void CL_RegisterHudMsgIconMaterial(const char *name);
 extern qboolean CG_ScoreboardDisplayed(void);

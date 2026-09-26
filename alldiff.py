@@ -11,12 +11,7 @@ syms = sorted((int(m.group(2), 16), m.group(1)) for m in
 nxt = {s[1]: (s[0], syms[k+1][0]) for k, s in enumerate(syms[:-1])}
 d, base = section('build/CoD2MP_s.exe')
 cd, cbase = section('../../cod2engineold/binaries/windows/1.0/CoD2MP_s.exe')
-names = {}
-for f in ('../ghidra/names_k.tsv', '../ghidra/names_1.0.tsv', '../ghidra/names_cg.tsv'):
-    for l in open(f):
-        r = l.rstrip('\n').split('\t')
-        if len(r) >= 2:
-            names.setdefault(r[1], int(r[0], 16))
+from alldiff_lib import names
 def plain(m):
     if m.startswith('?'): return m[1:].split('@')[0]
     return m.lstrip('_')

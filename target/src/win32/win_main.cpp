@@ -1,15 +1,65 @@
 #include "../qcommon/qcommon.h"
 #include <float.h>
+#include <direct.h>
+#include <tlhelp32.h>
 #include "win_local.h"
 
 static char sys_processSemaphoreFile[32];
+static char sys_cmdline[1024];
+
+// Client-side state shared with the cgame/ui modules; only winnt is set here.
+struct LegacyHacks
+{
+	int cg_norender;
+	int cl_running;
+	int cl_stance;
+	int cl_stanceTemp;
+	int cl_downloadSize;
+	int cl_downloadCount;
+	int cl_downloadTime;
+	char cl_downloadName[64];
+	char cl_serverloadmap[64];
+	char cl_serverloadgametype[64];
+	unsigned char cl_serverloadwaiting;
+	unsigned char sv_killserver;
+	char sv_killreason[256];
+	char ui_scriptMenu[256];
+	int ui_scriptMenuIndex;
+	char ui_newScriptMenu[256];
+	int ui_newScriptMenuIndex;
+	char ui_waitingScriptMenu[256];
+	int ui_waitingScriptMenuIndex;
+	unsigned char ui_waitingScriptMenuNoMouse;
+	unsigned char ui_scriptMenuAllowResponse;
+	char ui_savegameName[256];
+	char ui_savegameInfo[256];
+	unsigned char winnt;
+	int persid;
+};
+
+extern LegacyHacks *legacyHacks;
+extern qboolean com_errorEntered;
+
+enum language_t;
 
 void Key_Shutdown( void );
 void Sys_DestroyConsole( void );
+language_t Win_InitLocalization( void );
 void Win_ShutdownLocalization( void );
 void RefreshQuitOnErrorCondition( void );
 void Con_Shutdown( void );
 void Com_ShutdownEvents( void );
+void Com_ForceSafeMode( void );
+void Sys_CreateConsole( HINSTANCE hInstance );
+void Conbuf_AppendText( const char *pMsg );
+void Sys_SetErrorText( const char *buf );
+void Sys_CreateSplashWindow( void );
+void Sys_DestroySplashWindow( void );
+void Sys_ShowSplashWindow( void );
+void FixWindowsDesktop( void );
+void CL_ShutdownHunkUsers( void );
+void CL_ShutdownRef( void );
+LONG WINAPI MainWndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam );
 
 /*
 ==================
@@ -397,4 +447,444 @@ void Sys_In_Restart_f( void )
 {
 	IN_Shutdown();
 	IN_Init();
+}
+
+/*
+==================
+Sys_OutOfMemErrorInternal
+==================
+*/
+void Sys_OutOfMemErrorInternal( const char *filename, int line )
+{
+	Com_Printf( "Out of memory: filename '%s', line %d\n", filename, line );
+	MessageBoxA( NULL, Win_LocalizeRef( "WIN_OUT_OF_MEM_BODY" ), Win_LocalizeRef( "WIN_OUT_OF_MEM_TITLE" ), MB_ICONERROR );
+	exit( -1 );
+}
+
+/*
+==================
+Sys_StartProcess
+==================
+*/
+void Sys_StartProcess( const char *exeName, qboolean doexit )
+{
+	char szPathOrig[MAX_PATH];
+	STARTUPINFOA si;
+	PROCESS_INFORMATION pi;
+	DWORD error;
+	char *msgBuf;
+
+	memset( &si, 0, sizeof( si ) );
+	si.cb = sizeof( si );
+
+	GetCurrentDirectoryA( MAX_PATH, szPathOrig );
+
+	if ( !CreateProcessA( NULL, va( "\"%s\\%s\"", szPathOrig, exeName ), NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi ) )
+	{
+		error = GetLastError();
+		FormatMessageA( FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_SYSTEM,
+			NULL, error, MAKELANGID( LANG_NEUTRAL, SUBLANG_DEFAULT ), (LPSTR)&msgBuf, 0, NULL );
+		Com_Error( ERR_DROP, va( "EXE_ERR_COULDNT_START_PROCESS\x15'%s\\%s'\n%s\n%08x", szPathOrig, exeName, msgBuf, error ) );
+	}
+
+	if ( doexit )
+		Cbuf_AddText( "quit\n" );
+}
+
+/*
+==================
+Sys_Error
+==================
+*/
+void Sys_Error( const char *error, ... )
+{
+	va_list argptr;
+	char string[4096];
+	MSG msg;
+
+	com_errorEntered = qtrue;
+
+	va_start( argptr, error );
+	vsprintf( string, error, argptr );
+	va_end( argptr );
+
+	Sys_DestroySplashWindow();
+	timeEndPeriod( 1 );
+	IN_Shutdown();
+	CL_ShutdownHunkUsers();
+	CL_ShutdownRef();
+
+	FixWindowsDesktop();
+
+	Conbuf_AppendText( string );
+	Conbuf_AppendText( "\n" );
+
+	Sys_SetErrorText( string );
+	MessageBoxA( NULL, string, Win_LocalizeRef( "WIN_ERROR" ), MB_ICONERROR );
+	Sys_ShowConsole( 1, qtrue );
+
+	// wait for the user to quit
+	while ( GetMessageA( &msg, NULL, 0, 0 ) )
+	{
+		TranslateMessage( &msg );
+		DispatchMessageA( &msg );
+	}
+
+	Com_Quit_f();
+}
+
+/*
+==================
+Sys_Print
+==================
+*/
+void Sys_Print( const char *msg )
+{
+	Conbuf_AppendText( msg );
+}
+
+/*
+==================
+Sys_GetClipboardData
+==================
+*/
+char *Sys_GetClipboardData( void )
+{
+	char *data;
+	char *cliptext;
+	HANDLE hClipboardData;
+
+	data = NULL;
+
+	if ( OpenClipboard( NULL ) )
+	{
+		hClipboardData = GetClipboardData( CF_TEXT );
+		if ( hClipboardData )
+		{
+			cliptext = (char *)GlobalLock( hClipboardData );
+			if ( cliptext )
+			{
+				data = (char *)Z_Malloc( GlobalSize( hClipboardData ) + 1 );
+				I_strncpyz( data, cliptext, GlobalSize( hClipboardData ) );
+				GlobalUnlock( hClipboardData );
+
+				strtok( data, "\n\r\b" );
+			}
+		}
+		CloseClipboard();
+	}
+
+	return data;
+}
+
+/*
+==================
+Sys_LoadingKeepAlive
+
+Keeps power-management messages flowing and the display awake during long loads.
+==================
+*/
+void Sys_LoadingKeepAlive( void )
+{
+	MSG msg;
+
+	if ( PeekMessageA( &msg, NULL, WM_POWERBROADCAST, WM_POWERBROADCAST, PM_NOREMOVE ) )
+	{
+		if ( GetMessageA( &msg, NULL, WM_POWERBROADCAST, WM_POWERBROADCAST ) > 0 )
+		{
+			TranslateMessage( &msg );
+			DispatchMessageA( &msg );
+		}
+	}
+
+	SetThreadExecutionState( ES_DISPLAY_REQUIRED );
+
+	_controlfp( _PC_24, _MCW_PC );
+	_controlfp( _MCW_EM, _MCW_EM );
+}
+
+/*
+=================
+Sys_Net_Restart_f
+=================
+*/
+static void Sys_Net_Restart_f( void )
+{
+	NET_Restart();
+}
+
+/*
+================
+Sys_Init
+================
+*/
+void Sys_Init( void )
+{
+	OSVERSIONINFOA osversion;
+
+	timeBeginPeriod( 1 );
+
+	Cmd_AddCommand( "in_restart", Sys_In_Restart_f );
+	Cmd_AddCommand( "net_restart", Sys_Net_Restart_f );
+
+	osversion.dwOSVersionInfoSize = sizeof( osversion );
+
+	if ( !GetVersionExA( &osversion ) )
+		Sys_Error( "Couldn't get OS info" );
+
+	if ( osversion.dwMajorVersion < 4 )
+		Sys_Error( "Call of Duty 2 Multiplayer requires Windows version 4 or greater" );
+
+	if ( osversion.dwPlatformId == VER_PLATFORM_WIN32s )
+		Sys_Error( "Call of Duty 2 Multiplayer doesn't run on Win32s" );
+
+	legacyHacks->winnt = osversion.dwPlatformId == VER_PLATFORM_WIN32_NT;
+
+	Com_Printf( "Measured CPU speed is %.2lf GHz\n", sys_info.cpuGHz );
+	Com_Printf( "System memory is %i MB (capped at 1 GB)\n", sys_info.sysMB );
+	Com_Printf( "Video card is \"%s\"\n", sys_info.gpuDescription );
+
+	if ( sys_info.SSE )
+		Com_Printf( "Streaming SIMD Extensions (SSE) %ssupported\n", "" );
+	else
+		Com_Printf( "Streaming SIMD Extensions (SSE) %ssupported\n", "not " );
+
+	Com_Printf( "\n" );
+
+	IN_Init();
+}
+
+/*
+==================
+Sys_NoFreeFilesError
+==================
+*/
+static void Sys_NoFreeFilesError( void )
+{
+	MessageBoxA( NULL, Win_LocalizeRef( "WIN_DISK_FULL_BODY" ), Win_LocalizeRef( "WIN_DISK_FULL_TITLE" ), MB_ICONERROR );
+	exit( -1 );
+}
+
+/*
+==================
+Sys_IsGameProcess
+==================
+*/
+static qboolean Sys_IsGameProcess( DWORD id )
+{
+	HANDLE process;
+	HANDLE snapshot;
+	MODULEENTRY32 me;
+	char modulePath[MAX_PATH];
+	char *moduleName;
+	char *i;
+	qboolean isGame;
+
+	process = OpenProcess( PROCESS_ALL_ACCESS, FALSE, id );
+	if ( !process )
+		return qfalse;
+	CloseHandle( process );
+
+	snapshot = CreateToolhelp32Snapshot( TH32CS_SNAPMODULE, id );
+	if ( snapshot == INVALID_HANDLE_VALUE )
+		return qfalse;
+
+	isGame = qfalse;
+	me.dwSize = sizeof( me );
+
+	if ( Module32First( snapshot, &me ) )
+	{
+		GetModuleFileNameA( NULL, modulePath, MAX_PATH );
+		modulePath[MAX_PATH - 1] = 0;
+		moduleName = modulePath;
+
+		for ( i = modulePath; *i; i++ )
+		{
+			if ( *i == '\\' || *i == ':' )
+				moduleName = i + 1;
+		}
+
+		while ( stricmp( me.szModule, moduleName ) )
+		{
+			if ( !Module32Next( snapshot, &me ) )
+			{
+				CloseHandle( snapshot );
+				return qfalse;
+			}
+		}
+
+		isGame = qtrue;
+	}
+
+	CloseHandle( snapshot );
+	return isGame;
+}
+
+/*
+==================
+Sys_CheckCrashOrRerun
+
+Returns false if another instance is running or the user cancelled.
+==================
+*/
+static qboolean Sys_CheckCrashOrRerun( void )
+{
+	HANDLE file;
+	DWORD procID;
+	DWORD id;
+	DWORD byteCount;
+	int answer;
+
+	if ( !sys_processSemaphoreFile[0] )
+		return qtrue;
+
+	procID = GetCurrentProcessId();
+
+	file = CreateFileA( sys_processSemaphoreFile, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_HIDDEN, NULL );
+	if ( file != INVALID_HANDLE_VALUE )
+	{
+		if ( ReadFile( file, &id, sizeof( id ), &byteCount, NULL ) && byteCount == sizeof( id ) )
+		{
+			CloseHandle( file );
+
+			if ( procID == id || !Sys_IsGameProcess( id ) )
+			{
+				answer = MessageBoxA( NULL, Win_LocalizeRef( "WIN_IMPROPER_QUIT_BODY" ), Win_LocalizeRef( "WIN_IMPROPER_QUIT_TITLE" ), MB_YESNOCANCEL | MB_ICONWARNING );
+				if ( answer == IDYES )
+					Com_ForceSafeMode();
+				else if ( answer != IDNO && answer == IDCANCEL )
+					return qfalse;
+			}
+			else
+			{
+				return qfalse;
+			}
+		}
+		else
+		{
+			CloseHandle( file );
+		}
+	}
+
+	file = CreateFileA( sys_processSemaphoreFile, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_HIDDEN, NULL );
+	if ( file == INVALID_HANDLE_VALUE )
+		Sys_NoFreeFilesError();
+
+	if ( !WriteFile( file, &procID, sizeof( procID ), &byteCount, NULL ) || byteCount != sizeof( procID ) )
+	{
+		CloseHandle( file );
+		Sys_NoFreeFilesError();
+	}
+
+	CloseHandle( file );
+	return qtrue;
+}
+
+/*
+==================
+Win_RegisterClass
+==================
+*/
+static void Win_RegisterClass( void )
+{
+	WNDCLASSEXA wc;
+
+	memset( &wc, 0, sizeof( wc ) );
+	wc.cbSize = sizeof( wc );
+	wc.lpfnWndProc = MainWndProc;
+	wc.hInstance = g_wv.hInstance;
+	wc.hIcon = LoadIconA( g_wv.hInstance, MAKEINTRESOURCEA( 1 ) );
+	wc.hCursor = LoadCursorA( NULL, IDC_ARROW );
+	wc.hbrBackground = CreateSolidBrush( RGB( 0, 0, 0 ) );
+	wc.lpszClassName = "CoD2";
+
+	if ( !RegisterClassExA( &wc ) )
+		Com_Error( ERR_FATAL, "EXE_ERR_COULDNT_REGISTER_WINDOW" );
+}
+
+/*
+==================
+PrintWorkingDir
+==================
+*/
+static void PrintWorkingDir( void )
+{
+	char cwd[256];
+
+	_getcwd( cwd, sizeof( cwd ) );
+	Com_Printf( "Working directory: %s\n", cwd );
+}
+
+/*
+==================
+WinMain
+==================
+*/
+int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow )
+{
+	_controlfp( _PC_24, _MCW_PC );
+	_controlfp( _MCW_EM, _MCW_EM );
+
+	Sys_InitMainThread();
+	Win_InitLocalization();
+
+	if ( strnicmp( lpCmdLine, "allowdupe", 9 ) || lpCmdLine[9] > ' ' )
+	{
+		Sys_GetSemaphoreFileName();
+
+		if ( !Sys_CheckCrashOrRerun() )
+		{
+			Win_ShutdownLocalization();
+			return 0;
+		}
+	}
+
+	// should never get a previous instance in Win32
+	if ( hPrevInstance )
+	{
+		Win_ShutdownLocalization();
+		return 0;
+	}
+
+	Dvar_Init();
+	Sys_FindInfo();
+
+	g_wv.hInstance = hInstance;
+	I_strncpyz( sys_cmdline, lpCmdLine, sizeof( sys_cmdline ) );
+
+	Sys_CreateConsole( g_wv.hInstance );
+
+	Sys_CreateSplashWindow();
+	Sys_ShowSplashWindow();
+
+	Win_RegisterClass();
+
+	SetErrorMode( SEM_FAILCRITICALERRORS );
+
+	// get the initial time base
+	Sys_Milliseconds();
+
+	Com_Init( sys_cmdline );
+
+	PrintWorkingDir();
+
+	// hide the early console since we've reached the point where we
+	// have a working graphics subsystems
+	if ( !com_dedicated->current.integer && !com_viewlog->current.integer )
+		Sys_ShowConsole( 0, qfalse );
+
+	SetFocus( g_wv.hWnd );
+
+	// main game loop
+	while ( 1 )
+	{
+		// if not running as a game client, sleep a bit
+		if ( g_wv.isMinimized || ( com_dedicated && com_dedicated->current.integer ) )
+			Sleep( 5 );
+
+		Com_Frame();
+	}
+
+	// never gets here
+	return 0;
 }

@@ -58,9 +58,6 @@ void CL_ParseDownload(msg_t *msg);
 void CL_ParseSnapshot(msg_t *msg);
 void CL_ParseServerMessage(msg_t *msg);
 
-extern void LargeLocal_LargeLocal(const LargeLocal *_this, int size);
-extern void *LargeLocal_GetBuf(const LargeLocal *_this);
-extern void ZN10LargeLocalD1Ev(LargeLocal *_this);
 
 extern const char *Info_ValueForKey( const char *s, const char *key );
 extern void Info_NextPair(const char **head, char *key, char *value);
@@ -68,7 +65,7 @@ extern void FS_PureServerSetLoadedIwds(const char *iwdSums, const char *iwdNames
 extern void FS_PureServerSetReferencedIwds(const char *iwdSums, const char *iwdNames);
 extern void Dvar_SetFromStringByName(const char *dvarName, const char *string);
 extern bool Dvar_GetBool(const char *dvarName);
-extern void Dvar_SetCheatState(void);
+extern void Dvar_SetCheatsToReset(void);
 extern void Dvar_SetInt(dvar_t *dvar, int value);
 extern void Con_Close(void);
 extern void CL_ClearState(void);
@@ -88,7 +85,7 @@ extern int MSG_ReadByte(msg_t *msg);
 extern int MSG_ReadShort(msg_t *msg);
 extern int MSG_ReadBits(msg_t *msg, int bits);
 extern int MSG_ReadBit(msg_t *msg);
-extern char *MSG_ReadString(msg_t *msg);
+extern char *MSG_ReadCommandString(msg_t *msg);
 extern char *MSG_ReadBigString(msg_t *msg);
 extern void MSG_ReadData(msg_t *msg, void *data, int len);
 extern void MSG_ReadDeltaPlayerstate(msg_t *msg, playerState_t *from, playerState_t *to);
@@ -115,8 +112,6 @@ static qboolean CL_ShowPacketsEnabled(void)
 
 void CL_SystemInfoChanged(void)
 {
-    LargeLocal key_large_local;
-    LargeLocal value_large_local;
     char *key;
     char *value;
     clientActive_t *cla;
@@ -124,11 +119,11 @@ void CL_SystemInfoChanged(void)
     char *systemInfo;
     const char *s;
 
-    LargeLocal_LargeLocal(&key_large_local, 0x2000);
-    key = (char *)LargeLocal_GetBuf(&key_large_local);
+    LargeLocal key_large_local(0x2000);
+    key = (char *)key_large_local.GetBuf();
 
-    LargeLocal_LargeLocal(&value_large_local, 0x2000);
-    value = (char *)LargeLocal_GetBuf(&value_large_local);
+    LargeLocal value_large_local(0x2000);
+    value = (char *)value_large_local.GetBuf();
 
     cla = clients;
     clc = &::clc;
@@ -142,15 +137,13 @@ void CL_SystemInfoChanged(void)
     }
 
     if ((&::clc)->demoplaying != 0) {
-        ZN10LargeLocalD1Ev(&value_large_local);
-        ZN10LargeLocalD1Ev(&key_large_local);
         return;
     }
 
     s = Info_ValueForKey(systemInfo, "sv_cheats");
     if (atoi(s) == 0) {
 
-        Dvar_SetCheatState();
+        Dvar_SetCheatsToReset();
     }
 
     s = Info_ValueForKey(systemInfo, "sv_iwds");
@@ -184,8 +177,6 @@ void CL_SystemInfoChanged(void)
 
     cl_connectedToPureServer = (int)Dvar_GetBool("sv_pure");
 
-    ZN10LargeLocalD1Ev(&value_large_local);
-    ZN10LargeLocalD1Ev(&key_large_local);
 }
 
 void CL_ParseGamestate(msg_t *msg)
@@ -287,14 +278,13 @@ void CL_ParseGamestate(msg_t *msg)
 
 void CL_ParseDownload(msg_t *msg)
 {
-    LargeLocal data_large_local;
     byte *data;
     int block;
     int size;
     clientConnection_t *clc;
 
-    LargeLocal_LargeLocal(&data_large_local, MAX_MSGLEN);
-    data = (byte *)LargeLocal_GetBuf(&data_large_local);
+    LargeLocal data_large_local(MAX_MSGLEN);
+    data = (byte *)data_large_local.GetBuf();
 
     block = MSG_ReadShort(msg);
 
@@ -305,11 +295,10 @@ void CL_ParseDownload(msg_t *msg)
             CL_ParseWWWDownload(msg);
         } else {
 
-            MSG_ReadString(msg);
+            MSG_ReadCommandString(msg);
             MSG_ReadLong(msg);
             MSG_ReadLong(msg);
         }
-        ZN10LargeLocalD1Ev(&data_large_local);
         return;
     }
 #endif
@@ -324,8 +313,7 @@ void CL_ParseDownload(msg_t *msg)
         size = clc->downloadSize;
         if (size < 0) {
 
-            Com_Error(1, "%s", va("%s", MSG_ReadString(msg)));
-            ZN10LargeLocalD1Ev(&data_large_local);
+            Com_Error(1, "%s", va("%s", MSG_ReadCommandString(msg)));
             return;
         }
     }
@@ -349,7 +337,6 @@ void CL_ParseDownload(msg_t *msg)
 
             CL_AddReliableCommand(va("retransdl %d", clc->downloadBlock));
         }
-        ZN10LargeLocalD1Ev(&data_large_local);
         return;
     }
 
@@ -362,7 +349,6 @@ void CL_ParseDownload(msg_t *msg)
         CL_AddReliableCommand("stopdl");
         clc->downloadName[0] = 0;
         clc->downloadTempName[0] = 0;
-        ZN10LargeLocalD1Ev(&data_large_local);
         return;
     }
     if (clc->downloadName[0] &&
@@ -372,7 +358,6 @@ void CL_ParseDownload(msg_t *msg)
         CL_AddReliableCommand("stopdl");
         clc->downloadName[0] = 0;
         clc->downloadTempName[0] = 0;
-        ZN10LargeLocalD1Ev(&data_large_local);
         return;
     }
 #endif
@@ -383,7 +368,6 @@ void CL_ParseDownload(msg_t *msg)
 
             Com_Printf("Server sending download, but no download was requested\n");
             CL_AddReliableCommand("stopdl");
-            ZN10LargeLocalD1Ev(&data_large_local);
             return;
         }
 
@@ -393,7 +377,6 @@ void CL_ParseDownload(msg_t *msg)
             Com_Printf("Could not create %s\n", clc->downloadTempName);
             CL_AddReliableCommand("stopdl");
             CL_NextDownload();
-            ZN10LargeLocalD1Ev(&data_large_local);
             return;
         }
     }
@@ -413,7 +396,6 @@ void CL_ParseDownload(msg_t *msg)
     *(int *)((*download_ui_ptr) + 0x14) = clc->downloadCount;
 
     if (size != 0) {
-        ZN10LargeLocalD1Ev(&data_large_local);
         return;
     }
 
@@ -437,7 +419,6 @@ void CL_ParseDownload(msg_t *msg)
 
     CL_NextDownload();
 
-    ZN10LargeLocalD1Ev(&data_large_local);
 }
 
 #if COD2_IS_PATCH_13
@@ -448,7 +429,7 @@ void CL_ParseWWWDownload(msg_t *msg)
     const char *fs_homepath = Dvar_GetString("fs_homepath");
 
     I_strncpyz(cls.originalDownloadName, cls.downloadName, sizeof(cls.originalDownloadName));
-    I_strncpyz(cls.downloadName, MSG_ReadString(msg), sizeof(cls.downloadName));
+    I_strncpyz(cls.downloadName, MSG_ReadCommandString(msg), sizeof(cls.downloadName));
     cls.downloadSize = MSG_ReadLong(msg);
     cls.downloadFlags = MSG_ReadLong(msg);
 
@@ -594,7 +575,6 @@ static byte *CL_SnapSlot(byte *base, int messageNum)
 
 void CL_ParseSnapshot(msg_t *msg)
 {
-    LargeLocal newSnap_large_local;
     clSnapshot_t *newSnap;
     clientActive_t *cla;
     clientConnection_t *clc;
@@ -610,8 +590,8 @@ void CL_ParseSnapshot(msg_t *msg)
     byte *oldClientSlot;
     int oldClientNum;
 
-    LargeLocal_LargeLocal(&newSnap_large_local, sizeof(clSnapshot_t));
-    newSnap = (clSnapshot_t *)LargeLocal_GetBuf(&newSnap_large_local);
+    LargeLocal newSnap_large_local(sizeof(clSnapshot_t));
+    newSnap = (clSnapshot_t *)newSnap_large_local.GetBuf();
 
     memset(newSnap, 0, sizeof(clSnapshot_t));
 
@@ -928,12 +908,10 @@ void CL_ParseSnapshot(msg_t *msg)
     if (msg->overflowed) {
 
         newSnap->valid = 0;
-        ZN10LargeLocalD1Ev(&newSnap_large_local);
         return;
     }
 
     if (newSnap->valid == 0) {
-        ZN10LargeLocalD1Ev(&newSnap_large_local);
         return;
     }
 
@@ -984,12 +962,10 @@ void CL_ParseSnapshot(msg_t *msg)
 
     cla->newSnapshots = 1;
 
-    ZN10LargeLocalD1Ev(&newSnap_large_local);
 }
 
 void CL_ParseServerMessage(msg_t *msg)
 {
-    LargeLocal msgCompressed_buf_large_local;
     byte *msgCompressed_buf;
     msg_t msgCompressed;
     int cmd;
@@ -997,8 +973,8 @@ void CL_ParseServerMessage(msg_t *msg)
     static int x64TraceCount;
 #endif
 
-    LargeLocal_LargeLocal(&msgCompressed_buf_large_local, MAX_MSG_DECOMPRESS_BYTES);
-    msgCompressed_buf = (byte *)LargeLocal_GetBuf(&msgCompressed_buf_large_local);
+    LargeLocal msgCompressed_buf_large_local(MAX_MSG_DECOMPRESS_BYTES);
+    msgCompressed_buf = (byte *)msgCompressed_buf_large_local.GetBuf();
 
     if (CL_ShowNetValue() == 1) {
 
@@ -1063,7 +1039,7 @@ void CL_ParseServerMessage(msg_t *msg)
         case 4: {
 
             int seq = MSG_ReadLong(&msgCompressed);
-            char *str = MSG_ReadString(&msgCompressed);
+            char *str = MSG_ReadCommandString(&msgCompressed);
             clientConnection_t *clc = &::clc;
             if (seq <= clc->serverCommandSequence)
                 break;
@@ -1090,5 +1066,4 @@ void CL_ParseServerMessage(msg_t *msg)
         }
     }
 
-    ZN10LargeLocalD1Ev(&msgCompressed_buf_large_local);
 }

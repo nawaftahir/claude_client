@@ -77,9 +77,6 @@ extern void qsort(void *base, int nmemb, int size, int (*compar)(const void *, c
 #endif
 extern const char **Cmd_GetAutoCompleteFileList(const char *cmd, int *fileCount, int maxCount);
 extern void FS_FreeFileList(char **list, int count);
-extern void LargeLocal_LargeLocal(const LargeLocal *ll, int size);
-extern void *LargeLocal_GetBuf(const LargeLocal *ll);
-extern void ZN10LargeLocalD1Ev(LargeLocal *ll);
 extern int strnicmp(const char *s1, const char *s2, size_t n);
 extern void *__DefaultRuneLocale;
 extern refexport_t re;
@@ -1019,7 +1016,6 @@ static void Con_ClearMessageWindow(MessageWindow *wnd)
 
 static void Con_CheckResize(void)
 {
-    LargeLocal largeLocal;
     short *tbuf;
     int oldLinewidth;
     int oldTotalLines;
@@ -1030,8 +1026,8 @@ static void Con_CheckResize(void)
     int screenWidth;
     int newLinewidth;
 
-    LargeLocal_LargeLocal(&largeLocal, 0x20000);
-    tbuf = (short *)LargeLocal_GetBuf(&largeLocal);
+    LargeLocal largeLocal(0x20000);
+    tbuf = (short *)largeLocal.GetBuf();
 
     con.screenMin[0] = 4.0f;
     con.screenMin[1] = 4.0f;
@@ -1057,7 +1053,6 @@ static void Con_CheckResize(void)
     newLinewidth = screenWidth - 2;
     oldLinewidth = con.linewidth;
     if (newLinewidth == oldLinewidth) {
-        ZN10LargeLocalD1Ev(&largeLocal);
         return;
     }
 
@@ -1068,7 +1063,6 @@ static void Con_CheckResize(void)
             con.textBuffer[i] = Con_FillChar();
         con.currentLine = con.totallines - 1;
         con.display = con.currentLine;
-        ZN10LargeLocalD1Ev(&largeLocal);
         return;
     }
 
@@ -1108,7 +1102,6 @@ static void Con_CheckResize(void)
 
     con.currentLine = con.totallines - 1;
     con.display = con.currentLine;
-    ZN10LargeLocalD1Ev(&largeLocal);
 }
 
 static void Con_OneTimeInit(void)

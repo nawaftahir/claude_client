@@ -2,6 +2,62 @@
 
 static bool shouldQuitOnError = false;
 
+static HWND g_hwndGame[4];
+static unsigned int g_hiddenCount;
+
+static BOOL CALLBACK HideWindowCallback( HWND hwnd, LPARAM lParam )
+{
+	char caption[1024];
+	LONG style;
+	LONG styleEx;
+
+	if ( GetWindowTextA( hwnd, caption, sizeof( caption ) ) && strcmp( caption, "Call of Duty 2 Multiplayer" ) )
+		return TRUE;
+
+	style = GetWindowLongA( hwnd, GWL_STYLE );
+	styleEx = GetWindowLongA( hwnd, GWL_EXSTYLE );
+
+	if ( style & WS_VISIBLE )
+	{
+		g_hwndGame[g_hiddenCount++] = hwnd;
+		SetWindowLongA( hwnd, GWL_STYLE, style & ~WS_VISIBLE );
+		SetWindowLongA( hwnd, GWL_EXSTYLE, styleEx & ~WS_EX_TOPMOST );
+	}
+
+	return TRUE;
+}
+
+/*
+============
+FixWindowsDesktop
+
+Restores the desktop mode and a linear gamma ramp after a fatal error.
+============
+*/
+void FixWindowsDesktop()
+{
+	HWND hwndDesktop;
+	HDC hdc;
+	unsigned short ramp[3][256];
+	int i;
+
+	ChangeDisplaySettingsA( NULL, 0 );
+	EnumThreadWindows( GetCurrentThreadId(), HideWindowCallback, 0 );
+
+	hwndDesktop = GetDesktopWindow();
+	hdc = GetDC( hwndDesktop );
+
+	for ( i = 0; i < 256; i++ )
+	{
+		ramp[0][i] = i * 257;
+		ramp[1][i] = i * 257;
+		ramp[2][i] = i * 257;
+	}
+
+	SetDeviceGammaRamp( hdc, ramp );
+	ReleaseDC( hwndDesktop, hdc );
+}
+
 /*
 ============
 RefreshQuitOnErrorCondition
