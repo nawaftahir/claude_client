@@ -176,7 +176,7 @@ CG_Trace
 void CG_Trace( trace_t *results, const float *start, const float *mins, const float *maxs, const float *end, int skipNumber, int mask )
 {
 	CM_BoxTrace( results, start, end, mins, maxs, 0, mask );
-	results->entityNum = results->fraction != 1.0 ? ENTITYNUM_WORLD : ENTITYNUM_NONE;
+	results->entityNum = results->fraction != 1.0f ? ENTITYNUM_WORLD : ENTITYNUM_NONE;
 
 	if ( results->fraction != 0.0 )
 	{

@@ -1373,7 +1373,7 @@ start:
 							}
 						}
 
-						if ( sign == 1.0 )
+						if ( sign == 1.0f )
 							break;
 
 						sign = 1.0;

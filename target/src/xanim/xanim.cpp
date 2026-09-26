@@ -1152,7 +1152,7 @@ unsigned short XAnimGetNextNotifyIndex( const XAnimEntry *entry, float dtime )
 
 float XAnimGetNotifyFracLeaf(const XAnimState *state, const XAnimState *nextState, float time, float dtime)
 {
-	if ( nextState->oldTime == 1.0 )
+	if ( nextState->oldTime == 1.0f )
 		return 1.0;
 
 	if ( nextState->time < nextState->oldTime )
@@ -1166,7 +1166,7 @@ float XAnimGetNotifyFracLeaf(const XAnimState *state, const XAnimState *nextStat
 		return 1.0;
 	}
 
-	if ( (nextState->time > time || nextState->time == 1.0) && nextState->oldTime <= time )
+	if ( (nextState->time > time || nextState->time == 1.0f) && nextState->oldTime <= time )
 		return ((float)(nextState->oldCycleCount - state->oldCycleCount) + (time - state->oldTime)) / dtime;
 
 	return 1.0;
@@ -1247,14 +1247,14 @@ void XAnimProcessClientNotify(XAnimInfo *info, const XAnimEntry *entry, float dt
 	}
 
 	{
-		if ( state->oldTime == 1.0 )
+		if ( state->oldTime == 1.0f )
 		{
 			XAnimAddClientNotify(entry, g_end, XAnimGetNotifyFracLeaf(state, state, 1.0, dtime), type);
 			return;
 		}
 		if ( entry->numAnims )
 		{
-			if ( state->time < state->oldTime || state->time == 1.0 )
+			if ( state->time < state->oldTime || state->time == 1.0f )
 			{
 				XAnimAddClientNotify(entry, g_end, XAnimGetNotifyFracLeaf(state, state, 1.0, dtime), type);
 				return;
@@ -1297,7 +1297,7 @@ void XAnimProcessClientNotify(XAnimInfo *info, const XAnimEntry *entry, float dt
 			}
 			else
 			{
-				if ( state->time == 1.0 )
+				if ( state->time == 1.0f )
 				{
 					if ( state->oldTime > noteTrack->time )
 						return;
@@ -2514,7 +2514,7 @@ bool XAnimHasFinishedOrLooped( const XAnimTree_s *tree, unsigned int animIndex )
 		return true;
 
 	state = &g_xAnimInfo[index].state;
-	return state->time < state->oldTime || state->time == 1.0 || state->cycleCount > state->oldCycleCount;
+	return state->time < state->oldTime || state->time == 1.0f || state->cycleCount > state->oldCycleCount;
 }
 
 int XAnimGetNumChildren(const XAnim_s *anim, unsigned int animIndex)
@@ -2641,7 +2641,7 @@ int DObjUpdateServerInfo(DObj_s *obj, float dtime, int bNotify)
 
 	track = XAnimFindServerNoteTrack(obj->tree, 0, dtime);
 
-	if ( track != 1.0 )
+	if ( track != 1.0f )
 	{
 		time = dtime * track + 0.001f;
 
@@ -3436,7 +3436,7 @@ void XAnimSetTime(XAnimTree_s *tree, unsigned int animIndex, float time)
 
 void XAnimSetNotifyIndex( const XAnimTree_s *tree, XAnimInfo *info, const XAnimEntry *entry )
 {
-	if ( info->state.time == 1.0 )
+	if ( info->state.time == 1.0f )
 		return;
 
 	if ( entry->numAnims )

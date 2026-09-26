@@ -538,7 +538,7 @@ bool Mantle_FindMantleSurface( pmove_t *pm, pml_t *pml, trace_t *trace, vec3_t m
 		return false;
 	}
 
-	if ( trace->fraction == 1.0 )
+	if ( trace->fraction == 1.0f )
 	{
 		Mantle_DebugPrint("Mantle Failed: No mantle surface found");
 		return false;

@@ -1607,7 +1607,7 @@ void PM_HoldBreathFire( playerState_t *ps )
 	weapIndex = BG_GetViewmodelWeaponIndex(ps);
 	weapDef = BG_GetWeaponDef(weapIndex);
 
-	if ( ps->fWeaponPosFrac != 1.0 )
+	if ( ps->fWeaponPosFrac != 1.0f )
 	{
 		return;
 	}

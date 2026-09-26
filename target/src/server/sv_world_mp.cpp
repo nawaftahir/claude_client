@@ -674,13 +674,9 @@ passEntityNum and entities owned by passEntityNum are explicitly not checked.
 */
 void SV_Trace( trace_t *results, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, int passEntityNum, int contentmask, int locational, unsigned char *priorityMap, int staticmodels )
 {
-	vec3_t temp;
-	pointtrace_t pt;
-	moveclip_t clip;
-
 	// clip to world
 	CM_BoxTrace(results, start, end, mins, maxs, 0, contentmask);
-	results->entityNum = results->fraction != 1.0 ? ENTITYNUM_WORLD : ENTITYNUM_NONE;
+	results->entityNum = results->fraction != 1.0f ? ENTITYNUM_WORLD : ENTITYNUM_NONE;
 
 	if ( results->fraction == 0 )
 	{
@@ -699,6 +695,8 @@ void SV_Trace( trace_t *results, const vec3_t start, const vec3_t mins, const ve
 
 	if ( !(maxs[0] - mins[0] + maxs[1] - mins[1] + maxs[2] - mins[2]) )
 	{
+		pointtrace_t pt;
+
 		pt.contentmask = contentmask;
 
 		VectorCopy(start, pt.extents.start);
@@ -728,6 +726,9 @@ void SV_Trace( trace_t *results, const vec3_t start, const vec3_t mins, const ve
 	}
 	else
 	{
+		vec3_t temp;
+		moveclip_t clip;
+
 		clip.contentmask = contentmask;
 		clip.passEntityNum = passEntityNum;
 
@@ -773,10 +774,6 @@ SV_TracePassed
 */
 int SV_TracePassed( const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, int passEntityNum0, int passEntityNum1, int contentmask, int locational, int staticmodels )
 {
-	vec3_t temp;
-	sightpointtrace_t spt;
-	sightclip_t clip;
-
 	if ( CM_BoxSightTrace(0, start, end, mins, maxs, 0, contentmask) )
 	{
 		return 0;
@@ -792,6 +789,8 @@ int SV_TracePassed( const vec3_t start, const vec3_t mins, const vec3_t maxs, co
 
 	if ( !(maxs[0] - mins[0] + maxs[1] - mins[1] + maxs[2] - mins[2]) )
 	{
+		sightpointtrace_t spt;
+
 		spt.contentmask = contentmask;
 
 		VectorCopy(start, spt.start);
@@ -809,6 +808,9 @@ int SV_TracePassed( const vec3_t start, const vec3_t mins, const vec3_t maxs, co
 	}
 	else
 	{
+		vec3_t temp;
+		sightclip_t clip;
+
 		clip.contentmask = contentmask;
 
 		clip.passEntityNum[0] = passEntityNum0;

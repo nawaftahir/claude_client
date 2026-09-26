@@ -1526,7 +1526,7 @@ static void PM_GroundTraceMissed(pmove_t *pm, pml_t *pml)
 		VectorCopy(ps->origin, point);
 		point[2] -= 64;
 		pmoveHandlers[pm->handler].trace(&trace, ps->origin, pm->mins, pm->maxs, point, ps->clientNum, pm->tracemask);
-		if (trace.fraction == 1.0)
+		if (trace.fraction == 1.0f)
 		{
 			if (pm->cmd.forwardmove >= 0)
 				BG_AnimScriptEvent(ps, ANIM_ET_JUMP, qfalse, qtrue);
