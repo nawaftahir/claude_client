@@ -626,7 +626,7 @@ extern void *imp_inertiaDebug;
 extern void *imp_inertiaMax;
 extern void *imp_infoParms;
 extern void *imp_keys;
-extern void *imp_legacyHacks;
+extern LegacyHacks *legacyHacks;
 extern void *imp_legacyHacksArray;
 extern void *imp_level;
 extern void *imp_level_bgs;

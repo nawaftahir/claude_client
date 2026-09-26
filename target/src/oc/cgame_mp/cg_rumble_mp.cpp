@@ -18,7 +18,7 @@ extern void Com_BeginParseSession(const char *name);
 extern void Com_EndParseSession(void);
 extern void Com_Printf(const char *fmt, ...);
 extern void Com_DPrintf(const char *fmt, ...);
-extern const dvar_t *Dvar_RegisterBool_mac(const char *name, int value, int flags);
+dvar_t *Dvar_RegisterBool(const char *dvarName, bool value, unsigned short flags);
 extern void Cmd_AddCommand(const char *cmd, void (*func)(void));
 extern void Cmd_ArgvBuffer(int arg, char *buf, int bufSize);
 extern int Cmd_Argc(void);
@@ -429,7 +429,7 @@ void CG_InitRumble(void)
     for (i = 0; i < MAX_ACTIVE_RUMBLES; ++i)
         CG_InvalidateActiveRumble(i);
 
-    cg_drawRumbleDebug = Dvar_RegisterBool_mac("cg_drawrumbledebug", 0, 0x0);
+    cg_drawRumbleDebug = Dvar_RegisterBool("cg_drawrumbledebug", 0, 0x0);
     Cmd_AddCommand("playrumble", CG_PlayRumble_f);
 }
 

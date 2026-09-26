@@ -24,7 +24,7 @@ extern void UI_DrawText(const char *text, int maxChars, FontHandle font, float x
 extern void UI_DrawLoadBar(float x, float y, float w, float h, int horzAlign, int vertAlign, const vec_t *color, MaterialHandle material);
 extern void UI_FillRect(float x, float y, float width, float height, int horzAlign, int vertAlign, const vec_t *color);
 
-extern void *imp_legacyHacks;
+extern LegacyHacks *legacyHacks;
 extern void *imp_colorWhite;
 extern void *imp_g_waitingForServer;
 
@@ -58,7 +58,7 @@ void CG_DrawInformation(qboolean serverLoading)
 {
     char string[0x400];
     void *font;
-    char **lh = (char **)imp_legacyHacks;
+    char **lh = (char **)&::legacyHacks;
     char *base;
     char *pos;
     const char *configStr;

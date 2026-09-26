@@ -1025,7 +1025,7 @@ int g_cginit_loading = 0;
 
 void CL_StartLoading(const char *mapname, const char *gametype)
 {
-    char *ptr = *(char **)imp_legacyHacks;
+    char *ptr = (char *)::legacyHacks;
     if (*(int *)(ptr + 4) == 0)
         return;
     CL_StartHunkUsers();

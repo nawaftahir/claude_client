@@ -42,7 +42,7 @@ extern void Cmd_AddCommand(const char *name, void (*function)(void));
 extern dvar_t *Dvar_RegisterVec4(const char *dvarName, float x, float y, float z, float w, float min, float max, unsigned short flags);
 extern dvar_t *Dvar_RegisterFloat(const char *dvarName, float value, float min, float max, unsigned short flags);
 extern dvar_t *Dvar_RegisterInt(const char *dvarName, int value, int min, int max, unsigned short flags);
-extern const dvar_t *Dvar_RegisterBool_mac(const char *name, int value, unsigned int flags);
+dvar_t *Dvar_RegisterBool(const char *dvarName, bool value, unsigned short flags);
 extern dvar_t* Dvar_FindVar(const char* dvarName);
 extern bool Dvar_HasLatchedValue(const dvar_t *var);
 extern const char *Dvar_DisplayableValue(const dvar_t *dvar);
@@ -1350,7 +1350,7 @@ void CL_ConsoleFixPosition(void)
 
 void Con_Close(void)
 {
-    int *legacyHacks = *(int **)imp_legacyHacks;
+    int *legacyHacks = (int *)::legacyHacks;
     int active = legacyHacks[1];
     if (!active)
         return;
@@ -1605,7 +1605,7 @@ void Con_Init(void)
     field_t *history;
     int i;
 
-    con_restricted = Dvar_RegisterBool_mac("con_restricted", 0, 0x1001);
+    con_restricted = Dvar_RegisterBool("con_restricted", 0, 0x1001);
 
     consoleField = (&g_consoleField);
     Field_Clear((field_t *)(consoleField));
@@ -2152,7 +2152,7 @@ void Con_Init(void)
     field_t *history;
     int i;
 
-    con_restricted = Dvar_RegisterBool_mac("con_restricted", 0, 0x1001);
+    con_restricted = Dvar_RegisterBool("con_restricted", 0, 0x1001);
 
     consoleField = (&g_consoleField);
     Field_Clear((field_t *)(consoleField));
@@ -2185,7 +2185,7 @@ void Con_Init(void)
 
 void Con_Close(void)
 {
-    int *legacyHacks = *(int **)imp_legacyHacks;
+    int *legacyHacks = (int *)::legacyHacks;
     if (!legacyHacks[1])
         return;
 

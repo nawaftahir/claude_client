@@ -921,16 +921,16 @@ void CL_Connect_f(void)
             if (memcmp(server, (const char *)"localhost", 10) == 0)
             {
 
-                LegacyHacks *legacyHacks = *(LegacyHacks **)imp_legacyHacks;
+                LegacyHacks *legacyHacks = (LegacyHacks *)::legacyHacks;
                 legacyHacks->sv_killserver = 1;
             }
         }
     }
 
     {
-        LegacyHacks *legacyHacks = *(LegacyHacks **)imp_legacyHacks;
+        LegacyHacks *legacyHacks = (LegacyHacks *)::legacyHacks;
         legacyHacks->cl_serverloadmap[0] = '\0';
-        legacyHacks = *(LegacyHacks **)imp_legacyHacks;
+        legacyHacks = (LegacyHacks *)::legacyHacks;
         legacyHacks->cl_serverloadgametype[0] = '\0';
     }
 

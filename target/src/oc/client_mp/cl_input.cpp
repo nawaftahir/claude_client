@@ -40,7 +40,7 @@ extern const char *Cmd_Argv( int arg );
 extern void Com_Printf(const char *fmt, ...);
 extern void Cmd_AddCommand(const char *cmd, void (*func)(void));
 extern void Cmd_RemoveCommand(const char *cmd);
-extern const dvar_t *Dvar_RegisterBool_mac(const char *name, int value, int flags);
+dvar_t *Dvar_RegisterBool(const char *dvarName, bool value, unsigned short flags);
 extern dvar_t *Dvar_RegisterFloat(const char *dvarName, float value, float min, float max, unsigned short flags);
 extern dvar_t *Dvar_RegisterInt(const char *dvarName, int value, int min, int max, unsigned short flags);
 extern void MSG_Init(msg_t *buf, byte *data, int length);
@@ -701,7 +701,7 @@ void IN_LowerStance(void)
     int val;
     if (kb[25].active || kb[11].active )
         return;
-    statePtr = &(*(LegacyHacks **)imp_legacyHacks)->cl_stance;
+    statePtr = &((LegacyHacks *)::legacyHacks)->cl_stance;
     val = *statePtr;
     if (val <= 0)
         *statePtr = 1;
@@ -1083,7 +1083,7 @@ void CL_InitInput(void)
     cl_analog_attack_threshold = Dvar_RegisterFloat("cl_analog_attack_threshold", 0.8f, 0.0001f, 1.0f, 0x1000);
     cl_stanceHoldTime = Dvar_RegisterInt("cl_stanceHoldTime", 300, 0, 1000, 0x1000);
     {
-        const dvar_t *nodelta = Dvar_RegisterBool_mac("cl_nodelta", 0, 0x1000);
+        const dvar_t *nodelta = Dvar_RegisterBool("cl_nodelta", 0, 0x1000);
         cl_nodelta = nodelta;
     }
 

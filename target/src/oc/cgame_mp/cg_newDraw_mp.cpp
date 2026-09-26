@@ -51,7 +51,7 @@ extern int CL_GetKeyCatchers(void);
 extern Bool CL_GetDisplayHUDWithKeycatchUI(void);
 extern const char *CL_GetConfigString(int index);
 extern void CL_DrawStretchPic(float x, float y, float w, float h, int horzAlign, int vertAlign, float s1, float t1, float s2, float t2, const vec_t *color, MaterialHandle material);
-extern const dvar_t *Dvar_RegisterBool_mac(const char *name, int value, int flags);
+dvar_t *Dvar_RegisterBool(const char *dvarName, bool value, unsigned short flags);
 extern dvar_t *Dvar_RegisterFloat(const char *dvarName, float value, float min, float max, unsigned short flags);
 extern dvar_t *Dvar_RegisterInt(const char *dvarName, int value, int min, int max, unsigned short flags);
 extern dvar_t* Dvar_FindVar(const char* dvarName);
@@ -181,7 +181,7 @@ static qboolean CG_DrawHealthEnabled(void)
 void CG_AntiBurnInHUD_RegisterDvars(void)
 {
     hud_fadeout_speed = Dvar_RegisterFloat("hud_fadeout_speed", 0.1f, 0.0f, 1.0f, 0x1001);
-    hud_enable = Dvar_RegisterBool_mac("hud_enable", 1, 0x1001);
+    hud_enable = Dvar_RegisterBool("hud_enable", 1, 0x1001);
 
     hud_fade_ammodisplay = Dvar_RegisterFloat("hud_fade_ammodisplay", 0.0f, 0.0f, 30.0f, 0x1001);
     hud_fade_healthbar = Dvar_RegisterFloat("hud_fade_healthbar", 2.0f, 0.0f, 30.0f, 0x1001);

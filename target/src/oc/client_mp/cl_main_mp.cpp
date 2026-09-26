@@ -136,10 +136,10 @@ extern void Cbuf_ExecuteText(int, const char *);
 extern void Com_DPrintf(const char *fmt, ...);
 extern void Com_PrintMessage( print_msg_type_t channel, const char *msg );
 extern void Com_Restart(void);
-extern const dvar_t *Dvar_RegisterBool_mac(const char *name, int defaultValue, int flags);
+dvar_t *Dvar_RegisterBool(const char *dvarName, bool value, unsigned short flags);
 extern dvar_t *Dvar_RegisterInt(const char *dvarName, int value, int min, int max, unsigned short flags);
 extern dvar_t *Dvar_RegisterFloat(const char *dvarName, float value, float min, float max, unsigned short flags);
-extern const dvar_t *Dvar_RegisterString_mac(const char *name, const char *defaultValue, int flags);
+dvar_t *Dvar_RegisterString(const char *dvarName, const char *value, unsigned short flags);
 extern bool Dvar_GetBool(const char *dvarName);
 extern void Cmd_AddCommand(const char *name, void (*cmd)(void));
 extern void Cmd_RemoveCommand(const char *name);
@@ -652,7 +652,7 @@ Bool CL_IsPlayerTalking(int clientIndex)
 
 void CL_SetupForNewServerMap(const char *pszMapName, const char *pszGametype)
 {
-    LegacyHacks *hacks = *(LegacyHacks **)imp_legacyHacks;
+    LegacyHacks *hacks = (LegacyHacks *)::legacyHacks;
 
     Com_Printf("Server changing map %s, gametype %s\n", pszMapName, pszGametype);
     I_strncpyz(hacks->cl_serverloadmap, pszMapName, 0x40);
@@ -799,7 +799,7 @@ void CL_InitRenderer(void)
 
 void CL_StartHunkUsers(void)
 {
-    LegacyHacks *hacks = *(LegacyHacks **)imp_legacyHacks;
+    LegacyHacks *hacks = (LegacyHacks *)::legacyHacks;
 
     if (!hacks->cl_running)
         return;
@@ -1092,19 +1092,19 @@ void CL_InitOnceForAllClients(void)
     Con_Init();
     CL_InitInput();
 
-    cl_noprint = Dvar_RegisterBool_mac("cl_noprint", 0, 0);
-    cl_voice = Dvar_RegisterBool_mac("cl_voice", 1, 0x1003);
+    cl_noprint = Dvar_RegisterBool("cl_noprint", 0, 0);
+    cl_voice = Dvar_RegisterBool("cl_voice", 1, 0x1003);
     cl_timeout = Dvar_RegisterFloat("cl_timeout", 200.0f, 0.0f, 3600.0f, 0);
     cl_connectTimeout = Dvar_RegisterFloat("cl_connectTimeout", 200.0f, 0.0f, 3600.0f, 0);
     cl_shownet = Dvar_RegisterInt("cl_shownet", 0, -2, 4, 0);
-    cl_shownuments = Dvar_RegisterBool_mac("cl_shownuments", 0, 0);
-    cl_showServerCommands = Dvar_RegisterBool_mac("cl_showServerCommands", 0, 0);
-    cl_showSend = Dvar_RegisterBool_mac("cl_showSend", 0, 0);
-    cl_showTimeDelta = Dvar_RegisterBool_mac("cl_showTimeDelta", 0, 0);
-    cl_freezeDemo = Dvar_RegisterBool_mac("cl_freezeDemo", 0, 0);
-    cl_activeAction = Dvar_RegisterString_mac("activeAction", "", 0);
+    cl_shownuments = Dvar_RegisterBool("cl_shownuments", 0, 0);
+    cl_showServerCommands = Dvar_RegisterBool("cl_showServerCommands", 0, 0);
+    cl_showSend = Dvar_RegisterBool("cl_showSend", 0, 0);
+    cl_showTimeDelta = Dvar_RegisterBool("cl_showTimeDelta", 0, 0);
+    cl_freezeDemo = Dvar_RegisterBool("cl_freezeDemo", 0, 0);
+    cl_activeAction = Dvar_RegisterString("activeAction", "", 0);
     cl_avidemo = Dvar_RegisterInt("cl_avidemo", 0, 0, 0x7fffffff, 0);
-    cl_forceavidemo = Dvar_RegisterBool_mac("cl_forceavidemo", 0, 0);
+    cl_forceavidemo = Dvar_RegisterBool("cl_forceavidemo", 0, 0);
 
     {
         union {
@@ -1120,46 +1120,46 @@ void CL_InitOnceForAllClients(void)
     cl_packetdup = Dvar_RegisterInt("cl_packetdup", 1, 0, 5, 0x1001);
     cl_sensitivity = Dvar_RegisterFloat("sensitivity", 5.0f, 0.01f, 100.0f, 0x1001);
     cl_mouseAccel = Dvar_RegisterFloat("cl_mouseAccel", 0.0f, 0.0f, 100.0f, 0x1001);
-    cl_freelook = Dvar_RegisterBool_mac("cl_freelook", 1, 0x1001);
-    cl_showMouseRate = Dvar_RegisterBool_mac("cl_showmouserate", 0, 0);
-    cl_allowDownload = Dvar_RegisterBool_mac("cl_allowDownload", 1, 0x1001);
+    cl_freelook = Dvar_RegisterBool("cl_freelook", 1, 0x1001);
+    cl_showMouseRate = Dvar_RegisterBool("cl_showmouserate", 0, 0);
+    cl_allowDownload = Dvar_RegisterBool("cl_allowDownload", 1, 0x1001);
 #if COD2_IS_PATCH_13
     cl_wwwDownload = Dvar_RegisterBool("cl_wwwDownload", 1, 0x1003);
     cl_punkbuster = Dvar_RegisterBool("cl_punkbuster", 0, 0x1013);
 #endif
-    cl_talking = Dvar_RegisterBool_mac("cl_talking", 0, 0);
-    cl_inGameVideo = Dvar_RegisterBool_mac("r_inGameVideo", 1, 0x1001);
+    cl_talking = Dvar_RegisterBool("cl_talking", 0, 0);
+    cl_inGameVideo = Dvar_RegisterBool("r_inGameVideo", 1, 0x1001);
     cl_serverStatusResendTime = Dvar_RegisterInt("cl_serverStatusResendTime", 750, 0, 3600, 0);
-    cl_bypassMouseInput = Dvar_RegisterBool_mac("cl_bypassMouseInput", 0, 0);
+    cl_bypassMouseInput = Dvar_RegisterBool("cl_bypassMouseInput", 0, 0);
 
     m_pitch = Dvar_RegisterFloat("m_pitch", 0.022f, -1.0f, 1.0f, 0x1001);
     m_yaw = Dvar_RegisterFloat("m_yaw", 0.022f, -1.0f, 1.0f, 0x1001);
     m_forward = Dvar_RegisterFloat("m_forward", 0.25f, -1.0f, 1.0f, 0x1001);
     m_side = Dvar_RegisterFloat("m_side", 0.25f, -1.0f, 1.0f, 0x1001);
-    m_filter = Dvar_RegisterBool_mac("m_filter", 0, 0x1001);
+    m_filter = Dvar_RegisterBool("m_filter", 0, 0x1001);
     input_viewSensitivity = Dvar_RegisterFloat("input_viewSensitivity", 1.0f, 0.0001f, 5.0f, 0x1001);
-    cg_drawCrosshair = Dvar_RegisterBool_mac("cg_drawCrosshair", 1, 0x1001);
-    cl_motdString = Dvar_RegisterString_mac("cl_motdString", "", 0x1040);
-    cl_ingame = Dvar_RegisterBool_mac("cl_ingame", 0, 0x1040);
+    cg_drawCrosshair = Dvar_RegisterBool("cg_drawCrosshair", 1, 0x1001);
+    cl_motdString = Dvar_RegisterString("cl_motdString", "", 0x1040);
+    cl_ingame = Dvar_RegisterBool("cl_ingame", 0, 0x1040);
     Dvar_RegisterInt("cl_maxPing", 800, 20, 2000, 0x1001);
-    name = Dvar_RegisterString_mac("name", "Unknown Soldier", 0x1003);
+    name = Dvar_RegisterString("name", "Unknown Soldier", 0x1003);
     Dvar_RegisterInt("rate", 5000, 1000, 25000, 0x1003);
     Dvar_RegisterInt("snaps", 20, 1, 30, 0x1003);
-    Dvar_RegisterString_mac("password", "", 0x1002);
+    Dvar_RegisterString("password", "", 0x1002);
 
-    fx_enable = Dvar_RegisterBool_mac("fx_enable", 1, 0x1080);
-    fx_draw = Dvar_RegisterBool_mac("fx_draw", 1, 0x1080);
-    fx_cull = Dvar_RegisterBool_mac("fx_cull", 1, 0);
-    fx_sort = Dvar_RegisterBool_mac("fx_sort", 1, 0);
-    fx_freeze = Dvar_RegisterBool_mac("fx_freeze", 0, 0x1080);
-    fx_debug = Dvar_RegisterBool_mac("fx_debug", 0, 0x1080);
+    fx_enable = Dvar_RegisterBool("fx_enable", 1, 0x1080);
+    fx_draw = Dvar_RegisterBool("fx_draw", 1, 0x1080);
+    fx_cull = Dvar_RegisterBool("fx_cull", 1, 0);
+    fx_sort = Dvar_RegisterBool("fx_sort", 1, 0);
+    fx_freeze = Dvar_RegisterBool("fx_freeze", 0, 0x1080);
+    fx_debug = Dvar_RegisterBool("fx_debug", 0, 0x1080);
     fx_debugBolt = Dvar_RegisterFloat("fx_debugBolt", 0.0f, 0.0f, 100.0f, 0x1080);
-    fx_count = Dvar_RegisterBool_mac("fx_count", 0, 0x1080);
+    fx_count = Dvar_RegisterBool("fx_count", 0, 0x1080);
     fx_visMinTraceDist = Dvar_RegisterFloat("fx_visMinTraceDist", 80.0f, 0.0f, 1000.0f, 0x1080);
-    fx_profile = Dvar_RegisterBool_mac("fx_profile", 0, 0x1080);
-    nextdemo = Dvar_RegisterString_mac("nextdemo", "", 0);
-    Dvar_RegisterBool_mac("hud_enable", 1, 0x1001);
-    Dvar_RegisterBool_mac("cg_blood", 1, 0x1001);
+    fx_profile = Dvar_RegisterBool("fx_profile", 0, 0x1080);
+    nextdemo = Dvar_RegisterString("nextdemo", "", 0);
+    Dvar_RegisterBool("hud_enable", 1, 0x1001);
+    Dvar_RegisterBool("cg_blood", 1, 0x1001);
 
     Cmd_AddCommand("cmd", CL_ForwardToServer_f);
     Cmd_AddCommand("configstrings", CL_Configstrings_f);
@@ -1790,7 +1790,7 @@ void CL_RequestAuthorization(void)
         nums[j] = '\0';
     }
 
-    anonymous = Dvar_RegisterBool_mac((const char *)"cl_anonymous", 0, 0x101b);
+    anonymous = Dvar_RegisterBool((const char *)"cl_anonymous", 0, 0x101b);
 #if COD2_IS_PATCH_13
     CL_BuildMd5StrFromCDKey(md5Str);
     NET_OutOfBandPrint(NS_CLIENT1, cls.authorizeServer,
@@ -2335,7 +2335,7 @@ extern void Com_ClientDObjClearAllSkel(void);
 extern void CL_ClearMutedList(void);
 extern void Cbuf_Execute(void);
 extern void CL_SetADS(int ads);
-extern void *imp_legacyHacks;
+extern LegacyHacks *legacyHacks;
 void CL_Init(void)
 {
     Com_Printf("----- Client Initialization -----\n");
@@ -2364,7 +2364,7 @@ void CL_Init(void)
 
     c->active = 1;
 
-    byte **lh = (byte **)imp_legacyHacks;
+    byte **lh = (byte **)&::legacyHacks;
     (*lh)[0x5c] = 0;
     (*lh)[0x9c] = 0;
     (*lh)[0xdc] = 0;
@@ -2539,8 +2539,8 @@ void CL_Vid_Restart_f(void)
     Com_Restart();
 
     Dvar_RegisterInt((const char *)"loc_language", 0, 0, 13, 0x1021);
-    Dvar_RegisterBool_mac((const char *)"loc_translate", 1, 0x1020);
-    Dvar_RegisterBool_mac((const char *)"fs_ignoreLocalized", 0, 0x10a0);
+    Dvar_RegisterBool((const char *)"loc_translate", 1, 0x1020);
+    Dvar_RegisterBool((const char *)"fs_ignoreLocalized", 0, 0x10a0);
 
     FS_ConditionalRestart(conn->checksumFeed);
     SEH_UpdateLanguageInfo();
@@ -2600,7 +2600,7 @@ void CL_Snd_Restart_f(void)
 
 void CL_Disconnect(void)
 {
-    LegacyHacks *legacy = *(LegacyHacks **)imp_legacyHacks;
+    LegacyHacks *legacy = (LegacyHacks *)::legacyHacks;
     clientConnection_t *conn = (clientConnection_t *)clc;
     clientActive_t *active = (clientActive_t *)cl;
     connstate_t oldState;
@@ -2733,7 +2733,7 @@ void CL_Disconnect_f(void)
 
 void CL_MapLoading(const char *mapname)
 {
-    LegacyHacks *legacy = *(LegacyHacks **)imp_legacyHacks;
+    LegacyHacks *legacy = (LegacyHacks *)::legacyHacks;
     clientConnection_t *conn = (clientConnection_t *)clc;
     clientActive_t *active = (clientActive_t *)cl;
 

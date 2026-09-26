@@ -76,8 +76,8 @@ extern int GetKeyBindingLocalizedString(const char *binding, char *buf);
 extern const char *UI_SafeTranslateString(const char *key);
 extern void AnglesToAxis( const vec3_t angles, vec3_t axis[3] );
 extern void Cmd_ArgvBuffer(int arg, char *buffer, int bufferLength);
-extern const dvar_t *Dvar_RegisterBool_mac(const char *name, int value, int flags);
-extern const dvar_t *Dvar_RegisterString_mac(const char *name, const char *value, int flags);
+dvar_t *Dvar_RegisterBool(const char *dvarName, bool value, unsigned short flags);
+dvar_t *Dvar_RegisterString(const char *dvarName, const char *value, unsigned short flags);
 extern dvar_t *Dvar_RegisterInt(const char *dvarName, int value, int min, int max, unsigned short flags);
 extern dvar_t *Dvar_RegisterFloat(const char *dvarName, float value, float min, float max, unsigned short flags);
 extern dvar_t *Dvar_RegisterEnum(const char *dvarName, const char **valueList, int defaultIndex, unsigned short flags);
@@ -901,7 +901,7 @@ static void CG_RegisterSounds(void)
 
 static inline __attribute__((always_inline)) LegacyHacks *CG_LegacyHacks(void)
 {
-    return *(LegacyHacks **)imp_legacyHacks;
+    return (LegacyHacks *)::legacyHacks;
 }
 
 static inline __attribute__((always_inline)) void CG_ResetLegacyHackLoadingFlags(void)
@@ -915,45 +915,45 @@ static inline __attribute__((always_inline)) void CG_ResetLegacyHackLoadingFlags
 
 static inline __attribute__((always_inline)) void CG_RegisterDvars(void)
 {
-    cg_drawGun = Dvar_RegisterBool_mac("cg_drawGun", 1, 0x1080);
+    cg_drawGun = Dvar_RegisterBool("cg_drawGun", 1, 0x1080);
     cg_cursorHints = Dvar_RegisterInt("cg_cursorHints", 4, 0, 4, 0x1001);
     cg_hintFadeTime = Dvar_RegisterInt("cg_hintFadeTime", 0x64, 0, 0x7fffffff, 0x1001);
     cg_fov = Dvar_RegisterFloat("cg_fov", 80.0f, 1.0f, 160.0f, 0x1080);
     cg_fovScale = Dvar_RegisterFloat("cg_fovScale", 1.0f, 0.200000003f, 2.0f, 0x1080);
     cg_fovMin = Dvar_RegisterFloat("cg_fovMin", 10.0f, 1.0f, 160.0f, 0x1080);
     cg_viewsize = Dvar_RegisterInt("cg_viewsize", 0x64, 0x1e, 0x64, 0x1001);
-    cg_draw2D = Dvar_RegisterBool_mac("cg_draw2D", 1, 0x1080);
-    cg_drawHealth = Dvar_RegisterBool_mac("cg_drawHealth", 0, 0x1080);
-    cg_drawBreathHint = Dvar_RegisterBool_mac("cg_drawBreathHint", 1, 0x1001);
-    cg_drawMantleHint = Dvar_RegisterBool_mac("cg_drawMantleHint", 1, 0x1001);
+    cg_draw2D = Dvar_RegisterBool("cg_draw2D", 1, 0x1080);
+    cg_drawHealth = Dvar_RegisterBool("cg_drawHealth", 0, 0x1080);
+    cg_drawBreathHint = Dvar_RegisterBool("cg_drawBreathHint", 1, 0x1001);
+    cg_drawMantleHint = Dvar_RegisterBool("cg_drawMantleHint", 1, 0x1001);
     cg_drawFPS = Dvar_RegisterEnum("cg_drawFPS", cg_drawFpsNames, 0, 0x1001);
     cg_drawSoundOverlay = Dvar_RegisterEnum("cg_drawSoundOverlay", cg_drawSoundOverlayStrings, 0, 0x1000);
-    cg_drawScriptUsage = Dvar_RegisterBool_mac("cg_drawScriptUsage", 0, 0x1000);
-    cg_drawMaterial = Dvar_RegisterBool_mac("cg_drawMaterial", 0, 0x1080);
-    cg_drawSnapshot = Dvar_RegisterBool_mac("cg_drawSnapshot", 0, 0x1001);
-    cg_drawTurretCrosshair = Dvar_RegisterBool_mac("cg_drawTurretCrosshair", 1, 0x1001);
-    cg_drawCrosshairNames = Dvar_RegisterBool_mac("cg_drawCrosshairNames", 1, 0x1001);
+    cg_drawScriptUsage = Dvar_RegisterBool("cg_drawScriptUsage", 0, 0x1000);
+    cg_drawMaterial = Dvar_RegisterBool("cg_drawMaterial", 0, 0x1080);
+    cg_drawSnapshot = Dvar_RegisterBool("cg_drawSnapshot", 0, 0x1001);
+    cg_drawTurretCrosshair = Dvar_RegisterBool("cg_drawTurretCrosshair", 1, 0x1001);
+    cg_drawCrosshairNames = Dvar_RegisterBool("cg_drawCrosshairNames", 1, 0x1001);
     cg_drawCrosshairNamesPosX = Dvar_RegisterInt("cg_drawCrosshairNamesPosX", 0x12c, 0, 0x280, 0x1000);
     cg_drawCrosshairNamesPosY = Dvar_RegisterInt("cg_drawCrosshairNamesPosY", 0xb4, 0, 0x1e0, 0x1000);
     cg_hudCompassSize = Dvar_RegisterFloat("cg_hudCompassSize", 1.0f, 0.0f, FLT_MAX, 0x1001);
     cg_hudCompassMaxRange = Dvar_RegisterFloat("cg_hudCompassMaxRange", 1500.0f, 0.0f, FLT_MAX, 0x1001);
     cg_hudCompassMinRange = Dvar_RegisterFloat("cg_hudCompassMinRange", 0.0f, 0.0f, FLT_MAX, 0x1001);
     cg_hudCompassMinRadius = Dvar_RegisterFloat("cg_hudCompassMinRadius", 0.0f, 0.0f, FLT_MAX, 0x1001);
-    cg_hudCompassSpringyPointers = Dvar_RegisterBool_mac("cg_hudCompassSpringyPointers", 0, 0x1001);
+    cg_hudCompassSpringyPointers = Dvar_RegisterBool("cg_hudCompassSpringyPointers", 0, 0x1001);
     cg_hudCompassSoundPingFadeTime = Dvar_RegisterFloat("cg_hudCompassSoundPingFadeTime", 2.0f, 0.0f, 10.0f, 0x1081);
     cg_hudObjectiveMinHeight = Dvar_RegisterFloat("cg_hudObjectiveMinHeight", -70.0f, -FLT_MAX, 0.0f, 0x1001);
     cg_hudObjectiveMaxRange = Dvar_RegisterFloat("cg_hudObjectiveMaxRange", 2048.0f, 0.0f, FLT_MAX, 0x1001);
     cg_hudObjectiveMinAlpha = Dvar_RegisterFloat("cg_hudObjectiveMinAlpha", 1.0f, 0.0f, 1.0f, 0x1001);
     cg_hudStanceFlash = Dvar_RegisterColor("cg_hudStanceFlash", 1.0f, 1.0f, 1.0f, 1.0f, 0x1000);
-    cg_hudStanceHintPrints = Dvar_RegisterBool_mac("cg_hudStanceHintPrints", 0, 0x1001);
+    cg_hudStanceHintPrints = Dvar_RegisterBool("cg_hudStanceHintPrints", 0, 0x1001);
     cg_hudDamageIconWidth = Dvar_RegisterFloat("cg_hudDamageIconWidth", 128.0f, 0.0f, 512.0f, 0x1001);
     cg_hudDamageIconHeight = Dvar_RegisterFloat("cg_hudDamageIconHeight", 64.0f, 0.0f, 512.0f, 0x1001);
     cg_hudDamageIconOffset = Dvar_RegisterFloat("cg_hudDamageIconOffset", 128.0f, 0.0f, 512.0f, 0x1001);
     cg_hudDamageIconTime = Dvar_RegisterInt("cg_hudDamageIconTime", 0x7d0, 0, 0x7fffffff, 0x1001);
-    cg_hudDamageIconInScope = Dvar_RegisterBool_mac("cg_hudDamageIconInScope", 0, 0x1080);
+    cg_hudDamageIconInScope = Dvar_RegisterBool("cg_hudDamageIconInScope", 0, 0x1080);
     cg_hudGrenadeIconMaxRange = Dvar_RegisterFloat("cg_hudGrenadeIconMaxRange", 250.0f, 0.0f, 1000.0f, 0x1080);
     cg_hudGrenadeIconMaxHeight = Dvar_RegisterFloat("cg_hudGrenadeIconMaxHeight", 104.0f, 0.0f, 1000.0f, 0x1080);
-    cg_hudGrenadeIconInScope = Dvar_RegisterBool_mac("cg_hudGrenadeIconInScope", 0, 0x1080);
+    cg_hudGrenadeIconInScope = Dvar_RegisterBool("cg_hudGrenadeIconInScope", 0, 0x1080);
     cg_hudGrenadeIconOffset = Dvar_RegisterFloat("cg_hudGrenadeIconOffset", 50.0f, 0.0f, 512.0f, 0x1001);
     cg_hudGrenadeIconHeight = Dvar_RegisterFloat("cg_hudGrenadeIconHeight", 25.0f, 0.0f, 512.0f, 0x1001);
     cg_hudGrenadeIconWidth = Dvar_RegisterFloat("cg_hudGrenadeIconWidth", 25.0f, 0.0f, 512.0f, 0x1001);
@@ -965,16 +965,16 @@ static inline __attribute__((always_inline)) void CG_RegisterDvars(void)
     cg_hudGrenadePointerPulseMin = Dvar_RegisterFloat("cg_hudGrenadePointerPulseMin", 0.300000012f, -3.0f, 1.0f, 0x1000);
     cg_hudChatPosition = Dvar_RegisterVec2("cg_hudChatPosition", 5.0f, 150.0f, 0.0f, 640.0f, 0x1001);
     cg_hudSayPosition = Dvar_RegisterVec2("cg_hudSayPosition", 5.0f, 126.0f, 0.0f, 640.0f, 0x1001);
-    cg_drawLagometer = Dvar_RegisterBool_mac("cg_drawLagometer", 0, 0x1001);
+    cg_drawLagometer = Dvar_RegisterBool("cg_drawLagometer", 0, 0x1001);
     cg_centerPrintY = Dvar_RegisterFloat("cg_centerPrintY", -60.0f, -10000.0f, 10000.0f, 0x1001);
     cg_hudProneY = Dvar_RegisterFloat("cg_hudProneY", -160.0f, -10000.0f, 10000.0f, 0x1001);
     cg_weaponCycleDelay = Dvar_RegisterInt("cg_weaponCycleDelay", 0, 0, 0x7fffffff, 0x1001);
     cg_crosshairAlpha = Dvar_RegisterFloat("cg_crosshairAlpha", 1.0f, 0.0f, 1.0f, 0x1081);
     cg_crosshairAlphaMin = Dvar_RegisterFloat("cg_crosshairAlphaMin", 0.0f, 0.0f, 1.0f, 0x1081);
-    cg_crosshairDynamic = Dvar_RegisterBool_mac("cg_crosshairDynamic", 0, 0x1081);
-    cg_crosshairEnemyColor = Dvar_RegisterBool_mac("cg_crosshairEnemyColor", 1, 0x1081);
-    cg_brass = Dvar_RegisterBool_mac("cg_brass", 1, 0x1001);
-    cg_marks = Dvar_RegisterBool_mac("cg_marks", 1, 0x1001);
+    cg_crosshairDynamic = Dvar_RegisterBool("cg_crosshairDynamic", 0, 0x1081);
+    cg_crosshairEnemyColor = Dvar_RegisterBool("cg_crosshairEnemyColor", 1, 0x1081);
+    cg_brass = Dvar_RegisterBool("cg_brass", 1, 0x1001);
+    cg_marks = Dvar_RegisterBool("cg_marks", 1, 0x1001);
     cg_marksLimit = Dvar_RegisterInt("cg_marksLimit", 0x400, 0, 0x400, 0x1001);
     cg_gun_x = Dvar_RegisterFloat("cg_gun_x", 0.0f, -FLT_MAX, FLT_MAX, 0x1080);
     cg_gun_y = Dvar_RegisterFloat("cg_gun_y", 0.0f, -FLT_MAX, FLT_MAX, 0x1080);
@@ -988,12 +988,12 @@ static inline __attribute__((always_inline)) void CG_RegisterDvars(void)
     cg_gun_move_rate = Dvar_RegisterFloat("cg_gun_move_rate", 0.0f, -FLT_MAX, FLT_MAX, 0x1080);
     cg_gun_move_minspeed = Dvar_RegisterFloat("cg_gun_move_minspeed", 0.0f, -FLT_MAX, FLT_MAX, 0x1080);
     cg_centertime = Dvar_RegisterFloat("cg_centertime", 5.0f, 0.0f, FLT_MAX, 0x1080);
-    cg_debugPosition = Dvar_RegisterBool_mac("cg_debugposition", 0, 0x1080);
-    cg_debugEvents = Dvar_RegisterBool_mac("cg_debugevents", 0, 0x1080);
+    cg_debugPosition = Dvar_RegisterBool("cg_debugposition", 0, 0x1080);
+    cg_debugEvents = Dvar_RegisterBool("cg_debugevents", 0, 0x1080);
     cg_errorDecay = Dvar_RegisterFloat("cg_errordecay", 100.0f, 0.0f, FLT_MAX, 0x1000);
-    cg_nopredict = Dvar_RegisterBool_mac("cg_nopredict", 0, 0x1000);
+    cg_nopredict = Dvar_RegisterBool("cg_nopredict", 0, 0x1000);
     cg_showmiss = Dvar_RegisterInt("cg_showmiss", 0, 0, 2, 0x1000);
-    cg_footsteps = Dvar_RegisterBool_mac("cg_footsteps", 1, 0x1080);
+    cg_footsteps = Dvar_RegisterBool("cg_footsteps", 1, 0x1080);
     cg_tracerChance = Dvar_RegisterFloat("cg_tracerchance", 0.400000006f, 0.0f, 1.0f, 0x1080);
     cg_tracerWidth = Dvar_RegisterFloat("cg_tracerwidth", 0.800000012f, 0.0f, 8.0f, 0x1080);
     cg_tracerSpeed = Dvar_RegisterFloat("cg_tracerSpeed", 4500.0f, 0.0f, FLT_MAX, 0x1080);
@@ -1003,19 +1003,19 @@ static inline __attribute__((always_inline)) void CG_RegisterDvars(void)
     cg_tracerScaleDistRange = Dvar_RegisterFloat("cg_tracerScaleDistRange", 25000.0f, 0.0f, FLT_MAX, 0x1080);
     cg_thirdPersonRange = Dvar_RegisterFloat("cg_thirdPersonRange", 120.0f, 0.0f, 1024.0f, 0x1080);
     cg_thirdPersonAngle = Dvar_RegisterFloat("cg_thirdPersonAngle", 0.0f, -180.0f, 360.0f, 0x1080);
-    cg_thirdPerson = Dvar_RegisterBool_mac("cg_thirdPerson", 0, 0x1080);
+    cg_thirdPerson = Dvar_RegisterBool("cg_thirdPerson", 0, 0x1080);
     cg_chatTime = Dvar_RegisterInt("cg_chatTime", 0x2ee0, 0, 0xea60, 0x1001);
     cg_chatHeight = Dvar_RegisterInt("cg_chatHeight", 8, 0, 8, 0x1001);
-    cg_predictItems = Dvar_RegisterBool_mac("cg_predictItems", 1, 0x1003);
-    cg_noTaunt = Dvar_RegisterBool_mac("cg_noTaunt", 0, 0x1001);
+    cg_predictItems = Dvar_RegisterBool("cg_predictItems", 1, 0x1003);
+    cg_noTaunt = Dvar_RegisterBool("cg_noTaunt", 0, 0x1001);
     cg_voiceSpriteTime = Dvar_RegisterInt("cg_voiceSpriteTime", 0x1770, 0, 0xea60, 0x1001);
-    cg_teamChatsOnly = Dvar_RegisterBool_mac("cg_teamChatsOnly", 0, 0x1001);
+    cg_teamChatsOnly = Dvar_RegisterBool("cg_teamChatsOnly", 0, 0x1001);
     cg_paused = Dvar_RegisterInt("cl_paused", 0, 0, 2, 0x1040);
-    cg_synchronousClients = Dvar_RegisterBool_mac("g_synchronousClients", 0, 0x1008);
+    cg_synchronousClients = Dvar_RegisterBool("g_synchronousClients", 0, 0x1008);
     cg_dumpAnims = Dvar_RegisterInt("cg_dumpAnims", -1, -1, 0x3ff, 0x1080);
     cg_developer = Dvar_RegisterInt("developer", 0, 0, 2, 0x1000);
-    cg_minicon = Dvar_RegisterBool_mac("con_minicon", 0, 0x1001);
-    cg_subtitles = Dvar_RegisterBool_mac("cg_subtitles", 1, 0x1001);
+    cg_minicon = Dvar_RegisterBool("con_minicon", 0, 0x1001);
+    cg_subtitles = Dvar_RegisterBool("cg_subtitles", 1, 0x1001);
     cg_subtitleMinTime = Dvar_RegisterFloat("cg_subtitleMinTime", 3.0f, 0.0f, FLT_MAX, 0x1001);
     cg_subtitleWidthStandard = Dvar_RegisterInt("cg_subtitleWidthStandard", 0x50, 0x14, 0x100, 0x1001);
     cg_subtitleWidthWidescreen = Dvar_RegisterInt("cg_subtitleWidthWidescreen", 0x50, 0x14, 0x100, 0x1001);
@@ -1024,17 +1024,16 @@ static inline __attribute__((always_inline)) void CG_RegisterDvars(void)
     cg_subtitleCharHeight = Dvar_RegisterInt("cg_subtitleCharHeight", 0xc, 1, 0x1e0, 0x1001);
     cg_gameMessageWidth = Dvar_RegisterInt("cg_gameMessageWidth", 0x46, 0x14, 0x100, 0x1001);
     cg_gameBoldMessageWidth = Dvar_RegisterInt("cg_gameBoldMessageWidth", 0x3c, 0x14, 0x100, 0x1001);
-    cg_drawGameMessages = Dvar_RegisterBool_mac("cg_drawGameMessages", 1, 0x1000);
+    cg_drawGameMessages = Dvar_RegisterBool("cg_drawGameMessages", 1, 0x1000);
     cg_scoreboardScrollStep = Dvar_RegisterInt("cg_scoreboardScrollStep", 3, 1, 8, 0x1001);
     cg_scoreboardBannerHeight = Dvar_RegisterInt("cg_scoreboardBannerHeight", 0x18, 1, 0x64, 0x1001);
     cg_scoreboardItemHeight = Dvar_RegisterInt("cg_scoreboardItemHeight", 0x12, 1, 0x64, 0x1001);
-    cg_descriptiveText = Dvar_RegisterBool_mac("cg_descriptiveText", 1, 0x1001);
+    cg_descriptiveText = Dvar_RegisterBool("cg_descriptiveText", 1, 0x1001);
     cg_shock_screenBlendTime = Dvar_RegisterFloat("cg_shock_screenBlendTime", 0.400000006f, 0.00100000005f, 10.0f, 0x1080);
     cg_shock_screenBlendFadeTime = Dvar_RegisterFloat("cg_shock_screenBlendFadeTime", 1.0f, 0.00100000005f, 10.0f, 0x1080);
     cg_shock_viewKickPeriod = Dvar_RegisterFloat("cg_shock_viewKickPeriod", 0.75f, 0.00100000005f, 10.0f, 0x1080);
     cg_shock_viewKickRadius = Dvar_RegisterFloat("cg_shock_viewKickRadius", 0.0500000007f, 0.0f, 1.0f, 0x1080);
-    cg_shock_viewKickFadeTime = Dvar_RegisterFloat("cg_shock_viewKickFadeTime", 3.0f, 0.00100000005f, 10.0f, 0x1080);
-    cg_shock_sound = Dvar_RegisterBool_mac("cg_shock_sound", 1, 0x1080);
+    cg_shock_sound = Dvar_RegisterBool("cg_shock_sound", 1, 0x1080);
     cg_shock_soundFadeInTime = Dvar_RegisterFloat("cg_shock_soundFadeInTime", 0.25f, 0.00100000005f, 10.0f, 0x1080);
     cg_shock_soundFadeOutTime = Dvar_RegisterFloat("cg_shock_soundFadeOutTime", 2.5f, 0.00100000005f, 10.0f, 0x1080);
     cg_shock_soundLoopFadeTime = Dvar_RegisterFloat("cg_shock_soundLoopFadeTime", 1.5f, 0.00100000005f, 10.0f, 0x1080);
@@ -1054,7 +1053,7 @@ static inline __attribute__((always_inline)) void CG_RegisterDvars(void)
     cg_shock_volume_music = Dvar_RegisterFloat("cg_shock_volume_music", 1.0f, 0.0f, 1.0f, 0x1080);
     cg_shock_volume_announcer = Dvar_RegisterFloat("cg_shock_volume_announcer", 1.0f, 0.0f, 1.0f, 0x1080);
     cg_shock_volume_shellshock = Dvar_RegisterFloat("cg_shock_volume_shellshock", 1.0f, 0.0f, 1.0f, 0x1080);
-    cg_shock_mouse = Dvar_RegisterBool_mac("cg_shock_mouse", 1, 0x1080);
+    cg_shock_mouse = Dvar_RegisterBool("cg_shock_mouse", 1, 0x1080);
     cg_shock_mouse_maxpitchspeed = Dvar_RegisterFloat("cg_shock_mouse_maxpitchspeed", 90.0f, 0.0f, FLT_MAX, 0x1080);
     cg_shock_mouse_maxyawspeed = Dvar_RegisterFloat("cg_shock_mouse_maxyawspeed", 90.0f, 0.0f, FLT_MAX, 0x1080);
     cg_shock_mouse_sensitivityscale = Dvar_RegisterFloat("cg_shock_mouse_sensitivityscale", 0.5f, 0.0f, 2.0f, 0x1080);
@@ -1063,12 +1062,18 @@ static inline __attribute__((always_inline)) void CG_RegisterDvars(void)
     cg_scriptIconSize = Dvar_RegisterFloat("cg_scriptIconSize", 0.0f, 0.0f, 100.0f, 0x1001);
     cg_connectionIconSize = Dvar_RegisterFloat("cg_connectionIconSize", 0.0f, 0.0f, 100.0f, 0x1001);
     cg_voiceIconSize = Dvar_RegisterFloat("cg_voiceIconSize", 0.0f, 0.0f, 100.0f, 0x1001);
-    cg_constantSizeHeadIcons = Dvar_RegisterBool_mac("cg_constantSizeHeadIcons", 0, 0x1080);
+    cg_constantSizeHeadIcons = Dvar_RegisterBool("cg_constantSizeHeadIcons", 0, 0x1080);
     cg_headIconMinScreenRadius = Dvar_RegisterFloat("cg_headIconMinScreenRadius", 0.0199999996f, 0.0f, 1.0f, 0x1001);
-    cg_blood = Dvar_RegisterBool_mac("cg_blood", 1, 0x1001);
+    cg_blood = Dvar_RegisterBool("cg_blood", 1, 0x1001);
     CG_ResetLegacyHackLoadingFlags();
-    cg_weaponleftbone = Dvar_RegisterString_mac("cg_weaponleftbone", "tag_weapon_left", 0x1000);
-    cg_weaponrightbone = Dvar_RegisterString_mac("cg_weaponrightbone", "tag_weapon_right", 0x1000);
+    cg_weaponleftbone = Dvar_RegisterString("cg_weaponleftbone", "tag_weapon_left", 0x1000);
+    cg_weaponrightbone = Dvar_RegisterString("cg_weaponrightbone", "tag_weapon_right", 0x1000);
+    ((cgs_t *)cgs)->localServer = com_sv_running->current.enabled;
+    CG_LegacyHacks()->cl_stance = 0;
+    CL_SetADS(0);
+    (*(unsigned char *)&((cg_t *)cg)->objectiveText[0]) = 0;
+    CG_OffhandRegisterDvars();
+    BG_RegisterDvars();
 }
 
 static inline __attribute__((always_inline)) void CG_InitBgsCallbacks(void)
@@ -1126,14 +1131,6 @@ void CG_Init(int serverMessageNum, int serverCommandSequence, int clientNum)
     memset((void *)cg_items, 0, CG_MAX_ITEMS * sizeof(itemInfo_t));
 
     CG_RegisterDvars();
-
-    ((cgs_t *)cgsBase)->localServer = com_sv_running->current.enabled;
-    CG_LegacyHacks()->cl_stance = 0;
-
-    CL_SetADS(0);
-    (*(unsigned char *)&((cg_t *)cgBase)->objectiveText[0]) = 0;
-    CG_OffhandRegisterDvars();
-    BG_RegisterDvars();
 
     CG_InitBgsCallbacks();
 

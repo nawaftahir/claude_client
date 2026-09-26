@@ -13,7 +13,7 @@ extern void Sys_QueEvent(int time, sysEventType_t type, int value, int value2,
                          int ptrLength, void *ptr);
 extern void CL_MouseEvent(const int dx_in, const int dy_in);
 extern void Cbuf_AddText(const char *text);
-extern const dvar_t *Dvar_RegisterBool_mac(const char *name, int value, int flags);
+dvar_t *Dvar_RegisterBool(const char *dvarName, bool value, unsigned short flags);
 extern dvar_t *Dvar_RegisterFloat(const char *dvarName, float value, float min, float max, unsigned short flags);
 extern void Cmd_AddCommand(const char *cmd, void (*func)(void));
 extern void Com_Printf(const char *fmt, ...);
@@ -266,10 +266,10 @@ void CL_Gamepad_Init(void)
 {
     int i, n;
 
-    cl_gamepadEnable = Dvar_RegisterBool_mac("cl_gamepadEnable", 1, 0x1);
+    cl_gamepadEnable = Dvar_RegisterBool("cl_gamepadEnable", 1, 0x1);
     cl_gamepadLookSensitivity = Dvar_RegisterFloat("cl_gamepadLookSensitivity", 8.0f, 0.1f, 50.0f, 0x1);
     cl_gamepadDeadzone = Dvar_RegisterFloat("cl_gamepadDeadzone", 0.20f, 0.0f, 0.9f, 0x1);
-    cl_gamepadInvertY = Dvar_RegisterBool_mac("cl_gamepadInvertY", 0, 0x1);
+    cl_gamepadInvertY = Dvar_RegisterBool("cl_gamepadInvertY", 0, 0x1);
 
     if (SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER) != 0) {
         Com_Printf("Gamepad: SDL_INIT_GAMECONTROLLER failed: %s\n", SDL_GetError());

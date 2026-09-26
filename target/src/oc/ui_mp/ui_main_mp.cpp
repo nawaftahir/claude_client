@@ -242,8 +242,8 @@ extern void String_Init(void);
 extern void CL_GetScreenDimensions(int *width, int *height, float *aspect);
 extern dvar_t *Dvar_RegisterInt(const char *dvarName, int value, int min, int max, unsigned short flags);
 extern dvar_t *Dvar_RegisterFloat(const char *dvarName, float value, float min, float max, unsigned short flags);
-extern const void *Dvar_RegisterBool_mac(const char *name, int value, int flags);
-extern const void *Dvar_RegisterString_mac(const char *name, const char *value, int flags);
+dvar_t *Dvar_RegisterBool(const char *dvarName, bool value, unsigned short flags);
+dvar_t *Dvar_RegisterString(const char *dvarName, const char *value, unsigned short flags);
 extern void UI_LoadArenas(void);
 extern MenuList *UI_LoadMenus(const char *name, int imageTrack);
 extern void UI_LoadSoundAliases(void);
@@ -1247,26 +1247,26 @@ void UI_Init(void)
 
     UI_LoadSoundAliases();
 
-    Dvar_RegisterBool_mac("g_allowvote", 1, 0x1001);
-    Dvar_RegisterBool_mac("cg_brass", 1, 0x1001);
-    Dvar_RegisterBool_mac("cg_marks", 1, 0x1001);
+    Dvar_RegisterBool("g_allowvote", 1, 0x1001);
+    Dvar_RegisterBool("cg_brass", 1, 0x1001);
+    Dvar_RegisterBool("cg_marks", 1, 0x1001);
 
-    Dvar_RegisterString_mac("server1", "", 0x1001);
-    Dvar_RegisterString_mac("server2", "", 0x1001);
-    Dvar_RegisterString_mac("server3", "", 0x1001);
-    Dvar_RegisterString_mac("server4", "", 0x1001);
-    Dvar_RegisterString_mac("server5", "", 0x1001);
-    Dvar_RegisterString_mac("server6", "", 0x1001);
-    Dvar_RegisterString_mac("server7", "", 0x1001);
-    Dvar_RegisterString_mac("server8", "", 0x1001);
-    Dvar_RegisterString_mac("server9", "", 0x1001);
-    Dvar_RegisterString_mac("server10", "", 0x1001);
-    Dvar_RegisterString_mac("server11", "", 0x1001);
-    Dvar_RegisterString_mac("server12", "", 0x1001);
-    Dvar_RegisterString_mac("server13", "", 0x1001);
-    Dvar_RegisterString_mac("server14", "", 0x1001);
-    Dvar_RegisterString_mac("server15", "", 0x1001);
-    Dvar_RegisterString_mac("server16", "", 0x1001);
+    Dvar_RegisterString("server1", "", 0x1001);
+    Dvar_RegisterString("server2", "", 0x1001);
+    Dvar_RegisterString("server3", "", 0x1001);
+    Dvar_RegisterString("server4", "", 0x1001);
+    Dvar_RegisterString("server5", "", 0x1001);
+    Dvar_RegisterString("server6", "", 0x1001);
+    Dvar_RegisterString("server7", "", 0x1001);
+    Dvar_RegisterString("server8", "", 0x1001);
+    Dvar_RegisterString("server9", "", 0x1001);
+    Dvar_RegisterString("server10", "", 0x1001);
+    Dvar_RegisterString("server11", "", 0x1001);
+    Dvar_RegisterString("server12", "", 0x1001);
+    Dvar_RegisterString("server13", "", 0x1001);
+    Dvar_RegisterString("server14", "", 0x1001);
+    Dvar_RegisterString("server15", "", 0x1001);
+    Dvar_RegisterString("server16", "", 0x1001);
 
     ui_netSource = (const dvar_t *)(Dvar_RegisterInt("ui_netSource", 0, 0, 2, 0x1001));
     ui_smallFont = (const dvar_t *)(Dvar_RegisterFloat("ui_smallFont", 0.25f, 0.0f, 1.0f, 0x1001));
@@ -1275,15 +1275,15 @@ void UI_Init(void)
     ui_currentMap = (const dvar_t *)(Dvar_RegisterInt("ui_currentMap", 0, 0, 0x7fffffff, 0x1001));
     ui_gametype = (const dvar_t *)(Dvar_RegisterInt("ui_gametype", 3, 0, 0x7fffffff, 0x1001));
     ui_joinGameType = (const dvar_t *)(Dvar_RegisterInt("ui_joinGametype", 0, 0, 0x7fffffff, 0x1001));
-    ui_netGameTypeName = (const dvar_t *)(Dvar_RegisterString_mac("ui_netGametypeName", "", 0x1001));
+    ui_netGameTypeName = (const dvar_t *)(Dvar_RegisterString("ui_netGametypeName", "", 0x1001));
     ui_dedicated = (const dvar_t *)(Dvar_RegisterInt("ui_dedicated", 0, 0, 2, 0x1001));
     ui_currentNetMap = (const dvar_t *)(Dvar_RegisterInt("ui_currentNetMap", 0, 0, 0x7fffffff, 0x1001));
-    ui_browserShowFull = (const dvar_t *)(Dvar_RegisterBool_mac("ui_browserShowFull", 1, 0x1001));
-    ui_browserShowEmpty = (const dvar_t *)(Dvar_RegisterBool_mac("ui_browserShowEmpty", 1, 0x1001));
-    ui_browserShowPassword = (const dvar_t *)(Dvar_RegisterBool_mac("ui_browserShowPassword", 1, 0x1001));
-    ui_browserShowNoPassword = (const dvar_t *)(Dvar_RegisterBool_mac("ui_browserShowNoPassword", 1, 0x1001));
-    ui_browserShowPure = (const dvar_t *)(Dvar_RegisterBool_mac("ui_browserShowPure", 1, 0x1001));
-    ui_browserShowDedicated = (const dvar_t *)(Dvar_RegisterBool_mac("ui_browserShowDedicated", 0, 0x1001));
+    ui_browserShowFull = (const dvar_t *)(Dvar_RegisterBool("ui_browserShowFull", 1, 0x1001));
+    ui_browserShowEmpty = (const dvar_t *)(Dvar_RegisterBool("ui_browserShowEmpty", 1, 0x1001));
+    ui_browserShowPassword = (const dvar_t *)(Dvar_RegisterBool("ui_browserShowPassword", 1, 0x1001));
+    ui_browserShowNoPassword = (const dvar_t *)(Dvar_RegisterBool("ui_browserShowNoPassword", 1, 0x1001));
+    ui_browserShowPure = (const dvar_t *)(Dvar_RegisterBool("ui_browserShowPure", 1, 0x1001));
+    ui_browserShowDedicated = (const dvar_t *)(Dvar_RegisterBool("ui_browserShowDedicated", 0, 0x1001));
 #    if COD2_IS_PATCH_13
     ui_browserShowPunkBuster = (const dvar_t *)(Dvar_RegisterInt("ui_browserShowPunkBuster", -1, (int)0x80000000, 0x7fffffff, 0x1001));
 #    endif
@@ -1292,8 +1292,8 @@ void UI_Init(void)
     ui_browserKillcam = (const dvar_t *)(Dvar_RegisterInt("ui_browserKillcam", -1, (int)0x80000000, 0x7fffffff, 0x1001));
     ui_serverStatusTimeOut = (const dvar_t *)(Dvar_RegisterInt("ui_serverStatusTimeOut", 7000, 0, 0x7fffffff, 0x1001));
     ui_playerProfileCount = (const dvar_t *)(Dvar_RegisterInt("ui_playerProfileCount", 0, (int)0x80000000, 0x7fffffff, 0x1040));
-    ui_playerProfileSelected = (const dvar_t *)(Dvar_RegisterString_mac("ui_playerProfileSelected", "", 0x1040));
-    ui_playerProfileNameNew = (const dvar_t *)(Dvar_RegisterString_mac("ui_playerProfileNameNew", "", 0x1000));
+    ui_playerProfileSelected = (const dvar_t *)(Dvar_RegisterString("ui_playerProfileSelected", "", 0x1040));
+    ui_playerProfileNameNew = (const dvar_t *)(Dvar_RegisterString("ui_playerProfileNameNew", "", 0x1000));
 
     legacyBase = (byte *)imp_legacyHacksArray;
     (*(byte *)&((LegacyHacks *)legacyBase)->ui_newScriptMenu[0]) = 0;
@@ -1361,7 +1361,7 @@ void UI_Init(void)
     netGameTypeIdx = (ui_netGameType)->current.integer;
     Dvar_SetString(ui_netGameTypeName, sharedUiInfo.gameTypes[netGameTypeIdx].gameType);
 
-    Dvar_RegisterBool_mac("ui_multiplayer", 1, 0x1040);
+    Dvar_RegisterBool("ui_multiplayer", 1, 0x1040);
 
 #    if COD2_FEATURE_GAMEPAD
 
@@ -4947,26 +4947,26 @@ void UI_Init(void)
 
     UI_LoadSoundAliases();
 
-    Dvar_RegisterBool_mac("g_allowvote", 1, 0x1001);
-    Dvar_RegisterBool_mac("cg_brass", 1, 0x1001);
-    Dvar_RegisterBool_mac("cg_marks", 1, 0x1001);
+    Dvar_RegisterBool("g_allowvote", 1, 0x1001);
+    Dvar_RegisterBool("cg_brass", 1, 0x1001);
+    Dvar_RegisterBool("cg_marks", 1, 0x1001);
 
-    Dvar_RegisterString_mac("server1", "", 0x1001);
-    Dvar_RegisterString_mac("server2", "", 0x1001);
-    Dvar_RegisterString_mac("server3", "", 0x1001);
-    Dvar_RegisterString_mac("server4", "", 0x1001);
-    Dvar_RegisterString_mac("server5", "", 0x1001);
-    Dvar_RegisterString_mac("server6", "", 0x1001);
-    Dvar_RegisterString_mac("server7", "", 0x1001);
-    Dvar_RegisterString_mac("server8", "", 0x1001);
-    Dvar_RegisterString_mac("server9", "", 0x1001);
-    Dvar_RegisterString_mac("server10", "", 0x1001);
-    Dvar_RegisterString_mac("server11", "", 0x1001);
-    Dvar_RegisterString_mac("server12", "", 0x1001);
-    Dvar_RegisterString_mac("server13", "", 0x1001);
-    Dvar_RegisterString_mac("server14", "", 0x1001);
-    Dvar_RegisterString_mac("server15", "", 0x1001);
-    Dvar_RegisterString_mac("server16", "", 0x1001);
+    Dvar_RegisterString("server1", "", 0x1001);
+    Dvar_RegisterString("server2", "", 0x1001);
+    Dvar_RegisterString("server3", "", 0x1001);
+    Dvar_RegisterString("server4", "", 0x1001);
+    Dvar_RegisterString("server5", "", 0x1001);
+    Dvar_RegisterString("server6", "", 0x1001);
+    Dvar_RegisterString("server7", "", 0x1001);
+    Dvar_RegisterString("server8", "", 0x1001);
+    Dvar_RegisterString("server9", "", 0x1001);
+    Dvar_RegisterString("server10", "", 0x1001);
+    Dvar_RegisterString("server11", "", 0x1001);
+    Dvar_RegisterString("server12", "", 0x1001);
+    Dvar_RegisterString("server13", "", 0x1001);
+    Dvar_RegisterString("server14", "", 0x1001);
+    Dvar_RegisterString("server15", "", 0x1001);
+    Dvar_RegisterString("server16", "", 0x1001);
 
     ui_netSource = Dvar_RegisterInt("ui_netSource", 0, 0, 2, 0x1001);
     ui_smallFont = Dvar_RegisterFloat("ui_smallFont", 0.25f, 0.0f, 1.0f, 0x1001);
@@ -4975,15 +4975,15 @@ void UI_Init(void)
     ui_currentMap = Dvar_RegisterInt("ui_currentMap", 0, 0, 0x7fffffff, 0x1001);
     ui_gametype = Dvar_RegisterInt("ui_gametype", 3, 0, 0x7fffffff, 0x1001);
     ui_joinGameType = Dvar_RegisterInt("ui_joinGametype", 0, 0, 0x7fffffff, 0x1001);
-    ui_netGameTypeName = Dvar_RegisterString_mac("ui_netGametypeName", "", 0x1001);
+    ui_netGameTypeName = Dvar_RegisterString("ui_netGametypeName", "", 0x1001);
     ui_dedicated = Dvar_RegisterInt("ui_dedicated", 0, 0, 2, 0x1001);
     ui_currentNetMap = Dvar_RegisterInt("ui_currentNetMap", 0, 0, 0x7fffffff, 0x1001);
-    ui_browserShowFull = Dvar_RegisterBool_mac("ui_browserShowFull", 1, 0x1001);
-    ui_browserShowEmpty = Dvar_RegisterBool_mac("ui_browserShowEmpty", 1, 0x1001);
-    ui_browserShowPassword = Dvar_RegisterBool_mac("ui_browserShowPassword", 1, 0x1001);
-    ui_browserShowNoPassword = Dvar_RegisterBool_mac("ui_browserShowNoPassword", 1, 0x1001);
-    ui_browserShowPure = Dvar_RegisterBool_mac("ui_browserShowPure", 1, 0x1001);
-    ui_browserShowDedicated = Dvar_RegisterBool_mac("ui_browserShowDedicated", 0, 0x1001);
+    ui_browserShowFull = Dvar_RegisterBool("ui_browserShowFull", 1, 0x1001);
+    ui_browserShowEmpty = Dvar_RegisterBool("ui_browserShowEmpty", 1, 0x1001);
+    ui_browserShowPassword = Dvar_RegisterBool("ui_browserShowPassword", 1, 0x1001);
+    ui_browserShowNoPassword = Dvar_RegisterBool("ui_browserShowNoPassword", 1, 0x1001);
+    ui_browserShowPure = Dvar_RegisterBool("ui_browserShowPure", 1, 0x1001);
+    ui_browserShowDedicated = Dvar_RegisterBool("ui_browserShowDedicated", 0, 0x1001);
 #    if COD2_IS_PATCH_13
     ui_browserShowPunkBuster = Dvar_RegisterInt("ui_browserShowPunkBuster", -1, (int)0x80000000, 0x7fffffff, 0x1001);
 #    endif
@@ -4992,8 +4992,8 @@ void UI_Init(void)
     ui_browserKillcam = Dvar_RegisterInt("ui_browserKillcam", -1, (int)0x80000000, 0x7fffffff, 0x1001);
     ui_serverStatusTimeOut = Dvar_RegisterInt("ui_serverStatusTimeOut", 7000, 0, 0x7fffffff, 0x1001);
     ui_playerProfileCount = Dvar_RegisterInt("ui_playerProfileCount", 0, (int)0x80000000, 0x7fffffff, 0x1040);
-    ui_playerProfileSelected = Dvar_RegisterString_mac("ui_playerProfileSelected", "", 0x1040);
-    ui_playerProfileNameNew = Dvar_RegisterString_mac("ui_playerProfileNameNew", "", 0x1000);
+    ui_playerProfileSelected = Dvar_RegisterString("ui_playerProfileSelected", "", 0x1040);
+    ui_playerProfileNameNew = Dvar_RegisterString("ui_playerProfileNameNew", "", 0x1000);
 
     legacyBase = (byte *)imp_legacyHacksArray;
     (*(byte *)&((LegacyHacks *)legacyBase)->ui_newScriptMenu[0]) = 0;
@@ -5060,7 +5060,7 @@ void UI_Init(void)
     netGameTypeIdx = (ui_netGameType)->current.integer;
     Dvar_SetString(ui_netGameTypeName, sharedUiInfo.gameTypes[netGameTypeIdx].gameType);
 
-    Dvar_RegisterBool_mac("ui_multiplayer", 1, 0x1040);
+    Dvar_RegisterBool("ui_multiplayer", 1, 0x1040);
 }
 
 void UI_KeyEvent(int key, qboolean down)

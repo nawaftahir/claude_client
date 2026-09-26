@@ -693,7 +693,7 @@ qboolean CG_DrawActiveFrame(int serverTime, DemoType demoType,
     CG_ProcessSnapshots();
 
     {
-        LegacyHacks *legacyHacks = *(LegacyHacks **)imp_legacyHacks;
+        LegacyHacks *legacyHacks = (LegacyHacks *)::legacyHacks;
         nextSnap = cg->nextSnap;
         if (!cg->renderScreen ||
             nextSnap == 0 ||

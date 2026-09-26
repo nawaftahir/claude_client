@@ -298,7 +298,7 @@ static void CG_OpenScriptMenu(void)
         noMouseControl = 0;
     }
 
-    cguiSlot = (void **)imp_legacyHacks;
+    cguiSlot = (void **)&::legacyHacks;
     I_strncpyz((char *)*cguiSlot + 0x2e4, pszMenu, 0x100);
     *(int *)((char *)*cguiSlot + 0x3e4) = menuIndex;
 
@@ -335,7 +335,7 @@ static void CG_OpenScriptMenu(void)
 
 void CG_CheckOpenWaitingScriptMenu(void)
 {
-    void **cguiSlot = (void **)imp_legacyHacks;
+    void **cguiSlot = (void **)&::legacyHacks;
     char *cgui;
     int result;
     static int traceCount;
