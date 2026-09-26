@@ -3,7 +3,7 @@ xanim/xmodel_utils.cpp
 qcommon/cm_load.cpp
 xanim/xmodel_load.cpp
 qcommon/cm_load_obj.cpp
-universal/com_math.cpp
+universal/com_math.cpp /Op
 xanim/dobj.cpp
 xanim/xanim.cpp
 xanim/xmodel.cpp
