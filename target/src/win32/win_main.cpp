@@ -141,7 +141,7 @@ static void Sys_ShutdownEvents( void )
 {
 	sysEvent_t *ev;
 
-	while ( eventTail < eventHead )
+	while ( eventHead > eventTail )
 	{
 		ev = &eventQue[eventTail++ & MASK_QUED_EVENTS];
 
@@ -228,11 +228,7 @@ sysEvent_t Sys_GetEvent( void )
 	}
 
 	// create an empty event to return
-	ev.evType = SE_NONE;
-	ev.evValue = 0;
-	ev.evValue2 = 0;
-	ev.evPtrLength = 0;
-	ev.evPtr = NULL;
+	memset( &ev, 0, sizeof( ev ) );
 	ev.evTime = Sys_Milliseconds();
 
 	return ev;
