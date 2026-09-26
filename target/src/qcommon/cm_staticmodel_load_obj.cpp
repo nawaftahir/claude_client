@@ -40,13 +40,13 @@ static bool CM_CreateStaticModel( cStaticModel_t *staticModel, const char *name,
 	if ( !name || !name[0] )
 		Com_Error(ERR_DROP, "\x15" "Invalid static model name\n");
 
-	if ( scale[0] == 0.0 )
+	if ( scale[0] == 0.0f )
 		Com_Error(ERR_DROP, "\x15" "Static model [%s] has x scale of 0.0\n", name);
 
-	if ( scale[1] == 0.0 )
+	if ( scale[1] == 0.0f )
 		Com_Error(ERR_DROP, "\x15" "Static model [%s] has y scale of 0.0\n", name);
 
-	if ( scale[2] == 0.0 )
+	if ( scale[2] == 0.0f )
 		Com_Error(ERR_DROP, "\x15" "Static model [%s] has z scale of 0.0\n", name);
 
 	model = CM_XModelPrecache(name);

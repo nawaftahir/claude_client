@@ -4862,7 +4862,7 @@ void GScr_AllClientsPrint()
 {
 	const char *string;
 
-	if ( !Scr_GetNumParam() )
+	if ( Scr_GetNumParam() <= 0 )
 	{
 		return;
 	}
@@ -4880,7 +4880,7 @@ void GScr_MapExists()
 {
 	const char *s;
 
-	if ( !Scr_GetNumParam() )
+	if ( Scr_GetNumParam() <= 0 )
 	{
 		return;
 	}
@@ -4906,7 +4906,7 @@ void GScr_IsValidGameType()
 {
 	const char *v1;
 
-	if ( !Scr_GetNumParam() )
+	if ( Scr_GetNumParam() <= 0 )
 	{
 		return;
 	}
@@ -4930,7 +4930,7 @@ GScr_SetVoteString
 */
 void GScr_SetVoteString()
 {
-	if ( !Scr_GetNumParam() )
+	if ( Scr_GetNumParam() <= 0 )
 	{
 		return;
 	}
@@ -4950,7 +4950,7 @@ GScr_SetVoteTime
 */
 void GScr_SetVoteTime()
 {
-	if ( !Scr_GetNumParam() )
+	if ( Scr_GetNumParam() <= 0 )
 	{
 		return;
 	}
@@ -4969,7 +4969,7 @@ GScr_SetVoteYesCount
 */
 void GScr_SetVoteYesCount()
 {
-	if ( !Scr_GetNumParam() )
+	if ( Scr_GetNumParam() <= 0 )
 	{
 		return;
 	}
@@ -4987,7 +4987,7 @@ GScr_SetVoteNoCount
 */
 void GScr_SetVoteNoCount()
 {
-	if ( !Scr_GetNumParam() )
+	if ( Scr_GetNumParam() <= 0 )
 	{
 		return;
 	}
@@ -5006,7 +5006,7 @@ void GScr_KickPlayer()
 {
 	int v1;
 
-	if ( !Scr_GetNumParam() )
+	if ( Scr_GetNumParam() <= 0 )
 	{
 		return;
 	}
@@ -5024,7 +5024,7 @@ void GScr_BanPlayer()
 {
 	int v1;
 
-	if ( !Scr_GetNumParam() )
+	if ( Scr_GetNumParam() <= 0 )
 	{
 		return;
 	}
@@ -5043,7 +5043,7 @@ void GScr_ClientPrint()
 	gentity_t *v3;
 	const char *v2;
 
-	if ( !Scr_GetNumParam() )
+	if ( Scr_GetNumParam() <= 0 )
 	{
 		return;
 	}
