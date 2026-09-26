@@ -2,6 +2,9 @@
 #include "imports.h"
 #include "bytematch.h"
 #include "headers/PC/cgame_mp/cg_local.h"
+extern const dvar_t *cg_scoreboardScrollStep;
+extern const vec4_t colorBlack;
+extern const vec4_t colorWhite;
 
 extern const dvar_t *cg_scoreboardBannerHeight;
 
@@ -63,7 +66,7 @@ qboolean CG_ScoreboardDisplayed(void)
 void CG_ScrollScoreboardUp(void)
 {
     if (cg->scoresTop > 0) {
-        cg->scoresTop -= *(int *)(*(int *)imp_cg_scoreboardScrollStep + 8);
+        cg->scoresTop -= *(int *)(((int)cg_scoreboardScrollStep) + 8);
         if (cg->scoresTop < 0)
             cg->scoresTop = 0;
     }
@@ -72,7 +75,7 @@ void CG_ScrollScoreboardUp(void)
 void CG_ScrollScoreboardDown(void)
 {
     if (cg->scoresOffBottom != 0) {
-        cg->scoresTop += *(int *)(*(int *)imp_cg_scoreboardScrollStep + 8);
+        cg->scoresTop += *(int *)(((int)cg_scoreboardScrollStep) + 8);
         int maxScroll = cg->numScores - 1;
         if (cg->scoresTop > maxScroll)
             cg->scoresTop = maxScroll;
@@ -806,7 +809,7 @@ qboolean CG_DrawScoreboard(void)
     }
 
     {
-        const vec_t *cb = (const vec_t *)imp_colorBlack;
+        const vec_t *cb = (const vec_t *)((void *)&colorBlack);
         color[0] = cb[0];
         color[1] = cb[1];
         color[2] = cb[2];
@@ -824,7 +827,7 @@ qboolean CG_DrawScoreboard(void)
     }
 
     {
-        const vec_t *cw = (const vec_t *)imp_colorWhite;
+        const vec_t *cw = (const vec_t *)((void *)&colorWhite);
         color[0] = cw[0];
         color[1] = cw[1];
         color[2] = cw[2];
@@ -846,7 +849,7 @@ qboolean CG_DrawScoreboard(void)
         (const char *)"scoreboard gametype display", LOCMSG_SAFE);
 
     {
-        const vec_t *cw = (const vec_t *)imp_colorWhite;
+        const vec_t *cw = (const vec_t *)((void *)&colorWhite);
         float savedR = cw[0];
         float savedG = cw[1];
         float savedB = cw[2];
@@ -938,7 +941,7 @@ qboolean CG_DrawScoreboard(void)
     }
 
     {
-        const vec_t *cw = (const vec_t *)imp_colorWhite;
+        const vec_t *cw = (const vec_t *)((void *)&colorWhite);
         color[0] = cw[0];
         color[1] = cw[1];
         color[2] = cw[2];

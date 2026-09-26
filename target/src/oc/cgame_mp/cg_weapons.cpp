@@ -1,6 +1,12 @@
 #include "common_types.h"
 #include "imports.h"
 #include "headers/PC/cgame_mp/cg_local.h"
+extern const dvar_t *cg_gun_x;
+extern const dvar_t *cg_gun_y;
+extern const dvar_t *cg_gun_z;
+extern dvar_t *player_breath_hold_time;
+extern dvar_t *player_breath_snd_delay;
+extern dvar_t *player_breath_snd_lerp;
 
 extern const dvar_t *cg_weaponCycleDelay;
 extern const dvar_t *loc_warnings;
@@ -234,11 +240,6 @@ static snd_alias_list_t *CG_FindSoundAliasWithFallback(const char *name, const c
     return alias ? alias : Com_FindSoundAlias(fallback);
 }
 
-static float CG_DvarValue(void *dvarImport)
-{
-    return (*(dvar_t **)dvarImport)->current.value;
-}
-
 static void CG_SetHoldBreathChannelVolumes(float frac)
 {
     float volumes[11];
@@ -264,7 +265,7 @@ static void CG_UpdateHoldBreathSound(void)
 
     if (cg->predictedPlayerState.pm_flags & 0x4000) {
         cg->holdBreathFrac = DiffTrack(1.0f, cg->holdBreathFrac,
-                                       CG_DvarValue(imp_player_breath_snd_lerp),
+                                       player_breath_snd_lerp->current.value,
                                        (float)cg->frametime * 0.001f);
 
         if (cg->holdBreathTime < 0) {
@@ -273,7 +274,7 @@ static void CG_UpdateHoldBreathSound(void)
                 cg->holdBreathInTime = 0;
             } else {
                 cg->holdBreathInTime = CG_PlayClientSoundAlias(cgs->media.playerBreathInSound);
-                cg->holdBreathDelay = (int)(CG_DvarValue(imp_player_breath_snd_delay) * 1000.0f);
+                cg->holdBreathDelay = (int)(player_breath_snd_delay->current.value * 1000.0f);
             }
         } else if (cg->holdBreathTime > cg->holdBreathInTime) {
             CG_PlayClientSoundAlias(cgs->media.playerHeartBeatSound);
@@ -283,11 +284,11 @@ static void CG_UpdateHoldBreathSound(void)
     } else {
         if (cg->holdBreathTime >= 0) {
             cg->holdBreathTime += cg->frametime;
-            if ((int)(CG_DvarValue(imp_player_breath_hold_time) * 1000.0f) < cg->holdBreathTime) {
+            if ((int)(player_breath_hold_time->current.value * 1000.0f) < cg->holdBreathTime) {
                 CG_PlayClientSoundAlias(cgs->media.playerBreathGaspSound);
             } else if (cg->holdBreathDelay <= 0) {
                 CG_PlayClientSoundAlias(cgs->media.playerBreathOutSound);
-                cg->holdBreathDelay = (int)(CG_DvarValue(imp_player_breath_snd_delay) * 1000.0f);
+                cg->holdBreathDelay = (int)(player_breath_snd_delay->current.value * 1000.0f);
             }
         }
 
@@ -638,7 +639,7 @@ void CG_RegisterWeapon(int weaponNum)
     SCR_UpdateScreen();
     memset(weapInfo, 0, sizeof(*weapInfo));
     weapInfo->registered = 1;
-    weapInfo->item = &((gitem_t *)imp_bg_itemlist)[weaponNum];
+    weapInfo->item = &((gitem_t *)((void *)&bg_itemlist))[weaponNum];
     itemInfo = &cg_itemsArray[weaponNum];
 
     CG_RegisterItemVisuals(weaponNum);
@@ -1305,9 +1306,9 @@ void CG_AddViewWeapon(playerState_t *ps)
     hand.origin[1] = cg->refdef.vieworg[1];
     hand.origin[2] = cg->refdef.vieworg[2];
 
-    CG_Madd(hand.origin, finalAxis[0], cg->swayOffset[0] + cg->vGunOffset[0] + CG_DvarValue(imp_cg_gun_x));
-    CG_Madd(hand.origin, finalAxis[1], cg->swayOffset[1] + cg->vGunOffset[1] + CG_DvarValue(imp_cg_gun_y));
-    CG_Madd(hand.origin, finalAxis[2], cg->swayOffset[2] + cg->vGunOffset[2] + CG_DvarValue(imp_cg_gun_z));
+    CG_Madd(hand.origin, finalAxis[0], cg->swayOffset[0] + cg->vGunOffset[0] + cg_gun_x->current.value);
+    CG_Madd(hand.origin, finalAxis[1], cg->swayOffset[1] + cg->vGunOffset[1] + cg_gun_y->current.value);
+    CG_Madd(hand.origin, finalAxis[2], cg->swayOffset[2] + cg->vGunOffset[2] + cg_gun_z->current.value);
 
     if (BG_IsAimDownSightWeapon(weaponIndex) && playerState->fWeaponPosFrac > 0.0f) {
         cg->gunPitch = weaponAngles[0];

@@ -3,6 +3,8 @@
 #include "headers/PC/cgame_mp/cg_local.h"
 
 #include <ctype.h>
+extern const vec4_t colorWhite;
+extern Bool g_waitingForServer;
 
 extern void I_strncpyz(char *dest, const char *src, int destsize);
 extern char *va( const char *format, ... );
@@ -25,8 +27,6 @@ extern void UI_DrawLoadBar(float x, float y, float w, float h, int horzAlign, in
 extern void UI_FillRect(float x, float y, float width, float height, int horzAlign, int vertAlign, const vec_t *color);
 
 extern LegacyHacks *legacyHacks;
-extern void *imp_colorWhite;
-extern void *imp_g_waitingForServer;
 
 #define CG_FIELD_5C 0x5c
 #define CG_FIELD_9C 0x9c
@@ -130,7 +130,7 @@ void CG_DrawInformation(qboolean serverLoading)
     if (!serverLoading)
         return;
 
-    if (!*(Bool *)imp_g_waitingForServer)
+    if (!((Bool)g_waitingForServer))
         return;
 
     font = UI_GetFontHandle(0, 0.5f);
@@ -157,5 +157,5 @@ void CG_DrawInformation(qboolean serverLoading)
     translated = UI_SafeTranslateString("CGAME_WAITINGFORSERVERLOAD");
     textWidth = UI_TextWidth(translated, 0x7fffffff, (struct Font_s *)font, 0.5f);
     x = (640.0f - (float)textWidth) * 0.5f;
-    UI_DrawText(va("%s%s", translated, dots), 0x7fffffff, (FontHandle)font, x, 452.0f, 0, 0, 0.5f, (const vec_t *)imp_colorWhite, 3);
+    UI_DrawText(va("%s%s", translated, dots), 0x7fffffff, (FontHandle)font, x, 452.0f, 0, 0, 0.5f, (const vec_t *)((void *)&colorWhite), 3);
 }

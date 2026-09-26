@@ -8,8 +8,6 @@ extern clientStatic_t cls;
 
 extern UI_Component_data_t __ZN12UI_Component1gE;
 #define UI_Component_g __ZN12UI_Component1gE
-extern void *imp_cls;
-extern void *imp_re;
 extern refexport_t re;
 extern void *imp_com_developer;
 

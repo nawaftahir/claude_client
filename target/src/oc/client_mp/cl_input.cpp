@@ -4,7 +4,7 @@
 #include "cod2_feature_config.h"
 #include <math.h>
 extern clientActive_t clients[1];
-extern clientConnection_t clientConnections[1];
+extern clientConnection_t clc;
 /* dvar globals */
 extern LegacyHacks *legacyHacks;
 extern const dvar_t *cl_nodelta;
@@ -666,7 +666,7 @@ void IN_Stance_Down(void)
     cl = clients;
     cl->stanceHeld = 1;
     cl->stancePosition = legacyHacks->cl_stance;
-    cl->stanceTime = *(int *)imp_com_frameTime;
+    cl->stanceTime = ((int)com_frameTime);
     if (cl->stancePosition != 1) {
         legacyHacks->cl_stance = 1;
     }
@@ -826,7 +826,7 @@ void CL_WriteVoicePacket(void)
     byte data[MAX_MSGLEN];
     int voicePacket;
 
-    clc = clientConnections;
+    clc = &::clc;
     if (clc->demoplaying || (clc->state != CA_ACTIVE && clc->state != CA_LOADING)) {
         return;
     }
@@ -847,7 +847,7 @@ void CL_WriteVoicePacket(void)
         Com_Printf((const char *)"voice: %i\n", msg.cursize);
     }
 
-    clc = clientConnections;
+    clc = &::clc;
     NET_OutOfBandVoiceData(clc->netchan.sock, clc->serverAddress, msg.data, msg.cursize);
 }
 
@@ -864,7 +864,7 @@ void CL_WritePacket(void)
     int key;
     usercmd_t *lastCmd;
 
-    clc_ptr = clientConnections;
+    clc_ptr = &::clc;
 
     if (clc_ptr->demoplaying)
         return;
@@ -930,7 +930,7 @@ void CL_WritePacket(void)
         if (nodelta->current.enabled || !snap) {
             goto write_nodelta;
         } else {
-            clientConnection_t *clc2 = clientConnections;
+            clientConnection_t *clc2 = &::clc;
             if (clc2->demowaiting || clc2->serverMessageSequence != cl3->snap.messageNum) {
                 goto write_nodelta;
             }
@@ -948,7 +948,7 @@ write_cmdcount:
     MSG_WriteByte(&buf, compressedSize);
 
     {
-        clientConnection_t *clc3 = clientConnections;
+        clientConnection_t *clc3 = &::clc;
         key = clc3->serverMessageSequence;
         key ^= clc3->checksumFeed;
         {
@@ -982,7 +982,7 @@ write_footer:
     }
 
     {
-        clientConnection_t *clc4 = clientConnections;
+        clientConnection_t *clc4 = &::clc;
         clientActive_t *cl5 = clients;
         int slot = clc4->netchan.outgoingSequence & 0x1f;
 
@@ -1003,7 +1003,7 @@ write_footer:
         if (clc4->netchan.unsentFragments) {
             do {
                 CL_Netchan_TransmitNextFragment(&clc4->netchan);
-            } while ((clientConnections)->netchan.unsentFragments);
+            } while ((&::clc)->netchan.unsentFragments);
         }
     }
 }
@@ -1479,7 +1479,7 @@ void CL_SendCmdInternal(void)
     outPacket_t *outPacket;
     int connectElapsed;
 
-    clc = clientConnections;
+    clc = &::clc;
     if (clc->state > CA_LOADING) {
         cl = clients;
         ++cl->cmdNumber;
@@ -1521,7 +1521,7 @@ not_ready:
 
 void CL_Input(void)
 {
-    if ((clientConnections)->state != 8)
+    if ((&::clc)->state != 8)
         return;
     CL_SyncGpu();
     CL_SendCmdInternal();
@@ -1529,7 +1529,7 @@ void CL_Input(void)
 
 void CL_SendCmd(void)
 {
-    int state = (clientConnections)->state;
+    int state = (&::clc)->state;
     if (state <= 4 || state == 8)
         return;
     CL_SendCmdInternal();

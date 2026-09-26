@@ -5,6 +5,8 @@
 
 #include <string.h>
 #include <stdlib.h>
+extern const dvar_t *cg_showmiss;
+extern const dvar_t *cg_teamChatsOnly;
 extern displayContextDef_t cgDC;
 
 extern const dvar_t *cg_chatHeight;
@@ -632,7 +634,7 @@ void CG_MapRestart(qboolean savepersist)
 {
     char *cgui;
 
-    if (CG_DvarCurrentBool(imp_cg_showmiss)) {
+    if (CG_DvarCurrentBool((void *)&cg_showmiss)) {
         Com_Printf((const char *)"CG_MapRestart\n");
     }
 
@@ -1053,7 +1055,7 @@ void CG_ServerCommand(void)
         CG_ServerCommandMessage("bold game message", 1);
         return;
     case 'h':
-        if (!CG_DvarCurrentBool(imp_cg_teamChatsOnly)) {
+        if (!CG_DvarCurrentBool((void *)&cg_teamChatsOnly)) {
             CG_ServerCommandChat("chat message", 1);
         }
         return;

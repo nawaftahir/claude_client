@@ -2,6 +2,10 @@
 #include "imports.h"
 #include "headers/PC/cgame_mp/cg_local.h"
 #include "bytematch.h"
+extern gitem_t bg_itemlist[];
+extern const itemInfo_t *cg_items;
+extern const weaponInfo_t *cg_weapons;
+extern const char *eventnames[];
 extern const dvar_t *cg_debugEvents;
 extern const dvar_t *cg_footsteps;
 extern const dvar_t *bg_fallDamageMinHeight;
@@ -10,7 +14,6 @@ extern const dvar_t *cg_nopredict;
 extern const dvar_t *cg_synchronousClients;
 
 extern char **cg_uiglob;
-extern void *imp_eventnames;
 
 extern void Com_Printf(const char *msg, ...);
 extern void Com_DPrintf(const char *msg, ...);
@@ -136,22 +139,22 @@ static int weaponDataOffset(int weapon)
 
 static char *CG_WeaponInfoBase(void)
 {
-    return *(char **)imp_cg_weapons;
+    return ((char *)cg_weapons);
 }
 
 static char *CG_ItemInfoBase(void)
 {
-    return *(char **)imp_cg_items;
+    return ((char *)cg_items);
 }
 
 static char *BG_ItemListBase(void)
 {
-    return (char *)imp_bg_itemlist;
+    return (char *)((void *)&bg_itemlist);
 }
 
 static char **CG_EventNames(void)
 {
-    return (char **)imp_eventnames;
+    return (char **)((void *)&eventnames);
 }
 
 void CG_EntityEvent(centity_t *cent, int event);

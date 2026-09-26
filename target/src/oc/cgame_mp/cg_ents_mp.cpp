@@ -3,6 +3,10 @@
 #include "bytematch.h"
 #include "headers/PC/cgame_mp/cg_local.h"
 #include <string.h>
+extern gitem_t bg_itemlist[];
+extern centity_t *cg_entities;
+extern const itemInfo_t *cg_items;
+extern const weaponInfo_t *cg_weapons;
 extern scr_const_t scr_const;
 
 /* File-scope alias: bound where no local can shadow `scr_const`, so uses below
@@ -398,7 +402,7 @@ void CG_DObjCalcBoneGeneric(int handle, int localClientNum, int boneIndex)
     DObjCalcAnim(obj, partBits);
 
     if (handle <= 1023) {
-        cent = &(*(centity_t **)imp_cg_entities)[handle];
+        cent = &(((centity_t *)cg_entities))[handle];
         CG_RunDObjControllers(cent, partBits);
     }
 
@@ -426,7 +430,7 @@ void CG_AdjustPositionForMover(const vec_t *in, int moverNum, int fromTime, int 
         return;
     }
 
-    cent = &(*(centity_t **)imp_cg_entities)[moverNum];
+    cent = &(((centity_t *)cg_entities))[moverNum];
     if (cent->currentState.eType != 6) {
         out[0] = in[0];
         out[1] = in[1];
@@ -540,12 +544,12 @@ static struct DObj_s *CG_PreProcess_GetDObj(int iEntNum, int iEntType, struct XM
         return 0;
 
     if (iEntType == 9) {
-        struct XAnim_s *anims = CG_GetMG42Anims(&(*(centity_t **)imp_cg_entities)[iEntNum]);
+        struct XAnim_s *anims = CG_GetMG42Anims(&(((centity_t *)cg_entities))[iEntNum]);
         if (anims)
             tree = (struct XAnimTree_s *)XAnimCreateTree((XAnim *)anims, (Alloc_t)CG_AllocAnimTree);
     }
 
-    (*(centity_t **)imp_cg_entities)[iEntNum].tree = tree;
+    (((centity_t *)cg_entities))[iEntNum].tree = tree;
     dobjModel.model = model;
     dobjModel.boneName = 0;
     dobjModel.ignoreCollision = 1;
@@ -678,8 +682,8 @@ void CG_Item(centity_t *cent)
     if (s1->eFlags & 0x20)
         return;
 
-    item = &((gitem_t *)imp_bg_itemlist)[itemNum];
-    itemInfo = &(*(itemInfo_t **)imp_cg_items)[itemNum];
+    item = &((gitem_t *)((void *)&bg_itemlist))[itemNum];
+    itemInfo = &(((itemInfo_t *)cg_items))[itemNum];
     if (!itemInfo->registered) {
         CG_RegisterItemVisuals(itemNum);
         return;
@@ -717,7 +721,7 @@ void CG_Missile(centity_t *cent)
     if (s1->weapon > BG_GetNumWeapons())
         s1->weapon = 0;
 
-    weapInfo = &(*(weaponInfo_t **)imp_cg_weapons)[s1->weapon];
+    weapInfo = &(((weaponInfo_t *)cg_weapons))[s1->weapon];
     if (weapInfo->missileSound)
         CG_PlaySoundAlias(s1->number, cent->lerpOrigin, weapInfo->missileSound);
 
@@ -969,7 +973,7 @@ void CG_AddPacketEntities(void)
         if (entityNum == viewlocked_entNum)
             continue;
 
-        cent = &(*(centity_t **)imp_cg_entities)[entityNum];
+        cent = &(((centity_t *)cg_entities))[entityNum];
         if (cent->nextState.eType <= 9)
             CG_ProcessEntity(cent);
     }

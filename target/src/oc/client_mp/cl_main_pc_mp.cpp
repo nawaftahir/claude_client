@@ -1,7 +1,8 @@
 #include "common_types.h"
 #include "imports.h"
+extern ping_t cl_pinglist[];
 extern clientActive_t clients[1];
-extern clientConnection_t clientConnections[1];
+extern clientConnection_t clc;
 /* dvar globals */
 extern const dvar_t *cl_serverStatusResendTime;
 extern const dvar_t *com_sv_running;
@@ -216,7 +217,7 @@ void CL_ServerInfoPacket(netadr_t from, msg_t *msg, int time)
         return;
     }
 
-    pinglist = (ping_t *)imp_cl_pinglist;
+    pinglist = (ping_t *)((void *)&cl_pinglist);
     for (i = 0; i < 16; i++) {
         ping_t *ping = &pinglist[i];
 
@@ -422,7 +423,7 @@ void CL_Rcon_f(void)
     message[offset] = '\0';
 
     {
-        clientConnection_t *clcLocal = clientConnections;
+        clientConnection_t *clcLocal = &::clc;
         if (clcLocal->state > 4) {
 
             sendAdr = clcLocal->netchan.remoteAddress;
@@ -836,7 +837,7 @@ void CL_Ping_f(void)
         return;
 
     now = Sys_Milliseconds();
-    pinglist = (ping_t *)imp_cl_pinglist;
+    pinglist = (ping_t *)((void *)&cl_pinglist);
     entry = pinglist;
     endEntry = pinglist + 16;
 
@@ -909,7 +910,7 @@ void CL_Connect_f(void)
 
     SND_StopSounds((snd_stopsounds_arg_t)0);
 
-    clc = clientConnections;
+    clc = &::clc;
     clc->serverMessage[0] = 0;
 
     server = Cmd_Argv(1);
@@ -941,9 +942,9 @@ void CL_Connect_f(void)
     cls_servername = (byte *)cls.servername;
     I_strncpyz((char *)cls_servername, server, sizeof(((clientStatic_t *)0)->servername));
 
-    clc = clientConnections;
+    clc = &::clc;
     {
-        clientConnection_t *clcConn = (clientConnection_t *)clc;
+        clientConnection_t *clcConn = &::clc;
         if (!NET_StringToAdr((const char *)cls_servername, &clcConn->serverAddress)) {
             Com_Printf((const char *)"Bad server address\n");
             clcConn->state = (connstate_t)(0);
@@ -1000,13 +1001,13 @@ void CL_Connect_f(void)
 
     {
         clientConnection_t *clcConn;
-        clc = clientConnections;
-        clcConn = (clientConnection_t *)clc;
+        clc = &::clc;
+        clcConn = &::clc;
 
         if (NET_IsLocalAddress(clcConn->serverAddress)) {
             clcConn->state = (connstate_t)(4);
         } else {
-            clcConn = clientConnections;
+            clcConn = &::clc;
             clcConn->state = (connstate_t)(3);
             clc = clcConn;
         }
@@ -1019,7 +1020,7 @@ void CL_Connect_f(void)
     }
 
     {
-        clientConnection_t *clcConn = (clientConnection_t *)clc;
+        clientConnection_t *clcConn = &::clc;
         clcConn->connectTime = (int)0xfffe7961;
         clcConn->connectPacketCount = 0;
 
@@ -1150,7 +1151,7 @@ void CL_ServerStatus_f(void)
         serverAddr = Cmd_Argv(1);
     } else {
 
-        clientConnection_t *clcConn = clientConnections;
+        clientConnection_t *clcConn = &::clc;
         if (clcConn->state != 8)
             goto not_connected;
         if (clcConn->demoplaying != 0)

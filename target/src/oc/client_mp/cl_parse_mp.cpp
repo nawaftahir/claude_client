@@ -43,7 +43,7 @@ char *svc_strings[256] = {
 
 extern void *cl;
 extern byte cls_ptr[];
-extern byte **clc_ptr;
+extern clientConnection_t clc;
 extern dvar_t *com_dedicated;
 extern const dvar_t *cl_paused;
 extern const dvar_t *net_lanauthorize;
@@ -131,7 +131,7 @@ void CL_SystemInfoChanged(void)
     value = (char *)LargeLocal_GetBuf(&value_large_local);
 
     cla = (clientActive_t *)cl;
-    clc = (clientConnection_t *)*clc_ptr;
+    clc = &::clc;
 
     systemInfo = cla->gameState.stringData + cla->gameState.stringOffsets[1];
 
@@ -141,7 +141,7 @@ void CL_SystemInfoChanged(void)
         cla->serverId = sid_val;
     }
 
-    if (((clientConnection_t *)*clc_ptr)->demoplaying != 0) {
+    if ((&::clc)->demoplaying != 0) {
         ZN10LargeLocalD1Ev(&value_large_local);
         ZN10LargeLocalD1Ev(&key_large_local);
         return;
@@ -200,7 +200,7 @@ void CL_ParseGamestate(msg_t *msg)
 
     Con_Close();
 
-    clc = (clientConnection_t *)*clc_ptr;
+    clc = &::clc;
     clc->connectPacketCount = 0;
 
     CL_ClearState();
@@ -260,7 +260,7 @@ void CL_ParseGamestate(msg_t *msg)
         }
     }
 
-    clc = (clientConnection_t *)*clc_ptr;
+    clc = &::clc;
     clc->clientNum = MSG_ReadLong(msg);
 
     clc->checksumFeed = MSG_ReadLong(msg);
@@ -316,7 +316,7 @@ void CL_ParseDownload(msg_t *msg)
 
     if (block == 0) {
 
-        clc = (clientConnection_t *)*clc_ptr;
+        clc = &::clc;
         clc->downloadSize = MSG_ReadLong(msg);
 
         *(int *)((*download_ui_ptr) + 0x10) = clc->downloadSize;
@@ -337,7 +337,7 @@ void CL_ParseDownload(msg_t *msg)
         MSG_ReadData(msg, data, size);
     }
 
-    clc = (clientConnection_t *)*clc_ptr;
+    clc = &::clc;
     if (clc->downloadBlock != block) {
 
         Com_DPrintf("CL_ParseDownload: Expected block %d, got %d\n",
@@ -400,10 +400,10 @@ void CL_ParseDownload(msg_t *msg)
 
     if (size != 0) {
 
-        FS_Write(data, size, ((clientConnection_t *)*clc_ptr)->download);
+        FS_Write(data, size, (&::clc)->download);
     }
 
-    clc = (clientConnection_t *)*clc_ptr;
+    clc = &::clc;
     CL_AddReliableCommand(va("nextdl %d", clc->downloadBlock));
 
     clc->downloadBlock += 1;
@@ -615,7 +615,7 @@ void CL_ParseSnapshot(msg_t *msg)
 
     memset(newSnap, 0, sizeof(clSnapshot_t));
 
-    clc = (clientConnection_t *)*clc_ptr;
+    clc = &::clc;
     newSnap->serverCommandNum = clc->serverCommandSequence;
 
     newSnap->serverTime = MSG_ReadLong(msg);
@@ -639,7 +639,7 @@ void CL_ParseSnapshot(msg_t *msg)
 
         newSnap->valid = 1;
 
-        ((clientConnection_t *)*clc_ptr)->demowaiting = 0;
+        (&::clc)->demowaiting = 0;
         old = NULL;
     } else {
 
@@ -958,7 +958,7 @@ void CL_ParseSnapshot(msg_t *msg)
     cla->snap.ping = 999;
 
     {
-        int parseEntNum = ((clientConnection_t *)*clc_ptr)->netchan.outgoingSequence;
+        int parseEntNum = (&::clc)->netchan.outgoingSequence;
         int snapTime = cla->snap.ps.commandTime;
         int i;
 
@@ -1062,7 +1062,7 @@ void CL_ParseServerMessage(msg_t *msg)
 
             int seq = MSG_ReadLong(&msgCompressed);
             char *str = MSG_ReadString(&msgCompressed);
-            clientConnection_t *clc = (clientConnection_t *)*clc_ptr;
+            clientConnection_t *clc = &::clc;
             if (seq <= clc->serverCommandSequence)
                 break;
 

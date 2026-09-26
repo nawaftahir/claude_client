@@ -60,7 +60,6 @@
 #pragma comment(linker, "/alternatename:?cg_weapons@@3PAEA=?cg_weapons@@3PBUweaponInfo_s@@B")
 #pragma comment(linker, "/alternatename:?cl@@3PAXA=?cl@@3PBUclientActive_t@@B")
 #pragma comment(linker, "/alternatename:?cl_paused@@3PBUdvar_s@@B=?cl_paused@@3PAUdvar_s@@A")
-#pragma comment(linker, "/alternatename:?clc_ptr@@3PAPAEA=?clc_ptr@@3PAEA")
 #pragma comment(linker, "/alternatename:?colorWhite@@3PBMB=?colorWhite@@3QBMB")
 #pragma comment(linker, "/alternatename:?com_developer@@3PBUdvar_s@@B=?com_developer@@3PAUdvar_s@@A")
 #pragma comment(linker, "/alternatename:?com_expectedHunkUsage@@3PBUdvar_s@@B=?com_expectedHunkUsage@@3PAUdvar_s@@A")

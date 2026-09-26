@@ -4,8 +4,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
+extern const vec4_t colorBlack;
+extern refexport_t re;
 extern clientActive_t clients[1];
-extern clientConnection_t clientConnections[1];
+extern clientConnection_t clc;
 extern clientStatic_t cls;
 #define stricmp strcasecmp
 
@@ -25,10 +27,10 @@ const char *szShotName[] = {
     NULL,
 };
 
-#define re_ptr_195eca8 ((refexport_t *)imp_re)
+#define re_ptr_195eca8 ((refexport_t *)((void *)&re))
 #define cls_ptr_195ecac (((byte *)&::cls))
-#define ptr_195eea4 ((byte *)imp_com_errorEntered)
-#define ptr_195f58c ((byte *)imp_colorBlack)
+#define ptr_195eea4 ((byte *)((void *)&com_errorEntered))
+#define ptr_195f58c ((byte *)((void *)&colorBlack))
 #define ptr_195f5e0 ((byte *)imp_net_showprofile)
 
 extern const dvar_t *net_showprofile;
@@ -136,7 +138,7 @@ float CL_GetMenuBlurRadius(void)
     if ((((clientStatic_t *)(cls))->uiStarted) == 0)
         return 0.0f;
 
-    clientConnection_t *clc = clientConnections;
+    clientConnection_t *clc = &::clc;
     if (clc->state == 1)
         return 0.0f;
 
@@ -242,7 +244,7 @@ void CL_CubemapShot_f(void)
         RE_FUNC(re, 0xa8, re_void_func)();
         CL_ClearScene();
 
-        clientConnection_t *clc_local = clientConnections;
+        clientConnection_t *clc_local = &::clc;
         int needRender = clc_local->demoplaying != 0;
         clientActive_t *dv = clients;
         int serverTime = dv->serverTime;
@@ -277,7 +279,7 @@ static void SCR_UpdateFrame(void)
 
     {
         extern qboolean com_errorEntered;
-        clientConnection_t *clc_check = clientConnections;
+        clientConnection_t *clc_check = &::clc;
         clientActive_t *cl_check = clients;
         int cs = clc_check->state;
         if (g_cginit_loading)
@@ -308,7 +310,7 @@ static void SCR_UpdateFrame(void)
         goto end_frame;
     }
 
-    clientConnection_t *clc = clientConnections;
+    clientConnection_t *clc = &::clc;
     int connstate = clc->state;
     if (connstate != 8 && connstate != 1) {
         re->ClearScreen(1, (const vec_t *)ptr_195f58c, 0.0f, 0);
@@ -324,7 +326,7 @@ static void SCR_UpdateFrame(void)
 
     if (UI_IsFullscreen()) {
 
-        clc = clientConnections;
+        clc = &::clc;
         connstate = clc->state;
 
         if (connstate < 0) {
@@ -348,7 +350,7 @@ static void SCR_UpdateFrame(void)
         }
     } else {
 
-        clc = clientConnections;
+        clc = &::clc;
         connstate = clc->state;
 
         if ((unsigned int)connstate > 8) {
@@ -372,7 +374,7 @@ static void SCR_UpdateFrame(void)
 
         case 2:
             CL_DrawLogo();
-            clc = clientConnections;
+            clc = &::clc;
             if (clc->state != 2) {
                 goto end_frame_draw;
             }
@@ -396,7 +398,7 @@ static void SCR_UpdateFrame(void)
             CG_DrawActiveFrame(serverTime, needRender, 0, 0, 1);
             endViewBeforeUi = 1;
 
-            clc = clientConnections;
+            clc = &::clc;
             if (clc->demorecording) {
                 int pos = FS_FTell(clc->demofile);
                 int posKB = (pos + 0x3ff) >> 10;
@@ -443,7 +445,7 @@ check_ui:
             if (!diagOnce) {
                 diagOnce = 1;
                 Com_Printf("[diag] check_ui REACHED state=%d activeMenu=%d keyCatchers=0x%x displayHUD=%d\n",
-                           (clientConnections)->state, activeMenu,
+                           (&::clc)->state, activeMenu,
                            dv->keyCatchers, dv->displayHUDWithKeycatchUI);
             }
         }
@@ -452,7 +454,7 @@ check_ui:
             if (getenv("MTRACE"))
                 Com_Printf("[menu-trace] SCR check_ui active=%d keyCatchers=0x%x displayHUD=%d state=%d\n",
                            activeMenu, dv->keyCatchers, dv->displayHUDWithKeycatchUI,
-                           (clientConnections)->state);
+                           (&::clc)->state);
             ++uiTraceCount;
         }
 
@@ -497,7 +499,7 @@ void SCR_UpdateScreenInternal(void)
     if (updateScreenCalled)
         return;
 
-    if (clientConnections[0].state == 6)
+    if (::clc.state == 6)
         Sys_LoadingKeepAlive();
 
     if (scr_initialized && !com_errorEntered) {
@@ -512,7 +514,7 @@ void SCR_UpdateScreen(void)
     if (updateScreenCalled)
         return;
 
-    if (clientConnections[0].state == 6)
+    if (::clc.state == 6)
         Sys_LoadingKeepAlive();
 
     if (scr_initialized && !com_errorEntered) {

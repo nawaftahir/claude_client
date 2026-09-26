@@ -6,6 +6,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+extern const vec4_t colorBlack;
+extern const vec4_t colorLtGrey;
+extern const vec4_t colorRed;
+extern const vec4_t colorWhite;
 extern clientActive_t clients[1];
 extern cg_t cgArray[1];
 /* see cg_local.h: `cg` is a const pointer to the real object, so `cg->field` folds
@@ -608,7 +612,7 @@ void UI_DrawMapLevelshot(void)
         }
     }
 
-    UI_FillRect(0, 0, 640.0f, 480.0f, 0, 0, (const vec_t *)imp_colorBlack);
+    UI_FillRect(0, 0, 640.0f, 480.0f, 0, 0, (const vec_t *)((void *)&colorBlack));
 }
 
 #ifndef __EMSCRIPTEN__
@@ -778,8 +782,6 @@ static void UI_VerifyLanguage(void)
 }
 #endif
 
-extern void *imp_loc_warnings;
-extern void *imp_loc_warningsAsErrors;
 #ifndef __EMSCRIPTEN__
 const char *UI_SafeTranslateString(const char *reference)
 {
@@ -1813,11 +1815,11 @@ Bool UI_DrawRecordLevel(rectDef_t *rect)
     if (voiceLevel > 0.0) {
         float barWidth = voiceLevel * rect->w - 4.0f;
         if (barWidth > 0.0) {
-            UI_FillRect(rect->x + 2.0f, rect->y + 2.0f, barWidth, rect->h - 4.0f, 0, 0, (const vec_t *)imp_colorWhite);
+            UI_FillRect(rect->x + 2.0f, rect->y + 2.0f, barWidth, rect->h - 4.0f, 0, 0, (const vec_t *)((void *)&colorWhite));
         }
     }
 
-    white = (const vec_t *)imp_colorWhite;
+    white = (const vec_t *)((void *)&colorWhite);
 
     UI_FillRect(rect->x, rect->y, rect->w, 1.0f, 0, 0, white);
 
@@ -4257,7 +4259,7 @@ static void UI_DisplayDownloadInfo(const char *downloadName, float centerPoint, 
     const char *text;
 
     {
-        const vec_t *cBlack = (const vec_t *)imp_colorBlack;
+        const vec_t *cBlack = (const vec_t *)((void *)&colorBlack);
         color[0] = cBlack[0];
         color[1] = cBlack[1];
         color[2] = cBlack[2];
@@ -4273,7 +4275,7 @@ static void UI_DisplayDownloadInfo(const char *downloadName, float centerPoint, 
 
     if (downloadSize > 0) {
 
-        const vec_t *cRed = (const vec_t *)imp_colorRed;
+        const vec_t *cRed = (const vec_t *)((void *)&colorRed);
         int width;
         color[0] = cRed[0];
         color[1] = cRed[1];
@@ -4290,7 +4292,7 @@ static void UI_DisplayDownloadInfo(const char *downloadName, float centerPoint, 
         float yDl = yStart + 210.0f;
         float yEta = yStart + 235.0f;
         float yXfer = yStart + 260.0f;
-        const vec_t *ltGrey = (const vec_t *)imp_colorLtGrey;
+        const vec_t *ltGrey = (const vec_t *)((void *)&colorLtGrey);
 
         UI_DrawText(UI_SafeTranslateString(dlText), 64, font, 24.0f, yDl, 0, 0, scale, ltGrey, 3);
         UI_DrawText(UI_SafeTranslateString(etaText), 64, font, 24.0f, yEta, 0, 0, scale, ltGrey, 3);
@@ -4454,7 +4456,7 @@ void UI_DrawConnectScreen(void)
             }
         }
 
-        UI_DrawCenteredText(UI_SafeTranslateString(pszGameType), font, connectScale, 89.0f, (const vec_t *)imp_colorWhite, 6);
+        UI_DrawCenteredText(UI_SafeTranslateString(pszGameType), font, connectScale, 89.0f, (const vec_t *)((void *)&colorWhite), 6);
 
         {
             int numMaps = sharedUiInfo.mapCount;
@@ -4466,7 +4468,7 @@ void UI_DrawConnectScreen(void)
             }
         }
 
-        UI_DrawCenteredText(mapDisplayName, font, connectScale, 119.0f, (const vec_t *)imp_colorWhite, 6);
+        UI_DrawCenteredText(mapDisplayName, font, connectScale, 119.0f, (const vec_t *)((void *)&colorWhite), 6);
 
         bConnectInfoDisplayed = 1;
 
@@ -4518,7 +4520,7 @@ check_connection_state: {
                     return;
             }
 
-            UI_DrawCenteredText(translated, font, connectScale, 145.0f, (const vec_t *)imp_colorWhite, 6);
+            UI_DrawCenteredText(translated, font, connectScale, 145.0f, (const vec_t *)((void *)&colorWhite), 6);
         }
     } else if (cs == CA_CONNECTED) {
 
@@ -4555,7 +4557,7 @@ check_connection_state: {
                     return;
             }
 
-            UI_DrawCenteredText(translated, font, connectScale, 145.0f, (const vec_t *)imp_colorWhite, 6);
+            UI_DrawCenteredText(translated, font, connectScale, 145.0f, (const vec_t *)((void *)&colorWhite), 6);
         }
     }
 }

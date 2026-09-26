@@ -3,6 +3,7 @@
 #include "imports.h"
 #include "headers/PC/cgame_mp/cg_local.h"
 #include <math.h>
+extern bgs_t *bgs;
 extern displayContextDef_t cgDC;
 
 vec3_t maxs = { 4.0f, 4.0f, 4.0f };
@@ -684,11 +685,11 @@ qboolean CG_DrawActiveFrame(int serverTime, DemoType demoType,
     cg->bgs.frametime = cg->frametime;
 
     if (cg->infoScreenText[0] != '\0') {
-        *(void **)imp_bgs = 0;
+        bgs = 0;
         return 0;
     }
 
-    *(void **)imp_bgs = &cg->bgs;
+    bgs = &cg->bgs;
 
     CG_ProcessSnapshots();
 
@@ -700,7 +701,7 @@ qboolean CG_DrawActiveFrame(int serverTime, DemoType demoType,
             (nextSnap->snapFlags & 2) != 0 ||
             (legacyHacks->cl_serverloadmap[0] != '\0' &&
              legacyHacks->cl_serverloadgametype[0] != '\0')) {
-            *(void **)imp_bgs = 0;
+            bgs = 0;
             return 0;
         }
         legacyHacks->cl_serverloadwaiting = 0;
@@ -840,7 +841,7 @@ qboolean CG_DrawActiveFrame(int serverTime, DemoType demoType,
     }
 #endif
 
-    *(void **)imp_bgs = 0;
+    bgs = 0;
     return 1;
 }
 

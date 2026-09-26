@@ -2,6 +2,7 @@
 #include "imports.h"
 #include "bytematch.h"
 #include "headers/PC/cgame_mp/cg_local.h"
+extern FxHelper *theFxHelper;
 
 extern const dvar_t *cg_marks;
 extern const dvar_t *cg_marksLimit;
@@ -23,7 +24,7 @@ extern int CL_MarkFragments(const vec3_t *points, const vec_t *origin, const vec
 extern void Com_Error(errorParm_t code, const char *fmt, ...);
 
 #define CG_MARKS_DVAR cg_marks
-#define FX_HELPER_PTR (*(FxHelper **)(imp_theFxHelper))
+#define FX_HELPER_PTR (((FxHelper *)theFxHelper))
 
 static inline __attribute__((always_inline)) unsigned char ColorFloatToByte(float f)
 {
@@ -79,7 +80,7 @@ void CG_AddMarks(void)
     if (markPoly == &cg->activeMarkPolys)
         return;
 
-    fxSlot = (FxHelper **)(imp_theFxHelper);
+    fxSlot = (FxHelper **)((void *)&theFxHelper);
 
     do {
 

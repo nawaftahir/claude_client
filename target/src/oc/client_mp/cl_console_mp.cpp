@@ -1,6 +1,11 @@
 #include "common_types.h"
 #include "imports.h"
 #include "bytematch.h"
+extern field_t *chatField;
+extern qboolean *chat_team;
+extern const vec4_t colorWhite;
+extern field_t historyEditLines[];
+extern qkey_t *keys;
 extern clientActive_t clients[1];
 extern field_t g_consoleField;
 /* dvar globals */
@@ -214,7 +219,7 @@ void Con_ToggleConsole_f(void)
     char *field;
 
     if (con_restricted->current.enabled) {
-        if (*(int *)((char *)*(void **)imp_keys + 0x780))
+        if (*(int *)((char *)((void *)keys) + 0x780))
             goto toggle;
         if (!((clients)->keyCatchers & 1))
             return;
@@ -233,8 +238,8 @@ static void Con_ChatModePublic_f(void)
 {
     field_t **field;
 
-    **(int **)imp_chat_team = 0;
-    field = (field_t **)imp_chatField;
+    *((int *)chat_team) = 0;
+    field = (field_t **)((void *)&chatField);
     Field_Clear((field_t *)(*field));
     (*field)->widthInPixels = 0x24c;
     (*field)->charHeight = 10.0f;
@@ -246,8 +251,8 @@ static void Con_ChatModeTeam_f(void)
 {
     field_t **field;
 
-    **(int **)imp_chat_team = 1;
-    field = (field_t **)imp_chatField;
+    *((int *)chat_team) = 1;
+    field = (field_t **)((void *)&chatField);
     Field_Clear((field_t *)(*field));
     (*field)->widthInPixels = 0x21f;
     (*field)->charHeight = 10.0f;
@@ -547,7 +552,7 @@ void Con_DrawSay(int y)
     fontScale = 10.0f / 48.0f;
     font = (FontHandle)UI_GetFontHandle(0, fontScale);
 
-    if (**(int **)imp_chat_team)
+    if (*((int *)chat_team))
         label = SEH_SafeTranslateString("EXE_SAYTEAM");
     else
         label = SEH_SafeTranslateString("EXE_SAY");
@@ -562,10 +567,10 @@ void Con_DrawSay(int y)
     CL_DrawText(string, 0x7fffffff, font, (float)x,
                 (float)y + (float)fontHeight * normalizedScale,
                 1, 1, normalizedScale, normalizedScale,
-                (const float *)imp_colorWhite, 3);
+                (const float *)((void *)&colorWhite), 3);
 
     textWidth = re.TextWidth(string, 0, font);
-    field = *(field_t **)imp_chatField;
+    field = ((field_t *)chatField);
     Field_Draw(field, x + (int)((float)textWidth * normalizedScale), y,
                1, 1, 1);
 }
@@ -1167,7 +1172,7 @@ static void Con_OneTimeInit(void)
 
     con.messageBuffer = messageBuffer;
 
-    memcpy(con.color, imp_colorWhite, sizeof(con.color));
+    memcpy(con.color, ((void *)&colorWhite), sizeof(con.color));
     con.linewidth = -1;
     Con_CheckResize();
     con.initialized = 1;
@@ -1613,7 +1618,7 @@ void Con_Init(void)
     consoleField->charHeight = g_console_char_height;
     consoleField->fixedSize = 1;
 
-    history = (field_t *)imp_historyEditLines;
+    history = (field_t *)((void *)&historyEditLines);
     for (i = 0; i < 32; i++) {
         Field_Clear((field_t *)(&history[i]));
         history[i].widthInPixels = g_console_field_width;
@@ -1965,7 +1970,7 @@ static void Con_OneTimeInit(void)
     messageBuffer->minicon.fadein = 0;
     messageBuffer->minicon.fadeout = 0;
 
-    memcpy(con.color, imp_colorWhite, sizeof(con.color));
+    memcpy(con.color, ((void *)&colorWhite), sizeof(con.color));
     con.linewidth = -1;
     Con_CheckResize();
     con.initialized = 1;
@@ -2160,7 +2165,7 @@ void Con_Init(void)
     consoleField->charHeight = g_console_char_height;
     consoleField->fixedSize = 1;
 
-    history = (field_t *)imp_historyEditLines;
+    history = (field_t *)((void *)&historyEditLines);
     for (i = 0; i < 32; i++) {
         Field_Clear((field_t *)(&history[i]));
         history[i].widthInPixels = g_console_field_width;

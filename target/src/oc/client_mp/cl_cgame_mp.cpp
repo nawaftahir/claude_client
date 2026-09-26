@@ -5,7 +5,14 @@
 #    include <mmintrin.h>
 #endif
 #include <string.h>
-extern clientConnection_t clientConnections[1];
+extern const dvar_t *cl_freezeDemo;
+extern dvar_t *cl_paused;
+extern dvar_t *com_expectedHunkUsage;
+extern float com_timescaleValue;
+extern dvar_t *loc_warnings;
+extern dvar_t *loc_warningsAsErrors;
+extern dvar_t *sv_paused;
+extern clientConnection_t clc;
 extern clientStatic_t cls;
 extern const dvar_t *cl_activeAction;
 /* dvar globals */
@@ -109,7 +116,7 @@ extern clientActive_t clients[1];
 #define RE (&re)
 #define CLS ((&::cls))
 #define CL_LOCAL ((clientActive_t *)((void *)clients))
-#define CLUI_STATE (clientConnections)
+#define CLUI_STATE (&::clc)
 
 static const dvar_t *CL_DvarFromImport(void *importPtr)
 {
@@ -136,7 +143,7 @@ static const char *CL_DvarCurrentString(void *importPtr)
 
 static float CL_ComTimescaleValue(void)
 {
-    return *(float *)imp_com_timescaleValue;
+    return ((float)com_timescaleValue);
 }
 
 void CL_GetScreenDimensions(int *width, int *height, float *aspect);
@@ -552,7 +559,7 @@ void CL_SetExpectedHunkUsage(const char *mapname)
         if (!token || *token == '\0')
             continue;
 
-        Dvar_SetInt( (const dvar_t *)(*(void **)imp_com_expectedHunkUsage), atoi(token));
+        Dvar_SetInt( (const dvar_t *)(((void *)com_expectedHunkUsage)), atoi(token));
         Z_FreeInternal(buf);
         return;
     }
@@ -560,7 +567,7 @@ void CL_SetExpectedHunkUsage(const char *mapname)
     Z_FreeInternal(buf);
 
 set_default:
-    Dvar_SetInt( (const dvar_t *)(*(void **)imp_com_expectedHunkUsage), 0);
+    Dvar_SetInt( (const dvar_t *)(((void *)com_expectedHunkUsage)), 0);
 }
 
 void CL_CM_LoadMap(const char *mapname)
@@ -645,12 +652,12 @@ void CL_SubtitlePrint(const char *pszText, int iDuration, int iLineWidth)
         return;
     }
 
-    if (!CL_DvarCurrentBool(imp_loc_warnings)) {
+    if (!CL_DvarCurrentBool((void *)&loc_warnings)) {
         CL_ConsolePrint((print_msg_type_t)3, pszText, iDuration, iLineWidth);
         return;
     }
 
-    if (CL_DvarCurrentBool(imp_loc_warningsAsErrors)) {
+    if (CL_DvarCurrentBool((void *)&loc_warningsAsErrors)) {
         Com_Error(ERR_LOCALIZATION, "Could not translate subtitle text: \"%s\"", pszText);
     } else {
         Com_Printf("^3WARNING: Could not translate subtitle text: \"%s\"\n", pszText);
@@ -1320,9 +1327,9 @@ void CL_SetCGameTime(void)
         Com_Error(ERR_DROP, "CL_SetCGameTime: no snapshot");
     }
 
-    if (CL_DvarCurrentInt(imp_sv_paused) &&
-        CL_DvarCurrentInt(imp_cl_paused) &&
-        CL_DvarCurrentBool(imp_com_sv_running)) {
+    if (CL_DvarCurrentInt((void *)&sv_paused) &&
+        CL_DvarCurrentInt((void *)&cl_paused) &&
+        CL_DvarCurrentBool((void *)&com_sv_running)) {
         return;
     }
 
@@ -1352,7 +1359,7 @@ void CL_SetCGameTime(void)
         int demoPlaying = clui->demoplaying;
         clientStatic_t *cls = CLS;
 
-        if (!demoPlaying || !CL_DvarCurrentBool(imp_cl_freezeDemo)) {
+        if (!demoPlaying || !CL_DvarCurrentBool((void *)&cl_freezeDemo)) {
 
             int timeDelta = cl->serverTimeDelta;
             int realtime = cls->realtime;
@@ -1367,7 +1374,7 @@ void CL_SetCGameTime(void)
             int serverTime = cl->snap.serverTime;
             if (timeDelta + realtime < serverTime - 5) {
                 cl->extrapolatedSnapshot = 1;
-                if (CL_DvarCurrentBool(imp_cl_showTimeDelta)) {
+                if (CL_DvarCurrentBool((void *)&cl_showTimeDelta)) {
                     Com_Printf("%.6f extrapolating\n");
                 }
             }

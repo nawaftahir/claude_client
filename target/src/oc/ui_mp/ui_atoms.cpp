@@ -7,7 +7,6 @@ extern int Dvar_GetInt(const char *dvarName);
 extern int Hunk_Used(void);
 
 extern sharedUiInfo_t sharedUiInfo;
-extern void *imp_sharedUiInfo;
 
 void UI_DrawHandlePic(float x, float y, float w, float h, int horzAlign, int vertAlign, const vec_t *color, MaterialHandle hMaterial);
 void UI_DrawLoadBar(float x, float y, float w, float h, int horzAlign, int vertAlign, const vec_t *color, MaterialHandle material);

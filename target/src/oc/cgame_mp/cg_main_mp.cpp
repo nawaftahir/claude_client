@@ -2,6 +2,7 @@
 #include "imports.h"
 #include "headers/PC/cgame_mp/cg_local.h"
 #include <float.h>
+extern int bg_iNumWeapons;
 
 extern const dvar_t *com_sv_running;
 
@@ -1176,7 +1177,7 @@ void CG_Init(int serverMessageNum, int serverCommandSequence, int clientNum)
     if (!com_sv_running->current.enabled)
         Mantle_CreateAnims((MantleAnimAlloc)Hunk_AllocXAnimClient);
 
-    if (*(int *)imp_bg_iNumWeapons == 0) {
+    if (((int)bg_iNumWeapons) == 0) {
         CL_SetWeaponInfoMemory();
         BG_ClearWeaponDef();
         BG_FillInAmmoItems(0);

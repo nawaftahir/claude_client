@@ -1,14 +1,15 @@
 #include "common_types.h"
 #include "imports.h"
+extern refexport_t re;
 extern snd_local_t g_snd;
-extern clientConnection_t clientConnections[1];
+extern clientConnection_t clc;
 extern clientStatic_t cls;
 
-/* imp_clc holds the address of the `clc` POINTER, not of the connection itself, so
+/* ((void *)&clc) holds the address of the `clc` POINTER, not of the connection itself, so
    reaching the connection state needs two indirections -- the same form the rest of the
-   client code uses (`clientConnections`). Treating imp_clc as if it pointed
+   client code uses (`&::clc`). Treating ((void *)&clc) as if it pointed
    straight at the connection would read and, worse, WRITE the clc pointer itself. */
-#define CLC_CONN (clientConnections)
+#define CLC_CONN (&::clc)
 
 extern const dvar_t *nextmap;
 extern const dvar_t *cl_inGameVideo;
@@ -229,7 +230,7 @@ static void RoQShutdown(void)
             }
         }
 
-        rendererCallback = ((refexport_t *)(void *)imp_re)->SyncRenderThread;
+        rendererCallback = ((refexport_t *)(void *)((void *)&re))->SyncRenderThread;
         if (rendererCallback) {
             rendererCallback();
         }
@@ -771,7 +772,7 @@ void ROQ_DrawCinematicFromHandle(int handle)
         y = 0;
     }
 
-        re = (refexport_t *)(void *)imp_re;
+        re = (refexport_t *)(void *)((void *)&re);
     ((void (*)(int, const vec_t *, float, int))re->ClearScreen)(1, clearColor, 0.0f, 0);
 
     ((void (*)(int, int, int, int, int, int, byte *, int, int))re->DrawStretchRaw)(
@@ -788,7 +789,7 @@ void ROQ_DrawCinematicFromHandle(int handle)
         wf = (float)w;
         material = (int)(cls->whiteMaterial);
 
-        re = (refexport_t *)(void *)imp_re;
+        re = (refexport_t *)(void *)((void *)&re);
         ((void (*)(float, float, float, float, float, float, float, float, const vec_t *, int))re->DrawStretchPic)(
             xf, (float)y, wf, (float)(int)floorf(barSize),
             0.0f, 0.0f, 0.0f, 0.0f, clearColor, material);
@@ -1064,7 +1065,7 @@ parse_roq:
         {
 
             {
-                void (*rendererCb)(void) = ((refexport_t *)(void *)imp_re)->SyncRenderThread;
+                void (*rendererCb)(void) = ((refexport_t *)(void *)((void *)&re))->SyncRenderThread;
                 if (rendererCb)
                     rendererCb();
             }

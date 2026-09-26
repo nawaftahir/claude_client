@@ -3,7 +3,7 @@
 #include <stddef.h>
 #include <stdio.h>
 
-extern byte *clc_ptr;
+extern clientConnection_t clc;
 extern byte *cl_ptr;
 extern byte *net_profile_dvar;
 #if defined(COD2_X64) || defined(_M_X64) || defined(__x86_64__)
@@ -57,7 +57,7 @@ void CL_Netchan_Decode(byte *data, int size)
     int beforeTraceLen;
 #endif
 
-    clc_base = *(byte **)clc_ptr;
+    clc_base = (byte *)&::clc;
 
     reliableAcknowledge = ((clientConnection_t *)clc_base)->reliableAcknowledge;
     string = ((clientConnection_t *)clc_base)->reliableCommands[reliableAcknowledge & 0x7f];
@@ -141,7 +141,7 @@ void CL_Netchan_Transmit(netchan_t *chan, byte *data, int length)
     dataSize = length - 9;
     encodeData = data + 9;
 
-    clc_base = *(byte **)clc_ptr;
+    clc_base = (byte *)&::clc;
 
     serverCommandSequence = ((clientConnection_t *)clc_base)->serverCommandSequence;
     string = ((clientConnection_t *)clc_base)->serverCommands[serverCommandSequence & 0x7f];
@@ -178,7 +178,7 @@ void CL_Netchan_AddOOBProfilePacket(int iLength)
     if (((const dvar_t *)*(byte **)net_profile_dvar)->current.integer == 0)   /* was dvar+8 (x86 current offset; x64 is 16) */
         return;
 
-    clc_base = *(byte **)clc_ptr;
+    clc_base = (byte *)&::clc;
     NetProf_PrepProfiling(&((clientConnection_t *)clc_base)->pOOBProf);
     pOOBProf = ((clientConnection_t *)clc_base)->pOOBProf;
     NetProf_AddPacket(&pOOBProf->send, iLength, 0);
@@ -192,7 +192,7 @@ void CL_Netchan_SendOOBPacket(int iLength, const void *pData, netadr_t to)
         Com_Printf("CL_Netchan_SendOOBPacket used to send non-OOB packet.\n");
     }
 
-    clc_base = *(byte **)clc_ptr;
+    clc_base = (byte *)&::clc;
     NetProf_PrepProfiling(&((clientConnection_t *)clc_base)->pOOBProf);
 
     NET_SendPacket(NS_CLIENT1, iLength, pData, to);
@@ -214,7 +214,7 @@ void CL_Netchan_PrintProfileStats(qboolean bPrintToConsole)
     netProfileInfo_t *pOOBProf;
     netProfileInfo_t *pProf;
 
-    clc_base = *(byte **)clc_ptr;
+    clc_base = (byte *)&::clc;
 
     pProf = ((clientConnection_t *)clc_base)->netchan.pProf;
     if (pProf != NULL) {
@@ -257,7 +257,7 @@ void CL_Netchan_PrintProfileStats(qboolean bPrintToConsole)
         CL_DrawString(0x20, iYPos, szLine, 0, 0xa);
     }
 
-    clc_base = *(byte **)clc_ptr;
+    clc_base = (byte *)&::clc;
     pOOBProf = ((clientConnection_t *)clc_base)->pOOBProf;
     if (pOOBProf != NULL) {
         iTotalBPSSent = pOOBProf->send.iBytesPerSecond;
@@ -306,7 +306,7 @@ void CL_Netchan_PrintProfileStats(qboolean bPrintToConsole)
         iTotalBPSRecieved = 0;
     }
 
-    clc_base = *(byte **)clc_ptr;
+    clc_base = (byte *)&::clc;
     pProf = ((clientConnection_t *)clc_base)->netchan.pProf;
     if (pProf != NULL) {
         iTotalBPSSent += pProf->send.iBytesPerSecond;

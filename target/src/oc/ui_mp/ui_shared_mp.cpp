@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+extern sharedUiInfo_t sharedUiInfo;
 
 extern commandDef_t commandList[28];
 extern bind_t g_bindings[56];
@@ -147,7 +148,6 @@ static itemDef_t *itemCapture;
 static itemDef_t *g_bindItem;
 static qboolean debugMode;
 static int lastListBoxClickTime;
-extern void *imp_sharedUiInfo;
 
 void LerpColor(vec_t *a, vec_t *b, vec_t *c, float t);
 qboolean String_Parse(const char **p, char *out, int len);
@@ -1494,7 +1494,7 @@ void Item_ListBox_Paint(displayContextDef_t *dc, itemDef_t *item)
         float hy_bottom = (((rectDef_t*)(it))->y);
         hy_bottom = hy_bottom + (((rectDef_t*)(it))->h) - 16.0f - 1.0f;
 
-        uiInfo = (byte *)imp_sharedUiInfo;
+        uiInfo = (byte *)((void *)&sharedUiInfo);
 
         UI_DrawHandlePic(
             hx, hy_bottom, 16.0f, 16.0f,
@@ -1577,7 +1577,7 @@ void Item_ListBox_Paint(displayContextDef_t *dc, itemDef_t *item)
 
         float scrollY = (((rectDef_t*)(it))->y) + 1.0f;
 
-        uiInfo = (byte *)imp_sharedUiInfo;
+        uiInfo = (byte *)((void *)&sharedUiInfo);
 
         UI_DrawHandlePic(
             scrollX, scrollY, 16.0f, 16.0f,
@@ -2933,7 +2933,6 @@ void Item_YesNo_Paint(displayContextDef_t *dc, itemDef_t *item)
                 ((itemDef_t *)it)->textscale, newColor, (((itemDef_s*)(it))->textStyle));
 }
 
-extern void *imp_sharedUiInfo;
 void Item_Slider_Paint(displayContextDef_t *dc, itemDef_t *item)
 {
     byte *it = (byte *)item;
@@ -2984,7 +2983,7 @@ void Item_Slider_Paint(displayContextDef_t *dc, itemDef_t *item)
         x = (((rectDef_t*)(it))->x);
     }
 
-    byte *uiInfo = (byte *)imp_sharedUiInfo;
+    byte *uiInfo = (byte *)((void *)&sharedUiInfo);
     UI_DrawHandlePic(
         x, y, 96.0f, 16.0f,
         (((rectDef_t*)(it))->horzAlign), (((rectDef_t*)(it))->vertAlign), newColor,
@@ -3288,7 +3287,7 @@ qboolean Item_SetFocus(displayContextDef_t *dc, itemDef_t *item, float x, float 
     byte *d = (byte *)dc;
     int i;
 
-    snd_alias_list_t *defaultSound = ((sharedUiInfo_t *)imp_sharedUiInfo)->assets.itemFocusSound;
+    snd_alias_list_t *defaultSound = ((sharedUiInfo_t *)((void *)&sharedUiInfo))->assets.itemFocusSound;
 
     if (!item)
         return 0;

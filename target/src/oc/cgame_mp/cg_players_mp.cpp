@@ -2,6 +2,11 @@
 #include "imports.h"
 #include "headers/PC/cgame_mp/cg_local.h"
 #include <string.h>
+extern const dvar_t *cg_connectionIconSize;
+extern const dvar_t *cg_constantSizeHeadIcons;
+extern const dvar_t *cg_scriptIconSize;
+extern const dvar_t *cg_voiceIconSize;
+extern const dvar_t *cg_youInKillCamSize;
 
 extern const dvar_t *cg_debugPosition;
 extern const dvar_t *cg_headIconMinScreenRadius;
@@ -44,11 +49,6 @@ extern const char *CL_GetConfigString(int index);
 extern MaterialHandle CL_RegisterMaterial(const char *name, int flags);
 
 extern void *imp_cg_headIconMinScreenRadius;
-extern void *imp_cg_voiceIconSize;
-extern void *imp_cg_scriptIconSize;
-extern void *imp_cg_constantSizeHeadIcons;
-extern void *imp_cg_youInKillCamSize;
-extern void *imp_cg_connectionIconSize;
 extern byte *cg_pmove_mins;
 
 void CG_UpdatePlayerDObj(centity_t *cent);
@@ -214,9 +214,9 @@ void CG_PlayerSprites(centity_t *cent)
                 const char *str = CL_GetConfigString(headicon + 30);
                 material = CL_RegisterMaterial(str, 7);
                 if (material) {
-                    CG_PlayerFloatSprite(cent, material, ((*(const dvar_t **)(imp_cg_scriptIconSize))->current.value), 0,
-                                         (Bool)((*(const dvar_t **)(imp_cg_constantSizeHeadIcons))->current.enabled));
-                    additionalRadiusSize = 16.0f + ((*(const dvar_t **)(imp_cg_scriptIconSize))->current.value);
+                    CG_PlayerFloatSprite(cent, material, ((((const dvar_t *)cg_scriptIconSize))->current.value), 0,
+                                         (Bool)((((const dvar_t *)cg_constantSizeHeadIcons))->current.enabled));
+                    additionalRadiusSize = 16.0f + ((((const dvar_t *)cg_scriptIconSize))->current.value);
                     goto check_local_player;
                 }
             }
@@ -232,7 +232,7 @@ check_local_player:
 
             height = (int)additionalRadiusSize;
             material = cgs->media.youInKillCamMaterial;
-            CG_PlayerFloatSprite(cent, material, ((*(const dvar_t **)(imp_cg_youInKillCamSize))->current.value), height, 1);
+            CG_PlayerFloatSprite(cent, material, ((((const dvar_t *)cg_youInKillCamSize))->current.value), height, 1);
             return;
         }
     }
@@ -241,7 +241,7 @@ check_local_player:
     if (eFlags & 0x80) {
         height = (int)additionalRadiusSize;
         material = cgs->media.connectionMaterial;
-        CG_PlayerFloatSprite(cent, material, ((*(const dvar_t **)(imp_cg_connectionIconSize))->current.value), height, 0);
+        CG_PlayerFloatSprite(cent, material, ((((const dvar_t *)cg_connectionIconSize))->current.value), height, 0);
         return;
     }
 
@@ -251,7 +251,7 @@ check_local_player:
     if (cent->voiceChatSpriteTime > cg->time ) {
         height = (int)additionalRadiusSize;
         material = cent->voiceChatSprite;
-        CG_PlayerFloatSprite(cent, material, ((*(const dvar_t **)(imp_cg_voiceIconSize))->current.value), height, 0);
+        CG_PlayerFloatSprite(cent, material, ((((const dvar_t *)cg_voiceIconSize))->current.value), height, 0);
         return;
     }
 
@@ -261,7 +261,7 @@ check_local_player:
     additionalRadiusSize -= 5.0f;
     height = (int)additionalRadiusSize;
     material = cgs->media.balloonMaterial;
-    CG_PlayerFloatSprite(cent, material, ((*(const dvar_t **)(imp_cg_voiceIconSize))->current.value), height, 0);
+    CG_PlayerFloatSprite(cent, material, ((((const dvar_t *)cg_voiceIconSize))->current.value), height, 0);
 }
 
 static void CG_PlayerTurretPositionAndBlend(centity_t *cent)

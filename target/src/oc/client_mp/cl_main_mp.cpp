@@ -4,6 +4,9 @@
 #include "cod2_feature_config.h"
 #include "pb_public.h"
 #include "www_download.h"
+extern bgs_t *bgs;
+extern int cl_connectedToPureServer;
+extern int fs_checksumFeed;
 extern int dvar_modifiedFlags;
 extern int g_console_field_width;
 extern float g_console_char_height;
@@ -216,7 +219,7 @@ extern int puts(const char *);
 
 extern refexport_t re;
 extern const clientActive_t *cl;
-extern const clientConnection_t *clc;
+extern clientConnection_t clc;
 extern struct clientStatic_t cls;
 extern const dvar_t *cl_nodelta;
 extern const dvar_t *cl_noprint;
@@ -265,7 +268,6 @@ extern const dvar_t *cl_ingame;
 extern const dvar_t *name;
 extern const dvar_t *cl_voice;
 extern clientActive_t clients[1];
-extern clientConnection_t clientConnections[1];
 extern void Com_ClientDObjClearAllSkel(void);
 extern Bool g_waitingForServer;
 extern ping_t cl_pinglist[16];
@@ -390,7 +392,7 @@ Bool CL_AllLocalClientsDisconnected(void)
     if (UI_IsFullscreen())
         return 1;
     for (client = 0; client < 1; client++) {
-        if (clients[client].active && clientConnections[client].state >= CA_CONNECTING)
+        if (clients[client].active && (&::clc)[client].state >= CA_CONNECTING)
             return 0;
     }
     return 1;
@@ -398,7 +400,7 @@ Bool CL_AllLocalClientsDisconnected(void)
 
 qboolean CL_AnyLocalClientChallenging(void)
 {
-    if (*(byte *)&clients[0] != 0 && *(int *)&clientConnections[0] == 4)
+    if (*(byte *)&clients[0] != 0 && *(int *)&::clc == 4)
         return 1;
     return 0;
 }
@@ -417,10 +419,10 @@ static inline __attribute__((always_inline)) void CL_AddReliableCommand_core(con
 {
     clientConnection_t *conn;
     int index;
-    if (clientConnections[0].reliableSequence - clientConnections[0].reliableAcknowledge - 128 > 0) {
+    if (::clc.reliableSequence - ::clc.reliableAcknowledge - 128 > 0) {
         Com_Error(1, (const char *)"EXE_ERR_CLIENT_CMD_OVERFLOW");
     }
-    conn = (clientConnection_t *)clc;
+    conn = &::clc;
     conn->reliableSequence += 1;
     index = conn->reliableSequence & 0x7f;
     MSG_WriteReliableCommandToBuffer(cmd, (char *)conn->reliableCommands[index], 0x400);
@@ -433,7 +435,7 @@ void CL_AddReliableCommand(const char *cmd)
 
 void CL_StopRecord_f(void)
 {
-    clientConnection_t *cc = &clientConnections[0];
+    clientConnection_t *cc = &::clc;
     clientConnection_t *conn;
     int len;
 
@@ -444,7 +446,7 @@ void CL_StopRecord_f(void)
 
     len = -1;
     FS_Write(&len, 4, cc->demofile);
-    conn = (clientConnection_t *)clc;
+    conn = &::clc;
     FS_Write(&len, 4, conn->demofile);
     FS_FCloseFile(conn->demofile);
     conn->demofile = 0;
@@ -456,10 +458,10 @@ void CL_ShutdownDemo(void)
 {
     clientConnection_t *conn;
 
-    if (!clientConnections[0].demofile)
+    if (!::clc.demofile)
         return;
-    FS_FCloseFile(clientConnections[0].demofile);
-    conn = (clientConnection_t *)clc;
+    FS_FCloseFile(::clc.demofile);
+    conn = &::clc;
     conn->demofile = 0;
     conn->demoplaying = 0;
     conn->demorecording = 0;
@@ -581,7 +583,7 @@ void CL_Configstrings_f(void)
     clientActive_t *c;
     int offset;
 
-    if (clientConnections[0].state != 8) {
+    if (::clc.state != 8) {
         Com_Printf("Not connected to a server.\n");
         return;
     }
@@ -600,7 +602,7 @@ void CL_Clientinfo_f(void)
 {
 
     Com_Printf("--------- Client Information ---------\n");
-    Com_Printf("state: %i\n", clientConnections[0].state);
+    Com_Printf("state: %i\n", ::clc.state);
     Com_Printf("Server: %s\n", cls.servername);
     Com_Printf("User info settings:\n");
     Info_Print(Dvar_InfoString(2));
@@ -698,7 +700,7 @@ int Voice_SendVoiceData(void)
     if (Dvar_GetInt("rate") <= 0x1387)
         return 0;
 
-    if (clc->state != 8)
+    if (clc.state != 8)
         return 0;
 
     if ((cl_talking)->current.enabled)
@@ -1037,12 +1039,12 @@ void CL_startSingleplayer_f(void)
 
 void CL_StopLogo(void)
 {
-    *(int *)&clientConnections[0] = 0;
+    *(int *)&::clc = 0;
 }
 
 void CL_ToggleMenu_f(void)
 {
-    if (clientConnections[0].demoplaying != 0 || legacyHacks->cl_serverloadwaiting != 0) {
+    if (::clc.demoplaying != 0 || legacyHacks->cl_serverloadwaiting != 0) {
         UI_SetActiveMenu(1);
     } else {
         UI_SetActiveMenu(2);
@@ -1275,7 +1277,7 @@ void CL_ShowIP_f(void)
 extern int Com_sprintf(char *dest, size_t size, const char *format, ...);
 const char *CL_GetServerIPAddress(void)
 {
-    clientConnection_t *connection = &clientConnections[0];
+    clientConnection_t *connection = &::clc;
     netadr_t *serverAddress = &connection->serverAddress;
 
     if (connection->state <= CA_CHALLENGING) {
@@ -1410,7 +1412,7 @@ FontHandle CL_RegisterFont(const char *fontName, int imageTrack)
 
 void CL_WriteDemoMessage(msg_t *msg, int headerBytes)
 {
-    clientConnection_t *cc = &clientConnections[0];
+    clientConnection_t *cc = &::clc;
     clientConnection_t *conn;
     int swlen;
     int len;
@@ -1420,7 +1422,7 @@ void CL_WriteDemoMessage(msg_t *msg, int headerBytes)
 
     len = msg->cursize - headerBytes;
     swlen = len;
-    conn = (clientConnection_t *)clc;
+    conn = &::clc;
     FS_Write(&swlen, 4, conn->demofile);
 
     FS_Write(msg->data + headerBytes, len, conn->demofile);
@@ -1428,7 +1430,7 @@ void CL_WriteDemoMessage(msg_t *msg, int headerBytes)
 
 void CL_Record_f(void)
 {
-    clientConnection_t *conn = (clientConnection_t *)clc;
+    clientConnection_t *conn = &::clc;
     clientActive_t *active = (clientActive_t *)cl;
     char demoName[64];
     char name[256];
@@ -1543,7 +1545,7 @@ void CL_InitLoad(const char *mapname, const char *gametype)
     Dvar_SetInt(com_expectedHunkUsage, 0);
     UI_SetMap(mapname, gametype);
 
-    cc = (byte *)clc;
+    cc = (byte *)&clc;
     *(int *)cc = (*(int *)cc >= 5) ? 5 : 0;
 
     SCR_UpdateScreenInternal();
@@ -1586,20 +1588,20 @@ void CL_DrawLogo(void)
     re.DrawStretchPic(0.0f, h0, w, h1, 0.0f, 0.0f, 1.0f, 1.0f, color, cls.logo.material[1]);
 
     if (time > cls.logo.duration)
-        ((clientConnection_t *)clc)->state = CA_DISCONNECTED;
+        (&::clc)->state = CA_DISCONNECTED;
 }
 
 void CL_StopLogoOrCinematic(void)
 {
-    if (*(int *)&clientConnections[0] == 1) {
+    if (*(int *)&::clc == 1) {
         SCR_StopCinematic();
     } else {
-        *(int *)&clientConnections[0] = 0;
+        *(int *)&::clc = 0;
     }
 
     SND_StopSounds((snd_stopsounds_arg_t)0);
 
-    if (!*(int *)clc)
+    if (!clc.state)
         UI_SetActiveMenu(1);
     else
         UI_SetActiveMenu(0);
@@ -1803,7 +1805,7 @@ void CL_RequestAuthorization(void)
 
 void CL_CheckForResend(void)
 {
-    clientConnection_t *conn = (clientConnection_t *)clc;
+    clientConnection_t *conn = &::clc;
     char info[1024];
     char data[2048];
     int infoLen;
@@ -1908,7 +1910,7 @@ void CL_PlayLogo_f(void)
 
     Com_DPrintf((const char *)"CL_PlayLogo_f\n");
 
-    conn = (clientConnection_t *)clc;
+    conn = &::clc;
     if (conn->state == CA_CINEMATIC) {
         SCR_StopCinematic();
     } else if (conn->state == CA_LOGO) {
@@ -1945,7 +1947,7 @@ qboolean CL_UpdateDirtyPings_f(int source)
     int i;
     char buff[1024];
 
-    if (((clientConnection_t *)clc)->state != CA_DISCONNECTED)
+    if ((&::clc)->state != CA_DISCONNECTED)
         return 0;
 
     if ((unsigned int)source > 2)
@@ -2046,7 +2048,7 @@ void CL_RunOncePerClientFrame(int msec)
     int avidemoVal = cl_avidemo->current.integer;
     if (avidemoVal && msec) {
 
-        if (clc->state == 8 || cl_forceavidemo->current.enabled) {
+        if (clc.state == 8 || cl_forceavidemo->current.enabled) {
             Cbuf_ExecuteText(0, "screenshot silent\n");
         }
         float timescale = com_timescaleValue;
@@ -2100,7 +2102,7 @@ int Client_SendVoiceData(int bytes, char *enc_buffer)
 
 Bool CL_ConnectionlessPacket(netadr_t from, msg_t *msg, int time)
 {
-    clientConnection_t *conn = (clientConnection_t *)clc;
+    clientConnection_t *conn = &::clc;
     LargeLocal printBuf_large_local;
     char *printBuf;
     const char *cmd;
@@ -2273,7 +2275,7 @@ static inline __attribute__((always_inline))
 Bool
 CL_PacketEvent_real(netadr_t from, msg_t *msg, int time)
 {
-    clientConnection_t *conn = (clientConnection_t *)clc;
+    clientConnection_t *conn = &::clc;
     int headerBytes;
     int savedServerMessageSequence;
     int savedReliableAcknowledge;
@@ -2281,7 +2283,7 @@ CL_PacketEvent_real(netadr_t from, msg_t *msg, int time)
     if (msg->cursize > 3 && *(int *)msg->data == -1)
         return CL_ConnectionlessPacket(from, msg, time);
 
-    if (*(int *)&clientConnections[0] <= CA_CHALLENGING)
+    if (*(int *)&::clc <= CA_CHALLENGING)
         return 0;
 
     if (msg->cursize <= 3) {
@@ -2359,7 +2361,7 @@ void CL_Init(void)
     CL_ClearMutedList();
     c->voicePacketCount = 0;
 
-    *(int *)(byte *)clc = 0;
+    clc.state = CA_DISCONNECTED;
     cls.realtime = 0;
 
     c->active = 1;
@@ -2399,12 +2401,11 @@ void CL_ShutdownAll(void)
     cls.rendererStarted = 0;
 }
 
-extern void *imp_sv_paused;
 
 void CL_Frame(void)
 {
 
-    clientConnection_t *clc_p = &clientConnections[0];
+    clientConnection_t *clc_p = &::clc;
     clientActive_t *cl_p;
     const dvar_t *clp;
     int state;
@@ -2504,7 +2505,7 @@ Ltail:
 void CL_Vid_Restart_f(void)
 {
     const dvar_t *svRunning = com_sv_running;
-    clientConnection_t *conn = (clientConnection_t *)clc;
+    clientConnection_t *conn = &::clc;
     clientActive_t *active = (clientActive_t *)cl;
     MemoryFile memFile;
     void *tempBuf;
@@ -2601,7 +2602,7 @@ void CL_Snd_Restart_f(void)
 void CL_Disconnect(void)
 {
     LegacyHacks *legacy = (LegacyHacks *)::legacyHacks;
-    clientConnection_t *conn = (clientConnection_t *)clc;
+    clientConnection_t *conn = &::clc;
     clientActive_t *active = (clientActive_t *)cl;
     connstate_t oldState;
     int sequence;
@@ -2657,9 +2658,9 @@ void CL_Disconnect(void)
         return;
 
     Dvar_SetBool(sv_disableClientConsole, 0);
-    *(int *)imp_cl_connectedToPureServer = 0;
-    *(int *)imp_fs_checksumFeed = 0;
-    *(void **)imp_bgs = 0;
+    ((int)cl_connectedToPureServer) = 0;
+    ((int)fs_checksumFeed) = 0;
+    bgs = 0;
 }
 
 void CL_Shutdown(void)
@@ -2688,7 +2689,7 @@ void CL_Shutdown(void)
 
     CL_Disconnect();
 
-    if (!(Sys_IsMainThread() && !UI_IsFullscreen() && *(byte *)&clients[0] != 0 && *(int *)&clientConnections[0] > CA_LOGO)) {
+    if (!(Sys_IsMainThread() && !UI_IsFullscreen() && *(byte *)&clients[0] != 0 && *(int *)&::clc > CA_LOGO)) {
         CL_ShutdownDebugData();
 
         if (cls.hunkUsersStarted) {
@@ -2720,13 +2721,13 @@ void CL_Disconnect_f(void)
     connstate_t prevState;
 
     SCR_StopCinematic();
-    prevState = ((clientConnection_t *)clc)->state;
+    prevState = (&::clc)->state;
     CL_Disconnect();
 
     if (prevState <= CA_LOGO)
         return;
 
-    if (Sys_IsMainThread() && !UI_IsFullscreen() && *(byte *)&clients[0] != 0 && *(int *)&clientConnections[0] > 2)
+    if (Sys_IsMainThread() && !UI_IsFullscreen() && *(byte *)&clients[0] != 0 && *(int *)&::clc > 2)
         return;
     Com_Error(3, "EXE_DISCONNECTED_FROM_SERVER");
 }
@@ -2734,7 +2735,7 @@ void CL_Disconnect_f(void)
 void CL_MapLoading(const char *mapname)
 {
     LegacyHacks *legacy = (LegacyHacks *)::legacyHacks;
-    clientConnection_t *conn = (clientConnection_t *)clc;
+    clientConnection_t *conn = &::clc;
     clientActive_t *active = (clientActive_t *)cl;
 
     if (!legacy->cl_running)
@@ -2745,7 +2746,7 @@ void CL_MapLoading(const char *mapname)
     active->keyCatchers = 0;
     active->displayHUDWithKeycatchUI = 0;
 
-    if (*(int *)&clientConnections[0] > CA_CHALLENGING && I_stricmp(cls.servername, (const char *)"localhost") == 0) {
+    if (*(int *)&::clc > CA_CHALLENGING && I_stricmp(cls.servername, (const char *)"localhost") == 0) {
         conn->state = CA_CONNECTED;
         memset(conn->serverMessage, 0, sizeof(conn->serverMessage));
         memset(&active->gameState, 0, sizeof(active->gameState));
@@ -2770,7 +2771,7 @@ void CL_MapLoading(const char *mapname)
 
 void CL_DemoCompleted(void)
 {
-    clientConnection_t *conn = (clientConnection_t *)clc;
+    clientConnection_t *conn = &::clc;
     connstate_t oldState;
 
     if (conn->isTimeDemo) {
@@ -2794,7 +2795,7 @@ void CL_DemoCompleted(void)
     if (oldState <= CA_LOGO)
         return;
 
-    if (Sys_IsMainThread() && !UI_IsFullscreen() && *(byte *)&clients[0] != 0 && *(int *)&clientConnections[0] > CA_LOGO)
+    if (Sys_IsMainThread() && !UI_IsFullscreen() && *(byte *)&clients[0] != 0 && *(int *)&::clc > CA_LOGO)
         return;
 
     Com_Error(3, (const char *)"EXE_DISCONNECTED_FROM_SERVER");
@@ -2807,17 +2808,17 @@ void CL_ReadDemoMessage(void)
     byte bufData[MAX_MSGLEN];
     int serverMessageSequence;
 
-    if (!clientConnections[0].demofile) {
+    if (!::clc.demofile) {
         CL_DemoCompleted();
         return;
     }
 
-    if (FS_Read(&serverMessageSequence, 4, clientConnections[0].demofile) != 4) {
+    if (FS_Read(&serverMessageSequence, 4, ::clc.demofile) != 4) {
         CL_DemoCompleted();
         return;
     }
 
-    conn = (clientConnection_t *)clc;
+    conn = &::clc;
     conn->serverMessageSequence = serverMessageSequence;
 
     MSG_Init(&buf, bufData, sizeof(bufData));
@@ -2884,7 +2885,7 @@ void CL_PlayDemo_f(void)
     else
         Com_sprintf(name, sizeof(name), (const char *)"demos/%s.dm_%d", arg, 1);
 
-    conn = (clientConnection_t *)clc;
+    conn = &::clc;
     FS_FOpenFileRead(name, &conn->demofile, 1);
     if (!conn->demofile)
         Com_Error(1, va((const char *)"EXE_ERR_NOT_FOUND\x15%s", name));
@@ -2906,7 +2907,7 @@ void CL_PlayDemo_f(void)
 void CL_ForwardCommandToServer(const char *string)
 {
     const char *cmd = Cmd_Argv(0);
-    clientConnection_t *conn = (clientConnection_t *)clc;
+    clientConnection_t *conn = &::clc;
     const char *reliableCommand;
     int seq;
 
@@ -2942,7 +2943,7 @@ void CL_ForwardToServer_f(void)
     int acked;
     int slot;
 
-    if (clientConnections[0].state != CA_ACTIVE || clientConnections[0].demoplaying) {
+    if (::clc.state != CA_ACTIVE || ::clc.demoplaying) {
         Com_Printf((const char *)"Not connected to a server.\n");
         return;
     }
@@ -2950,7 +2951,7 @@ void CL_ForwardToServer_f(void)
         return;
     cmd = (const char *)Cmd_Args(1);
 
-    conn = (clientConnection_t *)clc;
+    conn = &::clc;
     seq = conn->reliableSequence;
     if (seq - conn->reliableAcknowledge - 128 > 0) {
         Com_Error(1, (const char *)"EXE_ERR_CLIENT_CMD_OVERFLOW");
@@ -2979,14 +2980,14 @@ void CL_DownloadsComplete(void)
     char cmd[1024];
     int i;
 
-    if (clientConnections[0].downloadRestart) {
-        clientConnections[0].downloadRestart = 0;
-        FS_Restart(clc->checksumFeed);
+    if (::clc.downloadRestart) {
+        ::clc.downloadRestart = 0;
+        FS_Restart(clc.checksumFeed);
         CL_AddReliableCommand_core((const char *)"donedl");
         return;
     }
 
-    clientConnections[0].state = CA_LOADING;
+    ::clc.state = CA_LOADING;
 
     if (!(com_sv_running)->current.enabled) {
         const char *info;
@@ -3051,7 +3052,7 @@ void CL_BeginDownload(const char *localName, const char *remoteName)
     int sequence;
 
     Com_DPrintf((const char *)"***** CL_BeginDownload *****\nLocalname: %s\nRemotename: %s\n****************************\n", localName, remoteName);
-    conn = (clientConnection_t *)clc;
+    conn = &::clc;
     I_strncpyz(conn->downloadName, localName, sizeof(conn->downloadName));
     Com_sprintf(conn->downloadTempName, sizeof(conn->downloadTempName), (const char *)"%s.tmp", localName);
 
@@ -3079,12 +3080,12 @@ void CL_NextDownload(void)
     char *localName;
     char *next;
 
-    if (!clientConnections[0].downloadList[0]) {
+    if (!::clc.downloadList[0]) {
         CL_DownloadsComplete();
         return;
     }
 
-    remoteName = clientConnections[0].downloadList;
+    remoteName = ::clc.downloadList;
     if (*remoteName == '@')
         ++remoteName;
 
@@ -3102,7 +3103,7 @@ void CL_NextDownload(void)
         next = localName + strlen(localName);
 
     CL_BeginDownload(localName, remoteName);
-    conn = (clientConnection_t *)clc;
+    conn = &::clc;
     conn->downloadRestart = 1;
     memmove(conn->downloadList, next, strlen(next) + 1);
 }
@@ -3123,7 +3124,7 @@ void CL_InitDownloads(void)
         return;
     }
 
-    conn = (clientConnection_t *)clc;
+    conn = &::clc;
     if (!FS_CompareIwds(conn->downloadList, sizeof(conn->downloadList), 1)) {
         CL_DownloadsComplete();
         return;

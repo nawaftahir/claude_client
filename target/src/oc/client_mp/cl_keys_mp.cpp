@@ -2,8 +2,11 @@
 #include "imports.h"
 #include <ctype.h>
 #include <string.h>
+extern const dvar_t *cl_bypassMouseInput;
+extern dvar_t *com_sv_running;
+extern dvar_t *sv_disableClientConsole;
 extern clientActive_t clients[1];
-extern clientConnection_t clientConnections[1];
+extern clientConnection_t clc;
 extern int dvar_modifiedFlags;
 extern int g_console_field_width;
 extern float g_console_char_height;
@@ -711,7 +714,7 @@ void CL_CharEvent(int key)
         return;
     }
 
-    if (!*((int *)clientConnections)) {
+    if (!*((int *)&::clc)) {
         Field_CharEvent(&g_consoleField, key);
         return;
     }
@@ -786,7 +789,7 @@ void Message_Key(int key)
 
     if (key == K_ENTER || key == K_KP_ENTER) {
         if (chatField->buffer[0]) {
-            if ((clientConnections)->state == 8) {
+            if ((&::clc)->state == 8) {
                 char buffer[1024];
 
                 if (*chat_team) {
@@ -952,7 +955,7 @@ void Console_Key(int key)
     // enter finishes the line
     if (key == K_ENTER || key == K_KP_ENTER) {
         // if not in the game explicitly prepend a slash if needed
-        if (clientConnections[0].state != CA_ACTIVE && g_consoleField.buffer[0] != '\\' && g_consoleField.buffer[0] != '/') {
+        if (::clc.state != CA_ACTIVE && g_consoleField.buffer[0] != '\\' && g_consoleField.buffer[0] != '/') {
             char temp[1024];
 
             I_strncpyz(temp, g_consoleField.buffer, sizeof(temp));
@@ -1176,7 +1179,7 @@ static inline __attribute__((always_inline)) void CL_HandleEscapeKey(qboolean do
         return;
     }
 
-    clc = clientConnections;
+    clc = &::clc;
     switch (clc->state) {
     case CA_CINEMATIC:
     case CA_LOGO:
@@ -1206,8 +1209,8 @@ static inline __attribute__((always_inline)) void CL_HandleConsoleToggleKey(qboo
 
     cl = clients;
     if (!(cl->keyCatchers & 1) &&
-        !CL_DvarEnabledFromImport(imp_com_sv_running) &&
-        CL_DvarEnabledFromImport(imp_sv_disableClientConsole)) {
+        !CL_DvarEnabledFromImport((void *)&com_sv_running) &&
+        CL_DvarEnabledFromImport((void *)&sv_disableClientConsole)) {
         return;
     }
 
@@ -1236,7 +1239,7 @@ void CL_KeyEvent(int key, const qboolean down, const unsigned int time)
         return;
 
     cl = clients;
-    clc = clientConnections;
+    clc = &::clc;
     keyState = &keys[key];
 
     keyState->down = down;
@@ -1292,7 +1295,7 @@ void CL_KeyEvent(int key, const qboolean down, const unsigned int time)
 
     bypassUi = 0;
     if (keyCatchers & 8) {
-        qboolean bypassMouseInput = CL_DvarEnabledFromImport(imp_cl_bypassMouseInput);
+        qboolean bypassMouseInput = CL_DvarEnabledFromImport((void *)&cl_bypassMouseInput);
         qboolean uiWantsKey = UI_checkKeyExec(key);
         if (bypassMouseInput && key >= 0xc8 && key <= 0xca) {
             bypassUi = 1;

@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 extern clientActive_t clients[1];
-extern clientConnection_t clientConnections[1];
+extern clientConnection_t clc;
 extern clientStatic_t cls;
 
 extern int I_stricmp(const char *s1, const char *s2);
@@ -62,7 +62,7 @@ int LAN_CompareServers(int source, int sortKey, int sortDir, int s1, int s2);
 
 void GetClientState(uiClientState_t *state)
 {
-    clientConnection_t *clc_local = clientConnections;
+    clientConnection_t *clc_local = &::clc;
 
     state->connectPacketCount = clc_local->connectPacketCount;
     state->connState = clc_local->state;
@@ -402,7 +402,7 @@ int UI_PlayLocalSoundAliasByName(const char *aliasname)
 
 qboolean UI_ClientIsInGame(void)
 {
-    clientConnection_t *clc_local = clientConnections;
+    clientConnection_t *clc_local = &::clc;
     return clc_local->state == 8;
 }
 
