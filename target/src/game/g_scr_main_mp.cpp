@@ -4838,7 +4838,7 @@ void GScr_MakeDvarServerInfo()
 	len = strlen(dvarValue);
 	p = outString;
 
-	for ( i = 0; i <= 0x3fe && dvarValue[i]; i++, p++ )
+	for ( i = 0; i < 0x3ff && dvarValue[i]; i++, p++ )
 	{
 		*p = I_CleanChar(dvarValue[i]);
 

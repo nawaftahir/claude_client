@@ -2859,8 +2859,6 @@ void CL_PlayDemo_f(void)
     const char *arg;
     char extension[32];
     char name[256];
-    int argLen;
-    int extLen;
 
     if (Cmd_Argc() != 2) {
         Com_Printf((const char *)"%s <demoname>\n", Cmd_Argv(0));
@@ -2876,10 +2874,7 @@ void CL_PlayDemo_f(void)
 
     arg = Cmd_Argv(1);
     Com_sprintf(extension, sizeof(extension), (const char *)".dm_%d", 1);
-    argLen = strlen(arg);
-    extLen = strlen(extension);
-
-    if (argLen >= extLen && I_stricmp(arg + argLen - extLen, extension) == 0)
+    if (!I_stricmp(arg + strlen(arg) - strlen(extension), extension))
         Com_sprintf(name, sizeof(name), (const char *)"demos/%s", arg);
     else
         Com_sprintf(name, sizeof(name), (const char *)"demos/%s.dm_%d", arg, 1);
@@ -2897,7 +2892,7 @@ void CL_PlayDemo_f(void)
     conn->isTimeDemo = I_stricmp(Cmd_Argv(0), (const char *)"timedemo") == 0;
     I_strncpyz(cls.servername, Cmd_Argv(1), sizeof(cls.servername));
 
-    while (conn->state == CA_CONNECTED || conn->state == CA_LOADING)
+    while (conn->state >= CA_CONNECTED && conn->state < CA_PRIMED)
         CL_ReadDemoMessage();
 
     conn->firstDemoFrameSkipped = 0;

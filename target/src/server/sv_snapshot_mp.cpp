@@ -1146,7 +1146,12 @@ qboolean SV_GetArchivedClientInfo( int clientNum, int *pArchiveTime, playerState
 
 	if ( !cachedSnapshot )
 	{
-		return *pArchiveTime > 0 ? qfalse : SV_GetCurrentClientInfo(clientNum, ps, cs);
+		if ( *pArchiveTime <= 0 )
+		{
+			return SV_GetCurrentClientInfo(clientNum, ps, cs);
+		}
+
+		return qfalse;
 	}
 
 	assert(*pArchiveTime > 0);

@@ -189,8 +189,6 @@ void CG_UpdateViewWeaponAnim(playerState_t *ps);
 
 static void CG_PlayADSAnim_impl(XAnimTree *pAnimTree, int animIndex)
 {
-    float adsProgress;
-
     if (animIndex == 0x15) {
 
         XAnimSetGoalWeight(pAnimTree, 0x15, 1.0f, 0.5f, 0.0f, 0, 1, 0);
@@ -201,9 +199,8 @@ static void CG_PlayADSAnim_impl(XAnimTree *pAnimTree, int animIndex)
         XAnimSetGoalWeight(pAnimTree, 0x16, 1.0f, 0.5f, 0.0f, 0, 1, 0);
     }
 
-    adsProgress = cg->predictedPlayerState.fWeaponPosFrac;
-    XAnimSetTime(pAnimTree, 0x15, adsProgress);
-    XAnimSetTime(pAnimTree, 0x16, 1.0f - adsProgress);
+    XAnimSetTime(pAnimTree, 0x15, cg->predictedPlayerState.fWeaponPosFrac);
+    XAnimSetTime(pAnimTree, 0x16, 1.0f - cg->predictedPlayerState.fWeaponPosFrac);
 }
 
 static void __attribute_regparm__(3) CG_PlayADSAnim(int unusedWeapon, XAnimTree *pAnimTree, int animIndex)
@@ -395,7 +392,7 @@ static inline __attribute__((always_inline)) void CG_SelectWeaponIndex_core(int 
     if (oldWeaponIndex == weaponIndex)
         return;
 
-    keepAds = weaponIndex && ((WeaponDef *)BG_GetWeaponDef(oldWeaponIndex))->iAltWeaponIndex == weaponIndex;
+    keepAds = weaponIndex && weaponIndex == ((WeaponDef *)BG_GetWeaponDef(oldWeaponIndex))->iAltWeaponIndex;
     cg->weaponSelect = weaponIndex;
     CG_MenuShowNotify(1);
 

@@ -2260,11 +2260,13 @@ void BG_RunLerpFrameRate( clientInfo_t *ci, lerpFrame_t *lf, int newAnimation, c
 	int wasLadderAnim;
 
 	bNewAnim = qfalse;
-	wasLadderAnim = qfalse;
-
 	if ( lf->animation && ( lf->animation->flags & 2 ) )
 	{
 		wasLadderAnim = qtrue;
+	}
+	else
+	{
+		wasLadderAnim = qfalse;
 	}
 
 	isLadderAnim = wasLadderAnim;
