@@ -48,7 +48,8 @@ for i, (va, name, obj) in enumerate(syms):
     stats['bytes'] += len(code)
     lit = code[best[0]:best[1]]
     hits = []
-    if len(lit) >= 8:
+    # short anchors (call-dense fns) still need the full masked compare; cov.py counts unique placements only
+    if len(lit) >= 8 or (len(lit) >= 4 and len(code) - len(mask) >= 16):
         p = cdata.find(lit)
         while p >= 0 and len(hits) < 8:
             st = p - best[0]
