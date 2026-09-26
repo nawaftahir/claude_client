@@ -231,7 +231,7 @@ const dvar_t *cl_forceavidemo;
 const dvar_t *cl_freelook;
 const dvar_t *cl_freezeDemo;
 const dvar_t *cl_inGameVideo;
-const dvar_t *cl_ingame;
+dvar_t *cl_ingame;
 const dvar_t *cl_maxpackets;
 const dvar_t *cl_motdString;
 const dvar_t *cl_mouseAccel;

@@ -3,7 +3,7 @@
 
 extern void Server_SwitchToValidFxScheduler( void );
 struct FxEffectDef;
-extern const FxEffectDef *FX_RegisterEffect( const char *name );
+extern FxEffectDef *FX_RegisterEffect( const char *name );
 extern float FX_GetEffectLength( const FxEffectDef *fx );
 
 void G_RunMissile_CreateWaterSplash( gentity_t *ent, trace_t *trace );

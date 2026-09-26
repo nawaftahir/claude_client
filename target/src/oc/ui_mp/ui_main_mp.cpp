@@ -198,7 +198,7 @@ extern float Dvar_GetFloat(const char *name);
 extern const char* Dvar_GetString(const char *dvarName);
 extern const char *Dvar_GetVariantString(const char *name);
 extern void Dvar_SetFloatByName(const char *name, float value);
-extern const dvar_t *Dvar_SetFromStringByNameFromSource(const char *name, const char *value, int source);
+extern dvar_t *Dvar_SetFromStringByNameFromSource(const char *name, const char *value, DvarSetSource source);
 extern dvar_t* Dvar_FindVar(const char* dvarName);
 extern int SEH_VerifyLanguageSelection(int lang);
 extern const char *SEH_StringEd_GetString(const char *ref);
@@ -257,7 +257,7 @@ extern void Controls_SetConfig(int apply);
 extern void CG_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAlign, float text_x, float text_y, int ownerDraw, int ownerDrawFlags, int align, float special, FontHandle font, float scale, vec_t *color, MaterialHandle material, int textStyle);
 extern const char *CG_GameTypeString(void);
 extern const char *CG_GetKillerText(void);
-extern const char *SEH_LocalizeTextMessage(const char *msg, const char *fmt, const char *ctx);
+extern const char *SEH_LocalizeTextMessage(const char *msg, const char *fmt, msgLocErrType_t errType);
 extern void LerpColor(vec_t *a, vec_t *b, vec_t *c, float t);
 extern void Item_SetCursorPos(itemDef_t *item, int pos);
 extern int Item_ListBox_MaxScroll(itemDef_t *item);
@@ -2613,7 +2613,7 @@ int UI_OwnerDrawWidth(int ownerDraw, FontHandle font, float scale)
             Dvar_SetInt(ui_netSource, 0);
             netSrcVal = (ui_netSource)->current.integer;
         }
-        s = SEH_LocalizeTextMessage(va("EXE_NETSOURCE\x14%s", netSources[netSrcVal]), "net source", 0);
+        s = SEH_LocalizeTextMessage(va("EXE_NETSOURCE\x14%s", netSources[netSrcVal]), "net source", LOCMSG_SAFE);
         break;
     }
     case 0xde: {
@@ -2621,7 +2621,7 @@ int UI_OwnerDrawWidth(int ownerDraw, FontHandle font, float scale)
         if ((unsigned int)ui_serverFilterType < 2)
             filterType = ui_serverFilterType;
         ui_serverFilterType = filterType;
-        s = SEH_LocalizeTextMessage(va("EXE_SERVERFILTER\x14%s", serverFilters[filterType].description), "server filter", 0);
+        s = SEH_LocalizeTextMessage(va("EXE_SERVERFILTER\x14%s", serverFilters[filterType].description), "server filter", LOCMSG_SAFE);
         break;
     }
     case 0xf7:
@@ -2686,7 +2686,7 @@ void UI_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAli
     {
         text = SEH_LocalizeTextMessage(
             va("EXE_NETSOURCE\x14%s", netSources[(ui_netSource)->current.integer]),
-            "net source", 0);
+            "net source", LOCMSG_SAFE);
         UI_DrawText(text, 0x7fffffff, font, rect[0], rect[1], 0, 0, scale, color, textStyle);
         return;
     }
@@ -2709,7 +2709,7 @@ void UI_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAli
         ui_serverFilterType = filterType;
         text = SEH_LocalizeTextMessage(
             va("EXE_SERVERFILTER\x14%s", serverFilters[filterType].description),
-            "server filter", 0);
+            "server filter", LOCMSG_SAFE);
         UI_DrawText(text, 0x7fffffff, font, rect[0], rect[1], 0, 0, scale, color, textStyle);
         return;
     }
@@ -3339,7 +3339,7 @@ void UI_RunMenuScript(const char **args)
 
         Dvar_SetBoolByName("cg_thirdPerson", 0);
         Dvar_SetFromStringByNameFromSource("dedicated",
-                                           va("%i", (ui_dedicated)->current.integer), 1);
+                                           va("%i", (ui_dedicated)->current.integer), DVAR_SOURCE_EXTERNAL);
         Dvar_SetStringByName("g_gametype",
                              sharedUiInfo.gameTypes[(ui_netGameType)->current.integer].gameType);
         {

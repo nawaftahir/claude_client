@@ -26,7 +26,7 @@ extern const dvar_t *com_expectedHunkUsage;
 extern const dvar_t *com_sv_running;
 extern const dvar_t *net_lanauthorize;
 extern const dvar_t *nextmap;
-extern const dvar_t *sv_disableClientConsole;
+extern dvar_t *sv_disableClientConsole;
 extern const dvar_t *sv_paused;
 extern const dvar_t *sv_voice;
 
@@ -87,7 +87,7 @@ extern int FS_Write(const void *buffer, int len, int f);
 extern void CL_ShutdownCGame(void);
 extern qboolean CL_ShutdownUI(void);
 extern void Dvar_SetInt(const dvar_t *dvar, int value);
-extern void Dvar_SetBool(const dvar_t *dvar, int value);
+extern void Dvar_SetBool(dvar_t *dvar, bool value);
 extern void Dvar_SetString(const dvar_t *dvar, const char *value);
 extern void UI_SetMap(const char *mapname, const char *gametype);
 extern void SCR_UpdateScreenInternal(void);
@@ -212,7 +212,7 @@ extern void CG_CalculateFPS(void);
 extern int Voice_GetLocalVoiceData(ClientVoicePacket_t *dest);
 extern void Voice_Playback(void);
 extern void SEH_UpdateLanguageInfo(void);
-extern const char *SEH_LocalizeTextMessage(const char *ref, const char *defaultText, int flags);
+extern const char *SEH_LocalizeTextMessage(const char *ref, const char *defaultText, msgLocErrType_t errType);
 extern char *strchr(const char *, int);
 extern float floorf(float);
 extern int puts(const char *);
@@ -263,7 +263,7 @@ extern const dvar_t *cl_serverStatusResendTime;
 #if defined(COD2_X64) || defined(_M_X64) || defined(__x86_64__)
 int clc_x64_lastChallenge;
 #endif
-extern const dvar_t *cl_ingame;
+extern dvar_t *cl_ingame;
 extern const dvar_t *name;
 extern const dvar_t *cl_voice;
 extern clientActive_t clients[1];
@@ -2241,7 +2241,7 @@ Bool CL_ConnectionlessPacket(netadr_t from, msg_t *msg, int time)
 
     if (I_strncmp(cmd, (const char *)"needcdkey", 9) == 0) {
         I_strncpyz(conn->serverMessage, (const char *)"EXE_AWAITINGCDKEYAUTH", sizeof(conn->serverMessage));
-        SEH_LocalizeTextMessage((const char *)"EXE_AWAITINGCDKEYAUTH", (const char *)"need cd key message", 0);
+        SEH_LocalizeTextMessage((const char *)"EXE_AWAITINGCDKEYAUTH", (const char *)"need cd key message", LOCMSG_SAFE);
         Com_Printf((const char *)"%s\n", conn->serverMessage);
         CL_RequestAuthorization();
         result = 1;

@@ -41,7 +41,7 @@ extern int _snd_local_listener;
 extern vec_t Vec3Normalize( vec3_t v );
 extern void Vec3Cross(const vec3_t v0, const vec3_t v1, vec3_t cross);
 extern void AxisCopy( const vec3_t in[3], vec3_t out[3] );
-extern void MatrixMultiply(const vec3_t axis, const float (*in1)[3], float (*out)[3]);
+extern void MatrixMultiply(const float (*in1)[3], const float (*in2)[3], float (*out)[3]);
 extern bool Com_SaveDvarsToBuffer(const char **dvarnames, int numDvars, char *buffer, int bufsize);
 extern bool Com_LoadDvarsFromBuffer(const char **dvarnames, int numDvars, const char *buffer, const char *filename);
 extern char *va( const char *format, ... );
@@ -138,33 +138,23 @@ void CG_UpdateShellShock(const shellshock_parms_t *parms, int start, int duratio
 
 void CG_PerturbCamera(void)
 {
-    cg_t *cgp = cg;
-    vec3_t rot;
-    vec3_t up;
-    vec3_t cross;
-    float (*refdefAxis)[3];
+    float rot[3][3];
     float axis[3][3];
 
-    if (cgp->shellshock.viewDelta[0] == 0.0f && cgp->shellshock.viewDelta[1] == 0.0f) {
-        return;
+    if (cg->shellshock.viewDelta[0] != 0.0f || cg->shellshock.viewDelta[1] != 0.0f) {
+        rot[0][0] = 1.0f;
+        rot[0][1] = cg->shellshock.viewDelta[0];
+        rot[0][2] = cg->shellshock.viewDelta[1];
+        rot[2][0] = 0.0f;
+        rot[2][1] = 0.0f;
+        rot[2][2] = 1.0f;
+        Vec3Normalize(rot[0]);
+        Vec3Cross(rot[2], rot[0], rot[1]);
+        Vec3Normalize(rot[1]);
+        Vec3Cross(rot[0], rot[1], rot[2]);
+        AxisCopy(cg->refdef.viewaxis, axis);
+        MatrixMultiply(rot, axis, cg->refdef.viewaxis);
     }
-
-    rot[0] = 1.0f;
-    rot[1] = cgp->shellshock.viewDelta[0];
-    rot[2] = cgp->shellshock.viewDelta[1];
-
-    up[0] = 0.0f;
-    up[1] = 0.0f;
-    up[2] = 1.0f;
-
-    Vec3Normalize(rot);
-    Vec3Cross(up, rot, cross);
-    Vec3Normalize(cross);
-    Vec3Cross(rot, cross, up);
-
-    refdefAxis = (float (*)[3])cgp->refdef.viewaxis;
-    AxisCopy(refdefAxis, axis);
-    MatrixMultiply(rot, axis, refdefAxis);
 }
 
 qboolean CG_SaveShellShockDvars(const char *name)

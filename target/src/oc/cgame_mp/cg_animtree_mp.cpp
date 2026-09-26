@@ -4,7 +4,7 @@
 
 extern void Scr_BeginLoadAnimTrees(int param);
 extern void Com_SafeClientDObjFree(int entNum);
-extern void XAnimFreeTree(void *tree, Free_t Free);
+extern void XAnimFreeTree(XAnimTree_s *tree, void (*Free)(void *, int));
 extern void MT_Free(void *ptr, int size);
 
 void CGScr_LoadAnimTrees(void)
@@ -35,7 +35,7 @@ void CG_SafeDObjFree(int iEntNum)
     cg->pEntityLastXModel[iEntNum] = 0;
 
     if (cg_entities[iEntNum].tree) {
-        XAnimFreeTree((void *)cg_entities[iEntNum].tree, (Free_t)MT_Free);
+        XAnimFreeTree(cg_entities[iEntNum].tree, MT_Free);
         cg_entities[iEntNum].tree = 0;
     }
 }
@@ -50,7 +50,7 @@ void CG_FreeClientDObjInfo(void)
         cg->pEntityLastXModel[i] = 0;
 
         if (cg_entities[i].tree) {
-            XAnimFreeTree((void *)cg_entities[i].tree, (Free_t)MT_Free);
+            XAnimFreeTree(cg_entities[i].tree, MT_Free);
             cg_entities[i].tree = 0;
         }
     }
@@ -66,7 +66,7 @@ void CG_FreeEntityDObjInfo(void)
         cg->pEntityLastXModel[i] = 0;
 
         if (cg_entities[i].tree) {
-            XAnimFreeTree((void *)cg_entities[i].tree, (Free_t)MT_Free);
+            XAnimFreeTree(cg_entities[i].tree, MT_Free);
             cg_entities[i].tree = 0;
         }
     }
