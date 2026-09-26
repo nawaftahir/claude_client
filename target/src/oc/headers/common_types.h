@@ -6179,6 +6179,8 @@ struct FxHelper {
     FxCamera mPrevCamera;
     int mSeed;
     float adsZoomFactor;
+
+    bool CullSphere(const float worldPos[3], float radius, int planeCount);
 };
 
 struct FxImpactTable {
@@ -11420,8 +11422,17 @@ struct dplane_t {
 };
 
 struct dsound_sample_t {
-    HSAMPLE mssSample;
-    struct CCircularBuffer *mssBuffer;
+    struct IDirectSoundCaptureBuffer *DSCB;
+    struct IDirectSoundBuffer *DSB;
+    unsigned int dwBufferSize;
+    unsigned int dwCaptureOffset;
+    unsigned int currentOffset;
+    unsigned int lastOffset;
+    unsigned int currentBufferLength;
+    int stopPosition;
+    unsigned int lastPlayPos;
+    int bytesBuffered;
+    int mode;
     int frequency;
     int volume;
     int pan;
@@ -13471,6 +13482,11 @@ struct refexport_t {
     float (*GetFarPlaneDist)(void);
     void (*EndRegistration)(void);
     void (*ClearScene)(void);
+    void (*SkinGfxEntityDelayed)(GfxEntity *ent);
+    GfxEntity * (*AddRefEntityToScene)(const GfxEntity *refEnt, GfxModel sceneModel, const centity_t *cent);
+    void (*UpdateXModelBoundsDelayed)(GfxEntity *ent);
+    void (*UpdateEffectsBolt)(void);
+    void (*UpdateEffectsNonBolt)(void);
     void (*DefaultVertexFrames)(int vertCount, GfxWorldVertex *verts);
     void (*AddPolyToScene)(MaterialHandle materialHandle, int lmapIndex, int vertCount, const GfxWorldVertex *verts);
     void (*AddLightToScene)(const vec_t *org, float radius, float r, float g, float b);
@@ -13533,12 +13549,11 @@ struct refexport_t {
     const char * (*ParseSunLight)(void *params, const char *text);
     MaterialHandle (*Material_Duplicate)(MaterialHandle mtlCopy, const char *name);
     void (*DuplicateFont)(FontHandle fontCopy, const char *name);
-    bool XModelAllowReadSurface;
+    void *unknown86_102[17];
     void (*SyncRenderThread)(void);
     void (*AbortRenderCommands)(void);
-    qboolean (*IsGpuFenceFinished)(void);
     void (*SyncGpu)(void);
-    void (*GpuWaited)(void);
+    void *unknown106;
     void (*SetLodOrigin)(const refdef_t *refdef);
 };
 

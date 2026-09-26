@@ -2503,7 +2503,7 @@ float XAnimGetWeight(const XAnimTree_s *tree, unsigned int animIndex)
 }
 
 
-bool XAnimHasFinishedOrLooped( const XAnimTree_s *tree, unsigned int animIndex )
+bool XAnimHasFinished( const XAnimTree_s *tree, unsigned int animIndex )
 {
 	unsigned short index;
 	const XAnimState *state;
@@ -2608,7 +2608,7 @@ void DObjInitServerTime(DObj_s *obj, float dtime)
 }
 
 
-void DObjUpdateServerInfo( DObj_s *obj, float dtime )
+void DObjUpdateClientInfo( DObj_s *obj, float dtime )
 {
 	bool hasWeight;
 	bool hasTime;
@@ -2657,7 +2657,7 @@ int DObjUpdateServerInfo(DObj_s *obj, float dtime, int bNotify)
 }
 
 
-int XAnimGetNotifyList( XAnimClientNotify **notifyList )
+int DObjGetClientNotifyList( XAnimClientNotify **notifyList )
 {
 	*notifyList = g_notifyList;
 	return g_notifyListSize;
