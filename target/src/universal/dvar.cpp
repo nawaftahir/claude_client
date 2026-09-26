@@ -1874,7 +1874,7 @@ bool Com_SaveDvarsToBuffer(const char **dvarnames, int numDvars, char *buffer, i
 	return true;
 }
 
-bool Com_LoadDvarsFromBuffer(const char **dvarnames, int numDvars, const char *buffer, const char *filename)
+qboolean Com_LoadDvarsFromBuffer(const char **dvarnames, int numDvars, const char *buffer, const char *filename)
 {
 	int i;
 	const char *token;
@@ -1923,7 +1923,7 @@ nextLine:
 	Com_EndParseSession();
 
 	if ( numRead == numDvars )
-		return true;
+		return qtrue;
 
 	Com_Printf("^1ERROR: the following dvars were not specified in file '%s'\n", filename);
 	for ( i = 0; i < numDvars; i++ )
@@ -1932,5 +1932,5 @@ nextLine:
 			Com_Printf("^1  %s\n", dvarnames[i]);
 	}
 
-	return false;
+	return qfalse;
 }

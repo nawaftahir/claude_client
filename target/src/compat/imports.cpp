@@ -8,7 +8,7 @@
 #include "../xanim/xanim_public.h"
 #include "../stringed/stringed_public.h"
 void CM_SaveLump( int lumpType, const void *data, int len, int *checksum );
-bool Com_LoadDvarsFromBuffer(const char **dvarnames, int numDvars, const char *buffer, const char *filename);
+qboolean Com_LoadDvarsFromBuffer(const char **dvarnames, int numDvars, const char *buffer, const char *filename);
 bool Com_SaveDvarsToBuffer(const char **dvarnames, int numDvars, char *buffer, int bufsize);
 int DObjBad( const DObj *obj );
 void DObjCompleteHierarchyBits(DObj_s *obj, int *partBits);

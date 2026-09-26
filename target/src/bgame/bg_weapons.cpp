@@ -2770,8 +2770,8 @@ void PM_AdjustAimSpreadScale( pmove_t *pm, pml_t *pml )
 			{
 				for ( i = 0; i < 2; i++ )
 				{
-					viewchange = I_fabs(AngleSubtract(pm->cmd.angles[i] * (float)(360.0 / 65536), pm->oldcmd.angles[i] * (float)(360.0 / 65536)))
-					             * 0.0099999998f * weapDef->hipSpreadTurnAdd / pml->frametime + viewchange;
+					viewchange = ( I_fabs(AngleSubtract(pm->cmd.angles[i] * (float)(360.0 / 65536), pm->oldcmd.angles[i] * (float)(360.0 / 65536)))
+					             * weapDef->hipSpreadTurnAdd * 0.0099999998f ) / pml->frametime + viewchange;
 				}
 			}
 

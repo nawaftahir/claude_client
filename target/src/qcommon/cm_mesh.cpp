@@ -1015,7 +1015,7 @@ void CM_MeshTestInLeaf( traceWork_t *tw, cLeaf_t *leaf, trace_t *trace )
 CM_RayIntersectTriangle
 ==================
 */
-int CM_RayIntersectTriangle( const float *orig, const float *dir, const float *vert0, const float *vert1, const float *vert2, float *t, float *u, float *v )
+bool CM_RayIntersectTriangle( const float *orig, const float *dir, const float *vert0, const float *vert1, const float *vert2, float *t, float *u, float *v )
 {
 	float uDet;
 	float vDet;
@@ -1032,21 +1032,21 @@ int CM_RayIntersectTriangle( const float *orig, const float *dir, const float *v
 	det = DotProduct(edge1, pvec);
 	if ( det < 0.001f )
 	{
-		return 0;
+		return false;
 	}
 
 	VectorSubtract(orig, vert0, tvec);
 	uDet = DotProduct(tvec, pvec);
 	if ( uDet < 0.0f || uDet > det )
 	{
-		return 0;
+		return false;
 	}
 
 	Vec3Cross(tvec, edge1, qvec);
 	vDet = DotProduct(dir, qvec);
 	if ( vDet < 0.0f || uDet + vDet > det )
 	{
-		return 0;
+		return false;
 	}
 
 	*t = DotProduct(edge2, qvec) / det;
@@ -1058,5 +1058,5 @@ int CM_RayIntersectTriangle( const float *orig, const float *dir, const float *v
 	{
 		*v = vDet / det;
 	}
-	return 1;
+	return true;
 }

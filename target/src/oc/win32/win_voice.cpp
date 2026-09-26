@@ -118,7 +118,7 @@ float Voice_GetVoiceLevel(void)
         return 0.0f;
 
     idx = sampleCount % 6;
-    result = voice_current_voicelevel / 32767.0f / 6.0f;
+    result = ( voice_current_voicelevel / 32767.0f ) / 6.0f;
     levelSamples[idx] = result;
     sampleCount++;
 

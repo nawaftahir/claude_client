@@ -2557,11 +2557,11 @@ void PM_Footsteps( pmove_t *pm, pml_t *pml )
 
 			if ( (ps->pm_flags & PMF_ADS_WALK) || ps->leanf != 0 )
 			{
-				bobmove = fLadderSpeed / (scale * 0.40000001f) * 0.34999999f;
+				bobmove = ( fLadderSpeed / ( scale * 0.40000001f ) ) * 0.34999999f;
 			}
 			else
 			{
-				bobmove = fLadderSpeed / scale * 0.44999999f;
+				bobmove = ( fLadderSpeed / scale ) * 0.44999999f;
 			}
 
 			if ( fLadderSpeed >= 0.0f )
@@ -2722,7 +2722,7 @@ void PM_Footsteps( pmove_t *pm, pml_t *pml )
 	{
 		if ( pm->cmd.rightmove )
 		{
-			scale = ((player_strafeSpeedScale->current.decimal - 1.0f) * 0.75f + 1.0f + 1.0f) * 0.5f * scale;
+			scale = ( ( ( ( player_strafeSpeedScale->current.decimal - 1.0f ) * 0.75f + 1.0f ) + 1.0f ) * scale ) * 0.5f;
 
 			if ( pm->cmd.forwardmove < 0 )
 			{
