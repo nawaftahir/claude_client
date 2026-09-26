@@ -220,7 +220,7 @@ void GaussianRandom( float *f0, float *f1 )
 	}
 	while ( lenSq > 1.0f );
 
-	lenSq = I_sqrt(log(lenSq) * -2.0 / lenSq);
+	lenSq = I_sqrt(log(lenSq) * -2.0f / lenSq);
 	*f0 = x * lenSq;
 	*f1 = y * lenSq;
 }
@@ -240,7 +240,7 @@ void PointInCircleFromUniformDeviates( float radiusDeviate, float yawDeviate, fl
 
 	deviate = radiusDeviate;
 	radius = I_sqrt(deviate);
-	yaw = yawDeviate * 6.283185307179586;
+	yaw = yawDeviate * 6.283185307179586f;
 	FastSinCos(yaw, &yawSin, &yawCos);
 	point[0] = radius * yawCos;
 	point[1] = radius * yawSin;
@@ -261,7 +261,7 @@ void PointOnSphereFromUniformDeviates( float heightDeviate, float yawDeviate, fl
 
 	height = heightDeviate * 2.0f - 1.0f;
 	radius = I_sqrt(1.0f - height * height);
-	yaw = yawDeviate * 6.283185307179586;
+	yaw = yawDeviate * 6.283185307179586f;
 	FastSinCos(yaw, &yawSin, &yawCos);
 	point[0] = radius * yawCos;
 	point[1] = radius * yawSin;
@@ -283,7 +283,7 @@ void PointOnHemisphereFromUniformDeviates( float heightDeviate, float yawDeviate
 
 	height = heightDeviate;
 	radius = I_sqrt(1.0f - height * height);
-	yaw = yawDeviate * 6.283185307179586;
+	yaw = yawDeviate * 6.283185307179586f;
 	FastSinCos(yaw, &yawSin, &yawCos);
 	point[0] = radius * yawCos;
 	point[1] = radius * yawSin;
@@ -408,7 +408,7 @@ float LinearTrack( float tgt, float cur, float rate, float deltaTime )
 
 	err = tgt - cur;
 
-	if ( err > 0.0 )
+	if ( err > 0.0f )
 		step = rate * deltaTime;
 	else
 		step = -rate * deltaTime;
@@ -610,7 +610,7 @@ byte DirToByte( const vec3_t dir )
 		return 0;
 	}
 
-	bestd = 0.0;
+	bestd = 0.0f;
 	best = 0;
 
 	for ( i = 0; i < sizeof(bytedirs) / sizeof(bytedirs[0]); ++i )
@@ -1069,7 +1069,7 @@ void RotatePointAroundVector( vec3_t dst, const vec3_t dir, const vec3_t point, 
 	memset(zrot, 0, sizeof(zrot));
 	zrot[0][0] = zrot[1][1] = zrot[2][2] = 1.0f;
 
-	rad = degrees * 0.017453292519943295;
+	rad = degrees * 0.017453292519943295f;
 	FastSinCos(rad, &zrot[0][1], &zrot[0][0]);
 	zrot[1][0] = -zrot[0][1];
 	zrot[1][1] = zrot[0][0];
@@ -1140,7 +1140,7 @@ float vectoyaw( const vec3_t vec )
 	}
 	else
 	{
-		yaw = atan2(vec[1], vec[0]) * 180.0 / M_PI;
+		yaw = atan2(vec[1], vec[0]) * 180.0f / M_PI;
 
 		if ( yaw < 0 )
 		{
@@ -1160,13 +1160,13 @@ vec_t vectosignedyaw( vec3_t vec )
 {
 	float yaw;
 
-	if ( vec[1] == 0.0 && vec[0] == 0.0 )
+	if ( vec[1] == 0.0f && vec[0] == 0.0f )
 	{
-		yaw = 0.0;
+		yaw = 0.0f;
 	}
 	else
 	{
-		yaw = atan2(vec[1], vec[0]) * 180.0 / M_PI;
+		yaw = atan2(vec[1], vec[0]) * 180.0f / M_PI;
 	}
 
 	return yaw;
@@ -1196,7 +1196,7 @@ float vectopitch( const vec3_t vec )
 	else
 	{
 		forward = I_sqrt(vec[0] * vec[0] + vec[1] * vec[1]);
-		pitch = atan2(vec[2], forward) * -180.0 / M_PI;
+		pitch = atan2(vec[2], forward) * -180.0f / M_PI;
 
 		if ( pitch < 0 )
 		{
@@ -1231,7 +1231,7 @@ float vectosignedpitch( const vec3_t vec )
 	else
 	{
 		forward = I_sqrt(vec[0] * vec[0] + vec[1] * vec[1]);
-		pitch = atan2(vec[2], forward) * -180.0 / M_PI;
+		pitch = atan2(vec[2], forward) * -180.0f / M_PI;
 	}
 
 	return pitch;
@@ -1262,13 +1262,13 @@ void vectoangles( const vec3_t value1, vec3_t angles )
 	else
 	{
 		yaw = ( atan2( value1[1], value1[0] ) * 180 / M_PI );
-		if ( yaw < 0.0 )
+		if ( yaw < 0.0f )
 		{
 			yaw += 360.0f;
 		}
 		forward = I_sqrt( value1[0] * value1[0] + value1[1] * value1[1] );
 		pitch = ( atan2( value1[2], forward ) * -180 / M_PI );
-		if ( pitch < 0.0 )
+		if ( pitch < 0.0f )
 		{
 			pitch += 360.0f;
 		}
@@ -1303,9 +1303,9 @@ void vectoanglessigned( const vec3_t value1, vec3_t angles )
 	}
 	else
 	{
-		yaw = atan2(value1[1], value1[0]) * 180.0 / M_PI;
+		yaw = atan2(value1[1], value1[0]) * 180.0f / M_PI;
 		forward = I_sqrt(value1[0] * value1[0] + value1[1] * value1[1]);
-		pitch = atan2(value1[2], forward) * -180.0 / M_PI;
+		pitch = atan2(value1[2], forward) * -180.0f / M_PI;
 	}
 
 	angles[PITCH] = pitch;
@@ -1368,7 +1368,7 @@ void YawVectors( const float yaw, vec3_t forward, vec3_t right )
 	float sy;
 	float cy;
 
-	angle = yaw * 0.017453292519943295;
+	angle = yaw * 0.017453292519943295f;
 	FastSinCos(angle, &sy, &cy);
 
 	if ( forward )
@@ -1953,7 +1953,7 @@ void RotateVec2( vec2_t v, float degrees )
 	float s;
 	float x;
 
-	FastSinCos(degrees * 0.017453292519943295, &s, &c);
+	FastSinCos(degrees * 0.017453292519943295f, &s, &c);
 	x = v[0] * c - v[1] * s;
 	v[1] = v[1] * c + v[0] * s;
 	v[0] = x;
@@ -2121,7 +2121,7 @@ QuatFromPitch
 */
 void QuatFromPitch( float angle, vec4_t quat )
 {
-	angle *= 0.008726646259971648;
+	angle *= 0.008726646259971648f;
 	quat[0] = 0;
 	quat[2] = 0;
 	FastSinCos(angle, &quat[1], &quat[3]);
@@ -2134,7 +2134,7 @@ QuatFromYaw
 */
 void QuatFromYaw( float angle, vec4_t quat )
 {
-	angle *= 0.008726646259971648;
+	angle *= 0.008726646259971648f;
 	quat[0] = 0;
 	quat[1] = 0;
 	FastSinCos(angle, &quat[2], &quat[3]);
@@ -2147,7 +2147,7 @@ QuatFromRoll
 */
 void QuatFromRoll( float angle, vec4_t quat )
 {
-	angle *= 0.008726646259971648;
+	angle *= 0.008726646259971648f;
 	quat[1] = 0;
 	quat[2] = 0;
 	FastSinCos(angle, &quat[0], &quat[3]);
@@ -2162,7 +2162,7 @@ void QuatFromAxisAngle( float angle, const vec3_t axis, vec4_t quat )
 {
 	float s;
 
-	angle *= 0.008726646259971648;
+	angle *= 0.008726646259971648f;
 	FastSinCos(angle, &s, &quat[3]);
 	VectorScale(axis, s, quat);
 }
@@ -2177,7 +2177,7 @@ void MatrixRotationX( vec3_t m[3], float angle )
 	float c;
 	float s;
 
-	FastSinCos(angle * 0.017453292519943295, &s, &c);
+	FastSinCos(angle * 0.017453292519943295f, &s, &c);
 	m[0][0] = 1.0f;
 	m[0][1] = 0;
 	m[0][2] = 0;
@@ -2199,7 +2199,7 @@ void MatrixRotationY( vec3_t m[3], float angle )
 	float c;
 	float s;
 
-	FastSinCos(angle * 0.017453292519943295, &s, &c);
+	FastSinCos(angle * 0.017453292519943295f, &s, &c);
 	m[0][0] = c;
 	m[0][1] = 0;
 	m[0][2] = s;
@@ -2221,7 +2221,7 @@ void MatrixRotationZ( vec3_t m[3], float angle )
 	float c;
 	float s;
 
-	FastSinCos(angle * 0.017453292519943295, &s, &c);
+	FastSinCos(angle * 0.017453292519943295f, &s, &c);
 	m[0][0] = c;
 	m[0][1] = -s;
 	m[0][2] = 0;
@@ -2244,8 +2244,8 @@ void InfinitePerspectiveMatrix( float mtx[4][4], float fovX, float fovY, float z
 
 	memset(mtx, 0, 64);
 	k = 0.99950027f;
-	mtx[0][0] = tan((90.0f - fovX * 0.5f) * 0.017453292519943295) * k;
-	mtx[1][1] = tan((90.0f - fovY * 0.5f) * 0.017453292519943295) * k;
+	mtx[0][0] = tan((90.0 - fovX * 0.5) * 0.017453292519943295) * k;
+	mtx[1][1] = tan((90.0 - fovY * 0.5) * 0.017453292519943295) * k;
 	mtx[2][2] = k;
 	mtx[2][3] = 1.0f;
 	mtx[3][2] = -zNear * k;
@@ -3062,13 +3062,13 @@ void AxisToAngles( vec3_t axis[3], vec3_t angles )
 	VectorCopy( axis[1], right );
 
 	// get the angle difference between the tmpAxis[2] and axis[2] after they have been reverse-rotated
-	a = (-angles[YAW] * 0.017453292519943295);
+	a = (-angles[YAW] * 0.017453292519943295f);
 	FastSinCos(a, &fSin, &fCos);
 
 	temp = fCos * right[0] - fSin * right[1];
 	right[1] = fSin * right[0] + fCos * right[1];
 
-	a = -angles[0] * 0.017453292519943295;
+	a = -angles[0] * 0.017453292519943295f;
 	FastSinCos(a, &fSin, &fCos);
 
 	right[0] = (fSin * right[2]) + (fCos * temp);
@@ -3077,9 +3077,9 @@ void AxisToAngles( vec3_t axis[3], vec3_t angles )
 	// now find the angles, the PITCH is effectively our ROLL
 	pitch = vectosignedpitch(right);
 
-	if ( right[1] < 0.0 )
+	if ( right[1] < 0.0f )
 	{
-		angles[ROLL] = pitch + ( pitch < 0.0 ? 180.0f : -180.0f );
+		angles[ROLL] = pitch + ( pitch < 0.0f ? 180.0f : -180.0f );
 	}
 	else
 	{
@@ -3104,13 +3104,13 @@ void AxisToSignedAngles( const vec3_t axis[3], vec3_t angles )
 	vectoanglessigned(axis[0], angles);
 	VectorCopy(axis[1], right);
 
-	a = -angles[YAW] * 0.017453292519943295;
+	a = -angles[YAW] * 0.017453292519943295f;
 	FastSinCos(a, &fSin, &fCos);
 
 	temp = fCos * right[0] - fSin * right[1];
 	right[1] = fSin * right[0] + fCos * right[1];
 
-	a = -angles[PITCH] * 0.017453292519943295;
+	a = -angles[PITCH] * 0.017453292519943295f;
 	FastSinCos(a, &fSin, &fCos);
 
 	right[0] = fSin * right[2] + fCos * temp;
@@ -3151,7 +3151,7 @@ int IntersectPlanes( const float **plane, vec3_t xyz )
 		return 0;
 	}
 
-	invDet = 1.0 / det;
+	invDet = 1.0f / det;
 
 	v[0] = plane[0][3] * (plane[1][1] * plane[2][2] - plane[2][1] * plane[1][2]);
 	v[1] = plane[1][3] * (plane[2][1] * plane[0][2] - plane[0][1] * plane[2][2]);
@@ -3552,11 +3552,11 @@ int BoxDistSqrdExceeds( const vec3_t absmin, const vec3_t absmax, const vec3_t o
 	VectorSubtract(absmin, org, mins);
 	VectorSubtract(absmax, org, maxs);
 
-	total = 0.0;
+	total = 0.0f;
 
 	for ( i = 0; i < 3; ++i )
 	{
-		if ( mins[i] * maxs[i] <= 0.0 )
+		if ( mins[i] * maxs[i] <= 0.0f )
 		{
 			continue;
 		}
@@ -3642,7 +3642,7 @@ void VectorRotate( const vec3_t vIn, const vec3_t vRotation, vec3_t out )
 	{
 		if ( vRotation[i] != 0 )
 		{
-			dAngle = vRotation[i] * M_PI / 180.0;
+			dAngle = vRotation[i] * M_PI / 180.0f;
 			SinCos(dAngle, &s, &c);
 			vWork[nIndex[i][0]] = va[nIndex[i][0]] * c - va[nIndex[i][1]] * s;
 			vWork[nIndex[i][1]] = va[nIndex[i][0]] * s + va[nIndex[i][1]] * c;

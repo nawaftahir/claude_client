@@ -51,8 +51,8 @@ extern const vec4_t colorLtOrange;
 #define DEG2RAD( a ) ( ( ( a ) * M_PI ) / 180.0F )
 #define RAD2DEG( a ) ( ( ( a ) * 180.0f ) / M_PI )
 
-#define DEGINRAD  57.29577951308232 // degrees in one radian
-#define RADINDEG  0.017453292519943295 // radian in one degree
+#define DEGINRAD  57.29577951308232f // degrees in one radian
+#define RADINDEG  0.017453292519943295f // radian in one degree
 
 #define Square( x ) ( ( x ) * ( x ) )
 
