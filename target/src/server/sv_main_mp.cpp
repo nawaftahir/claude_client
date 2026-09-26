@@ -605,7 +605,14 @@ void SVC_Info( netadr_t from )
 		Info_SetValueForKey(infostring, "kc", va("%i", killcam));
 	}
 
-	Info_SetValueForKey(infostring, "hw", va("%i", 1));
+	if ( com_dedicated && com_dedicated->current.integer )
+	{
+		Info_SetValueForKey(infostring, "hw", va("%i", 2));
+	}
+	else
+	{
+		Info_SetValueForKey(infostring, "hw", va("%i", 5));
+	}
 
 	if ( !sv_pure->current.boolean || gamedir && *gamedir )
 	{
