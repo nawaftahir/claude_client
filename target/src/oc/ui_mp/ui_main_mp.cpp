@@ -277,8 +277,8 @@ extern char **FS_ListFiles(const char *path, const char *ext, FsListBehavior beh
 extern void FS_FreeFileList(char **list, int allocTrackType);
 extern char *I_strupr(char *str);
 extern void Com_ChangePlayerProfile(const char *profileName);
-extern unsigned char Com_DeletePlayerProfile(const char *profileName);
-extern unsigned char Com_NewPlayerProfile(const char *name);
+extern bool Com_DeletePlayerProfile(const char *profileName);
+extern bool Com_NewPlayerProfile(const char *name);
 
 extern void Cbuf_ExecuteText(int execWhen, const char *text);
 extern int Com_sprintf(char *dest, size_t size, const char *format, ...);

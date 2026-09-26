@@ -82,6 +82,7 @@ extern "C" __declspec(dllimport) int __stdcall AIL_WAV_info(void *data, void *in
 extern "C" __declspec(dllimport) int __stdcall AIL_size_processed_digital_audio(int rate, int format, int num, void *info);
 extern "C" __declspec(dllimport) long int __stdcall AIL_process_digital_audio(void *dest, long int size, unsigned long rate, unsigned long format, long int num, void *info);
 extern "C" __declspec(dllimport) void __stdcall AIL_set_digital_master_room_type(void *dig, int room_type);
+extern "C" __declspec(dllimport) void __stdcall AIL_set_DirectSound_HWND(void *dig, HWND wnd);
 extern "C" __declspec(dllimport) void __stdcall AIL_set_digital_master_reverb_levels(void *dig, float dry, float wet);
 extern "C" __declspec(dllimport) void __stdcall AIL_set_3D_room_type(void *provider, int room_type);
 extern "C" __declspec(dllimport) int __stdcall AIL_startup(void);
@@ -227,6 +228,12 @@ void SND_ShutdownDriver(void)
 int SND_GetDriverCPUPercentage(void)
 {
     return AIL_digital_CPU_percent( (void *)(milesGlob.driver_2D));
+}
+
+void SND_SetHWND(HWND hwnd)
+{
+    if (g_snd.Initialized2d)
+        AIL_set_DirectSound_HWND( (void *)(milesGlob.driver_2D), hwnd);
 }
 
 void SND_Stop2DChannel(int index)

@@ -468,6 +468,7 @@ const dvar_t *ui_joinGameType;
 const dvar_t *ui_netGameType;
 const dvar_t *ui_netGameTypeName;
 const dvar_t *ui_netSource;
+const dvar_t *ui_playerProfileAlreadyChosen;
 const dvar_t *ui_playerProfileCount;
 const dvar_t *ui_playerProfileNameNew;
 const dvar_t *ui_playerProfileSelected;

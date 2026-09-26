@@ -15,6 +15,7 @@ qcommon/cm_world.cpp
 qcommon/cmd.cpp
 universal/com_files.cpp
 universal/com_memory.cpp
+universal/com_playerprofile.cpp
 universal/com_shared.cpp
 universal/com_sndalias.cpp
 universal/com_sndalias_load_obj.cpp

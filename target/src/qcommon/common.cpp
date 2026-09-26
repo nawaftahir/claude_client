@@ -1140,7 +1140,7 @@ void Com_ExecStartupConfigs( const char *configFile )
 
 void Com_StartupConfigs( void )
 {
-	Com_ExecStartupConfigs(CONFIG_NAME);
+	Com_InitPlayerProfiles();
 }
 
 static void Com_Init_Try_Block_Function( char *commandLine )
