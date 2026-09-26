@@ -129,7 +129,7 @@ void LAN_GetServerInfo(int source, int n, char *buf, int buflen)
 
     switch (source) {
     case 0:
-        if ((unsigned)n > 0x7f)
+        if (n < 0 || n >= 128)
             goto fail;
         server = &cls.localServers[n];
         break;
@@ -139,7 +139,7 @@ void LAN_GetServerInfo(int source, int n, char *buf, int buflen)
         server = &cls.globalServers[n];
         break;
     case 2:
-        if ((unsigned)n > 0x7f)
+        if (n < 0 || n >= 128)
             goto fail;
         server = &cls.favoriteServers[n];
         break;
@@ -191,7 +191,7 @@ int LAN_GetServerPing(int source, int n)
 
     switch (source) {
     case 0:
-        if ((unsigned)n > 0x7f)
+        if (n < 0 || n >= 128)
             return -1;
         server = &cls.localServers[n];
         break;
@@ -201,7 +201,7 @@ int LAN_GetServerPing(int source, int n)
         server = &cls.globalServers[n];
         break;
     case 2:
-        if ((unsigned)n > 0x7f)
+        if (n < 0 || n >= 128)
             return -1;
         server = &cls.favoriteServers[n];
         break;
@@ -223,20 +223,16 @@ void LAN_MarkServerDirty(int source, int n, qboolean dirty)
     Com_PumpMessageLoop();
 
     if (n == -1) {
-
+        count = 128;
         switch (source) {
         case 0:
-            count = 0x80;
             servers = cls.localServers;
             break;
         case 1:
-            count = cls.numglobalservers;
             servers = cls.globalServers;
-            if (count <= 0)
-                return;
+            count = cls.numglobalservers;
             break;
         case 2:
-            count = 0x80;
             servers = cls.favoriteServers;
             break;
         default:
@@ -248,7 +244,7 @@ void LAN_MarkServerDirty(int source, int n, qboolean dirty)
     } else {
         switch (source) {
         case 0:
-            if ((unsigned)n > 0x7f)
+            if (n < 0 || n >= 128)
                 return;
             cls.localServers[n].dirty = (byte)dirty;
             break;
@@ -258,7 +254,7 @@ void LAN_MarkServerDirty(int source, int n, qboolean dirty)
             cls.globalServers[n].dirty = (byte)dirty;
             break;
         case 2:
-            if ((unsigned)n > 0x7f)
+            if (n < 0 || n >= 128)
                 return;
             cls.favoriteServers[n].dirty = (byte)dirty;
             break;
@@ -270,7 +266,7 @@ int LAN_ServerIsDirty(int source, int n)
 {
     switch (source) {
     case 0:
-        if ((unsigned)n > 0x7f)
+        if (n < 0 || n >= 128)
             return 0;
         return cls.localServers[n].dirty;
     case 1:
@@ -278,7 +274,7 @@ int LAN_ServerIsDirty(int source, int n)
             return 0;
         return cls.globalServers[n].dirty;
     case 2:
-        if ((unsigned)n > 0x7f)
+        if (n < 0 || n >= 128)
             return 0;
         return cls.favoriteServers[n].dirty;
     }

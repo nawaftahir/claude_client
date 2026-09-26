@@ -4391,7 +4391,7 @@ void BG_CalculateWeaponPosition_BasePosition_angles( weaponState_t *ws, vec3_t a
 
 		if ( ws->vLastMoveAng[i] < targetAngles[i] )
 		{
-			if ( ws->frametime * 0.1f > speedFrac )
+			if ( speedFrac < ws->frametime * 0.1f )
 			{
 				speedFrac = ws->frametime * 0.1f;
 			}
@@ -4423,7 +4423,7 @@ void BG_CalculateWeaponPosition_BasePosition_angles( weaponState_t *ws, vec3_t a
 	{
 		if ( ps->fWeaponPosFrac < 0.5f )
 		{
-			speedFrac = 1.0f - ps->fWeaponPosFrac * 2.0;
+			speedFrac = 1.0f - ps->fWeaponPosFrac * 2.0f;
 			VectorMA(angles, speedFrac, ws->vLastMoveAng, angles);
 		}
 	}
@@ -4539,12 +4539,12 @@ void BG_CalculateWeaponPosition_BobOffset(weaponState_t *ws, vec3_t angles)
 	ps = ws->ps;
 	weapIndex = BG_GetViewmodelWeaponIndex(ps);
 	weapDef = BG_GetWeaponDef(weapIndex);
-	bobCycle = (float)(ps->bobCycle & 255) / 255.0f * M_PI * 2.0 + M_PI * 2;
-	cycle = bobCycle + 0.7853981633974483 + M_PI * 2;
+	bobCycle = (float)(ps->bobCycle & 255) / 255.0f * M_PI * 2 + M_PI * 2;
+	cycle = bobCycle + 0.78539819f + M_PI * 2;
 	speed = ws->xyspeed * 0.16f;
-	vAngOfs[0] = -BG_GetVerticalBobFactor(ps, cycle, speed, 10);
-	vAngOfs[1] = -BG_GetHorizontalBobFactor(ps, cycle, speed, 10);
-	cycle -= 0.4712389167638204;
+	vAngOfs[0] = BG_GetVerticalBobFactor(ps, cycle, speed, 10) * -1.0f;
+	vAngOfs[1] = BG_GetHorizontalBobFactor(ps, cycle, speed, 10) * -1.0f;
+	cycle -= 0.47123894f;
 	speed *= 1.5f;
 	vAngOfs[2] = I_fmin(BG_GetHorizontalBobFactor(ps, cycle, speed, 10), 0);
 	fPositionLerp = ps->fWeaponPosFrac;
@@ -4922,12 +4922,12 @@ void BG_CalculateView_BobAngles(viewState_t *vs, vec3_t angles)
 	weapDef = BG_GetWeaponDef(weapIndex);
 	if (!weapDef->adsOverlayReticle)
 		return;
-	bobCycle = (float)(ps->bobCycle & 255) / 255.0f * M_PI * 2.0 + M_PI * 2;
-	cycle = bobCycle + 0.7853981633974483 + M_PI * 2;
+	bobCycle = (float)(ps->bobCycle & 255) / 255.0f * M_PI * 2 + M_PI * 2;
+	cycle = bobCycle + 0.78539819f + M_PI * 2;
 	speed = vs->xyspeed * 0.16f;
-	vAngOfs[0] = -BG_GetVerticalBobFactor(ps, cycle, speed, 10);
-	vAngOfs[1] = -BG_GetHorizontalBobFactor(ps, cycle, speed, 10);
-	cycle -= 0.4712389167638204;
+	vAngOfs[0] = BG_GetVerticalBobFactor(ps, cycle, speed, 10) * -1.0f;
+	vAngOfs[1] = BG_GetHorizontalBobFactor(ps, cycle, speed, 10) * -1.0f;
+	cycle -= 0.47123894f;
 	speed *= 1.5f;
 	vAngOfs[2] = I_fmin(BG_GetHorizontalBobFactor(ps, cycle, speed, 10), 0);
 	fPositionLerp = ps->fWeaponPosFrac;
@@ -4961,7 +4961,7 @@ void BG_CalculateView_Velocity(viewState_t *vs, vec3_t angles)
 	weapDef = BG_GetWeaponDef(weapIndex);
 	if (!(ps->eFlags & 0x300) && ps->fWeaponPosFrac != 0 && weapDef->adsViewBobMult != 0)
 	{
-		bobCycle = (float)(ps->bobCycle & 255) / 255.0f * M_PI * 2.0 + M_PI * 2;
+		bobCycle = (float)(ps->bobCycle & 255) / 255.0f * M_PI * 2 + M_PI * 2;
 		fBob = BG_GetVerticalBobFactor(ps, bobCycle, vs->xyspeed, 45);
 		fBob = ps->fWeaponPosFrac * weapDef->adsViewBobMult * fBob;
 		angles[0] -= fBob;

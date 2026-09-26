@@ -1200,7 +1200,7 @@ void ScrCmd_LinkTo( scr_entref_t entref )
 		}
 	}
 
-	if ( numParam < 3 )
+	if ( numParam <= 2 )
 	{
 		if ( G_EntLinkTo(ent, parent, tagName) )
 		{

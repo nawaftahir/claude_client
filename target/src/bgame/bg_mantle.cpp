@@ -504,7 +504,6 @@ bool Mantle_FindMantleSurface( pmove_t *pm, pml_t *pml, trace_t *trace, vec3_t m
 	vec3_t traceDir;
 	float v10;
 	float v9;
-	float v8;
 	float v7;
 	playerState_t *ps;
 
@@ -560,8 +559,7 @@ bool Mantle_FindMantleSurface( pmove_t *pm, pml_t *pml, trace_t *trace, vec3_t m
 		return false;
 	}
 
-	v8 = DotProduct(traceDir, mantleDir);
-	if ( acos(v8) * DEGINRAD > mantle_check_angle->current.decimal )
+	if ( acos( DotProduct(traceDir, mantleDir) ) * 57.295776f > mantle_check_angle->current.decimal )
 	{
 		Mantle_DebugPrint("Mantle Failed: Player is not facing mantle surface");
 		return false;

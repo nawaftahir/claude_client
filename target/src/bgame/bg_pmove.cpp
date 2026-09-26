@@ -1542,9 +1542,9 @@ static void PM_GroundTraceMissed(pmove_t *pm, pml_t *pml)
 	else
 	{
 		VectorCopy(ps->origin, point);
-		point[2] = point[2] - 1.0;
+		point[2] = point[2] - 1.0f;
 		pmoveHandlers[pm->handler].trace(&trace, ps->origin, pm->mins, pm->maxs, point, ps->clientNum, pm->tracemask);
-		pml->almostGroundPlane = 1.0 != trace.fraction;
+		pml->almostGroundPlane = trace.fraction != 1.0f;
 	}
 	ps->groundEntityNum = ENTITYNUM_NONE;
 	pml->groundPlane = qfalse;

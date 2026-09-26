@@ -555,13 +555,13 @@ void PlayerCmd_getFractionStartAmmo( scr_entref_t entref )
 	{
 		weapDef = BG_GetWeaponDef(iWeaponIndex);
 
-		if ( weapDef->startAmmo <= 0 )
+		if ( weapDef->startAmmo < 1 )
 		{
 			Scr_AddFloat(1.0f);
 			return;
 		}
 
-		if ( pSelf->client->ps.ammo[weapDef->ammoIndex] <= 0 )
+		if ( pSelf->client->ps.ammo[weapDef->ammoIndex] < 1 )
 		{
 			Scr_AddFloat(0.0f);
 			return;

@@ -188,30 +188,26 @@ float CG_GetViewFov(void)
 static void CG_CalcFov(void)
 {
     float fov;
-    double halfAngle;
     float tanVal;
     float fov_x, fov_y;
+    float wave;
 
     fov = CG_GetViewFov();
 
-    halfAngle = (double)fov * 0.017453292519943295 * 0.5;
-    tanVal = (float)tan(halfAngle) * 0.75f;
+    tanVal = tan((fov * 0.017453292f) * 0.5f) * 0.75f;
+    fov_x = (atan(tanVal * cgs->viewAspect) * 57.295776f) * 2.0f;
+    fov_y = (atan(tanVal) * 57.295776f) * 2.0f;
 
-    {
-        fov_x = (float)((double)atanf(tanVal * cgs->viewAspect) * 57.29577951308232 * 2.0);
-        fov_y = (float)((double)atanf(tanVal) * 57.29577951308232 * 2.0);
-
-        if (CG_PointContents((const vec_t *)cg->refdef.vieworg, -1, 0x20)) {
-            float phase = (float)(cg->time) / 1000.0f * 0.4f;
-            float wave = sinf((float)((double)phase * 3.141592653589793 * 2.0));
-            fov_x += wave;
-            fov_y -= wave;
-        }
-
-        cg->refdef.fov_x = fov_x;
-        cg->refdef.fov_y = fov_y;
-        cg->zoomSensitivity = fov_x / cg_fov->current.value;
+    if (CG_PointContents((const vec_t *)cg->refdef.vieworg, -1, 0x20)) {
+        // 0.4 Hz underwater warp: 2 * pi * 0.4 / 1000
+        wave = sin(cg->time * 0.0025132743f);
+        fov_x += wave;
+        fov_y -= wave;
     }
+
+    cg->refdef.fov_x = fov_x;
+    cg->refdef.fov_y = fov_y;
+    cg->zoomSensitivity = fov_x / cg_fov->current.value;
 }
 
 void CG_FxSetTestPosition(void)

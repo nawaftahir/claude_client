@@ -414,7 +414,7 @@ void ClientEvents( gentity_t *ent, int oldEventSequence )
 		event = client->ps.events[ i & ( MAX_EVENTS - 1 ) ];
 		eventParm = client->ps.eventParms[ i & ( MAX_EVENTS - 1 ) ];
 
-		if ( event >= EV_LANDING_PAIN_DEFAULT && event <= EV_LANDING_PAIN_ASPHALT )
+		if ( event >= EV_LANDING_PAIN_DEFAULT && event < EV_FOLIAGE_SOUND )
 		{
 			if ( ent->s.eType != ET_PLAYER )
 			{
