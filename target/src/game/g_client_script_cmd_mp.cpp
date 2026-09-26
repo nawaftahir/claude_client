@@ -2901,7 +2901,7 @@ void PlayerCmd_GetGuid( scr_entref_t entref )
 		pSelf = NULL;
 	}
 
-	if ( Scr_GetNumParam() > 0 )
+	if ( Scr_GetNumParam() )
 	{
 		Scr_Error("USAGE: self getGuid()\n");
 	}

@@ -12,9 +12,11 @@ nxt = {s[1]: (s[0], syms[k+1][0]) for k, s in enumerate(syms[:-1])}
 d, base = section('build/CoD2MP_s.exe')
 cd, cbase = section('../../cod2engineold/binaries/windows/1.0/CoD2MP_s.exe')
 names = {}
-for l in open('../ghidra/names_1.0.tsv'):
-    a, n, k = l.rstrip('\n').split('\t')[:3]
-    names.setdefault(n, int(a, 16))
+for f in ('../ghidra/names_1.0.tsv', '../ghidra/names_cg.tsv'):
+    for l in open(f):
+        r = l.rstrip('\n').split('\t')
+        if len(r) >= 2:
+            names.setdefault(r[1], int(r[0], 16))
 def plain(m):
     if m.startswith('?'): return m[1:].split('@')[0]
     return m.lstrip('_')

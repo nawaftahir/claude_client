@@ -212,7 +212,7 @@ void Dvar_Set_f(void)
 
 	argc = Cmd_Argc();
 
-	if ( argc <= 2 )
+	if ( argc < 3 )
 	{
 		Com_Printf("USAGE: set <variable> <value>\n");
 		return;

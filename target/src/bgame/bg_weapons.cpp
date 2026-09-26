@@ -2430,7 +2430,7 @@ void PM_Weapon_ReloadDelayedAction( playerState_t *ps )
 
 			reloadTime -= boltTime;
 
-			if ( reloadTime <= 0 )
+			if ( reloadTime < 1 )
 			{
 				PM_ReloadClip(ps);
 			}

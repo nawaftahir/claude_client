@@ -1008,8 +1008,8 @@ void ScrCmd_attach( scr_entref_t entref )
 {
 	gentity_t *ent = GetEntity(entref);
 	const char *modelName = Scr_GetString(0);
-	unsigned int tag = Scr_GetNumParam() > 1 ? Scr_GetConstLowercaseString(1) : scr_const.emptystring;
-	qboolean ignoreCollision = Scr_GetNumParam() > 2 ? (qboolean)Scr_GetInt(2) : qfalse;
+	unsigned int tag = Scr_GetNumParam() >= 2 ? Scr_GetConstLowercaseString(1) : scr_const.emptystring;
+	qboolean ignoreCollision = Scr_GetNumParam() >= 3 ? (qboolean)Scr_GetInt(2) : qfalse;
 
 	if ( G_EntDetach(ent, modelName, tag) )
 	{
@@ -1035,7 +1035,7 @@ void ScrCmd_detach( scr_entref_t entref )
 
 	ent = GetEntity(entref);
 	modelName = Scr_GetString(0);
-	tag = Scr_GetNumParam() > 1 ? Scr_GetConstLowercaseString(1) : scr_const.emptystring;
+	tag = Scr_GetNumParam() >= 2 ? Scr_GetConstLowercaseString(1) : scr_const.emptystring;
 
 	if ( G_EntDetach(ent, modelName, tag) )
 	{
@@ -4727,7 +4727,7 @@ GScr_LoadMap
 */
 void GScr_LoadMap()
 {
-	if ( !Scr_GetNumParam() )
+	if ( Scr_GetNumParam() < 1 )
 	{
 		return;
 	}
@@ -5163,7 +5163,7 @@ GScr_CloseFile
 */
 void GScr_CloseFile()
 {
-	if ( !Scr_GetNumParam() )
+	if ( Scr_GetNumParam() <= 0 )
 	{
 		return;
 	}

@@ -36,7 +36,7 @@ void G_MissileLandAngles( gentity_t *ent, trace_t *trace, vec3_t vAngles, qboole
 
 			if ( fAbsAngDelta < 80.0f )
 			{
-				ent->s.apos.trDelta[0] = -(ent->s.apos.trDelta[0] * (randomf() * 0.3f + 0.85f));
+				ent->s.apos.trDelta[0] = ent->s.apos.trDelta[0] * (randomf() * 0.3f + 0.85f) * -1.0f;
 			}
 			else
 			{
