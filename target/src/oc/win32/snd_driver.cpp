@@ -178,7 +178,7 @@ void SND_Update3DChannel(int i, int frametime);
 void SND_Set2DChannelFromSaveInfo(int index, snd_save_2D_sample_t *info);
 Bool SND_InitDriver(void);
 void SND_SetStreamChannelFromSaveInfo(int index, snd_save_stream_t *info);
-void SND_DriverPostUpdate(int frametime);
+void SND_DriverPostUpdate(void);
 
 static long unsigned int MSS_FileOpenCallback(const char *pszFilename, long unsigned int *phFileHandle)
 {
@@ -264,9 +264,6 @@ Bool SND_Is2DChannelFree(int index)
     if (chaninfo->startDelay != 0) {
         return 0;
     }
-    if (chaninfo->pAlias0 == NULL && chaninfo->pAlias1 == NULL) {
-        return 1;
-    }
     return AIL_sample_status(handle_2D_004a3ad4[index]) == 2;
 }
 
@@ -308,9 +305,6 @@ Bool SND_Is3DChannelFree(int index)
     }
     if (chaninfo->startDelay != 0) {
         return 0;
-    }
-    if (chaninfo->pAlias0 == NULL && chaninfo->pAlias1 == NULL) {
-        return 1;
     }
     return AIL_3D_sample_status(milesGlob.handle_3D[index]) == 2;
 }
@@ -361,9 +355,6 @@ Bool SND_IsStreamChannelFree(int index)
     }
     if (sndGlob->chaninfo[index].startDelay != 0) {
         return 0;
-    }
-    if (sndGlob->chaninfo[index].pAlias0 == NULL && sndGlob->chaninfo[index].pAlias1 == NULL) {
-        return 1;
     }
     if (AIL_stream_status(streamHandle) == 2) {
         AIL_close_stream(milesGlob.handle_stream[streamIdx]);
@@ -1804,7 +1795,7 @@ void SND_SetStreamChannelFromSaveInfo(int index, snd_save_stream_t *info)
     }
 }
 
-void SND_DriverPostUpdate(int frametime)
+void SND_DriverPostUpdate(void)
 {
     void *rawHandle;
     float vol;

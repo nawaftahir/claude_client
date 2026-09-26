@@ -251,7 +251,19 @@ I_fround
 */
 TU_STATIC int I_fround(const float x)
 {
+#ifdef _MSC_VER
+	// fistp rounds to nearest; the bias sends exact halves up
+	const double bias = 1.0 / (1 << 30);
+	int result;
+
+	__asm fld x
+	__asm fadd bias
+	__asm fistp result
+
+	return result;
+#else
 	return (int)floor(x + 0.5f);
+#endif
 }
 
 /*

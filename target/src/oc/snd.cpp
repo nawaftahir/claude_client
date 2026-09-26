@@ -104,7 +104,7 @@ extern const dvar_t *com_statmon;
 int SND_GetDriverCPUPercentage(void);
 void StatMon_Warning(int severity, int timeout, const char *msg);
 void SND_DriverPreUpdate(int frametime);
-void SND_DriverPostUpdate(int frametime);
+void SND_DriverPostUpdate(void);
 float Com_GetTimescaleForSnd(void);
 void MemFile_InitForReading(MemoryFile *memFile, int size, void *buffer);
 void MemFile_WriteData(MemoryFile *memFile, int bytes, const void *data);
@@ -2024,192 +2024,171 @@ restore_streams:
         ;
 }
 
-void SND_Update(void)
+static inline float I_fsel(const float x, const float y, const float z)
 {
-    int cpu;
-    int frametime;
-    int now;
+    return x >= 0.0f ? y : z;
+}
+
+static void SND_UpdateVolumes(int frametime)
+{
     float frametime_f;
-    float ratio;
-    float timescale;
-    float newTimescale;
-    int i;
-    int rate;
-    int fadeTime;
-    float delta;
-    Bool hasMaster;
-    Bool newPaused;
     snd_volume_info_t *vi;
-    snd_enveffect *eff;
-    MemoryFile memFile;
-
-    if (!g_snd.Initialized2d)
-        return;
-
-    cpu = SND_GetDriverCPUPercentage();
-    g_snd.cpu = cpu;
-
-    if (*(unsigned char *)((char *)com_statmon + 8) && cpu > 2)
-        StatMon_Warning(2, 3000, "gfx/2d/warning@soundcpu.jpg");
-
-    now = Sys_Milliseconds();
-    frametime = now - g_snd.time;
-    g_snd.time = now;
-    SND_DriverPreUpdate(frametime);
-
-    newPaused = (*(int *)((char *)cl_paused + 8) != 0);
-    if (newPaused != g_snd.paused) {
-        if (newPaused)
-            SND_PauseSounds();
-        else
-            SND_UnpauseSounds();
-    }
+    int i;
 
     frametime_f = (float)frametime;
 
     for (i = 0; i < 11; i++) {
         vi = &g_snd.channelvol->channelvol[i];
         vi->volume += frametime_f * vi->goalrate;
-        if (vi->goalrate >= 0.0f) {
-            if (vi->volume > vi->goalvolume) {
+        if (vi->goalrate < 0.0f) {
+            if (vi->volume < vi->goalvolume) {
                 vi->volume = vi->goalvolume;
                 vi->goalrate = 0.0f;
             }
-        } else {
-            if (vi->goalvolume > vi->volume) {
-                vi->volume = vi->goalvolume;
-                vi->goalrate = 0.0f;
-            }
+        } else if (vi->volume > vi->goalvolume) {
+            vi->volume = vi->goalvolume;
+            vi->goalrate = 0.0f;
         }
     }
 
-    if (g_snd.mastervol.goalrate != 0.0f) {
+    if (g_snd.mastervol.goalrate == 0.0f) {
+        if (!*(unsigned char *)((char *)snd_volume + 7))
+            return;
+    } else {
         g_snd.mastervol.volume += frametime_f * g_snd.mastervol.goalrate;
-        if (g_snd.mastervol.goalrate >= 0.0f) {
-            if (g_snd.mastervol.volume > g_snd.mastervol.goalvolume) {
+        if (g_snd.mastervol.goalrate < 0.0f) {
+            if (g_snd.mastervol.volume < g_snd.mastervol.goalvolume) {
                 g_snd.mastervol.volume = g_snd.mastervol.goalvolume;
                 g_snd.mastervol.goalrate = 0.0f;
             }
-        } else {
-            if (g_snd.mastervol.goalvolume > g_snd.mastervol.volume) {
-                g_snd.mastervol.volume = g_snd.mastervol.goalvolume;
-                g_snd.mastervol.goalrate = 0.0f;
-            }
+        } else if (g_snd.mastervol.volume > g_snd.mastervol.goalvolume) {
+            g_snd.mastervol.volume = g_snd.mastervol.goalvolume;
+            g_snd.mastervol.goalrate = 0.0f;
         }
 
         if (g_snd.mastervol.volume == 0.0f && g_snd.mastervol.goalrate == 0.0f)
-            SND_StopSounds( (snd_stopsounds_arg_t)(0));
-
-        Dvar_ClearModified((dvar_t *)snd_volume);
-        g_snd.volume = g_snd.mastervol.volume * *(float *)((char *)snd_volume + 8) * 0.75f;
-    } else if (*(unsigned char *)((char *)snd_volume + 7)) {
-
-        Dvar_ClearModified((dvar_t *)snd_volume);
-        g_snd.volume = g_snd.mastervol.volume * *(float *)((char *)snd_volume + 8) * 0.75f;
+            SND_StopSounds((snd_stopsounds_arg_t)0);
     }
 
-    if (!g_snd.paused) {
+    Dvar_ClearModified((dvar_t *)snd_volume);
+    g_snd.volume = g_snd.mastervol.volume * *(float *)((char *)snd_volume + 8) * 0.75f;
+}
 
-        if (g_snd.restore.buffer) {
-            MemFile_InitForReading(&memFile, g_snd.restore.size, g_snd.restore.buffer);
-            SND_Restore(&memFile);
-            Z_FreeInternal((void *)g_snd.restore.buffer);
-            g_snd.restore.buffer = 0;
-            g_snd.restore.size = 0;
-        }
+static void SND_UpdateTimescale(void)
+{
+    float timescale;
+    float ratio;
+    int rate;
+    int i;
 
-        timescale = Com_GetTimescaleForSnd();
-        newTimescale = (timescale > 0.0f) ? timescale : 1.0f;
-        if (newTimescale != g_snd.timescale) {
-            ratio = newTimescale / g_snd.timescale;
-            g_snd.timescale = newTimescale;
+    timescale = Com_GetTimescaleForSnd();
+    if (timescale <= 0.0f)
+        timescale = 1.0f;
 
-            for (i = 0; i < g_snd.max_3D_channels; i++) {
-                if (SND_Is3DChannelFree(i))
-                    continue;
-                rate = SND_Get3DChannelPlaybackRate(i);
-                SND_Set3DChannelPlaybackRate(i, (int)floorf((float)rate * ratio + 0.5f));
-            }
+    if (timescale == g_snd.timescale)
+        return;
 
-            for (i = 32; i < 32 + g_snd.max_stream_channels; i++) {
-                if (SND_IsStreamChannelFree(i))
-                    continue;
-                rate = SND_GetStreamChannelPlaybackRate(i);
-                SND_SetStreamChannelPlaybackRate(i, (int)floorf((float)rate * ratio + 0.5f));
-            }
+    ratio = timescale / g_snd.timescale;
+    g_snd.timescale = timescale;
 
-            for (i = 45; i < 45 + g_snd.max_2D_channels; i++) {
-                if (SND_Is2DChannelFree(i))
-                    continue;
-                rate = SND_Get2DChannelPlaybackRate(i);
-                SND_Set2DChannelPlaybackRate(i, (int)floorf((float)rate * ratio + 0.5f));
-            }
-        }
-
-        eff = g_snd.effect;
-        if (eff->dryrate != 0.0f) {
-            eff->drylevel += frametime_f * eff->dryrate;
-            if (eff->dryrate < 0.0f) {
-                if (eff->drygoal >= eff->drylevel) {
-                    eff->drylevel = eff->drygoal;
-                    eff->dryrate = 0.0f;
-                }
-            } else {
-                if (eff->drylevel >= eff->drygoal) {
-                    eff->drylevel = eff->drygoal;
-                    eff->dryrate = 0.0f;
-                }
-            }
-        }
-        if (eff->wetrate != 0.0f) {
-            eff->wetlevel += frametime_f * eff->wetrate;
-            if (eff->wetrate < 0.0f) {
-                if (eff->wetgoal >= eff->wetlevel) {
-                    eff->wetlevel = eff->wetgoal;
-                    eff->wetrate = 0.0f;
-                }
-            } else {
-                if (eff->wetlevel >= eff->wetgoal) {
-                    eff->wetlevel = eff->wetgoal;
-                    eff->wetrate = 0.0f;
-                }
-            }
-        }
-        SND_UpdateReverbs();
+    for (i = 0; i < g_snd.max_3D_channels; i++) {
+        if (SND_Is3DChannelFree(i))
+            continue;
+        rate = SND_Get3DChannelPlaybackRate(i);
+        SND_Set3DChannelPlaybackRate(i, (int)floorf((float)rate * ratio + 0.5f));
     }
+
+    for (i = 32; i < 32 + g_snd.max_stream_channels; i++) {
+        if (SND_IsStreamChannelFree(i))
+            continue;
+        rate = SND_GetStreamChannelPlaybackRate(i);
+        SND_SetStreamChannelPlaybackRate(i, (int)floorf((float)rate * ratio + 0.5f));
+    }
+
+    for (i = 45; i < 45 + g_snd.max_2D_channels; i++) {
+        if (SND_Is2DChannelFree(i))
+            continue;
+        rate = SND_Get2DChannelPlaybackRate(i);
+        SND_Set2DChannelPlaybackRate(i, (int)floorf((float)rate * ratio + 0.5f));
+    }
+}
+
+static void SND_UpdateEnvironmentEffects(int frametime)
+{
+    snd_enveffect *eff;
+
+    eff = g_snd.effect;
+    if (eff->dryrate == 0.0f && eff->wetrate == 0.0f)
+        return;
+
+    if (eff->dryrate != 0.0f) {
+        eff->drylevel += (float)frametime * eff->dryrate;
+        if (eff->dryrate < 0.0f) {
+            if (eff->drygoal >= eff->drylevel) {
+                eff->drylevel = eff->drygoal;
+                eff->dryrate = 0.0f;
+            }
+        } else if (eff->drylevel >= eff->drygoal) {
+            eff->drylevel = eff->drygoal;
+            eff->dryrate = 0.0f;
+        }
+    }
+
+    if (eff->wetrate != 0.0f) {
+        eff->wetlevel += (float)frametime * eff->wetrate;
+        if (eff->wetrate < 0.0f) {
+            if (eff->wetgoal >= eff->wetlevel) {
+                eff->wetlevel = eff->wetgoal;
+                eff->wetrate = 0.0f;
+            }
+        } else if (eff->wetlevel >= eff->wetgoal) {
+            eff->wetlevel = eff->wetgoal;
+            eff->wetrate = 0.0f;
+        }
+    }
+
+    SND_UpdateReverbs();
+}
+
+static void SND_UpdateSlaveLerp(int frametime)
+{
+    Bool hasMaster;
+    int fadeTime;
+    int i;
 
     hasMaster = 0;
-    for (i = 0; i < g_snd.max_3D_channels && !hasMaster; i++) {
+    for (i = 0; !hasMaster && i < g_snd.max_3D_channels; i++) {
         if (!SND_Is3DChannelFree(i) && g_snd.chaninfo[i].startDelay == 0 && g_snd.chaninfo[i].master)
             hasMaster = 1;
     }
-    if (!hasMaster) {
-        for (i = 32; i < 32 + g_snd.max_stream_channels && !hasMaster; i++) {
-            if (!SND_IsStreamChannelFree(i) && g_snd.chaninfo[i].startDelay == 0 && g_snd.chaninfo[i].master)
-                hasMaster = 1;
-        }
+    for (i = 32; !hasMaster && i < 32 + g_snd.max_stream_channels; i++) {
+        if (!SND_IsStreamChannelFree(i) && g_snd.chaninfo[i].startDelay == 0 && g_snd.chaninfo[i].master)
+            hasMaster = 1;
     }
-    if (!hasMaster) {
-        for (i = 45; i < 45 + g_snd.max_2D_channels && !hasMaster; i++) {
-            if (!SND_Is2DChannelFree(i) && g_snd.chaninfo[i].startDelay == 0 && g_snd.chaninfo[i].master)
-                hasMaster = 1;
-        }
+    for (i = 45; !hasMaster && i < 45 + g_snd.max_2D_channels; i++) {
+        if (!SND_Is2DChannelFree(i) && g_snd.chaninfo[i].startDelay == 0 && g_snd.chaninfo[i].master)
+            hasMaster = 1;
     }
 
     fadeTime = *(int *)((char *)snd_slaveFadeTime + 8);
-    if (fadeTime == 0) {
+    if (!fadeTime) {
         g_snd.slaveLerp = hasMaster ? 1.0f : 0.0f;
-    } else {
-        delta = frametime_f / (float)fadeTime;
-        if (hasMaster)
-            g_snd.slaveLerp += delta;
-        else
-            g_snd.slaveLerp -= delta;
-        if (g_snd.slaveLerp > 1.0f)
-            g_snd.slaveLerp = 1.0f;
-        if (g_snd.slaveLerp < 0.0f)
-            g_snd.slaveLerp = 0.0f;
+        return;
     }
+
+    if (hasMaster)
+        g_snd.slaveLerp += (float)frametime / fadeTime;
+    else
+        g_snd.slaveLerp -= (float)frametime / fadeTime;
+
+    g_snd.slaveLerp = I_fsel(-g_snd.slaveLerp, 0.0f, I_fsel(g_snd.slaveLerp - 1.0f, 1.0f, g_snd.slaveLerp));
+}
+
+static void SND_UpdateChannels(int frametime)
+{
+    int i;
+
+    SND_UpdateSlaveLerp(frametime);
 
     for (i = 0; i < g_snd.max_3D_channels; i++) {
         if (!SND_Is3DChannelFree(i))
@@ -2225,6 +2204,47 @@ void SND_Update(void)
         if (!SND_Is2DChannelFree(i))
             SND_Update2DChannel(i, frametime);
     }
+}
 
-    SND_DriverPostUpdate(frametime);
+void SND_Update(void)
+{
+    int frametime;
+    Bool paused;
+    MemoryFile memFile;
+
+    if (!g_snd.Initialized2d)
+        return;
+
+    g_snd.cpu = SND_GetDriverCPUPercentage();
+    if (*(unsigned char *)((char *)com_statmon + 8) && g_snd.cpu > 2)
+        StatMon_Warning(2, 3000, "gfx/2d/warning@soundcpu.jpg");
+
+    frametime = Sys_Milliseconds() - g_snd.time;
+    g_snd.time += frametime;
+
+    paused = *(int *)((char *)cl_paused + 8) != 0;
+    if (paused != g_snd.paused) {
+        if (paused)
+            SND_PauseSounds();
+        else
+            SND_UnpauseSounds();
+    }
+
+    SND_UpdateVolumes(frametime);
+
+    if (!g_snd.paused) {
+        if (g_snd.restore.buffer) {
+            MemFile_InitForReading(&memFile, g_snd.restore.size, g_snd.restore.buffer);
+            SND_Restore(&memFile);
+            Z_FreeInternal((void *)g_snd.restore.buffer);
+            g_snd.restore.buffer = 0;
+            g_snd.restore.size = 0;
+        }
+
+        SND_UpdateTimescale();
+        SND_UpdateEnvironmentEffects(frametime);
+    }
+
+    SND_UpdateChannels(frametime);
+    SND_DriverPostUpdate();
 }
