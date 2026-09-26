@@ -2634,7 +2634,7 @@ void Scr_EvalBoolComplement( VariableValue *value )
 	}
 
 	type = value->type;
-	RemoveRefToValue(value);
+	RemoveRefToValue(value->type, value->u);
 	value->type = VAR_UNDEFINED;
 	Scr_Error(va("~ cannot be applied to \"%s\"", var_typename[type]));
 }
@@ -2660,7 +2660,7 @@ void Scr_CastBool( VariableValue *value )
 	else
 	{
 		type = value->type;
-		RemoveRefToValue(value);
+		RemoveRefToValue(value->type, value->u);
 		value->type = VAR_UNDEFINED;
 		Scr_Error(va("cannot cast %s to bool", var_typename[type]));
 	}
