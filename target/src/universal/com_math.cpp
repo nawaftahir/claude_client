@@ -1393,19 +1393,17 @@ VectorAngleMultiply
 */
 void VectorAngleMultiply( float *vec, float angle )
 {
-	float radians;
-	float s;
-	float c;
 	float x;
+	float temp;
+	float radians;
 	float y;
 
-	radians = angle * 0.017453292519943295f;
-	s = sin(radians);
-	c = cos(radians);
-	x = vec[0];
-	y = vec[1];
-	vec[0] = c * x - s * y;
-	vec[1] = c * y + s * x;
+	radians = angle * (float)( M_PI * 2 / 360 );
+	FastSinCos( radians, &y, &x );
+
+	temp = vec[0] * x - vec[1] * y;
+	vec[1] = vec[0] * y + vec[1] * x;
+	vec[0] = temp;
 }
 
 /*
