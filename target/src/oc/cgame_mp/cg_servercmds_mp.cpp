@@ -530,14 +530,12 @@ void CG_ParseFog(void)
 
 static void CG_DeactivateChannelVolCmd(void)
 {
-    int argc;
     int prio;
     int fadeTime;
     float fval;
 
-    argc = Cmd_Argc();
-    if (argc != 3) {
-        Com_Printf((const char *)"ERROR: CG_DeactivateChannelVolCmd called with %i args (should be 3)\n", argc);
+    if (Cmd_Argc() != 3) {
+        Com_Printf((const char *)"ERROR: CG_DeactivateChannelVolCmd called with %i args (should be 3)\n", Cmd_Argc());
         return;
     }
 
@@ -570,14 +568,12 @@ static void CG_SetChannelVolCmd(void)
 
 static void CG_DeactivateReverbCmd(void)
 {
-    int argc;
     int prio;
     int fadeTime;
     float fval;
 
-    argc = Cmd_Argc();
-    if (argc != 3) {
-        Com_Printf((const char *)"ERROR: CG_DeactivateReverbCmd called with %i args (should be 3)\n", argc);
+    if (Cmd_Argc() != 3) {
+        Com_Printf((const char *)"ERROR: CG_DeactivateReverbCmd called with %i args (should be 3)\n", Cmd_Argc());
         return;
     }
 
@@ -953,11 +949,9 @@ static void CG_ConfigStringModified(int index)
 
 static void CG_ReverbCmd(void)
 {
-    int argc;
 
-    argc = Cmd_Argc();
-    if (argc != 6) {
-        Com_Printf("ERROR: CG_ReverbCmd called with %i args (should be 6)\n", argc);
+    if (Cmd_Argc() != 6) {
+        Com_Printf("ERROR: CG_ReverbCmd called with %i args (should be 6)\n", Cmd_Argc());
         return;
     }
 
@@ -971,12 +965,10 @@ static void CG_ReverbCmd(void)
 
 static void CG_LocalSoundCmd(void)
 {
-    int argc;
     int soundIndex;
 
-    argc = Cmd_Argc();
-    if (argc != 2) {
-        Com_Printf("ERROR: CG_LocalSound called with %i args (should be 2)\n", argc);
+    if (Cmd_Argc() != 2) {
+        Com_Printf("ERROR: CG_LocalSound called with %i args (should be 2)\n", Cmd_Argc());
         return;
     }
 
