@@ -75,7 +75,7 @@ static bool Dvar_ToggleSimple(dvar_t *dvar)
 		return true;
 
 	case DVAR_TYPE_INT:
-		if (dvar->domain.integer.min <= 0 && dvar->domain.integer.max > 0)
+		if (dvar->domain.integer.min <= 0 && dvar->domain.integer.max >= 1)
 		{
 			if (dvar->current.integer)
 				Dvar_SetIntFromSource(dvar, 0, DVAR_SOURCE_EXTERNAL);

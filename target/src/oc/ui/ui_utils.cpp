@@ -97,48 +97,29 @@ qboolean Item_EnableShowViaDvar(const itemDef_t *item, int flag)
 
     memset(script, 0, 1024);
 
-    if (!item)
-        return 1;
-    if (item->enableDvar == NULL)
-        return 1;
-    if (*item->enableDvar == '\0')
-        return 1;
-    if (item->dvarTest == NULL)
-        return 1;
-    if (*item->dvarTest == '\0')
-        return 1;
+    if (item && item->enableDvar && *item->enableDvar && item->dvarTest && *item->dvarTest) {
+        testValue = Dvar_GetVariantString(item->dvarTest);
 
-    testValue = Dvar_GetVariantString(item->dvarTest);
+        I_strncat(script, 1024, item->enableDvar);
+        p = script;
 
-    I_strncat(script, 1024, item->enableDvar);
-    p = script;
+        while (String_Parse(&p, val, 1024)) {
+            if (val[0] == ';' && val[1] == '\0')
+                continue;
 
-    for (;;) {
-        if (!String_Parse(&p, val, 1024)) {
-
-            if (item->dvarFlags & flag)
-                return 0;
-            return 1;
-        }
-
-        if (val[0] == ';' && val[1] == '\0') {
-            if (!String_Parse(&p, val, 1024)) {
-                if (item->dvarFlags & flag)
+            if (item->dvarFlags & flag) {
+                if (I_stricmp(testValue, val) == 0)
+                    return 1;
+            } else {
+                if (I_stricmp(testValue, val) == 0)
                     return 0;
-                return 1;
             }
         }
 
-        if (item->dvarFlags & flag) {
-
-            if (I_stricmp(testValue, val) == 0)
-                return 1;
-        } else {
-
-            if (I_stricmp(testValue, val) == 0)
-                return 0;
-        }
+        return (item->dvarFlags & flag) == 0;
     }
+
+    return 1;
 }
 
 qboolean Item_IsEditFieldDef(itemDef_t *item)
