@@ -67,7 +67,7 @@ extern void CL_LookupColor(int colorIndex, float *color);
 extern void SCR_DrawSmallStringExt(int x, int y, const char *str, const float *color);
 extern void SCR_DrawConsoleString(int x, int y, const short int *text, int len, const float *color);
 extern int SEH_PrintStrlen(const char *str);
-extern const char *getBuildNumber(void);
+extern "C" const char *getBuildNumber(void);
 extern qboolean Sys_IsMainThread(void);
 extern int Sys_Milliseconds(void);
 extern void Com_StripExtension(const char *in, char *out);
@@ -607,7 +607,7 @@ static BM_NOINLINE void Con_DrawOuputWindow(void)
     innerY = y + 6.0f;
     innerHeight = height - 12.0f;
 
-    version = va("Build %s %s", getBuildNumber(), "MacOSXS-i386");
+    version = va("Build %s %s", getBuildNumber(), "win-x86");
     SCR_DrawSmallStringExt((int)innerX, (int)(innerY + innerHeight - 16.0f), version, con_versionColor);
 
     scrollBarWidth = 10.0f;

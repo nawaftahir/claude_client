@@ -9,7 +9,6 @@
 #pragma comment(linker, "/alternatename:?DObjCreateSkel@@YAXPBUDObj_s@@PADH@Z=?DObjCreateSkel@@YAXPAUDObj_s@@PAUDSkel_t@@H@Z")
 #pragma comment(linker, "/alternatename:?Dvar_GetUnpackedColor@@YAXPBUdvar_s@@PAM@Z=?Dvar_GetUnpackedColor@@YAXPBDPAM@Z")
 #pragma comment(linker, "/alternatename:?Dvar_SetColorByName@@YAXPBDMMMM@Z=?Dvar_SetColorByName@@YAXPBDEEEE@Z")
-#pragma comment(linker, "/alternatename:?Dvar_SetFromStringByNameFromSource@@YAPBUdvar_s@@PBD0H@Z=?Dvar_SetFromStringByNameFromSource@@YAPAUdvar_s@@PBD0W4DvarSetSource@@@Z")
 #pragma comment(linker, "/alternatename:?FX_AdjustCamera@@YAXPAY0BAA@W4PrimType@@M@Z=?FX_AdjustCamera@@YAXPBUrefdef_t@@M@Z")
 #pragma comment(linker, "/alternatename:?FX_GetEffectLength@@YAMPAUEffectTemplate@@@Z=?FX_GetEffectLength@@YAMPBUFxEffectDef@@@Z")
 #pragma comment(linker, "/alternatename:?FX_PlayEffect@@YAXPAUEffectTemplate@@PBM1@Z=?FX_PlayEffect@@YAXPBUFxEffectDef@@QBM1@Z")

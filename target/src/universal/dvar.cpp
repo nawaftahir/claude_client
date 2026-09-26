@@ -1703,7 +1703,7 @@ void Dvar_SetColorByName(const char *dvarName, unsigned char r, unsigned char g,
 		Dvar_RegisterString(dvarName, va("%g %g %g %g", r, g, b, a), DVAR_EXTERNAL);
 }
 
-static dvar_t *Dvar_SetFromStringByNameFromSource(const char *dvarName, const char *string, DvarSetSource source)
+dvar_t *Dvar_SetFromStringByNameFromSource(const char *dvarName, const char *string, DvarSetSource source)
 {
 	dvar_t *dvar;
 
