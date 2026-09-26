@@ -2465,7 +2465,7 @@ void BG_SwingAngles( float destination,  float swingTolerance, float clampTolera
 	}
 	else
 	{
-		if ( -clampTolerance > swing )
+		if ( swing < -clampTolerance )
 		{
 			*angle = AngleMod(destination + clampTolerance);
 		}
@@ -2932,7 +2932,7 @@ void BG_LerpAngles( vec3_t angles_goal, float maxAngleChange, vec3_t angles )
 			continue;
 		}
 
-		if ( -maxAngleChange > diff )
+		if ( diff < -maxAngleChange )
 		{
 			angles[i] = angles[i] - maxAngleChange;
 			continue;

@@ -213,7 +213,7 @@ bool FxHelper::CullSphere( const vec3_t worldPos, float radius, int planeCount )
 	for ( i = 0; i < planeCount; i++ )
 	{
 		dist = DotProduct(theFxHelper->mCamera.frustum[i], worldPos) - theFxHelper->mCamera.frustum[i][3];
-		if ( -radius > dist )
+		if ( dist < -radius )
 			return true;
 	}
 	return false;
@@ -227,7 +227,7 @@ bool FxHelper::CullSpherePreviousFrame( const vec3_t worldPos, float radius )
 	for ( i = 0; i < theFxHelper->mPrevCamera.numPlanes; i++ )
 	{
 		dist = DotProduct(theFxHelper->mPrevCamera.frustum[i], worldPos) - theFxHelper->mPrevCamera.frustum[i][3];
-		if ( -radius > dist )
+		if ( dist < -radius )
 			return true;
 	}
 	return false;
