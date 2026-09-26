@@ -763,7 +763,7 @@ static int Con_MessageLineScrollOffset(MessageWindow *msgwnd, MessageLine *line,
     if (remaining <= 0)
         return 0;
 
-    return (int)floorf(((float)remaining / (float)msgwnd->scrolltime) * (float)charHeight + 0.5f);
+    return I_fround(((float)remaining / (float)msgwnd->scrolltime) * (float)charHeight);
 }
 
 static qboolean Con_MessageLineAlpha(MessageWindow *msgwnd, MessageLine *line, int serverTime, float baseAlpha, float *drawAlpha)
@@ -1295,13 +1295,13 @@ void CL_ConsolePrint(print_msg_type_t type, const char *txt, int duration, int l
     if (!duration) {
         switch (type) {
         case PMSG_CONSOLE:
-            duration = (int)floorf(con_minicontime->current.value * 1000.0f + 0.5f);
+            duration = I_fround(con_minicontime->current.value * 1000.0f);
             break;
         case PMSG_GAME:
-            duration = (int)floorf(con_gamemessagetime->current.value * 1000.0f + 0.5f);
+            duration = I_fround(con_gamemessagetime->current.value * 1000.0f);
             break;
         case PMSG_BOLDGAME:
-            duration = (int)floorf(con_boldgamemessagetime->current.value * 1000.0f + 0.5f);
+            duration = I_fround(con_boldgamemessagetime->current.value * 1000.0f);
             break;
         case PMSG_SUBTITLE:
             duration = 5000;
@@ -1729,7 +1729,7 @@ void CL_DeathMessagePrint(const char *attackerName, const vec_t *attackerColor, 
     if (!con.initialized)
         Con_OneTimeInit();
 
-    duration = (int)floorf(con_gamemessagetime->current.value * 1000.0f + 0.5f);
+    duration = I_fround(con_gamemessagetime->current.value * 1000.0f);
     if (duration < 0)
         duration = 0;
 
@@ -2093,13 +2093,13 @@ void CL_ConsolePrint(print_msg_type_t type, const char *txt, int duration, int l
     if (!duration) {
         switch (type) {
         case PMSG_CONSOLE:
-            duration = (int)floorf(con_minicontime->current.value * 1000.0f + 0.5f);
+            duration = I_fround(con_minicontime->current.value * 1000.0f);
             break;
         case PMSG_GAME:
-            duration = (int)floorf(con_gamemessagetime->current.value * 1000.0f + 0.5f);
+            duration = I_fround(con_gamemessagetime->current.value * 1000.0f);
             break;
         case PMSG_BOLDGAME:
-            duration = (int)floorf(con_boldgamemessagetime->current.value * 1000.0f + 0.5f);
+            duration = I_fround(con_boldgamemessagetime->current.value * 1000.0f);
             break;
         case PMSG_SUBTITLE:
             duration = 5000;

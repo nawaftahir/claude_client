@@ -139,7 +139,7 @@ void CG_DrawCompassFriendlies(rectDef_t *rect, MaterialHandle material, vec_t *c
     int i;
 
     const dvar_t *fadeDvar = *dvar_compassFade;
-    int duration = (int)floorf(fadeDvar->current.value * 1000.0f + 0.5f);
+    int duration = I_fround(fadeDvar->current.value * 1000.0f);
 
     int displayStartTime = cg->compassFadeTime;
     compassFadeOutAlpha = CG_FadeHudMenu(fadeDvar, displayStartTime, duration);

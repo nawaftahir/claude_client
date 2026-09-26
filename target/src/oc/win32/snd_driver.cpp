@@ -528,7 +528,7 @@ void SND_GetStreamChannelSaveInfo(int index, snd_save_stream_t *info)
     AIL_stream_ms_position(handle, &length, &offset);
     info->fraction = (float)(unsigned long int)offset / (float)(unsigned long int)length;
     sndGlob = &g_snd;
-    info->rate = (int)floorf((float)AIL_stream_playback_rate(handle) / sndGlob->timescale + 0.5f);
+    info->rate = I_fround((float)AIL_stream_playback_rate(handle) / sndGlob->timescale);
     info->basevolume = sndGlob->chaninfo[index].basevolume;
     AIL_stream_volume_pan(handle, &info->volume, &info->pan);
     masterVol = sndGlob->volume;
@@ -1117,7 +1117,7 @@ int SND_StartAlias2DSample(const snd_alias_t *pAlias0, const snd_alias_t *pAlias
     AIL_set_sample_adpcm_block_size(handle, (int)((MssSound *)sound)->info.block_size);
 
     sndGlob = (&g_snd);
-    AIL_set_sample_playback_rate(handle, (int)floorf((float)(int)((MssSound *)sound)->info.rate * pitch * sndGlob->timescale + 0.5f));
+    AIL_set_sample_playback_rate(handle, I_fround((float)(int)((MssSound *)sound)->info.rate * pitch * sndGlob->timescale));
 
     aliasFlags = pAlias0->flags;
     volTable = (float *)sndGlob->channelvol;
@@ -1146,7 +1146,7 @@ int SND_StartAlias2DSample(const snd_alias_t *pAlias0, const snd_alias_t *pAlias
     }
 
     if (fraction != 0.0f) {
-        start_msec = (int)floorf((float)total_msec * fraction + 0.5f);
+        start_msec = I_fround((float)total_msec * fraction);
     } else {
         start_msec = timeshift;
     }
@@ -1234,7 +1234,7 @@ int SND_StartAlias3DSample(const snd_alias_t *pAlias0, const snd_alias_t *pAlias
 
     playbackRate = AIL_3D_sample_playback_rate(handle);
     sndGlob = (&g_snd);
-    AIL_set_3D_sample_playback_rate(handle, (int)floorf((float)playbackRate * pitch * sndGlob->timescale + 0.5f));
+    AIL_set_3D_sample_playback_rate(handle, I_fround((float)playbackRate * pitch * sndGlob->timescale));
     SND_Set3DPosition(index, org);
 
     AIL_set_3D_sample_loop_count(handle, ((byte)(pAlias0->flags) & 1) ^ 1);
@@ -1252,7 +1252,7 @@ int SND_StartAlias3DSample(const snd_alias_t *pAlias0, const snd_alias_t *pAlias
     }
 
     if (fraction != 0.0f) {
-        start_msec = (int)floorf((float)total_msec * fraction + 0.5f);
+        start_msec = I_fround((float)total_msec * fraction);
     } else {
         start_msec = timeshift;
     }
@@ -1345,7 +1345,7 @@ got_handle:
 
     baserate = AIL_stream_playback_rate(handle);
     sndGlob = (&g_snd);
-    AIL_set_stream_playback_rate(handle, (int)floorf((float)baserate * pitch * sndGlob->timescale + 0.5f));
+    AIL_set_stream_playback_rate(handle, I_fround((float)baserate * pitch * sndGlob->timescale));
 
     aliasFlags = pAlias0->flags;
     scaledVol = sndGlob->volume * volume;
@@ -1385,7 +1385,7 @@ got_handle:
     }
 
     if (fraction != 0.0f) {
-        start_msec = (int)floorf((float)total_msec * fraction + 0.5f);
+        start_msec = I_fround((float)total_msec * fraction);
     } else {
         start_msec = timeshift;
     }

@@ -169,7 +169,7 @@ static void CG_ShellShock_f(void)
     CG_SetShellShockParmsFromDvars( (shellshock_parms_t *)((byte *)cgs->shellshockParms));
 
     cg->testShock.time = cg->time;
-    cg->testShock.duration = (int)floorf((float)duration * 1000.0f + 0.5f);
+    cg->testShock.duration = I_fround((float)duration * 1000.0f);
 }
 
 static void CG_ShellShock_Load_f(void)

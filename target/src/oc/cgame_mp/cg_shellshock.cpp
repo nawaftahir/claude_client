@@ -90,7 +90,7 @@ static inline dvar_t *dvar_get_ptr(byte *dvar_pp)
 
 static inline int float_seconds_to_ms(float val)
 {
-    return (int)floorf(val * 1000.0f + 0.5f);
+    return I_fround(val * 1000.0f);
 }
 
 /* migrated from the ILP32 data blob to typed C (x64 port Stage 2). */
@@ -258,7 +258,7 @@ qboolean CG_DrawShellShockSavedScreenBlend(const shellshock_parms_t *parms, int 
     blend = fadeIn;
     if (timeLeft < fadeDuration) {
 
-        blend = (int)floorf((float)fadeIn * (float)timeLeft / (float)fadeDuration + 0.5f);
+        blend = I_fround((float)fadeIn * (float)timeLeft / (float)fadeDuration);
     }
 
     if (cgp->shellshock.hasSavedScreen != 0) {

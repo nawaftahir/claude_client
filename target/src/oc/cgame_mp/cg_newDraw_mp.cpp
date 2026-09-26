@@ -922,7 +922,7 @@ void CG_DrawPlayerCompassBack(const rectDef_t *rect, MaterialHandle material, ve
     float sizeScale;
     float height;
 
-    duration = (int)floorf(1000.0f * hud_fade_compass->current.value + 0.5f);
+    duration = I_fround(1000.0f * hud_fade_compass->current.value);
     displayStartTime = cg->compassFadeTime;
     alpha = CG_FadeHudMenu_inl(hud_fade_compass, displayStartTime, duration);
     color[3] = alpha;
@@ -968,7 +968,7 @@ static inline __attribute__((always_inline)) int CG_FadeDurationMsec(const dvar_
     if (!fadeDvar) {
         return 0;
     }
-    return (int)floorf(fadeDvar->current.value * 1000.0f + 0.5f);
+    return I_fround(fadeDvar->current.value * 1000.0f);
 }
 
 static inline __attribute__((always_inline)) float CG_HudFadeAlpha(const dvar_t *fadeDvar, int displayStartTime)
@@ -1056,7 +1056,7 @@ static inline __attribute__((always_inline)) int CG_RoundStanceFadeDuration(floa
 
     return result;
 #else
-    return (int)floorf(value + 0.5f);
+    return I_fround(value);
 #endif
 }
 

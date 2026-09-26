@@ -518,9 +518,9 @@ void CG_ParseFog(void)
     transitionTime = atoi(token);
 
     CL_SetFog(1, start, (float)halfDist_d,
-              (int)(unsigned char)(int)floorf((float)val4_d * 255.0f + 0.5f),
-              (int)(unsigned char)(int)floorf((float)val5_d * 255.0f + 0.5f),
-              (int)(unsigned char)(int)floorf((float)val6_d * 255.0f + 0.5f),
+              (int)(unsigned char)I_fround((float)val4_d * 255.0f),
+              (int)(unsigned char)I_fround((float)val5_d * 255.0f),
+              (int)(unsigned char)I_fround((float)val6_d * 255.0f),
               (float)val3_d);
 
     CL_SwitchFog(1, cg->time, transitionTime);
@@ -540,7 +540,7 @@ static void CG_DeactivateChannelVolCmd(void)
     }
 
     prio = atoi(CG_Argv(1));
-    fval = (float)(int)floorf((float)atof(CG_Argv(2)) * 1000.0f + 0.5f);
+    fval = (float)I_fround((float)atof(CG_Argv(2)) * 1000.0f);
     fadeTime = (fval > 0.0f) ? (int)fval : 0;
 
     SND_DeactivateChannelVolumes(prio, fadeTime);
@@ -562,7 +562,7 @@ static void CG_SetChannelVolCmd(void)
 
     prio = atoi(CG_Argv(1));
     shockIndex = atoi(CG_Argv(2));
-    fval = (float)(int)floorf((float)atof(CG_Argv(3)) * 1000.0f + 0.5f);
+    fval = (float)I_fround((float)atof(CG_Argv(3)) * 1000.0f);
     fadeTime = (fval > 0.0f) ? (int)fval : 0;
 
     SND_SetChannelVolumes(prio, cgs->shellshockParms[shockIndex].sound.channelvolume, fadeTime);
@@ -582,7 +582,7 @@ static void CG_DeactivateReverbCmd(void)
     }
 
     prio = atoi(CG_Argv(1));
-    fval = (float)(int)floorf((float)atof(CG_Argv(2)) * 1000.0f + 0.5f);
+    fval = (float)I_fround((float)atof(CG_Argv(2)) * 1000.0f);
     fadeTime = (fval > 0.0f) ? (int)fval : 0;
 
     SND_DeactivateEnvironmentEffects(prio, fadeTime);
@@ -691,7 +691,7 @@ static int CG_ParseFadeTimeArg(int argIndex)
 {
     int fadeTime;
 
-    fadeTime = (int)floorf((float)atof(CG_Argv(argIndex)) * 1000.0f + 0.5f);
+    fadeTime = I_fround((float)atof(CG_Argv(argIndex)) * 1000.0f);
     return fadeTime > 0 ? fadeTime : 0;
 }
 

@@ -27,7 +27,7 @@ extern void Com_Error(errorParm_t code, const char *fmt, ...);
 
 static inline __attribute__((always_inline)) unsigned char ColorFloatToByte(float f)
 {
-    int val = (int)floorf(f * 255.0f + 0.5f);
+    int val = I_fround(f * 255.0f);
     if (val - 255 >= 0)
         return 255;
     if (val <= 0)

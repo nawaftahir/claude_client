@@ -1115,7 +1115,7 @@ static __attribute_regparm__(3) int SND_PlaySoundAlias_Internal(const snd_alias_
             continue;
 
         g_snd.chaninfo[i].basevolume = (1.0f - lerp) * pAlias0->fVolMin + lerp * pAlias1->fVolMin;
-        rate = (int)floorf((float)g_snd.chaninfo[i].baserate * g_snd.chaninfo[i].pitch * g_snd.timescale + 0.5f);
+        rate = I_fround((float)g_snd.chaninfo[i].baserate * g_snd.chaninfo[i].pitch * g_snd.timescale);
         SND_Set3DChannelPlaybackRate(i, rate);
         SND_Set3DPosition(i, org);
         g_snd.chaninfo[i].looptime = g_snd.looptime;
@@ -1138,7 +1138,7 @@ static __attribute_regparm__(3) int SND_PlaySoundAlias_Internal(const snd_alias_
             continue;
 
         g_snd.chaninfo[i].basevolume = (1.0f - lerp) * pAlias0->fVolMin + lerp * pAlias1->fVolMin;
-        rate = (int)floorf((float)g_snd.chaninfo[i].baserate * g_snd.chaninfo[i].pitch * g_snd.timescale + 0.5f);
+        rate = I_fround((float)g_snd.chaninfo[i].baserate * g_snd.chaninfo[i].pitch * g_snd.timescale);
         SND_Set2DChannelPlaybackRate(i, rate);
         g_snd.chaninfo[i].looptime = g_snd.looptime;
         g_snd.chaninfo[i].lerp = lerp;
@@ -1160,7 +1160,7 @@ static __attribute_regparm__(3) int SND_PlaySoundAlias_Internal(const snd_alias_
             continue;
 
         g_snd.chaninfo[i].basevolume = (1.0f - lerp) * pAlias0->fVolMin + lerp * pAlias1->fVolMin;
-        rate = (int)floorf((float)g_snd.chaninfo[i].baserate * g_snd.chaninfo[i].pitch * g_snd.timescale + 0.5f);
+        rate = I_fround((float)g_snd.chaninfo[i].baserate * g_snd.chaninfo[i].pitch * g_snd.timescale);
         SND_SetStreamChannelPlaybackRate(i, rate);
         g_snd.chaninfo[i].org[0] = org[0];
         g_snd.chaninfo[i].org[1] = org[1];
@@ -1879,7 +1879,7 @@ static __attribute_regparm__(2)
 
     SND_SetStreamChannelFromSaveInfo(channel, (snd_save_stream_t *)info);
 
-    rate = (int)floorf((float)(*(int *)&info[4]) * g_snd.chaninfo[channel].pitch * g_snd.timescale + 0.5f);
+    rate = I_fround((float)(*(int *)&info[4]) * g_snd.chaninfo[channel].pitch * g_snd.timescale);
     SND_SetStreamChannelPlaybackRate(channel, rate);
 
     g_snd.chaninfo[channel].offset[0] = chaninfo.offset[0];
@@ -2095,21 +2095,21 @@ static void SND_UpdateTimescale(void)
         if (SND_Is3DChannelFree(i))
             continue;
         rate = SND_Get3DChannelPlaybackRate(i);
-        SND_Set3DChannelPlaybackRate(i, (int)floorf((float)rate * ratio + 0.5f));
+        SND_Set3DChannelPlaybackRate(i, I_fround((float)rate * ratio));
     }
 
     for (i = 32; i < 32 + g_snd.max_stream_channels; i++) {
         if (SND_IsStreamChannelFree(i))
             continue;
         rate = SND_GetStreamChannelPlaybackRate(i);
-        SND_SetStreamChannelPlaybackRate(i, (int)floorf((float)rate * ratio + 0.5f));
+        SND_SetStreamChannelPlaybackRate(i, I_fround((float)rate * ratio));
     }
 
     for (i = 45; i < 45 + g_snd.max_2D_channels; i++) {
         if (SND_Is2DChannelFree(i))
             continue;
         rate = SND_Get2DChannelPlaybackRate(i);
-        SND_Set2DChannelPlaybackRate(i, (int)floorf((float)rate * ratio + 0.5f));
+        SND_Set2DChannelPlaybackRate(i, I_fround((float)rate * ratio));
     }
 }
 

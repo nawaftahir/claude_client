@@ -1881,8 +1881,8 @@ void UI_DrawText(const char *text, int maxChars, FontHandle font, float x, float
     CalcSplitScreenTextOffset(font, &y);
     CalcScreenPlacement(&x, &y, &xScale, &yScale, horzAlign, vertAlign);
 
-    x = (float)(int)floorf(x + 0.5f);
-    y = (float)(int)floorf(y + 0.5f);
+    x = (float)I_fround(x);
+    y = (float)I_fround(y);
 
     CL_DrawTextPhysical(text, maxChars, font, x, y, xScale, yScale, color, style);
 }
@@ -1898,8 +1898,8 @@ void UI_DrawTextWithCursor(const char *text, int maxChars, FontHandle font, floa
     CalcSplitScreenTextOffset(font, &y);
     CalcScreenPlacement(&x, &y, &xScale, &yScale, horzAlign, vertAlign);
 
-    x = (float)(int)floorf(x + 0.5f);
-    y = (float)(int)floorf(y + 0.5f);
+    x = (float)I_fround(x);
+    y = (float)I_fround(y);
 
     CL_DrawTextPhysicalWithCursor(text, maxChars, font, x, y, xScale, yScale, color, style, cursorPos, (signed char)cursor);
 }
@@ -5644,8 +5644,8 @@ void UI_DrawText(const char *text, int maxChars, FontHandle font, float x, float
     CalcSplitScreenTextOffset(font, &y);
     CalcScreenPlacement(&x, &y, &xScale, &yScale, horzAlign, vertAlign);
 
-    x = (float)(int)floorf(x + 0.5f);
-    y = (float)(int)floorf(y + 0.5f);
+    x = (float)I_fround(x);
+    y = (float)I_fround(y);
 
     CL_DrawTextPhysical(text, maxChars, font, x, y, xScale, yScale, color, style);
 }

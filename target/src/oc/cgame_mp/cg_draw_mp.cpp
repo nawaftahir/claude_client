@@ -1229,7 +1229,7 @@ static inline int CG_RoundFPS(float value)
 
     return result;
 #else
-    return (int)floorf(value + 0.5f);
+    return I_fround(value);
 #endif
 }
 

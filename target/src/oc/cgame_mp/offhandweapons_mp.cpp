@@ -83,7 +83,7 @@ void CG_DrawOffHandName(rectDef_s *rect, struct Font_s *font, float scale, vec_t
 
     hud = hud_fade_offhand;
 
-    time = (int)floorf(hud->current.value * 1000.0f + 0.5f);
+    time = I_fround(hud->current.value * 1000.0f);
     fade = CG_FadeHudMenu( (const dvar_t *)((void *)hud), cg->offhandFadeTime, time);
 
     if (fade == 0.0f)
@@ -205,7 +205,7 @@ void CG_DrawOffHandIcon(rectDef_s *rect, float scale, vec_t *color, MaterialHand
 
     hud = hud_fade_offhand;
 
-    time = (int)floorf(hud->current.value * 1000.0f + 0.5f);
+    time = I_fround(hud->current.value * 1000.0f);
     fade = CG_FadeHudMenu( (const dvar_t *)((void *)hud), cg->offhandFadeTime, time);
 
     if (fade == 0.0f)
@@ -273,7 +273,7 @@ void CG_DrawOffHandHighlight(rectDef_s *rect, float scale, vec_t *color, Materia
 
     hud = hud_fade_offhand;
 
-    time = (int)floorf(hud->current.value * 1000.0f + 0.5f);
+    time = I_fround(hud->current.value * 1000.0f);
     fade = CG_FadeHudMenu( (const dvar_t *)((void *)hud), cg->offhandFadeTime, time);
 
     if (fade == 0.0f)
@@ -347,7 +347,7 @@ void CG_DrawOffHandAmmo(rectDef_s *rect, struct Font_s *font, float scale, vec_t
 
     hud = hud_fade_offhand;
 
-    time = (int)floorf(hud->current.value * 1000.0f + 0.5f);
+    time = I_fround(hud->current.value * 1000.0f);
     fade = CG_FadeHudMenu( (const dvar_t *)((void *)hud), cg->offhandFadeTime, time);
 
     if (fade == 0.0f)
