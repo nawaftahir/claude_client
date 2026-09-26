@@ -166,9 +166,6 @@ void Sys_FindInfo( void )
 /*
 ==================
 Sys_GetInfo
-
-Hands qcommon a copy of the last-measured hardware info (see Sys_FindInfo),
-for Com_SetRecommended/Com_CheckSetRecommended.
 ==================
 */
 void Sys_GetInfo( SysInfo *info )

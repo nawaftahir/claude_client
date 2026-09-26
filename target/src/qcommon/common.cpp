@@ -1730,10 +1730,6 @@ extern bool Dvar_AnyLatchedValues( void );
 /*
 ==================
 Com_GpuStringCompare
-
-Case-insensitive wildcard match against a configure_mp.csv gpu template.
-'*' matches anything (including nothing); ' ' matches a run of non-digits
-(used so "geforce 8800" also matches "geforce8800"). Returns 0 on match.
 ==================
 */
 static int Com_GpuStringCompare( const char *wild, const char *s )
@@ -1790,10 +1786,6 @@ static int Com_GpuStringCompare( const char *wild, const char *s )
 /*
 ==================
 Com_MatchGpuTemplate
-
-Builds a wildcard template from a configure_mp.csv "find" entry (a space is
-inserted before every run of uppercase letters) and matches it against the
-detected GPU description.
 ==================
 */
 static qboolean Com_MatchGpuTemplate( const char *find, const char *gpuDescription )
@@ -1843,9 +1835,6 @@ static qboolean Com_MatchGpuTemplate( const char *find, const char *gpuDescripti
 /*
 ==================
 Com_GetConfigureDvarNames
-
-Reads the dvar-name header row (everything after "cpu ghz"/"sys mb" or
-"gpu") into a 0x40 x 0x20 name table and returns how many there were.
 ==================
 */
 static int Com_GetConfigureDvarNames( const char **text, char *dvarNames )
@@ -1874,10 +1863,6 @@ static int Com_GetConfigureDvarNames( const char **text, char *dvarNames )
 /*
 ==================
 Com_GetConfigureDvarValues
-
-Reads dvarCount value columns for the current row. When dvarValues is NULL
-the columns are still validated but discarded (used for rows that lost the
-best-match comparison).
 ==================
 */
 static void Com_GetConfigureDvarValues( int dvarCount, const char **text, char *dvarValues )
@@ -1947,9 +1932,6 @@ static void Com_SkipConfigureBlankLines( const char **text )
 /*
 ==================
 Com_ParseCpuConfig
-
-Scans the CPU rows of configure_mp.csv for the best (highest GHz, then
-highest MB) row this machine qualifies for, and applies its dvars.
 ==================
 */
 static qboolean Com_ParseCpuConfig( const char **text, const SysInfo *info )
@@ -2052,9 +2034,6 @@ static qboolean Com_ParseCpuConfig( const char **text, const SysInfo *info )
 /*
 ==================
 Com_ParseGpuConfig
-
-Scans the gpu rows of configure_mp.csv for a wildcard template matching the
-detected GPU description, and applies its dvars.
 ==================
 */
 static qboolean Com_ParseGpuConfig( const char **text, const SysInfo *info )
@@ -2111,10 +2090,6 @@ static qboolean Com_ParseGpuConfig( const char **text, const SysInfo *info )
 /*
 ==================
 Com_SetRecommended
-
-Re-runs the CPU/GPU autoconfigure pick from configure_mp.csv and archives
-the file's checksum plus the measured hardware for next launch's
-Com_CheckSetRecommended to compare against.
 ==================
 */
 void Com_SetRecommended( qboolean restart )
@@ -2169,9 +2144,6 @@ void Com_SetRecommended( qboolean restart )
 /*
 ==================
 Com_HasConfigureChecksumChanged
-
-Re-hashes configure_mp.csv and reports (via Sys_HasConfigureChecksumChanged)
-whether it differs from the archived checksum.
 ==================
 */
 static qboolean Com_HasConfigureChecksumChanged( void )
@@ -2198,10 +2170,6 @@ static qboolean Com_HasConfigureChecksumChanged( void )
 /*
 ==================
 Com_CheckSetRecommended
-
-Called once at startup: re-runs autoconfigure if it has never run, if
-configure_mp.csv changed since the last run, or if the hardware itself
-changed since the last run.
 ==================
 */
 void Com_CheckSetRecommended( void )
