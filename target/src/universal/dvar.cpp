@@ -1278,7 +1278,8 @@ static dvar_t *Dvar_RegisterNew(const char *dvarName, unsigned char type, unsign
 	return dvar;
 }
 
-static dvar_t *Dvar_RegisterVariant(const char *dvarName, unsigned char type, unsigned short flags, DvarValue value, DvarLimits domain)
+// Retail expands this into every Dvar_Register* wrapper.
+static __forceinline dvar_t *Dvar_RegisterVariant(const char *dvarName, unsigned char type, unsigned short flags, DvarValue value, DvarLimits domain)
 {
 	dvar_t *dvar;
 
