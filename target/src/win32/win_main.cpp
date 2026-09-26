@@ -194,6 +194,19 @@ void Sys_FindInfo( void )
 	_controlfp( _MCW_EM, _MCW_EM );
 }
 
+/*
+==================
+Sys_GetInfo
+
+Hands qcommon a copy of the last-measured hardware info (see Sys_FindInfo),
+for Com_SetRecommended/Com_CheckSetRecommended.
+==================
+*/
+void Sys_GetInfo( SysInfo *info )
+{
+	*info = sys_info;
+}
+
 void Sys_ArchiveInfo( int checksum );
 
 /*

@@ -24,3 +24,13 @@
 40e4d0	CL_UpdateInGameState	callgraph
 40d3c0	CL_CheckForResend	callgraph
 541d77	atoi
+4324e0	Com_CheckSetRecommended	located
+432350	Com_SetRecommended	located
+431a80	Com_HasConfigureChecksumChanged	located
+431af0	Com_GpuStringCompare	located
+431ba0	Com_MatchGpuTemplate	located
+431c40	Com_GetConfigureDvarNames	located
+431d20	Com_GetConfigureDvarValues	located
+431e70	Com_SetConfigureDvars	located
+431f00	Com_ParseCpuConfig	located
+4321b0	Com_ParseGpuConfig	located

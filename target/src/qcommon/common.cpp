@@ -33,6 +33,7 @@ dvar_t *com_expectedHunkUsage;
 dvar_t *sv_paused;
 int com_unreferenced2;
 dvar_t *com_animCheck;
+dvar_t *com_recommendedSet;
 
 int com_frameTime;
 int com_lastFrameTime;
@@ -1143,6 +1144,8 @@ void Com_StartupConfigs( void )
 	Com_ExecStartupConfigs(CONFIG_NAME);
 }
 
+void Com_CheckSetRecommended( void );
+
 static void Com_Init_Try_Block_Function( char *commandLine )
 {
 	char *src;
@@ -1168,6 +1171,8 @@ static void Com_Init_Try_Block_Function( char *commandLine )
 	CL_SwitchToLocalClient( 0 );
 	Cbuf_Execute();
 	Com_SyncThreads();
+	com_recommendedSet = Dvar_RegisterBool("com_recommendedSet", false, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
+	Com_CheckSetRecommended();
 	Com_StartupVariable(0);
 	Com_InitHunkMemory();
 	dvar_modifiedFlags &= ~DVAR_ARCHIVE;
@@ -1694,6 +1699,521 @@ int Com_AddToString( const char *add, char *msg, int len, int maxlen, int mayAdd
 char Com_GetDecimalDelimiter( void )
 {
 	return '.';
+}
+
+/*
+========================================================================
+
+AUTOCONFIGURE
+
+Picks CPU/GPU dvar presets from configure_mp.csv based on measured hardware,
+and re-runs the pick whenever the hardware or the csv itself changes.
+
+========================================================================
+*/
+
+struct SysInfo
+{
+	double cpuGHz;
+	int sysMB;
+	bool SSE;
+	char gpuDescription[512];
+};
+
+extern void Sys_GetInfo( SysInfo *info );
+extern bool Sys_HasConfigureChecksumChanged( int checksum );
+extern bool Sys_HasInfoChanged( void );
+extern void Sys_ArchiveInfo( int checksum );
+extern dvar_t *Dvar_SetFromStringByNameFromSource( const char *dvarName, const char *string, DvarSetSource source );
+extern bool Dvar_AnyLatchedValues( void );
+
+/*
+==================
+Com_GpuStringCompare
+
+Case-insensitive wildcard match against a configure_mp.csv gpu template.
+'*' matches anything (including nothing); ' ' matches a run of non-digits
+(used so "geforce 8800" also matches "geforce8800"). Returns 0 on match.
+==================
+*/
+static int Com_GpuStringCompare( const char *wild, const char *s )
+{
+	for ( ;; )
+	{
+		char c = *wild;
+
+		if ( c == 0 )
+			return *s == 0 ? 0 : 1;
+
+		if ( c == '*' )
+		{
+			wild++;
+			if ( *wild == 0 )
+				return 0;
+
+			do
+			{
+				if ( Com_GpuStringCompare( wild, s ) == 0 )
+					return 0;
+			} while ( *s++ != 0 );
+
+			return 1;
+		}
+
+		if ( c == ' ' )
+		{
+			wild++;
+			if ( Com_GpuStringCompare( wild, s ) == 0 )
+				return 0;
+
+			while ( *s && !isdigit( (unsigned char)*s ) )
+			{
+				s++;
+				if ( Com_GpuStringCompare( wild, s ) == 0 )
+					return 0;
+			}
+
+			return 1;
+		}
+
+		if ( *s == 0 )
+			return 1;
+
+		if ( c != '?' && tolower( (unsigned char)c ) != tolower( (unsigned char)*s ) )
+			return 1;
+
+		wild++;
+		s++;
+	}
+}
+
+/*
+==================
+Com_MatchGpuTemplate
+
+Builds a wildcard template from a configure_mp.csv "find" entry (a space is
+inserted before every run of uppercase letters) and matches it against the
+detected GPU description.
+==================
+*/
+static qboolean Com_MatchGpuTemplate( const char *find, const char *gpuDescription )
+{
+	char wildcard[0x400];
+	int len;
+	const char *p;
+
+	wildcard[0] = '*';
+	len = 0;
+
+	if ( *find )
+	{
+		len = 1;
+
+		for ( p = find; *p; p++ )
+		{
+			char c = *p;
+
+			if ( c >= 'A' && c <= 'Z' )
+			{
+				if ( len > 0 && wildcard[len - 1] != ' ' )
+				{
+					wildcard[len++] = ' ';
+					if ( len >= 0x3ff )
+						Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: \"find\" string is too long\n" );
+				}
+			}
+			else
+			{
+				wildcard[len++] = c;
+				if ( len >= 0x3ff )
+					Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: \"find\" string is too long\n" );
+			}
+		}
+	}
+
+	if ( len > 0 && wildcard[len - 1] == '*' )
+		len--;
+
+	wildcard[len] = '*';
+	wildcard[len + 1] = 0;
+
+	return Com_GpuStringCompare( wildcard, gpuDescription ) == 0;
+}
+
+/*
+==================
+Com_GetConfigureDvarNames
+
+Reads the dvar-name header row (everything after "cpu ghz"/"sys mb" or
+"gpu") into a 0x40 x 0x20 name table and returns how many there were.
+==================
+*/
+static int Com_GetConfigureDvarNames( const char **text, char *dvarNames )
+{
+	int dvarCount = 0;
+
+	for ( ;; )
+	{
+		const char *token = Com_ParseOnLine( text );
+
+		if ( !*text )
+			Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: unexpected end-of-file" );
+		if ( !*token )
+			return dvarCount;
+
+		if ( (int)strlen( token ) > 0x1f )
+			Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: dvar name \"%s\" longer than %i\n", token, 0x1f );
+		if ( dvarCount > 0x3f )
+			Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: more than %i dvars\n", 0x40 );
+
+		I_strncpyz( dvarNames + dvarCount * 0x20, token, 0x20 );
+		dvarCount++;
+	}
+}
+
+/*
+==================
+Com_GetConfigureDvarValues
+
+Reads dvarCount value columns for the current row. When dvarValues is NULL
+the columns are still validated but discarded (used for rows that lost the
+best-match comparison).
+==================
+*/
+static void Com_GetConfigureDvarValues( int dvarCount, const char **text, char *dvarValues )
+{
+	int dvarIndex;
+	char *cur = dvarValues;
+
+	for ( dvarIndex = 0; dvarIndex < dvarCount; dvarIndex++ )
+	{
+		const char *token = Com_ParseOnLine( text );
+
+		if ( !*text )
+			Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: unexpected end-of-file" );
+		if ( !*token )
+			Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: missing entry in dvar value column %i\n", dvarIndex );
+		if ( (int)strlen( token ) > 0x1f )
+			Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: entry '%s' in dvar value column %i is longer than %i\n", token, dvarIndex, 0x1f );
+
+		if ( dvarValues )
+		{
+			I_strncpyz( cur, token, 0x20 );
+			cur += 0x20;
+		}
+	}
+
+	{
+		const char *token = Com_ParseOnLine( text );
+		if ( *token )
+			Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: extra dvar value column(s): value = %s\n", token );
+	}
+}
+
+/*
+==================
+Com_SetConfigureDvars
+==================
+*/
+static void Com_SetConfigureDvars( int dvarCount, const char *dvarNames, const char *dvarValues )
+{
+	int dvarIndex;
+
+	for ( dvarIndex = 0; dvarIndex < dvarCount; dvarIndex++ )
+	{
+		const char *name = dvarNames + dvarIndex * 0x20;
+		const char *value = dvarValues + dvarIndex * 0x20;
+
+		if ( !strncmp( name, "r_aaSamples", 12 ) )
+			Dvar_SetFromStringByNameFromSource( name, "1", DVAR_SOURCE_EXTERNAL );
+		else
+			Dvar_SetFromStringByNameFromSource( name, value, DVAR_SOURCE_EXTERNAL );
+
+		Dvar_AddFlags( Dvar_FindVar( name ), DVAR_ARCHIVE );
+	}
+}
+
+/*
+==================
+Com_SkipConfigureBlankLines
+==================
+*/
+static void Com_SkipConfigureBlankLines( const char **text )
+{
+	while ( *text && **text && ( **text == '\r' || **text == '\n' ) )
+		Com_SkipRestOfLine( text );
+}
+
+/*
+==================
+Com_ParseCpuConfig
+
+Scans the CPU rows of configure_mp.csv for the best (highest GHz, then
+highest MB) row this machine qualifies for, and applies its dvars.
+==================
+*/
+static qboolean Com_ParseCpuConfig( const char **text, const SysInfo *info )
+{
+	char dvarNames[0x40 * 0x20];
+	int dvarCount = 0;
+	struct
+	{
+		double MHz;
+		int MB;
+		char dvarValues[0x40 * 0x20];
+	} best;
+	double bestMHz = -1.0;
+	int bestMB = 0;
+	qboolean foundCpuMatch = qfalse;
+
+	for ( ;; )
+	{
+		const char *token;
+		double rowGHz;
+		int rowMB;
+
+		Com_SkipConfigureBlankLines( text );
+		if ( !*text || !**text )
+			break;
+
+		token = Com_Parse( text );
+		if ( !*token || *token == '#' )
+		{
+			Com_SkipRestOfLine( text );
+			continue;
+		}
+
+		if ( !dvarCount )
+		{
+			const char *col2;
+
+			if ( stricmp( token, "cpu ghz" ) )
+				Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: \"cpu ghz\" should be the first column\n" );
+
+			col2 = Com_ParseOnLine( text );
+			if ( stricmp( col2, "sys mb" ) )
+				Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: \"sys mb\" should be the second column\n" );
+
+			dvarCount = Com_GetConfigureDvarNames( text, dvarNames );
+			Com_SkipRestOfLine( text );
+			continue;
+		}
+
+		if ( !stricmp( token, "gpu" ) )
+		{
+			Com_UngetToken();
+			break;
+		}
+
+		rowGHz = atof( token );
+		if ( rowGHz < 0.0 )
+			Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: cpu ghz %g not allowed to be less than 0\n", rowGHz );
+
+		token = Com_ParseOnLine( text );
+		rowMB = atoi( token );
+		if ( rowMB <= 0x7f )
+			Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: sys mb %i not allowed to be less than 128\n", rowMB );
+
+		if ( info->cpuGHz >= rowGHz && rowMB <= info->sysMB )
+		{
+			if ( rowGHz > bestMHz || ( rowGHz == bestMHz && rowMB > bestMB ) )
+			{
+				bestMHz = rowGHz;
+				bestMB = rowMB;
+				best.MHz = rowGHz;
+				best.MB = rowMB;
+				Com_GetConfigureDvarValues( dvarCount, text, best.dvarValues );
+				foundCpuMatch = qtrue;
+			}
+			else
+			{
+				Com_GetConfigureDvarValues( dvarCount, text, NULL );
+			}
+		}
+		else
+		{
+			Com_GetConfigureDvarValues( dvarCount, text, NULL );
+		}
+
+		Com_SkipRestOfLine( text );
+	}
+
+	if ( !foundCpuMatch )
+		return qfalse;
+
+	Com_Printf( "configure_mp.csv: using CPU configuration %.0f GHz %i MB\n", bestMHz, bestMB );
+	Cbuf_AddText( "exec configure_mp.cfg" );
+	Cbuf_Execute();
+	Com_SetConfigureDvars( dvarCount, dvarNames, best.dvarValues );
+
+	return qtrue;
+}
+
+/*
+==================
+Com_ParseGpuConfig
+
+Scans the gpu rows of configure_mp.csv for a wildcard template matching the
+detected GPU description, and applies its dvars.
+==================
+*/
+static qboolean Com_ParseGpuConfig( const char **text, const SysInfo *info )
+{
+	char dvarNames[0x40 * 0x20];
+	int dvarCount;
+	qboolean foundGpuMatch = qfalse;
+	const char *token;
+
+	token = Com_Parse( text );
+	if ( stricmp( token, "gpu" ) )
+	{
+		Com_UngetToken();
+		return qfalse;
+	}
+
+	dvarCount = Com_GetConfigureDvarNames( text, dvarNames );
+
+	for ( ;; )
+	{
+		const char *find;
+
+		Com_SkipConfigureBlankLines( text );
+		if ( !*text || !**text )
+			break;
+
+		find = Com_Parse( text );
+		if ( !*find || *find == '#' )
+		{
+			Com_SkipRestOfLine( text );
+			continue;
+		}
+
+		if ( !foundGpuMatch && Com_MatchGpuTemplate( find, info->gpuDescription ) )
+		{
+			char dvarValues[0x40 * 0x20];
+
+			Com_Printf( "configure_mp.csv: using GPU configuration \"%s\"\n", find );
+			Com_GetConfigureDvarValues( dvarCount, text, dvarValues );
+			Com_SetConfigureDvars( dvarCount, dvarNames, dvarValues );
+			foundGpuMatch = qtrue;
+		}
+		else
+		{
+			Com_GetConfigureDvarValues( dvarCount, text, NULL );
+		}
+
+		Com_SkipRestOfLine( text );
+	}
+
+	return foundGpuMatch;
+}
+
+/*
+==================
+Com_SetRecommended
+
+Re-runs the CPU/GPU autoconfigure pick from configure_mp.csv and archives
+the file's checksum plus the measured hardware for next launch's
+Com_CheckSetRecommended to compare against.
+==================
+*/
+void Com_SetRecommended( qboolean restart )
+{
+	SysInfo info;
+	void *csv;
+	int filesize;
+	const char *text;
+	int checksum;
+	int i;
+
+	Com_Printf( "========= autoconfigure\n" );
+
+	Sys_GetInfo( &info );
+	// startup code can leave MMX state live, which corrupts the first x87 op
+	info.cpuGHz *= 1.02;
+	if ( info.sysMB <= 0x7f )
+		info.sysMB = 0x80;
+
+	filesize = FS_ReadFile( "configure_mp.csv", &csv );
+	if ( filesize < 0 )
+		Com_Error( ERR_FATAL, "EXE_ERR_NOT_FOUND" "\x15" "configure_mp.csv" );
+
+	text = (const char *)csv;
+	Com_BeginParseSession( "configure_mp.csv" );
+	Com_SetCSV( qtrue );
+
+	if ( !Com_ParseCpuConfig( &text, &info ) )
+	{
+		SysInfo rawInfo;
+		Sys_GetInfo( &rawInfo );
+		Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: " "\x14" "EXE_ERR_COULDNT_CONFIGURE" "\x15" " %.0f GHz %i MB\n", rawInfo.cpuGHz, rawInfo.sysMB );
+	}
+
+	if ( !Com_ParseGpuConfig( &text, &info ) )
+		Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: " "\x14" "EXE_ERR_COULDNT_CONFIGURE" "\x15" " \"%s\"\n", info.gpuDescription );
+
+	Com_EndParseSession();
+
+	checksum = 0;
+	for ( i = 0; i < filesize; i++ )
+		checksum = checksum * 0x7a69 + ( (char *)csv )[i];
+
+	FS_FreeFile( csv );
+	checksum &= 0xfffffff;
+	Sys_ArchiveInfo( checksum + 1 );
+
+	if ( restart && Dvar_AnyLatchedValues() )
+		Cbuf_AddText( "snd_restart\n" );
+}
+
+/*
+==================
+Com_HasConfigureChecksumChanged
+
+Re-hashes configure_mp.csv and reports (via Sys_HasConfigureChecksumChanged)
+whether it differs from the archived checksum.
+==================
+*/
+static qboolean Com_HasConfigureChecksumChanged( void )
+{
+	void *csv;
+	int filesize;
+	int checksum;
+	int i;
+
+	filesize = FS_ReadFile( "configure_mp.csv", &csv );
+	if ( filesize < 0 )
+		Com_Error( ERR_FATAL, "EXE_ERR_NOT_FOUND" "\x15" "configure_mp.csv" );
+
+	checksum = 0;
+	for ( i = 0; i < filesize; i++ )
+		checksum = checksum * 0x7a69 + ( (char *)csv )[i];
+
+	FS_FreeFile( csv );
+	checksum &= 0xfffffff;
+
+	return Sys_HasConfigureChecksumChanged( checksum + 1 );
+}
+
+/*
+==================
+Com_CheckSetRecommended
+
+Called once at startup: re-runs autoconfigure if it has never run, if
+configure_mp.csv changed since the last run, or if the hardware itself
+changed since the last run.
+==================
+*/
+void Com_CheckSetRecommended( void )
+{
+	if ( !com_recommendedSet->current.boolean || Com_HasConfigureChecksumChanged() )
+	{
+		Com_SetRecommended( qfalse );
+		Dvar_SetBool( com_recommendedSet, qtrue );
+	}
+
+	if ( Sys_HasInfoChanged() )
+		Com_SetRecommended( qfalse );
 }
 
 /*
