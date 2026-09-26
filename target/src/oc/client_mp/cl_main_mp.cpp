@@ -218,7 +218,6 @@ extern float floorf(float);
 extern int puts(const char *);
 
 extern refexport_t re;
-extern const clientActive_t *cl;
 extern clientConnection_t clc;
 extern struct clientStatic_t cls;
 extern const dvar_t *cl_nodelta;
@@ -510,7 +509,7 @@ void CL_ClearState(void)
 
     memset(&clients[0], 0, sizeof(clientActive_t));
 
-    restorePtr = (clientActive_t *)cl;
+    restorePtr = clients;
     restorePtr->cgameInitialized = cgameInitialized;
     restorePtr->cgameInitCalled = cgameInitCalled;
     restorePtr->keyCatchers = keyCatchers;
@@ -588,7 +587,7 @@ void CL_Configstrings_f(void)
         return;
     }
 
-    c = (clientActive_t *)cl;
+    c = clients;
     for (i = 0; i < 0x800; i++) {
         offset = c->gameState.stringOffsets[i];
         if (offset)
@@ -681,7 +680,7 @@ void CL_VoiceTransmit(void)
 
     if (clients[0].serverTime - clients[0].voicePacketLastTransmit > 199 || voiceLen > 9) {
         CL_WriteVoicePacket();
-        c = (clientActive_t *)cl;
+        c = clients;
         c->voicePacketCount = 0;
         c->voicePacketLastTransmit = c->serverTime;
     }
@@ -709,7 +708,7 @@ int Voice_SendVoiceData(void)
         return 1;
 
     {
-        int vpc = cl->voicePacketCount;
+        int vpc = clients->voicePacketCount;
         if (vpc)
             return 1;
     }
@@ -1431,7 +1430,7 @@ void CL_WriteDemoMessage(msg_t *msg, int headerBytes)
 void CL_Record_f(void)
 {
     clientConnection_t *conn = &::clc;
-    clientActive_t *active = (clientActive_t *)cl;
+    clientActive_t *active = clients;
     char demoName[64];
     char name[256];
     msg_t buf;
@@ -2342,7 +2341,7 @@ void CL_Init(void)
 {
     Com_Printf("----- Client Initialization -----\n");
 
-    clientActive_t *c = (clientActive_t *)cl;
+    clientActive_t *c = clients;
     Bool savedCgameInitialized = c->cgameInitialized;
     Bool savedCgameInitCalled = c->cgameInitCalled;
     int savedKeyCatchers = c->keyCatchers;
@@ -2506,7 +2505,7 @@ void CL_Vid_Restart_f(void)
 {
     const dvar_t *svRunning = com_sv_running;
     clientConnection_t *conn = &::clc;
-    clientActive_t *active = (clientActive_t *)cl;
+    clientActive_t *active = clients;
     MemoryFile memFile;
     void *tempBuf;
     void *clientStateBuf = NULL;
@@ -2555,7 +2554,7 @@ void CL_Vid_Restart_f(void)
     }
 
     if (clientStateBuf) {
-        active = (clientActive_t *)cl;
+        active = clients;
         if (active->cgameInitialized) {
             MemFile_InitForReading(&memFile, clientStateBytes, clientStateBuf);
             CL_ArchiveClientState(&memFile);
@@ -2603,7 +2602,7 @@ void CL_Disconnect(void)
 {
     LegacyHacks *legacy = (LegacyHacks *)::legacyHacks;
     clientConnection_t *conn = &::clc;
-    clientActive_t *active = (clientActive_t *)cl;
+    clientActive_t *active = clients;
     connstate_t oldState;
     int sequence;
 
@@ -2736,7 +2735,7 @@ void CL_MapLoading(const char *mapname)
 {
     LegacyHacks *legacy = (LegacyHacks *)::legacyHacks;
     clientConnection_t *conn = &::clc;
-    clientActive_t *active = (clientActive_t *)cl;
+    clientActive_t *active = clients;
 
     if (!legacy->cl_running)
         return;
@@ -3023,7 +3022,7 @@ void CL_DownloadsComplete(void)
         Com_Restart();
         CL_StartHunkUsers();
         SCR_UpdateScreenInternal();
-    } else if (((clientActive_t *)cl)->cgameInitialized) {
+    } else if (clients->cgameInitialized) {
         return;
     }
 

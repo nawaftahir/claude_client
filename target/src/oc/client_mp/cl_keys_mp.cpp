@@ -1248,14 +1248,13 @@ void CL_KeyEvent(int key, const qboolean down, const unsigned int time)
     if (down) {
         keyState->repeats++;
         if (keyState->repeats == 1) {
-            ++*anykeydown;
+            anykeydown++;
         } else {
             repeated = 1;
         }
     } else {
         keyState->repeats = 0;
-        if (*anykeydown > 0)
-            --*anykeydown;
+        anykeydown--;
     }
 
 #if COD2_FEATURE_GAMEPAD
@@ -1325,7 +1324,7 @@ void CL_KeyEvent(int key, const qboolean down, const unsigned int time)
 void Key_ClearStates(void)
 {
     int i;
-    *(int *)anykeydown = 0;
+    *anykeydown = 0;
 
     for (i = 0; i < 256; i++) {
         if (keys[i].down) {

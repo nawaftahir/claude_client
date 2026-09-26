@@ -236,28 +236,22 @@ toggle:
 
 static void Con_ChatModePublic_f(void)
 {
-    field_t **field;
-
-    *((int *)chat_team) = 0;
-    field = (field_t **)((void *)&chatField);
-    Field_Clear((field_t *)(*field));
-    (*field)->widthInPixels = 0x24c;
-    (*field)->charHeight = 10.0f;
-    (*field)->fixedSize = 0;
-    (clients)->keyCatchers ^= 0x10;
+    *chat_team = 0;
+    Field_Clear(chatField);
+    chatField->widthInPixels = 0x24c;
+    chatField->charHeight = 10.0f;
+    chatField->fixedSize = 0;
+    clients->keyCatchers ^= 0x10;
 }
 
 static void Con_ChatModeTeam_f(void)
 {
-    field_t **field;
-
-    *((int *)chat_team) = 1;
-    field = (field_t **)((void *)&chatField);
-    Field_Clear((field_t *)(*field));
-    (*field)->widthInPixels = 0x21f;
-    (*field)->charHeight = 10.0f;
-    (*field)->fixedSize = 0;
-    (clients)->keyCatchers ^= 0x10;
+    *chat_team = 1;
+    Field_Clear(chatField);
+    chatField->widthInPixels = 0x21f;
+    chatField->charHeight = 10.0f;
+    chatField->fixedSize = 0;
+    clients->keyCatchers ^= 0x10;
 }
 
 void Con_Bottom(void)
@@ -552,7 +546,7 @@ void Con_DrawSay(int y)
     fontScale = 10.0f / 48.0f;
     font = (FontHandle)UI_GetFontHandle(0, fontScale);
 
-    if (*((int *)chat_team))
+    if (*chat_team)
         label = SEH_SafeTranslateString("EXE_SAYTEAM");
     else
         label = SEH_SafeTranslateString("EXE_SAY");
