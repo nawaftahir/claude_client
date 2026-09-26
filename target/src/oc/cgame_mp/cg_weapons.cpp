@@ -104,7 +104,7 @@ extern int stricmp(const char *s1, const char *s2);
 extern void AxisCopy( const vec3_t in[3], vec3_t out[3] );
 extern void AxisToAngles( vec3_t axis[3], vec3_t angles );
 extern void AnglesToAxis( const vec3_t angles, vec3_t axis[3] );
-extern void MatrixMultiply(const float (*in1)[3], const float (*in2)[3], float (*out)[3]);
+extern void MatrixMultiply(const float in1[3][3], const float in2[3][3], float out[3][3]);
 extern void AddLeanToPosition(vec_t *position, const float fViewYaw, const float fLeanFrac, const float fViewRoll, const float fLeanDist);
 extern float DiffTrack(float tgt, float cur, float rate, float deltaTime);
 extern int DObjGetBoneIndex(const DObj *obj, unsigned int boneName);

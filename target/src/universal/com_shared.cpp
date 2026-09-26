@@ -47,7 +47,7 @@ bool Com_Filter( const char *filter, const char *name, int casesensitive)
 				filter++;
 			}
 			buf[i] = '\0';
-			if (buf[0])
+			if (strlen(buf))
 			{
 				ptr = Com_StringContains(name, buf, casesensitive ? I_strcmp : I_stricmp);
 				if (!ptr) return qfalse;

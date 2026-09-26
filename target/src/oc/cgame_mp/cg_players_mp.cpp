@@ -39,7 +39,7 @@ extern void Com_Error(int level, const char *fmt, ...);
 extern WeaponDef * BG_GetWeaponDef(int iWeapon);
 extern vec_t vectosignedyaw(vec3_t vec);
 extern float RotationToYaw(const vec2_t rot);
-extern void YawToAxis(float yaw, float *axis);
+extern void YawToAxis(float yaw, vec3_t axis[3]);
 extern void MatrixMultiply43(const float in1[4][3], const float in2[4][3], float out[4][3]);
 extern void AxisToAngles( vec3_t axis[3], vec3_t angles );
 extern void VectorAngleMultiply(float *trans, float yaw);
@@ -546,7 +546,7 @@ static void CG_PlayerTurretPositionAndBlend(centity_t *cent)
 
         {
             float rotYaw = RotationToYaw(rot);
-            YawToAxis(localYaw + rotYaw, localAxis4x3);
+            YawToAxis(localYaw + rotYaw, (vec3_t *)localAxis4x3);
         }
         localAxis4x3[9] = trans[0] + tagMat->trans[0];
         localAxis4x3[10] = trans[1] + tagMat->trans[1];
