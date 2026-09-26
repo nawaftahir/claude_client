@@ -1388,6 +1388,28 @@ void YawVectors( const float yaw, vec3_t forward, vec3_t right )
 
 /*
 ==============
+VectorAngleMultiply
+==============
+*/
+void VectorAngleMultiply( float *vec, float angle )
+{
+	float radians;
+	float s;
+	float c;
+	float x;
+	float y;
+
+	radians = angle * 0.017453292519943295f;
+	s = sin(radians);
+	c = cos(radians);
+	x = vec[0];
+	y = vec[1];
+	vec[0] = c * x - s * y;
+	vec[1] = c * y + s * x;
+}
+
+/*
+==============
 PerpendicularVector
 ==============
 */

@@ -11,13 +11,14 @@ extern int enc_buffer_pos;
 extern short int partial_audio_buffer[640];
 extern int samples_in_partial_audio_buffer;
 
-extern int DSOUNDRecord_Start(recordingSample_t *sample);
-extern int DSOUNDRecord_Stop(recordingSample_t *sample);
+extern long DSOUNDRecord_Start(recordingSample_t *sample);
+extern long DSOUNDRecord_Stop(recordingSample_t *sample);
 extern recordingSample_t *DSOUNDRecord_NewSample(void);
 extern int DSOUNDRecord_DestroySample(recordingSample_t *sample);
 extern void DSOUNDRecord_Shutdown(void);
 extern void DSOUNDRecord_Frame(void);
-extern int DSOUNDRecord_Init(int callInit, const void *handle);
+extern int DSOUNDRecord_Init(bool bCallDsoundInit);
+extern void Record_SetRecordingCallback(int (*new_audioCallback)(audioSample_t *));
 extern Bool Encode_Shutdown(void);
 extern int Encode_GetFrameSize(void);
 extern int Encode_Sample(short *buffer_in, char *buffer_out, int maxLength);
@@ -29,7 +30,6 @@ extern void Com_Printf(const char *msg, ...);
 
 extern byte *encode_vol_ptr;
 extern byte *voice_scale_ptr;
-extern byte *record_callback_ptr;
 
 int Record_Start(recordingSample_t *sample);
 int Record_Stop(recordingSample_t *sample);
@@ -181,6 +181,6 @@ int Record_AudioCallback(audioSample_t *sample)
 
 int Record_Init(int callInit, const void *handle)
 {
-    *(void **)record_callback_ptr = (void *)Record_AudioCallback;
-    return DSOUNDRecord_Init(1, handle);
+    Record_SetRecordingCallback(Record_AudioCallback);
+    return DSOUNDRecord_Init(true);
 }

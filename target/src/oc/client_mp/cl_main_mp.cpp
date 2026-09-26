@@ -202,7 +202,9 @@ extern void LargeLocal_LargeLocal(const LargeLocal *ll, int size);
 extern void *LargeLocal_GetBuf(const LargeLocal *ll);
 extern void ZN10LargeLocalD1Ev(LargeLocal *ll);
 extern void Cmd_TokenizeString(const char *text);
-extern refexport_t *GetRefAPI(int apiVersion, refimport_t *rimp);
+typedef refexport_t *(*GetRefAPI_t)(int apiVersion, refimport_t *rimp);
+extern GetRefAPI_t Sys_LoadRenderer(void);
+extern void Sys_UnloadRenderer(void);
 extern void MemFile_InitForWriting(MemoryFile *mf, int size, void *buf, bool flag);
 extern void MemFile_InitForReading(MemoryFile *mf, int size, void *buf);
 extern "C" void *Z_MallocInternal( int size );
@@ -1025,7 +1027,21 @@ void CL_InitRef(void)
     }
 #else
 
-    memcpy(&re, GetRefAPI(0x3b, &ri_local), sizeof(re));
+    {
+        GetRefAPI_t getRefAPI;
+        refexport_t *ret;
+
+        getRefAPI = Sys_LoadRenderer();
+        if (!getRefAPI)
+            Com_Error(ERR_FATAL, "Failed to load renderer.");
+        ret = getRefAPI(0x3b, &ri_local);
+        Com_Printf("-------------------------------\n");
+        if (!ret) {
+            Sys_UnloadRenderer();
+            Com_Error(ERR_FATAL, "Failed to initialize renderer: version mismatch.");
+        }
+        memcpy(&re, ret, sizeof(re));
+    }
 #endif
 
     Dvar_SetInt((dvar_t *)cl_paused, 0);

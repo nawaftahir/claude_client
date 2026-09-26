@@ -409,12 +409,13 @@ static_assert((sizeof(XAnimInfo) == 40), "ERROR: XAnimInfo size is invalid!");
 
 extern XAnimInfo g_xAnimInfo[];
 
-struct XAnimClientNotify
+struct XAnimNotify_s
 {
 	const char *name;
 	unsigned int notifyName;
 	float timeFrac;
 };
+typedef XAnimNotify_s XAnimClientNotify;
 
 struct XAnimSimpleRotPos
 {

@@ -718,6 +718,16 @@ void CL_ClearScene(void)
     RE->ClearScene();
 }
 
+void R_SkinGfxEntityDelayed(GfxEntity *ent)
+{
+    RE->SkinGfxEntityDelayed(ent);
+}
+
+GfxEntity *R_AddRefEntityToScene(const GfxEntity *refEnt, GfxModel sceneModel, const centity_t *cent)
+{
+    return RE->AddRefEntityToScene(refEnt, sceneModel, cent);
+}
+
 void CL_DefaultVertexFrames(int vertCount, GfxWorldVertex *verts)
 {
     RE->DefaultVertexFrames(vertCount, verts);
@@ -1204,6 +1214,21 @@ void CL_ArchiveClientState(MemoryFile *memFile)
 void CL_SetLodOrigin(const refdef_t *fd)
 {
     RE->SetLodOrigin(fd);
+}
+
+void R_UpdateXModelBoundsDelayed(GfxEntity *ent)
+{
+    RE->UpdateXModelBoundsDelayed(ent);
+}
+
+void R_UpdateEffectsBolt(void)
+{
+    RE->UpdateEffectsBolt();
+}
+
+void R_UpdateEffectsNonBolt(void)
+{
+    RE->UpdateEffectsNonBolt();
 }
 
 void CL_LookupColor(int c, vec_t *color)
