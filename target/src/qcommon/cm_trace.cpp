@@ -776,7 +776,7 @@ loop:
 
 	if ( tmin >= offset )
 	{
-		if ( -offset >= tmax )
+		if ( tmax <= -offset )
 		{
 			return;
 		}
@@ -785,7 +785,7 @@ loop:
 		goto loop;
 	}
 
-	if ( -offset >= tmax )
+	if ( tmax <= -offset )
 	{
 		node += node->data.children.childOffset[1];
 		goto loop;
@@ -1102,7 +1102,7 @@ void CM_TraceCapsuleThroughCapsule( traceWork_t *tw, trace_t *trace )
 	// calculate top and bottom of the capsule spheres to collide with
 	for ( i = 0 ; i < 3 ; i++ )
 	{
-		offset[i] = ( tw->threadInfo.box_model->mins[i] + tw->threadInfo.box_model->maxs[i] ) * 0.5f;
+		offset[i] = ( tw->threadInfo.box_model->maxs[i] + tw->threadInfo.box_model->mins[i] ) * 0.5f;
 		symetricSize[0][i] = tw->threadInfo.box_model->mins[i] - offset[i];
 		symetricSize[1][i] = tw->threadInfo.box_model->maxs[i] - offset[i];
 	}
@@ -1789,7 +1789,7 @@ loop:
 
 	if ( tmin >= offset )
 	{
-		if ( -offset >= tmax )
+		if ( tmax <= -offset )
 		{
 			return 0;
 		}
@@ -1798,7 +1798,7 @@ loop:
 		goto loop;
 	}
 
-	if ( -offset >= tmax )
+	if ( tmax <= -offset )
 	{
 		remoteNode += remoteNode->data.children.childOffset[1];
 		goto loop;

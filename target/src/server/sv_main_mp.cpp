@@ -777,7 +777,7 @@ void SV_PacketEvent( netadr_t from, msg_t *msg )
 
 			cl->reliableAcknowledge = MSG_ReadLong(msg);
 
-			if ( cl->reliableSequence - cl->reliableAcknowledge > MAX_RELIABLE_COMMANDS - 1 )
+			if ( cl->reliableSequence - cl->reliableAcknowledge >= MAX_RELIABLE_COMMANDS )
 			{
 				cl->reliableAcknowledge = cl->reliableSequence;
 				return;
