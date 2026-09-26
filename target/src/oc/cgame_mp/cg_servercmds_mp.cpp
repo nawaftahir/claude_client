@@ -543,29 +543,27 @@ static void CG_DeactivateChannelVolCmd(void)
 
     prio = atoi(CG_Argv(1));
     fval = (float)I_fround((float)atof(CG_Argv(2)) * 1000.0f);
-    fadeTime = (fval > 0.0f) ? (int)fval : 0;
+    fadeTime = (int)((0.0f - fval >= 0.0f) ? 0.0f : fval);
 
     SND_DeactivateChannelVolumes(prio, fadeTime);
 }
 
 static void CG_SetChannelVolCmd(void)
 {
-    int argc;
     int prio;
     int shockIndex;
     int fadeTime;
     float fval;
 
-    argc = Cmd_Argc();
-    if (argc != 4) {
-        Com_Printf((const char *)"ERROR: CG_SetChannelVolCmd called with %i args (should be 4)\n", argc);
+    if (Cmd_Argc() != 4) {
+        Com_Printf((const char *)"ERROR: CG_SetChannelVolCmd called with %i args (should be 4)\n", Cmd_Argc());
         return;
     }
 
     prio = atoi(CG_Argv(1));
     shockIndex = atoi(CG_Argv(2));
     fval = (float)I_fround((float)atof(CG_Argv(3)) * 1000.0f);
-    fadeTime = (fval > 0.0f) ? (int)fval : 0;
+    fadeTime = (int)((0.0f - fval >= 0.0f) ? 0.0f : fval);
 
     SND_SetChannelVolumes(prio, cgs->shellshockParms[shockIndex].sound.channelvolume, fadeTime);
 }
@@ -585,7 +583,7 @@ static void CG_DeactivateReverbCmd(void)
 
     prio = atoi(CG_Argv(1));
     fval = (float)I_fround((float)atof(CG_Argv(2)) * 1000.0f);
-    fadeTime = (fval > 0.0f) ? (int)fval : 0;
+    fadeTime = (int)((0.0f - fval >= 0.0f) ? 0.0f : fval);
 
     SND_DeactivateEnvironmentEffects(prio, fadeTime);
 }
