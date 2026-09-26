@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include "common_types.h"
 #include "imports.h"
 #include "bytematch.h"
@@ -281,8 +282,6 @@ extern unsigned char Com_NewPlayerProfile(const char *name);
 
 extern void Cbuf_ExecuteText(int execWhen, const char *text);
 extern int Com_sprintf(char *dest, size_t size, const char *format, ...);
-extern int ___toupper(int c);
-extern int ___tolower(int c);
 
 void UI_AssetCache(void);
 void UI_DrawSides(float x, float y, float w, float h, int horzAlign, int vertAlign, float size, const vec_t *color);
@@ -1096,7 +1095,7 @@ void UI_FeederSelection(float feederID, int index)
         name = (char *)va("levelshots/%s", Info_ValueForKey(info, "mapname"));
 
         for (p = name; *p; p++)
-            *p = ___tolower((int)(signed char)*p);
+            *p = tolower((int)(signed char)*p);
 
         sharedUiInfo.serverStatus.currentServerPreview = CL_RegisterMaterialNoMip(name, 3);
         if (sharedUiInfo.serverStatus.currentServerCinematic >= 0) {
@@ -2981,7 +2980,7 @@ static int UI_StrContains(const char *str, const char *charset)
         for (k = 0; charset[k]; k++) {
             if (s[k] == '\0')
                 return 0;
-            if (___toupper((signed char)charset[k]) != ___toupper((signed char)s[k]))
+            if (toupper((signed char)charset[k]) != toupper((signed char)s[k]))
                 break;
         }
         if (!charset[k])
@@ -4835,7 +4834,7 @@ void UI_FeederSelection(float feederID, int index)
         name = (char *)va("levelshots/%s", Info_ValueForKey(info, "mapname"));
 
         for (p = name; *p; p++)
-            *p = ___tolower((int)(signed char)*p);
+            *p = tolower((int)(signed char)*p);
 
         sharedUiInfo.serverStatus.currentServerPreview = CL_RegisterMaterialNoMip(name, 3);
         if (sharedUiInfo.serverStatus.currentServerCinematic >= 0) {

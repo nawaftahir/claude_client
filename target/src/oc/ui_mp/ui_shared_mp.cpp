@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include "common_types.h"
 #include "imports.h"
 #include "bytematch.h"
@@ -4672,7 +4673,6 @@ qboolean Menu_HandleMouseMove(displayContextDef_t *dc, menuDef_t *menu, float x,
     return 0;
 }
 
-extern int ___toupper(int c);
 qboolean Item_TextField_HandleKey(displayContextDef_t *dc, itemDef_t *item, int key)
 {
     byte *it = (byte *)item;
@@ -4738,7 +4738,7 @@ qboolean Item_TextField_HandleKey(displayContextDef_t *dc, itemDef_t *item, int 
 
         if ((((itemDef_s*)(it))->type) == 0x12) {
 
-            key = ___toupper(key);
+            key = toupper(key);
         }
 
         if (Key_GetOverstrikeMode()) {

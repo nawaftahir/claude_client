@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include "common_types.h"
 #include "imports.h"
 #include "bytematch.h"
@@ -79,7 +80,6 @@ extern void FS_FreeFileList(char **list, int count);
 extern void LargeLocal_LargeLocal(const LargeLocal *ll, int size);
 extern void *LargeLocal_GetBuf(const LargeLocal *ll);
 extern void ZN10LargeLocalD1Ev(LargeLocal *ll);
-extern int ___maskrune(int c, unsigned long flags);
 extern int strnicmp(const char *s1, const char *s2, size_t n);
 extern void *__DefaultRuneLocale;
 extern refexport_t re;
@@ -967,11 +967,7 @@ static void ConDrawInput_DvarMatch(const char *str)
 
 static inline __attribute__((always_inline)) int isPunctChar(int c)
 {
-    if ((c & 0xFFFFFF80) == 0) {
-        unsigned int *rune = (unsigned int *)__DefaultRuneLocale;
-        return (rune[0xD + c] >> 14) & 1;
-    }
-    return ___maskrune(c, 0x4000) != 0;
+    return isspace(c);
 }
 
 const char *Con_TokenizeInput(void)

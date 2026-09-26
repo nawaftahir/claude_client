@@ -423,7 +423,11 @@ typedef struct scrCompilePub_s
 static_assert((sizeof(scrCompilePub_t) == 0x1038), "ERROR: scrCompilePub_t size is invalid!");
 #endif
 
+#ifdef __cplusplus
+extern "C" scrCompilePub_t scrCompilePub; // also referenced from scr_yacc.c
+#else
 extern scrCompilePub_t scrCompilePub;
+#endif
 extern char g_EndPos;
 
 struct SourceLookup

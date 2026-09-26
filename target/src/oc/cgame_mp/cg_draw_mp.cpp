@@ -128,7 +128,6 @@ extern float Vec3Distance(const vec3_t v1, const vec3_t v2);
 extern float crandom(void);
 extern double sin(double);
 extern double tan(double);
-extern float fmaxf(float a, float b);
 extern float GetRealWidthFromVirtualWidth(float width);
 extern float GetRealHeightFromVirtualHeight(float height);
 extern float GetVirtualWidthFromRealWidth(float width);
@@ -1595,7 +1594,9 @@ unsigned int CG_DrawCrosshair(void)
         spread = ((spreadMax - spreadMin) * (ps->aimSpreadScale / 255.0f) + spreadMin) * transScale;
         spreadTan = tan((double)spread * 0.017453292519943295);
         fovTan = tan((double)cg->refdef.fov_y * 0.017453292519943295 * 0.5);
-        minOfs = fmaxf((float)weapDef->iReticleMinOfs, (float)(spreadTan * 240.0 / fovTan));
+        minOfs = spreadTan * 240.0 / fovTan;
+        if ( minOfs < (float)weapDef->iReticleMinOfs )
+            minOfs = (float)weapDef->iReticleMinOfs;
         minOfs -= sideSizeF * weapDef->fHipReticleSidePos;
 
         realW = GetRealWidthFromVirtualWidth(sideSize);

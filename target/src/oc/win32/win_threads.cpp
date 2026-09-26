@@ -1,7 +1,7 @@
 #include "common_types.h"
 #include "imports.h"
 
-extern DWORD GetCurrentThreadId(void);
+extern "C" __declspec(dllimport) DWORD __stdcall GetCurrentThreadId(void);
 extern void Com_InitThreadData(int index);
 
 static void *g_threadValues[5];

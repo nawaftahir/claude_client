@@ -33,7 +33,6 @@ extern LegacyHacks *legacyHacks;
 #define CG_FIELD_DC 0xdc
 #define CG_FIELD_4ED 0x4ed
 
-extern int ___tolower(int c);
 
 void CG_LoadingString(const char *s);
 void CG_DrawInformation(qboolean serverLoading);
@@ -118,7 +117,7 @@ void CG_DrawInformation(qboolean serverLoading)
 
     pos = string;
     while (*pos) {
-        *pos = (char)___tolower((int)*pos);
+        *pos = (char)tolower((int)*pos);
         pos++;
     }
 

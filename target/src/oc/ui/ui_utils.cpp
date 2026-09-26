@@ -1,9 +1,9 @@
+#include <ctype.h>
 #include "common_types.h"
 #include "imports.h"
 #include <string.h>
 #include <stdlib.h>
 
-extern int ___tolower(int c);
 extern const char *Dvar_GetVariantString(const char *dvarName);
 extern void I_strncat(char *dest, int destSize, const char *src);
 extern int I_stricmp(const char *s1, const char *s2);
@@ -76,7 +76,7 @@ static long hashForString(const char *str)
     long hash = 0;
 
     for (i = 0; str[i] != '\0'; ++i) {
-        letter = ___tolower(str[i]);
+        letter = tolower(str[i]);
         hash += (long)letter * (i + 119);
     }
 
