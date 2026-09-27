@@ -414,7 +414,7 @@ static qboolean __attribute_regparm__(3) CG_CalcMuzzlePoint(int entityNum, vec_t
 
     snap = cg->nextSnap;
 
-    if ((snap->ps.pm_flags & 0xc00000) && snap->ps.clientNum == entityNum) {
+    if ((snap->ps.pm_flags & 0xc00000) && entityNum == snap->ps.clientNum) {
         muzzle[0] = cg->refdef.vieworg[0];
         muzzle[1] = cg->refdef.vieworg[1];
         muzzle[2] = cg->refdef.vieworg[2];
