@@ -356,7 +356,7 @@ void SV_UnbanClient( const char *name )
 			text++;
 		}
 
-		unban = !I_strnicmpInline(text, cleanName, nameLen) && ( text[nameLen] == '\r' || text[nameLen] == '\n' );
+		unban = !strnicmp(text, cleanName, nameLen) && ( text[nameLen] == '\r' || text[nameLen] == '\n' );
 		Com_SkipRestOfLine((const char **)&text);
 
 		if ( unban )

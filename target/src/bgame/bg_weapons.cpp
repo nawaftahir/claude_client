@@ -1057,11 +1057,11 @@ BG_GetEmptySlotForWeapon
 */
 int BG_GetEmptySlotForWeapon( playerState_t *pPS, int iWeaponIndex )
 {
-	unsigned int weaponSlot;
+	int weaponSlot;
 
 	weaponSlot = BG_GetWeaponDef(iWeaponIndex)->weaponSlot;
 
-	if ( weaponSlot - 1 <= 1 )
+	if ( weaponSlot > SLOT_NONE && weaponSlot <= SLOT_PRIMARYB )
 	{
 		if ( !pPS->weaponslots[SLOT_PRIMARY] )
 		{

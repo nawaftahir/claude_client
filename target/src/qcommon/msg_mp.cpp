@@ -1613,6 +1613,8 @@ delta:
 	}
 }
 
+extern const dvar_t *cl_shownet;
+
 void MSG_WriteDeltaStruct( msg_t *msg, byte *from, byte *to, qboolean force, int numFields, int indexBits, const netField_t *stateFields, qboolean bChangeBit )
 {
 	int i;
@@ -1623,6 +1625,11 @@ void MSG_WriteDeltaStruct( msg_t *msg, byte *from, byte *to, qboolean force, int
 
 	if ( !to )
 	{
+		if ( cl_shownet && ( cl_shownet->current.integer >= 2 || cl_shownet->current.integer == -1 ) )
+		{
+			Com_Printf( "W|%3i: #%-3i remove\n", msg->cursize, *(int *)from );
+		}
+
 		if ( bChangeBit )
 		{
 			MSG_WriteBit1( msg );

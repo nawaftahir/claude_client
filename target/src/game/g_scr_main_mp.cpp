@@ -5958,7 +5958,6 @@ void Scr_ParseGameTypeList()
 	fileHandle_t f;
 	int l;
 
-	memset(buffer, 0, sizeof(buffer));
 	n = 0;
 
 	memset(g_scr_data.gametype.list, 0, sizeof(g_scr_data.gametype.list));

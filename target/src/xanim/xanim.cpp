@@ -2713,7 +2713,7 @@ void DObjCalcAnim(const DObj_s *obj, int *partBits)
 
 		while ( boneCount )
 		{
-			if ( (bool)((animInfo.animPartBits[boneIndex >> 5] >> (boneIndex & 0x1F)) & 1) )
+			if ( animInfo.animPartBits[boneIndex >> 5] & (1 << (boneIndex & 0x1F)) )
 			{
 			}
 			else
@@ -2736,7 +2736,7 @@ void DObjCalcAnim(const DObj_s *obj, int *partBits)
 
 		while ( boneCount )
 		{
-			if ( (bool)((animInfo.animPartBits[boneIndex >> 5] >> (boneIndex & 0x1F)) & 1) )
+			if ( animInfo.animPartBits[boneIndex >> 5] & (1 << (boneIndex & 0x1F)) )
 			{
 			}
 			else

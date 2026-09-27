@@ -620,7 +620,7 @@ qboolean G_RadiusDamage( const vec3_t origin, gentity_t *inflictor, gentity_t *a
 		return qfalse;
 	}
 
-	if ( radius < 1.0 )
+	if ( radius < 1.0f )
 	{
 		radius = 1.0;
 	}
@@ -685,7 +685,7 @@ qboolean G_RadiusDamage( const vec3_t origin, gentity_t *inflictor, gentity_t *a
 			continue;
 		}
 
-		points = fOuterDamage + (fInnerDamage - fOuterDamage) * (1.0 - dist / radius);
+		points = fOuterDamage + (fInnerDamage - fOuterDamage) * (1.0f - dist / radius);
 		damageAmount = CanDamage(ent, origin);
 
 		if ( damageAmount > 0.0f )
@@ -716,7 +716,7 @@ qboolean G_RadiusDamage( const vec3_t origin, gentity_t *inflictor, gentity_t *a
 				dist = VectorLength(dest);
 
 				// closer than a fifth of the radius
-				if ( radius * 0.2f > dist )
+				if ( dist < radius * 0.2f )
 				{
 					if ( LogAccuracyHit(ent, attacker) )
 					{
