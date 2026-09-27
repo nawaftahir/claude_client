@@ -204,9 +204,6 @@ void Voice_Shutdown(void)
 {
     int i;
 
-    if (!g_voice_initialized)
-        return;
-
     for (i = 0; i < 64; i++) {
         Sound_DestroySample((dsound_sample_t *)s_clientSamples[i]);
     }
