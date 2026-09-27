@@ -317,6 +317,13 @@ snd_alias_t *Com_PickSoundAlias( const char *aliasName )
 	return Com_PickSoundAliasFromList(aliasList);
 }
 
+float GraphGetValueFromFraction( int knotCount, const float (*knots)[2], float fraction );
+
+float Com_GetVolumeFalloffCurveValue( SndCurve *volumeFalloffCurve, float fraction )
+{
+	return GraphGetValueFromFraction(volumeFalloffCurve->knotCount, volumeFalloffCurve->knots, fraction);
+}
+
 // the dedicated server has no custom falloff curves
 SndCurve *Com_RegisterSoundAliasVolumeFalloffCurve( const char *filename, const char *sourceFile )
 {

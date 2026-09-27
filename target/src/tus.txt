@@ -188,6 +188,7 @@ oc/cgame_mp/cg_ents_mp.cpp
 oc/cgame_mp/cg_event_mp.cpp
 oc/cgame_mp/cg_hudelem_mp.cpp
 oc/cgame_mp/cg_info_mp.cpp
+cgame/cg_effects_load_obj.cpp
 oc/cgame_mp/cg_localents_mp.cpp
 oc/cgame_mp/cg_main_mp.cpp
 oc/cgame_mp/cg_marks_mp.cpp
