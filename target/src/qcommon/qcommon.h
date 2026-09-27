@@ -479,9 +479,9 @@ void MSG_WriteDeltaClient( msg_t *msg, clientState_t *from, clientState_t *to, q
 void MSG_ReadDeltaField( msg_t *msg, byte *from, byte *to, const netField_t *field, qboolean print );
 void MSG_ReadDeltaObjective( msg_t *msg, byte *from, byte *to, int numFields, const netField_t *fields );
 qboolean MSG_ReadDeltaStruct( msg_t *msg, byte *from, byte *to, int number, int numFields, int indexBits, const netField_t *stateFields );
-void MSG_ReadDeltaEntity( msg_t *msg, entityState_t *from, entityState_t *to, int number );
+qboolean MSG_ReadDeltaEntity( msg_t *msg, entityState_t *from, entityState_t *to, int number );
 void MSG_ReadDeltaArchivedEntity( msg_t *msg, archivedEntity_t *from, archivedEntity_t *to, int number );
-void MSG_ReadDeltaClient( msg_t *msg, clientState_t *from, clientState_t *to, int number );
+qboolean MSG_ReadDeltaClient( msg_t *msg, clientState_t *from, clientState_t *to, int number );
 void MSG_WriteDeltaHudElems( msg_t *msg, hudelem_t *from, hudelem_t *to, int count );
 void MSG_ReadDeltaHudElems( msg_t *msg, hudelem_t *from, hudelem_t *to, int count );
 void MSG_WriteDeltaPlayerstate( msg_t *msg, playerState_t *from, playerState_t *to );

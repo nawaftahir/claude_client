@@ -4,7 +4,7 @@ struct GfxEntity;
 struct Material;
 
 // Only the leading fields are read here.
-struct refdef_t
+struct refdef_s
 {
 	int x;
 	int y;
@@ -15,6 +15,7 @@ struct refdef_t
 	vec3_t vieworg;
 	vec3_t viewaxis[3];
 };
+typedef refdef_s refdef_t;
 
 struct FxCamera
 {

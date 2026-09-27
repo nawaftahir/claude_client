@@ -1919,12 +1919,12 @@ qboolean MSG_ReadDeltaStruct( msg_t *msg, byte *from, byte *to, int number, int 
 	return qfalse;
 }
 
-void MSG_ReadDeltaEntity( msg_t *msg, entityState_t *from, entityState_t *to, int number )
+qboolean MSG_ReadDeltaEntity( msg_t *msg, entityState_t *from, entityState_t *to, int number )
 {
 	int numFields;
 
 	numFields = ARRAY_COUNT( entityStateFields );
-	MSG_ReadDeltaStruct( msg, (byte *)from, (byte *)to, number, numFields, GENTITYNUM_BITS, entityStateFields );
+	return MSG_ReadDeltaStruct( msg, (byte *)from, (byte *)to, number, numFields, GENTITYNUM_BITS, entityStateFields );
 }
 
 void MSG_ReadDeltaArchivedEntity( msg_t *msg, archivedEntity_t *from, archivedEntity_t *to, int number )
@@ -1935,7 +1935,7 @@ void MSG_ReadDeltaArchivedEntity( msg_t *msg, archivedEntity_t *from, archivedEn
 	MSG_ReadDeltaStruct( msg, (byte *)from, (byte *)to, number, numFields, GENTITYNUM_BITS, archivedEntityFields );
 }
 
-void MSG_ReadDeltaClient( msg_t *msg, clientState_t *from, clientState_t *to, int number )
+qboolean MSG_ReadDeltaClient( msg_t *msg, clientState_t *from, clientState_t *to, int number )
 {
 	int numFields;
 	clientState_t nullstate;
@@ -1948,7 +1948,7 @@ void MSG_ReadDeltaClient( msg_t *msg, clientState_t *from, clientState_t *to, in
 		memset( &nullstate, 0, sizeof( nullstate ) );
 	}
 
-	MSG_ReadDeltaStruct( msg, (byte *)from, (byte *)to, number, numFields, CLIENTNUM_BITS, clientStateFields );
+	return MSG_ReadDeltaStruct( msg, (byte *)from, (byte *)to, number, numFields, CLIENTNUM_BITS, clientStateFields );
 }
 
 void MSG_WriteDeltaHudElems( msg_t *msg, hudelem_t *from, hudelem_t *to, int count )

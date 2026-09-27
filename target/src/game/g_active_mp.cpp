@@ -1375,7 +1375,7 @@ void G_PlayerController( gentity_t *self, int *partBits )
 	assert(ci->infoValid);
 	bgs = &level_bgs;
 
-	BG_Player_DoControllers(Com_GetServerDObj(self->s.number), self, partBits, ci, level.frameTime);
+	BG_Player_DoControllers(Com_GetServerDObj(self->s.number), &self->s, partBits, ci, level.frameTime);
 }
 
 /*

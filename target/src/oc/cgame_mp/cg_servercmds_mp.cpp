@@ -46,7 +46,7 @@ extern int Load_ScriptMenu(const char *name, int flags);
 extern MaterialHandle CL_RegisterMaterialNoMip(const char *name, int imageTrack);
 extern MaterialHandle CL_RegisterMaterial(const char *name, int flags);
 extern struct XModel *CL_RegisterModel(const char *name);
-extern struct EffectTemplate *FX_RegisterEffect(const char *fileName);
+extern EffectTemplate *FX_RegisterEffect(const char *fileName);
 extern void CG_InitLocalEntities(void);
 extern void CG_InitMarkPolys(void);
 extern void FX_FreeActive(void);

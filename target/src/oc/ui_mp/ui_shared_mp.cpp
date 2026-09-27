@@ -40,7 +40,7 @@ extern void Cbuf_ExecuteText(int exec_when, const char *text);
 extern int I_stricmp(const char *s0, const char *s1);
 extern int I_strncmp(const char *s0, const char *s1, int n);
 extern void I_strncat(char *dest, int destsize, const char *src);
-extern void Com_Error(int code, const char *fmt, ...);
+extern void Com_Error(errorParm_t code, const char *fmt, ...);
 extern void Com_Printf(const char *fmt, ...);
 extern char *Com_ParseOnLine( const char *( *data_p ) );
 extern const char *SEH_StringEd_GetString(const char *key);
@@ -64,7 +64,7 @@ extern void UI_DrawLoadBar(float x, float y, float w, float h, int horzAlign, in
 extern int UI_TextWidth(const char *text, int maxChars, FontHandle font, float scale);
 extern int UI_TextHeight(FontHandle font, float scale);
 extern const char *UI_SafeTranslateString(const char *key);
-extern int UI_OwnerDrawWidth(int ownerDraw, float scale);
+extern int UI_OwnerDrawWidth(int ownerDraw, FontHandle font, float scale);
 extern qboolean UI_OwnerDrawVisible(int flags);
 extern void UI_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAlign, float text_x, float text_y, int ownerDraw, int ownerDrawFlags, int align, float special, FontHandle font, float scale, vec_t *color, MaterialHandle shader, int textStyle);
 extern qboolean UI_OwnerDrawHandleKey(int ownerDraw, int flags, float *special, int key);
@@ -292,7 +292,7 @@ qboolean String_Parse(const char **p, char *out, int len)
             }
             if (Dvar_GetBool("loc_warnings")) {
                 if (Dvar_GetBool("loc_warningsAsErrors"))
-                    Com_Error(6, "Could not translate menu string reference %s", token);
+                    Com_Error(ERR_LOCALIZATION, "Could not translate menu string reference %s", token);
                 else
                     Com_Printf("^3WARNING: Could not translate menu string reference %s\n", token);
             }
@@ -868,7 +868,7 @@ void UI_AddMenuList(displayContextDef_t *dc, MenuList *menuList)
 
     for (i = 0; i < menuList->menuCount; i++) {
         if (dc->menuCount > 0x7f)
-            Com_Error(1, "UI_AddMenu: Maximum number of menus %d exceeded.", 0x80);
+            Com_Error(ERR_DROP, "UI_AddMenu: Maximum number of menus %d exceeded.", 0x80);
         dc->Menus[dc->menuCount] = menuList->menus[i];
         dc->menuCount += 1;
     }
@@ -1134,7 +1134,7 @@ void Menus_AddToStack(displayContextDef_t *dc, menuDef_t *menu)
 {
     Menus_RemoveFromStack(dc, menu);
     if (dc->openMenuCount == 16)
-        Com_Error(1, "\x15Too many menus opened");
+        Com_Error(ERR_DROP, "\x15Too many menus opened");
     dc->menuStack[dc->openMenuCount++] = menu;
 }
 
@@ -1236,7 +1236,7 @@ compute:;
     if (itemType == 8) {
         int alignment = (((itemDef_s*)(it))->textalignment);
         if (alignment == 1 || alignment == 2)
-            originalWidth += UI_OwnerDrawWidth(((itemDef_t *)it)->window.ownerDraw, scale);
+            originalWidth += UI_OwnerDrawWidth(((itemDef_t *)it)->window.ownerDraw, font, scale);
     } else if (itemType <= 0x12 && ((1 << itemType) & 0x70210)) {
         if ((((itemDef_s*)(it))->textalignment) == 1 && (*(void **)&((itemDef_t *)it)->dvar)) {
             originalWidth += UI_TextWidth(Dvar_GetVariantString(item->dvar), 0, font, scale);
@@ -2283,7 +2283,7 @@ void Menus_Open(displayContextDef_t *dc, menuDef_t *menu)
             *(void **)((char *)&((displayContextDef_s *)d)->menuStack[i]) = *(void **)((char *)&((displayContextDef_s *)d)->menuStack[(i + 1)]);
     }
     if ((((displayContextDef_s*)(d))->openMenuCount) == 0x10)
-        Com_Error(1, "\x15Too many menus opened");
+        Com_Error(ERR_DROP, "\x15Too many menus opened");
     int idx = (((displayContextDef_s*)(d))->openMenuCount);
     *(void **)((char *)&((displayContextDef_s *)d)->menuStack[idx]) = menu;
     (((displayContextDef_s*)(d))->openMenuCount) = idx + 1;
@@ -3508,7 +3508,7 @@ void Script_SetFocusByDvar(displayContextDef_t *dc, itemDef_t *item, const char 
 
         const char *dvarTest = ((itemDef_t *)focusItem)->dvarTest;
         if (!dvarTest)
-            Com_Error(1, "\x15Script_SetFocusByDvar: Item's dvarTest field is empty.");
+            Com_Error(ERR_DROP, "\x15Script_SetFocusByDvar: Item's dvarTest field is empty.");
 
         if (I_stricmp(dvarTest, dvarName) != 0)
             continue;
@@ -5524,7 +5524,7 @@ void Menu_Paint(displayContextDef_t *dc, menuDef_t *menu, qboolean forcePaint)
     }
 
     if ((((displayContextDef_s*)(d))->openMenuCount) == 0x10)
-        Com_Error(1, "\x15Too many menus opened");
+        Com_Error(ERR_DROP, "\x15Too many menus opened");
     int idx = (((displayContextDef_s*)(d))->openMenuCount);
     *(void **)((char *)&((displayContextDef_s *)d)->menuStack[idx]) = menu;
     (((displayContextDef_s*)(d))->openMenuCount) = idx + 1;

@@ -3,7 +3,7 @@
 #include "bytematch.h"
 #include <string.h>
 
-extern const dvar_t *com_developer;
+extern dvar_t *com_developer;
 extern clientStatic_t cls;
 
 extern UI_Component_data_t __ZN12UI_Component1gE;

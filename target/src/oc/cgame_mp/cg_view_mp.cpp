@@ -8,7 +8,7 @@ extern displayContextDef_t cgDC;
 
 vec3_t maxs = { 4.0f, 4.0f, 4.0f };
 
-extern const dvar_t *bg_bobMax;
+extern dvar_t *bg_bobMax;
 extern const dvar_t *cg_dumpAnims;
 extern const dvar_t *cg_errorDecay;
 extern const dvar_t *cg_fov;
@@ -18,7 +18,7 @@ extern const dvar_t *cg_paused;
 extern const dvar_t *cg_thirdPerson;
 extern const dvar_t *cg_thirdPersonAngle;
 extern const dvar_t *cg_thirdPersonRange;
-extern const dvar_t *cg_viewsize;
+extern dvar_t *cg_viewsize;
 extern void SND_SetListener(int entnum, const vec_t *origin, vec3_t *axis);
 extern void R_UpdateEffectsNonBolt(void);
 extern void CG_AddViewWeapon(playerState_t *ps);
@@ -45,8 +45,8 @@ extern void FX_InitSystem( bool rendererExists );
 extern int Cmd_Argc(void);
 extern const char *CG_Argv(int arg);
 extern void I_strncpyz(char *dest, const char *src, int destsize);
-extern int FX_RegisterEffect(const char *name);
-extern void FX_PlaySimpleEffect(int effectIndex, const vec_t *origin);
+extern EffectTemplate *FX_RegisterEffect(const char *name);
+extern void FX_PlaySimpleEffect(const EffectTemplate *fx, const vec_t *origin);
 extern double atof(const char *str);
 extern int BG_GetViewmodelWeaponIndex(const playerState_t *ps);
 extern int BG_GetNumWeapons(void);
@@ -103,7 +103,7 @@ void CG_FxRestart(void)
 void CG_FxTest(void)
 {
     char *fxName;
-    int fx;
+    EffectTemplate *fx;
 
     if (Cmd_Argc() - 1 <= 0) {
         Com_Printf((const char *)"Must supply filename from base path.  Optional restart time.\n");

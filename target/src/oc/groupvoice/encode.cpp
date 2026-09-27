@@ -35,7 +35,7 @@ extern int g_speex_initialized;
 static void *g_encoder;
 static struct SpeexBits encodeBits;
 
-extern void *speex_quality_ptr;
+extern int *speex_quality_ptr;
 
 void Encode_SetOptions(int frequency, int quality)
 {

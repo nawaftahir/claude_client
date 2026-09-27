@@ -23,16 +23,16 @@ float FxCurve_Integrate(const FxCurve *curve, float normDuration);
 const FxCurve *FxCurve_AllocAndCreateWithKeys(const float *keyArray, int dimensionCount, int keyCount);
 
 int FX_GetBoneIndex(const int entNum, unsigned int bone);
-void FX_PlaySimpleEffect(EffectTemplate *fx, const vec_t *org);
-void FX_PlayEffect(EffectTemplate *fx, const vec_t *org, const vec_t *fwd);
-void FX_PlayEntityEffect(EffectTemplate *fx, const vec_t *org, vec3_t *axis, const FxBoltInfo *bolt);
+void FX_PlaySimpleEffect(const EffectTemplate *fx, const vec_t *org);
+void FX_PlayEffect(const EffectTemplate *fx, const vec_t *org, const vec_t *fwd);
+void FX_PlayEntityEffect(const EffectTemplate *fx, const vec_t *org, const vec3_t *axis, const FxBoltInfo *bolt);
 void FX_InitSystem( bool rendererExists );
 void FX_FreeSystem(void);
 void FX_FreeActive(void);
-void FX_AdjustCamera(PrimType (*refdef)[256], float zfar);
+void FX_AdjustCamera(const refdef_t *refdef, float zfar);
 void FX_AdjustTime(int time);
 void FX_WarpTime(int time);
-float FX_GetEffectLength(EffectTemplate *fx);
+float FX_GetEffectLength(const EffectTemplate *fx);
 void Server_SwitchToValidFxScheduler(void);
 
 void FxMem_Init(void);

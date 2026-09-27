@@ -252,7 +252,7 @@ struct DxTextureStageEnums;
 struct Effect;
 struct EffectCluster;
 struct EffectPrimitive;
-struct EffectTemplate;
+struct FxEffectDef;
 union EffectTemplateLoadPtr;
 struct EffectVisInfo;
 struct Emitter;
@@ -3251,7 +3251,7 @@ typedef struct DxTextureStageEnums DxTextureStageEnums;
 typedef struct Effect Effect;
 typedef struct EffectCluster EffectCluster;
 typedef struct EffectPrimitive EffectPrimitive;
-typedef struct EffectTemplate EffectTemplate;
+typedef struct FxEffectDef EffectTemplate;
 typedef union EffectTemplateLoadPtr EffectTemplateLoadPtr;
 typedef struct EffectVisInfo EffectVisInfo;
 typedef struct Emitter Emitter;
@@ -4638,7 +4638,7 @@ typedef _WIN32_FIND_DATAA * LPWIN32_FIND_DATAA;
 typedef WSADATA * LPWSADATA;
 typedef long int M3DRESULT;
 typedef UINT MMRESULT;
-typedef void * (*MantleAnimAlloc)();
+typedef void * (*MantleAnimAlloc)(int);
 typedef unsigned char MaterialConstantSource;
 typedef struct Material * MaterialHandle;
 typedef unsigned char MaterialStreamDest;
@@ -5953,7 +5953,7 @@ struct EffectCluster {
     int refCount;
 };
 
-struct EffectTemplate {
+struct FxEffectDef {
     const char *mEffectName;
     int mPrimitiveCount;
     PrimitiveTemplate * mPrimitives[24];
@@ -9823,7 +9823,7 @@ union XAssetHeader {
     LocalizeEntry *localize;
     struct WeaponDef *weapon;
     SndDriverGlobals *sndDriverGlobals;
-    struct EffectTemplate *fx;
+    struct FxEffectDef *fx;
     struct FxImpactTable *impactFx;
     RawFile *rawfile;
     void *data;
@@ -11049,7 +11049,7 @@ struct cgMedia_t {
     MaterialHandle grenadeIcon;
     MaterialHandle grenadePointer;
     FxImpactTable *fx;
-    struct EffectTemplate *fxNoBloodFleshHit;
+    struct FxEffectDef *fxNoBloodFleshHit;
 };
 
 struct cg_hudelem_t {
@@ -14247,8 +14247,8 @@ struct cgs_t {
     int levelStartTime;
     int teamScores[2];
     struct XModel * gameModels[256];
-    struct EffectTemplate * fxs[64];
-    struct EffectTemplate *smokeGrenadeFx;
+    struct FxEffectDef * fxs[64];
+    struct FxEffectDef *smokeGrenadeFx;
     shellshock_parms_t shellshockParms[16];
     struct shellshock_parms_t holdBreathParams;
     int numInlineModels;
@@ -16081,8 +16081,8 @@ struct weaponInfo_s {
     const char *pszTranslatedModename;
     const char *pszTranslatedAIOverlayDescription;
     struct XModel *worldSurfModel;
-    struct EffectTemplate *viewFlashEffect;
-    struct EffectTemplate *worldFlashEffect;
+    struct FxEffectDef *viewFlashEffect;
+    struct FxEffectDef *worldFlashEffect;
     vec3_t weaponMidpoint;
     snd_alias_list_t *missileSound;
     snd_alias_list_t *pullbackSound;
@@ -16113,11 +16113,11 @@ struct weaponInfo_s {
     float missileDlight;
     vec3_t missileDlightColor;
     int missileRenderfx;
-    struct EffectTemplate *shellEjectEffect;
-    struct EffectTemplate *lastShotEjectEffect;
-    struct EffectTemplate *projExplosionEffect;
+    struct FxEffectDef *shellEjectEffect;
+    struct FxEffectDef *lastShotEjectEffect;
+    struct FxEffectDef *projExplosionEffect;
     snd_alias_list_t *projExplosionSound;
-    struct EffectTemplate *projTrailEffect;
+    struct FxEffectDef *projTrailEffect;
     float trailRadius;
     float wiTrailTime;
     MaterialHandle hReticleCenter;

@@ -37,7 +37,7 @@ extern void SND_FadeAllSounds(float volume, int duration);
 extern void AnglesToAxis( const vec3_t angles, vec3_t axis[3] );
 extern char *va( const char *format, ... );
 extern const char *UI_SafeTranslateString(const char *ref);
-extern void Com_Error(int level, const char *fmt, ...);
+extern void Com_Error(errorParm_t level, const char *fmt, ...);
 extern void Com_Printf(const char *fmt, ...);
 extern int strcmp(const char *s1, const char *s2);
 extern XAnim *XAnimGetAnims(const XAnimTree *tree);
@@ -797,7 +797,7 @@ void CG_ProcessSnapshots(void)
     if (n != cg->latestSnapshotNum) {
         if (n < cg->latestSnapshotNum) {
 
-            Com_Error(1, (const char *)"\x15"
+            Com_Error(ERR_DROP, (const char *)"\x15"
                                        "CG_ProcessSnapshots: n < cg->latestSnapshotNum");
         }
         cg->latestSnapshotNum = n;
@@ -865,7 +865,7 @@ void CG_ProcessSnapshots(void)
         }
 
         if (((snapshot_t *)snap)->serverTime < ((snapshot_t *)curSnap)->serverTime) {
-            Com_Error(1, (const char *)"\x15"
+            Com_Error(ERR_DROP, (const char *)"\x15"
                                        "CG_ProcessSnapshots: Server time went backwards");
         }
 

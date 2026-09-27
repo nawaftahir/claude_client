@@ -7,7 +7,7 @@ extern const dvar_t *cg_tracerLength;
 extern void BG_EvaluateTrajectory( const trajectory_t *tr, int atTime, vec3_t result );
 extern vec_t Vec3NormalizeTo( const vec3_t v, vec3_t out );
 extern void CG_DrawTracer(vec_t *start, vec_t *finish);
-extern void Com_Error(int code, const char *fmt, ...);
+extern void Com_Error(errorParm_t code, const char *fmt, ...);
 
 extern localEntity_t cg_eachClientActiveLocalEntities[1];
 extern localEntity_t *cg_eachClientFreeLocalEntities[1];
@@ -29,7 +29,7 @@ static void CG_FreeLocalEntity(localEntity_t *le)
     localEntity_t *next_ent = le->next;
 
     if (!prev_ent) {
-        Com_Error(1, "CG_FreeLocalEntity: not active");
+        Com_Error(ERR_DROP, "CG_FreeLocalEntity: not active");
     }
 
     next_ent->prev = prev_ent;

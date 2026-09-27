@@ -28,7 +28,7 @@ static int ipx_socket;
 static char socksBuf[4096];
 
 extern void Com_Printf(const char *fmt, ...);
-extern void Com_Error(int code, const char *fmt, ...);
+extern void Com_Error(errorParm_t code, const char *fmt, ...);
 extern dvar_t *Dvar_RegisterBool(const char *dvarName, bool value, unsigned short flags);
 extern dvar_t *Dvar_RegisterString(const char *dvarName, const char *value, unsigned short flags);
 extern dvar_t *Dvar_RegisterInt(const char *dvarName, int value, int min, int max, unsigned short flags);

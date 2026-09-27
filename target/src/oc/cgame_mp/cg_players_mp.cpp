@@ -35,7 +35,7 @@ extern int XAnimGetNumChildren(const struct XAnim_s *pXAnims, unsigned int animI
 extern unsigned int XAnimGetChildAt(const struct XAnim_s *pXAnims, unsigned int parentIndex, unsigned int childNum);
 extern const char *XAnimGetAnimDebugName(const struct XAnim_s *pXAnims, unsigned int animIndex);
 extern void XAnimCalcAbsDelta(struct XAnimTree_s *pAnimTree, unsigned int animIndex, float *rot, float *trans);
-extern void Com_Error(int level, const char *fmt, ...);
+extern void Com_Error(errorParm_t level, const char *fmt, ...);
 extern WeaponDef * BG_GetWeaponDef(int iWeapon);
 extern vec_t vectosignedyaw(vec3_t vec);
 extern float RotationToYaw(const vec2_t rot);
@@ -395,7 +395,7 @@ static void CG_PlayerTurretPositionAndBlend(centity_t *cent)
 
         numVertChildren = XAnimGetNumChildren(pXAnims, baseAnim);
         if (!numVertChildren)
-            Com_Error(1, "Player anim '%s' has no children",
+            Com_Error(ERR_DROP, "Player anim '%s' has no children",
                       XAnimGetAnimDebugName(pXAnims, baseAnim));
 
         fPrevBlend = 0.0f;
@@ -415,7 +415,7 @@ static void CG_PlayerTurretPositionAndBlend(centity_t *cent)
 
             numHorChildren = XAnimGetNumChildren(pXAnims, heightAnim);
             if (!numHorChildren)
-                Com_Error(1, "Player anim '%s' has no children",
+                Com_Error(ERR_DROP, "Player anim '%s' has no children",
                           XAnimGetAnimDebugName(pXAnims, heightAnim));
 
             rawBlend = (float)numHorChildren * 0.5f - localYaw / ((WeaponDef *)weapDef)->fAnimHorRotateInc;

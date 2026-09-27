@@ -5,7 +5,7 @@ extern clientActive_t clients[1];
 extern clientConnection_t clc;
 /* dvar globals */
 extern const dvar_t *cl_serverStatusResendTime;
-extern const dvar_t *com_sv_running;
+extern dvar_t *com_sv_running;
 extern clientStatic_t cls;
 
 typedef struct serverStatusRequest_s {
@@ -62,7 +62,7 @@ extern void Con_Close(void);
 extern qboolean NET_IsLocalAddress(netadr_t adr);
 extern void UI_CloseAll(void);
 extern void SCR_UpdateScreen(void);
-extern void Com_Error(int level, const char *fmt, ...);
+extern void Com_Error(errorParm_t level, const char *fmt, ...);
 extern void Com_Memset(void *dest, const int val, int count);
 extern void Dvar_SetString(dvar_t *dvar, const char *value);
 
@@ -994,7 +994,7 @@ void CL_Connect_f(void)
         sprintf(chs, (const char *)"%04x", crc);
 
         if (I_strnicmp(chs, cl_cdkeychecksum, 4) != 0) {
-            Com_Error(1, (const char *)"EXE_ERR_INVALID_CD_KEY");
+            Com_Error(ERR_DROP, (const char *)"EXE_ERR_INVALID_CD_KEY");
             return;
         }
     }

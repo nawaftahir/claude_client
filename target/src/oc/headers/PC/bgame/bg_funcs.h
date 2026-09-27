@@ -24,7 +24,7 @@ void BG_UpdatePlayerDObj(DObj_s *pDObj, entityState_s *es, clientInfo_t *ci, int
 void BG_LerpOffset(vec_t *offset_goal, float maxOffsetChange, vec_t *offset);
 void BG_UpdateConditionValue(int client, int condition, int value, qboolean checkConversion);
 void BG_AnimUpdatePlayerStateConditions(pmove_t *pmove);
-void BG_Player_DoControllers(const struct DObj_s *pDObj, const entityState_t *es, int *partBits, clientInfo_t *ci, int frametime);
+void BG_Player_DoControllers(struct DObj_s *obj, const entityState_t *es, int *partBits, clientInfo_t *ci, int frametime);
 void BG_PlayerAnimation(const DObj_s *pDObj, entityState_s *es, clientInfo_t *ci);
 int BG_AnimationIndexForString(const char *string, const char *string_1);
 void BG_AnimParseError(const char *msg, ...);

@@ -29,7 +29,6 @@ typedef unsigned char Boolean;
 #    define EDIT_ID 100
 #    define INPUT_ID 101
 
-extern void Com_Error(int code, const char *fmt, ...);
 extern void Sys_Error(const char *error, ...);
 extern void Com_Printf(const char *fmt, ...);
 extern void Cbuf_AddText(const char *text);

@@ -54,7 +54,7 @@ const char *UI_ReplaceConversions(const char *sourceString, ConversionArguments 
 const char *UI_ReplaceConversionString(const char *sourceString, const char *replaceString);
 void UI_CloseAll(void);
 void UI_CloseFocusedMenu(void);
-void UI_OverrideCursorPos(rectDef_t (*item)[16]);
+void UI_OverrideCursorPos(itemDef_t *item);
 Bool UI_DrawRecordLevel(rectDef_t *rect);
 MaterialHandle UI_FeederItemImage(const float feederID, int index);
 void UI_DrawText(const char *text, int maxChars, FontHandle font, float x, float y, int horzAlign, int vertAlign, float scale, const vec_t *color, int style);

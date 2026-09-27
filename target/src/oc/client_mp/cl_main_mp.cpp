@@ -18,17 +18,17 @@ extern float com_timescaleValue;
 extern const dvar_t *cg_drawCrosshair;
 extern const dvar_t *cl_anglespeedkey;
 extern const dvar_t *cl_bypassMouseInput;
-extern const dvar_t *cl_paused;
+extern dvar_t *cl_paused;
 extern const dvar_t *cl_pitchspeed;
 extern const dvar_t *cl_talking;
 extern const dvar_t *cl_yawspeed;
-extern const dvar_t *com_expectedHunkUsage;
-extern const dvar_t *com_sv_running;
-extern const dvar_t *net_lanauthorize;
-extern const dvar_t *nextmap;
+extern dvar_t *com_expectedHunkUsage;
+extern dvar_t *com_sv_running;
+extern dvar_t *net_lanauthorize;
+extern dvar_t *nextmap;
 extern dvar_t *sv_disableClientConsole;
-extern const dvar_t *sv_paused;
-extern const dvar_t *sv_voice;
+extern dvar_t *sv_paused;
+extern dvar_t *sv_voice;
 
 extern dvar_t *Dvar_RegisterBool(const char *dvarName, bool value, unsigned short flags);
 extern int CM_BoxSightTrace( int oldHitNum, const vec3_t start, const vec3_t end, const vec3_t mins, const vec3_t maxs, clipHandle_t model, int brushmask );
@@ -80,7 +80,7 @@ extern void Com_SetRecommended(int);
 extern void Sys_StartProcess(const char *exeName, int doexit);
 extern qboolean UI_SetActiveMenu(int menu);
 extern void Sys_ShowIP(void);
-extern void Com_Error(int code, const char *fmt, ...);
+extern void Com_Error(errorParm_t code, const char *fmt, ...);
 extern void FS_FCloseFile(fileHandle_t f);
 extern void MSG_WriteReliableCommandToBuffer(const char *cmd, char *buf, int bufSize);
 extern int FS_Write(const void *buffer, int len, int f);
@@ -418,7 +418,7 @@ static inline __attribute__((always_inline)) void CL_AddReliableCommand_core(con
     clientConnection_t *conn;
     int index;
     if (::clc.reliableSequence - ::clc.reliableAcknowledge - 128 > 0) {
-        Com_Error(1, (const char *)"EXE_ERR_CLIENT_CMD_OVERFLOW");
+        Com_Error(ERR_DROP, (const char *)"EXE_ERR_CLIENT_CMD_OVERFLOW");
     }
     conn = &::clc;
     conn->reliableSequence += 1;
@@ -1760,7 +1760,7 @@ void CL_RequestAuthorization(void)
 #endif
 
     if (!CL_CDKeyValidate(cl_cdkey, cl_cdkeychecksum)) {
-        Com_Error(1, (const char *)"EXE_ERR_INVALID_CD_KEY");
+        Com_Error(ERR_DROP, (const char *)"EXE_ERR_INVALID_CD_KEY");
         return;
     }
 
@@ -1845,7 +1845,7 @@ void CL_CheckForResend(void)
     }
 
     if (conn->state != CA_CHALLENGING) {
-        Com_Error(0, (const char *)"\x15"
+        Com_Error(ERR_FATAL, (const char *)"\x15"
                                    "CL_CheckForResend: bad clc->state");
         return;
     }
@@ -2207,7 +2207,7 @@ Bool CL_ConnectionlessPacket(netadr_t from, msg_t *msg, int time)
     if (I_stricmp(cmd, (const char *)"disconnect") == 0) {
         if (conn->state && NET_CompareAdr(from, conn->netchan.remoteAddress) &&
             cls.realtime - conn->lastPacketTime > 2999) {
-            Com_Error(1, (const char *)"EXE_SERVER_DISCONNECTED");
+            Com_Error(ERR_DROP, (const char *)"EXE_SERVER_DISCONNECTED");
         }
 
         result = 1;
@@ -2237,7 +2237,7 @@ Bool CL_ConnectionlessPacket(netadr_t from, msg_t *msg, int time)
 
     if (I_stricmp(cmd, (const char *)"error") == 0) {
         if (conn->state && NET_CompareBaseAdr(from, conn->serverAddress)) {
-            Com_Error(1, (const char *)"%s", MSG_ReadBigString(msg));
+            Com_Error(ERR_DROP, (const char *)"%s", MSG_ReadBigString(msg));
             result = 1;
         }
         goto finish;
@@ -2428,10 +2428,10 @@ void CL_CheckTimeout(void)
         && clc.state >= CA_CONNECTED && clc.state != CA_CINEMATIC && clc.state != CA_LOGO
         && cls.realtime - clc.connectTime > cl_timeout->current.value * 1000.0f) {
         if (++clients[0].timeoutcount > 5)
-            Com_Error(1, "EXE_ERR_SERVER_TIMEOUT");
+            Com_Error(ERR_DROP, "EXE_ERR_SERVER_TIMEOUT");
     } else if ((clc.state == CA_CONNECTING || clc.state == CA_CHALLENGING) && clc.connectTime > 0
         && cls.realtime - clc.connectTime > cl_connectTimeout->current.value * 1000.0f) {
-        Com_Error(1, "EXE_ERR_SERVER_TIMEOUT");
+        Com_Error(ERR_DROP, "EXE_ERR_SERVER_TIMEOUT");
     } else {
         clients[0].timeoutcount = 0;
     }
@@ -2694,7 +2694,7 @@ void CL_Disconnect_f(void)
 
     if (Sys_IsMainThread() && !UI_IsFullscreen() && *(byte *)&clients[0] != 0 && *(int *)&::clc > 2)
         return;
-    Com_Error(3, "EXE_DISCONNECTED_FROM_SERVER");
+    Com_Error(ERR_DISCONNECT, "EXE_DISCONNECTED_FROM_SERVER");
 }
 
 void CL_MapLoading(const char *mapname)
@@ -2763,7 +2763,7 @@ void CL_DemoCompleted(void)
     if (Sys_IsMainThread() && !UI_IsFullscreen() && *(byte *)&clients[0] != 0 && *(int *)&::clc > CA_LOGO)
         return;
 
-    Com_Error(3, (const char *)"EXE_DISCONNECTED_FROM_SERVER");
+    Com_Error(ERR_DISCONNECT, (const char *)"EXE_DISCONNECTED_FROM_SERVER");
 }
 
 void CL_ReadDemoMessage(void)
@@ -2798,7 +2798,7 @@ void CL_ReadDemoMessage(void)
     }
 
     if (buf.cursize > buf.maxsize)
-        Com_Error(1, (const char *)"\x15"
+        Com_Error(ERR_DROP, (const char *)"\x15"
                                    "CL_ReadDemoMessage: demoMsglen > MAX_MSGLEN");
 
     if (FS_Read(buf.data, buf.cursize, conn->demofile) != buf.cursize) {
@@ -2848,7 +2848,7 @@ void CL_PlayDemo_f(void)
     conn = &::clc;
     FS_FOpenFileRead(name, &conn->demofile, 1);
     if (!conn->demofile)
-        Com_Error(1, va((const char *)"EXE_ERR_NOT_FOUND\x15%s", name));
+        Com_Error(ERR_DROP, va((const char *)"EXE_ERR_NOT_FOUND\x15%s", name));
 
     I_strncpyz(conn->demoName, Cmd_Argv(1), sizeof(conn->demoName));
     Con_Close();
@@ -2885,7 +2885,7 @@ void CL_ForwardCommandToServer(const char *string)
     reliableCommand = (Cmd_Argc() > 1) ? string : cmd;
     seq = conn->reliableSequence;
     if (seq - conn->reliableAcknowledge - 128 > 0) {
-        Com_Error(1, (const char *)"EXE_ERR_CLIENT_CMD_OVERFLOW");
+        Com_Error(ERR_DROP, (const char *)"EXE_ERR_CLIENT_CMD_OVERFLOW");
     }
 
     conn->reliableSequence = seq + 1;
@@ -2914,7 +2914,7 @@ void CL_ForwardToServer_f(void)
     conn = &::clc;
     seq = conn->reliableSequence;
     if (seq - conn->reliableAcknowledge - 128 > 0) {
-        Com_Error(1, (const char *)"EXE_ERR_CLIENT_CMD_OVERFLOW");
+        Com_Error(ERR_DROP, (const char *)"EXE_ERR_CLIENT_CMD_OVERFLOW");
     }
     conn->reliableSequence = seq + 1;
     slot = conn->reliableSequence & 0x7f;
@@ -3027,7 +3027,7 @@ void CL_BeginDownload(const char *localName, const char *remoteName)
     cmd = va((const char *)"download %s", remoteName);
     sequence = conn->reliableSequence;
     if (sequence - conn->reliableAcknowledge - 128 > 0)
-        Com_Error(1, (const char *)"EXE_ERR_CLIENT_CMD_OVERFLOW");
+        Com_Error(ERR_DROP, (const char *)"EXE_ERR_CLIENT_CMD_OVERFLOW");
 
     conn->reliableSequence = sequence + 1;
     MSG_WriteReliableCommandToBuffer(cmd, conn->reliableCommands[conn->reliableSequence & 0x7f], 0x400);

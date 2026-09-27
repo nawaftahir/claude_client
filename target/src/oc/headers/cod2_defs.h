@@ -1568,7 +1568,7 @@ typedef struct DxTextureStageEnums DxTextureStageEnums;
 
 typedef struct Effect Effect;
 typedef struct EffectCluster EffectCluster;
-typedef struct EffectTemplate EffectTemplate;
+typedef struct FxEffectDef EffectTemplate;
 typedef union EffectTemplateLoadPtr EffectTemplateLoadPtr;
 
 typedef struct EncState EncState;
@@ -3106,7 +3106,7 @@ typedef WSADATA * LPWSADATA;
 
 typedef long int M3DRESULT;
 typedef UINT MMRESULT;
-typedef void * (*MantleAnimAlloc)();
+typedef void * (*MantleAnimAlloc)(int);
 
 typedef unsigned char MaterialConstantSource;
 
@@ -4033,7 +4033,7 @@ union DvarValue {
     byte color[4];
 };
 
-struct EffectTemplate {
+struct FxEffectDef {
     const char *mEffectName;
     int mPrimitiveCount;
     PrimitiveTemplate * mPrimitives[24];
@@ -6556,7 +6556,7 @@ union XAssetHeader {
     LocalizeEntry *localize;
     struct WeaponDef *weapon;
     SndDriverGlobals *sndDriverGlobals;
-    struct EffectTemplate *fx;
+    struct FxEffectDef *fx;
     struct FxImpactTable *impactFx;
     RawFile *rawfile;
     void *data;
@@ -7361,7 +7361,7 @@ struct cgMedia_t {
     MaterialHandle grenadeIcon;
     MaterialHandle grenadePointer;
     FxImpactTable *fx;
-    struct EffectTemplate *fxNoBloodFleshHit;
+    struct FxEffectDef *fxNoBloodFleshHit;
 };
 
 struct clientDebug_t {

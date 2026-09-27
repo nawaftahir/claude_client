@@ -16,8 +16,8 @@ extern const dvar_t *cg_cursorHints;
 extern const dvar_t *cg_drawBreathHint;
 extern const dvar_t *cg_drawMantleHint;
 extern const dvar_t *cg_hintFadeTime;
-extern const dvar_t *loc_warnings;
-extern const dvar_t *loc_warningsAsErrors;
+extern dvar_t *loc_warnings;
+extern dvar_t *loc_warningsAsErrors;
 
 extern const dvar_t *hud_fade_ammodisplay;
 extern const dvar_t *hud_fade_healthbar;

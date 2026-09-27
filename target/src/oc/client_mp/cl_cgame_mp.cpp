@@ -19,7 +19,7 @@ extern const dvar_t *cl_activeAction;
 extern const dvar_t *cl_showServerCommands;
 extern const dvar_t *cl_showTimeDelta;
 extern const dvar_t *com_statmon;
-extern const dvar_t *com_sv_running;
+extern dvar_t *com_sv_running;
 
 extern char *getenv(const char *name);
 
@@ -66,8 +66,8 @@ extern int DObjSkelExists(struct DObj_s *obj, int timeStamp);
 extern int DObjSkelIsBoneUpToDate(DObj_s *obj, int boneIndex);
 extern qboolean DObjSkelAreBonesUpToDate(const struct DObj_s *obj, int *partBits);
 extern int DObjGetAllocSkelSize(const struct DObj_s *obj);
-extern void DObjCreateSkel(const struct DObj_s *obj, char *mem, int timeStamp);
-extern void FX_AdjustCamera(PrimType (*refdef)[256], float zfar);
+extern void DObjCreateSkel(struct DObj_s *obj, struct DSkel_t *skel, int timeStamp);
+extern void FX_AdjustCamera(const refdef_t *refdef, float zfar);
 extern int FS_FOpenFileByMode(const char *filename, int *handle, fsMode_t mode);
 extern fileHandle_t FS_FOpenFileWrite(const char *filename);
 extern int FS_Read(void *buffer, int len, int handle);
@@ -185,10 +185,10 @@ void CL_SetViewport(int x, int y, int width, int height);
 void CL_SaveScreen(void);
 void CL_BlendSavedScreen(int fadeMsec);
 void CL_DrawStretchPicPhysical(float x, float y, float w, float h, float s1, float t1, float s2, float t2, const vec_t *color, MaterialHandle material);
-void CL_DrawQuadPic(int (*verts)[16][4], const vec_t *color, MaterialHandle material);
+void CL_DrawQuadPic(vec2_t *verts, const vec_t *color, MaterialHandle material);
 void CL_DrawSprite(MaterialHandle material, const byte *rgbaColor, const vec_t *pos, float radius, float minScreenRadius, int renderFxFlags);
 void CL_ModelBounds(struct GfxBrushModel *model, vec_t *mins, vec_t *maxs);
-int CL_MarkFragments(objective_t *(*points)[4], const vec_t *origin, objective_t *(*axis)[4], float radius, int maxPoints, GfxWorldVertex *verts, int maxFragments, GfxMarkFragment *fragmentBuffer, MaterialHandle markMaterial);
+int CL_MarkFragments(const vec3_t *points, const vec_t *origin, const vec3_t *axis, float radius, int maxPoints, GfxWorldVertex *verts, int maxFragments, GfxMarkFragment *fragmentBuffer, MaterialHandle markMaterial);
 void CL_TrackStatistics(trStatistics_t *pStats);
 qboolean CL_PickMaterial(const vec_t *org, const vec_t *dir, char *pszName, char *pszSurfaceFlags, char *pszContents, int iMaxChars);
 void CL_LoadSoundAliases(const char *loadspec);
@@ -608,7 +608,7 @@ qboolean CL_DObjCreateSkelForBone(struct DObj_s *obj, int boneIndex, int localCl
 
     mem = CL_AllocSkelMemory(localClientNum, DObjGetAllocSkelSize(obj));
     if (mem) {
-        DObjCreateSkel(obj, (char *)mem, timeStamp);
+        DObjCreateSkel((DObj_s *)obj, (DSkel_t *)mem, timeStamp);
         return 0;
     }
 
@@ -632,7 +632,7 @@ qboolean CL_DObjCreateSkelForBones(const struct DObj_s *obj, int *partBits, int 
 
     mem = CL_AllocSkelMemory(localClientNum, DObjGetAllocSkelSize(obj));
     if (mem) {
-        DObjCreateSkel(obj, (char *)mem, timeStamp);
+        DObjCreateSkel((DObj_s *)obj, (DSkel_t *)mem, timeStamp);
         return 0;
     }
 
@@ -798,10 +798,10 @@ void CL_DrawStretchPicPhysical(float x, float y, float w, float h, float s1, flo
 #endif
 }
 
-void CL_DrawQuadPic(int (*verts)[16][4], const vec_t *color, MaterialHandle material)
+void CL_DrawQuadPic(vec2_t *verts, const vec_t *color, MaterialHandle material)
 {
 #if defined(COD2_X64) && !defined(COD2_GFX_DLL)
-    R_AddCmdDrawQuadPic((vec2_t *)verts, color, material);
+    R_AddCmdDrawQuadPic(verts, color, material);
 #else
     RE->DrawQuadPic(verts, color, material);
 #endif
@@ -817,9 +817,9 @@ void CL_ModelBounds(struct GfxBrushModel *model, vec_t *mins, vec_t *maxs)
     RE->ModelBounds(model, mins, maxs);
 }
 
-int CL_MarkFragments(objective_t *(*points)[4], const vec_t *origin, objective_t *(*axis)[4], float radius, int maxPoints, GfxWorldVertex *verts, int maxFragments, GfxMarkFragment *fragmentBuffer, MaterialHandle markMaterial)
+int CL_MarkFragments(const vec3_t *points, const vec_t *origin, const vec3_t *axis, float radius, int maxPoints, GfxWorldVertex *verts, int maxFragments, GfxMarkFragment *fragmentBuffer, MaterialHandle markMaterial)
 {
-    return RE->MarkFragments(points, origin, axis, radius, maxPoints, verts, maxFragments, fragmentBuffer, markMaterial);
+    return RE->MarkFragments((void *)points, origin, (void *)axis, radius, maxPoints, verts, maxFragments, fragmentBuffer, markMaterial);
 }
 
 void CL_TrackStatistics(trStatistics_t *pStats)
@@ -925,7 +925,7 @@ void CL_FreeWeaponInfoMemory(void)
 void CL_FX_AdjustCamera(refdef_t *refdef)
 {
     float zfar = RE->GetFarPlaneDist();
-    FX_AdjustCamera( (PrimType (*)[256])(refdef), zfar);
+    FX_AdjustCamera(refdef, zfar);
 }
 
 void CL_CapTurnRate(float maxPitchSpeed, float maxYawSpeed)

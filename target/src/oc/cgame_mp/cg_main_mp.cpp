@@ -4,7 +4,7 @@
 #include <float.h>
 extern int bg_iNumWeapons;
 
-extern const dvar_t *com_sv_running;
+extern dvar_t *com_sv_running;
 
 extern struct XModel *CL_RegisterModel(const char *name);
 extern snd_alias_t *CL_PickSoundAlias(const char *aliasname);
@@ -27,7 +27,7 @@ extern menuDef_t *Menus_FindByName(displayContextDef_t *dc, const char *p);
 extern void Com_ClientDObjCreate(DObjModel_s *dobjModels, unsigned short numModels, struct XAnimTree_s *tree, int handle);
 extern int CG_WeaponDObjHandle(int weaponNum);
 extern void Com_SafeClientDObjFree(int handle);
-extern void XAnimFreeTree(struct XAnimTree_s *tree, void *Free);
+extern void XAnimFreeTree(struct XAnimTree_s *tree, Free_t Free);
 extern int BG_GetNumWeapons(void);
 extern void AxisCopy( const vec3_t in[3], vec3_t out[3] );
 extern void I_strncpyz(char *dest, const char *src, int destsize);
@@ -55,10 +55,10 @@ extern void SCR_UpdateScreen(void);
 extern void Com_Printf(const char *fmt, ...);
 extern void FX_InitSystem( bool rendererExists );
 extern void FX_CreateDefaultEffect(void);
-extern float FX_GetEffectLength(EffectTemplate *fx);
+extern float FX_GetEffectLength(const EffectTemplate *fx);
 extern void FX_Rewind(int time);
 extern void FX_WarpTime(int time);
-extern void FX_PlayEffect(EffectTemplate *fx, const vec_t *org, const vec_t *fwd);
+extern void FX_PlayEffect(const EffectTemplate *fx, const vec_t *org, const vec_t *fwd);
 extern void CG_LoadingString(const char *str);
 extern MaterialHandle CL_RegisterMaterial(const char *name, int flags);
 extern MaterialHandle CL_RegisterMaterialNoMip(const char *name, int imageTrack);
@@ -70,7 +70,7 @@ extern void CL_ModelBounds(int model, float *mins, float *maxs);
 extern EffectTemplate * FX_RegisterEffect(const char *fileName);
 extern void CG_SetShellShockParmsFromDvars(shellshock_parms_t *parms);
 extern int CG_LoadShellShockDvars(const char *name);
-extern void Com_Error(int code, const char *fmt, ...);
+extern void Com_Error(errorParm_t code, const char *fmt, ...);
 extern FxImpactTable *CG_RegisterImpactEffects(const char *mapname);
 extern void Controls_GetConfig(void);
 extern int GetKeyBindingLocalizedString(const char *binding, char *buf);
@@ -191,7 +191,7 @@ extern const dvar_t *cg_gun_move_minspeed;
 extern const dvar_t *cg_drawGun;
 extern const dvar_t *cg_cursorHints;
 extern const dvar_t *cg_hintFadeTime;
-extern const dvar_t *cg_viewsize;
+extern dvar_t *cg_viewsize;
 extern const dvar_t *cg_tracerChance;
 extern const dvar_t *cg_tracerWidth;
 extern const dvar_t *cg_tracerLength;
@@ -1165,7 +1165,7 @@ void CG_Init(int serverMessageNum, int serverCommandSequence, int clientNum)
 
     game = CL_GetConfigString(2);
     if (game[0] != 'c' || game[1] != 'o' || game[2] != 'd' || game[3] != '\0')
-        Com_Error(1, "\x15"
+        Com_Error(ERR_DROP, "\x15"
                      "Client/Server game mismatch: %s/%s",
                   "cod", game);
 
@@ -1173,7 +1173,7 @@ void CG_Init(int serverMessageNum, int serverCommandSequence, int clientNum)
     SCR_UpdateScreen();
 
     if (!com_sv_running->current.enabled)
-        Mantle_CreateAnims((MantleAnimAlloc)Hunk_AllocXAnimClient);
+        Mantle_CreateAnims(Hunk_AllocXAnimClient);
 
     if (((int)bg_iNumWeapons) == 0) {
         CL_SetWeaponInfoMemory();

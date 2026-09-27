@@ -19,7 +19,7 @@ static vec2_t sign[4] = {
 };
 
 extern char **compPointerConfig;
-extern const vec_t *colorWhite;
+extern const vec4_t colorWhite;
 
 extern FontHandle UI_GetFontHandle(int type, float scale);
 extern void UI_DrawText(const char *text, int maxChars, FontHandle font, float x, float y, int horzAlign, int vertAlign, float scale, const vec_t *color, int style);

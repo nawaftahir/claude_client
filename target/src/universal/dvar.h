@@ -131,7 +131,7 @@ void Dvar_SetFloatByName(const char *dvarName, float value);
 void Dvar_SetVec2ByName(const char *dvarName, float x, float y);
 void Dvar_SetVec3ByName(const char *dvarName, float x, float y, float z);
 void Dvar_SetStringByName(const char *dvarName, const char *value);
-void Dvar_SetColorByName(const char *dvarName, float r, float g, float b, float a);
+void Dvar_SetColorByName(const char *dvarName, unsigned char r, unsigned char g, unsigned char b, unsigned char a);
 void Dvar_SetFromStringByName(const char *dvarName, const char *string);
 
 bool Dvar_GetBool(const char *dvarName);

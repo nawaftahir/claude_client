@@ -2974,13 +2974,13 @@ void BG_LerpOffset( vec3_t offset_goal, float maxOffsetChange, vec3_t offset )
 BG_Player_DoControllers
 ============
 */
-void BG_Player_DoControllers( DObj *obj, const gentity_s *ent, int *partBits, clientInfo_t *ci, int frametime )
+void BG_Player_DoControllers( DObj *obj, const entityState_t *es, int *partBits, clientInfo_t *ci, int frametime )
 {
 	int i;
 	float maxAngleChange;
 	controller_info_t info;
 
-	BG_Player_DoControllersInternal(obj, &ent->s, partBits, ci, &info);
+	BG_Player_DoControllersInternal(obj, es, partBits, ci, &info);
 
 	maxAngleChange = frametime * 0.36000001f;
 

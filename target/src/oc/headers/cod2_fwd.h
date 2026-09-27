@@ -183,7 +183,7 @@ struct DxTextureStageEnums;
 struct Effect;
 struct EffectCluster;
 struct EffectPrimitive;
-struct EffectTemplate;
+struct FxEffectDef;
 union EffectTemplateLoadPtr;
 struct EffectVisInfo;
 struct Emitter;

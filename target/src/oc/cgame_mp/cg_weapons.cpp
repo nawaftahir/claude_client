@@ -9,8 +9,8 @@ extern dvar_t *player_breath_snd_delay;
 extern dvar_t *player_breath_snd_lerp;
 
 extern const dvar_t *cg_weaponCycleDelay;
-extern const dvar_t *loc_warnings;
-extern const dvar_t *loc_warningsAsErrors;
+extern dvar_t *loc_warnings;
+extern dvar_t *loc_warningsAsErrors;
 
 extern const dvar_t *cg_blood;
 extern const dvar_t *cg_brass;
@@ -73,8 +73,8 @@ extern bool BG_DoesWeaponNeedSlot(int weapon);
 extern int BG_WeaponAmmo(const playerState_t *ps, int weapon);
 extern qboolean BG_IsPlayerWeaponAnAlt(int iWeaponIndex, int iAltIndex);
 extern int FX_GetBoneIndex(const int entNum, unsigned int bone);
-extern void FX_PlayEntityEffect(EffectTemplate *fx, const vec_t *org, vec3_t *axis, const FxBoltInfo *bolt);
-extern void FX_PlayEffect(EffectTemplate *fx, const vec_t *org, const vec_t *fwd);
+extern void FX_PlayEntityEffect(const EffectTemplate *fx, const vec_t *org, const vec3_t *axis, const FxBoltInfo *bolt);
+extern void FX_PlayEffect(const EffectTemplate *fx, const vec_t *org, const vec_t *fwd);
 extern int strcmp(const char *s1, const char *s2);
 extern struct XAnimTree_s *DObjGetTree(const struct DObj_s *obj);
 extern void Com_SafeClientDObjFree(int handle);
@@ -742,10 +742,10 @@ void CG_RegisterWeapon(int weaponNum)
         weapInfo->hADSOverlay = (MaterialHandle)CL_RegisterMaterialNoMip(weapDef->szOverlayMaterial, 7);
 
     if (weapDef->szViewFlashEffect[0])
-        weapInfo->viewFlashEffect = (struct EffectTemplate *)FX_RegisterEffect(weapDef->szViewFlashEffect);
+        weapInfo->viewFlashEffect = (struct FxEffectDef *)FX_RegisterEffect(weapDef->szViewFlashEffect);
 
     if (weapDef->szWorldFlashEffect[0])
-        weapInfo->worldFlashEffect = (struct EffectTemplate *)FX_RegisterEffect(weapDef->szWorldFlashEffect);
+        weapInfo->worldFlashEffect = (struct FxEffectDef *)FX_RegisterEffect(weapDef->szWorldFlashEffect);
 
     weapInfo->missileSound = Com_FindSoundAlias(weapDef->szProjectileSound);
     weapInfo->pullbackSound = Com_FindSoundAlias(weapDef->szPullbackSound);
@@ -778,10 +778,10 @@ void CG_RegisterWeapon(int weaponNum)
     itemInfo->ammoPickupSound = CG_FindSoundAliasWithFallback(weapDef->szAmmoPickupSound, "weap_ammo_pickup");
 
     if (weapDef->szShellEjectEffect[0])
-        weapInfo->shellEjectEffect = (struct EffectTemplate *)FX_RegisterEffect(weapDef->szShellEjectEffect);
+        weapInfo->shellEjectEffect = (struct FxEffectDef *)FX_RegisterEffect(weapDef->szShellEjectEffect);
 
     if (weapDef->szLastShotEjectEffect[0])
-        weapInfo->lastShotEjectEffect = (struct EffectTemplate *)FX_RegisterEffect(weapDef->szLastShotEjectEffect);
+        weapInfo->lastShotEjectEffect = (struct FxEffectDef *)FX_RegisterEffect(weapDef->szLastShotEjectEffect);
     else
         weapInfo->lastShotEjectEffect = weapInfo->shellEjectEffect;
 
@@ -792,12 +792,12 @@ void CG_RegisterWeapon(int weaponNum)
     }
 
     if (weapDef->szProjExplosionEffect[0])
-        weapInfo->projExplosionEffect = (struct EffectTemplate *)FX_RegisterEffect(weapDef->szProjExplosionEffect);
+        weapInfo->projExplosionEffect = (struct FxEffectDef *)FX_RegisterEffect(weapDef->szProjExplosionEffect);
 
     weapInfo->projExplosionSound = Com_FindSoundAlias(weapDef->szProjExplosionSound);
 
     if (weapDef->szProjTrailEffect[0])
-        weapInfo->projTrailEffect = (struct EffectTemplate *)FX_RegisterEffect(weapDef->szProjTrailEffect);
+        weapInfo->projTrailEffect = (struct FxEffectDef *)FX_RegisterEffect(weapDef->szProjTrailEffect);
 
     weapInfo->missileDlight = (float)weapDef->iProjectileDLight;
 

@@ -39,7 +39,7 @@ struct MemoryFile
 };
 
 // Only the leading fields are read here.
-struct dvar_t
+struct dvar_s
 {
 	const char *name;
 	unsigned short flags;
@@ -52,6 +52,7 @@ struct dvar_t
 		float decimal;
 	} current;
 };
+typedef dvar_s dvar_t;
 
 extern dvar_t *fx_enable;
 extern dvar_t *fx_draw;

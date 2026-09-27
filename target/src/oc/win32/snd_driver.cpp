@@ -97,12 +97,12 @@ extern "C" __declspec(dllimport) const char *__stdcall AIL_last_error(void);
 extern "C" void *Z_MallocInternal( int size );
 extern "C" void Z_FreeInternal( void *ptr );
 extern void *Hunk_AllocInternal(int size);
-extern void Com_Error(int code, const char *fmt, ...);
+extern void Com_Error(errorParm_t code, const char *fmt, ...);
 extern void Com_Printf(const char *fmt, ...);
 extern void Com_DPrintf(const char *fmt, ...);
 extern "C" void Com_Memcpy( void *dest, const void *src, int count );
-extern void *Com_GetSoundFileMem(const void *alias);
-extern const char *Com_GetSoundFileName(const void *alias);
+extern void *Com_GetSoundFileMem(const snd_alias_t *alias);
+extern const char *Com_GetSoundFileName(const snd_alias_t *alias);
 extern void SND_Update(void);
 extern Bool SND_UpdateBackgroundVolume(int streamIdx, int frametime);
 extern float SND_Attenuate(SndCurve *volumeFalloffCurve, float radius, float mindist, float maxdist);
@@ -586,7 +586,7 @@ void SND_RawSamples(int samples, int rate, int width, int s_channels, const byte
 
         milesGlob.raw.handle = (HSAMPLE)(AIL_allocate_sample_handle( (void *)(milesGlob.driver_2D)));
         if (milesGlob.raw.handle == NULL) {
-            Com_Error(1, (const char *)"\x15MILES 2D sound sample allocation failed on raw channel\n");
+            Com_Error(ERR_DROP, (const char *)"\x15MILES 2D sound sample allocation failed on raw channel\n");
         }
         milesGlob.raw.rate = rate;
         milesGlob.raw.width = width;
@@ -1718,7 +1718,7 @@ configure_provider:
     for (i = 0; i < sndGlob->max_2D_channels; i++) {
         handle_2D_004a3ad4[i] = (HSAMPLE)(AIL_allocate_sample_handle( (void *)(milesGlob.driver_2D)));
         if (handle_2D_004a3ad4[i] == NULL) {
-            Com_Error(1, (const char *)"\x15MILES 2D sound sample allocation failed on channel %i\n", i + 1);
+            Com_Error(ERR_DROP, (const char *)"\x15MILES 2D sound sample allocation failed on channel %i\n", i + 1);
         }
     }
 
@@ -1726,7 +1726,7 @@ configure_provider:
     for (i = 0; i < sndGlob->max_3D_channels; i++) {
         milesGlob.handle_3D[i] = AIL_allocate_3D_sample_handle( (void *)(milesGlob.provider_3D));
         if (milesGlob.handle_3D[i] == NULL) {
-            Com_Error(1, (const char *)"\x15MILES 3D sound sample allocation failed on channel %i\n", i + 1);
+            Com_Error(ERR_DROP, (const char *)"\x15MILES 3D sound sample allocation failed on channel %i\n", i + 1);
         }
     }
 

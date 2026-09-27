@@ -7,7 +7,7 @@
 
 #if COD2_IS_PATCH_13
 extern struct clientStatic_t cls;
-extern const dvar_t *com_developer;
+extern dvar_t *com_developer;
 extern const char* Dvar_GetString(const char *dvarName);
 extern void FS_BuildOSPath(const char *base, const char *game, const char *qpath, char *ospath);
 extern void Cbuf_ExecuteText(int execWhen, const char *text);
@@ -45,8 +45,8 @@ extern clientActive_t clients[1];
 extern byte cls_ptr[];
 extern clientConnection_t clc;
 extern dvar_t *com_dedicated;
-extern const dvar_t *cl_paused;
-extern const dvar_t *net_lanauthorize;
+extern dvar_t *cl_paused;
+extern dvar_t *net_lanauthorize;
 extern byte **cl_packetdelay;
 extern byte **download_ui_ptr;
 extern const dvar_t *cl_shownet;
@@ -77,7 +77,7 @@ extern void CL_InitDownloads(void);
 extern void CL_AddReliableCommand(const char *cmd);
 extern void CL_WritePacket(void);
 extern void CL_NextDownload(void);
-extern void Com_Error(int level, const char *fmt, ...);
+extern void Com_Error(errorParm_t level, const char *fmt, ...);
 extern void Com_Printf(const char *fmt, ...);
 extern void Com_DPrintf(const char *fmt, ...);
 extern int MSG_ReadLong(msg_t *msg);
@@ -212,7 +212,7 @@ void CL_ParseGamestate(msg_t *msg)
 
             i = MSG_ReadShort(msg);
             if (i > 0x7ff) {
-                Com_Error(1, "\x15"
+                Com_Error(ERR_DROP, "\x15"
                              "configstring > MAX_CONFIGSTRINGS");
             }
 
@@ -222,7 +222,7 @@ void CL_ParseGamestate(msg_t *msg)
 
             cla = clients;
             if (len + 1 + cla->gameState.dataCount > MAX_GAMESTATE_CHARS) {
-                Com_Error(1, "\x15MAX_GAMESTATE_CHARS exceeded");
+                Com_Error(ERR_DROP, "\x15MAX_GAMESTATE_CHARS exceeded");
             }
 
             cla->gameState.stringOffsets[i] = cla->gameState.dataCount;
@@ -234,7 +234,7 @@ void CL_ParseGamestate(msg_t *msg)
 
             newnum = MSG_ReadBits(msg, 10);
             if (newnum > 0x3ff) {
-                Com_Error(1, "\x15"
+                Com_Error(ERR_DROP, "\x15"
                              "Baseline number out of range: %i",
                           newnum);
             }
@@ -246,7 +246,7 @@ void CL_ParseGamestate(msg_t *msg)
                                 newnum);
         } else {
 
-            Com_Error(1, "\x15"
+            Com_Error(ERR_DROP, "\x15"
                          "CL_ParseGamestate: bad command byte");
         }
     }
@@ -313,7 +313,7 @@ void CL_ParseDownload(msg_t *msg)
         size = clc->downloadSize;
         if (size < 0) {
 
-            Com_Error(1, "%s", va("%s", MSG_ReadCommandString(msg)));
+            Com_Error(ERR_DROP, "%s", va("%s", MSG_ReadCommandString(msg)));
             return;
         }
     }
@@ -545,7 +545,7 @@ void CL_WWWDownload(void)
             char *err = va("Download failure while getting '%s'\n", cls.downloadName);
             cls.wwwDlDisconnected = 0;
             CL_ClearStaticDownload();
-            Com_Error(1, "%s", err);
+            Com_Error(ERR_DROP, "%s", err);
             return;
         }
         Com_Printf("Download failure while getting '%s'\n", cls.downloadName);
@@ -698,7 +698,7 @@ void CL_ParseSnapshot(msg_t *msg)
             break;
 
         if (msg->readcount > msg->cursize) {
-            Com_Error(1, "\x15"
+            Com_Error(ERR_DROP, "\x15"
                          "CL_ParsePacketEntities: end of message");
         }
 
@@ -817,7 +817,7 @@ void CL_ParseSnapshot(msg_t *msg)
         newnum = MSG_ReadBits(msg, 6);
 
         if (msg->readcount > msg->cursize) {
-            Com_Error(1, "\x15"
+            Com_Error(ERR_DROP, "\x15"
                          "CL_ParsePacketClients: end of message");
         }
 
@@ -1059,7 +1059,7 @@ void CL_ParseServerMessage(msg_t *msg)
             break;
         default:
 
-            Com_Error(1, "\x15"
+            Com_Error(ERR_DROP, "\x15"
                          "CL_ParseServerMessage: Illegible server message %d\n",
                       cmd);
             break;

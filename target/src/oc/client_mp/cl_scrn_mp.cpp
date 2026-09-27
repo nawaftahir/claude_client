@@ -33,7 +33,7 @@ const char *szShotName[] = {
 #define ptr_195f58c ((byte *)((void *)&colorBlack))
 #define ptr_195f5e0 ((byte *)imp_net_showprofile)
 
-extern const dvar_t *net_showprofile;
+extern dvar_t *net_showprofile;
 
 typedef void (*re_void_func)(void);
 typedef void (*re_int_func)(int);
@@ -59,11 +59,11 @@ typedef void (*re_write_cubemap_func)(const char *, int, float, float);
 #endif
 
 extern void Com_Printf(const char *fmt, ...);
-extern void Com_Error(int code, const char *fmt, ...);
+extern void Com_Error(errorParm_t code, const char *fmt, ...);
 extern int Cmd_Argc(void);
 extern const char *Cmd_Argv( int arg );
 extern char *va( const char *format, ... );
-extern int CG_DrawActiveFrame(int serverTime, int needRender, int side, int size, int serverDemo);
+extern qboolean CG_DrawActiveFrame(int serverTime, DemoType demoType, CubemapShot cubemapShot, int cubemapSize, qboolean renderScreen);
 extern float UI_GetBlurRadius(void);
 extern void UI_Refresh(void);
 extern int UI_IsFullscreen(void);
@@ -249,7 +249,7 @@ void CL_CubemapShot_f(void)
         clientActive_t *dv = clients;
         int serverTime = dv->serverTime;
 
-        CG_DrawActiveFrame(serverTime, needRender, side, size, 0);
+        CG_DrawActiveFrame(serverTime, (DemoType)needRender, (CubemapShot)side, size, 0);
         RE_FUNC(re, 0xac, re_void_func)();
         RE_FUNC(re, 0xf0, re_int_func)(side);
     }
@@ -332,7 +332,7 @@ static void SCR_UpdateFrame(void)
         connstate = clc->state;
 
         if (connstate < 0) {
-            Com_Error(0, "SCR_DrawScreenField: bad clc->state");
+            Com_Error(ERR_FATAL, "SCR_DrawScreenField: bad clc->state");
         } else if (connstate <= 7) {
             goto check_ui;
         } else if (connstate == 8) {
@@ -341,14 +341,14 @@ static void SCR_UpdateFrame(void)
             clientActive_t *dv = clients;
             int serverTime = dv->serverTime;
 
-            int result = CG_DrawActiveFrame(serverTime, needRender, 0, 0, 0);
+            int result = CG_DrawActiveFrame(serverTime, (DemoType)needRender, CUBEMAPSHOT_NONE, 0, 0);
             endViewBeforeUi = 1;
             if (result == 0) {
                 CL_SendCmdInternal();
             }
             goto check_ui;
         } else {
-            Com_Error(0, "SCR_DrawScreenField: bad clc->state");
+            Com_Error(ERR_FATAL, "SCR_DrawScreenField: bad clc->state");
         }
     } else {
 
@@ -356,7 +356,7 @@ static void SCR_UpdateFrame(void)
         connstate = clc->state;
 
         if ((unsigned int)connstate > 8) {
-            Com_Error(0, "SCR_DrawScreenField: bad clc->state");
+            Com_Error(ERR_FATAL, "SCR_DrawScreenField: bad clc->state");
         }
 
         switch (connstate) {
@@ -397,7 +397,7 @@ static void SCR_UpdateFrame(void)
             clientActive_t *dv = clients;
             int serverTime = dv->serverTime;
 
-            CG_DrawActiveFrame(serverTime, needRender, 0, 0, 1);
+            CG_DrawActiveFrame(serverTime, (DemoType)needRender, CUBEMAPSHOT_NONE, 0, 1);
             endViewBeforeUi = 1;
 
             clc = &::clc;

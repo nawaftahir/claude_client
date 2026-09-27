@@ -99,7 +99,7 @@ const char *Com_GetSoundFileName(const snd_alias_t *alias);
 float Vec3Distance(const vec3_t v1, const vec3_t v2);
 float Vec3DistanceSq(const vec3_t v1, const vec3_t v2);
 void SND_Set3DPosition(int index, const vec_t *org);
-extern const dvar_t *cl_paused;
+extern dvar_t *cl_paused;
 extern const dvar_t *com_statmon;
 int SND_GetDriverCPUPercentage(void);
 void StatMon_Warning(int severity, int timeout, const char *msg);
@@ -134,7 +134,7 @@ void SND_Set3DChannelPlaybackRate(int index, int rate);
 void SND_SetStreamChannelPlaybackRate(int index, int rate);
 void SND_Set2DChannelPlaybackRate(int index, int rate);
 float floorf(float x);
-void Com_Error(int level, const char *fmt, ...);
+void Com_Error(errorParm_t level, const char *fmt, ...);
 snd_alias_t *Com_PickSoundAlias( const char *aliasName );
 snd_alias_t *Com_PickSoundAliasFromList( snd_alias_list_t *aliasList );
 
@@ -246,14 +246,14 @@ static __attribute_regparm__(3)
     if (Com_GetSoundFileName(pAlias0) != Com_GetSoundFileName(pAlias1)) {
         if (!bReport)
             return 0;
-        Com_Error(1, "\025tried to blend between sound aliases '%s' and '%s', but they don't use the same sound file\n", pAlias0->pszAliasName, pAlias1->pszAliasName);
+        Com_Error(ERR_DROP, "\025tried to blend between sound aliases '%s' and '%s', but they don't use the same sound file\n", pAlias0->pszAliasName, pAlias1->pszAliasName);
         return 0;
     }
 
     if (pAlias0->volumeFalloffCurve != pAlias1->volumeFalloffCurve) {
         if (!bReport)
             return 0;
-        Com_Error(1, "\025tried to blend between sound aliases '%s' and '%s', but they do not have the same volume falloff curve\n", pAlias0->pszAliasName, pAlias1->pszAliasName);
+        Com_Error(ERR_DROP, "\025tried to blend between sound aliases '%s' and '%s', but they do not have the same volume falloff curve\n", pAlias0->pszAliasName, pAlias1->pszAliasName);
         return 0;
     }
 
@@ -264,63 +264,63 @@ static __attribute_regparm__(3)
     if (isLooping != (flags1 & 1)) {
         if (!bReport)
             return 0;
-        Com_Error(1, "\025tried to blend between sound aliases '%s' and '%s', but they do not have the same looping status\n", pAlias0->pszAliasName, pAlias1->pszAliasName);
+        Com_Error(ERR_DROP, "\025tried to blend between sound aliases '%s' and '%s', but they do not have the same looping status\n", pAlias0->pszAliasName, pAlias1->pszAliasName);
         return 0;
     }
 
     if ((flags0 & 0x60) != (flags1 & 0x60)) {
         if (!bReport)
             return 0;
-        Com_Error(1, "\025tried to blend between sound aliases '%s' and '%s', but they are not both loaded or both streamed\n", pAlias0->pszAliasName, pAlias1->pszAliasName);
+        Com_Error(ERR_DROP, "\025tried to blend between sound aliases '%s' and '%s', but they are not both loaded or both streamed\n", pAlias0->pszAliasName, pAlias1->pszAliasName);
         return 0;
     }
 
     if ((flags0 & 0x780) != (flags1 & 0x780)) {
         if (!bReport)
             return 0;
-        Com_Error(1, "\025tried to blend between sound aliases '%s' and '%s', but they don't use the same channel\n", pAlias0->pszAliasName, pAlias1->pszAliasName);
+        Com_Error(ERR_DROP, "\025tried to blend between sound aliases '%s' and '%s', but they don't use the same channel\n", pAlias0->pszAliasName, pAlias1->pszAliasName);
         return 0;
     }
 
     if ((flags0 & 2) != (flags1 & 2)) {
         if (!bReport)
             return 0;
-        Com_Error(1, "\025tried to blend between sound aliases '%s' and '%s', but only one of them is a 'master' alias\n", pAlias0->pszAliasName, pAlias1->pszAliasName);
+        Com_Error(ERR_DROP, "\025tried to blend between sound aliases '%s' and '%s', but only one of them is a 'master' alias\n", pAlias0->pszAliasName, pAlias1->pszAliasName);
         return 0;
     }
 
     if ((flags0 & 4) != (flags1 & 4)) {
         if (!bReport)
             return 0;
-        Com_Error(1, "\025tried to blend between sound aliases '%s' and '%s', but only one of them is a 'slave' alias\n", pAlias0->pszAliasName, pAlias1->pszAliasName);
+        Com_Error(ERR_DROP, "\025tried to blend between sound aliases '%s' and '%s', but only one of them is a 'slave' alias\n", pAlias0->pszAliasName, pAlias1->pszAliasName);
         return 0;
     }
 
     if ((flags0 & 8) != (flags1 & 8)) {
         if (!bReport)
             return 0;
-        Com_Error(1, "\025tried to blend between sound aliases '%s' and '%s', but they don't use the same fulldrylevel setting\n", pAlias0->pszAliasName, pAlias1->pszAliasName);
+        Com_Error(ERR_DROP, "\025tried to blend between sound aliases '%s' and '%s', but they don't use the same fulldrylevel setting\n", pAlias0->pszAliasName, pAlias1->pszAliasName);
         return 0;
     }
 
     if ((flags0 & 0x10) != (flags1 & 0x10)) {
         if (!bReport)
             return 0;
-        Com_Error(1, "\025tried to blend between sound aliases '%s' and '%s', but they don't use the same nowetlevel setting\n", pAlias0->pszAliasName, pAlias1->pszAliasName);
+        Com_Error(ERR_DROP, "\025tried to blend between sound aliases '%s' and '%s', but they don't use the same nowetlevel setting\n", pAlias0->pszAliasName, pAlias1->pszAliasName);
         return 0;
     }
 
     if (pAlias0->fSlavePercentage != pAlias1->fSlavePercentage) {
         if (!bReport)
             return 0;
-        Com_Error(1, "\025tried to blend between sound aliases '%s' and '%s', but they do not have the same slave percentages.\n", pAlias0->pszAliasName, pAlias1->pszAliasName);
+        Com_Error(ERR_DROP, "\025tried to blend between sound aliases '%s' and '%s', but they do not have the same slave percentages.\n", pAlias0->pszAliasName, pAlias1->pszAliasName);
         return 0;
     }
 
     if (pAlias0->startDelay != pAlias1->startDelay) {
         if (!bReport)
             return 0;
-        Com_Error(1, "\025tried to blend between sound aliases '%s' and '%s', but they do not have the same start delay.\n", pAlias0->pszAliasName, pAlias1->pszAliasName);
+        Com_Error(ERR_DROP, "\025tried to blend between sound aliases '%s' and '%s', but they do not have the same start delay.\n", pAlias0->pszAliasName, pAlias1->pszAliasName);
         return 0;
     }
 
@@ -328,13 +328,13 @@ static __attribute_regparm__(3)
         if (pAlias0->fPitchMin != pAlias0->fPitchMax || pAlias1->fPitchMin != pAlias1->fPitchMax) {
             if (!bReport)
                 return 0;
-            Com_Error(1, "\025tried to blend between sound aliases '%s' and '%s', but they are looping and at least one of them has a random pitch\n", pAlias0->pszAliasName, pAlias1->pszAliasName);
+            Com_Error(ERR_DROP, "\025tried to blend between sound aliases '%s' and '%s', but they are looping and at least one of them has a random pitch\n", pAlias0->pszAliasName, pAlias1->pszAliasName);
             return 0;
         }
         if (pAlias0->fVolMin != pAlias0->fVolMax || pAlias1->fVolMin != pAlias1->fVolMax) {
             if (!bReport)
                 return 0;
-            Com_Error(1, "\025tried to blend between sound aliases '%s' and '%s', but they are looping and at least one of them has a random volume\n", pAlias0->pszAliasName, pAlias1->pszAliasName);
+            Com_Error(ERR_DROP, "\025tried to blend between sound aliases '%s' and '%s', but they are looping and at least one of them has a random volume\n", pAlias0->pszAliasName, pAlias1->pszAliasName);
             return 0;
         }
     }
@@ -342,7 +342,7 @@ static __attribute_regparm__(3)
     if (pAlias0->pszSecondaryAliasName || pAlias1->pszSecondaryAliasName) {
         if (!bReport)
             return 0;
-        Com_Error(1, "\025tried to blend between sound aliases '%s' and '%s', but one or both has a secondary alias.\n", pAlias0->pszAliasName, pAlias1->pszAliasName);
+        Com_Error(ERR_DROP, "\025tried to blend between sound aliases '%s' and '%s', but one or both has a secondary alias.\n", pAlias0->pszAliasName, pAlias1->pszAliasName);
         return 0;
     }
 
@@ -1083,7 +1083,7 @@ found:
     if (entchannel <= 10 && ((1 << entchannel) & 0x786)) {
 
     } else if (!g_snd.listeners[0].active) {
-        Com_Error(1, "attempted to play spatialized alias '%s' while there is no active listener\n", pAlias0->pszAliasName);
+        Com_Error(ERR_DROP, "attempted to play spatialized alias '%s' while there is no active listener\n", pAlias0->pszAliasName);
     }
 
     if (treatAsMaster || (pAlias0->flags & 2)) {
@@ -1365,7 +1365,7 @@ static __attribute_regparm__(3) int SND_PlaySoundAlias_Internal(const snd_alias_
             if (!snd_enable3D->current.enabled)
                 return 0;
             if (!g_snd.listeners[0].active) {
-                Com_Error(1, "attempted to play spatialized alias '%s' while there is no active listener. Most likely this means you tried to play a spatialized sound while not in a level.\n", pAlias0->pszAliasName);
+                Com_Error(ERR_DROP, "attempted to play spatialized alias '%s' while there is no active listener. Most likely this means you tried to play a spatialized sound while not in a level.\n", pAlias0->pszAliasName);
                 return 0;
             }
             master = treatAsMaster || (pAlias0->flags & 2);
@@ -1586,12 +1586,12 @@ static __attribute_regparm__(3) void SND_StartBackground(int track, const snd_al
     flags = pAlias->flags;
     entchannel = (flags & 0x780) >> 7;
     if (entchannel > 10 || !((1 << entchannel) & 0x786)) {
-        Com_Error(1, "\025alias %s sound %s played as an ambient / music track uses a 3D channel type; should probably be channel 'local'\n", pAlias->pszAliasName, Com_GetSoundFileName(pAlias));
+        Com_Error(ERR_DROP, "\025alias %s sound %s played as an ambient / music track uses a 3D channel type; should probably be channel 'local'\n", pAlias->pszAliasName, Com_GetSoundFileName(pAlias));
         flags = pAlias->flags;
     }
 
     if ((unsigned)((flags & 0x60) >> 5) - 2 > 1) {
-        Com_Error(1, "\025alias %s sound %s played as an ambient / music track is not streamed; type must be 'streamed'\n", pAlias->pszAliasName, Com_GetSoundFileName(pAlias));
+        Com_Error(ERR_DROP, "\025alias %s sound %s played as an ambient / music track is not streamed; type must be 'streamed'\n", pAlias->pszAliasName, Com_GetSoundFileName(pAlias));
     }
 
     volume = pAlias->fVolMin + randomf() * (pAlias->fVolMax - pAlias->fVolMin);

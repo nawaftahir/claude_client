@@ -11,7 +11,7 @@ extern clientStatic_t cls;
    straight at the connection would read and, worse, WRITE the clc pointer itself. */
 #define CLC_CONN (&::clc)
 
-extern const dvar_t *nextmap;
+extern dvar_t *nextmap;
 extern const dvar_t *cl_inGameVideo;
 
 extern void Com_DPrintf(const char *fmt, ...);
@@ -561,7 +561,7 @@ static void blitVQQuad32fs(byte **status, unsigned char *data)
 
 extern int Com_sprintf(char *dest, size_t size, const char *format, ...);
 extern int I_stricmp(const char *s1, const char *s2);
-extern void Com_Error(int level, const char *fmt, ...);
+extern void Com_Error(errorParm_t level, const char *fmt, ...);
 extern void Com_Memset(void *dest, const int val, int count);
 extern int FS_Read(void *buffer, int len, fileHandle_t f);
 extern void SND_RawSamples(int samples, int rate, int width, int channels, const byte *data);
@@ -575,7 +575,7 @@ static int CIN_findHandle(void)
             return i;
         }
     }
-    Com_Error(1, "CIN_findHandle: none free");
+    Com_Error(ERR_DROP, "CIN_findHandle: none free");
     return 0;
 }
 

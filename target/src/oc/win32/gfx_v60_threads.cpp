@@ -208,7 +208,7 @@ void gfxv60_m122(void)
 }
 
 extern void *malloc(unsigned int);
-extern void Com_Error(int code, const char *fmt, ...);
+extern void Com_Error(errorParm_t code, const char *fmt, ...);
 static unsigned char *g_v60HiArena;
 static unsigned g_v60HiOff;
 static unsigned g_v60HiPeak;

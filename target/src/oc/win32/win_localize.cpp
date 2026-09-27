@@ -6,7 +6,7 @@ extern "C" FILE *FS_FileOpen( const char *filename, const char *mode );
 extern "C" size_t FS_FileRead( void *ptr, size_t size, size_t nmemb, FILE *stream );
 extern "C" void FS_FileClose( FILE *stream );
 extern "C" int FS_FileSeek( FILE *file, int offset, int whence );
-extern qboolean SEH_GetLanguageIndexForName(const char *name, language_t *lang);
+extern qboolean SEH_GetLanguageIndexForName(const char *name, int *langindex);
 extern void Com_BeginParseSession(const char *name);
 extern void Com_EndParseSession(void);
 extern char *Com_Parse( const char *( *data_p ) );
@@ -22,7 +22,7 @@ language_t Win_InitLocalization(void)
     FILE *fp;
     int size;
     char *p;
-    language_t lang;
+    int lang;
 
     localization = 0;
     localized_strings = 0;
@@ -59,7 +59,7 @@ language_t Win_InitLocalization(void)
         p++;
     }
 
-    return lang;
+    return (language_t)lang;
 }
 
 void Win_ShutdownLocalization(void)

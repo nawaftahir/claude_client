@@ -84,8 +84,8 @@ struct cgs_t {
     int levelStartTime;
     int teamScores[2];
     struct XModel * gameModels[256];
-    struct EffectTemplate * fxs[64];
-    struct EffectTemplate *smokeGrenadeFx;
+    struct FxEffectDef * fxs[64];
+    struct FxEffectDef *smokeGrenadeFx;
     shellshock_parms_t shellshockParms[16];
     struct shellshock_parms_t holdBreathParams;
     int numInlineModels;
@@ -114,8 +114,8 @@ struct weaponInfo_s {
     const char *pszTranslatedModename;
     const char *pszTranslatedAIOverlayDescription;
     struct XModel *worldSurfModel;
-    struct EffectTemplate *viewFlashEffect;
-    struct EffectTemplate *worldFlashEffect;
+    struct FxEffectDef *viewFlashEffect;
+    struct FxEffectDef *worldFlashEffect;
     vec3_t weaponMidpoint;
     snd_alias_list_t *missileSound;
     snd_alias_list_t *pullbackSound;
@@ -146,11 +146,11 @@ struct weaponInfo_s {
     float missileDlight;
     vec3_t missileDlightColor;
     int missileRenderfx;
-    struct EffectTemplate *shellEjectEffect;
-    struct EffectTemplate *lastShotEjectEffect;
-    struct EffectTemplate *projExplosionEffect;
+    struct FxEffectDef *shellEjectEffect;
+    struct FxEffectDef *lastShotEjectEffect;
+    struct FxEffectDef *projExplosionEffect;
     snd_alias_list_t *projExplosionSound;
-    struct EffectTemplate *projTrailEffect;
+    struct FxEffectDef *projTrailEffect;
     float trailRadius;
     float wiTrailTime;
     MaterialHandle hReticleCenter;

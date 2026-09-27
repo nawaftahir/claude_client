@@ -10,7 +10,7 @@ extern const dvar_t *com_statmon;
 extern clientStatic_t cls;
 extern refexport_t re;
 extern int Sys_Milliseconds(void);
-extern void Com_Error(int code, const char *fmt, ...);
+extern void Com_Error(errorParm_t code, const char *fmt, ...);
 
 static statmonitor_t stats[MAX_STATMON_ENTRIES];
 static int statCount;
@@ -21,7 +21,7 @@ void StatMon_Warning(int type, int duration, const char *materialName)
 		return;
 
 	if (type < 0 || type >= MAX_STATMON_ENTRIES)
-		Com_Error(1, "\x15StatMon_UpdateEntry: invalid entry '%i'\n", type);
+		Com_Error(ERR_DROP, "\x15StatMon_UpdateEntry: invalid entry '%i'\n", type);
 
 	stats[type].endtime = Sys_Milliseconds() + duration;
 

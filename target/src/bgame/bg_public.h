@@ -1608,7 +1608,7 @@ void BG_AnimPlayerConditions(entityState_s *es, clientInfo_t *ci);
 void BG_UpdateConditionValue(int client, int condition, int value, qboolean checkConversion);
 void BG_UpdatePlayerDObj(DObj_s *pDObj, entityState_s *es, clientInfo_t *ci, int attachIgnoreCollision);
 int BG_AnimScriptAnimation( playerState_t *ps, int state, int movetype, qboolean isContinue );
-void BG_Player_DoControllers(DObj_s *obj, const gentity_s *ent, int *partBits, clientInfo_t *ci, int frametime);
+void BG_Player_DoControllers(DObj_s *obj, const entityState_t *es, int *partBits, clientInfo_t *ci, int frametime);
 void BG_AnimParseAnimScript(animScriptData_t *scriptData, loadAnim_t *pLoadAnims, int *piNumAnims);
 void BG_FindAnimTrees();
 void BG_FindAnims();

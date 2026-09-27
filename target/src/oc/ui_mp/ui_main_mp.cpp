@@ -21,7 +21,7 @@ extern LegacyHacks *legacyHacks;
 /* dvar globals */
 extern const dvar_t *cl_voice;
 extern const dvar_t *com_playerProfile;
-extern const dvar_t *sv_voice;
+extern dvar_t *sv_voice;
 
 extern serverStatusDvar_t serverStatusDvars[23];
 
@@ -50,8 +50,8 @@ void diag_drawtext(const char *text, void *font, float x, float y, float scale)
 }
 
 extern char *va( const char *format, ... );
-extern const dvar_t *loc_warnings;
-extern const dvar_t *loc_warningsAsErrors;
+extern dvar_t *loc_warnings;
+extern dvar_t *loc_warningsAsErrors;
 extern const dvar_t *ui_smallFont;
 extern const dvar_t *ui_bigFont;
 extern const dvar_t *ui_extraBigFont;
@@ -203,7 +203,7 @@ extern dvar_t *Dvar_SetFromStringByNameFromSource(const char *name, const char *
 extern dvar_t* Dvar_FindVar(const char* dvarName);
 extern int SEH_VerifyLanguageSelection(int lang);
 extern const char *SEH_StringEd_GetString(const char *ref);
-extern void Com_Error(int level, const char *fmt, ...);
+extern void Com_Error(errorParm_t level, const char *fmt, ...);
 extern qboolean String_Parse(const char **p, char *out, int len);
 extern int LAN_GetServerStatus(char *serverAddress, char *serverStatus, int maxLen);
 extern int LAN_AddServer(int source, const char *name, const char *addr);
@@ -331,7 +331,7 @@ const char *UI_ReplaceConversions(const char *sourceString, ConversionArguments 
 const char *UI_ReplaceConversionString(const char *sourceString, const char *replaceString);
 void UI_CloseAll(void);
 void UI_CloseFocusedMenu(void);
-void UI_OverrideCursorPos(rectDef_t (*item)[16]);
+void UI_OverrideCursorPos(itemDef_t *item);
 Bool UI_DrawRecordLevel(rectDef_t *rect);
 MaterialHandle UI_FeederItemImage(const float feederID, int index);
 void UI_DrawText(const char *text, int maxChars, FontHandle font, float x, float y, int horzAlign, int vertAlign, float scale, const vec_t *color, int style);
@@ -795,7 +795,7 @@ const char *UI_SafeTranslateString(const char *reference)
 
     if ((loc_warnings)->current.enabled) {
         if ((loc_warningsAsErrors)->current.enabled) {
-            Com_Error(6, "Could not translate string \"%s\"", ref);
+            Com_Error(ERR_LOCALIZATION, "Could not translate string \"%s\"", ref);
         } else {
             Com_Printf("^3WARNING: Could not translate string \"%s\"\n", ref);
         }
@@ -1203,7 +1203,7 @@ static void UI_GetGameTypesList(void)
     }
 
     if (sharedUiInfo.numGameTypes == 0) {
-        Com_Error(0, "\x15No game type scripts found in maps/mp/gametypes folder");
+        Com_Error(ERR_FATAL, "\x15No game type scripts found in maps/mp/gametypes folder");
     }
 }
 #endif
@@ -1748,7 +1748,7 @@ void UI_CloseFocusedMenu(void)
     }
 }
 
-void UI_OverrideCursorPos(rectDef_t (*item)[16])
+void UI_OverrideCursorPos(itemDef_t *item)
 {
     byte *itemPtr = (byte *)item;
     float feederFloat = ((itemDef_t *)itemPtr)->special;
@@ -4776,7 +4776,7 @@ const char *UI_SafeTranslateString(const char *reference)
 
     if ((loc_warnings)->current.enabled) {
         if ((loc_warningsAsErrors)->current.enabled) {
-            Com_Error(6, "Could not translate string \"%s\"", ref);
+            Com_Error(ERR_LOCALIZATION, "Could not translate string \"%s\"", ref);
         } else {
             Com_Printf("^3WARNING: Could not translate string \"%s\"\n", ref);
         }
@@ -4937,7 +4937,7 @@ static void UI_GetGameTypesList(void)
     }
 
     if (sharedUiInfo.numGameTypes == 0) {
-        Com_Error(0, "\x15No game type scripts found in maps/mp/gametypes folder");
+        Com_Error(ERR_FATAL, "\x15No game type scripts found in maps/mp/gametypes folder");
     }
 }
 

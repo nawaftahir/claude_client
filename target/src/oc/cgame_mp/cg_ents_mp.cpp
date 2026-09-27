@@ -16,9 +16,11 @@ extern void DObjUpdateClientInfo(struct DObj_s *obj, float timescale);
 extern void* MT_Alloc(int numBytes, int type);
 extern WeaponDef * BG_GetWeaponDef(int iWeapon);
 extern XAnimTree *XAnimCreateTree(XAnim *anims, Alloc_t Alloc);
-extern struct XAnim_s *XAnimCreateAnims(const char *debugName, int size, void *Alloc);
+extern struct XAnim_s *XAnimCreateAnims(const char *debugName, int size, Alloc_t Alloc);
 extern void XAnimBlend(XAnim *anims, unsigned int animIndex, const char *name, unsigned int children, unsigned int num, unsigned int flags);
-extern void XAnimPrecache(const char *name, void *Alloc);
+extern XAnimParts *XAnimPrecache(const char *name, Alloc_t Alloc);
+extern void *Hunk_AllocXAnimClient(int size);
+extern void *Hunk_AllocXAnimPrecache(int size);
 extern void XAnimCreate(struct XAnim_s *anims, unsigned int animIndex, const char *name);
 extern struct DObj_s * Com_GetClientDObj(int handle, int localClientNum);
 extern void Com_ClientDObjCreate(DObjModel_s *dobjModels, unsigned short numModels, struct XAnimTree_s *tree, int handle);
@@ -26,13 +28,13 @@ extern qboolean CG_CheckDObjInfoMatches(int iEntNum, int iEntType, struct XModel
 extern void CG_SetDObjInfo(int iEntNum, int iEntType, struct XModel *pXModel);
 extern void CG_SafeDObjFree(int iEntNum);
 extern void CG_RegisterItemVisuals(int itemNum);
-extern void Com_Error(int code, const char *fmt, ...);
+extern void Com_Error(errorParm_t code, const char *fmt, ...);
 extern float AngleSubtract( float a1, float a2 );
 extern float LerpAngle(float from, float to, float frac);
 extern bool DObjSetControlTagAngles(const DObj_s *obj, int *partBits, unsigned int boneIndex, float *angles);
 extern struct XAnimTree_s *DObjGetTree(const struct DObj_s *obj);
-extern void XAnimSetCompleteGoalWeightKnobAll(void *tree, int animIndex, float goalWeight, float goalTime, float rate, int notifyType, int notifyClient);
-extern void BG_Player_DoControllers(const struct DObj_s *pDObj, const entityState_t *es, int *partBits, clientInfo_t *ci, int frametime);
+extern int XAnimSetCompleteGoalWeightKnobAll(XAnimTree_s *tree, unsigned int animIndex, unsigned int rootIndex, float goalWeight, float goalTime, float rate, unsigned int notifyName, int bRestart);
+extern void BG_Player_DoControllers(struct DObj_s *obj, const entityState_t *es, int *partBits, clientInfo_t *ci, int frametime);
 extern int DObjGetClientNotifyList(XAnimNotify **notifyList);
 extern int stricmp(const char *s1, const char *s2);
 extern const char *CL_GetConfigString(int index);
@@ -59,10 +61,10 @@ extern void MatrixTransformVector43(const vec3_t in1, const float in2[4][3], vec
 extern int BG_GetNumWeapons(void);
 extern int CG_PlaySoundAlias(int entitynum, const vec_t *origin, snd_alias_list_t *aliasList);
 extern int FX_GetBoneIndex(const int entNum, unsigned int bone);
-extern void FX_PlayEntityEffect(EffectTemplate *fx, const vec_t *org, vec3_t *axis, const FxBoltInfo *bolt);
-extern void FX_PlayEffect(EffectTemplate *fx, const vec_t *org, const vec_t *fwd);
-extern void FX_PlayOrientedEffect(EffectTemplate *fx, const vec_t *org, const vec_t *fwd, const vec_t *up);
-extern void FX_PlaySimpleEffect(EffectTemplate *fx, const vec_t *org);
+extern void FX_PlayEntityEffect(const EffectTemplate *fx, const vec_t *org, const vec3_t *axis, const FxBoltInfo *bolt);
+extern void FX_PlayEffect(const EffectTemplate *fx, const vec_t *org, const vec_t *fwd);
+extern void FX_PlayOrientedEffect(const EffectTemplate *fx, const vec_t *org, const vec_t *fwd, const vec_t *up);
+extern void FX_PlaySimpleEffect(const EffectTemplate *fx, const vec_t *org);
 extern void Com_Printf(const char *fmt, ...);
 extern void ByteToDir(const int b, vec3_t dir);
 extern float Vec3DistanceSq(const vec3_t v1, const vec3_t v2);
@@ -116,15 +118,15 @@ struct XAnim_s *CG_GetMG42Anims(centity_t *cent)
 
     weapDef = (WeaponDef *)(BG_GetWeaponDef(cent->nextState.weapon));
 
-    pAnims = XAnimCreateAnims((const char *)"MG42", 3, imp_Hunk_AllocXAnimClient);
+    pAnims = XAnimCreateAnims((const char *)"MG42", 3, Hunk_AllocXAnimClient);
 
     XAnimBlend(pAnims, 0, (const char *)"root", 1, 2, 0);
 
-    XAnimPrecache(weapDef->szXAnims[1], imp_Hunk_AllocXAnimPrecache);
+    XAnimPrecache(weapDef->szXAnims[1], Hunk_AllocXAnimPrecache);
 
     XAnimCreate(pAnims, 1, weapDef->szXAnims[1]);
 
-    XAnimPrecache(weapDef->szXAnims[3], imp_Hunk_AllocXAnimPrecache);
+    XAnimPrecache(weapDef->szXAnims[3], Hunk_AllocXAnimPrecache);
 
     XAnimCreate(pAnims, 2, weapDef->szXAnims[3]);
 
@@ -138,7 +140,7 @@ static void CG_mg42_DoControllers(const centity_t *cent, int *partBits)
     struct DObj_s *obj;
     float angles[3];
     const scr_const_t *scr;
-    struct XAnim_s *tree;
+    struct XAnimTree_s *tree;
     int animIndex;
 
     s1 = (const entityState_t *)((const byte *)cent + 0xf0);
@@ -169,7 +171,7 @@ static void CG_mg42_DoControllers(const centity_t *cent, int *partBits)
 
     DObjSetControlTagAngles(obj, partBits, scr->tag_flash, angles);
 
-    tree = (struct XAnim_s *)DObjGetTree(obj);
+    tree = (struct XAnimTree_s *)DObjGetTree(obj);
 
     if (cg->predictedPlayerState.eFlags & 0x300) {
         if (cg->predictedPlayerState.viewlocked_entNum == s1->number) {
@@ -193,7 +195,7 @@ static void CG_mg42_DoControllers(const centity_t *cent, int *partBits)
         float goalWeight = 1.0f;
         float goalTime = 0.1f;
         float rate = 1.0f;
-        XAnimSetCompleteGoalWeightKnobAll(tree, animIndex, goalWeight, goalTime, rate, 0, 0);
+        XAnimSetCompleteGoalWeightKnobAll(tree, animIndex, 0, goalWeight, goalTime, rate, 0, 0);
     }
 }
 
@@ -676,7 +678,7 @@ void CG_Item(centity_t *cent)
     GfxEntity ent;
 
     if (itemNum >= *(int *)imp_bg_numItems)
-        Com_Error(1, (const char *)"\x15"
+        Com_Error(ERR_DROP, (const char *)"\x15"
                                    "Bad item index %i on entity",
                   itemNum);
 
@@ -691,7 +693,7 @@ void CG_Item(centity_t *cent)
     }
 
     if (!itemInfo->models[0])
-        Com_Error(1, (const char *)"\x15No XModel loaded for item index %i (%s)", itemNum, item->pickup_name);
+        Com_Error(ERR_DROP, (const char *)"\x15No XModel loaded for item index %i (%s)", itemNum, item->pickup_name);
 
     obj = CG_PreProcess_GetDObj(s1->number, s1->eType, itemInfo->models[0]);
     if (!obj)
@@ -902,7 +904,7 @@ void CG_ProcessEntity(centity_t *cent)
 
     eType = cent->nextState.eType;
     if ((unsigned int)eType > 9) {
-        Com_Error(1, (const char *)"\x15"
+        Com_Error(ERR_DROP, (const char *)"\x15"
                                    "Bad entity type: %i\n",
                   eType);
         return;
