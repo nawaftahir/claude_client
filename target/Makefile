@@ -10,7 +10,7 @@ ANCHOR ?= ../../cod2engineold/binaries/windows/1.0/CoD2MP_s.exe
 ifndef IN_IMAGE
 
 $(OUT) all:
-	docker run --rm -v $(CURDIR):/w -w /w $(IMAGE) sh -c 'make -j4 -k IN_IMAGE=1 $(OUT); s=$$?; chown -R $(shell id -u):$(shell id -g) build; exit $$s'
+	docker run --rm -v $(CURDIR):/w -w /w $(IMAGE) sh -c 'make -j$$(nproc) -k IN_IMAGE=1 $(OUT); s=$$?; chown -R $(shell id -u):$(shell id -g) build; exit $$s'
 
 measure: all
 	python3 ../cmp.py $(OUT) build/CoD2MP_s.map $(ANCHOR) build/cmp.json >/dev/null
@@ -47,6 +47,7 @@ deps = awk '/including file:/{sub(/.*including file: */,""); gsub(/\\/,"/"); if 
 	sub(/^[zZ]:\/w\/src\//,"src/"); sub(/^(\.\/)+/,"src/"); print "$@: " $$0; print $$0 ":"}' $@.log > $@.d
 
 -include $(OBJS:=.d)
+
 
 build/obj/%.obj: src/%.cpp
 	@mkdir -p $(dir $@)
