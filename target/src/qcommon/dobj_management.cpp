@@ -37,12 +37,7 @@ DObj* Com_GetServerDObj( int handle )
 	assert((unsigned)handle < ARRAY_COUNT(serverObjMap));
 	assert((unsigned)serverObjMap[handle] < DOBJ_HANDLE_MAX);
 
-	if ( serverObjMap[handle] )
-	{
-		return &objBuf[serverObjMap[handle]];
-	}
-
-	return NULL;
+	return serverObjMap[handle] ? &objBuf[serverObjMap[handle]] : NULL;
 }
 
 
