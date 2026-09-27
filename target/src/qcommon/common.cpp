@@ -1850,9 +1850,9 @@ static int Com_GetConfigureDvarNames( const char **text, char *dvarNames )
 		if ( !*token )
 			return dvarCount;
 
-		if ( (int)strlen( token ) > 0x1f )
+		if ( strlen( token ) > 0x1f )
 			Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: dvar name \"%s\" longer than %i\n", token, 0x1f );
-		if ( dvarCount > 0x3f )
+		if ( dvarCount >= 0x40 )
 			Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: more than %i dvars\n", 0x40 );
 
 		I_strncpyz( dvarNames + dvarCount * 0x20, token, 0x20 );
