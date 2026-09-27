@@ -774,7 +774,7 @@ static void UI_VerifyLanguage(void)
     if (verified != newLanguage)
         Dvar_SetIntByName("ui_language", verified);
 
-    if (oldLanguage != newLanguage)
+    if (newLanguage != oldLanguage)
         Dvar_SetBoolByName("ui_languagechanged", 1);
     else
         Dvar_SetBoolByName("ui_languagechanged", 0);
