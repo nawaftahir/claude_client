@@ -1724,7 +1724,7 @@ void PM_Weapon_FireWeapon(playerState_s *ps, int delayedAction);
 void PM_BeginWeaponChange(playerState_s *pm, int newweapon);
 long BG_StringHashValue( const char *fname );
 
-int Mantle_IsWeaponInactive(const playerState_s *ps);
+bool Mantle_IsWeaponInactive(const playerState_s *ps);
 float Jump_ReduceFriction(playerState_s *ps);
 void PM_FlyMove(pmove_t *pm, pml_t *pml);
 

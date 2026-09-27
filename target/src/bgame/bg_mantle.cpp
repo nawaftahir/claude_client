@@ -772,15 +772,15 @@ void Mantle_ClearHint( playerState_t *ps )
 Mantle_IsWeaponInactive
 ==================
 */
-int Mantle_IsWeaponInactive( const playerState_t *ps )
+bool Mantle_IsWeaponInactive( const playerState_t *ps )
 {
 	const MantleState *mstate;
 	int animIndex;
-	int result;
+	bool result;
 
 	if ( !mantle_enable->current.boolean )
 	{
-		result = 0;
+		result = false;
 	}
 	else
 	{
@@ -788,7 +788,7 @@ int Mantle_IsWeaponInactive( const playerState_t *ps )
 
 		if ( !(ps->pm_flags & PMF_MANTLE) )
 		{
-			result = 0;
+			result = false;
 		}
 		else
 		{

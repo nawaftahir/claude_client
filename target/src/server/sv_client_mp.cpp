@@ -1860,7 +1860,7 @@ void SV_UserMove( client_t *cl, msg_t *msg, qboolean delta )
 		cl->deltaMessage = -1;
 	}
 
-	if ( cl->reliableSequence - cl->reliableAcknowledge > MAX_RELIABLE_COMMANDS - 1 )
+	if ( cl->reliableSequence - cl->reliableAcknowledge >= MAX_RELIABLE_COMMANDS )
 	{
 		return;
 	}
