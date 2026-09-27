@@ -70,6 +70,8 @@ extern "C" __declspec(dllimport) void __stdcall AIL_set_3D_sample_effects_level(
 extern "C" __declspec(dllimport) void __stdcall AIL_set_3D_sample_info(void *S, void *info);
 extern "C" __declspec(dllimport) void __stdcall AIL_set_3D_sample_offset(void *S, int offset);
 extern "C" __declspec(dllimport) void __stdcall AIL_set_3D_position(void *S, float x, float y, float z);
+extern "C" __declspec(dllimport) void __stdcall AIL_set_3D_stream_position(void *S, float x, float y, float z);
+extern "C" __declspec(dllimport) int __stdcall AIL_is_3D_stream(void *stream);
 extern "C" __declspec(dllimport) void __stdcall AIL_set_stream_loop_count(void *S, int count);
 extern "C" __declspec(dllimport) void __stdcall AIL_set_stream_ms_position(void *S, int ms);
 extern "C" __declspec(dllimport) void *__stdcall AIL_open_stream(void *dig, const char *filename, int flags);
@@ -113,7 +115,7 @@ extern vec_t Vec3Normalize( vec3_t v );
 extern float Vec3Distance(const vec3_t v1, const vec3_t v2);
 extern int SND_FindFree2DChannel(int entnum, int channel);
 extern int SND_FindFree3DChannel(int entnum, int channel);
-extern void SND_SetChannelInfo(int index, int entnum, const snd_alias_t *pAlias0, const snd_alias_t *pAlias1, float lerp, const vec_t *origin, float volume, float pitch, int srcChannelCount, int baserate, int total_msec, int start_msec, int startDelay, int master, snd_alias_system_t system);
+extern void SND_SetChannelInfo(int index, int entnum, const void *pAlias0, const void *pAlias1, float lerp, const float *org, float volume, float pitch, int channels, int rate, int total_msec, int start_msec, int startDelay, int master, int system);
 extern dvar_t *Dvar_RegisterBool(const char *dvarName, bool value, unsigned short flags);
 extern dvar_t *Dvar_RegisterString(const char *dvarName, const char *value, unsigned short flags);
 extern void Dvar_SetString(dvar_t *dvar, const char *value);
@@ -830,6 +832,24 @@ void SND_UpdateStreamChannel(int i, int frametime)
         streamIdx = i - 0x20;
         SND_GetCurrent3DPosition(chaninfo->entnum, chaninfo->offset, chaninfo->org);
         MSS_SpatializeStreamImpl(i, &volume, &pan);
+
+        if (AIL_is_3D_stream(milesGlob.handle_stream[streamIdx])) {
+
+            int listenerIdx = SND_GetListenerIndexNearestToOrigin(chaninfo->org);
+            snd_listener *listener = &sndGlob->listeners[listenerIdx];
+            float *listenerOrigin = listener->orient.origin;
+            float *right = listener->orient.axis[0];
+            float *up = listener->orient.axis[1];
+            float *forward = listener->orient.axis[2];
+            float dx = chaninfo->org[0] - listenerOrigin[0];
+            float dy = chaninfo->org[1] - listenerOrigin[1];
+            float dz = chaninfo->org[2] - listenerOrigin[2];
+            float x = dx * right[0] + dy * right[1] + dz * right[2];
+            float z = dx * forward[0] + dy * forward[1] + dz * forward[2];
+            float y = -(dx * up[0] + dy * up[1] + dz * up[2]);
+            AIL_set_3D_stream_position(milesGlob.handle_stream[streamIdx], y, z, x);
+            pan = 0.5f;
+        }
     } else {
         streamIdx = i - 0x20;
     }
@@ -1412,7 +1432,7 @@ got_handle:
         to[2] = org[2];
     }
 
-    SND_SetChannelInfo(index, entnum, pAlias0, pAlias1, lerp, org, volume, pitch, srcChannelCount, baserate, (int)total_msec, start_msec, startDelay, master, system);
+    SND_SetChannelInfo(index, entnum, pAlias0, pAlias1, lerp, org, volume, pitch, srcChannelCount, baserate, (int)total_msec, start_msec, startDelay, master, (int)system);
 
     {
         sndGlob = (&g_snd);
@@ -1423,6 +1443,26 @@ got_handle:
     if (SND_IsAliasChannel3D(channel)) {
 
         MSS_SpatializeStreamImpl(streamIdx, &volume, &pan);
+
+        if (AIL_is_3D_stream(milesGlob.handle_stream[streamIdx])) {
+            sndGlob = (&g_snd);
+            to = sndGlob->chaninfo[index].org;
+            {
+                int listenerIdx = SND_GetListenerIndexNearestToOrigin(to);
+                float *listenerOrigin = sndGlob->listeners[listenerIdx].orient.origin;
+                float *right = sndGlob->listeners[listenerIdx].orient.axis[0];
+                float *up = sndGlob->listeners[listenerIdx].orient.axis[1];
+                float *forward = sndGlob->listeners[listenerIdx].orient.axis[2];
+                float dx = to[0] - listenerOrigin[0];
+                float dy = to[1] - listenerOrigin[1];
+                float dz = to[2] - listenerOrigin[2];
+                float x = dx * right[0] + dy * right[1] + dz * right[2];
+                float z = dx * forward[0] + dy * forward[1] + dz * forward[2];
+                float y = -(dx * up[0] + dy * up[1] + dz * up[2]);
+                AIL_set_3D_stream_position(milesGlob.handle_stream[streamIdx], y, z, x);
+            }
+            pan = 0.5f;
+        }
 
         sndGlob = (&g_snd);
         aliasFlags = pAlias0->flags;

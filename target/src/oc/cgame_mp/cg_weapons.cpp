@@ -79,7 +79,7 @@ extern int strcmp(const char *s1, const char *s2);
 extern struct XAnimTree_s *DObjGetTree(const struct DObj_s *obj);
 extern void Com_SafeClientDObjFree(int handle);
 extern int BG_GetViewmodelWeaponIndex(const playerState_t *ps);
-extern bool XAnimHasFinished(const struct XAnimTree_s *tree, unsigned int animIndex);
+extern Bool XAnimHasFinished(const struct XAnimTree_s *tree, unsigned int animIndex);
 extern int BG_ClipForWeapon(int weapon);
 extern vec_t Vec3Normalize( vec3_t v );
 extern vec_t Vec3NormalizeTo( const vec3_t v, vec3_t out );
@@ -124,7 +124,7 @@ extern itemInfo_t cg_itemsArray[];
 extern weaponInfo_t cg_weaponsArray[];
 extern gitem_t bg_itemlist[];
 static const int iSlotPreferenceOrder[2];
-static scr_string_t *s_barrelTags[4] = { &scr_const.tag_flash, &scr_const.tag_flash_11, &scr_const.tag_flash_2, &scr_const.tag_flash_22 };
+extern weapSlot_t (*s_barrelTags[4])[64];
 
 COD2_ASSERT_FIELD(WeaponDef, szGunXModel,       0x0c);
 COD2_ASSERT_FIELD(WeaponDef, weapSlot,          0x80);
@@ -553,7 +553,7 @@ static inline __attribute__((always_inline)) void CG_PlayFireWeaponEffect(centit
     if (!fx)
         return;
 
-    flashTag = *s_barrelTags[barrel];
+    flashTag = *(unsigned short *)s_barrelTags[barrel];
     bolt[0] = ent->number;
     bolt[1] = FX_GetBoneIndex(ent->number, flashTag);
     if (bolt[1] < 0)
@@ -1057,7 +1057,7 @@ void CG_BulletHitClientEvent(int sourceEntityNum, vec_t *position, int surfType,
 
     CG_PlaySoundAlias(0x3fe, position, alias);
 
-    flashTag = *s_barrelTags[0];
+    flashTag = *(unsigned short *)s_barrelTags[0];
     tracerChance = cg_tracerChance->current.value;
     if (tracerChance <= 0.0f)
         return;
@@ -1214,7 +1214,7 @@ void CG_AddPlayerWeapon(GfxEntity *parent, playerState_t *ps, centity_t *cent, q
         if (!fx)
             return;
 
-        bolt[1] = FX_GetBoneIndex(bolt[0], *s_barrelTags[0]);
+        bolt[1] = FX_GetBoneIndex(bolt[0], *(unsigned short *)s_barrelTags[0]);
         if (bolt[1] < 0)
             return;
 
@@ -1375,7 +1375,7 @@ void CG_BulletHitEvent(int sourceEntityNum, vec_t *position, vec_t *normal, vec_
     if (fxReflect)
         FX_PlayEffect((EffectTemplate *)fxReflect, position, reflected);
 
-    flashTag = *s_barrelTags[0];
+    flashTag = *(unsigned short *)s_barrelTags[0];
     tracerChance = cg_tracerChance->current.value;
     if (tracerChance <= 0.0f)
         return;

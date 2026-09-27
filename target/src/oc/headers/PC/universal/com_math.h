@@ -56,8 +56,6 @@ struct FxHelper {
     FxCamera mPrevCamera;
     int mSeed;
     float adsZoomFactor;
-
-    bool CullSphere(const float worldPos[3], float radius, int planeCount);
 };
 
 struct GfxGammaRamp {
@@ -120,11 +118,6 @@ struct refexport_t {
     float (*GetFarPlaneDist)(void);
     void (*EndRegistration)(void);
     void (*ClearScene)(void);
-    void (*SkinGfxEntityDelayed)(struct GfxEntity *ent);
-    struct GfxEntity * (*AddRefEntityToScene)(const struct GfxEntity *refEnt, union GfxModel sceneModel, const struct centity_s *cent);
-    void (*UpdateXModelBoundsDelayed)(struct GfxEntity *ent);
-    void (*UpdateEffectsBolt)(void);
-    void (*UpdateEffectsNonBolt)(void);
     void (*DefaultVertexFrames)(int vertCount, GfxWorldVertex *verts);
     void (*AddPolyToScene)(MaterialHandle materialHandle, int lmapIndex, int vertCount, const GfxWorldVertex *verts);
     void (*AddLightToScene)(const vec_t *org, float radius, float r, float g, float b);
@@ -187,11 +180,12 @@ struct refexport_t {
     const char * (*ParseSunLight)(void *params, const char *text);
     MaterialHandle (*Material_Duplicate)(MaterialHandle mtlCopy, const char *name);
     void (*DuplicateFont)(FontHandle fontCopy, const char *name);
-    void *unknown86_102[17];
+    bool XModelAllowReadSurface;
     void (*SyncRenderThread)(void);
     void (*AbortRenderCommands)(void);
+    qboolean (*IsGpuFenceFinished)(void);
     void (*SyncGpu)(void);
-    void *unknown106;
+    void (*GpuWaited)(void);
     void (*SetLodOrigin)(const refdef_t *refdef);
 };
 

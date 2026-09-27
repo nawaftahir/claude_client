@@ -17,6 +17,7 @@ extern vec_t Vec3NormalizeTo( const vec3_t v, vec3_t out );
 extern void PerpendicularVector( const vec3_t src, vec3_t dst );
 extern void RotatePointAroundVector( vec3_t dst, const vec3_t dir, const vec3_t point, float degrees );
 extern void Vec3Cross(const vec3_t v0, const vec3_t v1, vec3_t cross);
+extern Bool FxHelper_CullSphere(const FxHelper *_this, const vec_t *worldPos, float radius, int planeCount);
 extern void CL_AddPolyToScene(MaterialHandle mtlHandle, unsigned short lmapIndex,
                               unsigned short vertCount, const GfxWorldVertex *verts);
 extern int CL_MarkFragments(const vec3_t *points, const vec_t *origin, const vec3_t *axis, float radius, int maxPoints, GfxWorldVertex *verts, int maxFragments, GfxMarkFragment *fragmentBuffer, MaterialHandle markMaterial);
@@ -83,8 +84,8 @@ void CG_AddMarks(void)
 
     do {
 
-        if (!(*fxSlot)->CullSphere(markPoly->origin, markPoly->radius,
-                                   (*fxSlot)->mCamera.numPlanes)) {
+        if (!FxHelper_CullSphere(*fxSlot, markPoly->origin, markPoly->radius,
+                                 (*fxSlot)->mCamera.numPlanes)) {
 
             markPoly->lastFrameDrawn = cg->clientFrame;
 

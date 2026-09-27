@@ -1132,9 +1132,9 @@ int BG_GetStackSlotForWeapon( const playerState_t *pPS, int iWeaponIndex, unsign
 	return SLOT_NONE;
 }
 
-// Name from the Mac 1.3 client (bg_weapons).
+// Unreferenced; the original name did not survive.
 // True if altWeaponIndex is reachable from weaponIndex's alt-weapon chain.
-qboolean BG_IsPlayerWeaponAnAlt( int weaponIndex, int altWeaponIndex )
+qboolean BG_IsInAltWeaponChain( int weaponIndex, int altWeaponIndex )
 {
 	int index;
 

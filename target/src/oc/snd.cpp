@@ -666,102 +666,6 @@ void SND_UpdateReverbs(void)
     }
 }
 
-static bool SND_ValidateEnvEffectsPriorityValue(const char *priorityName, int *priority)
-{
-    const char *priorityStrings[3];
-    int stringIndex;
-
-    priorityStrings[0] = "none";
-    priorityStrings[1] = "level";
-    priorityStrings[2] = "shellshock";
-
-    for (stringIndex = 1; stringIndex < 3; ++stringIndex) {
-        if (!stricmp(priorityName, priorityStrings[stringIndex])) {
-            *priority = stringIndex;
-            return true;
-        }
-    }
-
-    Com_Printf("invalid priority string '%s', it must be one of the following strings:\n", priorityName);
-    for (stringIndex = 1; stringIndex < 3; ++stringIndex)
-        Com_Printf("  %s\n", priorityStrings[stringIndex]);
-    return false;
-}
-
-static int SND_RoomtypeFromString(const char *string)
-{
-    int stringIndex;
-
-    for (stringIndex = 0; snd_roomStrings[stringIndex]; ++stringIndex) {
-        if (!stricmp(string, snd_roomStrings[stringIndex]))
-            return stringIndex;
-    }
-
-    Com_Printf("invalid roomtype string '%s', it must be one of the following strings:\n", string);
-    for (stringIndex = 0; snd_roomStrings[stringIndex]; ++stringIndex) {
-        if (*snd_roomStrings[stringIndex])
-            Com_Printf("  %s\n", snd_roomStrings[stringIndex]);
-    }
-    return 0;
-}
-
-void SND_SetEnvironmentEffects_f(void)
-{
-    const char *roomstring;
-    float drylevel;
-    float wetlevel;
-    int priority;
-    int fademsec;
-
-    if (Cmd_Argc() != 6) {
-        Com_Printf("USAGE: snd_setEnvironmentEffects <const char *priority> <const char *roomstring> <float drylevel> <float wetlevel> <int fademsec>\n");
-        return;
-    }
-    if (!SND_ValidateEnvEffectsPriorityValue(Cmd_Argv(1), &priority))
-        return;
-
-    roomstring = Cmd_Argv(2);
-    if (!SND_RoomtypeFromString(roomstring) && stricmp(roomstring, snd_roomStrings[0]))
-        return;
-
-    drylevel = atof(Cmd_Argv(3));
-    if (drylevel < 0.0f || drylevel > 1.0f) {
-        Com_Printf("invalid 'drylevel' %g, must be in the range of 0.0-1.0\n", drylevel);
-        return;
-    }
-    wetlevel = atof(Cmd_Argv(4));
-    if (wetlevel < 0.0f || wetlevel > 1.0f) {
-        Com_Printf("invalid 'wetlevel' %g, must be in the range of 0.0-1.0\n", wetlevel);
-        return;
-    }
-    fademsec = atoi(Cmd_Argv(5));
-    if (fademsec < 0) {
-        Com_Printf("invalid 'fademsec' %i, must be greater than or equal to zero\n", fademsec);
-        return;
-    }
-    SND_SetEnvironmentEffects(priority, roomstring, drylevel, wetlevel, fademsec);
-}
-
-void SND_DeactivateEnvironmentEffects_f(void)
-{
-    int priority;
-    int fademsec;
-
-    if (Cmd_Argc() != 3) {
-        Com_Printf("USAGE: snd_deactivateEnvironmentEffects <int priority> <int fademsec>\n");
-        return;
-    }
-    if (!SND_ValidateEnvEffectsPriorityValue(Cmd_Argv(1), &priority))
-        return;
-
-    fademsec = atoi(Cmd_Argv(2));
-    if (fademsec < 0) {
-        Com_Printf("invalid 'fademsec' %i, must be greater than or equal to zero\n", fademsec);
-        return;
-    }
-    SND_DeactivateEnvironmentEffects(priority, fademsec);
-}
-
 void SND_ErrorCleanup(void)
 {
     if (g_snd.restore.buffer) {
@@ -786,44 +690,6 @@ void SND_SetListener(int entnum, const vec_t *origin, vec3_t *axis)
     g_snd.listeners[0].orient.origin[2] = origin[2];
     g_snd.listeners[0].entnum = entnum;
     g_snd.listeners[0].active = 1;
-}
-
-void SND_SetChannelInfo(int index, int entnum, const snd_alias_t *pAlias0, const snd_alias_t *pAlias1, float lerp, const vec_t *origin, float volume, float pitch, int srcChannelCount, int baserate, int total_msec, int start_msec, int startDelay, int master, snd_alias_system_t system)
-{
-    snd_channel_info_t *chaninfo;
-    vec3_t org;
-    vec3_t axis[3];
-    vec3_t delta;
-
-    chaninfo = &g_snd.chaninfo[index];
-    if (entnum >= 0 && entnum < 1024 && SND_IsAliasChannel3D((pAlias0->flags & 0x780) >> 7)) {
-        CG_GetEntityOrientation(entnum, org, axis);
-        delta[0] = origin[0] - org[0];
-        delta[1] = origin[1] - org[1];
-        delta[2] = origin[2] - org[2];
-        chaninfo->offset[0] = delta[0] * axis[0][0] + delta[1] * axis[0][1] + delta[2] * axis[0][2];
-        chaninfo->offset[1] = delta[0] * axis[1][0] + delta[1] * axis[1][1] + delta[2] * axis[1][2];
-        chaninfo->offset[2] = delta[0] * axis[2][0] + delta[1] * axis[2][1] + delta[2] * axis[2][2];
-    } else {
-        chaninfo->offset[0] = 0.0f;
-        chaninfo->offset[1] = 0.0f;
-        chaninfo->offset[2] = 0.0f;
-    }
-    chaninfo->entnum = entnum;
-    chaninfo->entchannel = (pAlias0->flags & 0x780) >> 7;
-    chaninfo->basevolume = volume;
-    chaninfo->pitch = pitch;
-    chaninfo->srcChannelCount = srcChannelCount;
-    chaninfo->baserate = baserate;
-    chaninfo->pAlias1 = pAlias1;
-    chaninfo->lerp = lerp;
-    chaninfo->startDelay = startDelay;
-    chaninfo->pAlias0 = pAlias0;
-    chaninfo->looptime = g_snd.looptime;
-    chaninfo->endtime = g_snd.time - start_msec + total_msec;
-    chaninfo->paused = g_snd.paused && g_snd.pauseSettings[(pAlias0->flags & 0x780) >> 7];
-    chaninfo->master = master;
-    chaninfo->system = system;
 }
 
 void SND_GetCurrent3DPosition(int entnum, const vec_t *offset, vec_t *pos_out)
@@ -1794,6 +1660,49 @@ void SND_FadeAllSounds(float volume, int fadetime)
     }
 }
 
+void SND_DeactivateEnvironmentEffects_f(void)
+{
+    const char *priorityStrings[3];
+    const char *priorityName;
+    int priority;
+    int fademsec;
+    int i;
+
+    if (Cmd_Argc() != 3) {
+        Com_Printf("usage: snd_deactivateenveffects <priority> <fademsec>\n");
+        return;
+    }
+
+    priorityStrings[0] = "effect";
+    priorityStrings[1] = "level";
+    priorityStrings[2] = "shellshock";
+
+    priorityName = Cmd_Argv(1);
+
+    priority = -1;
+    for (i = 1; i < 3; i++) {
+        if (stricmp(priorityName, priorityStrings[i]) == 0) {
+            priority = i;
+            break;
+        }
+    }
+
+    if (priority < 0) {
+        Com_Printf("invalid priority string '%s', it must be one of the following strings:\n", priorityName);
+        for (i = 1; i < 3; i++) {
+            Com_Printf("  %s\n", priorityStrings[i]);
+        }
+        return;
+    }
+
+    fademsec = atoi(Cmd_Argv(2));
+    if (fademsec < 0) {
+        Com_Printf("invalid 'fademsec' %i, must be greater than or equal to zero\n", fademsec);
+        return;
+    }
+
+    SND_DeactivateEnvironmentEffects(priority, fademsec);
+}
 
 void SND_Save(MemoryFile *memFile)
 {

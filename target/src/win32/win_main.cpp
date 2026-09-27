@@ -96,63 +96,6 @@ void Sys_DetectVideoCard( char *description );
 bool Sys_SupportsSSE( void );
 
 /*
-========================================================================
-
-RENDERER DLL
-
-========================================================================
-*/
-
-struct refexport_t;
-struct refimport_t;
-typedef refexport_t *(*GetRefAPI_t)( int apiVersion, refimport_t *rimp );
-
-const char *Dvar_EnumToString( const dvar_t *dvar );
-
-static const char *gfx_driverNames[] = { "d3d", NULL };
-HMODULE hGfxDll;
-
-/*
-==================
-Sys_LoadRenderer
-==================
-*/
-GetRefAPI_t Sys_LoadRenderer( void )
-{
-	const dvar_t *gfx_driver;
-	const char *dllName;
-	GetRefAPI_t getRefAPI;
-
-	gfx_driver = Dvar_RegisterEnum( "gfx_driver", gfx_driverNames, 0, 0x1020 );
-	dllName = va( "gfx_%s_mp_x86_s.dll", Dvar_EnumToString( gfx_driver ) );
-	hGfxDll = LoadLibraryA( dllName );
-	if ( !hGfxDll )
-		Com_Error( ERR_FATAL, va( "Failed to load gfx driver %s.", dllName ) );
-	getRefAPI = (GetRefAPI_t)GetProcAddress( hGfxDll, "GetRefAPI" );
-	if ( !getRefAPI )
-	{
-		FreeLibrary( hGfxDll );
-		hGfxDll = NULL;
-		Com_Error( ERR_FATAL, va( "Failed to find \"GetRefAPI\" in gfx driver %s.", dllName ) );
-	}
-	return getRefAPI;
-}
-
-/*
-==================
-Sys_UnloadRenderer
-==================
-*/
-void Sys_UnloadRenderer( void )
-{
-	if ( hGfxDll )
-	{
-		FreeLibrary( hGfxDll );
-		hGfxDll = NULL;
-	}
-}
-
-/*
 ==================
 Sys_ShouldUpdateForConfigChange
 ==================
