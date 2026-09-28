@@ -652,6 +652,7 @@ void Item_RunScript(displayContextDef_t *dc, itemDef_t *item, const char *s)
     char command[0x400];
     const char *p;
     int i;
+    int bRan;
 
     memset(script, 0, 0x400);
     if (!item || !s || s[0] == '\0')
@@ -664,17 +665,16 @@ void Item_RunScript(displayContextDef_t *dc, itemDef_t *item, const char *s)
         if (command[0] == ';' && command[1] == '\0')
             continue;
 
-        {
-            const commandDef_t *cmd = commandList;
-            for (i = 0; i < scriptCommandCount; i++, cmd++) {
-                if (I_stricmp(command, cmd->name) == 0) {
-                    ((void (__cdecl *)(displayContextDef_t *, itemDef_t *, const char **))commandList[i].handler)(dc, item, &p);
-                    goto next_command;
-                }
+        bRan = 0;
+        for (i = 0; i < scriptCommandCount; i++) {
+            if (I_stricmp(command, commandList[i].name) == 0) {
+                ((void (__cdecl *)(displayContextDef_t *, itemDef_t *, const char **))commandList[i].handler)(dc, item, &p);
+                bRan = 1;
+                break;
             }
         }
-        UI_RunMenuScript(&p);
-    next_command:;
+        if (!bRan)
+            UI_RunMenuScript(&p);
     }
 }
 

@@ -414,22 +414,13 @@ const char *CL_GetUsernameForLocalClient(int controllerIndex)
     return name->current.string;
 }
 
-static inline __attribute__((always_inline)) void CL_AddReliableCommand_core(const char *cmd)
-{
-    clientConnection_t *conn;
-    int index;
-    if (::clc.reliableSequence - ::clc.reliableAcknowledge - 128 > 0) {
-        Com_Error(ERR_DROP, (const char *)"EXE_ERR_CLIENT_CMD_OVERFLOW");
-    }
-    conn = &::clc;
-    conn->reliableSequence += 1;
-    index = conn->reliableSequence & 0x7f;
-    MSG_WriteReliableCommandToBuffer(cmd, (char *)conn->reliableCommands[index], 0x400);
-}
-
 void CL_AddReliableCommand(const char *cmd)
 {
-    CL_AddReliableCommand_core(cmd);
+    if (::clc.reliableSequence - ::clc.reliableAcknowledge > 128) {
+        Com_Error(ERR_DROP, (const char *)"EXE_ERR_CLIENT_CMD_OVERFLOW");
+    }
+    ::clc.reliableSequence++;
+    MSG_WriteReliableCommandToBuffer(cmd, (char *)::clc.reliableCommands[::clc.reliableSequence & 0x7f], 0x400);
 }
 
 void CL_StopRecord_f(void)
@@ -2918,11 +2909,13 @@ void CL_ForwardToServer_f(void)
 
 static void CL_SendPureChecksums(void)
 {
+    const char *pChecksums;
     char cmd[1024];
     int i;
 
+    pChecksums = FS_ReferencedIwdPureChecksums();
     Com_sprintf(cmd, sizeof(cmd), (const char *)"Va ");
-    I_strncat(cmd, sizeof(cmd), FS_ReferencedIwdPureChecksums());
+    I_strncat(cmd, sizeof(cmd), pChecksums);
 
     for (i = 0; i < 2; ++i)
         cmd[i] = (char)(cmd[i] + 13 + i * 2);
@@ -2938,7 +2931,7 @@ void CL_DownloadsComplete(void)
     if (::clc.downloadRestart) {
         ::clc.downloadRestart = 0;
         FS_Restart(clc.checksumFeed);
-        CL_AddReliableCommand_core((const char *)"donedl");
+        CL_AddReliableCommand((const char *)"donedl");
         return;
     }
 
@@ -2993,7 +2986,7 @@ void CL_DownloadsComplete(void)
     }
     for (i = 0; i < 2; ++i)
         cmd[i] = (char)(cmd[i] + 13 + i * 2);
-    CL_AddReliableCommand_core(cmd);
+    CL_AddReliableCommand(cmd);
 
     CL_WritePacket();
     CL_WritePacket();

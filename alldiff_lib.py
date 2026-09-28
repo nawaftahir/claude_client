@@ -11,7 +11,7 @@ d, base = section('build/CoD2MP_s.exe')
 cd, cbase = section('../../cod2engineold/binaries/windows/1.0/CoD2MP_s.exe')
 names = {}
 located = set()  # mid-function hits; CRT names are legitimately unaligned
-for f in ('../ghidra/names_k.tsv', '../ghidra/names_1.0.tsv', '../ghidra/names_cg.tsv'):
+for f in ('../ghidra/names_k.tsv', '../ghidra/names_1.0.tsv', '../ghidra/names_cg.tsv', '../ghidra/names_loc.tsv'):
     for l in open(f):
         r = l.rstrip('\n').split('\t')
         if len(r) >= 2:
