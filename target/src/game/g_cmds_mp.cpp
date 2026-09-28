@@ -1126,7 +1126,7 @@ void Cmd_CallVote_f( gentity_t *ent )
 			return;
 		}
 
-		if ( ent->client->sess.voteCount > 2 )
+		if ( ent->client->sess.voteCount >= 3 )
 		{
 			SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_MAXVOTESCALLED\"", 101));
 			return;
