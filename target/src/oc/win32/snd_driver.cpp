@@ -311,13 +311,10 @@ Bool SND_Is3DChannelFree(int index)
 
 void SND_StopStreamChannel(int index)
 {
-    snd_local_t *sndGlob;
-    int streamIdx = index - 0x20;
-    AIL_close_stream(milesGlob.handle_stream[streamIdx]);
-    milesGlob.handle_stream[streamIdx] = NULL;
-    sndGlob = &g_snd;
-    sndGlob->chaninfo[index].paused = 0;
-    sndGlob->chaninfo[index].startDelay = 0;
+    AIL_close_stream(milesGlob.handle_stream[index - 32]);
+    g_snd.chaninfo[index].paused = 0;
+    g_snd.chaninfo[index].startDelay = 0;
+    milesGlob.handle_stream[index - 32] = NULL;
 }
 
 void SND_PauseStreamChannel(int index)

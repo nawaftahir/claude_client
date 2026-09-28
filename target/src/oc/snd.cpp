@@ -1693,15 +1693,13 @@ void SND_StopMusic(int fadetime)
 void SND_StopSounds(snd_stopsounds_arg_t which)
 {
     int i;
-    int total;
 
     if (!g_snd.Initialized2d)
         return;
 
     if (!(which & 8)) {
 
-        total = g_snd.max_2D_channels + 45;
-        for (i = 45; i < total; i++) {
+        for (i = 45; i < g_snd.max_2D_channels + 45; i++) {
             if (!SND_Is2DChannelFree(i))
                 SND_Stop2DChannel(i);
         }
@@ -1712,27 +1710,26 @@ void SND_StopSounds(snd_stopsounds_arg_t which)
         }
     }
 
-    total = g_snd.max_stream_channels + 32;
-    for (i = 32; i < total; i++) {
+    for (i = 32; i < g_snd.max_stream_channels + 32; i++) {
         if (SND_IsStreamChannelFree(i))
             continue;
 
-        if ((which & 4) && (unsigned)(i - 33) <= 1)
-            continue;
         if ((which & 2) && i == 32)
+            continue;
+        if ((which & 4) && (i == 33 || i == 34))
             continue;
 
         SND_StopStreamChannel(i);
     }
 
     if (!(which & 1)) {
-        for (i = 1; i <= 2; i++) {
+        for (i = 1; i < 3; i++) {
             SND_DeactivateEnvironmentEffects(i, 0);
         }
     }
 
     if (!(which & 0x10)) {
-        for (i = 1; i <= 3; i++) {
+        for (i = 1; i < 4; i++) {
             SND_DeactivateChannelVolumes(i, 0);
         }
     }
