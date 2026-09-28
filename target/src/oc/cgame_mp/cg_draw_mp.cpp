@@ -1067,11 +1067,8 @@ void CG_DrawActive(void)
     cg->refdef.viewIndex = 0;
 
     sensitivity = cg->zoomSensitivity;
-    {
-        float shellshockSensitivity = cg->shellshock.sensitivity;
-        if (shellshockSensitivity != 0.0f)
-            sensitivity *= shellshockSensitivity;
-    }
+    if (cg->shellshock.sensitivity != 0.0f)
+        sensitivity = cg->shellshock.sensitivity * cg->zoomSensitivity;
 
     ka = cg->kickAngles;
     oa = cg->offsetAngles;
