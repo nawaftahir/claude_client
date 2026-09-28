@@ -940,7 +940,9 @@ static void CompleteCommand(void)
 
 bool Console_IsRconCmd(const char *commandString)
 {
-    return I_strncmp(commandString, "rcon", strlen("rcon")) == 0;
+    const char *rcon = "rcon";
+
+    return I_strncmp(commandString, rcon, strlen(rcon)) == 0;
 }
 
 void Console_Key(int key)
