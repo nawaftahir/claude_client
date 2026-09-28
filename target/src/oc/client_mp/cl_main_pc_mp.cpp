@@ -473,22 +473,26 @@ found_status:
         Com_Printf((const char *)"Server settings:\n");
 
         while (*line) {
-            for (infoField = 0; infoField < 2; infoField++) {
-                int j = 0;
+            for (infoField = 0; infoField < 2 && *line; infoField++) {
+                int j;
                 if (*line == '\\')
                     line++;
-                while (*line && *line != '\\' && j < 0x3ff) {
-                    info[j++] = *line++;
+                j = 0;
+                while (*line) {
+                    info[j++] = *line;
+                    if (j >= 0x3ff)
+                        break;
+                    line++;
+                    if (*line == '\\')
+                        break;
                 }
                 info[j] = '\0';
 
-                if (infoField == 0)
-                    Com_Printf((const char *)"%-24s", info);
-                else
+                if (infoField)
                     Com_Printf((const char *)"%s\n", info);
+                else
+                    Com_Printf((const char *)"%-24s", info);
             }
-            if (!*line)
-                break;
         }
     }
 
@@ -504,11 +508,8 @@ found_status:
 
     {
         int playerIdx = 0;
-        while (1) {
-            line = MSG_ReadStringLine(msg);
-            if (!*line)
-                break;
-
+        line = MSG_ReadStringLine(msg);
+        while (*line) {
             {
                 int statusLen = strlen(serverStatus->string);
                 Com_sprintf(serverStatus->string + statusLen, 0x2000 - statusLen, (const char *)"\\%s", line);
@@ -531,6 +532,7 @@ found_status:
                 Com_Printf((const char *)"%-2d   %-3d    %-3d   %s\n", playerIdx, score, ping, name);
             }
 
+            line = MSG_ReadStringLine(msg);
             playerIdx++;
         }
     }

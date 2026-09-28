@@ -18,7 +18,7 @@ static vec2_t sign[4] = {
                           { -1.0f, 1.0f }
 };
 
-extern char **compPointerConfig;
+extern const dvar_t *cg_hudCompassSpringyPointers;
 extern const vec4_t colorWhite;
 
 extern FontHandle UI_GetFontHandle(int type, float scale);
@@ -216,10 +216,14 @@ void CG_UpdateCompassOrientation(void)
     cg->compassYaw = AngleNormalize360(fDiff + fTargetYaw);
 }
 
+static __forceinline int CG_FloatIsNegative(const float x)
+{
+    return *(const int *)&x < 0;
+}
+
 void CG_UpdateCompPointerOrientation(void)
 {
-    const dvar_t *config = compPointerConfig ? (const dvar_t *)*compPointerConfig : NULL;
-    if (!config || config->current.enabled == 0) {
+    if (cg_hudCompassSpringyPointers->current.enabled == 0) {
         cg->compPointerYaw = cg->refdefViewAngles[1];
         return;
     }
@@ -231,42 +235,35 @@ void CG_UpdateCompPointerOrientation(void)
         return;
     }
 
-    float fTargetYaw = cg->refdefViewAngles[1];
-
     if (lastTime > currentTime || (float)(currentTime - lastTime) > 500.0f) {
         cg->compassLastTime = currentTime;
-        cg->compPointerYaw = fTargetYaw;
+        cg->compPointerYaw = cg->refdefViewAngles[1];
         cg->compPointerSpeed = 0.0f;
         return;
     }
 
     int iTotalTime = currentTime - lastTime;
     cg->compassLastTime = currentTime;
-    float fDiff = AngleSubtract(cg->compPointerYaw, fTargetYaw);
+    float fDiff = AngleSubtract(cg->compPointerYaw, cg->refdefViewAngles[1]);
 
     if (fabsf(fDiff) > 10.0f) {
-        fDiff = (fDiff >= 0.0f) ? 10.0f : -10.0f;
-    }
-
-    if (iTotalTime <= 0) {
-        cg->compPointerYaw = AngleNormalize360(fDiff + fTargetYaw);
-        return;
+        fDiff = CG_FloatIsNegative(fDiff) ? -10.0f : 10.0f;
     }
 
     while (iTotalTime > 0) {
-        float dt;
+        int step;
         if (iTotalTime > 5) {
+            step = 5;
             iTotalTime -= 5;
-            dt = 5.0f;
         } else {
-            dt = (float)iTotalTime;
+            step = iTotalTime;
             iTotalTime = 0;
         }
-        float fTimeStep = dt * 0.001f;
+        float fTimeStep = (float)step * 0.001f;
 
         if (fabsf(fDiff) < 0.5f) {
             if (fabsf(cg->compPointerSpeed) < 2.0f) {
-                cg->compPointerYaw = fTargetYaw;
+                cg->compPointerYaw = cg->refdefViewAngles[1];
                 cg->compPointerSpeed = 0.0f;
                 return;
             }
@@ -280,40 +277,34 @@ void CG_UpdateCompPointerOrientation(void)
             cg->compPointerSpeed += fTimeStep * 1500.0f;
         }
 
-        float vel = cg->compPointerSpeed;
-        vel -= vel * 3.0f * fTimeStep;
-        cg->compPointerSpeed = vel;
+        cg->compPointerSpeed = cg->compPointerSpeed - fTimeStep * cg->compPointerSpeed * 3.0f;
 
-        if (vel > 0.0f) {
+        if (cg->compPointerSpeed > 0.0f) {
             if (fDiff > 0.0f) {
-                vel -= vel * 5.0f * fTimeStep;
-                cg->compPointerSpeed = vel;
+                cg->compPointerSpeed = cg->compPointerSpeed - fTimeStep * cg->compPointerSpeed * 5.0f;
             }
-            vel -= 2.0f * fTimeStep;
-            cg->compPointerSpeed = vel;
-            if (vel < 0.0f) {
+            cg->compPointerSpeed = cg->compPointerSpeed - (fTimeStep + fTimeStep);
+            if (cg->compPointerSpeed < 0.0f) {
                 cg->compPointerSpeed = 0.0f;
             }
         } else {
             if (fDiff < 0.0f) {
-                vel -= vel * 5.0f * fTimeStep;
-                cg->compPointerSpeed = vel;
+                cg->compPointerSpeed = cg->compPointerSpeed - fTimeStep * cg->compPointerSpeed * 5.0f;
             }
-            vel += 2.0f * fTimeStep;
-            if (vel > 0.0f)
-                vel = 0.0f;
-            cg->compPointerSpeed = vel;
+            cg->compPointerSpeed = fTimeStep + fTimeStep + cg->compPointerSpeed;
+            if (cg->compPointerSpeed > 0.0f) {
+                cg->compPointerSpeed = 0.0f;
+            }
         }
 
-        vel = cg->compPointerSpeed;
-        if (vel > 2000.0f) {
+        if (cg->compPointerSpeed > 2000.0f) {
             cg->compPointerSpeed = 2000.0f;
-        } else if (vel < -2000.0f) {
+        } else if (cg->compPointerSpeed < -2000.0f) {
             cg->compPointerSpeed = -2000.0f;
         }
     }
 
-    cg->compPointerYaw = AngleNormalize360(fDiff + fTargetYaw);
+    cg->compPointerYaw = AngleNormalize360(fDiff + cg->refdefViewAngles[1]);
 }
 
 void CG_TileClear(void)

@@ -127,7 +127,9 @@ int mixerGetRecordSource( char *source )
 	int i;
 	int j;
 
-	if ( waveInGetNumDevs() < 1 || mixerGetNumDevs() < 1 )
+	if ( waveInGetNumDevs() < 1 )
+		return 0;
+	if ( mixerGetNumDevs() < 1 )
 		return 0;
 
 	listText = NULL;

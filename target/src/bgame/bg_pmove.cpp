@@ -920,7 +920,7 @@ void PM_WalkMove( pmove_t *pm, pml_t *pml )
 	scale *= PM_DamageScale_Walk(ps->damageTimer);
 	ps->damageTimer -= (int)(pml->frametime * 1000.0f);
 
-	if ( ps->damageTimer <= 0 )
+	if ( ps->damageTimer <= 0.0f )
 	{
 		ps->damageTimer = 0;
 	}
@@ -1394,7 +1394,7 @@ static void PM_CrashLand(playerState_t *ps, pml_t *pml)
 	if (den < 0)
 		return;
 	t = (-b - sqrt(den)) / (2 * a);
-	landVel = -(t * acc + vel);
+	landVel = (t * acc + vel) * -1.0f;
 	fallHeight = landVel * landVel / (ps->gravity * 2.0f);
 	if (bg_fallDamageMaxHeight->current.decimal <= bg_fallDamageMinHeight->current.decimal)
 	{
@@ -3066,13 +3066,13 @@ void PM_UpdateLean(playerState_t *ps, float msec, usercmd_t *cmd,
 	{
 		if (leanofs > 0)
 		{
-			leanofs = leanofs - msec / 280.0f * fLeanMax;
+			leanofs = leanofs - fLeanMax * (msec / 280.0f);
 			if (leanofs < 0)
 				leanofs = 0;
 		}
 		else if (leanofs < 0)
 		{
-			leanofs = msec / 280.0f * fLeanMax + leanofs;
+			leanofs = fLeanMax * (msec / 280.0f) + leanofs;
 			if (leanofs > 0)
 				leanofs = 0;
 		}
@@ -3080,15 +3080,15 @@ void PM_UpdateLean(playerState_t *ps, float msec, usercmd_t *cmd,
 	else if (leaning > 0)
 	{
 		if (leanofs < fLeanMax)
-			leanofs = msec / 350.0f * fLeanMax + leanofs;
+			leanofs = fLeanMax * (msec / 350.0f) + leanofs;
 		if (leanofs > fLeanMax)
 			leanofs = fLeanMax;
 	}
 	else
 	{
 		if (leanofs > -fLeanMax)
-			leanofs = leanofs - msec / 350.0f * fLeanMax;
-		if (-fLeanMax > leanofs)
+			leanofs = leanofs - fLeanMax * (msec / 350.0f);
+		if (leanofs < -fLeanMax)
 			leanofs = -fLeanMax;
 	}
 	ps->leanf = leanofs;

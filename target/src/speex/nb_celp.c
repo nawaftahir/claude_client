@@ -1146,7 +1146,7 @@ static void nb_decode_lost(DecState *st, spx_word16_t *out, char *stack)
 #else
          /*exc[i]=pitch_gain*exc[i-st->last_pitch] +  fact*st->innov[i+offset];*/
          exc[i]=pitch_gain*(exc[i-st->last_pitch]+VERY_SMALL) + 
-         fact*sqrt(1-pitch_gain)*speex_rand(innov_gain);
+         fact*sqrt((double)(1.0f-pitch_gain))*speex_rand(innov_gain);
 #endif
       }
       }

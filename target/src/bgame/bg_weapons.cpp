@@ -5026,27 +5026,24 @@ void BG_CalculateWeaponPosition_Sway( const playerState_t *ps, vec3_t swayViewAn
 		swayVertScale = weapDef->swayVertScale;
 	}
 
-	swayPitchScale *= ssSwayScale;
-	swayYawScale *= ssSwayScale;
-	swayHorizScale *= ssSwayScale;
-	swayVertScale *= ssSwayScale;
-
-	AnglesSubtract(ps->viewangles, swayViewAngles, deltaAngles);
+	deltaAngles[0] = AngleSubtract(ps->viewangles[0], swayViewAngles[0]);
+	deltaAngles[1] = AngleSubtract(ps->viewangles[1], swayViewAngles[1]);
 
 	assert(dt);
-	VectorScale(deltaAngles, 1.0f / (dt * 60.0f), deltaAngles);
+	deltaAngles[0] = (1.0f / (dt * 60.0f)) * deltaAngles[0];
+	deltaAngles[1] = (1.0f / (dt * 60.0f)) * deltaAngles[1];
 
 	deltaAngles[0] = I_fclamp(deltaAngles[0], -swayMaxAngle, swayMaxAngle);
 	deltaAngles[1] = I_fclamp(deltaAngles[1], -swayMaxAngle, swayMaxAngle);
 
-	deltaOffset_8 = deltaAngles[1] * swayHorizScale;
-	deltaOffset_4 = deltaAngles[0] * swayVertScale;
+	deltaOffset_8 = deltaAngles[1] * swayHorizScale * ssSwayScale;
+	deltaOffset_4 = deltaAngles[0] * swayVertScale * ssSwayScale;
 
 	swayOffset[1] = DiffTrack(deltaOffset_8, swayOffset[1], swayLerpSpeed, dt);
 	swayOffset[2] = DiffTrack(deltaOffset_4, swayOffset[2], swayLerpSpeed, dt);
 
-	deltaAngles[0] = deltaAngles[0] * swayPitchScale;
-	deltaAngles[1] = deltaAngles[1] * swayYawScale;
+	deltaAngles[0] = deltaAngles[0] * swayPitchScale * ssSwayScale;
+	deltaAngles[1] = deltaAngles[1] * swayYawScale * ssSwayScale;
 
 	swayAngles[0] = DiffTrackAngle(deltaAngles[0], swayAngles[0], swayLerpSpeed, dt);
 	swayAngles[1] = DiffTrackAngle(deltaAngles[1], swayAngles[1], swayLerpSpeed, dt);

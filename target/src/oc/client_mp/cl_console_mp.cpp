@@ -1104,45 +1104,35 @@ static void Con_CheckResize(void)
     con.display = con.currentLine;
 }
 
-static void Con_OneTimeInit(void)
+static void Con_InitMessageBuffers(void)
 {
     MessageBuffer *messageBuffer;
 
-    con_inputBoxColor = Dvar_RegisterVec4("con_inputBoxColor", 0.25f, 0.25f, 0.2f, 1.0f, 0.0f, 1.0f, 0x1001);
-    con_inputHintBoxColor = Dvar_RegisterVec4("con_inputHintBoxColor", 0.4f, 0.4f, 0.35f, 1.0f, 0.0f, 1.0f, 0x1001);
-    con_outputBarColor = Dvar_RegisterVec4("con_outputBarColor", 1.0f, 1.0f, 0.95f, 0.6f, 0.0f, 1.0f, 0x1001);
-    con_outputSliderColor = Dvar_RegisterVec4("con_outputSliderColor", 0.15f, 0.15f, 0.1f, 0.6f, 0.0f, 1.0f, 0x1001);
-    con_outputWindowColor = Dvar_RegisterVec4("con_outputWindowColor", 0.35f, 0.35f, 0.3f, 0.75f, 0.0f, 1.0f, 0x1001);
-
-    con_gamemessagetime = Dvar_RegisterFloat("con_gamemessagetime", 5.0f, 0.0f, 3.402823466e38f, 0x1000);
-    con_boldgamemessagetime = Dvar_RegisterFloat("con_boldgamemessagetime", 8.0f, 0.0f, 3.402823466e38f, 0x1000);
-    con_minicontime = Dvar_RegisterFloat("con_minicontime", 4.0f, 0.0f, 3.402823466e38f, 0x1001);
-    con_miniconlines = Dvar_RegisterInt("con_miniconlines", 5, 0, 100, 0x1001);
-
     messageBuffer = con.messageBufferArray;
+
+    messageBuffer->gamemsg.scrolltime = 250;
+    messageBuffer->gamemsg.fadein = 250;
+    messageBuffer->boldgamemsg.scrolltime = 250;
+    messageBuffer->boldgamemsg.fadein = 250;
+    messageBuffer->subtitle.scrolltime = 250;
+    messageBuffer->subtitle.fadein = 250;
 
     messageBuffer->gamemsg.lines = messageBuffer->gamemsg_lines;
     messageBuffer->gamemsg.current_line = 0;
     messageBuffer->gamemsg.count = 8;
     messageBuffer->gamemsg.padding = 3;
-    messageBuffer->gamemsg.scrolltime = 250;
-    messageBuffer->gamemsg.fadein = 250;
     messageBuffer->gamemsg.fadeout = 500;
 
     messageBuffer->boldgamemsg.lines = messageBuffer->boldgamemsg_lines;
     messageBuffer->boldgamemsg.current_line = 0;
     messageBuffer->boldgamemsg.count = 8;
     messageBuffer->boldgamemsg.padding = 3;
-    messageBuffer->boldgamemsg.scrolltime = 250;
-    messageBuffer->boldgamemsg.fadein = 250;
     messageBuffer->boldgamemsg.fadeout = 500;
 
     messageBuffer->subtitle.lines = messageBuffer->subtitle_lines;
     messageBuffer->subtitle.current_line = 0;
     messageBuffer->subtitle.count = 8;
     messageBuffer->subtitle.padding = 3;
-    messageBuffer->subtitle.scrolltime = 250;
-    messageBuffer->subtitle.fadein = 250;
     messageBuffer->subtitle.fadeout = 500;
 
     messageBuffer->minicon.lines = messageBuffer->minicon_lines;
@@ -1154,8 +1144,28 @@ static void Con_OneTimeInit(void)
     messageBuffer->minicon.fadeout = 0;
 
     con.messageBuffer = messageBuffer;
+}
 
-    memcpy(con.color, ((void *)&colorWhite), sizeof(con.color));
+static void Con_OneTimeInit(void)
+{
+    con_inputBoxColor = Dvar_RegisterVec4("con_inputBoxColor", 0.25f, 0.25f, 0.2f, 1.0f, 0.0f, 1.0f, 0x1001);
+    con_inputHintBoxColor = Dvar_RegisterVec4("con_inputHintBoxColor", 0.4f, 0.4f, 0.35f, 1.0f, 0.0f, 1.0f, 0x1001);
+    con_outputBarColor = Dvar_RegisterVec4("con_outputBarColor", 1.0f, 1.0f, 0.95f, 0.6f, 0.0f, 1.0f, 0x1001);
+    con_outputSliderColor = Dvar_RegisterVec4("con_outputSliderColor", 0.15f, 0.15f, 0.1f, 0.6f, 0.0f, 1.0f, 0x1001);
+    con_outputWindowColor = Dvar_RegisterVec4("con_outputWindowColor", 0.35f, 0.35f, 0.3f, 0.75f, 0.0f, 1.0f, 0x1001);
+
+    con_gamemessagetime = Dvar_RegisterFloat("con_gamemessagetime", 5.0f, 0.0f, 3.402823466e38f, 0x1000);
+    con_boldgamemessagetime = Dvar_RegisterFloat("con_boldgamemessagetime", 8.0f, 0.0f, 3.402823466e38f, 0x1000);
+    con_minicontime = Dvar_RegisterFloat("con_minicontime", 4.0f, 0.0f, 3.402823466e38f, 0x1001);
+    con_miniconlines = Dvar_RegisterInt("con_miniconlines", 5, 0, 100, 0x1001);
+
+    Con_InitMessageBuffers();
+
+
+    con.color[0] = 1.0f;
+    con.color[1] = 1.0f;
+    con.color[2] = 1.0f;
+    con.color[3] = 1.0f;
     con.linewidth = -1;
     Con_CheckResize();
     con.initialized = 1;
@@ -1344,7 +1354,9 @@ void Con_Close(void)
         return;
 
     Field_Clear((&g_consoleField));
-    Con_ClearAllMessageWindows();
+    Con_ClearNotify();
+    MsgWnd_Clear(&con.messageBuffer->minicon);
+    MsgWnd_Clear(&con.messageBuffer->subtitle);
     clients[0].keyCatchers &= ~1;
 }
 

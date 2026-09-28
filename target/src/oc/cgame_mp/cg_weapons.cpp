@@ -230,14 +230,6 @@ static inline __attribute__((always_inline)) float CG_WeaponAnimRate(struct XAni
     return animRate;
 }
 
-static snd_alias_list_t *CG_FindSoundAliasWithFallback(const char *name, const char *fallback)
-{
-    snd_alias_list_t *alias;
-
-    alias = Com_FindSoundAlias(name);
-    return alias ? alias : Com_FindSoundAlias(fallback);
-}
-
 static void CG_SetHoldBreathChannelVolumes(float frac)
 {
     float volumes[11];
@@ -727,11 +719,11 @@ void CG_RegisterWeapon(int weaponNum)
         DObjUpdateClientInfo(weapInfo->viewModelDObj, 0.05f);
     }
 
-    if (weapDef->szWorldModel[0]) {
+    if (weapDef->szWorldModel[0])
         weapInfo->worldSurfModel = CL_RegisterModel(weapDef->szWorldModel);
-        if (!weapInfo->worldSurfModel)
-            Com_Printf("WARNING: Weapon %s could not load world model\n", weapDef->szWorldModel);
-    }
+
+    if (weapDef->szWorldModel[0] && !weapInfo->worldSurfModel)
+        Com_Printf("WARNING: Weapon %s could not load world model\n", weapDef->szWorldModel);
 
     if (weapDef->szReticleCenter[0])
         weapInfo->hReticleCenter = (MaterialHandle)CL_RegisterMaterialNoMip(weapDef->szReticleCenter, 7);
@@ -765,9 +757,13 @@ void CG_RegisterWeapon(int weaponNum)
     weapInfo->reloadStartSoundPlayer = Com_FindSoundAlias(weapDef->szReloadStartSoundPlayer);
     weapInfo->reloadEndSound = Com_FindSoundAlias(weapDef->szReloadEndSound);
     weapInfo->reloadEndSoundPlayer = Com_FindSoundAlias(weapDef->szReloadEndSoundPlayer);
-    weapInfo->raiseSound = CG_FindSoundAliasWithFallback(weapDef->szRaiseSound, "weap_raise");
+    weapInfo->raiseSound = Com_FindSoundAlias(weapDef->szRaiseSound);
+    if (!weapInfo->raiseSound)
+        weapInfo->raiseSound = Com_FindSoundAlias("weap_raise");
     weapInfo->altSwitchSound = Com_FindSoundAlias(weapDef->szAltSwitchSound);
-    weapInfo->putawaySound = CG_FindSoundAliasWithFallback(weapDef->szPutawaySound, "weap_putaway");
+    weapInfo->putawaySound = Com_FindSoundAlias(weapDef->szPutawaySound);
+    if (!weapInfo->putawaySound)
+        weapInfo->putawaySound = Com_FindSoundAlias("weap_putaway");
     weapInfo->noteTrackSound[0] = Com_FindSoundAlias(weapDef->szNoteTrackSoundA);
     weapInfo->noteTrackSound[1] = Com_FindSoundAlias(weapDef->szNoteTrackSoundB);
     weapInfo->noteTrackSound[2] = Com_FindSoundAlias(weapDef->szNoteTrackSoundC);
@@ -776,7 +772,9 @@ void CG_RegisterWeapon(int weaponNum)
     if (!itemInfo->pickupSound)
         itemInfo->pickupSound = Com_FindSoundAlias("weap_pickup");
 
-    itemInfo->ammoPickupSound = CG_FindSoundAliasWithFallback(weapDef->szAmmoPickupSound, "weap_ammo_pickup");
+    itemInfo->ammoPickupSound = Com_FindSoundAlias(weapDef->szAmmoPickupSound);
+    if (!itemInfo->ammoPickupSound)
+        itemInfo->ammoPickupSound = Com_FindSoundAlias("weap_ammo_pickup");
 
     if (weapDef->szShellEjectEffect[0])
         weapInfo->shellEjectEffect = (struct FxEffectDef *)FX_RegisterEffect(weapDef->szShellEjectEffect);

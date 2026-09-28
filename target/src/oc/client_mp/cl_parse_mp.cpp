@@ -211,7 +211,7 @@ void CL_ParseGamestate(msg_t *msg)
         if (cmd == 2) {
 
             i = MSG_ReadShort(msg);
-            if (i > 0x7ff) {
+            if (i < 0 || i >= 0x800) {
                 Com_Error(ERR_DROP, "\x15"
                              "configstring > MAX_CONFIGSTRINGS");
             }
@@ -233,7 +233,7 @@ void CL_ParseGamestate(msg_t *msg)
         } else if (cmd == 3) {
 
             newnum = MSG_ReadBits(msg, 10);
-            if (newnum > 0x3ff) {
+            if (newnum < 0 || newnum >= 0x400) {
                 Com_Error(ERR_DROP, "\x15"
                              "Baseline number out of range: %i",
                           newnum);
@@ -260,16 +260,9 @@ void CL_ParseGamestate(msg_t *msg)
 
     FS_ConditionalRestart(clc->checksumFeed);
 
-    if (net_lanauthorize->current.enabled == 0) {
-        if (Sys_IsLANAddress(clc->serverAddress)) {
-
-            CL_InitDownloads();
-            Dvar_SetInt((dvar_t *)cl_paused, 0);
-            return;
-        }
+    if (net_lanauthorize->current.enabled || !Sys_IsLANAddress(clc->serverAddress)) {
+        CL_RequestAuthorization();
     }
-
-    CL_RequestAuthorization();
 
     CL_InitDownloads();
 

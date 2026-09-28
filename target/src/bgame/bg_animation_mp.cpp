@@ -866,7 +866,7 @@ void BG_ParseCommands( const char **input, animScriptItem_t *scriptItem, animScr
 	while ( 1 )
 	{
 		// parse the body part
-		token = partIndex <= 0 ? Com_Parse(input) : Com_ParseOnLine(input);
+		token = partIndex < 1 ? Com_Parse(input) : Com_ParseOnLine(input);
 		if ( !token || !*token )
 		{
 			break;
