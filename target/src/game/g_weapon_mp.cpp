@@ -306,6 +306,7 @@ void Bullet_Fire_Extended( const gentity_t *source, gentity_t *attacker,
 	register int event2;
 	register gentity_t *tent2;
 	register int surfType;
+	int surfFlags;
 
 	if ( resursion > MAX_BULLET_RESURSIONS )
 	{
@@ -374,10 +375,10 @@ void Bullet_Fire_Extended( const gentity_t *source, gentity_t *attacker,
 		tent->s.hintString = DirToByte(reflect);
 
 		tent2 = tent;
-		if ( traceEnt->s.eType != ET_PLAYER_CORPSE )
-			surfType = (byte)((tr.surfaceFlags & 0x1F00000) >> 20);
-		else
-			surfType = SURF_TYPE_FLESH;
+		surfFlags = tr.surfaceFlags;
+		if ( traceEnt->s.eType == ET_PLAYER_CORPSE )
+			surfFlags = SURF_TYPE_FLESH << 20;
+		surfType = (byte)((surfFlags & 0x1F00000) >> 20);
 		tent2->s.surfType = surfType;
 
 		tent->s.otherEntityNum = weaponEnt->s.number;

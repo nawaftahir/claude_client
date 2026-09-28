@@ -322,7 +322,7 @@ int FS_GetModList( char *listbuf, int bufsize )
 	pFiles1 = Sys_ListFiles( fs_basepath->current.string, NULL, NULL, &dummy, qtrue );
 
 	// DHM - Nerve :: Don't add blank paths (root)
-	if ( fs_cdpath->current.string && fs_cdpath->current.string[0] )
+	if ( fs_cdpath->current.string && strlen( fs_cdpath->current.string ) != 0 )
 	{
 		pFiles2 = Sys_ListFiles( fs_cdpath->current.string, NULL, NULL, &dummy, qtrue );
 	}

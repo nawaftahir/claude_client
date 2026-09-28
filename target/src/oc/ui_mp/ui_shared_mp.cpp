@@ -1203,36 +1203,35 @@ void Item_SetTextExtents(itemDef_t *item, int *width, int *height, const char *t
     *width = (int)(((itemDef_s*)(it))->textRect[0].w);
     *height = (int)((itemDef_t *)it)->textRect[0].h;
 
-    if (*width != 0) {
-        int itemType = (((itemDef_s*)(it))->type);
-        if (itemType != 8 && !(*(void **)&((itemDef_t *)it)->dvar))
-            goto check_alignment;
-        if ((((itemDef_s*)(it))->textalignment) == 1)
-            goto compute;
-    check_alignment:
-        if ((((itemDef_s*)(it))->textalignment) == 3)
-            goto compute;
+    if (*width != 0
+        && (((((itemDef_s*)(it))->type) != 8 && !(*(void **)&((itemDef_t *)it)->dvar)
+            || (((itemDef_s*)(it))->textalignment) != 1)
+            && (((itemDef_s*)(it))->textalignment) != 3))
         return;
-    }
 
-compute:;
+
     FontHandle font = UI_GetFontHandle(((itemDef_t *)it)->fontEnum, ((itemDef_t *)it)->textscale);
     float scale = ((itemDef_t *)it)->textscale;
     originalWidth = UI_TextWidth(textPtr, 0, font, scale);
 
     int itemType = (((itemDef_s*)(it))->type);
-    if (itemType == 8) {
-        int alignment = (((itemDef_s*)(it))->textalignment);
-        if (alignment == 1 || alignment == 2)
-            originalWidth += UI_OwnerDrawWidth(((itemDef_t *)it)->window.ownerDraw, font, scale);
-    } else if (itemType <= 0x12 && ((1 << itemType) & 0x70210)) {
-        if ((((itemDef_s*)(it))->textalignment) == 1 && (*(void **)&((itemDef_t *)it)->dvar)) {
-            originalWidth += UI_TextWidth(Dvar_GetVariantString(item->dvar), 0, font, scale);
+    if (itemType == 8 && ((((itemDef_s*)(it))->textalignment) == 1 || (((itemDef_s*)(it))->textalignment) == 2)) {
+        originalWidth += UI_OwnerDrawWidth(((itemDef_t *)it)->window.ownerDraw, font, scale);
+    } else {
+        switch (itemType) {
+        case 4:
+        case 9:
+        case 16:
+        case 17:
+        case 18:
+            if ((((itemDef_s*)(it))->textalignment) == 1 && (*(void **)&((itemDef_t *)it)->dvar)) {
+                originalWidth += UI_TextWidth(Dvar_GetVariantString(item->dvar), 0, font, scale);
+            }
         }
-    }
 
-    if ((((itemDef_s*)(it))->textalignment) == 3)
-        originalWidth += UI_TextWidth(text, 0, font, scale);
+        if ((((itemDef_s*)(it))->textalignment) == 3)
+            originalWidth += UI_TextWidth(text, 0, font, scale);
+    }
 
     *width = UI_TextWidth(textPtr, 0, font, scale);
     *height = UI_TextHeight(font, scale);
@@ -1261,14 +1260,12 @@ compute:;
     textX += (((rectDef_t*)(it))->x);
     textY += (((rectDef_t*)(it))->y);
 
-    float newRect[6];
-    newRect[0] = textX;
-    newRect[1] = textY;
-    newRect[2] = textW;
-    newRect[3] = textH;
-    *(int *)&newRect[4] = horzAlign;
-    *(int *)&newRect[5] = vertAlign;
-    Item_SetTextRect(item, (const rectDef_t *)newRect);
+    item->textRect[0].x = textX;
+    item->textRect[0].y = textY;
+    item->textRect[0].w = textW;
+    item->textRect[0].h = textH;
+    item->textRect[0].horzAlign = horzAlign;
+    item->textRect[0].vertAlign = vertAlign;
 }
 
 void Item_Text_AutoWrapped_Paint(itemDef_t *item, const char *textPtr, vec_t *color)

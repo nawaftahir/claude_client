@@ -166,8 +166,8 @@ void CM_PositionTestCapsuleInTriangle( traceWork_t *tw, CollisionTriangle_t *tri
 		t = DotProduct(start, tri->tvec) - tri->tvec[3];
 
 		vertToCheck = vertToCheck | ((s + t > 1.0f) ? 1 : 0);
-		vertToCheck = vertToCheck | ((s < 0.0f) ? 2 : 0);
-		vertToCheck = vertToCheck | ((t < 0.0f) ? 4 : 0);
+		vertToCheck = vertToCheck | ((s < 0.0f) << 1);
+		vertToCheck = vertToCheck | ((t < 0.0f) << 2);
 
 		if ( vertToCheck == 0 )
 		{
@@ -179,7 +179,7 @@ void CM_PositionTestCapsuleInTriangle( traceWork_t *tw, CollisionTriangle_t *tri
 		{
 			for ( i = 0; i < 3; i++ )
 			{
-				if ( (vertToCheck >> i) & 1 )
+				if ( vertToCheck & (1 << i) )
 				{
 					edgeIndex = tri->edges[i];
 

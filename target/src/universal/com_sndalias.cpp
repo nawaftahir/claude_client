@@ -324,11 +324,18 @@ float Com_GetVolumeFalloffCurveValue( SndCurve *volumeFalloffCurve, float fracti
 	return GraphGetValueFromFraction(volumeFalloffCurve->knotCount, volumeFalloffCurve->knots, fraction);
 }
 
-// the dedicated server has no custom falloff curves
 SndCurve *Com_RegisterSoundAliasVolumeFalloffCurve( const char *filename, const char *sourceFile )
 {
 	int curveIndex;
 
+	for ( curveIndex = 0; curveIndex < MAX_VOLUMEFALLOFFCURVES; curveIndex++ )
+	{
+		if ( g_sa.volumeFalloffCurves[curveIndex].filename && !stricmp(filename, g_sa.volumeFalloffCurves[curveIndex].filename) )
+		{
+			return &g_sa.volumeFalloffCurves[curveIndex];
+		}
+	}
+	Com_Error(ERR_DROP, "\x15" "Sound alias file %s: Volume Falloff Curve '%s' not found.", sourceFile, filename);
 	return NULL;
 }
 

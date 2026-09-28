@@ -942,7 +942,7 @@ gentity_t *Drop_Weapon( gentity_t *ent, int iWeaponIndex, unsigned int tag )
 
 		if ( !iMax && !iMin )
 		{
-			iDropAmmo = I_fround(((randomf() + 1.0f) * 0.5f) * (BG_GetAmmoClipSize(clipIndex) - 1)) + 1;
+			iDropAmmo = I_fround((randomf() + 1.0f) * (BG_GetAmmoClipSize(clipIndex) - 1) * 0.5f) + 1;
 			iDropClip = I_fround((randomf() * 0.5f + 0.25f) * iDropAmmo);
 			iDropAmmo -= iDropClip;
 		}

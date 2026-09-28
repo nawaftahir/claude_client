@@ -1891,20 +1891,13 @@ void EmitFunction(sval_u func, sval_u sourcePos)
 		goto emit_function;
 	}
 
-	if ( pos.type == VAR_CODEPOS )
-	{
-		EmitCodepos(pos.u.codePosValue);
-	}
-	else if ( scrCompilePub.developer_statement == SCR_DEV_NO )
+	if ( pos.type != VAR_CODEPOS && scrCompilePub.developer_statement == SCR_DEV_NO )
 	{
 		CompileError(sourcePos.sourcePosValue, "normal script cannot reference a function in a /# ... #/ comment");
 		return;
 	}
-	else
-	{
-		EmitCodepos(pos.u.codePosValue);
-	}
 
+	EmitCodepos(pos.u.codePosValue);
 	return;
 
 emit_function:

@@ -439,7 +439,7 @@ void Cmd_Take_f( gentity_t *ent )
 	amount = atoi(amt);
 	name = ConcatArgs(1);
 
-	if ( !name || !name[0] )
+	if ( !name || !strlen(name) )
 	{
 		return;
 	}
