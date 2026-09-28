@@ -396,7 +396,7 @@ float GetVirtualHeightFromRealHeight(float height);
 void CalcScreenX(float *x, int horzAlign);
 void CalcScreenY(float *y, int vertAlign);
 void CalcSplitScreenTextOffset(FontHandle font, float *y);
-void SetScreenScaling(float safeAreaRatioHorizontal, float safeAreaRatioVertical, int viewportX, int viewportY, int viewportWidth, int viewportHeight);
+void SetScreenScaling(float safeAreaRatioHorizontal, float safeAreaRatioVertical, int viewportX, int viewportY, float viewportWidth, float viewportHeight);
 void CalcScreenPlacement(float *x, float *y, float *w, float *h, int horzAlign, int vertAlign);
 
 #endif

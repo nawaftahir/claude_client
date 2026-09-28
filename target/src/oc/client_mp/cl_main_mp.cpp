@@ -72,6 +72,7 @@ int CL_ClearStaticDownload(void)
 
 extern qboolean Sys_IsMainThread(void);
 extern int UI_IsFullscreen(void);
+extern void IN_Frame(void);
 extern void Com_Printf(const char *fmt, ...);
 extern const char *FS_LoadedIwdNames(void);
 extern const char *FS_ReferencedIwdNames(void);
@@ -91,7 +92,7 @@ extern void Dvar_SetBool(dvar_t *dvar, bool value);
 extern void Dvar_SetString(dvar_t *dvar, const char *value);
 extern void UI_SetMap(const char *mapname, const char *gametype);
 extern void SCR_UpdateScreenInternal(void);
-extern void SetScreenScaling(float safeAreaH, float safeAreaV, int vpX, int vpY, int vpW, int vpH);
+extern void SetScreenScaling(float safeAreaH, float safeAreaV, int vpX, int vpY, float vpW, float vpH);
 extern void CalcSplitScreenTextOffset(FontHandle font, float *y);
 extern void CalcScreenPlacement(float *x, float *y, float *w, float *h, int horzAlign, int vertAlign);
 extern void SND_Init(void);
@@ -556,8 +557,9 @@ extern char *va( const char *format, ... );
 void CL_Reconnect_f(void)
 {
     char *server = cls.servername;
+    int len = strlen(server);
 
-    if (!*server || !memcmp(server, "localhost", 10)) {
+    if (len == 0 || !strcmp(server, "localhost")) {
         Com_Printf("Can't reconnect to localhost.\n");
         return;
     }
@@ -734,21 +736,14 @@ void CL_RefPrintf(int print_level, const char *fmt, ...)
     vsnprintf(msg, sizeof(msg), fmt, argptr);
     __builtin_va_end(argptr);
 
-    switch (print_level) {
-    case 0:
+    if (print_level == 0) {
         Com_Printf("%s", msg);
-        break;
-    case 1:
-        Com_DPrintf("^1%s", msg);
-        break;
-    case 2:
+    } else if (print_level == 2) {
         Com_Printf("^3%s", msg);
-        break;
-    case 3:
+    } else if (print_level == 3) {
         Com_Printf("^1%s", msg);
-        break;
-    default:
-        break;
+    } else if (print_level == 1) {
+        Com_DPrintf("^1%s", msg);
     }
 }
 
@@ -774,11 +769,9 @@ void CL_InitRenderer(void)
     int fieldWidth;
 
     re.BeginRegistration(&cls.vidConfig);
-    {
-        int vw = cls.vidConfig.width;
-        int vh = cls.vidConfig.height;
-        SetScreenScaling(1.0f, 1.0f, 0, 0, vw, vh);
-    }
+    _controlfp(_PC_24, _MCW_PC);
+    _controlfp(_MCW_EM, _MCW_EM);
+    SetScreenScaling(1.0f, 1.0f, 0, 0, cls.vidConfig.width, cls.vidConfig.height);
 
     cls.whiteMaterial = re.RegisterMaterial("white", 3, 3);
     cls.consoleMaterial = re.RegisterMaterial("console", 3, 3);
@@ -1676,8 +1669,7 @@ void CL_AddDebugString(const vec_t *xyz, const vec_t *color, float scale, const 
     if (!cls.debug.strings) {
         cls.debug.strings = (trDebugString_t *)(Z_MallocInternal(0x8000));
         cls.debug.stringFromServer = (byte *)(Z_MallocInternal(cls.debug.maxStrings));
-        cls.debug.numStrings = 0;
-        stringIndex = 0;
+        cls.debug.numStrings = stringIndex = 0;
     }
 
     string = &cls.debug.strings[stringIndex];
@@ -1692,7 +1684,7 @@ void CL_AddDebugString(const vec_t *xyz, const vec_t *color, float scale, const 
     strncpy(string->text, text, 0x5f);
     string->text[95] = '\0';
 
-    cls.debug.stringFromServer[stringIndex] = (byte)fromServer;
+    cls.debug.stringFromServer[cls.debug.numStrings] = (byte)fromServer;
     cls.debug.numStrings++;
 }
 
@@ -2056,14 +2048,15 @@ void CL_RunOncePerClientFrame(int msec)
         re.SyncGpu();
     }
 
-    int avidemoVal = cl_avidemo->current.integer;
-    if (avidemoVal && msec) {
+    IN_Frame();
+
+    if (cl_avidemo->current.integer && msec) {
 
         if (clc.state == 8 || cl_forceavidemo->current.enabled) {
             Cbuf_ExecuteText(0, "screenshot silent\n");
         }
         float timescale = com_timescaleValue;
-        msec = (int)(1000.0f / (float)avidemoVal * timescale);
+        msec = (int)(1000.0f / (float)cl_avidemo->current.integer * timescale);
         if (msec == 0)
             msec = 1;
     }
@@ -2076,9 +2069,11 @@ void CL_RunOncePerClientFrame(int msec)
     cls.realtime += msec;
 
     int curFrameTime = com_frameTime;
-    int delta = curFrameTime - old_com_frameTime;
-    frame_msec = (delta != 0) ? delta : 1;
-    if (frame_msec > 200)
+    unsigned int delta = curFrameTime - old_com_frameTime;
+    frame_msec = delta;
+    if (delta == 0)
+        frame_msec = 1;
+    else if (delta > 200)
         frame_msec = 200;
     old_com_frameTime = curFrameTime;
 }

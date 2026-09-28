@@ -505,8 +505,9 @@ void CG_ParseFog(void)
 {
     const char *info;
     const char *token;
-    double halfDist_d, val3_d, val4_d, val5_d, val6_d;
+    float halfDist, val3;
     float start;
+    int r, g, b;
     int transitionTime;
 
     info = CL_GetConfigString(12);
@@ -521,21 +522,17 @@ void CG_ParseFog(void)
         return;
     }
 
-    halfDist_d = atof(token);
+    halfDist = (float)atof(token);
 
-    val3_d = atof(Com_Parse(&info));
-    val4_d = atof(Com_Parse(&info));
-    val5_d = atof(Com_Parse(&info));
-    val6_d = atof(Com_Parse(&info));
+    val3 = (float)atof(Com_Parse(&info));
+    r = I_fround((float)atof(Com_Parse(&info)) * 255.0f);
+    g = I_fround((float)atof(Com_Parse(&info)) * 255.0f);
+    b = I_fround((float)atof(Com_Parse(&info)) * 255.0f);
 
     token = Com_Parse(&info);
     transitionTime = atoi(token);
 
-    CL_SetFog(1, start, (float)halfDist_d,
-              (int)(unsigned char)I_fround((float)val4_d * 255.0f),
-              (int)(unsigned char)I_fround((float)val5_d * 255.0f),
-              (int)(unsigned char)I_fround((float)val6_d * 255.0f),
-              (float)val3_d);
+    CL_SetFog(1, start, halfDist, r, g, b, val3);
 
     CL_SwitchFog(1, cg->time, transitionTime);
 }

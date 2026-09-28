@@ -72,7 +72,7 @@ extern void CG_PredictPlayerState(void);
 extern void AngleVectors( const vec3_t angles, vec3_t forward, vec3_t right, vec3_t up );
 extern void CG_TraceCapsule(trace_t *result, const vec_t *start, const vec_t *mins, const vec_t *maxs, const vec_t *end, int skipNumber, int mask);
 extern float CL_GetMenuBlurRadius(void);
-extern void SetScreenScaling(float scaleX, float scaleY, int x, int y, int w, int h);
+extern void SetScreenScaling(float scaleX, float scaleY, int x, int y, float w, float h);
 extern float BG_GetBobCycle(const playerState_t *ps);
 extern float BG_GetSpeed(const playerState_t *ps, int time);
 extern float BG_GetVerticalBobFactor(const playerState_t *ps, float cycle, float speed, float maxAmp);

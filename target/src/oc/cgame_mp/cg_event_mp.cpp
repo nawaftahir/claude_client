@@ -5,6 +5,7 @@
 extern itemInfo_t cg_itemsArray[];
 extern weaponInfo_t cg_weaponsArray[];
 extern gitem_t bg_itemlist[];
+extern const int bg_numItems;
 extern const char *eventnames[];
 extern const dvar_t *cg_debugEvents;
 extern const dvar_t *cg_footsteps;
@@ -765,7 +766,7 @@ void CG_EntityEvent(centity_t *cent, int event)
             int itemIndex = es->eventParm;
             if (itemIndex <= 0)
                 return;
-            if (itemIndex >= *(int *)imp_bg_numItems)
+            if (itemIndex >= bg_numItems)
                 return;
 
             char *itemDefs = CG_ItemInfoBase();

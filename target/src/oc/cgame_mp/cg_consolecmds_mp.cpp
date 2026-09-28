@@ -146,7 +146,7 @@ static void CG_ShellShock_f(void)
 {
     char arg[256];
     int argc;
-    double duration;
+    int msec;
 
     argc = Cmd_Argc();
 
@@ -164,12 +164,12 @@ static void CG_ShellShock_f(void)
     }
 
     Cmd_ArgvBuffer(1, arg, 256);
-    duration = atof(arg);
+    msec = I_fround((float)atof(arg) * 1000.0f);
 
     CG_SetShellShockParmsFromDvars( (shellshock_parms_t *)((byte *)cgs->shellshockParms));
 
     cg->testShock.time = cg->time;
-    cg->testShock.duration = I_fround((float)duration * 1000.0f);
+    cg->testShock.duration = msec;
 }
 
 static void CG_ShellShock_Load_f(void)

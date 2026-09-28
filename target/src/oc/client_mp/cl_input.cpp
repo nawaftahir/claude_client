@@ -63,6 +63,7 @@ extern int PM_IsBinocularsADS(const playerState_t *ps);
 extern int ClampChar(int i);
 extern float sqrtf(float x);
 extern qboolean Sys_IsLANAddress(netadr_t adr);
+extern void IN_Frame(void);
 extern struct clientStatic_t cls;
 extern int com_frameTime;
 extern unsigned int frame_msec;
@@ -1463,51 +1464,69 @@ usercmd_t CL_CreateCmd(void)
     return cmd;
 }
 
-void CL_SendCmdInternal(void)
+void CL_CreateNewCommands(void)
+{
+    clientConnection_t *clc;
+    clientActive_t *cl;
+
+    clc = &::clc;
+    if (clc->state >= CA_PRIMED) {
+        int cmdNum;
+
+        cl = clients;
+        cmdNum = ++cl->cmdNumber & 127;
+        cl->cmds[cmdNum] = CL_CreateCmd();
+    }
+}
+
+qboolean CL_ReadyToSendPacket(void)
 {
     clientConnection_t *clc;
     clientActive_t *cl;
     outPacket_t *outPacket;
-    int connectElapsed;
+    int realtime;
 
     clc = &::clc;
-    if (clc->state > CA_LOADING) {
-        cl = clients;
-        ++cl->cmdNumber;
-        cl->cmds[cl->cmdNumber & 127] = CL_CreateCmd();
-    }
-
     if (clc->demoplaying || clc->state == CA_CINEMATIC || clc->state == CA_LOGO) {
-        goto not_ready;
+        return 0;
     }
 
-    connectElapsed = cls.realtime - clc->connectTime;
-    if (clc->demowaiting) {
-        if (connectElapsed <= 49) {
-            goto not_ready;
-        }
-    } else if ((unsigned int)(clc->state - CA_PRIMED) > 1) {
+    realtime = cls.realtime;
 
-        if (clc->serverAddress.type != NA_LOOPBACK && connectElapsed <= 999)
-            goto not_ready;
+    if (clc->downloadTempName[0] && realtime - clc->lastPacketSentTime < 50) {
+        return 0;
     }
 
-    if (clc->serverAddress.type == NA_LOOPBACK || Sys_IsLANAddress(clc->serverAddress)) {
-        CL_WritePacket();
-        return;
+    if (clc->state != CA_ACTIVE && clc->state != CA_PRIMED && !clc->downloadTempName[0]
+        && realtime - clc->lastPacketSentTime < 1000) {
+        return 0;
+    }
+
+    if (clc->serverAddress.type == NA_LOOPBACK) {
+        return 1;
+    }
+
+    if (Sys_IsLANAddress(clc->serverAddress)) {
+        return 1;
     }
 
     cl = clients;
     outPacket = &cl->outPackets[(clc->netchan.outgoingSequence - 1) & 31];
-    if (cls.realtime - outPacket->p_realtime >= 1000 / cl_maxpackets->current.integer) {
-        CL_WritePacket();
+    return cls.realtime - outPacket->p_realtime >= 1000 / cl_maxpackets->current.integer;
+}
+
+void CL_SendCmdInternal(void)
+{
+    CL_CreateNewCommands();
+
+    if (!CL_ReadyToSendPacket()) {
+        if (cl_showSend->current.enabled) {
+            Com_Printf((const char *)". ");
+        }
         return;
     }
 
-not_ready:
-    if (cl_showSend->current.enabled) {
-        Com_Printf((const char *)". ");
-    }
+    CL_WritePacket();
 }
 
 void CL_Input(void)
@@ -1515,13 +1534,14 @@ void CL_Input(void)
     if ((&::clc)->state != 8)
         return;
     CL_SyncGpu();
+    IN_Frame();
     CL_SendCmdInternal();
 }
 
 void CL_SendCmd(void)
 {
     int state = (&::clc)->state;
-    if (state <= 4 || state == 8)
+    if (state < CA_CONNECTED || state == CA_ACTIVE)
         return;
     CL_SendCmdInternal();
 }

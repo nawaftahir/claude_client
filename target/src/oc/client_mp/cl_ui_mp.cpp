@@ -84,8 +84,6 @@ void LAN_ResetPings(int source)
     case 1:
         count = cls.numglobalservers;
         servers = cls.globalServers;
-        if (count <= 0)
-            return;
         break;
     case 2:
         count = 128;

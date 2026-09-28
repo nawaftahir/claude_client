@@ -977,9 +977,9 @@ static inline __attribute__((always_inline)) float CG_HudFadeAlpha(const dvar_t 
     return CG_FadeHudMenu_inl(fadeDvar, displayStartTime, CG_FadeDurationMsec(fadeDvar));
 }
 
-static inline __attribute__((always_inline)) qboolean CG_PlayerOwnsWeapon(const playerState_t *ps, int weaponIndex)
+static inline __attribute__((always_inline)) qboolean CG_PlayerOwnsWeapon(const int *weapons, int weaponIndex)
 {
-    return (ps->weapons[weaponIndex >> 5] & (1 << (weaponIndex & 31))) != 0;
+    return (weapons[weaponIndex >> 5] & (1 << (weaponIndex & 31))) != 0;
 }
 
 static inline __attribute__((always_inline)) int CG_GetDrawWeaponIndex(void)
@@ -989,7 +989,7 @@ static inline __attribute__((always_inline)) int CG_GetDrawWeaponIndex(void)
 
     ps = &cg->predictedPlayerState;
     weaponIndex = cg->weaponSelect;
-    if (weaponIndex < 0 || weaponIndex >= BG_GetNumWeapons() || !CG_PlayerOwnsWeapon(ps, weaponIndex)) {
+    if (weaponIndex < 0 || weaponIndex >= BG_GetNumWeapons() || !CG_PlayerOwnsWeapon(ps->weapons, weaponIndex)) {
         weaponIndex = ps->weapon;
     }
     return weaponIndex;

@@ -587,15 +587,11 @@ void CG_Player(centity_t *cent)
     entityState_t *es;
     int iClientNum;
     struct DObj_s *obj;
-    /* Scratch GfxEntity handed to the renderer. x86 sized it 0x74 and the code
-     * below writes some fields through centity_t offset-puns (currentState.time2,
-     * pos.trDuration) that coincided with GfxEntity.materialRGBA / .axis on x86.
-     * On x64 GfxEntity grew (the pointer-widened `lighting` union pushes axis to
-     * +24 and materialRGBA to +96, total ~0x80), so those puns landed on the
-     * wrong bytes -> mis-scaled/rotated/distorted player model, and 0x74 also
-     * truncated the trailing fields. Size it for the x64 struct and write the
-     * fields typed. */
-    byte body[0xA0];
+    /* Scratch GfxEntity handed to the renderer. Retail clears/sizes 0x74
+     * (`rep stosd` count 0x1d at 0x4d6271); the code below writes some fields
+     * through centity_t offset-puns (currentState.time2, pos.trDuration) that
+     * coincide with GfxEntity.materialRGBA / .axis. */
+    byte body[0x74];
 
     es = &cent->nextState;
 
@@ -683,7 +679,7 @@ void CG_Corpse(centity_t *cent)
     byte *ci;
     int clientNum;
     struct DObj_s *obj;
-    byte body[0xA0];
+    byte body[0x74];
 
     es = &cent->nextState;
 
@@ -692,7 +688,7 @@ void CG_Corpse(centity_t *cent)
 
     clientNum = cent->nextState.number;
 
-    ci = (byte *)((char *)cgs - 0x6bec + clientNum * CI_STRIDE);
+    ci = (byte *)&cgs->corpseinfo[clientNum - 0x40];
 
     obj = Com_GetClientDObj(clientNum, cent->localClientNum);
     BG_UpdatePlayerDObj(obj, es, (clientInfo_t *)ci, 0);

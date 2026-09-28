@@ -656,7 +656,7 @@ static inline __attribute__((always_inline)) void CG_PrintAliasSubtitle(const sn
         subtitleWidth = cg_subtitleWidthStandard->current.integer;
     }
 
-    minMsec = (int)(cg_subtitleMinTime->current.value * 1000.0f + 0.5f);
+    minMsec = I_fround(cg_subtitleMinTime->current.value * 1000.0f);
     if (minMsec < msec) {
         minMsec = msec;
     }
@@ -845,14 +845,14 @@ int CG_PlayEntitySoundAlias(int entitynum, snd_alias_list_t *aliasList)
     return CG_PlayPickedAlias(Com_PickSoundAliasFromList(aliasList), entitynum, origin, 0);
 }
 
-static inline __attribute__((always_inline)) void CG_RegisterSurfaceSoundAliases(byte *cgsBase, int offset, const char *aliasBase)
+static inline __attribute__((always_inline)) void CG_RegisterSurfaceSoundAliases(snd_alias_list_t **dest, const char *aliasBase)
 {
-    char aliasName[0x118];
+    char aliasName[0x104];
     int surfaceType;
 
     for (surfaceType = 0; surfaceType < 0x17; surfaceType++) {
         sprintf(aliasName, "%s_%s", aliasBase, Com_SurfaceTypeToName(surfaceType));
-        *(snd_alias_list_t **)(cgsBase + offset + surfaceType * 4) = Com_FindSoundAlias(aliasName);
+        dest[surfaceType] = Com_FindSoundAlias(aliasName);
     }
 }
 
@@ -866,20 +866,20 @@ static void CG_RegisterSounds(void)
     CG_RegisterSoundAlias((byte *)cgs, 0xbc84, "player_out_of_ammo");
     CG_RegisterSoundAlias((byte *)cgs, 0xbc88, "land_damage");
 
-    CG_RegisterSurfaceSoundAliases((byte *)cgs, 0xbc90, "grenade_bounce");
-    CG_RegisterSurfaceSoundAliases((byte *)cgs, 0xbcec, "grenade_explode");
-    CG_RegisterSurfaceSoundAliases((byte *)cgs, 0xbd48, "rocket_explode");
-    CG_RegisterSurfaceSoundAliases((byte *)cgs, 0xbda4, "bullet_small");
-    CG_RegisterSurfaceSoundAliases((byte *)cgs, 0xbe00, "bulletspray_small");
-    CG_RegisterSurfaceSoundAliases((byte *)cgs, 0xbe5c, "bullet_large");
-    CG_RegisterSurfaceSoundAliases((byte *)cgs, 0xbeb8, "step_run");
-    CG_RegisterSurfaceSoundAliases((byte *)cgs, 0xbf14, "step_run_plr");
-    CG_RegisterSurfaceSoundAliases((byte *)cgs, 0xbf70, "step_walk");
-    CG_RegisterSurfaceSoundAliases((byte *)cgs, 0xbfcc, "step_walk_plr");
-    CG_RegisterSurfaceSoundAliases((byte *)cgs, 0xc028, "step_prone");
-    CG_RegisterSurfaceSoundAliases((byte *)cgs, 0xc084, "step_prone_plr");
-    CG_RegisterSurfaceSoundAliases((byte *)cgs, 0xc0e0, "land");
-    CG_RegisterSurfaceSoundAliases((byte *)cgs, 0xc13c, "land_plr");
+    CG_RegisterSurfaceSoundAliases((snd_alias_list_t **)((byte *)cgs + 0xbc90), "grenade_bounce");
+    CG_RegisterSurfaceSoundAliases((snd_alias_list_t **)((byte *)cgs + 0xbcec), "grenade_explode");
+    CG_RegisterSurfaceSoundAliases((snd_alias_list_t **)((byte *)cgs + 0xbd48), "rocket_explode");
+    CG_RegisterSurfaceSoundAliases((snd_alias_list_t **)((byte *)cgs + 0xbda4), "bullet_small");
+    CG_RegisterSurfaceSoundAliases((snd_alias_list_t **)((byte *)cgs + 0xbe00), "bulletspray_small");
+    CG_RegisterSurfaceSoundAliases((snd_alias_list_t **)((byte *)cgs + 0xbe5c), "bullet_large");
+    CG_RegisterSurfaceSoundAliases((snd_alias_list_t **)((byte *)cgs + 0xbeb8), "step_run");
+    CG_RegisterSurfaceSoundAliases((snd_alias_list_t **)((byte *)cgs + 0xbf14), "step_run_plr");
+    CG_RegisterSurfaceSoundAliases((snd_alias_list_t **)((byte *)cgs + 0xbf70), "step_walk");
+    CG_RegisterSurfaceSoundAliases((snd_alias_list_t **)((byte *)cgs + 0xbfcc), "step_walk_plr");
+    CG_RegisterSurfaceSoundAliases((snd_alias_list_t **)((byte *)cgs + 0xc028), "step_prone");
+    CG_RegisterSurfaceSoundAliases((snd_alias_list_t **)((byte *)cgs + 0xc084), "step_prone_plr");
+    CG_RegisterSurfaceSoundAliases((snd_alias_list_t **)((byte *)cgs + 0xc0e0), "land");
+    CG_RegisterSurfaceSoundAliases((snd_alias_list_t **)((byte *)cgs + 0xc13c), "land_plr");
 
     CG_RegisterSoundAlias((byte *)cgs, 0xc198, "gear_rattle_run");
     CG_RegisterSoundAlias((byte *)cgs, 0xc19c, "gear_rattle_plr_run");

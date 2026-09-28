@@ -123,6 +123,7 @@ extern void *Hunk_AllocXAnimClient(int size);
 extern itemInfo_t cg_itemsArray[];
 extern weaponInfo_t cg_weaponsArray[];
 extern gitem_t bg_itemlist[];
+extern const int bg_numItems;
 static const int iSlotPreferenceOrder[2];
 static scr_string_t *s_barrelTags[4] = { &scr_const.tag_flash, &scr_const.tag_flash_11, &scr_const.tag_flash_2, &scr_const.tag_flash_22 };
 
@@ -885,23 +886,21 @@ void CG_RegisterItemVisuals(int itemNum)
 
 void CG_RegisterItems(void)
 {
-    char items[0x109];
-    int itemCount;
+    char items[0x108];
     int i;
 
     strcpy(items, CL_GetConfigString(8));
-    itemCount = *(int *)imp_bg_numItems;
 
-    for (i = 1; i < itemCount; i++) {
-        int c = (signed char)items[i >> 2];
+    for (i = 1; i < bg_numItems; i++) {
+        int c = (signed char)items[(unsigned int)i >> 2];
 
-        if (c <= '9') {
-            if (((c - '0') >> (i & 3)) & 1)
-                CG_RegisterItemVisuals(i);
-        } else {
-            if (((c - 'W') >> (i & 3)) & 1)
-                CG_RegisterItemVisuals(i);
-        }
+        if (c <= '9')
+            c -= '0';
+        else
+            c -= 'W';
+
+        if (c & (1 << (i & 3)))
+            CG_RegisterItemVisuals(i);
     }
 }
 

@@ -6,6 +6,7 @@
 extern itemInfo_t cg_itemsArray[];
 extern weaponInfo_t cg_weaponsArray[];
 extern gitem_t bg_itemlist[];
+extern const int bg_numItems;
 extern centity_t cg_entities[];
 extern scr_const_t scr_const;
 
@@ -76,11 +77,9 @@ extern const int boxVerts[24][3];
 
 COD2_ASSERT_FIELD(cg_t, rumbleScale, 0x2c5a0);
 
-#define CG_CORPSEINFO_BASE_ADJUST (-0x6bec)
-
 static clientInfo_t *CG_CorpseInfoForEntityNum(int entNum)
 {
-    return (clientInfo_t *)((byte *)cgs + CG_CORPSEINFO_BASE_ADJUST + entNum * sizeof(clientInfo_t));
+    return &cgs->corpseinfo[entNum - 0x40];
 }
 
 struct XAnim_s *CG_GetMG42Anims(centity_t *cent);
@@ -462,41 +461,41 @@ void CG_CalcEntityLerpPositions(centity_t *cent)
     clientInfo_t *ci;
 
     if (cent->currentState.pos.trType == TR_INTERPOLATE ||
-        (cent->currentState.pos.trType == TR_LINEAR_STOP && cent->currentState.number <= 63)) {
+        (cent->currentState.pos.trType == TR_LINEAR_STOP && cent->currentState.number < 64)) {
         CG_InterpolateEntityPosition(cent);
-        return;
-    }
+    } else {
 
-    BG_EvaluateTrajectory(&cent->currentState.pos, cg->time, cent->lerpOrigin);
-    BG_EvaluateTrajectory(&cent->currentState.apos, cg->time, cent->lerpAngles);
+        BG_EvaluateTrajectory(&cent->currentState.pos, cg->time, cent->lerpOrigin);
+        BG_EvaluateTrajectory(&cent->currentState.apos, cg->time, cent->lerpAngles);
 
-    if (cent->nextState.eType == 1) {
-        ci = &cg->bgs.clientinfo[cent->nextState.clientNum];
-        ci->lerpMoveDir = cent->nextState.angles2[1];
-        ci->playerAngles[0] = cent->lerpAngles[0];
-        ci->playerAngles[1] = cent->lerpAngles[1];
-        ci->playerAngles[2] = cent->lerpAngles[2];
-        cent->lerpAngles[0] = 0.0f;
-        cent->lerpAngles[2] = 0.0f;
-        ci->lerpLean = cent->nextState.leanf;
-    } else if (cent->nextState.eType == 2) {
-        ci = CG_CorpseInfoForEntityNum(cent->nextState.number);
-        ci->lerpMoveDir = cent->nextState.angles2[1];
-        ci->playerAngles[0] = cent->lerpAngles[0];
-        ci->playerAngles[1] = cent->lerpAngles[1];
-        ci->playerAngles[2] = cent->lerpAngles[2];
-        cent->lerpAngles[0] = 0.0f;
-        cent->lerpAngles[2] = 0.0f;
-        ci->lerpLean = cent->nextState.leanf;
-    }
+        if (cent->nextState.eType == 1) {
+            ci = &cg->bgs.clientinfo[cent->nextState.clientNum];
+            ci->lerpMoveDir = cent->nextState.angles2[1];
+            ci->playerAngles[0] = cent->lerpAngles[0];
+            ci->playerAngles[1] = cent->lerpAngles[1];
+            ci->playerAngles[2] = cent->lerpAngles[2];
+            cent->lerpAngles[0] = 0.0f;
+            cent->lerpAngles[2] = 0.0f;
+            ci->lerpLean = cent->nextState.leanf;
+        } else if (cent->nextState.eType == 2) {
+            ci = CG_CorpseInfoForEntityNum(cent->nextState.number);
+            ci->lerpMoveDir = cent->nextState.angles2[1];
+            ci->playerAngles[0] = cent->lerpAngles[0];
+            ci->playerAngles[1] = cent->lerpAngles[1];
+            ci->playerAngles[2] = cent->lerpAngles[2];
+            cent->lerpAngles[0] = 0.0f;
+            cent->lerpAngles[2] = 0.0f;
+            ci->lerpLean = cent->nextState.leanf;
+        }
 
-    if (cent != &cg->predictedPlayerEntity) {
-        CG_AdjustPositionForMover(cent->lerpOrigin,
-                                  cent->currentState.groundEntityNum,
-                                  cg->snap->serverTime,
-                                  cg->time,
-                                  cent->lerpOrigin,
-                                  0);
+        if (cent != &cg->predictedPlayerEntity) {
+            CG_AdjustPositionForMover(cent->lerpOrigin,
+                                      cent->currentState.groundEntityNum,
+                                      cg->snap->serverTime,
+                                      cg->time,
+                                      cent->lerpOrigin,
+                                      0);
+        }
     }
 }
 
@@ -506,7 +505,7 @@ void CG_EntityEffects(centity_t *cent)
     int constantLight;
 
     if (loopSound) {
-        if (cent->nextState.constantLight == 0x00FFFFFF) {
+        if (cent->nextState.solid == 0xffffff) {
             vec3_t origin;
             vec_t *midpoint = cgs->inlineModelMidpoints[cent->nextState.index.brushmodel];
 
@@ -522,10 +521,10 @@ void CG_EntityEffects(centity_t *cent)
     constantLight = cent->nextState.constantLight;
     if (constantLight) {
         CL_AddLightToScene(cent->lerpOrigin,
-                           (float)((unsigned int)constantLight >> 24) * 4.0f,
-                           (float)((constantLight >> 16) & 0xff) / 255.0f,
+                           (float)(((unsigned int)constantLight >> 24) * 4),
+                           (float)(constantLight & 0xff) / 255.0f,
                            (float)((constantLight >> 8) & 0xff) / 255.0f,
-                           (float)(constantLight & 0xff) / 255.0f);
+                           (float)((constantLight >> 16) & 0xff) / 255.0f);
     }
 }
 
@@ -677,7 +676,7 @@ void CG_Item(centity_t *cent)
     struct DObj_s *obj;
     GfxEntity ent;
 
-    if (itemNum >= *(int *)imp_bg_numItems)
+    if (itemNum >= bg_numItems)
         Com_Error(ERR_DROP, (const char *)"\x15"
                                    "Bad item index %i on entity",
                   itemNum);
@@ -775,7 +774,7 @@ void CG_ScriptMover(centity_t *cent)
     AnglesToAxis(cent->lerpAngles, ent.axis);
     ent.renderFxFlags = 0x40;
 
-    if (s1->constantLight == 0x00FFFFFF) {
+    if (s1->solid == 0xffffff) {
         GfxModel model;
 
         ent.reType = (refEntityType_t)(3);

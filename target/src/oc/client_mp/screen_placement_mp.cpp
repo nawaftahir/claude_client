@@ -13,7 +13,7 @@ float GetVirtualHeightFromRealHeight(float height);
 void CalcScreenX(float *x, int horzAlign);
 void CalcScreenY(float *y, int vertAlign);
 void CalcSplitScreenTextOffset(FontHandle font, float *y);
-void SetScreenScaling(float safeAreaRatioHorizontal, float safeAreaRatioVertical, int viewportX, int viewportY, int viewportWidth, int viewportHeight);
+void SetScreenScaling(float safeAreaRatioHorizontal, float safeAreaRatioVertical, int viewportX, int viewportY, float viewportWidth, float viewportHeight);
 void CalcScreenPlacement(float *x, float *y, float *w, float *h, int horzAlign, int vertAlign);
 
 float GetRealWidthFromVirtualWidth(float width)
@@ -100,10 +100,10 @@ void CalcSplitScreenTextOffset(FontHandle font, float *y)
 }
 
 void SetScreenScaling(float safeAreaRatioHorizontal, float safeAreaRatioVertical,
-                      int viewportX, int viewportY, int viewportWidth, int viewportHeight)
+                      int viewportX, int viewportY, float viewportWidth, float viewportHeight)
 {
-    float fViewportHeight = (float)viewportHeight;
-    float fViewportWidth = (float)viewportWidth;
+    float fViewportHeight = viewportHeight;
+    float fViewportWidth = viewportWidth;
     float fViewportY = (float)viewportY;
     float fViewportX = (float)viewportX;
 
@@ -111,7 +111,7 @@ void SetScreenScaling(float safeAreaRatioHorizontal, float safeAreaRatioVertical
     SP->realViewportSize[1] = fViewportHeight;
 
     byte *cls = cls_ptr_195ecac;
-    float adjustedRealWidth = fViewportHeight * (4.0f / 3.0f) / (((clientStatic_t *)(cls))->vidConfig.aspectRatioPixel);
+    float adjustedRealWidth = fViewportHeight / ((clientStatic_t *)(cls))->vidConfig.aspectRatioPixel * (4.0f / 3.0f);
     float horzAspectPixelDiff = fViewportWidth - adjustedRealWidth;
     float horzAspectScale = fViewportWidth / adjustedRealWidth;
 

@@ -21,10 +21,16 @@ extern int speex_decode(void *state, SpeexBits *bits, float *out);
 #endif
 extern void Com_Printf(const char *fmt, ...);
 
-extern const void *speex_nb_mode_ptr;
-extern const void *speex_wb_mode_ptr;
-extern const void *speex_uwb_mode_ptr;
-extern int *speex_quality_ptr;
+#ifdef __cplusplus
+extern "C" {
+#endif
+extern const SpeexMode speex_nb_mode;
+extern const SpeexMode speex_wb_mode;
+extern const SpeexMode speex_uwb_mode;
+#ifdef __cplusplus
+}
+#endif
+extern int g_encoder_samplerate;
 
 extern void *g_decoder;
 extern int g_current_decode_bandwidth_setting;
@@ -38,13 +44,13 @@ Bool Decode_Init(int bandwidthEnum)
 
     switch (bandwidthEnum) {
     case 0:
-        mode = speex_nb_mode_ptr;
+        mode = &speex_nb_mode;
         break;
     case 1:
-        mode = speex_wb_mode_ptr;
+        mode = &speex_wb_mode;
         break;
     case 2:
-        mode = speex_uwb_mode_ptr;
+        mode = &speex_uwb_mode;
         break;
     default:
         Com_Printf("Unknown bandwidth mode %i\n", bandwidthEnum);
@@ -53,7 +59,7 @@ Bool Decode_Init(int bandwidthEnum)
 
     g_decoder = speex_decoder_init( (const SpeexMode *)(mode));
     speex_decoder_ctl(g_decoder, 0, &tmp);
-    speex_decoder_ctl(g_decoder, 0x18, speex_quality_ptr);
+    speex_decoder_ctl(g_decoder, 0x18, &g_encoder_samplerate);
     speex_encoder_ctl(g_decoder, 3, &g_decode_frame_size);
     g_current_decode_bandwidth_setting = bandwidthEnum;
     speex_bits_init(&decodeBits);
@@ -77,9 +83,10 @@ int Decode_Sample(char *buffer, int maxLength, short *out, int frame_size)
     speex_bits_read_from(&decodeBits, buffer, maxLength);
 
     if (speex_decode(g_decoder, &decodeBits, output) != 0)
-        return 0;
+        count = 0;
+    else
+        count = frame_size * 2;
 
-    count = frame_size * 2;
     for (i = 0; i < count; i++) {
         out[i] = (short)(int)output[i];
     }

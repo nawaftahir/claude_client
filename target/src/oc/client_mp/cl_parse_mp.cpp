@@ -154,7 +154,7 @@ void CL_SystemInfoChanged(void)
 
     FS_PureServerSetReferencedIwds(s, Info_ValueForKey(systemInfo, "sv_referencedIwdNames"));
 
-    if (!com_dedicated->current.integer) {
+    if (!com_dedicated->current.enabled) {
 
         s = systemInfo;
         while (s) {
