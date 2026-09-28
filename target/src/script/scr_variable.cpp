@@ -889,7 +889,7 @@ void Scr_SetThreadNotifyName( unsigned int startLocalId, unsigned int notifyName
 	assert(((entryValue->w.type & VAR_MASK) == VAR_THREAD));
 
 	entryValue->w.type &= ~VAR_MASK;
-	entryValue->w.type = (unsigned char)entryValue->w.type;
+	entryValue->w.type &= 0xFF;
 	entryValue->w.type |= VAR_NOTIFY_THREAD;
 
 	entryValue->w.notifyName |= notifyName << VAR_NAME_BITS;
@@ -995,7 +995,7 @@ void Scr_SetThreadWaitTime( unsigned int startLocalId, unsigned int waitTime )
 	assert(((entryValue->w.type & VAR_MASK) == VAR_THREAD) || !Scr_GetThreadNotifyName(startLocalId));
 
 	entryValue->w.type &= ~VAR_MASK;
-	entryValue->w.type = (unsigned char)entryValue->w.type;
+	entryValue->w.type &= 0xFF;
 	entryValue->w.type |= VAR_TIME_THREAD;
 
 	scrVarGlob.variableList[startLocalId].w.waitTime |= waitTime << VAR_NAME_BITS;
