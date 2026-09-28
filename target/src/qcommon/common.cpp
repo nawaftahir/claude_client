@@ -1795,39 +1795,35 @@ static qboolean Com_MatchGpuTemplate( const char *find, const char *gpuDescripti
 	const char *p;
 
 	wildcard[0] = '*';
-	len = 0;
+	len = 1;
 
 	if ( *find )
 	{
-		len = 1;
-
 		for ( p = find; *p; p++ )
 		{
-			char c = *p;
-
-			if ( c >= 'A' && c <= 'Z' )
+			if ( isspace(*p) )
 			{
-				if ( len > 0 && wildcard[len - 1] != ' ' )
-				{
-					wildcard[len++] = ' ';
-					if ( len >= 0x3ff )
-						Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: \"find\" string is too long\n" );
-				}
+				if ( wildcard[len - 1] == ' ' )
+					continue;
+
+				wildcard[len] = ' ';
 			}
 			else
 			{
-				wildcard[len++] = c;
-				if ( len >= 0x3ff )
-					Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: \"find\" string is too long\n" );
+				wildcard[len] = *p;
 			}
+
+			len++;
+
+			if ( len == 0x3ff )
+				Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: \"find\" string is too long\n" );
 		}
 	}
 
-	if ( len > 0 && wildcard[len - 1] == '*' )
-		len--;
+	if ( wildcard[len - 1] != '*' )
+		wildcard[len++] = '*';
 
-	wildcard[len] = '*';
-	wildcard[len + 1] = 0;
+	wildcard[len] = 0;
 
 	return Com_GpuStringCompare( wildcard, gpuDescription ) == 0;
 }
