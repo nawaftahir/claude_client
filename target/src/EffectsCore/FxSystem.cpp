@@ -2,6 +2,24 @@
 
 struct GfxEntity;
 struct Material;
+struct GfxWorldVertex;
+
+// Renderer exports; only the slots used here (client re 0x60f080).
+struct refexport_t
+{
+	void *unused0[10];
+	void (*SetIgnorePrecacheErrors)( int ignore );
+	void *unused11[2];
+	const char *(*GetMaterialName)( Material *material );
+	int (*GetMaterialSubimageCount)( Material *material );
+	bool (*IsMaterialRefractive)( Material *material );
+	void *unused16[4];
+	GfxEntity *(*AddRefEntityToScene)( const GfxEntity *refEnt, XModel *model, const void *cent );
+	void *unused21[4];
+	void (*AddPolyToScene)( Material *material, int lmapIndex, int vertCount, const GfxWorldVertex *verts );
+	void (*AddLightToScene)( const float *org, float radius, float r, float g, float b );
+};
+extern refexport_t re;
 
 // Only the leading fields are read here.
 struct refdef_s
@@ -50,7 +68,7 @@ struct FxHelper
 	int GetMaterialSubimageCount( Material *material );
 	bool IsMaterialRefractive( Material *material );
 	void AddLightToScene( const vec3_t org, float radius, float red, float green, float blue );
-	void Unused();
+	void AddPolyToScene( Material *material, int vertCount, const GfxWorldVertex *verts );
 	void CameraShake( const vec3_t origin, float intensity, int radius, int time );
 	int GetSeed();
 
@@ -255,21 +273,22 @@ bool FxHelper::CullCylinder( const vec3_t worldPos0, const vec3_t worldPos1, flo
 void FxHelper::Trace( trace_t *tr, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, int skipEntNum, int flags )
 {
 	CM_BoxTrace(tr, start, end, mins, maxs, 0, flags);
-	tr->entityNum = tr->fraction != 1.0f ? ENTITYNUM_NONE - 1 : ENTITYNUM_NONE;
+	tr->entityNum = tr->fraction != 1.0 ? ENTITYNUM_NONE - 1 : ENTITYNUM_NONE;
 }
 
-// Effects are not drawn on the dedicated server.
 void FxHelper::AddFxToScene( GfxEntity *ent, XModel *model )
 {
+	re.AddRefEntityToScene(ent, model, NULL);
 }
 
 void FxHelper::SetIgnorePrecacheErrors( bool ignore )
 {
+	re.SetIgnorePrecacheErrors(ignore);
 }
 
 const char *FxHelper::GetMaterialName( Material *material )
 {
-	return NULL;
+	return re.GetMaterialName(material);
 }
 
 void FxHelper::Archive( FxArchive *arch )
@@ -284,21 +303,23 @@ void FxHelper::Archive( FxArchive *arch )
 
 int FxHelper::GetMaterialSubimageCount( Material *material )
 {
-	return 0;
+	return re.GetMaterialSubimageCount(material);
 }
 
 bool FxHelper::IsMaterialRefractive( Material *material )
 {
-	return false;
+	return re.IsMaterialRefractive(material);
 }
 
 void FxHelper::AddLightToScene( const vec3_t org, float radius, float red, float green, float blue )
 {
+	re.AddLightToScene(org, radius, red, green, blue);
 }
 
-// Empty and never called; original name unknown.
-void FxHelper::Unused()
+// Never called; name follows the re slot (lmap 0x1f = none).
+void FxHelper::AddPolyToScene( Material *material, int vertCount, const GfxWorldVertex *verts )
 {
+	re.AddPolyToScene(material, 0x1f, vertCount, verts);
 }
 
 void FxHelper::CameraShake( const vec3_t origin, float intensity, int radius, int time )
