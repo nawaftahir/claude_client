@@ -612,7 +612,7 @@ unsigned int GetNewVariableIndexInternal3( unsigned int parentId, unsigned int n
 	assert(entry == &scrVarGlob.variableList[index]);
 	assert(newEntryValue == &scrVarGlob.variableList[entry->hash.id]);
 
-	newEntryValue->w.type = (unsigned char)newEntryValue->w.type;
+	newEntryValue->w.type &= 0xFF;
 	newEntryValue->w.name |= name << VAR_NAME_BITS;
 
 	parentValue = &scrVarGlob.variableList[parentId];
