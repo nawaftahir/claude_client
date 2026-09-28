@@ -598,7 +598,7 @@ void Touch_Item( gentity_t *ent, gentity_t *other, qboolean touched )
 		return;
 	}
 
-	if ( other->health <= 0 )
+	if ( other->health < 1 )
 	{
 		return;     // dead people can't pickup
 	}
@@ -629,7 +629,7 @@ void Touch_Item( gentity_t *ent, gentity_t *other, qboolean touched )
 			{
 				SV_GameSendServerCommand(other - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_PICKUP_CANTCARRYMOREAMMO\x14%s\"", 102, BG_GetWeaponDef(item->giTag)->displayName));
 			}
-			else if ( BG_GetWeaponDef(item->giTag)->weaponSlot - 1 <= 1 )
+			else if ( BG_GetWeaponDef(item->giTag)->weaponSlot > 0 && BG_GetWeaponDef(item->giTag)->weaponSlot <= 2 )
 			{
 				SV_GameSendServerCommand(other - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_CANT_GET_PRIMARY_WEAP_MESSAGE\"", 102));
 			}
@@ -1202,7 +1202,7 @@ void SaveRegisteredItems()
 
 		if ( bits == 4 )
 		{
-			string[n++] = digit < 10 ? digit + '0' : digit + 'W';
+			string[n++] = ( digit < 10 ? '0' : 'W' ) + digit;
 
 			digit = 0;
 			bits = 0;
@@ -1211,7 +1211,7 @@ void SaveRegisteredItems()
 
 	if ( bits )
 	{
-		string[n++] = digit < 10 ? digit + '0' : digit + 'W';
+		string[n++] = ( digit < 10 ? '0' : 'W' ) + digit;
 	}
 
 	string[n] = 0;

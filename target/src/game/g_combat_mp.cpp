@@ -135,7 +135,6 @@ LookAtKiller
 void LookAtKiller( gentity_t *self, gentity_t *inflictor, gentity_t *attacker )
 {
 	vec3_t		dir;
-	vec3_t		angles;
 
 	if ( attacker && attacker != self )
 	{
@@ -153,10 +152,6 @@ void LookAtKiller( gentity_t *self, gentity_t *inflictor, gentity_t *attacker )
 
 	assert(self->client);
 	self->client->ps.stats[STAT_DEAD_YAW] = vectoyaw ( dir );
-
-	angles[YAW] = vectoyaw ( dir );
-	angles[PITCH] = 0;
-	angles[ROLL] = 0;
 }
 
 const char *modNames[] =
