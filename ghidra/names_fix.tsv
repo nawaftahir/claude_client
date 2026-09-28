@@ -272,3 +272,4 @@
 40e620	Voice_SendVoiceData	fix	# simloc55
 492a70	GetTotalVelocity	fix	# simloc55
 44be60	SND_UnpauseSounds	fix	# simloc55
+4bcfa0	G_DebugArc	fix
