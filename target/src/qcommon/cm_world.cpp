@@ -202,20 +202,24 @@ CM_AddEntityToNode
 */
 static void CM_AddEntityToNode( svEntity_t *ent, unsigned short childNodeIndex )
 {
-	uint16_t *prevEnt;
 	unsigned short entnum;
+	unsigned short *prevEnt;
 
 	entnum = ent - sv.svEntities;
+	prevEnt = &cm_world.sectors[childNodeIndex].contents.entities;
 
-	for ( prevEnt = &cm_world.sectors[childNodeIndex].contents.entities;
-	      (unsigned short)(*prevEnt - 1) <= entnum;
-	      prevEnt = &sv.svEntities[*prevEnt - 1].nextEntityInWorldSector )
+	while ( 1 )
 	{
-	}
+		if ( (unsigned short)(*prevEnt - 1) > entnum )
+		{
+			ent->worldSector = childNodeIndex;
+			ent->nextEntityInWorldSector = *prevEnt;
+			*prevEnt = entnum + 1;
+			break;
+		}
 
-	ent->worldSector = childNodeIndex;
-	ent->nextEntityInWorldSector = *prevEnt;
-	*prevEnt = entnum + 1;
+		prevEnt = &sv.svEntities[*prevEnt - 1].nextEntityInWorldSector;
+	}
 }
 
 /*
@@ -225,19 +229,23 @@ CM_AddStaticModelToNode
 */
 static void CM_AddStaticModelToNode( cStaticModel_t *staticModel, unsigned short childNodeIndex )
 {
-	cStaticModel_t *prevStaticModel;
 	unsigned short modelnum;
+	unsigned short *prevStaticModel;
 
 	modelnum = staticModel - cm.staticModelList;
+	prevStaticModel = &cm_world.sectors[childNodeIndex].contents.staticModels;
 
-	for ( prevStaticModel = (cStaticModel_t *)&cm_world.sectors[childNodeIndex].contents.staticModels ;
-	      (unsigned short)(prevStaticModel->writable.nextModelInWorldSector - 1) <= modelnum ;
-	      prevStaticModel = &cm.staticModelList[prevStaticModel->writable.nextModelInWorldSector - 1] )
+	while ( 1 )
 	{
-	}
+		if ( (unsigned short)(*prevStaticModel - 1) > modelnum )
+		{
+			staticModel->writable.nextModelInWorldSector = *prevStaticModel;
+			*prevStaticModel = modelnum + 1;
+			break;
+		}
 
-	staticModel->writable.nextModelInWorldSector = prevStaticModel->writable.nextModelInWorldSector;
-	prevStaticModel->writable.nextModelInWorldSector = modelnum + 1;
+		prevStaticModel = &cm.staticModelList[*prevStaticModel - 1].writable.nextModelInWorldSector;
+	}
 }
 
 /*

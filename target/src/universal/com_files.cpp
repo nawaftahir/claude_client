@@ -732,9 +732,6 @@ static bool FS_IsBackupSubStr(const char *filenameSubStr)
 
 static bool FS_IsPathSepChar(char c)
 {
-	if ( c == '/' )
-		return 1;
-
 	return c == '/' || c == '\\';
 }
 
@@ -2360,15 +2357,15 @@ void FS_AddIwdFilesForGameDirectory(const char *path, const char *dir)
 
 static void FS_AddGameDirectoryInternal(const char *path, const char *dir, int bLanguageDirectory, int iLanguage)
 {
-	char szGameFolder[MAX_QPATH];
-	const char* pszLanguage;
-	searchpath_t* i;
-	searchpath_t* search;
 	char ospath[MAX_OSPATH];
+	const char* pszLanguage;
+	char szGameFolder[MAX_QPATH];
+	searchpath_t* search;
+	searchpath_t* i;
 
 	if (bLanguageDirectory)
 	{
-		pszLanguage = "english";
+		pszLanguage = SEH_GetLanguageName(iLanguage);
 		Com_sprintf(szGameFolder, sizeof(szGameFolder), "%s/%s", dir, pszLanguage);
 	}
 	else
@@ -2392,7 +2389,7 @@ static void FS_AddGameDirectoryInternal(const char *path, const char *dir, int b
 				if (i->language != iLanguage)
 				{
 					Com_Printf(
-					    "WARNING: game golder %s/%s re-added as localized folder with different language\n",
+					    "WARNING: game folder %s/%s re-added as localized folder with different language\n",
 					    path, szGameFolder);
 				}
 			}

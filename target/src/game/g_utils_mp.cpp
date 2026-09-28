@@ -231,7 +231,7 @@ G_SoundAliasIndex
 */
 int G_SoundAliasIndex( const char *name )
 {
-	return (unsigned char)G_FindConfigstringIndex( name, CS_SOUND_ALIASES, MAX_SOUNDALIASES, qtrue, NULL );
+	return G_FindConfigstringIndex( name, CS_SOUND_ALIASES, MAX_SOUNDALIASES, qtrue, NULL );
 }
 
 /*
@@ -608,18 +608,7 @@ G_EntIsLinkedTo
 */
 qboolean G_EntIsLinkedTo( gentity_t *ent, gentity_t *parent )
 {
-	tagInfo_s *tagInfo;
-	qboolean linked;
-
-	tagInfo = ent->tagInfo;
-	linked = qfalse;
-
-	if ( tagInfo && tagInfo->parent == parent )
-	{
-		linked = qtrue;
-	}
-
-	return linked;
+	return ent->tagInfo && ent->tagInfo->parent == parent;
 }
 
 /*

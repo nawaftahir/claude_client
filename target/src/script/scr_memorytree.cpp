@@ -495,7 +495,7 @@ MT_FreeIndex
 */
 void MT_FreeIndex( unsigned int nodeNum, int numBytes )
 {
-	int lowBit, size;
+	int size, lowBit;
 
 	size = MT_GetSize(numBytes);
 	assert(size >= 0 && size <= MEMORY_NODE_BITS);
@@ -512,13 +512,14 @@ void MT_FreeIndex( unsigned int nodeNum, int numBytes )
 
 		if ( size == MEMORY_NODE_BITS || !MT_RemoveMemoryNode(nodeNum ^ lowBit, size) )
 		{
-			MT_AddMemoryNode(nodeNum, size);
-			return;
+			break;
 		}
 
 		nodeNum &= ~lowBit;
 		size++;
 	}
+
+	MT_AddMemoryNode(nodeNum, size);
 }
 
 /*

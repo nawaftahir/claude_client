@@ -3202,10 +3202,7 @@ void EmitExpression( sval_u expr, scr_block_s *block )
 {
 	VariableCompileValue constValue;
 
-	if ( !EmitOrEvalExpression(expr, &constValue, block) )
-	{
-	}
-	else
+	if ( EmitOrEvalExpression(expr, &constValue, block) )
 	{
 		EmitValue(&constValue);
 	}

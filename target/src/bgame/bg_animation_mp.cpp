@@ -2371,17 +2371,19 @@ BG_PlayerAnimation_VerifyAnim
 */
 void BG_PlayerAnimation_VerifyAnim( XAnimTree *pAnimTree, lerpFrame_t *lf )
 {
-	struct XAnim_s *animTree = bgs->animScriptData.animTree.anims;
-
-	if ( lf->animationNumber )
+	if ( !lf->animationNumber )
 	{
-		if ( XAnimGetWeight(pAnimTree, lf->animationNumber & ~ANIM_TOGGLEBIT) == 0.0 )
-		{
-			lf->animationNumber = 0;
-			lf->animation = NULL;
-			lf->animationTime = 150;
-		}
+		return;
 	}
+
+	if ( XAnimGetWeight(pAnimTree, lf->animationNumber & ~ANIM_TOGGLEBIT))
+	{
+		return;
+	}
+
+	lf->animationNumber = 0;
+	lf->animation = NULL;
+	lf->animationTime = 150;
 }
 
 /*

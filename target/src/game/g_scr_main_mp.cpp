@@ -698,14 +698,7 @@ GScr_GetDvarFloat
 */
 void GScr_GetDvarFloat()
 {
-	const char *v3;
-	const char *nptr;
-	int v1;
-
-	v3 = Scr_GetString(0);
-	nptr = Dvar_GetVariantString(v3);
-	*(float *)&v1 = atof(nptr);
-	Scr_AddFloat(*(float *)&v1);
+	Scr_AddFloat( atof( Dvar_GetVariantString( Scr_GetString(0) ) ) );
 }
 
 /*
