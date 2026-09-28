@@ -371,7 +371,7 @@ float SND_Get2DChannelVolume(int index)
 
 float SND_Get3DChannelVolume(int index)
 {
-    return AIL_3D_sample_volume(milesGlob.handle_3D[index]);
+    return pow(AIL_3D_sample_volume(milesGlob.handle_3D[index]), 1.0f / 0.6f);
 }
 
 float SND_GetStreamChannelVolume(int index)
@@ -1202,7 +1202,7 @@ int SND_StartAlias3DSample(const snd_alias_t *pAlias0, const snd_alias_t *pAlias
         scaledVol *= SND_GetLerpedSlavePercentage(pAlias0->fSlavePercentage);
     }
 
-    AIL_set_3D_sample_volume(handle, scaledVol);
+    AIL_set_3D_sample_volume(handle, pow(scaledVol, 0.6f));
     AIL_set_3D_sample_distances(handle, pAlias0->fDistMin, pAlias0->fDistMax);
 
     playbackRate = AIL_3D_sample_playback_rate(handle);
@@ -1491,7 +1491,7 @@ void SND_Update3DChannel(int i, int frametime)
         volTable = (float *)sndGlob->channelvol;
         channel = (aliasFlags & 0x780) >> 7;
         scaledVol = volume * volTable[channel * 3] * sndGlob->volume;
-        AIL_set_3D_sample_volume(milesGlob.handle_3D[i], scaledVol);
+        AIL_set_3D_sample_volume(milesGlob.handle_3D[i], pow(scaledVol, 0.6f));
 
         {
             startDelay = sndGlob->chaninfo[i].startDelay;
