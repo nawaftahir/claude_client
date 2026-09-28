@@ -308,9 +308,9 @@ Bool SND_Is3DChannelFree(int index)
 void SND_StopStreamChannel(int index)
 {
     AIL_close_stream(milesGlob.handle_stream[index - 32]);
+    milesGlob.handle_stream[index - 32] = NULL;
     g_snd.chaninfo[index].paused = 0;
     g_snd.chaninfo[index].startDelay = 0;
-    milesGlob.handle_stream[index - 32] = NULL;
 }
 
 void SND_PauseStreamChannel(int index)
