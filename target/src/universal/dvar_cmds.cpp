@@ -2,6 +2,8 @@
 #include "../qcommon/cmd.h"
 #include "dvar.h"
 
+const char *CL_GetUsernameForLocalClient(int controllerIndex);
+
 void Dvar_ForEach(void (*callback)(const char *dvarName))
 {
 	dvar_t *dvar;
@@ -601,6 +603,11 @@ char *Dvar_InfoString(int bit)
 		{
 			Info_SetValueForKey( info, dvar->name, Dvar_DisplayableValue(dvar) );
 		}
+	}
+
+	if ( bit & DVAR_USERINFO )
+	{
+		Info_SetValueForKey( info, "name", CL_GetUsernameForLocalClient(0) );
 	}
 
 	return info;
