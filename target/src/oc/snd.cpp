@@ -214,14 +214,14 @@ float SND_Attenuate(SndCurve *volumeFalloffCurve, float radius, float mindist, f
     if (dist <= 0.0f) {
         return 1.0f;
     }
-    if (mindist == maxdist) {
+    if (maxdist == mindist) {
         return 0.0f;
     }
-    float fraction = dist / (maxdist - mindist);
-    if (fraction >= 1.0f) {
+    dist = dist / (maxdist - mindist);
+    if (dist >= 1.0f) {
         return 0.0f;
     }
-    return Com_GetVolumeFalloffCurveValue(volumeFalloffCurve, fraction);
+    return Com_GetVolumeFalloffCurveValue(volumeFalloffCurve, dist);
 }
 
 Bool SND_IsAliasChannel3D(int channel)

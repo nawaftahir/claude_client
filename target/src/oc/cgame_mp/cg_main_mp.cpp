@@ -845,9 +845,9 @@ int CG_PlayEntitySoundAlias(int entitynum, snd_alias_list_t *aliasList)
     return CG_PlayPickedAlias(Com_PickSoundAliasFromList(aliasList), entitynum, origin, 0);
 }
 
-static inline __attribute__((always_inline)) void CG_RegisterSurfaceSoundAliases(snd_alias_list_t **dest, const char *aliasBase)
+static inline __attribute__((always_inline)) void CG_RegisterSurfaceSoundAliases(const char *aliasBase, snd_alias_list_t **dest)
 {
-    char aliasName[0x104];
+    char aliasName[256];
     int surfaceType;
 
     for (surfaceType = 0; surfaceType < 0x17; surfaceType++) {
@@ -866,20 +866,20 @@ static void CG_RegisterSounds(void)
     CG_RegisterSoundAlias((byte *)cgs, 0xbc84, "player_out_of_ammo");
     CG_RegisterSoundAlias((byte *)cgs, 0xbc88, "land_damage");
 
-    CG_RegisterSurfaceSoundAliases((snd_alias_list_t **)((byte *)cgs + 0xbc90), "grenade_bounce");
-    CG_RegisterSurfaceSoundAliases((snd_alias_list_t **)((byte *)cgs + 0xbcec), "grenade_explode");
-    CG_RegisterSurfaceSoundAliases((snd_alias_list_t **)((byte *)cgs + 0xbd48), "rocket_explode");
-    CG_RegisterSurfaceSoundAliases((snd_alias_list_t **)((byte *)cgs + 0xbda4), "bullet_small");
-    CG_RegisterSurfaceSoundAliases((snd_alias_list_t **)((byte *)cgs + 0xbe00), "bulletspray_small");
-    CG_RegisterSurfaceSoundAliases((snd_alias_list_t **)((byte *)cgs + 0xbe5c), "bullet_large");
-    CG_RegisterSurfaceSoundAliases((snd_alias_list_t **)((byte *)cgs + 0xbeb8), "step_run");
-    CG_RegisterSurfaceSoundAliases((snd_alias_list_t **)((byte *)cgs + 0xbf14), "step_run_plr");
-    CG_RegisterSurfaceSoundAliases((snd_alias_list_t **)((byte *)cgs + 0xbf70), "step_walk");
-    CG_RegisterSurfaceSoundAliases((snd_alias_list_t **)((byte *)cgs + 0xbfcc), "step_walk_plr");
-    CG_RegisterSurfaceSoundAliases((snd_alias_list_t **)((byte *)cgs + 0xc028), "step_prone");
-    CG_RegisterSurfaceSoundAliases((snd_alias_list_t **)((byte *)cgs + 0xc084), "step_prone_plr");
-    CG_RegisterSurfaceSoundAliases((snd_alias_list_t **)((byte *)cgs + 0xc0e0), "land");
-    CG_RegisterSurfaceSoundAliases((snd_alias_list_t **)((byte *)cgs + 0xc13c), "land_plr");
+    CG_RegisterSurfaceSoundAliases("grenade_bounce", (snd_alias_list_t **)((byte *)cgs + 0xbc90));
+    CG_RegisterSurfaceSoundAliases("grenade_explode", (snd_alias_list_t **)((byte *)cgs + 0xbcec));
+    CG_RegisterSurfaceSoundAliases("rocket_explode", (snd_alias_list_t **)((byte *)cgs + 0xbd48));
+    CG_RegisterSurfaceSoundAliases("bullet_small", (snd_alias_list_t **)((byte *)cgs + 0xbda4));
+    CG_RegisterSurfaceSoundAliases("bulletspray_small", (snd_alias_list_t **)((byte *)cgs + 0xbe00));
+    CG_RegisterSurfaceSoundAliases("bullet_large", (snd_alias_list_t **)((byte *)cgs + 0xbe5c));
+    CG_RegisterSurfaceSoundAliases("step_run", (snd_alias_list_t **)((byte *)cgs + 0xbeb8));
+    CG_RegisterSurfaceSoundAliases("step_run_plr", (snd_alias_list_t **)((byte *)cgs + 0xbf14));
+    CG_RegisterSurfaceSoundAliases("step_walk", (snd_alias_list_t **)((byte *)cgs + 0xbf70));
+    CG_RegisterSurfaceSoundAliases("step_walk_plr", (snd_alias_list_t **)((byte *)cgs + 0xbfcc));
+    CG_RegisterSurfaceSoundAliases("step_prone", (snd_alias_list_t **)((byte *)cgs + 0xc028));
+    CG_RegisterSurfaceSoundAliases("step_prone_plr", (snd_alias_list_t **)((byte *)cgs + 0xc084));
+    CG_RegisterSurfaceSoundAliases("land", (snd_alias_list_t **)((byte *)cgs + 0xc0e0));
+    CG_RegisterSurfaceSoundAliases("land_plr", (snd_alias_list_t **)((byte *)cgs + 0xc13c));
 
     CG_RegisterSoundAlias((byte *)cgs, 0xc198, "gear_rattle_run");
     CG_RegisterSoundAlias((byte *)cgs, 0xc19c, "gear_rattle_plr_run");
@@ -1079,11 +1079,11 @@ static inline __attribute__((always_inline)) void CG_InitBgsCallbacks(void)
 {
     byte *cgBase = (byte *)cg;
 
-    (*(void **)&((cg_t *)cgBase)->bgs.animScriptData.soundAlias) = imp_Com_FindSoundAlias;
+    (*(void **)&((cg_t *)cgBase)->bgs.animScriptData.soundAlias) = (void *)Com_FindSoundAlias;
     (*(void **)&((cg_t *)cgBase)->bgs.animScriptData.playSoundAlias) = (void *)CG_PlayEntitySoundAlias;
     (*(void **)&((cg_t *)cgBase)->bgs.GetXModel) = (void *)CG_GetXModel;
     (*(void **)&((cg_t *)cgBase)->bgs.CreateDObj) = (void *)CG_CreateDObj;
-    (*(void **)&((cg_t *)cgBase)->bgs.SafeDObjFree) = imp_Com_SafeClientDObjFree;
+    (*(void **)&((cg_t *)cgBase)->bgs.SafeDObjFree) = (void *)Com_SafeClientDObjFree;
     (*(void **)&((cg_t *)cgBase)->bgs.AllocXAnim) = (void *)Hunk_AllocXAnimClient;
     ((cg_t *)cgBase)->bgs.anim_user = 0;
 }

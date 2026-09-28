@@ -4216,7 +4216,7 @@ interrupt:
 		moveLenSq = VectorLengthSquared(move) / (pml.frametime * pml.frametime);
 		velLenSq = VectorLengthSquared(ps->velocity);
 
-		if ( velLenSq * 0.25f > moveLenSq )
+		if ( moveLenSq < velLenSq * 0.25f )
 		{
 			VectorScale(move, 1.0f / pml.frametime, ps->velocity);
 		}

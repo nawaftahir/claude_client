@@ -20,7 +20,7 @@ void StatMon_Warning(int type, int duration, const char *materialName)
 	if (!com_statmon->current.enabled)
 		return;
 
-	if (type < 0 || type >= MAX_STATMON_ENTRIES)
+	if (type < 0 || type >= sizeof(stats) / sizeof(stats[0]))
 		Com_Error(ERR_DROP, "\x15StatMon_UpdateEntry: invalid entry '%i'\n", type);
 
 	stats[type].endtime = Sys_Milliseconds() + duration;

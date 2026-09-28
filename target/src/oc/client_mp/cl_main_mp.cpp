@@ -739,6 +739,14 @@ void CL_RefPrintf(int print_level, const char *fmt, ...)
 }
 
 extern void StatMon_Reset(void);
+extern void StatMon_Warning(int type, int duration, const char *materialName);
+extern void Sys_ShowSplashWindow(void);
+extern void Sys_HideSplashWindow(void);
+extern void CIN_UploadCinematic(int handle);
+extern int CIN_PlayCinematic(const char *name, int x, int y, int w, int h, int bits);
+extern e_status CIN_RunCinematic(int handle);
+extern void CG_DObjCalcPose(const centity_s *cent, const DObj_s *obj, int *partBits);
+extern const char *CL_GetHudMsgIconMaterialName(int iconIndex);
 extern refexport_t re;
 void CL_ShutdownRef(void)
 {
@@ -877,9 +885,9 @@ void CL_InitRef(void)
     *(void **)&ri_local.Hunk_ClearTempMemory = (void *)imp_Hunk_ClearTempMemory;
     *(void **)&ri_local.Hunk_ClearTempMemoryHigh = (void *)imp_Hunk_ClearTempMemoryHigh;
     *(void **)&ri_local.Sys_DirectXFatalError = (void *)imp_Sys_DirectXFatalError;
-    *(void **)&ri_local.Sys_ShowSplashWindow = (void *)imp_Sys_ShowSplashWindow;
-    *(void **)&ri_local.Sys_HideSplashWindow = (void *)imp_Sys_HideSplashWindow;
-    *(void **)&ri_local.Sys_LoadingKeepAlive = (void *)imp_Sys_LoadingKeepAlive;
+    *(void **)&ri_local.Sys_ShowSplashWindow = (void *)Sys_ShowSplashWindow;
+    *(void **)&ri_local.Sys_HideSplashWindow = (void *)Sys_HideSplashWindow;
+    *(void **)&ri_local.Sys_LoadingKeepAlive = (void *)Sys_LoadingKeepAlive;
     *(void **)&ri_local.FS_ReadFile = (void *)imp_FS_ReadFile;
     *(void **)&ri_local.FS_FreeFile = (void *)imp_FS_FreeFile;
     *(void **)&ri_local.FS_FOpenFileRead = (void *)imp_FS_FOpenFileRead;
@@ -940,7 +948,7 @@ void CL_InitRef(void)
     *(void **)&ri_local.SEH_ReadCharFromString = (void *)imp_SEH_ReadCharFromString;
     *(void **)&ri_local.CL_UpdateDebugData = (void *)CL_UpdateDebugData;
     *(void **)&ri_local.CL_FlushDebugData = (void *)CL_FlushDebugData;
-    *(void **)&ri_local.StatMon_Warning = (void *)imp_StatMon_Warning;
+    *(void **)&ri_local.StatMon_Warning = (void *)StatMon_Warning;
     *(void **)&ri_local.XModelPrecache = (void *)imp_XModelPrecache;
     *(void **)&ri_local.XModelGetSurfaces = (void *)imp_XModelGetSurfaces;
     *(void **)&ri_local.XModelBad = (void *)imp_XModelBad;
@@ -980,11 +988,11 @@ void CL_InitRef(void)
     *(void **)&ri_local.DObjGetLodOutDist = (void *)imp_DObjGetLodOutDist;
     *(void **)&ri_local.DObjCompleteHierarchyBits = (void *)imp_DObjCompleteHierarchyBits;
     *(void **)&ri_local.DObjSetModel = (void *)imp_DObjSetModel;
-    *(void **)&ri_local.CIN_UploadCinematic = (void *)imp_CIN_UploadCinematic;
-    *(void **)&ri_local.CIN_PlayCinematic = (void *)imp_CIN_PlayCinematic;
-    *(void **)&ri_local.CIN_RunCinematic = (void *)imp_CIN_RunCinematic;
-    *(void **)&ri_local.CG_DObjCalcPose = (void *)imp_CG_DObjCalcPose;
-    *(void **)&ri_local.CL_GetHudMsgIconMaterialName = (void *)imp_CL_GetHudMsgIconMaterialName;
+    *(void **)&ri_local.CIN_UploadCinematic = (void *)CIN_UploadCinematic;
+    *(void **)&ri_local.CIN_PlayCinematic = (void *)CIN_PlayCinematic;
+    *(void **)&ri_local.CIN_RunCinematic = (void *)CIN_RunCinematic;
+    *(void **)&ri_local.CG_DObjCalcPose = (void *)CG_DObjCalcPose;
+    *(void **)&ri_local.CL_GetHudMsgIconMaterialName = (void *)CL_GetHudMsgIconMaterialName;
     {
 
         extern cplane_t * CM_GetPlaneNum(int planeNum);
