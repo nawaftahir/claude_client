@@ -5,35 +5,36 @@
 
 extern float floorf(float x);
 
-extern byte *_dvar_shellshock_fadein;
-extern byte *_dvar_shellshock_fadeout;
-extern byte *_dvar_shellshock_screenblend;
-extern byte *_dvar_shellshock_screentype;
-extern byte *_dvar_shellshock_screenenabled;
-extern byte *_dvar_shellshock_soundfadein;
-extern byte *_dvar_shellshock_soundfadeout;
-extern byte *_dvar_shellshock_loopfadein;
-extern byte *_dvar_shellshock_loopfadeout;
-extern byte *_dvar_shellshock_looptype;
-extern byte *_dvar_shellshock_sounddrylevellooptype;
-extern byte *_dvar_shellshock_soundwetlevellooptype;
-extern byte *_dvar_shellshock_soundloopsilent;
-extern byte *_dvar_shellshock_viewkickfadein;
-extern byte *_dvar_shellshock_viewkickperiod;
-extern byte *_dvar_shellshock_viewkickradius;
-extern byte *_dvar_shellshock_viewkickpitch;
-extern byte *_dvar_shellshock_viewkickyaw;
-extern byte *_dvar_shellshock_soundroomtype;
-extern byte *_dvar_shellshock_sounddrylevel;
-extern byte *_dvar_shellshock_soundwetlevel;
-extern byte *_dvar_shellshock_soundmodenddelay;
-extern byte *_dvar_shellshock_soundendduration;
-extern byte *_dvar_shellshock_soundfade;
-extern byte *_dvar_shellshock_mouseenable;
-extern byte *_dvar_shellshock_mousefadein;
-extern byte *_dvar_shellshock_mouseturnrate;
-extern byte *_dvar_shellshock_mousereducemax;
-extern byte *_dvar_shellshock_mousesensitivity;
+extern const dvar_t *cg_shock_mouse;
+extern const dvar_t *cg_shock_mouse_fadeTime;
+extern const dvar_t *cg_shock_mouse_maxpitchspeed;
+extern const dvar_t *cg_shock_mouse_maxyawspeed;
+extern const dvar_t *cg_shock_mouse_sensitivityscale;
+extern const dvar_t *cg_shock_screenBlendFadeTime;
+extern const dvar_t *cg_shock_screenBlendTime;
+extern const dvar_t *cg_shock_sound;
+extern const dvar_t *cg_shock_soundDryLevel;
+extern const dvar_t *cg_shock_soundFadeInTime;
+extern const dvar_t *cg_shock_soundFadeOutTime;
+extern const dvar_t *cg_shock_soundLoopEndDelay;
+extern const dvar_t *cg_shock_soundLoopFadeTime;
+extern const dvar_t *cg_shock_soundModEndDelay;
+extern const dvar_t *cg_shock_soundRoomType;
+extern const dvar_t *cg_shock_soundWetLevel;
+extern const dvar_t *cg_shock_viewKickPeriod;
+extern const dvar_t *cg_shock_viewKickRadius;
+extern const dvar_t *cg_shock_volume_announcer;
+extern const dvar_t *cg_shock_volume_auto;
+extern const dvar_t *cg_shock_volume_auto2d;
+extern const dvar_t *cg_shock_volume_body;
+extern const dvar_t *cg_shock_volume_item;
+extern const dvar_t *cg_shock_volume_local;
+extern const dvar_t *cg_shock_volume_menu;
+extern const dvar_t *cg_shock_volume_music;
+extern const dvar_t *cg_shock_volume_shellshock;
+extern const dvar_t *cg_shock_volume_voice;
+extern const dvar_t *cg_shock_volume_weapon;
+
 extern const dvar_t *cg_shock_viewKickFadeTime;
 
 extern int _snd_local_listener;
@@ -65,27 +66,24 @@ extern int SND_PlaySoundAlias(const snd_alias_t *pAlias, int entnum, const vec_t
 extern void CL_CapTurnRate(float min_rate, float max_rate);
 extern void CL_SetUserCmdInShellshock(int inShellshock);
 
-static inline float dvar_get_float(byte *dvar_pp)
+static inline float dvar_get_float(const dvar_t *dvar)
 {
-    dvar_t *dvar = *(dvar_t **)dvar_pp;
     return dvar->current.value;
 }
 
-static inline int dvar_get_int(byte *dvar_pp)
+static inline int dvar_get_int(const dvar_t *dvar)
 {
-    dvar_t *dvar = *(dvar_t **)dvar_pp;
     return dvar->current.integer;
 }
 
-static inline int dvar_get_bool(byte *dvar_pp)
+static inline int dvar_get_bool(const dvar_t *dvar)
 {
-    dvar_t *dvar = *(dvar_t **)dvar_pp;
     return (int)dvar->current.enabled;
 }
 
-static inline dvar_t *dvar_get_ptr(byte *dvar_pp)
+static inline const dvar_t *dvar_get_ptr(const dvar_t *dvar)
 {
-    return *(dvar_t **)dvar_pp;
+    return dvar;
 }
 
 static inline int float_seconds_to_ms(float val)
@@ -267,83 +265,125 @@ void CG_SetShellShockParmsFromDvars(shellshock_parms_t *parms)
     float val;
     float epsilon;
 
-    parms->screenBlend.fadeTime = float_seconds_to_ms(dvar_get_float(_dvar_shellshock_fadein));
+    parms->screenBlend.fadeTime = float_seconds_to_ms(dvar_get_float(cg_shock_screenBlendFadeTime));
 
-    parms->screenBlend.effectTime = float_seconds_to_ms(dvar_get_float(_dvar_shellshock_fadeout));
+    parms->screenBlend.effectTime = float_seconds_to_ms(dvar_get_float(cg_shock_screenBlendTime));
 
     parms->view.fadeTime = 3000;
 
-    val = dvar_get_float(_dvar_shellshock_screenblend);
+    val = dvar_get_float(cg_shock_viewKickPeriod);
     epsilon = 0.001f;
-    if (epsilon - val >= 0.0f) {
-        parms->view.kickRate = 1.0f;
-    } else {
-        parms->view.kickRate = epsilon / val;
-    }
+    if (epsilon - val >= 0.0f)
+        val = epsilon;
+    parms->view.kickRate = epsilon / val;
 
-    parms->view.kickRadius = dvar_get_float(_dvar_shellshock_screentype);
+    parms->view.kickRadius = dvar_get_float(cg_shock_viewKickRadius);
 
-    parms->sound.use = dvar_get_bool(_dvar_shellshock_screenenabled);
+    parms->sound.use = dvar_get_bool(cg_shock_sound);
 
-    parms->sound.fadeInTime = float_seconds_to_ms(dvar_get_float(_dvar_shellshock_soundfadein));
+    parms->sound.fadeInTime = float_seconds_to_ms(dvar_get_float(cg_shock_soundFadeInTime));
 
-    parms->sound.fadeOutTime = float_seconds_to_ms(dvar_get_float(_dvar_shellshock_soundfadeout));
+    parms->sound.fadeOutTime = float_seconds_to_ms(dvar_get_float(cg_shock_soundFadeOutTime));
 
-    parms->sound.loopFadeTime = float_seconds_to_ms(dvar_get_float(_dvar_shellshock_loopfadein));
+    parms->sound.loopFadeTime = float_seconds_to_ms(dvar_get_float(cg_shock_soundLoopFadeTime));
 
-    parms->sound.loopEndDelay = float_seconds_to_ms(dvar_get_float(_dvar_shellshock_loopfadeout));
+    parms->sound.loopEndDelay = float_seconds_to_ms(dvar_get_float(cg_shock_soundLoopEndDelay));
 
-    strncpy(parms->sound.roomtype, Dvar_EnumToString(dvar_get_ptr(_dvar_shellshock_looptype)), 0xf);
+    strncpy(parms->sound.roomtype, Dvar_EnumToString(dvar_get_ptr(cg_shock_soundRoomType)), 0xf);
     parms->sound.roomtype[15] = 0;
 
-    *(int *)&parms->sound.drylevel = dvar_get_int(_dvar_shellshock_sounddrylevellooptype);
+    *(int *)&parms->sound.drylevel = dvar_get_int(cg_shock_soundDryLevel);
 
-    *(int *)&parms->sound.wetlevel = dvar_get_int(_dvar_shellshock_soundwetlevellooptype);
+    *(int *)&parms->sound.wetlevel = dvar_get_int(cg_shock_soundWetLevel);
 
-    parms->sound.modEndDelay = float_seconds_to_ms(dvar_get_float(_dvar_shellshock_soundloopsilent));
+    parms->sound.modEndDelay = float_seconds_to_ms(dvar_get_float(cg_shock_soundModEndDelay));
 
-    val = dvar_get_float(_dvar_shellshock_viewkickfadein);
-    parms->sound.channelvolume[0] = (val > 0.0f) ? ((val < 1.0f) ? val : 1.0f) : 0.0f;
+    val = dvar_get_float(cg_shock_volume_auto);
+    if (0.0f <= -val)
+        val = 0.0f;
+    if (0.0f <= val - 1.0f)
+        val = 1.0f;
+    parms->sound.channelvolume[0] = val;
 
-    val = dvar_get_float(_dvar_shellshock_viewkickperiod);
-    parms->sound.channelvolume[1] = (val > 0.0f) ? ((val < 1.0f) ? val : 1.0f) : 0.0f;
+    val = dvar_get_float(cg_shock_volume_auto2d);
+    if (0.0f <= -val)
+        val = 0.0f;
+    if (0.0f <= val - 1.0f)
+        val = 1.0f;
+    parms->sound.channelvolume[1] = val;
 
-    val = dvar_get_float(_dvar_shellshock_viewkickradius);
-    parms->sound.channelvolume[2] = (val > 0.0f) ? ((val < 1.0f) ? val : 1.0f) : 0.0f;
+    val = dvar_get_float(cg_shock_volume_menu);
+    if (0.0f <= -val)
+        val = 0.0f;
+    if (0.0f <= val - 1.0f)
+        val = 1.0f;
+    parms->sound.channelvolume[2] = val;
 
-    val = dvar_get_float(_dvar_shellshock_viewkickpitch);
-    parms->sound.channelvolume[5] = (val > 0.0f) ? ((val < 1.0f) ? val : 1.0f) : 0.0f;
+    val = dvar_get_float(cg_shock_volume_weapon);
+    if (0.0f <= -val)
+        val = 0.0f;
+    if (0.0f <= val - 1.0f)
+        val = 1.0f;
+    parms->sound.channelvolume[5] = val;
 
-    val = dvar_get_float(_dvar_shellshock_viewkickyaw);
-    parms->sound.channelvolume[6] = (val > 0.0f) ? ((val < 1.0f) ? val : 1.0f) : 0.0f;
+    val = dvar_get_float(cg_shock_volume_voice);
+    if (0.0f <= -val)
+        val = 0.0f;
+    if (0.0f <= val - 1.0f)
+        val = 1.0f;
+    parms->sound.channelvolume[6] = val;
 
-    val = dvar_get_float(_dvar_shellshock_soundroomtype);
-    parms->sound.channelvolume[4] = (val > 0.0f) ? ((val < 1.0f) ? val : 1.0f) : 0.0f;
+    val = dvar_get_float(cg_shock_volume_item);
+    if (0.0f <= -val)
+        val = 0.0f;
+    if (0.0f <= val - 1.0f)
+        val = 1.0f;
+    parms->sound.channelvolume[4] = val;
 
-    val = dvar_get_float(_dvar_shellshock_sounddrylevel);
-    parms->sound.channelvolume[3] = (val > 0.0f) ? ((val < 1.0f) ? val : 1.0f) : 0.0f;
+    val = dvar_get_float(cg_shock_volume_body);
+    if (0.0f <= -val)
+        val = 0.0f;
+    if (0.0f <= val - 1.0f)
+        val = 1.0f;
+    parms->sound.channelvolume[3] = val;
 
-    val = dvar_get_float(_dvar_shellshock_soundwetlevel);
-    parms->sound.channelvolume[7] = (val > 0.0f) ? ((val < 1.0f) ? val : 1.0f) : 0.0f;
+    val = dvar_get_float(cg_shock_volume_local);
+    if (0.0f <= -val)
+        val = 0.0f;
+    if (0.0f <= val - 1.0f)
+        val = 1.0f;
+    parms->sound.channelvolume[7] = val;
 
-    val = dvar_get_float(_dvar_shellshock_soundmodenddelay);
-    parms->sound.channelvolume[8] = (val > 0.0f) ? ((val < 1.0f) ? val : 1.0f) : 0.0f;
+    val = dvar_get_float(cg_shock_volume_music);
+    if (0.0f <= -val)
+        val = 0.0f;
+    if (0.0f <= val - 1.0f)
+        val = 1.0f;
+    parms->sound.channelvolume[8] = val;
 
-    val = dvar_get_float(_dvar_shellshock_soundendduration);
-    parms->sound.channelvolume[9] = (val > 0.0f) ? ((val < 1.0f) ? val : 1.0f) : 0.0f;
+    val = dvar_get_float(cg_shock_volume_announcer);
+    if (0.0f <= -val)
+        val = 0.0f;
+    if (0.0f <= val - 1.0f)
+        val = 1.0f;
+    parms->sound.channelvolume[9] = val;
 
-    val = dvar_get_float(_dvar_shellshock_soundfade);
-    parms->sound.channelvolume[10] = (val > 0.0f) ? ((val < 1.0f) ? val : 1.0f) : 0.0f;
+    val = dvar_get_float(cg_shock_volume_shellshock);
+    if (0.0f <= -val)
+        val = 0.0f;
+    if (0.0f <= val - 1.0f)
+        val = 1.0f;
+    parms->sound.channelvolume[10] = val;
 
-    parms->mouse.use = dvar_get_bool(_dvar_shellshock_mouseenable);
+    parms->mouse.use = dvar_get_bool(cg_shock_mouse);
 
-    parms->mouse.fadeTime = float_seconds_to_ms(dvar_get_float(_dvar_shellshock_mousefadein));
+    parms->mouse.fadeTime = float_seconds_to_ms(dvar_get_float(cg_shock_mouse_fadeTime));
 
-    *(int *)&parms->mouse.maxPitchSpeed = dvar_get_int(_dvar_shellshock_mouseturnrate);
+    *(int *)&parms->mouse.maxPitchSpeed = dvar_get_int(cg_shock_mouse_maxpitchspeed);
 
-    *(int *)&parms->mouse.maxYawSpeed = dvar_get_int(_dvar_shellshock_mousereducemax);
+    *(int *)&parms->mouse.maxYawSpeed = dvar_get_int(cg_shock_mouse_maxyawspeed);
 
-    *(int *)&parms->mouse.sensitivity = dvar_get_int(_dvar_shellshock_mousesensitivity);
+    *(int *)&parms->mouse.sensitivity = dvar_get_int(cg_shock_mouse_sensitivityscale);
 }
 
 static inline __attribute__((always_inline)) void CG_DeactivateShellShockSound(cg_t *cgp)
