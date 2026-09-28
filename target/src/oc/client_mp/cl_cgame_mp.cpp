@@ -745,7 +745,7 @@ void CL_AddLightToScene(const vec_t *org, float radius, float r, float g, float 
 
 void CL_SetFog(int fogvar, float start, float end, int r, int g, int b, float density)
 {
-    RE->SetFog(fogvar, start, end, (unsigned char)r, (unsigned char)g, (unsigned char)b, density);
+    RE->SetFog(fogvar, start, end, r, g, b, density);
 }
 
 void CL_SwitchFog(int fogvar, int startTime, int transitionTime)

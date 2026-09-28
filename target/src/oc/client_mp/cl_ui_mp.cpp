@@ -439,7 +439,8 @@ void CL_InitUI(void)
     Com_Printf("[disrend] CL_InitUI after UI_Init = %d\n", g_disableRendering);
 #endif
     CL_SwitchToLocalClient(0);
-    UI_Component_Init();
+    if (cls.uiStarted)
+        UI_Component_Init();
 }
 
 qboolean UI_checkKeyExec(int key)
