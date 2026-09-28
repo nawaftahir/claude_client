@@ -1026,7 +1026,7 @@ void XAnimCalcRelDeltaParts(const XAnimParts_s *parts, float weightScale, float 
 void XAnimCalcAbsDeltaParts(const XAnimParts_s *parts, const float weightScale, float time, XAnimSimpleRotPos *rotPos)
 {
 	float Q[2];
-	vec4_t pos;
+	vec3_t pos;
 
 	XAnim_CalcDeltaForTime(parts, time, Q, pos);
 	VectorMA2(rotPos->rot, weightScale * 0.000030518509f, Q, rotPos->rot);
