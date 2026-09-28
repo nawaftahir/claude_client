@@ -1,4 +1,4 @@
-import difflib, re, json, sys, pefile, capstone
+import os, difflib, re, json, sys, pefile, capstone
 md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
 def section(path):
     pe = pefile.PE(path)
@@ -11,13 +11,16 @@ d, base = section('build/CoD2MP_s.exe')
 cd, cbase = section('../../cod2engineold/binaries/windows/1.0/CoD2MP_s.exe')
 names = {}
 located = set()  # mid-function hits; CRT names are legitimately unaligned
-for f in ('../ghidra/names_k.tsv', '../ghidra/names_1.0.tsv', '../ghidra/names_cg.tsv', '../ghidra/names_loc.tsv'):
+dropped = set()
+for f in (() if os.environ.get('NAMES_NOFIX') else ('../ghidra/names_fix.tsv',)) + ('../ghidra/names_k.tsv', '../ghidra/names_1.0.tsv', '../ghidra/names_cg.tsv', '../ghidra/names_loc.tsv'):
     for l in open(f):
         r = l.rstrip('\n').split('\t')
+        if len(r) > 2 and r[2] == 'drop': dropped.add(r[1]); continue
         if len(r) >= 2:
             a = int(r[0], 16)  # prefer a 16-aligned (function start) candidate
             if r[1] not in names or (names[r[1]] % 16 and not a % 16): names[r[1]] = a
             if len(r) > 2 and r[2] == 'located': located.add(r[1])
+for _k in dropped: names.pop(_k, None)
 def plain(m):
     if m.startswith('?'): return m[1:].split('@')[0]
     return m.lstrip('_')
