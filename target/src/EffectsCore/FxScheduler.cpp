@@ -906,7 +906,7 @@ float FxScheduler::GetDecalSize( const PrimitiveTemplate *primTemp )
 	FxChannelInstance sizeRandInst;
 
 	FxChannelInstance_Create( &primTemp->mFxChannels[FX_CHANNEL_SIZE], &sizeInst );
-	if ( (short)( primTemp->mAttributeFlags & 0x8000 ) )
+	if ( primTemp->mAttributeFlags & 0x8000 )
 	{
 		blend = flrand( 0.0f, 1.0f );
 		FxChannelInstance_Create( &primTemp->mFxChannels[FX_CHANNEL_SIZE_RAND], &sizeRandInst );

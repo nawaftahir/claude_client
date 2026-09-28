@@ -450,6 +450,7 @@ static DvarValue Dvar_ClampValueToDomain(unsigned char type, DvarValue value, co
 	switch ( type )
 	{
 	case DVAR_TYPE_BOOL:
+		value.boolean = value.boolean != 0;
 		break;
 	case DVAR_TYPE_INT:
 		if ( value.integer < domain.integer.min )

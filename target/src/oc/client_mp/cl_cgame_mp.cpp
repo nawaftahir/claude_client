@@ -254,7 +254,7 @@ qboolean CL_GetUserCmd(int cmdNumber, usercmd_t *ucmd)
     clientActive_t *cl = CL_LOCAL;
     int currentCmd = cl->cmdNumber;
 
-    if (currentCmd < cmdNumber) {
+    if (cmdNumber > currentCmd) {
         Com_Error(ERR_DROP, "CL_GetUserCmd: %i >= %i", cmdNumber, currentCmd);
         currentCmd = cl->cmdNumber;
     }
