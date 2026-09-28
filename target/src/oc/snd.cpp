@@ -463,7 +463,6 @@ void SND_DeactivateChannelVolumes(int priority, int fademsec)
 {
     int j;
     snd_channelvolgroup *channelVolGroup;
-    float fadetime;
     int newPriority;
 
     channelVolGroup = &g_snd.channelVolGroups[priority];
@@ -477,15 +476,13 @@ void SND_DeactivateChannelVolumes(int priority, int fademsec)
         newPriority--;
     }
 
-    if (fademsec <= 0)
-        fadetime = 1.0f;
-    else
-        fadetime = (float)fademsec;
+    if (fademsec < 1)
+        fademsec = 1;
 
     g_snd.channelvol = &g_snd.channelVolGroups[newPriority];
     for (j = 0; j < 11; j++) {
         g_snd.channelvol->channelvol[j].volume = channelVolGroup->channelvol[j].volume;
-        g_snd.channelvol->channelvol[j].goalrate = (g_snd.channelvol->channelvol[j].goalvolume - channelVolGroup->channelvol[j].volume) / fadetime;
+        g_snd.channelvol->channelvol[j].goalrate = (g_snd.channelvol->channelvol[j].goalvolume - channelVolGroup->channelvol[j].volume) / (float)fademsec;
     }
 }
 
