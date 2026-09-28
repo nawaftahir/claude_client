@@ -235,11 +235,9 @@ void SND_SetHWND(HWND hwnd)
 
 void SND_Stop2DChannel(int index)
 {
-    snd_local_t *sndGlob;
     AIL_end_sample(milesGlob.handle_2D[index - 45]);
-    sndGlob = &g_snd;
-    sndGlob->chaninfo[index].paused = 0;
-    sndGlob->chaninfo[index].startDelay = 0;
+    g_snd.chaninfo[index].paused = 0;
+    g_snd.chaninfo[index].startDelay = 0;
 }
 
 void SND_Pause2DChannel(int index)
@@ -273,11 +271,9 @@ Bool SND_Is2DChannelFree(int index)
 
 void SND_Stop3DChannel(int index)
 {
-    snd_local_t *sndGlob;
     AIL_end_3D_sample(milesGlob.handle_3D[index]);
-    sndGlob = &g_snd;
-    sndGlob->chaninfo[index].paused = 0;
-    sndGlob->chaninfo[index].startDelay = 0;
+    g_snd.chaninfo[index].paused = 0;
+    g_snd.chaninfo[index].startDelay = 0;
 }
 
 void SND_Pause3DChannel(int index)
