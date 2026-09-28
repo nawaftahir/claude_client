@@ -590,7 +590,6 @@ void SND_SetEnvironmentEffects(int priority, const char *roomstring, float dryle
 {
     snd_enveffect *effect;
     int roomtype;
-    float fadetime;
     int k;
 
     if (!g_snd.Initialized2d)
@@ -604,21 +603,20 @@ void SND_SetEnvironmentEffects(int priority, const char *roomstring, float dryle
 
     if (fademsec < 1)
         fademsec = 1;
-    fadetime = (float)fademsec;
 
     effect->drygoal = drylevel;
     effect->drylevel = g_snd.effect->drylevel;
-    effect->dryrate = (drylevel - g_snd.effect->drylevel) / fadetime;
+    effect->dryrate = (drylevel - g_snd.effect->drylevel) / fademsec;
     effect->wetgoal = wetlevel;
     effect->wetlevel = g_snd.effect->wetlevel;
-    effect->wetrate = (wetlevel - g_snd.effect->wetlevel) / fadetime;
+    effect->wetrate = (wetlevel - g_snd.effect->wetlevel) / fademsec;
 
     if (effect == g_snd.effect) {
         SND_SetRoomtype(roomtype);
         return;
     }
 
-    for (k = priority + 1; k <= 2; k++) {
+    for (k = priority + 1; k < 3; k++) {
         if (g_snd.envEffects[k].active)
             return;
     }
