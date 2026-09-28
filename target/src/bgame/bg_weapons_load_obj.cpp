@@ -810,7 +810,7 @@ WeaponDef* BG_LoadWeaponDefInternal( const char *folder, const char *name )
 		return NULL;
 	}
 
-	if ( len - n > 0x1FFF )
+	if ( len - n >= 0x2000 )
 	{
 		Com_Printf("^3WARNING: \"%s\" Is too long of a weapon file to parse\n", fileName);
 		FS_FCloseFile(f);
