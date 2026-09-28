@@ -2146,7 +2146,7 @@ void Com_SetRecommended( qboolean restart )
 Com_HasConfigureChecksumChanged
 ==================
 */
-static qboolean Com_HasConfigureChecksumChanged( void )
+static bool Com_HasConfigureChecksumChanged( void )
 {
 	void *csv;
 	int filesize;
