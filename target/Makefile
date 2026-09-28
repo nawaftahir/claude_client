@@ -44,7 +44,9 @@ LFLAGS := /nologo /LTCG /FORCE /OPT:NOREF /OPT:NOICF /FIXED:NO /SUBSYSTEM:WINDOW
 win = $(subst /,\\,$(1))
 # header dependencies from /showIncludes (system headers skipped)
 deps = awk '/including file:/{sub(/.*including file: */,""); gsub(/\\/,"/"); if ($$0 ~ /^[zZ]:\/opt/) next; \
-	sub(/^[zZ]:\/w\/src\//,"src/"); sub(/^(\.\/)+/,"src/"); print "$@: " $$0; print $$0 ":"}' $@.log > $@.d
+	sub(/^[zZ]:\/w\/src\//,"src/"); sub(/^(\.\/)+/,"src/"); while (sub(/\/[^\/.][^\/]*\/\.\.\//,"/")); \
+	sub(/\/headers\/pc\//,"/headers/PC/"); sub(/\/headers\/mac\//,"/headers/Mac/"); \
+	print "$@: " $$0; print $$0 ":"}' $@.log > $@.d
 
 -include $(OBJS:=.d)
 
