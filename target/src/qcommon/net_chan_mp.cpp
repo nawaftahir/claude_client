@@ -1,6 +1,8 @@
 #include "qcommon.h"
 #include "netchan.h"
 
+void CL_Netchan_AddOOBProfilePacket( int iLength );
+
 /* net_chan.c sees a plain prototype, not glibc's builtin-tagged one:
  * the builtin form stages the first argument in a register before the size,
  * which the shipped code does not do. */
@@ -973,6 +975,8 @@ qboolean NET_OutOfBandPrint( netsrc_t sock, netadr_t adr, const char *data )
 
 	if ( sock == NS_SERVER )
 		SV_Netchan_AddOOBProfilePacket(len);
+	else
+		CL_Netchan_AddOOBProfilePacket(len);
 
 	return res > 0;
 }
@@ -1010,6 +1014,8 @@ qboolean NET_OutOfBandData( netsrc_t sock, netadr_t adr, byte *format, int len )
 
 	if ( sock == NS_SERVER )
 		SV_Netchan_AddOOBProfilePacket(mbuf.cursize);
+	else
+		CL_Netchan_AddOOBProfilePacket(mbuf.cursize);
 
 	return res > 0;
 }
@@ -1042,6 +1048,8 @@ void NET_OutOfBandVoiceData( netsrc_t sock, netadr_t adr, byte *format, int len 
 
 	if ( sock == NS_SERVER )
 		SV_Netchan_AddOOBProfilePacket(iLen);
+	else
+		CL_Netchan_AddOOBProfilePacket(iLen);
 }
 
 /*

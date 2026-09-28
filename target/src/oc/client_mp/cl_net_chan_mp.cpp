@@ -5,7 +5,7 @@
 
 extern clientConnection_t clc;
 extern byte *cl_ptr;
-extern byte *net_profile_dvar;
+extern dvar_t *net_profile;
 #if defined(COD2_X64) || defined(_M_X64) || defined(__x86_64__)
 extern int clc_x64_lastChallenge;
 #endif
@@ -172,16 +172,11 @@ void CL_Netchan_Transmit(netchan_t *chan, byte *data, int length)
 
 void CL_Netchan_AddOOBProfilePacket(int iLength)
 {
-    byte *clc_base;
-    netProfileInfo_t *pOOBProf;
-
-    if (((const dvar_t *)*(byte **)net_profile_dvar)->current.integer == 0)   /* was dvar+8 (x86 current offset; x64 is 16) */
-        return;
-
-    clc_base = (byte *)&::clc;
-    NetProf_PrepProfiling(&((clientConnection_t *)clc_base)->pOOBProf);
-    pOOBProf = ((clientConnection_t *)clc_base)->pOOBProf;
-    NetProf_AddPacket(&pOOBProf->send, iLength, 0);
+    if (net_profile->current.integer)
+    {
+        NetProf_PrepProfiling(&clc.pOOBProf);
+        NetProf_AddPacket(&clc.pOOBProf->send, iLength, 0);
+    }
 }
 
 void CL_Netchan_SendOOBPacket(int iLength, const void *pData, netadr_t to)
@@ -197,7 +192,7 @@ void CL_Netchan_SendOOBPacket(int iLength, const void *pData, netadr_t to)
 
     NET_SendPacket(NS_CLIENT1, iLength, pData, to);
 
-    if (((const dvar_t *)*(byte **)net_profile_dvar)->current.integer == 0)   /* was dvar+8 (x86 current offset; x64 is 16) */
+    if (net_profile->current.integer == 0)   /* was dvar+8 (x86 current offset; x64 is 16) */
         return;
 
     NetProf_PrepProfiling(&((clientConnection_t *)clc_base)->pOOBProf);
