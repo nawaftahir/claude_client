@@ -251,3 +251,24 @@
 531560	UI_OverrideCursorPos	fix	# callalign v2
 5314f0	UI_FeederItemImage	fix	# callalign v2
 52be30	UI_DrawRect	fix	# callalign v2
+4aa740	?A?$map	fix	# simloc55
+52bf90	UI_DrawTextWithCursor	fix	# simloc55
+4d9880	CG_ProcessSnapshots	fix	# simloc55
+4d97d0	CG_ReadNextSnapshot	fix	# simloc55
+492930	IntegrateTotalVelocity	fix	# simloc55
+492710	IntegrateVelocity2	fix	# simloc55
+48bd10	ConsumeQuat	fix	# simloc55
+4786f0	Scr_EvalDivide	fix	# simloc55
+4c5bf0	CG_DrawActive	fix	# simloc55
+4b10a0	CL_Rcon_f	fix	# simloc55
+4d2a80	CG_AddMovingTracer	fix	# simloc55
+40e1a0	CL_PacketEvent_real	fix	# simloc55
+49f460	FX_AddTail	fix	# simloc55
+492520	IntegrateVelocity	fix	# simloc55
+425f50	vectoanglessigned	fix	# simloc55
+4a9dd0	AddEntry	fix	# simloc55
+49a260	ParseMaterials	fix	# simloc55
+41c8f0	CM_SightTraceSphereThroughSphere	fix	# simloc55
+40e620	Voice_SendVoiceData	fix	# simloc55
+492a70	GetTotalVelocity	fix	# simloc55
+44be60	SND_UnpauseSounds	fix	# simloc55
