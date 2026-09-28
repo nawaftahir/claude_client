@@ -1303,38 +1303,33 @@ void CL_ConsolePrint(print_msg_type_t type, const char *txt, int duration, int l
             break;
         case PMSG_SUBTITLE:
             duration = 5000;
-            break;
         default:
-            duration = 0;
-            break;
+            goto skipClamp;
         }
     }
 
     if (duration < 0)
         duration = 0;
 
+skipClamp:
+
     color = ColorIndex(0x37);
 
     if (type == PMSG_GAME || type == PMSG_BOLDGAME) {
-        const char *lineStart = txt;
         const char *newline;
         char lineText[0x1000];
 
-        while ((newline = strchr(lineStart, '\n')) != NULL) {
-            int charCount = (int)(newline - lineStart) + 1;
-            int copyCount = charCount;
+        while ((newline = strchr(txt, '\n')) != NULL) {
+            unsigned int copyCount = (unsigned int)(newline - txt) + 1;
 
             if (copyCount > 0xfff)
                 copyCount = 0xfff;
 
-            memcpy(lineText, lineStart, copyCount);
+            memcpy(lineText, txt, copyCount);
             lineText[copyCount] = '\0';
             color = CL_ConsolePrint_AddLine(type, lineText, duration, linewidth, color);
-            lineStart = newline + 1;
+            txt = newline + 1;
         }
-
-        CL_ConsolePrint_AddLine(type, lineStart, duration, linewidth, color);
-        return;
     }
 
     CL_ConsolePrint_AddLine(type, txt, duration, linewidth, color);
@@ -1356,7 +1351,7 @@ void Con_Close(void)
     Field_Clear((&g_consoleField));
     Con_ClearNotify();
     MsgWnd_Clear(&con.messageBuffer->minicon);
-    MsgWnd_Clear(&con.messageBuffer->subtitle);
+    Con_ClearSubtitles();
     clients[0].keyCatchers &= ~1;
 }
 
@@ -1653,12 +1648,9 @@ static void CL_WriteConsoleEncodedByte(int info, int value)
     con.lineOffset++;
 }
 
-static int CL_FindHudMsgIconMaterialIndex(const char *iconShader)
+static unsigned char CL_FindHudMsgIconMaterialIndex(const char *iconShader)
 {
     int index;
-
-    if (!iconShader)
-        return 0;
 
     for (index = 0; index < registeredIconMaterialCount; index++) {
         if (strcmp(hudMsgIconMaterials[index], iconShader) == 0)

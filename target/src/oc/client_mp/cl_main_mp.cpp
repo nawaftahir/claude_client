@@ -1078,16 +1078,13 @@ void CL_OpenScriptMenu_f(void)
     if (!parentMenuName || !menuResponse)
         return;
 
-    menuIndex = -1;
-    for (int i = 0; i < 0x20; i++) {
-        configStr = CL_GetConfigString(0x4de + i);
-        if (!*configStr)
-            continue;
-        if (I_stricmp(parentMenuName, configStr) == 0) {
-            menuIndex = i;
+    for (menuIndex = 0; menuIndex < 0x20; menuIndex++) {
+        configStr = CL_GetConfigString(0x4de + menuIndex);
+        if (*configStr && I_stricmp(parentMenuName, configStr) == 0)
             break;
-        }
     }
+    if (menuIndex == 0x20)
+        menuIndex = -1;
 
     Cbuf_ExecuteText(2, va("cmd mr %i %i %s\n", Dvar_GetInt("sv_serverId"), menuIndex, menuResponse));
 }
@@ -1736,6 +1733,8 @@ static void CL_BuildMd5StrFromCDKey(char *md5Str)
 }
 #endif
 
+short BigShort(short l);
+
 void CL_RequestAuthorization(void)
 {
     char nums[64];
@@ -1762,14 +1761,14 @@ void CL_RequestAuthorization(void)
             return;
         }
 
-        cls.authorizeServer.port = 0xdc50;
+        cls.authorizeServer.port = BigShort(0x50dc);
         Com_Printf((const char *)"%s resolved to %i.%i.%i.%i:%i\n",
                    (const char *)"cod2master.activision.com",
                    cls.authorizeServer.ip[0],
                    cls.authorizeServer.ip[1],
                    cls.authorizeServer.ip[2],
                    cls.authorizeServer.ip[3],
-                   0x50dc);
+                   BigShort(cls.authorizeServer.port));
     }
 
     if (cls.authorizeServer.type == NA_BAD)
@@ -1778,14 +1777,14 @@ void CL_RequestAuthorization(void)
     if (Dvar_GetBool((const char *)"fs_restrict")) {
         I_strncpyz(nums, (const char *)"demo", sizeof(nums));
     } else {
+        j = 0;
         cdkey = cl_cdkey;
         len = strlen(cdkey);
         if (len > 32)
             len = 32;
 
-        j = 0;
         for (i = 0; i < len; ++i) {
-            unsigned char ch = (unsigned char)cdkey[i];
+            char ch = cdkey[i];
             if ((ch >= '0' && ch <= '9') ||
                 (ch >= 'a' && ch <= 'z') ||
                 (ch >= 'A' && ch <= 'Z')) {
@@ -2861,32 +2860,19 @@ void CL_PlayDemo_f(void)
 void CL_ForwardCommandToServer(const char *string)
 {
     const char *cmd = Cmd_Argv(0);
-    clientConnection_t *conn = &::clc;
-    const char *reliableCommand;
-    int seq;
 
-    if (!cmd || cmd[0] == '-')
+    if (cmd[0] == '-')
         return;
 
-    if (CG_IsConsoleCommandName(cmd))
-        return;
-
-    if (conn->demoplaying || conn->state <= 4 || cmd[0] == '+') {
+    if (::clc.demoplaying || ::clc.state < 5 || cmd[0] == '+') {
         Com_Printf((const char *)"Unknown command \"%s\"\n", cmd);
         return;
     }
 
-    reliableCommand = (Cmd_Argc() > 1) ? string : cmd;
-    seq = conn->reliableSequence;
-    if (seq - conn->reliableAcknowledge - 128 > 0) {
-        Com_Error(ERR_DROP, (const char *)"EXE_ERR_CLIENT_CMD_OVERFLOW");
-    }
-
-    conn->reliableSequence = seq + 1;
-    MSG_WriteReliableCommandToBuffer(
-        reliableCommand,
-        conn->reliableCommands[conn->reliableSequence & 0x7f],
-        0x400);
+    if (Cmd_Argc() > 1)
+        CL_AddReliableCommand(string);
+    else
+        CL_AddReliableCommand(cmd);
 }
 
 void CL_ForwardToServer_f(void)

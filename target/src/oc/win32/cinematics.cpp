@@ -184,7 +184,6 @@ static void RoQShutdown(void)
 {
     int h;
     int *clcState;
-    char *nextMapStr;
     void (*rendererCallback)(void);
 
     h = currentHandle;
@@ -206,25 +205,10 @@ static void RoQShutdown(void)
             clcState = (int *)&CLC_CONN->state;
             *clcState = cinTable[currentHandle].previousGameState;
             CL_handle = -1;
-            if (*clcState == 0) {
-                nextMapStr = (char *)(nextmap->current.string);
-                if (*nextMapStr != '\0') {
-                    if (!sAspyrIntroPlayed) {
-                        if (strstr(nextMapStr, "IW_logo")) {
-                            Cbuf_ExecuteText(2, va("%s\n", "cinematic aspyr_intro"));
-                            sAspyrIntroPlayed = 1;
-                        } else {
-                            Cbuf_ExecuteText(2, va("%s\n", nextMapStr));
-                            Dvar_SetString((dvar_t *)nextmap, "");
-                        }
-                    } else {
-                        Cbuf_ExecuteText(2, va("%s\n", nextMapStr));
-                        Dvar_SetString((dvar_t *)nextmap, "");
-                    }
-                    UI_SetActiveMenu(1);
-                } else {
-                    UI_SetActiveMenu(0);
-                }
+            if (*clcState == 0 && *nextmap->current.string != '\0') {
+                Cbuf_ExecuteText(2, va("%s\n", nextmap->current.string));
+                Dvar_SetString((dvar_t *)nextmap, "");
+                UI_SetActiveMenu(1);
             } else {
                 UI_SetActiveMenu(0);
             }

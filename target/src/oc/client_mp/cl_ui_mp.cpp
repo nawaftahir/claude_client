@@ -357,7 +357,6 @@ int GetClientname(int index, char *buf, int size)
 {
     clientActive_t *cl;
     int count;
-    int start;
     int i;
 
     *buf = '\0';
@@ -367,13 +366,9 @@ int GetClientname(int index, char *buf, int size)
         return 0;
 
     count = *(int *)((char *)cl + 0x26e0);
-    if (count <= 0)
-        return 0;
-
-    start = *(int *)((char *)cl + 0x26e8);
 
     for (i = 0; i < count; i++) {
-        int slot = (start + i) & 0x7ff;
+        int slot = (*(int *)((char *)cl + 0x26e8) + i) & 0x7ff;
         clientState_t *entry = &cl->parseClients[slot];
 
         if (entry->clientIndex == index) {

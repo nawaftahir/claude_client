@@ -466,24 +466,18 @@ restart:
     cmd = Cmd_Argv(0);
     argc = Cmd_Argc();
 
-    if (cmd[0] < 'B' || cmd[0] > 'z') {
-        return 1;
-    }
-
     switch (cmd[0]) {
-    case 'd':
     case 'w':
-        if (argc - 1 <= 0) {
-            Com_Error(ERR_SERVERDISCONNECT, "EXE_DISCONNECTED");
-        }
-        {
+        if (argc >= 2) {
             const char *reason = SEH_SafeTranslateString(Cmd_Argv(1));
             const char *base = SEH_SafeTranslateString("EXE_SERVERDISCONNECTREASON");
             const char *msg = UI_ReplaceConversionString(base, reason);
             Com_Error(ERR_SERVERDISCONNECT, msg);
+        } else {
+            Com_Error(ERR_SERVERDISCONNECT, "EXE_DISCONNECTED");
         }
 
-    case 'B':
+    case 'x':
         Cmd_TokenizeStringWithLimit(s, 3);
         {
             const char *arg2 = Cmd_Argv(2);
@@ -491,7 +485,7 @@ restart:
             Com_sprintf(bigConfigString, 0x2000, "%c %s %s", 'd', arg1, arg2);
         }
         return 0;
-    case 'b':
+    case 'y':
         Cmd_TokenizeStringWithLimit(s, 3);
         {
             const char *arg2 = Cmd_Argv(2);
@@ -501,7 +495,7 @@ restart:
             strcat(bigConfigString, arg2);
         }
         return 0;
-    case 'c':
+    case 'z':
         Cmd_TokenizeStringWithLimit(s, 3);
         {
             const char *arg2 = Cmd_Argv(2);
@@ -512,16 +506,17 @@ restart:
         }
         s = bigConfigString;
         goto restart;
-    case 'z':
+    case 'd':
+        Cmd_TokenizeStringWithLimit(s, 3);
+        CL_ConfigstringModified();
+        Cmd_TokenizeStringWithLimit(s, 3);
+        return 1;
+    case 'B':
+    case 'n':
         Con_ClearNotify();
         Con_ClearSubtitles();
         memset(CL_LOCAL->cmds, 0, sizeof(CL_LOCAL->cmds));
         RE->ClearFlares();
-        return 1;
-    case 'C':
-        Cmd_TokenizeStringWithLimit(s, 3);
-        CL_ConfigstringModified();
-        Cmd_TokenizeStringWithLimit(s, 3);
         return 1;
     default:
         return 1;
@@ -668,9 +663,7 @@ void CL_SubtitlePrint(const char *pszText, int iDuration, int iLineWidth)
 
 const char *CL_GetConfigString(int index)
 {
-    clientActive_t *cl = &clients[0];
-    int offset = cl->gameState.stringOffsets[index];
-    return cl->gameState.stringData + offset;
+    return clients[0].gameState.stringData + clients[0].gameState.stringOffsets[index];
 }
 
 snd_alias_t *CL_PickSoundAlias(const char *aliasname)
