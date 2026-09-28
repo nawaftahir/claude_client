@@ -870,8 +870,6 @@ static int SND_Get3DChannelOverlay(snd_overlay_info_t *info, int maxcount)
 
     if (maxcount > g_snd.max_3D_channels)
         maxcount = g_snd.max_3D_channels;
-    if (maxcount <= 0)
-        return maxcount;
     for (i = 0; i < maxcount; i++) {
         if (SND_Is3DChannelFree(i)) {
             info[i].pszSampleName = NULL;
@@ -910,8 +908,6 @@ static int SND_GetStreamChannelOverlay(snd_overlay_info_t *info, int maxcount)
 
     if (maxcount > g_snd.max_stream_channels)
         maxcount = g_snd.max_stream_channels;
-    if (maxcount <= 0)
-        return maxcount;
     for (i = 0; i < maxcount; i++) {
         if (SND_IsStreamChannelFree(i + 32)) {
             info[i].pszSampleName = NULL;
@@ -930,12 +926,20 @@ static int SND_GetStreamChannelOverlay(snd_overlay_info_t *info, int maxcount)
 
             pAlias = g_snd.chaninfo[32 + i].pAlias0;
             category = (pAlias->flags & 0x780) >> 7;
-            if (category > 10 || !((1 << category) & 0x786)) {
+            switch (category) {
+            case 1:
+            case 2:
+            case 7:
+            case 8:
+            case 9:
+            case 10:
+                info[i].dist = -1;
+                break;
+            default:
                 SND_GetCurrent3DPosition(g_snd.chaninfo[32 + i].entnum, g_snd.chaninfo[32 + i].offset, org);
                 dist = Vec3Distance(org, g_snd.listeners[0].orient.origin);
                 info[i].dist = (int)dist;
-            } else {
-                info[i].dist = -1;
+                break;
             }
         }
     }
