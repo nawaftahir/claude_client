@@ -1737,7 +1737,7 @@ qboolean PM_InteruptWeaponWithProneMove( playerState_t *ps )
 
 	if ( ps->weaponstate == WEAPON_FIRING
 	        || ps->weaponstate == WEAPON_MELEE_FIRE
-	        || ( ps->weaponstate > WEAPON_MELEE_FIRE && ps->weaponstate <= WEAPON_OFFHAND_END ) )
+	        || ( ps->weaponstate >= WEAPON_OFFHAND_INIT && ps->weaponstate <= WEAPON_OFFHAND_END ) )
 	{
 		return qfalse;
 	}
