@@ -1,12 +1,15 @@
-// Debug drawing; the dedicated server builds these without a renderer, so lines draw nothing.
+// Debug drawing; lines go to the client debug-line list.
 #include "../qcommon/qcommon.h"
 #include "g_shared.h"
 
 void PerpendicularVector( const vec3_t src, vec3_t dst );
 void G_DebugCircleEx( const float *center, float radius, const float *dir, const float *color, int depthTest, int duration );
 
+void CL_AddDebugLine( const float *start, const float *end, const float *color, int depthTest, int duration, int fromServer );
+
 void G_DebugLine( const float *start, const float *end, const float *color, int depthTest, int duration )
 {
+	CL_AddDebugLine(start, end, color, depthTest, duration, 0);
 }
 
 void G_DebugBox( const float *origin, const float *mins, const float *maxs, float yaw, const float *color, int depthTest, int duration )
@@ -23,7 +26,7 @@ void G_DebugBox( const float *origin, const float *mins, const float *maxs, floa
 	float fCos;
 	vec3_t fRotated;
 
-	FastSinCos(yaw * 0.017453292519943295, &fSin, &fCos);
+	FastSinCos(yaw * 0.017453292f, &fSin, &fCos);
 
 	for ( i = 0; i < 8; i++ )
 	{
@@ -79,7 +82,7 @@ void G_DebugCircleEx( const float *center, float radius, const float *dir, const
 
 	for ( i = 0; i < sizeof(verts) / sizeof(verts[0]); i++ )
 	{
-		angle = i * 0.39269908169872414;
+		angle = (float)i * 0.39269909f;
 		FastSinCos(angle, &s, &c);
 		s *= radius;
 		c *= radius;
