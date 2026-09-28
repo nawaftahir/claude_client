@@ -250,7 +250,7 @@ void Jump_Start( pmove_t *pm, pml_t *pml, float height )
 
 	ps = pm->ps;
 
-	velocitySqrd = height * 2.0f * ps->gravity;
+	velocitySqrd = (height + height) * ps->gravity;
 
 	if ( ps->pm_flags & PMF_TIME_LAND && ps->pm_time <= JUMP_LAND_SLOWDOWN_TIME )
 	{
