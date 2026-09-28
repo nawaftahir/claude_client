@@ -191,3 +191,54 @@
 47a6a0	Scr_ClearOutParams	fix
 449bd0	SetScreenScaling	fix
 533500	UI_SafeTranslateString	fix
+402020	CL_PickSoundAlias	fix	# callalign
+4dc0a0	speex_warning	fix	# callalign
+499ee0	ParseSequenceFixedFrameValue	fix	# callalign
+4c0170	CG_GetKillerText	fix	# callalign
+44ca10	SND_UpdateVolumes	fix	# callalign
+498300	Trace	fix	# callalign
+44cff0	SND_UpdateChannels	fix	# callalign
+4b3b40	SND_SetRoomtype	fix	# callalign
+433970	Com_Frame	fix	# callalign
+496490	PlayEffect	fix	# callalign
+48d910	XModelConsumeQuat	fix	# callalign
+52bef0	UI_DrawText	fix	# callalign
+4789b0	Scr_FreeEntityList	fix	# callalign
+409ca0	ReplaceConsoleInputArgument	fix	# callalign
+406d40	CL_KeyState	fix	# callalign
+4d49e0	CG_CompassAddWeaponPingInfo	fix	# callalign
+4ba0f0	CG_PrintAliasSubtitle	fix	# callalign
+475ec0	ClearObjectInternal	fix	# callalign
+535e10	Item_ListBox_MaxScroll	fix	# callalign
+47d4d0	VM_CancelNotifyInternal	fix	# callalign
+403720	CL_RegisterHudMsgIconMaterial_core	fix	# callalign
+4766c0	RemoveRefToObject	fix	# callalign
+473cd0	RuntimeErrorInternal	fix	# callalign
+483790	ScriptParse	fix	# callalign
+4ba480	CG_FindSmokeGrenadeEntityState	fix	# callalign
+404e60	Con_AutoCompleteFromList	fix	# callalign
+4ba810	CG_InitXAnimTrees	fix	# callalign
+4d0d90	CG_EjectWeaponBrass	fix	# callalign
+4bdfc0	CG_DrawStanceIcon	fix	# callalign
+401d20	CL_DObjCreateSkelForBone	fix	# callalign
+4108e0	CL_GetPing	fix	# callalign
+53c0a0	Menu_SetFeederSelection	fix	# callalign
+4d00b0	CG_UpdateViewWeaponAnim	fix	# callalign
+4079e0	CL_KeyMove	fix	# callalign
+44c2f0	SND_PlayAmbientAlias	fix	# callalign
+449ee0	CalcScreenPlacement	fix	# callalign
+407f90	CL_CmdButtons	fix	# callalign
+476180	Scr_KillThread	fix	# callalign
+47ec90	VM_Resume	fix	# callalign
+4bb4e0	CG_InitConsoleCommands	fix	# callalign
+4b0390	CL_ServerInfoPacket	fix	# callalign
+409190	Field_Draw	fix	# callalign
+4d99c0	CG_DamageFeedback	fix	# callalign
+49e040	FX_CalcImpactOrigin	fix	# callalign
+4cd110	CG_DrawInformation	fix	# callalign
+4cfda0	CG_AddPlayerWeapon	fix	# callalign
+4c9bb0	CG_DrawActiveFrame	fix	# callalign
+49da80	FX_CalcOriginAndAxis	fix	# callalign
+40ead0	CL_InitRef	fix	# callalign
+45a0f0	SV_Netchan_PrintProfileStats	fix	# callalign
+4da460	CG_EntityEvent	fix	# ctx strings
