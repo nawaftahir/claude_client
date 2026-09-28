@@ -737,9 +737,92 @@ XAnimTree_s* SV_DObjGetTree( gentity_t *ent )
 SV_XModelDebugBoxes
 ===============
 */
+extern void DObjGetBoneInfo( const DObj *obj, XBoneInfo **boneInfo );
+extern int DObjGetNumModels( const DObj_s *obj );
+extern bool DObjIgnoreCollision( const DObj_s *obj, int modelIndex );
+extern void CL_AddDebugLine( const vec_t *start, const vec_t *end, const vec_t *color, qboolean depthTest, int duration, qboolean fromServer );
+
+int boxVerts[24][3] =
+{
+	{ 0, 0, 0 }, { 1, 0, 0 },
+	{ 0, 0, 0 }, { 0, 1, 0 },
+	{ 1, 1, 0 }, { 1, 0, 0 },
+	{ 1, 1, 0 }, { 0, 1, 0 },
+	{ 0, 0, 1 }, { 1, 0, 1 },
+	{ 0, 0, 1 }, { 0, 1, 1 },
+	{ 1, 1, 1 }, { 1, 0, 1 },
+	{ 1, 1, 1 }, { 0, 1, 1 },
+	{ 0, 0, 0 }, { 0, 0, 1 },
+	{ 1, 0, 0 }, { 1, 0, 1 },
+	{ 0, 1, 0 }, { 0, 1, 1 },
+	{ 1, 1, 0 }, { 1, 1, 1 },
+};
+
 void SV_XModelDebugBoxes( gentity_s *ent )
 {
-	;
+	DObj_s *obj;
+	DObjAnimMat *mat;
+	XBoneInfo *boneInfoArray[128];
+	XBoneInfo *boneInfo;
+	vec3_t axis[3];
+	float boneMat[4][3];
+	vec4_t color;
+	vec3_t org;
+	vec3_t vec;
+	vec3_t start;
+	vec3_t end;
+	int numModels;
+	int modelIndex;
+	int numBones;
+	int localBoneIndex;
+	int edge;
+
+	obj = Com_GetServerDObj(ent->s.number);
+	DObjGetBoneInfo(obj, boneInfoArray);
+	mat = DObjGetRotTransArray(obj);
+
+	color[0] = 1.0f;
+	color[1] = 1.0f;
+	color[2] = 1.0f;
+	color[3] = 0.0f;
+
+	AnglesToAxis(ent->r.currentAngles, axis);
+
+	numModels = DObjGetNumModels(obj);
+
+	for ( modelIndex = 0; modelIndex < numModels; modelIndex++ )
+	{
+		if ( DObjIgnoreCollision(obj, modelIndex) )
+			continue;
+
+		numBones = XModelNumBones(DObjGetModel(obj, modelIndex));
+
+		for ( localBoneIndex = 0; localBoneIndex < numBones; localBoneIndex++, mat++ )
+		{
+			boneInfo = boneInfoArray[localBoneIndex];
+			ConvertQuatToMat(mat, boneMat);
+			VectorCopy(mat->trans, boneMat[3]);
+
+			for ( edge = 0; edge < 24; edge += 2 )
+			{
+				org[0] = boneInfo->bounds[boxVerts[edge][0]][0];
+				org[1] = boneInfo->bounds[boxVerts[edge][1]][1];
+				org[2] = boneInfo->bounds[boxVerts[edge][2]][2];
+				MatrixTransformVector43(org, boneMat, vec);
+				MatrixTransformVector(vec, axis, start);
+				VectorAdd(start, ent->r.currentOrigin, start);
+
+				org[0] = boneInfo->bounds[boxVerts[edge + 1][0]][0];
+				org[1] = boneInfo->bounds[boxVerts[edge + 1][1]][1];
+				org[2] = boneInfo->bounds[boxVerts[edge + 1][2]][2];
+				MatrixTransformVector43(org, boneMat, vec);
+				MatrixTransformVector(vec, axis, end);
+				VectorAdd(end, ent->r.currentOrigin, end);
+
+				CL_AddDebugLine(start, end, color, 0, 0, 1);
+			}
+		}
+	}
 }
 
 /*
