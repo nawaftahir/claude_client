@@ -776,6 +776,7 @@ void SV_XModelDebugBoxes( gentity_s *ent )
 	int numBones;
 	int localBoneIndex;
 	int edge;
+	const int *vert;
 
 	obj = Com_GetServerDObj(ent->s.number);
 	DObjGetBoneInfo(obj, boneInfoArray);
@@ -800,21 +801,24 @@ void SV_XModelDebugBoxes( gentity_s *ent )
 		for ( localBoneIndex = 0; localBoneIndex < numBones; localBoneIndex++, mat++ )
 		{
 			boneInfo = boneInfoArray[localBoneIndex];
+			vert = boxVerts[0];
 			ConvertQuatToMat(mat, boneMat);
 			VectorCopy(mat->trans, boneMat[3]);
 
-			for ( edge = 0; edge < 24; edge += 2 )
+			for ( edge = 0; edge < 12; edge++ )
 			{
-				org[0] = boneInfo->bounds[boxVerts[edge][0]][0];
-				org[1] = boneInfo->bounds[boxVerts[edge][1]][1];
-				org[2] = boneInfo->bounds[boxVerts[edge][2]][2];
+				org[0] = boneInfo->bounds[vert[0]][0];
+				org[1] = boneInfo->bounds[vert[1]][1];
+				org[2] = boneInfo->bounds[vert[2]][2];
+				vert += 3;
 				MatrixTransformVector43(org, boneMat, vec);
 				MatrixTransformVector(vec, axis, start);
 				VectorAdd(start, ent->r.currentOrigin, start);
 
-				org[0] = boneInfo->bounds[boxVerts[edge + 1][0]][0];
-				org[1] = boneInfo->bounds[boxVerts[edge + 1][1]][1];
-				org[2] = boneInfo->bounds[boxVerts[edge + 1][2]][2];
+				org[0] = boneInfo->bounds[vert[0]][0];
+				org[1] = boneInfo->bounds[vert[1]][1];
+				org[2] = boneInfo->bounds[vert[2]][2];
+				vert += 3;
 				MatrixTransformVector43(org, boneMat, vec);
 				MatrixTransformVector(vec, axis, end);
 				VectorAdd(end, ent->r.currentOrigin, end);

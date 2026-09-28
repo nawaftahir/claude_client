@@ -79,7 +79,7 @@ void DObjDumpInfo(const DObj_s *obj)
 
 bool DObjIgnoreCollision( const DObj_s *obj, int modelIndex )
 {
-	return (obj->ignoreCollision >> modelIndex) & 1;
+	return (obj->ignoreCollision & (1 << modelIndex)) != 0;
 }
 
 int DObjGetBoneIndexInternal(const DObj_s *obj, unsigned int name)
