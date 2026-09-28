@@ -345,7 +345,7 @@ unsigned int SEH_KoreanCharToIndex( unsigned int c )
 	if ( SEH_IsKoreanChar(c) )
 	{
 		c -= 0xb0a0;
-		c = ( c >> 8 ) * 96 + (unsigned char)c;
+		c = ( c >> 8 ) * 96 + ( c & 0xff );
 		return c;
 	}
 	return 0;
@@ -357,10 +357,10 @@ unsigned char SEH_IsTraditionalChineseChar( unsigned int c )
 	unsigned char trail;
 
 	lead = c >> 8;
-	if ( ( lead > 0xa0 && lead <= 0xc6 ) || ( lead > 0xc8 && lead <= 0xf9 ) )
+	if ( ( lead >= 0xa1 && lead <= 0xc6 ) || ( lead >= 0xc9 && lead <= 0xf9 ) )
 	{
 		trail = c;
-		if ( ( trail > 0x3f && trail <= 0x7e ) || ( trail > 0xa0 && trail != 0xff ) )
+		if ( ( trail >= 0x40 && trail <= 0x7e ) || ( trail >= 0xa1 && trail <= 0xfe ) )
 			return 1;
 	}
 	return 0;
@@ -368,7 +368,7 @@ unsigned char SEH_IsTraditionalChineseChar( unsigned int c )
 
 unsigned char SEH_IsTraditionalChinesePunctuation( unsigned int c )
 {
-	if ( c > 0xa13f && c <= 0xa153 )
+	if ( c >= 0xa140 && c < 0xa154 )
 		return 1;
 	return 0;
 }
@@ -380,7 +380,7 @@ unsigned int SEH_TraditionalChineseCharToIndex( unsigned int c )
 		c -= 0xa140;
 		if ( ( c & 0xff ) >= 0x60 )
 			c -= 0x20;
-		c = ( c >> 8 ) * 160 + (unsigned char)c;
+		c = ( c >> 8 ) * 160 + ( c & 0xff );
 		return c;
 	}
 	return 0;
@@ -388,9 +388,9 @@ unsigned int SEH_TraditionalChineseCharToIndex( unsigned int c )
 
 unsigned char SEH_IsJapaneseLeadTrail( unsigned char lead, unsigned char trail )
 {
-	if ( ( lead > 0x80 && lead <= 0x9f ) || ( lead > 0xdf && lead <= 0xef ) )
+	if ( ( lead >= 0x81 && lead <= 0x9f ) || ( lead >= 0xe0 && lead <= 0xef ) )
 	{
-		if ( ( trail > 0x3f && trail <= 0x7e ) || ( trail > 0x7f && trail <= 0xfc ) )
+		if ( ( trail >= 0x40 && trail <= 0x7e ) || ( trail >= 0x80 && trail <= 0xfc ) )
 			return 1;
 	}
 	return 0;
@@ -398,7 +398,7 @@ unsigned char SEH_IsJapaneseLeadTrail( unsigned char lead, unsigned char trail )
 
 unsigned char SEH_IsJapanesePunctuation( unsigned int c )
 {
-	if ( c > 0x813f && c <= 0x8151 )
+	if ( c >= 0x8140 && c < 0x8152 )
 		return 1;
 	return 0;
 }
@@ -410,9 +410,9 @@ unsigned int SEH_JapaneseCharToIndex( unsigned int c )
 		c -= 0x8140;
 		if ( ( c & 0xff ) >= 0x40 )
 			c--;
-		if ( ( ( c >> 8 ) & 0xff ) > 0x5e )
+		if ( ( c & 0xff00 ) >= 0x5f00 )
 			c -= 0x4000;
-		c = ( c >> 8 ) * 0xbc + (unsigned char)c;
+		c = ( c >> 8 ) * 0xbc + ( c & 0xff );
 		return c;
 	}
 	return 0;
@@ -423,14 +423,14 @@ int SEH_IsChineseLeadTrail( unsigned char lead, unsigned char trail )
 	int result;
 
 	result = 0;
-	if ( lead > 0xa0 && lead <= 0xf7 && trail > 0xa0 && trail != 0xff )
+	if ( lead >= 0xa1 && lead <= 0xf7 && trail > 0xa0 && trail < 0xff )
 		result = 1;
 	return result;
 }
 
 bool SEH_IsChinesePunctuation( unsigned int c )
 {
-	if ( c > 0xa1a0 && c <= 0xa1ad )
+	if ( c > 0xa1a0 && c < 0xa1ae )
 		return 1;
 	return 0;
 }
@@ -440,7 +440,7 @@ unsigned int SEH_ChineseCharToIndex( unsigned int c )
 	if ( SEH_IsChineseChar(c) )
 	{
 		c -= 0xa1a0;
-		c = ( c >> 8 ) * 95 + (unsigned char)c;
+		c = ( c >> 8 ) * 95 + ( c & 0xff );
 		return c;
 	}
 	return 0;
@@ -574,7 +574,7 @@ int SEH_IsKoreanLeadTrail( unsigned char lead, unsigned char trail )
 	int result;
 
 	result = 0;
-	if ( lead > 0xaf && lead <= 0xc8 && trail > 0xa0 && trail != 0xff )
+	if ( lead >= 0xb0 && lead <= 0xc8 && trail > 0xa0 && trail < 0xff )
 		result = 1;
 	return result;
 }

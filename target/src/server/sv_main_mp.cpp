@@ -78,7 +78,7 @@ int SV_GetReliableSequence( client_t *client, const char *cmd )
 		if ( cmd[0] != client->reliableCommandInfo[index].cmd[0] )
 			continue;
 
-		if ( (unsigned char)( cmd[0] - 'x' ) <= 2 )
+		if ( cmd[0] >= 'x' && cmd[0] <= 'z' )
 			continue;
 
 		if ( !strcmp(cmd + 1, &client->reliableCommandInfo[index].cmd[1]) )
@@ -1082,6 +1082,9 @@ Player movement occurs as a result of packet events, which
 happen before SV_Frame is called
 ==================
 */
+void UI_SetMap( const char *mapname, const char *gametype );
+void CL_StartHunkUsers( void );
+
 void SV_Frame( int msec )
 {
 	int frameMsec;
@@ -1098,6 +1101,8 @@ void SV_Frame( int msec )
 			Com_Shutdown("EXE_SERVERKILLED");
 		}
 
+		UI_SetMap("", "");
+		CL_StartHunkUsers();
 		engineState->serverKilled = false;
 		return;
 	}

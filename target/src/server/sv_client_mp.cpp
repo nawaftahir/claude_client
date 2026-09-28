@@ -581,6 +581,7 @@ void SV_DirectConnect( netadr_t from )
 	int i;
 	int guid;
 	client_t    *cl, *newcl;
+	challenge_t *chal;
 	gentity_t *ent;
 	int clientNum;
 	int version;
@@ -642,13 +643,13 @@ void SV_DirectConnect( netadr_t from )
 	// see if the challenge is valid (local clients don't need to challenge)
 	if ( !NET_IsLocalAddress( from ) )
 	{
-		for ( i = 0 ; i < MAX_CHALLENGES ; i++ )
+		for ( i = 0, chal = svs.challenges ; i < MAX_CHALLENGES ; i++, chal++ )
 		{
-			if ( NET_CompareAdr( from, svs.challenges[i].adr ) )
+			if ( NET_CompareAdr( from, chal->adr ) )
 			{
-				if ( challenge == svs.challenges[i].challenge )
+				if ( challenge == chal->challenge )
 				{
-					guid = svs.challenges[i].guid;
+					guid = chal->guid;
 					break;
 				}
 			}

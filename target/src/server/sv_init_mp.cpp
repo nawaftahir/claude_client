@@ -665,10 +665,16 @@ void SV_SaveSystemInfo()
 	dvar_modifiedFlags &= ~DVAR_CODINFO;
 }
 
+void CL_InitLoad( const char *mapname, const char *gametype );
+void CL_MapLoading( const char *mapname );
+void CL_StartHunkUsers( void );
+void UI_LoadIngameMenus( void );
+
 void SV_SpawnServer( char *server )
 {
 	int i;
 	int checksum;
+	int len;
 	client_t *cl;
 	qboolean savepersist;
 	char mapname[MAX_QPATH];
@@ -676,6 +682,7 @@ void SV_SpawnServer( char *server )
 
 	Scr_ParseGameTypeList();
 	SV_SetGametype();
+	CL_InitLoad( server, sv_gametype->current.string );
 
 	// ydnar: broadcast a level change to all connected clients
 	if ( com_sv_running->current.boolean )
@@ -700,6 +707,9 @@ void SV_SpawnServer( char *server )
 
 	// set serverinfo visible name
 	Dvar_SetStringByName("mapname", server);
+
+	CL_MapLoading( server );
+	CL_ShutdownAll();
 
 	// shut down the existing game if it is running
 	SV_ShutdownGameProgs();
@@ -738,6 +748,14 @@ void SV_SpawnServer( char *server )
 
 	Com_sprintf(mapname, sizeof(mapname), "maps/mp/%s.%s", server, GetBspExtension());
 	SV_SetExpectedHunkUsage(mapname);
+
+	if ( legacyHacks->cl_running )
+	{
+		CL_StartHunkUsers();
+		SCR_UpdateScreen();
+	}
+
+	UI_LoadIngameMenus();
 
 	// allocate empty config strings
 	for ( i = 0 ; i < MAX_CONFIGSTRINGS ; i++ )
@@ -816,7 +834,7 @@ void SV_SpawnServer( char *server )
 
 	for( i = 0; i < sv_maxclients->current.integer; ++i )
 	{
-		if ( svs.clients[i].state > CS_ZOMBIE )
+		if ( svs.clients[i].state >= CS_CONNECTED )
 		{
 			const char *dropreason = ClientConnect(i, svs.clients[i].scriptId);
 
@@ -839,7 +857,9 @@ void SV_SpawnServer( char *server )
 		iwdChecksums = FS_LoadedIwdChecksums();
 		Dvar_SetString(sv_iwds, iwdChecksums);
 
-		if ( !*iwdChecksums )
+		len = strlen(iwdChecksums);
+
+		if ( !len )
 		{
 			Com_Printf("WARNING: sv_pure set but no IWD files loaded\n");
 		}

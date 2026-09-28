@@ -277,7 +277,7 @@ void NetProf_UpdateStatistics( netProfileStream_t *pStream )
 				iNumFragments--;
 		}
 
-		if ( iTimeSpan <= 0 || !iNumPackets )
+		if ( iTimeSpan < 1 || !iNumPackets )
 		{
 			pStream->iBytesPerSecond = 0;
 		}

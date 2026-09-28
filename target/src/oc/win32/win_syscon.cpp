@@ -56,7 +56,7 @@ typedef struct {
     HDC hDC;
     HFONT hfBufferFont;
     HWND hwndInputLine;
-    char errorString[80];
+    char errorString[512];
     char consoleText[512];
     char returnedText[512];
     int windowVisLevel;
@@ -333,17 +333,8 @@ void Sys_SetErrorText(const char *buf)
     strncpy(s_wcd.errorString, buf, sizeof(s_wcd.errorString) - 1);
     s_wcd.errorString[sizeof(s_wcd.errorString) - 1] = '\0';
 
-    if (!s_wcd.hwndErrorBox) {
-        s_wcd.hwndErrorBox = CreateWindow("static", NULL,
-                                          WS_CHILD | WS_VISIBLE | SS_SUNKEN,
-                                          6, 5, 526, 30, s_wcd.hWnd, (HMENU)ERRORBOX_ID,
-                                          GetModuleHandle(NULL), NULL);
-        SendMessage(s_wcd.hwndErrorBox, WM_SETFONT, (WPARAM)s_wcd.hfBufferFont, 0);
-        SetWindowText(s_wcd.hwndErrorBox, s_wcd.errorString);
-
-        DestroyWindow(s_wcd.hwndInputLine);
-        s_wcd.hwndInputLine = NULL;
-    }
+    DestroyWindow(s_wcd.hwndInputLine);
+    s_wcd.hwndInputLine = NULL;
 }
 
 #endif

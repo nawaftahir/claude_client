@@ -515,6 +515,7 @@ LPCSTR SE_Load( LPCSTR psFileName, bool forceEnglish )
 	LPCSTR psErrorMessage;
 	unsigned char *psLoadedData;
 	LPCSTR psParsePos;
+	int len;
 
 	psErrorMessage = NULL;
 	psLoadedData = SE_LoadFileData( psFileName );
@@ -526,7 +527,8 @@ LPCSTR SE_Load( LPCSTR psFileName, bool forceEnglish )
 
 	while ( !psErrorMessage && TheStringPackage->ReadLine( psParsePos, sLineBuffer ) )
 	{
-		if (sLineBuffer[0])
+		len = strlen(sLineBuffer);
+		if (len)
 		{
 			psErrorMessage = TheStringPackage->ParseLine( sLineBuffer, forceEnglish );
 		}

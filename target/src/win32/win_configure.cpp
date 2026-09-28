@@ -86,7 +86,7 @@ int Sys_SystemMemoryMB( void )
 
 			sysMB = Sys_RoundUp( (float)statusEx.ullTotalPhys * ( 1.0f / ( 1024 * 1024 ) ) );
 			if ( (float)sysMB * ( 1024.0f * 1024.0f ) < (float)statusEx.ullTotalPhys || sysMB > 1024 )
-				return 1024;
+				sysMB = 1024;
 			return sysMB;
 		}
 	}
@@ -105,7 +105,7 @@ int Sys_SystemMemoryMB( void )
 
 	sysMB = Sys_RoundUp( (float)status.dwTotalPhys * ( 1.0f / ( 1024 * 1024 ) ) );
 	if ( (float)sysMB * ( 1024.0f * 1024.0f ) < (float)status.dwTotalPhys || sysMB > 1024 )
-		return 1024;
+		sysMB = 1024;
 	return sysMB;
 }
 

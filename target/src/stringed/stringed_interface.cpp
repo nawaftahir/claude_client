@@ -7,9 +7,7 @@ unsigned char *SE_LoadFileData( const char *psFileName )
 	int iTotalBytesLoaded;
 
 	iTotalBytesLoaded = FS_ReadFile(psFileName, (void **)&pbReturn);
-	if ( iTotalBytesLoaded > 0 )
-		return pbReturn;
-	return NULL;
+	return iTotalBytesLoaded <= 0 ? NULL : pbReturn;
 }
 
 void SE_FreeFileDataAfterLoad( unsigned char *psLoadedFile )

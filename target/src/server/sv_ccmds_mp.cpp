@@ -170,6 +170,7 @@ static void SV_MapRestart( qboolean fast_restart )
 	const char *dropreason;
 	char mapname[MAX_QPATH];
 	int savepersist;
+	char restartCmd;
 
 	// make sure server is running
 	if ( !com_sv_running->current.boolean )
@@ -238,7 +239,8 @@ static void SV_MapRestart( qboolean fast_restart )
 		}
 
 		// add the map_restart command
-		SV_AddServerCommand(cl, SV_CMD_RELIABLE, va("%c", savepersist ? 110 : 66));
+		restartCmd = savepersist ? 110 : 66;
+		SV_AddServerCommand(cl, SV_CMD_RELIABLE, va("%c", restartCmd));
 
 		// connect the client again, without the firstTime flag
 		dropreason = ClientConnect(i, cl->scriptId);

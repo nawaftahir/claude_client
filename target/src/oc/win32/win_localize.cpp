@@ -21,7 +21,8 @@ language_t Win_InitLocalization(void)
 {
     FILE *fp;
     int size;
-    char *p;
+    int i;
+    char ch;
     int lang;
 
     localization = 0;
@@ -47,16 +48,16 @@ language_t Win_InitLocalization(void)
     localization[size] = '\0';
 
     lang = (language_t)(0);
-    p = localization;
-    while (*p) {
-        if (*p == '\n') {
-            *p = '\0';
-            p++;
-            localized_strings = p;
+    i = 0;
+    ch = localization[0];
+    while (ch) {
+        if (ch == '\n') {
+            localization[i] = '\0';
+            localized_strings = &localization[i + 1];
             SEH_GetLanguageIndexForName(localization, &lang);
             break;
         }
-        p++;
+        ch = localization[++i];
     }
 
     return (language_t)lang;

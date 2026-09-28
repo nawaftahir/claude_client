@@ -186,7 +186,7 @@ qboolean SV_inSnapshot( const vec3_t origin, int iEntityNum )
 	{
 		l = svEnt->clusternums[i];
 
-		if ( ( bitvector[l >> 3] >> ( l & 7 ) ) & 1 )
+		if ( bitvector[l >> 3] & ( 1 << ( l & 7 ) ) )
 		{
 			break;
 		}
@@ -198,7 +198,7 @@ qboolean SV_inSnapshot( const vec3_t origin, int iEntityNum )
 		{
 			while ( l <= svEnt->lastCluster )
 			{
-				if ( ( bitvector[l >> 3] >> ( l & 7 ) ) & 1 )
+				if ( bitvector[l >> 3] & ( 1 << ( l & 7 ) ) )
 				{
 					break;
 				}
