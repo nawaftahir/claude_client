@@ -153,6 +153,7 @@ void SND_UpdateLoopingSounds(void);
 Bool SND_UpdateBackgroundVolume(int track, int frametime);
 void SND_DeactivateEnvironmentEffects(int priority, int fademsec);
 void SND_SetEnvironmentEffects(int priority, const char *roomstring, float drylevel, float wetlevel, int fademsec);
+static int SND_RoomtypeFromString(const char *string);
 void SND_UpdateReverbs(void);
 void SND_ErrorCleanup(void);
 void SND_DisconnectListener(void);
@@ -591,7 +592,6 @@ void SND_SetEnvironmentEffects(int priority, const char *roomstring, float dryle
     int roomtype;
     float fadetime;
     int k;
-    const char **names;
 
     if (!g_snd.Initialized2d)
         return;
@@ -599,31 +599,12 @@ void SND_SetEnvironmentEffects(int priority, const char *roomstring, float dryle
     effect = &g_snd.envEffects[priority];
     effect->active = 1;
 
-    roomtype = 0;
-    names = (const char **)(void *)snd_roomStrings;
-    if (names[0]) {
-        while (names[roomtype]) {
-            if (stricmp(roomstring, names[roomtype]) == 0)
-                break;
-            roomtype++;
-        }
-        if (!names[roomtype]) {
-            Com_Printf("invalid roomtype string '%s', it must be one of the following strings:\n", roomstring);
-            names = (const char **)(void *)snd_roomStrings;
-            for (k = 0; names[k]; k++) {
-                if (names[k][0])
-                    Com_Printf("  %s\n", names[k]);
-            }
-            roomtype = 0;
-        }
-    }
-
+    roomtype = SND_RoomtypeFromString(roomstring);
     effect->roomtype = roomtype;
 
-    if (fademsec <= 0)
-        fadetime = 1.0f;
-    else
-        fadetime = (float)fademsec;
+    if (fademsec < 1)
+        fademsec = 1;
+    fadetime = (float)fademsec;
 
     effect->drygoal = drylevel;
     effect->drylevel = g_snd.effect->drylevel;
