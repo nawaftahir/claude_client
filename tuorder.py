@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """TU link-order experiments: move groups of TUs to their retail position (median retail address of matched fns).
-usage (in target/): tuorder.py <out.json>  -> lab experiments 'only_<g>' and 'allbut_<g>' (whole tus.txt edits)"""
+usage (in target/): tuorder.py <out.json> [g1+g2 ...]  -> lab experiments 'only_<g>' and 'allbut_<g>' (whole tus.txt edits)"""
 import json, statistics, sys
 text = open('src/tus.txt').read()
 L = text.split('\n')
@@ -30,7 +30,9 @@ def group(i):
         if p.startswith(pre): return g
     return 'misc'
 G = {}
-for i in movers: G.setdefault(group(i), set()).add(i)
+for i in movers:
+    G.setdefault(group(i), set()).add(i)
+    G[key(tus[i])] = {i}  # single TU by basename
 def order(moved):
     k, prev = [], 0
     for i, t in enumerate(tus):
@@ -38,8 +40,10 @@ def order(moved):
         k.append((addr[i] if i in moved else prev, i, t))  # everything else rides with its predecessor
     return '\n'.join(head + [t for _, _, t in sorted(k)]) + '\n'
 exps = []
-for g, s in sorted(G.items()):
+for spec in sys.argv[2:]:  # explicit group combinations
+    exps.append({'id': 'set_' + spec, 'edits': [{'file': 'src/tus.txt', 'old': text, 'new': order(set().union(*(G[g] for g in spec.split('+'))))}]})
+for g, s in ([] if sys.argv[2:] else sorted(G.items())):
     exps.append({'id': 'only_' + g, 'edits': [{'file': 'src/tus.txt', 'old': text, 'new': order(s)}]})
     exps.append({'id': 'allbut_' + g, 'edits': [{'file': 'src/tus.txt', 'old': text, 'new': order(set(movers) - s)}]})
 json.dump(exps, open(sys.argv[1], 'w'))
-print({g: len(s) for g, s in G.items()}, len(exps), 'experiments')
+print(len(exps), 'experiments')

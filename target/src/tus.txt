@@ -1,12 +1,16 @@
 # translation units in link order (client 1.0 order where measured), then extra cl flags
-xanim/xmodel_utils.cpp
+# not yet placed in the client
+# client layer (draft, opencod2)
+universal/assertive.cpp
+oc/client_mp/cl_cgame_mp.cpp
+oc/client_mp/cl_console_mp.cpp
+oc/client_mp/cl_input.cpp
+oc/client_mp/cl_keys_mp.cpp
+oc/client_mp/cl_main_mp.cpp
+oc/client_mp/cl_net_chan_mp.cpp
+oc/client_mp/cl_ui_mp.cpp
 qcommon/cm_load.cpp
-xanim/xmodel_load.cpp
 qcommon/cm_load_obj.cpp
-universal/com_math.cpp /Op
-xanim/dobj.cpp
-xanim/xanim.cpp
-xanim/xmodel.cpp
 qcommon/cm_mesh.cpp
 qcommon/cm_polylib.cpp
 qcommon/cm_test.cpp
@@ -14,6 +18,7 @@ qcommon/cm_trace.cpp
 qcommon/cm_world.cpp
 qcommon/cmd.cpp
 universal/com_files.cpp
+universal/com_math.cpp /Op
 universal/com_memory.cpp
 universal/com_playerprofile.cpp
 universal/com_shared.cpp
@@ -33,6 +38,7 @@ qcommon/msg_mp.cpp
 qcommon/net_chan_mp.cpp
 universal/q_parse.cpp
 universal/q_shared.cpp
+oc/snd.cpp
 oc/qcommon/statmonitor.cpp
 server/sv_ccmds_mp.cpp
 server/sv_client_mp.cpp
@@ -43,6 +49,15 @@ server/sv_main_mp.cpp
 server/sv_net_chan_mp.cpp
 server/sv_snapshot_mp.cpp
 server/sv_voice_mp.cpp
+win32/win_common.cpp
+win32/win_configure.cpp
+win32/win_input.cpp
+win32/win_main.cpp
+win32/win_net.cpp
+win32/win_shared.cpp
+win32/win_splash.cpp
+oc/win32/win_syscon.cpp
+win32/win_wndproc.cpp
 script/scr_animtree.cpp
 script/scr_compiler.cpp
 script/scr_main.cpp
@@ -52,7 +67,12 @@ script/scr_stringlist.cpp
 script/scr_variable.cpp
 script/scr_vm.cpp
 script/scr_yacc.c
+xanim/dobj.cpp
+xanim/xanim.cpp
+xanim/xmodel_load.cpp
 xanim/xanim_load.cpp
+xanim/xmodel.cpp
+xanim/xmodel_utils.cpp
 EffectsCore/FxArchive.cpp
 EffectsCore/FxChannel.cpp
 EffectsCore/FxCurve.cpp
@@ -79,8 +99,32 @@ zlib/uncompr.c
 zlib/unzip.c
 zlib/zutil.c
 stringed/stringed_hooks.cpp
+stringed/stringed_ingame.cpp
 stringed/stringed_interface.cpp
+oc/win32/cinematics.cpp
+oc/client_mp/cl_main_pc_mp.cpp
+oc/win32/snd_driver.cpp
 server/sv_main_pc_mp.cpp
+oc/cgame_mp/cg_main_mp.cpp
+oc/cgame_mp/cg_consolecmds_mp.cpp
+oc/cgame_mp/cg_drawtools_mp.cpp
+oc/cgame_mp/cg_newDraw_mp.cpp
+oc/cgame_mp/cg_draw_mp.cpp
+oc/cgame_mp/cg_ents_mp.cpp
+oc/cgame_mp/cg_marks_mp.cpp
+oc/cgame_mp/cg_view_mp.cpp
+oc/cgame_mp/cg_animtree_mp.cpp
+oc/cgame_mp/cg_servercmds_mp.cpp
+oc/cgame_mp/cg_shellshock.cpp
+oc/client_mp/cl_scrn_mp.cpp
+oc/cgame_mp/cg_weapons.cpp
+oc/cgame_mp/offhandweapons_mp.cpp
+cgame/cg_effects_load_obj.cpp
+oc/cgame_mp/cg_localents_mp.cpp
+oc/cgame_mp/cg_scoreboard_mp.cpp
+oc/cgame_mp/cg_hudelem_mp.cpp
+oc/cgame_mp/cg_predict_mp.cpp
+oc/cgame_mp/cg_playerstate_mp.cpp
 speex/speex.c /TP
 speex/bits.c /TP
 speex/modes.c /TP
@@ -127,7 +171,6 @@ game/g_client_fields_mp.cpp
 bgame/bg_jump.cpp
 bgame/bg_slidemove.cpp
 game/g_weapon_load_obj.cpp
-# not yet placed in the client
 EffectsCore/FxCurve_load_obj.cpp
 EffectsCore/fx_dvars.cpp
 bgame/bg_misctables.cpp
@@ -156,8 +199,6 @@ speex/high_lsp_tables.c /TP
 speex/lbr_48k_tables.c /TP
 speex/lsp_tables_nb.c /TP
 stringed/loc_dvars.cpp
-stringed/stringed_ingame.cpp
-universal/assertive.cpp
 universal/com_file_wrapper.cpp
 universal/com_memory_high.cpp
 universal/dedicated_dvar.cpp
@@ -177,46 +218,16 @@ unknown/after_scr_const_mp.cpp
 unknown/after_scr_tempmemory.cpp
 unknown/after_scr_vm.cpp
 unknown/after_xmodel_utils.cpp
-
-# client layer (draft, opencod2)
-oc/cgame_mp/cg_animtree_mp.cpp
 oc/cgame_mp/cg_compassfriendlies_mp.cpp
-oc/cgame_mp/cg_consolecmds_mp.cpp
-oc/cgame_mp/cg_draw_mp.cpp
-oc/cgame_mp/cg_drawtools_mp.cpp
-oc/cgame_mp/cg_ents_mp.cpp
 oc/cgame_mp/cg_event_mp.cpp
-oc/cgame_mp/cg_hudelem_mp.cpp
 oc/cgame_mp/cg_info_mp.cpp
-cgame/cg_effects_load_obj.cpp
-oc/cgame_mp/cg_localents_mp.cpp
-oc/cgame_mp/cg_main_mp.cpp
-oc/cgame_mp/cg_marks_mp.cpp
-oc/cgame_mp/cg_newDraw_mp.cpp
 oc/cgame_mp/cg_players_mp.cpp
-oc/cgame_mp/cg_playerstate_mp.cpp
-oc/cgame_mp/cg_predict_mp.cpp
 oc/cgame_mp/cg_registergraphics_new.cpp
 oc/cgame_mp/cg_rumble_mp.cpp
-oc/cgame_mp/cg_scoreboard_mp.cpp
-oc/cgame_mp/cg_servercmds_mp.cpp
-oc/cgame_mp/cg_shellshock.cpp
 oc/cgame_mp/cg_snapshot_mp.cpp
-oc/cgame_mp/cg_view_mp.cpp
-oc/cgame_mp/cg_weapons.cpp
-oc/cgame_mp/offhandweapons_mp.cpp
-oc/client_mp/cl_cgame_mp.cpp
 oc/client_mp/cl_cin_mp.cpp
-oc/client_mp/cl_console_mp.cpp
 oc/client_mp/cl_gamepad.cpp
-oc/client_mp/cl_input.cpp
-oc/client_mp/cl_keys_mp.cpp
-oc/client_mp/cl_main_mp.cpp
-oc/client_mp/cl_main_pc_mp.cpp
-oc/client_mp/cl_net_chan_mp.cpp
 oc/client_mp/cl_parse_mp.cpp
-oc/client_mp/cl_scrn_mp.cpp
-oc/client_mp/cl_ui_mp.cpp
 oc/client_mp/cl_ui_pc_mp.cpp
 oc/client_mp/screen_placement_mp.cpp
 oc/groupvoice/decode.cpp
@@ -225,29 +236,17 @@ oc/groupvoice/play.cpp
 oc/groupvoice/record.cpp
 oc/groupvoice/mixer.cpp
 oc/ui/ui_component.cpp
+oc/ui_mp/ui_main_mp.cpp
+oc/ui_mp/ui_shared_mp.cpp
 oc/ui/ui_shared_obj.cpp
-oc/ui/ui_utils.cpp
 oc/ui_mp/ui_atoms.cpp
+oc/ui/ui_utils.cpp
 oc/ui_mp/ui_console_mode.cpp
 oc/ui_mp/ui_gameinfo_mp.cpp
 oc/ui_mp/ui_gamepad_menu.cpp
-oc/ui_mp/ui_main_mp.cpp
-oc/ui_mp/ui_shared_mp.cpp
-oc/win32/cinematics.cpp
 oc/win32/gfx_dll_v60.cpp
 oc/win32/gfx_v60_threads.cpp
-oc/snd.cpp
-oc/win32/snd_driver.cpp
-win32/win_common.cpp
-win32/win_configure.cpp
-win32/win_input.cpp
-win32/win_main.cpp
-win32/win_net.cpp
 oc/win32/win_localize.cpp
-win32/win_shared.cpp
-win32/win_splash.cpp
-win32/win_wndproc.cpp
-oc/win32/win_syscon.cpp
 oc/win32/win_threads.cpp
 oc/win32/win_voice.cpp
 oc/alias.cpp
