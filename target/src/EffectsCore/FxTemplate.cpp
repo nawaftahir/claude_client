@@ -1999,10 +1999,17 @@ void FX_Print( const char *fmt, ... )
 	Com_Printf(msg);
 }
 
-// Materials are not loaded on the dedicated server.
+// Renderer exports; only the slot used here (client re 0x60f080).
+struct refexport_t
+{
+	void *unused0[4];
+	Material *(*RegisterMaterial)( const char *name, int baseImageFlags, int imageTrack );
+};
+extern refexport_t re;
+
 Material *FX_RegisterMaterial( const char *name )
 {
-	return NULL;
+	return re.RegisterMaterial(name, 3, 6);
 }
 
 XModel *FX_ModelRegister( const char *name )

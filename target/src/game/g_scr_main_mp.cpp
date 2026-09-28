@@ -518,6 +518,8 @@ void iprintlnbold()
 	Scr_MakeGameMessage(-1, va("%c", 103));
 }
 
+void CL_AddDebugLine( const float *start, const float *end, const float *color, int depthTest, int duration, int fromServer );
+
 void GScr_print3d()
 {
 	vec3_t origin;
@@ -555,7 +557,32 @@ GScr_line
 */
 void GScr_line()
 {
-	;
+	vec3_t start;
+	vec3_t end;
+	vec4_t color;
+	vec3_t vec;
+	int depthTest;
+
+	depthTest = 0;
+	color[0] = 1.0f;
+	color[1] = 1.0f;
+	color[2] = 1.0f;
+	color[3] = 1.0f;
+
+	switch ( Scr_GetNumParam() )
+	{
+	default:
+		depthTest = Scr_GetInt( 4 );
+	case 4:
+		color[3] = Scr_GetFloat( 3 );
+	case 3:
+		Scr_GetVector( 2, vec );
+		VectorCopy( vec, color );
+	case 2:
+		Scr_GetVector( 1, end );
+		Scr_GetVector( 0, start );
+		CL_AddDebugLine( start, end, color, depthTest, 0, qtrue );
+	}
 }
 
 /*
