@@ -729,10 +729,7 @@ XAnimTree_s* SV_DObjGetTree( gentity_t *ent )
 
 	obj = Com_GetServerDObj(ent->s.number);
 
-	if ( obj )
-		return DObjGetTree(obj);
-
-	return NULL;
+	return obj ? DObjGetTree(obj) : NULL;
 }
 
 /*
