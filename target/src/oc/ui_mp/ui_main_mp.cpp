@@ -3349,7 +3349,7 @@ void UI_RunMenuScript(const char **args)
                              sharedUiInfo.gameTypes[(ui_netGameType)->current.integer].gameType);
         {
             int mapIdx = (ui_currentNetMap)->current.integer;
-            int offset = mapIdx * 41 + mapIdx;
+            int offset = mapIdx * 41; /* 41 dwords = sizeof(mapInfo) 0xA4 */
             const char *mapName = *(const char **)((byte *)&sharedUiInfo.mapList[0].mapLoadName + offset * 4);
             Cbuf_ExecuteText(2, va("wait ; wait ; map %s\n", mapName));
         }
@@ -3508,7 +3508,7 @@ void UI_RunMenuScript(const char **args)
 
     if (I_stricmp(name, "voteTypeMap") == 0) {
         int mapIdx = (ui_currentNetMap)->current.integer;
-        int offset = mapIdx * 41 + mapIdx;
+        int offset = mapIdx * 41; /* 41 dwords = sizeof(mapInfo) 0xA4 */
         const char *mapName = *(const char **)((byte *)&sharedUiInfo.mapList[0].mapLoadName + offset * 4);
         const char *gtName = sharedUiInfo.gameTypes[(ui_netGameType)->current.integer].gameType;
         Cbuf_ExecuteText(2, va("callvote typemap %s %s\n", gtName, mapName));
@@ -3520,7 +3520,7 @@ void UI_RunMenuScript(const char **args)
         if (mapIdx < 0 || mapIdx >= sharedUiInfo.mapCount)
             return;
         {
-            int offset = mapIdx * 41 + mapIdx;
+            int offset = mapIdx * 41; /* 41 dwords = sizeof(mapInfo) 0xA4 */
             const char *mapName = *(const char **)((byte *)&sharedUiInfo.mapList[0].mapLoadName + offset * 4);
             Cbuf_ExecuteText(2, va("callvote map %s\n", mapName));
         }
