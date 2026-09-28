@@ -1549,8 +1549,7 @@ static __attribute_regparm__(2) void SND_RestoreChanInfo(snd_channel_info_t *cha
 static __attribute_regparm__(3) void SND_StartBackground(int track, const snd_alias_t *pAlias, int fadetime, snd_alias_system_t system)
 {
     int channel;
-    int entchannel;
-    int flags;
+    int type;
     float volume;
     float pitch;
     Bool newPaused;
@@ -1563,14 +1562,21 @@ static __attribute_regparm__(3) void SND_StartBackground(int track, const snd_al
             SND_UnpauseSounds();
     }
 
-    flags = pAlias->flags;
-    entchannel = (flags & 0x780) >> 7;
-    if (entchannel > 10 || !((1 << entchannel) & 0x786)) {
+    switch ((pAlias->flags & 0x780) >> 7) {
+    case 1:
+    case 2:
+    case 7:
+    case 8:
+    case 9:
+    case 10:
+        break;
+    default:
         Com_Error(ERR_DROP, "\025alias %s sound %s played as an ambient / music track uses a 3D channel type; should probably be channel 'local'\n", pAlias->pszAliasName, Com_GetSoundFileName(pAlias));
-        flags = pAlias->flags;
+        break;
     }
 
-    if ((unsigned)((flags & 0x60) >> 5) - 2 > 1) {
+    type = (pAlias->flags & 0x60) >> 5;
+    if (type != 2 && type != 3) {
         Com_Error(ERR_DROP, "\025alias %s sound %s played as an ambient / music track is not streamed; type must be 'streamed'\n", pAlias->pszAliasName, Com_GetSoundFileName(pAlias));
     }
 
