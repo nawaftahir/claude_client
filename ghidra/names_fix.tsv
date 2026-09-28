@@ -21,8 +21,6 @@
 0	CL_HandleEscapeKey	drop
 0	CL_KeyEvent	drop
 0	CL_ReferencedIWDList_f	drop
-0	CL_InitRef	drop
-0	CL_GetPing	drop
 0	CL_CheckForResend	drop
 0	CL_PacketEvent_real	drop
 0	CL_PacketEvent	drop
@@ -34,28 +32,19 @@
 0	SND_UnpauseSounds	drop
 0	SV_Map_f	drop
 0	SV_GameClientNum	drop
-0	SV_Netchan_PrintProfileStats	drop
 0	Sys_Error	drop
-0	ClearObjectInternal	drop
-0	RemoveRefToObject	drop
 0	Scr_GetNextCodepos	drop
-0	VM_Resume	drop
 0	Scr_ParamError	drop
 0	DObjGetCreateParms	drop
-0	FX_CalcOriginAndAxis	drop
 0	FX_SetMaterialAndSequenceParams	drop
 0	ROQ_DrawCinematicFromHandle	drop
 0	ROQ_RunCinematicFromHandle	drop
-0	CL_ServerInfoPacket	drop
 0	CL_Rcon_f	drop
 0	CL_ServersResponsePacket	drop
 0	CL_ServerStatus	drop
 0	CL_ServerStatus_f	drop
 0	SND_Is3DChannelFree	drop
 0	SND_GetStreamChannelVolume	drop
-0	SND_Set3DPosition	drop
-0	SND_UpdateStreamChannel	drop
-0	CG_InitConsoleCommands	drop
 0	CG_DrawStringExt	drop
 0	CG_DrawSmallDevStringColor	drop
 0	CG_DrawBigDevString	drop
@@ -73,7 +62,6 @@
 0	CG_WhizbySound	drop
 0	CG_DrawTracer	drop
 0	CG_WeaponRunXModelAnims	drop
-0	CG_UpdateViewWeaponAnim	drop
 0	CG_Scoreboard_DrawColumnString	drop
 0	CG_DrawClientScore	drop
 0	CG_DrawScoreboard_ListBanner	drop
@@ -82,11 +70,8 @@
 0	CG_GetHudElemInfo	drop
 0	CG_Draw2dHudElems	drop
 0	vbr_analysis	drop
-0	G_UpdateClientInfo	drop
 0	Scr_AddEntity	drop
 0	G_DebugCircle	drop
-0	CG_EntityEvent	drop
-0	CG_DrawInformation	drop
 0	CG_PlayerTurretPositionAndBlend	drop
 0	CG_ResetEntity	drop
 0	CG_ProcessSnapshots	drop
@@ -95,7 +80,6 @@
 0	Record_QueueAudioDataForEncoding	drop
 0	UI_OwnerDraw	drop
 0	UI_Refresh	drop
-0	UI_FeederCount	drop
 0	Menu_CheckOnKey	drop
 0	Window_Paint	drop
 0	Menu_SetPrevCursorItem	drop
@@ -242,3 +226,15 @@
 40ead0	CL_InitRef	fix	# callalign
 45a0f0	SV_Netchan_PrintProfileStats	fix	# callalign
 4da460	CG_EntityEvent	fix	# ctx strings
+430690	Com_ShutdownInternal	fix	# callalign
+4929f0	GetTotalVelocityAtTime0	fix	# callalign
+4aa050	SE_GetFoundFile	fix	# callalign
+4b4c20	SND_UpdateStreamChannel	fix	# callalign
+4b4960	SND_Update2DChannel	fix	# callalign
+4b4a30	SND_Update3DChannel	fix	# callalign
+4c4fb0	CG_StartShakeCamera	fix	# callalign
+4cda50	CG_ResetViewWeaponAnimTree	fix	# callalign
+4fa7e0	G_UpdateClientInfo	fix	# callalign
+52cef0	UI_DrawMapLevelshot	fix	# callalign
+530f70	UI_FeederCount	fix	# callalign
+4b2da0	SND_Set3DPosition	fix	# callalign
