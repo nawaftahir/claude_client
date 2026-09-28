@@ -68,7 +68,7 @@ build/lib/%.lib: src/lib/%.def
 	@mkdir -p $(dir $@)
 	@wine /opt/msvc710/Vc7/bin/lib.exe /nologo /machine:x86 /def:$(call win,$<) /out:$(call win,$@) > $@.log 2>&1 || (cat $@.log; false)
 
-$(OUT): $(OBJS) $(IMPLIBS)
+$(OUT): $(OBJS) $(IMPLIBS) src/tus.txt
 	@printf '%s\n' $(call win,$(OBJS)) > build/objs.rsp
 	$(LINK) $(LFLAGS) /OUT:$(call win,$@) @build\\objs.rsp $(LIBS) > build/link.log 2>&1; tail -1 build/link.log
 
