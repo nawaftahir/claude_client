@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Find functions of a linked test image (map + .reloc) byte-identical in the client, relocations masked."""
-import json, re, sys
+import bisect, json, re, sys
 import pefile, capstone
 
 img, mapf, target = sys.argv[1:4]
@@ -8,7 +8,7 @@ pe = pefile.PE(img)
 base = pe.OPTIONAL_HEADER.ImageBase
 text = next(s for s in pe.sections if s.Name.startswith(b'.text'))
 tdata, tva = text.get_data(), base + text.VirtualAddress
-relocs = {base + e.rva for b in getattr(pe, 'DIRECTORY_ENTRY_BASERELOC', []) for e in b.entries if e.type == 3}
+relocs = sorted({base + e.rva for b in getattr(pe, 'DIRECTORY_ENTRY_BASERELOC', []) for e in b.entries if e.type == 3})
 
 cpe = pefile.PE(target)
 ctext = next(s for s in cpe.sections if s.Name.startswith(b'.text'))
@@ -29,9 +29,8 @@ for i, (va, name, obj) in enumerate(syms):
     if len(code) < 6:
         continue
     mask = set()
-    for r in relocs:
-        if va <= r < va + len(code):
-            mask.update(range(r - va, r - va + 4))
+    for r in relocs[bisect.bisect_left(relocs, va):bisect.bisect_left(relocs, va + len(code))]:
+        mask.update(range(r - va, r - va + 4))
     for ins in md.disasm(code, va):
         if ins.mnemonic in ('call', 'jmp') and ins.size == 5 and ins.bytes[0] in (0xe8, 0xe9):
             tgt = int.from_bytes(ins.bytes[1:], 'little', signed=True) + ins.address + 5
