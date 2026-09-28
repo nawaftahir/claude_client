@@ -197,7 +197,7 @@ void Voice_IncomingVoiceData(int talker, unsigned char *data, int packetDataSize
 
 Bool Voice_IsClientTalking(int clientNum)
 {
-    return (Sys_Milliseconds() - s_clientTalkTime[clientNum]) <= 299;
+    return (Sys_Milliseconds() - s_clientTalkTime[clientNum]) < 300 ? 1 : 0;
 }
 
 void Voice_Shutdown(void)

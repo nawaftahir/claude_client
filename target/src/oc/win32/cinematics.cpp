@@ -242,7 +242,7 @@ static void RoQShutdown(void)
 
 e_status ROQ_StopCinematicFromHandle(int handle)
 {
-    if ((unsigned int)handle > 0xf || cinTable[handle].status == FMV_EOF) {
+    if (handle < 0 || handle >= 16 || cinTable[handle].status == FMV_EOF) {
         return FMV_EOF;
     }
     currentHandle = handle;

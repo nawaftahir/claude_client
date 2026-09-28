@@ -724,7 +724,7 @@ void CL_RefPrintf(int print_level, const char *fmt, ...)
     __builtin_va_list argptr;
 
     __builtin_va_start(argptr, fmt);
-    vsnprintf(msg, sizeof(msg), fmt, argptr);
+    vsprintf(msg, fmt, argptr);
     __builtin_va_end(argptr);
 
     if (print_level == 0) {
