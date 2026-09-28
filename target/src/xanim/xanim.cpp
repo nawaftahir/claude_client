@@ -2561,7 +2561,7 @@ const char* XAnimGetAnimDebugName(const XAnim_s *anims, unsigned int animIndex)
 
 	missing = !entry->numAnims && XanimIsDefaultPart(entry->u.parts);
 
-	return missing ? va("^3%s (missing)", format) : format;
+	return !missing ? format : va("^3%s (missing)", format);
 }
 
 const char* XAnimGetAnimTreeDebugName(const XAnim_s *anims)
