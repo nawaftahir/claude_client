@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Batched line-variant experiments for lab.py: each experiment applies one vary.auto variant in each of up to K
-different near-miss functions. usage (in target/): genvary.py <structdiff.txt> <out.json> [maxdiff=40] [K=10] [gen=cmp|tern]
+different near-miss functions. usage (in target/): genvary.py <structdiff.txt> <out.json> [maxdiff=40] [K=10] [gen=cmp|tern|ifelse]
 Winners = variants whose own function gained in its batch; confirm them alone with lab.py before merging."""
 import glob, json, os, re, sys
 import cmpflip
@@ -42,7 +42,7 @@ def sane(o, v):
 
 maxd = int(sys.argv[3]) if len(sys.argv) > 3 else 40
 K = int(sys.argv[4]) if len(sys.argv) > 4 else 10
-gen = {'cmp': cmpflip.variants, 'tern': cmpflip.ternaries}[sys.argv[5] if len(sys.argv) > 5 else 'cmp']
+gen = sys.argv[5] if len(sys.argv) > 5 else 'cmp'
 fns, seen = [], set()
 for r in (l.split() for l in open(sys.argv[1])):
     if len(r) < 5 or r[0] == 'sched' or not (0 < int(r[1]) <= maxd): continue
@@ -51,7 +51,12 @@ for r in (l.split() for l in open(sys.argv[1])):
     seen.add(loc)
     p, a, b = loc
     L = open(p, errors='replace').read().split('\n')
-    todo = [(n, L[n - 1], v) for n in range(a, b + 1) for v in gen(L[n - 1]) if sane(L[n - 1], v)]
+    if gen == 'ifelse':  # exact-text block edits, unique in the file
+        txt = '\n'.join(L)
+        todo = [(None, o, v) for o, v in cmpflip.ifelse(L, a - 1, b) if txt.count(o) == 1]
+    else:
+        f = {'cmp': cmpflip.variants, 'tern': cmpflip.ternaries}[gen]
+        todo = [(n, L[n - 1], v) for n in range(a, b + 1) for v in f(L[n - 1]) if sane(L[n - 1], v)]
     if todo: fns.append((r[4], p, todo))
 exps, k = [], 0
 while any(f[2] for f in fns):
@@ -59,7 +64,7 @@ while any(f[2] for f in fns):
     edits, tags = [], []
     for m, p, todo in batch:
         n, o, v = todo.pop(0)
-        edits.append({'file': p, 'line': n, 'old': o, 'new': v, 'fn': m})
+        edits.append(dict({'file': p, 'old': o, 'new': v, 'fn': m}, **({'line': n} if n else {})))
     exps.append({'id': 'v%04d' % k, 'edits': edits}); k += 1
     fns.sort(key=lambda f: -len(f[2]))  # spread long lists across batches
 json.dump(exps, open(sys.argv[2], 'w'), indent=0)

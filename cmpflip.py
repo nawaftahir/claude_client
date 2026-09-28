@@ -108,7 +108,55 @@ def ternaries(line):
     vs.discard(line)
     return sorted(vs)
 
+IFL = re.compile(r'^(\s*)if\s*\((.*)\)\s*(\{?)\s*$')
+
+def _block(L, i, ind):
+    """body of a block opening at/after line i (brace on line i or i+1) -> (first body line, closing line) or None"""
+    if not L[i].rstrip().endswith('{'):
+        i += 1
+        if i >= len(L) or L[i].strip() != '{' or L[i][:len(L[i]) - len(L[i].lstrip())] != ind: return None
+    for k in range(i + 1, len(L)):
+        if L[k].startswith(ind + '}') or (L[k].strip().startswith('}') and L[k][:len(L[k]) - len(L[k].lstrip())] == ind):
+            return i + 1, k
+        if L[k].strip() and not L[k].startswith(ind) and not L[k].startswith('#'): return None
+    return None
+
+def ifelse(L, a, b):
+    """if/else arm swaps within lines L[a:b] -> [(old text, new text)]; bodies keep their formatting"""
+    out = []
+    for i in range(a, b):
+        m = IFL.match(L[i])
+        if not m: continue
+        ind, cond = m.group(1), m.group(2)
+        dep = 0
+        for ch in cond:
+            dep += ch == '('; dep -= ch == ')'
+            if dep < 0: break
+        if dep != 0 or 'assert' in cond: continue
+        t = _block(L, i, ind)
+        if not t: continue
+        s, e = t
+        tail = L[e].strip()
+        if tail == '} else {': j = e
+        elif tail == '}' and e + 1 < len(L) and L[e + 1].strip() == 'else': j = e + 1
+        else: continue
+        u = _block(L, j, ind)
+        if not u or u[1] > b: continue
+        s2, e2 = u
+        A, B = L[s:e], L[s2:e2]
+        c = cond.strip()
+        head = L[i][:m.start(2)] + cond.replace(c, negate(c), 1) + L[i][m.end(2):]
+        new = [head] + L[i + 1:s] + B + L[e:s2] + A + [L[e2]]
+        out.append(('\n'.join(L[i:e2 + 1]), '\n'.join(new)))
+    return out
+
 if __name__ == '__main__':
+    src = ['\tif ( x == 1 )', '\t{', '\t\ta();', '\t}', '\telse', '\t{', '\t\tb();', '\t\tc();', '\t}',
+           '\tif (p) {', '\t\td();', '\t} else {', '\t\te();', '\t}']
+    r = ifelse(src, 0, len(src))
+    assert r[0][1] == '\n'.join(['\tif ( x != 1 )', '\t{', '\t\tb();', '\t\tc();', '\t}', '\telse', '\t{', '\t\ta();', '\t}']), r[0][1]
+    assert r[1][1] == '\n'.join(['\tif (!p) {', '\t\te();', '\t} else {', '\t\td();', '\t}']), r[1][1]
+    assert len(r) == 2
     for t, want in [('\tb = sourceBuf ? &buf[l] : NULL;', '\tb = !sourceBuf ? NULL : &buf[l];'),
                     ('\t\tline[i] = c != \'\\t\' ? c : \' \';', '\t\tline[i] = c == \'\\t\' ? \' \' : c;'),
                     ('\treturn yy_is_jam ? 0 : yy_current_state;', '\treturn !yy_is_jam ? yy_current_state : 0;'),

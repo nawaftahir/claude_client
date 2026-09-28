@@ -14,7 +14,7 @@ void CM_CalcTraceEntents( TraceExtents *extents )
 	for ( i = 0; i < 3; ++i )
 	{
 		diff = extents->start[i] - extents->end[i];
-		extents->invDelta[i] = diff == 0.0f ? 0.0f : 1.0f / diff;
+		extents->invDelta[i] = diff != 0.0f ? 1.0f / diff : 0.0f;
 	}
 }
 
