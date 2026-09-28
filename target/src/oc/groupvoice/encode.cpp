@@ -57,7 +57,7 @@ void Encode_SetOptions(int frequency, int quality)
     g_encoder_samplerate = frequency;
 }
 
-Bool Encode_Init(int bandwidthEnum)
+bool Encode_Init(int bandwidthEnum)
 {
     const void *mode;
 

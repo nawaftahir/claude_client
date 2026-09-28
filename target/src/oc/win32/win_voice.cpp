@@ -9,7 +9,7 @@ extern dvar_t *Dvar_RegisterBool(const char *dvarName, bool value, unsigned shor
 extern dvar_t *Dvar_RegisterFloat(const char *dvarName, float value, float min, float max, unsigned short flags);
 extern int Record_Init(int callInit, const void *handle);
 extern int Sound_Init(const void *handle);
-extern Bool Encode_Init(int freq);
+extern bool Encode_Init(int freq);
 extern unsigned char Decode_Init(int freq);
 extern void Record_Shutdown(void);
 extern Bool Encode_Shutdown(void);

@@ -198,13 +198,13 @@ void Com_LoadSoundAliasLooping( const char *token, const char *sourceFile, snd_a
 }
 
 // A leading '!' inverts the loadspec; "menu" aliases always load.
-byte Com_SoundAliasLoadspecKeep( const char *loadspec, const char *loadspecCurGame, const char *token, const char *sourceFile )
+bool Com_SoundAliasLoadspecKeep( const char *loadspec, const char *loadspecCurGame, const char *token, const char *sourceFile )
 {
 	char *found;
 	char *text;
 	char spec[16384];
 	unsigned int loadspecLen;
-	byte keep;
+	bool keep;
 
 	loadspecLen = strlen(loadspec);
 	spec[sizeof(spec) - 1] = 0;
@@ -226,7 +226,7 @@ byte Com_SoundAliasLoadspecKeep( const char *loadspec, const char *loadspecCurGa
 			{
 				return keep;
 			}
-			return keep ^ 1;
+			return !keep;
 		}
 		if ( (found == spec || *(found - 1) <= '!') && found[loadspecLen] <= ' ' )
 		{
