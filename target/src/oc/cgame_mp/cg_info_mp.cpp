@@ -42,13 +42,8 @@ void CG_LoadingString(const char *s)
 
     I_strncpyz(cg->infoScreenText, s, sizeof(cg->infoScreenText));
 
-    if (s == NULL || *s == '\0') {
-
-        SCR_UpdateScreen();
-        return;
-    }
-
-    Com_Printf(va("LOADING... %s\n", s));
+    if (s && *s)
+        Com_Printf(va("LOADING... %s\n", s));
 
     SCR_UpdateScreen();
 }
