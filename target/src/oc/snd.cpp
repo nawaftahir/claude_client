@@ -2182,35 +2182,32 @@ static void SND_UpdateTimescale(void)
 
 static void SND_UpdateEnvironmentEffects(int frametime)
 {
-    snd_enveffect *eff;
-
-    eff = g_snd.effect;
-    if (eff->dryrate == 0.0f && eff->wetrate == 0.0f)
+    if (g_snd.effect->dryrate == 0.0f && g_snd.effect->wetrate == 0.0f)
         return;
 
-    if (eff->dryrate != 0.0f) {
-        eff->drylevel += (float)frametime * eff->dryrate;
-        if (eff->dryrate < 0.0f) {
-            if (eff->drygoal >= eff->drylevel) {
-                eff->drylevel = eff->drygoal;
-                eff->dryrate = 0.0f;
+    if (g_snd.effect->dryrate != 0.0f) {
+        g_snd.effect->drylevel += (float)frametime * g_snd.effect->dryrate;
+        if (g_snd.effect->dryrate < 0.0f) {
+            if (g_snd.effect->drylevel <= g_snd.effect->drygoal) {
+                g_snd.effect->drylevel = g_snd.effect->drygoal;
+                g_snd.effect->dryrate = 0.0f;
             }
-        } else if (eff->drylevel >= eff->drygoal) {
-            eff->drylevel = eff->drygoal;
-            eff->dryrate = 0.0f;
+        } else if (g_snd.effect->drylevel >= g_snd.effect->drygoal) {
+            g_snd.effect->drylevel = g_snd.effect->drygoal;
+            g_snd.effect->dryrate = 0.0f;
         }
     }
 
-    if (eff->wetrate != 0.0f) {
-        eff->wetlevel += (float)frametime * eff->wetrate;
-        if (eff->wetrate < 0.0f) {
-            if (eff->wetgoal >= eff->wetlevel) {
-                eff->wetlevel = eff->wetgoal;
-                eff->wetrate = 0.0f;
+    if (g_snd.effect->wetrate != 0.0f) {
+        g_snd.effect->wetlevel += (float)frametime * g_snd.effect->wetrate;
+        if (g_snd.effect->wetrate < 0.0f) {
+            if (g_snd.effect->wetlevel <= g_snd.effect->wetgoal) {
+                g_snd.effect->wetlevel = g_snd.effect->wetgoal;
+                g_snd.effect->wetrate = 0.0f;
             }
-        } else if (eff->wetlevel >= eff->wetgoal) {
-            eff->wetlevel = eff->wetgoal;
-            eff->wetrate = 0.0f;
+        } else if (g_snd.effect->wetlevel >= g_snd.effect->wetgoal) {
+            g_snd.effect->wetlevel = g_snd.effect->wetgoal;
+            g_snd.effect->wetrate = 0.0f;
         }
     }
 
