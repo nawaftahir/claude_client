@@ -1407,7 +1407,7 @@ int nb_decode(void *state, SpeexBits *bits, void *vout)
 #ifdef FIXED_POINT
       ol_gain = MULT16_32_Q15(28406,ol_gain_table[qe]);
 #else
-      ol_gain = SIG_SCALING*exp(qe/3.5f);
+      ol_gain = SIG_SCALING*exp(qe/3.5);
 #endif
    }
 #ifdef EPIC_48K
