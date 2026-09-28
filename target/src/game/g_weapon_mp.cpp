@@ -114,11 +114,11 @@ void RoundFloatArray(float *x, float *y)
 	{
 		if ( y[i] <= x[i] )
 		{
-			x[i] = floor(x[i]);
+			x[i] = floor((double)x[i]);
 		}
 		else
 		{
-			x[i] = ceil(x[i]);
+			x[i] = ceil((double)x[i]);
 		}
 	}
 }

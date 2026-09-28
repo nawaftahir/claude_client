@@ -1542,7 +1542,7 @@ void MSG_WriteDeltaField( msg_t *msg, byte *from, byte *to, const netField_t *fi
 	}
 	else
 	{
-		register int absBits;
+		int absBits;
 
 		if ( !*(int *)toF )
 		{
@@ -1554,7 +1554,7 @@ void MSG_WriteDeltaField( msg_t *msg, byte *from, byte *to, const netField_t *fi
 			value = *(int *)toF;
 			absBits = field->bits;
 
-			if ( absBits < 0 )
+			if ( absBits <= 0 )
 			{
 				absBits = -absBits;
 			}

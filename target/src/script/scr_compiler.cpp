@@ -2832,6 +2832,8 @@ EvalPrimitiveExpression
 */
 bool EvalPrimitiveExpression( sval_u expr, VariableCompileValue *constValue )
 {
+	float value;
+
 	switch ( expr.node[0].type )
 	{
 	case ENUM_expression_list:
@@ -2842,15 +2844,18 @@ bool EvalPrimitiveExpression( sval_u expr, VariableCompileValue *constValue )
 		return true;
 
 	case ENUM_float:
-		EvalFloat( expr.node[1].floatValue, expr.node[2], constValue );
-		return true;
+		value = expr.node[1].floatValue;
+		goto evalFloat;
 
 	case ENUM_minus_integer:
 		EvalInteger( -expr.node[1].intValue, expr.node[2], constValue );
 		return true;
 
 	case ENUM_minus_float:
-		EvalFloat( -expr.node[1].floatValue, expr.node[2], constValue );
+		value = -expr.node[1].floatValue;
+
+evalFloat:
+		EvalFloat( value, expr.node[2], constValue );
 		return true;
 
 	case ENUM_string:

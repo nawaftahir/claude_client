@@ -1069,13 +1069,22 @@ void COM_PlayIntroMovies()
 	Dvar_SetBool(com_introPlayed, true);
 }
 
+extern const dvar_t *com_statmon;
+
 void Com_InitDvars()
 {
-	com_dedicated = Dvar_RegisterInt("dedicated", 2, 0, 2, DVAR_ROM | DVAR_CHANGEABLE_RESET);
+	com_dedicated = Dvar_RegisterInt("dedicated", 0, 0, 2, DVAR_LATCH | DVAR_CHANGEABLE_RESET);
+
+	if ( com_dedicated->current.integer )
+	{
+		Dvar_RegisterInt("dedicated", 0, 0, 2, DVAR_ROM | DVAR_CHANGEABLE_RESET);
+	}
+
 	com_maxfps = Dvar_RegisterInt("com_maxfps", 85, 0, 1000, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
 	com_developer = Dvar_RegisterInt("developer", 0, 0, 2, DVAR_CHANGEABLE_RESET);
 	com_developer_script = Dvar_RegisterBool("developer_script", false, DVAR_CHANGEABLE_RESET);
 	com_logfile = Dvar_RegisterInt("logfile", 0, 0, 2, DVAR_CHANGEABLE_RESET);
+	com_statmon = Dvar_RegisterBool("com_statmon", false, DVAR_CHANGEABLE_RESET);
 	com_timescale = Dvar_RegisterFloat("timescale", 1.0, 0.001, 1000.0, DVAR_SYSTEMINFO | DVAR_CHEAT | DVAR_CHANGEABLE_RESET);
 	com_fixedtime = Dvar_RegisterInt("fixedtime", 0, 0, 1000, DVAR_CHEAT | DVAR_CHANGEABLE_RESET);
 	com_viewlog = Dvar_RegisterInt("viewlog", 0, 0, 2, DVAR_CHEAT | DVAR_CHANGEABLE_RESET);
@@ -1874,7 +1883,7 @@ static void Com_GetConfigureDvarValues( int dvarCount, const char **text, char *
 			Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: unexpected end-of-file" );
 		if ( !*token )
 			Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: missing entry in dvar value column %i\n", dvarIndex );
-		if ( (int)strlen( token ) > 0x1f )
+		if ( strlen( token ) > 0x1f )
 			Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: entry '%s' in dvar value column %i is longer than %i\n", token, dvarIndex, 0x1f );
 
 		if ( dvarValues )
@@ -2102,7 +2111,9 @@ void Com_SetRecommended( qboolean restart )
 	Sys_GetInfo( &info );
 	// startup code can leave MMX state live, which corrupts the first x87 op
 	info.cpuGHz *= 1.02;
-	if ( info.sysMB <= 0x7f )
+	if ( info.sysMB >= 0x80 )
+		info.sysMB += 8;
+	else
 		info.sysMB = 0x80;
 
 	filesize = FS_ReadFile( "configure_mp.csv", &csv );
@@ -2115,9 +2126,8 @@ void Com_SetRecommended( qboolean restart )
 
 	if ( !Com_ParseCpuConfig( &text, &info ) )
 	{
-		SysInfo rawInfo;
-		Sys_GetInfo( &rawInfo );
-		Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: " "\x14" "EXE_ERR_COULDNT_CONFIGURE" "\x15" " %.0f GHz %i MB\n", rawInfo.cpuGHz, rawInfo.sysMB );
+		Sys_GetInfo( &info );
+		Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: " "\x14" "EXE_ERR_COULDNT_CONFIGURE" "\x15" " %.0f GHz %i MB\n", info.cpuGHz, info.sysMB );
 	}
 
 	if ( !Com_ParseGpuConfig( &text, &info ) )
