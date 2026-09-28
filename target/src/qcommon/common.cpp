@@ -332,17 +332,17 @@ const char *noticeErrors[] =
 	""
 };
 
-int Com_IsNoticeError( const char *msg )
+bool Com_IsNoticeError( const char *msg )
 {
 	int i;
 
 	for ( i = 0; *noticeErrors[i]; i++ )
 	{
 		if ( !strcasecmp(noticeErrors[i], msg) )
-			return 1;
+			return true;
 	}
 
-	return 0;
+	return false;
 }
 
 /*

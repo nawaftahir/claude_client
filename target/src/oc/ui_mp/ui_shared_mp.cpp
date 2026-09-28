@@ -779,10 +779,10 @@ qboolean GetCommandHasBinding(const char *command)
 
     int i;
     for (i = 0; i < 56; i++) {
-        if (g_bindings[i].command && I_stricmp(command, g_bindings[i].command) == 0) {
-            if (g_bindings[i].bind1 != -1)
-                return 1;
-            return 0;
+        if (I_stricmp(command, g_bindings[i].command) == 0) {
+            if (g_bindings[i].bind1 == -1)
+                break;
+            return 1;
         }
     }
     return 0;
