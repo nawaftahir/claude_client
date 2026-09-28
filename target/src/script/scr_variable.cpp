@@ -2461,12 +2461,7 @@ unsigned int FindNextSibling( unsigned int id )
 
 	childId = scrVarGlob.variableList[scrVarGlob.variableList[id].nextSibling].hash.id;
 
-	if ( !IsObject( ( &scrVarGlob.variableList[childId] ) ) )
-	{
-		return childId;
-	}
-
-	return 0;
+	return !IsObject( ( &scrVarGlob.variableList[childId] ) ) ? childId : 0;
 }
 
 
@@ -2481,12 +2476,7 @@ unsigned int FindPrevSibling( unsigned int id )
 
 	childId = scrVarGlob.variableList[scrVarGlob.variableList[scrVarGlob.variableList[scrVarGlob.variableList[id].nextSibling].hash.u.prevSibling].hash.u.prevSibling].hash.id;
 
-	if ( !IsObject( ( &scrVarGlob.variableList[childId] ) ) )
-	{
-		return childId;
-	}
-
-	return 0;
+	return !IsObject( ( &scrVarGlob.variableList[childId] ) ) ? childId : 0;
 }
 
 
