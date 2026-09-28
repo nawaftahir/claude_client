@@ -67,6 +67,7 @@ void GetClientState(uiClientState_t *state)
     state->connectPacketCount = clc_local->connectPacketCount;
     state->connState = clc_local->state;
     I_strncpyz(state->servername, cls.servername, 0x400);
+    I_strncpyz(state->updateInfoString, cls.updateInfoString, 0x400);
     I_strncpyz(state->messageString, clc_local->serverMessage, 0x400);
     state->clientNum = (clients)->snap.ps.clientNum;
 }

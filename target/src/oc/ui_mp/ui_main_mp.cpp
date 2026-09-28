@@ -448,7 +448,9 @@ void UI_UpdateTime(int realtime)
     for (i = 0; i < 4; i++) {
         sum += uiInfo->previousTimes[i];
     }
-    uiInfo->uiDC.FPS = (float)(sum == 0 ? 4000 : 4000 / sum);
+    if (sum == 0)
+        sum = 1;
+    uiInfo->uiDC.FPS = (float)(4000 / sum);
 }
 
 void UI_Shutdown(void)
@@ -573,7 +575,7 @@ const char *UI_GetGameTypeDisplayName(const char *pszGameType)
 #ifndef __EMSCRIPTEN__
 void UI_BuildPlayerList(void)
 {
-    char cs[0x844];
+    char cs[sizeof(uiClientState_t)];
     char name[0x20];
     int count;
     int n;
@@ -584,18 +586,13 @@ void UI_BuildPlayerList(void)
     sharedUiInfo.playerCount = 0;
 
     for (n = 0; n < count; n++) {
-        int playerCount;
-        char *playerName;
-
         if (!GetClientname(n, name, 0x20))
             continue;
 
-        playerCount = sharedUiInfo.playerCount;
-        playerName = sharedUiInfo.playerNames[playerCount];
-        sharedUiInfo.playerClientNums[playerCount] = n;
-        I_strncpyz(playerName, name, 0x20);
-        I_CleanStr(playerName);
-        sharedUiInfo.playerCount = playerCount + 1;
+        sharedUiInfo.playerClientNums[sharedUiInfo.playerCount] = n;
+        I_strncpyz(sharedUiInfo.playerNames[sharedUiInfo.playerCount], name, 0x20);
+        I_CleanStr(sharedUiInfo.playerNames[sharedUiInfo.playerCount]);
+        sharedUiInfo.playerCount++;
     }
 }
 #endif
@@ -696,7 +693,7 @@ static int UI_PlayerProfilesQsortCompare(const void *arg1, const void *arg2)
 #ifndef __EMSCRIPTEN__
 static void UI_SelectCurrentMap(void)
 {
-    byte cstate[0x844];
+    byte cstate[sizeof(uiClientState_t)];
     char szMap[0x40];
     int i;
     int visibleIndex;
@@ -746,14 +743,6 @@ qboolean UI_CheckExecKey(int key)
         return 0;
     if (!menu)
         return 0;
-
-    if ((key >= 0xc8 && key <= 0xce) ||
-        key == 0x0d || key == 0xbf ||
-        key == 0x09 ||
-        (key >= 0x9a && key <= 0x9d) ||
-        key == 0xa3 || key == 0xa4) {
-        return 1;
-    }
 
     khNode = menu->onKey;
     while (khNode) {
@@ -1964,49 +1953,34 @@ static void UI_StartServerRefresh(qboolean full)
 #ifndef __EMSCRIPTEN__
 static void UI_InsertServerAtPosition(int serverIndex, int position)
 {
-    int numServers = sharedUiInfo.serverStatus.numDisplayServers;
-    int *displayServers = sharedUiInfo.serverStatus.displayServers;
-    int *selectedServer = &sharedUiInfo.serverStatus.currentServer;
-    int j;
+    int i;
 
-    if (position < 0 || numServers < position)
+    if (position < 0 || position > sharedUiInfo.serverStatus.numDisplayServers)
         return;
 
-    if (*selectedServer >= position && numServers != 0)
-        *selectedServer += 1;
+    if (position <= sharedUiInfo.serverStatus.currentServer && sharedUiInfo.serverStatus.numDisplayServers)
+        sharedUiInfo.serverStatus.currentServer++;
 
-    numServers++;
-    sharedUiInfo.serverStatus.numDisplayServers = numServers;
-
-    for (j = numServers - 1; j > position; j--)
-        displayServers[j] = displayServers[j - 1];
-
-    displayServers[position] = serverIndex;
+    sharedUiInfo.serverStatus.numDisplayServers++;
+    for (i = sharedUiInfo.serverStatus.numDisplayServers; i > position; i--)
+        sharedUiInfo.serverStatus.displayServers[i] = sharedUiInfo.serverStatus.displayServers[i - 1];
+    sharedUiInfo.serverStatus.displayServers[position] = serverIndex;
 }
 #endif
 
 #ifndef __EMSCRIPTEN__
 static void UI_RemoveDuplicateFromFavorites(int serverIndex)
 {
-    int numServers = sharedUiInfo.serverStatus.numDisplayServers;
-    int *displayServers = sharedUiInfo.serverStatus.displayServers;
     int i, j;
 
-    if (numServers <= 0)
-        return;
-
-    for (i = 0; i < numServers; i++) {
-        if (displayServers[i] == serverIndex)
-            break;
+    for (i = 0; i < sharedUiInfo.serverStatus.numDisplayServers; i++) {
+        if (sharedUiInfo.serverStatus.displayServers[i] == serverIndex) {
+            sharedUiInfo.serverStatus.numDisplayServers--;
+            for (j = i; j < sharedUiInfo.serverStatus.numDisplayServers; j++)
+                sharedUiInfo.serverStatus.displayServers[j] = sharedUiInfo.serverStatus.displayServers[j + 1];
+            return;
+        }
     }
-    if (i >= numServers)
-        return;
-
-    numServers--;
-    sharedUiInfo.serverStatus.numDisplayServers = numServers;
-
-    for (j = i; j < numServers; j++)
-        displayServers[j] = displayServers[j + 1];
 }
 #endif
 
@@ -4589,7 +4563,7 @@ static int UI_PlayerProfilesQsortCompare(const void *arg1, const void *arg2)
 
 static void UI_SelectCurrentMap(void)
 {
-    byte cstate[0x844];
+    byte cstate[sizeof(uiClientState_t)];
     char szMap[0x40];
     int numMaps;
     int i;
@@ -5077,7 +5051,7 @@ void UI_KeyEvent(int key, qboolean down)
 
 static void UI_BuildPlayerList(void)
 {
-    char cs[0x844];
+    char cs[sizeof(uiClientState_t)];
     char name[0x20];
     int count;
     int n;

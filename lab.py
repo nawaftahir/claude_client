@@ -15,7 +15,9 @@ def sh(cmd, cwd, **kw):
     return subprocess.run(cmd, cwd=cwd, shell=True, capture_output=True, text=True, **kw)
 
 def slots():
-    return sorted((p for p in (os.path.join(LAB, s) for s in os.listdir(LAB)) if os.path.isdir(p + '/target')),
+    only = os.environ.get('LAB_SLOTS', '').split()  # e.g. LAB_SLOTS="s1 s2" while other slots are busy
+    return sorted((p for p in (os.path.join(LAB, s) for s in os.listdir(LAB))
+                   if os.path.isdir(p + '/target') and (not only or os.path.basename(p) in only)),
                   key=lambda p: int(p.rsplit('s', 1)[1])) if os.path.isdir(LAB) else []
 
 def cov_bytes(cmpjson, cwd):

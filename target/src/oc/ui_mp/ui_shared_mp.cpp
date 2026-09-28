@@ -400,7 +400,7 @@ void Script_SetBackground(displayContextDef_t *dc, itemDef_t *item, const char *
     char name[0x400];
     if (String_Parse(args, name, 0x400)) {
         byte *it = (byte *)item;
-        (*(MaterialHandle *)&((itemDef_t *)it)->window.background) = CL_RegisterMaterialNoMip(name, 3);
+        (*(MaterialHandle *)&((itemDef_t *)it)->window.background) = CL_RegisterMaterialNoMip(name, item->imageTrack);
     }
 }
 
@@ -550,7 +550,7 @@ static void Script_ConditionalExecHandler_impl(int execWhen, itemDef_t *item, co
 
 static Bool Script_ExecIfStringsEqual(const char *dvarValue, const char *testValue)
 {
-    return I_stricmp(dvarValue, testValue) == 0;
+    return I_stricmp(dvarValue, testValue) == 0 ? 1 : 0;
 }
 
 static Bool Script_ExecIfIntsEqual(const char *dvarValue, const char *testValue)
@@ -560,10 +560,7 @@ static Bool Script_ExecIfIntsEqual(const char *dvarValue, const char *testValue)
 
 static Bool Script_ExecIfFloatsEqual(const char *dvarValue, const char *testValue)
 {
-    float diff = (float)(atof(dvarValue) - atof(testValue));
-    if (diff < 0)
-        diff = -diff;
-    return diff < 9.999999747378752e-06f;
+    return (float)fabs(atof(dvarValue) - atof(testValue)) < 9.999999747378752e-06f ? 1 : 0;
 }
 
 void Script_ExecOnDvarStringValue(displayContextDef_t *dc, itemDef_t *item, const char **args)
@@ -747,28 +744,27 @@ void Controls_SetDefaults(void)
 
 void BindingFromName(const char *dvar, char *nameBind)
 {
-    int i;
+    int i, b1, b2;
+    char nameBind2[0x80];
+
     for (i = 0; i < 0x38; i++) {
-        if (!g_bindings[i].command || I_stricmp(dvar, g_bindings[i].command) != 0)
-            continue;
+        if (I_stricmp(dvar, g_bindings[i].command) == 0) {
+            b1 = g_bindings[i].bind1;
+            if (b1 == -1)
+                break;
 
-        int key1 = g_bindings[i].bind1;
-        if (key1 == -1)
-            break;
+            Key_KeynumToStringBuf(b1, nameBind, 0x20);
+            I_strncpyz(nameBind, UI_SafeTranslateString(nameBind), 0x80);
 
-        Key_KeynumToStringBuf(key1, nameBind, 0x20);
-        I_strncpyz(nameBind, UI_SafeTranslateString(nameBind), 0x80);
-
-        int key2 = g_bindings[i].bind2;
-        if (key2 == -1)
+            b2 = g_bindings[i].bind2;
+            if (b2 != -1) {
+                Key_KeynumToStringBuf(b2, nameBind2, 0x20);
+                I_strncpyz(nameBind2, UI_SafeTranslateString(nameBind2), 0x80);
+                I_strncat(nameBind, 0x80, va(" %s ", UI_SafeTranslateString("KEY_OR")));
+                I_strncat(nameBind, 0x80, nameBind2);
+            }
             return;
-
-        char nameBind2[0x80];
-        Key_KeynumToStringBuf(key2, nameBind2, 0x20);
-        I_strncpyz(nameBind2, UI_SafeTranslateString(nameBind2), 0x80);
-        I_strncat(nameBind, 0x80, va(" %s ", UI_SafeTranslateString("KEY_OR")));
-        I_strncat(nameBind, 0x80, nameBind2);
-        return;
+        }
     }
 
     I_strncpyz(nameBind, UI_SafeTranslateString("KEY_UNBOUND"), 0x80);
@@ -863,14 +859,13 @@ void UI_AddMenuList(displayContextDef_t *dc, MenuList *menuList)
     /* was raw x86 offsets: menus ptr @+4 read as 4-byte (truncated), Menus[] stride *4 */
     if (!menuList)
         return;
-    if (menuList->menuCount <= 0)
-        return;
 
     for (i = 0; i < menuList->menuCount; i++) {
-        if (dc->menuCount > 0x7f)
-            Com_Error(ERR_DROP, "UI_AddMenu: Maximum number of menus %d exceeded.", 0x80);
-        dc->Menus[dc->menuCount] = menuList->menus[i];
-        dc->menuCount += 1;
+        menuDef_t *menu = menuList->menus[i];
+        if (dc->menuCount >= 128)
+            Com_Error(ERR_DROP, "UI_AddMenu: Maximum number of menus %d exceeded.", 128);
+        dc->Menus[dc->menuCount] = menu;
+        dc->menuCount++;
     }
 }
 
@@ -893,7 +888,7 @@ float Item_Slider_ThumbPosition(itemDef_t *item)
 {
     byte *it = (byte *)item;
     editFieldDef_t *editDef = Item_GetEditFieldDef(item);
-    float baseX, value, minVal, maxVal;
+    float baseX, value;
 
     if (!editDef)
         return 0.0f;
@@ -904,15 +899,14 @@ float Item_Slider_ThumbPosition(itemDef_t *item)
         baseX = (((rectDef_t*)(it))->x);
 
     value = Dvar_GetFloat(item->dvar);
-    minVal = (((editFieldDef_s*)(editDef))->minVal);
-    maxVal = *((float *)editDef + 1);
 
-    if (value < minVal)
-        value = minVal;
-    else if (value > maxVal)
-        value = maxVal;
+    if (value < editDef->minVal)
+        value = editDef->minVal;
+    else if (value > editDef->maxVal)
+        value = editDef->maxVal;
 
-    return ((value - minVal) / (maxVal - minVal)) * 84.0f + 5.0f + 1.0f + baseX;
+    value = (value - editDef->minVal) / (editDef->maxVal - editDef->minVal) * 84.0f;
+    return value + baseX + 6.0f;
 }
 
 qboolean Menu_CheckOnKey(displayContextDef_t *dc, menuDef_t *menu, int key)
@@ -965,14 +959,23 @@ qboolean Menu_CheckOnKey(displayContextDef_t *dc, menuDef_t *menu, int key)
     return 0;
 }
 
+static bool Window_IsVisible(Window *w)
+{
+    return ((unsigned int)w->dynamicFlags[0] >> 2) & 1;
+}
+
+static bool Window_HasFocus(Window *w)
+{
+    if (!Window_IsVisible(w))
+        return false;
+    return ((unsigned int)w->dynamicFlags[0] >> 1) & 1;
+}
+
 qboolean Menus_AnyFullScreenVisible(displayContextDef_t *dc)
 {
-    byte *d = (byte *)dc;
-    int count = (((displayContextDef_s*)(d))->openMenuCount);
     int i;
-    for (i = count - 1; i >= 0; i--) {
-        byte *menu = *(byte **)((char *)&((displayContextDef_s *)d)->menuStack[i]);
-        if (((*(byte *)&((menuDef_t *)menu)->window.dynamicFlags[0]) & 4) && (((menuDef_t*)(menu))->fullScreen))
+    for (i = dc->openMenuCount - 1; i >= 0; i--) {
+        if (Window_IsVisible(&dc->menuStack[i]->window) && dc->menuStack[i]->fullScreen)
             return 1;
     }
     return 0;
@@ -980,13 +983,10 @@ qboolean Menus_AnyFullScreenVisible(displayContextDef_t *dc)
 
 menuDef_t *Menu_GetFocused(displayContextDef_t *dc)
 {
-    int count = dc->openMenuCount;
     int i;
-    for (i = count - 1; i >= 0; i--) {
-        menuDef_t *menu = dc->menuStack[i];
-        int flags = menu->window.dynamicFlags[0];
-        if ((flags & 4) && (flags & 2))
-            return menu;
+    for (i = dc->openMenuCount - 1; i >= 0; i--) {
+        if (Window_HasFocus(&dc->menuStack[i]->window) && Window_IsVisible(&dc->menuStack[i]->window))
+            return dc->menuStack[i];
     }
     return NULL;
 }
@@ -1136,18 +1136,6 @@ void Menus_AddToStack(displayContextDef_t *dc, menuDef_t *menu)
     if (dc->openMenuCount == 16)
         Com_Error(ERR_DROP, "\x15Too many menus opened");
     dc->menuStack[dc->openMenuCount++] = menu;
-}
-
-static bool Window_IsVisible(Window *w)
-{
-    return ((unsigned int)w->dynamicFlags[0] >> 2) & 1;
-}
-
-static bool Window_HasFocus(Window *w)
-{
-    if (!Window_IsVisible(w))
-        return false;
-    return ((unsigned int)w->dynamicFlags[0] >> 1) & 1;
 }
 
 static qboolean Menus_MenuIsInStack(displayContextDef_t *dc, menuDef_t *menu)

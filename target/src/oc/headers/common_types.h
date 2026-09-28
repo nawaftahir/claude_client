@@ -15439,6 +15439,7 @@ struct uiClientState_t {
     int connectPacketCount;
     int clientNum;
     char servername[1024];
+    char updateInfoString[1024];
     char messageString[1024];
 };
 
@@ -15777,6 +15778,9 @@ struct clientStatic_t {
     int numfavoriteservers;
     serverInfo_t favoriteServers[128];
     int pingUpdateSource;
+    netadr_t updateServer;
+    char updateChallenge[1024];
+    char updateInfoString[1024];
     netadr_t authorizeServer;
     MaterialHandle whiteMaterial;
     MaterialHandle consoleMaterial;

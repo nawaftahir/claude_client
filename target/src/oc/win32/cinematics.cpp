@@ -273,7 +273,7 @@ void ROQ_SetExtentsFromHandle(int handle, int x, int y, int w, int h)
 
 void ROQ_UploadCinematicFromHandle(int handle)
 {
-    if ((unsigned int)handle <= 0xf && cinTable[handle].buf) {
+    if (handle >= 0 && handle < 16 && cinTable[handle].buf) {
         if (cinTable[handle].playonwalls <= 0 && cinTable[handle].dirty) {
             if (cinTable[handle].playonwalls == 0) {
                 cinTable[handle].playonwalls = -1;

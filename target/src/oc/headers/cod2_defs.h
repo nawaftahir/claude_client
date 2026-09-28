@@ -10214,6 +10214,7 @@ struct uiClientState_t {
     int connectPacketCount;
     int clientNum;
     char servername[1024];
+    char updateInfoString[1024];
     char messageString[1024];
 };
 
@@ -10469,6 +10470,9 @@ struct clientStatic_t {
     int numfavoriteservers;
     serverInfo_t favoriteServers[128];
     int pingUpdateSource;
+    netadr_t updateServer;
+    char updateChallenge[1024];
+    char updateInfoString[1024];
     netadr_t authorizeServer;
     MaterialHandle whiteMaterial;
     MaterialHandle consoleMaterial;
@@ -10494,11 +10498,13 @@ struct clientStatic_t {
 COD2_ASSERT_FIELD(clientStatic_t, localServers, 0x13c);
 COD2_ASSERT_FIELD(clientStatic_t, globalServers, 0x4944);
 COD2_ASSERT_FIELD(clientStatic_t, favoriteServers, 0x2c3b48);
-COD2_ASSERT_FIELD(clientStatic_t, authorizeServer, 0x2c834c);
+// PC 1.0: authorizeServer 0x8d7e00 - cls 0x60f2a0 (CL_RequestAuthorization)
+COD2_ASSERT_FIELD(clientStatic_t, authorizeServer, 0x2c8b60);
+// retail CL_Shutdown clears 0x2c8d24 bytes; 0x154 bytes not yet placed
 #if COD2_IS_PATCH_13
-COD2_ASSERT_SIZE(clientStatic_t, 0x2c8a18);
+COD2_ASSERT_SIZE(clientStatic_t, 0x2c922c);
 #else
-COD2_ASSERT_SIZE(clientStatic_t, 0x2c83bc);
+COD2_ASSERT_SIZE(clientStatic_t, 0x2c8bd0);
 #endif
 
 struct viewDamage_t {
