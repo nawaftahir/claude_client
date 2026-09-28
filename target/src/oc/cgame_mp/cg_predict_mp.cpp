@@ -29,7 +29,7 @@ extern void CG_TransitionPlayerState(playerState_t *ps, playerState_t *ops);
 extern void BG_PlayerStateToEntityState(playerState_s *ps, entityState_s *s, int snap, byte handler);
 extern void BG_EvaluateTrajectory( const trajectory_t *tr, int atTime, vec3_t result );
 extern WeaponDef *BG_GetWeaponDef(int weapon);
-extern qboolean CG_GetWeapReticleZoom(float *fZoom);
+extern bool CG_GetWeapReticleZoom(float *fZoom);
 extern float flrand(float min, float max);
 extern float randomf(void);
 extern float AngleNormalize360( float angle );

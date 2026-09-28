@@ -171,7 +171,7 @@ void CG_AddLagometerFrameInfo(void);
 void CG_AddLagometerSnapshotInfo(snapshot_t *snap);
 static void CG_DrawDisconnect(void);
 void CG_PriorityCenterPrint(const char *str, float charWidth, int priority);
-qboolean CG_GetWeapReticleZoom(float *pfZoom);
+bool CG_GetWeapReticleZoom(float *pfZoom);
 void CG_DrawFrameOverlay(float innerLeft, float innerRight, float innerTop, float innerBottom, const vec_t *color, MaterialHandle material);
 static unsigned int CG_DrawCrosshairNames(void);
 void CG_CheckTimedMenus(void);
@@ -192,14 +192,18 @@ static float CG_DrawWeapReticle(void);
 unsigned int CG_DrawCrosshair(void);
 unsigned int CG_Draw2D(void);
 
-static inline __attribute__((always_inline)) qboolean CG_UpdateCameraShakeStrength(cg_t *cg, cameraShake_t *shake)
+static inline __attribute__((always_inline)) qboolean CG_UpdateCameraShakeStrength(cameraShake_t *shake)
 {
     float elapsed;
     float distanceScale;
     float rumbleScale;
 
-    elapsed = (float)(cg->time - shake->time);
-    if (elapsed < 0.0f || elapsed >= shake->length) {
+    int elapsedMs = cg->time - shake->time;
+    if (elapsedMs < 0) {
+        return 0;
+    }
+    elapsed = (float)elapsedMs;
+    if (elapsed >= shake->length) {
         return 0;
     }
 
@@ -209,7 +213,7 @@ static inline __attribute__((always_inline)) qboolean CG_UpdateCameraShakeStreng
         return 0;
     }
 
-    shake->size = distanceScale < 0.0f ? distanceScale / rumbleScale : distanceScale * rumbleScale;
+    shake->size = distanceScale >= 0.0f ? distanceScale * rumbleScale : distanceScale / rumbleScale;
     shake->rumbleScale = rumbleScale;
     return 1;
 }
@@ -230,7 +234,7 @@ void CG_StartShakeCamera(float scale, int duration, const vec_t *src, float radi
     temp.src[1] = src[1];
     temp.src[2] = src[2];
     temp.radius = radius;
-    CG_UpdateCameraShakeStrength(cg, &temp);
+    CG_UpdateCameraShakeStrength(&temp);
 
     serverTime = cg->time;
     for (i = 0; i < 4; ++i) {
@@ -416,17 +420,16 @@ void CG_PriorityCenterPrint(const char *str, float charWidth, int priority)
  * `extern qboolean` and read full eax; a 1-byte Bool return leaves eax's upper
  * bytes dirty under MSVC -> garbage non-zero -> !CG_GetWeapReticleZoom() == 0 ->
  * drawGun never set -> the viewmodel was hidden even when spawned. */
-qboolean CG_GetWeapReticleZoom(float *pfZoom)
+bool CG_GetWeapReticleZoom(float *pfZoom)
 {
     WeaponDef *weaponDef;
     float zoom;
-    float zoomFrac;
 
     weaponDef = (WeaponDef *)BG_GetWeaponDef(BG_GetViewmodelWeaponIndex(&cg->predictedPlayerState));
     zoom = cg->predictedPlayerState.fWeaponPosFrac;
     *pfZoom = 0.0f;
 
-    if ((!weaponDef->szOverlayMaterial || !weaponDef->szOverlayMaterial[0]) && !weaponDef->overlayReticle)
+    if (!weaponDef->szOverlayMaterial[0] && !weaponDef->overlayReticle)
     {
         return 0;
     }
@@ -436,26 +439,22 @@ qboolean CG_GetWeapReticleZoom(float *pfZoom)
     }
 
     if (cg->playerEntity.bPositionToADS) {
-        zoomFrac = zoom - (1.0f - weaponDef->fAdsZoomInFrac );
-        *pfZoom = zoomFrac;
-        if (zoomFrac > 0.0f) {
-            zoomFrac /= weaponDef->fAdsZoomInFrac ;
-            *pfZoom = zoomFrac;
+        *pfZoom = zoom - (1.0f - weaponDef->fAdsZoomInFrac);
+        if (*pfZoom > 0.0f) {
+            *pfZoom /= weaponDef->fAdsZoomInFrac;
         }
     } else {
-        zoomFrac = zoom - (1.0f - weaponDef->fAdsZoomOutFrac );
-        *pfZoom = zoomFrac;
-        if (zoomFrac > 0.0f) {
-            zoomFrac /= weaponDef->fAdsZoomOutFrac ;
-            *pfZoom = zoomFrac;
+        *pfZoom = zoom - (1.0f - weaponDef->fAdsZoomOutFrac);
+        if (*pfZoom > 0.0f) {
+            *pfZoom /= weaponDef->fAdsZoomOutFrac;
         }
     }
 
-    if (zoomFrac <= 0.01f) {
+    if (*pfZoom <= 0.01f) {
         return 0;
     }
 
-    if (zoomFrac > 1.0f) {
+    if (*pfZoom > 1.0f) {
         *pfZoom = 1.0f;
     }
 
@@ -922,7 +921,7 @@ unsigned int CG_ShakeCamera(void)
 
     for (i = 0; i < 4; ++i) {
         shake = &cg->cameraShake[i];
-        if (!CG_UpdateCameraShakeStrength(cg, shake)) {
+        if (!CG_UpdateCameraShakeStrength(shake)) {
             continue;
         }
 

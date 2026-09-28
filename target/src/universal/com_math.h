@@ -288,7 +288,7 @@ FloatIsNegative
 */
 TU_STATIC int const FloatIsNegative(const float x)
 {
-	return *(const unsigned int *)&x >> 31;
+	return *(const int *)&x < 0;
 }
 
 /*

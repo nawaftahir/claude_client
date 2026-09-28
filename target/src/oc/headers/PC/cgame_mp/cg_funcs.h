@@ -29,7 +29,7 @@ void CG_AddLagometerFrameInfo(void);
 void CG_AddLagometerSnapshotInfo(snapshot_t *snap);
 void CG_DrawDisconnect(void);
 void CG_PriorityCenterPrint(const char *str, float charWidth, int priority);
-qboolean CG_GetWeapReticleZoom(float *pfZoom);  /* qboolean(int), not Bool: callers read full eax (see cg_draw_mp.c) */
+bool CG_GetWeapReticleZoom(float *pfZoom);
 void CG_DrawFrameOverlay(float innerLeft, float innerRight, float innerTop, float innerBottom, const vec_t *color, MaterialHandle material);
 unsigned int CG_DrawCrosshairNames(void);
 void CG_CheckTimedMenus(void);

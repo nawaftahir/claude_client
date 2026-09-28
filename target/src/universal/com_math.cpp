@@ -3396,10 +3396,8 @@ ProjectPointOnPlane
 void ProjectPointOnPlane( const vec3_t p, const vec3_t normal, vec3_t dst )
 {
 	float scale;
-	float d;
 
-	d = DotProduct(normal, p);
-	scale = -d;
+	scale = -DotProduct(normal, p);
 	VectorMA(p, scale, normal, dst);
 }
 

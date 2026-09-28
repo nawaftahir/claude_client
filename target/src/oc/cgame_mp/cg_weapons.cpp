@@ -114,7 +114,7 @@ extern GfxEntity *R_AddRefEntityToScene(const GfxEntity *refEnt, GfxModel sceneM
 extern void R_SkinGfxEntityDelayed(GfxEntity *ent);
 extern void SND_SetChannelVolumes(int priority, const float *channelvolume, int fademsec);
 extern void SND_DeactivateChannelVolumes(int priority, int fademsec);
-extern qboolean CG_GetWeapReticleZoom(float *fZoom);
+extern bool CG_GetWeapReticleZoom(float *fZoom);
 extern qboolean BG_IsAimDownSightWeapon(int iWeapon);
 extern void BG_CalculateWeaponPosition_Sway(const struct playerState_s *ps, float *swayViewAngles, float *swayOffset, float *swayAngles, float ssSwayScale, int frametime);
 extern void BG_CalculateWeaponAngles(weaponState_t *ws, vec_t *angles);
