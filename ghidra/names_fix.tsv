@@ -26,7 +26,6 @@
 0	CL_PacketEvent	drop
 0	CL_Netchan_PrintProfileStats	drop
 0	CM_SightTraceSphereThroughSphere	drop
-0	FS_AddGameDirectory	drop
 0	BoxOnPlaneSide	drop
 0	Com_ParseVolumeFalloffCurve	drop
 0	SND_UnpauseSounds	drop
@@ -36,7 +35,6 @@
 0	Scr_GetNextCodepos	drop
 0	Scr_ParamError	drop
 0	DObjGetCreateParms	drop
-0	FX_SetMaterialAndSequenceParams	drop
 0	ROQ_DrawCinematicFromHandle	drop
 0	ROQ_RunCinematicFromHandle	drop
 0	CL_Rcon_f	drop
@@ -57,7 +55,6 @@
 0	CG_ScriptMover	drop
 0	CG_CalcViewValues	drop
 0	CG_UpdateShellShock	drop
-0	SCR_UpdateFrame	drop
 0	CG_Madd	drop
 0	CG_WhizbySound	drop
 0	CG_DrawTracer	drop
@@ -81,7 +78,6 @@
 0	UI_OwnerDraw	drop
 0	UI_Refresh	drop
 0	Menu_CheckOnKey	drop
-0	Window_Paint	drop
 0	Menu_SetPrevCursorItem	drop
 0	Item_YesNo_Paint	drop
 0	Item_Slider_Paint	drop
@@ -90,8 +86,6 @@
 0	Script_SetFocus	drop
 0	Item_TextField_HandleKey	drop
 0	Menu_HandleKey	drop
-0	Item_Paint	drop
-0	Menu_Paint	drop
 0	Menus_HandleOOBClick	drop
 0	Item_GetCursorPosOffset	drop
 428e30	AxisToAngles	fix
@@ -238,3 +232,22 @@
 52cef0	UI_DrawMapLevelshot	fix	# callalign
 530f70	UI_FeederCount	fix	# callalign
 4b2da0	SND_Set3DPosition	fix	# callalign
+53abf0	Item_ListBox_Paint	fix	# ctx listbox string
+536760	Item_ListBox_HandleKey	fix	# ctx listbox string
+53b7e0	Item_Paint	fix	# ctx caller Menu_PaintAll
+533bd0	Window_Paint	fix	# ctx
+532830	UI_DisplayDownloadInfo	fix	# ctx strings
+53c3f0	Menu_Paint	fix	# ctx
+4c0370	CG_OwnerDraw	fix	# ctx callees
+44c940	SND_UpdateBackgroundVolume	fix	# callalign
+4045a0	CL_ConsolePrint_AddLine	fix	# callalign v2
+423640	FS_AddGameDirectory	fix	# callalign v2
+476f80	RemoveVariable	fix	# callalign v2
+477090	SafeRemoveVariable	fix	# callalign v2
+49e500	FX_SetMaterialAndSequenceParams	fix	# callalign v2
+4bc300	CG_DrawDevString	fix	# callalign v2
+413510	SCR_UpdateFrame	fix	# callalign v2
+4d3960	CG_DrawScoreboard_GetTeamColor	fix	# callalign v2
+531560	UI_OverrideCursorPos	fix	# callalign v2
+5314f0	UI_FeederItemImage	fix	# callalign v2
+52be30	UI_DrawRect	fix	# callalign v2
