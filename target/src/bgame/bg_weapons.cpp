@@ -978,14 +978,12 @@ qboolean BG_SetPlayerWeaponForSlot( playerState_t *ps, int slot, int weaponIndex
 
 	weaponSlot = BG_GetWeaponDef(weaponIndex)->weaponSlot;
 
-	if ( (unsigned int)(weaponSlot - 1) <= 1 )
+	if ( weaponSlot <= 0 || weaponSlot > 2 )
 	{
-		if ( slot != SLOT_PRIMARY && slot != SLOT_PRIMARYB )
-		{
-			return qfalse;
-		}
+		return qfalse;
 	}
-	else
+
+	if ( slot != SLOT_PRIMARY && slot != SLOT_PRIMARYB )
 	{
 		return qfalse;
 	}
