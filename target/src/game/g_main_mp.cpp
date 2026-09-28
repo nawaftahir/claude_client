@@ -398,10 +398,9 @@ G_InitGame
 */
 void G_InitGame( int levelTime, int randomSeed, int restart, int savepersist )
 {
-	int j;
 	int i;
-	char cs2[MAX_INFO_STRING];
 	char cs[MAX_INFO_STRING];
+	char cs2[MAX_INFO_STRING];
 
 	Com_Printf("------- Game Initialization -------\n");
 	Com_Printf("gamename: %s\n", GAMEVERSION);
@@ -501,9 +500,9 @@ void G_InitGame( int levelTime, int randomSeed, int restart, int savepersist )
 	level.clients = g_clients;
 
 	// set client fields on player ents
-	for ( j = 0 ; j < level.maxclients ; j++ )
+	for ( i = 0 ; i < level.maxclients ; i++ )
 	{
-		g_entities[j].client = level.clients + j;
+		g_entities[i].client = level.clients + i;
 	}
 
 	// always leave room for the max number of clients,
@@ -546,9 +545,9 @@ void G_InitGame( int levelTime, int randomSeed, int restart, int savepersist )
 
 	Scr_StartupGameType();
 
-	for ( j = 0; j < MAX_CLIENT_CORPSES; j++ )
+	for ( i = 0; i < MAX_CLIENT_CORPSES; i++ )
 	{
-		g_scr_data.playerCorpseInfo[j].entnum = -1;
+		g_scr_data.playerCorpseInfo[i].entnum = -1;
 	}
 
 	bgs = NULL;
@@ -1348,6 +1347,8 @@ void G_SightTrace( int *hitNum, const vec3_t start, const vec3_t end, int passEn
 	SV_SightTrace( hitNum, start, vec3_origin, vec3_origin, end, passEntityNum, ENTITYNUM_NONE, contentmask );
 }
 
+extern void CL_AddDebugString( const float *xyz, const float *color, float scale, const char *text, int fromServer );
+
 /*
 =============
 G_AddDebugString
@@ -1355,4 +1356,5 @@ G_AddDebugString
 */
 void G_AddDebugString( const vec3_t xyz, const vec4_t color, float scale, const char *pszText )
 {
+	CL_AddDebugString( xyz, color, scale, pszText, qtrue );
 }

@@ -165,11 +165,7 @@ void Com_LoadSoundAliasChannel( const char *token, const char *sourceFile, snd_a
 
 void Com_LoadSoundAliasType( const char *token, const char *sourceFile, snd_alias_build_t *alias )
 {
-	if ( !I_stricmp(token, "streamed") )
-	{
-		alias->type = SAT_STREAMED;
-	}
-	else if ( !I_stricmp(token, "primed") )
+	if ( !I_stricmp(token, "streamed") || !I_stricmp(token, "primed") )
 	{
 		alias->type = SAT_STREAMED;
 	}

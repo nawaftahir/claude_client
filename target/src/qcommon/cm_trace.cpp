@@ -935,7 +935,7 @@ qboolean CM_TraceSphereThroughSphere( traceWork_t *tw, const vec3_t vStart, cons
 		trace->contents = tw->threadInfo.box_brush->contents;
 		VectorSubtract(vEnd, vStationary, vDelta);
 
-		if ( fRadiusSqrd >= VectorLengthSquared(vDelta) )
+		if ( VectorLengthSquared(vDelta) <= fRadiusSqrd )
 		{
 			trace->allsolid = 1;
 		}
@@ -959,8 +959,8 @@ qboolean CM_TraceSphereThroughSphere( traceWork_t *tw, const vec3_t vStart, cons
 		return qtrue;
 	}
 
-	fDeltaLen = Vec3NormalizeTo(vDelta, vNormal);
-	fEntry = (-fB - I_sqrt(fDiscriminant)) / fA + fDeltaLen * (float)SURFACE_CLIP_EPSILON / fB;
+	fDeltaLen = Vec3NormalizeTo(vDelta, vNormal) * (float)SURFACE_CLIP_EPSILON;
+	fEntry = (-fB - I_sqrt(fDiscriminant)) / fA + fDeltaLen / fB;
 
 	if ( fEntry < trace->fraction )
 	{
@@ -1040,8 +1040,8 @@ qboolean CM_TraceCylinderThroughCylinder( traceWork_t *tw, const vec3_t vStation
 	}
 
 	vDelta[2] = 0.0;
-	fDeltaLen = Vec3NormalizeTo(vDelta, vNormal);
-	fEpsilon = fDeltaLen * (float)SURFACE_CLIP_EPSILON / fB;
+	fDeltaLen = Vec3NormalizeTo(vDelta, vNormal) * (float)SURFACE_CLIP_EPSILON;
+	fEpsilon = fDeltaLen / fB;
 	fEntry = (-fB - I_sqrt(fDiscriminant)) / fA + fEpsilon;
 
 	if ( fEntry < trace->fraction )

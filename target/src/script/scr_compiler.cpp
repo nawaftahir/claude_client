@@ -877,7 +877,7 @@ void Scr_InitFromChildBlocks( scr_block_s **childBlocks, int childCount, scr_blo
 	{
 		assert(i < block->localVarsCount);
 
-		if ( (block->localVarsInitBits[ i >> 3 ] >> ( i & 7 )) & 1 )
+		if ( ( 1 << ( i & 7 ) ) & block->localVarsInitBits[ i >> 3 ] )
 		{
 			continue;
 		}
@@ -892,7 +892,7 @@ void Scr_InitFromChildBlocks( scr_block_s **childBlocks, int childCount, scr_blo
 			assert(i < childBlock->localVarsPublicCount);
 			assert(childBlock->localVars[i].name == name);
 
-			if ( !((childBlock->localVarsInitBits[ i >> 3 ] >> ( i & 7 )) & 1) )
+			if ( !( ( 1 << ( i & 7 ) ) & childBlock->localVarsInitBits[ i >> 3 ] ) )
 			{
 				goto out;
 			}
@@ -1040,7 +1040,7 @@ void Scr_TransferBlock( scr_block_s *from, scr_block_s *to )
 
 		*(unsigned int *)( (char *)to + sizeof( scr_localVar_t ) * i + offsetof( scr_block_s, localVars ) ) = name;
 
-		if ( ( from->localVarsInitBits[ i >> 3 ] >> ( i & 7 ) ) & 1 )
+		if ( ( 1 << ( i & 7 ) ) & from->localVarsInitBits[ i >> 3 ] )
 		{
 			to->localVarsInitBits[ i >> 3 ] |= 1 << ( i & 7 );
 		}

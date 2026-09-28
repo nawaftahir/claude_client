@@ -1282,9 +1282,12 @@ static void FX_RemoveNonBolt( int index, bool bDie )
 	FX_RemoveEffect(fx, bDie);
 }
 
+extern void StatMon_Warning( int type, int duration, const char *materialName );
+
 // Original name unknown.
 static void FX_EffectLimitReached()
 {
+	StatMon_Warning(3, 3000, "gfx/2d/warning@maxeffects.jpg");
 }
 
 // Original name unknown.

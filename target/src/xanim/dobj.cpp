@@ -327,7 +327,7 @@ void DObjCompleteHierarchyBits(DObj_s *obj, int *partBits)
 			continue;
 		}
 
-		if ( (byte)(((byte)(partBits[boneIndex >> 5] >> (boneIndex & 0x1F)) ^ 1) & 1) )
+		if ( !(( 1 << (boneIndex & 0x1F) ) & partBits[boneIndex >> 5]) )
 		{
 			--boneIndex;
 			continue;
@@ -373,7 +373,7 @@ int DObjSkelIsBoneUpToDate(DObj_s *obj, int boneIndex)
 {
 	DSkel_t *skel = obj->skel;
 
-	return ((skel->partBits.skel[boneIndex >> 5] >> (boneIndex & 0x1F)) & 1) != 0;
+	return (( 1 << (boneIndex & 0x1F) ) & skel->partBits.skel[boneIndex >> 5]) != 0;
 }
 
 int DObjSkelAreBonesUpToDate(const DObj_s *obj, int *partBits)
@@ -1559,7 +1559,7 @@ void DObjSetLocalTagInternal( const DObj_s *obj, const float *trans, const float
 	VectorCopy(trans, rotTrans->trans);
 }
 
-bool DObjSetControlTagAngles(const DObj_s *obj, int *partBits, unsigned int boneIndex, float *angles)
+qboolean DObjSetControlTagAngles(const DObj_s *obj, int *partBits, unsigned int boneIndex, float *angles)
 {
 	int index;
 
@@ -1575,7 +1575,7 @@ bool DObjSetControlTagAngles(const DObj_s *obj, int *partBits, unsigned int bone
 	return true;
 }
 
-bool DObjSetLocalTag(const DObj_s *obj, int *partBits, unsigned int boneIndex, const float *trans, const float *angles)
+qboolean DObjSetLocalTag(const DObj_s *obj, int *partBits, unsigned int boneIndex, const float *trans, const float *angles)
 {
 	int index;
 
@@ -1595,7 +1595,7 @@ bool DObjSetLocalTag(const DObj_s *obj, int *partBits, unsigned int boneIndex, c
 	return true;
 }
 
-bool DObjSetLocalBoneIndex(const DObj_s *obj, int *partBits, int boneIndex, const float *trans, const float *angles)
+qboolean DObjSetLocalBoneIndex(const DObj_s *obj, int *partBits, int boneIndex, const float *trans, const float *angles)
 {
 	if ( !DObjSetRotTransIndex(obj, partBits, boneIndex) )
 		return false;

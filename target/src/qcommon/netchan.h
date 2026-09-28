@@ -73,7 +73,7 @@ void NetProf_NewSendPacket(netchan_t *chan, int iSize, int bFragment);
 void NetProf_NewRecievePacket(netchan_t *chan, int iSize, int bFragment);
 void NetProf_UpdateStatistics(netProfileStream_t *pStream);
 void SV_Netchan_PrintProfileStats(int bPrintToConsole);
-qboolean NET_OutOfBandPrint(netsrc_t sock, netadr_t adr, const char *msg);
+unsigned char NET_OutOfBandPrint(netsrc_t sock, netadr_t adr, const char *msg);
 void NET_OutOfBandVoiceData( netsrc_t sock, netadr_t adr, byte *data, int len );
 void Netchan_Setup( netsrc_t sock, netchan_t *chan, netadr_t adr, int qport );
 bool Netchan_TransmitNextFragment(netchan_t *chan);

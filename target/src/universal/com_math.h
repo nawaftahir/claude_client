@@ -69,6 +69,8 @@ float Q_acos( float c );
 #define TU_STATIC static inline   /* one copy per TU that uses it */
 #endif
 
+TU_STATIC int I_fround(const float x);
+
 // Scalar helpers. Definition order is emission order: each TU's used copies
 // follow its last function in exactly this sequence.
 
@@ -220,7 +222,7 @@ Q_rint
 */
 TU_STATIC int Q_rint(const float in)
 {
-	return (int)floor(in + 0.5f);
+	return I_fround(in);
 }
 
 /*
@@ -306,7 +308,20 @@ FastCeil
 */
 TU_STATIC int const FastCeil(const float x)
 {
+#ifdef _MSC_VER
+	// fistp rounds to nearest; 0.5 - 2^-30 sends non-integers up and keeps
+	// exact integers in place
+	const double bias = 0.5 - 1.0 / (1 << 30);
+	int result;
+
+	__asm fld x
+	__asm fadd bias
+	__asm fistp result
+
+	return result;
+#else
 	return (int)ceil(x);
+#endif
 }
 
 /*

@@ -519,13 +519,7 @@ void G_SetClientContents( gentity_t *pEnt )
 		return;
 	}
 
-	if ( pEnt->client->sess.sessionState == SESS_STATE_DEAD )
-	{
-		pEnt->r.contents = CONTENTS_NONE;
-		return;
-	}
-
-	pEnt->r.contents = CONTENTS_BODY;
+	pEnt->r.contents = ( pEnt->client->sess.sessionState == SESS_STATE_DEAD ) ? CONTENTS_NONE : CONTENTS_BODY;
 }
 
 /*

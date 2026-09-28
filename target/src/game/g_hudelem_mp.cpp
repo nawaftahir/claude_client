@@ -305,9 +305,9 @@ void HudElem_SetColor(game_hudelem_t *hud, int offset)
 
 	Scr_GetVector(0, color);
 
-	hud->elem.color.split.r = Q_rint(I_fmax(0.0f, I_fmin(1.0f, color[0])) * 255);
-	hud->elem.color.split.g = Q_rint(I_fmax(0.0f, I_fmin(1.0f, color[1])) * 255);
-	hud->elem.color.split.b = Q_rint(I_fmax(0.0f, I_fmin(1.0f, color[2])) * 255);
+	hud->elem.color.split.r = I_fround(I_fmax(0.0f, I_fmin(1.0f, color[0])) * 255);
+	hud->elem.color.split.g = I_fround(I_fmax(0.0f, I_fmin(1.0f, color[1])) * 255);
+	hud->elem.color.split.b = I_fround(I_fmax(0.0f, I_fmin(1.0f, color[2])) * 255);
 }
 
 /*
@@ -339,7 +339,7 @@ void HudElem_SetAlpha( game_hudelem_t *hud, int offset )
 	assert(g_hudelem_fields[offset].ofs == HEOFS( elem.color ));
 
 	alpha = Scr_GetFloat(0);
-	hud->elem.color.split.a = Q_rint(I_fmax(0.0f, I_fmin(1.0f, alpha)) * 255);
+	hud->elem.color.split.a = I_fround(I_fmax(0.0f, I_fmin(1.0f, alpha)) * 255);
 }
 
 /*
@@ -1038,7 +1038,7 @@ void HECmd_FadeOverTime( scr_entref_t entref )
 	}
 
 	hud->elem.fadeStartTime = level.time;
-	hud->elem.fadeTime = Q_rint(fadeTime * 1000);
+	hud->elem.fadeTime = I_fround(fadeTime * 1000);
 	hud->elem.fromColor.rgba = hud->elem.color.rgba;
 }
 
@@ -1077,7 +1077,7 @@ void HECmd_ScaleOverTime( scr_entref_t entref )
 	height = Scr_GetInt(2);
 
 	hud->elem.scaleStartTime = level.time;
-	hud->elem.scaleTime = Q_rint(scaleTime * 1000);
+	hud->elem.scaleTime = I_fround(scaleTime * 1000);
 	hud->elem.fromWidth = hud->elem.width;
 	hud->elem.fromHeight = hud->elem.height;
 	hud->elem.width = width;
@@ -1108,7 +1108,7 @@ void HECmd_MoveOverTime( scr_entref_t entref )
 	}
 
 	hud->elem.moveStartTime = level.time;
-	hud->elem.moveTime = Q_rint(movetime * 1000);
+	hud->elem.moveTime = I_fround(movetime * 1000);
 	hud->elem.fromX = hud->elem.x;
 	hud->elem.fromY = hud->elem.y;
 	hud->elem.fromAlignOrg = hud->elem.alignOrg;

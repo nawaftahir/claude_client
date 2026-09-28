@@ -32,7 +32,7 @@ extern void CG_RegisterItemVisuals(int itemNum);
 extern void Com_Error(errorParm_t code, const char *fmt, ...);
 extern float AngleSubtract( float a1, float a2 );
 extern float LerpAngle(float from, float to, float frac);
-extern bool DObjSetControlTagAngles(const DObj_s *obj, int *partBits, unsigned int boneIndex, float *angles);
+extern qboolean DObjSetControlTagAngles(const DObj_s *obj, int *partBits, unsigned int boneIndex, float *angles);
 extern struct XAnimTree_s *DObjGetTree(const struct DObj_s *obj);
 extern int XAnimSetCompleteGoalWeightKnobAll(XAnimTree_s *tree, unsigned int animIndex, unsigned int rootIndex, float goalWeight, float goalTime, float rate, unsigned int notifyName, int bRestart);
 extern void BG_Player_DoControllers(struct DObj_s *obj, const entityState_t *es, int *partBits, clientInfo_t *ci, int frametime);

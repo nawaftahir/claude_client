@@ -248,7 +248,7 @@ qboolean Pickup_Weapon( gentity_t *ent, gentity_t *other, int *pickupEvent, qboo
 
 			if ( !max && !min )
 			{
-				ent->count = Q_rint((randomf() + 1.0f) * 0.5f * (BG_GetAmmoClipSize(BG_ClipForWeapon(weapIdx)) - 1)) + 1;
+				ent->count = I_fround((randomf() + 1.0f) * 0.5f * (BG_GetAmmoClipSize(BG_ClipForWeapon(weapIdx)) - 1)) + 1;
 			}
 			else if ( max < 0 )
 			{
@@ -942,8 +942,8 @@ gentity_t *Drop_Weapon( gentity_t *ent, int iWeaponIndex, unsigned int tag )
 
 		if ( !iMax && !iMin )
 		{
-			iDropAmmo = Q_rint(((randomf() + 1.0f) * 0.5f) * (BG_GetAmmoClipSize(clipIndex) - 1)) + 1;
-			iDropClip = Q_rint((randomf() * 0.5f + 0.25f) * iDropAmmo);
+			iDropAmmo = I_fround(((randomf() + 1.0f) * 0.5f) * (BG_GetAmmoClipSize(clipIndex) - 1)) + 1;
+			iDropClip = I_fround((randomf() * 0.5f + 0.25f) * iDropAmmo);
 			iDropAmmo -= iDropClip;
 		}
 		else
@@ -1107,7 +1107,7 @@ void FinishSpawningItem( gentity_t *ent )
 
 		G_SetOrigin(ent, endpos);
 
-		if ( tr.fraction < 1.0 )
+		if ( tr.fraction < 1.0f )
 		{
 			VectorCopy(tr.normal, vAxis[2]);
 			AngleVectors(ent->r.currentAngles, vAxis[0], NULL, NULL);

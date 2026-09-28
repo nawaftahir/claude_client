@@ -958,9 +958,9 @@ int Vec3PackUnitVec( const vec3_t v )
 	int y;
 	int z;
 
-	x = Q_rint(v[0] * 511.0f) & 0x3ff;
-	y = Q_rint(v[1] * 511.0f) & 0x3ff;
-	z = Q_rint(v[2] * 511.0f) & 0x3ff;
+	x = I_fround(v[0] * 511.0f) & 0x3ff;
+	y = I_fround(v[1] * 511.0f) & 0x3ff;
+	z = I_fround(v[2] * 511.0f) & 0x3ff;
 
 	return x | (y << 10) | (z << 20);
 }
@@ -3211,7 +3211,7 @@ void SnapPointToIntersectingPlanes( const float **planes, vec3_t xyz, float snap
 
 	for ( axis = 0; axis < 3; axis++ )
 	{
-		rounded = Q_rint(xyz[axis] / snapGrid) * snapGrid;
+		rounded = I_fround(xyz[axis] / snapGrid) * snapGrid;
 
 		if ( I_fabs(rounded - xyz[axis]) < snapEpsilon )
 		{
@@ -3283,7 +3283,7 @@ void SnapPointToPlanes( const vec4_t *planes, int planeCount, vec3_t xyz, float 
 
 	for ( axis = 0; axis < 3; axis++ )
 	{
-		rounded = Q_rint(xyz[axis] / snapGrid) * snapGrid;
+		rounded = I_fround(xyz[axis] / snapGrid) * snapGrid;
 
 		if ( I_fabs(rounded - xyz[axis]) < snapEpsilon )
 		{
@@ -3908,7 +3908,7 @@ float SnapFloatToGrid( float value, float grid, float epsilon )
 	float err;
 
 	value = SnapFloatBits(value, 4, 12);
-	snapped = Q_rint(value * grid) / grid;
+	snapped = I_fround(value * grid) / grid;
 	err = I_fabs(snapped - value);
 
 	if ( err <= epsilon )

@@ -774,30 +774,21 @@ Mantle_IsWeaponInactive
 */
 bool Mantle_IsWeaponInactive( const playerState_t *ps )
 {
-	const MantleState *mstate;
 	int animIndex;
-	bool result;
 
 	if ( !mantle_enable->current.boolean )
 	{
-		result = false;
+		return false;
 	}
-	else
+
+	if ( !(ps->pm_flags & PMF_MANTLE) )
 	{
-		mstate = &ps->mantleState;
-
-		if ( !(ps->pm_flags & PMF_MANTLE) )
-		{
-			result = false;
-		}
-		else
-		{
-			animIndex = s_mantleTrans[mstate->transIndex].overAnimIndex;
-			result = animIndex != MANTLE_OVER_LOW;
-		}
+		return false;
 	}
 
-	return result;
+	animIndex = s_mantleTrans[ps->mantleState.transIndex].overAnimIndex;
+
+	return animIndex != MANTLE_OVER_LOW;
 }
 
 // Unreferenced storage; original declarations unknown (sized from the layout).

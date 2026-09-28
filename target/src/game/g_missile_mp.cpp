@@ -467,7 +467,7 @@ void G_RunMissile_CreateWaterSplash( gentity_t *ent, trace_t *trace )
 
 	if ( reflect[2] < 0 )
 	{
-		reflect[2] = -reflect[2];
+		reflect[2] *= -1.0f;
 	}
 
 	tent = G_TempEntity(ent->r.currentOrigin, EV_BULLET_HIT_LARGE);

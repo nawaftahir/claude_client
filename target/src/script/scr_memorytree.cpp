@@ -41,7 +41,7 @@ void MT_DumpTree()
 	for ( nodeNum = 0; nodeNum <= MEMORY_NODE_BITS; nodeNum++ )
 	{
 		subTreeSize = MT_GetSubTreeSize(scrMemTreeGlob.head[nodeNum]);
-		buckets = subTreeSize << nodeNum;
+		buckets = subTreeSize * (1 << nodeNum);
 		totalBuckets += buckets;
 		Com_Printf("%d subtree has %d * %d = %d free buckets\n", nodeNum, subTreeSize, 1 << nodeNum, buckets);
 	}
@@ -644,7 +644,7 @@ void MT_FinishForceAlloc( byte *allocBits )
 
 	for ( nodeNum = 1; nodeNum < MEMORY_NODE_COUNT; nodeNum++ )
 	{
-		if ( (bool)( allocBits[nodeNum >> 3] >> ( nodeNum & 7 ) & 1 ) )
+		if ( allocBits[nodeNum >> 3] & ( 1 << ( nodeNum & 7 ) ) )
 		{
 			continue;
 		}

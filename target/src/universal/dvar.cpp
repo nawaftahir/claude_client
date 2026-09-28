@@ -332,7 +332,7 @@ static int Dvar_StringToEnum(const DvarLimits *domain, const char *string)
 	len = I_strlen(string);
 	for ( stringIndex = 0; stringIndex < domain->enumeration.stringCount; ++stringIndex )
 	{
-		if ( !I_strnicmpInline(string, domain->enumeration.strings[stringIndex], len) )
+		if ( !strncasecmp(string, domain->enumeration.strings[stringIndex], len) )
 			return stringIndex;
 	}
 

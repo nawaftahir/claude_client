@@ -2935,7 +2935,6 @@ GScr_acos
 void GScr_acos()
 {
 	float v4;
-	int v3;
 
 	v4 = Scr_GetFloat(0);
 
@@ -2944,9 +2943,9 @@ void GScr_acos()
 		Scr_Error(va("%g out of range", v4));
 	}
 
-	*(float *)&v3 = acos(v4);
-	*(float *)&v3 = *(float *)&v3 * DEGINRAD;
-	Scr_AddFloat(*(float *)&v3);
+	v4 = acos(v4);
+	v4 = v4 * DEGINRAD;
+	Scr_AddFloat(v4);
 }
 
 /*
@@ -6141,7 +6140,7 @@ void Scr_PlayerDamage( gentity_t *self, gentity_t *inflictor, gentity_t *attacke
 
 	Scr_AddString(BG_GetWeaponDef(iWeapon)->szInternalName);
 
-	if ( meansOfDeath < 0 || (unsigned int)meansOfDeath > MOD_NUM - 1 )
+	if ( meansOfDeath < 0 || (unsigned int)meansOfDeath >= MOD_NUM )
 		Scr_AddString("badMOD");
 	else
 		Scr_AddString(modNames[meansOfDeath]);
@@ -6174,7 +6173,7 @@ void Scr_PlayerKilled( gentity_t *self, gentity_t *inflictor, gentity_t *attacke
 	GScr_AddVector(vDir);
 	Scr_AddString(BG_GetWeaponDef(iWeapon)->szInternalName);
 
-	if ( meansOfDeath < 0 || (unsigned int)meansOfDeath > MOD_NUM - 1 )
+	if ( meansOfDeath < 0 || (unsigned int)meansOfDeath >= MOD_NUM )
 		Scr_AddString("badMOD");
 	else
 		Scr_AddString(modNames[meansOfDeath]);

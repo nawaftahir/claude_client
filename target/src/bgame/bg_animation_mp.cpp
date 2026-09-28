@@ -2070,6 +2070,7 @@ void BG_SetNewAnimation( clientInfo_t *ci, lerpFrame_t *lf, int newAnimation, qb
 	int oldAnimNum;
 	qboolean bOldAnimNull;
 	float fStartTime;
+	float fCycleLen;
 	qboolean bLegs;
 	XAnimTree *pAnimTree;
 	XAnim *pXAnims;
@@ -2182,7 +2183,8 @@ void BG_SetNewAnimation( clientInfo_t *ci, lerpFrame_t *lf, int newAnimation, qb
 				cycleLen = 1000;
 			}
 
-			fStartTime = (bgs->time % cycleLen) / (float)cycleLen + ci->clientNum * 0.36000001f;
+			fCycleLen = (float)cycleLen;
+			fStartTime = (float)(bgs->time % cycleLen) / fCycleLen + ci->clientNum * 0.36000001f;
 			fStartTime = fStartTime - (int)fStartTime;
 		}
 	}

@@ -447,7 +447,7 @@ typedef struct
 	int playerAnimType;
 	int weaponType;
 	int weaponClass;
-	unsigned int weaponSlot;
+	int weaponSlot;
 	int offhandClass;
 	int slotStackable;
 	int stance;

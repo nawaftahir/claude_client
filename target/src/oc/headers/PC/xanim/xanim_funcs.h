@@ -42,7 +42,7 @@ void DObjCompleteHierarchyBits(DObj_s *obj, int *partBits);
 void DObjGetHierarchyBits(DObj *obj, int boneIndex, int *partBits);
 void DObjSetLocalTagInternal(const DObj *obj, const vec_t *trans, const vec_t *angles, int boneIndex);
 qboolean DObjSetLocalTag(const DObj *obj, int *partBits, unsigned int tagName, const vec_t *trans, const vec_t *angles);
-bool DObjSetControlTagAngles(const DObj_s *obj, int *partBits, unsigned int boneIndex, float *angles);
+qboolean DObjSetControlTagAngles(const DObj_s *obj, int *partBits, unsigned int boneIndex, float *angles);
 void DObjDumpInfo(const DObj *obj);
 void DObjCreate(DObjModel_s *dobjModels, unsigned int numModels, XAnimTree_s *tree, char *buf, unsigned int entnum);
 void DObjCalcSkel(DObj *obj, int *partBits);

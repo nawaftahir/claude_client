@@ -283,8 +283,8 @@ XAnimParts *XAnimLoadFile(const char *name, void *(*Alloc)(int))
 		}
 		for (m = 0; m < boneCount; ++m)
 		{
-			bFlipQuat = ((int)quatBits[m >> 3] >> (m & 7)) & 1;
-			bSimpleQuat = (simpleQuatBits[m >> 3] >> (m & 7)) & 1;
+			bFlipQuat = ( 1 << (m & 7) ) & quatBits[m >> 3];
+			bSimpleQuat = ( 1 << (m & 7) ) & simpleQuatBits[m >> 3];
 			part = &parts->parts[m];
 			numQuatIndices = XModelDataReadUnsignedShort(&pos);
 			if (!numQuatIndices)

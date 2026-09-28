@@ -349,21 +349,18 @@ Respond_trigger_damage
 */
 qboolean Respond_trigger_damage( gentity_t *pEnt, int iMOD )
 {
-	qboolean result;
-
-	if ( (bool)(pEnt->spawnflags & 1) && iMOD == MOD_PISTOL_BULLET )
+	int flags = pEnt->spawnflags;
+	if ( (bool)(flags & 1) && iMOD == MOD_PISTOL_BULLET )
 	{
-		result = qfalse;
-		goto done;
+		return qfalse;
 	}
 
-	if ( pEnt->spawnflags & 2 && iMOD == MOD_RIFLE_BULLET )
+	if ( flags & 2 && iMOD == MOD_RIFLE_BULLET )
 	{
-		result = qfalse;
-		goto done;
+		return qfalse;
 	}
 
-	if ( pEnt->spawnflags & 4 )
+	if ( flags & 4 )
 	{
 		switch ( iMOD )
 		{
@@ -371,12 +368,11 @@ qboolean Respond_trigger_damage( gentity_t *pEnt, int iMOD )
 		case MOD_GRENADE_SPLASH:
 		case MOD_PROJECTILE:
 		case MOD_PROJECTILE_SPLASH:
-			result = qfalse;
-			goto done;
+			return qfalse;
 		}
 	}
 
-	if ( pEnt->spawnflags & 8 )
+	if ( flags & 8 )
 	{
 		switch ( iMOD )
 		{
@@ -385,29 +381,26 @@ qboolean Respond_trigger_damage( gentity_t *pEnt, int iMOD )
 		case MOD_PROJECTILE:
 		case MOD_PROJECTILE_SPLASH:
 		case MOD_EXPLOSIVE:
-			result = qfalse;
-			goto done;
+			return qfalse;
 		}
 	}
 
-	if ( pEnt->spawnflags & 16 )
+	if ( flags & 16 )
 	{
 		switch ( iMOD )
 		{
 		case MOD_GRENADE_SPLASH:
 		case MOD_PROJECTILE_SPLASH:
-			result = qfalse;
-			goto done;
+			return qfalse;
 		}
 	}
 
-	if ( pEnt->spawnflags & 32 && iMOD == MOD_MELEE )
+	if ( flags & 32 && iMOD == MOD_MELEE )
 	{
-		result = qfalse;
-		goto done;
+		return qfalse;
 	}
 
-	if ( pEnt->spawnflags & 256 )
+	if ( flags & 256 )
 	{
 		switch ( iMOD )
 		{
@@ -417,15 +410,11 @@ qboolean Respond_trigger_damage( gentity_t *pEnt, int iMOD )
 		case MOD_FALLING:
 		case MOD_SUICIDE:
 		case MOD_TRIGGER_HURT:
-			result = qfalse;
-			goto done;
+			return qfalse;
 		}
 	}
 
-	result = qtrue;
-
-done:
-	return result;
+	return qtrue;
 }
 
 /*

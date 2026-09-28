@@ -24,7 +24,7 @@ void Z_FreeInternal( void *ptr )
 
 void Z_VirtualFreeInternal( void *ptr )
 {
-	free( ptr );
+	VirtualFree( ptr, 0, MEM_RELEASE );
 }
 
 // unreferenced; its name is not known
@@ -76,18 +76,13 @@ void *Z_MallocGarbageInternal( int size )
 	return buf;
 }
 
-static void *Z_VirtualReserve( int size )
-{
-	return malloc( size );
-}
-
 void *Z_VirtualAllocInternal( unsigned int size )
 {
 	void *buf;
 
-	buf = Z_VirtualReserve( size );
+	buf = VirtualAlloc( NULL, size, MEM_COMMIT, PAGE_READWRITE );
 	if ( !buf )
-		Sys_OutOfMemErrorInternal( "universal/com_memory.cpp", 536 );
+		Sys_OutOfMemErrorInternal( ".\\universal\\com_memory.cpp", 524 );
 
 	return buf;
 }
@@ -185,26 +180,28 @@ void Com_TouchMemory( void )
 void Com_InitHunkMemory( void )
 {
 	dvar_t *com_hunkMegs;
+	int nMegs;
 
 	if ( FS_LoadStack() != 0 )
 		Com_Error( ERR_FATAL, "\x15" "Hunk initialization failed. File system load stack not zero" );
 
 	com_hunkMegs = Dvar_RegisterInt( "com_hunkMegs", 160, 1, 512, DVAR_ARCHIVE | DVAR_LATCH | DVAR_CHANGEABLE_RESET );
+	nMegs = com_hunkMegs->current.integer;
 
-	if ( com_hunkMegs->current.integer < 80 )
+	if ( nMegs < 80 )
 	{
 		Com_Printf( "Minimum com_hunkMegs for a dedicated server is %i, allocating %i megs.\n", 80, 80 );
 		s_hunkTotal = 80 * 1024 * 1024;
 	}
 	else
 	{
-		s_hunkTotal = com_hunkMegs->current.integer * 1024 * 1024;
+		s_hunkTotal = nMegs * 1024 * 1024;
 	}
 
-	s_hunkData = (byte *)malloc( s_hunkTotal );
+	s_hunkData = (byte *)VirtualAlloc( NULL, s_hunkTotal, MEM_COMMIT, PAGE_READWRITE );
 
 	if ( !s_hunkData )
-		Sys_OutOfMemErrorInternal( "universal/com_memory.cpp", 864 );
+		Sys_OutOfMemErrorInternal( ".\\universal\\com_memory.cpp", 843 );
 
 	s_origHunkData = s_hunkData;
 	Hunk_Clear();
@@ -213,7 +210,7 @@ void Com_InitHunkMemory( void )
 
 void Hunk_Shutdown( void )
 {
-	free( s_origHunkData );
+	VirtualFree( s_origHunkData, 0, MEM_RELEASE );
 	s_hunkData = NULL;
 	s_origHunkData = NULL;
 	s_hunkTotal = 0;
@@ -346,15 +343,13 @@ void Hunk_ClearData( void )
 	unsigned char *low;
 	unsigned char *high;
 	unsigned int hash;
-	fileData_t **bucket;
 
 	low = &s_hunkData[hunk_low.permanent];
 	high = s_hunkData + s_hunkTotal - hunk_high.permanent;
 
 	for ( hash = 0; hash < FILEDATA_HASH_SIZE; ++hash )
 	{
-		bucket = &com_fileDataHashTable[hash];
-		Hunk_ClearDataFor( bucket, low, high );
+		Hunk_ClearDataFor( &com_fileDataHashTable[hash], low, high );
 	}
 
 	Hunk_ClearDataFor( &com_hunkData, low, high );

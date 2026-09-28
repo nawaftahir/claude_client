@@ -813,7 +813,7 @@ BG_DoesWeaponRequireSlot
 */
 bool BG_DoesWeaponRequireSlot( int weaponIndex )
 {
-	const unsigned int *weaponSlot;
+	const int *weaponSlot;
 
 	weaponSlot = &BG_GetWeaponDef(weaponIndex)->weaponSlot;
 	return *weaponSlot == SLOT_PRIMARY || *weaponSlot == SLOT_PRIMARYB;
@@ -1021,21 +1021,19 @@ int BG_IsPlayerWeaponInSlot( playerState_t *pPS, int iWeaponIndex, qboolean bAny
 	{
 		weapDef = BG_GetWeaponDef(index);
 
-		if ( weapDef->weaponSlot - 1 <= 1 )
-		{
-			if ( pPS->weaponslots[SLOT_PRIMARY] == index )
-			{
-				return SLOT_PRIMARY;
-			}
-
-			if ( pPS->weaponslots[SLOT_PRIMARYB] == index )
-			{
-				return SLOT_PRIMARYB;
-			}
-		}
-		else
+		if ( weapDef->weaponSlot <= 0 || weapDef->weaponSlot > 2 )
 		{
 			return SLOT_NONE;
+		}
+
+		if ( pPS->weaponslots[SLOT_PRIMARY] == index )
+		{
+			return SLOT_PRIMARY;
+		}
+
+		if ( pPS->weaponslots[SLOT_PRIMARYB] == index )
+		{
+			return SLOT_PRIMARYB;
 		}
 
 		if ( bAnyMode && weapDef->altWeaponIndex )
@@ -1091,8 +1089,11 @@ int BG_GetStackSlotForWeapon( const playerState_t *pPS, int iWeaponIndex, unsign
 		return SLOT_NONE;
 	}
 
-	if ( weapDef->weaponSlot - 1 <= 1 )
+	if ( weapDef->weaponSlot <= 0 || weapDef->weaponSlot > 2 )
 	{
+		return SLOT_NONE;
+	}
+
 	if ( preferedSlot == SLOT_PRIMARY || preferedSlot == SLOT_PRIMARYB )
 	{
 		if ( !pPS->weaponslots[preferedSlot] )
@@ -1124,7 +1125,6 @@ int BG_GetStackSlotForWeapon( const playerState_t *pPS, int iWeaponIndex, unsign
 	if ( BG_GetWeaponDef(pPS->weaponslots[SLOT_PRIMARYB])->slotStackable )
 	{
 		return SLOT_PRIMARYB;
-	}
 	}
 
 	return SLOT_NONE;
@@ -2945,27 +2945,9 @@ void PM_Weapon_CheckForChangeWeapon( pmove_t *pm )
 		return;
 	}
 
-	if ( Mantle_IsWeaponInactive(ps) )
-	{
-		if ( ps->weapon )
-		{
-			PM_BeginWeaponChange(ps, WP_NONE);
-		}
-
-		return;
-	}
-
-	if ( ps->pm_flags & PMF_LADDER )
-	{
-		if ( ps->weapon )
-		{
-			PM_BeginWeaponChange(ps, WP_NONE);
-		}
-
-		return;
-	}
-
-	if ( ps->pm_flags & PMF_DISABLEWEAPON )
+	if ( Mantle_IsWeaponInactive(ps)
+	        || (ps->pm_flags & PMF_LADDER)
+	        || (ps->pm_flags & PMF_DISABLEWEAPON) )
 	{
 		if ( ps->weapon )
 		{

@@ -545,7 +545,7 @@ void ScriptEntCmdGetCommandTimes( float *pfTotalTime, float *pfAccelTime, float 
 
 	int iNumParms = Scr_GetNumParam();
 
-	if ( iNumParms >= 3 )
+	if ( iNumParms > 2 )
 	{
 		*pfAccelTime = Scr_GetFloat(2);
 
@@ -554,7 +554,7 @@ void ScriptEntCmdGetCommandTimes( float *pfTotalTime, float *pfAccelTime, float 
 			Scr_ParamError(2, "accel time must be nonnegative");
 		}
 
-		if ( iNumParms >= 4 )
+		if ( iNumParms > 3 )
 		{
 			*pfDecelTime = Scr_GetFloat(3);
 

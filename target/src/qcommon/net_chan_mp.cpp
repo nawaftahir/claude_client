@@ -493,7 +493,7 @@ bool Netchan_Transmit( netchan_t *chan, int length, const byte *data )
 	chan->outgoingSequence++;
 
 	// send the qport if we are a client
-	if ( chan->sock <= NS_CLIENT )
+	if ( chan->sock < NS_SERVER )
 	{
 		MSG_WriteShort( &send, chan->qport );
 	}
@@ -947,7 +947,7 @@ NET_OutOfBandPrint
 Sends a text message in an out-of-band datagram
 ================
 */
-qboolean NET_OutOfBandPrint( netsrc_t sock, netadr_t adr, const char *data )
+unsigned char NET_OutOfBandPrint( netsrc_t sock, netadr_t adr, const char *data )
 {
 	int len;
 	int res;
@@ -988,7 +988,7 @@ NET_OutOfBandData
 Sends a data message in an out-of-band datagram (only used for "connect")
 ================
 */
-qboolean NET_OutOfBandData( netsrc_t sock, netadr_t adr, byte *format, int len )
+unsigned char NET_OutOfBandData( netsrc_t sock, netadr_t adr, byte *format, int len )
 {
 	int i;
 	msg_t mbuf;

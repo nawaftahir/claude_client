@@ -623,7 +623,7 @@ void CM_LinkAllStaticModels()
 CM_AreaEntities_r
 ================
 */
-static void CM_AreaEntities_r( unsigned int nodeIndexIn, areaParms_t *ap )
+static void CM_AreaEntities_r( unsigned short nodeIndexIn, areaParms_t *ap )
 {
 	unsigned short nodeIndex;
 	svEntity_t *svEnt;

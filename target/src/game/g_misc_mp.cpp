@@ -206,7 +206,7 @@ void G_PlayerTurretPositionAndBlend( gentity_t *ent, gentity_t *pTurretEnt )
 	float fBlend;
 	float w;
 	float fHeightRatio;
-	double rot;
+	vec2_t rot;
 	vec3_t trans;
 	vec3_t turretAxis[4];
 	float tagHeight;
@@ -310,7 +310,7 @@ void G_PlayerTurretPositionAndBlend( gentity_t *ent, gentity_t *pTurretEnt )
 			XAnimSetGoalWeight(pAnimTree, leafAnim2, fBlend, 1.0f, 1.0f, 0, 0, 0);
 		}
 
-		XAnimCalcAbsDelta(pAnimTree, heightAnim, (float *)&rot, trans);
+		XAnimCalcAbsDelta(pAnimTree, heightAnim, rot, trans);
 
 		if ( trans[2] >= fDelta )
 		{
@@ -363,13 +363,13 @@ void G_PlayerTurretPositionAndBlend( gentity_t *ent, gentity_t *pTurretEnt )
 		}
 	}
 
-	XAnimCalcAbsDelta(pAnimTree, baseAnim, (float *)&rot, trans);
+	XAnimCalcAbsDelta(pAnimTree, baseAnim, rot, trans);
 
 	RotateVec2(trans, localYaw);
 	Vector2Add(trans, tagMat->trans, localAxis[3]);
 	localAxis[3][2] = tagHeight;
 
-	yaw = RotationToYaw((float *)&rot) + localYaw;
+	yaw = RotationToYaw(rot) + localYaw;
 	YawToAxis(yaw, localAxis);
 
 	MatrixMultiply43(localAxis, turretAxis, axis);
@@ -702,7 +702,7 @@ int turret_ReturnToDefaultPos( gentity_t *self, qboolean bManned )
 
 	pTurretInfo = self->pTurretInfo;
 
-	desiredAngles[0] = !bManned ? pTurretInfo->dropPitch : 0.0f;
+	desiredAngles[0] = bManned ? 0.0f : pTurretInfo->dropPitch;
 	desiredAngles[1] = 0;
 
 	return turret_UpdateTargetAngles( self, desiredAngles, bManned );

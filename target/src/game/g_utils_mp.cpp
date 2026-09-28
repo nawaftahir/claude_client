@@ -241,10 +241,10 @@ G_DObjUpdate
 */
 void G_DObjUpdate( gentity_t *ent )
 {
-	int modelIndex;
-	XModel *model;
 	DObjModel_s dobjModels[DOBJ_MAX_SUBMODELS];
+	XModel *model;
 	int numModels;
+	int modelIndex;
 	int i;
 
 	if ( ent->client )
@@ -262,13 +262,13 @@ void G_DObjUpdate( gentity_t *ent )
 		return;
 	}
 
-	numModels = 0;
 	model = G_GetModel(modelIndex);
 
-	dobjModels[numModels].model = model;
-	dobjModels[numModels].boneName = 0;
-	dobjModels[numModels].ignoreCollision = 0;
-	numModels++;
+	dobjModels->model = model;
+	dobjModels->boneName = 0;
+	dobjModels->ignoreCollision = 0;
+
+	numModels = 1;
 
 	if ( ent->s.eType == ET_GENERAL || ent->s.eType == ET_SCRIPTMOVER || ent->s.eType == ET_TURRET )
 	{

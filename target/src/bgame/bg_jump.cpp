@@ -206,7 +206,7 @@ void Jump_ClampVelocity( playerState_t *ps, const vec3_t origin )
 		return;
 	}
 
-	maxJumpVel = I_sqrt(heightDiff * 2.0 * ps->gravity);
+	maxJumpVel = I_sqrt(ps->gravity * (heightDiff * 2.0f));
 
 	if ( ps->velocity[2] > maxJumpVel )
 	{

@@ -499,13 +499,13 @@ void XAnimCalcNonLoopEnd( const XAnimParts_s *parts, const unsigned char *animTo
 	{
 		animPartIndex = animToModel[i];
 
-		if ( (ignorePartBits[animPartIndex >> 5] >> (animPartIndex & 0x1F)) & 1 )
+		if ( ( 1 << (animPartIndex & 0x1F) ) & ignorePartBits[animPartIndex >> 5] )
 			continue;
 
 		totalRotTrans = &rotTransArray[animPartIndex];
 		childPart = &parts->parts[i];
 
-		if ( (simpleQuatBits[i >> 3] >> (i & 7)) & 1 )
+		if ( ( 1 << (i & 7) ) & simpleQuatBits[i >> 3] )
 		{
 			if ( childPart->quat )
 				XAnim_CalcSimpleRotEnd(childPart->quat, scale, &totalRotTrans->quat[2]);
@@ -531,7 +531,7 @@ void XAnimClearData(const DObj_s *obj, DObjAnimMat *rotTransArray, XAnimCalcAnim
 
 	for ( i = 0; i < obj->numBones; ++i, ++rotTransArray )
 	{
-		if ( (bool)((info->ignorePartBits[i >> 5] >> (i & 0x1F)) & 1) )
+		if ( (bool)( ( 1 << (i & 0x1F) ) & info->ignorePartBits[i >> 5] ) )
 		{
 		}
 		else
@@ -1643,12 +1643,7 @@ void XAnimUpdateOldTime(XAnimTree_s *tree, unsigned int infoIndex, XAnimState *s
 
 		childHasWeight = bWeight;
 
-		if ( !parentHasWeight || state->goalTime <= dtime )
-		{
-			state->weight = state->goalWeight;
-			state->goalTime = 0.0f;
-		}
-		else
+		if ( parentHasWeight && dtime < state->goalTime )
 		{
 			state->weight += (state->goalWeight - state->weight) * dtime / state->goalTime;
 
@@ -1656,6 +1651,11 @@ void XAnimUpdateOldTime(XAnimTree_s *tree, unsigned int infoIndex, XAnimState *s
 				state->weight = state->goalWeight * 0.001f;
 
 			state->goalTime = state->goalTime - dtime;
+		}
+		else
+		{
+			state->weight = state->goalWeight;
+			state->goalTime = 0.0f;
 		}
 
 		bTime = 0;
@@ -2118,7 +2118,7 @@ void XAnimCalc(const DObj_s *obj, unsigned int entry, float weightScale, DObjAni
 			{
 				for ( i = 0; i < obj->numBones; ++i, ++rotTransArray )
 				{
-					if ( (animInfo->ignorePartBits[i >> 5] >> (i & 0x1F)) & 1 )
+					if ( ( 1 << (i & 0x1F) ) & animInfo->ignorePartBits[i >> 5] )
 						continue;
 
 					if ( rotTransArray->transWeight != 0.0f )
@@ -2133,7 +2133,7 @@ void XAnimCalc(const DObj_s *obj, unsigned int entry, float weightScale, DObjAni
 			{
 				for ( i = 0; i < obj->numBones; ++i, ++rotTransArray )
 				{
-					if ( (animInfo->ignorePartBits[i >> 5] >> (i & 0x1F)) & 1 )
+					if ( ( 1 << (i & 0x1F) ) & animInfo->ignorePartBits[i >> 5] )
 						continue;
 
 					scale = Vec4LengthSq(rotTransArray->quat);
@@ -2152,7 +2152,7 @@ void XAnimCalc(const DObj_s *obj, unsigned int entry, float weightScale, DObjAni
 			{
 				for ( i = 0; i < obj->numBones; ++i, ++rotTransArray, ++calcBuffer )
 				{
-					if ( (animInfo->ignorePartBits[i >> 5] >> (i & 0x1F)) & 1 )
+					if ( ( 1 << (i & 0x1F) ) & animInfo->ignorePartBits[i >> 5] )
 						continue;
 
 					scale = Vec4LengthSq(calcBuffer->quat);
@@ -3793,13 +3793,13 @@ void XAnimCalcParts_unsigned_char_( const XAnimParts_s *parts, const unsigned ch
 	{
 		animPartIndex = animToModel[i];
 
-		if ( (ignorePartBits[animPartIndex >> 5] >> (animPartIndex & 0x1F)) & 1 )
+		if ( ( 1 << (animPartIndex & 0x1F) ) & ignorePartBits[animPartIndex >> 5] )
 			continue;
 
 		totalRotTrans = &rotTransArray[animPartIndex];
 		childPart = &parts->parts[i];
 
-		if ( (simpleQuatBits[i >> 3] >> (i & 7)) & 1 )
+		if ( ( 1 << (i & 7) ) & simpleQuatBits[i >> 3] )
 		{
 			if ( childPart->quat )
 				XAnim_CalcSimpleRotDuring_unsigned_char_(&animTime, childPart->quat, scale, &totalRotTrans->quat[2]);
@@ -3925,13 +3925,13 @@ void XAnimCalcParts_unsigned_short_( const XAnimParts_s *parts, const unsigned c
 	{
 		animPartIndex = animToModel[i];
 
-		if ( (ignorePartBits[animPartIndex >> 5] >> (animPartIndex & 0x1F)) & 1 )
+		if ( ( 1 << (animPartIndex & 0x1F) ) & ignorePartBits[animPartIndex >> 5] )
 			continue;
 
 		totalRotTrans = &rotTransArray[animPartIndex];
 		childPart = &parts->parts[i];
 
-		if ( (simpleQuatBits[i >> 3] >> (i & 7)) & 1 )
+		if ( ( 1 << (i & 7) ) & simpleQuatBits[i >> 3] )
 		{
 			if ( childPart->quat )
 				XAnim_CalcSimpleRotDuring_unsigned_short_(&animTime, childPart->quat, scale, &totalRotTrans->quat[2]);

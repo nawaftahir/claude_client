@@ -456,8 +456,8 @@ void DObjShutdown();
 void DObjFree(DObj_s *obj);
 void DObjAbort();
 
-bool DObjSetControlTagAngles(const DObj_s *obj, int *partBits, unsigned int boneIndex, float *angles);
-bool DObjSetLocalTag(const DObj_s *obj, int *partBits, unsigned int boneIndex, const float *trans, const float *angles);
+qboolean DObjSetControlTagAngles(const DObj_s *obj, int *partBits, unsigned int boneIndex, float *angles);
+qboolean DObjSetLocalTag(const DObj_s *obj, int *partBits, unsigned int boneIndex, const float *trans, const float *angles);
 inline void ConvertQuatToMat( const DObjAnimMat *mat, float axis[3][3] )
 {
 	float xx;

@@ -48,7 +48,7 @@ extern int I_strnicmp(const char *s0, const char *s1, int n);
 extern int Com_AddToString(const char *add, char *msg, int len, int maxlen, qboolean mayAddQuotes);
 extern void CL_Netchan_SendOOBPacket(int len, const void *data, netadr_t to);
 extern qboolean NET_StringToAdr(const char *s, netadr_t *a);
-extern qboolean NET_OutOfBandPrint(netsrc_t sock, netadr_t adr, const char *msg);
+extern unsigned char NET_OutOfBandPrint(netsrc_t sock, netadr_t adr, const char *msg);
 extern int Com_sprintf(char *dest, size_t size, const char *format, ...);
 extern int Sys_Milliseconds(void);
 extern int sscanf(const char *str, const char *format, ...);
