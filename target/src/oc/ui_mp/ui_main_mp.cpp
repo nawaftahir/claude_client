@@ -528,10 +528,13 @@ static void UI_DrawMapPreview(const rectDef_t *rect, const vec_t *color, int net
 
     material = sharedUiInfo.mapList[map].levelShot;
 
-    if (!material) {
-        material = CL_RegisterMaterialNoMip("menu/art/unknownmap", 3);
+    if (material) {
+        UI_DrawHandlePic(rect->x, rect->y, rect->w, rect->h,
+                         rect->horzAlign, rect->vertAlign,
+                         color, material);
+        return;
     }
-
+    material = CL_RegisterMaterialNoMip("menu/art/unknownmap", 3);
     UI_DrawHandlePic(rect->x, rect->y, rect->w, rect->h,
                      rect->horzAlign, rect->vertAlign,
                      color, material);
@@ -602,16 +605,17 @@ void UI_BuildPlayerList(void)
 
 void UI_DrawMapLevelshot(void)
 {
-    if (g_mapname[0]) {
-        menuDef_t *menu = Menus_FindByName(&uiInfo->uiDC, "connect");
-        if (menu) {
-            uiInfo->uiDC.blurRadiusOut = 0;
-            Menu_Paint(&uiInfo->uiDC, menu, 1);
-            return;
-        }
-    }
+    menuDef_t *menu = NULL;
 
-    UI_FillRect(0, 0, 640.0f, 480.0f, 0, 0, (const vec_t *)((void *)&colorBlack));
+    if (g_mapname[0])
+        menu = Menus_FindByName(&uiInfo->uiDC, "connect");
+
+    if (!menu) {
+        UI_FillRect(0, 0, 640.0f, 480.0f, 0, 0, (const vec_t *)((void *)&colorBlack));
+        return;
+    }
+    uiInfo->uiDC.blurRadiusOut = 0;
+    Menu_Paint(&uiInfo->uiDC, menu, 1);
 }
 
 #ifndef __EMSCRIPTEN__
