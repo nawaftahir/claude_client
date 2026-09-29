@@ -3195,9 +3195,12 @@ qboolean Item_YesNo_HandleKey(displayContextDef_t *dc, itemDef_t *item, int key)
 {
     char dvarString[25];
 
-    if (item->dvar && Item_ShouldHandleKey(dc, item, key)
-        && (key == 13 || key == 156 || key == 157 || key == 164 || key == 163
-            || key == 200 || key == 201 || key == 202)) {
+    if (!item->dvar)
+        return 0;
+    if (!Item_ShouldHandleKey(dc, item, key))
+        return 0;
+    if (key == 13 || key == 156 || key == 157 || key == 164 || key == 163
+        || key == 200 || key == 201 || key == 202) {
         strncpy(dvarString, Dvar_GetVariantString(item->dvar), 24);
         dvarString[24] = 0;
         Dvar_SetFromStringByName(item->dvar, va("%i", atoi(dvarString) == 0));
