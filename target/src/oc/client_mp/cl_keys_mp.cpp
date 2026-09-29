@@ -68,7 +68,7 @@ extern void SCR_UpdateScreen(void);
 extern Bool CL_AllLocalClientsDisconnected(void);
 
 extern FontHandle UI_GetFontHandle(int fontEnum, float scale);
-extern void CL_DrawTextWithCursor(const char *text, int maxChars, Font_s *font, float x, float y, int horzAlign, int vertAlign, float xScale, float yScale, const vec_t *color, int style, int cursorPos, int cursor);
+extern void CL_DrawTextWithCursor(const char *text, int maxChars, FontHandle font, float x, float y, int horzAlign, int vertAlign, float xScale, float yScale, const vec_t *color, int style, int cursorPos, int cursor);
 extern float GetRealWidthFromVirtualWidth(float w);
 extern float GetRealHeightFromVirtualHeight(float h);
 extern float GetVirtualWidthFromRealWidth(float w);
@@ -143,7 +143,7 @@ void Key_SetBinding(int keynum, const char *binding);
 char *Key_GetBinding(int keynum);
 void CL_InitKeyCommands(void);
 void Key_Shutdown(void);
-void Field_Draw(field_t *edit, int x, int y, int horzAlign, int vertAlign, qboolean showCursor);
+void Field_Draw(field_t *edit, int x, int y, int horzAlign, int vertAlign);
 void Key_Unbind_f(void);
 void Key_Unbindall_f(void);
 void Key_Bind_f(void);
@@ -433,20 +433,19 @@ void Key_Shutdown(void)
     }
 }
 
-void Field_Draw(field_t *edit, int x, int y, int horzAlign, int vertAlign, qboolean showCursor)
+void Field_Draw(field_t *edit, int x, int y, int horzAlign, int vertAlign)
 {
     vec4_t vColor;
     char str[0x400];
     int cursorPos;
-    void *font;
+    FontHandle font;
     int fontStyle;
     float xScale;
     float yScale;
     float xAdj;
     float yAdj;
-    int cursorChar;
-    int drawWidth;
-    float rawScale;
+    char cursorChar;
+    float scale;
 
     vColor[0] = 1.0f;
     vColor[1] = 1.0f;
@@ -457,70 +456,34 @@ void Field_Draw(field_t *edit, int x, int y, int horzAlign, int vertAlign, qbool
 
     cursorPos = edit->cursor - edit->scroll;
 
-    if (edit->fixedSize != 0) {
-
-        font = (void *)cls.consoleFont;
-
-        if (*key_overstrikeMode) {
-            fontStyle = 0;
-            xScale = 1.0f;
-            yScale = 1.0f;
-            cursorChar = 0x5f;
-        } else {
-            fontStyle = 0;
-            xScale = 1.0f;
-            yScale = 1.0f;
-            cursorChar = 0x7c;
-        }
+    if (edit->fixedSize) {
+        font = cls.consoleFont;
+        fontStyle = 0;
+        xScale = 1.0f;
+        yScale = 1.0f;
+        cursorChar = *key_overstrikeMode ? '_' : '|';
     } else {
-
-        rawScale = edit->charHeight / 48.0f;
-
-        font = (void *)UI_GetFontHandle(0, rawScale);
-
-        {
-            typedef float (*GetFontYSizeFn)(void *font, float scale);
-            float fontYSize;
-            GetFontYSizeFn fn = (GetFontYSizeFn)re.NormalizedTextScale;
-            fontYSize = fn(font, rawScale);
-            (void)fontYSize;
-
-            if (vertAlign == 5) {
-
-                typedef float (*ConvertFn)(float val);
-                ConvertFn getRealW = (ConvertFn)GetRealWidthFromVirtualWidth;
-                ConvertFn getRealH = (ConvertFn)GetRealHeightFromVirtualHeight;
-                xScale = getRealW(fontYSize);
-                yScale = getRealH(fontYSize);
-            } else {
-                xScale = fontYSize;
-                yScale = fontYSize;
-            }
-        }
-
-        if (*key_overstrikeMode) {
-            fontStyle = 3;
-            cursorChar = 0x5f;
+        scale = edit->charHeight / 48.0f;
+        font = UI_GetFontHandle(0, scale);
+        scale = re.NormalizedTextScale(font, scale);
+        if (vertAlign == 5) {
+            xScale = GetRealWidthFromVirtualWidth(scale);
+            yScale = GetRealHeightFromVirtualHeight(scale);
         } else {
-            fontStyle = 3;
-            cursorChar = 0x7c;
+            xScale = scale;
+            yScale = scale;
         }
+        fontStyle = 3;
+        cursorChar = *key_overstrikeMode ? '_' : '|';
     }
 
     xAdj = (float)x;
+    yAdj = (float)y + (float)re.TextHeight(font) * yScale;
 
-    {
-        typedef int (*GetFontHeightFn)(void *font);
-        GetFontHeightFn fn = (GetFontHeightFn)re.TextHeight;
-        int fontHeight = fn(font);
-        yAdj = (float)y + (float)fontHeight * yScale;
-    }
-
-    drawWidth = edit->drawWidth;
-    if (drawWidth == 0)
+    if (!edit->drawWidth)
         edit->drawWidth = 0x100;
 
-    CL_DrawTextWithCursor(str, edit->drawWidth, (Font_s *)font,
+    CL_DrawTextWithCursor(str, edit->drawWidth, font,
                           xAdj, yAdj, horzAlign, vertAlign,
                           xScale, yScale,
                           vColor, fontStyle, cursorPos, cursorChar);

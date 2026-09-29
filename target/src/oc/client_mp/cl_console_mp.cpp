@@ -63,7 +63,7 @@ extern FontHandle UI_GetFontHandle(int fontEnum, float scale);
 extern const char *SEH_SafeTranslateString(const char *str);
 extern char *va( const char *format, ... );
 extern void CL_DrawText(const char *text, int maxChars, struct Font_s *font, float x, float y, int horzAlign, int vertAlign, float xScale, float yScale, const float *color, int style);
-extern void Field_Draw(field_t *field, int x, int y, int width, int horzAlign, int vertAlign);
+extern void Field_Draw(field_t *edit, int x, int y, int horzAlign, int vertAlign);
 extern void CL_LookupColor(int colorIndex, float *color);
 extern void SCR_DrawSmallStringExt(int x, int y, const char *str, const float *color);
 extern void SCR_DrawConsoleString(int x, int y, const short int *text, int len, const float *color);
@@ -557,7 +557,7 @@ void Con_DrawSay(int y)
     textWidth = re.TextWidth(string, 0, font);
     field = ((field_t *)chatField);
     Field_Draw(field, x + (int)((float)textWidth * normalizedScale), y,
-               1, 1, 1);
+               1, 1);
 }
 
 void Con_ToggleConsoleOutput(void)
@@ -1551,7 +1551,7 @@ static void Con_DrawInput(void)
     ConDrawInput_TextAndOver(promptString, con_versionColor);
     conDrawInputGlob.leftX = conDrawInputGlob.x;
     g_consoleField.widthInPixels = (int)(con.screenMax[0] - 6.0f - conDrawInputGlob.x);
-    Field_Draw(&g_consoleField, (int)conDrawInputGlob.x, (int)conDrawInputGlob.y, 5, 5, 1);
+    Field_Draw(&g_consoleField, (int)conDrawInputGlob.x, (int)conDrawInputGlob.y, 5, 5);
     conDrawInputGlob.y += conDrawInputGlob.fontHeight;
     conDrawInputGlob.x = conDrawInputGlob.leftX;
 

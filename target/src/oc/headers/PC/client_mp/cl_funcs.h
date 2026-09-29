@@ -208,7 +208,7 @@ void Key_SetBinding(int keynum, const char *binding);
 char *Key_GetBinding(int keynum);
 void CL_InitKeyCommands(void);
 void Key_Shutdown(void);
-void Field_Draw(field_t *edit, int x, int y, int horzAlign, int vertAlign, qboolean showCursor);
+void Field_Draw(field_t *edit, int x, int y, int horzAlign, int vertAlign);
 void Key_Unbind_f(void);
 void Key_Unbindall_f(void);
 void Key_Bind_f(void);
