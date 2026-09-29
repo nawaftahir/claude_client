@@ -4441,7 +4441,10 @@ static qboolean Rect_ContainsPoint(const rectDef_t *rect, float x, float y)
 {
     rectDef_t r;
 
-    r = *rect;
+    r.x = rect->x;
+    r.y = rect->y;
+    r.w = rect->w;
+    r.h = rect->h;
     CalcScreenX(&x, 4);
     CalcScreenY(&y, 4);
     CalcScreenPlacement(&r.x, &r.y, &r.w, &r.h, rect->horzAlign, rect->vertAlign);
