@@ -1730,45 +1730,20 @@ qboolean UI_IsFullscreen(void)
 }
 #endif
 
-static int UI_ReadableSizeFraction(int value, unsigned int mask, int shift)
-{
-    int product = (int)((unsigned int)(value & (int)mask) * 100u);
-
-    if (product < 0)
-        product += (int)mask;
-
-    return product >> shift;
-}
-
 static void __attribute_regparm__(3) UI_ReadableSize(char *buf, int bufsize, int value)
 {
-    const char *suffix;
-
-    if (value > 0x40000000) {
-        int len;
-
-        Com_sprintf(buf, bufsize, "%d", value >> 30);
-        suffix = UI_SafeTranslateString("EXE_GIGABYTE");
-        len = strlen(buf);
-        Com_sprintf(buf + len, bufsize - len, ".%02d %s",
-                    UI_ReadableSizeFraction(value, 0x3fffffff, 30), suffix);
-    } else if (value > 0x100000) {
-        int len;
-
-        Com_sprintf(buf, bufsize, "%d", value >> 20);
-        suffix = UI_SafeTranslateString("EXE_MEGABYTE");
-        len = strlen(buf);
-        Com_sprintf(buf + len, bufsize - len, ".%02d %s",
-                    UI_ReadableSizeFraction(value, 0xfffff, 20), suffix);
+    if (value > 1024 * 1024 * 1024) {
+        Com_sprintf(buf, bufsize, "%d", value / (1024 * 1024 * 1024));
+        Com_sprintf(buf + strlen(buf), bufsize - strlen(buf), ".%02d %s",
+                    (value % (1024 * 1024 * 1024)) * 100 / (1024 * 1024 * 1024), UI_SafeTranslateString("EXE_GIGABYTE"));
+    } else if (value > 1024 * 1024) {
+        Com_sprintf(buf, bufsize, "%d", value / (1024 * 1024));
+        Com_sprintf(buf + strlen(buf), bufsize - strlen(buf), ".%02d %s",
+                    (value % (1024 * 1024)) * 100 / (1024 * 1024), UI_SafeTranslateString("EXE_MEGABYTE"));
+    } else if (value > 1024) {
+        Com_sprintf(buf, bufsize, "%d %s", value / 1024, UI_SafeTranslateString("EXE_KILOBYTE"));
     } else {
-        if (value > 0x400) {
-            value >>= 10;
-            suffix = UI_SafeTranslateString("EXE_KILOBYTE");
-        } else {
-            suffix = UI_SafeTranslateString("EXE_BYTES");
-        }
-
-        Com_sprintf(buf, bufsize, "%d %s", value, suffix);
+        Com_sprintf(buf, bufsize, "%d %s", value, UI_SafeTranslateString("EXE_BYTES"));
     }
 }
 
