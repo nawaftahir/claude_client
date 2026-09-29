@@ -620,18 +620,18 @@ void Touch_Item( gentity_t *ent, gentity_t *other, qboolean touched )
 				return;
 			}
 
-			if ( ((volatile gitem_t*)item)->giType != IT_WEAPON )
+			switch ( item->giType )
 			{
-				return;
-			}
-
-			if ( Com_BitCheck(other->client->ps.weapons, item->giTag) )
-			{
-				SV_GameSendServerCommand(other - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_PICKUP_CANTCARRYMOREAMMO\x14%s\"", 102, BG_GetWeaponDef(item->giTag)->displayName));
-			}
-			else if ( BG_GetWeaponDef(item->giTag)->weaponSlot > 0 && BG_GetWeaponDef(item->giTag)->weaponSlot <= 2 )
-			{
-				SV_GameSendServerCommand(other - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_CANT_GET_PRIMARY_WEAP_MESSAGE\"", 102));
+			case IT_WEAPON:
+				if ( Com_BitCheck(other->client->ps.weapons, item->giTag) )
+				{
+					SV_GameSendServerCommand(other - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_PICKUP_CANTCARRYMOREAMMO\x14%s\"", 102, BG_GetWeaponDef(item->giTag)->displayName));
+				}
+				else if ( BG_GetWeaponDef(item->giTag)->weaponSlot > 0 && BG_GetWeaponDef(item->giTag)->weaponSlot <= 2 )
+				{
+					SV_GameSendServerCommand(other - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_CANT_GET_PRIMARY_WEAP_MESSAGE\"", 102));
+				}
+				break;
 			}
 		}
 
