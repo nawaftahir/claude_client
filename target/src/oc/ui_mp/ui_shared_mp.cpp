@@ -3984,7 +3984,9 @@ static bool Item_ShouldHandleKey(displayContextDef_t *dc, itemDef_t *item, int k
 {
     if (!Window_HasFocus(&item->window))
         return false;
-    return key != 200 && key != 201 && key != 202 || Item_ContainsMouse(dc, item);
+    if ((key == 200 || key == 201 || key == 202) && !Item_ContainsMouse(dc, item))
+        return false;
+    return true;
 }
 
 // retail 0x536e60
@@ -4004,9 +4006,9 @@ int Item_DvarEnum_CountSettings(itemDef_t *item)
     struct dvar_s *enumDvar;
 
     enumDvar = Dvar_FindVar(*(const char **)&item->typeData.listBox);
-    if (enumDvar->type == 6)
-        return enumDvar->domain.enumeration.stringCount;
-    return 0;
+    if (enumDvar->type != 6)
+        return 0;
+    return enumDvar->domain.enumeration.stringCount;
 }
 
 // retail 0x536ea0
@@ -4173,6 +4175,17 @@ qboolean Item_HandleKey(displayContextDef_t *dc, itemDef_t *item, int key, qbool
         return 0;
 
     switch (item->type) {
+    case 1:
+        return 0;
+    case 2:
+        return 0;
+    case 3:
+        return 0;
+    case 4:
+    case 9:
+        return 0;
+    case 5:
+        return 0;
     case 6:
         return Item_ListBox_HandleKey(dc, item, key, down, 0);
     case 11:
@@ -4187,6 +4200,14 @@ qboolean Item_HandleKey(displayContextDef_t *dc, itemDef_t *item, int key, qbool
         return Item_Bind_HandleKey(dc, item, key, down);
     case 10:
         return Item_Slider_HandleKey(dc, item, key, down);
+    case 7:
+        return 0;
+    case 15:
+        return 0;
+    case 16:
+    case 17:
+    case 18:
+        return 0;
     default:
         return 0;
     }
