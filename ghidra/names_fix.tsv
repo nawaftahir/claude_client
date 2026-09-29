@@ -289,3 +289,5 @@
 4d5970	CG_PlayerTurretPositionAndBlend	fix	# caller CG_Player, callees vectosignedyaw/CG_Trace
 4d4af0	CG_DrawCompassFriendlies	fix	# caller CG_OwnerDraw
 480da0	yyparse	fix	# caller ScriptParse
+52b290	UI_RegisterDvars	fix	# strings: dvar list, called from UI_Init
+531ab0	UI_Init	fix	# strings: ui_mp/menus.txt

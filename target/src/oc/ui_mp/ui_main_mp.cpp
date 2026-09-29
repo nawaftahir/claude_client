@@ -4912,19 +4912,8 @@ static void UI_GetGameTypesList(void)
     }
 }
 
-void UI_Init(void)
+void UI_RegisterDvars(void)
 {
-    byte *legacyBase;
-    int width, height;
-    MenuList *menuList;
-    int netGameTypeIdx;
-    float mPitch;
-
-    *(int *)uiInfo = 0;
-    g_ingameMenusLoaded = 0;
-
-    UI_LoadSoundAliases();
-
     Dvar_RegisterBool("g_allowvote", 1, 0x1001);
     Dvar_RegisterBool("cg_brass", 1, 0x1001);
     Dvar_RegisterBool("cg_marks", 1, 0x1001);
@@ -4972,6 +4961,22 @@ void UI_Init(void)
     ui_playerProfileCount = Dvar_RegisterInt("ui_playerProfileCount", 0, (int)0x80000000, 0x7fffffff, 0x1040);
     ui_playerProfileSelected = Dvar_RegisterString("ui_playerProfileSelected", "", 0x1040);
     ui_playerProfileNameNew = Dvar_RegisterString("ui_playerProfileNameNew", "", 0x1000);
+}
+
+void UI_Init(void)
+{
+    byte *legacyBase;
+    int width, height;
+    MenuList *menuList;
+    int netGameTypeIdx;
+    float mPitch;
+
+    *(int *)uiInfo = 0;
+    g_ingameMenusLoaded = 0;
+
+    UI_LoadSoundAliases();
+
+    UI_RegisterDvars();
 
     legacyBase = (byte *)imp_legacyHacksArray;
     (*(byte *)&((LegacyHacks *)legacyBase)->ui_newScriptMenu[0]) = 0;
@@ -5006,7 +5011,6 @@ void UI_Init(void)
 
     menuList = UI_LoadMenus("ui_mp/menus.txt", 3);
     UI_AddMenuList(&uiInfo->uiDC, menuList);
-    UI_LoadIngameMenus();
 
     if (g_mapname[0] != '\0') {
         UI_MapLoadInfo(va("maps/mp/%s.csv", g_mapname));
