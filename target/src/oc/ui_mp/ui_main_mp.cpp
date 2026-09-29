@@ -1294,78 +1294,46 @@ static void UI_GetGameTypesList(void)
     sharedUiInfo.numGameTypes = 0;
     sharedUiInfo.numJoinGameTypes = 0;
 
-    sharedUiInfo.joinGameTypes[0].gameType = String_Alloc("All");
-    {
-        int idx = sharedUiInfo.numJoinGameTypes;
-        sharedUiInfo.joinGameTypes[idx].gameTypeName = "";
-    }
-    sharedUiInfo.numJoinGameTypes += 1;
+    sharedUiInfo.joinGameTypes[sharedUiInfo.numJoinGameTypes].gameType = String_Alloc("All");
+    sharedUiInfo.joinGameTypes[sharedUiInfo.numJoinGameTypes].gameTypeName = "";
+    sharedUiInfo.numJoinGameTypes++;
 
     iNumGameTypeScripts = FS_GetFileList("maps/mp/gametypes", "gsc", FS_LIST_PURE_ONLY, szGameTypeList, 0x1000);
 
-    if (iNumGameTypeScripts > 0) {
-        pszFileName = szGameTypeList;
+    pszFileName = szGameTypeList;
+    for (i = 0; i < iNumGameTypeScripts; i++) {
+        int iLen = strlen(pszFileName);
 
-        for (i = 0; i < iNumGameTypeScripts; i++) {
-            int iLen = strlen(pszFileName);
-            char *pszEnd;
-            int numTypes;
+        if (pszFileName[0] != '_') {
+            char *pszExt = pszFileName + iLen - 4;
 
-            if (pszFileName[0] == '_') {
-                pszFileName += iLen + 1;
-                continue;
-            }
+            if (!I_stricmp(pszExt, ".gsc"))
+                *pszExt = '\0';
 
-            pszEnd = pszFileName + iLen;
-            if (I_stricmp(pszEnd - 4, ".gsc") == 0) {
-                pszFileName[iLen - 4] = '\0';
-            }
-
-            numTypes = sharedUiInfo.numGameTypes;
-            if (numTypes == 32 || sharedUiInfo.numJoinGameTypes == 32) {
+            if (sharedUiInfo.numGameTypes == 32 || sharedUiInfo.numJoinGameTypes == 32) {
                 Com_Printf("Too many game type scripts found! Only loading the first %i\n", 31);
                 break;
             }
 
-            sharedUiInfo.gameTypes[numTypes].gameType = String_Alloc(pszFileName);
-
-            {
-                int gt = sharedUiInfo.numGameTypes;
-                const char *scriptName = sharedUiInfo.gameTypes[gt].gameType;
-                int nameIdx = sharedUiInfo.numJoinGameTypes;
-                sharedUiInfo.joinGameTypes[nameIdx].gameType = scriptName;
-            }
+            sharedUiInfo.gameTypes[sharedUiInfo.numGameTypes].gameType = String_Alloc(pszFileName);
+            sharedUiInfo.joinGameTypes[sharedUiInfo.numJoinGameTypes].gameType = sharedUiInfo.gameTypes[sharedUiInfo.numGameTypes].gameType;
 
             pBuffParse = GetMenuBuffer(va("maps/mp/gametypes/%s.txt", pszFileName));
             if (pBuffParse) {
-                const char *parsed = Com_Parse(&pBuffParse);
-                int gt2 = sharedUiInfo.numGameTypes;
-                sharedUiInfo.gameTypes[gt2].gameTypeName = String_Alloc(parsed);
-                {
-                    const char *displayName = sharedUiInfo.gameTypes[sharedUiInfo.numGameTypes].gameTypeName;
-                    int nameIdx2 = sharedUiInfo.numJoinGameTypes;
-                    sharedUiInfo.joinGameTypes[nameIdx2].gameTypeName = displayName;
-                }
+                sharedUiInfo.gameTypes[sharedUiInfo.numGameTypes].gameTypeName = String_Alloc(Com_Parse(&pBuffParse));
             } else {
-
-                int gt3 = sharedUiInfo.numGameTypes;
-                *(const char **)((byte *)&sharedUiInfo + 4432 + gt3 * 8) = *(const char **)((byte *)&sharedUiInfo + 4428 + gt3 * 8);
-                {
-                    const char *displayName2 = sharedUiInfo.gameTypes[sharedUiInfo.numGameTypes].gameTypeName;
-                    int nameIdx3 = sharedUiInfo.numJoinGameTypes;
-                    sharedUiInfo.joinGameTypes[nameIdx3].gameTypeName = displayName2;
-                }
+                sharedUiInfo.gameTypes[sharedUiInfo.numGameTypes].gameTypeName = sharedUiInfo.gameTypes[sharedUiInfo.numGameTypes].gameType;
             }
+            sharedUiInfo.joinGameTypes[sharedUiInfo.numJoinGameTypes].gameTypeName = sharedUiInfo.gameTypes[sharedUiInfo.numGameTypes].gameTypeName;
 
-            sharedUiInfo.numGameTypes += 1;
-            sharedUiInfo.numJoinGameTypes += 1;
-            pszFileName = pszEnd + 1;
+            sharedUiInfo.numGameTypes++;
+            sharedUiInfo.numJoinGameTypes++;
         }
+        pszFileName += iLen + 1;
     }
 
-    if (sharedUiInfo.numGameTypes == 0) {
+    if (!sharedUiInfo.numGameTypes)
         Com_Error(ERR_FATAL, "\x15No game type scripts found in maps/mp/gametypes folder");
-    }
 }
 #endif
 
