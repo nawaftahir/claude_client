@@ -136,7 +136,6 @@ void CL_SetServerInfo(serverInfo_t *server, const char *info, int ping)
 
 void CL_SetServerInfoByAddress(netadr_t from, const char *info, int ping)
 {
-    clientStatic_t *cls;
     int i;
     int low;
     int high;
@@ -144,159 +143,138 @@ void CL_SetServerInfoByAddress(netadr_t from, const char *info, int ping)
     int compare;
 
     Com_PumpMessageLoop();
-    cls = (&::cls);
 
-    for (i = 0; i < 128; ++i) {
-        if (NET_CompareAdr(from, cls->localServers[i].adr)) {
-            CL_SetServerInfo(&cls->localServers[i], info, ping);
-        }
+    for (i = 0; i < 128; i++) {
+        if (NET_CompareAdr(from, cls.localServers[i].adr))
+            CL_SetServerInfo(&cls.localServers[i], info, ping);
     }
 
-    high = cls->numglobalservers;
-    if (high > 0) {
-        low = 0;
-        while (low < high) {
-            mid = (low + high) / 2;
-            compare = NET_CompareAdrSigned(&from, &cls->globalServers[mid].adr);
-            if (compare < 0) {
-                high = mid;
-                continue;
-            }
-
-            if (compare > 0) {
-                low = mid + 1;
-                continue;
-            }
-
-            while (mid > 0 && NET_CompareAdrSigned(&from, &cls->globalServers[mid - 1].adr) == 0) {
-                --mid;
-            }
-
-            for (i = mid; i < cls->numglobalservers; ++i) {
-                if (NET_CompareAdrSigned(&from, &cls->globalServers[i].adr) != 0) {
-                    break;
-                }
-
-                CL_SetServerInfo(&cls->globalServers[i], info, ping);
-            }
+    // global servers are sorted by address
+    low = 0;
+    high = cls.numglobalservers;
+    while (low < high) {
+        mid = (low + high) / 2;
+        compare = NET_CompareAdrSigned(&from, &cls.globalServers[mid].adr);
+        if (compare < 0) {
+            high = mid;
+        } else if (compare > 0) {
+            low = mid + 1;
+        } else {
+            // back up to the first matching entry
+            i = mid;
+            do {
+                i--;
+            } while (i >= 0 && !NET_CompareAdrSigned(&from, &cls.globalServers[i].adr));
+            i++;
+            do {
+                CL_SetServerInfo(&cls.globalServers[i], info, ping);
+                i++;
+            } while (i < cls.numglobalservers && !NET_CompareAdrSigned(&from, &cls.globalServers[i].adr));
             break;
         }
     }
 
-    for (i = 0; i < 128; ++i) {
-        if (NET_CompareAdr(from, cls->favoriteServers[i].adr)) {
-            CL_SetServerInfo(&cls->favoriteServers[i], info, ping);
-        }
+    for (i = 0; i < 128; i++) {
+        if (NET_CompareAdr(from, cls.favoriteServers[i].adr))
+            CL_SetServerInfo(&cls.favoriteServers[i], info, ping);
     }
 }
 
 void CL_ServerInfoPacket(netadr_t from, msg_t *msg, int time)
 {
+    int i;
+    int type;
+    char info[1024];
     const char *infoString;
+    const char *protoStr;
     int prot;
     int expectedProt;
-    const char *protoStr;
-    int i;
-    ping_t *pinglist;
-    ping_t *entry;
-    char info[1024];
-    int len;
-    clientStatic_t *cls;
 
     infoString = MSG_ReadCommandString(msg);
-    prot = atoi(Info_ValueForKey(infoString, (const char *)"protocol"));
 
-    protoStr = Dvar_GetString((const char *)"debug_protocol");
+    // if this isn't the correct protocol version, ignore it
+    prot = atoi(Info_ValueForKey(infoString, "protocol"));
+    protoStr = Dvar_GetString("debug_protocol");
     if (*protoStr)
         expectedProt = atoi(protoStr);
     else
-        expectedProt = 0x76;
-
+        expectedProt = 115;
     if (prot != expectedProt) {
-        Com_DPrintf((const char *)"Different protocol info packet: %s\n", infoString);
+        Com_DPrintf("Different protocol info packet: %s\n", infoString);
         return;
     }
 
-    pinglist = (ping_t *)((void *)&cl_pinglist);
+    // iterate servers waiting for ping response
     for (i = 0; i < 16; i++) {
-        ping_t *ping = &pinglist[i];
+        if (cl_pinglist[i].adr.port && !cl_pinglist[i].time && NET_CompareAdr(from, cl_pinglist[i].adr)) {
+            // calc ping time
+            cl_pinglist[i].time = time - cl_pinglist[i].start + 1;
+            Com_DPrintf("ping time %dms from %s\n", cl_pinglist[i].time, NET_AdrToString(from));
 
-        if (ping->adr.port == 0)
-            continue;
+            // save of info
+            I_strncpyz(cl_pinglist[i].info, infoString, sizeof(cl_pinglist[i].info));
 
-        if (ping->time != 0)
-            continue;
-
-        {
-            if (!NET_CompareAdr(from, ping->adr))
-                continue;
-        }
-
-        {
-            int pingTime = time - ping->start + 1;
-            ping->time = pingTime;
-        }
-
-        Com_DPrintf((const char *)"ping time %dms from %s\n", ping->time, NET_AdrToString(from));
-
-        I_strncpyz(ping->info, infoString, sizeof(ping->info));
-
-        {
-            int nettype = (from.type >= 3 && from.type <= 4) ? 1 : 0;
-            Info_SetValueForKey(ping->info, (const char *)"nettype", va((const char *)"%d", nettype));
-        }
-
-        CL_SetServerInfoByAddress(from, infoString, ping->time);
-        return;
-    }
-
-    cls = (&::cls);
-
-    if (cls->waitglobalserverresponse)
-        return;
-
-    for (i = 0; i < 128; i++) {
-        serverInfo_t *server = &cls->localServers[i];
-
-        if (server->adr.port != 0) {
-
-            if (NET_CompareAdr(from, server->adr))
-                return;
-            continue;
-        }
-
-        {
-            cls->numlocalservers = i + 1;
-
-            server->adr = from;
-            server->dirty = 0;
-            server->hostName[0] = '\0';
-            server->mapName[0] = '\0';
-            server->game[0] = '\0';
-            server->minPing = 0;
-            server->maxPing = 0;
-            server->ping = -1;
-            server->gameType[0] = '\0';
-            server->requestCount = 0;
-            server->netType = (byte)from.type;
-            server->clients = 0;
-
-            I_strncpyz(info, MSG_ReadCommandString(msg), 0x400);
-            if (!info[0])
-                return;
-
-            len = strlen(info);
-            if (info[len - 2] != '\n') {
-                info[len] = '\n';
-                info[len + 1] = '\0';
+            // tack on the net type
+            switch (from.type) {
+            case NA_BROADCAST:
+            case NA_IP:
+                type = 1;
+                break;
+            case NA_IPX:
+            case NA_BROADCAST_IPX:
+                type = 2;
+                break;
+            default:
+                type = 0;
+                break;
             }
+            Info_SetValueForKey(cl_pinglist[i].info, "nettype", va("%d", type));
+            CL_SetServerInfoByAddress(from, infoString, cl_pinglist[i].time);
 
-            Com_Printf((const char *)"%s: %s", NET_AdrToString(from), info);
             return;
         }
     }
 
-    Com_DPrintf((const char *)"MAX_OTHER_SERVERS hit, dropping infoResponse\n");
+    // if not just sent a local broadcast or pinging local servers
+    if (cls.pingUpdateSource != 0)
+        return;
+
+    for (i = 0; i < 128; i++) {
+        // empty slot
+        if (cls.localServers[i].adr.port == 0)
+            break;
+
+        // avoid duplicate
+        if (NET_CompareAdr(from, cls.localServers[i].adr))
+            return;
+    }
+
+    if (i == 128) {
+        Com_DPrintf("MAX_OTHER_SERVERS hit, dropping infoResponse\n");
+        return;
+    }
+
+    // add this to the list
+    cls.numlocalservers = i + 1;
+    cls.localServers[i].adr = from;
+    cls.localServers[i].clients = 0;
+    cls.localServers[i].hostName[0] = '\0';
+    cls.localServers[i].mapName[0] = '\0';
+    cls.localServers[i].maxClients = 0;
+    cls.localServers[i].maxPing = 0;
+    cls.localServers[i].minPing = 0;
+    cls.localServers[i].ping = -1;
+    cls.localServers[i].game[0] = '\0';
+    cls.localServers[i].gameType[0] = '\0';
+    cls.localServers[i].netType = from.type;
+    cls.localServers[i].allowAnonymous = 0;
+
+    I_strncpyz(info, MSG_ReadCommandString(msg), 1024);
+    if (strlen(info)) {
+        if (info[strlen(info) - 1] != '\n')
+            strncat(info, "\n", sizeof(info));
+        Com_Printf("%s: %s", NET_AdrToString(from), info);
+    }
 }
 
 qboolean CL_CDKeyValidate(const char *key, const char *checksum)
@@ -819,84 +797,80 @@ void CL_ServersResponsePacket(netadr_t from, msg_t *msg)
 
 }
 
+ping_t *CL_GetFreePing(void)
+{
+    ping_t *pingptr;
+    ping_t *best;
+    int oldest;
+    int i;
+    int time;
+    int now;
+
+    now = Sys_Milliseconds();
+
+    pingptr = cl_pinglist;
+    for (i = 0; i < 16; i++, pingptr++) {
+        // find free ping slot
+        if (pingptr->adr.port) {
+            if (!pingptr->time) {
+                if (now - pingptr->start < 500) {
+                    // still waiting for response
+                    continue;
+                }
+            } else {
+                // results have not been queried
+                continue;
+            }
+        }
+
+        // clear it
+        pingptr->adr.port = 0;
+        return pingptr;
+    }
+
+    // use oldest entry
+    pingptr = cl_pinglist;
+    best = cl_pinglist;
+    oldest = 0x80000000;
+    for (i = 0; i < 16; i++, pingptr++) {
+        // scan for oldest
+        time = now - pingptr->start;
+        if (time > oldest) {
+            oldest = time;
+            best = pingptr;
+        }
+    }
+
+    return best;
+}
+
 void CL_Ping_f(void)
 {
     netadr_t to;
-    int now;
-    ping_t *pinglist;
-    ping_t *entry;
-    ping_t *endEntry;
-    ping_t *bestEntry;
+    ping_t *pingptr;
+    const char *server;
 
     if (Cmd_Argc() != 2) {
-        Com_Printf((const char *)"usage: ping [server]\n");
+        Com_Printf("usage: ping [server]\n");
         return;
     }
 
     memset(&to, 0, sizeof(netadr_t));
 
-    if (!NET_StringToAdr(Cmd_Argv(1), &to))
+    server = Cmd_Argv(1);
+
+    if (!NET_StringToAdr(server, &to))
         return;
 
-    now = Sys_Milliseconds();
-    pinglist = (ping_t *)((void *)&cl_pinglist);
-    entry = pinglist;
-    endEntry = pinglist + 16;
+    pingptr = CL_GetFreePing();
 
-    while (entry != endEntry) {
-        ping_t *ping = entry;
+    memcpy(&pingptr->adr, &to, sizeof(netadr_t));
+    pingptr->start = Sys_Milliseconds();
+    pingptr->time = 0;
 
-        if (ping->adr.port == 0)
-            goto found_slot;
+    CL_SetServerInfoByAddress(pingptr->adr, NULL, 0);
 
-        {
-            if (ping->time == 0) {
-
-                int elapsed = now - ping->start;
-                if (elapsed > 0x1f3)
-                    goto found_slot;
-            } else if (ping->time > 0x1f3) {
-
-                goto found_slot;
-            }
-        }
-
-        entry++;
-    }
-
-    {
-        ping_t *scan = pinglist;
-        int oldest = (int)0x80000000;
-        bestEntry = pinglist;
-
-        while (scan != endEntry) {
-            int age = now - scan->start;
-            if (age > oldest) {
-                bestEntry = scan;
-                oldest = age;
-            }
-            scan++;
-        }
-        entry = bestEntry;
-        goto fill_slot;
-    }
-
-found_slot:
-    entry->adr.port = 0;
-
-fill_slot:
-
-    entry->adr = to;
-
-    entry->start = Sys_Milliseconds();
-    entry->time = 0;
-
-    {
-        CL_SetServerInfoByAddress(entry->adr, NULL, 0);
-    }
-
-    NET_OutOfBandPrint(NS_CLIENT1, to, (const char *)"getinfo xxx");
-
+    NET_OutOfBandPrint(NS_CLIENT1, to, "getinfo xxx");
 }
 
 void CL_Connect_f(void)

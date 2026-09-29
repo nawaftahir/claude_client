@@ -908,7 +908,9 @@ enum netadrtype_t {
     NA_BAD = 1,
     NA_LOOPBACK = 2,
     NA_BROADCAST = 3,
-    NA_IP = 4
+    NA_IP = 4,
+    NA_IPX = 5,
+    NA_BROADCAST_IPX = 6
 };
 
 enum netsrc_t {
@@ -8587,14 +8589,14 @@ struct netProfileInfo_s {
 struct netadr_t {
     netadrtype_t type;
     byte ip[4];
-    byte ipx[10];
     short unsigned int port;
+    byte ipx[10];
 };
 
 COD2_ASSERT_FIELD(netadr_t, type, 0x0);
 COD2_ASSERT_FIELD(netadr_t, ip, 0x4);
-COD2_ASSERT_FIELD(netadr_t, ipx, 0x8);
-COD2_ASSERT_FIELD(netadr_t, port, 0x12);
+COD2_ASSERT_FIELD(netadr_t, port, 0x8);
+COD2_ASSERT_FIELD(netadr_t, ipx, 0xa);
 COD2_ASSERT_SIZE(netadr_t, 0x14);
 
 struct challenge_t {

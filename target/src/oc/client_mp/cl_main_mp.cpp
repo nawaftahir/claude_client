@@ -1240,33 +1240,81 @@ void CL_ShutdownDebugData(void)
 
 void CL_GetPing(int n, char *buf, int buflen, int *pingtime)
 {
-    ping_t *ping = &cl_pinglist[n];
+    const char *str;
     int time;
-    const char *adrStr;
+    int maxPing;
 
-    if (ping->adr.port == 0) {
+    if (!cl_pinglist[n].adr.port) {
+        // empty slot
         buf[0] = '\0';
         *pingtime = 0;
         return;
     }
 
-    adrStr = NET_AdrToString(ping->adr);
-    I_strncpyz(buf, adrStr, buflen);
+    str = NET_AdrToString(cl_pinglist[n].adr);
+    I_strncpyz(buf, str, buflen);
 
-    time = ping->time;
-    if (time == 0) {
-
-        int maxPing;
-        time = Sys_Milliseconds() - ping->start;
+    time = cl_pinglist[n].time;
+    if (!time) {
+        // check for timeout
+        time = Sys_Milliseconds() - cl_pinglist[n].start;
         maxPing = Dvar_GetInt("cl_maxPing");
-        if (maxPing <= 99)
+        if (maxPing < 100)
             maxPing = 100;
-        if (maxPing > time)
+        if (time < maxPing) {
+            // not timed out yet
             time = 0;
+        }
     }
 
-    CL_SetServerInfoByAddress(ping->adr, ping->info, ping->time);
+    CL_SetServerInfoByAddress(cl_pinglist[n].adr, cl_pinglist[n].info, cl_pinglist[n].time);
+
     *pingtime = time;
+}
+
+void CL_UpdateServerInfo(int n)
+{
+    if (!cl_pinglist[n].adr.port)
+        return;
+
+    CL_SetServerInfoByAddress(cl_pinglist[n].adr, cl_pinglist[n].info, cl_pinglist[n].time);
+}
+
+void CL_GetPingInfo(int n, char *buf, int buflen)
+{
+    if (!cl_pinglist[n].adr.port) {
+        // empty slot
+        if (buflen)
+            buf[0] = '\0';
+        return;
+    }
+
+    I_strncpyz(buf, cl_pinglist[n].info, buflen);
+}
+
+void CL_ClearPing(int n)
+{
+    if (n < 0 || n >= 16)
+        return;
+
+    cl_pinglist[n].adr.port = 0;
+}
+
+int CL_GetPingQueueCount(void)
+{
+    int i;
+    int count;
+    ping_t *pingptr;
+
+    count = 0;
+    pingptr = cl_pinglist;
+
+    for (i = 0; i < 16; i++, pingptr++) {
+        if (pingptr->adr.port)
+            count++;
+    }
+
+    return count;
 }
 
 void CL_ShowIP_f(void)
@@ -1840,7 +1888,7 @@ void CL_CheckForResend(void)
     }
 
     I_strncpyz(info, Dvar_InfoString(2), sizeof(info));
-    Info_SetValueForKey(info, (const char *)"protocol", va((const char *)"%i", 0x76));
+    Info_SetValueForKey(info, (const char *)"protocol", va((const char *)"%i", 115));
     Info_SetValueForKey(info, (const char *)"challenge", va((const char *)"%i", conn->challenge));
     Info_SetValueForKey(info, (const char *)"qport", va((const char *)"%i", conn->qport));
 
@@ -1864,36 +1912,34 @@ void CL_CheckForResend(void)
 
 void CL_LocalServers_f(void)
 {
+    const char *message;
     int i;
-    int pass;
-    int port;
+    int j;
     netadr_t to;
 
-    Com_Printf((const char *)"Scanning for servers on the local network...\n");
+    Com_Printf("Scanning for servers on the local network...\n");
 
+    // reset the list, waiting for response
     cls.numlocalservers = 0;
     cls.pingUpdateSource = 0;
 
-    for (i = 0; i < 128; ++i) {
-        byte dirty = cls.localServers[i].dirty;
+    for (i = 0; i < 128; i++) {
+        qboolean b = cls.localServers[i].dirty;
         Com_Memset(&cls.localServers[i], 0, sizeof(cls.localServers[i]));
-        cls.localServers[i].dirty = dirty;
+        cls.localServers[i].dirty = b;
     }
-
     Com_Memset(&to, 0, sizeof(to));
 
-    for (pass = 0; pass < 2; ++pass) {
-        for (port = 0x7120; port < 0x7124; ++port) {
-            to.port = (unsigned short)(((port & 0xff) << 8) | ((port >> 8) & 0xff));
+    // the 'xxx' is a challenge echoed back by the server
+    message = "\xff\xff\xff\xffgetinfo xxx";
+
+    // send each message twice in case one is dropped
+    for (i = 0; i < 2; i++) {
+        // broadcast on each server port
+        for (j = 0; j < 4; j++) {
+            to.port = BigShort((short)(28960 + j));
             to.type = NA_BROADCAST;
-            /* Out-of-band packets start with four 0xFF bytes. This literal had been
-               mangled into "\xff" "fd" repeated, which put FF 66 64 FF ... on the wire
-               instead of FF FF FF FF -- CL_Netchan_SendOOBPacket rejected it as
-               "used to send non-OOB packet" and LAN server discovery never worked.
-               The length 0xf matches 4 marker bytes + "getinfo xxx" (11). */
-            CL_Netchan_SendOOBPacket(0xf, (const void *)"\xff\xff\xff\xff"
-                                                        "getinfo xxx",
-                                     to);
+            CL_Netchan_SendOOBPacket(strlen(message), message, to);
         }
     }
 }
@@ -1940,80 +1986,69 @@ void CL_PlayLogo_f(void)
 
 qboolean CL_UpdateDirtyPings_f(int source)
 {
-    serverInfo_t *servers;
-    int max;
     int slots;
-    int status;
     int i;
     char buff[1024];
+    int pingTime;
+    int max;
+    qboolean status;
+
+    status = 0;
 
     if ((&::clc)->state != CA_DISCONNECTED)
         return 0;
 
-    if ((unsigned int)source > 2)
+    if (source < 0 || source > 2)
         return 0;
 
     cls.pingUpdateSource = source;
 
-    slots = 0;
-    for (i = 0; i < 16; ++i) {
-        if (cl_pinglist[i].adr.port)
-            ++slots;
-    }
+    slots = CL_GetPingQueueCount();
+    if (slots < 16) {
+        serverInfo_t *server = NULL;
 
-    status = 0;
-
-    if (slots <= 15) {
-        if (source == 1) {
-            max = cls.numglobalservers;
-            servers = cls.globalServers;
-        } else if (source == 2) {
-            max = cls.numfavoriteservers;
-            servers = cls.favoriteServers;
-        } else {
+        max = (source == 1) ? 20000 : 128;
+        switch (source) {
+        case 0:
+            server = &cls.localServers[0];
             max = cls.numlocalservers;
-            servers = cls.localServers;
+            break;
+        case 1:
+            server = &cls.globalServers[0];
+            max = cls.numglobalservers;
+            break;
+        case 2:
+            server = &cls.favoriteServers[0];
+            max = cls.numfavoriteservers;
+            break;
         }
-
-        if (max > 0) {
-            for (i = 0; i < max; ++i) {
-                int pingSlot;
-                int duplicate;
+        for (i = 0; i < max; i++) {
+            if (server[i].dirty && server[i].ping == -1) {
                 int j;
 
-                if (!servers[i].dirty)
-                    continue;
-                if (servers[i].ping != -1)
-                    continue;
-
-                if (slots > 15) {
-                    status = 1;
+                if (slots >= 16)
                     break;
-                }
 
-                duplicate = 0;
-                for (j = 0; j < 16; ++j) {
+                for (j = 0; j < 16; j++) {
                     if (!cl_pinglist[j].adr.port)
                         continue;
-                    if (NET_CompareAdr(cl_pinglist[j].adr, servers[i].adr)) {
-                        duplicate = 1;
+                    if (NET_CompareAdr(cl_pinglist[j].adr, server[i].adr)) {
+                        // already on the list
                         break;
                     }
                 }
-
-                if (duplicate)
-                    continue;
-
-                pingSlot = 0;
-                while (pingSlot < 16 && cl_pinglist[pingSlot].adr.port)
-                    ++pingSlot;
-
-                cl_pinglist[pingSlot].adr = servers[i].adr;
-                cl_pinglist[pingSlot].start = Sys_Milliseconds();
-                cl_pinglist[pingSlot].time = 0;
-                NET_OutOfBandPrint(NS_CLIENT1, cl_pinglist[pingSlot].adr, (const char *)"getinfo xxx");
-                ++slots;
-                status = 1;
+                if (j >= 16) {
+                    status = 1;
+                    for (j = 0; j < 16; j++) {
+                        if (!cl_pinglist[j].adr.port)
+                            break;
+                    }
+                    cl_pinglist[j].adr = server[i].adr;
+                    cl_pinglist[j].start = Sys_Milliseconds();
+                    cl_pinglist[j].time = 0;
+                    NET_OutOfBandPrint(NS_CLIENT1, cl_pinglist[j].adr, "getinfo xxx");
+                    slots++;
+                }
             }
         }
     }
@@ -2021,18 +2056,15 @@ qboolean CL_UpdateDirtyPings_f(int source)
     if (slots)
         status = 1;
 
-    for (i = 0; i < 16; ++i) {
-        int pingTime;
-
+    for (i = 0; i < 16; i++) {
         if (!cl_pinglist[i].adr.port)
             continue;
 
-        CL_GetPing(i, buff, sizeof(buff), &pingTime);
-        if (!pingTime)
-            continue;
-
-        cl_pinglist[i].adr.port = 0;
-        status = 1;
+        CL_GetPing(i, buff, 1024, &pingTime);
+        if (pingTime) {
+            CL_ClearPing(i);
+            status = 1;
+        }
     }
 
     return status;
