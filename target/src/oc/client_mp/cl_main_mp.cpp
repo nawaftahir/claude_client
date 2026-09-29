@@ -1,4 +1,5 @@
 #include "common_types.h"
+#include <float.h>
 #include "imports.h"
 #include "bytematch.h"
 #include "cod2_feature_config.h"
@@ -241,6 +242,10 @@ extern const dvar_t *m_side;
 extern const dvar_t *m_filter;
 extern const dvar_t *cl_activeAction;
 extern const dvar_t *cl_allowDownload;
+extern dvar_t *cl_updateavailable;
+extern dvar_t *cl_updatefiles;
+extern dvar_t *cl_updateoldversion;
+extern dvar_t *cl_updateversion;
 extern const dvar_t *cl_inGameVideo;
 extern dvar_t *fx_enable;
 extern dvar_t *fx_draw;
@@ -346,6 +351,8 @@ qboolean CL_UpdateDirtyPings_f(int source);
 void CL_RunOncePerClientFrame(int msec);
 int Client_SendVoiceData(int bytes, char *enc_buffer);
 Bool CL_ConnectionlessPacket(netadr_t from, msg_t *msg, int time);
+void CL_UpdateInfoPacket(netadr_t from);
+short BigShort(short l);
 Bool CL_PacketEvent(netadr_t from, msg_t *msg, int time);
 void CL_Init(void);
 void CL_ShutdownAll(void);
@@ -1095,45 +1102,39 @@ void CL_InitOnceForAllClients(void)
     Con_Init();
     CL_InitInput();
 
-    cl_noprint = Dvar_RegisterBool("cl_noprint", 0, 0);
+    cl_noprint = Dvar_RegisterBool("cl_noprint", 0, 0x1000);
     cl_voice = Dvar_RegisterBool("cl_voice", 1, 0x1003);
-    cl_timeout = Dvar_RegisterFloat("cl_timeout", 200.0f, 0.0f, 3600.0f, 0);
-    cl_connectTimeout = Dvar_RegisterFloat("cl_connectTimeout", 200.0f, 0.0f, 3600.0f, 0);
-    cl_shownet = Dvar_RegisterInt("cl_shownet", 0, -2, 4, 0);
-    cl_shownuments = Dvar_RegisterBool("cl_shownuments", 0, 0);
-    cl_showServerCommands = Dvar_RegisterBool("cl_showServerCommands", 0, 0);
-    cl_showSend = Dvar_RegisterBool("cl_showSend", 0, 0);
-    cl_showTimeDelta = Dvar_RegisterBool("cl_showTimeDelta", 0, 0);
-    cl_freezeDemo = Dvar_RegisterBool("cl_freezeDemo", 0, 0);
-    cl_activeAction = Dvar_RegisterString("activeAction", "", 0);
-    cl_avidemo = Dvar_RegisterInt("cl_avidemo", 0, 0, 0x7fffffff, 0);
-    cl_forceavidemo = Dvar_RegisterBool("cl_forceavidemo", 0, 0);
+    cl_timeout = Dvar_RegisterFloat("cl_timeout", 200.0f, 0.0f, 3600.0f, 0x1000);
+    cl_connectTimeout = Dvar_RegisterFloat("cl_connectTimeout", 200.0f, 0.0f, 3600.0f, 0x1000);
+    cl_shownet = Dvar_RegisterInt("cl_shownet", 0, -2, 4, 0x1000);
+    cl_shownuments = Dvar_RegisterBool("cl_shownuments", 0, 0x1000);
+    cl_showServerCommands = Dvar_RegisterBool("cl_showServerCommands", 0, 0x1000);
+    cl_showSend = Dvar_RegisterBool("cl_showSend", 0, 0x1000);
+    cl_showTimeDelta = Dvar_RegisterBool("cl_showTimeDelta", 0, 0x1000);
+    cl_freezeDemo = Dvar_RegisterBool("cl_freezeDemo", 0, 0x1000);
+    cl_activeAction = Dvar_RegisterString("activeAction", "", 0x1000);
+    cl_avidemo = Dvar_RegisterInt("cl_avidemo", 0, 0, 0x7fffffff, 0x1000);
+    cl_forceavidemo = Dvar_RegisterBool("cl_forceavidemo", 0, 0x1000);
 
-    {
-        union {
-            int i;
-            float f;
-        } flt_max = { 0x7f7fffff }, flt_nmax = { 0xff7fffff };
-        cl_yawspeed = Dvar_RegisterFloat("cl_yawspeed", 140.0f, flt_nmax.f, flt_max.f, 0x1001);
-        cl_pitchspeed = Dvar_RegisterFloat("cl_pitchspeed", 140.0f, flt_nmax.f, flt_max.f, 0x1001);
-        cl_anglespeedkey = Dvar_RegisterFloat("cl_anglespeedkey", 1.5f, 0.0f, flt_max.f, 0);
-    }
+    cl_yawspeed = Dvar_RegisterFloat("cl_yawspeed", 140.0f, -FLT_MAX, FLT_MAX, 0x1001);
+    cl_pitchspeed = Dvar_RegisterFloat("cl_pitchspeed", 140.0f, -FLT_MAX, FLT_MAX, 0x1001);
+    cl_anglespeedkey = Dvar_RegisterFloat("cl_anglespeedkey", 1.5f, 0.0f, FLT_MAX, 0x1000);
 
     cl_maxpackets = Dvar_RegisterInt("cl_maxpackets", 30, 15, 100, 0x1001);
     cl_packetdup = Dvar_RegisterInt("cl_packetdup", 1, 0, 5, 0x1001);
     cl_sensitivity = Dvar_RegisterFloat("sensitivity", 5.0f, 0.01f, 100.0f, 0x1001);
     cl_mouseAccel = Dvar_RegisterFloat("cl_mouseAccel", 0.0f, 0.0f, 100.0f, 0x1001);
     cl_freelook = Dvar_RegisterBool("cl_freelook", 1, 0x1001);
-    cl_showMouseRate = Dvar_RegisterBool("cl_showmouserate", 0, 0);
+    cl_showMouseRate = Dvar_RegisterBool("cl_showmouserate", 0, 0x1000);
     cl_allowDownload = Dvar_RegisterBool("cl_allowDownload", 1, 0x1001);
 #if COD2_IS_PATCH_13
     cl_wwwDownload = Dvar_RegisterBool("cl_wwwDownload", 1, 0x1003);
     cl_punkbuster = Dvar_RegisterBool("cl_punkbuster", 0, 0x1013);
 #endif
-    cl_talking = Dvar_RegisterBool("cl_talking", 0, 0);
+    cl_talking = Dvar_RegisterBool("cl_talking", 0, 0x1000);
     cl_inGameVideo = Dvar_RegisterBool("r_inGameVideo", 1, 0x1001);
-    cl_serverStatusResendTime = Dvar_RegisterInt("cl_serverStatusResendTime", 750, 0, 3600, 0);
-    cl_bypassMouseInput = Dvar_RegisterBool("cl_bypassMouseInput", 0, 0);
+    cl_serverStatusResendTime = Dvar_RegisterInt("cl_serverStatusResendTime", 750, 0, 3600, 0x1000);
+    cl_bypassMouseInput = Dvar_RegisterBool("cl_bypassMouseInput", 0, 0x1000);
 
     m_pitch = Dvar_RegisterFloat("m_pitch", 0.022f, -1.0f, 1.0f, 0x1001);
     m_yaw = Dvar_RegisterFloat("m_yaw", 0.022f, -1.0f, 1.0f, 0x1001);
@@ -1152,17 +1153,26 @@ void CL_InitOnceForAllClients(void)
 
     fx_enable = Dvar_RegisterBool("fx_enable", 1, 0x1080);
     fx_draw = Dvar_RegisterBool("fx_draw", 1, 0x1080);
-    fx_cull = Dvar_RegisterBool("fx_cull", 1, 0);
-    fx_sort = Dvar_RegisterBool("fx_sort", 1, 0);
+    fx_cull = Dvar_RegisterBool("fx_cull", 1, 0x1000);
+    fx_sort = Dvar_RegisterBool("fx_sort", 1, 0x1000);
     fx_freeze = Dvar_RegisterBool("fx_freeze", 0, 0x1080);
     fx_debug = Dvar_RegisterBool("fx_debug", 0, 0x1080);
     fx_debugBolt = Dvar_RegisterFloat("fx_debugBolt", 0.0f, 0.0f, 100.0f, 0x1080);
     fx_count = Dvar_RegisterBool("fx_count", 0, 0x1080);
     fx_visMinTraceDist = Dvar_RegisterFloat("fx_visMinTraceDist", 80.0f, 0.0f, 1000.0f, 0x1080);
     fx_profile = Dvar_RegisterBool("fx_profile", 0, 0x1080);
-    nextdemo = Dvar_RegisterString("nextdemo", "", 0);
+    nextdemo = Dvar_RegisterString("nextdemo", "", 0x1000);
     Dvar_RegisterBool("hud_enable", 1, 0x1001);
     Dvar_RegisterBool("cg_blood", 1, 0x1001);
+    cl_updateavailable = Dvar_RegisterBool("cl_updateavailable", 0, 0x1040);
+    cl_updatefiles = Dvar_RegisterString("cl_updatefiles", "", 0x1040);
+    cl_updateoldversion = Dvar_RegisterString("cl_updateoldversion", "", 0x1040);
+    cl_updateversion = Dvar_RegisterString("cl_updateversion", "", 0x1040);
+    I_strncpyz(cls.autoupdateServerNames[0], "cod2update.activision.com", 64);
+    I_strncpyz(cls.autoupdateServerNames[1], "cod2update2.activision.com", 64);
+    I_strncpyz(cls.autoupdateServerNames[2], "cod2update3.activision.com", 64);
+    I_strncpyz(cls.autoupdateServerNames[3], "cod2update4.activision.com", 64);
+    I_strncpyz(cls.autoupdateServerNames[4], "cod2update5.activision.com", 64);
 
     Cmd_AddCommand("cmd", CL_ForwardToServer_f);
     Cmd_AddCommand("configstrings", CL_Configstrings_f);
@@ -1207,6 +1217,34 @@ void CL_InitOnceForAllClients(void)
 }
 
 extern "C" void Z_FreeInternal( void *ptr );
+void CL_UpdateInfoPacket(netadr_t from)
+{
+    if (cls.autoupdateServer.type == NA_BAD) {
+        Com_DPrintf("CL_UpdateInfoPacket:  Auto-Updater has bad address\n");
+        return;
+    }
+
+    Com_DPrintf("Auto-Updater resolved to %i.%i.%i.%i:%i\n",
+                cls.autoupdateServer.ip[0], cls.autoupdateServer.ip[1],
+                cls.autoupdateServer.ip[2], cls.autoupdateServer.ip[3],
+                BigShort(cls.autoupdateServer.port));
+
+    if (!NET_CompareAdr(from, cls.autoupdateServer)) {
+        Com_DPrintf("CL_UpdateInfoPacket:  Received packet from %i.%i.%i.%i:%i\n",
+                    from.ip[0], from.ip[1], from.ip[2], from.ip[3],
+                    BigShort(from.port));
+        return;
+    }
+
+    Dvar_SetBool(cl_updateavailable, atoi(Cmd_Argv(1)) != 0);
+
+    if (cl_updateavailable->current.enabled) {
+        Dvar_SetString(cl_updatefiles, Cmd_Argv(2));
+        Dvar_SetString(cl_updateversion, Cmd_Argv(3));
+        Dvar_SetString(cl_updateoldversion, "1.0");
+    }
+}
+
 void CL_ShutdownDebugData(void)
 {
     void (*shutdownDebug)(void);
@@ -1781,7 +1819,6 @@ static void CL_BuildMd5StrFromCDKey(char *md5Str)
 }
 #endif
 
-short BigShort(short l);
 
 void CL_RequestAuthorization(void)
 {
@@ -2268,6 +2305,12 @@ Bool CL_ConnectionlessPacket(netadr_t from, msg_t *msg, int time)
         goto finish;
     }
 
+    if (I_stricmp(cmd, (const char *)"updateResponse") == 0) {
+        CL_UpdateInfoPacket(from);
+        result = 1;
+        goto finish;
+    }
+
     if (I_strncmp(cmd, (const char *)"getserversResponse", 18) == 0) {
         CL_ServersResponsePacket(from, msg);
         result = 1;
@@ -2399,14 +2442,13 @@ void CL_Init(void)
 
     c->active = 1;
 
-    byte **lh = (byte **)&::legacyHacks;
-    (*lh)[0x5c] = 0;
-    (*lh)[0x9c] = 0;
-    (*lh)[0xdc] = 0;
+    ((byte *)::legacyHacks)[0x5c] = 0;
+    ((byte *)::legacyHacks)[0x9c] = 0;
+    ((byte *)::legacyHacks)[0xdc] = 0;
 
     Cbuf_Execute();
 
-    *(int *)(*lh + 4) = 1;
+    *(int *)((byte *)::legacyHacks + 4) = 1;
     CL_SetADS(0);
 
     Com_Printf("----- Client Initialization Complete -----\n");
@@ -2494,22 +2536,20 @@ void CL_Frame(void)
 
 void CL_Vid_Restart_f(void)
 {
-    const dvar_t *svRunning = com_sv_running;
-    clientConnection_t *conn = &::clc;
-    clientActive_t *active = clients;
     MemoryFile memFile;
-    void *tempBuf;
-    void *clientStateBuf = NULL;
-    int clientStateBytes = 0;
+    void *clientStateBuf;
+    int clientStateBytes;
 
-    if (svRunning->current.enabled) {
-        Com_Printf((const char *)"Listen server cannot video restart.\n");
+    if (com_sv_running->current.enabled) {
+        Com_Printf("Listen server cannot video restart.\n");
         return;
     }
 
-    if (active->cgameInitialized) {
-        tempBuf = Z_VirtualAllocInternal(0xa00000);
-        MemFile_InitForWriting(&memFile, 0xa00000, tempBuf, 1);
+    clientStateBuf = NULL;
+    clientStateBytes = 0;
+
+    if (clients->cgameInitialized) {
+        MemFile_InitForWriting(&memFile, 0xa00000, Z_VirtualAllocInternal(0xa00000), 1);
         CL_ArchiveClientState(&memFile);
 
         clientStateBytes = memFile.bytesUsed;
@@ -2533,20 +2573,19 @@ void CL_Vid_Restart_f(void)
     Dvar_RegisterBool((const char *)"loc_translate", 1, 0x1020);
     Dvar_RegisterBool((const char *)"fs_ignoreLocalized", 0, 0x10a0);
 
-    FS_ConditionalRestart(conn->checksumFeed);
+    FS_ConditionalRestart(clc.checksumFeed);
     SEH_UpdateLanguageInfo();
     Dvar_SetInt((dvar_t *)cl_paused, 0);
     CL_InitRef();
     CL_StartHunkUsers();
 
-    if (conn->state >= CA_LOADING && conn->state <= CA_ACTIVE) {
+    if (clc.state > CA_CONNECTED && clc.state != CA_CINEMATIC && clc.state != CA_LOGO) {
         CL_InitCGame();
         CL_SendPureChecksums();
     }
 
     if (clientStateBuf) {
-        active = clients;
-        if (active->cgameInitialized) {
+        if (clients->cgameInitialized) {
             MemFile_InitForReading(&memFile, clientStateBytes, clientStateBuf);
             CL_ArchiveClientState(&memFile);
         }
@@ -2556,26 +2595,23 @@ void CL_Vid_Restart_f(void)
 
 void CL_Snd_Restart_f(void)
 {
-    const dvar_t *svRunning = com_sv_running;
     MemoryFile memFile;
     snd_listener listeners;
-    void *tempBuf;
-    void *savedBuf;
-    int bytesUsed;
+    int size;
+    void *buffer;
 
-    if (svRunning->current.enabled) {
-        Com_Printf((const char *)"Listen server cannot sound restart.\n");
+    if (com_sv_running->current.enabled) {
+        Com_Printf("Listen server cannot sound restart.\n");
         return;
     }
 
-    tempBuf = Z_VirtualAllocInternal(0xa00000);
-    MemFile_InitForWriting(&memFile, 0xa00000, tempBuf, 1);
+    MemFile_InitForWriting(&memFile, 0xa00000, Z_VirtualAllocInternal(0xa00000), 1);
     SND_Save(&memFile);
 
-    bytesUsed = memFile.bytesUsed;
-    savedBuf = Z_MallocInternal(bytesUsed);
-    memcpy(savedBuf, tempBuf, bytesUsed);
-    Z_VirtualFreeInternal(tempBuf);
+    size = memFile.bytesUsed;
+    buffer = Z_MallocInternal(size);
+    memcpy(buffer, memFile.buffer, size);
+    Z_VirtualFreeInternal(memFile.buffer);
 
     SND_SaveListeners(&listeners);
     SND_Shutdown();
@@ -2584,73 +2620,76 @@ void CL_Snd_Restart_f(void)
 
     CL_Vid_Restart_f();
 
-    MemFile_InitForReading(&memFile, bytesUsed, savedBuf);
+    MemFile_InitForReading(&memFile, size, buffer);
     SND_Restore(&memFile);
-    Z_FreeInternal(savedBuf);
+    Z_FreeInternal(buffer);
 }
+
+// retail globals, names from CoD1 (SUPPORTED)
+qboolean autoupdateStarted;
+char autoupdateFilename[64];
 
 void CL_Disconnect(void)
 {
-    LegacyHacks *legacy = (LegacyHacks *)::legacyHacks;
-    clientConnection_t *conn = &::clc;
-    clientActive_t *active = clients;
-    connstate_t oldState;
-    int sequence;
+    bool wasConnected;
 
-    if (!legacy->cl_running)
+    if (!legacyHacks->cl_running) {
         return;
-
-    if (conn->demorecording)
-        CL_StopRecord_f();
-
-    if (conn->download) {
-        FS_FCloseFile(conn->download);
-        conn->download = 0;
     }
 
-    conn->downloadName[0] = '\0';
-    conn->downloadTempName[0] = '\0';
-    legacy->cl_downloadName[0] = 0;
+    if (clc.demorecording) {
+        CL_StopRecord_f();
+    }
 
-    if (conn->demofile) {
-        FS_FCloseFile(conn->demofile);
-        conn->demofile = 0;
-        conn->demoplaying = 0;
-        conn->demorecording = 0;
+    if (clc.download) {
+        FS_FCloseFile(clc.download);
+        clc.download = 0;
+    }
+    *clc.downloadTempName = *clc.downloadName = 0;
+    legacyHacks->cl_downloadName[0] = 0;
+
+    if (clc.demofile) {
+        FS_FCloseFile(clc.demofile);
+        clc.demofile = 0;
+        clc.demoplaying = 0;
+        clc.demorecording = 0;
     }
 
     SCR_StopCinematic();
 
-    if (conn->state > CA_CHALLENGING) {
-        sequence = conn->reliableSequence;
-        if (sequence - conn->reliableAcknowledge - 128 <= 0) {
-            conn->reliableSequence = sequence + 1;
-            MSG_WriteReliableCommandToBuffer((const char *)"disconnect",
-                                             conn->reliableCommands[conn->reliableSequence & 0x7f], 0x400);
-            CL_WritePacket();
-            CL_WritePacket();
-            CL_WritePacket();
-        }
+    // send a disconnect message to the server
+    // send it a few times in case one is dropped
+    if (clc.state >= CA_CONNECTED && clc.reliableSequence - clc.reliableAcknowledge <= 128) {
+        CL_AddReliableCommand("disconnect");
+        CL_WritePacket();
+        CL_WritePacket();
+        CL_WritePacket();
     }
 
-    oldState = conn->state;
+    wasConnected = clc.state >= CA_CONNECTING;
+
     CL_ClearState();
     CL_ClearMutedList();
 
-    memset(conn, 0, sizeof(*conn));
-    conn->state = CA_DISCONNECTED;
+    // wipe the client connection
+    memset(&clc, 0, sizeof(clc));
     SND_DisconnectListener();
+    clc.state = CA_DISCONNECTED;
 
-    if (oldState > CA_LOGO)
-        active->keyCatchers &= 1;
+    if (wasConnected) {
+        clients->keyCatchers &= 1;
+    }
 
-    if (!CL_AllLocalClientsDisconnected())
-        return;
+    if (CL_AllLocalClientsDisconnected()) {
+        autoupdateFilename[0] = 0;
+        autoupdateStarted = 0;
+        Dvar_SetBool(sv_disableClientConsole, 0);
 
-    Dvar_SetBool(sv_disableClientConsole, 0);
-    ((int)cl_connectedToPureServer) = 0;
-    ((int)fs_checksumFeed) = 0;
-    bgs = 0;
+        // not connected to a pure server anymore
+        cl_connectedToPureServer = 0;
+        fs_checksumFeed = 0;
+        bgs = 0;
+    }
 }
 
 void CL_Shutdown(void)
@@ -2937,68 +2976,55 @@ static void CL_SendPureChecksums(void)
 
 void CL_DownloadsComplete(void)
 {
-    char cmd[1024];
-    int i;
+    char *fn;
 
-    if (::clc.downloadRestart) {
-        ::clc.downloadRestart = 0;
-        FS_Restart(clc.checksumFeed);
-        CL_AddReliableCommand((const char *)"donedl");
+    if (autoupdateStarted) {
+        if (strlen(autoupdateFilename) > 4) {
+            fn = va("%s/%s", FS_ShiftStr("ni]Zm^l", 7), autoupdateFilename);
+            Sys_StartProcess(fn, 1);
+        }
+        autoupdateStarted = 0;
+        CL_Disconnect();
         return;
     }
 
-    ::clc.state = CA_LOADING;
+    // if we downloaded files we need to restart the file system
+    if (clc.downloadRestart) {
+        clc.downloadRestart = 0;
 
-    if (!(com_sv_running)->current.enabled) {
+        FS_Restart(clc.checksumFeed);
+
+        // inform the server so we get new gamestate info
+        CL_AddReliableCommand("donedl");
+        return;
+    }
+
+    // let the client game init and load data
+    clc.state = CA_LOADING;
+
+    if (!com_sv_running->current.enabled) {
         const char *info;
         char mapname[64];
         char gametype[64];
-        void (*shutdownInput)(void);
-        void (*shutdown)(int);
 
         info = CL_GetConfigString(0);
-        I_strncpyz(mapname, Info_ValueForKey(info, (const char *)"mapname"), sizeof(mapname));
-        I_strncpyz(gametype, Info_ValueForKey(info, (const char *)"g_gametype"), sizeof(gametype));
+        I_strncpyz(mapname, Info_ValueForKey(info, "mapname"), sizeof(mapname));
+        I_strncpyz(gametype, Info_ValueForKey(info, "g_gametype"), sizeof(gametype));
         UI_SetMap(mapname, gametype);
-        SCR_UpdateScreenInternal();
-
-        shutdownInput = re.SyncRenderThread;
-        if (shutdownInput)
-            shutdownInput();
-
-        if (cls.hunkUsersStarted) {
-            CL_ShutdownCGame();
-            CL_ShutdownUI();
-            cls.whiteMaterial = 0;
-            cls.consoleMaterial = 0;
-            cls.consoleFont = 0;
-            cls.hunkUsersStarted = 0;
-        }
-
-        shutdown = *(void (**)(int))&re;
-        if (shutdown)
-            shutdown(0);
-
-        cls.rendererStarted = 0;
+        SCR_UpdateScreen();
+        CL_ShutdownAll();
         Com_Restart();
         CL_StartHunkUsers();
-        SCR_UpdateScreenInternal();
+        SCR_UpdateScreen();
     } else if (clients->cgameInitialized) {
         return;
     }
 
-    Dvar_SetInt((dvar_t *)cl_paused, 1);
+    Dvar_SetInt(cl_paused, 1);
     CL_InitCGame();
-    Dvar_SetInt((dvar_t *)cl_paused, 0);
 
-    {
-        const char *checksums = FS_ReferencedIwdPureChecksums();
-        Com_sprintf(cmd, sizeof(cmd), (const char *)"Va ");
-        I_strncat(cmd, sizeof(cmd), checksums);
-    }
-    for (i = 0; i < 2; ++i)
-        cmd[i] = (char)(cmd[i] + 13 + i * 2);
-    CL_AddReliableCommand(cmd);
+    // set pure checksums
+    CL_SendPureChecksums();
 
     CL_WritePacket();
     CL_WritePacket();
@@ -3007,95 +3033,79 @@ void CL_DownloadsComplete(void)
 
 void CL_BeginDownload(const char *localName, const char *remoteName)
 {
-    clientConnection_t *conn;
-    const char *cmd;
-    int sequence;
-
-    Com_DPrintf((const char *)"***** CL_BeginDownload *****\nLocalname: %s\nRemotename: %s\n****************************\n", localName, remoteName);
-    conn = &::clc;
-    I_strncpyz(conn->downloadName, localName, sizeof(conn->downloadName));
-    Com_sprintf(conn->downloadTempName, sizeof(conn->downloadTempName), (const char *)"%s.tmp", localName);
+    Com_DPrintf("***** CL_BeginDownload *****\nLocalname: %s\nRemotename: %s\n****************************\n", localName, remoteName);
+    I_strncpyz(clc.downloadName, localName, sizeof(clc.downloadName));
+    Com_sprintf(clc.downloadTempName, sizeof(clc.downloadTempName), "%s.tmp", localName);
 
     I_strncpyz(legacyHacks->cl_downloadName, remoteName, 0x40);
     legacyHacks->cl_downloadSize = 0;
     legacyHacks->cl_downloadCount = 0;
     legacyHacks->cl_downloadTime = cls.realtime;
 
-    ((clientConnection_t *)conn)->downloadBlock = 0;
-    ((clientConnection_t *)conn)->downloadCount = 0;
+    clc.downloadBlock = 0;
+    clc.downloadCount = 0;
 
-    cmd = va((const char *)"download %s", remoteName);
-    sequence = conn->reliableSequence;
-    if (sequence - conn->reliableAcknowledge - 128 > 0)
-        Com_Error(ERR_DROP, (const char *)"EXE_ERR_CLIENT_CMD_OVERFLOW");
-
-    conn->reliableSequence = sequence + 1;
-    MSG_WriteReliableCommandToBuffer(cmd, conn->reliableCommands[conn->reliableSequence & 0x7f], 0x400);
+    CL_AddReliableCommand(va("download %s", remoteName));
 }
-
 void CL_NextDownload(void)
 {
-    clientConnection_t *conn;
-    char *remoteName;
-    char *localName;
-    char *next;
+    char *s;
+    char *remoteName, *localName;
 
-    if (!::clc.downloadList[0]) {
-        CL_DownloadsComplete();
+    if (*clc.downloadList) {
+        s = clc.downloadList;
+        if (*s == '@')
+            s++;
+        remoteName = s;
+
+        if ((s = strchr(s, '@')) == NULL) {
+            CL_DownloadsComplete();
+            return;
+        }
+
+        *s++ = 0;
+        localName = s;
+        if ((s = strchr(s, '@')) != NULL)
+            *s++ = 0;
+        else
+            s = localName + strlen(localName);
+
+        CL_BeginDownload(localName, remoteName);
+        clc.downloadRestart = 1;
+
+        memmove(clc.downloadList, s, strlen(s) + 1);
         return;
     }
 
-    remoteName = ::clc.downloadList;
-    if (*remoteName == '@')
-        ++remoteName;
-
-    localName = strchr(remoteName, '@');
-    if (!localName) {
-        CL_DownloadsComplete();
-        return;
-    }
-
-    *localName++ = '\0';
-    next = strchr(localName, '@');
-    if (next)
-        *next++ = '\0';
-    else
-        next = localName + strlen(localName);
-
-    CL_BeginDownload(localName, remoteName);
-    conn = &::clc;
-    conn->downloadRestart = 1;
-    memmove(conn->downloadList, next, strlen(next) + 1);
+    CL_DownloadsComplete();
 }
 
 void CL_InitDownloads(void)
 {
-    clientConnection_t *conn;
-    const dvar_t *svRunning;
-    char missingFiles[1024];
+    char missingfiles[1024];
+    const char *dir;
 
-    FS_ShiftStr((const char *)"ni]Zm^l", 7);
+    dir = FS_ShiftStr("ni]Zm^l", 7);
 
-    svRunning = com_sv_running;
-    if (svRunning->current.enabled || !cl_allowDownload->current.enabled) {
-        if (FS_CompareIwds(missingFiles, sizeof(missingFiles), 0))
-            Com_Printf((const char *)"\nWARNING: You are missing some files referenced by the server:\n%sYou might not be able to join the game\nGo to the settings menu to turn on autodownload, or get the file elsewhere\n\n", missingFiles);
-        CL_DownloadsComplete();
-        return;
+    if (autoupdateStarted && NET_CompareAdr(cls.autoupdateServer, clc.serverAddress)) {
+        if (strlen(cl_updatefiles->current.string) > 4) {
+            I_strncpyz(autoupdateFilename, cl_updatefiles->current.string, sizeof(autoupdateFilename));
+            I_strncpyz(clc.downloadList, va("@%s/%s@%s/%s", dir, cl_updatefiles->current.string, dir, cl_updatefiles->current.string), sizeof(clc.downloadList));
+            clc.state = CA_CONNECTED;
+            CL_NextDownload();
+            return;
+        }
+    } else if (com_sv_running->current.enabled || !cl_allowDownload->current.enabled) {
+        if (FS_CompareIwds(missingfiles, sizeof(missingfiles), 0))
+            Com_Printf("\nWARNING: You are missing some files referenced by the server:\n%sYou might not be able to join the game\nGo to the settings menu to turn on autodownload, or get the file elsewhere\n\n", missingfiles);
+    } else if (FS_CompareIwds(clc.downloadList, sizeof(clc.downloadList), 1)) {
+        Com_Printf("Need iwds: %s\n", clc.downloadList);
+        if (*clc.downloadList) {
+            clc.state = CA_CONNECTED;
+            CL_NextDownload();
+            return;
+        }
     }
 
-    conn = &::clc;
-    if (!FS_CompareIwds(conn->downloadList, sizeof(conn->downloadList), 1)) {
-        CL_DownloadsComplete();
-        return;
-    }
-
-    Com_Printf((const char *)"Need iwds: %s\n", conn->downloadList);
-    if (!conn->downloadList[0]) {
-        CL_DownloadsComplete();
-        return;
-    }
-
-    conn->state = CA_CONNECTED;
-    CL_NextDownload();
+    CL_DownloadsComplete();
 }

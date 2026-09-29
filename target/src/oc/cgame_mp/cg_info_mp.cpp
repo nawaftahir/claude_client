@@ -52,7 +52,6 @@ void CG_DrawInformation(qboolean serverLoading)
 {
     char string[0x400];
     void *font;
-    char **lh = (char **)&::legacyHacks;
     char *base;
     char *pos;
     const char *configStr;
@@ -66,7 +65,7 @@ void CG_DrawInformation(qboolean serverLoading)
 
     if (serverLoading) {
 
-        base = *lh;
+        base = (char *)::legacyHacks;
         if (*(char *)(base + CG_FIELD_DC) == 0) {
 
             *(char *)(base + CG_FIELD_4ED) = 0;
@@ -74,19 +73,19 @@ void CG_DrawInformation(qboolean serverLoading)
             CG_CloseScriptMenu();
             CG_CloseScriptMenu();
 
-            base = *lh;
+            base = (char *)::legacyHacks;
             *(char *)(base + CG_FIELD_4ED) = 1;
 
             CL_CloseAllMenus();
 
             SND_StopSounds((snd_stopsounds_arg_t)0);
 
-            base = *lh;
+            base = (char *)::legacyHacks;
             *(char *)(base + CG_FIELD_DC) = 1;
         }
     } else {
 
-        base = *lh;
+        base = (char *)::legacyHacks;
         *(char *)(base + CG_FIELD_5C) = 0;
         *(char *)(base + CG_FIELD_9C) = 0;
         *(char *)(base + CG_FIELD_DC) = 0;
@@ -96,7 +95,7 @@ void CG_DrawInformation(qboolean serverLoading)
 
     if (serverLoading) {
 
-        base = *lh;
+        base = (char *)::legacyHacks;
         I_strncpyz(string, base + 0x5c, 0x400);
     } else {
 

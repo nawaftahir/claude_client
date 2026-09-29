@@ -257,7 +257,6 @@ static void CG_OpenScriptMenu(void)
     int menuIndex;
     const char *pszMenu;
     unsigned char noMouseControl;
-    void **cguiSlot;
     char *cgui;
     int result;
     const char *arg2;
@@ -306,9 +305,8 @@ static void CG_OpenScriptMenu(void)
         noMouseControl = 0;
     }
 
-    cguiSlot = (void **)&::legacyHacks;
-    I_strncpyz((char *)*cguiSlot + 0x2e4, pszMenu, 0x100);
-    *(int *)((char *)*cguiSlot + 0x3e4) = menuIndex;
+    I_strncpyz(CGUI_PTR + 0x2e4, pszMenu, 0x100);
+    *(int *)(CGUI_PTR + 0x3e4) = menuIndex;
 
     if (noMouseControl) {
         result = CL_Popup((const char *)"UIMENU_SCRIPT_POPUP_NO_MOUSE");
@@ -327,41 +325,40 @@ static void CG_OpenScriptMenu(void)
         return;
     }
 
-    *((char *)*cguiSlot + 0x2e4) = '\0';
-    *(int *)((char *)*cguiSlot + 0x3e4) = -1;
+    *(CGUI_PTR + 0x2e4) = '\0';
+    *(int *)(CGUI_PTR + 0x3e4) = -1;
 
-    cgui = (char *)*cguiSlot;
+    cgui = CGUI_PTR;
     if ((*(unsigned char *)&((LegacyHacks *)cgui)->ui_waitingScriptMenu[0]) != '\0') {
         if (I_stricmp(pszMenu, ((char *)cgui + offsetof(LegacyHacks, ui_waitingScriptMenu[0]))) == 0) {
             return;
         }
-        Cbuf_AddText(va((const char *)"cmd mr %i noop\n", *(int *)((char *)*cguiSlot + 0x4e8)));
+        Cbuf_AddText(va((const char *)"cmd mr %i noop\n", *(int *)(CGUI_PTR + 0x4e8)));
     }
 
-    I_strncpyz((char *)*cguiSlot + 0x3e8, pszMenu, 0x100);
-    *(int *)((char *)*cguiSlot + 0x4e8) = menuIndex;
-    *(unsigned char *)((char *)*cguiSlot + 0x4ec) = noMouseControl;
+    I_strncpyz(CGUI_PTR + 0x3e8, pszMenu, 0x100);
+    *(int *)(CGUI_PTR + 0x4e8) = menuIndex;
+    *(unsigned char *)(CGUI_PTR + 0x4ec) = noMouseControl;
 }
 
 void CG_CheckOpenWaitingScriptMenu(void)
 {
-    void **cguiSlot = (void **)&::legacyHacks;
     char *cgui;
     int result;
 #if COD2_TRACE
     static int traceCount;
 #endif
 
-    cgui = (char *)*cguiSlot;
+    cgui = CGUI_PTR;
     if ((*(unsigned char *)&((LegacyHacks *)cgui)->ui_waitingScriptMenu[0]) == '\0') {
         return;
     }
 
     strcpy(((char *)cgui + offsetof(LegacyHacks, ui_newScriptMenu[0])), ((char *)cgui + offsetof(LegacyHacks, ui_waitingScriptMenu[0])));
-    cgui = (char *)*cguiSlot;
+    cgui = CGUI_PTR;
     ((LegacyHacks *)cgui)->ui_newScriptMenuIndex = ((LegacyHacks *)cgui)->ui_waitingScriptMenuIndex;
 
-    cgui = (char *)*cguiSlot;
+    cgui = CGUI_PTR;
     if (((LegacyHacks *)cgui)->ui_waitingScriptMenuNoMouse) {
         result = CL_Popup((const char *)"UIMENU_SCRIPT_POPUP_NO_MOUSE");
     } else {
@@ -371,21 +368,21 @@ void CG_CheckOpenWaitingScriptMenu(void)
     if (traceCount++ < 32) {
         if (getenv("MTRACE"))
             Com_Printf("[menu-trace] waiting popup menu='%s' index=%d noMouse=%u result=%d\n",
-                       (char *)*cguiSlot + 0x3e8,
-                       *(int *)((char *)*cguiSlot + 0x4e8),
-                       *(unsigned char *)((char *)*cguiSlot + 0x4ec), result);
+                       CGUI_PTR + 0x3e8,
+                       *(int *)(CGUI_PTR + 0x4e8),
+                       *(unsigned char *)(CGUI_PTR + 0x4ec), result);
     }
 #endif
 
     if (result) {
 
-        *((char *)*cguiSlot + 0x3e8) = '\0';
-        *(int *)((char *)*cguiSlot + 0x4e8) = -1;
-        *(unsigned char *)((char *)*cguiSlot + 0x4ec) = 0;
+        *(CGUI_PTR + 0x3e8) = '\0';
+        *(int *)(CGUI_PTR + 0x4e8) = -1;
+        *(unsigned char *)(CGUI_PTR + 0x4ec) = 0;
     } else {
 
-        *((char *)*cguiSlot + 0x2e4) = '\0';
-        *(int *)((char *)*cguiSlot + 0x3e4) = -1;
+        *(CGUI_PTR + 0x2e4) = '\0';
+        *(int *)(CGUI_PTR + 0x3e4) = -1;
     }
 }
 

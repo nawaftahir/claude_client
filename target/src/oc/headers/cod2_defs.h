@@ -10479,6 +10479,11 @@ struct clientStatic_t {
     MaterialHandle whiteMaterial;
     MaterialHandle consoleMaterial;
     FontHandle consoleFont;
+#if !COD2_IS_PATCH_13
+    // names from CoD1 (SUPPORTED); PC 1.0 0x8d7e20 / 0x8d7f60
+    char autoupdateServerNames[5][64];
+    netadr_t autoupdateServer;
+#endif
     struct vidConfig_t vidConfig;
     struct clientDebug_t debug;
 #if COD2_IS_PATCH_13
@@ -10502,11 +10507,12 @@ COD2_ASSERT_FIELD(clientStatic_t, globalServers, 0x4944);
 COD2_ASSERT_FIELD(clientStatic_t, favoriteServers, 0x2c3b48);
 // PC 1.0: authorizeServer 0x8d7e00 - cls 0x60f2a0 (CL_RequestAuthorization)
 COD2_ASSERT_FIELD(clientStatic_t, authorizeServer, 0x2c8b60);
-// retail CL_Shutdown clears 0x2c8d24 bytes; 0x154 bytes not yet placed
 #if COD2_IS_PATCH_13
 COD2_ASSERT_SIZE(clientStatic_t, 0x2c922c);
 #else
-COD2_ASSERT_SIZE(clientStatic_t, 0x2c8bd0);
+// PC 1.0: CL_Shutdown clears 0x2c8d24 bytes
+COD2_ASSERT_FIELD(clientStatic_t, autoupdateServer, 0x2c8cc0);
+COD2_ASSERT_SIZE(clientStatic_t, 0x2c8d24);
 #endif
 
 struct viewDamage_t {
