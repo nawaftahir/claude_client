@@ -517,28 +517,29 @@ extern int putenv(const char *string);
 extern char *getenv(const char *name);
 void CL_Setenv_f(void)
 {
-    char buffer[1024];
-    int argc, i;
-    const char *env;
-
-    argc = Cmd_Argc();
+    int argc = Cmd_Argc();
 
     if (argc > 2) {
+        char buffer[1024];
+        int i;
 
-        I_strncpyz(buffer, Cmd_Argv(1), 0x400);
-        I_strncat(buffer, 0x400, "=");
+        I_strncpyz(buffer, Cmd_Argv(1), sizeof(buffer));
+        I_strncat(buffer, sizeof(buffer), "=");
+
         for (i = 2; i < argc; i++) {
-            I_strncat(buffer, 0x400, Cmd_Argv(i));
-            I_strncat(buffer, 0x400, " ");
+            I_strncat(buffer, sizeof(buffer), Cmd_Argv(i));
+            I_strncat(buffer, sizeof(buffer), " ");
         }
+
         putenv(buffer);
     } else if (argc == 2) {
+        char *env = getenv(Cmd_Argv(1));
 
-        env = getenv(Cmd_Argv(1));
-        if (env)
+        if (env) {
             Com_Printf("%s=%s\n", Cmd_Argv(1), env);
-        else
+        } else {
             Com_Printf("%s undefined\n", Cmd_Argv(1));
+        }
     }
 }
 
@@ -2707,18 +2708,17 @@ void CL_Shutdown(void)
 
 void CL_Disconnect_f(void)
 {
-    connstate_t prevState;
+    bool wasConnected;
 
     SCR_StopCinematic();
-    prevState = (&::clc)->state;
+
+    wasConnected = clc.state != CA_DISCONNECTED && clc.state != CA_CINEMATIC && clc.state != CA_LOGO;
+
     CL_Disconnect();
 
-    if (prevState <= CA_LOGO)
-        return;
-
-    if (Sys_IsMainThread() && !UI_IsFullscreen() && *(byte *)&clients[0] != 0 && *(int *)&::clc > 2)
-        return;
-    Com_Error(ERR_DISCONNECT, "EXE_DISCONNECTED_FROM_SERVER");
+    if (wasConnected && CL_AllLocalClientsDisconnected()) {
+        Com_Error(ERR_DISCONNECT, "EXE_DISCONNECTED_FROM_SERVER");
+    }
 }
 
 void CL_MapLoading(const char *mapname)
@@ -2908,28 +2908,15 @@ void CL_ForwardCommandToServer(const char *string)
 
 void CL_ForwardToServer_f(void)
 {
-    clientConnection_t *conn;
-    const char *cmd;
-    int seq;
-    int acked;
-    int slot;
-
-    if (::clc.state != CA_ACTIVE || ::clc.demoplaying) {
-        Com_Printf((const char *)"Not connected to a server.\n");
+    if (clc.state != CA_ACTIVE || clc.demoplaying) {
+        Com_Printf("Not connected to a server.\n");
         return;
     }
-    if (Cmd_Argc() <= 1)
-        return;
-    cmd = (const char *)Cmd_Args(1);
 
-    conn = &::clc;
-    seq = conn->reliableSequence;
-    if (seq - conn->reliableAcknowledge - 128 > 0) {
-        Com_Error(ERR_DROP, (const char *)"EXE_ERR_CLIENT_CMD_OVERFLOW");
+    // don't forward the first argument
+    if (Cmd_Argc() > 1) {
+        CL_AddReliableCommand(Cmd_Args(1));
     }
-    conn->reliableSequence = seq + 1;
-    slot = conn->reliableSequence & 0x7f;
-    MSG_WriteReliableCommandToBuffer(cmd, (char *)conn->reliableCommands[slot], 0x400);
 }
 
 static void CL_SendPureChecksums(void)

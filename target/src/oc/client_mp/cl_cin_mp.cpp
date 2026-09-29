@@ -9,9 +9,9 @@ extern void ROQ_DrawCinematicFromHandle(int handle);
 extern void ROQ_PlayCinematic_f(void);
 extern void ROQ_DrawCinematic(void);
 extern void ROQ_RunCinematic(void);
-extern void ROQ_StopCinematic(void);
 extern void ROQ_UploadCinematicFromHandle(int handle);
 extern void ROQ_CloseAllVideos(void);
+void SND_StopSounds(snd_stopsounds_arg_t which);
 
 e_status CIN_StopCinematic(int handle)
 {
@@ -58,7 +58,11 @@ void SCR_RunCinematic(void)
 
 void SCR_StopCinematic(void)
 {
-    ROQ_StopCinematic();
+    if (CL_handle >= 0 && CL_handle < 16) {
+        CIN_StopCinematic(CL_handle);
+        SND_StopSounds(SND_STOP_ALL);
+        CL_handle = -1;
+    }
 }
 
 void CIN_UploadCinematic(int handle)

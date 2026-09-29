@@ -67,7 +67,6 @@ void ROQ_DrawCinematicFromHandle(int handle);
 void ROQ_DrawCinematic(void);
 static void RoQReset(void);
 void ROQ_CloseAllVideos(void);
-void ROQ_StopCinematic(void);
 e_status ROQ_RunCinematicFromHandle(int handle);
 void ROQ_RunCinematic(void);
 void ROQ_PlayCinematic_f(void);
@@ -850,27 +849,6 @@ void ROQ_CloseAllVideos(void)
     }
 }
 
-void ROQ_StopCinematic(void)
-{
-    int h;
-
-    h = CL_handle;
-    if ((unsigned int)h <= 0xf) {
-        if (cinTable[h].status != FMV_EOF) {
-            currentHandle = h;
-            Com_DPrintf("trFMV::stop(), closing %s\n", cinTable[currentHandle].fileName);
-            if (cinTable[currentHandle].buf) {
-                if (!cinTable[currentHandle].alterGameState || CLC_CONN->state == 1) {
-                    cinTable[currentHandle].status = FMV_EOF;
-                    RoQShutdown();
-                }
-            }
-        }
-        SND_StopSounds((snd_stopsounds_arg_t)0);
-        CL_handle = -1;
-    }
-}
-
 extern "C" void Com_Memcpy( void *dest, const void *src, int count );
 
 e_status ROQ_RunCinematicFromHandle(int handle)
@@ -1383,7 +1361,7 @@ void ROQ_RunCinematic(void)
         if (ROQ_RunCinematicFromHandle(CL_handle) == FMV_EOF) {
             /* Playback reached its natural end. Nothing used to act on that, so the
                shutdown never ran and the start-up chain (atvi -> IW_logo -> cod_intro ->
-               main menu) stalled on a black screen. ROQ_StopCinematic cannot be used
+               main menu) stalled on a black screen. SCR_StopCinematic cannot be used
                here: it skips the shutdown when the status is already FMV_EOF. */
             int h = CL_handle;
 
