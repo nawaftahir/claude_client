@@ -2553,10 +2553,11 @@ static bool FS_RegisterDvars()
 	return false;
 }
 
+void Com_ReadCDKey( void );
+
 void FS_Startup(const char *gameName)
 {
 	Com_Printf("----- FS_Startup -----\n");
-	fs_packFiles = 0;
 	FS_RegisterDvars();
 
 	if ( fs_useOldAssets->current.boolean )
@@ -2617,6 +2618,7 @@ void FS_Startup(const char *gameName)
 			FS_AddGameDirectory(fs_homepath->current.string, fs_gameDirVar->current.string);
 	}
 
+	Com_ReadCDKey();
 	FS_AddCommands();
 	FS_DisplayPath(1);
 	Dvar_ClearModified(fs_gameDirVar);

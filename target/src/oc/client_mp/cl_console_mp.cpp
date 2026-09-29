@@ -55,7 +55,7 @@ extern const char *Dvar_DisplayableValue(const dvar_t *dvar);
 extern const char *Dvar_DisplayableLatchedValue(const dvar_t *dvar);
 extern const char *Dvar_DisplayableResetValue(const dvar_t *dvar);
 extern const char *Dvar_GetVariantString(const char *dvarName);
-extern void Dvar_DomainToString_GetLines(int type, int v0, int v1, char *outBuf, int outBufSize, int *outLineCount);
+extern const char *Dvar_DomainToString_GetLines(unsigned char type, DvarLimits domain, char *outBuffer, int outBufferLen, int *outLineCount);
 extern void CalcScreenPlacement(float *xAdj, float *yAdj, float *xScale, float *yScale, int horzAlign, int vertAlign);
 extern void CalcScreenX(float *x, int align);
 extern void CalcScreenY(float *y, int align);
@@ -1366,79 +1366,102 @@ static inline __attribute__((always_inline)) void ConDrawInput_NextLine(void)
     conDrawInputGlob.x = conDrawInputGlob.leftX;
 }
 
-static void ConDrawInput_DrawHintBox(int lineCount, float width)
+static void ConDrawInput_Text(const char *str, const vec_t *color)
 {
-    float x = conDrawInputGlob.x - 6.0f;
-    float y = conDrawInputGlob.y - 6.0f;
-    float w = con.screenMax[0] - x;
-    float h = (float)lineCount * conDrawInputGlob.fontHeight + 12.0f;
-
-    if (width > 0.0f && width + 12.0f < w)
-        w = width + 12.0f;
-
-    ConDraw_Box(x, y, w, h, con_inputHintBoxColor->current.vector);
+    re.DrawText(str, 0x7fffffff, cls.consoleFont, conDrawInputGlob.x, conDrawInputGlob.y + conDrawInputGlob.fontHeight, 1.0f, 1.0f, color, 0);
 }
 
-static void ConDrawInput_AutoCompleteArg(const char **strings, int stringCount)
+static void ConDrawInput_TextAndOver(const char *str, const vec_t *color)
 {
-    FontHandle font = cls.consoleFont;
-    const char *prefix = Cmd_Argv(1);
-    char matchBuffer[1024];
-    const char *matches[16];
-    int matchCount = 0;
-    int bufferUsed = 0;
-    int matchLenMax = 0;
+    ConDrawInput_Text(str, color);
+    conDrawInputGlob.x += (float)re.TextWidth(str, 0, cls.consoleFont);
+}
+
+static void ConDrawInput_Box(int lines, const vec_t *color)
+{
+    float x;
+    float y;
+    float w;
+    float h;
+
+    x = conDrawInputGlob.x - 6.0f;
+    y = conDrawInputGlob.y - 6.0f;
+    w = con.screenMax[0] - con.screenMin[0] - (x - con.screenMin[0]);
+    h = (float)lines * conDrawInputGlob.fontHeight + 12.0f;
+    ConDraw_Box(x, y, w, h, color);
+}
+
+static int ConDrawInput_TextFieldFirstArgChar(void)
+{
+    int charIndex;
+
+    for (charIndex = 0; isspace(g_consoleField.buffer[charIndex]); ++charIndex)
+        ;
+    while (!isspace(g_consoleField.buffer[charIndex]))
+        ++charIndex;
+    while (isspace(g_consoleField.buffer[charIndex]))
+        ++charIndex;
+    return charIndex;
+}
+
+static int ConDrawInput_TextWidth(const char *text)
+{
+    return re.TextWidth(text, 0, cls.consoleFont);
+}
+
+static void ConDrawInput_AutoCompleteArg(const char **stringList, int stringCount)
+{
+    const char *prefix;
     int prefixLen;
+    int matchCount;
+    int matchBufferUsed;
+    int matchLenMax;
+    int matchLen;
     int stringIndex;
-    float savedX;
+    int matchIndex;
+    const char *matches[16];
+    char matchBuffer[1024];
+    float x;
+    float y;
+    float w;
+    float h;
 
-    if (!strings || stringCount <= 0 || !prefix)
-        return;
-
+    prefix = Cmd_Argv(1);
     prefixLen = strlen(prefix);
-
-    for (stringIndex = 0; stringIndex < stringCount; stringIndex++) {
-        const char *candidate = strings[stringIndex];
-        char *match;
-        int matchLen;
-        int width;
-
-        if (!candidate || I_strnicmp(prefix, candidate, prefixLen) != 0)
-            continue;
-        if (matchCount == 16)
-            return;
-
-        match = &matchBuffer[bufferUsed];
-        Com_StripExtension(candidate, match);
-        matchLen = strlen(match) + 1;
-        if (bufferUsed + matchLen > (int)sizeof(matchBuffer))
-            return;
-
-        matches[matchCount++] = match;
-        bufferUsed += matchLen;
-
-        width = re.TextWidth(match, 0, font);
-        if (width > matchLenMax)
-            matchLenMax = width;
+    matchCount = 0;
+    matchBufferUsed = 0;
+    matchLenMax = 0;
+    for (stringIndex = 0; stringIndex < stringCount; ++stringIndex) {
+        if (!I_strnicmp(prefix, stringList[stringIndex], prefixLen)) {
+            if (matchCount == 16)
+                return;
+            if (matchBufferUsed + strlen(stringList[stringIndex]) >= 0x400)
+                return;
+            matches[matchCount] = &matchBuffer[matchBufferUsed];
+            Com_StripExtension(stringList[stringIndex], (char *)matches[matchCount]);
+            matchBufferUsed += strlen(matches[matchCount]) + 1;
+            matchLen = ConDrawInput_TextWidth(matches[matchCount]);
+            if (matchLenMax < matchLen)
+                matchLenMax = matchLen;
+            ++matchCount;
+        }
     }
-
-    if (!matchCount)
-        return;
-
-    qsort(matches, matchCount, sizeof(matches[0]), ConDrawInput_CompareStrings);
-
-    savedX = conDrawInputGlob.leftX;
-    ConDrawInput_DrawHintBox(matchCount, (float)matchLenMax);
-    conDrawInputGlob.x += 6.0f;
-    conDrawInputGlob.y += 6.0f;
-    conDrawInputGlob.leftX = conDrawInputGlob.x;
-
-    for (stringIndex = 0; stringIndex < matchCount; stringIndex++) {
-        ConDrawInput_DrawText(matches[stringIndex], 0x7fffffff, con_inputDvarInfoColor);
-        ConDrawInput_NextLine();
+    if (matchCount) {
+        qsort(matches, matchCount, sizeof(matches[0]), ConDrawInput_CompareStrings);
+        x = (float)re.TextWidth(g_consoleField.buffer, ConDrawInput_TextFieldFirstArgChar(), cls.consoleFont) + conDrawInputGlob.leftX - 6.0f;
+        y = con.screenMin[1] + conDrawInputGlob.fontHeight + 6.0f;
+        w = (float)matchLenMax + 12.0f;
+        h = (float)matchCount * conDrawInputGlob.fontHeight + 12.0f;
+        ConDraw_Box(x, y, w, h, con_inputHintBoxColor->current.vector);
+        conDrawInputGlob.x = x + 6.0f;
+        conDrawInputGlob.y = y + 6.0f;
+        conDrawInputGlob.leftX = conDrawInputGlob.x;
+        for (matchIndex = 0; matchIndex < matchCount; ++matchIndex) {
+            ConDrawInput_Text(matches[matchIndex], con_inputDvarInfoColor);
+            conDrawInputGlob.y += conDrawInputGlob.fontHeight;
+            conDrawInputGlob.x = conDrawInputGlob.leftX;
+        }
     }
-
-    conDrawInputGlob.leftX = savedX;
 }
 
 static void ConDrawInput_CmdMatch(const char *str)
@@ -1453,110 +1476,98 @@ static void ConDrawInput_CmdMatch(const char *str)
 static void ConDrawInput_DetailedDvarMatch(const char *str)
 {
     const dvar_t *dvar;
-    qboolean hasLatchedValue;
-    int lineCount;
+    bool hasLatchedValue;
+    int infoLineCount;
+    char dvarInfo[1024];
 
-    if (I_strnicmp(str, conDrawInputGlob.inputText, conDrawInputGlob.inputTextLen) != 0)
+    if (I_strnicmp(str, conDrawInputGlob.inputText, conDrawInputGlob.inputTextLen))
         return;
-    if (conDrawInputGlob.hasExactMatch && str[conDrawInputGlob.inputTextLen] != '\0')
+    if (conDrawInputGlob.hasExactMatch && str[conDrawInputGlob.inputTextLen])
         return;
 
     dvar = Dvar_FindVar(str);
-    if (!dvar)
-        return;
-
     hasLatchedValue = Dvar_HasLatchedValue(dvar);
-    lineCount = hasLatchedValue ? 4 : 3;
-    ConDrawInput_DrawHintBox(lineCount, 0.0f);
-
-    ConDrawInput_DrawText(str, 0x18, con_inputDvarMatchColor);
-    ConDrawInput_NextLine();
-
-    ConDrawInput_DrawText(Dvar_DisplayableValue(dvar), 0x28, con_inputDvarValueColor);
-    ConDrawInput_NextLine();
-
-    ConDrawInput_DrawText(Dvar_DisplayableResetValue(dvar), 0x28, con_inputDvarInfoColor);
-    ConDrawInput_NextLine();
-
+    ConDrawInput_Box(hasLatchedValue ? 3 : 2, con_inputHintBoxColor->current.vector);
+    ConDrawInput_DrawText(str, 24, con_inputDvarMatchColor);
+    conDrawInputGlob.x += 300.0f;
+    ConDrawInput_DrawText(Dvar_DisplayableValue(dvar), 40, con_inputDvarValueColor);
+    conDrawInputGlob.y += conDrawInputGlob.fontHeight;
+    conDrawInputGlob.x = conDrawInputGlob.leftX;
     if (hasLatchedValue) {
-        ConDrawInput_DrawText(Dvar_DisplayableLatchedValue(dvar), 0x28, con_inputDvarInactiveValueColor);
-        ConDrawInput_NextLine();
+        ConDrawInput_Text("  latched value", con_inputDvarInactiveValueColor);
+        conDrawInputGlob.x += 300.0f;
+        ConDrawInput_DrawText(Dvar_DisplayableLatchedValue(dvar), 40, con_inputDvarInactiveValueColor);
+        conDrawInputGlob.y += conDrawInputGlob.fontHeight;
+        conDrawInputGlob.x = conDrawInputGlob.leftX;
     }
-
-    if (Cmd_Argc() == 2)
+    ConDrawInput_Text("  default", con_inputDvarInactiveValueColor);
+    conDrawInputGlob.x += 300.0f;
+    ConDrawInput_DrawText(Dvar_DisplayableResetValue(dvar), 40, con_inputDvarInactiveValueColor);
+    conDrawInputGlob.y += conDrawInputGlob.fontHeight;
+    conDrawInputGlob.y += conDrawInputGlob.fontHeight;
+    conDrawInputGlob.x = conDrawInputGlob.leftX;
+    Dvar_DomainToString_GetLines(dvar->type, dvar->domain, dvarInfo, sizeof(dvarInfo), &infoLineCount);
+    ConDrawInput_Box(infoLineCount + 1, con_inputHintBoxColor->current.vector);
+    ConDrawInput_Text(dvarInfo, con_inputDvarInfoColor);
+    conDrawInputGlob.y += conDrawInputGlob.fontHeight;
+    conDrawInputGlob.x = conDrawInputGlob.leftX;
+    if (dvar->type == DVAR_TYPE_ENUM && Cmd_Argc() == 2)
         ConDrawInput_AutoCompleteArg(dvar->domain.enumeration.strings, dvar->domain.enumeration.stringCount);
 }
 
 static void ConDrawInput_DetailedCmdMatch(const char *str)
 {
-    if (I_strnicmp(str, conDrawInputGlob.inputText, conDrawInputGlob.inputTextLen) != 0)
+    int fileCount;
+    const char **files;
+
+    if (I_strnicmp(str, conDrawInputGlob.inputText, conDrawInputGlob.inputTextLen))
         return;
-    if (conDrawInputGlob.hasExactMatch && str[conDrawInputGlob.inputTextLen] != '\0')
+    if (conDrawInputGlob.hasExactMatch && str[conDrawInputGlob.inputTextLen])
         return;
 
-    ConDrawInput_DrawHintBox(1, 0.0f);
-    ConDrawInput_DrawText(str, 0x7fffffff, con_inputCommandMatchColor);
-    ConDrawInput_NextLine();
-
+    ConDrawInput_Box(1, con_inputHintBoxColor->current.vector);
+    ConDrawInput_Text(str, con_inputCommandMatchColor);
+    conDrawInputGlob.y += conDrawInputGlob.fontHeight;
+    conDrawInputGlob.x = conDrawInputGlob.leftX;
     if (Cmd_Argc() == 2) {
-        int fileCount = 0;
-        const char **files = Cmd_GetAutoCompleteFileList(str, &fileCount, 10);
-        if (fileCount > 0)
+        files = Cmd_GetAutoCompleteFileList(str, &fileCount, 10);
+        if (fileCount) {
             ConDrawInput_AutoCompleteArg(files, fileCount);
-        if (files)
             FS_FreeFileList((char **)files, 10);
+        }
     }
 }
 
-static BM_NOINLINE void Con_DrawInput(void)
+static void Con_DrawInput(void)
 {
-    clientActive_t *cl = clients;
-    field_t *consoleField = (&g_consoleField);
-    FontHandle font;
-    const char *prompt;
-    const char *cmd;
-    int promptWidth;
+    const char *promptString;
     int matchCount;
 
-    if (!(cl->keyCatchers & 1))
+    if (!(clients[0].keyCatchers & 1))
         return;
     if (!Sys_IsMainThread())
         return;
 
-    prompt = va("%s: %s> ", "CoD2 MP", COD2_VERSION_SHORT);
-    font = cls.consoleFont;
-    conDrawInputGlob.fontHeight = (float)re.TextHeight(font);
-    if (conDrawInputGlob.fontHeight <= 0.0f)
-        conDrawInputGlob.fontHeight = 16.0f;
-
+    promptString = va("%s: %s> ", "CoD2 MP", COD2_VERSION_SHORT);
+    conDrawInputGlob.fontHeight = (float)re.TextHeight(cls.consoleFont);
     conDrawInputGlob.x = con.screenMin[0] + 6.0f;
     conDrawInputGlob.y = con.screenMin[1] + 6.0f;
     conDrawInputGlob.leftX = conDrawInputGlob.x;
-
-    ConDraw_Box(con.screenMin[0], con.screenMin[1],
-                con.screenMax[0] - con.screenMin[0], conDrawInputGlob.fontHeight + 12.0f,
-                con_inputBoxColor->current.vector);
-
-    ConDrawInput_DrawText(prompt, 0x7fffffff, con_versionColor);
-
-    promptWidth = re.TextWidth(prompt, 0, font);
-    conDrawInputGlob.x += (float)promptWidth;
+    ConDrawInput_Box(1, con_inputBoxColor->current.vector);
+    ConDrawInput_TextAndOver(promptString, con_versionColor);
     conDrawInputGlob.leftX = conDrawInputGlob.x;
+    g_consoleField.widthInPixels = (int)(con.screenMax[0] - 6.0f - conDrawInputGlob.x);
+    Field_Draw(&g_consoleField, (int)conDrawInputGlob.x, (int)conDrawInputGlob.y, 5, 5, 1);
+    conDrawInputGlob.y += conDrawInputGlob.fontHeight;
+    conDrawInputGlob.x = conDrawInputGlob.leftX;
 
-    consoleField->widthInPixels = (int)(con.screenMax[0] - 6.0f - conDrawInputGlob.x);
-    Field_Draw(consoleField, (int)conDrawInputGlob.x, (int)conDrawInputGlob.y, 5, 5, 1);
-
-    ConDrawInput_NextLine();
-
-    cmd = Con_TokenizeInput();
-    if (!cmd || !*cmd)
+    conDrawInputGlob.inputText = Con_TokenizeInput();
+    conDrawInputGlob.inputTextLen = strlen(conDrawInputGlob.inputText);
+    if (!conDrawInputGlob.inputTextLen)
         return;
 
-    conDrawInputGlob.inputText = cmd;
-    conDrawInputGlob.inputTextLen = strlen(cmd);
     conDrawInputGlob.hasExactMatch = 0;
     conDrawInputGlob.matchCount = 0;
-
     Dvar_ForEach(ConDrawInput_IncrMatchCounter);
     Cmd_ForEach(ConDrawInput_IncrMatchCounter);
 
@@ -1564,22 +1575,23 @@ static BM_NOINLINE void Con_DrawInput(void)
     if (!matchCount)
         return;
 
+    conDrawInputGlob.y += conDrawInputGlob.fontHeight;
+    conDrawInputGlob.x = conDrawInputGlob.leftX;
     if (matchCount > 24) {
-        const char *tooMany = va("%i matches (too many to show)", matchCount);
-        ConDrawInput_DrawHintBox(1, 0.0f);
-        ConDrawInput_DrawText(tooMany, 0x7fffffff, con_inputDvarMatchColor);
+        promptString = va("%i matches (too many to show)", matchCount);
+        ConDrawInput_Box(1, con_inputHintBoxColor->current.vector);
+        ConDrawInput_Text(promptString, con_inputDvarMatchColor);
         return;
     }
 
-    if (matchCount == 1 || conDrawInputGlob.hasExactMatch) {
+    if (matchCount == 1 || conDrawInputGlob.hasExactMatch && Con_AnySpaceAfterCommand()) {
         Dvar_ForEach(ConDrawInput_DetailedDvarMatch);
         Cmd_ForEach(ConDrawInput_DetailedCmdMatch);
-        return;
+    } else {
+        ConDrawInput_Box(matchCount, con_inputHintBoxColor->current.vector);
+        Dvar_ForEach(ConDrawInput_DvarMatch);
+        Cmd_ForEach(ConDrawInput_CmdMatch);
     }
-
-    ConDrawInput_DrawHintBox(matchCount, 0.0f);
-    Dvar_ForEach(ConDrawInput_DvarMatch);
-    Cmd_ForEach(ConDrawInput_CmdMatch);
 }
 
 void Con_DrawConsole(void)

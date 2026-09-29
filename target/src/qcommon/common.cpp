@@ -709,6 +709,52 @@ char cl_cdkeychecksum[5] = "    ";
 
 qboolean CL_CDKeyValidate( const char *key, const char *checksum );
 
+// retail 0x4317f0; name unknown
+static void Com_ClearCDKey( void )
+{
+	strcpy( cl_cdkey, "                " );
+}
+
+/*
+=================
+Com_ReadCDKey
+=================
+*/
+void Com_ReadCDKey( void )
+{
+	HKEY hKey;
+	DWORD size;
+	DWORD type;
+	char buffer[21];
+
+	if ( RegOpenKeyA( HKEY_LOCAL_MACHINE, CDKEY_REGISTRY_PATH, &hKey ) != ERROR_SUCCESS )
+	{
+		strcpy( cl_cdkey, "                " );
+		return;
+	}
+
+	type = REG_SZ;
+	size = sizeof( buffer );
+	if ( RegQueryValueExA( hKey, "codkey", NULL, &type, (LPBYTE)buffer, &size ) != ERROR_SUCCESS )
+	{
+		RegCloseKey( hKey );
+		strcpy( cl_cdkey, "                " );
+		return;
+	}
+
+	RegCloseKey( hKey );
+	if ( size == sizeof( buffer ) )
+	{
+		memcpy( cl_cdkey, buffer, 16 );
+		cl_cdkey[16] = 0;
+		memcpy( cl_cdkeychecksum, buffer + 16, 4 );
+		cl_cdkeychecksum[4] = 0;
+		if ( CL_CDKeyValidate( cl_cdkey, cl_cdkeychecksum ) )
+			return;
+	}
+	Com_ClearCDKey();
+}
+
 /*
 =================
 Com_WriteCDKey
