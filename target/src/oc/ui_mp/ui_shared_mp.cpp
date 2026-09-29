@@ -140,7 +140,7 @@ void Item_UpdatePosition(itemDef_t *item)
 }
 extern void Item_SetTextRect(itemDef_t *item, const rectDef_t *textRect);
 extern void Item_SetupKeywordHash(void);
-extern qboolean ListBox_HasValidCursorPos(const listBoxDef_t *listBox);
+extern bool ListBox_HasValidCursorPos(const listBoxDef_t *listBox);
 extern void ListBox_SetCursorPos(listBoxDef_t *listBox, int cursorPos);
 extern void ListBox_SetEndPos(listBoxDef_t *listBox, int endPos);
 extern void ListBox_SetStartPos(listBoxDef_t *listBox, int startPos);
@@ -3427,298 +3427,207 @@ int Item_ListBox_OverLB(itemDef_t *item, float x, float y)
     return 0;
 }
 
+// retail 0x536760
 qboolean Item_ListBox_HandleKey(displayContextDef_t *dc, itemDef_t *item, int key, qboolean down, qboolean force)
 {
-    byte *it = (byte *)item;
-    byte *d = (byte *)dc;
-    byte *listPtr;
-    int count, max, viewmax, flags;
+    listBoxDef_s *listPtr;
+    int count;
+    int max;
+    int viewmax;
     int inRect;
+    int flags;
 
-    listPtr = (byte *)Item_GetListBoxDef(item);
+    listPtr = Item_GetListBoxDef(item);
     if (!listPtr)
         return 0;
-
-    count = UI_FeederCount((*(int *)&((itemDef_t *)it)->special));
-
-    {
-        float compareX, compareY;
-        float compareRect_x, compareRect_y, compareRect_w, compareRect_h;
-
-        compareX = (float)((displayContextDef_t *)d)->cursorx;
-        compareY = (float)(((displayContextDef_s*)(d))->cursory);
-
-        compareRect_x = (((rectDef_t*)(it))->x);
-        compareRect_y = (((rectDef_t*)(it))->y);
-        compareRect_w = (((rectDef_t*)(it))->w);
-        compareRect_h = (((rectDef_t*)(it))->h);
-
-        CalcScreenX(&compareX, 4);
-        CalcScreenY(&compareY, 4);
-        CalcScreenPlacement(&compareRect_x, &compareRect_y, &compareRect_w, &compareRect_h,
-                            (((rectDef_t*)(it))->horzAlign), (((rectDef_t*)(it))->vertAlign));
-
-        if (compareX >= compareRect_x &&
-            compareX <= compareRect_x + compareRect_w &&
-            compareY >= compareRect_y &&
-            compareY <= compareRect_y + compareRect_h)
-            inRect = 1;
-        else
-            inRect = 0;
-    }
-
-    flags = ((itemDef_t *)it)->window.dynamicFlags[0];
-
-    if (!force) {
-        if (!inRect || !(flags & 2))
-            return 0;
-    }
+    count = UI_FeederCount(item->special);
+    inRect = Rect_ContainsPoint(&item->window.rect[0], (float)dc->cursorx, (float)dc->cursory);
+    flags = item->window.dynamicFlags[0];
+    if (!force && (!inRect || !(flags & 2)))
+        return 0;
 
     UI_OverrideCursorPos(item);
     max = Item_ListBox_MaxScroll(item);
-
-    if (Window_IsHorizontal((Window *)it)) {
-
-        viewmax = (int)((((rectDef_t*)(it))->w) / (((listBoxDef_s*)(listPtr))->elementWidth));
-
-        if (key == 0x9c) {
-
-            if ((((listBoxDef_s*)(listPtr))->notselectable)) {
-
-                goto scroll_start_dec;
+    if (Window_IsHorizontal(&item->window)) {
+        viewmax = (int)(item->window.rect[0].w / listPtr->elementWidth);
+        if (key == 156 || key == 185) {
+            if (!listPtr->notselectable) {
+                listPtr->cursorPos[0]--;
+                if (listPtr->cursorPos[0] < 0)
+                    listPtr->cursorPos[0] = 0;
+                if (listPtr->cursorPos[0] < listPtr->startPos[0])
+                    listPtr->startPos[0] = listPtr->cursorPos[0];
+                if (listPtr->cursorPos[0] >= listPtr->startPos[0] + viewmax)
+                    listPtr->startPos[0] = listPtr->cursorPos[0] - viewmax + 1;
+                item->cursorPos[0] = listPtr->cursorPos[0];
+                UI_FeederSelection(item->special, item->cursorPos[0]);
+            } else {
+                listPtr->startPos[0]--;
+                if (listPtr->startPos[0] < 0)
+                    listPtr->startPos[0] = 0;
             }
-            ListBox_SetCursorPos((listBoxDef_t *)((itemDef_t *)listPtr), (((listBoxDef_s*)(listPtr))->cursorPos[0]) - 1);
-            if ((((listBoxDef_s*)(listPtr))->cursorPos[0]) < 0)
-                ListBox_SetCursorPos((listBoxDef_t *)((itemDef_t *)listPtr), 0);
-            if ((((listBoxDef_s*)(listPtr))->cursorPos[0]) < *(int *)listPtr)
-                ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), (((listBoxDef_s*)(listPtr))->cursorPos[0]));
-            if ((((listBoxDef_s*)(listPtr))->cursorPos[0]) >= viewmax + *(int *)listPtr)
-                ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), (((listBoxDef_s*)(listPtr))->cursorPos[0]) - viewmax + 1);
-            Item_SetCursorPos(item, (((listBoxDef_s*)(listPtr))->cursorPos[0]));
-            goto do_feeder_selection;
+            return 1;
         }
-
-        if (key == 0x9d) {
-
-            if ((((listBoxDef_s*)(listPtr))->notselectable)) {
-
-                ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), *(int *)listPtr + 1);
-                if (count > *(int *)listPtr)
-                    return 1;
-                ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), count - 1);
-                return 1;
+        if (key == 157 || key == 187) {
+            if (!listPtr->notselectable) {
+                listPtr->cursorPos[0]++;
+                if (listPtr->cursorPos[0] < listPtr->startPos[0])
+                    listPtr->startPos[0] = listPtr->cursorPos[0];
+                if (listPtr->cursorPos[0] >= count)
+                    listPtr->cursorPos[0] = count - 1;
+                if (listPtr->cursorPos[0] >= listPtr->startPos[0] + viewmax)
+                    listPtr->startPos[0] = listPtr->cursorPos[0] - viewmax + 1;
+                item->cursorPos[0] = listPtr->cursorPos[0];
+                UI_FeederSelection(item->special, item->cursorPos[0]);
+            } else {
+                listPtr->startPos[0]++;
+                if (listPtr->startPos[0] >= count)
+                    listPtr->startPos[0] = count - 1;
             }
-            ListBox_SetCursorPos((listBoxDef_t *)((itemDef_t *)listPtr), (((listBoxDef_s*)(listPtr))->cursorPos[0]) + 1);
-            if ((((listBoxDef_s*)(listPtr))->cursorPos[0]) < *(int *)listPtr)
-                ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), (((listBoxDef_s*)(listPtr))->cursorPos[0]));
-            if (count <= (((listBoxDef_s*)(listPtr))->cursorPos[0]))
-                ListBox_SetCursorPos((listBoxDef_t *)((itemDef_t *)listPtr), count - 1);
-            if ((((listBoxDef_s*)(listPtr))->cursorPos[0]) >= viewmax + *(int *)listPtr)
-                ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), (((listBoxDef_s*)(listPtr))->cursorPos[0]) - viewmax + 1);
-            Item_SetCursorPos(item, (((listBoxDef_s*)(listPtr))->cursorPos[0]));
-            goto do_feeder_selection;
+            return 1;
         }
-
     } else {
-
-        viewmax = (int)((((rectDef_t*)(it))->h) / (((listBoxDef_s*)(listPtr))->elementHeight));
-
-        if (key == 0x9a || key == 0xce) {
-
-            if ((((listBoxDef_s*)(listPtr))->notselectable)) {
-
-                goto scroll_start_dec;
+        viewmax = (int)(item->window.rect[0].h / listPtr->elementHeight);
+        if (key == 154 || key == 183 || key == 206) {
+            if (!listPtr->notselectable) {
+                item->cursorPos[0]--;
+                if (item->cursorPos[0] < 0)
+                    item->cursorPos[0] = 0;
+                if (item->cursorPos[0] < listPtr->startPos[0])
+                    listPtr->startPos[0] = item->cursorPos[0];
+                if (item->cursorPos[0] >= listPtr->startPos[0] + viewmax)
+                    listPtr->startPos[0] = item->cursorPos[0] - viewmax + 1;
+                UI_FeederSelection(item->special, item->cursorPos[0]);
+            } else {
+                listPtr->startPos[0]--;
+                if (listPtr->startPos[0] < 0)
+                    listPtr->startPos[0] = 0;
             }
-            Item_SetCursorPos(item, ((itemDef_t *)it)->cursorPos[0] - 1);
-            if (((itemDef_t *)it)->cursorPos[0] < 0)
-                Item_SetCursorPos(item, 0);
-            if (((itemDef_t *)it)->cursorPos[0] < *(int *)listPtr)
-                ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), ((itemDef_t *)it)->cursorPos[0]);
-            if (((itemDef_t *)it)->cursorPos[0] >= viewmax + *(int *)listPtr)
-                ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), ((itemDef_t *)it)->cursorPos[0] - viewmax + 1);
-            UI_FeederSelection(((itemDef_t *)it)->special, ((itemDef_t *)it)->cursorPos[0]);
             return 1;
         }
-
-        if (key == 0x9b || key == 0xcd) {
-
-            if ((((listBoxDef_s*)(listPtr))->notselectable)) {
-
-                goto scroll_start_inc;
+        if (key == 155 || key == 189 || key == 205) {
+            if (!listPtr->notselectable) {
+                item->cursorPos[0]++;
+                if (item->cursorPos[0] < listPtr->startPos[0])
+                    listPtr->startPos[0] = item->cursorPos[0];
+                if (item->cursorPos[0] >= count)
+                    item->cursorPos[0] = count - 1;
+                if (item->cursorPos[0] < 0)
+                    item->cursorPos[0] = 0;
+                if (item->cursorPos[0] >= listPtr->startPos[0] + viewmax)
+                    listPtr->startPos[0] = item->cursorPos[0] - viewmax + 1;
+                UI_FeederSelection(item->special, item->cursorPos[0]);
+            } else {
+                listPtr->startPos[0]++;
+                if (listPtr->startPos[0] > max)
+                    listPtr->startPos[0] = max;
             }
-            Item_SetCursorPos(item, ((itemDef_t *)it)->cursorPos[0] + 1);
-            if (((itemDef_t *)it)->cursorPos[0] < *(int *)listPtr)
-                ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), ((itemDef_t *)it)->cursorPos[0]);
-            if (count <= ((itemDef_t *)it)->cursorPos[0])
-                Item_SetCursorPos(item, count - 1);
-            if (((itemDef_t *)it)->cursorPos[0] < 0)
-                Item_SetCursorPos(item, 0);
-            if (((itemDef_t *)it)->cursorPos[0] >= viewmax + *(int *)listPtr) {
-                ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), ((itemDef_t *)it)->cursorPos[0] - viewmax + 1);
-            }
-            goto do_feeder_selection;
+            return 1;
         }
-
     }
-
-    if (key == 0xc8 || key == 0xc9) {
-
+    // mouse hit
+    if (key == 200 || key == 201) {
         if (flags & 0x100) {
-
-            goto scroll_start_dec;
-        }
-        if (flags & 0x200) {
-
-            goto scroll_start_inc;
-        }
-        if (flags & 0x800) {
-
-            goto scroll_start_pgup;
-        }
-        if (flags & 0x1000) {
-
-            goto scroll_start_pgdn;
-        }
-        if (flags & 0x400) {
-
-            return 1;
-        }
-
-        if (((itemDef_t *)it)->special == 18.0f) {
-            UI_OverrideCursorPos(item);
-            UI_FeederSelection(((itemDef_t *)it)->special, ((itemDef_t *)it)->cursorPos[0]);
-        }
-
-        {
-            int curTime = (((displayContextDef_s*)(d))->realTime);
-            if (curTime < lastListBoxClickTime &&
-                ((listBoxDef_t *)listPtr)->doubleClick != NULL &&
-                ((itemDef_t *)it)->cursorPos[0] == (((listBoxDef_s*)(listPtr))->cursorPos[0])) {
-                if (ListBox_HasValidCursorPos((const listBoxDef_t *)((itemDef_t *)listPtr))) {
-                    Item_RunScript(dc, item, ((listBoxDef_t *)listPtr)->doubleClick);
-                    curTime = (((displayContextDef_s*)(d))->realTime);
-                }
+            listPtr->startPos[0]--;
+            if (listPtr->startPos[0] < 0)
+                listPtr->startPos[0] = 0;
+        } else if (flags & 0x200) {
+            listPtr->startPos[0]++;
+            if (listPtr->startPos[0] > max)
+                listPtr->startPos[0] = max;
+        } else if (flags & 0x800) {
+            listPtr->startPos[0] -= viewmax;
+            if (listPtr->startPos[0] < 0)
+                listPtr->startPos[0] = 0;
+        } else if (flags & 0x1000) {
+            listPtr->startPos[0] += viewmax;
+            if (listPtr->startPos[0] > max)
+                listPtr->startPos[0] = max;
+        } else if (!(flags & 0x400)) {
+            if (item->special == 18.0f) {
+                UI_OverrideCursorPos(item);
+                UI_FeederSelection(item->special, item->cursorPos[0]);
             }
-
-            lastListBoxClickTime = curTime + 0x12c;
-
-            if (((itemDef_t *)it)->cursorPos[0] == (((listBoxDef_s*)(listPtr))->cursorPos[0]))
-                return 1;
-
-            if (((itemDef_t *)it)->cursorPos[0] < 0)
-                Item_SetCursorPos(item, (((listBoxDef_s*)(listPtr))->cursorPos[0]));
-
-            {
-                int oldCursorPos = (((listBoxDef_s*)(listPtr))->cursorPos[0]);
-                if (oldCursorPos < UI_FeederCount((*(int *)&((itemDef_t *)it)->special)))
-                    Item_SetCursorPos(item, (((listBoxDef_s*)(listPtr))->cursorPos[0]));
+            if (dc->realTime < lastListBoxClickTime && listPtr->doubleClick
+                && item->cursorPos[0] == listPtr->cursorPos[0] && ListBox_HasValidCursorPos(listPtr))
+                Item_RunScript(dc, item, listPtr->doubleClick);
+            lastListBoxClickTime = dc->realTime + 300;
+            if (item->cursorPos[0] != listPtr->cursorPos[0]) {
+                if (item->cursorPos[0] < 0)
+                    item->cursorPos[0] = listPtr->cursorPos[0];
+                if (listPtr->cursorPos[0] < UI_FeederCount(item->special))
+                    item->cursorPos[0] = listPtr->cursorPos[0];
+                UI_FeederSelection(item->special, item->cursorPos[0]);
             }
-            goto do_feeder_selection;
         }
+        return 1;
     }
-
-    if (key == 0xa5) {
-
-        if ((((listBoxDef_s*)(listPtr))->notselectable)) {
-
-            ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), 0);
-            return 1;
+    if (key == 165 || key == 182) {
+        if (!listPtr->notselectable) {
+            item->cursorPos[0] = 0;
+            listPtr->cursorPos[0] = 0;
+            listPtr->startPos[0] = 0;
+            UI_FeederSelection(item->special, item->cursorPos[0]);
+        } else {
+            listPtr->startPos[0] = 0;
         }
-        Item_SetCursorPos(item, 0);
-        ListBox_SetCursorPos((listBoxDef_t *)((itemDef_t *)listPtr), 0);
-        ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), 0);
-        goto do_feeder_selection;
+        return 1;
     }
-
-    if (key == 0xa6) {
-
-        if ((((listBoxDef_s*)(listPtr))->notselectable)) {
-
-            ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), max);
-            return 1;
+    if (key == 166 || key == 188) {
+        if (!listPtr->notselectable) {
+            item->cursorPos[0] = count - 1;
+            listPtr->cursorPos[0] = count - 1;
+            if (item->cursorPos[0] >= listPtr->startPos[0] + viewmax)
+                listPtr->startPos[0] = item->cursorPos[0] - viewmax + 1;
+            if (item->cursorPos[0] < 0) {
+                item->cursorPos[0] = 0;
+                listPtr->cursorPos[0] = 0;
+            }
+            UI_FeederSelection(item->special, item->cursorPos[0]);
+        } else {
+            listPtr->startPos[0] = max;
         }
-        Item_SetCursorPos(item, count - 1);
-        ListBox_SetCursorPos((listBoxDef_t *)((itemDef_t *)listPtr), count - 1);
-        if (((itemDef_t *)it)->cursorPos[0] >= viewmax + *(int *)listPtr)
-            ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), ((itemDef_t *)it)->cursorPos[0] - viewmax + 1);
-        if (((itemDef_t *)it)->cursorPos[0] < 0) {
-            Item_SetCursorPos(item, 0);
-            ListBox_SetCursorPos((listBoxDef_t *)((itemDef_t *)listPtr), 0);
-        }
-        goto do_feeder_selection;
+        return 1;
     }
-
-    if (key == 0xa4) {
-
-        if ((((listBoxDef_s*)(listPtr))->notselectable)) {
-            goto scroll_start_pgup;
+    if (key == 164 || key == 184) {
+        if (!listPtr->notselectable) {
+            listPtr->cursorPos[0] -= viewmax;
+            if (listPtr->cursorPos[0] < 0)
+                listPtr->cursorPos[0] = 0;
+            if (listPtr->cursorPos[0] < listPtr->startPos[0])
+                listPtr->startPos[0] = listPtr->cursorPos[0];
+            if (listPtr->cursorPos[0] >= listPtr->startPos[0] + viewmax)
+                listPtr->startPos[0] = listPtr->cursorPos[0] - viewmax + 1;
+            item->cursorPos[0] = listPtr->cursorPos[0];
+            UI_FeederSelection(item->special, item->cursorPos[0]);
+        } else {
+            listPtr->startPos[0] -= viewmax;
+            if (listPtr->startPos[0] < 0)
+                listPtr->startPos[0] = 0;
         }
-        ListBox_SetCursorPos((listBoxDef_t *)((itemDef_t *)listPtr), (((listBoxDef_s*)(listPtr))->cursorPos[0]) - viewmax);
-        if ((((listBoxDef_s*)(listPtr))->cursorPos[0]) < 0)
-            ListBox_SetCursorPos((listBoxDef_t *)((itemDef_t *)listPtr), 0);
-        if ((((listBoxDef_s*)(listPtr))->cursorPos[0]) < *(int *)listPtr)
-            ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), (((listBoxDef_s*)(listPtr))->cursorPos[0]));
-        if ((((listBoxDef_s*)(listPtr))->cursorPos[0]) >= viewmax + *(int *)listPtr)
-            ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), (((listBoxDef_s*)(listPtr))->cursorPos[0]) - viewmax + 1);
-        Item_SetCursorPos(item, (((listBoxDef_s*)(listPtr))->cursorPos[0]));
-        goto do_feeder_selection;
+        return 1;
     }
-
-    if (key == 0xa3) {
-
-        if ((((listBoxDef_s*)(listPtr))->notselectable)) {
-            goto scroll_start_pgdn;
+    if (key == 163 || key == 190) {
+        if (!listPtr->notselectable) {
+            listPtr->cursorPos[0] += viewmax;
+            if (listPtr->cursorPos[0] < listPtr->startPos[0])
+                listPtr->startPos[0] = listPtr->cursorPos[0];
+            if (listPtr->cursorPos[0] >= count)
+                listPtr->cursorPos[0] = count - 1;
+            if (listPtr->cursorPos[0] < 0)
+                listPtr->cursorPos[0] = 0;
+            if (listPtr->cursorPos[0] >= listPtr->startPos[0] + viewmax)
+                listPtr->startPos[0] = listPtr->cursorPos[0] - viewmax + 1;
+            item->cursorPos[0] = listPtr->cursorPos[0];
+            UI_FeederSelection(item->special, item->cursorPos[0]);
+        } else {
+            listPtr->startPos[0] += viewmax;
+            if (listPtr->startPos[0] > max)
+                listPtr->startPos[0] = max;
         }
-        ListBox_SetCursorPos((listBoxDef_t *)((itemDef_t *)listPtr), (((listBoxDef_s*)(listPtr))->cursorPos[0]) + viewmax);
-        if ((((listBoxDef_s*)(listPtr))->cursorPos[0]) < *(int *)listPtr)
-            ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), (((listBoxDef_s*)(listPtr))->cursorPos[0]));
-        if (count <= (((listBoxDef_s*)(listPtr))->cursorPos[0]))
-            ListBox_SetCursorPos((listBoxDef_t *)((itemDef_t *)listPtr), count - 1);
-        if ((((listBoxDef_s*)(listPtr))->cursorPos[0]) < 0)
-            ListBox_SetCursorPos((listBoxDef_t *)((itemDef_t *)listPtr), 0);
-        if ((((listBoxDef_s*)(listPtr))->cursorPos[0]) >= viewmax + *(int *)listPtr)
-            ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), (((listBoxDef_s*)(listPtr))->cursorPos[0]) - viewmax + 1);
-        Item_SetCursorPos(item, (((listBoxDef_s*)(listPtr))->cursorPos[0]));
-        goto do_feeder_selection;
+        return 1;
     }
-
     return 0;
-
-scroll_start_dec: {
-    int newStart = *(int *)listPtr - 1;
-    ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), newStart);
-    if (*(int *)listPtr < 0)
-        ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), 0);
-    return 1;
-}
-
-scroll_start_inc: {
-    int newStart = *(int *)listPtr + 1;
-    ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), newStart);
-    if (max < *(int *)listPtr)
-        ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), max);
-    return 1;
-}
-
-scroll_start_pgup: {
-    int newStart = *(int *)listPtr - viewmax;
-    ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), newStart);
-    if (*(int *)listPtr < 0)
-        ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), 0);
-    return 1;
-}
-
-scroll_start_pgdn: {
-    int newStart = *(int *)listPtr + viewmax;
-    ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), newStart);
-    if (max < *(int *)listPtr)
-        ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), max);
-    return 1;
-}
-
-do_feeder_selection:
-    UI_FeederSelection(((itemDef_t *)it)->special, ((itemDef_t *)it)->cursorPos[0]);
-    return 1;
 }
 
 static void Scroll_ListBox_ThumbFunc(displayContextDef_t *dc, void *p)

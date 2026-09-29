@@ -1802,60 +1802,50 @@ void UI_CloseFocusedMenu(void)
     }
 }
 
+// retail 0x5310a0
+static int UI_GetIndexFromSelection(int actual)
+{
+    int i;
+    int c;
+
+    c = 0;
+    for (i = 0; i < sharedUiInfo.mapCount; i++) {
+        if (sharedUiInfo.mapList[i].active) {
+            if (i == actual)
+                return c;
+            c++;
+        }
+    }
+    return 0;
+}
+
+// retail 0x531560
 void UI_OverrideCursorPos(itemDef_t *item)
 {
-    byte *itemPtr = (byte *)item;
-    float feederFloat = ((itemDef_t *)itemPtr)->special;
+    listBoxDef_s *listPtr;
+    int delta;
+    int max;
 
-    if (feederFloat == 4.0f) {
-        int testMapIndex = (ui_currentNetMap)->current.integer;
-        int numMaps = sharedUiInfo.mapCount;
-        int visCount = 0;
-        int i;
-
-        for (i = 0; i < numMaps; i++) {
-            if (sharedUiInfo.mapList[i].active != 0) {
-                if (i == testMapIndex)
-                    goto found;
-                visCount++;
-            }
+    if (item->special == 4.0f) {
+        item->cursorPos[0] = UI_GetIndexFromSelection(ui_currentNetMap->current.integer);
+    } else if (item->special == 2.0f) {
+        listPtr = item->typeData.listBox;
+        if (!listPtr->endPos[0]) {
+            item->cursorPos[0] = -1;
+            return;
         }
-        visCount = 0;
-    found:
-        Item_SetCursorPos((itemDef_t *)item, visCount);
-    } else if (feederFloat == 2.0f) {
-        byte *listPtr = (*(byte **)&((itemDef_t *)itemPtr)->typeData.listBox);
-        int endPos = *(int *)(listPtr + 0x10);
-
-        if (endPos == 0) {
-            Item_SetCursorPos((itemDef_t *)item, -1);
-        } else {
-            int serverIndex = sharedUiInfo.serverStatus.currentServer;
-            int cursorField = ((itemDef_t *)itemPtr)->cursorPos[0];
-            int startPos_val = *(int *)listPtr;
-            int delta;
-            int maxScroll;
-
-            if (serverIndex < 0)
-                return;
-            if (cursorField < startPos_val)
-                return;
-            if (cursorField > endPos)
-                return;
-
-            delta = serverIndex - cursorField;
-            ListBox_SetStartPos((listBoxDef_t *)listPtr, delta + startPos_val);
-            ListBox_SetEndPos((listBoxDef_t *)listPtr, delta + endPos);
-            ListBox_SetCursorPos((listBoxDef_t *)listPtr, delta + *(int *)(listPtr + 0x24));
-            Item_SetCursorPos((itemDef_t *)item, sharedUiInfo.serverStatus.currentServer);
-
-            maxScroll = Item_ListBox_MaxScroll((itemDef_t *)item);
-            if (maxScroll < *(int *)listPtr) {
-                ListBox_SetStartPos((listBoxDef_t *)listPtr, maxScroll);
-            }
-            if (*(int *)listPtr < 0) {
-                ListBox_SetStartPos((listBoxDef_t *)listPtr, 0);
-            }
+        if (sharedUiInfo.serverStatus.currentServer >= 0
+            && item->cursorPos[0] >= listPtr->startPos[0] && item->cursorPos[0] <= listPtr->endPos[0]) {
+            delta = sharedUiInfo.serverStatus.currentServer - item->cursorPos[0];
+            listPtr->startPos[0] += delta;
+            listPtr->endPos[0] += delta;
+            listPtr->cursorPos[0] += delta;
+            item->cursorPos[0] = sharedUiInfo.serverStatus.currentServer;
+            max = Item_ListBox_MaxScroll(item);
+            if (listPtr->startPos[0] > max)
+                listPtr->startPos[0] = max;
+            if (listPtr->startPos[0] < 0)
+                listPtr->startPos[0] = 0;
         }
     }
 }

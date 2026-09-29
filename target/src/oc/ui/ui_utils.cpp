@@ -60,7 +60,7 @@ int Item_GetCursorPosOffset(const itemDef_t *item, const char *text, int delta);
 void ListBox_SetCursorPos(listBoxDef_t *listBox, int cursorPos);
 void ListBox_SetStartPos(listBoxDef_t *listBox, int startPos);
 void ListBox_SetEndPos(listBoxDef_t *listBox, int endPos);
-qboolean ListBox_HasValidCursorPos(const listBoxDef_t *listBox);
+bool ListBox_HasValidCursorPos(const listBoxDef_t *listBox);
 void Window_AddDynamicFlags(Window *w, const int newFlags);
 void Window_RemoveDynamicFlags(Window *w, const int newFlags);
 editFieldDef_t *Item_GetEditFieldDef(itemDef_t *item);
@@ -307,16 +307,12 @@ void ListBox_SetEndPos(listBoxDef_t *listBox, int endPos)
     listBox->endPos[0] = endPos;
 }
 
-qboolean ListBox_HasValidCursorPos(const listBoxDef_t *listBox)
+// retail 0x540c30
+bool ListBox_HasValidCursorPos(const listBoxDef_t *listBox)
 {
-
-    int cursor = listBox->cursorPos[0];
-
-    if (cursor >= listBox->endPos[0])
-        return 0;
-    if (cursor < listBox->startPos[0])
-        return 0;
-    return 1;
+    if (listBox->cursorPos[0] >= listBox->endPos[0])
+        return false;
+    return listBox->cursorPos[0] >= listBox->startPos[0];
 }
 
 void Window_AddDynamicFlags(Window *w, const int newFlags)
