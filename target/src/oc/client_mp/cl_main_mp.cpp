@@ -352,6 +352,9 @@ void CL_RunOncePerClientFrame(int msec);
 int Client_SendVoiceData(int bytes, char *enc_buffer);
 Bool CL_ConnectionlessPacket(netadr_t from, msg_t *msg, int time);
 void CL_UpdateInfoPacket(netadr_t from);
+void CL_CheckAutoUpdate(void);
+extern qboolean autoupdateChecked;
+extern qboolean autoupdateStarted;
 short BigShort(short l);
 Bool CL_PacketEvent(netadr_t from, msg_t *msg, int time);
 void CL_Init(void);
@@ -1212,6 +1215,9 @@ void CL_InitOnceForAllClients(void)
     Cmd_AddCommand("openmenu", UI_OpenMenu_f);
     Cmd_AddCommand("closemenu", UI_CloseMenu_f);
 
+    autoupdateChecked = 0;
+    autoupdateStarted = 0;
+    CL_CheckAutoUpdate();
     CL_InitRef();
     SCR_Init();
 }

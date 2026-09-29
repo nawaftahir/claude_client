@@ -434,7 +434,6 @@ byte *record_callback_ptr;
 int removeMeWhenMPStopsCrashingInHere;
 int sampleCount;
 qboolean scr_initialized;
-int scriptCommandCount;
 sharedUiInfo_t sharedUiInfo;
 unsigned char spGlob[1]  /* size unknown */;
 const void *speex_nb_mode_ptr;

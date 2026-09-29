@@ -527,6 +527,26 @@ void Sys_StartProcess( const char *exeName, qboolean doexit )
 		Cbuf_AddText( "quit\n" );
 }
 
+/*
+==================
+Sys_OpenURL
+==================
+*/
+void Sys_OpenURL( const char *url, qboolean doexit )
+{
+	HWND wnd;
+
+	if ( !ShellExecuteA( NULL, "open", url, NULL, NULL, SW_RESTORE ) )
+		Com_Error( ERR_DROP, va( "EXE_ERR_COULDNT_OPEN_URL\x15%s", url ) );
+
+	wnd = GetForegroundWindow();
+	if ( wnd )
+		ShowWindow( wnd, SW_MAXIMIZE );
+
+	if ( doexit )
+		Cbuf_AddText( "quit\n" );
+}
+
 // Retail keeps this as a separate call from Sys_Error (0x4627b0); name unknown.
 static void Sys_ErrorShutdown( void )
 {

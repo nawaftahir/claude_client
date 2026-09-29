@@ -48,6 +48,8 @@ extern int I_strnicmp(const char *s0, const char *s1, int n);
 extern int Com_AddToString(const char *add, char *msg, int len, int maxlen, qboolean mayAddQuotes);
 extern void CL_Netchan_SendOOBPacket(int len, const void *data, netadr_t to);
 extern qboolean NET_StringToAdr(const char *s, netadr_t *a);
+extern dvar_t *cl_updatefiles;
+void Sys_OpenURL(const char *url, qboolean doexit);
 extern unsigned char NET_OutOfBandPrint(netsrc_t sock, netadr_t adr, const char *msg);
 extern int Com_sprintf(char *dest, size_t size, const char *format, ...);
 extern int Sys_Milliseconds(void);
@@ -439,6 +441,72 @@ void CL_Rcon_f(void)
 }
 
 void CL_ServerStatusResponse(netadr_t from, msg_t *msg);
+
+// names from CoD1 (SUPPORTED)
+qboolean autoupdateChecked;
+
+void CL_CheckAutoUpdate(void)
+{
+    int validServerNum = 0;
+    int i, rnd;
+    netadr_t temp;
+    char *servername[5];
+
+    if (autoupdateChecked)
+        return;
+
+    for (i = 0; i < 5; i++) {
+        if (NET_StringToAdr(cls.autoupdateServerNames[i], &temp)) {
+            servername[validServerNum] = cls.autoupdateServerNames[i];
+            validServerNum++;
+        }
+    }
+
+    if (!validServerNum) {
+        Com_DPrintf("Couldn't resolve an AutoUpdate Server address.\n");
+    } else {
+        rnd = rand() % validServerNum;
+
+        Com_DPrintf("Resolving AutoUpdate Server... ");
+        if (!NET_StringToAdr(servername[rnd], &cls.autoupdateServer)) {
+            Com_DPrintf("\nCouldn't resolve first address, trying others... ");
+
+            for (i = 1; i < validServerNum; i++) {
+                if (NET_StringToAdr(servername[(i + rnd) % validServerNum], &cls.autoupdateServer)) {
+                    Com_DPrintf("\nAlternate server address resolved... ");
+                    break;
+                }
+            }
+
+            if (i == validServerNum) {
+                Com_DPrintf("\nFailed to resolve any Auto-update servers.\n");
+                autoupdateChecked = 1;
+                return;
+            }
+        }
+
+        cls.autoupdateServer.port = BigShort(28960);
+        Com_DPrintf("%i.%i.%i.%i:%i\n", cls.autoupdateServer.ip[0], cls.autoupdateServer.ip[1],
+                    cls.autoupdateServer.ip[2], cls.autoupdateServer.ip[3],
+                    BigShort(cls.autoupdateServer.port));
+
+        NET_OutOfBandPrint(NS_CLIENT1, cls.autoupdateServer,
+                           va("getUpdateInfo2 \"%s\" \"%s\" \"%s\"\n", "CoD2 MP", "1.0", "win-x86"));
+    }
+
+    autoupdateChecked = 1;
+}
+
+void CL_GetAutoUpdate(void)
+{
+    if (!autoupdateChecked)
+        return;
+
+    if (!strlen(cl_updatefiles->current.string))
+        return;
+
+    Sys_OpenURL(cl_updatefiles->current.string, 1);
+}
 
 void CL_ServerStatusResponse(netadr_t from, msg_t *msg)
 {

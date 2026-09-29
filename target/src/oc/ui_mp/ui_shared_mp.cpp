@@ -8,7 +8,7 @@
 #include <math.h>
 extern sharedUiInfo_t sharedUiInfo;
 
-extern commandDef_t commandList[28];
+extern commandDef_t commandList[29];
 extern bind_t g_bindings[56];
 
 qboolean g_editingField = 0x0;
@@ -142,6 +142,7 @@ extern qboolean g_waitingForKey;
 extern qboolean g_editingField;
 extern itemDef_t *g_editItem;
 extern int scriptCommandCount;
+void CL_GetAutoUpdate(void);
 static rectDef_t rect;
 static qboolean inHandleKey;
 static scrollInfo_t scrollInfo;
@@ -613,6 +614,11 @@ void Script_Play(displayContextDef_t *dc, itemDef_t *item, const char **args)
     if (String_Parse(args, val, 1024)) {
         UI_PlayLocalSoundAliasByName(val);
     }
+}
+
+void Script_GetAutoUpdate(displayContextDef_t *dc, itemDef_t *item, const char **args)
+{
+    CL_GetAutoUpdate();
 }
 
 void Script_ScriptMenuResponse(displayContextDef_t *dc, itemDef_t *item, const char **args)
@@ -5764,7 +5770,7 @@ count_visible:;
     }
 }
 
-commandDef_t commandList[28] = {
+commandDef_t commandList[29] = {
     { (const char *)&str_002abdc4, (void (*)())&Script_FadeIn },
     { (const char *)&str_002abdcc, (void (*)())&Script_FadeOut },
     { (const char *)&str_002abdd4, (void (*)())&Script_Show },
@@ -5792,8 +5798,10 @@ commandDef_t commandList[28] = {
     { (const char *)&str_002abf0c, (void (*)())&Script_ExecNowOnDvarFloatValue },
     { (const char *)&str_002abf24, (void (*)())&Script_Play },
     { (const char *)&str_002abf2c, (void (*)())&Script_Orbit },
+    { "getautoupdate", (void (*)())&Script_GetAutoUpdate },
     { (const char *)&str_002abf34, (void (*)())&Script_ScriptMenuResponse }
 };
+int scriptCommandCount = sizeof(commandList) / sizeof(commandDef_t);
 bind_t g_bindings[56] = {
     { (char *)&str_002abf48, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
     { (char *)&str_002abf50, 0xc9, 0xffffffff, 0xffffffff, 0xffffffff },
