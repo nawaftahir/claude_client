@@ -239,7 +239,7 @@ menuDef_t *Menu_GetFocused(displayContextDef_t *dc);
 int Item_ListBox_MaxScroll(itemDef_t *item);
 int Item_ListBox_ThumbPosition(itemDef_t *item);
 int Item_ListBox_ThumbDrawPosition(displayContextDef_t *dc, itemDef_t *item);
-static void Scroll_Slider_SetThumbPos_impl(byte *dc, byte *item);
+static void Scroll_Slider_SetThumbPos(displayContextDef_t *dc, itemDef_t *item);
 static void Scroll_Slider_ThumbFunc(displayContextDef_t *dc, void *p);
 void Menus_Close(displayContextDef_t *dc, menuDef_t *menu);
 void Menus_CloseAll(displayContextDef_t *dc);
@@ -1110,53 +1110,49 @@ int Item_ListBox_ThumbDrawPosition(displayContextDef_t *dc, itemDef_t *item)
     return Item_ListBox_ThumbPosition(item);
 }
 
-static void Scroll_Slider_SetThumbPos_impl(byte *dc, byte *item)
+static float I_fsel(const float x, const float y, const float z)
 {
-    byte *editDef;
-    float rightEdge;
-    float cursorx;
-    float usableStart, usableWidth;
-    float yIgnored, hIgnored;
-    float thumbPos, thumbFrac;
-    float minVal, maxVal;
+    return x >= 0.0f ? y : z;
+}
 
-    editDef = (byte *)Item_GetEditFieldDef((itemDef_t *)item);
+static float I_fclamp(const float val, const float min, const float max)
+{
+    return I_fsel(min - val, min, I_fsel(val - max, max, val));
+}
+
+// retail 0x537b90
+static void Scroll_Slider_SetThumbPos(displayContextDef_t *dc, itemDef_t *item)
+{
+    editFieldDef_t *editDef;
+    float x;
+    float y;
+    float w;
+    float h;
+    float cursorx;
+    float value;
+
+    editDef = Item_GetEditFieldDef(item);
     if (!editDef)
         return;
-
-    if (((itemDef_t *)item)->text)
-        rightEdge = (((itemDef_s*)(item))->textRect[0].x) + (((itemDef_s*)(item))->textRect[0].w) + 8.0f;
+    if (item->text)
+        x = item->textRect[0].x + item->textRect[0].w + 8.0f;
     else
-        rightEdge = (((rectDef_t*)(item))->x);
-
-    cursorx = (float)*(int *)(dc + 0xc);
+        x = item->window.rect[0].x;
+    cursorx = (float)dc->cursorx;
     CalcScreenX(&cursorx, 4);
-
-    usableStart = rightEdge + 5.0f + 1.0f;
-    usableWidth = 84.0f;
-    yIgnored = 0.0f;
-    hIgnored = 0.0f;
-
-    CalcScreenPlacement(&usableStart, &yIgnored, &usableWidth, &hIgnored,
-                        (((rectDef_t*)(item))->horzAlign), (((rectDef_t*)(item))->vertAlign));
-
-    thumbPos = cursorx - usableStart;
-    if (thumbPos < 0.0f)
-        thumbPos = 0.0f;
-    else if (thumbPos > usableWidth)
-        thumbPos = usableWidth;
-
-    thumbFrac = thumbPos / usableWidth;
-    minVal = (((editFieldDef_s*)(editDef))->minVal);
-    maxVal = (((editFieldDef_s*)(editDef))->maxVal);
-    Dvar_SetFromStringByName(((itemDef_t *)item)->dvar,
-                             va("%g", (double)(minVal + (maxVal - minVal) * thumbFrac)));
+    x += 6.0f;
+    w = 84.0f;
+    y = 0.0f;
+    h = 0.0f;
+    CalcScreenPlacement(&x, &y, &w, &h, item->window.rect[0].horzAlign, item->window.rect[0].vertAlign);
+    value = I_fclamp(cursorx - x, 0.0f, w);
+    Dvar_SetFromStringByName(item->dvar, va("%g", (editDef->maxVal - editDef->minVal) * (value / w) + editDef->minVal));
 }
 
 static void Scroll_Slider_ThumbFunc(displayContextDef_t *dc, void *p)
 {
     byte *scroll = (byte *)p;
-    Scroll_Slider_SetThumbPos_impl((byte *)dc, *(byte **)(scroll + 0x18));
+    Scroll_Slider_SetThumbPos(dc, *(itemDef_t **)(scroll + 0x18));
 }
 
 int Menus_RemoveFromStack(displayContextDef_t *dc, menuDef_t *menu)
@@ -3165,27 +3161,25 @@ qboolean Item_Slider_HandleKey(displayContextDef_t *dc, itemDef_t *item, int key
     if (!Item_ShouldHandleKey(dc, item, key))
         return 0;
     if (key == 200 || key == 201 || key == 202) {
-        Scroll_Slider_SetThumbPos_impl((byte *)dc, (byte *)item);
+        Scroll_Slider_SetThumbPos(dc, item);
         return 1;
     }
     editDef = Item_GetEditFieldDef(item);
-    if (editDef) {
-        step = (editDef->maxVal - editDef->minVal) * 0.05f;
-        value = (float)atof(Dvar_GetVariantString(item->dvar));
-        if (key == 156 || key == 164) {
-            value -= step;
-            if (value < editDef->minVal)
-                value = editDef->minVal;
-            Dvar_SetFromStringByName(item->dvar, va("%g", value));
-            return 1;
-        }
-        if (key == 157 || key == 163) {
-            value += step;
-            if (value > editDef->maxVal)
-                value = editDef->maxVal;
-            Dvar_SetFromStringByName(item->dvar, va("%g", value));
-            return 1;
-        }
+    if (!editDef)
+        return 0;
+    step = (editDef->maxVal - editDef->minVal) * 0.05f;
+    value = (float)atof(Dvar_GetVariantString(item->dvar));
+    if (key == 156 || key == 164) {
+        value -= step;
+        value = value > editDef->minVal ? value : editDef->minVal;
+        Dvar_SetFromStringByName(item->dvar, va("%g", value));
+        return 1;
+    }
+    if (key == 157 || key == 163) {
+        value += step;
+        value = value < editDef->maxVal ? value : editDef->maxVal;
+        Dvar_SetFromStringByName(item->dvar, va("%g", value));
+        return 1;
     }
     return 0;
 }
