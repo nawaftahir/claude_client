@@ -1144,88 +1144,88 @@ static int __attribute_regparm__(2) UI_GetServerStatusInfo(const char *serverAdd
     }
 
     memset(info, 0, sizeof(*info));
-    if (!LAN_GetServerStatus((char *)serverAddress, info->text, sizeof(info->text)))
-        return 0;
-
-    I_strncpyz(info->address, serverAddress, sizeof(info->address));
-    p = info->text;
-    info->numLines = 0;
-    info->lines[info->numLines][0] = "address";
-    info->lines[info->numLines][1] = "";
-    info->lines[info->numLines][2] = "";
-    info->lines[info->numLines][3] = info->address;
-    info->numLines++;
-
-    while (p && *p) {
-        p = strchr(p, '\\');
-        if (!p)
-            break;
-        *p++ = '\0';
-        if (*p == '\\')
-            break;
-        info->lines[info->numLines][0] = p;
+    if (LAN_GetServerStatus((char *)serverAddress, info->text, sizeof(info->text))) {
+        I_strncpyz(info->address, serverAddress, sizeof(info->address));
+        p = info->text;
+        info->numLines = 0;
+        info->lines[info->numLines][0] = "address";
         info->lines[info->numLines][1] = "";
         info->lines[info->numLines][2] = "";
-        p = strchr(p, '\\');
-        if (!p)
-            break;
-        *p++ = '\0';
-        info->lines[info->numLines][3] = p;
-        info->numLines++;
-        if (info->numLines >= 128)
-            break;
-    }
-
-    if (info->numLines < 125) {
-        info->lines[info->numLines][0] = "";
-        info->lines[info->numLines][1] = "";
-        info->lines[info->numLines][2] = "";
-        info->lines[info->numLines][3] = "";
+        info->lines[info->numLines][3] = info->address;
         info->numLines++;
 
-        info->lines[info->numLines][0] = "@EXE_SV_INFO_NUM";
-        info->lines[info->numLines][1] = "@EXE_SV_INFO_SCORE";
-        info->lines[info->numLines][2] = "@EXE_SV_INFO_PING";
-        info->lines[info->numLines][3] = "@EXE_SV_INFO_NAME";
-        info->numLines++;
-
-        i = 0;
-        len = 0;
         while (p && *p) {
-            if (*p == '\\')
-                *p++ = '\0';
-            if (!p)
-                break;
-            score = p;
-            p = strchr(p, ' ');
-            if (!p)
-                break;
-            *p++ = '\0';
-            ping = p;
-            p = strchr(p, ' ');
-            if (!p)
-                break;
-            *p++ = '\0';
-            name = p;
-            Com_sprintf(&info->pings[len], sizeof(info->pings) - len, "%d", i);
-            info->lines[info->numLines][0] = &info->pings[len];
-            len += strlen(&info->pings[len]) + 1;
-            info->lines[info->numLines][1] = score;
-            info->lines[info->numLines][2] = ping;
-            info->lines[info->numLines][3] = name;
-            info->numLines++;
-            if (info->numLines >= 128)
-                break;
             p = strchr(p, '\\');
             if (!p)
                 break;
             *p++ = '\0';
-            i++;
+            if (*p == '\\')
+                break;
+            info->lines[info->numLines][0] = p;
+            info->lines[info->numLines][1] = "";
+            info->lines[info->numLines][2] = "";
+            p = strchr(p, '\\');
+            if (!p)
+                break;
+            *p++ = '\0';
+            info->lines[info->numLines][3] = p;
+            info->numLines++;
+            if (info->numLines >= 128)
+                break;
         }
-    }
 
-    UI_AddServerStatusDvarRows(info);
-    return 1;
+        if (info->numLines < 125) {
+            info->lines[info->numLines][0] = "";
+            info->lines[info->numLines][1] = "";
+            info->lines[info->numLines][2] = "";
+            info->lines[info->numLines][3] = "";
+            info->numLines++;
+
+            info->lines[info->numLines][0] = "@EXE_SV_INFO_NUM";
+            info->lines[info->numLines][1] = "@EXE_SV_INFO_SCORE";
+            info->lines[info->numLines][2] = "@EXE_SV_INFO_PING";
+            info->lines[info->numLines][3] = "@EXE_SV_INFO_NAME";
+            info->numLines++;
+
+            i = 0;
+            len = 0;
+            while (p && *p) {
+                if (*p == '\\')
+                    *p++ = '\0';
+                if (!p)
+                    break;
+                score = p;
+                p = strchr(p, ' ');
+                if (!p)
+                    break;
+                *p++ = '\0';
+                ping = p;
+                p = strchr(p, ' ');
+                if (!p)
+                    break;
+                *p++ = '\0';
+                name = p;
+                Com_sprintf(&info->pings[len], sizeof(info->pings) - len, "%d", i);
+                info->lines[info->numLines][0] = &info->pings[len];
+                len += strlen(&info->pings[len]) + 1;
+                info->lines[info->numLines][1] = score;
+                info->lines[info->numLines][2] = ping;
+                info->lines[info->numLines][3] = name;
+                info->numLines++;
+                if (info->numLines >= 128)
+                    break;
+                p = strchr(p, '\\');
+                if (!p)
+                    break;
+                *p++ = '\0';
+                i++;
+            }
+        }
+
+        UI_AddServerStatusDvarRows(info);
+        return 1;
+    }
+    return 0;
 }
 
 #ifndef __EMSCRIPTEN__
