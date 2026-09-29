@@ -249,22 +249,22 @@ static inline __attribute__((always_inline)) qboolean CL_ConsumeButtonPress(kbut
 
 static inline __attribute__((always_inline)) float CL_KeyState(kbutton_t *key)
 {
-    unsigned int msec;
+    int msec;
 
     msec = key->msec;
     key->msec = 0;
 
     if (key->active) {
-        if (key->downtime) {
-            msec += com_frameTime - key->downtime;
+        if (!key->downtime) {
+            msec = com_frameTime;
         } else {
-            msec += com_frameTime;
+            msec += com_frameTime - key->downtime;
         }
 
         key->downtime = com_frameTime;
     }
 
-    if ((int)msec <= 0) {
+    if (msec <= 0) {
         return 0.0f;
     }
 
