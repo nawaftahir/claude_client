@@ -360,6 +360,35 @@ void Com_SetErrorMessage( const char *errorMessage )
 
 static int com_unreferenced5;
 
+// Leading members only; the full layouts live in oc/headers/common_types.h.
+struct refexport_t
+{
+	void *unused0[62];
+	void (*ResetImageAllocations)( void );
+	void *unused1[40];
+	void (*AbortRenderCommands)( void );
+};
+struct clientStatic_t
+{
+	qboolean quit;
+	qboolean hunkUsersStarted;
+	char servername[256];
+	qboolean rendererStarted;
+	qboolean soundStarted;
+	qboolean uiStarted;
+};
+extern refexport_t re;
+extern clientStatic_t cls;
+extern unsigned char updateScreenCalled;
+
+qboolean UI_SetActiveMenu( int menu );
+void SND_ErrorCleanup( void );
+void CL_FlushDebugData( qboolean fromServer );
+void CL_ConsoleFixPosition( void );
+qboolean UI_AnyFullScreenMenuVisible( void );
+void SEH_UpdateLanguageInfo( void );
+const char *SEH_LocalizeTextMessage( const char *pszInputBuffer, const char *pszMessageType, msgLocErrType_t errType );
+
 /*
 ================
 Com_ErrorCleanup
@@ -370,26 +399,49 @@ void Com_ErrorCleanup( void )
 	static int	lastErrorTime;
 	static int	errorCount;
 	int			currentTime;
+	const char	*localized;
 	char msgBuf[MAXPRINTMSG];
 
 	LargeLocalReset();
+
+	if ( re.AbortRenderCommands )
+		re.AbortRenderCommands();
+
 	Dvar_SetInAutoExec(0);
 	Com_ClearTempMemory();
 	Hunk_ClearTempMemoryHigh();
 	Dvar_SetIntByName("cl_paused", 0);
 	FS_PureServerSetLoadedIwds("", "");
+	SEH_UpdateLanguageInfo();
 
 	strcpy(msgBuf, com_errorMessage);
 
 	if ( com_errorType != ERR_DISCONNECT )
+	{
+		if ( cls.uiStarted )
+			UI_SetActiveMenu(0);
+
 		Com_SetErrorMessage(com_errorMessage);
+	}
+	else if ( com_errorMessage[0] )
+	{
+		localized = SEH_LocalizeTextMessage(com_errorMessage, "error message", LOCMSG_NOERR);
+		if ( localized )
+			I_strncpyz(com_errorMessage, localized, sizeof(com_errorMessage));
+	}
 
 	if ( com_errorType != ERR_DISCONNECT )
 		Scr_Abort();
 
+	SND_ErrorCleanup();
 	Com_CleanupBsp();
 	CM_Cleanup();
 	Com_ResetParseSessions();
+	CL_FlushDebugData(qtrue);
+
+	if ( re.ResetImageAllocations )
+		re.ResetImageAllocations();
+
 	FS_ResetFiles();
 
 	if ( com_errorType == ERR_DROP )
@@ -413,6 +465,8 @@ void Com_ErrorCleanup( void )
 	if ( com_errorType != ERR_SERVERDISCONNECT && com_errorType != ERR_DROP && com_errorType != ERR_DISCONNECT )
 		Sys_Error("%s", com_errorMessage);
 
+	updateScreenCalled = 0;
+
 	if ( com_errorType == ERR_SERVERDISCONNECT )
 	{
 		Com_ShutdownInternal("EXE_DISCONNECTEDFROMOWNLISTENSERVER");
@@ -420,6 +474,10 @@ void Com_ErrorCleanup( void )
 	else
 	{
 		Com_Printf("********************\nERROR: %s\n********************\n", com_errorMessage);
+
+		if ( com_errorType == ERR_DROP && cls.uiStarted && !com_fixedConsolePosition )
+			CL_ConsoleFixPosition();
+
 		Com_ShutdownInternal(msgBuf);
 
 		if ( com_errorType == ERR_DROP )
@@ -457,10 +515,33 @@ void Com_Error( errorParm_t code, const char *fmt, ... )
 
 	if ( code == ERR_SCRIPT || code == ERR_LOCALIZATION )
 	{
+		if ( !com_fixedConsolePosition )
+		{
+			com_fixedConsolePosition = 1;
+			CL_ConsoleFixPosition();
+		}
+
+		if ( cls.uiStarted )
+		{
+			if ( !UI_AnyFullScreenMenuVisible() )
+			{
+				Com_SetErrorMessage(com_errorMessage);
+				UI_SetActiveMenu(1);
+			}
+
+			if ( cls.uiStarted )
+			{
+				com_errorEntered = 0;
+				return;
+			}
+		}
+
 		code = ERR_DROP;
 	}
 	else if ( code == ERR_SCRIPT_DROP )
 	{
+		com_fixedConsolePosition = 1;
+		CL_ConsoleFixPosition();
 		code = ERR_DROP;
 	}
 	else
@@ -1427,6 +1508,37 @@ int Com_ModifyMsec( int msec )
 
 /*
 ==================
+Com_UpdateStatMonWarnings
+==================
+*/
+extern int com_fileAccessed;
+extern void StatMon_Warning( int type, int duration, const char *materialName );
+
+static void Com_UpdateStatMonWarnings()
+{
+	static int lastFrameTime;
+	int prevTime;
+	int frameTime;
+
+	if ( !com_statmon->current.boolean )
+		return;
+
+	if ( com_fileAccessed )
+	{
+		StatMon_Warning(1, 3000, "gfx/2d/warning@file.jpg");
+		com_fileAccessed = 0;
+	}
+
+	prevTime = lastFrameTime;
+	frameTime = Sys_Milliseconds();
+	lastFrameTime = frameTime;
+
+	if ( com_statmon->current.boolean && frameTime - prevTime > 33 && prevTime )
+		StatMon_Warning(0, 3000, "gfx/2d/warning@fps.jpg");
+}
+
+/*
+==================
 Com_ViewLogModified
 ==================
 */
@@ -1522,6 +1634,7 @@ done:
 	CL_Frame();
 	SCR_UpdateScreen();
 	SCR_RunCinematic();
+	Com_UpdateStatMonWarnings();
 }
 
 

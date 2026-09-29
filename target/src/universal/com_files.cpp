@@ -2430,7 +2430,11 @@ static void FS_AddGameDirectoryInternal(const char *path, const char *dir, int b
 
 void FS_AddGameDirectory(const char *path, const char *dir)
 {
-	FS_AddGameDirectoryInternal(path, dir, qtrue, 0);
+	int language;
+
+	for ( language = MAX_LANGUAGES - 1; language >= 0; language-- )
+		FS_AddGameDirectoryInternal(path, dir, qtrue, language);
+
 	FS_AddGameDirectoryInternal(path, dir, qfalse, 0);
 }
 
@@ -2486,10 +2490,22 @@ void FS_ShutdownServerReferencedIwds()
 	fs_numServerReferencedIwds = 0;
 }
 
+enum snd_stopsounds_arg_t
+{
+	SND_STOP_STREAMED = 8
+};
+void SND_StopSounds( snd_stopsounds_arg_t which );
+void SEH_Init_StringEd();
+void SEH_Shutdown_StringEd();
+void SEH_UpdateLanguageInfo();
+
 // closemfp is unused
 void FS_Shutdown( int closemfp )
 {
 	int i;
+
+	SND_StopSounds(SND_STOP_STREAMED);
+	SEH_Shutdown_StringEd();
 
 	for (i = 1; i < MAX_FILE_HANDLES; ++i)
 	{
@@ -2602,7 +2618,7 @@ void FS_Startup(const char *gameName)
 	}
 
 	FS_AddCommands();
-	FS_Path_f();
+	FS_DisplayPath(1);
 	Dvar_ClearModified(fs_gameDirVar);
 	Com_Printf("----------------------\n");
 	Com_Printf("%d files in iwd files\n", fs_packFiles);
@@ -2654,6 +2670,8 @@ void FS_Restart(int checksumFeed)
 	fs_checksumFeed = checksumFeed;
 	FS_ClearIwdReferences();
 	FS_Startup(BASEGAME);
+	SEH_Init_StringEd();
+	SEH_UpdateLanguageInfo();
 	FS_SetRestrictions();
 
 	// if we can't find default.cfg, assume that the paths are
