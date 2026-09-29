@@ -626,14 +626,6 @@ void CG_Player(centity_t *cent)
     {
         byte *ci = (byte *)(((char *)cg + offsetof(cg_t, bgs.clientinfo[0].infoValid)) + iClientNum * CI_STRIDE);
         BG_PlayerAnimation(obj, es, (clientInfo_t *)ci);
-        /* Advance the body DObj's anim time/weights toward their goals each frame.
-         * BG_PlayerAnimation only SETS goal weights; the actual blend over time is
-         * done by DObjUpdateClientInfo (as the viewmodel does in CG_UpdateViewWeaponAnim).
-         * The 3rd-person / packet-entity player body never received this per-frame
-         * update, so its idle looked fine (immediate, view-driven weights) but any
-         * looping or blended movement animation stayed frozen -- the upper body
-         * "disappeared/bugged" when moving. */
-        DObjUpdateClientInfo(obj, (float)cg->frametime * 0.001f);
     }
 
     if (es->eFlags & 0x300)
@@ -649,7 +641,7 @@ void CG_Player(centity_t *cent)
     ((GfxEntity *)body)->lighting.baseCoords[1] = cent->lerpOrigin[1];
 
     {
-        float z = cent->lerpOrigin[2] + es->fTorsoHeight;
+        float z = ((GfxEntity *)body)->origin[2] + es->fTorsoHeight;
 
         if (es->eFlags & 8)
             z += 12.0f;
@@ -667,7 +659,7 @@ void CG_Player(centity_t *cent)
 
     CG_AddCEntityToScene((const GfxEntity *)body, obj, cent);
 
-    if (es->eFlags & 0x2)
+    if (es->eFlags & 0x20000)
         return;
 
     CG_AddPlayerWeapon((GfxEntity *)body, 0, cent, 1);
