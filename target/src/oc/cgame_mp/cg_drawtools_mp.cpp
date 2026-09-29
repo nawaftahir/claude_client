@@ -10,13 +10,24 @@ extern float sinf(float x);
 extern float cosf(float x);
 extern double atof(const char *s);
 
+static inline void FastSinCos(const float value, float *pSin, float *pCos)
+{
+    __asm
+    {
+        push eax
+        push ecx
+        fld value
+        fsincos
+        mov ecx, pCos
+        mov eax, pSin
+        fstp dword ptr [ecx]
+        fstp dword ptr [eax]
+        pop ecx
+        pop eax
+    }
+}
+
 static vec4_t color;
-static vec2_t sign[4] = {
-                          { -1.0f, -1.0f },
-                          { 1.0f, -1.0f },
-                          { 1.0f, 1.0f },
-                          { -1.0f, 1.0f }
-};
 
 extern const dvar_t *cg_hudCompassSpringyPointers;
 extern const vec4_t colorWhite;
@@ -338,23 +349,28 @@ int CG_DrawBigDevString(float x, float y, const char *s, float alpha, int align)
 
 void CG_DrawRotatedPicPhysical(float x, float y, float width, float height, float angle, const vec_t *color, MaterialHandle material)
 {
-    float radians = (float)((double)angle * 0.017453292519943295);
-    float s = sinf(radians);
-    float c = cosf(radians);
-    float halfW = width * 0.5f;
-    float halfH = height * 0.5f;
-    float cx = halfW + x;
-    float cy = halfH + y;
-    float cw = c * halfW;
-    float sw = s * halfW;
-    float sh = s * halfH;
-    float ch = c * halfH;
-
+    static const float sign[4][2] = { { -1.0f, -1.0f }, { 1.0f, -1.0f }, { 1.0f, 1.0f }, { -1.0f, 1.0f } };
+    float s;
+    float c;
+    float halfWidth;
+    float halfHeight;
+    float center[2];
+    float scale[2][2];
     vec2_t verts[4];
     int i;
+
+    FastSinCos(angle * 0.017453292f, &s, &c);
+    halfWidth = width * 0.5f;
+    halfHeight = height * 0.5f;
+    center[0] = x + halfWidth;
+    center[1] = y + halfHeight;
+    scale[0][0] = c * halfWidth;
+    scale[0][1] = s * halfWidth;
+    scale[1][0] = s * halfHeight;
+    scale[1][1] = c * halfHeight;
     for (i = 0; i < 4; i++) {
-        verts[i][0] = cx + cw * sign[i][0] - sw * sign[i][1];
-        verts[i][1] = cy + sh * sign[i][0] + ch * sign[i][1];
+        verts[i][0] = scale[0][0] * sign[i][0] + center[0] - scale[1][0] * sign[i][1];
+        verts[i][1] = scale[1][1] * sign[i][1] + scale[0][1] * sign[i][0] + center[1];
     }
 
     CL_DrawQuadPic(verts, color, material);
@@ -368,15 +384,15 @@ void CG_DrawRotatedPic(float x, float y, float width, float height, int horzAlig
 
 void CG_DrawRotatedQuadPic(float x, float y, vec2_t *verts, float angle, const vec_t *color, MaterialHandle material)
 {
-    float radians = (float)((double)angle * 0.017453292519943295);
-    float s = sinf(radians);
-    float c = cosf(radians);
-
+    float s;
+    float c;
     vec2_t xy[4];
     int i;
+
+    FastSinCos(angle * 0.017453292f, &s, &c);
     for (i = 0; i < 4; i++) {
-        xy[i][0] = x + c * verts[i][0] - s * verts[i][1];
-        xy[i][1] = y + s * verts[i][0] + c * verts[i][1];
+        xy[i][0] = c * verts[i][0] + x - s * verts[i][1];
+        xy[i][1] = s * verts[i][0] + c * verts[i][1] + y;
     }
 
     CL_DrawQuadPic(xy, color, material);
