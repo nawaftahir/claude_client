@@ -50,14 +50,14 @@ void UI_DrawLoadBar(float x, float y, float w, float h, int horzAlign, int vertA
 
     expectedHunk = Dvar_GetInt("com_expectedHunkUsage");
 
-    frac = 0.0f;
-
     if (expectedHunk > 0) {
 
         frac = (float)Hunk_Used() / (float)expectedHunk;
 
         if (frac > 1.0f)
             frac = 1.0f;
+    } else {
+        frac = 0.0f;
     }
 
     CL_DrawStretchPic(x, y, frac * w, h, horzAlign, vertAlign, 0.0f, 0.0f, frac, 1.0f, color, material);
