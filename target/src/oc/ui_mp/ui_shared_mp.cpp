@@ -99,6 +99,44 @@ extern struct listBoxDef_s *Item_GetListBoxDef(itemDef_t *item);
 extern struct multiDef_s *Item_GetMultiDef(itemDef_t *item);
 extern void Item_SetCursorPos(itemDef_t *item, int cursorPos);
 extern void Item_SetScreenCoords(itemDef_t *item, float x, float y, int horzAlign, int vertAlign);
+
+static inline void FastSinCos(const float value, float *pSin, float *pCos)
+{
+    __asm
+    {
+        push eax
+        push ecx
+        fld value
+        fsincos
+        mov ecx, pCos
+        mov eax, pSin
+        fstp dword ptr [ecx]
+        fstp dword ptr [eax]
+        pop ecx
+        pop eax
+    }
+}
+
+// retail 0x5340d0
+void Item_UpdatePosition(itemDef_t *item)
+{
+    menuDef_t *menu;
+    float x, y;
+
+    if (item == NULL || item->parent == NULL)
+        return;
+
+    menu = (menuDef_t *)item->parent;
+    x = menu->window.rect[0].x;
+    y = menu->window.rect[0].y;
+
+    if (menu->window.border != 0) {
+        x += menu->window.borderSize;
+        y += menu->window.borderSize;
+    }
+
+    Item_SetScreenCoords(item, x, y, menu->window.rect[0].horzAlign, menu->window.rect[0].vertAlign);
+}
 extern void Item_SetTextRect(itemDef_t *item, const rectDef_t *textRect);
 extern void Item_SetupKeywordHash(void);
 extern qboolean ListBox_HasValidCursorPos(const listBoxDef_t *listBox);
@@ -2113,17 +2151,7 @@ void Menu_TransitionItemByName(menuDef_t *menu, const char *p, rectDef_t rectFro
 
         Window_SetRectEffects1((Window *)item, &newRect);
 
-        byte *parent = (*(byte **)&((itemDef_t *)item)->parent);
-        if (parent) {
-            float px = (((rectDef_t*)(parent))->x);
-            float py = (((rectDef_t*)(parent))->y);
-            if (((menuDef_t *)parent)->window.border) {
-                float borderSize = ((menuDef_t *)parent)->window.borderSize;
-                px += borderSize;
-                py += borderSize;
-            }
-            Item_SetScreenCoords((itemDef_t *)item, px, py, (((rectDef_t*)(parent))->horzAlign), (((rectDef_t*)(parent))->vertAlign));
-        }
+        Item_UpdatePosition((itemDef_t *)item);
     }
 }
 
@@ -2174,17 +2202,7 @@ void Menu_OrbitItemByName(menuDef_t *menu, const char *p, float x, float y, floa
         newRect.y = y;
         Window_SetRectClient( (Window *)(item), &newRect);
 
-        byte *parent = (*(byte **)&((itemDef_t *)item)->parent);
-        if (parent) {
-            float px = (((rectDef_t*)(parent))->x);
-            float py = (((rectDef_t*)(parent))->y);
-            if (((menuDef_t *)parent)->window.border) {
-                float borderSize = ((menuDef_t *)parent)->window.borderSize;
-                px += borderSize;
-                py += borderSize;
-            }
-            Item_SetScreenCoords((itemDef_t *)item, px, py, (((rectDef_t*)(parent))->horzAlign), (((rectDef_t*)(parent))->vertAlign));
-        }
+        Item_UpdatePosition((itemDef_t *)item);
     }
 }
 
@@ -5101,33 +5119,16 @@ void Item_Paint(displayContextDef_t *dc, itemDef_t *item)
             float rx = (((itemDef_s*)(it))->window.rectClient[0].x) + w - ((itemDef_t *)it)->window.rectEffects0[0].x;
             float ry = (((itemDef_s*)(it))->window.rectClient[0].y) + h - ((itemDef_t *)it)->window.rectEffects0[0].y;
 
-            float angle;
-            *(int *)&angle = 0x3d567750;
-            float sin_a = sinf(angle);
-            float cos_a = cosf(angle);
+            float sin_a, cos_a;
+            FastSinCos(0.05235988f, &sin_a, &cos_a);
 
-            newRect.w = (((itemDef_s*)(it))->window.rectClient[0].w);
-            newRect.h = (((itemDef_s*)(it))->window.rectClient[0].h);
-            newRect.horzAlign = (((itemDef_s*)(it))->window.rectClient[0].horzAlign);
-            newRect.vertAlign = (((itemDef_s*)(it))->window.rectClient[0].vertAlign);
-
+            newRect = (*(rectDef_t *)&((itemDef_t *)it)->window.rectClient[0].x);
             newRect.x = rx * cos_a - ry * sin_a + ((itemDef_t *)it)->window.rectEffects0[0].x - w;
-
             newRect.y = rx * sin_a + ry * cos_a + ((itemDef_t *)it)->window.rectEffects0[0].y - h;
 
             Window_SetRectClient( (Window *)(item), &newRect);
 
-            byte *p = (*(byte **)&((itemDef_t *)it)->parent);
-            if (p) {
-                float px = (((rectDef_t*)(p))->x);
-                float py = (((rectDef_t*)(p))->y);
-                if (((menuDef_t*)(p))->window.border) {
-                    float borderSize = ((menuDef_t*)(p))->window.borderSize;
-                    px += borderSize;
-                    py += borderSize;
-                }
-                Item_SetScreenCoords((itemDef_t *)item, px, py, (((rectDef_t*)(p))->horzAlign), (((rectDef_t*)(p))->vertAlign));
-            }
+            Item_UpdatePosition((itemDef_t *)item);
 
             flags = ((itemDef_t *)it)->window.dynamicFlags[0];
         }
@@ -5211,17 +5212,7 @@ void Item_Paint(displayContextDef_t *dc, itemDef_t *item)
 
             Window_SetRectClient( (Window *)(item), &newRect);
 
-            byte *p = (*(byte **)&((itemDef_t *)it)->parent);
-            if (p) {
-                float px = (((rectDef_t*)(p))->x);
-                float py = (((rectDef_t*)(p))->y);
-                if (((menuDef_t*)(p))->window.border) {
-                    float borderSize = ((menuDef_t*)(p))->window.borderSize;
-                    px += borderSize;
-                    py += borderSize;
-                }
-                Item_SetScreenCoords((itemDef_t *)item, px, py, (((rectDef_t*)(p))->horzAlign), (((rectDef_t*)(p))->vertAlign));
-            }
+            Item_UpdatePosition((itemDef_t *)item);
 
             if (done == 4) {
                 Window_RemoveDynamicFlags((Window *)item, 0x80);
