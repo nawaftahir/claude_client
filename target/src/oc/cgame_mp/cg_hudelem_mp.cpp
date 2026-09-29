@@ -38,21 +38,6 @@ static void CG_GetHudElemInfo(const hudelem_t *elem, cg_hudelem_t *cghe, char *h
 void CG_Draw2dHudElems(qboolean foreground);
 void CG_Draw3dHudElems(void);
 
-static inline __attribute__((always_inline)) char *cg_base(void)
-{
-    return (char *)cg;
-}
-
-static int cg_time(void)
-{
-    return cg->time;
-}
-
-static char *cg_snap(void)
-{
-    return (char *)cg->snap;
-}
-
 static float clamp01(float val)
 {
     if (val < 0.0f)
@@ -74,7 +59,7 @@ static float CG_GetMoveLerpFactor(const hudelem_t *elem)
     int moveTime = elem->moveTime;
     if (moveTime <= 0)
         return 1.0f;
-    int serverTime = cg_time();
+    int serverTime = cg->time;
     int elapsed = serverTime - elem->moveStartTime;
     if (elapsed <= 0)
         return 0.0f;
@@ -113,7 +98,7 @@ static float CG_AlignY(int alignOrg, float y, float height)
 
 Bool CG_AreHudElemsHidden(void)
 {
-    char *base = cg_base();
+    char *base = (char *)cg;
     int val = ((cg_t *)base)->drawHud;
     if (!val) {
         return 1;
@@ -168,7 +153,7 @@ int compare_hudelems(const inflate_huft *pe0, const inflate_huft *pe1)
 
 static const char *CG_FormatTimerString(const hudelem_t *elem, int isTenths)
 {
-    int serverTime = cg_time();
+    int serverTime = cg->time;
     int msec;
     int hours, minutes, seconds, tenths;
 
@@ -238,7 +223,7 @@ static float CG_GetWidth(const hudelem_t *elem, float fontHeight)
     float width = CG_GetDimValue(elem->width, fontHeight);
     int scaleTime = elem->scaleTime;
     if (scaleTime > 0) {
-        int serverTime = cg_time();
+        int serverTime = cg->time;
         int elapsed = serverTime - elem->scaleStartTime;
         if (scaleTime > elapsed) {
             float toWidth = CG_GetDimValue(elem->fromWidth, fontHeight);
@@ -255,7 +240,7 @@ static float CG_GetHeight(const hudelem_t *elem, float fontHeight)
     float height = CG_GetDimValue(elem->height, fontHeight);
     int scaleTime = elem->scaleTime;
     if (scaleTime > 0) {
-        int serverTime = cg_time();
+        int serverTime = cg->time;
         int elapsed = serverTime - elem->scaleStartTime;
         if (scaleTime > elapsed) {
             float toHeight = CG_GetDimValue(elem->fromHeight, fontHeight);
@@ -379,7 +364,7 @@ static void CG_GetHudElemInfo(const hudelem_t *elem, cg_hudelem_t *cghe, char *h
         if (idx > 63)
             break;
 
-        char *snap = cg_snap();
+        char *snap = (char *)cg->snap;
         I_strncpyz(cghe->hudElemText, (char *)snap + 0xe0920 + idx * 1208, 256);
         break;
     }
@@ -493,7 +478,7 @@ static void CG_GetHudElemInfo(const hudelem_t *elem, cg_hudelem_t *cghe, char *h
             float hResult = h;
             int scaleTime = elem->scaleTime;
             if (scaleTime > 0) {
-                int serverTime = cg_time();
+                int serverTime = cg->time;
                 int elapsed = serverTime - elem->scaleStartTime;
                 if (scaleTime > elapsed) {
                     float toH = CG_GetDimValue(elem->fromHeight, cghe->fontHeight);
@@ -534,7 +519,7 @@ static void CG_GetHudElemInfo(const hudelem_t *elem, cg_hudelem_t *cghe, char *h
             float hResult = h;
             int scaleTime = elem->scaleTime;
             if (scaleTime > 0) {
-                int serverTime = cg_time();
+                int serverTime = cg->time;
                 int elapsed = serverTime - elem->scaleStartTime;
                 if (scaleTime > elapsed) {
                     float toH = CG_GetDimValue(elem->fromHeight, cghe->fontHeight);
@@ -607,7 +592,7 @@ static void CG_GetHudElemInfo(const hudelem_t *elem, cg_hudelem_t *cghe, char *h
     }
 
     {
-        int serverTime = cg_time();
+        int serverTime = cg->time;
         int fadeElapsed = serverTime - elem->fadeStartTime;
         int fadeTime = elem->fadeTime;
 
@@ -648,7 +633,7 @@ void CG_Draw2dHudElems(qboolean foreground)
     int elemCount;
     int i;
 
-    byte *ps = (byte *)cg_snap() + 0x0C;
+    byte *ps = (byte *)(char *)cg->snap + 0x0C;
     elemCount = 0;
     current = (hudelem_t *)(ps + 0x7a8);
     archival = current + 31;
@@ -750,7 +735,7 @@ void CG_Draw2dHudElems(qboolean foreground)
                 void *handMaterial = CL_RegisterMaterialNoMip(materialName, 7);
 
                 float timeVal = 0.0f;
-                int serverTime = cg_time();
+                int serverTime = cg->time;
                 int msec;
 
                 switch (elem->type) {
@@ -840,7 +825,7 @@ void CG_Draw3dHudElems(void)
     if (CG_AreHudElemsHidden())
         return;
 
-    byte *ps = (byte *)cg_snap() + 0x0C;
+    byte *ps = (byte *)(char *)cg->snap + 0x0C;
     elemCount = 0;
     current = (hudelem_t *)(ps + 0x7a8);
     archival = current + 31;

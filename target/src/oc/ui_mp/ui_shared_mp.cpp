@@ -4527,199 +4527,136 @@ qboolean Menu_HandleMouseMove(displayContextDef_t *dc, menuDef_t *menu, float x,
     return 0;
 }
 
+// retail 0x5373a0
+static void Item_TextField_EnsureCursorVisible(itemDef_t *item, const char *text)
+{
+    editFieldDef_t *editPtr;
+    int cursorPos;
+    int paintOffsetMin;
+
+    editPtr = Item_GetEditFieldDef(item);
+    cursorPos = item->cursorPos[0];
+    if (editPtr->paintOffset > cursorPos) {
+        editPtr->paintOffset = cursorPos;
+    } else if (editPtr->maxPaintChars) {
+        paintOffsetMin = Item_GetCursorPosOffset(item, text, -editPtr->maxPaintChars);
+        if (editPtr->paintOffset < paintOffsetMin)
+            editPtr->paintOffset = paintOffsetMin;
+    }
+}
+
 qboolean Item_TextField_HandleKey(displayContextDef_t *dc, itemDef_t *item, int key)
 {
-    byte *it = (byte *)item;
-    char buff[0x400];
+    char buff[1024];
     int len;
-    int cursorPos;
+    itemDef_t *newItem;
+    editFieldDef_t *editPtr;
 
-    editFieldDef_t *editPtr = Item_GetEditFieldDef(item);
-    if (!editPtr)
+    editPtr = Item_GetEditFieldDef(item);
+    if (!editPtr || !item->dvar)
         return 0;
-    if (!(*(void **)&((itemDef_t *)it)->dvar))
-        return 0;
 
-    memset(buff, 0, 0x400);
-    I_strncpyz(buff, Dvar_GetVariantString(((itemDef_t *)it)->dvar), 0x400);
-
-    len = 0;
-    while (buff[len])
-        len++;
-
-    int maxChars = editPtr->maxChars;
-    if (maxChars && len > maxChars) {
-        buff[maxChars] = '\0';
-        len = maxChars;
+    memset(buff, 0, sizeof(buff));
+    I_strncpyz(buff, Dvar_GetVariantString(item->dvar), sizeof(buff));
+    len = strlen(buff);
+    if (editPtr->maxChars && len > editPtr->maxChars) {
+        len = editPtr->maxChars;
+        buff[len] = 0;
     }
 
     if (key & 0x400) {
         key &= ~0x400;
 
         if (key == 8) {
-            cursorPos = ((itemDef_t *)it)->cursorPos[0];
-            if (cursorPos > 0)
-                memmove(buff + cursorPos - 1, buff + cursorPos, len - cursorPos + 1);
-            Dvar_SetFromStringByName(((itemDef_t *)it)->dvar, buff);
-            I_strncpyz(buff, Dvar_GetVariantString(((itemDef_t *)it)->dvar), 0x400);
-            Item_SetCursorPos(item, Item_GetCursorPosOffset(item, buff, -1));
-            goto scroll_update;
+            if (item->cursorPos[0] > 0)
+                memmove(&buff[item->cursorPos[0] - 1], &buff[item->cursorPos[0]], len + 1 - item->cursorPos[0]);
+            Dvar_SetFromStringByName(item->dvar, buff);
+            I_strncpyz(buff, Dvar_GetVariantString(item->dvar), sizeof(buff));
+            item->cursorPos[0] = Item_GetCursorPosOffset(item, buff, -1);
+            Item_TextField_EnsureCursorVisible(item, buff);
+            return 1;
         }
 
-        if ((((itemDef_s*)(it))->type) == 0x10) {
-            if (!I_isforfilename(key))
-                return 1;
-        }
-
-        if (key <= 0x1f)
+        if (item->type == 16 && !I_isforfilename(key))
             return 1;
-        if (!(*(void **)&((itemDef_t *)it)->dvar))
+        if (key < 32 || !item->dvar)
             return 1;
-
-        if ((((itemDef_s*)(it))->type) == 9) {
-
-            if (!I_isdigit(key))
+        if (item->type == 9 && !I_isdigit(key))
+            return 0;
+        if (item->type == 17) {
+            if (!I_isdigit(key) && key != Com_GetDecimalDelimiter())
                 return 0;
-        } else if ((((itemDef_s*)(it))->type) == 0x11) {
-
-            if (!I_isdigit(key)) {
-                if (key != (int)(signed char)Com_GetDecimalDelimiter())
-                    return 0;
-            }
-            if (key == (int)(signed char)Com_GetDecimalDelimiter())
+            if (key == Com_GetDecimalDelimiter())
                 key = '.';
         }
-
-        if ((((itemDef_s*)(it))->type) == 0x12) {
-
+        if (item->type == 18)
             key = toupper(key);
-        }
 
-        if (Key_GetOverstrikeMode()) {
-
-            maxChars = editPtr->maxChars;
-            if (maxChars && maxChars <= ((itemDef_t *)it)->cursorPos[0]) {
-                if (editPtr->maxCharsGotoNext == 0)
-                    return 1;
-                itemDef_t *nextItem = Menu_SetNextCursorItem(dc, ((itemDef_t *)it)->parent);
-                if (nextItem && Item_IsTextField(nextItem))
-                    g_editItem = nextItem;
+        if (!Key_GetOverstrikeMode()) {
+            if (len == 255 || editPtr->maxChars && len >= editPtr->maxChars)
                 return 1;
+            memmove(&buff[item->cursorPos[0] + 1], &buff[item->cursorPos[0]], len + 1 - item->cursorPos[0]);
+        } else if (editPtr->maxChars && item->cursorPos[0] >= editPtr->maxChars) {
+            if (editPtr->maxCharsGotoNext) {
+                newItem = Menu_SetNextCursorItem(dc, item->parent);
+                if (newItem && Item_IsTextField(newItem))
+                    g_editItem = newItem;
             }
-            goto write_char;
+            return 1;
         }
 
-        if (len == 0xff)
-            return 1;
-        maxChars = editPtr->maxChars;
-        if (maxChars && len >= maxChars)
-            return 1;
-        cursorPos = ((itemDef_t *)it)->cursorPos[0];
-        memmove(buff + cursorPos + 1, buff + cursorPos, len - cursorPos + 1);
-
-    write_char:
-        buff[((itemDef_t *)it)->cursorPos[0]] = (char)key;
-        Dvar_SetFromStringByName(((itemDef_t *)it)->dvar, buff);
-        I_strncpyz(buff, Dvar_GetVariantString(((itemDef_t *)it)->dvar), 0x400);
-        Item_SetCursorPos(item, Item_GetCursorPosOffset(item, buff, 1));
-
-        editPtr = Item_GetEditFieldDef(item);
-        cursorPos = ((itemDef_t *)it)->cursorPos[0];
-        if (cursorPos < editPtr->paintOffset) {
-            editPtr->paintOffset = cursorPos;
-        } else if (editPtr->maxPaintChars) {
-            int off = Item_GetCursorPosOffset(item, buff, -editPtr->maxPaintChars);
-            if (off > editPtr->paintOffset)
-                editPtr->paintOffset = off;
+        buff[item->cursorPos[0]] = key;
+        Dvar_SetFromStringByName(item->dvar, buff);
+        I_strncpyz(buff, Dvar_GetVariantString(item->dvar), sizeof(buff));
+        item->cursorPos[0] = Item_GetCursorPosOffset(item, buff, 1);
+        Item_TextField_EnsureCursorVisible(item, buff);
+        if (editPtr->maxChars && item->cursorPos[0] >= editPtr->maxChars && editPtr->maxCharsGotoNext) {
+            newItem = Menu_SetNextCursorItem(dc, item->parent);
+            newItem->cursorPos[0] = 0;
+            if (newItem && Item_IsTextField(newItem))
+                g_editItem = newItem;
         }
-
-        maxChars = editPtr->maxChars;
-        if (maxChars == 0)
-            return 1;
-        if (maxChars > ((itemDef_t *)it)->cursorPos[0])
-            return 1;
-        if (editPtr->maxCharsGotoNext == 0)
-            return 1;
-        {
-            itemDef_t *nextItem = Menu_SetNextCursorItem(dc, ((itemDef_t *)it)->parent);
-            Item_SetCursorPos(nextItem, 0);
-            if (nextItem && Item_IsTextField(nextItem))
-                g_editItem = nextItem;
+    } else if (key == 162 || key == 193) {
+        if (item->cursorPos[0] < len) {
+            memmove(&buff[item->cursorPos[0]], &buff[item->cursorPos[0] + 1], len - item->cursorPos[0]);
+            Dvar_SetFromStringByName(item->dvar, buff);
         }
         return 1;
-    }
-
-    switch (key) {
-    case 0xa2:
-        cursorPos = ((itemDef_t *)it)->cursorPos[0];
-        if (len > cursorPos) {
-            memmove(buff + cursorPos, buff + cursorPos + 1, len - cursorPos);
-            Dvar_SetFromStringByName(((itemDef_t *)it)->dvar, buff);
-        }
+    } else if (key == 157 || key == 187) {
+        item->cursorPos[0] = Item_GetCursorPosOffset(item, buff, 1);
+        Item_TextField_EnsureCursorVisible(item, buff);
         return 1;
-
-    case 0x9d:
-        Item_SetCursorPos(item, Item_GetCursorPosOffset(item, buff, 1));
-        goto scroll_update;
-
-    case 0x9c:
-        Item_SetCursorPos(item, Item_GetCursorPosOffset(item, buff, -1));
-    scroll_update:
-        editPtr = Item_GetEditFieldDef(item);
-        cursorPos = ((itemDef_t *)it)->cursorPos[0];
-        if (cursorPos < editPtr->paintOffset) {
-            editPtr->paintOffset = cursorPos;
-            return 1;
-        }
-        if (editPtr->maxPaintChars == 0)
-            return 1;
-        {
-            int off = Item_GetCursorPosOffset(item, buff, -editPtr->maxPaintChars);
-            if (off > editPtr->paintOffset)
-                editPtr->paintOffset = off;
-        }
+    } else if (key == 156 || key == 185) {
+        item->cursorPos[0] = Item_GetCursorPosOffset(item, buff, -1);
+        Item_TextField_EnsureCursorVisible(item, buff);
         return 1;
-
-    case 0xa5:
-        Item_SetCursorPos(item, 0);
+    } else if (key == 165 || key == 182) {
+        item->cursorPos[0] = 0;
         editPtr->paintOffset = 0;
         return 1;
-
-    case 0xa6:
-        Item_SetCursorPos(item, len);
-        goto scroll_update;
-
-    case 0xa1:
+    } else if (key == 166 || key == 188) {
+        item->cursorPos[0] = len;
+        Item_TextField_EnsureCursorVisible(item, buff);
+        return 1;
+    } else if (key == 161 || key == 192) {
         Key_SetOverstrikeMode(Key_GetOverstrikeMode() == 0);
         return 1;
-
-    case 9:
-    case 0x9b:
-    {
-        itemDef_t *nextItem = Menu_SetNextCursorItem(dc, ((itemDef_t *)it)->parent);
-        if (nextItem && Item_IsTextField(nextItem))
-            g_editItem = nextItem;
     }
-        return 1;
 
-    case 0x9a:
-    {
-        itemDef_t *prevItem = Menu_SetPrevCursorItem(dc, ((itemDef_t *)it)->parent);
-        if (prevItem && Item_IsTextField(prevItem))
-            g_editItem = prevItem;
+    if (key == 9 || key == 155 || key == 189) {
+        newItem = Menu_SetNextCursorItem(dc, item->parent);
+        if (newItem && Item_IsTextField(newItem))
+            g_editItem = newItem;
     }
-        return 1;
-
-    case 0xd:
-    case 0xbf:
-        if ((*(void **)&((itemDef_t *)it)->onAccept))
-            Item_RunScript(dc, item, ((itemDef_t *)it)->onAccept);
+    if (key == 154 || key == 183) {
+        newItem = Menu_SetPrevCursorItem(dc, item->parent);
+        if (newItem && Item_IsTextField(newItem))
+            g_editItem = newItem;
+    }
+    if ((key == 13 || key == 191) && item->onAccept)
+        Item_RunScript(dc, item, item->onAccept);
+    if (key == 13 || key == 191 || key == 27)
         return 0;
-
-    case 0x1b:
-        return 0;
-    }
-
     return 1;
 }
 
