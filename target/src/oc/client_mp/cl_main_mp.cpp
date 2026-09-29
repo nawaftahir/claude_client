@@ -2392,19 +2392,6 @@ void CL_Init(void)
     Com_Printf("----- Client Initialization -----\n");
 
     clientActive_t *c = clients;
-    Bool savedCgameInitialized = c->cgameInitialized;
-    Bool savedCgameInitCalled = c->cgameInitCalled;
-    int savedKeyCatchers = c->keyCatchers;
-    Bool savedDisplayHUDWithKeycatchUI = c->displayHUDWithKeycatchUI;
-    Bool savedActive = c->active;
-
-    memset(c, 0, sizeof(clientActive_t));
-
-    c->cgameInitialized = savedCgameInitialized;
-    c->cgameInitCalled = savedCgameInitCalled;
-    c->keyCatchers = savedKeyCatchers;
-    c->displayHUDWithKeycatchUI = savedDisplayHUDWithKeycatchUI;
-    c->active = savedActive;
 
     Com_ClientDObjClearAllSkel();
     CL_ClearMutedList();

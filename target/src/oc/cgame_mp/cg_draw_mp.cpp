@@ -222,7 +222,6 @@ void CG_StartShakeCamera(float scale, int duration, const vec_t *src, float radi
 {
     cameraShake_t temp;
     cameraShake_t *shake;
-    int serverTime;
     int bestIndex;
     float bestSize;
     int i;
@@ -236,30 +235,29 @@ void CG_StartShakeCamera(float scale, int duration, const vec_t *src, float radi
     temp.radius = radius;
     CG_UpdateCameraShakeStrength(&temp);
 
-    serverTime = cg->time;
     for (i = 0; i < 4; ++i) {
         shake = &cg->cameraShake[i];
-        if (shake->time > serverTime)
-            break;
-        if ((float)serverTime >= (float)shake->time + shake->length)
-            break;
+        if (shake->time > cg->time)
+            goto store;
+        if ((float)shake->time + shake->length <= (float)cg->time)
+            goto store;
     }
 
-    if (i >= 4) {
-        bestIndex = 4;
-        bestSize = temp.size;
-        for (i = 0; i < 4; ++i) {
-            if (bestSize > cg->cameraShake[i].size) {
-                bestIndex = i;
-                bestSize = cg->cameraShake[i].size;
-            }
+    bestIndex = i;
+    bestSize = temp.size;
+    for (i = 0; i < 4; ++i) {
+        if (cg->cameraShake[i].size < bestSize) {
+            bestIndex = i;
+            bestSize = cg->cameraShake[i].size;
         }
-        if (bestIndex == 4)
-            return;
-        i = bestIndex;
     }
+    if (bestIndex == 4)
+        return;
+    i = bestIndex;
 
-    cg->cameraShake[i] = temp;
+store:
+    shake = &cg->cameraShake[i];
+    *shake = temp;
 }
 
 void CG_DrawTeamBackground(float x, float y, float w, float h, float alpha, int team)
@@ -333,6 +331,7 @@ void CG_DrawDisconnect(void)
     const char *text;
     FontHandle font;
     int textWidth;
+    float x;
     vec4_t color = { 1.0f, 1.0f, 1.0f, 1.0f };
 
     CL_GetUserCmd(CL_GetCurrentCmdNumber() - 127, &cmd);
@@ -352,8 +351,10 @@ void CG_DrawDisconnect(void)
     text = UI_SafeTranslateString("CGAME_CONNECTIONINTERUPTED");
     font = UI_GetFontHandle(0, 0.5f);
     textWidth = UI_TextWidth(text, 0, font, 0.5f);
-    UI_DrawText(text, 0x7fffffff, font, (float)((640 - textWidth) / 2), 100.0f, 0, 0, 0.5f, color, 3);
-    if (!(((byte *)&cg->time)[1] & 2)) {
+    textWidth = (int)(float)textWidth;
+    x = (float)((640 - textWidth) / 2);
+    UI_DrawText(text, 0x7fffffff, font, x, 100.0f, 0, 0, 0.5f, color, 3);
+    if (!(cg->time & 0x200)) {
         UI_DrawHandlePic(296.0f, 416.0f, 48.0f, 48.0f, 0, 0, 0, CL_RegisterMaterial("net_disconnect", 7));
     }
 }
@@ -869,7 +870,9 @@ static void CG_DrawSoundOverlay(void)
 
     y = 92.0f;
     for (i = 0; i < count; ++i) {
-        if (info[i].pszSampleName) {
+        if (!info[i].pszSampleName) {
+            line = va("%2i", i);
+        } else {
             line = va(
                 "%2i %-50s vol^3%04.2f ^7rvol^3%04.2f ^7dist^3%5i ^7pit^3%04.2f",
                 i,
@@ -878,8 +881,6 @@ static void CG_DrawSoundOverlay(void)
                 info[i].fCurVolume,
                 info[i].dist,
                 info[i].fPitch);
-        } else {
-            line = va("%2i", i);
         }
 
         CG_DrawStringExt(2.0f, y, line, colorWhite, 0, 1, 10.0f, 0);
@@ -953,11 +954,11 @@ unsigned int CG_ShakeCamera(void)
 
 qboolean CG_DrawFollow(void)
 {
-    clientInfo_t *clientInfo;
     const char *clientName;
     const char *followingString;
     FontHandle font;
     float scale;
+    float x;
     int textWidth;
 
     if (!(cg->snap->ps.pm_flags & 0x400000)) {
@@ -968,22 +969,21 @@ qboolean CG_DrawFollow(void)
         return 0;
     }
 
-    clientInfo = &((clientInfo_t *)&((cg_t *)cg)->bgs.clientinfo[0].infoValid)[cg->snap->ps.clientNum];
-    if (clientInfo->infoValid) {
-        clientName = clientInfo->name;
-    } else {
+    clientName = cg->bgs.clientinfo[cg->snap->ps.clientNum].name;
+    if (!cg->bgs.clientinfo[cg->snap->ps.clientNum].infoValid)
         clientName = "?";
-    }
 
     followingString = SEH_LocalizeTextMessage("CGAME_FOLLOWING\x15", "spectator follow string", (msgLocErrType_t)0);
     scale = CL_IsRenderingSplitScreen() ? 0.5f : (1.0f / 3.0f);
     font = UI_GetFontHandle(0, 1.0f / 3.0f);
 
     textWidth = UI_TextWidth(followingString, 0, font, scale);
-    UI_DrawText(followingString, 0x7fffffff, font, (float)(-textWidth) * 0.5f, 40.0f, 7, 1, scale, colorWhite, 3);
+    x = (float)(-textWidth) * 0.5f;
+    UI_DrawText(followingString, 0x7fffffff, font, x, 40.0f, 7, 1, scale, colorWhite, 3);
 
     textWidth = UI_TextWidth(clientName, 0, font, scale);
-    UI_DrawText(clientName, 0x7fffffff, font, (float)(-textWidth) * 0.5f, 65.0f, 7, 1, scale, colorWhite, 3);
+    x = (float)(-textWidth) * 0.5f;
+    UI_DrawText(clientName, 0x7fffffff, font, x, 65.0f, 7, 1, scale, colorWhite, 3);
 
     return 1;
 }
