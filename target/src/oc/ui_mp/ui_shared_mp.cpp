@@ -278,6 +278,7 @@ static void Item_List_Paint(displayContextDef_t *dc, itemDef_t *item, const char
 qboolean Item_Slider_HandleKey(displayContextDef_t *dc, itemDef_t *item, int key, qboolean down);
 qboolean Item_YesNo_HandleKey(displayContextDef_t *dc, itemDef_t *item, int key);
 qboolean Item_SetFocus(displayContextDef_t *dc, itemDef_t *item, float x, float y);
+itemDef_t *Menu_ClearFocus(displayContextDef_t *dc, menuDef_t *menu);
 void Script_SetFocusByDvar(displayContextDef_t *dc, itemDef_t *item, const char **args);
 void Script_SetFocus(displayContextDef_t *dc, itemDef_t *item, const char **args);
 static bool Item_IsTextField(itemDef_t *item);
@@ -3174,163 +3175,86 @@ qboolean Item_YesNo_HandleKey(displayContextDef_t *dc, itemDef_t *item, int key)
     return 0;
 }
 
-qboolean Item_SetFocus(displayContextDef_t *dc, itemDef_t *item, float x, float y)
+// retail 0x534130
+itemDef_t *Menu_ClearFocus(displayContextDef_t *dc, menuDef_t *menu)
 {
-    byte *it = (byte *)item;
-    byte *d = (byte *)dc;
+    itemDef_t *ret;
     int i;
 
-    snd_alias_list_t *defaultSound = ((sharedUiInfo_t *)((void *)&sharedUiInfo))->assets.itemFocusSound;
+    ret = NULL;
+    if (!menu)
+        return NULL;
+    for (i = 0; i < menu->itemCount; i++) {
+        if (Window_HasFocus(&menu->items[i]->window))
+            ret = menu->items[i];
+        Window_RemoveDynamicFlags(&menu->items[i]->window, 2);
+        if (menu->items[i]->leaveFocus)
+            Item_RunScript(dc, menu->items[i], menu->items[i]->leaveFocus);
+    }
+    return ret;
+}
 
+qboolean Item_SetFocus(displayContextDef_t *dc, itemDef_t *item, float x, float y)
+{
+    rectDef_t r;
+    const rectDef_t *textRect;
+    itemDef_t *oldFocus;
+    menuDef_t *parent;
+    menuDef_t *focusedMenu;
+    snd_alias_list_t *sfx;
+    int i;
+
+    sfx = sharedUiInfo.assets.itemFocusSound;
     if (!item)
         return 0;
-    if ((((Window *)it)->staticFlags & 0x100000))
+    if (item->window.staticFlags & 0x100000)
         return 0;
-    int flags = ((itemDef_t *)it)->window.dynamicFlags[0];
-    if (!(flags & 4))
+    if (!Window_IsVisible(&item->window))
         return 0;
-    if (flags & 2)
+    if (Window_HasFocus(&item->window))
         return 1;
-
-    byte *parent = (*(byte **)&((itemDef_t *)it)->parent);
-
-    if (parent) {
-        int pflags = ((menuDef_t *)parent)->window.dynamicFlags[0];
-        if (!(pflags & 4) || !(pflags & 2)) {
-
-            byte *focusedMenu = NULL;
-            int openCount = (((displayContextDef_s*)(d))->openMenuCount);
-            for (i = openCount - 1; i >= 0; i--) {
-                byte *om = *(byte **)((char *)&((displayContextDef_s *)d)->menuStack[i]);
-                int omf = ((menuDef_t *)om)->window.dynamicFlags[0];
-                if ((omf & 4) && (omf & 2)) {
-                    focusedMenu = om;
-                    break;
-                }
-            }
-            if (!focusedMenu)
-                goto check_dvar;
-
-            float rx = (((rectDef_t*)(focusedMenu))->x), ry = (((rectDef_t*)(focusedMenu))->y);
-            float rw = (((rectDef_t*)(focusedMenu))->w), rh = *(float *)(focusedMenu + 0xc);
-            float cx = x, cy = y;
-            CalcScreenX(&cx, 4);
-            CalcScreenY(&cy, 4);
-            CalcScreenPlacement(&rx, &ry, &rw, &rh, (((rectDef_t*)(focusedMenu))->horzAlign), (((rectDef_t*)(focusedMenu))->vertAlign));
-            if (cx < rx || cx > rx + rw || cy < ry || cy > ry + rh)
-                goto check_dvar;
-
-            float prx = (((rectDef_t*)(parent))->x), pry = (((rectDef_t*)(parent))->y);
-            float prw = (((rectDef_t*)(parent))->w), prh = ((menuDef_t *)parent)->window.rect[0].h;
-            float pcx = x, pcy = y;
-            CalcScreenX(&pcy, 4);
-            CalcScreenY(&pcx, 4);
-            CalcScreenPlacement(&prx, &pry, &prw, &prh, (((rectDef_t*)(parent))->horzAlign), (((rectDef_t*)(parent))->vertAlign));
-            if (pcx < prx || pcx > prx + prw || pcy < pry || pcy > pry + prh)
-                goto check_dvar;
-        }
-    }
-
-check_dvar:;
-
-    int dvarFlags = ((itemDef_t *)it)->dvarFlags;
-    if (dvarFlags & 3) {
-        if (!Item_EnableShowViaDvar(item, 1))
-            return 0;
-        dvarFlags = ((itemDef_t *)it)->dvarFlags;
-    }
-    if (dvarFlags & 0xc) {
-        if (!Item_EnableShowViaDvar(item, 4))
+    parent = item->parent;
+    if (parent && !Window_HasFocus(&parent->window)) {
+        focusedMenu = Menu_GetFocused(dc);
+        if (focusedMenu && Rect_ContainsPoint(&focusedMenu->window.rect[0], x, y)
+            && Rect_ContainsPoint(&parent->window.rect[0], x, y))
             return 0;
     }
-
-    byte *menu = (*(byte **)&((itemDef_t *)it)->parent);
-
-    void *oldFocus = NULL;
-    if (menu && (((menuDef_t*)(menu))->itemCount) > 0) {
-        int itemCount = (((menuDef_t*)(menu))->itemCount);
-        for (i = 0; i < itemCount; i++) {
-            byte *sibling = *(byte **)((char *)&((menuDef_t *)menu)->items[i]);
-            int sf = ((Window *)sibling)->dynamicFlags[0];
-            if ((sf & 4) && (sf & 2))
-                oldFocus = sibling;
-            Window_RemoveDynamicFlags( (Window *)((itemDef_t *)((void *)sibling)), 2);
-
-            byte *reloaded = *(byte **)((char *)&((menuDef_t *)menu)->items[i]);
-            if (((itemDef_t *)reloaded)->leaveFocus)   /* was reloaded + 0x2bc (x86) */
-                Item_RunScript(dc, (itemDef_t *)reloaded, ((itemDef_t *)reloaded)->leaveFocus);
+    if ((item->dvarFlags & 3) && !Item_EnableShowViaDvar(item, 1))
+        return 0;
+    if ((item->dvarFlags & 0xc) && !Item_EnableShowViaDvar(item, 4))
+        return 0;
+    oldFocus = Menu_ClearFocus(dc, item->parent);
+    if (item->type == 0) {
+        textRect = &item->textRect[0];
+        r = *textRect;
+        r.y -= r.h;
+        r.horzAlign = textRect->horzAlign;
+        r.vertAlign = textRect->vertAlign;
+        if (Rect_ContainsPoint(&r, x, y)) {
+            Window_AddDynamicFlags(&item->window, 2);
+            if (item->focusSound)
+                sfx = item->focusSound;
+            if (sfx)
+                UI_PlayLocalSoundAlias(sfx);
+        } else if (oldFocus) {
+            Window_AddDynamicFlags(&oldFocus->window, 2);
+            if (oldFocus->onFocus)
+                Item_RunScript(dc, oldFocus, oldFocus->onFocus);
         }
     } else {
-        oldFocus = NULL;
+        Window_AddDynamicFlags(&item->window, 2);
+        if (item->onFocus)
+            Item_RunScript(dc, item, item->onFocus);
+        if (item->focusSound)
+            sfx = item->focusSound;
+        if (sfx)
+            UI_PlayLocalSoundAlias(sfx);
     }
-
-    int itemType = (((itemDef_s*)(it))->type);
-    if (itemType == 0) {
-
-        byte *textRect = (byte *)((itemDef_t *)it)->textRect;
-        float tw = (((rectDef_t*)(textRect))->w);
-        float th = (((rectDef_t*)(textRect))->h);
-        float tx = (((itemDef_s*)(it))->textRect[0].x);
-        float ty = (((rectDef_t*)(textRect))->y) - th;
-        float tcx = x, tcy = y;
-        CalcScreenX(&tcx, 4);
-        CalcScreenY(&tcy, 4);
-        CalcScreenPlacement(&tx, &ty, &tw, &th, (((rectDef_t*)(textRect))->horzAlign), (((rectDef_t*)(textRect))->vertAlign));
-        if (tcx < tx || tcx > tx + tw)
-            goto fail;
-        if (tcy < ty || tcy > ty + th)
-            goto fail;
-
-        Window_AddDynamicFlags( (Window *)((itemDef_t *)((void *)it)), 2);
-        snd_alias_list_t *itemSound = ((itemDef_t *)it)->focusSound;
-        if (itemSound) {
-            UI_PlayLocalSoundAlias(itemSound);
-        } else if (defaultSound) {
-            UI_PlayLocalSoundAlias(defaultSound);
-        }
-        goto set_cursor;
-    }
-
-    Window_AddDynamicFlags( (Window *)((itemDef_t *)((void *)it)), 2);
-
-    if ((*(void **)&((itemDef_t *)it)->onFocus))
-        Item_RunScript(dc, item, ((itemDef_t *)it)->onFocus);
-
-    snd_alias_list_t *itemSound = ((itemDef_t *)it)->focusSound;
-    if (itemSound) {
-        UI_PlayLocalSoundAlias(itemSound);
-    } else if (defaultSound) {
-        UI_PlayLocalSoundAlias(defaultSound);
-    }
-
-set_cursor:;
-
-    if (menu) {
-        int itemCount = (((menuDef_t*)(menu))->itemCount);
-        for (i = 0; i < itemCount; i++) {
-            if (((menuDef_t *)menu)->items[i] == item) {
-                Menu_SetCursorItem((menuDef_t *)menu, i);
-                return 1;
-            }
-        }
-    }
-    return 1;
-
-fail:
-
-    if (oldFocus) {
-        Window_AddDynamicFlags( (Window *)((itemDef_t *)(oldFocus)), 2);
-        if ((*(void **)&((itemDef_t *)oldFocus)->onFocus))
-            Item_RunScript(dc, (itemDef_t *)oldFocus, ((itemDef_t *)oldFocus)->onFocus);
-    }
-
-    if (menu) {
-        int itemCount = (((menuDef_t*)(menu))->itemCount);
-        for (i = 0; i < itemCount; i++) {
-            if (((menuDef_t *)menu)->items[i] == item) {
-                Menu_SetCursorItem((menuDef_t *)menu, i);
-                return 1;
-            }
+    for (i = 0; i < parent->itemCount; i++) {
+        if (parent->items[i] == item) {
+            parent->cursorItem[0] = i;
+            return 1;
         }
     }
     return 1;
@@ -4352,16 +4276,35 @@ static qboolean Menu_OverActiveItem(menuDef_t *menu, float x, float y)
     return 0;
 }
 
+// retail 0x5341d0
+qboolean IsVisible(int flags)
+{
+    return (flags & 4) && !(flags & 0x10);
+}
+
+static void Item_SetMouseOver(itemDef_t *item, qboolean focus)
+{
+    if (item) {
+        if (focus)
+            item->window.dynamicFlags[0] |= 1;
+        else
+            item->window.dynamicFlags[0] &= ~1;
+    }
+}
+
 qboolean Menu_HandleMouseMove(displayContextDef_t *dc, menuDef_t *menu, float x, float y)
 {
-    byte *m = (byte *)menu;
-    int i, pass;
-    qboolean focusSet = 0;
-    void *focusItem = NULL;
+    int i;
+    int pass;
+    qboolean focusSet;
+    itemDef_t *overItem;
+    itemDef_t *focusItem;
 
+    focusSet = 0;
+    focusItem = NULL;
     if (!menu)
         return 0;
-    if ((((menuDef_t *)m)->window.dynamicFlags[0] & 0x4004) == 0)
+    if (!(menu->window.dynamicFlags[0] & 0x4004))
         return 0;
     if (itemCapture)
         return 0;
@@ -4369,80 +4312,41 @@ qboolean Menu_HandleMouseMove(displayContextDef_t *dc, menuDef_t *menu, float x,
         return 0;
 
     for (pass = 0; pass < 2; pass++) {
-        int itemCount = (((menuDef_t*)(m))->itemCount);
-        for (i = itemCount - 1; i >= 0; i--) {
-            byte *it = *(byte **)((char *)&((menuDef_t *)m)->items[i]);
-
-            if ((((itemDef_t *)it)->window.dynamicFlags[0] & 0x4004) == 0)
-                goto next_item;
-
-            if ((*(byte *)&((itemDef_t *)it)->dvarFlags) & 3) {
-                if (!Item_EnableShowViaDvar((itemDef_t *)it, 1))
-                    goto next_item;
-                it = *(byte **)((char *)&((menuDef_t *)m)->items[i]);
-            }
-            if ((*(byte *)&((itemDef_t *)it)->dvarFlags) & 0xc) {
-                if (!Item_EnableShowViaDvar((itemDef_t *)it, 4))
-                    goto next_item;
-                it = *(byte **)((char *)&((menuDef_t *)m)->items[i]);
-            }
-
-            byte *overItem = it;
-            int flags = ((itemDef_t *)overItem)->window.dynamicFlags[0];
-            if ((flags & 4) && (flags & 2) && !focusItem)
+        for (i = menu->itemCount - 1; i >= 0; i--) {
+            if (!(menu->items[i]->window.dynamicFlags[0] & 0x4004))
+                continue;
+            if ((menu->items[i]->dvarFlags & 3) && !Item_EnableShowViaDvar(menu->items[i], 1))
+                continue;
+            if ((menu->items[i]->dvarFlags & 0xc) && !Item_EnableShowViaDvar(menu->items[i], 4))
+                continue;
+            overItem = menu->items[i];
+            if (Window_HasFocus(&overItem->window) && !focusItem)
                 focusItem = overItem;
-
-            if (!Rect_ContainsPoint((rectDef_t *)overItem, x, y)) {
-                byte *orig = *(byte **)((char *)&((menuDef_t *)m)->items[i]);
-                if ((((Window *)orig)->dynamicFlags[0] & 1)) {
-                    Item_MouseLeave(dc, (itemDef_t *)orig);
-                    orig = *(byte **)((char *)&((menuDef_t *)m)->items[i]);
-                    if (orig)
-                        Window_RemoveDynamicFlags( (Window *)((itemDef_t *)((void *)orig)), 1);
-                }
-                goto next_item;
-            }
-
-            if (pass == 1) {
-                overItem = *(byte **)((char *)&((menuDef_t *)m)->items[i]);
-                int itemType = (((itemDef_s*)(overItem))->type);
-                if (itemType == 0 && ((itemDef_t *)overItem)->text) {
-                    if (!Rect_ContainsPoint(Item_CorrectedTextRect((itemDef_t *)overItem), x, y))
-                        goto next_item;
-                }
-
-                if (!((*(byte *)&((itemDef_t *)overItem)->window.dynamicFlags[0]) & 4))
-                    goto next_item;
-                if ((*(byte *)&((itemDef_t *)overItem)->window.dynamicFlags[0]) & 0x10)
-                    goto next_item;
-
-                Item_MouseEnter(dc, (itemDef_t *)overItem, x, y);
-                if (!focusSet) {
-                    if (Item_SetFocus(dc, (itemDef_t *)overItem, x, y)) {
-                        focusSet = 1;
-                        focusItem = overItem;
+            if (Rect_ContainsPoint(&overItem->window.rect[0], x, y)) {
+                if (pass == 1) {
+                    if (overItem->type == 0 && overItem->text) {
+                        if (!Rect_ContainsPoint(Item_CorrectedTextRect(overItem), x, y))
+                            continue;
+                    }
+                    if (IsVisible(overItem->window.dynamicFlags[0])) {
+                        Item_MouseEnter(dc, overItem, x, y);
+                        if (!focusSet) {
+                            focusSet = Item_SetFocus(dc, overItem, x, y);
+                            if (focusSet)
+                                focusItem = overItem;
+                        }
                     }
                 }
+            } else if (overItem->window.dynamicFlags[0] & 1) {
+                Item_MouseLeave(dc, overItem);
+                Item_SetMouseOver(menu->items[i], 0);
             }
-        next_item:;
         }
     }
-
     if (focusSet)
         return 1;
-
-    if (focusItem) {
-        if (!Rect_ContainsPoint((rectDef_t *)focusItem, x, y)) {
-            int itemCount = (((menuDef_t*)(m))->itemCount);
-            for (i = 0; i < itemCount; i++) {
-                byte *it = *(byte **)((char *)&((menuDef_t *)m)->items[i]);
-                Window_RemoveDynamicFlags( (Window *)((itemDef_t *)((void *)it)), 2);
-                if ((*(void **)&((itemDef_t *)it)->leaveFocus))
-                    Item_RunScript(dc, (itemDef_t *)it, ((itemDef_t *)it)->leaveFocus);
-            }
-        }
-    }
-
+    if (focusItem && !Rect_ContainsPoint(&focusItem->window.rect[0], x, y))
+        Menu_ClearFocus(dc, menu);
     return 0;
 }
 
