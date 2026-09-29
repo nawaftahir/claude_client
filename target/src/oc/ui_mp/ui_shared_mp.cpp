@@ -280,6 +280,7 @@ qboolean Item_YesNo_HandleKey(displayContextDef_t *dc, itemDef_t *item, int key)
 qboolean Item_SetFocus(displayContextDef_t *dc, itemDef_t *item, float x, float y);
 void Script_SetFocusByDvar(displayContextDef_t *dc, itemDef_t *item, const char **args);
 void Script_SetFocus(displayContextDef_t *dc, itemDef_t *item, const char **args);
+static bool Item_IsTextField(itemDef_t *item);
 int Item_ListBox_OverLB(itemDef_t *item, float x, float y);
 static qboolean Rect_ContainsPoint(const rectDef_t *rect, float x, float y);
 void Item_ListBox_MouseEnter(itemDef_t *item, float x, float y);
@@ -3439,6 +3440,35 @@ void Script_SetFocusByDvar(displayContextDef_t *dc, itemDef_t *item, const char 
     }
 }
 
+// retail 0x537320
+static bool Item_IsTextField(itemDef_t *item)
+{
+    switch (item->type) {
+    case 4:
+    case 9:
+    case 0x10:
+    case 0x11:
+    case 0x12:
+        return true;
+    default:
+        return false;
+    }
+}
+
+// retail 0x537360
+static void Item_TextField_BeginEdit(itemDef_t *item)
+{
+    editFieldDef_t *editDef;
+
+    editDef = Item_GetEditFieldDef(item);
+    if (editDef)
+        editDef->paintOffset = 0;
+    item->cursorPos[0] = 0;
+    g_editingField = 1;
+    g_editItem = item;
+    Key_SetOverstrikeMode(1);
+}
+
 void Script_SetFocus(displayContextDef_t *dc, itemDef_t *item, const char **args)
 {
     char name[0x400];
@@ -3472,16 +3502,8 @@ void Script_SetFocus(displayContextDef_t *dc, itemDef_t *item, const char **args
         return;
     }
 
-    int itemType = (((itemDef_s*)(focusItem))->type);
-    if (itemType <= 0x12 && ((1 << itemType) & 0x70210)) {
-        editFieldDef_t *editPtr = Item_GetEditFieldDef((itemDef_t *)focusItem);
-        if (editPtr)
-            editPtr->paintOffset = 0;
-        Item_SetCursorPos((itemDef_t *)focusItem, 0);
-        g_editingField = 1;
-        g_editItem = (itemDef_t *)focusItem;
-        Key_SetOverstrikeMode(1);
-    }
+    if (Item_IsTextField((itemDef_t *)focusItem))
+        Item_TextField_BeginEdit((itemDef_t *)focusItem);
 }
 
 int Item_ListBox_OverLB(itemDef_t *item, float x, float y)
@@ -4580,8 +4602,7 @@ qboolean Item_TextField_HandleKey(displayContextDef_t *dc, itemDef_t *item, int 
                 if (editPtr->maxCharsGotoNext == 0)
                     return 1;
                 itemDef_t *nextItem = Menu_SetNextCursorItem(dc, ((itemDef_t *)it)->parent);
-                if (nextItem && (unsigned int)((itemDef_s *)nextItem)->type <= 0x12 &&
-                    ((1 << ((itemDef_s *)nextItem)->type) & 0x70210))
+                if (nextItem && Item_IsTextField(nextItem))
                     g_editItem = nextItem;
                 return 1;
             }
@@ -4622,8 +4643,7 @@ qboolean Item_TextField_HandleKey(displayContextDef_t *dc, itemDef_t *item, int 
         {
             itemDef_t *nextItem = Menu_SetNextCursorItem(dc, ((itemDef_t *)it)->parent);
             Item_SetCursorPos(nextItem, 0);
-            if (nextItem && (unsigned int)((itemDef_s *)nextItem)->type <= 0x12 &&
-                ((1 << ((itemDef_s *)nextItem)->type) & 0x70210))
+            if (nextItem && Item_IsTextField(nextItem))
                 g_editItem = nextItem;
         }
         return 1;
@@ -4677,8 +4697,7 @@ qboolean Item_TextField_HandleKey(displayContextDef_t *dc, itemDef_t *item, int 
     case 0x9b:
     {
         itemDef_t *nextItem = Menu_SetNextCursorItem(dc, ((itemDef_t *)it)->parent);
-        if (nextItem && (unsigned int)((itemDef_s *)nextItem)->type <= 0x12 &&
-            ((1 << ((itemDef_s *)nextItem)->type) & 0x70210))
+        if (nextItem && Item_IsTextField(nextItem))
             g_editItem = nextItem;
     }
         return 1;
@@ -4686,8 +4705,7 @@ qboolean Item_TextField_HandleKey(displayContextDef_t *dc, itemDef_t *item, int 
     case 0x9a:
     {
         itemDef_t *prevItem = Menu_SetPrevCursorItem(dc, ((itemDef_t *)it)->parent);
-        if (prevItem && (unsigned int)((itemDef_s *)prevItem)->type <= 0x12 &&
-            ((1 << ((itemDef_s *)prevItem)->type) & 0x70210))
+        if (prevItem && Item_IsTextField(prevItem))
             g_editItem = prevItem;
     }
         return 1;
@@ -4706,87 +4724,66 @@ qboolean Item_TextField_HandleKey(displayContextDef_t *dc, itemDef_t *item, int 
 }
 
 extern int inHandleKey;
+// retail 0x538050
+static void Item_Action(displayContextDef_t *dc, itemDef_t *item)
+{
+    if (item)
+        Item_RunScript(dc, item, item->action);
+}
+
 void Menu_HandleKey(displayContextDef_t *dc, menuDef_t *menu, int key, qboolean down)
 {
-    byte *m = (byte *)menu;
-    byte *d = (byte *)dc;
-    void *focusedItem = NULL;
     int i;
+    itemDef_t *item = NULL;
 
-    if (g_waitingForKey) {
-        if (down) {
-            Item_Bind_HandleKey(dc, g_bindItem, key, down);
+    if (g_waitingForKey && down) {
+        Item_Bind_HandleKey(dc, g_bindItem, key, down);
+        return;
+    }
+
+    if (g_editingField && down) {
+        if (!Item_TextField_HandleKey(dc, g_editItem, key)) {
+            g_editingField = 0;
+            g_editItem = NULL;
+            return;
+        } else if (key == 200 || key == 201 || key == 202) {
+            g_editingField = 0;
+            g_editItem = NULL;
+            Display_MouseMove(dc, NULL, dc->cursorx, dc->cursory);
+        } else {
             return;
         }
     }
 
-    if (g_editingField) {
-        if (down) {
-            if (!Item_TextField_HandleKey(dc, g_editItem, key)) {
-                g_editingField = 0;
-                g_editItem = NULL;
-            } else {
-
-                if (key >= 0xc8 && key <= 0xca) {
-                    g_editingField = 0;
-                    g_editItem = NULL;
-                    Display_MouseMove(dc, NULL, ((displayContextDef_t *)d)->cursorx, (((displayContextDef_s*)(d))->cursory));
-                }
-            }
-            goto done;
-        }
-    }
-
-    if (!menu)
+    if (menu == NULL)
         return;
 
-    if (down) {
-        if (!((((Window *)m)->staticFlags & 0x1000000)) && !(((menuDef_t*)(m))->fullScreen)) {
-
-            float cx = (float)((displayContextDef_t *)d)->cursorx, cy = (float)(((displayContextDef_s*)(d))->cursory);
-            float rx = *(float *)m, ry = (((rectDef_t*)(m))->y);
-            float rw = (((rectDef_t*)(m))->w), rh = ((menuDef_t *)m)->window.rect[0].h;
-            CalcScreenX(&cx, 4);
-            CalcScreenY(&cy, 4);
-            CalcScreenPlacement(&rx, &ry, &rw, &rh, (((rectDef_t*)(m))->horzAlign), (((rectDef_t*)(m))->vertAlign));
-            int inside = (cx >= rx && cx <= rx + rw && cy >= ry && cy <= ry + rh);
-            if (!inside) {
-
-                if (!inHandleKey && key >= 0xc8 && key <= 0xca) {
-                    inHandleKey = 1;
-                    Menus_HandleOOBClick(dc, menu, key, down);
-                    inHandleKey = 0;
-                    return;
-                }
-            }
+    // see if the mouse is within the window bounds and if so is this a mouse click
+    if (down && !(menu->window.staticFlags & 0x1000000) && !menu->fullScreen
+        && !Rect_ContainsPoint(&menu->window.rect[0], (float)dc->cursorx, (float)dc->cursory)) {
+        if (!inHandleKey && (key == 200 || key == 201 || key == 202)) {
+            inHandleKey = 1;
+            Menus_HandleOOBClick(dc, menu, key, down);
+            inHandleKey = 0;
+            return;
         }
     }
 
-    int itemCount = (((menuDef_t*)(m))->itemCount);
-    focusedItem = NULL;
-    for (i = 0; i < itemCount; i++) {
-        byte *it = *(byte **)((char *)&((menuDef_t *)m)->items[i]);
-        int flags = ((itemDef_t *)it)->window.dynamicFlags[0];
-        if ((flags & 4) && (flags & 2))
-            focusedItem = it;
+    // get the item with focus
+    for (i = 0; i < menu->itemCount; i++) {
+        if (Window_HasFocus(&menu->items[i]->window))
+            item = menu->items[i];
     }
 
-    if (key == 0xcd || key == 0xce) {
-        if (focusedItem && ((itemDef_s *)focusedItem)->type == 6) {
-            goto dispatch_item;
-        }
-        return;
+    // mouse wheel only scrolls listboxes
+    if (key == 205 || key == 206) {
+        if (!item || item->type != 6)
+            return;
     }
 
-    if (focusedItem) {
-    dispatch_item:
-        if (Item_HandleKey(dc, (itemDef_t *)focusedItem, key, down)) {
-
-            if (focusedItem) {
-                byte *fi = (byte *)focusedItem;
-                if ((*(void **)&((itemDef_t *)fi)->action))
-                    Item_RunScript(dc, (itemDef_t *)focusedItem, ((itemDef_t *)fi)->action);
-            }
+    if (item != NULL) {
+        if (Item_HandleKey(dc, item, key, down)) {
+            Item_RunScript(dc, item, item->action);
             return;
         }
     }
@@ -4794,118 +4791,74 @@ void Menu_HandleKey(displayContextDef_t *dc, menuDef_t *menu, int key, qboolean 
     if (!down)
         return;
 
-    if (key >= 1 && key <= 0xff) {
-        if (Menu_CheckOnKey(dc, menu, key))
-            return;
-    }
+    if (key > 0 && key <= 255 && Menu_CheckOnKey(dc, menu, key))
+        return;
 
-    if (key == 0xb1) {
+    // default handling
+    switch (key) {
+    case 177:
         if (Dvar_GetInt("developer"))
             debugMode ^= 1;
-        return;
-    }
+        break;
 
-    if (key == 0xb2) {
+    case 178:
         if (Dvar_GetInt("developer"))
-            Cbuf_ExecuteText(2, "screenshot\n");
-        return;
-    }
+            Cbuf_AddText("screenshot\n");
+        break;
 
-    if (key == 0x1b) {
-        if (!g_waitingForKey && (*(void **)&((menuDef_t *)m)->onESC)) {
-            byte tempItem[0x2a0];
-            *(void **)&(*(unsigned char *)&((itemDef_t *)tempItem)->parent) = menu;
-            Item_RunScript(dc, (itemDef_t *)tempItem, ((menuDef_t *)m)->onESC);
-        }
-        return;
-    }
-
-    if (key == 9 || key == 0x9b || key == 0x9d || key == 0x9c) {
-        Menu_SetNextCursorItem(dc, menu);
-        return;
-    }
-
-    if (key == 0x9a) {
+    case 154:
+    case 156:
+    case 183:
+    case 206:
         Menu_SetPrevCursorItem(dc, menu);
-        return;
-    }
+        break;
 
-    if (key >= 0xc8 && key <= 0xc9) {
-        if (!focusedItem)
-            return;
+    case 27:
+        if (!g_waitingForKey && menu->onESC) {
+            itemDef_t it;
+            it.parent = menu;
+            Item_RunScript(dc, &it, menu->onESC);
+        }
+        break;
 
-        int itemType = ((itemDef_s *)focusedItem)->type;
-        if (itemType == 0) {
+    case 9:
+    case 155:
+    case 157:
+    case 189:
+    case 205:
+        Menu_SetNextCursorItem(dc, menu);
+        break;
 
-            byte *fi = (byte *)focusedItem;
-            int textBuf[6];
-            memset(textBuf, 0, 24);
-            textBuf[0] = (*(int*)&((itemDef_s*)(fi))->textRect[0].x);
-            textBuf[1] = (*(int*)&((itemDef_s*)(fi))->textRect[0].y);
-            textBuf[2] = (*(int*)&((itemDef_s*)(fi))->textRect[0].w);
-            textBuf[3] = (*(int*)&((itemDef_s*)(fi))->textRect[0].h);
-            textBuf[4] = (((itemDef_s*)(fi))->textRect[0].horzAlign);
-            textBuf[5] = (((itemDef_s*)(fi))->textRect[0].vertAlign);
-            float tw = *(float *)&textBuf[2];
-            float ty = *(float *)&textBuf[1];
-            if (tw != 0.0f)
-                ty -= *(float *)&textBuf[3];
-            float trx = *(float *)&textBuf[0], trw = *(float *)&textBuf[2];
-            float try_ = ty, trh = *(float *)&textBuf[3];
-            float tcx = (float)((displayContextDef_t *)d)->cursorx, tcy = (float)(((displayContextDef_s*)(d))->cursory);
-            CalcScreenX(&tcx, 4);
-            CalcScreenY(&tcy, 4);
-            CalcScreenPlacement(&trx, &try_, &trw, &trh, textBuf[4], textBuf[5]);
-            if (tcx < trx || tcx > trx + trw || tcy < try_ || tcy > try_ + trh)
-                return;
-        } else {
-
-            byte *fi = (byte *)focusedItem;
-            float irx = (((rectDef_t*)(fi))->x), iry = (((rectDef_t*)(fi))->y);
-            float irw = (((rectDef_t*)(fi))->w), irh = (((rectDef_t*)(fi))->h);
-            float icx = (float)((displayContextDef_t *)d)->cursorx, icy = (float)(((displayContextDef_s*)(d))->cursory);
-            CalcScreenX(&icx, 4);
-            CalcScreenY(&icy, 4);
-            CalcScreenPlacement(&irx, &iry, &irw, &irh, (((rectDef_t*)(fi))->horzAlign), (((rectDef_t*)(fi))->vertAlign));
-            if (icx < irx || icx > irx + irw || icy < iry || icy > iry + irh)
-                return;
-
-            if (itemType <= 0x12 && ((1 << itemType) & 0x70210)) {
-                editFieldDef_t *ep = Item_GetEditFieldDef((itemDef_t *)focusedItem);
-                if (ep)
-                    ep->paintOffset = 0;
-                Item_SetCursorPos((itemDef_t *)focusedItem, 0);
-                g_editingField = 1;
-                g_editItem = (itemDef_t *)focusedItem;
-                Key_SetOverstrikeMode(1);
-                return;
+    case 200:
+    case 201:
+        if (item) {
+            if (item->type == 0) {
+                if (Rect_ContainsPoint(Item_CorrectedTextRect(item), (float)dc->cursorx, (float)dc->cursory))
+                    Item_Action(dc, item);
+            } else if (Rect_ContainsPoint(&item->window.rect[0], (float)dc->cursorx, (float)dc->cursory)) {
+                if (Item_IsTextField(item))
+                    Item_TextField_BeginEdit(item);
+                else
+                    Item_Action(dc, item);
             }
         }
+        break;
 
-        if (((itemDef_s *)focusedItem)->action)
-            Item_RunScript(dc, (itemDef_t *)focusedItem, ((itemDef_s *)focusedItem)->action);
-        return;
-    }
-
-    if (key == 0xd || key == 0xbf || key == 0xca) {
-        if (!focusedItem)
-            return;
-
-        int ftype = ((itemDef_s *)focusedItem)->type;
-        if (ftype <= 0x12 && ((1 << ftype) & 0x70210)) {
-            Item_SetCursorPos((itemDef_t *)focusedItem, 0);
-            g_editingField = 1;
-            g_editItem = (itemDef_t *)focusedItem;
-            Key_SetOverstrikeMode(1);
-        } else if (focusedItem) {
-            if (((itemDef_s *)focusedItem)->action)
-                Item_RunScript(dc, (itemDef_t *)focusedItem, ((itemDef_s *)focusedItem)->action);
+    case 13:
+    case 191:
+    case 202:
+        if (item) {
+            if (Item_IsTextField(item)) {
+                item->cursorPos[0] = 0;
+                g_editingField = 1;
+                g_editItem = item;
+                Key_SetOverstrikeMode(1);
+            } else {
+                Item_Action(dc, item);
+            }
         }
-        return;
+        break;
     }
-
-done:
-    return;
 }
 
 // retail 0x536fa0
