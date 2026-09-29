@@ -187,7 +187,7 @@ void Con_DrawConsole(void);
 void Con_Init(void);
 void CL_DeathMessagePrint(const char *attackerName, const vec_t *attackerColor, const char *victimName, const vec_t *victimColor, const char *iconShader, float iconWidth, float iconHeight, const vec_t *iconColor, int horzFlipIcon);
 
-static inline __attribute__((always_inline)) void CL_RegisterHudMsgIconMaterial_core(const char *name)
+void CL_RegisterHudMsgIconMaterial(const char *name)
 {
     int index;
     int count = registeredIconMaterialCount;
@@ -199,11 +199,6 @@ static inline __attribute__((always_inline)) void CL_RegisterHudMsgIconMaterial_
 
     hudMsgIconMaterials[count] = CopyStringInternal(name);
     registeredIconMaterialCount++;
-}
-
-void CL_RegisterHudMsgIconMaterial(const char *name)
-{
-    CL_RegisterHudMsgIconMaterial_core(name);
 }
 
 const char *CL_GetHudMsgIconMaterialName(int index)
@@ -1633,12 +1628,12 @@ void Con_Init(void)
     Cmd_AddCommand("condump", Con_Dump_f);
 
     registeredIconMaterialCount = 0;
-    CL_RegisterHudMsgIconMaterial_core("killiconcrush");
-    CL_RegisterHudMsgIconMaterial_core("killicondied");
-    CL_RegisterHudMsgIconMaterial_core("killiconfalling");
-    CL_RegisterHudMsgIconMaterial_core("killiconheadshot");
-    CL_RegisterHudMsgIconMaterial_core("killiconmelee");
-    CL_RegisterHudMsgIconMaterial_core("killiconsuicide");
+    CL_RegisterHudMsgIconMaterial("killiconcrush");
+    CL_RegisterHudMsgIconMaterial("killicondied");
+    CL_RegisterHudMsgIconMaterial("killiconfalling");
+    CL_RegisterHudMsgIconMaterial("killiconheadshot");
+    CL_RegisterHudMsgIconMaterial("killiconmelee");
+    CL_RegisterHudMsgIconMaterial("killiconsuicide");
 }
 
 static void CL_WriteConsoleEncodedByte(int info, int value)
@@ -2177,12 +2172,12 @@ void Con_Init(void)
     Cmd_AddCommand("condump", Con_Dump_f);
 
     registeredIconMaterialCount = 0;
-    CL_RegisterHudMsgIconMaterial_core("killiconcrush");
-    CL_RegisterHudMsgIconMaterial_core("killicondied");
-    CL_RegisterHudMsgIconMaterial_core("killiconfalling");
-    CL_RegisterHudMsgIconMaterial_core("killiconheadshot");
-    CL_RegisterHudMsgIconMaterial_core("killiconmelee");
-    CL_RegisterHudMsgIconMaterial_core("killiconsuicide");
+    CL_RegisterHudMsgIconMaterial("killiconcrush");
+    CL_RegisterHudMsgIconMaterial("killicondied");
+    CL_RegisterHudMsgIconMaterial("killiconfalling");
+    CL_RegisterHudMsgIconMaterial("killiconheadshot");
+    CL_RegisterHudMsgIconMaterial("killiconmelee");
+    CL_RegisterHudMsgIconMaterial("killiconsuicide");
 }
 
 void Con_Close(void)
