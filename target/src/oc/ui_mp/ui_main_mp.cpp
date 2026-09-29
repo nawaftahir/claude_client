@@ -5301,106 +5301,94 @@ uiMenuCommand_t UI_GetActiveMenu(void)
 
 qboolean UI_SetActiveMenu(int menu)
 {
-    byte *legacyBase;
     menuDef_t *pFocus;
     const char *errorMsg;
+    LegacyHacks *hacks;
 
     if (Menu_Count(&uiInfo->uiDC) <= 0)
         return 0;
 
-    if (menu != 9 && menu != 10)
+    if (menu != UIMENU_SCRIPT_POPUP && menu != UIMENU_SCRIPT_POPUP_NO_MOUSE)
         uiInfo->currentMenuType = menu;
 
-    if ((unsigned int)menu > 11)
-        return 0;
-
     switch (menu) {
-    case 0:
+    case UIMENU_NONE:
         Key_SetCatcher(Key_GetCatcher() & ~8);
         Dvar_SetIntByName("cl_paused", 0);
         Menus_CloseAll(&uiInfo->uiDC);
         return 1;
 
-    case 1:
+    case UIMENU_MAIN:
         Key_SetCatcher(8);
         Menus_OpenByName(&uiInfo->uiDC, "main");
         errorMsg = Dvar_GetString("com_errorMessage");
-        if (errorMsg[0] != '\0' && I_stricmp(errorMsg, ";") != 0) {
+        if (strlen(errorMsg) && I_stricmp(errorMsg, ";"))
             Menus_OpenByName(&uiInfo->uiDC, "error_popmenu");
-        }
         SND_FadeAllSounds(1.0f, 1000);
         return 1;
 
-    case 2: {
-        const char *cgMenuName = cg->scriptMainMenu;
+    case UIMENU_INGAME:
         Key_SetCatcher(8);
         Menus_CloseAll(&uiInfo->uiDC);
-        if (!Menus_OpenByName(&uiInfo->uiDC, cgMenuName)) {
+        if (!Menus_OpenByName(&uiInfo->uiDC, cg->scriptMainMenu))
             Menus_OpenByName(&uiInfo->uiDC, "main");
-        }
         return 1;
-    }
 
-    case 3:
+    case UIMENU_NEED_CD:
         Key_SetCatcher(8);
         Menus_OpenByName(&uiInfo->uiDC, "needcd");
         return 1;
 
-    case 4:
+    case UIMENU_BAD_CD_KEY:
         Key_SetCatcher(8);
         Menus_OpenByName(&uiInfo->uiDC, "badcd");
         return 1;
 
-    case 5:
+    case UIMENU_TEAM:
         Key_SetCatcher(8);
         Menus_OpenByName(&uiInfo->uiDC, "team");
         return 1;
 
-    case 6:
-    case 7:
+    case UIMENU_PREGAME:
+    case UIMENU_POSTGAME:
         return 0;
 
-    case 8:
-        uiInfo->uiDC.cursorx = 0x27f;
-        uiInfo->uiDC.cursory = 0x1df;
+    case UIMENU_WM_QUICKMESSAGE:
+        uiInfo->uiDC.cursorx = 639;
+        uiInfo->uiDC.cursory = 479;
         Key_SetCatcher(8);
-        (clients)->displayHUDWithKeycatchUI = 1;
+        clients->displayHUDWithKeycatchUI = 1;
         Menus_CloseAll(&uiInfo->uiDC);
         Menus_OpenByName(&uiInfo->uiDC, "quickmessage");
         return 1;
 
-    case 9:
-    case 10:
-        pFocus = Menu_GetFocused(&uiInfo->uiDC);
-        if (pFocus) {
-            int activeMenu = uiInfo->currentMenuType;
-            if (activeMenu != 9 && activeMenu != 10)
-                return 0;
-        }
-
-        legacyBase = (byte *)legacyHacks;
-        if (pFocus) {
-            if (I_stricmp(pFocus->window.name, ((LegacyHacks *)legacyBase)->ui_newScriptMenu) == 0)
-                return 1;
-        }
-
-        uiInfo->currentMenuType = 9;
-
-        if (menu == 10) {
-            uiInfo->uiDC.cursorx = 0x27f;
-            uiInfo->uiDC.cursory = 0x1df;
-        }
-
-        Key_SetCatcher(8);
-        Menus_CloseAll(&uiInfo->uiDC);
-        strcpy(((LegacyHacks *)legacyBase)->ui_scriptMenu, ((LegacyHacks *)legacyBase)->ui_newScriptMenu);
-        ((LegacyHacks *)legacyBase)->ui_scriptMenuIndex = ((LegacyHacks *)legacyBase)->ui_newScriptMenuIndex;
-        (*(byte *)&((LegacyHacks *)legacyBase)->ui_newScriptMenu[0]) = 0;
-        ((LegacyHacks *)legacyBase)->ui_newScriptMenuIndex = -1;
-        Menus_OpenByName(&uiInfo->uiDC, ((LegacyHacks *)legacyBase)->ui_scriptMenu);
+    case UIMENU_WM_AUTOUPDATE:
+        Menus_OpenByName(&uiInfo->uiDC, "autoupdate");
         return 1;
 
-    case 11:
+    case UIMENU_SCRIPT_POPUP:
+    case UIMENU_SCRIPT_POPUP_NO_MOUSE:
+        pFocus = Menu_GetFocused(&uiInfo->uiDC);
+        if (pFocus && uiInfo->currentMenuType != UIMENU_SCRIPT_POPUP && uiInfo->currentMenuType != UIMENU_SCRIPT_POPUP_NO_MOUSE)
+            return 0;
+        if (pFocus && !I_stricmp(pFocus->window.name, legacyHacks->ui_newScriptMenu))
+            return 1;
+        uiInfo->currentMenuType = UIMENU_SCRIPT_POPUP;
+        if (menu == UIMENU_SCRIPT_POPUP_NO_MOUSE) {
+            uiInfo->uiDC.cursorx = 639;
+            uiInfo->uiDC.cursory = 479;
+        }
+        Key_SetCatcher(8);
+        Menus_CloseAll(&uiInfo->uiDC);
+        hacks = legacyHacks;
+        strcpy(hacks->ui_scriptMenu, hacks->ui_newScriptMenu);
+        hacks->ui_scriptMenuIndex = hacks->ui_newScriptMenuIndex;
+        hacks->ui_newScriptMenu[0] = 0;
+        hacks->ui_newScriptMenuIndex = -1;
+        Menus_OpenByName(&uiInfo->uiDC, hacks->ui_scriptMenu);
+        return 1;
+
+    case UIMENU_PLAYER_PROFILE:
         Key_SetCatcher(8);
         Menus_OpenByName(&uiInfo->uiDC, "player_profile");
         SND_FadeAllSounds(1.0f, 1000);

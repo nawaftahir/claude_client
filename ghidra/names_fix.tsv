@@ -291,3 +291,5 @@
 480da0	yyparse	fix	# caller ScriptParse
 52b290	UI_RegisterDvars	fix	# strings: dvar list, called from UI_Init
 531ab0	UI_Init	fix	# strings: ui_mp/menus.txt
+53c5d0	Menu_Count	fix	# UI_KeyEvent reads menuCount raw
+5384a0	Display_VisibleMenuCount	fix	# 0x4004 count, inlined in Menus_HandleOOBClick

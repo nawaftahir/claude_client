@@ -1606,6 +1606,22 @@ static __attribute_regparm__(3) void SND_StartBackground(int track, const snd_al
     SND_StartAliasStreamOnChannel(pAlias, pAlias, 0.0f, 0x400, (vec_t *)&g_snd.listeners[0].orient.origin, g_snd.chaninfo[channel].basevolume, pitch, 0, 0.0f, pAlias->startDelay, (pAlias->flags >> 1) & 1, channel, system);
 }
 
+static void SND_StopBackground(int track, int fadetime)
+{
+    if (SND_IsStreamChannelFree(track + 32))
+        return;
+
+    if (fadetime == 0) {
+        SND_StopStreamChannel(track + 32);
+        return;
+    }
+
+    if (g_snd.background[track].goalvolume > 0.0f) {
+        g_snd.background[track].goalrate = -g_snd.background[track].goalvolume / (float)fadetime;
+        g_snd.background[track].goalvolume = 0.0f;
+    }
+}
+
 void SND_PlayAmbientAlias(const snd_alias_t *pAlias, int fadetime, snd_alias_system_t system)
 {
     int tracknum;
@@ -1653,18 +1669,7 @@ void SND_PlayAmbientAlias(const snd_alias_t *pAlias, int fadetime, snd_alias_sys
         }
     }
 
-    curTrack = g_snd.ambient_track;
-    tracknum = curTrack + 32;
-
-    if (!SND_IsStreamChannelFree(tracknum)) {
-        if (fadetime == 0) {
-            SND_StopStreamChannel(tracknum);
-        } else if (g_snd.background[curTrack].goalvolume > 0.0f) {
-            g_snd.background[curTrack].goalrate = -g_snd.background[curTrack].goalvolume / (float)fadetime;
-            g_snd.background[curTrack].goalvolume = 0.0f;
-        }
-    }
-
+    SND_StopBackground(g_snd.ambient_track, fadetime);
     g_snd.ambient_track = 3 - g_snd.ambient_track;
     SND_StartBackground(g_snd.ambient_track, pAlias, fadetime, system);
 }
@@ -1683,19 +1688,7 @@ void SND_PlayMusicAlias(const snd_alias_t *pAlias, snd_alias_system_t system)
 
 void SND_StopMusic(int fadetime)
 {
-    if (SND_IsStreamChannelFree(32))
-        return;
-
-    if (fadetime == 0) {
-        SND_StopStreamChannel(32);
-        return;
-    }
-
-    if (g_snd.background[0].goalvolume <= 0.0f)
-        return;
-
-    g_snd.background[0].goalrate = -g_snd.background[0].goalvolume / (float)fadetime;
-    g_snd.background[0].goalvolume = 0.0f;
+    SND_StopBackground(0, fadetime);
 }
 
 void SND_StopSounds(snd_stopsounds_arg_t which)

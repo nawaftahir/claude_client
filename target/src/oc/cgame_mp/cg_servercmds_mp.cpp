@@ -697,68 +697,19 @@ static int CG_ParseFadeTimeArg(int argIndex)
     return fadeTime > 0 ? fadeTime : 0;
 }
 
-static void CG_PrintUnknownServerCommand(const char *cmd)
+static void CG_RemoveChatEscapeChar(char *text)
 {
-    int argc;
     int i;
+    int l;
 
-    Com_Printf("Unknown client game command: %s\n", cmd ? cmd : "");
-    argc = Cmd_Argc();
-    if (argc <= 1) {
-        return;
-    }
-
-    Com_Printf("Arguments(%i):", argc - 1);
-    for (i = 1; i < argc; ++i) {
-        Com_Printf(" %s", CG_Argv(i));
-    }
-    Com_Printf("\n");
-}
-
-static void CG_CopyCleanChatString(char *dest, int destSize, const char *src)
-{
-    int out;
-    int in;
-
-    if (!dest || destSize <= 0) {
-        return;
-    }
-
-    out = 0;
-    for (in = 0; src && src[in] && out < destSize - 1; ++in) {
-        if ((unsigned char)src[in] == 0x19) {
+    l = 0;
+    for (i = 0; text[i]; i++) {
+        if (text[i] == 0x19) {
             continue;
         }
-        dest[out++] = src[in];
+        text[l++] = text[i];
     }
-    dest[out] = '\0';
-}
-
-static void CG_ServerCommandMessage(const char *context, qboolean bold)
-{
-    char message[256];
-
-    CG_TranslateHudElemMessage(CG_Argv(1), context, message);
-    if (bold) {
-        CG_BoldGameMessage(message);
-    } else {
-        CG_GameMessage(message);
-    }
-}
-
-static void CG_ServerCommandChat(const char *context, qboolean addToTeamChat)
-{
-    char message[150];
-    const char *localized;
-
-    localized = SEH_LocalizeTextMessage(CG_Argv(1), context, (msgLocErrType_t)0);
-    I_strncpyz(message, localized, sizeof(message));
-    CG_CopyCleanChatString(message, sizeof(message), message);
-
-    if (addToTeamChat) {
-        CG_AddToTeamChat(message);
-    }
-    Com_Printf("%s\n", message);
+    text[l] = 0;
 }
 
 static void CG_ParseScores(void)
@@ -864,92 +815,67 @@ static void CG_SetVoteStringFromConfigString(const char *configString)
     I_strncpyz(cgs->voteString, SEH_LocalizeTextMessage(converted, "vote string", (msgLocErrType_t)0), sizeof(cgs->voteString));
 }
 
-static void CG_ConfigStringModified(int index)
+// retail 0x4ca7c0, index in eax
+static void CG_RegisterConfigMaterial(int index)
 {
-    const char *configString;
-    int shellShockIndex;
+    const char *str;
 
-    configString = CL_GetConfigString(index);
+    str = CL_GetConfigString(index);
+    if (*str) {
+        CL_RegisterMaterialNoMip(str, 7);
+    }
+}
 
-    switch (index) {
-    case 0:
-        CG_ParseServerinfo();
-        return;
-    case 3:
-        CG_StartAmbient();
-        return;
-    case 5:
-        cgs->teamScores[0] = atoi(configString);
-        return;
-    case 6:
-        cgs->teamScores[1] = atoi(configString);
-        return;
-    case 7:
+static void CG_ConfigStringModified(void)
+{
+    const char *str;
+    int num;
+
+    num = atoi(CG_Argv(1));
+    str = CL_GetConfigString(num);
+
+    if (num == 7) {
         CG_SetupWeaponDef();
-        return;
-    case 8:
+    } else if (num == 8) {
         CG_RegisterItems();
-        return;
-    case 11:
-        CG_NorthDirectionChanged();
-        return;
-    case 12:
-        CG_ParseFog();
-        return;
-    case 13:
-        cgs->levelStartTime = atoi(configString);
-        return;
-    case 15:
-        cgs->voteTime = atoi(configString);
-        return;
-    case 16:
-        CG_SetVoteStringFromConfigString(configString);
-        return;
-    case 17:
-        cgs->voteYes = atoi(configString);
-        return;
-    case 18:
-        cgs->voteNo = atoi(configString);
-        return;
-    default:
-        break;
-    }
-
-    if ((unsigned int)(index - 0x8e) <= 0xbf) {
+    } else if (num == 3) {
+        CG_StartAmbient();
+    } else if (num == 0) {
+        CG_ParseServerinfo();
+    } else if (num >= 0x8e && num < 0x14e) {
         CG_ParseCodinfo();
-        return;
-    }
-
-    if ((unsigned int)(index - 0x14e) <= 0xff) {
-        cgs->gameModels[index - 0x14e] = CL_RegisterModel(configString);
-        return;
-    }
-
-    if ((unsigned int)(index - 0x34e) <= 0x3f) {
-        cgs->fxs[index - 0x34e] = FX_RegisterEffect(configString);
-        return;
-    }
-
-    shellShockIndex = index - 0x48e;
-    if ((unsigned int)shellShockIndex <= 0xf) {
-        if (*configString && CG_LoadShellShockDvars(configString)) {
-            CG_SetShellShockParmsFromDvars(&cgs->shellshockParms[shellShockIndex]);
+    } else if (num == 5) {
+        cgs->teamScores[0] = atoi(str);
+    } else if (num == 6) {
+        cgs->teamScores[1] = atoi(str);
+    } else if (num == 13) {
+        cgs->levelStartTime = atoi(str);
+    } else if (num == 15) {
+        cgs->voteTime = atoi(str);
+    } else if (num == 17) {
+        cgs->voteYes = atoi(str);
+    } else if (num == 18) {
+        cgs->voteNo = atoi(str);
+    } else if (num == 16) {
+        CG_SetVoteStringFromConfigString(str);
+    } else if (num == 12) {
+        CG_ParseFog();
+    } else if (num >= 0x14e && num < 0x24e) {
+        cgs->gameModels[num - 0x14e] = CL_RegisterModel(str);
+    } else if (num >= 0x34e && num < 0x38e) {
+        cgs->fxs[num - 0x34e] = FX_RegisterEffect(str);
+    } else if (num >= 0x48e && num < 0x49e) {
+        if (*str && CG_LoadShellShockDvars(str)) {
+            CG_SetShellShockParmsFromDvars(&cgs->shellshockParms[num - 0x48e]);
         }
-        return;
-    }
-
-    if ((unsigned int)(index - 0x17) <= 7) {
-        CL_RegisterMaterialNoMip(configString, 7);
-        return;
-    }
-
-    if ((unsigned int)(index - 0x1f) <= 0xe) {
-        CL_RegisterMaterial(configString, 7);
-        return;
-    }
-
-    if ((unsigned int)(index - 0x61e) <= 0x7f && *configString) {
-        CL_RegisterMaterialNoMip(configString, 7);
+    } else if (num >= 0x17 && num < 0x1f) {
+        CL_RegisterMaterialNoMip(str, 7);
+    } else if (num >= 0x1f && num < 0x2e) {
+        CL_RegisterMaterial(str, 7);
+    } else if (num >= 0x61e && num < 0x69e) {
+        CG_RegisterConfigMaterial(num);
+    } else if (num == 11) {
+        CG_NorthDirectionChanged();
     }
 }
 
@@ -991,21 +917,64 @@ void CG_ServerCommand(void)
 {
     const char *cmd;
     int value;
+    int argc;
+    int i;
+    char text[150];
+    char message[256];
 
     cmd = CG_Argv(0);
-    if (!cmd || !*cmd) {
-        return;
-    }
-
     switch (cmd[0]) {
-    case 'B':
-        CG_MapRestart(0);
+    case 'a':
+        CG_SelectWeaponIndex(atoi(CG_Argv(1)));
         return;
-    case 'C':
-        value = atoi(CG_Argv(1));
-        if (!value || BG_GetWeaponDef(value)) {
-            CG_SetEquippedOffHand(value);
+    case 'b':
+        CG_ParseScores();
+        return;
+    case 'c':
+        CG_TranslateHudElemMessage(CG_Argv(1), "announcement message", message);
+        CG_BoldGameMessage(message);
+        return;
+    case 'd':
+        CG_ConfigStringModified();
+        return;
+    case 'e':
+    case 'f':
+        CG_TranslateHudElemMessage(CG_Argv(1), "game message", message);
+        CG_GameMessage(message);
+        return;
+    case 'g':
+        CG_TranslateHudElemMessage(CG_Argv(1), "bold game message", message);
+        CG_BoldGameMessage(message);
+        return;
+    case 'h':
+        if (cg_teamChatsOnly->current.enabled) {
+            return;
         }
+        I_strncpyz(text, SEH_LocalizeTextMessage(CG_Argv(1), "chat message", (msgLocErrType_t)0), sizeof(text));
+        CG_RemoveChatEscapeChar(text);
+        CG_AddToTeamChat(text);
+        Com_Printf("%s\n", text);
+        return;
+    case 'i':
+        I_strncpyz(text, SEH_LocalizeTextMessage(CG_Argv(1), "team chat message", (msgLocErrType_t)0), sizeof(text));
+        CG_RemoveChatEscapeChar(text);
+        CG_AddToTeamChat(text);
+        Com_Printf("%s\n", text);
+        return;
+    case 'n':
+        CG_MapRestart(1);
+        return;
+    case 'o':
+        SND_PlayMusicAlias(CL_PickSoundAlias(CG_Argv(1)), SASYS_CGAME);
+        return;
+    case 'p':
+        SND_StopMusic(atoi(CG_Argv(1)));
+        return;
+    case 'q':
+        SND_FadeAllSounds((float)atof(CG_Argv(1)), atoi(CG_Argv(2)));
+        return;
+    case 'r':
+        CG_ReverbCmd();
         return;
     case 'D':
         CG_DeactivateReverbCmd();
@@ -1016,6 +985,34 @@ void CG_ServerCommand(void)
     case 'F':
         CG_DeactivateChannelVolCmd();
         return;
+    case 's':
+        CG_LocalSoundCmd();
+        return;
+    case 't':
+        CG_OpenScriptMenu();
+        return;
+    case 'u':
+        CG_CloseScriptMenu();
+        return;
+    case 'K':
+        CL_CloseInGameMenu();
+        return;
+    case 'v':
+        I_strncpyz(text, CG_Argv(1), sizeof(text));
+        CG_SetClientDvarFromServer(text, CG_Argv(2));
+        return;
+    case 'B':
+        CG_MapRestart(0);
+        return;
+    case 'C':
+        value = atoi(CG_Argv(1));
+        if (!value || BG_GetWeaponDef(value)->offhandClass) {
+            CG_SetEquippedOffHand(value);
+        }
+        return;
+    case 'J':
+        CL_ResetPlayerMuting(atoi(CG_Argv(1)));
+        return;
     case 'G':
         cgs->teamScores[0] = atoi(CG_Argv(1));
         return;
@@ -1025,84 +1022,18 @@ void CG_ServerCommand(void)
     case 'I':
         CG_MenuShowNotify(atoi(CG_Argv(1)));
         return;
-    case 'J':
-        CL_ResetPlayerMuting(atoi(CG_Argv(1)));
+    case 0:
         return;
-    case 'K':
-        CL_CloseInGameMenu();
-        return;
-    case 'a':
-        CG_SelectWeaponIndex(atoi(CG_Argv(1)));
-        return;
-    case 'b':
-        CG_ParseScores();
-        return;
-    case 'c':
-        CG_ServerCommandMessage("announcement message", 1);
-        return;
-    case 'd':
-        CG_ConfigStringModified(atoi(CG_Argv(1)));
-        return;
-    case 'e':
-    case 'f':
-        CG_ServerCommandMessage("game message", 0);
-        return;
-    case 'g':
-        CG_ServerCommandMessage("bold game message", 1);
-        return;
-    case 'h':
-        if (!CG_DvarCurrentBool((void *)&cg_teamChatsOnly)) {
-            CG_ServerCommandChat("chat message", 1);
-        }
-        return;
-    case 'i':
-        CG_ServerCommandChat("team chat message", 1);
-        return;
-    case 'n':
-        CG_MapRestart(1);
-        return;
-    case 'o':
-        if (CG_PlaySoundOnFirstClient()) {
-            SND_PlayMusicAlias(CL_PickSoundAlias(CG_Argv(1)), SASYS_CGAME);
-        }
-        return;
-    case 'p':
-        if (CG_PlaySoundOnFirstClient()) {
-            SND_StopMusic(atoi(CG_Argv(1)));
-        }
-        return;
-    case 'q':
-        if (CG_PlaySoundOnFirstClient()) {
-            SND_FadeAllSounds((float)atof(CG_Argv(1)), atoi(CG_Argv(2)));
-        }
-        return;
-    case 'r':
-        CG_ReverbCmd();
-        return;
-    case 's':
-        CG_LocalSoundCmd();
-        return;
-    case 't':
-#if COD2_TRACE
-        if (getenv("MTRACE"))
-            Com_Printf("[menu-trace] client received server command '%s'\n", cmd);
-#endif
-        CG_OpenScriptMenu();
-        return;
-    case 'u':
-        CG_CloseScriptMenu();
-        return;
-    case 'v': {
-        char dvarName[150];
-        I_strncpyz(dvarName, CG_Argv(1), sizeof(dvarName));
-        if (strncmp(dvarName, "ui_allow_join", 13) == 0) {
-            Com_Printf("client dvar command %s='%s'\n", dvarName, CG_Argv(2));
-        }
-        CG_SetClientDvarFromServer(dvarName, CG_Argv(2));
-        return;
-    }
     default:
-        CG_PrintUnknownServerCommand(cmd);
+        Com_Printf("Unknown client game command: %s\n", CG_Argv(0));
+        argc = Cmd_Argc();
+        if (argc > 1) {
+            Com_Printf("Arguments(%i):", argc - 1);
+            for (i = 1; i < argc; ++i) {
+                Com_Printf(" %s", CG_Argv(i));
+            }
+            Com_Printf("\n");
+        }
         return;
     }
 }

@@ -1,4 +1,5 @@
 #include "qcommon.h"
+#include <float.h>
 #include "cmd.h"
 
 // common.c -- misc functions used in client and server
@@ -95,6 +96,18 @@ inline void Com_SyncThreads( void )
 }
 
 void Com_StartHunkUsers( void );
+unsigned char CL_PacketEvent( netadr_t from, msg_t *msg, int time );
+void CL_KeyEvent( int key, const qboolean down, const unsigned int time );
+void CL_CharEvent( int key );
+void CL_InitKeyCommands( void );
+void CL_InitOnceForAllClients( void );
+void CL_Init( void );
+void CL_InitRenderer( void );
+void CL_StartHunkUsers( void );
+void SND_Init( void );
+void UI_SetMap( const char *mapname, const char *gametype );
+void Sys_HideSplashWindow( void );
+void Sys_LoadingKeepAlive( void );
 
 void Com_Printf( const char *fmt, ... );
 void Com_Quit_f();
@@ -350,12 +363,44 @@ bool Com_IsNoticeError( const char *msg )
 Com_SetErrorMessage
 =================
 */
+const char *SEH_LocalizeTextMessage( const char *pszInputBuffer, const char *pszMessageType, msgLocErrType_t errType );
+
 void Com_SetErrorMessage( const char *errorMessage )
 {
+	const char *title;
+	const char *localized;
+
 	ui_errorMessage = Dvar_RegisterString("com_errorMessage", "", DVAR_ROM | DVAR_CHANGEABLE_RESET);
 	ui_errorTitle = Dvar_RegisterString("com_errorTitle", "", DVAR_ROM | DVAR_CHANGEABLE_RESET);
 
-	Dvar_SetString(ui_errorMessage, errorMessage);
+	if ( com_errorType != ERR_SERVERDISCONNECT && !Com_IsNoticeError(errorMessage) )
+	{
+		title = SEH_LocalizeTextMessage("MENU_ERROR", "error message", LOCMSG_NOERR);
+		if ( title )
+			Dvar_SetString(ui_errorTitle, title);
+		else
+			Dvar_SetString(ui_errorTitle, "MENU_ERROR");
+	}
+	else
+	{
+		title = SEH_LocalizeTextMessage("MENU_NOTICE", "error message", LOCMSG_NOERR);
+		if ( title )
+			Dvar_SetString(ui_errorTitle, title);
+		else
+			Dvar_SetString(ui_errorTitle, "MENU_NOTICE");
+	}
+
+	localized = SEH_LocalizeTextMessage(errorMessage, "error message", LOCMSG_NOERR);
+	if ( localized )
+	{
+		Dvar_SetString(ui_errorMessage, localized);
+		strncpy(com_errorMessage, localized, sizeof(com_errorMessage) - 1);
+		com_errorMessage[sizeof(com_errorMessage) - 1] = 0;
+	}
+	else
+	{
+		Dvar_SetString(ui_errorMessage, errorMessage);
+	}
 }
 
 static int com_unreferenced5;
@@ -387,7 +432,6 @@ void CL_FlushDebugData( qboolean fromServer );
 void CL_ConsoleFixPosition( void );
 qboolean UI_AnyFullScreenMenuVisible( void );
 void SEH_UpdateLanguageInfo( void );
-const char *SEH_LocalizeTextMessage( const char *pszInputBuffer, const char *pszMessageType, msgLocErrType_t errType );
 
 /*
 ================
@@ -921,28 +965,33 @@ int Com_EventLoop( void )
 
 		switch ( ev.evType )
 		{
-		default:
-			Com_Error( ERR_FATAL, "\x15" "Com_EventLoop: bad event type %i", ev.evType );
-			break;
-
 		case SE_NONE:
-		fetch:
-			if ( !NET_GetLoopPacket( NS_SERVER, &evFrom, &buf ) )
-				goto done;
-
-			CL_SwitchToLocalClient( 0 );
-
-			if ( com_sv_running->current.boolean )
+			while ( NET_GetLoopPacket( NS_CLIENT, &evFrom, &buf ) )
 			{
-				SV_PacketEvent( evFrom, &buf );
+				CL_PacketEvent( evFrom, &buf, ev.evTime );
 			}
 
-			goto fetch;
-		done:
+			while ( NET_GetLoopPacket( NS_SERVER, &evFrom, &buf ) )
+			{
+				if ( com_sv_running->current.boolean )
+				{
+					SV_PacketEvent( evFrom, &buf );
+				}
+			}
 			return ev.evTime;
 
+		case SE_KEY:
+			CL_KeyEvent( ev.evValue, ev.evValue2, ev.evTime );
+			break;
+
+		case SE_CHAR:
+			CL_CharEvent( ev.evValue );
+			break;
+
+		case SE_MOUSE:
+			break;
+
 		case SE_CONSOLE:
-			CL_SwitchToLocalClient( 0 );
 			Cbuf_AddText( (char *)ev.evPtr );
 			Z_Free( ev.evPtr );
 			Cbuf_AddText( "\n" );
@@ -965,9 +1014,16 @@ int Com_EventLoop( void )
 
 			if ( com_sv_running->current.boolean )
 			{
-				CL_SwitchToLocalClient( 0 );
 				SV_PacketEvent( evFrom, &buf );
 			}
+			else
+			{
+				CL_PacketEvent( evFrom, &buf, ev.evTime );
+			}
+			break;
+
+		default:
+			Com_Error( ERR_FATAL, "\x15" "Com_EventLoop: bad event type %i", ev.evType );
 			break;
 		}
 	}
@@ -991,12 +1047,19 @@ int Debug_EventLoop( void )
 
 		switch ( ev.evType )
 		{
-		default:
-			Com_Error( ERR_FATAL, "\x15" "Com_EventLoop: bad event type %i", ev.evType );
-			break;
-
 		case SE_NONE:
 			return processed;
+
+		case SE_KEY:
+			CL_KeyEvent( ev.evValue, ev.evValue2, ev.evTime );
+			break;
+
+		case SE_CHAR:
+			CL_CharEvent( ev.evValue );
+			break;
+
+		case SE_MOUSE:
+			break;
 
 		case SE_CONSOLE:
 			Cbuf_AddText( (char *)ev.evPtr );
@@ -1006,6 +1069,10 @@ int Debug_EventLoop( void )
 
 		case SE_PACKET:
 			Z_Free( ev.evPtr );
+			break;
+
+		default:
+			Com_Error( ERR_FATAL, "\x15" "Com_EventLoop: bad event type %i", ev.evType );
 			break;
 		}
 
@@ -1249,6 +1316,7 @@ static void Com_Init_Try_Block_Function( char *commandLine )
 	Cmd_Init();
 	Com_StartupVariable(0);
 	Com_StartupVariable("developer");
+	CL_InitKeyCommands();
 	FS_InitFilesystem();
 	Com_InitDvars();
 
@@ -1260,10 +1328,20 @@ static void Com_Init_Try_Block_Function( char *commandLine )
 
 	CL_SwitchToLocalClient( 0 );
 	Cbuf_Execute();
-	Com_SyncThreads();
 	com_recommendedSet = Dvar_RegisterBool("com_recommendedSet", false, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
 	Com_CheckSetRecommended();
+	_controlfp( _PC_53, _MCW_PC );
+	_controlfp( _MCW_EM, _MCW_EM );
 	Com_StartupVariable(0);
+	SEH_UpdateLanguageInfo();
+
+	if ( com_dedicated->current.integer )
+	{
+		Sys_HideSplashWindow();
+		Sys_ShowConsole( 1, qtrue );
+		Sys_NormalExit();
+	}
+
 	Com_InitHunkMemory();
 	dvar_modifiedFlags &= ~DVAR_ARCHIVE;
 	com_codeTimeScale = 1.0;
@@ -1289,8 +1367,31 @@ static void Com_Init_Try_Block_Function( char *commandLine )
 	DObjInit();
 	SV_Init();
 	NET_Init();
-	com_frameTime  = Com_Milliseconds();
+	Dvar_ClearModified( com_dedicated );
+
+	if ( !com_dedicated->current.integer )
+	{
+		CL_InitOnceForAllClients();
+		CL_Init();
+		Sys_ShowConsole( com_viewlog->current.integer, qfalse );
+	}
+
+	com_frameTime = Com_Milliseconds();
 	Com_AddStartupCommands();
+
+	if ( !com_dedicated->current.integer )
+	{
+		cls.rendererStarted = qtrue;
+		CL_InitRenderer();
+		cls.soundStarted = qtrue;
+		SND_Init();
+	}
+
+	Sys_LoadingKeepAlive();
+
+	if ( !com_dedicated->current.integer )
+		Sys_ShowConsole( com_viewlog->current.integer, qfalse );
+
 	COM_PlayIntroMovies();
 	com_fullyInitialized = 1;
 	Com_Printf("--- Common Initialization Complete ---\n");
@@ -1641,6 +1742,8 @@ done:
 // empty in the dedicated build
 void Com_StartHunkUsers( void )
 {
+	UI_SetMap("", "");
+	CL_StartHunkUsers();
 }
 
 /*

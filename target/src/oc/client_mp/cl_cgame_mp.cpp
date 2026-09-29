@@ -832,42 +832,26 @@ void CL_LoadSoundAliases(const char *loadspec)
 
 qboolean CL_Popup(const char *menu)
 {
-    clientConnection_t *clui = CLUI_STATE;
-    int fullscreen = UI_IsFullscreen();
-    int activeMenu = UI_GetActiveMenu();
-#if COD2_TRACE
-    static int traceCount;
-
-    if (traceCount++ < 32) {
-        if (getenv("MTRACE"))
-            Com_Printf("[menu-trace] CL_Popup menu='%s' state=%d demo=%d fullscreen=%d active=%d\n",
-                       menu, clui->state, clui->demoplaying, fullscreen, activeMenu);
-    }
-#endif
-
-    if (clui->state != 8)
+    if (clc.state != CA_ACTIVE)
+        return 0;
+    if (clc.demoplaying)
+        return 0;
+    if (UI_IsFullscreen())
         return 0;
 
-    if (clui->demoplaying)
-        return 0;
-
-    if (fullscreen)
-        return 0;
-
-    if (I_stricmp(menu, "UIMENU_INGAME") == 0) {
-        UI_SetActiveMenu(8);
+    if (!I_stricmp(menu, "UIMENU_WM_QUICKMESSAGE")) {
+        UI_SetActiveMenu(UIMENU_WM_QUICKMESSAGE);
         return 1;
     }
-
-    if (I_strnicmp(menu, "UIMENU_SCRIPT_POPUP", 0x13) != 0) {
+    if (!I_stricmp(menu, "UIMENU_WM_AUTOUPDATE")) {
+        UI_SetActiveMenu(UIMENU_WM_AUTOUPDATE);
         return 1;
     }
-
-    if (I_stricmp(menu, "UIMENU_SCRIPT_POPUP_SUBMENU") == 0) {
-        return UI_SetActiveMenu(10);
-    }
-
-    return UI_SetActiveMenu(9);
+    if (I_strnicmp(menu, "UIMENU_SCRIPT_POPUP", 19))
+        return 1;
+    if (!I_stricmp(menu, "UIMENU_SCRIPT_POPUP_NO_MOUSE"))
+        return UI_SetActiveMenu(UIMENU_SCRIPT_POPUP_NO_MOUSE);
+    return UI_SetActiveMenu(UIMENU_SCRIPT_POPUP);
 }
 
 void CL_ClosePopup(const char *menu)
@@ -875,16 +859,10 @@ void CL_ClosePopup(const char *menu)
     if (UI_IsFullscreen())
         return;
 
-    if (I_stricmp(menu, "UIMENU_SCRIPT_POPUP_SUBMENU") == 0) {
-        if (UI_GetActiveMenu() == 9 || UI_GetActiveMenu() == 10)
-            UI_SetActiveMenu(0);
-        return;
-    }
-
-    if (I_stricmp(menu, "UIMENU_SCRIPT_POPUP") == 0) {
-        if (UI_GetActiveMenu() == 9 || UI_GetActiveMenu() == 10)
-            UI_SetActiveMenu(0);
-    }
+    // retail tests SCRIPT_POPUP for both names
+    if ((!I_stricmp(menu, "UIMENU_SCRIPT_POPUP_NO_MOUSE") && UI_GetActiveMenu() == UIMENU_SCRIPT_POPUP)
+        || (!I_stricmp(menu, "UIMENU_SCRIPT_POPUP") && UI_GetActiveMenu() == UIMENU_SCRIPT_POPUP))
+        UI_CloseFocusedMenu();
 }
 
 void CL_CloseInGameMenu(void)

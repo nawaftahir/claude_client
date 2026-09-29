@@ -1,5 +1,7 @@
 #include "common_types.h"
 #include "imports.h"
+
+extern int qport;
 extern ping_t cl_pinglist[];
 extern clientActive_t clients[1];
 extern clientConnection_t clc;
@@ -1069,7 +1071,7 @@ void CL_Connect_f(void)
         clcConn->connectTime = (int)0xfffe7961;
         clcConn->connectPacketCount = 0;
 
-        clcConn->qport = *(int *)imp_g_qport;
+        clcConn->qport = ::qport;
     }
 
     UI_CloseAll();

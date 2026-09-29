@@ -1,15 +1,14 @@
 // build identification; original file name unknown
 #include <stdio.h>
 
-#define BUILD_NUMBER 696
-#define BUILD_DATE   "Oct 24 2005"
-#define BUILD_TIME   "17:45:05"
+#define BUILD_NUMBER "crc6_v1"
+#define BUILD_TIME   "Thu Oct 06 2005 07:13:42PM"
 
 // Original name unknown; size from the layout.
 char buildInfo[1024];
 
 const char *getBuildNumber( void )
 {
-	sprintf(buildInfo, "%d %s %s", BUILD_NUMBER, BUILD_DATE, BUILD_TIME);
+	sprintf(buildInfo, "%s %s", BUILD_NUMBER, BUILD_TIME);
 	return buildInfo;
 }

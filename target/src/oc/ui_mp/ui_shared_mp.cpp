@@ -848,6 +848,11 @@ qboolean Display_KeyBindPending(void)
 
 int Menu_Count(displayContextDef_t *dc)
 {
+    return dc->menuCount;
+}
+
+static int Display_VisibleMenuCount(displayContextDef_t *dc)
+{
     int i, count;
 
     count = 0;
@@ -2030,16 +2035,11 @@ void Menu_Setup(displayContextDef_t *dc)
     Controls_GetConfig_core();
 }
 
-static inline __attribute__((always_inline)) void Menus_CloseByName_core(displayContextDef_t *dc, const char *p)
+void Menus_CloseByName(displayContextDef_t *dc, const char *p)
 {
     menuDef_t *menu = Menus_FindByName(dc, p);
     if (menu)
         Menus_Close(dc, menu);
-}
-
-void Menus_CloseByName(displayContextDef_t *dc, const char *p)
-{
-    Menus_CloseByName_core(dc, p);
 }
 
 void Menu_SetFeederSelection(displayContextDef_t *dc, menuDef_t *menu, int feeder, int index, const char *name)
@@ -2218,7 +2218,7 @@ void Script_CloseForGameType(displayContextDef_t *dc, itemDef_t *item, const cha
     if (!String_Parse(args, name, 0x400))
         return;
     const char *p = va(name, Dvar_GetString(item->dvar));
-    Menus_CloseByName_core(dc, p);
+    Menus_CloseByName(dc, p);
 }
 
 void Script_Close(displayContextDef_t *dc, itemDef_t *item, const char **args)
@@ -2227,7 +2227,7 @@ void Script_Close(displayContextDef_t *dc, itemDef_t *item, const char **args)
     (void)item;
     if (!String_Parse(args, name, 0x400))
         return;
-    Menus_CloseByName_core(dc, name);
+    Menus_CloseByName(dc, name);
 }
 
 void Script_InGameClose(displayContextDef_t *dc, itemDef_t *item, const char **args)
@@ -2238,7 +2238,7 @@ void Script_InGameClose(displayContextDef_t *dc, itemDef_t *item, const char **a
         return;
     if (!UI_ClientIsInGame())
         return;
-    Menus_CloseByName_core(dc, name);
+    Menus_CloseByName(dc, name);
 }
 
 static void Window_CloseCinematic(Window *window)
@@ -5422,126 +5422,42 @@ void Item_Paint(displayContextDef_t *dc, itemDef_t *item)
 
 void Menu_Paint(displayContextDef_t *dc, menuDef_t *menu, qboolean forcePaint)
 {
-    byte *m = (byte *)menu;
     int i;
-#if COD2_TRACE
-    int traceScriptMenu = 0;
-#endif
 
     if (!menu)
         return;
+    if (!Window_IsVisible(&menu->window) && !forcePaint)
+        return;
+    if (menu->window.ownerDrawFlags && !UI_OwnerDrawVisible(menu->window.ownerDrawFlags))
+        return;
 
-#if COD2_TRACE
-    if (menu->window.name &&
-        (!I_stricmp(menu->window.name, "serverinfo_dm") ||
-         !strncmp(menu->window.name, "team_", 5) ||
-         !I_stricmp(menu->window.name, "team"))) {
-        static int paintTraceCount;
-        if (paintTraceCount < 120) {
-            traceScriptMenu = 1;
-            if (getenv("MTRACE"))
-                Com_Printf("[menu-trace] Menu_Paint name=%s force=%d flags=0x%x owner=0x%x items=%d fullscreen=%d openCount=%d\n",
-                           menu->window.name, forcePaint, ((menuDef_t *)m)->window.dynamicFlags[0],
-                           ((menuDef_t *)m)->window.ownerDrawFlags, (((menuDef_t*)(m))->itemCount), (((menuDef_t*)(m))->fullScreen),
-                           (((displayContextDef_s*)((byte *)dc))->openMenuCount));
-            ++paintTraceCount;
-        }
-    }
-#endif
+    if (menu->soundName)
+        UI_PlayLocalSoundAliasByName(menu->soundName);
 
-    if (!((*(byte *)&((menuDef_t *)m)->window.dynamicFlags[0]) & 4)) {
-#if COD2_TRACE
-        if (traceScriptMenu)
-            if (getenv("MTRACE"))
-                Com_Printf("[menu-trace] Menu_Paint skip invisible name=%s flags=0x%x\n",
-                           menu->window.name, ((menuDef_t *)m)->window.dynamicFlags[0]);
-#endif
-        if (!forcePaint)
-            return;
+    if (menu->blurRadius != 0.0f)
+        dc->blurRadiusOut = sqrt(menu->blurRadius * menu->blurRadius + dc->blurRadiusOut * dc->blurRadiusOut);
+
+    if (forcePaint) {
+        Window_AddDynamicFlags(&menu->window, 0x4000);
+        Menus_AddToStack(dc, menu);
     }
 
-    int ownerDrawFlags = ((menuDef_t *)m)->window.ownerDrawFlags;
-    if (ownerDrawFlags) {
-        if (!UI_OwnerDrawVisible(ownerDrawFlags)) {
-#if COD2_TRACE
-            if (traceScriptMenu)
-                if (getenv("MTRACE"))
-                    Com_Printf("[menu-trace] Menu_Paint skip owner name=%s owner=0x%x\n",
-                               menu->window.name, ownerDrawFlags);
-#endif
-            return;
-        }
-    }
+    if (menu->fullScreen && menu->window.background)
+        UI_DrawHandlePic(0.0f, 0.0f, 640.0f, 480.0f, menu->window.rect[0].horzAlign, menu->window.rect[0].vertAlign, NULL, menu->window.background);
 
-    if ((*(void **)&((menuDef_t *)m)->soundName))
-        UI_PlayLocalSoundAliasByName(((menuDef_t *)m)->soundName);
+    Window_Paint(dc, (float (*)[4][32])menu, menu->fadeAmount, menu->fadeInAmount, menu->fadeClamp, (float)menu->fadeCycle);
 
-    float fadeAmount = (((menuDef_t*)(m))->blurRadius);
-    if (fadeAmount != 0.0f) {
-        float cursorDist = dc->blurRadiusOut;
-        float dist = sqrtf(fadeAmount * fadeAmount + cursorDist * cursorDist);
-        dc->blurRadiusOut = dist;
-        if (!forcePaint)
-            goto paint_content;
-    } else if (!forcePaint) {
-        goto paint_content;
-    }
-
-    Window_AddDynamicFlags( (Window *)((itemDef_t *)((void *)m)), 0x4000);
-
-    byte *d = (byte *)dc;
-    int openCount = (((displayContextDef_s*)(d))->openMenuCount);
-    int removeIdx = -1;
-    for (i = openCount - 1; i >= 0; i--) {
-        if (*(void **)((char *)&((displayContextDef_s *)d)->menuStack[i]) == menu) {
-            removeIdx = i;
-            break;
-        }
-    }
-    if (removeIdx >= 0) {
-        (((displayContextDef_s*)(d))->openMenuCount) = openCount - 1;
-        for (i = removeIdx; i < (((displayContextDef_s*)(d))->openMenuCount); i++)
-            *(void **)((char *)&((displayContextDef_s *)d)->menuStack[i]) = *(void **)((char *)&((displayContextDef_s *)d)->menuStack[(i + 1)]);
-    }
-
-    if ((((displayContextDef_s*)(d))->openMenuCount) == 0x10)
-        Com_Error(ERR_DROP, "\x15Too many menus opened");
-    int idx = (((displayContextDef_s*)(d))->openMenuCount);
-    *(void **)((char *)&((displayContextDef_s *)d)->menuStack[idx]) = menu;
-    (((displayContextDef_s*)(d))->openMenuCount) = idx + 1;
-
-paint_content:
-
-    if ((((menuDef_t*)(m))->fullScreen) && ((menuDef_t *)m)->window.background) {
-        UI_DrawHandlePic(
-            0.0f, 0.0f, 640.0f, 480.0f,
-            (((rectDef_t*)(m))->horzAlign), (((rectDef_t*)(m))->vertAlign), NULL,
-            ((menuDef_t *)m)->window.background);
-    }
-
-    Window_Paint(dc, (float (*)[4][32])m,
-                 (((menuDef_t*)(m))->fadeAmount), (((menuDef_t*)(m))->fadeInAmount),
-                 (((menuDef_t*)(m))->fadeClamp), (float)(((menuDef_t*)(m))->fadeCycle));
-
-    int itemCount = (((menuDef_t*)(m))->itemCount);
-#if COD2_TRACE
-    if (getenv("COD2_MENUDIAG") && itemCount != 0) {
-        Com_Printf("[itemdiag] menu=%p name=%p itemCount=%d items=%p\n",
-                   (void *)m, (void *)((menuDef_t *)m)->window.name, itemCount,
-                   (void *)((menuDef_t *)m)->items);
-    }
-#endif
-    if (itemCount > 0) {
-        for (i = 0; i < itemCount; i++) {
-            itemDef_t *item = *(itemDef_t **)((char *)&((menuDef_t *)m)->items[i]);
-            Item_Paint(dc, item);
-        }
-    }
+    for (i = 0; i < menu->itemCount; i++)
+        Item_Paint(dc, menu->items[i]);
 
     if (debugMode) {
-        float color[4] = { 1.0f, 1.0f, 0.0f, 1.0f };
-        UI_DrawRect(*(float *)m, (((rectDef_t*)(m))->y), (((rectDef_t*)(m))->w), ((menuDef_t *)m)->window.rect[0].h,
-                    (((rectDef_t*)(m))->horzAlign), (((rectDef_t*)(m))->vertAlign), 1.0f, color);
+        vec4_t color;
+        color[0] = 1.0f;
+        color[1] = 0.0f;
+        color[2] = 1.0f;
+        color[3] = 1.0f;
+        UI_DrawRect(menu->window.rect[0].x, menu->window.rect[0].y, menu->window.rect[0].w, menu->window.rect[0].h,
+                    menu->window.rect[0].horzAlign, menu->window.rect[0].vertAlign, 1.0f, color);
     }
 }
 
@@ -5629,7 +5545,7 @@ void Menus_HandleOOBClick(displayContextDef_t *dc, menuDef_t *menu, int key, qbo
             break;
         }
     }
-    if (!Menu_Count(dc))
+    if (!Display_VisibleMenuCount(dc))
         UI_Pause(0);
     Display_CloseCinematics(dc);
 }

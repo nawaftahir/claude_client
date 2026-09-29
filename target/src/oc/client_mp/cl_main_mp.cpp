@@ -5,6 +5,8 @@
 #include "cod2_feature_config.h"
 #include "pb_public.h"
 #include "www_download.h"
+
+extern int qport;
 extern bgs_t *bgs;
 extern int cl_connectedToPureServer;
 extern int fs_checksumFeed;
@@ -2241,7 +2243,7 @@ Bool CL_ConnectionlessPacket(netadr_t from, msg_t *msg, int time)
             goto finish;
         }
 
-        Netchan_Setup(NS_CLIENT1, &conn->netchan, from, *(int *)imp_g_qport);
+        Netchan_Setup(NS_CLIENT1, &conn->netchan, from, ::qport);
         conn->state = CA_CONNECTED;
         conn->lastPacketSentTime = cls.realtime;
         conn->lastPacketTime = -9999;
@@ -2342,9 +2344,7 @@ finish:
     return result;
 }
 
-static inline __attribute__((always_inline))
-Bool
-CL_PacketEvent_real(netadr_t from, msg_t *msg, int time)
+Bool CL_PacketEvent(netadr_t from, msg_t *msg, int time)
 {
     clientConnection_t *conn = &::clc;
     int headerBytes;
@@ -2397,11 +2397,6 @@ CL_PacketEvent_real(netadr_t from, msg_t *msg, int time)
         CL_WriteDemoMessage(msg, headerBytes);
 
     return 1;
-}
-
-Bool CL_PacketEvent(netadr_t from, msg_t *msg, int time)
-{
-    return CL_PacketEvent_real(from, msg, time);
 }
 
 extern void Com_ClientDObjClearAllSkel(void);
@@ -2689,20 +2684,7 @@ void CL_Disconnect(void)
 
 void CL_Shutdown(void)
 {
-    static const char *const commands[] = {
-        "cmd", "configstrings", "clientinfo", "vid_restart",
-        "snd_restart", "disconnect", "record", "demo",
-        "cinematic", "logo", "stoprecord", "connect",
-        "reconnect", "localservers", "globalservers", "rcon",
-        "setenv", "ping", "serverstatus", "showip",
-        "fs_openedList", "fs_referencedList", "updatehunkusage", "updatescreen",
-        "SaveTranslations", "SaveNewTranslations", "LoadTranslations", "startSingleplayer",
-        "buyNow", "singlePlayLink", "setRecommended", "cubemapShot",
-        "openScriptMenu", "openmenu", "closemenu"
-    };
-    unsigned int i;
-
-    Com_Printf((const char *)"----- CL_Shutdown -----\n");
+    Com_Printf("----- CL_Shutdown -----\n");
 
     if (recursive) {
         printf("recursive shutdown\n");
@@ -2713,7 +2695,7 @@ void CL_Shutdown(void)
 
     CL_Disconnect();
 
-    if (!(Sys_IsMainThread() && !UI_IsFullscreen() && *(byte *)&clients[0] != 0 && *(int *)&::clc > CA_LOGO)) {
+    if (CL_AllLocalClientsDisconnected()) {
         CL_ShutdownDebugData();
 
         if (cls.hunkUsersStarted) {
@@ -2729,15 +2711,48 @@ void CL_Shutdown(void)
         CL_ShutdownRef();
         CL_ShutdownInput();
 
-        for (i = 0; i < sizeof(commands) / sizeof(commands[0]); ++i)
-            Cmd_RemoveCommand(commands[i]);
+        Cmd_RemoveCommand("cmd");
+        Cmd_RemoveCommand("configstrings");
+        Cmd_RemoveCommand("clientinfo");
+        Cmd_RemoveCommand("vid_restart");
+        Cmd_RemoveCommand("snd_restart");
+        Cmd_RemoveCommand("disconnect");
+        Cmd_RemoveCommand("record");
+        Cmd_RemoveCommand("demo");
+        Cmd_RemoveCommand("cinematic");
+        Cmd_RemoveCommand("logo");
+        Cmd_RemoveCommand("stoprecord");
+        Cmd_RemoveCommand("connect");
+        Cmd_RemoveCommand("reconnect");
+        Cmd_RemoveCommand("localservers");
+        Cmd_RemoveCommand("globalservers");
+        Cmd_RemoveCommand("rcon");
+        Cmd_RemoveCommand("setenv");
+        Cmd_RemoveCommand("ping");
+        Cmd_RemoveCommand("serverstatus");
+        Cmd_RemoveCommand("showip");
+        Cmd_RemoveCommand("fs_openedList");
+        Cmd_RemoveCommand("fs_referencedList");
+        Cmd_RemoveCommand("updatehunkusage");
+        Cmd_RemoveCommand("updatescreen");
+        Cmd_RemoveCommand("SaveTranslations");
+        Cmd_RemoveCommand("SaveNewTranslations");
+        Cmd_RemoveCommand("LoadTranslations");
+        Cmd_RemoveCommand("startSingleplayer");
+        Cmd_RemoveCommand("buyNow");
+        Cmd_RemoveCommand("singlePlayLink");
+        Cmd_RemoveCommand("setRecommended");
+        Cmd_RemoveCommand("cubemapShot");
+        Cmd_RemoveCommand("openScriptMenu");
+        Cmd_RemoveCommand("openmenu");
+        Cmd_RemoveCommand("closemenu");
 
         memset(&cls, 0, sizeof(cls));
     }
 
     legacyHacks->cl_running = 0;
     recursive = 0;
-    Com_Printf((const char *)"-----------------------\n");
+    Com_Printf("-----------------------\n");
 }
 
 void CL_Disconnect_f(void)
@@ -2769,20 +2784,21 @@ void CL_MapLoading(const char *mapname)
     active->keyCatchers = 0;
     active->displayHUDWithKeycatchUI = 0;
 
-    if (*(int *)&::clc > CA_CHALLENGING && I_stricmp(cls.servername, (const char *)"localhost") == 0) {
+    if (conn->state >= CA_CONNECTED && I_stricmp(cls.servername, (const char *)"localhost") == 0) {
+        memset(cls.updateInfoString, 0, sizeof(cls.updateInfoString));
         conn->state = CA_CONNECTED;
         memset(conn->serverMessage, 0, sizeof(conn->serverMessage));
         memset(&active->gameState, 0, sizeof(active->gameState));
         conn->lastPacketSentTime = -9999;
     } else {
         Dvar_SetString((dvar_t *)nextmap, (const char *)"");
-        CL_Disconnect();
         I_strncpyz(cls.servername, (const char *)"localhost", sizeof(cls.servername));
+        CL_Disconnect();
         UI_CloseAll();
 
         conn->state = CA_CHALLENGING;
         ((clientConnection_t *)conn)->connectTime = -3000;
-        conn->qport = *(int *)imp_g_qport;
+        conn->qport = ::qport;
         NET_StringToAdr(cls.servername, &conn->serverAddress);
         CL_CheckForResend();
     }
