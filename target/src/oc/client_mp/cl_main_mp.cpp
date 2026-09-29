@@ -1481,7 +1481,6 @@ void CL_DrawText(const char *text, int maxChars, FontHandle font, float x, float
 
 void CL_DrawTextPhysicalWithCursor(const char *text, int maxChars, FontHandle font, float x, float y, float xScale, float yScale, const vec_t *color, int style, int cursorPos, int cursor)
 {
-    cursor = (signed char)cursor;
     re.DrawTextWithCursor(text, maxChars, font, x, y, xScale, yScale, color, style, cursorPos, cursor);
 }
 

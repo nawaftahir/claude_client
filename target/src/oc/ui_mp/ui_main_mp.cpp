@@ -1972,7 +1972,7 @@ void UI_DrawTextWithCursor(const char *text, int maxChars, FontHandle font, floa
     x = (float)I_fround(x);
     y = (float)I_fround(y);
 
-    CL_DrawTextPhysicalWithCursor(text, maxChars, font, x, y, xScale, yScale, color, style, cursorPos, (signed char)cursor);
+    CL_DrawTextPhysicalWithCursor(text, maxChars, font, x, y, xScale, yScale, color, style, cursorPos, cursor);
 }
 
 #ifndef __EMSCRIPTEN__

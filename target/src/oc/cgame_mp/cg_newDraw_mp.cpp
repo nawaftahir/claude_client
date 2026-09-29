@@ -1087,8 +1087,8 @@ static void CG_DrawStanceIcon(const rectDef_t *rect, vec_t *drawColor, float x, 
     if (cg->lastStanceChangeTime + 1000 > cg->time) {
         Dvar_GetUnpackedColor(cg_hudStanceFlash, drawColor);
 
-        flashAlpha = (float)(cg->lastStanceChangeTime - cg->time + 1000) / 1000.0f * 0.8f;
-        drawColor[3] = flashAlpha;
+        flashAlpha = (float)(cg->lastStanceChangeTime - cg->time + 1000) / 1000.0f;
+        drawColor[3] = flashAlpha * 0.8f;
         if (fadeAlpha < drawColor[3]) {
             drawColor[3] = fadeAlpha;
         }

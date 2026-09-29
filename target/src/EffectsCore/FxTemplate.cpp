@@ -1065,7 +1065,7 @@ bool PrimitiveTemplate::ParseSequenceStartFrameMode( const char *val )
 bool PrimitiveTemplate::ParseSequenceFixedFrameValue( const char *val )
 {
 	mSequenceFixedFrameValue = atoi(val);
-	if ( mSequenceFixedFrameValue <= 0 )
+	if ( mSequenceFixedFrameValue < 1 )
 		return false;
 	return true;
 }
