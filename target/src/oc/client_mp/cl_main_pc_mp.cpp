@@ -322,6 +322,7 @@ void CL_RconInit(void)
 static void CL_RconLogin(void)
 {
     const char *password;
+    int len;
 
     if (Cmd_Argc() != 3) {
         Com_Printf("USAGE: rcon login <password>\n");
@@ -329,12 +330,13 @@ static void CL_RconLogin(void)
     }
 
     password = Cmd_Argv(2);
-    if (strlen(password) >= sizeof(rconGlob.password)) {
+    len = strlen(password);
+    if (len >= sizeof(rconGlob.password)) {
         Com_Printf("rcon password must be %i characters or less\n", sizeof(rconGlob.password));
         return;
     }
 
-    memcpy(rconGlob.password, password, strlen(password) + 1);
+    memcpy(rconGlob.password, password, len + 1);
 }
 
 static void CL_RconLogout(void)
