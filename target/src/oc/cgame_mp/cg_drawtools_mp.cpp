@@ -350,27 +350,27 @@ int CG_DrawBigDevString(float x, float y, const char *s, float alpha, int align)
 void CG_DrawRotatedPicPhysical(float x, float y, float width, float height, float angle, const vec_t *color, MaterialHandle material)
 {
     static const float sign[4][2] = { { -1.0f, -1.0f }, { 1.0f, -1.0f }, { 1.0f, 1.0f }, { -1.0f, 1.0f } };
-    float s;
     float c;
-    float halfWidth;
-    float halfHeight;
+    float s;
+    float halfW;
+    float halfH;
     float center[2];
     float scale[2][2];
     vec2_t verts[4];
     int i;
 
     FastSinCos(angle * 0.017453292f, &s, &c);
-    halfWidth = width * 0.5f;
-    halfHeight = height * 0.5f;
-    center[0] = x + halfWidth;
-    center[1] = y + halfHeight;
-    scale[0][0] = c * halfWidth;
-    scale[0][1] = s * halfWidth;
-    scale[1][0] = s * halfHeight;
-    scale[1][1] = c * halfHeight;
+    halfW = width * 0.5f;
+    halfH = height * 0.5f;
+    center[0] = x + halfW;
+    center[1] = halfH + y;
+    scale[0][0] = c * halfW;
+    scale[0][1] = s * halfW;
+    scale[1][0] = s * halfH;
+    scale[1][1] = c * halfH;
     for (i = 0; i < 4; i++) {
-        verts[i][0] = scale[0][0] * sign[i][0] + center[0] - scale[1][0] * sign[i][1];
-        verts[i][1] = scale[1][1] * sign[i][1] + scale[0][1] * sign[i][0] + center[1];
+        verts[i][0] = center[0] + scale[0][0] * sign[i][0] - scale[0][1] * sign[i][1];
+        verts[i][1] = scale[1][0] * sign[i][0] + scale[1][1] * sign[i][1] + center[1];
     }
 
     CL_DrawQuadPic(verts, color, material);
@@ -384,8 +384,8 @@ void CG_DrawRotatedPic(float x, float y, float width, float height, int horzAlig
 
 void CG_DrawRotatedQuadPic(float x, float y, vec2_t *verts, float angle, const vec_t *color, MaterialHandle material)
 {
-    float s;
     float c;
+    float s;
     vec2_t xy[4];
     int i;
 
