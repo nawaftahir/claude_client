@@ -281,6 +281,7 @@ qboolean Item_SetFocus(displayContextDef_t *dc, itemDef_t *item, float x, float 
 void Script_SetFocusByDvar(displayContextDef_t *dc, itemDef_t *item, const char **args);
 void Script_SetFocus(displayContextDef_t *dc, itemDef_t *item, const char **args);
 int Item_ListBox_OverLB(itemDef_t *item, float x, float y);
+static qboolean Rect_ContainsPoint(const rectDef_t *rect, float x, float y);
 void Item_ListBox_MouseEnter(itemDef_t *item, float x, float y);
 void Item_MouseEnter(displayContextDef_t *dc, itemDef_t *item, float x, float y);
 qboolean Item_ListBox_HandleKey(displayContextDef_t *dc, itemDef_t *item, int key, qboolean down, qboolean force);
@@ -3485,143 +3486,63 @@ void Script_SetFocus(displayContextDef_t *dc, itemDef_t *item, const char **args
 
 int Item_ListBox_OverLB(itemDef_t *item, float x, float y)
 {
-    byte *it = (byte *)item;
-    int horzAlign = (((rectDef_t*)(it))->horzAlign);
-    int vertAlign = (((rectDef_t*)(it))->vertAlign);
+    rectDef_t r;
+    struct listBoxDef_s *listPtr;
+    int thumbstart;
+    int count;
 
-    UI_FeederCount((*(int *)&((itemDef_t *)it)->special));
-    if (!Item_GetListBoxDef(item))
+    count = UI_FeederCount(item->special);
+    listPtr = Item_GetListBoxDef(item);
+    if (!listPtr)
         return 0;
-
-    if (Window_IsHorizontal((Window *)it)) {
-
-        float scrollX = (((rectDef_t*)(it))->x) + (((rectDef_t*)(it))->w) - 16.0f;
-        float itemY = (((rectDef_t*)(it))->y);
-
-        float rx = scrollX, ry = itemY, rw = 16.0f, rh = 16.0f;
-        float cx = x, cy = y;
-        CalcScreenX(&cx, 4);
-        CalcScreenY(&cy, 4);
-        CalcScreenPlacement(&rx, &ry, &rw, &rh, horzAlign, vertAlign);
-        if (cx >= rx && cx <= rx + rw && cy >= ry && cy <= ry + rh)
-            return 0x200;
-
-        float endY = itemY + (((rectDef_t*)(it))->h) - 16.0f;
-        rx = scrollX;
-        ry = endY;
-        rw = 16.0f;
-        rh = 16.0f;
-        cx = x;
-        cy = y;
-        CalcScreenX(&cx, 4);
-        CalcScreenY(&cy, 4);
-        CalcScreenPlacement(&rx, &ry, &rw, &rh, horzAlign, vertAlign);
-        if (cx >= rx && cx <= rx + rw && cy >= ry && cy <= ry + rh)
+    r.horzAlign = item->window.rect[0].horzAlign;
+    r.vertAlign = item->window.rect[0].vertAlign;
+    if (Window_IsHorizontal((Window *)item)) {
+        // left arrow
+        r.x = item->window.rect[0].x;
+        r.y = item->window.rect[0].h + item->window.rect[0].y - 16.0f;
+        r.h = r.w = 16.0f;
+        if (Rect_ContainsPoint(&r, x, y))
             return 0x100;
-
-        int thumbPos = Item_ListBox_ThumbPosition(item);
-
-        rx = scrollX;
-        ry = (float)thumbPos;
-        rw = 16.0f;
-        rh = 16.0f;
-        cx = x;
-        cy = y;
-        CalcScreenX(&cx, 4);
-        CalcScreenY(&cy, 4);
-        CalcScreenPlacement(&rx, &ry, &rw, &rh, horzAlign, vertAlign);
-        if (cx >= rx && cx <= rx + rw && cy >= ry && cy <= ry + rh)
+        // right arrow
+        r.x = item->window.rect[0].x + item->window.rect[0].w - 16.0f;
+        if (Rect_ContainsPoint(&r, x, y))
+            return 0x200;
+        // thumb
+        thumbstart = Item_ListBox_ThumbPosition(item);
+        r.x = thumbstart;
+        if (Rect_ContainsPoint(&r, x, y))
+            return 0x400;
+        r.x = item->window.rect[0].x + 16.0f;
+        r.w = thumbstart - r.x;
+        if (Rect_ContainsPoint(&r, x, y))
             return 0x800;
-
-        rx = scrollX;
-        ry = itemY + 16.0f + 1.0f;
-        rw = 16.0f;
-        rh = (float)thumbPos - ry;
-        cx = x;
-        cy = y;
-        CalcScreenX(&cx, 4);
-        CalcScreenY(&cy, 4);
-        CalcScreenPlacement(&rx, &ry, &rw, &rh, horzAlign, vertAlign);
-        if (cx >= rx && cx <= rx + rw && cy >= ry && cy <= ry + rh)
-            return 0x400;
-
-        float thumbEnd = (float)thumbPos + 16.0f + 1.0f;
-        rx = scrollX;
-        ry = thumbEnd;
-        rw = 16.0f;
-        rh = endY - thumbEnd;
-        cx = x;
-        cy = y;
-        CalcScreenX(&cx, 4);
-        CalcScreenY(&cy, 4);
-        CalcScreenPlacement(&rx, &ry, &rw, &rh, horzAlign, vertAlign);
-        if (cx >= rx && cx <= rx + rw && cy >= ry && cy <= ry + rh)
-            return 0x400;
+        r.x = thumbstart + 16.0f;
+        r.w = item->window.rect[0].x + item->window.rect[0].w - 16.0f;
+        if (Rect_ContainsPoint(&r, x, y))
+            return 0x1000;
     } else {
-
-        float scrollX = (((rectDef_t*)(it))->x) + (((rectDef_t*)(it))->w) - 16.0f;
-        float itemY = (((rectDef_t*)(it))->y);
-
-        float rx = scrollX, ry = itemY, rw = 16.0f, rh = 16.0f;
-        float cx = x, cy = y;
-        CalcScreenX(&cx, 4);
-        CalcScreenY(&cy, 4);
-        CalcScreenPlacement(&rx, &ry, &rw, &rh, horzAlign, vertAlign);
-        if (cx >= rx && cx <= rx + rw && cy >= ry && cy <= ry + rh)
+        r.x = item->window.rect[0].x + item->window.rect[0].w - 16.0f;
+        r.y = item->window.rect[0].y;
+        r.h = r.w = 16.0f;
+        if (Rect_ContainsPoint(&r, x, y))
             return 0x100;
-
-        float endY = itemY + (((rectDef_t*)(it))->h) - 16.0f;
-        rx = scrollX;
-        ry = endY;
-        rw = 16.0f;
-        rh = 16.0f;
-        cx = x;
-        cy = y;
-        CalcScreenX(&cx, 4);
-        CalcScreenY(&cy, 4);
-        CalcScreenPlacement(&rx, &ry, &rw, &rh, horzAlign, vertAlign);
-        if (cx >= rx && cx <= rx + rw && cy >= ry && cy <= ry + rh)
+        r.y = item->window.rect[0].y + item->window.rect[0].h - 16.0f;
+        if (Rect_ContainsPoint(&r, x, y))
             return 0x200;
-
-        int thumbPos = Item_ListBox_ThumbPosition(item);
-        rx = scrollX;
-        ry = (float)thumbPos;
-        rw = 16.0f;
-        rh = 16.0f;
-        cx = x;
-        cy = y;
-        CalcScreenX(&cx, 4);
-        CalcScreenY(&cy, 4);
-        CalcScreenPlacement(&rx, &ry, &rw, &rh, horzAlign, vertAlign);
-        if (cx >= rx && cx <= rx + rw && cy >= ry && cy <= ry + rh)
+        thumbstart = Item_ListBox_ThumbPosition(item);
+        r.y = thumbstart;
+        if (Rect_ContainsPoint(&r, x, y))
+            return 0x400;
+        r.y = item->window.rect[0].y + 16.0f;
+        r.h = thumbstart - r.y;
+        if (Rect_ContainsPoint(&r, x, y))
             return 0x800;
-
-        rx = scrollX;
-        ry = itemY + 16.0f + 1.0f;
-        rw = 16.0f;
-        rh = (float)thumbPos - ry;
-        cx = x;
-        cy = y;
-        CalcScreenX(&cx, 4);
-        CalcScreenY(&cy, 4);
-        CalcScreenPlacement(&rx, &ry, &rw, &rh, horzAlign, vertAlign);
-        if (cx >= rx && cx <= rx + rw && cy >= ry && cy <= ry + rh)
-            return 0x400;
-
-        float thumbEnd = (float)thumbPos + 16.0f + 1.0f;
-        rx = scrollX;
-        ry = thumbEnd;
-        rw = 16.0f;
-        rh = endY - thumbEnd;
-        cx = x;
-        cy = y;
-        CalcScreenX(&cx, 4);
-        CalcScreenY(&cy, 4);
-        CalcScreenPlacement(&rx, &ry, &rw, &rh, horzAlign, vertAlign);
-        if (cx >= rx && cx <= rx + rw && cy >= ry && cy <= ry + rh)
-            return 0x400;
+        r.y = thumbstart + 16.0f;
+        r.h = item->window.rect[0].y + item->window.rect[0].h - 16.0f;
+        if (Rect_ContainsPoint(&r, x, y))
+            return 0x1000;
     }
-
     return 0;
 }
 
@@ -4000,7 +3921,6 @@ static void Scroll_ListBox_AutoFunc(displayContextDef_t *dc, void *p)
 }
 
 extern const char str_002157b8[];
-static qboolean Rect_ContainsPoint(const rectDef_t *rect, float x, float y);
 
 static int Item_ContainsMouse(displayContextDef_t *dc, itemDef_t *item)
 {
