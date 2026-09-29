@@ -2622,21 +2622,17 @@ const char *UI_FeederItemText(float feederID, int index, int column, MaterialHan
 
         UI_UpdateServerCount();
 
-        if (index < 0 || index >= sharedUiInfo.serverStatus.numDisplayServers)
-            return "";
+        if (index >= 0 && index < sharedUiInfo.serverStatus.numDisplayServers) {
+            if (lastColumn != column || lastTime > uiInfo->uiDC.realTime + 5000) {
+                LAN_GetServerInfo((ui_netSource)->current.integer,
+                                  sharedUiInfo.serverStatus.displayServers[index],
+                                  info, 0x400);
+                lastColumn = column;
+                lastTime = uiInfo->uiDC.realTime;
+            }
 
-        if (column != lastColumn ||
-            uiInfo->uiDC.realTime + 5000 < lastTime) {
-            LAN_GetServerInfo((ui_netSource)->current.integer,
-                              sharedUiInfo.serverStatus.displayServers[index],
-                              info, 0x400);
-            lastColumn = column;
-            lastTime = uiInfo->uiDC.realTime;
-        }
+            pingVal = atoi(Info_ValueForKey(info, "ping"));
 
-        pingVal = atoi(Info_ValueForKey(info, "ping"));
-
-        if (column <= 9) {
             switch (column) {
             case 0:
                 if (atoi(Info_ValueForKey(info, "pswrd")))
@@ -2644,46 +2640,10 @@ const char *UI_FeederItemText(float feederID, int index, int column, MaterialHan
                 return "";
             case 1: {
                 int hw = atoi(Info_ValueForKey(info, "hw"));
-                if ((unsigned)hw > 7)
-                    return "";
-                *handle = sharedUiInfo.serverHardwareIconList[hw];
+                if (hw >= 0 && hw < 8)
+                    *handle = sharedUiInfo.serverHardwareIconList[hw];
                 return "";
             }
-            case 2:
-                if (pingVal <= 0)
-                    return Info_ValueForKey(info, "addr");
-                I_strncpyz(clientBuff, Info_ValueForKey(info, "hostname"), 0x14);
-                return clientBuff;
-            case 3: {
-                const char *mapName = Info_ValueForKey(info, "mapname");
-                int numM = sharedUiInfo.mapCount;
-                int mi;
-                if (numM <= 0)
-                    return mapName;
-                for (mi = 0; mi < numM; mi++) {
-                    byte *entry = (byte *)&sharedUiInfo + mi * 0xa4;
-                    if (I_stricmp(mapName, *(const char **)(entry + 0x1358)) == 0) {
-                        return *(const char **)(entry + 0x1354);
-                    }
-                }
-                return mapName;
-            }
-            case 4: {
-                const char *maxClients = Info_ValueForKey(info, "sv_maxclients");
-                const char *clients = Info_ValueForKey(info, "clients");
-                Com_sprintf(clientBuff, 0x20, "%s (%s)", clients, maxClients);
-                return clientBuff;
-            }
-            case 5: {
-                const char *gt = Info_ValueForKey(info, "gametype");
-                if (!gt || gt[0] == '\0')
-                    return "?";
-                return Info_ValueForKey(info, "gametype");
-            }
-            case 6:
-                if (atoi(Info_ValueForKey(info, "voice")))
-                    return "X";
-                return "";
             case 7:
                 if (atoi(Info_ValueForKey(info, "pure")))
                     return "X";
@@ -2692,59 +2652,60 @@ const char *UI_FeederItemText(float feederID, int index, int column, MaterialHan
                 if (atoi(Info_ValueForKey(info, "mod")))
                     return "X";
                 return "";
+            case 6:
+                if (atoi(Info_ValueForKey(info, "voice")))
+                    return "X";
+                return "";
+            case 2:
+                if (pingVal <= 0)
+                    return Info_ValueForKey(info, "addr");
+                I_strncpyz(clientBuff, Info_ValueForKey(info, "hostname"), 0x14);
+                return clientBuff;
+            case 3:
+                return UI_GetMapDisplayName(Info_ValueForKey(info, "mapname"));
+            case 4:
+                Com_sprintf(clientBuff, 0x20, "%s (%s)", Info_ValueForKey(info, "clients"), Info_ValueForKey(info, "sv_maxclients"));
+                return clientBuff;
+            case 5:
+                if (Info_ValueForKey(info, "gametype") && *Info_ValueForKey(info, "gametype"))
+                    return Info_ValueForKey(info, "gametype");
+                return "?";
             case 9:
-                if (pingVal > 0)
-                    return Info_ValueForKey(info, "ping");
-                return "...";
+                if (pingVal <= 0)
+                    return "...";
+                return Info_ValueForKey(info, "ping");
             }
         }
     } else if (feederID == 13.0f) {
-
-        if (index < 0 || index >= sharedUiInfo.serverStatusInfo.numLines)
-            return "";
-        if ((unsigned)column > 3)
-            return "";
-        {
-            const char *text = *(const char **)((byte *)&sharedUiInfo + 109864 + (column + index * 4) * 4);
-            if (text[0] == '@')
-                return UI_SafeTranslateString(text + 1);
-            return text;
+        if (index >= 0 && index < sharedUiInfo.serverStatusInfo.numLines) {
+            if (column >= 0 && column < 4) {
+                const char *text = *(const char **)((byte *)&sharedUiInfo + 109864 + (column + index * 4) * 4);
+                if (text[0] == '@')
+                    return UI_SafeTranslateString(text + 1);
+                return text;
+            }
         }
     } else if (feederID == 7.0f) {
-
-        if (index < 0 || index >= sharedUiInfo.playerCount)
-            return "";
-        return sharedUiInfo.playerNames[index];
+        if (index >= 0 && index < sharedUiInfo.playerCount)
+            return sharedUiInfo.playerNames[index];
     } else if (feederID == 9.0f) {
-
-        if (index < 0 || index >= sharedUiInfo.modCount)
-            return "";
-        {
+        if (index >= 0 && index < sharedUiInfo.modCount) {
             const char *desc = *(const char **)((byte *)&sharedUiInfo + 25976 + index * 8);
             if (desc && desc[0] != '\0')
                 return desc;
             return *(const char **)((byte *)&sharedUiInfo + 25972 + index * 8);
         }
     } else if (feederID == 20.0f) {
-
-        if (index < 0 || index >= sharedUiInfo.playerCount)
-            return "";
-        if (column - 1 == 0) {
-
-            return sharedUiInfo.playerNames[index];
+        if (index >= 0 && index < sharedUiInfo.playerCount) {
+            if (column == 1)
+                return sharedUiInfo.playerNames[index];
+            if (CL_IsPlayerMuted(sharedUiInfo.playerClientNums[index]))
+                return UI_SafeTranslateString("MP_MUTED");
         }
-
-        if (CL_IsPlayerMuted(sharedUiInfo.playerClientNums[index]))
-            return UI_SafeTranslateString("MP_MUTED");
-        return "";
-    } else if (feederID == 24.0f) {
-
-        if (index < 0 || index >= uiInfo->playerProfileCount)
-            return "";
-        {
-            int sortedIdx = uiInfo->playerProfileStatus.displayProfile[index];
-            return uiInfo->playerProfileName[sortedIdx];
-        }
+    }
+    if (feederID == 24.0f) {
+        if (index >= 0 && index < uiInfo->playerProfileCount)
+            return uiInfo->playerProfileName[uiInfo->playerProfileStatus.displayProfile[index]];
     }
 
     return "";
