@@ -1043,50 +1043,54 @@ menuDef_t *Menu_GetFocused(displayContextDef_t *dc)
     return NULL;
 }
 
+// retail 0x535e10
 int Item_ListBox_MaxScroll(itemDef_t *item)
 {
-    byte *it = (byte *)item;
-    byte *listPtr = (byte *)Item_GetListBoxDef(item);
-    int count = UI_FeederCount(((itemDef_t *)it)->special);
+    listBoxDef_s *listPtr;
+    int count;
+    int max;
+
+    listPtr = Item_GetListBoxDef(item);
+    count = UI_FeederCount(item->special);
     if (!listPtr)
         return 0;
-    int visibleRows;
-    if (Window_IsHorizontal((Window *)it)) {
-
-        visibleRows = (int)((((rectDef_t*)(it))->w) / (((listBoxDef_s*)(listPtr))->elementWidth));
-    } else {
-
-        visibleRows = (int)((((rectDef_t*)(it))->h) / (((listBoxDef_s*)(listPtr))->elementHeight));
-    }
-    int maxScroll = count - visibleRows + 1;
-    if (maxScroll < 0)
+    if (Window_IsHorizontal(&item->window))
+        max = count - (int)(item->window.rect[0].w / listPtr->elementWidth) + 1;
+    else
+        max = count - (int)(item->window.rect[0].h / listPtr->elementHeight) + 1;
+    if (max < 0)
         return 0;
-    return maxScroll;
+    return max;
 }
 
+// retail 0x535e80
 int Item_ListBox_ThumbPosition(itemDef_t *item)
 {
-    byte *it = (byte *)item;
-    byte *listPtr = (byte *)Item_GetListBoxDef(item);
-    int maxScroll;
-    float scrollArea, ratio;
+    listBoxDef_s *listPtr;
+    float size;
+    float pos;
+    int max;
 
+    listPtr = Item_GetListBoxDef(item);
     if (!listPtr)
         return 0;
-
-    maxScroll = Item_ListBox_MaxScroll(item);
-
-    if (Window_IsHorizontal((Window *)it)) {
-
-        scrollArea = (((rectDef_t*)(it))->w) - 32.0f - 2.0f;
-        ratio = (maxScroll > 0) ? (scrollArea - 16.0f) / (float)maxScroll : 0.0f;
-        return (int)(ratio * (float)*(int *)listPtr + (((rectDef_t*)(it))->x) + 1.0f + 16.0f);
-    } else {
-
-        scrollArea = (((rectDef_t*)(it))->h) - 32.0f - 2.0f;
-        ratio = (maxScroll > 0) ? (scrollArea - 16.0f) / (float)maxScroll : 0.0f;
-        return (int)(ratio * (float)*(int *)listPtr + (((rectDef_t*)(it))->y) + 1.0f + 16.0f);
+    max = Item_ListBox_MaxScroll(item);
+    if (Window_IsHorizontal(&item->window)) {
+        size = item->window.rect[0].w - 32.0f - 2.0f;
+        if (max > 0)
+            pos = (size - 16.0f) / (float)max;
+        else
+            pos = 0.0f;
+        pos *= listPtr->startPos[0];
+        return (int)(item->window.rect[0].x + 1.0f + 16.0f + pos);
     }
+    size = item->window.rect[0].h - 32.0f - 2.0f;
+    if (max > 0)
+        pos = (size - 16.0f) / (float)max;
+    else
+        pos = 0.0f;
+    pos *= listPtr->startPos[0];
+    return (int)(item->window.rect[0].y + 1.0f + 16.0f + pos);
 }
 
 int Item_ListBox_ThumbDrawPosition(displayContextDef_t *dc, itemDef_t *item)
