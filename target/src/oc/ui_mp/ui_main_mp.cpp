@@ -670,6 +670,43 @@ static int UI_ServersQsortCompare(const void *arg1, const void *arg2)
 #endif
 
 #ifndef __EMSCRIPTEN__
+static void UI_LoadMods(void)
+{
+    int numdirs;
+    char dirlist[2048];
+    char *dirptr;
+    char *descptr;
+    int i;
+    int dirlen;
+
+    sharedUiInfo.modCount = 0;
+    numdirs = FS_GetFileList("$modlist", "", FS_LIST_ALL, dirlist, sizeof(dirlist));
+    dirptr = dirlist;
+    for (i = 0; i < numdirs; i++) {
+        dirlen = strlen(dirptr) + 1;
+        descptr = dirptr + dirlen;
+        sharedUiInfo.modList[sharedUiInfo.modCount].modName = String_Alloc(dirptr);
+        sharedUiInfo.modList[sharedUiInfo.modCount].modDescr = String_Alloc(descptr);
+        dirptr += dirlen + strlen(descptr) + 1;
+        sharedUiInfo.modCount++;
+        if (sharedUiInfo.modCount >= 64)
+            break;
+    }
+}
+
+static int UI_GetPlayerProfileListIndexFromName(const char *name)
+{
+    int profileIndex;
+
+    for (profileIndex = 0; profileIndex < uiInfo->playerProfileCount; profileIndex++) {
+        if (!I_stricmp(name, uiInfo->playerProfileName[uiInfo->playerProfileStatus.displayProfile[profileIndex]]))
+            return profileIndex;
+    }
+    return -1;
+}
+#endif
+
+#ifndef __EMSCRIPTEN__
 static int UI_PlayerProfilesQsortCompare(const void *arg1, const void *arg2)
 {
     int idx1 = *(const int *)arg1;
@@ -687,6 +724,137 @@ static int UI_PlayerProfilesQsortCompare(const void *arg1, const void *arg2)
         result = -result;
 
     return result;
+}
+#endif
+
+#ifndef __EMSCRIPTEN__
+static void UI_SelectPlayerProfileIndex(int index)
+{
+    int menuIndex;
+
+    for (menuIndex = uiInfo->uiDC.openMenuCount - 1; menuIndex >= 0; menuIndex--) {
+        if (((unsigned int)uiInfo->uiDC.menuStack[menuIndex]->window.dynamicFlags[0] >> 2) & 1)
+            Menu_SetFeederSelection(&uiInfo->uiDC, uiInfo->uiDC.menuStack[menuIndex], 24, index, 0);
+    }
+}
+
+static void UI_SortPlayerProfiles(int selectIndex)
+{
+    int profileIndex;
+
+    if (!uiInfo->playerProfileCount)
+        return;
+    for (profileIndex = 0; profileIndex < uiInfo->playerProfileCount; profileIndex++)
+        uiInfo->playerProfileStatus.displayProfile[profileIndex] = profileIndex;
+    qsort(uiInfo->playerProfileStatus.displayProfile, uiInfo->playerProfileCount, sizeof(int), UI_PlayerProfilesQsortCompare);
+    UI_SelectPlayerProfileIndex(selectIndex);
+}
+
+static void UI_AddPlayerProfiles(void)
+{
+    char **profileList;
+    int profileCount;
+    int profileIndex;
+
+    uiInfo->playerProfileCount = 0;
+    uiInfo->playerProfileStatus.sortDir = 1;
+    profileList = FS_ListFiles("players", "/", FS_LIST_ALL, &profileCount, 3);
+    for (profileIndex = 0; profileIndex < profileCount; profileIndex++)
+        uiInfo->playerProfileName[uiInfo->playerProfileCount++] = String_Alloc(profileList[profileIndex]);
+    FS_FreeFileList(profileList, 3);
+    UI_SortPlayerProfiles(0);
+    Dvar_SetInt((dvar_t *)ui_playerProfileCount, uiInfo->playerProfileCount);
+}
+
+static void UI_SelectActivePlayerProfile(void)
+{
+    int selIndex;
+
+    selIndex = UI_GetPlayerProfileListIndexFromName(com_playerProfile->current.string);
+    if (selIndex >= 0 && selIndex < uiInfo->playerProfileCount)
+        UI_SelectPlayerProfileIndex(selIndex);
+}
+
+static void UI_CreatePlayerProfile(void)
+{
+    char name[32];
+    int profileIndex;
+
+    if (!strlen(ui_playerProfileNameNew->current.string))
+        return;
+    I_strncpyz(name, ui_playerProfileNameNew->current.string, sizeof(name));
+    Dvar_SetString((dvar_t *)ui_playerProfileNameNew, "");
+    if (uiInfo->playerProfileCount == 64) {
+        Menus_OpenByName(&uiInfo->uiDC, "profile_create_too_many_popmenu");
+        return;
+    }
+    for (profileIndex = 0; profileIndex < uiInfo->playerProfileCount; profileIndex++) {
+        if (!I_stricmp(name, uiInfo->playerProfileName[profileIndex])) {
+            Menus_OpenByName(&uiInfo->uiDC, "profile_exists_popmenu");
+            return;
+        }
+    }
+    if (!Com_NewPlayerProfile(name)) {
+        Menus_OpenByName(&uiInfo->uiDC, "profile_create_fail_popmenu");
+        return;
+    }
+    uiInfo->playerProfileName[uiInfo->playerProfileCount++] = String_Alloc(name);
+    UI_SortPlayerProfiles(0);
+    Dvar_SetInt((dvar_t *)ui_playerProfileCount, uiInfo->playerProfileCount);
+    UI_SelectPlayerProfileIndex(UI_GetPlayerProfileListIndexFromName(name));
+}
+
+static void UI_DeletePlayerProfile(void)
+{
+    int curSelected;
+    int nameIndex;
+
+    if (!uiInfo->playerProfileCount)
+        return;
+    if (!Com_DeletePlayerProfile(ui_playerProfileSelected->current.string)) {
+        Menus_OpenByName(&uiInfo->uiDC, "profile_delete_fail_popmenu");
+        return;
+    }
+    curSelected = UI_GetPlayerProfileListIndexFromName(ui_playerProfileSelected->current.string);
+    nameIndex = uiInfo->playerProfileStatus.displayProfile[curSelected];
+    if (--uiInfo->playerProfileCount) {
+        uiInfo->playerProfileName[nameIndex] = uiInfo->playerProfileName[uiInfo->playerProfileCount];
+        if (curSelected == uiInfo->playerProfileCount)
+            curSelected--;
+        UI_SortPlayerProfiles(curSelected);
+    } else {
+        Dvar_SetString((dvar_t *)ui_playerProfileSelected, "");
+    }
+    Dvar_SetInt((dvar_t *)ui_playerProfileCount, uiInfo->playerProfileCount);
+}
+
+static void UI_LoadPlayerProfile(void)
+{
+    if (ui_playerProfileSelected->current.string[0])
+        Com_ChangePlayerProfile(ui_playerProfileSelected->current.string);
+}
+
+static void UI_LoadMovies(void)
+{
+    char movielist[4096];
+    char *moviename;
+    int i;
+    int len;
+
+    sharedUiInfo.movieCount = FS_GetFileList("video", "roq", FS_LIST_PURE_ONLY, movielist, sizeof(movielist));
+    if (!sharedUiInfo.movieCount)
+        return;
+    if (sharedUiInfo.movieCount > 256)
+        sharedUiInfo.movieCount = 256;
+    moviename = movielist;
+    for (i = 0; i < sharedUiInfo.movieCount; i++) {
+        len = strlen(moviename);
+        if (!I_stricmp(moviename + len - 4, ".roq"))
+            moviename[len - 4] = 0;
+        I_strupr(moviename);
+        sharedUiInfo.movieList[i] = String_Alloc(moviename);
+        moviename += len + 1;
+    }
 }
 #endif
 
@@ -752,6 +920,36 @@ qboolean UI_CheckExecKey(int key)
     }
     return 0;
 }
+
+#ifndef __EMSCRIPTEN__
+static void UI_Update(const char *name)
+{
+    float rate;
+
+    if (!I_stricmp(name, "ui_SetName")) {
+        Dvar_SetStringByName("name", Dvar_GetVariantString("ui_Name"));
+    } else if (!I_stricmp(name, "ui_GetName")) {
+        Dvar_SetStringByName("ui_Name", Dvar_GetVariantString("name"));
+    } else if (!I_stricmp(name, "ui_setRate")) {
+        rate = (float)Dvar_GetInt("rate");
+        if (rate >= 5000.0f) {
+            Dvar_SetIntByName("cl_maxpackets", 30);
+            Dvar_SetIntByName("cl_packetdup", 1);
+        } else if (rate >= 4000.0f) {
+            Dvar_SetIntByName("cl_maxpackets", 15);
+            Dvar_SetIntByName("cl_packetdup", 2);
+        } else {
+            Dvar_SetIntByName("cl_maxpackets", 15);
+            Dvar_SetIntByName("cl_packetdup", 1);
+        }
+    } else if (!I_stricmp(name, "ui_mousePitch")) {
+        if (Dvar_GetBool(name))
+            Dvar_SetFloatByName("m_pitch", -0.022f);
+        else
+            Dvar_SetFloatByName("m_pitch", 0.022f);
+    }
+}
+#endif
 
 #ifndef __EMSCRIPTEN__
 static void UI_VerifyLanguage(void)
@@ -861,6 +1059,29 @@ Bool UI_GetOpenOrCloseMenuOnDvarArgs(const char **args, const char *cmd,
     }
 
     return 1;
+}
+#endif
+
+#ifndef __EMSCRIPTEN__
+static bool UI_DvarValueTest(const char *cmd, const char *dvarName, const char *testValue, bool wantMatch)
+{
+    if (!Dvar_FindVar(dvarName)) {
+        Com_Printf("%s: cannot find dvar %s\n", cmd, dvarName);
+        return 0;
+    }
+    return (I_stricmp(testValue, Dvar_GetVariantString(dvarName)) == 0) == wantMatch;
+}
+
+static void UI_CloseMenuOnDvar(const char *cmd, const char *menuName, const char *dvarName, const char *testValue)
+{
+    if (UI_DvarValueTest(cmd, dvarName, testValue, I_stricmp(cmd, "closeMenuOnDvar") == 0))
+        Menus_CloseByName(&uiInfo->uiDC, menuName);
+}
+
+static void UI_OpenMenuOnDvar(const char *cmd, const char *menuName, const char *dvarName, const char *testValue)
+{
+    if (UI_DvarValueTest(cmd, dvarName, testValue, I_stricmp(cmd, "openMenuOnDvar") == 0))
+        Menus_OpenByName(&uiInfo->uiDC, menuName);
 }
 #endif
 
@@ -1459,128 +1680,88 @@ uiMenuCommand_t UI_GetActiveMenu(void)
 #ifndef __EMSCRIPTEN__
 qboolean UI_SetActiveMenu(int menu)
 {
-    byte *legacyBase;
     menuDef_t *pFocus;
     const char *errorMsg;
 
     if (Menu_Count(&uiInfo->uiDC) <= 0)
         return 0;
 
-    if (menu != 9 && menu != 10)
+    if (menu != UIMENU_SCRIPT_POPUP && menu != UIMENU_SCRIPT_POPUP_NO_MOUSE)
         uiInfo->currentMenuType = (uiMenuCommand_t)(menu);
 
-    if ((unsigned)menu > 11)
-        return 0;
-
     switch (menu) {
-    case 0:
+    case UIMENU_NONE:
         Key_SetCatcher(Key_GetCatcher() & ~8);
         Dvar_SetIntByName("cl_paused", 0);
         Menus_CloseAll(&uiInfo->uiDC);
         return 1;
 
-    case 1:
+    case UIMENU_MAIN:
         Key_SetCatcher(8);
         Menus_OpenByName(&uiInfo->uiDC, "main");
         errorMsg = Dvar_GetString("com_errorMessage");
-        if (errorMsg[0] != '\0' && I_stricmp(errorMsg, ";") != 0) {
+        if (strlen(errorMsg) && I_stricmp(errorMsg, ";"))
             Menus_OpenByName(&uiInfo->uiDC, "error_popmenu");
-        }
         SND_FadeAllSounds(1.0f, 1000);
         return 1;
 
-    case 2:
-    {
-        int opened;
-        const char *cgMenuName = cg->scriptMainMenu;
+    case UIMENU_INGAME:
         Key_SetCatcher(8);
         Menus_CloseAll(&uiInfo->uiDC);
-        opened = Menus_OpenByName(&uiInfo->uiDC, cgMenuName);
-        if (!opened) {
+        if (!Menus_OpenByName(&uiInfo->uiDC, cg->scriptMainMenu))
             Menus_OpenByName(&uiInfo->uiDC, "main");
-        }
-    }
         return 1;
 
-    case 3:
+    case UIMENU_NEED_CD:
         Key_SetCatcher(8);
         Menus_OpenByName(&uiInfo->uiDC, "needcd");
         return 1;
 
-    case 4:
+    case UIMENU_BAD_CD_KEY:
         Key_SetCatcher(8);
         Menus_OpenByName(&uiInfo->uiDC, "badcd");
         return 1;
 
-    case 5:
+    case UIMENU_TEAM:
         Key_SetCatcher(8);
         Menus_OpenByName(&uiInfo->uiDC, "team");
         return 1;
 
-    case 6:
-    case 7:
-        return 0;
-
-    case 8:
+    case UIMENU_WM_QUICKMESSAGE:
         uiInfo->uiDC.cursorx = 0x27f;
         uiInfo->uiDC.cursory = 0x1df;
         Key_SetCatcher(8);
-        (clients)->displayHUDWithKeycatchUI = 1;
+        clients->displayHUDWithKeycatchUI = 1;
         Menus_CloseAll(&uiInfo->uiDC);
         Menus_OpenByName(&uiInfo->uiDC, "quickmessage");
         return 1;
 
-    case 9:
-    case 10:
+    case UIMENU_WM_AUTOUPDATE:
+        Menus_OpenByName(&uiInfo->uiDC, "autoupdate");
+        return 1;
+
+    case UIMENU_SCRIPT_POPUP:
+    case UIMENU_SCRIPT_POPUP_NO_MOUSE:
         pFocus = Menu_GetFocused(&uiInfo->uiDC);
-        if (pFocus) {
-            int activeMenu = uiInfo->currentMenuType;
-#if COD2_TRACE
-            static int traceCount;
-            if (traceCount++ < 32) {
-                if (getenv("MTRACE"))
-                    Com_Printf("[menu-trace] UI popup guard focus='%s' flags=0x%x active=%d loaded=%d\n",
-                               pFocus->window.name, pFocus->window.dynamicFlags[0],
-                               activeMenu, Menu_Count(&uiInfo->uiDC));
-            }
-#endif
-            if (activeMenu != 9 && activeMenu != 10)
-                return 0;
-        }
-
-        legacyBase = (byte *)legacyHacks;
-
-        if (pFocus) {
-
-            if (I_stricmp(pFocus->window.name, ((LegacyHacks *)legacyBase)->ui_newScriptMenu) == 0)
-                return 1;
-        }
-
-        uiInfo->currentMenuType = (uiMenuCommand_t)(9);
-
-        if (menu == 10) {
+        if (pFocus && uiInfo->currentMenuType != UIMENU_SCRIPT_POPUP && uiInfo->currentMenuType != UIMENU_SCRIPT_POPUP_NO_MOUSE)
+            return 0;
+        if (pFocus && !I_stricmp(pFocus->window.name, legacyHacks->ui_newScriptMenu))
+            return 1;
+        uiInfo->currentMenuType = UIMENU_SCRIPT_POPUP;
+        if (menu == UIMENU_SCRIPT_POPUP_NO_MOUSE) {
             uiInfo->uiDC.cursorx = 0x27f;
             uiInfo->uiDC.cursory = 0x1df;
         }
-
         Key_SetCatcher(8);
-        (clients)->displayHUDWithKeycatchUI = 1;
         Menus_CloseAll(&uiInfo->uiDC);
-
-        strcpy(((LegacyHacks *)legacyBase)->ui_scriptMenu, ((LegacyHacks *)legacyBase)->ui_newScriptMenu);
-        ((LegacyHacks *)legacyBase)->ui_scriptMenuIndex = ((LegacyHacks *)legacyBase)->ui_newScriptMenuIndex;
-        (*(byte *)&((LegacyHacks *)legacyBase)->ui_newScriptMenu[0]) = 0;
-        ((LegacyHacks *)legacyBase)->ui_newScriptMenuIndex = -1;
-
-        Com_Printf("script menu '%s': join dvars auto='%s' allies='%s' axis='%s'\n",
-                   ((LegacyHacks *)legacyBase)->ui_scriptMenu,
-                   Dvar_GetVariantString("ui_allow_joinauto"),
-                   Dvar_GetVariantString("ui_allow_joinallies"),
-                   Dvar_GetVariantString("ui_allow_joinaxis"));
-        Menus_OpenByName(&uiInfo->uiDC, ((LegacyHacks *)legacyBase)->ui_scriptMenu);
+        strcpy(legacyHacks->ui_scriptMenu, legacyHacks->ui_newScriptMenu);
+        legacyHacks->ui_scriptMenuIndex = legacyHacks->ui_newScriptMenuIndex;
+        legacyHacks->ui_newScriptMenu[0] = 0;
+        legacyHacks->ui_newScriptMenuIndex = -1;
+        Menus_OpenByName(&uiInfo->uiDC, legacyHacks->ui_scriptMenu);
         return 1;
 
-    case 11:
+    case UIMENU_PLAYER_PROFILE:
         Key_SetCatcher(8);
         Menus_OpenByName(&uiInfo->uiDC, "player_profile");
         SND_FadeAllSounds(1.0f, 1000);
@@ -1892,6 +2073,22 @@ void UI_DrawTextWithCursor(const char *text, int maxChars, FontHandle font, floa
 
     CL_DrawTextPhysicalWithCursor(text, maxChars, font, x, y, xScale, yScale, color, style, cursorPos, (signed char)cursor);
 }
+
+#ifndef __EMSCRIPTEN__
+static void UI_StopServerRefresh(void)
+{
+    int count;
+
+    if (!sharedUiInfo.serverStatus.refreshActive)
+        return;
+    sharedUiInfo.serverStatus.refreshActive = 0;
+    Com_Printf("%d servers listed in browser with %d players.\n",
+               sharedUiInfo.serverStatus.numDisplayServers, sharedUiInfo.serverStatus.numPlayersOnServers);
+    count = LAN_GetServerCount(ui_netSource->current.integer) - sharedUiInfo.serverStatus.numDisplayServers;
+    if (count > 0)
+        Com_Printf("%d servers not listed (filtered out by game browser settings)\n", count);
+}
+#endif
 
 #ifndef __EMSCRIPTEN__
 static void UI_StartServerRefresh(qboolean full)
@@ -3437,43 +3634,7 @@ void UI_RunMenuScript(const char **args)
     }
 
     if (I_stricmp(name, "LoadMods") == 0) {
-        int numFiles, i, modCount;
-        char *namePtr;
-
-        sharedUiInfo.modCount = 0;
-        numFiles = FS_GetFileList("$modlist", "", FS_LIST_ALL, addr, 0x800);
-        if (numFiles <= 0)
-            return;
-
-        namePtr = addr;
-        modCount = sharedUiInfo.modCount;
-
-        for (i = 0; i < numFiles; i++) {
-            const char *modName;
-            const char *modDesc;
-            int nameLen, descLen;
-
-            for (nameLen = 0; namePtr[nameLen]; nameLen++)
-                ;
-            nameLen++;
-
-            modName = namePtr;
-            modDesc = namePtr + nameLen;
-
-            *(const char **)((byte *)&sharedUiInfo + 25972 + modCount * 8) = String_Alloc(modName);
-
-            modCount = sharedUiInfo.modCount;
-            *(const char **)((byte *)&sharedUiInfo + 25976 + modCount * 8) = String_Alloc(modDesc);
-
-            for (descLen = 0; modDesc[descLen]; descLen++)
-                ;
-            namePtr = (char *)modDesc + descLen + 1;
-
-            modCount = sharedUiInfo.modCount + 1;
-            sharedUiInfo.modCount = modCount;
-            if (modCount > 63)
-                return;
-        }
+        UI_LoadMods();
         return;
     }
 
@@ -3533,277 +3694,38 @@ void UI_RunMenuScript(const char **args)
     }
 
     if (I_stricmp(name, "addPlayerProfiles") == 0) {
-
-        int numFiles, i;
-        char **fileList;
-
-        uiInfo->playerProfileCount = 0;
-        uiInfo->playerProfileStatus.sortDir = 1;
-
-        fileList = FS_ListFiles("players", "/", FS_LIST_ALL, &sortColumn, 0);
-
-        if (sortColumn > 0) {
-            for (i = 0; i < sortColumn; i++) {
-                int profileIdx = uiInfo->playerProfileCount;
-                uiInfo->playerProfileName[profileIdx] = String_Alloc(fileList[i]);
-                uiInfo->playerProfileCount += 1;
-            }
-        }
-
-        FS_FreeFileList(fileList, 0);
-
-        {
-            int numProfiles = uiInfo->playerProfileCount;
-            if (numProfiles > 0) {
-                for (i = 0; i < numProfiles; i++)
-                    uiInfo->playerProfileStatus.displayProfile[i] = i;
-                qsort(uiInfo->playerProfileStatus.displayProfile, numProfiles, 4, UI_PlayerProfilesQsortCompare);
-
-                {
-                    int numMenus = uiInfo->uiDC.openMenuCount;
-                    for (i = numMenus - 1; i >= 0; i--) {
-                        menuDef_t *menu = uiInfo->uiDC.menuStack[i];
-                        if (*(byte *)&menu->window.dynamicFlags[0] & 4) {
-                            Menu_SetFeederSelection(&uiInfo->uiDC, menu, 0x18, 0, 0);
-                        }
-                    }
-                }
-            }
-        }
-
-        Dvar_SetInt((dvar_t *)ui_playerProfileCount, uiInfo->playerProfileCount);
+        UI_AddPlayerProfiles();
         return;
     }
 
     if (I_stricmp(name, "sortPlayerProfiles") == 0) {
-
-        int curSort = uiInfo->playerProfileStatus.sortDir;
-        uiInfo->playerProfileStatus.sortDir = !curSort;
-
-        {
-            int numProfiles = uiInfo->playerProfileCount;
-            if (numProfiles > 0) {
-                int i;
-                for (i = 0; i < numProfiles; i++)
-                    uiInfo->playerProfileStatus.displayProfile[i] = i;
-                qsort(uiInfo->playerProfileStatus.displayProfile, numProfiles, 4, UI_PlayerProfilesQsortCompare);
-
-                {
-                    int numMenus = uiInfo->uiDC.openMenuCount;
-                    for (i = numMenus - 1; i >= 0; i--) {
-                        menuDef_t *menu = uiInfo->uiDC.menuStack[i];
-                        if (*(byte *)&menu->window.dynamicFlags[0] & 4) {
-                            Menu_SetFeederSelection(&uiInfo->uiDC, menu, 0x18, 0, 0);
-                        }
-                    }
-                }
-            }
-        }
+        uiInfo->playerProfileStatus.sortDir = !uiInfo->playerProfileStatus.sortDir;
+        UI_SortPlayerProfiles(0);
         return;
     }
 
     if (I_stricmp(name, "selectActivePlayerProfile") == 0) {
-
-        const char *curProfile = (com_playerProfile)->current.string;
-        int numProfiles = uiInfo->playerProfileCount;
-        int i, found = -1;
-
-        for (i = 0; i < numProfiles; i++) {
-            int sortedIdx = uiInfo->playerProfileStatus.displayProfile[i];
-            if (I_stricmp(curProfile, uiInfo->playerProfileName[sortedIdx]) == 0) {
-                found = i;
-                break;
-            }
-        }
-        if (found < 0)
-            return;
-        if (found >= numProfiles)
-            return;
-
-        {
-            int numMenus = uiInfo->uiDC.openMenuCount;
-            for (i = numMenus - 1; i >= 0; i--) {
-                menuDef_t *menu = uiInfo->uiDC.menuStack[i];
-                if (*(byte *)&menu->window.dynamicFlags[0] & 4) {
-                    Menu_SetFeederSelection(&uiInfo->uiDC, menu, 0x18, found, 0);
-                }
-            }
-        }
+        UI_SelectActivePlayerProfile();
         return;
     }
 
     if (I_stricmp(name, "createPlayerProfile") == 0) {
-        const char *newName = ui_playerProfileNameNew->current.string;
-        int i, numProfiles;
-
-        if (newName[0] == '\0')
-            return;
-
-        I_strncpyz(out, newName, 0x20);
-        Dvar_SetString((dvar_t *)ui_playerProfileNameNew, "");
-
-        numProfiles = uiInfo->playerProfileCount;
-        if (numProfiles >= 64) {
-            Menus_OpenByName(&uiInfo->uiDC, "profile_create_too_many_popmenu");
-            return;
-        }
-
-        for (i = 0; i < numProfiles; i++) {
-            if (I_stricmp(out, uiInfo->playerProfileName[i]) == 0) {
-                Menus_OpenByName(&uiInfo->uiDC, "profile_exists_popmenu");
-                return;
-            }
-        }
-
-        if (!Com_NewPlayerProfile(out)) {
-            Menus_OpenByName(&uiInfo->uiDC, "profile_create_fail_popmenu");
-            return;
-        }
-
-        {
-            int idx = uiInfo->playerProfileCount;
-            uiInfo->playerProfileName[idx] = String_Alloc(out);
-            uiInfo->playerProfileCount += 1;
-        }
-
-        {
-            int np = uiInfo->playerProfileCount;
-            if (np > 0) {
-                for (i = 0; i < np; i++)
-                    uiInfo->playerProfileStatus.displayProfile[i] = i;
-                qsort(uiInfo->playerProfileStatus.displayProfile, np, 4, UI_PlayerProfilesQsortCompare);
-            }
-        }
-
-        Dvar_SetInt((dvar_t *)ui_playerProfileCount, uiInfo->playerProfileCount);
-
-        {
-            int np = uiInfo->playerProfileCount;
-            int found = -1;
-            for (i = 0; i < np; i++) {
-                int si = uiInfo->playerProfileStatus.displayProfile[i];
-                if (I_stricmp(out, uiInfo->playerProfileName[si]) == 0) {
-                    found = i;
-                    break;
-                }
-            }
-
-            {
-                int numMenus = uiInfo->uiDC.openMenuCount;
-                for (i = numMenus - 1; i >= 0; i--) {
-                    menuDef_t *menu = uiInfo->uiDC.menuStack[i];
-                    if (*(byte *)&menu->window.dynamicFlags[0] & 4) {
-                        Menu_SetFeederSelection(&uiInfo->uiDC, menu, 0x18, found, 0);
-                    }
-                }
-            }
-        }
+        UI_CreatePlayerProfile();
         return;
     }
 
     if (I_stricmp(name, "deletePlayerProfile") == 0) {
-        int numProfiles = uiInfo->playerProfileCount;
-        int sortedIdx, i;
-        const char *selName;
-
-        if (numProfiles == 0)
-            return;
-
-        selName = ui_playerProfileSelected->current.string;
-        if (!Com_DeletePlayerProfile(selName)) {
-            Menus_OpenByName(&uiInfo->uiDC, "profile_delete_fail_popmenu");
-            return;
-        }
-
-        {
-            int found = -1;
-            for (i = 0; i < numProfiles; i++) {
-                int si = uiInfo->playerProfileStatus.displayProfile[i];
-                if (I_stricmp(selName, uiInfo->playerProfileName[si]) == 0) {
-                    found = i;
-                    sortedIdx = si;
-                    break;
-                }
-            }
-            if (found < 0) {
-                found = -1;
-                sortedIdx = *(int *)((byte *)uiInfo + 0x388 - 4);
-            }
-
-            uiInfo->playerProfileCount -= 1;
-            numProfiles = uiInfo->playerProfileCount;
-
-            if (numProfiles == 0) {
-                Dvar_SetString((dvar_t *)ui_playerProfileSelected, "");
-            } else {
-
-                uiInfo->playerProfileName[sortedIdx] =
-                    uiInfo->playerProfileName[numProfiles];
-
-                if (found >= numProfiles)
-                    found = numProfiles - 1;
-
-                if (numProfiles > 0) {
-                    for (i = 0; i < numProfiles; i++)
-                        uiInfo->playerProfileStatus.displayProfile[i] = i;
-                    qsort(uiInfo->playerProfileStatus.displayProfile, numProfiles, 4, UI_PlayerProfilesQsortCompare);
-                }
-
-                {
-                    int numMenus = uiInfo->uiDC.openMenuCount;
-                    for (i = numMenus - 1; i >= 0; i--) {
-                        menuDef_t *menu = uiInfo->uiDC.menuStack[i];
-                        if (*(byte *)&menu->window.dynamicFlags[0] & 4) {
-                            Menu_SetFeederSelection(&uiInfo->uiDC, menu, 0x18, found, 0);
-                        }
-                    }
-                }
-            }
-        }
-
-        Dvar_SetInt((dvar_t *)ui_playerProfileCount, uiInfo->playerProfileCount);
+        UI_DeletePlayerProfile();
         return;
     }
 
     if (I_stricmp(name, "loadPlayerProfile") == 0) {
-        const char *selProfile = ui_playerProfileSelected->current.string;
-        if (selProfile[0] == '\0')
-            return;
-        Com_ChangePlayerProfile(selProfile);
+        UI_LoadPlayerProfile();
         return;
     }
 
     if (I_stricmp(name, "LoadMovies") == 0) {
-        int numMovies, i;
-        char *filePtr;
-        extern int __mh_execute_header;
-
-        numMovies = FS_GetFileList("video", "roq", FS_LIST_PURE_ONLY, addr, (int)&__mh_execute_header);
-        sharedUiInfo.movieCount = numMovies;
-        if (numMovies == 0)
-            return;
-
-        if (numMovies > 256)
-            numMovies = 256;
-        sharedUiInfo.movieCount = numMovies;
-
-        filePtr = addr;
-        for (i = 0; i < numMovies; i++) {
-            int len;
-            char *end;
-
-            for (len = 0; filePtr[len]; len++)
-                ;
-            end = filePtr + len;
-
-            if (I_stricmp(end - 4, ".roq") == 0)
-                *(end - 4) = '\0';
-
-            I_strupr(filePtr);
-            *(const char **)((byte *)&sharedUiInfo + 0x677c + i * 4) = String_Alloc(filePtr);
-
-            filePtr = end + 1;
-        }
+        UI_LoadMovies();
         return;
     }
 
@@ -3824,18 +3746,8 @@ void UI_RunMenuScript(const char **args)
     }
 
     if (I_stricmp(name, "closeJoin") == 0) {
-        int refreshing = sharedUiInfo.serverStatus.refreshActive;
-        if (refreshing) {
-
-            sharedUiInfo.serverStatus.refreshActive = 0;
-            Com_Printf("%d servers listed in browser with %d players.\n",
-                       sharedUiInfo.serverStatus.numDisplayServers, sharedUiInfo.serverStatus.numPlayersOnServers);
-            {
-                int filtered = LAN_GetServerCount((ui_netSource)->current.integer) -
-                               sharedUiInfo.serverStatus.numDisplayServers;
-                if (filtered > 0)
-                    Com_Printf("%d servers not listed (filtered out by game browser settings)\n", filtered);
-            }
+        if (sharedUiInfo.serverStatus.refreshActive) {
+            UI_StopServerRefresh();
             sharedUiInfo.serverStatus.nextDisplayRefresh = 0;
             sharedUiInfo.nextServerStatusRefresh = 0;
             uiInfo->nextFindPlayerRefresh = 0;
@@ -3848,18 +3760,7 @@ void UI_RunMenuScript(const char **args)
     }
 
     if (I_stricmp(name, "StopRefresh") == 0) {
-        int refreshing = sharedUiInfo.serverStatus.refreshActive;
-        if (refreshing) {
-            sharedUiInfo.serverStatus.refreshActive = 0;
-            Com_Printf("%d servers listed in browser with %d players.\n",
-                       sharedUiInfo.serverStatus.numDisplayServers, sharedUiInfo.serverStatus.numPlayersOnServers);
-            {
-                int filtered = LAN_GetServerCount((ui_netSource)->current.integer) -
-                               sharedUiInfo.serverStatus.numDisplayServers;
-                if (filtered > 0)
-                    Com_Printf("%d servers not listed (filtered out by game browser settings)\n", filtered);
-            }
-        }
+        UI_StopServerRefresh();
         sharedUiInfo.serverStatus.nextDisplayRefresh = 0;
         sharedUiInfo.nextServerStatusRefresh = 0;
         uiInfo->nextFindPlayerRefresh = 0;
@@ -4044,40 +3945,8 @@ void UI_RunMenuScript(const char **args)
     }
 
     if (I_stricmp(name, "update") == 0) {
-        if (!String_Parse(args, name2, 0x400))
-            return;
-
-        if (I_stricmp(name2, "ui_SetName") == 0) {
-            Dvar_SetStringByName("name", Dvar_GetVariantString("ui_Name"));
-            return;
-        }
-        if (I_stricmp(name2, "ui_GetName") == 0) {
-            Dvar_SetStringByName("ui_Name", Dvar_GetVariantString("name"));
-            return;
-        }
-        if (I_stricmp(name2, "ui_setRate") == 0) {
-            int rate = Dvar_GetInt("rate");
-            float frate = (float)rate;
-            if (frate >= 5000.0f) {
-                Dvar_SetIntByName("cl_maxpackets", 30);
-                Dvar_SetIntByName("cl_packetdup", 1);
-            } else if (frate >= 4000.0f) {
-                Dvar_SetIntByName("cl_maxpackets", 15);
-                Dvar_SetIntByName("cl_packetdup", 2);
-            } else {
-                Dvar_SetIntByName("cl_maxpackets", 15);
-                Dvar_SetIntByName("cl_packetdup", 1);
-            }
-            return;
-        }
-        if (I_stricmp(name2, "ui_mousePitch") == 0) {
-            if (Dvar_GetBool(name2)) {
-                Dvar_SetFloatByName("m_pitch", -0.022f);
-            } else {
-                Dvar_SetFloatByName("m_pitch", 0.022f);
-            }
-            return;
-        }
+        if (String_Parse(args, name2, 0x400))
+            UI_Update(name2);
         return;
     }
 
@@ -4113,40 +3982,14 @@ void UI_RunMenuScript(const char **args)
     }
 
     if (I_stricmp(name, "openMenuOnDvar") == 0 || I_stricmp(name, "openMenuOnDvarNot") == 0) {
-        int wantMatch = (I_stricmp(name, "openMenuOnDvar") == 0);
-        if (!UI_GetOpenOrCloseMenuOnDvarArgs(args, name, dvarName, testValue, menuName))
-            return;
-
-        if (!Dvar_FindVar(dvarName)) {
-            Com_Printf("%s: cannot find dvar %s\n", name, dvarName);
-            return;
-        }
-
-        {
-            int matches = (I_stricmp(testValue, Dvar_GetVariantString(dvarName)) == 0);
-            if (matches == wantMatch) {
-                Menus_OpenByName(&uiInfo->uiDC, menuName);
-            }
-        }
+        if (UI_GetOpenOrCloseMenuOnDvarArgs(args, name, dvarName, testValue, menuName))
+            UI_OpenMenuOnDvar(name, menuName, dvarName, testValue);
         return;
     }
 
     if (I_stricmp(name, "closeMenuOnDvar") == 0 || I_stricmp(name, "closeMenuOnDvarNot") == 0) {
-        int wantMatch = (I_stricmp(name, "closeMenuOnDvar") == 0);
-        if (!UI_GetOpenOrCloseMenuOnDvarArgs(args, name, dvarName, testValue, menuName))
-            return;
-
-        if (!Dvar_FindVar(dvarName)) {
-            Com_Printf("%s: cannot find dvar %s\n", name, dvarName);
-            return;
-        }
-
-        {
-            int matches = (I_stricmp(testValue, Dvar_GetVariantString(dvarName)) == 0);
-            if (matches == wantMatch) {
-                Menus_CloseByName(&uiInfo->uiDC, menuName);
-            }
-        }
+        if (UI_GetOpenOrCloseMenuOnDvarArgs(args, name, dvarName, testValue, menuName))
+            UI_CloseMenuOnDvar(name, menuName, dvarName, testValue);
         return;
     }
 
