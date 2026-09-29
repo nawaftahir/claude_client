@@ -2085,16 +2085,22 @@ static void UI_StopServerRefresh(void)
 #endif
 
 #ifndef __EMSCRIPTEN__
+// retail 0x530040; name unknown
+static void UI_ClearDisplayedServers(void)
+{
+    sharedUiInfo.serverStatus.numDisplayServers = 0;
+    sharedUiInfo.serverStatus.numPlayersOnServers = 0;
+    sharedUiInfo.serverStatus.serverCount = LAN_GetServerCount((ui_netSource)->current.integer);
+}
+
 static void UI_StartServerRefresh(qboolean full)
 {
     qtime_t q;
     char dvarName[0x18];
-    int source;
-    int now;
+    const char *ptr;
 
     Com_RealTime(&q);
-    source = (ui_netSource)->current.integer;
-    snprintf(dvarName, sizeof(dvarName), "ui_lastServerRefresh_%i", source);
+    snprintf(dvarName, sizeof(dvarName), "ui_lastServerRefresh_%i", (ui_netSource)->current.integer);
     Dvar_SetStringByName(dvarName,
                          va("%s %i, %i   %i:%02i",
                             UI_SafeTranslateString(MonthAbbrev[q.tm_mon]),
@@ -2103,35 +2109,31 @@ static void UI_StartServerRefresh(qboolean full)
                             q.tm_hour,
                             q.tm_min));
 
-    now = uiInfo->uiDC.realTime;
-
     if (!full) {
-        LAN_ResetPings(source);
+        LAN_ResetPings((ui_netSource)->current.integer);
         sharedUiInfo.serverStatus.refreshActive = 1;
-        sharedUiInfo.serverStatus.refreshtime = now + 1000;
+        sharedUiInfo.serverStatus.refreshtime = uiInfo->uiDC.realTime + 1000;
         return;
     }
 
     sharedUiInfo.serverStatus.refreshActive = 1;
-    sharedUiInfo.serverStatus.nextDisplayRefresh = now + 1000;
-    sharedUiInfo.serverStatus.numDisplayServers = 0;
-    sharedUiInfo.serverStatus.numPlayersOnServers = 0;
-    sharedUiInfo.serverStatus.serverCount = LAN_GetServerCount(source);
-    LAN_MarkServerDirty(source, -1, 1);
-    LAN_ResetPings(source);
+    sharedUiInfo.serverStatus.nextDisplayRefresh = uiInfo->uiDC.realTime + 1000;
+    UI_ClearDisplayedServers();
+    LAN_MarkServerDirty((ui_netSource)->current.integer, -1, 1);
+    LAN_ResetPings((ui_netSource)->current.integer);
 
-    if (source == 0) {
+    if ((ui_netSource)->current.integer == 0) {
         Cbuf_ExecuteText(0, "localservers\n");
-        sharedUiInfo.serverStatus.refreshtime = now + 1000;
+        sharedUiInfo.serverStatus.refreshtime = uiInfo->uiDC.realTime + 1000;
         return;
     }
 
-    sharedUiInfo.serverStatus.refreshtime = now + 5000;
+    sharedUiInfo.serverStatus.refreshtime = uiInfo->uiDC.realTime + 5000;
 
-    if (source == 1) {
-        const char *debugProtocol = Dvar_GetVariantString("debug_protocol");
-        if (debugProtocol[0])
-            Cbuf_ExecuteText(0, va("globalservers %d %s full empty\n", 0, debugProtocol));
+    if ((ui_netSource)->current.integer == 1) {
+        ptr = Dvar_GetVariantString("debug_protocol");
+        if (strlen(ptr))
+            Cbuf_ExecuteText(0, va("globalservers %d %s full empty\n", 0, ptr));
         else
             Cbuf_ExecuteText(0, va("globalservers %d %d full empty\n", 0, 0x73));
     }
@@ -2252,10 +2254,7 @@ static void __attribute_regparm__(0) UI_BuildServerDisplayList(qboolean force)
 
     if (force) {
         numclean = 0;
-        sharedUiInfo.serverStatus.numDisplayServers = 0;
-        sharedUiInfo.serverStatus.numPlayersOnServers = 0;
-        netSource = (ui_netSource)->current.integer;
-        sharedUiInfo.serverStatus.serverCount = LAN_GetServerCount(netSource);
+        UI_ClearDisplayedServers();
 
         if (sharedUiInfo.serverStatus.currentServer >= 0) {
             Menu_SetFeederSelection(&uiInfo->uiDC, 0, 2, 0, 0);
@@ -2268,9 +2267,7 @@ static void __attribute_regparm__(0) UI_BuildServerDisplayList(qboolean force)
     count = LAN_GetServerCount(netSource);
 
     if (LAN_WaitServerResponse(netSource) || (netSource == 0 && count == 0)) {
-        sharedUiInfo.serverStatus.numDisplayServers = 0;
-        sharedUiInfo.serverStatus.numPlayersOnServers = 0;
-        sharedUiInfo.serverStatus.serverCount = LAN_GetServerCount((ui_netSource)->current.integer);
+        UI_ClearDisplayedServers();
         sharedUiInfo.serverStatus.nextDisplayRefresh = uiInfo->uiDC.realTime + 500;
         return;
     }
