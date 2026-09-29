@@ -848,7 +848,14 @@ qboolean Display_KeyBindPending(void)
 
 int Menu_Count(displayContextDef_t *dc)
 {
-    return dc->menuCount;
+    int i, count;
+
+    count = 0;
+    for (i = 0; i < dc->menuCount; i++) {
+        if (dc->Menus[i]->window.dynamicFlags[0] & 0x4004)
+            count++;
+    }
+    return count;
 }
 
 void UI_AddMenuList(displayContextDef_t *dc, MenuList *menuList)
@@ -1148,19 +1155,24 @@ static qboolean Menus_MenuIsInStack(displayContextDef_t *dc, menuDef_t *menu)
     return 0;
 }
 
-void Menus_Close(displayContextDef_t *dc, menuDef_t *menu)
+static void Menu_RunCloseScript(displayContextDef_t *dc, menuDef_t *menu)
 {
     itemDef_t item;
+
+    if (Window_IsVisible(&menu->window) && menu->onClose) {
+        item.parent = menu;
+        Item_RunScript(dc, &item, menu->onClose);
+    }
+}
+
+void Menus_Close(displayContextDef_t *dc, menuDef_t *menu)
+{
     bool hadFocus;
     int i;
 
     if (Menus_MenuIsInStack(dc, menu)) {
         hadFocus = Window_HasFocus(&menu->window);
-
-        if (Window_IsVisible(&menu->window) && menu->onClose) {
-            item.parent = menu;
-            Item_RunScript(dc, &item, menu->onClose);
-        }
+        Menu_RunCloseScript(dc, menu);
 
         Menus_RemoveFromStack(dc, menu);
 
@@ -4497,15 +4509,55 @@ void Item_MouseEnter(displayContextDef_t *dc, itemDef_t *item, float x, float y)
         Item_ListBox_MouseEnter(item, x, y);
 }
 
-static qboolean Rect_ContainsPoint(byte *item, float x, float y)
+static qboolean Rect_ContainsPoint(const rectDef_t *rect, float x, float y)
 {
-    float rx = (((rectDef_t*)(item))->x), ry = (((rectDef_t*)(item))->y);
-    float rw = (((rectDef_t*)(item))->w), rh = ((itemDef_t *)item)->window.rect[0].h;
-    float cx = x, cy = y;
-    CalcScreenX(&cx, 4);
-    CalcScreenY(&cy, 4);
-    CalcScreenPlacement(&rx, &ry, &rw, &rh, (((rectDef_t*)(item))->horzAlign), (((rectDef_t*)(item))->vertAlign));
-    return (cx >= rx && cx <= rx + rw && cy >= ry && cy <= ry + rh);
+    rectDef_t r;
+
+    r = *rect;
+    CalcScreenX(&x, 4);
+    CalcScreenY(&y, 4);
+    CalcScreenPlacement(&r.x, &r.y, &r.w, &r.h, r.horzAlign, r.vertAlign);
+    return x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
+}
+
+static rectDef_t *Item_CorrectedTextRect(itemDef_t *item)
+{
+    static rectDef_t rect;
+
+    memset(&rect, 0, sizeof(rect));
+    if (item) {
+        rect = item->textRect[0];
+        if (rect.w != 0.0f)
+            rect.y -= rect.h;
+    }
+    return &rect;
+}
+
+static qboolean Menu_OverActiveItem(menuDef_t *menu, float x, float y)
+{
+    int i;
+    itemDef_t *overItem;
+
+    if (menu && (menu->window.dynamicFlags[0] & 0x4004)) {
+        if (Rect_ContainsPoint(&menu->window.rect[0], x, y)) {
+            for (i = 0; i < menu->itemCount; i++) {
+                if (!(menu->items[i]->window.dynamicFlags[0] & 0x4004))
+                    continue;
+                if (menu->items[i]->window.staticFlags & 0x100000)
+                    continue;
+                if (Rect_ContainsPoint(&menu->items[i]->window.rect[0], x, y)) {
+                    overItem = menu->items[i];
+                    if (overItem->type == 0 && overItem->text) {
+                        if (Rect_ContainsPoint(Item_CorrectedTextRect(overItem), x, y))
+                            return 1;
+                        continue;
+                    }
+                    return 1;
+                }
+            }
+        }
+    }
+    return 0;
 }
 
 qboolean Menu_HandleMouseMove(displayContextDef_t *dc, menuDef_t *menu, float x, float y)
@@ -4548,7 +4600,7 @@ qboolean Menu_HandleMouseMove(displayContextDef_t *dc, menuDef_t *menu, float x,
             if ((flags & 4) && (flags & 2) && !focusItem)
                 focusItem = overItem;
 
-            if (!Rect_ContainsPoint(overItem, x, y)) {
+            if (!Rect_ContainsPoint((rectDef_t *)overItem, x, y)) {
                 byte *orig = *(byte **)((char *)&((menuDef_t *)m)->items[i]);
                 if ((((Window *)orig)->dynamicFlags[0] & 1)) {
                     Item_MouseLeave(dc, (itemDef_t *)orig);
@@ -4563,23 +4615,7 @@ qboolean Menu_HandleMouseMove(displayContextDef_t *dc, menuDef_t *menu, float x,
                 overItem = *(byte **)((char *)&((menuDef_t *)m)->items[i]);
                 int itemType = (((itemDef_s*)(overItem))->type);
                 if (itemType == 0 && ((itemDef_t *)overItem)->text) {
-                    int textBuf[6];
-                    memset(textBuf, 0, 24);
-                    textBuf[0] = (*(int*)&((itemDef_s*)(overItem))->textRect[0].x);
-                    textBuf[1] = (*(int*)&((itemDef_s*)(overItem))->textRect[0].y);
-                    textBuf[2] = (*(int*)&((itemDef_s*)(overItem))->textRect[0].w);
-                    textBuf[3] = (*(int*)&((itemDef_s*)(overItem))->textRect[0].h);
-                    textBuf[4] = (((itemDef_s*)(overItem))->textRect[0].horzAlign);
-                    textBuf[5] = (((itemDef_s*)(overItem))->textRect[0].vertAlign);
-                    if (*(float *)&textBuf[2] != 0.0f)
-                        *(float *)&textBuf[1] -= *(float *)&textBuf[3];
-                    float trx = *(float *)&textBuf[0], try_ = *(float *)&textBuf[1];
-                    float trw = *(float *)&textBuf[2], trh = *(float *)&textBuf[3];
-                    float tcx = x, tcy = y;
-                    CalcScreenX(&tcx, 4);
-                    CalcScreenY(&tcy, 4);
-                    CalcScreenPlacement(&trx, &try_, &trw, &trh, textBuf[4], textBuf[5]);
-                    if (tcx < trx || tcx > trx + trw || tcy < try_ || tcy > try_ + trh)
+                    if (!Rect_ContainsPoint(Item_CorrectedTextRect((itemDef_t *)overItem), x, y))
                         goto next_item;
                 }
 
@@ -4604,7 +4640,7 @@ qboolean Menu_HandleMouseMove(displayContextDef_t *dc, menuDef_t *menu, float x,
         return 1;
 
     if (focusItem) {
-        if (!Rect_ContainsPoint((byte *)focusItem, x, y)) {
+        if (!Rect_ContainsPoint((rectDef_t *)focusItem, x, y)) {
             int itemCount = (((menuDef_t*)(m))->itemCount);
             for (i = 0; i < itemCount; i++) {
                 byte *it = *(byte **)((char *)&((menuDef_t *)m)->items[i]);
@@ -5574,154 +5610,28 @@ void Menu_PaintAll(displayContextDef_t *dc)
 
 void Menus_HandleOOBClick(displayContextDef_t *dc, menuDef_t *menu, int key, qboolean down)
 {
-    byte *d = (byte *)dc;
-    byte *m = (byte *)menu;
-    int i, j, k;
+    int i, j;
 
     if (!menu)
         return;
-
-    if (down) {
-        if ((((Window *)m)->staticFlags & 0x2000000)) {
-
-            if (((*(byte *)&((menuDef_t *)m)->window.dynamicFlags[0]) & 4) && (*(void **)&((menuDef_t *)m)->onClose)) {
-                byte tempItem[0x2a0];
-                *(void **)&(*(unsigned char *)&((itemDef_t *)tempItem)->parent) = menu;
-                Item_RunScript(dc, (itemDef_t *)tempItem, ((menuDef_t *)m)->onClose);
-            }
-            Window_RemoveDynamicFlags( (Window *)((itemDef_t *)((void *)menu)), 6);
-        }
-
+    if (down && (menu->window.staticFlags & 0x2000000)) {
+        Menu_RunCloseScript(dc, menu);
+        Window_RemoveDynamicFlags(&menu->window, 6);
     }
-
-    int openCount = (((displayContextDef_s*)(d))->openMenuCount);
-    float cx = (float)((displayContextDef_t *)d)->cursorx;
-    float cy = (float)(((displayContextDef_s*)(d))->cursory);
-    int targetIdx = -1;
-
-    for (i = openCount - 1; i >= 0; i--) {
-        byte *openMenu = *(byte **)((char *)&((displayContextDef_s *)d)->menuStack[i]);
-        if (!openMenu)
-            continue;
-        if ((((menuDef_t *)openMenu)->window.dynamicFlags[0] & 0x4004) == 0)
-            continue;
-
-        float rx = *(float *)openMenu, ry = (((rectDef_t*)(openMenu))->y);
-        float rw = (((rectDef_t*)(openMenu))->w), rh = ((menuDef_t *)openMenu)->window.rect[0].h;
-        float testX = cx, testY = cy;
-        CalcScreenX(&testX, 4);
-        CalcScreenY(&testY, 4);
-        CalcScreenPlacement(&rx, &ry, &rw, &rh, (((rectDef_t*)(openMenu))->horzAlign), (((rectDef_t*)(openMenu))->vertAlign));
-        if (testX < rx || testX > rx + rw || testY < ry || testY > ry + rh)
-            continue;
-
-        int itemCount = (((menuDef_t*)(openMenu))->itemCount);
-        if (itemCount <= 0)
-            continue;
-
-        for (j = 0; j < itemCount; j++) {
-            byte *item = *(byte **)((char *)&((menuDef_t *)openMenu)->items[j]);
-            if ((((itemDef_t *)item)->window.dynamicFlags[0] & 0x4004) == 0)
-                continue;
-            if (((itemDef_t *)item)->window.staticFlags & 0x100000)
-                continue;
-
-            float irx = (((rectDef_t*)(item))->x), iry = (((rectDef_t*)(item))->y);
-            float irw = (((rectDef_t*)(item))->w), irh = ((itemDef_t *)item)->window.rect[0].h;
-            float itx = cx, ity = cy;
-            CalcScreenX(&itx, 4);
-            CalcScreenY(&ity, 4);
-            CalcScreenPlacement(&irx, &iry, &irw, &irh, (((rectDef_t*)(item))->horzAlign), (((rectDef_t*)(item))->vertAlign));
-            if (itx < irx || itx > irx + irw || ity < iry || ity > iry + irh)
-                continue;
-
-            int itemType = (((itemDef_s*)(item))->type);
-            if (itemType != 0 && ((itemDef_t *)item)->text) {
-
-                int textBuf[6];
-                memset(textBuf, 0, 24);
-                *(float *)&textBuf[0] = (((itemDef_s*)(item))->textRect[0].x);
-                *(float *)&textBuf[1] = (((itemDef_s*)(item))->textRect[0].y);
-                *(float *)&textBuf[2] = (((itemDef_s*)(item))->textRect[0].w);
-                *(float *)&textBuf[3] = ((itemDef_t *)item)->textRect[0].h;
-                textBuf[4] = (((itemDef_s*)(item))->textRect[0].horzAlign);
-                textBuf[5] = (((itemDef_s*)(item))->textRect[0].vertAlign);
-                float trY = *(float *)&textBuf[1];
-                if (*(float *)&textBuf[2] != 0.0f)
-                    trY -= *(float *)&textBuf[3];
-                float trx2 = *(float *)&textBuf[0], trw2 = *(float *)&textBuf[2];
-                float try2 = trY, trh2 = *(float *)&textBuf[3];
-                float ttx = cx, tty = cy;
-                CalcScreenX(&ttx, 4);
-                CalcScreenY(&tty, 4);
-                CalcScreenPlacement(&trx2, &try2, &trw2, &trh2, textBuf[4], textBuf[5]);
-                if (ttx < trx2 || ttx > trx2 + trw2 || tty < try2 || tty > try2 + trh2)
-                    continue;
-            }
-
-            targetIdx = i;
-            goto found;
+    for (i = dc->openMenuCount - 1; i >= 0; i--) {
+        if (Menu_OverActiveItem(dc->menuStack[i], (float)dc->cursorx, (float)dc->cursory)) {
+            for (j = dc->openMenuCount - 1; j >= 0; j--)
+                Window_RemoveDynamicFlags(&dc->menuStack[j]->window, 2);
+            Window_AddDynamicFlags(&dc->menuStack[i]->window, 6);
+            Display_MouseMove(dc, NULL, dc->cursorx, dc->cursory);
+            Menu_HandleMouseMove(dc, dc->menuStack[i], (float)dc->cursorx, (float)dc->cursory);
+            Menu_HandleKey(dc, dc->menuStack[i], key, down);
+            break;
         }
     }
-
-    goto count_visible;
-
-found:;
-
-    openCount = (((displayContextDef_s*)(d))->openMenuCount);
-    for (i = openCount - 1; i >= 0; i--)
-        Window_RemoveDynamicFlags( (Window *)((itemDef_t *)(*(void **)((char *)&((displayContextDef_s *)d)->menuStack[i]))), 2);
-
-    Window_AddDynamicFlags( (Window *)((itemDef_t *)(*(void **)((char *)&((displayContextDef_s *)d)->menuStack[targetIdx]))), 6);
-    Display_MouseMove(dc, NULL, ((displayContextDef_t *)d)->cursorx, (((displayContextDef_s*)(d))->cursory));
-    Menu_HandleMouseMove(dc, *(menuDef_t **)((char *)&((displayContextDef_s *)d)->menuStack[targetIdx]), (float)((displayContextDef_t *)d)->cursorx, (float)(((displayContextDef_s*)(d))->cursory));
-    Menu_HandleKey(dc, *(menuDef_t **)((char *)&((displayContextDef_s *)d)->menuStack[targetIdx]), key, down);
-
-count_visible:;
-
-    int menuCount = ((displayContextDef_t *)d)->menuCount;
-    int visCount = 0;
-    for (i = 0; i < menuCount; i++) {
-        byte *cm = *(byte **)((char *)&((displayContextDef_s *)d)->Menus[i]);
-        if ((((Window *)cm)->dynamicFlags[0] & 0x4004) != 0)
-            visCount++;
-    }
-
-    if (visCount > 0) {
+    if (!Menu_Count(dc))
         UI_Pause(0);
-
-        openCount = (((displayContextDef_s*)(d))->openMenuCount);
-        for (i = openCount - 1; i >= 0; i--) {
-            byte *openMenu = *(byte **)((char *)&((displayContextDef_s *)d)->menuStack[i]);
-            if (!openMenu)
-                continue;
-
-            if (((menuDef_t *)openMenu)->window.style == 5) {
-                int cinHandle = ((menuDef_t *)openMenu)->window.cinematic;
-                if (cinHandle >= 0) {
-                    CIN_StopCinematic(cinHandle);
-                    ((menuDef_t *)openMenu)->window.cinematic = -1;
-                }
-            }
-
-            int ic = (((menuDef_t*)(openMenu))->itemCount);
-            for (j = 0; j < ic; j++) {
-                byte *item = *(byte **)((char *)&((menuDef_t *)openMenu)->items[j]);
-                if (((itemDef_t *)item)->window.style == 5) {
-                    int ch = ((itemDef_t *)item)->window.cinematic;
-                    if (ch >= 0) {
-                        CIN_StopCinematic(ch);
-                        ((itemDef_t *)item)->window.cinematic = -1;
-                    }
-                    item = *(byte **)((char *)&((menuDef_t *)openMenu)->items[j]);
-                }
-                if ((((itemDef_s*)(item))->type) == 8)
-                    CIN_StopCinematic(-((itemDef_t *)item)->window.ownerDraw);
-            }
-        }
-    } else {
-        UI_Pause(0);
-    }
+    Display_CloseCinematics(dc);
 }
 
 commandDef_t commandList[29] = {
