@@ -265,18 +265,14 @@ static void CG_TeamVoiceChat_f(void)
 
 qboolean CG_IsConsoleCommandName(const char *cmd)
 {
-    byte *cmdList = (byte *)commandsList;
-    const char *name;
+    int i;
 
     if (!cmd)
         return 0;
 
-    name = *(const char **)cmdList;
-    while (name != NULL) {
-        if (I_stricmp(cmd, name) == 0)
+    for (i = 0; commandsList[i].cmd; i++) {
+        if (!I_stricmp(cmd, commandsList[i].cmd))
             return 1;
-        cmdList += 8;
-        name = *(const char **)cmdList;
     }
 
     return 0;
@@ -285,32 +281,21 @@ qboolean CG_IsConsoleCommandName(const char *cmd)
 qboolean CG_ConsoleCommand(void)
 {
     const char *cmd;
-    const consoleCommand_t *cmd_p;
-    const char *name;
     int i;
 
     if (cg->nextSnap == NULL)
         return 0;
 
     cmd = CG_Argv(0);
-    name = commandsList[0].cmd;
-    if (name == NULL)
-        return 0;
-
-    i = 0;
-    cmd_p = commandsList;
-    for (;;) {
-        if (I_stricmp(cmd, name) == 0) {
-            if (commandsList[i].function != NULL)
+    for (i = 0; commandsList[i].cmd; i++) {
+        if (!I_stricmp(cmd, commandsList[i].cmd)) {
+            if (commandsList[i].function)
                 commandsList[i].function();
             return 1;
         }
-        i++;
-        cmd_p++;
-        name = cmd_p->cmd;
-        if (name == NULL)
-            return 0;
     }
+
+    return 0;
 }
 
 void CG_InitConsoleCommands(void)

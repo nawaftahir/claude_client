@@ -37,6 +37,7 @@ COD2_ASSERT_FIELD(struct itemDef_s, action, 0x2b0);
 
 extern char *va( const char *format, ... );
 extern void Cbuf_ExecuteText(int exec_when, const char *text);
+extern void Cbuf_AddText(const char *text);
 extern int I_stricmp(const char *s0, const char *s1);
 extern int I_strncmp(const char *s0, const char *s1, int n);
 extern void I_strncat(char *dest, int destsize, const char *src);
@@ -712,62 +713,54 @@ void Item_RunScript(displayContextDef_t *dc, itemDef_t *item, const char *s)
     }
 }
 
-static inline __attribute__((always_inline)) void Controls_GetConfig_core(void)
+static void Controls_GetKeyAssignment(const char *command, int *twokeys)
 {
-    char b[0x100];
-    const char *command;
-    byte *entry = (byte *)g_bindings;
+    int count;
+    int j;
+    char b[256];
 
-    do {
-        int twokeys[2];
-        int count = 0;
-        int j;
+    twokeys[0] = twokeys[1] = -1;
+    count = 0;
 
-        command = *(const char **)entry;
-        twokeys[1] = -1;
-        twokeys[0] = -1;
-
-        for (j = 0; j < 0x100; j++) {
-            Key_GetBindingBuf(j, b, 0x100);
-            if (b[0] == '\0')
-                continue;
-            if (!command || I_stricmp(b, command) != 0)   /* command is NULL on x64 (see g_bindings) */
-                continue;
+    for (j = 0; j < 256; j++) {
+        Key_GetBindingBuf(j, b, 256);
+        if (*b == 0)
+            continue;
+        if (!I_stricmp(b, command)) {
             twokeys[count] = j;
             count++;
             if (count == 2)
                 break;
         }
-
-        (((bind_t*)(entry))->bind1) = twokeys[0];
-        (((bind_t*)(entry))->bind2) = twokeys[1];
-        entry += sizeof(bind_t);   /* 0x14 was x86 sizeof(bind_t); x64 is 24 */
-
-    } while (entry != (byte *)g_bindings + 56 * sizeof(bind_t));
+    }
 }
 
 void Controls_GetConfig(void)
 {
-    Controls_GetConfig_core();
+    int i;
+    int twokeys[2];
+
+    for (i = 0; i < 56; i++) {
+        Controls_GetKeyAssignment(g_bindings[i].command, twokeys);
+        g_bindings[i].bind1 = twokeys[0];
+        g_bindings[i].bind2 = twokeys[1];
+    }
 }
 
 extern void Key_SetBinding(int key, const char *command);
 extern byte szShotName[];
 void Controls_SetConfig(qboolean restart)
 {
-    (void)restart;
+    int i;
 
-    int i;   /* was byte-stride 0x14 / +12 offsets (x86 bind_t layout) */
     for (i = 0; i < 56; i++) {
-        int key1 = g_bindings[i].bind1;
-        if (key1 != -1 && g_bindings[i].command) {
-            Key_SetBinding(key1, g_bindings[i].command);
-            int key2 = g_bindings[i].bind2;
-            if (key2 != -1)
-                Key_SetBinding(key2, g_bindings[i].command);
+        if (g_bindings[i].bind1 != -1) {
+            Key_SetBinding(g_bindings[i].bind1, g_bindings[i].command);
+            if (g_bindings[i].bind2 != -1)
+                Key_SetBinding(g_bindings[i].bind2, g_bindings[i].command);
         }
     }
-    Cbuf_ExecuteText(2, "bindingsave\n");
+    Cbuf_AddText("in_restart\n");
 }
 
 void Controls_SetDefaults(void)
@@ -2019,7 +2012,7 @@ void Menu_Setup(displayContextDef_t *dc)
     dc->openMenuCount = 0;
     Item_SetupKeywordHash();
     Menu_SetupKeywordHash();
-    Controls_GetConfig_core();
+    Controls_GetConfig();
 }
 
 void Menus_CloseByName(displayContextDef_t *dc, const char *p)
