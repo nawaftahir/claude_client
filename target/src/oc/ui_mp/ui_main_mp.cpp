@@ -323,7 +323,6 @@ void UI_CloseMenu_f(void);
 void UI_Init(void);
 void UI_KeyEvent(int key, qboolean down);
 void UI_MouseEvent(int dx, int dy);
-void UI_MouseEventAbsolute(int x, int y);
 uiMenuCommand_t UI_GetActiveMenu(void);
 qboolean UI_SetActiveMenu(int menu);
 qboolean UI_IsFullscreen(void);
@@ -1568,29 +1567,6 @@ void UI_MouseEvent(int dx, int dy)
 }
 #endif
 
-#ifndef __EMSCRIPTEN__
-void UI_MouseEventAbsolute(int x, int y)
-{
-    int *cursorX = &uiInfo->uiDC.cursorx;
-    int *cursorY = &uiInfo->uiDC.cursory;
-
-    if (x < 0)
-        x = 0;
-    else if (x > 640)
-        x = 640;
-
-    if (y < 0)
-        y = 0;
-    else if (y > 480)
-        y = 480;
-
-    *cursorX = x;
-    *cursorY = y;
-
-    if (Menu_Count(&uiInfo->uiDC) > 0)
-        Display_MouseMove(&uiInfo->uiDC, 0, *cursorX, *cursorY);
-}
-#endif
 
 #ifndef __EMSCRIPTEN__
 uiMenuCommand_t UI_GetActiveMenu(void)
@@ -4838,27 +4814,6 @@ void UI_MouseEvent(int dx, int dy)
     }
 }
 
-void UI_MouseEventAbsolute(int x, int y)
-{
-    int *cursorX = &uiInfo->uiDC.cursorx;
-    int *cursorY = &uiInfo->uiDC.cursory;
-
-    if (x < 0)
-        x = 0;
-    else if (x > 640)
-        x = 640;
-
-    if (y < 0)
-        y = 0;
-    else if (y > 480)
-        y = 480;
-
-    *cursorX = x;
-    *cursorY = y;
-
-    if (Menu_Count(&uiInfo->uiDC) > 0)
-        Display_MouseMove(&uiInfo->uiDC, 0, *cursorX, *cursorY);
-}
 
 uiMenuCommand_t UI_GetActiveMenu(void)
 {

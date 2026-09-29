@@ -69,7 +69,6 @@ extern int com_frameTime;
 extern unsigned int frame_msec;
 
 extern void UI_MouseEvent(int dx, int dy);
-extern void UI_MouseEventAbsolute(int x, int y);
 static kbutton_t playersKb[1][28];
 static kbutton_t *kb = playersKb[0];
 
@@ -771,32 +770,13 @@ Bool IsTalking(void)
     return kb[27].active;
 }
 
-void CL_MouseEvent(const int dx_in, const int dy_in)
+void CL_MouseEvent(int dx, int dy)
 {
-    clientActive_t *ptr = clients;
-    int dx = dx_in, dy = dy_in;
-    int index;
-    if (!(ptr->keyCatchers & 8) || cl_bypassMouseInput->current.enabled) {
-        index = ptr->mouseIndex;
-        ptr->mouseDx[index] += dx;
-        ptr->mouseDy[index] += dy;
-    } else {
+    if ((clients->keyCatchers & 8) && !cl_bypassMouseInput->current.enabled) {
         UI_MouseEvent(dx, dy);
-    }
-}
-
-void CL_MouseEventAbsolute(const int x, const int y, const int dx_in, const int dy_in)
-{
-    clientActive_t *ptr = clients;
-    int dx = dx_in, dy = dy_in;
-    int index;
-
-    if (!(ptr->keyCatchers & 8) || cl_bypassMouseInput->current.enabled) {
-        index = ptr->mouseIndex;
-        ptr->mouseDx[index] += dx;
-        ptr->mouseDy[index] += dy;
     } else {
-        UI_MouseEventAbsolute(x, y);
+        clients->mouseDx[clients->mouseIndex] += dx;
+        clients->mouseDy[clients->mouseIndex] += dy;
     }
 }
 

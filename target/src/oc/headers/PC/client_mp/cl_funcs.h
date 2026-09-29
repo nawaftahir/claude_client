@@ -181,7 +181,6 @@ void IN_TalkDown(void);
 void IN_TalkUp(void);
 Bool IsTalking(void);
 void CL_MouseEvent(const int dx_in, const int dy_in);
-void CL_MouseEventAbsolute(const int x, const int y, const int dx_in, const int dy_in);
 void CL_WriteVoicePacket(void);
 void CL_WritePacket(void);
 void CL_InitInput(void);

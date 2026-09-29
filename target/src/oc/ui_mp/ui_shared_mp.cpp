@@ -5004,10 +5004,8 @@ void Menu_Paint(displayContextDef_t *dc, menuDef_t *menu, qboolean forcePaint)
 
     if (debugMode) {
         vec4_t color;
-        color[0] = 1.0f;
+        color[0] = color[2] = color[3] = 1.0f;
         color[1] = 0.0f;
-        color[2] = 1.0f;
-        color[3] = 1.0f;
         UI_DrawRect(menu->window.rect[0].x, menu->window.rect[0].y, menu->window.rect[0].w, menu->window.rect[0].h,
                     menu->window.rect[0].horzAlign, menu->window.rect[0].vertAlign, 1.0f, color);
     }

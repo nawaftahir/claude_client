@@ -44,7 +44,6 @@ void UI_CloseMenu_f(void);
 void UI_Init(void);
 void UI_KeyEvent(int key, qboolean down);
 void UI_MouseEvent(int dx, int dy);
-void UI_MouseEventAbsolute(int x, int y);
 uiMenuCommand_t UI_GetActiveMenu(void);
 qboolean UI_SetActiveMenu(int menu);
 qboolean UI_IsFullscreen(void);
