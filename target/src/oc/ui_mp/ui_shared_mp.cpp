@@ -5226,7 +5226,7 @@ void Item_Paint(displayContextDef_t *dc, itemDef_t *item)
 
             if (newRect.x == target[0]) {
                 done++;
-            } else if (target[0] > newRect.x) {
+            } else if (newRect.x < target[0]) {
                 newRect.x += step[0];
                 if (newRect.x > target[0]) {
                     newRect.x = target[0];
@@ -5242,7 +5242,7 @@ void Item_Paint(displayContextDef_t *dc, itemDef_t *item)
 
             if (newRect.y == target[1]) {
                 done++;
-            } else if (target[1] > newRect.y) {
+            } else if (newRect.y < target[1]) {
                 newRect.y += step[1];
                 if (newRect.y > target[1]) {
                     newRect.y = target[1];
@@ -5258,7 +5258,7 @@ void Item_Paint(displayContextDef_t *dc, itemDef_t *item)
 
             if (newRect.w == target[2]) {
                 done++;
-            } else if (target[2] > newRect.w) {
+            } else if (newRect.w < target[2]) {
                 newRect.w += step[2];
                 if (newRect.w > target[2]) {
                     newRect.w = target[2];
@@ -5274,7 +5274,7 @@ void Item_Paint(displayContextDef_t *dc, itemDef_t *item)
 
             if (newRect.h == target[3]) {
                 done++;
-            } else if (target[3] > newRect.h) {
+            } else if (newRect.h < target[3]) {
                 newRect.h += step[3];
                 if (newRect.h > target[3]) {
                     newRect.h = target[3];
