@@ -2059,7 +2059,7 @@ static int Com_GpuStringCompare( const char *wild, const char *s )
 Com_MatchGpuTemplate
 ==================
 */
-static qboolean Com_MatchGpuTemplate( const char *find, const char *gpuDescription )
+static bool Com_MatchGpuTemplate( const char *find, const char *gpuDescription )
 {
 	char wildcard[0x400];
 	int len;
@@ -2176,10 +2176,7 @@ static void Com_SetConfigureDvars( int dvarCount, const char *dvarNames, const c
 		const char *name = dvarNames + dvarIndex * 0x20;
 		const char *value = dvarValues + dvarIndex * 0x20;
 
-		if ( !strncmp( name, "r_aaSamples", 12 ) )
-			Dvar_SetFromStringByNameFromSource( name, "1", DVAR_SOURCE_EXTERNAL );
-		else
-			Dvar_SetFromStringByNameFromSource( name, value, DVAR_SOURCE_EXTERNAL );
+		Dvar_SetFromStringByNameFromSource( name, value, DVAR_SOURCE_EXTERNAL );
 
 		Dvar_AddFlags( Dvar_FindVar( name ), DVAR_ARCHIVE );
 	}
@@ -2201,49 +2198,30 @@ static void Com_SkipConfigureBlankLines( const char **text )
 Com_ParseCpuConfig
 ==================
 */
-static qboolean Com_ParseCpuConfig( const char **text, const SysInfo *info )
+static bool Com_ParseCpuConfig( const SysInfo *info, const char **text )
 {
 	char dvarNames[0x40 * 0x20];
-	int dvarCount = 0;
-	struct
-	{
-		double MHz;
-		int MB;
-		char dvarValues[0x40 * 0x20];
-	} best;
-	double bestMHz = -1.0;
-	int bestMB = 0;
-	qboolean foundCpuMatch = qfalse;
+	char dvarValues[0x40 * 0x20];
+	SysInfo row;
+	SysInfo best;
+	int dvarCount;
+	bool foundCpuMatch;
+	bool isBest;
+	const char *token;
+
+	best.cpuGHz = -1.0;
+	dvarCount = 0;
+	best.sysMB = 0;
+	foundCpuMatch = false;
 
 	for ( ;; )
 	{
-		const char *token;
-		double rowGHz;
-		int rowMB;
-
-		Com_SkipConfigureBlankLines( text );
-		if ( !*text || !**text )
+		token = Com_Parse( text );
+		if ( !text )
 			break;
 
-		token = Com_Parse( text );
 		if ( !*token || *token == '#' )
 		{
-			Com_SkipRestOfLine( text );
-			continue;
-		}
-
-		if ( !dvarCount )
-		{
-			const char *col2;
-
-			if ( stricmp( token, "cpu ghz" ) )
-				Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: \"cpu ghz\" should be the first column\n" );
-
-			col2 = Com_ParseOnLine( text );
-			if ( stricmp( col2, "sys mb" ) )
-				Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: \"sys mb\" should be the second column\n" );
-
-			dvarCount = Com_GetConfigureDvarNames( text, dvarNames );
 			Com_SkipRestOfLine( text );
 			continue;
 		}
@@ -2254,48 +2232,47 @@ static qboolean Com_ParseCpuConfig( const char **text, const SysInfo *info )
 			break;
 		}
 
-		rowGHz = atof( token );
-		if ( rowGHz < 0.0 )
-			Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: cpu ghz %g not allowed to be less than 0\n", rowGHz );
-
-		token = Com_ParseOnLine( text );
-		rowMB = atoi( token );
-		if ( rowMB <= 0x7f )
-			Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: sys mb %i not allowed to be less than 128\n", rowMB );
-
-		if ( info->cpuGHz >= rowGHz && rowMB <= info->sysMB )
+		if ( !dvarCount )
 		{
-			if ( rowGHz > bestMHz || ( rowGHz == bestMHz && rowMB > bestMB ) )
-			{
-				bestMHz = rowGHz;
-				bestMB = rowMB;
-				best.MHz = rowGHz;
-				best.MB = rowMB;
-				Com_GetConfigureDvarValues( dvarCount, text, best.dvarValues );
-				foundCpuMatch = qtrue;
-			}
-			else
-			{
-				Com_GetConfigureDvarValues( dvarCount, text, NULL );
-			}
-		}
-		else
-		{
-			Com_GetConfigureDvarValues( dvarCount, text, NULL );
+			if ( stricmp( token, "cpu ghz" ) )
+				Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: \"cpu ghz\" should be the first column\n" );
+			token = Com_ParseOnLine( text );
+			if ( stricmp( token, "sys mb" ) )
+				Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: \"sys mb\" should be the second column\n" );
+			dvarCount = Com_GetConfigureDvarNames( text, dvarNames );
+			continue;
 		}
 
-		Com_SkipRestOfLine( text );
+		row.cpuGHz = atof( token );
+		if ( row.cpuGHz < 0.0 )
+			Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: cpu ghz %g not allowed to be less than 0\n", row.cpuGHz );
+
+		row.sysMB = atoi( Com_ParseOnLine( text ) );
+		if ( row.sysMB < 0x80 )
+			Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: sys mb %i not allowed to be less than 128\n", row.sysMB );
+
+		isBest = false;
+		if ( info->cpuGHz >= row.cpuGHz && info->sysMB >= row.sysMB )
+		{
+			if ( best.cpuGHz < row.cpuGHz || ( best.cpuGHz == row.cpuGHz && best.sysMB < row.sysMB ) )
+			{
+				isBest = true;
+				best = row;
+				foundCpuMatch = true;
+			}
+		}
+		Com_GetConfigureDvarValues( dvarCount, text, isBest ? dvarValues : NULL );
 	}
 
 	if ( !foundCpuMatch )
-		return qfalse;
+		return false;
 
-	Com_Printf( "configure_mp.csv: using CPU configuration %.0f GHz %i MB\n", bestMHz, bestMB );
+	Com_Printf( "configure_mp.csv: using CPU configuration %.0f GHz %i MB\n", best.cpuGHz, best.sysMB );
 	Cbuf_AddText( "exec configure_mp.cfg" );
 	Cbuf_Execute();
-	Com_SetConfigureDvars( dvarCount, dvarNames, best.dvarValues );
+	Com_SetConfigureDvars( dvarCount, dvarNames, dvarValues );
 
-	return qtrue;
+	return true;
 }
 
 /*
@@ -2303,52 +2280,47 @@ static qboolean Com_ParseCpuConfig( const char **text, const SysInfo *info )
 Com_ParseGpuConfig
 ==================
 */
-static qboolean Com_ParseGpuConfig( const char **text, const SysInfo *info )
+static bool Com_ParseGpuConfig( const char **text, const SysInfo *info )
 {
 	char dvarNames[0x40 * 0x20];
+	char dvarValues[0x40 * 0x20];
 	int dvarCount;
-	qboolean foundGpuMatch = qfalse;
+	bool foundGpuMatch;
 	const char *token;
 
 	token = Com_Parse( text );
 	if ( stricmp( token, "gpu" ) )
 	{
 		Com_UngetToken();
-		return qfalse;
+		return false;
 	}
 
 	dvarCount = Com_GetConfigureDvarNames( text, dvarNames );
+	foundGpuMatch = false;
 
 	for ( ;; )
 	{
-		const char *find;
-
-		Com_SkipConfigureBlankLines( text );
-		if ( !*text || !**text )
+		token = Com_Parse( text );
+		if ( !*text )
 			break;
 
-		find = Com_Parse( text );
-		if ( !*find || *find == '#' )
+		if ( !*token || *token == '#' )
 		{
 			Com_SkipRestOfLine( text );
 			continue;
 		}
 
-		if ( !foundGpuMatch && Com_MatchGpuTemplate( find, info->gpuDescription ) )
+		if ( !foundGpuMatch && Com_MatchGpuTemplate( token, info->gpuDescription ) )
 		{
-			char dvarValues[0x40 * 0x20];
-
-			Com_Printf( "configure_mp.csv: using GPU configuration \"%s\"\n", find );
+			Com_Printf( "configure_mp.csv: using GPU configuration \"%s\"\n", token );
 			Com_GetConfigureDvarValues( dvarCount, text, dvarValues );
 			Com_SetConfigureDvars( dvarCount, dvarNames, dvarValues );
-			foundGpuMatch = qtrue;
+			foundGpuMatch = true;
 		}
 		else
 		{
 			Com_GetConfigureDvarValues( dvarCount, text, NULL );
 		}
-
-		Com_SkipRestOfLine( text );
 	}
 
 	return foundGpuMatch;
@@ -2386,7 +2358,7 @@ void Com_SetRecommended( qboolean restart )
 	Com_BeginParseSession( "configure_mp.csv" );
 	Com_SetCSV( qtrue );
 
-	if ( !Com_ParseCpuConfig( &text, &info ) )
+	if ( !Com_ParseCpuConfig( &info, &text ) )
 	{
 		Sys_GetInfo( &info );
 		Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: " "\x14" "EXE_ERR_COULDNT_CONFIGURE" "\x15" " %.0f GHz %i MB\n", info.cpuGHz, info.sysMB );

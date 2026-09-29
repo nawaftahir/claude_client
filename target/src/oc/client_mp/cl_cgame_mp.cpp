@@ -218,10 +218,13 @@ void CL_DrawStretchPic(float x, float y, float w, float h, int horzAlign, int ve
 void CL_SyncTimes(void);
 void CL_SetCGameTime(void);
 
-static inline __attribute__((always_inline)) void CL_FirstSnapshot(void)
+void CL_FirstSnapshot(void)
 {
     clientActive_t *cl = CL_LOCAL;
     clientConnection_t *clui = CLUI_STATE;
+
+    if (cl->snap.snapFlags & 2)
+        return;
 
     clui->state = (connstate_t)(8);
     int serverTime = cl->snap.serverTime;
@@ -1285,167 +1288,112 @@ void CL_SyncTimes(void)
     CL_FirstSnapshot();
 }
 
+// retail 0x402e70
+char *CL_TimeDemoLogBaseName(void)
+{
+    char *mapname;
+    char *base;
+    char *ext;
+    char *name;
+
+    ext = NULL;
+    base = CL_LOCAL->mapname;
+    for (mapname = CL_LOCAL->mapname; *mapname; mapname++) {
+        if (*mapname == '/' || *mapname == '\\') {
+            base = mapname + 1;
+            ext = NULL;
+        } else if (*mapname == '.') {
+            ext = mapname;
+        }
+    }
+    if (!ext)
+        return base;
+
+    name = va("%s", base);
+    name[ext - base] = 0;
+    return name;
+}
+
+// retail 0x402ed0
+void CL_UpdateTimeDemo(void)
+{
+    int now;
+
+    if (!clc.timeDemoLog)
+        clc.timeDemoLog = FS_FOpenFileWrite(va("demos/timedemo_%s_mode_%i.csv", CL_TimeDemoLogBaseName(), Dvar_GetInt("r_mode")));
+
+    now = Sys_Milliseconds();
+    if (!clc.timeDemoStart)
+        clc.timeDemoStart = now;
+    else if (clc.timeDemoLog)
+        FS_Printf(clc.timeDemoLog, "%i,%i\n", clc.timeDemoFrames, now - clc.timeDemoPrev);
+
+    clc.timeDemoFrames++;
+    clc.timeDemoPrev = now;
+    CL_LOCAL->serverTime = clc.timeDemoBaseTime + clc.timeDemoFrames * 50;
+}
+
 void CL_SetCGameTime(void)
 {
-    clientConnection_t *clui;
-    clientActive_t *cl;
-    int state;
+    clientActive_t *cl = CL_LOCAL;
 
-    clui = CLUI_STATE;
-    state = clui->state;
-
-    if (state != 8) {
-        if (state != 7)
+    if (clc.state != CA_ACTIVE) {
+        if (clc.state != CA_PRIMED)
             return;
-
-        if (clui->demoplaying) {
-
-            if (!clui->firstDemoFrameSkipped) {
-                clui->firstDemoFrameSkipped = 1;
+        if (clc.demoplaying) {
+            if (!clc.firstDemoFrameSkipped) {
+                clc.firstDemoFrameSkipped = 1;
                 return;
             }
             CL_ReadDemoMessage();
         }
-
-        cl = CL_LOCAL;
         if (cl->newSnapshots) {
             cl->newSnapshots = 0;
-            if (!(cl->snap.snapFlags & 2)) {
-                CL_FirstSnapshot();
-            }
+            CL_FirstSnapshot();
         }
-
-        clui = CLUI_STATE;
-        if (clui->state != 8)
+        if (clc.state != CA_ACTIVE)
             return;
     }
 
-    cl = CL_LOCAL;
-    if (!cl->snap.valid) {
+    if (!cl->snap.valid)
         Com_Error(ERR_DROP, "CL_SetCGameTime: no snapshot");
-    }
 
-    if (CL_DvarCurrentInt((void *)&sv_paused) &&
-        CL_DvarCurrentInt((void *)&cl_paused) &&
-        CL_DvarCurrentBool((void *)&com_sv_running)) {
+    if (sv_paused->current.integer && cl_paused->current.integer && com_sv_running->current.enabled)
         return;
+
+    if (cl->snap.serverTime < cl->oldFrameServerTime) {
+        if (!I_stricmp(cls.servername, "localhost"))
+            CL_FirstSnapshot();
+        else
+            Com_Error(ERR_DROP, "cl.snap.serverTime < cl.oldFrameServerTime");
     }
+    cl->oldFrameServerTime = cl->snap.serverTime;
 
-    cl = CL_LOCAL;
-    {
-        int serverTime = cl->snap.serverTime;
-        if (serverTime < cl->oldFrameServerTime) {
-            clientStatic_t *cls = CLS;
-            if (I_stricmp(cls->servername, "localhost") != 0) {
-                Com_Error(ERR_DROP, "cl.snap.serverTime < cl.oldFrameServerTime");
-            }
-
-            if (!(cl->snap.snapFlags & 2)) {
-                CL_FirstSnapshot();
-            }
+    if (!clc.demoplaying || !cl_freezeDemo->current.enabled) {
+        cl->serverTime = cls.realtime + cl->serverTimeDelta;
+        if (cl->serverTime < cl->oldServerTime)
+            cl->serverTime = cl->oldServerTime;
+        cl->oldServerTime = cl->serverTime;
+        if (cls.realtime + cl->serverTimeDelta >= cl->snap.serverTime - 5) {
+            cl->extrapolatedSnapshot = 1;
+            if (cl_showTimeDelta->current.enabled)
+                Com_Printf("Extrapolating snapshot!\n");
         }
     }
 
-    cl = CL_LOCAL;
-    {
-        int serverTime = cl->snap.serverTime;
-        cl->oldFrameServerTime = serverTime;
-    }
-
-    clui = CLUI_STATE;
-    {
-        int demoPlaying = clui->demoplaying;
-        clientStatic_t *cls = CLS;
-
-        if (!demoPlaying || !CL_DvarCurrentBool((void *)&cl_freezeDemo)) {
-
-            int timeDelta = cl->serverTimeDelta;
-            int realtime = cls->realtime;
-            cl->serverTime = realtime + timeDelta;
-
-            int oldServerTime = cl->oldServerTime;
-            if (cl->serverTime < oldServerTime) {
-                cl->serverTime = oldServerTime;
-            }
-            cl->oldServerTime = cl->serverTime;
-
-            int serverTime = cl->snap.serverTime;
-            if (timeDelta + realtime < serverTime - 5) {
-                cl->extrapolatedSnapshot = 1;
-                if (CL_DvarCurrentBool((void *)&cl_showTimeDelta)) {
-                    Com_Printf("%.6f extrapolating\n");
-                }
-            }
-        } else {
-
-            if (!clui->timeDemoLog) {
-
-                char *mapPath = cl->mapname;
-                char *base = mapPath;
-                char *dotPos = 0;
-                while (*mapPath) {
-                    if (*mapPath == '/' || *mapPath == '\\') {
-                        base = mapPath + 1;
-                        dotPos = 0;
-                    } else if (*mapPath == '.') {
-                        dotPos = mapPath;
-                    }
-                    mapPath++;
-                }
-                {
-                    const char *name;
-                    if (dotPos) {
-                        name = va("%s", base);
-                        ((char *)name)[dotPos - base] = '\0';
-                    } else {
-                        name = base;
-                    }
-                    int mode = Dvar_GetInt("cl_timedemoMode");
-                    clui->timeDemoLog = FS_FOpenFileWrite(va("demos/timedemo_%s_mode_%i.csv", name, mode));
-                }
-            }
-
-            {
-                int msec = Sys_Milliseconds();
-                clui = CLUI_STATE;
-                if (!clui->timeDemoStart) {
-                    clui->timeDemoStart = msec;
-                } else if (clui->timeDemoLog) {
-                    FS_Printf(clui->timeDemoLog, "%i,%i\n",
-                              clui->timeDemoFrames,
-                              msec - clui->timeDemoPrev);
-                }
-                clui->timeDemoPrev = msec;
-                int frameNum = clui->timeDemoFrames + 1;
-                clui->timeDemoFrames = frameNum;
-                cl = CL_LOCAL;
-                cl->serverTime = clui->timeDemoBaseTime + frameNum * 50;
-            }
-        }
-    }
-
-    cl = CL_LOCAL;
-
-    if (cl->newSnapshots) {
+    if (cl->newSnapshots)
         CL_AdjustTimeDelta();
-    }
 
-    clui = CLUI_STATE;
-    if (!clui->demoplaying)
+    if (!clc.demoplaying)
         return;
 
-    if (!clui->isTimeDemo) {
-        cl = CL_LOCAL;
-    } else {
-        cl = CL_LOCAL;
-    }
+    if (clc.isTimeDemo)
+        CL_UpdateTimeDemo();
 
     while (cl->serverTime >= cl->snap.serverTime) {
         CL_ReadDemoMessage();
-        clui = CLUI_STATE;
-        if (clui->state != 8)
+        if (clc.state != CA_ACTIVE)
             return;
-        cl = CL_LOCAL;
     }
 }
 
