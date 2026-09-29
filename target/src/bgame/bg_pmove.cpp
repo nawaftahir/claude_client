@@ -3143,6 +3143,7 @@ are being updated isntead of a full move
 // rain - take a tracemask as well - we can't use anything out of pm
 void PM_UpdateViewAngles( playerState_t *ps, float msec, usercmd_t *cmd, byte handler )
 {
+	int pmFlags;
 	short temp;
 	int i;
 	float delta;
@@ -3229,13 +3230,15 @@ void PM_UpdateViewAngles( playerState_t *ps, float msec, usercmd_t *cmd, byte ha
 		return;
 	}
 
-	if ( ps->pm_flags & PMF_MANTLE )
+	pmFlags = ps->pm_flags;
+
+	if ( pmFlags & PMF_MANTLE )
 	{
 		Mantle_CapView(ps);
 		return;
 	}
 
-	if ( ps->pm_flags & PMF_LADDER && ps->groundEntityNum == ENTITYNUM_NONE && bg_ladder_yawcap->current.decimal != 0 )
+	if ( pmFlags & PMF_LADDER && ps->groundEntityNum == ENTITYNUM_NONE && bg_ladder_yawcap->current.decimal != 0 )
 	{
 		ladderFacing = vectoyaw(ps->vLadderVec) + 180;
 		delta = AngleDelta(ladderFacing, ps->viewangles[YAW]);
@@ -3256,7 +3259,7 @@ void PM_UpdateViewAngles( playerState_t *ps, float msec, usercmd_t *cmd, byte ha
 		}
 	}
 
-	if ( ps->pm_flags & PMF_PRONE && !(ps->eFlags & EF_TURRET_ACTIVE) )
+	if ( pmFlags & PMF_PRONE )
 	{
 		proneBlocked = qfalse;
 
