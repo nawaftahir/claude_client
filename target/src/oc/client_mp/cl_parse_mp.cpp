@@ -5,8 +5,8 @@
 #include "PC/qcommon/net_hardening.h"
 #include <stdlib.h>
 
+extern clientStatic_t cls;
 #if COD2_IS_PATCH_13
-extern struct clientStatic_t cls;
 extern dvar_t *com_developer;
 extern const char* Dvar_GetString(const char *dvarName);
 extern void FS_BuildOSPath(const char *base, const char *game, const char *qpath, char *ospath);
@@ -548,414 +548,328 @@ void CL_WWWDownload(void)
 }
 #endif
 
-static byte *CL_EntitySlot(byte *base, int num)
+static void CL_DeltaEntity(msg_t *msg, clSnapshot_t *frame, int newnum, entityState_t *old, qboolean unchanged)
 {
-    int idx = num & 0x7ff;
-    return base + 0xd30e0 + idx * 240;
+    entityState_t *state;
+
+    state = &clients->parseEntities[clients->parseEntitiesNum & 0x7ff];
+
+    if (unchanged) {
+        *state = *old;
+    } else if (MSG_ReadDeltaEntity(msg, old, state, newnum)) {
+        // entity was removed
+        return;
+    }
+
+    clients->parseEntitiesNum++;
+    frame->numEntities++;
 }
 
-static byte *CL_ClientSlot(byte *base, int num)
+void CL_ParsePacketEntities(msg_t *msg, clSnapshot_t *oldframe, clSnapshot_t *newframe)
 {
-    int idx = num & 0x7ff;
-    return base + 0x14b0e0 + idx * 92;
-}
-
-static byte *CL_SnapSlot(byte *base, int messageNum)
-{
-    int idx = messageNum & 0x1f;
-    return base + 0x495e0 + idx * 0x26d8;
-}
-
-void CL_ParseSnapshot(msg_t *msg)
-{
-    clSnapshot_t *newSnap;
-    clientActive_t *cla;
-    clientConnection_t *clc;
-    clSnapshot_t *old;
-    int oldMessageNum;
-    int deltaNum;
     int newnum;
+    entityState_t *oldstate;
     int oldindex;
-    entityState_t nullstate_ent;
-    clientState_t dummy;
-    byte *oldEntitySlot;
-    int oldEntityNum;
-    byte *oldClientSlot;
-    int oldClientNum;
+    int oldnum;
 
-    LargeLocal newSnap_large_local(sizeof(clSnapshot_t));
-    newSnap = (clSnapshot_t *)newSnap_large_local.GetBuf();
+    newframe->parseEntitiesNum = clients->parseEntitiesNum;
+    newframe->numEntities = 0;
 
-    memset(newSnap, 0, sizeof(clSnapshot_t));
-
-    clc = &::clc;
-    newSnap->serverCommandNum = clc->serverCommandSequence;
-
-    newSnap->serverTime = MSG_ReadLong(msg);
-
-    newSnap->messageNum = clc->serverMessageSequence;
-
-    deltaNum = MSG_ReadByte(msg);
-
-    if (deltaNum == 0) {
-
-        newSnap->deltaNum = -1;
-    } else {
-
-        newSnap->deltaNum = newSnap->messageNum - deltaNum;
-    }
-
-    newSnap->snapFlags = MSG_ReadByte(msg);
-
-    oldMessageNum = newSnap->deltaNum;
-    if (oldMessageNum <= 0) {
-
-        newSnap->valid = 1;
-
-        (&::clc)->demowaiting = 0;
-        old = NULL;
-    } else {
-
-        cla = clients;
-        old = &cla->snapshots[oldMessageNum & 0x1f];
-
-        if (old->valid == 0) {
-
-            Com_Printf("Delta from invalid frame (not supposed to happen!).\n");
-        } else if (old->messageNum != oldMessageNum) {
-
-            Com_DPrintf("Delta frame too old.\n");
-        } else {
-
-            if (cla->parseEntitiesNum - old->parseEntitiesNum > 0x780) {
-
-                Com_DPrintf("Delta parseEntitiesNum too old.\n");
-            } else if (cla->parseClientsNum - old->parseClientsNum > 0x780) {
-
-                Com_DPrintf("Delta parseClientsNum too old.\n");
-            } else {
-
-                newSnap->valid = 1;
-            }
-        }
-    }
-
-    if (CL_ShowNetValue() > 1) {
-        Com_Printf("%3i:%s\n", msg->readcount - 1, "playerstate");
-    }
-
-    if (old) {
-        MSG_ReadDeltaPlayerstate(msg, &old->ps, &newSnap->ps);
-    } else {
-
-        MSG_ReadDeltaPlayerstate(msg, NULL, &newSnap->ps);
-    }
-
-#if COD2_TRACE
-    if (getenv("COD2_SNAPDIAG")) {
-        static int c;
-        if ((c++ & 0x1f) == 0)
-            Com_Printf("[snapdiag] serverTime=%d valid=%d deltaNum=%d hasOld=%d newSnap.ps.commandTime=%d ps.origin=(%.0f %.0f %.0f)\n",
-                       newSnap->serverTime, newSnap->valid, newSnap->deltaNum, old ? 1 : 0,
-                       newSnap->ps.commandTime, newSnap->ps.origin[0], newSnap->ps.origin[1], newSnap->ps.origin[2]);
-    }
-#endif
-
-    if (CL_ShowNetValue() > 1) {
-        Com_Printf("%3i:%s\n", msg->readcount - 1, "packet clients");
-    }
-
-    cla = clients;
-    newSnap->parseEntitiesNum = cla->parseEntitiesNum;
-    newSnap->numEntities = 0;
-
-    if (old && old->numEntities > 0) {
-
-        oldEntitySlot = (byte *)&cla->parseEntities[old->parseEntitiesNum & 0x7ff];
-        oldEntityNum = *(int *)oldEntitySlot;
-    } else {
-        oldEntitySlot = NULL;
-        oldEntityNum = 0x1869f;
-    }
-
+    // delta from the entities present in oldframe
     oldindex = 0;
+    oldstate = NULL;
+    if (!oldframe) {
+        oldnum = 99999;
+    } else if (oldindex >= oldframe->numEntities) {
+        oldnum = 99999;
+    } else {
+        oldstate = &clients->parseEntities[(oldframe->parseEntitiesNum + oldindex) & 0x7ff];
+        oldnum = oldstate->number;
+    }
 
-    for (;;) {
-
-        if (msg->overflowed)
-            break;
-
+    while (!msg->overflowed) {
         newnum = MSG_ReadBits(msg, 10);
 
         if (newnum == 0x3ff)
             break;
 
-        if (msg->readcount > msg->cursize) {
-            Com_Error(ERR_DROP, "\x15"
-                         "CL_ParsePacketEntities: end of message");
-        }
+        if (msg->readcount > msg->cursize)
+            Com_Error(ERR_DROP, "\x15" "CL_ParsePacketEntities: end of message");
 
-        while (oldEntityNum < newnum) {
-            if (msg->overflowed)
-                break;
+        while (oldnum < newnum && !msg->overflowed) {
+            // one or more entities from the old packet are unchanged
+            if (cl_shownet->current.integer == 3)
+                Com_Printf("%3i:  unchanged: %i\n", msg->readcount, oldnum);
 
-            if (CL_ShowNetValue() == 3) {
-                Com_Printf("%3i:  unchanged: %i\n", msg->readcount, oldEntityNum);
-            }
+            CL_DeltaEntity(msg, newframe, oldnum, oldstate, 1);
 
-            cla = clients;
-            memcpy(&cla->parseEntities[cla->parseEntitiesNum & 0x7ff], oldEntitySlot, sizeof(entityState_t));
-            cla->parseEntitiesNum += 1;
-            newSnap->numEntities += 1;
-
-            oldindex += 1;
-            if (oldindex >= old->numEntities) {
-                oldEntityNum = 0x1869f;
+            oldindex++;
+            if (oldindex >= oldframe->numEntities) {
+                oldnum = 99999;
             } else {
-                oldEntitySlot = (byte *)&cla->parseEntities[(oldindex + old->parseEntitiesNum) & 0x7ff];
-                oldEntityNum = *(int *)oldEntitySlot;
+                oldstate = &clients->parseEntities[(oldframe->parseEntitiesNum + oldindex) & 0x7ff];
+                oldnum = oldstate->number;
             }
         }
 
-        if (oldEntityNum == newnum) {
+        if (oldnum == newnum) {
+            // delta from previous state
+            if (cl_shownet->current.integer == 3)
+                Com_Printf("%3i:  delta: %i\n", msg->readcount, newnum);
 
-            if (CL_ShowNetValue() == 3) {
-                Com_Printf("%3i:  delta: %i\n", msg->readcount, oldEntityNum);
-            }
+            CL_DeltaEntity(msg, newframe, newnum, oldstate, 0);
 
-            cla = clients;
-            if (!MSG_ReadDeltaEntity(msg, (entityState_t *)oldEntitySlot,
-                                     &cla->parseEntities[cla->parseEntitiesNum & 0x7ff],
-                                     oldEntityNum)) {
-                cla->parseEntitiesNum += 1;
-                newSnap->numEntities += 1;
-            }
-
-            oldindex += 1;
-            if (oldindex >= old->numEntities) {
-                oldEntityNum = 0x1869f;
+            oldindex++;
+            if (oldindex >= oldframe->numEntities) {
+                oldnum = 99999;
             } else {
-                oldEntitySlot = (byte *)&cla->parseEntities[(oldindex + old->parseEntitiesNum) & 0x7ff];
-                oldEntityNum = *(int *)oldEntitySlot;
+                oldstate = &clients->parseEntities[(oldframe->parseEntitiesNum + oldindex) & 0x7ff];
+                oldnum = oldstate->number;
             }
+            continue;
+        }
+
+        // delta from baseline
+        if (cl_shownet->current.integer == 3)
+            Com_Printf("%3i:  baseline: %i\n", msg->readcount, newnum);
+
+        CL_DeltaEntity(msg, newframe, newnum, &clients->entityBaselines[newnum], 0);
+    }
+
+    // any remaining entities in the old frame are copied over
+    while (oldnum != 99999 && !msg->overflowed) {
+        if (cl_shownet->current.integer == 3)
+            Com_Printf("%3i:  unchanged: %i\n", msg->readcount, oldnum);
+
+        CL_DeltaEntity(msg, newframe, oldnum, oldstate, 1);
+
+        oldindex++;
+        if (oldindex >= oldframe->numEntities) {
+            oldnum = 99999;
         } else {
-
-            if (CL_ShowNetValue() == 3) {
-                Com_Printf("%3i:  baseline: %i\n", msg->readcount, newnum);
-            }
-
-            cla = clients;
-            if (!MSG_ReadDeltaEntity(msg,
-                                     &cla->entityBaselines[newnum],
-                                     &cla->parseEntities[cla->parseEntitiesNum & 0x7ff],
-                                     newnum)) {
-                cla->parseEntitiesNum += 1;
-                newSnap->numEntities += 1;
-            }
+            oldstate = &clients->parseEntities[(oldframe->parseEntitiesNum + oldindex) & 0x7ff];
+            oldnum = oldstate->number;
         }
     }
 
-    while (oldEntityNum != 0x1869f) {
-        if (msg->overflowed)
-            break;
+    if (cl_shownuments->current.enabled)
+        Com_Printf("Entities in packet: %i\n", newframe->numEntities);
+}
 
-        if (CL_ShowNetValue() == 3) {
-            Com_Printf("%3i:  unchanged: %i\n", msg->readcount, oldEntityNum);
-        }
+static void CL_DeltaClient(msg_t *msg, clSnapshot_t *frame, int newnum, clientState_t *old, qboolean unchanged)
+{
+    clientState_t *state;
 
-        cla = clients;
-        memcpy(&cla->parseEntities[cla->parseEntitiesNum & 0x7ff], oldEntitySlot, sizeof(entityState_t));
-        cla->parseEntitiesNum += 1;
-        newSnap->numEntities += 1;
+    state = &clients->parseClients[clients->parseClientsNum & 0x7ff];
 
-        oldindex += 1;
-        if (oldindex >= old->numEntities)
-            break;
-
-        oldEntitySlot = (byte *)&cla->parseEntities[(oldindex + old->parseEntitiesNum) & 0x7ff];
-        oldEntityNum = *(int *)oldEntitySlot;
+    if (unchanged) {
+        *state = *old;
+    } else if (MSG_ReadDeltaClient(msg, old, state, newnum)) {
+        return;
     }
 
-    if (CL_ShowPacketsEnabled()) {
-        Com_Printf("Entities in packet: %i\n", newSnap->numEntities);
-    }
+    clients->parseClientsNum++;
+    frame->numClients++;
+}
 
-    if (CL_ShowNetValue() > 1) {
-        Com_Printf("%3i:%s\n", msg->readcount - 1, "packet clients");
-    }
+void CL_ParsePacketClients(msg_t *msg, clSnapshot_t *oldframe, clSnapshot_t *newframe)
+{
+    int newnum;
+    clientState_t *oldstate;
+    int oldindex;
+    int oldnum;
+    clientState_t dummy;
 
-    cla = clients;
-    newSnap->parseClientsNum = cla->parseClientsNum;
-    newSnap->numClients = 0;
-
-    if (old && old->numClients > 0) {
-
-        oldClientSlot = (byte *)&cla->parseClients[old->parseClientsNum & 0x7ff];
-        oldClientNum = *(int *)oldClientSlot;
-    } else {
-        oldClientSlot = NULL;
-        oldClientNum = 0x1869f;
-    }
+    newframe->parseClientsNum = clients->parseClientsNum;
+    newframe->numClients = 0;
 
     oldindex = 0;
+    oldstate = NULL;
+    if (!oldframe) {
+        oldnum = 99999;
+    } else if (oldindex >= oldframe->numClients) {
+        oldnum = 99999;
+    } else {
+        oldstate = &clients->parseClients[(oldframe->parseClientsNum + oldindex) & 0x7ff];
+        oldnum = oldstate->clientIndex;
+    }
 
-    for (;;) {
-
-        if (msg->overflowed)
-            break;
-
+    while (!msg->overflowed) {
         if (!MSG_ReadBit(msg))
             break;
 
         newnum = MSG_ReadBits(msg, 6);
 
-        if (msg->readcount > msg->cursize) {
-            Com_Error(ERR_DROP, "\x15"
-                         "CL_ParsePacketClients: end of message");
-        }
+        if (msg->readcount > msg->cursize)
+            Com_Error(ERR_DROP, "\x15" "CL_ParsePacketClients: end of message");
 
-        while (oldClientNum < newnum) {
+        while (oldnum < newnum) {
+            if (cl_shownet->current.integer == 3)
+                Com_Printf("%3i:  unchanged: %i\n", msg->readcount, oldnum);
 
-            if (CL_ShowNetValue() == 3) {
-                Com_Printf("%3i:  unchanged: %i\n", msg->readcount, oldClientNum);
-            }
+            CL_DeltaClient(msg, newframe, oldnum, oldstate, 1);
 
-            cla = clients;
-            memcpy(&cla->parseClients[cla->parseClientsNum & 0x7ff], oldClientSlot, sizeof(clientState_t));
-            cla->parseClientsNum += 1;
-            newSnap->numClients += 1;
-
-            oldindex += 1;
-            if (oldindex >= old->numClients) {
-                oldClientNum = 0x1869f;
-                break;
-            }
-            oldClientSlot = (byte *)&cla->parseClients[(oldindex + old->parseClientsNum) & 0x7ff];
-            oldClientNum = *(int *)oldClientSlot;
-        }
-
-        if (oldClientNum == newnum) {
-
-            if (CL_ShowNetValue() == 3) {
-                Com_Printf("%3i:  delta: %i\n", msg->readcount, oldClientNum);
-            }
-
-            cla = clients;
-            if (!MSG_ReadDeltaClient(msg, (clientState_t *)oldClientSlot,
-                                     &cla->parseClients[cla->parseClientsNum & 0x7ff],
-                                     oldClientNum)) {
-                cla->parseClientsNum += 1;
-                newSnap->numClients += 1;
-            }
-
-            oldindex += 1;
-            if (oldindex >= old->numClients) {
-                oldClientNum = 0x1869f;
+            oldindex++;
+            if (oldindex >= oldframe->numClients) {
+                oldnum = 99999;
             } else {
-                oldClientSlot = (byte *)&cla->parseClients[(oldindex + old->parseClientsNum) & 0x7ff];
-                oldClientNum = *(int *)oldClientSlot;
+                oldstate = &clients->parseClients[(oldframe->parseClientsNum + oldindex) & 0x7ff];
+                oldnum = oldstate->clientIndex;
             }
+        }
+
+        if (oldnum == newnum) {
+            if (cl_shownet->current.integer == 3)
+                Com_Printf("%3i:  delta: %i\n", msg->readcount, newnum);
+
+            CL_DeltaClient(msg, newframe, newnum, oldstate, 0);
+
+            oldindex++;
+            if (oldindex >= oldframe->numClients) {
+                oldnum = 99999;
+            } else {
+                oldstate = &clients->parseClients[(oldframe->parseClientsNum + oldindex) & 0x7ff];
+                oldnum = oldstate->clientIndex;
+            }
+            continue;
+        }
+
+        if (cl_shownet->current.integer == 3)
+            Com_Printf("%3i:  baseline: %i\n", msg->readcount, newnum);
+
+        memset(&dummy, 0, sizeof(dummy));
+        CL_DeltaClient(msg, newframe, newnum, &dummy, 0);
+    }
+
+    while (oldnum != 99999 && !msg->overflowed) {
+        if (cl_shownet->current.integer == 3)
+            Com_Printf("%3i:  unchanged: %i\n", msg->readcount, oldnum);
+
+        CL_DeltaClient(msg, newframe, oldnum, oldstate, 1);
+
+        oldindex++;
+        if (oldindex >= oldframe->numClients) {
+            oldnum = 99999;
         } else {
-
-            if (CL_ShowNetValue() == 3) {
-                Com_Printf("%3i:  baseline: %i\n", msg->readcount, newnum);
-            }
-
-            memset(&dummy, 0, sizeof(clientState_t));
-
-            cla = clients;
-            if (!MSG_ReadDeltaClient(msg, (clientState_t *)&dummy,
-                                     &cla->parseClients[cla->parseClientsNum & 0x7ff],
-                                     newnum)) {
-                cla->parseClientsNum += 1;
-                newSnap->numClients += 1;
-            }
+            oldstate = &clients->parseClients[(oldframe->parseClientsNum + oldindex) & 0x7ff];
+            oldnum = oldstate->clientIndex;
         }
     }
 
-    while (oldClientNum != 0x1869f) {
-        if (msg->overflowed)
-            break;
+    if (cl_shownuments->current.enabled)
+        Com_Printf("Clients in packet: %i\n", newframe->numClients);
+}
 
-        if (CL_ShowNetValue() == 3) {
-            Com_Printf("%3i:  unchanged: %i\n", msg->readcount, oldClientNum);
+void CL_ParseSnapshot(msg_t *msg)
+{
+    clSnapshot_t *old;
+    clSnapshot_t *newSnap;
+    int deltaNum;
+    int oldMessageNum;
+    int i;
+    int packetNum;
+
+    LargeLocal newSnap_large_local(sizeof(clSnapshot_t));
+    newSnap = (clSnapshot_t *)newSnap_large_local.GetBuf();
+
+    memset(newSnap, 0, sizeof(*newSnap));
+
+    // get the reliable sequence acknowledge number
+    newSnap->serverCommandNum = clc.serverCommandSequence;
+
+    newSnap->serverTime = MSG_ReadLong(msg);
+
+    newSnap->messageNum = clc.serverMessageSequence;
+
+    deltaNum = MSG_ReadByte(msg);
+    if (!deltaNum) {
+        newSnap->deltaNum = -1;
+    } else {
+        newSnap->deltaNum = newSnap->messageNum - deltaNum;
+    }
+    newSnap->snapFlags = MSG_ReadByte(msg);
+
+    // an uncompressed frame is always valid
+    if (newSnap->deltaNum <= 0) {
+        newSnap->valid = 1;
+        old = NULL;
+        clc.demowaiting = 0;
+    } else {
+        old = &clients->snapshots[newSnap->deltaNum & 0x1f];
+        if (!old->valid) {
+            // should never happen
+            Com_Printf("Delta from invalid frame (not supposed to happen!).\n");
+        } else if (old->messageNum != newSnap->deltaNum) {
+            // the frame that the server did the delta from has been overwritten
+            Com_DPrintf("Delta frame too old.\n");
+        } else if (clients->parseEntitiesNum - old->parseEntitiesNum > 0x780) {
+            Com_DPrintf("Delta parseEntitiesNum too old.\n");
+        } else if (clients->parseClientsNum - old->parseClientsNum > 0x780) {
+            Com_DPrintf("Delta parseClientsNum too old.\n");
+        } else {
+            newSnap->valid = 1;
         }
-
-        cla = clients;
-        memcpy(&cla->parseClients[cla->parseClientsNum & 0x7ff], oldClientSlot, sizeof(clientState_t));
-        cla->parseClientsNum += 1;
-        newSnap->numClients += 1;
-
-        oldindex += 1;
-        if (oldindex >= old->numClients)
-            break;
-
-        oldClientSlot = (byte *)&cla->parseClients[(oldindex + old->parseClientsNum) & 0x7ff];
-        oldClientNum = *(int *)oldClientSlot;
     }
 
-    if (CL_ShowPacketsEnabled()) {
-        Com_Printf("Clients in packet: %i\n", newSnap->numClients);
+    if (cl_shownet->current.integer >= 2)
+        Com_Printf("%3i:%s\n", msg->readcount - 1, "playerstate");
+
+    if (old) {
+        MSG_ReadDeltaPlayerstate(msg, &old->ps, &newSnap->ps);
+    } else {
+        MSG_ReadDeltaPlayerstate(msg, NULL, &newSnap->ps);
     }
 
+    if (cl_shownet->current.integer >= 2)
+        Com_Printf("%3i:%s\n", msg->readcount - 1, "packet entities");
+
+    CL_ParsePacketEntities(msg, old, newSnap);
+
+    if (cl_shownet->current.integer >= 2)
+        Com_Printf("%3i:%s\n", msg->readcount - 1, "packet clients");
+
+    CL_ParsePacketClients(msg, old, newSnap);
+
+    // if not valid, dump the entire thing now that it has been properly read
     if (msg->overflowed) {
-
         newSnap->valid = 0;
         return;
     }
 
-    if (newSnap->valid == 0) {
+    if (!newSnap->valid)
         return;
-    }
 
-    cla = clients;
-    {
-        int oldMsg = cla->snap.messageNum + 1;
-        int serverMessageSequence = newSnap->messageNum;
+    // clear the valid flags of any snapshots between the last received and this one
+    oldMessageNum = clients->snap.messageNum + 1;
 
-        if (serverMessageSequence - oldMsg >= 0x20) {
-            oldMsg = serverMessageSequence - 0x1f;
-        }
+    if (newSnap->messageNum - oldMessageNum >= 32)
+        oldMessageNum = newSnap->messageNum - 31;
 
-        while (oldMsg < serverMessageSequence) {
-            cla->snapshots[oldMsg & 0x1f].valid = 0;
-            oldMsg++;
-        }
-    }
+    for ( ; oldMessageNum < newSnap->messageNum; oldMessageNum++)
+        clients->snapshots[oldMessageNum & 0x1f].valid = 0;
 
-    cla = clients;
-    cla->oldSnapServerTime = cla->snap.serverTime;
+    clients->oldSnapServerTime = clients->snap.serverTime;
+    clients->snap = *newSnap;
+    clients->snap.ping = 999;
 
-    memcpy(&cla->snap, newSnap, sizeof(clSnapshot_t));
-
-    cla->snap.ping = 999;
-
-    {
-        int parseEntNum = (&::clc)->netchan.outgoingSequence;
-        int snapTime = cla->snap.ps.commandTime;
-        int i;
-
-        for (i = 1; i < 0x21; i++) {
-            int idx = (parseEntNum - i) & 0x1f;
-            outPacket_t *slot = &cla->outPackets[idx];
-            if (slot->p_serverTime >= snapTime) {
-                cla->snap.ping = *(int *)(*(byte **)cls_ptr + 0x118) - slot->p_realtime;
-                break;
-            }
+    // calculate ping time
+    for (i = 0; i < 32; i++) {
+        packetNum = (clc.netchan.outgoingSequence - 1 - i) & 0x1f;
+        if (clients->snap.ps.commandTime >= clients->outPackets[packetNum].p_serverTime) {
+            clients->snap.ping = cls.realtime - clients->outPackets[packetNum].p_realtime;
+            break;
         }
     }
 
-    cla = clients;
-    memcpy(&cla->snapshots[cla->snap.messageNum & 0x1f], &cla->snap, sizeof(clSnapshot_t));
+    // save the frame off in the backup array for later delta comparisons
+    clients->snapshots[clients->snap.messageNum & 0x1f] = clients->snap;
 
-    if (CL_ShowNetValue() == 3) {
-        Com_Printf("   snapshot:%i  delta:%i  ping:%i\n",
-                   cla->snap.messageNum, cla->snap.deltaNum, cla->snap.ping);
-    }
+    if (cl_shownet->current.integer == 3)
+        Com_Printf("   snapshot:%i  delta:%i  ping:%i\n", clients->snap.messageNum, clients->snap.deltaNum, clients->snap.ping);
 
-    cla->newSnapshots = 1;
-
+    clients->newSnapshots = 1;
 }
+
 
 void CL_ParseServerMessage(msg_t *msg)
 {
