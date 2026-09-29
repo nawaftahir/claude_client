@@ -57,13 +57,13 @@ typedef struct
 
 #define YY_BUF_SIZE 16384
 
-yy_buffer_state *yy_current_buffer = 0;
-char *yy_c_buf_p = 0;
-int yy_start = 0;
+static yy_buffer_state *yy_current_buffer = 0;
+static char *yy_c_buf_p = 0;
+static int yy_start = 0;
 FILE *yyin = 0;
 FILE *yyout = 0;
 static sval_u yaccResult;
-static unsigned int g_out_pos;
+unsigned int g_out_pos;
 static unsigned int g_sourcePos;
 static unsigned char g_parse_user;
 static sval_u g_dummyVal;
@@ -1036,14 +1036,10 @@ int yylex()
 {
 	/** The main scanner function which does all the work.
 	*/
-	int yy_amount_of_matched_text;
-	int yy_next_state;
-	int yy_retval;
 	register int yy_current_state;
 	register char *yy_cp;
 	register char *yy_bp;
 	register int yy_act;
-	register unsigned char yy_c;
 
 	if ( yy_init )
 	{
@@ -1088,7 +1084,7 @@ int yylex()
 yy_match:
 		do
 		{
-			yy_c = yy_ec[YY_SC_TO_UI(*yy_cp)];
+			register unsigned char yy_c = yy_ec[YY_SC_TO_UI(*yy_cp)];
 			if ( yy_accept[yy_current_state] )
 			{
 				yy_last_accepting_state = yy_current_state;
@@ -1171,437 +1167,437 @@ do_action: /* This label is used only to access EOF actions. */
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = StringValue(yytext + 1, yyleng - 2) != 0 ? 259 : 257; goto lex_done; }
+			return StringValue(yytext + 1, yyleng - 2) != 0 ? 259 : 257;
 		case 8:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = StringValue(yytext + 2, yyleng - 3) != 0 ? 260 : 257; goto lex_done; }
+			return StringValue(yytext + 2, yyleng - 3) != 0 ? 260 : 257;
 		case 9:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 261; goto lex_done; }
+			return 261;
 		case 10:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 262; goto lex_done; }
+			return 262;
 		case 11:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 263; goto lex_done; }
+			return 263;
 		case 12:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 264; goto lex_done; }
+			return 264;
 		case 13:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 265; goto lex_done; }
+			return 265;
 		case 14:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 266; goto lex_done; }
+			return 266;
 		case 15:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 267; goto lex_done; }
+			return 267;
 		case 16:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 268; goto lex_done; }
+			return 268;
 		case 17:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 269; goto lex_done; }
+			return 269;
 		case 18:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 270; goto lex_done; }
+			return 270;
 		case 19:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 271; goto lex_done; }
+			return 271;
 		case 20:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 272; goto lex_done; }
+			return 272;
 		case 21:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 273; goto lex_done; }
+			return 273;
 		case 22:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 274; goto lex_done; }
+			return 274;
 		case 23:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 275; goto lex_done; }
+			return 275;
 		case 24:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 276; goto lex_done; }
+			return 276;
 		case 25:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 277; goto lex_done; }
+			return 277;
 		case 26:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 278; goto lex_done; }
+			return 278;
 		case 27:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 279; goto lex_done; }
+			return 279;
 		case 28:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 280; goto lex_done; }
+			return 280;
 		case 29:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 281; goto lex_done; }
+			return 281;
 		case 30:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 282; goto lex_done; }
+			return 282;
 		case 31:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 283; goto lex_done; }
+			return 283;
 		case 32:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 284; goto lex_done; }
+			return 284;
 		case 33:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 285; goto lex_done; }
+			return 285;
 		case 34:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 286; goto lex_done; }
+			return 286;
 		case 35:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
 			yycopyint(yytext);       // IntegerValue
-			{ yy_retval = 287; goto lex_done; }
+			return 287;
 		case 36:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
 			yycopyfloat(yytext);       // FloatValue
-			{ yy_retval = 288; goto lex_done; }
+			return 288;
 		case 37:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 290; goto lex_done; }
+			return 290;
 		case 38:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 289; goto lex_done; }
+			return 289;
 		case 39:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 294; goto lex_done; }
+			return 294;
 		case 40:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 291; goto lex_done; }
+			return 291;
 		case 41:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 293; goto lex_done; }
+			return 293;
 		case 42:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 292; goto lex_done; }
+			return 292;
 		case 43:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 295; goto lex_done; }
+			return 295;
 		case 44:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 296; goto lex_done; }
+			return 296;
 		case 45:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 297; goto lex_done; }
+			return 297;
 		case 46:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 298; goto lex_done; }
+			return 298;
 		case 47:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 299; goto lex_done; }
+			return 299;
 		case 48:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 300; goto lex_done; }
+			return 300;
 		case 49:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 301; goto lex_done; }
+			return 301;
 		case 50:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 302; goto lex_done; }
+			return 302;
 		case 51:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 303; goto lex_done; }
+			return 303;
 		case 52:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 304; goto lex_done; }
+			return 304;
 		case 53:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 305; goto lex_done; }
+			return 305;
 		case 54:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 306; goto lex_done; }
+			return 306;
 		case 55:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 307; goto lex_done; }
+			return 307;
 		case 56:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 308; goto lex_done; }
+			return 308;
 		case 57:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 309; goto lex_done; }
+			return 309;
 		case 58:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 310; goto lex_done; }
+			return 310;
 		case 59:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 311; goto lex_done; }
+			return 311;
 		case 60:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 312; goto lex_done; }
+			return 312;
 		case 61:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 313; goto lex_done; }
+			return 313;
 		case 62:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 314; goto lex_done; }
+			return 314;
 		case 63:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 315; goto lex_done; }
+			return 315;
 		case 64:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 316; goto lex_done; }
+			return 316;
 		case 65:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 317; goto lex_done; }
+			return 317;
 		case 66:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 318; goto lex_done; }
+			return 318;
 		case 67:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 319; goto lex_done; }
+			return 319;
 		case 68:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 320; goto lex_done; }
+			return 320;
 		case 69:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 321; goto lex_done; }
+			return 321;
 		case 70:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 322; goto lex_done; }
+			return 322;
 		case 71:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 323; goto lex_done; }
+			return 323;
 		case 72:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 325; goto lex_done; }
+			return 325;
 		case 73:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 326; goto lex_done; }
+			return 326;
 		case 74:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 327; goto lex_done; }
+			return 327;
 		case 75:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 328; goto lex_done; }
+			return 328;
 		case 76:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 329; goto lex_done; }
+			return 329;
 		case 77:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 330; goto lex_done; }
+			return 330;
 		case 78:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 331; goto lex_done; }
+			return 331;
 		case 79:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 332; goto lex_done; }
+			return 332;
 		case 80:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 333; goto lex_done; }
+			return 333;
 		case 81:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 334; goto lex_done; }
+			return 334;
 		case 82:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 335; goto lex_done; }
+			return 335;
 		case 83:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 336; goto lex_done; }
+			return 336;
 		case 84:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 337; goto lex_done; }
+			return 337;
 		case 85:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 338; goto lex_done; }
+			return 338;
 		case 86:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 339; goto lex_done; }
+			return 339;
 		case 87:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 340; goto lex_done; }
+			return 340;
 		case 88:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 341; goto lex_done; }
+			return 341;
 		case 89:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
-			{ yy_retval = 342; goto lex_done; }
+			return 342;
 		case 90:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;                  // TextValue
 			yysetlength(yytext, yyleng);
-			{ yy_retval = 258; goto lex_done; }
+			return 258;
 		case 91:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
 			yysetlength(yytext, yyleng);
-			{ yy_retval = 324; goto lex_done; }
+			return 324;
 		case 92:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
 			g_out_pos += yyleng;
 			CompileError(g_sourcePos, "bad token '%s'", yytext);
-			{ yy_retval = 257; goto lex_done; }
+			return 257;
 		case 93:
 			yylval.pos = g_out_pos;
 			g_sourcePos = g_out_pos;
@@ -1611,11 +1607,11 @@ do_action: /* This label is used only to access EOF actions. */
 		case 95: // YY_STATE_EOF(...)
 		case 96:
 		case 97:
-			{ yy_retval = 0; goto lex_done; } // YYNULL
+			return 0; // YYNULL
 		case 94: // YY_END_OF_BUFFER
 		{
 			/* Amount of text matched not including the EOB char. */
-			yy_amount_of_matched_text = yy_cp - yytext - 1;
+			int yy_amount_of_matched_text = (int) (yy_cp - yytext) - 1;
 
 			/* Undo the effects of YY_DO_BEFORE_ACTION. */
 			*yy_cp = yy_hold_char;
@@ -1645,6 +1641,8 @@ do_action: /* This label is used only to access EOF actions. */
 			*/
 			if ( yy_c_buf_p <= &((yy_current_buffer)->yy_ch_buf[yy_n_chars]) )
 			{
+				int yy_next_state;
+
 				/* This was really a NUL. */
 
 				yy_c_buf_p = &((yytext)[yy_amount_of_matched_text]);
@@ -1723,8 +1721,6 @@ do_action: /* This label is used only to access EOF actions. */
 			break;
 		}
 	}
-lex_done:
-	return yy_retval;
 }
 
 int yy_get_next_buffer()
