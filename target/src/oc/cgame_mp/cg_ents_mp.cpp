@@ -232,26 +232,28 @@ void CG_ProcessClientNoteTracks(int clientNum)
     XAnimNotify *noteList;
     int listSize;
     int i;
-    byte *clientGunHand;
 
-    if ((unsigned int)clientNum > 63)
+    if (clientNum < 0 || clientNum >= 64)
         return;
 
     listSize = DObjGetClientNotifyList(&noteList);
     if (listSize <= 0)
         return;
 
-    clientGunHand = (byte *)&cg->bgs.clientinfo[clientNum].leftHandGun;
-    for (i = 0; i < listSize; ++i) {
+    for (i = 0; i < listSize; ++i)
+    {
         if (noteList[i].type != 1)
             continue;
 
-        if (stricmp(noteList[i].name, (const char *)"anim_gunhand = \"left\"") == 0) {
-            *(int *)clientGunHand = 1;
-            *(int *)(clientGunHand + 4) = 1;
-        } else if (stricmp(noteList[i].name, (const char *)"anim_gunhand = \"right\"") == 0) {
-            *(int *)clientGunHand = 0;
-            *(int *)(clientGunHand + 4) = 1;
+        if (!stricmp(noteList[i].name, "anim_gunhand = \"left\""))
+        {
+            cg->bgs.clientinfo[clientNum].leftHandGun = 1;
+            cg->bgs.clientinfo[clientNum].dobjDirty = 1;
+        }
+        else if (!stricmp(noteList[i].name, "anim_gunhand = \"right\""))
+        {
+            cg->bgs.clientinfo[clientNum].leftHandGun = 0;
+            cg->bgs.clientinfo[clientNum].dobjDirty = 1;
         }
     }
 }
@@ -461,41 +463,39 @@ void CG_CalcEntityLerpPositions(centity_t *cent)
     clientInfo_t *ci;
 
     if (cent->currentState.pos.trType == TR_INTERPOLATE ||
-        (cent->currentState.pos.trType == TR_LINEAR_STOP && cent->currentState.number < 64)) {
+        (cent->currentState.pos.trType == TR_LINEAR_STOP && cent->currentState.number < 64))
+    {
         CG_InterpolateEntityPosition(cent);
-    } else {
+        return;
+    }
 
-        BG_EvaluateTrajectory(&cent->currentState.pos, cg->time, cent->lerpOrigin);
-        BG_EvaluateTrajectory(&cent->currentState.apos, cg->time, cent->lerpAngles);
+    BG_EvaluateTrajectory(&cent->currentState.pos, cg->time, cent->lerpOrigin);
+    BG_EvaluateTrajectory(&cent->currentState.apos, cg->time, cent->lerpAngles);
 
-        if (cent->nextState.eType == 1) {
+    if (cent->nextState.eType == 1 || cent->nextState.eType == 2)
+    {
+        if (cent->nextState.eType == 1)
             ci = &cg->bgs.clientinfo[cent->nextState.clientNum];
-            ci->lerpMoveDir = cent->nextState.angles2[1];
-            ci->playerAngles[0] = cent->lerpAngles[0];
-            ci->playerAngles[1] = cent->lerpAngles[1];
-            ci->playerAngles[2] = cent->lerpAngles[2];
-            cent->lerpAngles[0] = 0.0f;
-            cent->lerpAngles[2] = 0.0f;
-            ci->lerpLean = cent->nextState.leanf;
-        } else if (cent->nextState.eType == 2) {
+        else
             ci = CG_CorpseInfoForEntityNum(cent->nextState.number);
-            ci->lerpMoveDir = cent->nextState.angles2[1];
-            ci->playerAngles[0] = cent->lerpAngles[0];
-            ci->playerAngles[1] = cent->lerpAngles[1];
-            ci->playerAngles[2] = cent->lerpAngles[2];
-            cent->lerpAngles[0] = 0.0f;
-            cent->lerpAngles[2] = 0.0f;
-            ci->lerpLean = cent->nextState.leanf;
-        }
 
-        if (cent != &cg->predictedPlayerEntity) {
-            CG_AdjustPositionForMover(cent->lerpOrigin,
-                                      cent->currentState.groundEntityNum,
-                                      cg->snap->serverTime,
-                                      cg->time,
-                                      cent->lerpOrigin,
-                                      0);
-        }
+        ci->lerpMoveDir = cent->nextState.angles2[1];
+        ci->playerAngles[0] = cent->lerpAngles[0];
+        ci->playerAngles[1] = cent->lerpAngles[1];
+        ci->playerAngles[2] = cent->lerpAngles[2];
+        cent->lerpAngles[0] = 0.0f;
+        cent->lerpAngles[2] = 0.0f;
+        ci->lerpLean = cent->nextState.leanf;
+    }
+
+    if (cent != &cg->predictedPlayerEntity)
+    {
+        CG_AdjustPositionForMover(cent->lerpOrigin,
+                                  cent->currentState.groundEntityNum,
+                                  cg->snap->serverTime,
+                                  cg->time,
+                                  cent->lerpOrigin,
+                                  0);
     }
 }
 

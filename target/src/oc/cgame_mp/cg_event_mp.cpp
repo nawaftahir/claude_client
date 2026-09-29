@@ -167,226 +167,167 @@ static void PlayProneSound(int entNum, int isFirstPerson, int soundOffset)
     CG_PlayEntitySoundAlias(entNum, alias);
 }
 
-static void CG_Obituary(centity_t *cent)
+static void CG_Obituary(entityState_t *ent)
 {
-    entityState_t *es = &cent->nextState;
-    char *snap;
-    float attackerColor[4];
-    float victimColor[4];
-    float iconColor[4];
-    int target;
-    int attacker;
-    char targetName[34];
-    char attackerName[34];
-    float iconWidth;
     const char *iconShader;
+    float iconWidth;
+    int attacker;
     int iconHorzFlip;
-    char *victimCI;
-    char *attackerCI;
+    int target;
+    int mod;
+    float victimColor[4];
+    float attackerColor[4];
+    float iconColor[4];
+    char attackerName[34];
+    char targetName[34];
+    clientInfo_t *victimCI;
+    clientInfo_t *attackerCI;
 
-    attackerColor[0] = 1.0f;
-    attackerColor[1] = 1.0f;
-    attackerColor[2] = 1.0f;
-    attackerColor[3] = 1.0f;
     victimColor[0] = 1.0f;
     victimColor[1] = 1.0f;
     victimColor[2] = 1.0f;
     victimColor[3] = 1.0f;
+    attackerColor[0] = 1.0f;
+    attackerColor[1] = 1.0f;
+    attackerColor[2] = 1.0f;
+    attackerColor[3] = 1.0f;
     iconColor[0] = 1.0f;
     iconColor[1] = 1.0f;
     iconColor[2] = 1.0f;
     iconColor[3] = 1.0f;
 
-    target = es->otherEntityNum;
-    attacker = es->attackerEntityNum;
+    target = ent->otherEntityNum;
+    attacker = ent->attackerEntityNum;
+    iconWidth = 1.4f;
+    iconHorzFlip = 0;
 
-    int ep = es->eventParm;
-    if ((ep & 0x80) == 0) {
-
-        char *weapDef = (char *)BG_GetWeaponDef(ep);
-
-        const char *killIcon = ((WeaponDef *)weapDef)->killIcon ;
-        if (*killIcon == '\0') {
-
-            iconWidth = f_1_4;
-            iconShader = (const char *)"killicondied";
-            iconHorzFlip = 0;
-        } else {
-
-            iconShader = killIcon;
-
-            int isWideIcon = ((WeaponDef *)weapDef)->wideKillIcon ;
-            if (isWideIcon) {
-                iconWidth = f_2_8;
-            } else {
-                iconWidth = f_1_4;
-            }
-
-            iconHorzFlip = ((WeaponDef *)weapDef)->flipKillIcon  != 0;
-        }
-    } else {
-
-        int mod = (ep & 0x7f) - 7;
-        if ((unsigned int)mod > 5) {
-
-            iconWidth = f_1_4;
-            iconShader = (const char *)"killicondied";
-            iconHorzFlip = 0;
-        } else {
-            switch (mod) {
-            case 0:
-                iconWidth = f_1_4;
-                iconShader = (const char *)"killiconmelee";
-                iconHorzFlip = 0;
-                break;
-            case 1:
-                iconWidth = f_1_4;
-                iconShader = (const char *)"killiconcrush";
-                iconHorzFlip = 0;
-                break;
-            case 2:
-                iconWidth = f_1_4;
-                iconShader = (const char *)"killiconheadshot";
-                iconHorzFlip = 0;
-                break;
-            case 3:
-                iconWidth = f_1_4;
-                iconShader = (const char *)"killiconsuicide";
-                iconHorzFlip = 0;
-                break;
-            case 4:
-                iconWidth = f_1_4;
-                iconShader = (const char *)"killiconfalling";
-                iconHorzFlip = 0;
-                break;
-            default:
-                iconWidth = f_1_4;
-                iconShader = (const char *)"killicondied";
-                iconHorzFlip = 0;
-                break;
-            }
-        }
-    }
-
-    if ((unsigned int)target > 63) {
-
-        Com_Error(ERR_DROP, (const char *)"\x15"
-                                   "CG_Obituary: target out of range");
-    }
-
+    if (ent->eventParm & 0x80)
     {
-        int tgt = target;
-        int tgtOff = tgt * (1 + (tgt * 5 * 16 - tgt * 5) * 2);
-
+        mod = ent->eventParm & ~0x80;
+        iconShader = "killicondied";
     }
+    else
     {
-        char *clientInfoBase = (char *)cg + CG_CLIENTINFO + target * 1208;
-        victimCI = ((char *)clientInfoBase + offsetof(clientInfo_t, name[8]));
+        WeaponDef *weapDef = BG_GetWeaponDef(ent->eventParm);
 
-        if (((clientInfo_t *)clientInfoBase)->infoValid == 0)
-            return;
-
-        I_strncpyz(targetName, ((char *)clientInfoBase + offsetof(clientInfo_t, name[20])), 0x20);
-
-        I_strncat(targetName, 0x22, (const char *)"^7");
-
-        CG_DrawScoreboard_GetTeamColor(*(int *)(((char *)victimCI + offsetof(clientInfo_t, oldteam)) - 0x14), victimColor);
-
-        int localClient = cg->clientNum;
-        char *localCI = (char *)cg + CG_CLIENTINFO + localClient * 1208;
-        if (((clientInfo_t *)localCI)->infoValid == 0)
-            return;
-    }
-
-    if ((unsigned int)attacker <= 63) {
-
-        char *atkInfoBase = (char *)cg + CG_CLIENTINFO + attacker * 1208;
-        attackerCI = ((char *)atkInfoBase + offsetof(clientInfo_t, name[8]));
-
-        if (((clientInfo_t *)atkInfoBase)->infoValid == 0)
-            return;
-
-        I_strncpyz(attackerName, ((char *)atkInfoBase + offsetof(clientInfo_t, name[20])), 0x20);
-
-        I_strncat(attackerName, 0x22, (const char *)"^7");
-
-        CG_DrawScoreboard_GetTeamColor(*(int *)(((char *)attackerCI + offsetof(clientInfo_t, oldteam)) - 0x14), attackerColor);
-
-        snap = (char *)cg->nextSnap;
-        if (target == *(int *)(snap + SNAP_PS_CLIENTNUM)) {
-
-            I_strncpyz(cg->killerName, attackerName, 0x20);
+        mod = 0;
+        if (*weapDef->killIcon)
+        {
+            iconShader = weapDef->killIcon;
+            if (weapDef->wideKillIcon)
+                iconWidth = 2.8f;
+            if (weapDef->flipKillIcon)
+                iconHorzFlip = 1;
         }
-    } else {
-
-        attackerName[0] = '\0';
-        attacker = 0x3fe;
-        attackerCI = (char *)0;
-    }
-
-    if (attacker == target) {
-
-        attackerName[0] = '\0';
-    } else {
-
-        snap = (char *)cg->nextSnap;
-        int localClientNum = *(int *)(snap + SNAP_PS_CLIENTNUM);
-
-        if (attacker == localClientNum) {
-
-            if (attackerCI != (char *)0) {
-                int atkTeam = *(int *)(((char *)attackerCI + offsetof(clientInfo_t, oldteam)) - 0x14);
-                if (atkTeam != 0 && atkTeam == *(int *)(((char *)victimCI + offsetof(clientInfo_t, oldteam)) - 0x14)) {
-
-                    const char *msg = va((const char *)"CGAME_YOUKILLED\x15^1&&2^7 %s\x14%s", targetName, (const char *)"CGAME_TEAMMATE");
-
-                    if (cg->inKillCam == 0) {
-                        CG_PriorityCenterPrint(msg, 9.6f, 1);
-                    }
-                } else {
-
-                    const char *msg = va((const char *)"CGAME_YOUKILLED\x15%s", targetName);
-                    if (cg->inKillCam == 0) {
-                        CG_PriorityCenterPrint(msg, 9.6f, 1);
-                    }
-                }
-            } else {
-                const char *msg = va((const char *)"CGAME_YOUKILLED\x15%s", targetName);
-                if (cg->inKillCam == 0) {
-                    CG_PriorityCenterPrint(msg, 9.6f, 1);
-                }
-            }
-        } else if (target == localClientNum) {
-
-            if (attackerCI != (char *)0) {
-                int atkTeam = *(int *)(((char *)attackerCI + offsetof(clientInfo_t, oldteam)) - 0x14);
-                if (atkTeam != 0 && atkTeam == *(int *)(((char *)victimCI + offsetof(clientInfo_t, oldteam)) - 0x14)) {
-
-                    const char *msg = va((const char *)"CGAME_YOUWEREKILLED\x15^1&&2^7 %s\x14%s", attackerName, (const char *)"CGAME_TEAMMATE");
-                    if (cg->inKillCam == 0) {
-                        CG_PriorityCenterPrint(msg, 9.6f, 1);
-                    }
-                } else {
-
-                    const char *msg = va((const char *)"CGAME_YOUWEREKILLED\x15%s", attackerName);
-                    if (cg->inKillCam == 0) {
-                        CG_PriorityCenterPrint(msg, 9.6f, 1);
-                    }
-                }
-            } else {
-                const char *msg = va((const char *)"CGAME_YOUWEREKILLED\x15%s", attackerName);
-                if (cg->inKillCam == 0) {
-                    CG_PriorityCenterPrint(msg, 9.6f, 1);
-                }
-            }
+        else
+        {
+            iconShader = "killicondied";
         }
     }
 
-    if (cg->inKillCam != 0)
+    switch (mod)
+    {
+    case 7:
+        iconWidth = 1.4f;
+        iconShader = "killiconmelee";
+        break;
+    case 8:
+        iconWidth = 1.4f;
+        iconShader = "killiconheadshot";
+        break;
+    case 9:
+        iconWidth = 1.4f;
+        iconShader = "killiconcrush";
+        break;
+    case 11:
+        iconWidth = 1.4f;
+        iconShader = "killiconfalling";
+        break;
+    case 12:
+        iconWidth = 1.4f;
+        iconShader = "killiconsuicide";
+        break;
+    case 13:
+        iconWidth = 1.4f;
+        iconShader = "killicondied";
+        break;
+    }
+
+    if (target < 0 || target >= 64)
+        Com_Error(ERR_DROP, "\x15" "CG_Obituary: target out of range");
+
+    victimCI = &cg->bgs.clientinfo[target];
+    if (!victimCI->infoValid)
         return;
 
-    CL_DeathMessagePrint(attackerName, attackerColor, targetName,
-                         victimColor, iconShader, iconWidth, 1.4f, iconColor, iconHorzFlip);
+    I_strncpyz(targetName, victimCI->name, 32);
+    I_strncat(targetName, 34, "^7");
+    CG_DrawScoreboard_GetTeamColor(victimCI->oldteam, victimColor);
+
+    if (!cg->bgs.clientinfo[cg->clientNum].infoValid)
+        return;
+
+    if (attacker >= 0 && attacker < 64)
+    {
+        attackerCI = &cg->bgs.clientinfo[attacker];
+        if (!attackerCI->infoValid)
+            return;
+
+        I_strncpyz(attackerName, attackerCI->name, 32);
+        I_strncat(attackerName, 34, "^7");
+        CG_DrawScoreboard_GetTeamColor(attackerCI->oldteam, attackerColor);
+
+        if (target == cg->nextSnap->ps.clientNum)
+            I_strncpyz(cg->killerName, attackerName, 32);
+    }
+    else
+    {
+        attackerCI = NULL;
+        attackerName[0] = '\0';
+        attacker = 0x3fe;
+    }
+
+    if (attacker == target)
+    {
+        attackerName[0] = '\0';
+    }
+    else if (attacker == cg->nextSnap->ps.clientNum)
+    {
+        const char *msg;
+
+        if (attackerCI->oldteam && attackerCI->oldteam == victimCI->oldteam)
+            msg = va("CGAME_YOUKILLED\x15^1&&2^7 %s\x14%s", targetName, "CGAME_TEAMMATE");
+        else
+            msg = va("CGAME_YOUKILLED\x15%s", targetName);
+
+        if (!cg->inKillCam)
+            CG_PriorityCenterPrint(msg, 9.6f, 1);
+    }
+    else if (target == cg->nextSnap->ps.clientNum && attackerCI)
+    {
+        const char *msg;
+
+        if (attackerCI->oldteam && attackerCI->oldteam == victimCI->oldteam)
+            msg = va("CGAME_YOUWEREKILLED\x15^1&&2^7 %s\x14%s", attackerName, "CGAME_TEAMMATE");
+        else
+            msg = va("CGAME_YOUWEREKILLED\x15%s", attackerName);
+
+        if (!cg->inKillCam)
+            CG_PriorityCenterPrint(msg, 9.6f, 1);
+    }
+
+    if (!cg->inKillCam)
+        CL_DeathMessagePrint(attackerName, attackerColor, targetName, victimColor, iconShader, iconWidth, 1.4f, iconColor, iconHorzFlip);
+}
+
+static inline bool CG_IsLocalEntity(const entityState_t *ent)
+{
+    const snapshot_t *snap = cg->nextSnap;
+
+    if ((snap->ps.pm_flags & 0xc00000) && ent->number == snap->ps.clientNum)
+        return true;
+
+    return false;
 }
 
 void CG_EntityEvent(centity_t *cent, int event)
@@ -395,8 +336,7 @@ void CG_EntityEvent(centity_t *cent, int event)
     vec_t *position;
     int eventParm;
     int clientNum;
-    char isFirstPerson;
-    char isViewerFlag;
+    bool isFirstPerson;
     int entNum;
     float dir[3];
     float reflect[3];
@@ -421,16 +361,7 @@ void CG_EntityEvent(centity_t *cent, int event)
 
     eventParm = es->eventParm;
 
-    snap = (char *)cg->nextSnap;
-    isFirstPerson = 0;
-    isViewerFlag = 0;
-    if (*(int *)(snap + SNAP_FLAGS) & 0xc00000) {
-        int esNumber = es->number;
-        if (esNumber == *(int *)(snap + SNAP_PS_CLIENTNUM)) {
-            isFirstPerson = 1;
-            isViewerFlag = 1;
-        }
-    }
+    isFirstPerson = CG_IsLocalEntity(es);
 
     if (cg_debugEvents->current.enabled != 0) {
 
@@ -473,7 +404,7 @@ void CG_EntityEvent(centity_t *cent, int event)
 
         entNum = es->number;
 
-        if (isViewerFlag) {
+        if (isFirstPerson) {
 
             CG_PlayEntitySoundAlias(entNum, cgs->media.runningEquipmentSoundPlayer);
         } else {
@@ -501,7 +432,7 @@ void CG_EntityEvent(centity_t *cent, int event)
 
         entNum = es->number;
 
-        if (isViewerFlag) {
+        if (isFirstPerson) {
 
             CG_PlayEntitySoundAlias(entNum, cgs->media.walkingEquipmentSoundPlayer);
         } else {
@@ -529,7 +460,7 @@ void CG_EntityEvent(centity_t *cent, int event)
 
         entNum = es->number;
 
-        if (isViewerFlag) {
+        if (isFirstPerson) {
 
             CG_PlayEntitySoundAlias(entNum, cgs->media.walkingEquipmentSoundPlayer);
         } else {
@@ -555,7 +486,7 @@ void CG_EntityEvent(centity_t *cent, int event)
 
         entNum = es->number;
 
-        if (isViewerFlag) {
+        if (isFirstPerson) {
 
             CG_PlayEntitySoundAlias(entNum, cgs->media.runningEquipmentSoundPlayer);
         } else {
@@ -1470,7 +1401,7 @@ void CG_EntityEvent(centity_t *cent, int event)
         }
 
         case 0xc6:
-            CG_Obituary(cent);
+            CG_Obituary(es);
             return;
 
         case 0xc2:
@@ -1540,74 +1471,49 @@ void CG_EntityEvent(centity_t *cent, int event)
 
 void CG_CheckEvents(centity_t *cent)
 {
-    char *c = (char *)cent;
     int eventSequence;
-    int prevEventSeq;
     int i;
-    int oldEventParm;
-    int diff;
+    byte oldEventParm;
 
-    if (((centity_t *)c)->nextState.eType > 10) {
-
-        i = ((centity_t *)c)->previousEventSequence;
-        if (i == 0) {
-
-            ((centity_t *)c)->previousEventSequence = 1;
-
+    if (cent->nextState.eType > 10)
+    {
+        if (!cent->previousEventSequence)
+        {
+            cent->previousEventSequence = 1;
             CG_CalcEntityLerpPositions(cent);
-
-            CG_EntityEvent(cent, ((centity_t *)c)->nextState.eType - 10);
+            CG_EntityEvent(cent, cent->nextState.eType - 10);
         }
         return;
     }
 
-    eventSequence = ((centity_t *)c)->nextState.eventSequence;
-    if (eventSequence == 0) {
-
-        ((centity_t *)c)->previousEventSequence = 0;
+    eventSequence = cent->nextState.eventSequence;
+    if (!eventSequence)
+    {
+        cent->previousEventSequence = 0;
         return;
     }
 
-    prevEventSeq = ((centity_t *)c)->previousEventSequence;
+    if (eventSequence < cent->previousEventSequence)
+        cent->previousEventSequence -= 256;
 
-    if (eventSequence < prevEventSeq) {
+    if (eventSequence - cent->previousEventSequence > 4)
+        cent->previousEventSequence = eventSequence - 4;
 
-        prevEventSeq -= 256;
-        ((centity_t *)c)->previousEventSequence = prevEventSeq;
+    if (cent->previousEventSequence < eventSequence)
+    {
+        CG_CalcEntityLerpPositions(cent);
+
+        oldEventParm = cent->nextState.eventParm;
+        for (i = cent->previousEventSequence; i != cent->nextState.eventSequence; i++)
+        {
+            int ev = cent->nextState.events[i & 3];
+
+            cent->nextState.eventParm = cent->nextState.eventParms[i & 3];
+            CG_EntityEvent(cent, ev);
+        }
+        cent->nextState.eventParm = oldEventParm;
+        eventSequence = cent->nextState.eventSequence;
     }
 
-    diff = eventSequence - prevEventSeq;
-    if (diff > 4) {
-
-        prevEventSeq = eventSequence - 4;
-        ((centity_t *)c)->previousEventSequence = prevEventSeq;
-    }
-
-    if (((centity_t *)c)->previousEventSequence >= eventSequence) {
-
-        ((centity_t *)c)->previousEventSequence = eventSequence;
-        return;
-    }
-
-    CG_CalcEntityLerpPositions(cent);
-
-    oldEventParm = (unsigned char)((centity_t *)c)->nextState.eventParm;
-    i = ((centity_t *)c)->previousEventSequence;
-
-    while (i != ((centity_t *)c)->nextState.eventSequence) {
-
-        int ev = ((centity_t *)c)->nextState.events[i & 3];
-
-        ((centity_t *)c)->nextState.eventParm =
-            ((centity_t *)c)->nextState.eventParms[i & 3];
-
-        CG_EntityEvent(cent, ev);
-
-        i++;
-    }
-
-    ((centity_t *)c)->nextState.eventParm = (unsigned char)oldEventParm;
-
-    ((centity_t *)c)->previousEventSequence =
-        ((centity_t *)c)->nextState.eventSequence;
+    cent->previousEventSequence = eventSequence;
 }

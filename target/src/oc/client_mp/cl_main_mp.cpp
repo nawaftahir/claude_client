@@ -484,9 +484,9 @@ char *CL_AllocSkelMemory(int localClientNum, unsigned int size)
     clientActive_t *client = &clients[localClientNum];
     int pos = client->skelMemPos;
     char *buf = (char *)((intptr_t)pos + (intptr_t)client->skelMemoryStart);
-    int newPos = pos + ((size + 15) & ~15);
+    unsigned int newPos = pos + ((size + 15) & ~15);
     client->skelMemPos = newPos;
-    if (newPos >= 0x3fff1)
+    if (newPos > 0x3fff0)
         return 0;
     return buf;
 }

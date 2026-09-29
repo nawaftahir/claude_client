@@ -684,18 +684,12 @@ static inline __attribute__((always_inline)) int CG_PlayPickedAlias(const snd_al
 
 static inline __attribute__((always_inline)) int CG_LocalSoundEntityNum(void)
 {
-    const byte *localSoundState;
-
-    localSoundState = (const byte *)&cgArray + 36;
-    return *(const int *)(localSoundState + 0xd8);
+    return cgArray[0].nextSnap->ps.clientNum;
 }
 
 static inline __attribute__((always_inline)) const vec_t *CG_LocalSoundOrigin(void)
 {
-    const byte *localSoundState;
-
-    localSoundState = (const byte *)&cgArray + 36;
-    return (const vec_t *)(localSoundState + 0x20);
+    return cgArray[0].nextSnap->ps.origin;
 }
 
 int CG_PlaySoundAliasAsMasterByName(int entitynum, const vec_t *origin, const char *aliasname)
