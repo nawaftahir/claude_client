@@ -281,6 +281,8 @@ qboolean Item_SetFocus(displayContextDef_t *dc, itemDef_t *item, float x, float 
 void Script_SetFocusByDvar(displayContextDef_t *dc, itemDef_t *item, const char **args);
 void Script_SetFocus(displayContextDef_t *dc, itemDef_t *item, const char **args);
 static bool Item_IsTextField(itemDef_t *item);
+static bool Item_ShouldHandleKey(displayContextDef_t *dc, itemDef_t *item, int key);
+static int Item_Enum_GetIndex(itemDef_t *item);
 int Item_ListBox_OverLB(itemDef_t *item, float x, float y);
 static qboolean Rect_ContainsPoint(const rectDef_t *rect, float x, float y);
 void Item_ListBox_MouseEnter(itemDef_t *item, float x, float y);
@@ -3154,93 +3156,38 @@ void Item_OwnerDraw_Paint(displayContextDef_t *dc, itemDef_t *item)
 extern const char *Dvar_GetVariantString(const char *dvarName);
 qboolean Item_Slider_HandleKey(displayContextDef_t *dc, itemDef_t *item, int key, qboolean down)
 {
-    byte *it = (byte *)item;
-    byte *d = (byte *)dc;
+    editFieldDef_t *editDef;
+    float step;
+    float value;
 
-    if (!(*(void **)&((itemDef_t *)it)->dvar))
+    if (!item->dvar)
         return 0;
-    if (!((*(byte *)&((itemDef_t *)it)->window.dynamicFlags[0]) & 4) || !((*(byte *)&((itemDef_t *)it)->window.dynamicFlags[0]) & 2))
+    if (!Item_ShouldHandleKey(dc, item, key))
         return 0;
-
-    if (key >= 0xc8 && key <= 0xca) {
-        float cx = (float)((displayContextDef_t *)d)->cursorx;
-        float cy = (float)(((displayContextDef_s*)(d))->cursory);
-
-        float rx = (((rectDef_t*)(it))->x), ry = (((rectDef_t*)(it))->y);
-        float rw = (((rectDef_t*)(it))->w), rh = (((rectDef_t*)(it))->h);
-        CalcScreenX(&cx, 4);
-        CalcScreenY(&cy, 4);
-        CalcScreenPlacement(&rx, &ry, &rw, &rh, (((rectDef_t*)(it))->horzAlign), (((rectDef_t*)(it))->vertAlign));
-        if (cx < rx || cx > rx + rw || cy < ry || cy > ry + rh)
-            return 0;
-
-    }
-
-    if (key >= 0xc8 && key <= 0xca) {
+    if (key == 200 || key == 201 || key == 202) {
         Scroll_Slider_SetThumbPos_impl((byte *)dc, (byte *)item);
         return 1;
     }
-
-    editFieldDef_t *editDef = Item_GetEditFieldDef(item);
-    if (!editDef)
-        return 0;
-
-    float maxVal = *((float *)editDef + 1);
-    float minVal = (((editFieldDef_s*)(editDef))->minVal);
-    float step = (maxVal - minVal) * 0.05f;
-
-    const char *valStr = Dvar_GetVariantString(((itemDef_t *)it)->dvar);
-    float value = (float)atof(valStr);
-
-    if (key == 0x9c || key == 0xa4) {
-
-        value -= step;
-        if (value < minVal)
-            value = minVal;
-    } else if (key == 0x9d || key == 0xa3) {
-
-        value += step;
-        if (value > maxVal)
-            value = maxVal;
-    } else {
-        return 0;
+    editDef = Item_GetEditFieldDef(item);
+    if (editDef) {
+        step = (editDef->maxVal - editDef->minVal) * 0.05f;
+        value = (float)atof(Dvar_GetVariantString(item->dvar));
+        if (key == 156 || key == 164) {
+            value -= step;
+            if (value < editDef->minVal)
+                value = editDef->minVal;
+            Dvar_SetFromStringByName(item->dvar, va("%g", value));
+            return 1;
+        }
+        if (key == 157 || key == 163) {
+            value += step;
+            if (value > editDef->maxVal)
+                value = editDef->maxVal;
+            Dvar_SetFromStringByName(item->dvar, va("%g", value));
+            return 1;
+        }
     }
-
-    Dvar_SetFromStringByName(((itemDef_t *)it)->dvar, va("%g", (double)value));
-    return 1;
-}
-
-qboolean Item_YesNo_HandleKey(displayContextDef_t *dc, itemDef_t *item, int key)
-{
-    byte *it = (byte *)item;
-    byte *d = (byte *)dc;
-    char dvarString[0x19];
-
-    if (!(*(void **)&((itemDef_t *)it)->dvar))
-        return 0;
-    if (!((*(byte *)&((itemDef_t *)it)->window.dynamicFlags[0]) & 4) || !((*(byte *)&((itemDef_t *)it)->window.dynamicFlags[0]) & 2))
-        return 0;
-
-    if (key >= 0xc8 && key <= 0xca) {
-        float cx = (float)((displayContextDef_t *)d)->cursorx;
-        float cy = (float)(((displayContextDef_s*)(d))->cursory);
-        float rx = (((rectDef_t*)(it))->x), ry = (((rectDef_t*)(it))->y);
-        float rw = (((rectDef_t*)(it))->w), rh = (((rectDef_t*)(it))->h);
-        CalcScreenX(&cx, 4);
-        CalcScreenY(&cy, 4);
-        CalcScreenPlacement(&rx, &ry, &rw, &rh, (((rectDef_t*)(it))->horzAlign), (((rectDef_t*)(it))->vertAlign));
-        if (cx < rx || cx > rx + rw || cy < ry || cy > ry + rh)
-            return 0;
-
-    } else if (key != 0xd && key != 0x9c && key != 0x9d && key != 0xa4 && key != 0xa3 &&
-               key != 0xc8 && key != 0xc9 && key != 0xca) {
-        return 0;
-    }
-
-    I_strncpyz(dvarString, Dvar_GetVariantString(((itemDef_t *)it)->dvar), 0x19);
-    int val = atoi(dvarString);
-    Dvar_SetFromStringByName(((itemDef_t *)it)->dvar, va("%i", !val));
-    return 1;
+    return 0;
 }
 
 qboolean Item_SetFocus(displayContextDef_t *dc, itemDef_t *item, float x, float y)
@@ -4032,247 +3979,214 @@ qboolean Item_Bind_HandleKey(displayContextDef_t *dc, itemDef_t *item, int key, 
     return 1;
 }
 
+// retail 0x536d20
+static bool Item_ShouldHandleKey(displayContextDef_t *dc, itemDef_t *item, int key)
+{
+    if (!Window_HasFocus(&item->window))
+        return false;
+    return key != 200 && key != 201 && key != 202 || Item_ContainsMouse(dc, item);
+}
+
+// retail 0x536e60
+int Item_Multi_CountSettings(itemDef_t *item)
+{
+    multiDef_t *multiPtr;
+
+    multiPtr = Item_GetMultiDef(item);
+    if (!multiPtr)
+        return 0;
+    return multiPtr->count;
+}
+
+// retail 0x536e80
+int Item_DvarEnum_CountSettings(itemDef_t *item)
+{
+    struct dvar_s *enumDvar;
+
+    enumDvar = Dvar_FindVar(*(const char **)&item->typeData.listBox);
+    if (enumDvar->type == 6)
+        return enumDvar->domain.enumeration.stringCount;
+    return 0;
+}
+
+// retail 0x536ea0
+static int Item_Multi_FindDvarByValue(itemDef_t *item)
+{
+    multiDef_t *multiPtr;
+    const char *string;
+    float value;
+    int i;
+
+    multiPtr = Item_GetMultiDef(item);
+    if (!multiPtr)
+        return 0;
+    if (multiPtr->strDef) {
+        string = Dvar_GetVariantString(item->dvar);
+        for (i = 0; i < multiPtr->count; i++) {
+            if (!I_stricmp(string, multiPtr->dvarStr[i]))
+                return i;
+        }
+    } else {
+        value = (float)atof(Dvar_GetVariantString(item->dvar));
+        for (i = 0; i < multiPtr->count; i++) {
+            if (value == multiPtr->dvarValue[i])
+                return i;
+        }
+    }
+    return 0;
+}
+
+// retail 0x537190
+static int Item_List_NextEntryForKey(int key, int current, int count)
+{
+    if (!count)
+        return 0;
+    if (key == 200 || key == 13 || key == 202 || key == 163 || key == 157)
+        return (current + 1) % count;
+    if (key == 201 || key == 164 || key == 156)
+        return (current + count - 1) % count;
+    return current;
+}
+
+// retail 0x5371f0
+static qboolean Item_Multi_HandleKey(displayContextDef_t *dc, itemDef_t *item, int key)
+{
+    multiDef_t *multiPtr;
+    int current;
+    int count;
+    int next;
+
+    multiPtr = Item_GetMultiDef(item);
+    if (!multiPtr)
+        return 0;
+    if (!Item_ShouldHandleKey(dc, item, key))
+        return 0;
+    current = Item_Multi_FindDvarByValue(item);
+    count = Item_Multi_CountSettings(item);
+    next = Item_List_NextEntryForKey(key, current, count);
+    if (next == current)
+        return 0;
+    if (multiPtr->strDef)
+        Dvar_SetFromStringByName(item->dvar, multiPtr->dvarStr[next]);
+    else
+        Dvar_SetFromStringByName(item->dvar, va("%g", multiPtr->dvarValue[next]));
+    return 1;
+}
+
+// retail 0x5372a0
+static qboolean Item_DvarEnum_HandleKey(displayContextDef_t *dc, itemDef_t *item, int key)
+{
+    int current;
+    int count;
+    int next;
+
+    if (!Item_ShouldHandleKey(dc, item, key))
+        return 0;
+    current = Item_Enum_GetIndex(item);
+    count = Item_DvarEnum_CountSettings(item);
+    next = Item_List_NextEntryForKey(key, current, count);
+    if (next == current)
+        return 0;
+    Dvar_SetFromStringByName(item->dvar, va("%i", next));
+    return 1;
+}
+
+// retail 0x536730
+static qboolean Item_OwnerDraw_HandleKey(itemDef_t *item, int key)
+{
+    return UI_OwnerDrawHandleKey(item->window.ownerDraw, item->window.ownerDrawFlags, &item->special, key);
+}
+
+// retail 0x5360b0
+static int Item_Slider_OverSlider(itemDef_t *item, float x, float y)
+{
+    rectDef_t r;
+
+    r.x = Item_Slider_ThumbPosition(item) - 5.0f;
+    r.y = item->window.rect[0].y - 2.0f;
+    r.w = 10.0f;
+    r.h = 20.0f;
+    r.horzAlign = item->window.rect[0].horzAlign;
+    r.vertAlign = item->window.rect[0].vertAlign;
+    if (Rect_ContainsPoint(&r, x, y))
+        return 0x400;
+    return 0;
+}
+
+// retail 0x537ce0
+static void Item_StartCapture(displayContextDef_t *dc, itemDef_t *item, int key)
+{
+    int flags;
+
+    switch (item->type) {
+    case 6:
+        flags = Item_ListBox_OverLB(item, (float)dc->cursorx, (float)dc->cursory);
+        if (flags & 0x300) {
+            scrollInfo.nextScrollTime = dc->realTime + 500;
+            scrollInfo.nextAdjustTime = dc->realTime + 150;
+            scrollInfo.adjustValue = 500;
+            scrollInfo.scrollKey = key;
+            scrollInfo.scrollDir = (flags & 0x100) ? 1 : 0;
+            scrollInfo.item = item;
+            captureData = &scrollInfo;
+            captureFunc = (void (__cdecl *)(void))(Scroll_ListBox_AutoFunc);
+            itemCapture = item;
+        } else if (flags & 0x400) {
+            scrollInfo.scrollKey = key;
+            scrollInfo.item = item;
+            scrollInfo.xStart = (float)dc->cursorx;
+            scrollInfo.yStart = (float)dc->cursory;
+            captureData = &scrollInfo;
+            captureFunc = (void (__cdecl *)(void))(Scroll_ListBox_ThumbFunc);
+            itemCapture = item;
+        }
+        break;
+    case 10:
+        flags = Item_Slider_OverSlider(item, (float)dc->cursorx, (float)dc->cursory);
+        if (flags & 0x400) {
+            scrollInfo.scrollKey = key;
+            scrollInfo.item = item;
+            scrollInfo.xStart = (float)dc->cursorx;
+            scrollInfo.yStart = (float)dc->cursory;
+            captureData = &scrollInfo;
+            captureFunc = (void (__cdecl *)(void))(Scroll_Slider_ThumbFunc);
+            itemCapture = item;
+        }
+        break;
+    }
+}
+
 qboolean Item_HandleKey(displayContextDef_t *dc, itemDef_t *item, int key, qboolean down)
 {
-    byte *it = (byte *)item;
-    byte *d = (byte *)dc;
-
     if (itemCapture) {
         itemCapture = NULL;
         captureFunc = NULL;
         captureData = NULL;
     } else {
-
         if (!down)
             return 0;
-        if (key >= 0xc8 && key <= 0xca) {
-            int itemType = (((itemDef_s*)(it))->type);
-            if (itemType == 6) {
-
-                float lbx = (float)((displayContextDef_t *)d)->cursorx;
-                float lby = (float)(((displayContextDef_s*)(d))->cursory);
-                int overLB = Item_ListBox_OverLB(item, lbx, lby);
-                if (overLB & 0x300) {
-
-                    scrollInfo.nextScrollTime = (((displayContextDef_s*)(d))->realTime) + 500;
-                    scrollInfo.nextAdjustTime = (((displayContextDef_s*)(d))->realTime) + 150;
-                    scrollInfo.adjustValue = 500;
-                    scrollInfo.scrollKey = key;
-                    scrollInfo.scrollDir = (overLB >> 8) & 1;
-                    scrollInfo.item = item;
-                    captureData = &scrollInfo;
-                    captureFunc = (void (__cdecl *)(void))(Scroll_ListBox_AutoFunc);
-                    itemCapture = item;
-                } else if (overLB & 0x400) {
-
-                    scrollInfo.scrollKey = key;
-                    scrollInfo.item = item;
-                    scrollInfo.xStart = (float)((displayContextDef_t *)d)->cursorx;
-                    scrollInfo.yStart = (float)(((displayContextDef_s*)(d))->cursory);
-                    captureData = &scrollInfo;
-                    captureFunc = (void (__cdecl *)(void))(Scroll_ListBox_ThumbFunc);
-                    itemCapture = item;
-                }
-
-            } else if (itemType == 0xa) {
-
-                float sy = (float)(((displayContextDef_s*)(d))->cursory);
-                float sx = (float)((displayContextDef_t *)d)->cursorx;
-                float thumbX = Item_Slider_ThumbPosition(item);
-                float itemY = (((rectDef_t*)(it))->y) - 2.0f;
-                int horzAlign = (((rectDef_t*)(it))->horzAlign);
-                int vertAlign = (((rectDef_t*)(it))->vertAlign);
-
-                float rx = thumbX - 5.0f, ry = itemY;
-                float rw = 10.0f, rh = 20.0f;
-                float cx = sx, cy = sy;
-                CalcScreenX(&cx, 4);
-                CalcScreenY(&cy, 4);
-                CalcScreenPlacement(&rx, &ry, &rw, &rh, horzAlign, vertAlign);
-                int hit = (cx >= rx && rx + rw >= cx && cy >= ry && ry + rh >= cy) ? 0x400 : 0;
-
-                if (hit) {
-                    scrollInfo.scrollKey = key;
-                    scrollInfo.item = item;
-                    scrollInfo.xStart = (float)((displayContextDef_t *)d)->cursorx;
-                    scrollInfo.yStart = (float)(((displayContextDef_s*)(d))->cursory);
-                    captureData = &scrollInfo;
-                    captureFunc = (void (__cdecl *)(void))(Scroll_Slider_ThumbFunc);
-                    itemCapture = item;
-                }
-
-            }
-        }
+        if (key == 200 || key == 201 || key == 202)
+            Item_StartCapture(dc, item, key);
     }
 
     if (!down)
         return 0;
 
-    switch ((((itemDef_s*)(it))->type)) {
+    switch (item->type) {
     case 6:
         return Item_ListBox_HandleKey(dc, item, key, down, 0);
-
-    case 8:
-        return UI_OwnerDrawHandleKey(((itemDef_t *)it)->window.ownerDraw, ((itemDef_t *)it)->window.ownerDrawFlags,
-                                     (float *)(((char *)it + offsetof(itemDef_t, special))), key);
-
-    case 0xa:
-        return Item_Slider_HandleKey(dc, item, key, down);
-
-    case 0xb:
+    case 11:
         return Item_YesNo_HandleKey(dc, item, key);
-
-    case 0xc: {
-        byte *multiPtr = (byte *)Item_GetMultiDef(item);
-        if (!multiPtr)
-            return 0;
-        if (!((*(byte *)&((itemDef_t *)it)->window.dynamicFlags[0]) & 4))
-            return 0;
-        if (!((*(byte *)&((itemDef_t *)it)->window.dynamicFlags[0]) & 2))
-            return 0;
-
-        if (key >= 0xc8 && key <= 0xca) {
-            if (!Rect_ContainsPoint((rectDef_t *)it, (float)((displayContextDef_t *)d)->cursorx, (float)(((displayContextDef_s*)(d))->cursory)))
-                return 0;
-        }
-
-        byte *mDef = (byte *)Item_GetMultiDef(item);
-        int current = 0;
-        if (mDef) {
-            int strDef = (((multiDef_s*)(mDef))->strDef);
-            if (!strDef) {
-
-                const char *valStr = Dvar_GetVariantString(item->dvar);
-                float curVal = (float)atof(valStr);
-                int count = (((multiDef_s*)(mDef))->count);
-                if (count > 0) {
-
-                    if (curVal != (((multiDef_s*)(mDef))->dvarValue[0])) {
-                        int i;
-                        for (i = 1; i < count; i++) {
-                            if (*(float *)(mDef + 0x100 + i * 4) == curVal) {
-                                current = i;
-                                break;
-                            }
-                        }
-
-                    }
-                }
-            } else {
-
-                const char *string = Dvar_GetVariantString(item->dvar);
-                int count = (((multiDef_s*)(mDef))->count);
-                if (count > 0) {
-                    int i;
-                    for (i = 0; i < count; i++) {
-                        if (I_stricmp(string, *(const char **)(mDef + 0x80 + i * 4)) == 0) {
-                            current = i;
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-
-        byte *mDef2 = (byte *)Item_GetMultiDef(item);
-        int totalCount;
-        if (!mDef2)
-            totalCount = 0;
-        else
-            totalCount = (((multiDef_s*)(mDef2))->count);
-
-        int newIndex;
-        if (!totalCount) {
-            newIndex = 0;
-        } else if (key == 0xc8 || key == 0xd || key == 0xca || key == 0xa3 || key == 0x9d) {
-
-            newIndex = (current + 1) % totalCount;
-        } else if (key == 0xc9 || key == 0xa4 || key == 0x9c) {
-
-            newIndex = (current - 1 + totalCount) % totalCount;
-        } else {
-            return 0;
-        }
-
-        if (newIndex == current)
-            return 0;
-
-        const char *newVal;
-        if ((((multiDef_s*)(multiPtr))->strDef)) {
-
-            newVal = *(const char **)(multiPtr + 0x80 + newIndex * 4);
-        } else {
-
-            newVal = va("%g", (double)(((multiDef_s*)(multiPtr))->dvarValue[newIndex]));
-        }
-        Dvar_SetFromStringByName(item->dvar, newVal);
-        return 1;
-    }
-
-    case 0xd: {
-        if (!((*(byte *)&((itemDef_t *)it)->window.dynamicFlags[0]) & 4))
-            return 0;
-        if (!((*(byte *)&((itemDef_t *)it)->window.dynamicFlags[0]) & 2))
-            return 0;
-
-        if (key >= 0xc8 && key <= 0xca) {
-            if (!Rect_ContainsPoint((rectDef_t *)it, (float)((displayContextDef_t *)d)->cursorx, (float)(((displayContextDef_s*)(d))->cursory)))
-                return 0;
-        }
-
-        struct dvar_s *enumDvar = Dvar_FindVar((*(const char **)&((itemDef_t *)it)->typeData.listBox));
-        int current = 0;
-        if (enumDvar->type == 6) {
-
-            const char *enumString = Dvar_GetVariantString(item->dvar);
-            current = atoi(enumString);
-            if (current < 0 || current >= enumDvar->domain.enumeration.stringCount) {
-
-                int numStrings = enumDvar->domain.enumeration.stringCount;
-                current = 0;
-                if (numStrings > 0) {
-                    const char **strings = enumDvar->domain.enumeration.strings;
-                    int i;
-                    for (i = 0; i < numStrings; i++) {
-                        if (I_stricmp(enumString, strings[i]) == 0) {
-                            current = i;
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-
-        struct dvar_s *dv = Dvar_FindVar((*(const char **)&((itemDef_t *)it)->typeData.listBox));
-        int totalCount;
-        if (dv->type == 6)
-            totalCount = *(int *)((byte *)dv + 0x14);
-        else
-            totalCount = 0;
-
-        int newIndex;
-        if (!totalCount) {
-            newIndex = 0;
-        } else if (key == 0xc8 || key == 0xd || key == 0xca || key == 0xa3 || key == 0x9d) {
-
-            newIndex = (current + 1) % totalCount;
-        } else if (key == 0xc9 || key == 0xa4 || key == 0x9c) {
-
-            newIndex = (current - 1 + totalCount) % totalCount;
-        } else {
-            return 0;
-        }
-
-        if (newIndex == current)
-            return 0;
-
-        Dvar_SetFromStringByName(item->dvar, va("%i", newIndex));
-        return 1;
-    }
-
-    case 0xe:
+    case 12:
+        return Item_Multi_HandleKey(dc, item, key);
+    case 13:
+        return Item_DvarEnum_HandleKey(dc, item, key);
+    case 8:
+        return Item_OwnerDraw_HandleKey(item, key);
+    case 14:
         return Item_Bind_HandleKey(dc, item, key, down);
-
+    case 10:
+        return Item_Slider_HandleKey(dc, item, key, down);
     default:
         return 0;
     }
