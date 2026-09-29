@@ -5075,6 +5075,84 @@ done:
     return;
 }
 
+// retail 0x536fa0
+static const char *Item_Multi_GetText(itemDef_t *item)
+{
+    multiDef_t *multiDef;
+    const char *value;
+    float fval;
+    int j;
+
+    multiDef = *(multiDef_t **)&item->typeData.listBox;
+    if (!multiDef)
+        return "<dvarStrList or dvarFloatList not set>";
+
+    if (multiDef->strDef) {
+        value = Dvar_GetVariantString(item->dvar);
+        for (j = 0; j < multiDef->count; j++) {
+            if (I_stricmp(value, multiDef->dvarStr[j]) == 0)
+                return multiDef->dvarList[j];
+        }
+    } else {
+        fval = (float)atof(Dvar_GetVariantString(item->dvar));
+        for (j = 0; j < multiDef->count; j++) {
+            if (fval == multiDef->dvarValue[j])
+                return multiDef->dvarList[j];
+        }
+    }
+    return "";
+}
+
+// retail 0x5370a0
+static int Item_Enum_GetIndex(itemDef_t *item)
+{
+    struct dvar_s *dvar;
+    const char *value;
+    int idx;
+    int j;
+
+    dvar = Dvar_FindVar(*(const char **)&item->typeData.listBox);
+    if (dvar->type != 6)
+        return 0;
+
+    value = Dvar_GetVariantString(item->dvar);
+    idx = atoi(value);
+    if (idx >= 0 && idx < dvar->domain.enumeration.stringCount)
+        return idx;
+
+    for (j = 0; j < dvar->domain.enumeration.stringCount; j++) {
+        if (I_stricmp(value, dvar->domain.enumeration.strings[j]) == 0)
+            return j;
+    }
+    return 0;
+}
+
+// retail 0x53a040
+static void Item_Multi_Paint(displayContextDef_t *dc, itemDef_t *item)
+{
+    Item_List_Paint(dc, item, Item_Multi_GetText(item));
+}
+
+// retail 0x53a060
+static void Item_Enum_Paint(displayContextDef_t *dc, itemDef_t *item)
+{
+    const char *text;
+    struct dvar_s *dvar;
+
+    if (!*(const char **)&item->typeData.listBox) {
+        text = "<dvarEnumList not set>";
+    } else {
+        dvar = Dvar_FindVar(*(const char **)&item->typeData.listBox);
+        if (dvar->type != 6)
+            text = "<not an enum dvar>";
+        else if (!dvar->domain.enumeration.stringCount)
+            text = "";
+        else
+            text = dvar->domain.enumeration.strings[Item_Enum_GetIndex(item)];
+    }
+    Item_List_Paint(dc, item, text);
+}
+
 void Item_Paint(displayContextDef_t *dc, itemDef_t *item)
 {
     byte *it = (byte *)item;
@@ -5333,75 +5411,12 @@ void Item_Paint(displayContextDef_t *dc, itemDef_t *item)
         case 0xb:
             Item_YesNo_Paint(dc, item);
             break;
-        case 0x0c:  {
-            const char *text;
-            multiDef_t *multiDef = Item_GetMultiDef(item);
-            if (!multiDef) {
-                text = "<dvarStrList or dvarFloatList not set>";
-            } else if (multiDef->strDef) {
-
-                const char *value = Dvar_GetVariantString(item->dvar);
-                int j;
-                text = "";
-                for (j = 0; j < multiDef->count; j++) {
-                    if (I_stricmp(value, multiDef->dvarStr[j]) == 0) {
-                        text = multiDef->dvarList[j];
-                        break;
-                    }
-                }
-            } else {
-
-                const char *value = Dvar_GetVariantString(item->dvar);
-                float fval = (float)atof(value);
-                int j;
-                text = "";
-                for (j = 0; j < multiDef->count; j++) {
-                    if (fval == multiDef->dvarValue[j]) {
-                        text = multiDef->dvarList[j];
-                        break;
-                    }
-                }
-            }
-            Item_List_Paint(dc, item, text);
+        case 0x0c:
+            Item_Multi_Paint(dc, item);
             break;
-        }
-        case 0x0d:  {
-            const char *text;
-            const char *enumDvarName = (*(const char **)&((itemDef_t *)it)->typeData.listBox);
-            if (!enumDvarName) {
-                text = "<dvarEnumList not set>";
-            } else {
-                struct dvar_s *dvar = Dvar_FindVar(enumDvarName);
-                if (!dvar || dvar->type != 6) {
-
-                    text = "<not an enum dvar>";
-                } else if (dvar->domain.enumeration.stringCount <= 0 || !dvar->domain.enumeration.strings) {
-
-                    text = "";
-                } else {
-
-                    const char *enumString = Dvar_GetVariantString(item->dvar);
-                    int idx = atoi(enumString);
-                    int enumCount = dvar->domain.enumeration.stringCount;
-                    const char **strings = (const char **)dvar->domain.enumeration.strings;
-                    if (idx >= 0 && idx < enumCount) {
-                        text = strings[idx];
-                    } else {
-
-                        int j;
-                        text = strings[0];
-                        for (j = 0; j < enumCount; j++) {
-                            if (I_stricmp(enumString, strings[j]) == 0) {
-                                text = strings[j];
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-            Item_List_Paint(dc, item, text);
+        case 0x0d:
+            Item_Enum_Paint(dc, item);
             break;
-        }
         case 0x0e:
             Item_Bind_Paint(dc, item);
             break;
