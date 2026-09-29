@@ -2716,31 +2716,25 @@ int UI_OwnerDrawWidth(int ownerDraw, FontHandle font, float scale)
     case 0xcd:
         s = sharedUiInfo.gameTypes[(ui_gametype)->current.integer].gameTypeName;
         break;
-    case 0xdc: {
-        int netSrcVal = (ui_netSource)->current.integer;
-        if (netSrcVal > sharedUiInfo.numJoinGameTypes) {
+    case 0xdc:
+        if ((ui_netSource)->current.integer > sharedUiInfo.numJoinGameTypes)
             Dvar_SetInt((dvar_t *)ui_netSource, 0);
-            netSrcVal = (ui_netSource)->current.integer;
-        }
-        s = SEH_LocalizeTextMessage(va("EXE_NETSOURCE\x14%s", netSources[netSrcVal]), "net source", LOCMSG_SAFE);
+        s = SEH_LocalizeTextMessage(va("EXE_NETSOURCE\x14%s", netSources[(ui_netSource)->current.integer]), "net source", LOCMSG_SAFE);
         break;
-    }
     case 0xde: {
-        int filterType = 0;
-        if ((unsigned int)ui_serverFilterType < 2)
-            filterType = ui_serverFilterType;
-        ui_serverFilterType = filterType;
-        s = SEH_LocalizeTextMessage(va("EXE_SERVERFILTER\x14%s", serverFilters[filterType].description), "server filter", LOCMSG_SAFE);
+        if (ui_serverFilterType < 0 || ui_serverFilterType > 1)
+            ui_serverFilterType = 0;
+        s = SEH_LocalizeTextMessage(va("EXE_SERVERFILTER\x14%s", serverFilters[ui_serverFilterType].description), "server filter", LOCMSG_SAFE);
         break;
     }
-    case 0xf7:
-        s = Dvar_GetVariantString(va("ui_lastServerRefresh_%i", (ui_netSource)->current.integer));
-        break;
     case 0xfa:
         if (Display_KeyBindPending())
             s = UI_SafeTranslateString("EXE_KEYWAIT");
         else
             s = UI_SafeTranslateString("EXE_KEYCHANGE");
+        break;
+    case 0xf7:
+        s = Dvar_GetVariantString(va("ui_lastServerRefresh_%i", (ui_netSource)->current.integer));
         break;
     default:
         return 0;
