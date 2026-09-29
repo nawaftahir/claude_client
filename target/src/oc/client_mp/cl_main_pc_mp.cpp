@@ -318,108 +318,122 @@ void CL_RconInit(void)
     rconGlob.address.type = NA_BAD;
 }
 
+// helper names are ours; retail keeps them as separate functions
+static void CL_RconLogin(void)
+{
+    const char *password;
+
+    if (Cmd_Argc() != 3) {
+        Com_Printf("USAGE: rcon login <password>\n");
+        return;
+    }
+
+    password = Cmd_Argv(2);
+    if (strlen(password) >= sizeof(rconGlob.password)) {
+        Com_Printf("rcon password must be %i characters or less\n", sizeof(rconGlob.password));
+        return;
+    }
+
+    memcpy(rconGlob.password, password, strlen(password) + 1);
+}
+
+static void CL_RconLogout(void)
+{
+    if (!rconGlob.password[0]) {
+        Com_Printf("Not logged in\n");
+        return;
+    }
+
+    rconGlob.password[0] = 0;
+}
+
+short BigShort(short l);
+
+static void CL_RconHost(void)
+{
+    if (Cmd_Argc() != 3) {
+        Com_Printf("USAGE: rcon host <address>\n");
+        return;
+    }
+
+    if (!NET_StringToAdr(Cmd_Argv(2), &rconGlob.address)) {
+        Com_Printf("bad host address\n");
+        return;
+    }
+
+    if (!rconGlob.address.port) {
+        rconGlob.address.port = BigShort(28960);
+    }
+}
+
 void CL_Rcon_f(void)
 {
-    const char *cmd;
-    char message[0x400];
-    int offset;
+    char message[1024];
+    int len;
     int i;
-    netadr_t sendAdr;
+    const char *cmd;
+    netadr_t to;
 
-    if (Cmd_Argc() <= 1) {
-        Com_Printf((const char *)"USAGE: rcon <command> <options...>\n");
+    if (Cmd_Argc() < 2) {
+        Com_Printf("USAGE: rcon <command> <options...>\n");
         return;
     }
 
     cmd = Cmd_Argv(1);
 
-    if (I_stricmp(cmd, (const char *)"login") == 0) {
-        if (Cmd_Argc() != 3) {
-            Com_Printf((const char *)"USAGE: rcon login <password>\n");
-            return;
-        }
-        {
-            const char *pass = Cmd_Argv(2);
-            int passLen = strlen(pass);
-            if (passLen > 0x17) {
-                Com_Printf((const char *)"rcon password must be %i characters or less\n", 0x18);
-                return;
-            }
-            memcpy(rconGlob.password, pass, passLen + 1);
-        }
+    if (!I_stricmp(cmd, "login")) {
+        CL_RconLogin();
         return;
     }
 
-    if (I_stricmp(cmd, (const char *)"logout") == 0) {
-        if (!rconGlob.password[0]) {
-            Com_Printf((const char *)"Not logged in\n");
-            return;
-        }
-        rconGlob.password[0] = '\0';
+    if (!I_stricmp(cmd, "logout")) {
+        CL_RconLogout();
         return;
     }
 
-    if (I_stricmp(cmd, (const char *)"host") == 0) {
-        if (Cmd_Argc() != 3) {
-            Com_Printf((const char *)"USAGE: rcon host <address>\n");
-            return;
-        }
-        if (!NET_StringToAdr(Cmd_Argv(2), &rconGlob.address)) {
-            Com_Printf((const char *)"bad host address\n");
-            return;
-        }
-        if (rconGlob.address.port == 0) {
-            rconGlob.address.port = 0x2071;
-        }
+    if (!I_stricmp(cmd, "host")) {
+        CL_RconHost();
         return;
     }
 
     if (!rconGlob.password[0]) {
-        Com_Printf((const char *)"You need to log in with 'rcon login <password>' before using rcon.\n");
+        Com_Printf("You need to log in with 'rcon login <password>' before using rcon.\n");
         return;
     }
 
-    message[0] = (char)0xff;
-    message[1] = (char)0xff;
-    message[2] = (char)0xff;
-    message[3] = (char)0xff;
-    message[4] = '\0';
+    message[0] = -1;
+    message[1] = -1;
+    message[2] = -1;
+    message[3] = -1;
+    message[4] = 0;
 
-    offset = Com_AddToString((const char *)"rcon ", message, 4, 0x400, 0);
-    offset = Com_AddToString(rconGlob.password, message, offset, 0x400, 0);
+    len = Com_AddToString("rcon ", message, 4, sizeof(message), 0);
+    len = Com_AddToString(rconGlob.password, message, len, sizeof(message), 0);
 
     for (i = 1; i < Cmd_Argc(); i++) {
-        offset = Com_AddToString((const char *)" ", message, offset, 0x400, 0);
-        offset = Com_AddToString(Cmd_Argv(i), message, offset, 0x400, 1);
+        len = Com_AddToString(" ", message, len, sizeof(message), 0);
+        len = Com_AddToString(Cmd_Argv(i), message, len, sizeof(message), 1);
     }
 
-    if (offset == 0x400) {
-        Com_Printf((const char *)"rcon commands are limited to %i characters\n", 0x3ff);
+    if (len == sizeof(message)) {
+        Com_Printf("rcon commands are limited to %i characters\n", sizeof(message) - 1);
         return;
     }
 
-    message[offset] = '\0';
+    message[len] = 0;
 
-    {
-        clientConnection_t *clcLocal = &::clc;
-        if (clcLocal->state > 4) {
-
-            sendAdr = clcLocal->netchan.remoteAddress;
-        } else {
-            if (rconGlob.address.type == NA_BAD) {
-                Com_Printf((const char *)"Can't determine rcon target.  You can fix this by either:\n");
-                Com_Printf((const char *)"1) Joining the server as a player.\n");
-                Com_Printf((const char *)"2) Setting the host server with 'rcon host <address>'.\n");
-                return;
-            }
-            sendAdr = rconGlob.address;
-        }
+    if (clc.state >= 5) {
+        to = clc.netchan.remoteAddress;
+    } else if (rconGlob.address.type != NA_BAD) {
+        to = rconGlob.address;
+    } else {
+        Com_Printf("Can't determine rcon target.  You can fix this by either:\n");
+        Com_Printf("1) Joining the server as a player.\n");
+        Com_Printf("2) Setting the host server with 'rcon host <address>'.\n");
+        return;
     }
 
-    {
-        int msgLen = strlen(message);
-        CL_Netchan_SendOOBPacket(msgLen, message, sendAdr);
-    }
+    CL_Netchan_SendOOBPacket(strlen(message) + 1, message, to);
 }
 
 void CL_ServerStatusResponse(netadr_t from, msg_t *msg);
