@@ -560,18 +560,13 @@ float Q_acos( float c )
 ClampChar
 ==============
 */
-int ClampChar( int i )
+signed char ClampChar( int i )
 {
-	int result;
-
 	if ( i < -128 )
-		result = -128;
-	else if ( i > 127 )
-		result = 127;
-	else
-		result = (char)i;
-
-	return result;
+		return -128;
+	if ( i > 127 )
+		return 127;
+	return i;
 }
 
 /*

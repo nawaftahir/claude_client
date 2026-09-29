@@ -60,7 +60,7 @@ extern void NET_OutOfBandVoiceData(netsrc_t sock, netadr_t adr, byte *format, in
 extern void CL_SyncGpu(void);
 extern void CL_SendCmdInternal(void);
 extern int PM_IsBinocularsADS(const playerState_t *ps);
-extern int ClampChar(int i);
+extern signed char ClampChar(int i);
 extern float sqrtf(float x);
 extern qboolean Sys_IsLANAddress(netadr_t adr);
 extern void IN_Frame(void);
@@ -280,33 +280,19 @@ static inline __attribute__((always_inline)) int CL_KeyMoveValue(kbutton_t *key)
     return (int)(CL_KeyState(key) * 127.0f);
 }
 
-static float CL_ClampMouseAxisDelta(float delta, float maxSpeed)
+static float I_fsel(const float x, const float y, const float z)
 {
-    float maxDelta;
-
-    if (!isfinite(delta)) {
-        return 0.0f;
-    }
-
-    if (!isfinite(maxSpeed) || maxSpeed == 0.0f) {
-        return delta;
-    }
-
-    maxDelta = (float)frame_msec * maxSpeed * 0.0010000000474974513f;
-    if (delta > maxDelta) {
-        return maxDelta;
-    }
-
-    if (delta < -maxDelta) {
-        return -maxDelta;
-    }
-
-    return delta;
+    return x >= 0.0f ? y : z;
 }
 
-static float CL_FiniteOrDefault(float value, float defaultValue)
+static float I_fmax(const float x, const float y)
 {
-    return isfinite(value) ? value : defaultValue;
+    return I_fsel(x - y, x, y);
+}
+
+static float I_fmin(const float x, const float y)
+{
+    return I_fsel(y - x, x, y);
 }
 
 void IN_MLookDown(void)
@@ -1207,95 +1193,70 @@ void CL_CmdButtons(usercmd_t *cmd)
 
 void CL_MouseMove(usercmd_t *cmd)
 {
-    clientActive_t *cl;
-    float mx;
-    float my;
+    float mx, my;
+    float accelSensitivity;
     float rate;
-    float sensitivity;
-    float accel;
-    float baseSensitivity;
-    float cgameSensitivity;
-    float yawDelta;
-    float pitchDelta;
-    int index;
+    float cap;
+    float yaw, pitch;
 
-#define KB_AT(index) (&kb[(index)])
-
-    cl = clients;
+    // allow mouse smoothing
     if (m_filter->current.enabled) {
-        mx = (float)(cl->mouseDx[0] + cl->mouseDx[1]) * 0.5f;
-        my = (float)(cl->mouseDy[0] + cl->mouseDy[1]) * 0.5f;
+        mx = (float)(clients->mouseDx[0] + clients->mouseDx[1]) * 0.5f;
+        my = (float)(clients->mouseDy[0] + clients->mouseDy[1]) * 0.5f;
     } else {
-        index = cl->mouseIndex;
-        mx = (float)cl->mouseDx[index];
-        my = (float)cl->mouseDy[index];
+        mx = (float)clients->mouseDx[clients->mouseIndex];
+        my = (float)clients->mouseDy[clients->mouseIndex];
     }
+    clients->mouseIndex ^= 1;
+    clients->mouseDx[clients->mouseIndex] = 0;
+    clients->mouseDy[clients->mouseIndex] = 0;
 
-    index = cl->mouseIndex ^ 1;
-    cl->mouseIndex = index;
-    cl->mouseDx[index] = 0;
-    cl->mouseDy[index] = 0;
-
-#if COD2_FEATURE_GAMEPAD
-
-    if (mx * mx + my * my > 9.0f)
-        CL_Gamepad_NoteKbmActive();
-#endif
-
-    if (frame_msec == 0) {
+    if (frame_msec <= 0)
         return;
-    }
 
-    rate = sqrtf(mx * mx + my * my) / (float)frame_msec;
-    if (!isfinite(rate)) {
+    rate = sqrt(mx * mx + my * my) / (float)frame_msec;
+    accelSensitivity = rate * cl_mouseAccel->current.value + cl_sensitivity->current.value;
+    accelSensitivity *= clients->cgameSensitivity;
+
+    if (rate != 0.0f && cl_showMouseRate->current.enabled)
+        Com_Printf("%f : %f\n", rate, accelSensitivity);
+
+    if (clients->snap.ps.pm_flags & 0x8000)
         return;
-    }
 
-    accel = CL_FiniteOrDefault(cl_mouseAccel->current.value, 0.0f);
-    baseSensitivity = CL_FiniteOrDefault(cl_sensitivity->current.value, 5.0f);
-    cgameSensitivity = CL_FiniteOrDefault(cl->cgameSensitivity, 1.0f);
-    sensitivity = (rate * accel + baseSensitivity) * cgameSensitivity;
-    if (!isfinite(sensitivity)) {
-        return;
-    }
-
-    if (rate != 0.0f && cl_showMouseRate->current.enabled) {
-        Com_Printf((const char *)"%f : %f\n", rate, sensitivity);
-    }
-
-    if ((short)cl->snap.ps.pm_flags < 0) {
-        return;
-    }
-
-    if (cl->snap.ps.eFlags & 0x300) {
+    if (clients->snap.ps.eFlags & 0x300) {
         mx *= 2.5;
         my *= 2.0f;
     } else {
-        mx *= sensitivity;
-        my *= sensitivity;
+        mx *= accelSensitivity;
+        my *= accelSensitivity;
     }
 
-    if (mx == 0.0f && my == 0.0f) {
+    if (!mx && !my)
         return;
-    }
 
-    if (KB_AT(8)->active) {
-        cmd->rightmove = ClampChar((int)cmd->rightmove + (int)(mx * CL_FiniteOrDefault(m_side->current.value, 0.25f)));
+    // add mouse X/Y movement to cmd
+    if (kb[8].active) {
+        cmd->rightmove = ClampChar(cmd->rightmove + (int)(mx * m_side->current.value));
     } else {
-        yawDelta = mx * CL_FiniteOrDefault(m_yaw->current.value, 0.022f);
-        yawDelta = CL_ClampMouseAxisDelta(yawDelta, CL_FiniteOrDefault(cl->cgameMaxYawSpeed, 0.0f));
-        cl->viewangles[1] -= yawDelta;
+        yaw = mx * m_yaw->current.value;
+        if (clients->cgameMaxYawSpeed != 0.0f) {
+            cap = (float)frame_msec * clients->cgameMaxYawSpeed * 0.001f;
+            yaw = I_fmax(-cap, I_fmin(cap, yaw));
+        }
+        clients->viewangles[1] -= yaw;
     }
 
-    if ((KB_AT(13)->active || cl_freelook->current.enabled) && !KB_AT(8)->active) {
-        pitchDelta = my * CL_FiniteOrDefault(m_pitch->current.value, 0.022f);
-        pitchDelta = CL_ClampMouseAxisDelta(pitchDelta, CL_FiniteOrDefault(cl->cgameMaxPitchSpeed, 0.0f));
-        cl->viewangles[0] += pitchDelta;
+    if ((kb[13].active || cl_freelook->current.enabled) && !kb[8].active) {
+        pitch = my * m_pitch->current.value;
+        if (clients->cgameMaxPitchSpeed != 0.0f) {
+            cap = (float)frame_msec * clients->cgameMaxPitchSpeed * 0.001f;
+            pitch = I_fmax(-cap, I_fmin(cap, pitch));
+        }
+        clients->viewangles[0] += pitch;
     } else {
-        cmd->forwardmove = ClampChar((int)cmd->forwardmove - (int)(my * CL_FiniteOrDefault(m_forward->current.value, 0.25f)));
+        cmd->forwardmove = ClampChar(cmd->forwardmove - (int)(my * m_forward->current.value));
     }
-
-#undef KB_AT
 }
 
 void IN_DownDown(void)
