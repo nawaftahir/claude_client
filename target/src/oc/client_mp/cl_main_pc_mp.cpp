@@ -554,61 +554,46 @@ void CL_ClearMutedList(void)
     memset(s_playerMute, 0, sizeof(s_playerMute));
 }
 
+short BigShort(short l);
+
 void CL_GlobalServers_f(void)
 {
     netadr_t to;
-    char command[1024];
-    char *buffptr;
     int i;
     int count;
+    char *buffptr;
+    char command[1024];
 
-    if (Cmd_Argc() <= 2) {
-        Com_Printf((const char *)"usage: globalservers <master# 0-1> <protocol> [keywords]\n");
+    if (Cmd_Argc() < 3) {
+        Com_Printf("usage: globalservers <master# 0-1> <protocol> [keywords]\n");
         return;
     }
 
-    {
-        int numglobal = cls.numglobalservers;
-
-        for (i = 0; i < numglobal; i++) {
-            byte rc = cls.globalServers[i].requestCount;
-            byte rc1 = (byte)(rc + 1);
-            if (rc1 == 0)
-                cls.globalServers[i].requestCount = 0xFF;
-            else
-                cls.globalServers[i].requestCount = rc1;
-        }
+    // age the existing entries
+    for (i = 0; i < cls.numglobalservers; i++) {
+        if (!++cls.globalServers[i].requestCount)
+            cls.globalServers[i].requestCount = 255;
     }
 
-    Com_Printf((const char *)"Requesting servers from the master...\n");
+    Com_Printf("Requesting servers from the master...\n");
 
-    NET_StringToAdr((const char *)"cod2master.activision.com", &to);
+    NET_StringToAdr("cod2master.activision.com", &to);
+    cls.waitglobalserverresponse = 1;
+    cls.pingUpdateSource = 1;
+    to.type = NA_IP;
+    to.port = BigShort(20710);
 
-    {
-        cls.waitglobalserverresponse = 1;
-        cls.pingUpdateSource = 1;
-    }
+    sprintf(command, "getservers %s", Cmd_Argv(2));
 
-    to.type = (netadrtype_t)(4);
-    to.port = (unsigned short)0xe650;
-
-    sprintf(command, (const char *)"getservers %s", Cmd_Argv(2));
-
+    // tack on keywords
     buffptr = command + strlen(command);
-
     count = Cmd_Argc();
-    if (count > 3) {
+    for (i = 3; i < count; i++)
+        buffptr += sprintf(buffptr, " %s", Cmd_Argv(i));
 
-        for (i = 3; i != count; i++) {
-            buffptr += sprintf(buffptr, (const char *)" %s", Cmd_Argv(i));
-        }
-    }
-
-    if (Dvar_GetBool((const char *)"fs_restrict"))
-    {
-        *(int *)buffptr = 0x6d656420;
-        *(short *)(buffptr + 4) = 0x6f;
-    }
+    // if we are a demo, automatically add a "demo" keyword
+    if (Dvar_GetBool("fs_restrict"))
+        buffptr += sprintf(buffptr, " demo");
 
     NET_OutOfBandPrint(NS_SERVER, to, command);
 }

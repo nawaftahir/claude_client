@@ -271,14 +271,14 @@ void CL_ParseGamestate(msg_t *msg)
 
 void CL_ParseDownload(msg_t *msg)
 {
+    int size;
     byte *data;
     int block;
-    int size;
-    clientConnection_t *clc;
 
     LargeLocal data_large_local(MAX_MSGLEN);
     data = (byte *)data_large_local.GetBuf();
 
+    // read the data
     block = MSG_ReadShort(msg);
 
 #if COD2_IS_PATCH_13
@@ -296,122 +296,106 @@ void CL_ParseDownload(msg_t *msg)
     }
 #endif
 
-    if (block == 0) {
+    if (!block) {
+        // block zero is special, contains file size
+        clc.downloadSize = MSG_ReadLong(msg);
+        legacyHacks->cl_downloadSize = clc.downloadSize;
 
-        clc = &::clc;
-        clc->downloadSize = MSG_ReadLong(msg);
-
-        *(int *)((*download_ui_ptr) + 0x10) = clc->downloadSize;
-
-        size = clc->downloadSize;
-        if (size < 0) {
-
-            Com_Error(ERR_DROP, "%s", va("%s", MSG_ReadCommandString(msg)));
+        if (clc.downloadSize < 0) {
+            Com_Error(ERR_DROP, va("%s", MSG_ReadCommandString(msg)));
             return;
         }
     }
 
     size = MSG_ReadShort(msg);
-
     if (size > 0) {
-
         MSG_ReadData(msg, data, size);
     }
 
-    clc = &::clc;
-    if (clc->downloadBlock != block) {
-
-        Com_DPrintf("CL_ParseDownload: Expected block %d, got %d\n",
-                    clc->downloadBlock, block);
-
-        if (block > clc->downloadBlock) {
-
+    if (clc.downloadBlock != block) {
+        Com_DPrintf("CL_ParseDownload: Expected block %d, got %d\n", clc.downloadBlock, block);
+        if (block > clc.downloadBlock) {
             Com_DPrintf("CL_ParseDownload: Sending retransmit request to get the missed block\n");
-
-            CL_AddReliableCommand(va("retransdl %d", clc->downloadBlock));
+            CL_AddReliableCommand(va("retransdl %d", clc.downloadBlock));
         }
         return;
     }
 
 #if COD2_FEATURE_NET_HARDENING
 
-    if (clc->downloadTempName[0] &&
-        !NetHardening_ValidDownloadName(clc->downloadTempName, 0)) {
+    if (clc.downloadTempName[0] &&
+        !NetHardening_ValidDownloadName(clc.downloadTempName, 0)) {
         Com_Printf("WARNING: refusing malicious download temp path '%s'\n",
-                   clc->downloadTempName);
+                   clc.downloadTempName);
         CL_AddReliableCommand("stopdl");
-        clc->downloadName[0] = 0;
-        clc->downloadTempName[0] = 0;
+        clc.downloadName[0] = 0;
+        clc.downloadTempName[0] = 0;
         return;
     }
-    if (clc->downloadName[0] &&
-        !NetHardening_ValidDownloadName(clc->downloadName, 1)) {
+    if (clc.downloadName[0] &&
+        !NetHardening_ValidDownloadName(clc.downloadName, 1)) {
         Com_Printf("WARNING: refusing malicious download name '%s'\n",
-                   clc->downloadName);
+                   clc.downloadName);
         CL_AddReliableCommand("stopdl");
-        clc->downloadName[0] = 0;
-        clc->downloadTempName[0] = 0;
+        clc.downloadName[0] = 0;
+        clc.downloadTempName[0] = 0;
         return;
     }
 #endif
 
-    if (clc->download == 0) {
-
-        if (clc->downloadTempName[0] == '\0') {
-
+    // open the file if not opened yet
+    if (!clc.download) {
+        if (!*clc.downloadTempName) {
             Com_Printf("Server sending download, but no download was requested\n");
             CL_AddReliableCommand("stopdl");
             return;
         }
 
-        clc->download = FS_SV_FOpenFileWrite(clc->downloadTempName);
-        if (clc->download == 0) {
+        clc.download = FS_SV_FOpenFileWrite(clc.downloadTempName);
 
-            Com_Printf("Could not create %s\n", clc->downloadTempName);
+        if (!clc.download) {
+            Com_Printf("Could not create %s\n", clc.downloadTempName);
             CL_AddReliableCommand("stopdl");
             CL_NextDownload();
             return;
         }
     }
 
-    if (size != 0) {
-
-        FS_Write(data, size, (&::clc)->download);
+    if (size) {
+        FS_Write(data, size, clc.download);
     }
 
-    clc = &::clc;
-    CL_AddReliableCommand(va("nextdl %d", clc->downloadBlock));
+    CL_AddReliableCommand(va("nextdl %d", clc.downloadBlock));
+    clc.downloadBlock++;
 
-    clc->downloadBlock += 1;
+    clc.downloadCount += size;
 
-    clc->downloadCount += size;
+    // So UI gets access to it
+    legacyHacks->cl_downloadCount = clc.downloadCount;
 
-    *(int *)((*download_ui_ptr) + 0x14) = clc->downloadCount;
+    if (!size) {
+        // A zero length block means EOF
+        if (clc.download) {
+            FS_FCloseFile(clc.download);
 
-    if (size != 0) {
-        return;
+            // rename the file
+            FS_SV_Rename(clc.downloadTempName, clc.downloadName);
+            clc.download = 0;
+        }
+        *clc.downloadTempName = *clc.downloadName = 0;
+        legacyHacks->cl_downloadName[0] = 0;
+
+        // send intentions now
+        // We need this because without it, we would hold the last nextdl and then start
+        // loading right away.  If we take a while to load, the server is happily trying
+        // to send us that last block over and over.
+        // Write it twice to help make sure we acknowledge the download
+        CL_WritePacket();
+        CL_WritePacket();
+
+        // get another file if needed
+        CL_NextDownload();
     }
-
-    if (clc->download != 0) {
-
-        FS_FCloseFile(clc->download);
-
-        clc->download = 0;
-
-        FS_SV_Rename(clc->downloadTempName, clc->downloadName);
-    }
-
-    clc->downloadName[0] = 0;
-    clc->downloadTempName[0] = 0;
-
-    *(byte *)((*download_ui_ptr) + 0x1c) = 0;
-
-    CL_WritePacket();
-
-    CL_WritePacket();
-
-    CL_NextDownload();
-
 }
 
 #if COD2_IS_PATCH_13
@@ -871,6 +855,24 @@ void CL_ParseSnapshot(msg_t *msg)
 }
 
 
+void CL_ParseCommandString(msg_t *msg)
+{
+    char *s;
+    int seq;
+    int index;
+
+    seq = MSG_ReadLong(msg);
+    s = MSG_ReadCommandString(msg);
+
+    if (clc.serverCommandSequence >= seq) {
+        return;
+    }
+    clc.serverCommandSequence = seq;
+
+    index = seq & 0x7f;
+    I_strncpyz(clc.serverCommands[index], s, sizeof(clc.serverCommands[index]));
+}
+
 void CL_ParseServerMessage(msg_t *msg)
 {
     byte *msgCompressed_buf;
@@ -883,10 +885,10 @@ void CL_ParseServerMessage(msg_t *msg)
     LargeLocal msgCompressed_buf_large_local(MAX_MSG_DECOMPRESS_BYTES);
     msgCompressed_buf = (byte *)msgCompressed_buf_large_local.GetBuf();
 
-    if (CL_ShowNetValue() == 1) {
+    if (cl_shownet->current.integer == 1) {
 
         Com_Printf("%i ", msg->cursize);
-    } else if (CL_ShowNetValue() > 1) {
+    } else if (cl_shownet->current.integer >= 2) {
 
         Com_Printf("------------------\n");
     }
@@ -920,13 +922,13 @@ void CL_ParseServerMessage(msg_t *msg)
 
         if (cmd == 7) {
 
-            if (CL_ShowNetValue() > 1) {
+            if (cl_shownet->current.integer >= 2) {
                 Com_Printf("%3i:%s\n", msgCompressed.readcount - 1, "END OF MESSAGE");
             }
             break;
         }
 
-        if (CL_ShowNetValue() > 1) {
+        if (cl_shownet->current.integer >= 2) {
             if (svc_strings[cmd] == NULL) {
                 Com_Printf("%3i:BAD CMD %i\n", msgCompressed.readcount - 1, cmd);
             } else {
@@ -938,31 +940,17 @@ void CL_ParseServerMessage(msg_t *msg)
         case 0:
 
             break;
-        case 1: {
-
+        case 4:
+            CL_ParseCommandString(&msgCompressed);
+            break;
+        case 1:
             CL_ParseGamestate(&msgCompressed);
             break;
-        }
-        case 4: {
-
-            int seq = MSG_ReadLong(&msgCompressed);
-            char *str = MSG_ReadCommandString(&msgCompressed);
-            clientConnection_t *clc = &::clc;
-            if (seq <= clc->serverCommandSequence)
-                break;
-
-            clc->serverCommandSequence = seq;
-
-            I_strncpyz(clc->serverCommands[seq & 0x7f], str, 1024);
-            break;
-        }
-        case 5:
-
-            CL_ParseDownload(&msgCompressed);
-            break;
         case 6:
-
             CL_ParseSnapshot(&msgCompressed);
+            break;
+        case 5:
+            CL_ParseDownload(&msgCompressed);
             break;
         default:
 
