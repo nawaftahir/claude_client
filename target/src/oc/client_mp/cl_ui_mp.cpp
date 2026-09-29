@@ -114,9 +114,11 @@ int LAN_GetServerCount(int source)
 
 qboolean LAN_WaitServerResponse(int source)
 {
-    if (source != 1)
-        return 0;
-    return cls.waitglobalserverresponse;
+    switch (source) {
+    case 1:
+        return cls.waitglobalserverresponse;
+    }
+    return 0;
 }
 
 void LAN_GetServerInfo(int source, int n, char *buf, int buflen)

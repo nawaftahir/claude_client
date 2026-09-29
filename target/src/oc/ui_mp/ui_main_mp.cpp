@@ -2223,13 +2223,12 @@ static void __attribute_regparm__(0) UI_BuildServerDisplayList(qboolean force)
 {
     char info_buf[0x400];
     int count, i, clients, ping;
-    int netSource;
 
     if (!force) {
         if (uiInfo->uiDC.realTime <= sharedUiInfo.serverStatus.nextDisplayRefresh)
             return;
     } else if (force == 2) {
-
+        force = 0;
     }
 
     clients = 0;
@@ -2241,8 +2240,7 @@ static void __attribute_regparm__(0) UI_BuildServerDisplayList(qboolean force)
         motdLen = strlen(sharedUiInfo.serverStatus.motd);
 
         if (motdLen == 0) {
-            const char *translated = UI_SafeTranslateString("EXE_COD_MULTIPLAYER");
-            strcpy(sharedUiInfo.serverStatus.motd, va("%s - %s", translated, "1.0"));
+            strcpy(sharedUiInfo.serverStatus.motd, va("%s - %s", UI_SafeTranslateString("EXE_COD_MULTIPLAYER"), "1.0"));
             motdLen = strlen(sharedUiInfo.serverStatus.motd);
         }
 
@@ -2263,10 +2261,8 @@ static void __attribute_regparm__(0) UI_BuildServerDisplayList(qboolean force)
         LAN_MarkServerDirty((ui_netSource)->current.integer, -1, 1);
     }
 
-    netSource = (ui_netSource)->current.integer;
-    count = LAN_GetServerCount(netSource);
-
-    if (LAN_WaitServerResponse(netSource) || (netSource == 0 && count == 0)) {
+    count = LAN_GetServerCount((ui_netSource)->current.integer);
+    if (LAN_WaitServerResponse((ui_netSource)->current.integer) || ((ui_netSource)->current.integer == 0 && count == 0)) {
         UI_ClearDisplayedServers();
         sharedUiInfo.serverStatus.nextDisplayRefresh = uiInfo->uiDC.realTime + 500;
         return;
@@ -2279,91 +2275,71 @@ static void __attribute_regparm__(0) UI_BuildServerDisplayList(qboolean force)
             continue;
 
         ping = LAN_GetServerPing((ui_netSource)->current.integer, i);
+        if (ping > 0 || (ui_netSource)->current.integer == 2) {
+            LAN_GetServerInfo((ui_netSource)->current.integer, i, info_buf, 0x400);
+            clients = atoi(Info_ValueForKey(info_buf, "clients"));
+            sharedUiInfo.serverStatus.numPlayersOnServers += clients;
+            if (!I_strnicmp(Info_ValueForKey(info_buf, "addr"), "000.000.000.000", 15)) {
+                LAN_MarkServerDirty((ui_netSource)->current.integer, i, 0);
+                continue;
+            }
+            if (!(ui_browserShowEmpty)->current.enabled && !clients) {
+                LAN_MarkServerDirty((ui_netSource)->current.integer, i, 0);
+                continue;
+            }
+            if (!(ui_browserShowFull)->current.enabled && clients == atoi(Info_ValueForKey(info_buf, "sv_maxclients"))) {
+                LAN_MarkServerDirty((ui_netSource)->current.integer, i, 0);
+                continue;
+            }
+            if (!(ui_browserShowPassword)->current.enabled && atoi(Info_ValueForKey(info_buf, "pswrd"))) {
+                LAN_MarkServerDirty((ui_netSource)->current.integer, i, 0);
+                continue;
+            }
+            if (!(ui_browserShowNoPassword)->current.enabled && !atoi(Info_ValueForKey(info_buf, "pswrd"))) {
+                LAN_MarkServerDirty((ui_netSource)->current.integer, i, 0);
+                continue;
+            }
+            if ((ui_browserShowPure)->current.enabled && !atoi(Info_ValueForKey(info_buf, "pure"))) {
+                LAN_MarkServerDirty((ui_netSource)->current.integer, i, 0);
+                continue;
+            }
+            if ((ui_browserShowDedicated)->current.enabled) {
+                int hw = atoi(Info_ValueForKey(info_buf, "hw"));
+                if (hw != 1 && hw != 2 && hw != 3) {
+                    LAN_MarkServerDirty((ui_netSource)->current.integer, i, 0);
+                    continue;
+                }
+            }
+            if ((ui_browserMod)->current.integer >= 0 && atoi(Info_ValueForKey(info_buf, "mod")) != (ui_browserMod)->current.integer) {
+                LAN_MarkServerDirty((ui_netSource)->current.integer, i, 0);
+                continue;
+            }
+            if ((ui_browserFriendlyfire)->current.integer >= 0 && atoi(Info_ValueForKey(info_buf, "ff")) != (ui_browserFriendlyfire)->current.integer) {
+                LAN_MarkServerDirty((ui_netSource)->current.integer, i, 0);
+                continue;
+            }
+            if ((ui_browserKillcam)->current.integer >= 0 && atoi(Info_ValueForKey(info_buf, "kc")) != (ui_browserKillcam)->current.integer) {
+                LAN_MarkServerDirty((ui_netSource)->current.integer, i, 0);
+                continue;
+            }
+            if (sharedUiInfo.joinGameTypes[(ui_joinGameType)->current.integer].gameTypeName[0]
+                && I_stricmp(Info_ValueForKey(info_buf, "gametype"), sharedUiInfo.joinGameTypes[(ui_joinGameType)->current.integer].gameType)) {
+                LAN_MarkServerDirty((ui_netSource)->current.integer, i, 0);
+                continue;
+            }
+            if (ui_serverFilterType > 0 && I_stricmp(Info_ValueForKey(info_buf, "game"), serverFilters[ui_serverFilterType].basedir)) {
+                LAN_MarkServerDirty((ui_netSource)->current.integer, i, 0);
+                continue;
+            }
 
-        if (ping <= 0 && (ui_netSource)->current.integer != 2)
-            continue;
-
-        LAN_GetServerInfo((ui_netSource)->current.integer, i, info_buf, 0x400);
-
-        clients = atoi(Info_ValueForKey(info_buf, "clients"));
-        sharedUiInfo.serverStatus.numPlayersOnServers += clients;
-
-        if (I_strnicmp(Info_ValueForKey(info_buf, "addr"), "000.000.000.000", 15) == 0)
-            goto reject;
-
-        if (!(ui_browserShowEmpty)->current.enabled && clients == 0)
-            goto reject;
-
-        if (!(ui_browserShowFull)->current.enabled) {
-            if (clients == atoi(Info_ValueForKey(info_buf, "sv_maxclients")))
-                goto reject;
-        }
-
-        if (!(ui_browserShowPassword)->current.enabled) {
-            if (atoi(Info_ValueForKey(info_buf, "pswrd")) != 0)
-                goto reject;
-        }
-
-        if (!(ui_browserShowNoPassword)->current.enabled) {
-            if (atoi(Info_ValueForKey(info_buf, "pswrd")) == 0)
-                goto reject;
-        }
-
-        if ((ui_browserShowPure)->current.enabled) {
-            if (atoi(Info_ValueForKey(info_buf, "pure")) == 0)
-                goto reject;
-        }
-
-        if ((ui_browserShowDedicated)->current.enabled) {
-            if ((unsigned)(atoi(Info_ValueForKey(info_buf, "hw")) - 1) > 2)
-                goto reject;
-        }
-
-        if ((ui_browserMod)->current.integer >= 0) {
-            if (atoi(Info_ValueForKey(info_buf, "mod")) != (ui_browserMod)->current.integer)
-                goto reject;
-        }
-
-        if ((ui_browserFriendlyfire)->current.integer >= 0) {
-            if (atoi(Info_ValueForKey(info_buf, "ff")) != (ui_browserFriendlyfire)->current.integer)
-                goto reject;
-        }
-
-        if ((ui_browserKillcam)->current.integer >= 0) {
-            if (atoi(Info_ValueForKey(info_buf, "kc")) != (ui_browserKillcam)->current.integer)
-                goto reject;
-        }
-
-        {
-            int joinGTIdx = (ui_joinGameType)->current.integer;
-            const char *joinGTName = sharedUiInfo.joinGameTypes[joinGTIdx].gameTypeName;
-            if (joinGTName[0] != '\0') {
-                const char *joinGTShort = sharedUiInfo.joinGameTypes[joinGTIdx].gameType;
-                if (I_stricmp(Info_ValueForKey(info_buf, "gametype"), joinGTShort) != 0)
-                    goto reject;
+            if ((ui_netSource)->current.integer == 2)
+                UI_RemoveDuplicateFromFavorites(i);
+            UI_BinaryInsertServer(i);
+            if (ping > 0) {
+                LAN_MarkServerDirty((ui_netSource)->current.integer, i, 0);
+                numclean++;
             }
         }
-
-        if (ui_serverFilterType > 0) {
-            const char *filterBaseName = *(const char **)((byte *)serverFilters + ui_serverFilterType * 8 + 4);
-            if (I_stricmp(Info_ValueForKey(info_buf, "game"), filterBaseName) != 0)
-                goto reject;
-        }
-
-        if ((ui_netSource)->current.integer == 2) {
-            UI_RemoveDuplicateFromFavorites(i);
-        }
-
-        UI_BinaryInsertServer(i);
-
-        if (ping > 0) {
-            LAN_MarkServerDirty((ui_netSource)->current.integer, i, 0);
-            numclean++;
-        }
-        continue;
-
-    reject:
-        LAN_MarkServerDirty((ui_netSource)->current.integer, i, 0);
     }
 
     sharedUiInfo.serverStatus.refreshtime = uiInfo->uiDC.realTime;
