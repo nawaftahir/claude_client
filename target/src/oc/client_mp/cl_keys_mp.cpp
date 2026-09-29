@@ -792,6 +792,7 @@ static void ConcatRemaining(const char *src, const char *start)
 static void ReplaceConsoleInputArgument(int replaceCount, const char *replacement)
 {
 	int cmdLineLen;
+	int replaceStart;
 
 	if ( !*replacement )
 		return;
@@ -800,7 +801,8 @@ static void ReplaceConsoleInputArgument(int replaceCount, const char *replacemen
 	while ( cmdLineLen && isspace(g_consoleField.buffer[cmdLineLen - 1]) )
 		cmdLineLen--;
 
-	I_strncpyz(&g_consoleField.buffer[cmdLineLen - replaceCount], replacement, sizeof(g_consoleField.buffer) - (cmdLineLen - replaceCount));
+	replaceStart = cmdLineLen - replaceCount;
+	I_strncpyz(&g_consoleField.buffer[replaceStart], replacement, sizeof(g_consoleField.buffer) - replaceStart);
 }
 
 static void CompleteCmdArgument(void)
