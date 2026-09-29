@@ -444,9 +444,7 @@ void Menu_FadeItemByName(menuDef_t *menu, const char *p, qboolean fadeOut)
     }
 }
 
-static inline __attribute__((always_inline))
-menuDef_t *
-Menus_FindByName_core(displayContextDef_t *dc, const char *p)
+menuDef_t *Menus_FindByName(displayContextDef_t *dc, const char *p)
 {
     int i;
     for (i = 0; i < dc->menuCount; i++) {
@@ -454,11 +452,6 @@ Menus_FindByName_core(displayContextDef_t *dc, const char *p)
             return dc->Menus[i];
     }
     return NULL;
-}
-
-menuDef_t *Menus_FindByName(displayContextDef_t *dc, const char *p)
-{
-    return Menus_FindByName_core(dc, p);
 }
 
 void Script_Show(displayContextDef_t *dc, itemDef_t *item, const char **args)
@@ -2027,7 +2020,7 @@ void Menu_Setup(displayContextDef_t *dc)
 
 static inline __attribute__((always_inline)) void Menus_CloseByName_core(displayContextDef_t *dc, const char *p)
 {
-    menuDef_t *menu = Menus_FindByName_core(dc, p);
+    menuDef_t *menu = Menus_FindByName(dc, p);
     if (menu)
         Menus_Close(dc, menu);
 }
@@ -2236,74 +2229,58 @@ void Script_InGameClose(displayContextDef_t *dc, itemDef_t *item, const char **a
     Menus_CloseByName_core(dc, name);
 }
 
+static void Window_CloseCinematic(Window *window)
+{
+    if (window->style == 5 && window->cinematic >= 0) {
+        CIN_StopCinematic(window->cinematic);
+        window->cinematic = -1;
+    }
+}
+
+static void Menu_CloseCinematics(menuDef_t *menu)
+{
+    int i;
+
+    if (menu) {
+        Window_CloseCinematic(&menu->window);
+        for (i = 0; i < menu->itemCount; i++) {
+            Window_CloseCinematic(&menu->items[i]->window);
+            if (menu->items[i]->type == 8)
+                CIN_StopCinematic(-menu->items[i]->window.ownerDraw);
+        }
+    }
+}
+
+static void Display_CloseCinematics(displayContextDef_t *dc)
+{
+    int i;
+
+    for (i = dc->openMenuCount - 1; i >= 0; i--)
+        Menu_CloseCinematics(dc->menuStack[i]);
+}
+
 void Menus_Open(displayContextDef_t *dc, menuDef_t *menu)
 {
-    byte *d = (byte *)dc;
-    byte *m = (byte *)menu;
-    int openCount, i, j;
-    byte tempItem[0x2a0];
+    itemDef_t item;
+    int i;
 
-    openCount = (((displayContextDef_s*)(d))->openMenuCount);
-    for (i = openCount - 1; i >= 0; i--)
-        Window_RemoveDynamicFlags( (Window *)((itemDef_t *)(*(void **)((char *)&((displayContextDef_s *)d)->menuStack[i]))), 2);
-    openCount = (((displayContextDef_s*)(d))->openMenuCount);
-
-    int removeIdx = -1;
-    for (i = openCount - 1; i >= 0; i--) {
-        if (*(void **)((char *)&((displayContextDef_s *)d)->menuStack[i]) == menu) {
-            removeIdx = i;
-            break;
-        }
+    for (i = dc->openMenuCount - 1; i >= 0; i--)
+        Window_RemoveDynamicFlags(&dc->menuStack[i]->window, 2);
+    Menus_AddToStack(dc, menu);
+    Window_AddDynamicFlags(&menu->window, 6);
+    if (menu->onOpen) {
+        item.parent = menu;
+        Item_RunScript(dc, &item, menu->onOpen);
     }
-    if (removeIdx >= 0) {
-        (((displayContextDef_s*)(d))->openMenuCount) = openCount - 1;
-        for (i = removeIdx; i < (((displayContextDef_s*)(d))->openMenuCount); i++)
-            *(void **)((char *)&((displayContextDef_s *)d)->menuStack[i]) = *(void **)((char *)&((displayContextDef_s *)d)->menuStack[(i + 1)]);
-    }
-    if ((((displayContextDef_s*)(d))->openMenuCount) == 0x10)
-        Com_Error(ERR_DROP, "\x15Too many menus opened");
-    int idx = (((displayContextDef_s*)(d))->openMenuCount);
-    *(void **)((char *)&((displayContextDef_s *)d)->menuStack[idx]) = menu;
-    (((displayContextDef_s*)(d))->openMenuCount) = idx + 1;
-    Window_AddDynamicFlags( (Window *)((itemDef_t *)((void *)menu)), 6);
-    if ((*(void **)&((menuDef_t *)m)->onOpen)) {
-        *(void **)&(*(unsigned char *)&((itemDef_t *)tempItem)->parent) = menu;
-        Item_RunScript(dc, (itemDef_t *)tempItem, ((menuDef_t *)m)->onOpen);
-    }
-    if ((*(void **)&((menuDef_t *)m)->soundName))
-        UI_PlayLocalSoundAliasByName(((menuDef_t *)m)->soundName);
-    openCount = (((displayContextDef_s*)(d))->openMenuCount);
-    for (i = openCount - 1; i >= 0; i--) {
-        byte *om = *(byte **)((char *)&((displayContextDef_s *)d)->menuStack[i]);
-        if (!om)
-            continue;
-        if (((menuDef_t *)om)->window.style == 5) {
-            int ch = ((menuDef_t *)om)->window.cinematic;
-            if (ch >= 0) {
-                CIN_StopCinematic(ch);
-                ((menuDef_t *)om)->window.cinematic = -1;
-            }
-        }
-        for (j = 0; j < (((menuDef_t*)(om))->itemCount); j++) {
-            byte *it = *(byte **)((char *)&((menuDef_t *)om)->items[j]);
-            if (((itemDef_t *)it)->window.style == 5) {
-                int ch = ((itemDef_t *)it)->window.cinematic;
-                if (ch >= 0) {
-                    CIN_StopCinematic(ch);
-                    ((itemDef_t *)it)->window.cinematic = -1;
-                }
-                it = *(byte **)((char *)&((menuDef_t *)om)->items[j]);
-            }
-            if ((((itemDef_s*)(it))->type) == 8)
-                CIN_StopCinematic(-((itemDef_t *)it)->window.ownerDraw);
-        }
-    }
-    Display_MouseMove(dc, NULL, ((displayContextDef_t *)d)->cursorx, (((displayContextDef_s*)(d))->cursory));
+    if (menu->soundName)
+        UI_PlayLocalSoundAliasByName(menu->soundName);
+    Display_CloseCinematics(dc);
+    Display_MouseMove(dc, NULL, dc->cursorx, dc->cursory);
 }
 
 qboolean Menus_OpenByName(displayContextDef_t *dc, const char *p)
 {
-    menuDef_t *menu = Menus_FindByName_core(dc, p);
+    menuDef_t *menu = Menus_FindByName(dc, p);
     if (menu) {
         Menus_Open(dc, menu);
         return 1;
@@ -2342,37 +2319,27 @@ void Script_InGameOpen(displayContextDef_t *dc, itemDef_t *item, const char **ar
 
 qboolean Display_MouseMove(displayContextDef_t *dc, void *p, int x, int y)
 {
-    byte *d = (byte *)dc;
-    if (p) {
-        byte *menu = (byte *)p;
-        rectDef_t newRect = *(rectDef_t *)menu;
-        newRect.x += (float)x;
-        newRect.y += (float)y;
-        Window_SetRect( (Window *)(p), &newRect);
-        Menu_UpdatePosition((menuDef_t *)p);
-        return 1;
-    }
-    int openCount = (((displayContextDef_s*)(d))->openMenuCount);
-    int i = openCount - 1;
-    if (i < 0)
-        return 1;
-    int startIdx = i;
-    for (; i >= 0; i--) {
-        byte *menu = *(byte **)((char *)&((displayContextDef_s *)d)->menuStack[i]);
-        int flags = ((menuDef_t *)menu)->window.dynamicFlags[0];
-        if ((flags & 4) && (flags & 2)) {
-            if ((((Window *)menu)->staticFlags & 0x1000000)) {
-                Menu_HandleMouseMove(dc, (menuDef_t *)menu, (float)x, (float)y);
-                return 1;
-            }
-            startIdx = i;
-            break;
-        }
-    }
-    for (i = 0; i <= startIdx; i++) {
-        byte *menu = *(byte **)((char *)&((displayContextDef_s *)d)->menuStack[(startIdx - i)]);
-        if (Menu_HandleMouseMove(dc, (menuDef_t *)menu, (float)x, (float)y))
+    int i;
+    menuDef_t *menu;
+    UiRectangle r;
+
+    menu = (menuDef_t *)p;
+    if (!menu) {
+        menu = Menu_GetFocused(dc);
+        if (menu && (menu->window.staticFlags & 0x1000000)) {
+            Menu_HandleMouseMove(dc, menu, (float)x, (float)y);
             return 1;
+        }
+        for (i = dc->openMenuCount - 1; i >= 0; i--) {
+            if (Menu_HandleMouseMove(dc, dc->menuStack[i], (float)x, (float)y))
+                break;
+        }
+    } else {
+        r = menu->window.rect[0];
+        r.x += (float)x;
+        r.y += (float)y;
+        Window_SetRect(&menu->window, &r);
+        Menu_UpdatePosition(menu);
     }
     return 1;
 }
