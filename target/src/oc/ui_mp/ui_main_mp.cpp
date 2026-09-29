@@ -1603,11 +1603,9 @@ qboolean UI_SetActiveMenu(int menu)
         SND_FadeAllSounds(1.0f, 1000);
         return 1;
 
-    case UIMENU_INGAME:
+    case UIMENU_TEAM:
         Key_SetCatcher(8);
-        Menus_CloseAll(&uiInfo->uiDC);
-        if (!Menus_OpenByName(&uiInfo->uiDC, cg->scriptMainMenu))
-            Menus_OpenByName(&uiInfo->uiDC, "main");
+        Menus_OpenByName(&uiInfo->uiDC, "team");
         return 1;
 
     case UIMENU_NEED_CD:
@@ -1620,9 +1618,11 @@ qboolean UI_SetActiveMenu(int menu)
         Menus_OpenByName(&uiInfo->uiDC, "badcd");
         return 1;
 
-    case UIMENU_TEAM:
+    case UIMENU_INGAME:
         Key_SetCatcher(8);
-        Menus_OpenByName(&uiInfo->uiDC, "team");
+        Menus_CloseAll(&uiInfo->uiDC);
+        if (!Menus_OpenByName(&uiInfo->uiDC, cg->scriptMainMenu))
+            Menus_OpenByName(&uiInfo->uiDC, "main");
         return 1;
 
     case UIMENU_WM_QUICKMESSAGE:

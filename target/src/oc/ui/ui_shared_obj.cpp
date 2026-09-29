@@ -218,13 +218,15 @@ static inline __attribute__((always_inline)) menuDef_t **UI_MenuStorage(void)
 int KeywordHash_Key(const char *keyword)
 {
     int hash, i;
+    int c;
 
     hash = 0;
     for (i = 0; keyword[i]; i++) {
-        if (keyword[i] >= 'A' && keyword[i] <= 'Z')
-            hash += (keyword[i] + ('a' - 'A')) * (119 + i);
+        c = keyword[i];
+        if (c >= 'A' && c <= 'Z')
+            hash += (c + ('a' - 'A')) * (119 + i);
         else
-            hash += keyword[i] * (119 + i);
+            hash += c * (119 + i);
     }
     hash = (hash ^ (hash >> 10) ^ (hash >> 20)) & 0x1ff;
     return hash;
