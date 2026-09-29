@@ -273,3 +273,19 @@
 492a70	GetTotalVelocity	fix	# simloc55
 44be60	SND_UnpauseSounds	fix	# simloc55
 4bcfa0	G_DebugArc	fix
+50bc70	Mantle_CheckLedge	fix	# snapped from 50bc91
+40c6c0	CL_Setenv_f	fix	# snapped from 40c6e0
+422b90	FS_DisplayPath	fix	# snapped from 422c0f
+433ab0	Com_Restart	fix	# snapped from 433afb
+4790f0	Scr_EvalArrayRef	fix	# snapped from 479132
+4d0eb0	CG_FireWeapon	fix	# snapped from 4d0f0e
+50e3e0	BG_CheckProneValid	fix	# snapped from 50e435
+513020	PM_UpdateViewAngles	fix	# snapped from 51306b
+5171a0	G_SpawnTurret	fix	# snapped from 5171e2
+5197a0	G_RegisterWeapon	fix	# snapped from 5197a1
+4bccf0	G_DebugBox	fix
+4bce10	G_DebugCircleEx	fix
+4bccd0	G_DebugLine	fix
+4d5970	CG_PlayerTurretPositionAndBlend	fix	# caller CG_Player, callees vectosignedyaw/CG_Trace
+4d4af0	CG_DrawCompassFriendlies	fix	# caller CG_OwnerDraw
+480da0	yyparse	fix	# caller ScriptParse
