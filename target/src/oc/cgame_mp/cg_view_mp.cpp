@@ -143,28 +143,28 @@ float CG_GetViewFov(void)
             fov_x = cg_fov->current.value;
 
             if (BG_IsAimDownSightWeapon(weapIndex)) {
-                float fPosLerp = cg->predictedPlayerState.fWeaponPosFrac;
                 float adsFov = ((WeaponDef *)weapDef)->fAdsZoomFov;
                 int *peBase = (int *)&((cg_t *)cg)->playerEntity.fLastWeaponPosFrac;
 
-                if (fPosLerp == 1.0f) {
+                if (cg->predictedPlayerState.fWeaponPosFrac == 1.0f) {
                     fov_x = adsFov;
-                } else if (fPosLerp != 0.0f) {
-                    float transTime;
+                } else if (cg->predictedPlayerState.fWeaponPosFrac != 0.0f) {
                     float normalizedLerp;
 
                     if (peBase[1] != 0) {
-                        transTime = ((WeaponDef *)weapDef)->fAdsZoomInFrac;
+                        normalizedLerp = cg->predictedPlayerState.fWeaponPosFrac - (1.0f - ((WeaponDef *)weapDef)->fAdsZoomInFrac);
+                        if (normalizedLerp > 0.0f) {
+                            normalizedLerp /= ((WeaponDef *)weapDef)->fAdsZoomInFrac;
+                        }
                     } else {
-                        transTime = ((WeaponDef *)weapDef)->fAdsZoomOutFrac;
+                        normalizedLerp = cg->predictedPlayerState.fWeaponPosFrac - (1.0f - ((WeaponDef *)weapDef)->fAdsZoomOutFrac);
+                        if (normalizedLerp > 0.0f) {
+                            normalizedLerp /= ((WeaponDef *)weapDef)->fAdsZoomOutFrac;
+                        }
                     }
 
-                    normalizedLerp = fPosLerp - (1.0f - transTime);
                     if (normalizedLerp > 0.0f) {
-                        normalizedLerp /= transTime;
-                        if (normalizedLerp > 0.0f) {
-                            fov_x -= (fov_x - adsFov) * normalizedLerp;
-                        }
+                        fov_x -= (fov_x - adsFov) * normalizedLerp;
                     }
                 }
             }
@@ -179,7 +179,7 @@ float CG_GetViewFov(void)
 
     {
         float fovMin = (cg_fovMin)->current.value;
-        fov_x = (fovMin - fov_x < 0.0f) ? fov_x : fovMin;
+        fov_x = (fovMin - fov_x >= 0.0f) ? fovMin : fov_x;
     }
 
     return fov_x;

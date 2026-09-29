@@ -1230,15 +1230,17 @@ static inline int CG_RoundFPS(float value)
 #endif
 }
 
+extern int I_stricmp(const char *s1, const char *s2);
+
 static float CG_DrawFPS(float y)
 {
     const char *s;
-    int total = 0;
+    int total;
     int fpsMin;
     int fpsMax;
     int minTime = 0x7fffffff;
     int maxTime = 0;
-    float variance = 0.0f;
+    float variance;
     float average;
     const float *color;
     int i;
@@ -1246,17 +1248,21 @@ static float CG_DrawFPS(float y)
     if (fps_index < 32)
         return y;
 
+    total = 0;
+
     for (i = 0; i < 32; ++i) {
         total += fps_previousTimes[i];
 
-        if (fps_previousTimes[i] < minTime)
+        if (minTime > fps_previousTimes[i])
             minTime = fps_previousTimes[i];
 
-        if (fps_previousTimes[i] > maxTime)
+        if (maxTime < fps_previousTimes[i])
             maxTime = fps_previousTimes[i];
     }
 
     average = (float)total * (1.0f / 32.0f);
+
+    variance = 0.0f;
 
     for (i = 0; i < 32; ++i)
         variance += fabsf((float)fps_previousTimes[i] - average);
@@ -1274,15 +1280,19 @@ static float CG_DrawFPS(float y)
 
     if (cg_drawFPS->current.integer > 2)
         s = va("%1.2fmspf(%i-%i)", (float)total * (1.0f / 32.0f), minTime, maxTime);
-    else
-        s = va("%ifps(%i-%i,%i)", CG_RoundFPS(32000.0f / (float)total), fpsMin, fpsMax, CG_RoundFPS(variance));
+    else {
+        int fpsAvg = CG_RoundFPS(32000.0f / (float)total);
+        int fpsVar = CG_RoundFPS(variance);
+
+        s = va("%ifps(%i-%i,%i)", fpsAvg, fpsMin, fpsMax, fpsVar);
+    }
 
     y += (float)CG_DrawBigDevStringColor(620.0f, y, s, colorWhiteFaded, 6);
 
     if (cg_drawFPS->current.integer <= 1)
         return y;
 
-    if (!stricmp(Dvar_GetString("gfx_driver"), "ogl")) {
+    if (!I_stricmp(Dvar_GetString("gfx_driver"), "ogl")) {
         y += (float)CG_DrawSmallDevStringColor(620.0f, y, "use d3d for stats", colorWhiteFaded, 6);
         return y;
     }

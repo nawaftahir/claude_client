@@ -108,7 +108,7 @@ void __attribute_regparm__(1) CG_RegisterGraphics(const char *mapname)
             CL_ModelBounds(model, mins, maxs);
 
             for (j = 0; j < 3; j++) {
-                float mid = (mins[j] + maxs[j]) * 0.5f;
+                float mid = (float)(mins[j] + (maxs[j] - mins[j]) * 0.5);
                 cgs->inlineModelMidpoints[i][j] = mid;
             }
         }

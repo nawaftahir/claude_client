@@ -1138,17 +1138,19 @@ static void CG_DrawPlayerStance(const rectDef_t *rect, vec_t *color, struct Font
     if (cg->proneBlockedEndTime > cg->time) {
         int width;
         float pulseDegrees;
+        float textX;
 
         proneStr = UI_SafeTranslateString("CGAME_PRONE_BLOCKED");
         width = UI_TextWidth(proneStr, 0, font, scale);
+        textX = -((float)width * 0.5f);
         pulseDegrees = (float)(cg->proneBlockedEndTime - cg->time) / 1500.0f * 540.0f;
-        drawColor[3] = (float)fabs(sin((double)pulseDegrees * 0.017453292519943295));
+        drawColor[3] = (float)fabs(sin(pulseDegrees * 0.017453292f));
 
         UI_DrawText(
             proneStr,
             0x7fffffff,
             font,
-            -(float)width * 0.5f,
+            textX,
             cg_hudProneY->current.value,
             7,
             3,

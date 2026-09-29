@@ -2178,7 +2178,6 @@ Bool CL_ConnectionlessPacket(netadr_t from, msg_t *msg, int time)
     clientConnection_t *conn = &::clc;
     char *printBuf;
     const char *cmd;
-    Bool result = 0;
 
     LargeLocal printBuf_large_local(MAX_MSGLEN);
     printBuf = (char *)printBuf_large_local.GetBuf();
@@ -2194,21 +2193,19 @@ Bool CL_ConnectionlessPacket(netadr_t from, msg_t *msg, int time)
 
     if (I_strnicmp(cmd, "PB_", 3) == 0) {
         PB_HandleClientOobPacket(&from, msg);
-        result = 1;
-        goto finish;
+        return 1;
     }
 #endif
 
     if (I_stricmp(cmd, (const char *)"v") == 0) {
         CL_VoicePacket(msg);
-        result = 1;
-        goto finish;
+        return 1;
     }
 
     if (I_stricmp(cmd, (const char *)"challengeResponse") == 0) {
         if (conn->state != CA_CONNECTING) {
             Com_Printf((const char *)"Unwanted challenge response received.  Ignored.\n");
-            goto finish;
+            return 0;
         }
 
         conn->challenge = atoi(Cmd_Argv(1));
@@ -2220,19 +2217,18 @@ Bool CL_ConnectionlessPacket(netadr_t from, msg_t *msg, int time)
         conn->connectTime = -99999;
         conn->serverAddress = from;
         Com_DPrintf((const char *)"challenge: %d\n", conn->challenge);
-        result = 1;
-        goto finish;
+        return 1;
     }
 
     if (I_stricmp(cmd, (const char *)"connectResponse") == 0) {
         if (conn->state > CA_CHALLENGING) {
             Com_Printf((const char *)"Dup connect received.  Ignored.\n");
-            goto finish;
+            return 0;
         }
 
         if (conn->state != CA_CHALLENGING) {
             Com_Printf((const char *)"connectResponse packet while not connecting.  Ignored.\n");
-            goto finish;
+            return 0;
         }
 
         if (!NET_CompareBaseAdr(from, conn->serverAddress)) {
@@ -2243,27 +2239,24 @@ Bool CL_ConnectionlessPacket(netadr_t from, msg_t *msg, int time)
             expected = NET_AdrToString(conn->serverAddress);
             actual = NET_AdrToString(from);
             Com_Printf((const char *)"%s should have been %s\n", actual, expected);
-            goto finish;
+            return 0;
         }
 
         Netchan_Setup(NS_CLIENT1, &conn->netchan, from, ::qport);
         conn->state = CA_CONNECTED;
         conn->lastPacketSentTime = cls.realtime;
         conn->lastPacketTime = -9999;
-        result = 1;
-        goto finish;
+        return 1;
     }
 
     if (I_stricmp(cmd, (const char *)"infoResponse") == 0) {
         CL_ServerInfoPacket(from, msg, time);
-        result = 1;
-        goto finish;
+        return 1;
     }
 
     if (I_stricmp(cmd, (const char *)"statusResponse") == 0) {
         CL_ServerStatusResponse(from, msg);
-        result = 1;
-        goto finish;
+        return 1;
     }
 
     if (I_stricmp(cmd, (const char *)"disconnect") == 0) {
@@ -2272,19 +2265,16 @@ Bool CL_ConnectionlessPacket(netadr_t from, msg_t *msg, int time)
             Com_Error(ERR_DROP, (const char *)"EXE_SERVER_DISCONNECTED");
         }
 
-        result = 1;
-        goto finish;
+        return 1;
     }
 
     if (I_stricmp(cmd, (const char *)"echo") == 0) {
         NET_OutOfBandPrint(NS_CLIENT1, from, va((const char *)"%s", Cmd_Argv(1)));
-        result = 1;
-        goto finish;
+        return 1;
     }
 
     if (I_stricmp(cmd, (const char *)"keyAuthorize") == 0) {
-        result = 1;
-        goto finish;
+        return 1;
     }
 
     if (I_stricmp(cmd, (const char *)"print") == 0) {
@@ -2293,28 +2283,25 @@ Bool CL_ConnectionlessPacket(netadr_t from, msg_t *msg, int time)
         I_strncpyz(conn->serverMessage, text, sizeof(conn->serverMessage));
         Com_sprintf(printBuf, 0x4000, (const char *)"%s", text);
         Com_PrintMessage((print_msg_type_t)0, printBuf);
-        result = 1;
-        goto finish;
+        return 1;
     }
 
     if (I_stricmp(cmd, (const char *)"error") == 0) {
         if (conn->state && NET_CompareBaseAdr(from, conn->serverAddress)) {
             Com_Error(ERR_DROP, (const char *)"%s", MSG_ReadBigString(msg));
-            result = 1;
+            return 1;
         }
-        goto finish;
+        return 0;
     }
 
     if (I_stricmp(cmd, (const char *)"updateResponse") == 0) {
         CL_UpdateInfoPacket(from);
-        result = 1;
-        goto finish;
+        return 1;
     }
 
     if (I_strncmp(cmd, (const char *)"getserversResponse", 18) == 0) {
         CL_ServersResponsePacket(from, msg);
-        result = 1;
-        goto finish;
+        return 1;
     }
 
     if (I_strncmp(cmd, (const char *)"needcdkey", 9) == 0) {
@@ -2322,8 +2309,7 @@ Bool CL_ConnectionlessPacket(netadr_t from, msg_t *msg, int time)
         SEH_LocalizeTextMessage((const char *)"EXE_AWAITINGCDKEYAUTH", (const char *)"need cd key message", LOCMSG_SAFE);
         Com_Printf((const char *)"%s\n", conn->serverMessage);
         CL_RequestAuthorization();
-        result = 1;
-        goto finish;
+        return 1;
     }
 
     if (I_stricmp(cmd, (const char *)"loadingnewmap") == 0) {
@@ -2339,12 +2325,10 @@ Bool CL_ConnectionlessPacket(netadr_t from, msg_t *msg, int time)
             UI_DrawConnectScreen();
         }
 
-        result = 1;
-        goto finish;
+        return 1;
     }
 
-finish:
-    return result;
+    return 0;
 }
 
 Bool CL_PacketEvent(netadr_t from, msg_t *msg, int time)
