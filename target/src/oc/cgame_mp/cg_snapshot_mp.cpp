@@ -710,22 +710,10 @@ void CG_SetInitialSnapshot(snapshot_t *snap_param)
         cg->oldTime = serverTime;
     }
 
-    {
-
-        clientViewOrigin[0] = ((snapshot_t *)snap)->ps.origin[0];
-        clientViewOrigin[1] = ((snapshot_t *)snap)->ps.origin[1];
-
-        float z;
-
-        {
-            float origin_z;
-            float viewHeight;
-
-            origin_z = ((snapshot_t *)snap)->ps.origin[2];
-            viewHeight = ((snapshot_t *)snap)->ps.viewHeightCurrent;
-            clientViewOrigin[2] = origin_z + viewHeight;
-        }
-    }
+    clientViewOrigin[0] = ((snapshot_t *)snap)->ps.origin[0];
+    clientViewOrigin[1] = ((snapshot_t *)snap)->ps.origin[1];
+    clientViewOrigin[2] = ((snapshot_t *)snap)->ps.origin[2];
+    clientViewOrigin[2] += ((snapshot_t *)snap)->ps.viewHeightCurrent;
 
     AnglesToAxis(((snapshot_t *)snap)->ps.viewangles, (vec3_t *)clientViewAxis);
 
