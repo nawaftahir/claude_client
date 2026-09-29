@@ -1898,60 +1898,49 @@ void CL_RequestAuthorization(void)
 
 void CL_CheckForResend(void)
 {
-    clientConnection_t *conn = &::clc;
+    int i;
     char info[1024];
-    char data[2048];
-    int infoLen;
+    char data[1024];
 
-    if (conn->demoplaying)
+    if (clc.demoplaying)
         return;
 
-    if (conn->state != CA_CONNECTING && conn->state != CA_CHALLENGING)
+    if (clc.state != CA_CONNECTING && clc.state != CA_CHALLENGING)
         return;
 
-    if (cls.realtime - conn->connectTime <= 2999)
+    if (cls.realtime - clc.connectTime < 3000)
         return;
 
-    conn->connectTime = cls.realtime;
-    conn->connectPacketCount++;
+    clc.connectTime = cls.realtime;
+    clc.connectPacketCount++;
 
-    if (conn->state == CA_CONNECTING) {
-        const dvar_t *lanAuthorize = net_lanauthorize;
-
-        if (lanAuthorize->current.enabled || !Sys_IsLANAddress(conn->serverAddress))
+    switch (clc.state) {
+    case CA_CONNECTING:
+        if (net_lanauthorize->current.enabled || !Sys_IsLANAddress(clc.serverAddress))
             CL_RequestAuthorization();
+        NET_OutOfBandPrint(NS_CLIENT1, clc.serverAddress, "getchallenge");
+        break;
 
-        NET_OutOfBandPrint(NS_CLIENT1, conn->serverAddress, (const char *)"getchallenge");
-        return;
+    case CA_CHALLENGING:
+        I_strncpyz(info, Dvar_InfoString(2), sizeof(info));
+        Info_SetValueForKey(info, "protocol", va("%i", 115));
+        Info_SetValueForKey(info, "challenge", va("%i", clc.challenge));
+        Info_SetValueForKey(info, "qport", va("%i", clc.qport));
+
+        strcpy(data, "connect ");
+        data[8] = '"';
+        for (i = 0; i < strlen(info); i++)
+            data[9 + i] = info[i];
+        data[9 + i] = '"';
+        data[10 + i] = 0;
+
+        NET_OutOfBandData(NS_CLIENT1, clc.serverAddress, (unsigned char *)data, i + 10);
+        dvar_modifiedFlags &= ~2;
+        break;
+
+    default:
+        Com_Error(ERR_FATAL, "\x15" "CL_CheckForResend: bad clc->state");
     }
-
-    if (conn->state != CA_CHALLENGING) {
-        Com_Error(ERR_FATAL, (const char *)"\x15"
-                                   "CL_CheckForResend: bad clc->state");
-        return;
-    }
-
-    I_strncpyz(info, Dvar_InfoString(2), sizeof(info));
-    Info_SetValueForKey(info, (const char *)"protocol", va((const char *)"%i", 115));
-    Info_SetValueForKey(info, (const char *)"challenge", va((const char *)"%i", conn->challenge));
-    Info_SetValueForKey(info, (const char *)"qport", va((const char *)"%i", conn->qport));
-
-    infoLen = strlen(info);
-    data[0] = 'c';
-    data[1] = 'o';
-    data[2] = 'n';
-    data[3] = 'n';
-    data[4] = 'e';
-    data[5] = 'c';
-    data[6] = 't';
-    data[7] = ' ';
-    data[8] = '"';
-    memcpy(data + 9, info, infoLen);
-    data[9 + infoLen] = '"';
-    data[10 + infoLen] = '\0';
-
-    NET_OutOfBandData(NS_CLIENT1, conn->serverAddress, (unsigned char *)data, infoLen + 10);
-    dvar_modifiedFlags &= ~2;
 }
 
 void CL_LocalServers_f(void)
