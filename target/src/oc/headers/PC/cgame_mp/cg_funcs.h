@@ -174,7 +174,7 @@ void CG_ScrollScoreboardDown(void);
 void CG_RegisterScoreboardGraphics(void);
 int CalcBorderLines(sbpicinfo_t *backdropBorderLines);
 void CG_DrawScoreboard_GetTeamColor(int team, vec_t *color);
-float CG_DrawScoreboard_ScoresList(float alpha);
+void CG_DrawScoreboard_ScoresList(float alpha);
 qboolean CG_DrawScoreboard(void);
 
 void CG_ParseServerinfo(void);
