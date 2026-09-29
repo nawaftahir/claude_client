@@ -965,7 +965,7 @@ qboolean Menu_CheckOnKey(displayContextDef_t *dc, menuDef_t *menu, int key)
     return 0;
 }
 
-static bool Window_IsVisible(Window *w)
+bool Window_IsVisible(Window *w)
 {
     return ((unsigned int)w->dynamicFlags[0] >> 2) & 1;
 }
@@ -2039,47 +2039,34 @@ void Menus_CloseByName(displayContextDef_t *dc, const char *p)
 
 void Menu_SetFeederSelection(displayContextDef_t *dc, menuDef_t *menu, int feeder, int index, const char *name)
 {
-    byte *m;
-    float feederFloat;
-    int i, itemCount;
+    listBoxDef_t *listPtr;
+    int i;
 
     if (!menu) {
-
-        if (name) {
-            menu = Menus_FindByName(dc, name);
-        } else {
+        if (!name)
             menu = Menu_GetFocused(dc);
-        }
+        else
+            menu = Menus_FindByName(dc, name);
         if (!menu)
             return;
     }
 
-    m = (byte *)menu;
-    itemCount = (((menuDef_t*)(m))->itemCount);
-    if (itemCount <= 0)
-        return;
-
-    feederFloat = (float)feeder;
-
-    for (i = 0; i < itemCount; i++) {
-        byte *item = *(byte **)((char *)&((menuDef_t *)m)->items[i]);
-        byte *listPtr;
-
-        if (((itemDef_t *)item)->special != feederFloat)
+    for (i = 0; i < menu->itemCount; i++) {
+        if (menu->items[i]->special != (float)feeder)
             continue;
 
-        listPtr = (byte *)Item_GetListBoxDef((itemDef_t *)item);
-        Item_SetCursorPos((itemDef_t *)item, index);
-        UI_FeederSelection(((itemDef_t *)item)->special, ((itemDef_t *)item)->cursorPos[0]);
+        listPtr = Item_GetListBoxDef(menu->items[i]);
+        Item_SetCursorPos(menu->items[i], index);
+        UI_FeederSelection(menu->items[i]->special, menu->items[i]->cursorPos[0]);
 
         if (!listPtr)
             continue;
 
         if (index == 0) {
-            ListBox_SetCursorPos((listBoxDef_t *)((itemDef_t *)listPtr), 0);
-            ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), 0);
-        } else if (index < *(int *)listPtr) {
-            ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), index);
+            ListBox_SetCursorPos(listPtr, 0);
+            ListBox_SetStartPos(listPtr, 0);
+        } else if (index < listPtr->startPos[0]) {
+            ListBox_SetStartPos(listPtr, index);
         }
     }
 }

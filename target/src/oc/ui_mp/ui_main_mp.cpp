@@ -233,6 +233,7 @@ extern menuDef_t *Menu_GetFocused(displayContextDef_t *dc);
 extern void Menu_HandleKey(displayContextDef_t *dc, menuDef_t *menu, int key, qboolean down);
 extern void Menu_PaintAll(displayContextDef_t *dc);
 extern void Menu_SetFeederSelection(displayContextDef_t *dc, menuDef_t *menu, int feeder, int index, const char *name);
+extern bool Window_IsVisible(Window *w);
 extern void Menu_Setup(displayContextDef_t *dc);
 extern qboolean Display_MouseMove(displayContextDef_t *dc, void *capture, int x, int y);
 extern int Display_KeyBindPending(void);
@@ -733,7 +734,7 @@ static void UI_SelectPlayerProfileIndex(int index)
     int menuIndex;
 
     for (menuIndex = uiInfo->uiDC.openMenuCount - 1; menuIndex >= 0; menuIndex--) {
-        if (((unsigned int)uiInfo->uiDC.menuStack[menuIndex]->window.dynamicFlags[0] >> 2) & 1)
+        if (Window_IsVisible(&uiInfo->uiDC.menuStack[menuIndex]->window))
             Menu_SetFeederSelection(&uiInfo->uiDC, uiInfo->uiDC.menuStack[menuIndex], 24, index, 0);
     }
 }
@@ -2384,20 +2385,35 @@ static int UI_IsActionKey(int key)
     return (key == 0xc8 || key == 0xc9 || key == 0xd || key == 0xbf);
 }
 
-static int UI_UpdateMapVisibility(int listIndex)
+static void UI_SelectCurrentGameType(void)
 {
-    int numMaps = sharedUiInfo.mapCount;
-    int i, visCount = 0;
-    byte *p = (byte *)&sharedUiInfo;
+    const char *currType;
+    int i;
 
-    for (i = 0; i < numMaps; i++) {
-        *(int *)(p + 0x13f4 + i * 0xa4) = 0;
-        if ((*(int *)(p + 0x1368 + i * 0xa4) >> listIndex) & 1) {
-            visCount++;
-            *(int *)(p + 0x13f4 + i * 0xa4) = 1;
+    currType = Dvar_GetString("g_gametype");
+    for (i = 0; i < sharedUiInfo.numGameTypes; i++) {
+        if (!I_stricmp(currType, sharedUiInfo.gameTypes[i].gameType)) {
+            Dvar_SetInt((dvar_t *)ui_netGameType, i);
+            Dvar_SetString((dvar_t *)ui_netGameTypeName, sharedUiInfo.gameTypes[i].gameType);
+            return;
         }
     }
-    return visCount;
+}
+
+static int UI_MapCountByGameType(void)
+{
+    int i, c, game;
+
+    c = 0;
+    game = ui_netGameType->current.integer;
+    for (i = 0; i < sharedUiInfo.mapCount; i++) {
+        sharedUiInfo.mapList[i].active = 0;
+        if (sharedUiInfo.mapList[i].typeBits & (1 << game)) {
+            c++;
+            sharedUiInfo.mapList[i].active = 1;
+        }
+    }
+    return c;
 }
 
 static void UI_SelectFirstVisibleMap(int currentMapIdx)
@@ -2461,8 +2477,7 @@ qboolean UI_OwnerDrawHandleKey(int ownerDraw, int flags, float *special, int key
         if (!UI_IsActionKey(key))
             return 0;
         {
-            int listIndex = (ui_netGameType)->current.integer;
-            int oldVisCount = UI_UpdateMapVisibility(listIndex);
+            int oldVisCount = UI_MapCountByGameType();
             int newGT, newVisCount;
 
             if (key == 0xc9) {
@@ -2482,8 +2497,7 @@ qboolean UI_OwnerDrawHandleKey(int ownerDraw, int flags, float *special, int key
             }
 
             Dvar_SetInt((dvar_t *)ui_gametype, newGT);
-            listIndex = (ui_netGameType)->current.integer;
-            newVisCount = UI_UpdateMapVisibility(listIndex);
+            newVisCount = UI_MapCountByGameType();
 
             if (newVisCount != oldVisCount) {
                 Dvar_SetInt((dvar_t *)ui_currentMap, 0);
@@ -2555,7 +2569,7 @@ qboolean UI_OwnerDrawHandleKey(int ownerDraw, int flags, float *special, int key
             Dvar_SetInt((dvar_t *)ui_netGameType, newVal);
             Dvar_SetString((dvar_t *)ui_netGameTypeName, sharedUiInfo.gameTypes[(ui_netGameType)->current.integer].gameType);
 
-            UI_UpdateMapVisibility((ui_netGameType)->current.integer);
+            UI_MapCountByGameType();
             UI_SelectFirstVisibleMap((ui_currentNetMap)->current.integer);
         }
         return 1;
@@ -3496,9 +3510,9 @@ void UI_RunMenuScript(const char **args)
 {
     char name[1024];
     char buff[1024];
-    char buff2[2048];
+    char buff2[1024];
     char out[32];
-    char addr[2048];
+    char addr[32];
     char name2[1024];
     char testValue[1024];
     char dvarName[1024];
@@ -3544,11 +3558,7 @@ void UI_RunMenuScript(const char **args)
         Dvar_SetStringByName("cdkey4", "");
         Dvar_SetStringByName("cdkey5", "");
         {
-            int len;
-
-            for (len = 0; buff[len]; len++)
-                ;
-            if (len == 0x10) {
+            if (strlen(buff) == 16) {
 
                 I_strncpyz(out, buff, 5);
                 Dvar_SetStringByName("cdkey1", out);
@@ -3561,10 +3571,7 @@ void UI_RunMenuScript(const char **args)
             }
         }
         {
-            int len2;
-            for (len2 = 0; buff2[len2]; len2++)
-                ;
-            if (len2 == 4) {
+            if (strlen(buff2) == 4) {
                 I_strncpyz(out, buff2, 5);
                 Dvar_SetStringByName("cdkey5", out);
             }
@@ -3590,39 +3597,9 @@ void UI_RunMenuScript(const char **args)
     }
 
     if (I_stricmp(name, "loadArenas") == 0) {
-        int i;
-        const char *curGameType;
-
         UI_LoadArenas();
-
-        curGameType = Dvar_GetString("g_gametype");
-        {
-            int numGT = sharedUiInfo.numGameTypes;
-            if (numGT > 0) {
-                for (i = 0; i < numGT; i++) {
-                    if (I_stricmp(curGameType, *(const char **)((byte *)&sharedUiInfo + 0x114c + i * 8)) == 0) {
-                        Dvar_SetInt((dvar_t *)ui_netGameType, i);
-                        Dvar_SetString((dvar_t *)ui_netGameTypeName, sharedUiInfo.gameTypes[i].gameType);
-                        break;
-                    }
-                }
-            }
-        }
-
-        {
-            int gtIdx = (ui_netGameType)->current.integer;
-            int numMaps = sharedUiInfo.mapCount;
-            if (numMaps > 0) {
-                for (i = 0; i < numMaps; i++) {
-                    byte *entry = (byte *)&sharedUiInfo + i * 0xa4;
-                    *(int *)(entry + 0x13f4) = 0;
-                    if ((*(int *)(entry + 0x1368) >> gtIdx) & 1) {
-                        *(int *)(entry + 0x13f4) = 1;
-                    }
-                }
-            }
-        }
-
+        UI_SelectCurrentGameType();
+        UI_MapCountByGameType();
         Menu_SetFeederSelection(&uiInfo->uiDC, 0, 4, 0, "createserver_maps");
         UI_SelectCurrentMap();
         return;
@@ -3639,23 +3616,14 @@ void UI_RunMenuScript(const char **args)
     }
 
     if (I_stricmp(name, "voteTypeMap") == 0) {
-        int mapIdx = (ui_currentNetMap)->current.integer;
-        int offset = mapIdx * 41; /* 41 dwords = sizeof(mapInfo) 0xA4 */
-        const char *mapName = *(const char **)((byte *)&sharedUiInfo.mapList[0].mapLoadName + offset * 4);
-        const char *gtName = sharedUiInfo.gameTypes[(ui_netGameType)->current.integer].gameType;
-        Cbuf_ExecuteText(2, va("callvote typemap %s %s\n", gtName, mapName));
+        Cbuf_ExecuteText(2, va("callvote typemap %s %s\n", sharedUiInfo.gameTypes[ui_netGameType->current.integer].gameType,
+                               sharedUiInfo.mapList[ui_currentNetMap->current.integer].mapLoadName));
         return;
     }
 
     if (I_stricmp(name, "voteMap") == 0) {
-        int mapIdx = (ui_currentNetMap)->current.integer;
-        if (mapIdx < 0 || mapIdx >= sharedUiInfo.mapCount)
-            return;
-        {
-            int offset = mapIdx * 41; /* 41 dwords = sizeof(mapInfo) 0xA4 */
-            const char *mapName = *(const char **)((byte *)&sharedUiInfo.mapList[0].mapLoadName + offset * 4);
-            Cbuf_ExecuteText(2, va("callvote map %s\n", mapName));
-        }
+        if (ui_currentNetMap->current.integer >= 0 && ui_currentNetMap->current.integer < sharedUiInfo.mapCount)
+            Cbuf_ExecuteText(2, va("callvote map %s\n", sharedUiInfo.mapList[ui_currentNetMap->current.integer].mapLoadName));
         return;
     }
 
