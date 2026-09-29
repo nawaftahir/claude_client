@@ -4720,7 +4720,7 @@ int UI_FeederCount(float feederID)
         for (i = 0; i < numMaps; i++) {
             byte *entry = (byte *)&sharedUiInfo + i * 0xa4;
             *(int *)(entry + 0x13f4) = 0;
-            if ((*(int *)(entry + 0x1368) >> gameType) & 1) {
+            if (*(int *)(entry + 0x1368) & (1 << gameType)) {
                 count++;
                 *(int *)(entry + 0x13f4) = 1;
             }
