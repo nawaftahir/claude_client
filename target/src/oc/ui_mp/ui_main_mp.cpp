@@ -352,6 +352,7 @@ static void UI_REGPARM1 UI_BuildServerStatus(int force);
 void UI_Refresh(void);
 void UI_RunMenuScript(const char **args);
 int UI_FeederCount(float feederID);
+static const char *UI_SelectedMap(int index, int *actual);
 static void UI_DisplayDownloadInfo(const char *downloadName, float centerPoint, float yStart, FontHandle font, float scale);
 void UI_DrawConnectScreen(void);
 
@@ -1267,40 +1268,22 @@ static int __attribute_regparm__(2) UI_GetServerStatusInfo(const char *serverAdd
 void UI_FeederSelection(float feederID, int index)
 {
     if (feederID == 4.0f) {
+        int actual, map;
 
-        int mapVal = (ui_currentNetMap)->current.integer;
-        int offset = mapVal * 164;
-        int cinHandle = *(int *)((byte *)&sharedUiInfo + 4972 + offset);
-        int numMaps, visCount, actual, i;
-
-        if (cinHandle >= 0) {
-            CIN_StopCinematic(cinHandle);
-            *(int *)((byte *)&sharedUiInfo + 4960 + 12 + offset) = -1;
+        map = (ui_currentNetMap)->current.integer;
+        if (sharedUiInfo.mapList[map].cinematic >= 0) {
+            CIN_StopCinematic(sharedUiInfo.mapList[map].cinematic);
+            sharedUiInfo.mapList[map].cinematic = -1;
         }
-
-        numMaps = sharedUiInfo.mapCount;
-        visCount = 0;
-        actual = 0;
-        for (i = 0; i < numMaps; i++) {
-            if (sharedUiInfo.mapList[i].active != 0) {
-                if (visCount == index) {
-                    actual = i;
-                    goto map_found;
-                }
-                visCount++;
-            }
-        }
-        actual = 0;
-    map_found:
+        UI_SelectedMap(index, &actual);
         Dvar_SetInt((dvar_t *)ui_currentMap, actual);
         Dvar_SetInt((dvar_t *)ui_currentNetMap, actual);
-
     } else if (feederID == 2.0f) {
 
         char *name;
         char *p;
 
-        if (sharedUiInfo.serverStatus.numDisplayServers >= 1)
+        if (sharedUiInfo.serverStatus.numDisplayServers > 0)
             sharedUiInfo.serverStatus.currentServer = index;
 
         LAN_GetServerInfo((ui_netSource)->current.integer,
@@ -1317,12 +1300,12 @@ void UI_FeederSelection(float feederID, int index)
             sharedUiInfo.serverStatus.currentServerCinematic = -1;
         }
 
-    } else if (feederID == 7.0f || feederID == 20.0f) {
-
+    } else if (feederID == 7.0f) {
         uiInfo->playerIndex = index;
-
     } else if (feederID == 9.0f) {
         sharedUiInfo.modIndex = index;
+    } else if (feederID == 20.0f) {
+        uiInfo->playerIndex = index;
 
     } else if (feederID == 24.0f) {
 
@@ -3912,50 +3895,23 @@ void UI_RunMenuScript(const char **args)
 int UI_FeederCount(float feederID)
 {
     if (feederID == 4.0f) {
-
-        int gameType = (ui_netGameType)->current.integer;
-        int numMaps = sharedUiInfo.mapCount;
-        int count = 0;
-        int i;
-
-        if (numMaps <= 0)
-            return 0;
-
-        for (i = 0; i < numMaps; i++) {
-            byte *entry = (byte *)&sharedUiInfo + i * 0xa4;
-            *(int *)(entry + 0x13f4) = 0;
-            if ((*(int *)(entry + 0x1368) >> gameType) & 1) {
-                count++;
-                *(int *)(entry + 0x13f4) = 1;
-            }
-        }
-        return count;
+        return UI_MapCountByGameType();
     } else if (feederID == 9.0f) {
         return sharedUiInfo.modCount;
     } else if (feederID == 2.0f) {
-
-        int serverCount = LAN_GetServerCount((ui_netSource)->current.integer);
-        if (serverCount != sharedUiInfo.serverStatus.serverCount) {
-            sharedUiInfo.serverStatus.serverCount = serverCount;
-            if (sharedUiInfo.serverStatus.numDisplayServers != 0) {
-                sharedUiInfo.serverStatus.currentServer = -1;
-                UI_BuildServerDisplayList(1);
-            }
-        }
+        UI_UpdateServerCount();
         return sharedUiInfo.serverStatus.numDisplayServers;
     } else if (feederID == 13.0f) {
         return sharedUiInfo.serverStatusInfo.numLines;
     } else if (feederID == 7.0f || feederID == 20.0f) {
-
-        int curTime = uiInfo->uiDC.realTime;
-        if (curTime > uiInfo->playerRefresh) {
-            uiInfo->playerRefresh = curTime + 3000;
+        if (uiInfo->uiDC.realTime > uiInfo->playerRefresh) {
+            uiInfo->playerRefresh = uiInfo->uiDC.realTime + 3000;
             UI_BuildPlayerList();
         }
         return sharedUiInfo.playerCount;
-    } else if (feederID == 24.0f) {
-        return uiInfo->playerProfileCount;
     }
+    if (feederID == 24.0f)
+        return uiInfo->playerProfileCount;
     return 0;
 }
 
