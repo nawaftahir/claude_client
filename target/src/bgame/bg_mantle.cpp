@@ -559,7 +559,7 @@ bool Mantle_FindMantleSurface( pmove_t *pm, pml_t *pml, trace_t *trace, vec3_t m
 		return false;
 	}
 
-	if ( acos( DotProduct(traceDir, mantleDir) ) * 57.295776f > mantle_check_angle->current.decimal )
+	if ( acos( (double)DotProduct(traceDir, mantleDir) ) * 57.295776f > mantle_check_angle->current.decimal )
 	{
 		Mantle_DebugPrint("Mantle Failed: Player is not facing mantle surface");
 		return false;

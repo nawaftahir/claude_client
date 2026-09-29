@@ -178,7 +178,7 @@ void CG_Trace( trace_t *results, const float *start, const float *mins, const fl
 	CM_BoxTrace( results, start, end, mins, maxs, 0, mask );
 	results->entityNum = results->fraction != 1.0f ? ENTITYNUM_WORLD : ENTITYNUM_NONE;
 
-	if ( results->fraction != 0.0 )
+	if ( results->fraction != 0.0f )
 	{
 		CG_ClipMoveToEntities( start, mins, maxs, end, skipNumber, mask, 1, results );
 	}

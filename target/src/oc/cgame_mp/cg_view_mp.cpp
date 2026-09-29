@@ -105,7 +105,7 @@ void CG_FxTest(void)
     char *fxName;
     EffectTemplate *fx;
 
-    if (Cmd_Argc() - 1 <= 0) {
+    if (Cmd_Argc() < 2) {
         Com_Printf((const char *)"Must supply filename from base path.  Optional restart time.\n");
     }
 

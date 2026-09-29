@@ -187,7 +187,6 @@ draw:
 void CG_PlayerSprites(centity_t *cent)
 {
     byte *snap;
-    byte *ci;
     int iTeam;
     int localTeam;
     float additionalRadiusSize;
@@ -195,37 +194,32 @@ void CG_PlayerSprites(centity_t *cent)
     int height;
     MaterialHandle material;
 
-    ci = (byte *)((char *)cg + cent->nextState.clientNum * CI_STRIDE);
-    if (!*(int *)(ci + 0xe0914))
+    additionalRadiusSize = 0.0f;
+
+    if (!cg->bgs.clientinfo[cent->nextState.clientNum].infoValid)
         return;
-    iTeam = *(int *)(ci + 0xe0940);
+    iTeam = cg->bgs.clientinfo[cent->nextState.clientNum].team;
 
     snap = (*(byte **)&cg->nextSnap);
-    ci = (byte *)((char *)cg + ((snapshot_t *)snap)->ps.clientNum * CI_STRIDE);
-    if (!*(int *)(ci + 0xe0914))
+    if (!cg->bgs.clientinfo[((snapshot_t *)snap)->ps.clientNum].infoValid)
         return;
-    localTeam = *(int *)(ci + 0xe0940);
+    localTeam = cg->bgs.clientinfo[((snapshot_t *)snap)->ps.clientNum].team;
 
     {
         int headicon = cent->nextState.iHeadIcon;
         if (headicon) {
             int headiconTeam = cent->nextState.iHeadIconTeam;
-            if (!headiconTeam || localTeam == 3 || localTeam == headiconTeam) {
+            if (!headiconTeam || localTeam == 3 || headiconTeam == localTeam) {
                 const char *str = CL_GetConfigString(headicon + 30);
                 material = CL_RegisterMaterial(str, 7);
                 if (material) {
                     CG_PlayerFloatSprite(cent, material, ((((const dvar_t *)cg_scriptIconSize))->current.value), 0,
                                          (Bool)((((const dvar_t *)cg_constantSizeHeadIcons))->current.enabled));
                     additionalRadiusSize = 16.0f + ((((const dvar_t *)cg_scriptIconSize))->current.value);
-                    goto check_local_player;
                 }
             }
         }
     }
-
-    additionalRadiusSize = 0.0f;
-
-check_local_player:
 
     if (cent->nextState.number == cg->clientNum) {
         if (cg->inKillCam ) {

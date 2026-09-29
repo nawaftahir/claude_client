@@ -141,11 +141,7 @@ void FxHelper::WarpTime( int intime )
 	int frameTime;
 	const int maxFrameTime = 200;
 
-	if ( fx_freeze->current.boolean )
-	{
-		mFrameTime = 0;
-	}
-	else if ( !time )
+	if ( fx_freeze->current.boolean || !time )
 	{
 		mFrameTime = 0;
 	}
@@ -219,7 +215,10 @@ void FxHelper::AdjustCamera( const refdef_t *refdef, float zfar )
 	VectorCopy(refdef->vieworg, mCamera.vieworg);
 	CalcFrustumPlanes(refdef, zfar);
 	if ( refdef->fov_x != 80.0f )
-		adsZoomFactor = tan(80.0 * 0.5 * (M_PI / 180.0)) / tan(refdef->fov_x * 0.5f * (M_PI / 180.0));
+	{
+		float halfFov = refdef->fov_x * 0.5f;
+		adsZoomFactor = tan(80.0 * 0.5 * (M_PI / 180.0)) / tan(halfFov * (float)(M_PI / 180.0));
+	}
 	else
 		adsZoomFactor = 1.0f;
 }

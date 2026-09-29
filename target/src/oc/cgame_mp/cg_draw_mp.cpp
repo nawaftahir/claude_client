@@ -362,7 +362,7 @@ void CG_PriorityCenterPrint(const char *str, float charWidth, int priority)
 {
     char hudElemString[256];
     const char *s;
-    qboolean needNewline;
+    qboolean needNewline = 0;
     int count;
     unsigned int letter;
 
@@ -375,7 +375,6 @@ void CG_PriorityCenterPrint(const char *str, float charWidth, int priority)
     cgArray[0].centerPrintPriority = priority;
 
     s = cgArray[0].centerPrint;
-    needNewline = 0;
     count = 0;
     while (*s) {
         letter = SEH_ReadCharFromString(&s, 0);
@@ -386,7 +385,7 @@ void CG_PriorityCenterPrint(const char *str, float charWidth, int priority)
         }
 
         ++count;
-        if (count > 0x4a) {
+        if (count >= 0x4b) {
             needNewline = 1;
         }
 

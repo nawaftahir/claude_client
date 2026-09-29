@@ -1803,10 +1803,7 @@ Bool UI_DrawRecordLevel(rectDef_t *rect)
     voiceLevel = Voice_GetVoiceLevel();
 
     if (voiceLevel > 0.0) {
-        float barWidth = voiceLevel * rect->w - 4.0f;
-        if (barWidth > 0.0) {
-            UI_FillRect(rect->x + 2.0f, rect->y + 2.0f, barWidth, rect->h - 4.0f, 0, 0, (const vec_t *)((void *)&colorWhite));
-        }
+        UI_FillRect(rect->x + 2.0f, rect->y + 2.0f, voiceLevel * rect->w - 4.0f, rect->h - 4.0f, 0, 0, (const vec_t *)((void *)&colorWhite));
     }
 
     white = (const vec_t *)((void *)&colorWhite);

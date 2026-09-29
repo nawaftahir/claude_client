@@ -177,7 +177,7 @@ Material *FxArchive::ReadMaterial()
 	char materialName[64];
 
 	len = ReadByte();
-	if ( !len || len > 63 )
+	if ( !len || len >= 64 )
 		return 0;
 	ReadData( materialName, len );
 	materialName[len] = 0;

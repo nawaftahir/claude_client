@@ -15,12 +15,6 @@ void UI_Component_Init(void);
 
 void UI_Component_Init(void)
 {
-    int uiStarted;
-
-    uiStarted = cls.uiStarted;
-    if (!uiStarted)
-        return;
-
     memset(&UI_Component_g, 0, sizeof(UI_Component_data_t));
 
     UI_Component_g.screenWidth = (float)cls.vidConfig.width;
@@ -30,12 +24,7 @@ void UI_Component_Init(void)
     UI_Component_g.charHeight = 16.0f;
     UI_Component_g.scrollBarSize = 16.0f;
 
-    {
-        int dev = com_developer->current.integer;
-        if (dev == 0)
-            return;
-    }
-
+    if (com_developer->current.integer)
     {
         UI_Component_g.cursor = re.RegisterMaterial("ui/assets/3_cursor3", 0x30, 1);
         UI_Component_g.filledCircle = re.RegisterMaterial("ui/assets/sliderbutt_1", 0x30, 1);
