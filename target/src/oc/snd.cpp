@@ -2104,43 +2104,32 @@ static inline float I_fsel(const float x, const float y, const float z)
     return x >= 0.0f ? y : z;
 }
 
-static void SND_UpdateVolumes(int frametime)
+static void SND_UpdateVolume(snd_volume_info_t *vi, int frametime)
 {
-    float frametime_f;
-    snd_volume_info_t *vi;
-    int i;
-
-    frametime_f = (float)frametime;
-
-    for (i = 0; i < 11; i++) {
-        vi = &g_snd.channelvol->channelvol[i];
-        vi->volume += frametime_f * vi->goalrate;
-        if (vi->goalrate < 0.0f) {
-            if (vi->volume < vi->goalvolume) {
-                vi->volume = vi->goalvolume;
-                vi->goalrate = 0.0f;
-            }
-        } else if (vi->volume > vi->goalvolume) {
+    vi->volume += (float)frametime * vi->goalrate;
+    if (vi->goalrate < 0.0f) {
+        if (vi->volume < vi->goalvolume) {
             vi->volume = vi->goalvolume;
             vi->goalrate = 0.0f;
         }
+    } else if (vi->volume > vi->goalvolume) {
+        vi->volume = vi->goalvolume;
+        vi->goalrate = 0.0f;
     }
+}
+
+static void SND_UpdateVolumes(int frametime)
+{
+    int i;
+
+    for (i = 0; i < 11; i++)
+        SND_UpdateVolume(&g_snd.channelvol->channelvol[i], frametime);
 
     if (g_snd.mastervol.goalrate == 0.0f) {
         if (!*(unsigned char *)((char *)snd_volume + 7))
             return;
     } else {
-        g_snd.mastervol.volume += frametime_f * g_snd.mastervol.goalrate;
-        if (g_snd.mastervol.goalrate < 0.0f) {
-            if (g_snd.mastervol.volume < g_snd.mastervol.goalvolume) {
-                g_snd.mastervol.volume = g_snd.mastervol.goalvolume;
-                g_snd.mastervol.goalrate = 0.0f;
-            }
-        } else if (g_snd.mastervol.volume > g_snd.mastervol.goalvolume) {
-            g_snd.mastervol.volume = g_snd.mastervol.goalvolume;
-            g_snd.mastervol.goalrate = 0.0f;
-        }
-
+        SND_UpdateVolume(&g_snd.mastervol, frametime);
         if (g_snd.mastervol.volume == 0.0f && g_snd.mastervol.goalrate == 0.0f)
             SND_StopSounds((snd_stopsounds_arg_t)0);
     }
