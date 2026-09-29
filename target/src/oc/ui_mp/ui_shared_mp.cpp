@@ -2318,88 +2318,59 @@ qboolean Display_MouseMove(displayContextDef_t *dc, void *p, int x, int y)
 
 itemDef_t *Menu_SetNextCursorItem(displayContextDef_t *dc, menuDef_t *menu)
 {
-    byte *m = (byte *)menu;
-    byte *d = (byte *)dc;
-    int oldCursor = (((menuDef_t*)(m))->cursorItem[0]);
-    int wrapped = 0;
-    int cursor;
-    if (oldCursor == -1) {
-        Menu_SetCursorItem(menu, 0);
+    qboolean wrapped;
+    int oldCursor;
+
+    wrapped = 0;
+    oldCursor = menu->cursorItem[0];
+    if (menu->cursorItem[0] == -1) {
+        menu->cursorItem[0] = 0;
         wrapped = 1;
     }
-    cursor = (((menuDef_t*)(m))->cursorItem[0]);
-    for (;;) {
-        if (cursor >= (((menuDef_t*)(m))->itemCount)) {
-            Menu_SetCursorItem(menu, oldCursor);
-            return NULL;
-        }
-        Menu_SetCursorItem(menu, cursor + 1);
-        cursor = (((menuDef_t*)(m))->cursorItem[0]);
-        if (cursor >= (((menuDef_t*)(m))->itemCount)) {
+    while (menu->cursorItem[0] < menu->itemCount) {
+        menu->cursorItem[0]++;
+        if (menu->cursorItem[0] >= menu->itemCount) {
             if (wrapped)
-                return *(itemDef_t **)((char *)&((menuDef_t *)m)->items[oldCursor]);
-            Menu_SetCursorItem(menu, 0);
+                return menu->items[oldCursor];
             wrapped = 1;
-            cursor = (((menuDef_t*)(m))->cursorItem[0]);
+            menu->cursorItem[0] = 0;
         }
-        itemDef_t *item = *(itemDef_t **)((char *)&((menuDef_t *)m)->items[cursor]);
-        if (Item_SetFocus(dc, item, (float)((displayContextDef_t *)d)->cursorx, (float)(((displayContextDef_s*)(d))->cursory))) {
-            cursor = (((menuDef_t*)(m))->cursorItem[0]);
-            item = *(itemDef_t **)((char *)&((menuDef_t *)m)->items[cursor]);
-            Menu_HandleMouseMove(dc, menu, (((rectDef_t*)(item))->x) + 1.0f, *((float *)item + 1) + 1.0f);
-            cursor = (((menuDef_t*)(m))->cursorItem[0]);
-            return *(itemDef_t **)((char *)&((menuDef_t *)m)->items[cursor]);
+        if (Item_SetFocus(dc, menu->items[menu->cursorItem[0]], (float)dc->cursorx, (float)dc->cursory)) {
+            Menu_HandleMouseMove(dc, menu, menu->items[menu->cursorItem[0]]->window.rect[0].x + 1.0f,
+                                 menu->items[menu->cursorItem[0]]->window.rect[0].y + 1.0f);
+            return menu->items[menu->cursorItem[0]];
         }
-        cursor = (((menuDef_t*)(m))->cursorItem[0]);
     }
+    menu->cursorItem[0] = oldCursor;
+    return NULL;
 }
 
 itemDef_t *Menu_SetPrevCursorItem(displayContextDef_t *dc, menuDef_t *menu)
 {
-    byte *m = (byte *)menu;
-    byte *d = (byte *)dc;
-    int oldCursor = (((menuDef_t*)(m))->cursorItem[0]);
-    int wrapped = 0;
-    int cursor;
-    if (oldCursor < 0) {
-        Menu_SetCursorItem(menu, (((menuDef_t*)(m))->itemCount) - 1);
+    qboolean wrapped;
+    int oldCursor;
+
+    wrapped = 0;
+    oldCursor = menu->cursorItem[0];
+    if (menu->cursorItem[0] < 0) {
+        menu->cursorItem[0] = menu->itemCount - 1;
         wrapped = 1;
     }
-    for (;;) {
-        cursor = (((menuDef_t*)(m))->cursorItem[0]);
-        if (cursor <= -1) {
-            if (wrapped)
-                goto fail;
-            Menu_SetCursorItem(menu, (((menuDef_t*)(m))->itemCount) - 1);
+    while (menu->cursorItem[0] > -1) {
+        menu->cursorItem[0]--;
+        if (menu->cursorItem[0] < 0 && !wrapped) {
             wrapped = 1;
-            cursor = (((menuDef_t*)(m))->cursorItem[0]);
-            if (cursor < 0)
-                goto fail;
-        } else {
-            Menu_SetCursorItem(menu, cursor - 1);
-            cursor = (((menuDef_t*)(m))->cursorItem[0]);
-            if (cursor < 0) {
-                if (wrapped)
-                    goto try_focus;
-                Menu_SetCursorItem(menu, (((menuDef_t*)(m))->itemCount) - 1);
-                wrapped = 1;
-                cursor = (((menuDef_t*)(m))->cursorItem[0]);
-                if (cursor < 0)
-                    goto fail;
-            }
+            menu->cursorItem[0] = menu->itemCount - 1;
         }
-    try_focus:;
-        itemDef_t *item = *(itemDef_t **)((char *)&((menuDef_t *)m)->items[cursor]);
-        if (Item_SetFocus(dc, item, (float)((displayContextDef_t *)d)->cursorx, (float)(((displayContextDef_s*)(d))->cursory))) {
-            cursor = (((menuDef_t*)(m))->cursorItem[0]);
-            item = *(itemDef_t **)((char *)&((menuDef_t *)m)->items[cursor]);
-            Menu_HandleMouseMove(dc, menu, (((rectDef_t*)(item))->x) + 1.0f, *((float *)item + 1) + 1.0f);
-            cursor = (((menuDef_t*)(m))->cursorItem[0]);
-            return *(itemDef_t **)((char *)&((menuDef_t *)m)->items[cursor]);
+        if (menu->cursorItem[0] < 0)
+            break;
+        if (Item_SetFocus(dc, menu->items[menu->cursorItem[0]], (float)dc->cursorx, (float)dc->cursory)) {
+            Menu_HandleMouseMove(dc, menu, menu->items[menu->cursorItem[0]]->window.rect[0].x + 1.0f,
+                                 menu->items[menu->cursorItem[0]]->window.rect[0].y + 1.0f);
+            return menu->items[menu->cursorItem[0]];
         }
     }
-fail:
-    Menu_SetCursorItem(menu, oldCursor);
+    menu->cursorItem[0] = oldCursor;
     return NULL;
 }
 
@@ -4044,7 +4015,7 @@ static int Item_Multi_FindDvarByValue(itemDef_t *item)
     } else {
         value = (float)atof(Dvar_GetVariantString(item->dvar));
         for (i = 0; i < multiPtr->count; i++) {
-            if (value == multiPtr->dvarValue[i])
+            if (multiPtr->dvarValue[i] == value)
                 return i;
         }
     }
