@@ -253,7 +253,7 @@ void I_strncpyz(char *dest, const char *src, int destsize);
 int Key_GetOverstrikeMode(void);
 FontHandle UI_GetFontHandle(int fontEnum, float scale);
 void UI_DrawText(const char *text, int maxChars, FontHandle font, float x, float y, int horzAlign, int vertAlign, float scale, const vec_t *color, int style);
-void UI_DrawTextWithCursor(const char *text, int maxChars, FontHandle font, float x, float y, int horzAlign, int vertAlign, float scale, const vec_t *color, int style, int cursorPos, int cursor);
+void UI_DrawTextWithCursor(const char *text, int maxChars, FontHandle font, float x, float y, int horzAlign, int vertAlign, float scale, const vec_t *color, int style, int cursorPos, char cursor);
 void Script_SetItemColor(displayContextDef_t *dc, itemDef_t *item, const char **args);
 void Window_Paint(displayContextDef_t *dc, float (*w)[4][32], float fadeAmount, float fadeInAmount, float fadeClamp, float fadeCycle);
 void Menu_Setup(displayContextDef_t *dc);

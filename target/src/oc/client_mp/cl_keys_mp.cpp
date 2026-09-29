@@ -68,7 +68,7 @@ extern void SCR_UpdateScreen(void);
 extern Bool CL_AllLocalClientsDisconnected(void);
 
 extern FontHandle UI_GetFontHandle(int fontEnum, float scale);
-extern void CL_DrawTextWithCursor(const char *text, int maxChars, FontHandle font, float x, float y, int horzAlign, int vertAlign, float xScale, float yScale, const vec_t *color, int style, int cursorPos, int cursor);
+extern void CL_DrawTextWithCursor(const char *text, int maxChars, FontHandle font, float x, float y, int horzAlign, int vertAlign, float xScale, float yScale, const vec_t *color, int style, int cursorPos, char cursor);
 extern float GetRealWidthFromVirtualWidth(float w);
 extern float GetRealHeightFromVirtualHeight(float h);
 extern float GetVirtualWidthFromRealWidth(float w);

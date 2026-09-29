@@ -57,7 +57,7 @@ void UI_OverrideCursorPos(itemDef_t *item);
 Bool UI_DrawRecordLevel(rectDef_t *rect);
 MaterialHandle UI_FeederItemImage(const float feederID, int index);
 void UI_DrawText(const char *text, int maxChars, FontHandle font, float x, float y, int horzAlign, int vertAlign, float scale, const vec_t *color, int style);
-void UI_DrawTextWithCursor(const char *text, int maxChars, FontHandle font, float x, float y, int horzAlign, int vertAlign, float scale, const vec_t *color, int style, int cursorPos, int cursor);
+void UI_DrawTextWithCursor(const char *text, int maxChars, FontHandle font, float x, float y, int horzAlign, int vertAlign, float scale, const vec_t *color, int style, int cursorPos, char cursor);
 qboolean UI_OwnerDrawHandleKey(int ownerDraw, int flags, float *special, int key);
 const char *UI_FeederItemText(float feederID, int index, int column, MaterialHandle *handle);
 void UI_DrawRect(float x, float y, float width, float height, int horzAlign, int vertAlign, float size, const vec_t *color);

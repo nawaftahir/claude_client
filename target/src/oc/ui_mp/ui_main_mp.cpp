@@ -337,7 +337,7 @@ void UI_OverrideCursorPos(itemDef_t *item);
 Bool UI_DrawRecordLevel(rectDef_t *rect);
 MaterialHandle UI_FeederItemImage(const float feederID, int index);
 void UI_DrawText(const char *text, int maxChars, FontHandle font, float x, float y, int horzAlign, int vertAlign, float scale, const vec_t *color, int style);
-void UI_DrawTextWithCursor(const char *text, int maxChars, FontHandle font, float x, float y, int horzAlign, int vertAlign, float scale, const vec_t *color, int style, int cursorPos, int cursor);
+void UI_DrawTextWithCursor(const char *text, int maxChars, FontHandle font, float x, float y, int horzAlign, int vertAlign, float scale, const vec_t *color, int style, int cursorPos, char cursor);
 static void UI_StartServerRefresh(qboolean full);
 static void __attribute_regparm__(0) UI_BuildServerDisplayList(qboolean force);
 static inline __attribute__((always_inline)) void UI_UpdateServerCount(void);
@@ -1928,7 +1928,7 @@ void UI_DrawText(const char *text, int maxChars, FontHandle font, float x, float
 }
 #endif
 
-void UI_DrawTextWithCursor(const char *text, int maxChars, FontHandle font, float x, float y, int horzAlign, int vertAlign, float scale, const vec_t *color, int style, int cursorPos, int cursor)
+void UI_DrawTextWithCursor(const char *text, int maxChars, FontHandle font, float x, float y, int horzAlign, int vertAlign, float scale, const vec_t *color, int style, int cursorPos, char cursor)
 {
     float xScale;
     float yScale;
