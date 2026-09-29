@@ -4175,51 +4175,43 @@ void Item_ListBox_MouseEnter(itemDef_t *item, float x, float y)
 
 void Item_MouseEnter(displayContextDef_t *dc, itemDef_t *item, float x, float y)
 {
-    byte *it = (byte *)item;
+    rectDef_t r;
+    const rectDef_t *textRect;
+    int flags;
+
     if (!item)
         return;
-    byte *parent = (byte *)item->parent;
-    if (!parent)
+    textRect = &item->textRect[0];
+    r = *textRect;
+    r.y -= r.h;
+    r.horzAlign = textRect->horzAlign;
+    r.vertAlign = textRect->vertAlign;
+    if ((item->dvarFlags & 3) && !Item_EnableShowViaDvar(item, 1))
         return;
-    int dvarFlags = ((itemDef_t *)it)->dvarFlags;
-    if (dvarFlags & 3) {
-        if (!Item_EnableShowViaDvar((itemDef_t *)it, 1))
-            return;
-        dvarFlags = ((itemDef_t *)it)->dvarFlags;
-    }
-    if (dvarFlags & 0xc) {
-        if (!Item_EnableShowViaDvar((itemDef_t *)it, 4))
-            return;
-    }
-    int flags = ((itemDef_t *)it)->window.dynamicFlags[0];
-    float rx = (((rectDef_t*)(it))->x), ry = (((rectDef_t*)(it))->y);
-    float rw = (((rectDef_t*)(it))->w), rh = (((rectDef_t*)(it))->h);
-    float cx = x, cy = y;
-    CalcScreenX(&cx, 4);
-    CalcScreenY(&cy, 4);
-    CalcScreenPlacement(&rx, &ry, &rw, &rh, (((rectDef_t*)(it))->horzAlign), (((rectDef_t*)(it))->vertAlign));
-    qboolean inside = (cx >= rx && cx <= rx + rw && cy >= ry && cy <= ry + rh);
-    if (inside) {
+    if ((item->dvarFlags & 0xc) && !Item_EnableShowViaDvar(item, 4))
+        return;
+    flags = item->window.dynamicFlags[0];
+    if (Rect_ContainsPoint(&r, x, y)) {
         if (!(flags & 0x40)) {
-            Item_RunScript(dc, item, ((itemDef_t *)it)->mouseEnterText);
-            Window_AddDynamicFlags( (Window *)((itemDef_t *)((void *)it)), 0x40);
+            Item_RunScript(dc, item, item->mouseEnterText);
+            Window_AddDynamicFlags(&item->window, 0x40);
         }
         if (!(flags & 1)) {
-            Item_RunScript(dc, item, ((itemDef_t *)it)->mouseEnter);
-            Window_AddDynamicFlags( (Window *)((itemDef_t *)((void *)it)), 1);
+            Item_RunScript(dc, item, item->mouseEnter);
+            Window_AddDynamicFlags(&item->window, 1);
         }
     } else {
         if (flags & 0x40) {
-            Item_RunScript(dc, item, ((itemDef_t *)it)->mouseExitText);
-            Window_RemoveDynamicFlags( (Window *)((itemDef_t *)((void *)it)), 0x40);
+            Item_RunScript(dc, item, item->mouseExitText);
+            Window_RemoveDynamicFlags(&item->window, 0x40);
         }
         if (!(flags & 1)) {
-            Item_RunScript(dc, item, ((itemDef_t *)it)->mouseEnter);
-            Window_AddDynamicFlags( (Window *)((itemDef_t *)((void *)it)), 1);
+            Item_RunScript(dc, item, item->mouseEnter);
+            Window_AddDynamicFlags(&item->window, 1);
         }
+        if (item->type == 6)
+            Item_ListBox_MouseEnter(item, x, y);
     }
-    if ((((itemDef_s*)(it))->type) == 6)
-        Item_ListBox_MouseEnter(item, x, y);
 }
 
 static qboolean Rect_ContainsPoint(const rectDef_t *rect, float x, float y)
