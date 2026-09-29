@@ -111,6 +111,70 @@ void MemFile_WriteData(MemoryFile *memFile, int bytes, const void *data);
 void MemFile_ReadData(MemoryFile *memFile, int bytes, void *data);
 void MemFile_WriteCString(MemoryFile *memFile, const char *str);
 const char *MemFile_ReadCString(MemoryFile *memFile);
+
+inline void MemFile_WriteByte(MemoryFile *memFile, unsigned char value)
+{
+    MemFile_WriteData(memFile, 1, &value);
+}
+
+inline void MemFile_WriteShort(MemoryFile *memFile, short value)
+{
+    MemFile_WriteData(memFile, 2, &value);
+}
+
+inline void MemFile_WriteInt(MemoryFile *memFile, int value)
+{
+    MemFile_WriteData(memFile, 4, &value);
+}
+
+inline void MemFile_WriteFloat(MemoryFile *memFile, float value)
+{
+    MemFile_WriteData(memFile, 4, &value);
+}
+
+inline void MemFile_WriteVec3(MemoryFile *memFile, const float *value)
+{
+    MemFile_WriteData(memFile, 12, value);
+}
+
+inline unsigned char MemFile_ReadByte(MemoryFile *memFile)
+{
+    unsigned char value;
+
+    MemFile_ReadData(memFile, 1, &value);
+    return value;
+}
+
+inline short MemFile_ReadShort(MemoryFile *memFile)
+{
+    short value;
+
+    MemFile_ReadData(memFile, 2, &value);
+    return value;
+}
+
+inline int MemFile_ReadInt(MemoryFile *memFile)
+{
+    int value;
+
+    MemFile_ReadData(memFile, 4, &value);
+    return value;
+}
+
+inline float MemFile_ReadFloat(MemoryFile *memFile)
+{
+    float value;
+
+    MemFile_ReadData(memFile, 4, &value);
+    return value;
+}
+
+inline void MemFile_ReadVec3(MemoryFile *memFile, float *value)
+{
+    value[0] = MemFile_ReadFloat(memFile);
+    value[1] = MemFile_ReadFloat(memFile);
+    value[2] = MemFile_ReadFloat(memFile);
+}
 int SND_GetAliasOffset(const snd_alias_t *alias);
 snd_alias_t *SND_GetAliasWithOffset(const char *name, int offset);
 int SND_Get3DChannelLength(int index);
@@ -1084,32 +1148,13 @@ no_channel:
 
 static __attribute_regparm__(2) void SND_SaveChanInfo(snd_channel_info_t *chaninfo, MemoryFile *memFile)
 {
-    short value_s;
-    unsigned char value_b;
-    int value_i;
-    float value_f;
-
-    value_s = (short)chaninfo->entnum;
-    MemFile_WriteData(memFile, 2, &value_s);
-
-    value_b = (unsigned char)chaninfo->entchannel;
-    MemFile_WriteData(memFile, 1, &value_b);
-
-    value_b = chaninfo->master;
-    MemFile_WriteData(memFile, 1, &value_b);
-
-    value_i = chaninfo->startDelay;
-    MemFile_WriteData(memFile, 4, &value_i);
-
-    value_f = chaninfo->basevolume;
-    MemFile_WriteData(memFile, 4, &value_f);
-
-    value_f = chaninfo->lerp;
-    MemFile_WriteData(memFile, 4, &value_f);
-
-    MemFile_WriteData(memFile, 4, &chaninfo->offset[0]);
-    MemFile_WriteData(memFile, 4, &chaninfo->offset[1]);
-    MemFile_WriteData(memFile, 4, &chaninfo->offset[2]);
+    MemFile_WriteShort(memFile, (short)chaninfo->entnum);
+    MemFile_WriteByte(memFile, (unsigned char)chaninfo->entchannel);
+    MemFile_WriteByte(memFile, chaninfo->master);
+    MemFile_WriteInt(memFile, chaninfo->startDelay);
+    MemFile_WriteFloat(memFile, chaninfo->basevolume);
+    MemFile_WriteFloat(memFile, chaninfo->lerp);
+    MemFile_WriteVec3(memFile, chaninfo->offset);
 }
 
 void SND_Init(void)
@@ -1522,33 +1567,15 @@ int SND_FindFree3DChannel(int entnum, int entchannel)
 
 static __attribute_regparm__(2) void SND_RestoreChanInfo(snd_channel_info_t *chaninfo, MemoryFile *memFile)
 {
-    short value_s;
-    unsigned char value_b;
-    int value_i;
-
     memset(chaninfo, 0, sizeof(snd_channel_info_t));
 
-    MemFile_ReadData(memFile, 2, &value_s);
-    chaninfo->entnum = (int)value_s;
-
-    MemFile_ReadData(memFile, 1, &value_b);
-    chaninfo->entchannel = (int)value_b;
-
-    MemFile_ReadData(memFile, 1, &value_b);
-    chaninfo->master = (value_b != 0);
-
-    MemFile_ReadData(memFile, 4, &value_i);
-    chaninfo->startDelay = value_i;
-
-    MemFile_ReadData(memFile, 4, &value_i);
-    chaninfo->basevolume = *(float *)&value_i;
-
-    MemFile_ReadData(memFile, 4, &value_i);
-    chaninfo->lerp = *(float *)&value_i;
-
-    MemFile_ReadData(memFile, 4, &chaninfo->offset[0]);
-    MemFile_ReadData(memFile, 4, &chaninfo->offset[1]);
-    MemFile_ReadData(memFile, 4, &chaninfo->offset[2]);
+    chaninfo->entnum = MemFile_ReadShort(memFile);
+    chaninfo->entchannel = MemFile_ReadByte(memFile);
+    chaninfo->master = MemFile_ReadByte(memFile) != 0;
+    chaninfo->startDelay = MemFile_ReadInt(memFile);
+    chaninfo->basevolume = MemFile_ReadFloat(memFile);
+    chaninfo->lerp = MemFile_ReadFloat(memFile);
+    MemFile_ReadVec3(memFile, chaninfo->offset);
 }
 
 static __attribute_regparm__(3) void SND_StartBackground(int track, const snd_alias_t *pAlias, int fadetime, snd_alias_system_t system)
@@ -1776,118 +1803,207 @@ void SND_FadeAllSounds(float volume, int fadetime)
 }
 
 
+static void SND_SaveSoundAlias(const snd_alias_t *alias, MemoryFile *memFile)
+{
+    short value;
+
+    MemFile_WriteCString(memFile, alias->pszAliasName);
+    value = SND_GetAliasOffset(alias);
+    MemFile_WriteData(memFile, 2, &value);
+}
+
+const snd_alias_t *SND_RestoreSoundAlias(MemoryFile *memFile)
+{
+    const char *name;
+
+    name = MemFile_ReadCString(memFile);
+    if (!*name)
+        return 0;
+
+    return SND_GetAliasWithOffset(name, (unsigned short)MemFile_ReadShort(memFile));
+}
+
+static void SND_Save3DChannel(int chanIndex, MemoryFile *memFile)
+{
+    snd_save_3D_sample_t info;
+
+    if (SND_Is3DChannelFree(chanIndex))
+        return;
+    if (g_snd.chaninfo[chanIndex].system != 1)
+        return;
+    if (!SND_Get3DChannelLength(chanIndex))
+        return;
+    if (!SND_Get3DChannelPlaybackRate(chanIndex))
+        return;
+
+    SND_Get3DChannelSaveInfo(chanIndex, &info);
+    SND_SaveSoundAlias(g_snd.chaninfo[chanIndex].pAlias0, memFile);
+    SND_SaveSoundAlias(g_snd.chaninfo[chanIndex].pAlias1, memFile);
+    SND_SaveChanInfo(&g_snd.chaninfo[chanIndex], memFile);
+    MemFile_WriteData(memFile, sizeof(info), &info);
+}
+
+static Bool SND_Restore3DChannel(MemoryFile *memFile)
+{
+    const snd_alias_t *pAlias0;
+    const snd_alias_t *pAlias1;
+    snd_channel_info_t chaninfo;
+    snd_save_3D_sample_t info;
+    int channel;
+    float *offset;
+
+    pAlias0 = SND_RestoreSoundAlias(memFile);
+    if (!pAlias0)
+        return 0;
+
+    pAlias1 = SND_RestoreSoundAlias(memFile);
+    SND_RestoreChanInfo(&chaninfo, memFile);
+    MemFile_ReadData(memFile, sizeof(info), &info);
+
+    if ((pAlias0->flags & 0x60) >> 5 != 1)
+        return 1;
+    if ((pAlias1->flags & 0x60) >> 5 != 1)
+        return 1;
+    if (!Com_GetSoundFileMem(pAlias0))
+        return 1;
+    if (Com_GetSoundFileMem(pAlias1) != Com_GetSoundFileMem(pAlias0))
+        return 1;
+    if (!SND_ValidateSoundAliasBlend(pAlias0, pAlias1, 0))
+        return 1;
+    if (!*(unsigned char *)((char *)snd_enable3D + 8))
+        return 1;
+
+    SND_StartAlias3DSample(pAlias0, pAlias1, chaninfo.lerp, chaninfo.entnum, info.org, info.volume, info.pitch, 0, info.fraction, chaninfo.startDelay, chaninfo.master, &channel, (snd_alias_system_t)(1));
+    if (channel < 0)
+        return 1;
+
+    offset = g_snd.chaninfo[channel].offset;
+    offset[0] = chaninfo.offset[0];
+    offset[1] = chaninfo.offset[1];
+    offset[2] = chaninfo.offset[2];
+    return 1;
+}
+
+static void SND_Save2DChannel(int chanIndex, MemoryFile *memFile)
+{
+    snd_save_2D_sample_t info;
+
+    if (SND_Is2DChannelFree(chanIndex))
+        return;
+    if (g_snd.chaninfo[chanIndex].system != 1)
+        return;
+    if (!SND_Get2DChannelLength(chanIndex))
+        return;
+    if (!SND_Get2DChannelPlaybackRate(chanIndex))
+        return;
+
+    SND_Get2DChannelSaveInfo(chanIndex, &info);
+    SND_SaveSoundAlias(g_snd.chaninfo[chanIndex].pAlias0, memFile);
+    SND_SaveSoundAlias(g_snd.chaninfo[chanIndex].pAlias1, memFile);
+    SND_SaveChanInfo(&g_snd.chaninfo[chanIndex], memFile);
+    MemFile_WriteData(memFile, sizeof(info), &info);
+}
+
+static Bool SND_Restore2DChannel(MemoryFile *memFile)
+{
+    const snd_alias_t *pAlias0;
+    const snd_alias_t *pAlias1;
+    snd_channel_info_t chaninfo;
+    snd_save_2D_sample_t info;
+    int channel;
+    float *offset;
+
+    pAlias0 = SND_RestoreSoundAlias(memFile);
+    if (!pAlias0)
+        return 0;
+
+    pAlias1 = SND_RestoreSoundAlias(memFile);
+    SND_RestoreChanInfo(&chaninfo, memFile);
+    MemFile_ReadData(memFile, sizeof(info), &info);
+
+    if ((pAlias0->flags & 0x60) >> 5 != 1)
+        return 1;
+    if ((pAlias1->flags & 0x60) >> 5 != 1)
+        return 1;
+    if (!Com_GetSoundFileMem(pAlias0))
+        return 1;
+    if (Com_GetSoundFileMem(pAlias1) != Com_GetSoundFileMem(pAlias0))
+        return 1;
+    if (!SND_ValidateSoundAliasBlend(pAlias0, pAlias1, 0))
+        return 1;
+    if (!*(unsigned char *)((char *)snd_enable2D + 8))
+        return 1;
+
+    SND_StartAlias2DSample(pAlias0, pAlias1, chaninfo.lerp, chaninfo.entnum, info.volume, info.pitch, 0, info.fraction, chaninfo.startDelay, chaninfo.master, &channel, (snd_alias_system_t)(1));
+    if (channel < 0)
+        return 1;
+
+    SND_Set2DChannelFromSaveInfo(channel, &info);
+
+    offset = g_snd.chaninfo[channel].offset;
+    offset[0] = chaninfo.offset[0];
+    offset[1] = chaninfo.offset[1];
+    offset[2] = chaninfo.offset[2];
+    return 1;
+}
+
+static void SND_SaveStreamChannel(int chanIndex, MemoryFile *memFile)
+{
+    snd_save_stream_t info;
+
+    if (chanIndex >= 35) {
+        if (SND_IsStreamChannelFree(chanIndex))
+            return;
+    } else {
+        if (chanIndex == 33 || chanIndex == 34)
+            return;
+        if (SND_IsStreamChannelFree(chanIndex)) {
+            MemFile_WriteCString(memFile, "");
+            return;
+        }
+    }
+
+    if (g_snd.chaninfo[chanIndex].system != 1)
+        return;
+    if (!SND_GetStreamChannelLength(chanIndex))
+        return;
+
+    SND_GetStreamChannelSaveInfo(chanIndex, &info);
+    SND_SaveSoundAlias(g_snd.chaninfo[chanIndex].pAlias0, memFile);
+    SND_SaveSoundAlias(g_snd.chaninfo[chanIndex].pAlias1, memFile);
+    SND_SaveChanInfo(&g_snd.chaninfo[chanIndex], memFile);
+    MemFile_WriteData(memFile, sizeof(info), &info);
+}
+
 void SND_Save(MemoryFile *memFile)
 {
     int i;
-    short value;
-    char info3D[0x18];
-    char info2D[0x10];
-    char infoStream[0x20];
-    const snd_alias_t *alias;
 
-    for (i = 1; i < 4; i++) {
+    for (i = 1; i < 4; i++)
         MemFile_WriteData(memFile, 0x88, &g_snd.channelVolGroups[i]);
-    }
 
-    for (i = 1; i < 3; i++) {
+    for (i = 1; i < 3; i++)
         MemFile_WriteData(memFile, 0x20, &g_snd.envEffects[i]);
-    }
 
     MemFile_WriteData(memFile, 8, &g_snd.background[1]);
 
-    if (g_snd.Initialized2d && g_snd.max_3D_channels > 0) {
-        for (i = 0; i < g_snd.max_3D_channels; i++) {
-            if (SND_Is3DChannelFree(i))
-                continue;
-            if (g_snd.chaninfo[i].system != 1)
-                continue;
-            if (SND_Get3DChannelLength(i) == 0)
-                continue;
-            if (SND_Get3DChannelPlaybackRate(i) == 0)
-                continue;
-
-            SND_Get3DChannelSaveInfo(i, (snd_save_3D_sample_t *)info3D);
-
-            alias = g_snd.chaninfo[i].pAlias0;
-            MemFile_WriteCString(memFile, alias->pszAliasName);
-            value = SND_GetAliasOffset(alias);
-            MemFile_WriteData(memFile, 2, &value);
-
-            alias = g_snd.chaninfo[i].pAlias1;
-            MemFile_WriteCString(memFile, alias->pszAliasName);
-            value = SND_GetAliasOffset(alias);
-            MemFile_WriteData(memFile, 2, &value);
-
-            SND_SaveChanInfo(&g_snd.chaninfo[i], memFile);
-            MemFile_WriteData(memFile, 0x18, info3D);
-        }
+    if (g_snd.Initialized2d) {
+        for (i = 0; i < g_snd.max_3D_channels; i++)
+            SND_Save3DChannel(i, memFile);
     }
 
     MemFile_WriteCString(memFile, "");
 
-    if (g_snd.Initialized2d && g_snd.max_2D_channels + 45 > 45) {
-        for (i = 45; i < g_snd.max_2D_channels + 45; i++) {
-            if (SND_Is2DChannelFree(i))
-                continue;
-            if (g_snd.chaninfo[i].system != 1)
-                continue;
-            if (SND_Get2DChannelLength(i) == 0)
-                continue;
-            if (SND_Get2DChannelPlaybackRate(i) == 0)
-                continue;
-
-            SND_Get2DChannelSaveInfo(i, (snd_save_2D_sample_t *)info2D);
-
-            alias = g_snd.chaninfo[i].pAlias0;
-            MemFile_WriteCString(memFile, alias->pszAliasName);
-            value = SND_GetAliasOffset(alias);
-            MemFile_WriteData(memFile, 2, &value);
-
-            alias = g_snd.chaninfo[i].pAlias1;
-            MemFile_WriteCString(memFile, alias->pszAliasName);
-            value = SND_GetAliasOffset(alias);
-            MemFile_WriteData(memFile, 2, &value);
-
-            SND_SaveChanInfo(&g_snd.chaninfo[i], memFile);
-            MemFile_WriteData(memFile, 0x10, info2D);
-        }
+    if (g_snd.Initialized2d) {
+        for (i = 45; i < g_snd.max_2D_channels + 45; i++)
+            SND_Save2DChannel(i, memFile);
     }
 
     MemFile_WriteCString(memFile, "");
 
-    if (g_snd.Initialized2d && g_snd.max_stream_channels + 32 > 32) {
-        for (i = 32; i < g_snd.max_stream_channels + 32; i++) {
-
-            if ((unsigned)(i - 33) <= 1)
-                continue;
-
-            if (SND_IsStreamChannelFree(i)) {
-                MemFile_WriteCString(memFile, "");
-                continue;
-            }
-
-            if (g_snd.chaninfo[i].system != 1) {
-                continue;
-            }
-
-            if (SND_GetStreamChannelLength(i) == 0)
-                continue;
-
-            SND_GetStreamChannelSaveInfo(i, (snd_save_stream_t *)infoStream);
-
-            alias = g_snd.chaninfo[i].pAlias0;
-            MemFile_WriteCString(memFile, alias->pszAliasName);
-            value = SND_GetAliasOffset(alias);
-            MemFile_WriteData(memFile, 2, &value);
-
-            alias = g_snd.chaninfo[i].pAlias1;
-            MemFile_WriteCString(memFile, alias->pszAliasName);
-            value = SND_GetAliasOffset(alias);
-            MemFile_WriteData(memFile, 2, &value);
-
-            SND_SaveChanInfo(&g_snd.chaninfo[i], memFile);
-            MemFile_WriteData(memFile, 0x20, infoStream);
-        }
+    if (g_snd.Initialized2d) {
+        for (i = 32; i < g_snd.max_stream_channels + 32; i++)
+            SND_SaveStreamChannel(i, memFile);
     }
 
     MemFile_WriteCString(memFile, "");
@@ -1896,37 +2012,26 @@ void SND_Save(MemoryFile *memFile)
 static __attribute_regparm__(2)
     Bool SND_RestoreStreamChannel(int channel, MemoryFile *memFile)
 {
-    const char *name;
-    short value;
     const snd_alias_t *pAlias0;
     const snd_alias_t *pAlias1;
     snd_channel_info_t chaninfo;
     char info[0x20];
     int rate;
+    int type;
 
-    name = MemFile_ReadCString(memFile);
-    if (*name == '\0')
-        return 0;
-
-    MemFile_ReadData(memFile, 2, &value);
-    pAlias0 = SND_GetAliasWithOffset(name, (unsigned short)value);
+    pAlias0 = SND_RestoreSoundAlias(memFile);
     if (!pAlias0)
         return 0;
 
-    name = MemFile_ReadCString(memFile);
-    if (*name != '\0') {
-        MemFile_ReadData(memFile, 2, &value);
-        pAlias1 = SND_GetAliasWithOffset(name, (unsigned short)value);
-    } else {
-        pAlias1 = 0;
-    }
-
+    pAlias1 = SND_RestoreSoundAlias(memFile);
     SND_RestoreChanInfo(&chaninfo, memFile);
     MemFile_ReadData(memFile, 0x20, info);
 
-    if ((unsigned)((pAlias0->flags & 0x60) >> 5) - 2 > 1)
+    type = (pAlias0->flags & 0x60) >> 5;
+    if (type != 2 && type != 3)
         return 1;
-    if ((unsigned)((pAlias1->flags & 0x60) >> 5) - 2 > 1)
+    type = (pAlias1->flags & 0x60) >> 5;
+    if (type != 2 && type != 3)
         return 1;
 
     if (!SND_ValidateSoundAliasBlend(pAlias0, pAlias1, 0))
@@ -1964,13 +2069,6 @@ static __attribute_regparm__(2)
 void SND_Restore(MemoryFile *memFile)
 {
     int i;
-    const char *name;
-    short value;
-    const snd_alias_t *pAlias0;
-    const snd_alias_t *pAlias1;
-    snd_channel_info_t chaninfo;
-    char info[0x20];
-    int channel;
 
     if (!g_snd.Initialized2d)
         return;
@@ -1997,100 +2095,16 @@ void SND_Restore(MemoryFile *memFile)
 
     MemFile_ReadData(memFile, 8, &g_snd.background[1]);
 
-    for (;;) {
-        name = MemFile_ReadCString(memFile);
-        if (*name == '\0')
-            break;
+    while (SND_Restore3DChannel(memFile))
+        ;
 
-        MemFile_ReadData(memFile, 2, &value);
-        pAlias0 = SND_GetAliasWithOffset(name, (unsigned short)value);
-        if (!pAlias0)
-            break;
+    while (SND_Restore2DChannel(memFile))
+        ;
 
-        name = MemFile_ReadCString(memFile);
-        if (*name != '\0') {
-            MemFile_ReadData(memFile, 2, &value);
-            pAlias1 = SND_GetAliasWithOffset(name, (unsigned short)value);
-        } else {
-            pAlias1 = 0;
-        }
-
-        SND_RestoreChanInfo(&chaninfo, memFile);
-        MemFile_ReadData(memFile, 0x18, info);
-
-        if ((pAlias0->flags & 0x60) != 0x20)
-            continue;
-        if ((pAlias1->flags & 0x60) != 0x20)
-            continue;
-        if (!Com_GetSoundFileMem(pAlias0))
-            continue;
-        if (Com_GetSoundFileMem(pAlias1) != Com_GetSoundFileMem(pAlias0))
-            continue;
-        if (!SND_ValidateSoundAliasBlend(pAlias0, pAlias1, 0))
-            continue;
-        if (!*(unsigned char *)((char *)snd_enable3D + 8))
-            continue;
-
-        SND_StartAlias3DSample(pAlias0, pAlias1, chaninfo.lerp, chaninfo.entnum, (const vec_t *)&info[0x0C], *(float *)&info[8], *(float *)&info[4], 0, *(float *)&info[0], chaninfo.startDelay, chaninfo.master, &channel, (snd_alias_system_t)(1));
-        if (channel < 0)
-            continue;
-
-        g_snd.chaninfo[channel].offset[0] = chaninfo.offset[0];
-        g_snd.chaninfo[channel].offset[1] = chaninfo.offset[1];
-        g_snd.chaninfo[channel].offset[2] = chaninfo.offset[2];
+    for (i = 0; i < 3; i++) {
+        if (i != 1 && i != 2)
+            SND_RestoreStreamChannel(32 + i, memFile);
     }
-
-    for (;;) {
-        name = MemFile_ReadCString(memFile);
-        if (*name == '\0')
-            break;
-
-        MemFile_ReadData(memFile, 2, &value);
-        pAlias0 = SND_GetAliasWithOffset(name, (unsigned short)value);
-        if (!pAlias0)
-            goto restore_streams;
-
-        name = MemFile_ReadCString(memFile);
-        if (*name != '\0') {
-            MemFile_ReadData(memFile, 2, &value);
-            pAlias1 = SND_GetAliasWithOffset(name, (unsigned short)value);
-        } else {
-            pAlias1 = 0;
-        }
-
-        SND_RestoreChanInfo(&chaninfo, memFile);
-        MemFile_ReadData(memFile, 0x10, info);
-
-        if ((pAlias0->flags & 0x60) != 0x20)
-            continue;
-        if ((pAlias1->flags & 0x60) != 0x20)
-            continue;
-        if (!Com_GetSoundFileMem(pAlias0))
-            continue;
-        if (Com_GetSoundFileMem(pAlias1) != Com_GetSoundFileMem(pAlias0))
-            continue;
-        if (!SND_ValidateSoundAliasBlend(pAlias0, pAlias1, 0))
-            continue;
-        if (!*(unsigned char *)((char *)snd_enable2D + 8))
-            continue;
-
-        SND_StartAlias2DSample(pAlias0, pAlias1, chaninfo.lerp, chaninfo.entnum, *(float *)&info[8], *(float *)&info[4], 0, *(float *)&info[0], chaninfo.startDelay, chaninfo.master, &channel, (snd_alias_system_t)(1));
-        if (channel < 0)
-            continue;
-
-        SND_Set2DChannelFromSaveInfo(channel, (snd_save_2D_sample_t *)info);
-
-        g_snd.chaninfo[channel].offset[0] = chaninfo.offset[0];
-        g_snd.chaninfo[channel].offset[1] = chaninfo.offset[1];
-        g_snd.chaninfo[channel].offset[2] = chaninfo.offset[2];
-    }
-
-restore_streams:
-
-    SND_RestoreStreamChannel(32, memFile);
-
-    if (!SND_RestoreStreamChannel(-1, memFile))
-        return;
 
     while (SND_RestoreStreamChannel(-1, memFile))
         ;
