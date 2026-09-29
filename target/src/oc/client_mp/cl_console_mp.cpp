@@ -139,15 +139,16 @@ static void Con_ChatModeTeam_f(void);
 void Con_Bottom(void);
 static void Con_Dump_f(void);
 void Con_Shutdown(void);
-static void __attribute_regparm__(3) Con_UpdateMessageWindowLine(MessageWindow *msgwnd, qboolean linefeed, int duration);
 #ifndef __EMSCRIPTEN__
 static inline __attribute__((always_inline)) short Con_FillChar(void)
 {
     return (short)((ColorIndex(0x37) << 8) | 0x20);
 }
 #endif
-static void __attribute_regparm__(2) Con_Linefeed(print_msg_type_t type, int duration);
-static int CL_ConsolePrint_AddLine(print_msg_type_t type, const char *txt, int duration, int linewidth, int color);
+static void Con_UpdateMessageWindowLine(MessageWindow *msgwnd, qboolean linefeed, int duration);
+static void Con_UpdateMessageWindow(print_msg_type_t type, qboolean linefeed, int duration);
+static void Con_Linefeed(print_msg_type_t type, int duration);
+static unsigned char CL_ConsolePrint_AddLine(print_msg_type_t type, const char *txt, int duration, int linewidth, unsigned char color);
 static void Con_UpdateMessageWindowLine_impl(MessageWindow *msgwnd, qboolean linefeed, int duration);
 void Con_AutoCompleteFromList(const char **strings, int stringCount, const char *prefix, char *completed, int sizeofCompleted);
 static void ConDraw_Box(float x, float y, float w, float h, const vec_t *color);
@@ -161,7 +162,7 @@ void Con_PageDown(void);
 void Con_Top(void);
 Bool Con_IsActive(void);
 static void Con_Clear_f(void);
-static void __attribute_regparm__(2) CL_AddConsoleInfoColor(int iFirstInfo, const vec_t *vColor);
+static void CL_AddConsoleInfoColor(int iFirstInfo, const vec_t *vColor);
 static void Con_DrawMessageWindow(MessageWindow *msgwnd, int x, int y, int charHeight, int horzAlign, int vertAlign, float alpha, float msgwndScale, msgwnd_mode_t mode);
 void Con_DrawSubtitles(int xPos, int yPos, int charHeight, float alpha, msgwnd_mode_t mode);
 void Con_DrawMiniConsole(int xPos, int yPos, float alpha);
@@ -185,7 +186,7 @@ static void ConDrawInput_DetailedCmdMatch(const char *str);
 static void Con_DrawInput(void);
 void Con_DrawConsole(void);
 void Con_Init(void);
-void CL_DeathMessagePrint(const char *attackerName, const vec_t *attackerColor, const char *victimName, const vec_t *victimColor, const char *iconShader, float iconWidth, float iconHeight, const vec_t *iconColor, int horzFlipIcon);
+void CL_DeathMessagePrint(const char *attackerName, const vec_t *attackerColor, const char *victimName, const vec_t *victimColor, const char *iconShader, float iconWidth, float iconHeight, const vec_t *iconColor, bool horzFlipIcon);
 
 void CL_RegisterHudMsgIconMaterial(const char *name)
 {
@@ -314,124 +315,83 @@ void Con_Shutdown(void)
     }
 }
 
-static void Con_UpdateMessageWindowLine_impl(MessageWindow *msgwnd, qboolean linefeed, int duration)
+static void Con_CopyCurrentConsoleLineText(short *text)
+{
+    int len;
+    int textOffset;
+    int i;
+
+    len = con.linewidth;
+    if (len >= 78)
+        len = 78;
+
+    textOffset = (con.currentLine % con.totallines) * con.linewidth;
+    for (i = 0; i < len; i++)
+        text[i] = con.textBuffer[textOffset + i];
+
+    for (i = len; i < 78; i++)
+        text[i] = Con_FillChar();
+}
+
+#ifndef __EMSCRIPTEN__
+static void Con_UpdateMessageWindowLine(MessageWindow *msgwnd, qboolean linefeed, int duration)
 {
     MessageLine *line;
-    int serverTime;
-    int origLinewidth;
-    int copyCount;
-    int textOffset;
-    int charIndex;
     int i;
 
     line = &msgwnd->lines[msgwnd->current_line];
+    line->startTime = clients->serverTime;
+    line->endTime = clients->serverTime + duration;
+    Con_CopyCurrentConsoleLineText(line->textBuffer);
 
-    serverTime = (clients)->serverTime;
-    line->startTime = serverTime;
-
-    line->endTime = duration + serverTime;
-
-    {
-        origLinewidth = con.linewidth;
-        copyCount = origLinewidth;
-
-        if (origLinewidth >= 79)
-            copyCount = 78;
-
-        textOffset = origLinewidth * (con.currentLine % con.totallines);
-
-        if (copyCount > 0) {
-            for (charIndex = 0; charIndex < copyCount; charIndex++) {
-                line->textBuffer[charIndex] = con.textBuffer[textOffset + charIndex];
-            }
-        }
-
-        if (copyCount <= 77) {
-            short fillChar = (short)((ColorIndex(0x37) << 8) | 0x20);
-            while (copyCount < 78) {
-                line->textBuffer[copyCount] = fillChar;
-                copyCount++;
-            }
-        }
-    }
-
-    if (!linefeed)
-        return;
-    if (msgwnd->count <= 0)
+    if (!linefeed || msgwnd->count <= 0)
         return;
 
     msgwnd->current_line = (msgwnd->current_line + 1) % msgwnd->count;
 
-    if (msgwnd->padding <= 0)
+    for (i = 0; i < msgwnd->padding; i++) {
+        line = &msgwnd->lines[(msgwnd->current_line + i) % msgwnd->count];
+        if (line->endTime - msgwnd->fadeout > clients->serverTime) {
+            line->startTime += clients->serverTime - (line->endTime - msgwnd->fadeout);
+            line->endTime = msgwnd->fadeout + clients->serverTime;
+        }
+    }
+}
+
+static void Con_UpdateMessageWindow(print_msg_type_t type, qboolean linefeed, int duration)
+{
+    if (con.currentLine < 0)
         return;
 
-    for (i = 0; i < msgwnd->padding; i++) {
-        int lineIdx;
-        MessageLine *otherLine;
-        int endTime;
-        int fadeout;
-        char *cl_ptr;
-        int curTime;
-
-        lineIdx = (i + msgwnd->current_line) % msgwnd->count;
-        otherLine = &msgwnd->lines[lineIdx];
-
-        endTime = otherLine->endTime;
-        fadeout = msgwnd->fadeout;
-        cl_ptr = (char *)((void *)clients);
-        curTime = ((clientActive_t *)cl_ptr)->serverTime;
-
-        if (endTime - fadeout > curTime) {
-
-            int lineDuration = endTime - otherLine->startTime;
-            otherLine->startTime = fadeout + (curTime - lineDuration);
-
-            otherLine->endTime = (clients)->serverTime + msgwnd->fadeout;
-        }
+    switch (type) {
+    case PMSG_CONSOLE:
+        Con_UpdateMessageWindowLine(&con.messageBuffer->minicon, linefeed, duration);
+        break;
+    case PMSG_GAME:
+        Con_UpdateMessageWindowLine(&con.messageBuffer->gamemsg, linefeed, duration);
+        break;
+    case PMSG_BOLDGAME:
+        Con_UpdateMessageWindowLine(&con.messageBuffer->boldgamemsg, linefeed, duration);
+        break;
+    case PMSG_SUBTITLE:
+        Con_UpdateMessageWindowLine(&con.messageBuffer->subtitle, linefeed, duration);
+        break;
     }
 }
 
-#ifndef __EMSCRIPTEN__
-static void __attribute_regparm__(3) Con_UpdateMessageWindowLine(MessageWindow *msgwnd, qboolean linefeed, int duration)
+static void Con_Linefeed(print_msg_type_t type, int duration)
 {
-    Con_UpdateMessageWindowLine_impl(msgwnd, linefeed, duration);
-}
+    int i;
 
-static void __attribute_regparm__(2) Con_Linefeed(print_msg_type_t type, int duration)
-{
-    int cursor;
-
-    if (con.currentLine >= 0) {
-        switch (type) {
-        case PMSG_CONSOLE:
-            Con_UpdateMessageWindowLine(&con.messageBuffer->minicon, 1, duration);
-            break;
-        case PMSG_GAME:
-            Con_UpdateMessageWindowLine(&con.messageBuffer->gamemsg, 1, duration);
-            break;
-        case PMSG_BOLDGAME:
-            Con_UpdateMessageWindowLine(&con.messageBuffer->boldgamemsg, 1, duration);
-            break;
-        case PMSG_SUBTITLE:
-            Con_UpdateMessageWindowLine(&con.messageBuffer->subtitle, 1, duration);
-            break;
-        default:
-            break;
-        }
-    }
+    Con_UpdateMessageWindow(type, 1, duration);
 
     con.lineOffset = 0;
     if (con.display == con.currentLine)
         con.display++;
     con.currentLine++;
 
-    if (con.linewidth <= 0)
-        return;
-
-    for (cursor = 0; cursor < con.linewidth; cursor++) {
-        int textIndex = (con.currentLine % con.totallines) * con.linewidth + cursor;
-        con.textBuffer[textIndex] = Con_FillChar();
-    }
+    for (i = 0; i < con.linewidth; i++)
+        con.textBuffer[(con.currentLine % con.totallines) * con.linewidth + i] = Con_FillChar();
 }
 
 void Con_AutoCompleteFromList(const char **strings, int stringCount, const char *prefix, char *completed, int sizeofCompleted)
@@ -681,32 +641,24 @@ static void Con_Clear_f(void)
     con.display = con.currentLine;
 }
 
-static inline __attribute__((always_inline)) int CL_ClampColorByte(float value)
+static float I_fsel(const float x, const float y, const float z)
 {
-    float v = (float)(int)(value * 255.0f);
-    float hi = (v >= 255.0f) ? 255.0f : v;
-
-    if (v > 0.0f)
-        return (int)hi;
-
-    return 0;
+    return x >= 0.0f ? y : z;
 }
 
-static void __attribute_regparm__(2) CL_AddConsoleInfoColor(int iFirstInfo, const vec_t *vColor)
+static float I_fclamp(const float val, const float min, const float max)
 {
-    int lineBase = (con.currentLine % con.totallines) * con.linewidth;
-    int offset = con.lineOffset;
+    return I_fsel(min - val, min, I_fsel(val - max, max, val));
+}
 
-    con.textBuffer[lineBase + offset] = (short)((iFirstInfo << 8) | CL_ClampColorByte(vColor[0]));
-    offset++;
-    con.lineOffset = offset;
-
-    con.textBuffer[lineBase + offset] = (short)(((iFirstInfo + 1) << 8) | CL_ClampColorByte(vColor[1]));
-    offset++;
-    con.lineOffset = offset;
-
-    con.textBuffer[lineBase + offset] = (short)(((iFirstInfo + 2) << 8) | CL_ClampColorByte(vColor[2]));
-    con.lineOffset = offset + 1;
+static void CL_AddConsoleInfoColor(int iFirstInfo, const vec_t *vColor)
+{
+    con.textBuffer[(con.currentLine % con.totallines) * con.linewidth + con.lineOffset] = (iFirstInfo << 8) | (int)I_fclamp((float)(int)(vColor[0] * 255.0f), 0.0f, 255.0f);
+    con.lineOffset++;
+    con.textBuffer[(con.currentLine % con.totallines) * con.linewidth + con.lineOffset] = ((iFirstInfo + 1) << 8) | (int)I_fclamp((float)(int)(vColor[1] * 255.0f), 0.0f, 255.0f);
+    con.lineOffset++;
+    con.textBuffer[(con.currentLine % con.totallines) * con.linewidth + con.lineOffset] = ((iFirstInfo + 2) << 8) | (int)I_fclamp((float)(int)(vColor[2] * 255.0f), 0.0f, 255.0f);
+    con.lineOffset++;
 }
 
 static MessageLine *Con_MessageLineForIndex(MessageWindow *msgwnd, int lineIndex)
@@ -1008,15 +960,14 @@ static void Con_ClearMessageWindow(MessageWindow *wnd)
 
 static void Con_CheckResize(void)
 {
-    short *tbuf;
-    int oldLinewidth;
-    int oldTotalLines;
-    int lineCount;
-    int charCount;
     int i;
     int j;
-    int screenWidth;
-    int newLinewidth;
+    int width;
+    int oldwidth;
+    int oldtotallines;
+    int numlines;
+    int numchars;
+    short *tbuf;
 
     LargeLocal largeLocal(0x20000);
     tbuf = (short *)largeLocal.GetBuf();
@@ -1031,66 +982,56 @@ static void Con_CheckResize(void)
     CalcScreenX(&con.screenMax[0], 3);
     CalcScreenY(&con.screenMax[1], 3);
 
-    con.screenMin[0] = floorf(con.screenMin[0]);
-    con.screenMin[1] = floorf(con.screenMin[1]);
-    con.screenMax[0] = floorf(con.screenMax[0]);
-    con.screenMax[1] = floorf(con.screenMax[1]);
+    con.screenMin[0] = floor(con.screenMin[0]);
+    con.screenMin[1] = floor(con.screenMin[1]);
+    con.screenMax[0] = floor(con.screenMax[0]);
+    con.screenMax[1] = floor(con.screenMax[1]);
 
-    screenWidth = (int)(con.screenMax[0] - con.screenMin[0]);
-    if (screenWidth > 639)
-        screenWidth >>= 3;
-    else
-        screenWidth = 80;
+    width = (int)(con.screenMax[0] - con.screenMin[0]);
+    if (width < 640)
+        width = 640;
+    width = width / 8 - 2;
 
-    newLinewidth = screenWidth - 2;
-    oldLinewidth = con.linewidth;
-    if (newLinewidth == oldLinewidth) {
+    if (width == con.linewidth)
         return;
-    }
 
-    if (newLinewidth <= 0) {
-        con.linewidth = 78;
-        con.totallines = 0x348;
-        for (i = 0; i < 65536; i++)
+    if (width < 1) {
+        width = 78;
+        con.linewidth = width;
+        con.totallines = 0x10000 / con.linewidth;
+        for (i = 0; i < 0x10000; i++)
             con.textBuffer[i] = Con_FillChar();
-        con.currentLine = con.totallines - 1;
-        con.display = con.currentLine;
-        return;
-    }
+    } else {
+        oldwidth = con.linewidth;
+        con.linewidth = width;
+        oldtotallines = con.totallines;
+        con.totallines = 0x10000 / con.linewidth;
+        numlines = oldtotallines;
 
-    con.linewidth = newLinewidth;
-    oldTotalLines = con.totallines;
-    lineCount = 65536 / newLinewidth;
-    con.totallines = lineCount;
-    if (oldTotalLines < lineCount)
-        lineCount = oldTotalLines;
+        if (con.totallines < numlines)
+            numlines = con.totallines;
 
-    charCount = oldLinewidth;
-    if (charCount > newLinewidth)
-        charCount = newLinewidth;
+        numchars = oldwidth;
 
-    memcpy(tbuf, con.textBuffer, 0x20000);
+        if (con.linewidth < numchars)
+            numchars = con.linewidth;
 
-    for (i = 0; i < 65536; i++)
-        con.textBuffer[i] = Con_FillChar();
+        memcpy(tbuf, con.textBuffer, 0x20000);
+        for (i = 0; i < 0x10000; i++)
+            con.textBuffer[i] = Con_FillChar();
 
-    if (lineCount > 0) {
-        for (i = 0; i < lineCount; i++) {
-            int destBase = (con.totallines - i - 1) * con.linewidth;
-            int srcLine = (con.currentLine - i + oldTotalLines) % oldTotalLines;
-            int srcBase = srcLine * oldLinewidth;
-
-            if (charCount > 0) {
-                for (j = 0; j < charCount; j++)
-                    con.textBuffer[destBase + j] = tbuf[srcBase + j];
+        for (i = 0; i < numlines; i++) {
+            for (j = 0; j < numchars; j++) {
+                con.textBuffer[(con.totallines - 1 - i) * con.linewidth + j] =
+                    tbuf[((con.currentLine - i + oldtotallines) % oldtotallines) * oldwidth + j];
             }
         }
-    }
 
-    MsgWnd_Clear(&con.messageBuffer->gamemsg);
-    MsgWnd_Clear(&con.messageBuffer->boldgamemsg);
-    MsgWnd_Clear(&con.messageBuffer->minicon);
-    MsgWnd_Clear(&con.messageBuffer->subtitle);
+        MsgWnd_Clear(&con.messageBuffer->gamemsg);
+        MsgWnd_Clear(&con.messageBuffer->boldgamemsg);
+        MsgWnd_Clear(&con.messageBuffer->minicon);
+        MsgWnd_Clear(&con.messageBuffer->subtitle);
+    }
 
     con.currentLine = con.totallines - 1;
     con.display = con.currentLine;
@@ -1163,103 +1104,80 @@ static void Con_OneTimeInit(void)
     con.initialized = 1;
 }
 
-static int CL_ConsolePrint_AddLine(print_msg_type_t type, const char *txt, int duration, int linewidth, int color)
+static unsigned char CL_ConsolePrint_AddLine(print_msg_type_t type, const char *txt, int duration, int linewidth, unsigned char color)
 {
-    const char *buf;
-    int targetLineWidth;
+    int c;
+    int l;
     int lineBroken;
+    int targetLineWidth;
+    int maxLinewidth;
+    float printLen;
 
-    {
-        int clamp;
+    if (type == PMSG_CONSOLE || type == PMSG_LOGFILE)
+        maxLinewidth = con.linewidth;
+    else
+        maxLinewidth = con.linewidth - 78 < 0 ? con.linewidth : 78;
 
-        if (type == PMSG_CONSOLE || type == PMSG_LOGFILE)
-            clamp = con.linewidth;
-        else
-            clamp = (con.linewidth >= 78) ? 78 : con.linewidth;
+    if (linewidth <= 0 || linewidth > maxLinewidth)
+        linewidth = maxLinewidth;
 
-        if (linewidth <= 0 || clamp < linewidth)
-            linewidth = clamp;
-    }
-
+    targetLineWidth = linewidth;
     if (type == PMSG_GAME || type == PMSG_BOLDGAME) {
-        int printLen = SEH_PrintStrlen(txt);
-        if (printLen > linewidth) {
-            float lines = ceilf((float)printLen / (float)linewidth);
-            targetLineWidth = (int)((float)printLen / lines);
-        } else {
-            targetLineWidth = linewidth;
+        l = SEH_PrintStrlen(txt);
+        if (l > linewidth) {
+            printLen = (float)l;
+            targetLineWidth = (int)(printLen / (int)ceil(printLen / (float)linewidth));
         }
-    } else {
-        targetLineWidth = linewidth;
     }
 
     if (con.prevType != type && con.lineOffset > 0)
-        Con_Linefeed(type, duration);
+        Con_Linefeed(con.prevType, duration);
 
-    buf = txt;
     lineBroken = 0;
-
-    while (*buf) {
-        unsigned char c = (unsigned char)*buf;
-
-        if (c == '^' && buf[1] != '\0' && buf[1] != '^' && (unsigned char)buf[1] > '/' && (unsigned char)buf[1] <= '9') {
-            color = ColorIndex((unsigned char)buf[1]);
-            buf += 2;
+    while ((c = (unsigned char)*txt) != 0) {
+        if (*txt == '^' && txt[1] && txt[1] != '^' && (unsigned char)txt[1] >= '0' && (unsigned char)txt[1] <= '9') {
+            color = ColorIndex(txt[1]);
+            txt += 2;
             continue;
         }
 
-        if (linewidth > 0) {
-            if (c > ' ') {
-                int wordLen = 0;
-                do {
-                    wordLen++;
-                    if (wordLen == linewidth)
-                        break;
-                } while ((unsigned char)buf[wordLen] > ' ');
+        for (l = 0; l < linewidth; l++) {
+            if ((unsigned char)txt[l] <= ' ')
+                break;
+        }
 
-                if (wordLen != linewidth && con.lineOffset + wordLen > linewidth) {
-                    Con_Linefeed(type, duration);
-                    lineBroken = 1;
-                }
-            } else if (con.lineOffset > linewidth) {
+        if (l != linewidth && con.lineOffset + l > linewidth) {
+            Con_Linefeed(type, duration);
+            lineBroken = 1;
+        }
+
+        txt++;
+
+        switch (c) {
+        case '\n':
+            Con_Linefeed(type, duration);
+            break;
+        case '\r':
+            con.lineOffset = 0;
+            break;
+        default:
+            if (!con.lineOffset && c == ' ' && lineBroken)
+                break;
+            con.textBuffer[(con.currentLine % con.totallines) * con.linewidth + con.lineOffset] = (short)((color << 8) | c);
+            con.lineOffset++;
+            if (con.lineOffset >= linewidth || (con.lineOffset >= targetLineWidth && c == ' ')) {
                 Con_Linefeed(type, duration);
                 lineBroken = 1;
             }
-        }
-
-        buf++;
-
-        if (c == '\n') {
-            Con_Linefeed(type, duration);
-            continue;
-        }
-
-        if (c == '\r') {
-            con.lineOffset = 0;
-            continue;
-        }
-
-        if (con.lineOffset == 0 && c == ' ' && lineBroken)
-            continue;
-
-        {
-            int textIndex = (con.currentLine % con.totallines) * con.linewidth + con.lineOffset;
-            con.textBuffer[textIndex] = (short)((color << 8) | c);
-            con.lineOffset++;
-        }
-
-        if (con.lineOffset >= linewidth || (con.lineOffset >= targetLineWidth && c == ' ')) {
-            Con_Linefeed(type, duration);
-            lineBroken = 1;
+            break;
         }
     }
 
     if (con.lineOffset > 0) {
-        if (type != PMSG_CONSOLE) {
+        if (type)
             Con_Linefeed(type, duration);
-        } else if (con.currentLine >= 0) {
-            Con_UpdateMessageWindowLine(&con.messageBuffer->minicon, 0, duration);
-        }
+        else
+            Con_UpdateMessageWindow(PMSG_CONSOLE, 0, duration);
     }
 
     con.prevType = type;
@@ -1269,7 +1187,7 @@ static int CL_ConsolePrint_AddLine(print_msg_type_t type, const char *txt, int d
 void CL_ConsolePrint(print_msg_type_t type, const char *txt, int duration, int linewidth)
 {
     const dvar_t *noPrint;
-    int color;
+    unsigned char color;
 
     noPrint = cl_noprint;
     if (!noPrint)
@@ -1635,23 +1553,6 @@ void Con_Init(void)
     CL_RegisterHudMsgIconMaterial("killiconsuicide");
 }
 
-static void CL_WriteConsoleEncodedByte(int info, int value)
-{
-    int row;
-    int textIndex;
-
-    if (con.linewidth <= 0 || con.totallines <= 0)
-        return;
-
-    if (con.lineOffset >= con.linewidth)
-        return;
-
-    row = con.currentLine % con.totallines;
-    textIndex = row * con.linewidth + con.lineOffset;
-    con.textBuffer[textIndex] = (short)((info << 8) | (value & 0xff));
-    con.lineOffset++;
-}
-
 static unsigned char CL_FindHudMsgIconMaterialIndex(const char *iconShader)
 {
     int index;
@@ -1664,62 +1565,44 @@ static unsigned char CL_FindHudMsgIconMaterialIndex(const char *iconShader)
     return 0;
 }
 
-static const char *CL_SkipConsoleColorCode(const char *text)
+static void CL_AddConsoleChar(unsigned short ch)
 {
-    unsigned char color;
-
-    if (text[0] != '^')
-        return text;
-
-    color = (unsigned char)text[1];
-    if (color == '\0' || color == '^' || color <= '/' || color > '9')
-        return text;
-
-    return text + 2;
+    con.textBuffer[(con.currentLine % con.totallines) * con.linewidth + con.lineOffset] = ch;
+    con.lineOffset++;
 }
 
-static void CL_WriteDeathMessageText(const char *text, int color)
+static void CL_AddDeathMessageText(const char *txt, int color)
 {
-    const char *cursor;
+    int row;
+    int curColor;
+    int c;
 
-    if (!text)
-        return;
+    if (color < 0)
+        curColor = 7;
+    else
+        curColor = color;
 
-    for (cursor = text; *cursor && con.lineOffset < con.linewidth;) {
-        const char *afterColor = CL_SkipConsoleColorCode(cursor);
-        unsigned char ch;
-
-        if (afterColor != cursor) {
-            cursor = afterColor;
+    row = con.currentLine % con.totallines;
+    while ((c = (unsigned char)*txt) != 0 && con.lineOffset < con.linewidth) {
+        if (*txt == '^' && txt[1] && txt[1] != '^' && txt[1] >= '0' && txt[1] <= '9') {
+            if (color < 0)
+                curColor = ColorIndex(txt[1]);
+            txt += 2;
             continue;
         }
-
-        ch = (unsigned char)*cursor++;
-        if (ch == '\n' || ch == '\r')
+        txt++;
+        if (c == '\n' || c == '\r')
             continue;
-
-        CL_WriteConsoleEncodedByte(color, ch);
+        con.textBuffer[row * con.linewidth + con.lineOffset] = (curColor << 8) | c;
+        con.lineOffset++;
     }
 }
 
-static void CL_WriteDeathMessageIcon(const char *iconShader, float iconWidth, float iconHeight, int horzFlipIcon)
+void CL_DeathMessagePrint(const char *attackerName, const vec_t *attackerColor, const char *victimName, const vec_t *victimColor, const char *iconShader, float iconWidth, float iconHeight, const vec_t *iconColor, bool horzFlipIcon)
 {
-    int iconMaterialIndex = CL_FindHudMsgIconMaterialIndex(iconShader);
-    int widthCode = horzFlipIcon ? 0x13 : 0x10;
-
-    CL_WriteConsoleEncodedByte(widthCode, (int)(iconWidth * 32.0f));
-    CL_WriteConsoleEncodedByte(0x11, (int)(iconHeight * 32.0f));
-    CL_WriteConsoleEncodedByte(0x12, iconMaterialIndex);
-}
-
-void CL_DeathMessagePrint(const char *attackerName, const vec_t *attackerColor, const char *victimName, const vec_t *victimColor, const char *iconShader, float iconWidth, float iconHeight, const vec_t *iconColor, int horzFlipIcon)
-{
-    const dvar_t *noPrint;
     int duration;
-    int defaultColor;
 
-    noPrint = cl_noprint;
-    if (noPrint && noPrint->current.enabled)
+    if (cl_noprint && cl_noprint->current.enabled)
         return;
 
     if (!con.initialized)
@@ -1730,27 +1613,30 @@ void CL_DeathMessagePrint(const char *attackerName, const vec_t *attackerColor, 
         duration = 0;
 
     if (con.lineOffset > 0)
-        Con_Linefeed(PMSG_GAME, duration);
+        Con_Linefeed(con.prevType, duration);
 
-    defaultColor = ColorIndex('7');
-
-    if (attackerName && attackerName[0]) {
-        CL_AddConsoleInfoColor(0x0a, attackerColor);
-        CL_WriteDeathMessageText(attackerName, defaultColor);
-        CL_WriteDeathMessageText(" ", defaultColor);
+    if (*attackerName) {
+        CL_AddConsoleInfoColor(10, attackerColor);
+        CL_AddDeathMessageText(attackerName, 7);
+        CL_AddDeathMessageText(" ", 7);
     }
 
-    CL_AddConsoleInfoColor(0x0d, iconColor);
-    CL_WriteDeathMessageIcon(iconShader, iconWidth, iconHeight, horzFlipIcon);
-    CL_WriteDeathMessageText(" ", defaultColor);
+    CL_AddConsoleInfoColor(13, iconColor);
+    if (horzFlipIcon)
+        CL_AddConsoleChar(0x1300 | (unsigned short)(int)(iconWidth * 32.0f));
+    else
+        CL_AddConsoleChar(0x1000 | (unsigned short)(int)(iconWidth * 32.0f));
+    CL_AddConsoleChar(0x1100 | (unsigned short)(int)(iconHeight * 32.0f));
+    CL_AddConsoleChar(0x1200 | CL_FindHudMsgIconMaterialIndex(iconShader));
+    CL_AddDeathMessageText(" ", 7);
 
-    CL_AddConsoleInfoColor(0x0a, victimColor);
-    if (victimName && con.lineOffset + (int)strlen(victimName) + 2 >= con.linewidth) {
+    CL_AddConsoleInfoColor(10, victimColor);
+    if ((int)strlen(victimName) + con.lineOffset + 3 >= con.linewidth) {
         Con_Linefeed(PMSG_GAME, duration);
-        CL_AddConsoleInfoColor(0x0a, victimColor);
+        CL_AddConsoleInfoColor(10, victimColor);
     }
 
-    CL_WriteDeathMessageText(victimName, defaultColor);
+    CL_AddDeathMessageText(victimName, 7);
     Con_Linefeed(PMSG_GAME, duration);
     con.prevType = PMSG_GAME;
 }
@@ -1967,7 +1853,7 @@ static void Con_OneTimeInit(void)
     con.initialized = 1;
 }
 
-static int CL_ConsolePrint_AddLine(print_msg_type_t type, const char *txt, int duration, int linewidth, int color)
+static unsigned char CL_ConsolePrint_AddLine(print_msg_type_t type, const char *txt, int duration, int linewidth, unsigned char color)
 {
     const char *buf;
     int targetLineWidth;

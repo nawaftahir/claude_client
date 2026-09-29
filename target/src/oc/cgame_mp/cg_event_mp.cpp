@@ -43,7 +43,7 @@ extern void CG_PriorityCenterPrint(const char *msg, float scale, int priority);
 extern void CL_DeathMessagePrint(const char *attackerName, const float *attackerColor,
                                  const char *targetName, const float *victimColor,
                                  const char *iconShader, float iconWidth, float iconHeight,
-                                 const float *iconColor, int iconHorzFlip);
+                                 const float *iconColor, bool iconHorzFlip);
 extern void CG_DrawScoreboard_GetTeamColor(int team, vec_t *color);
 extern void CL_SetADS(int val);
 extern void CG_CalcEntityLerpPositions(centity_t *cent);
@@ -172,7 +172,7 @@ static void CG_Obituary(entityState_t *ent)
     const char *iconShader;
     float iconWidth;
     int attacker;
-    int iconHorzFlip;
+    bool iconHorzFlip;
     int target;
     int mod;
     float victimColor[4];

@@ -111,7 +111,7 @@ void CL_ConsoleFixPosition(void);
 void Con_Close(void);
 void Con_DrawConsole(void);
 void Con_Init(void);
-void CL_DeathMessagePrint(const char *attackerName, const vec_t *attackerColor, const char *victimName, const vec_t *victimColor, const char *iconShader, float iconWidth, float iconHeight, const vec_t *iconColor, int horzFlipIcon);
+void CL_DeathMessagePrint(const char *attackerName, const vec_t *attackerColor, const char *victimName, const vec_t *victimColor, const char *iconShader, float iconWidth, float iconHeight, const vec_t *iconColor, bool horzFlipIcon);
 
 void IN_MLookDown(void);
 void IN_CenterView(void);
