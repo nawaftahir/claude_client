@@ -3190,6 +3190,22 @@ qboolean Item_Slider_HandleKey(displayContextDef_t *dc, itemDef_t *item, int key
     return 0;
 }
 
+// retail 0x536d80
+qboolean Item_YesNo_HandleKey(displayContextDef_t *dc, itemDef_t *item, int key)
+{
+    char dvarString[25];
+
+    if (item->dvar && Item_ShouldHandleKey(dc, item, key)
+        && (key == 13 || key == 156 || key == 157 || key == 164 || key == 163
+            || key == 200 || key == 201 || key == 202)) {
+        strncpy(dvarString, Dvar_GetVariantString(item->dvar), 24);
+        dvarString[24] = 0;
+        Dvar_SetFromStringByName(item->dvar, va("%i", atoi(dvarString) == 0));
+        return 1;
+    }
+    return 0;
+}
+
 qboolean Item_SetFocus(displayContextDef_t *dc, itemDef_t *item, float x, float y)
 {
     byte *it = (byte *)item;
