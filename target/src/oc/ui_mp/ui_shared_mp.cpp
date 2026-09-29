@@ -760,7 +760,7 @@ void Controls_SetConfig(qboolean restart)
                 Key_SetBinding(g_bindings[i].bind2, g_bindings[i].command);
         }
     }
-    Cbuf_AddText("in_restart\n");
+    Cbuf_ExecuteText(2, "in_restart\n");
 }
 
 void Controls_SetDefaults(void)
@@ -4000,30 +4000,31 @@ static void Scroll_ListBox_AutoFunc(displayContextDef_t *dc, void *p)
 }
 
 extern const char str_002157b8[];
+static qboolean Rect_ContainsPoint(const rectDef_t *rect, float x, float y);
+
+static int Item_ContainsMouse(displayContextDef_t *dc, itemDef_t *item)
+{
+    return Rect_ContainsPoint(&item->window.rect[0], (float)dc->cursorx, (float)dc->cursory);
+}
+
+static int BindingIDFromName(const char *name)
+{
+    int i;
+
+    for (i = 0; i < 56; i++) {
+        if (!I_stricmp(name, g_bindings[i].command))
+            return i;
+    }
+    return -1;
+}
+
 qboolean Item_Bind_HandleKey(displayContextDef_t *dc, itemDef_t *item, int key, qboolean down)
 {
-    byte *it = (byte *)item;
+    int id;
     int i;
 
     if (!g_waitingForKey) {
-
-        if (!down)
-            return 0;
-        if (key == 0xd)
-            goto enter_bind;
-        if (key == 0xc8) {
-
-            byte *d = (byte *)dc;
-            float cx = (float)((displayContextDef_t *)d)->cursorx;
-            float cy = (float)(((displayContextDef_s*)(d))->cursory);
-            float rx = (((rectDef_t*)(it))->x), ry = (((rectDef_t*)(it))->y);
-            float rw = (((rectDef_t*)(it))->w), rh = (((rectDef_t*)(it))->h);
-            CalcScreenX(&cx, 4);
-            CalcScreenY(&cy, 4);
-            CalcScreenPlacement(&rx, &ry, &rw, &rh, (((rectDef_t*)(it))->horzAlign), (((rectDef_t*)(it))->vertAlign));
-            if (cx < rx || cx > rx + rw || cy < ry || cy > ry + rh)
-                return 0;
-        enter_bind:
+        if (down && (key == 13 || key == 200 && Item_ContainsMouse(dc, item))) {
             g_waitingForKey = 1;
             g_bindItem = item;
             return 1;
@@ -4034,92 +4035,59 @@ qboolean Item_Bind_HandleKey(displayContextDef_t *dc, itemDef_t *item, int key, 
     if (!g_bindItem)
         return 0;
 
-    if ((key & 0x400) || key == 0x60)
+    if (key & 0x400)
         return 1;
 
-    if (key == 0x7f) {
-        const char *dvarName = item->dvar;
-
-        for (i = 0; i < 0x38; i++) {
-            if (I_stricmp(dvarName, *(const char **)((byte *)g_bindings + i * 0x14)) == 0)
-                break;
-        }
-        if (i < 0x38) {
-
-            int idx = i * 0x14;
-            int key1 = *(int *)((byte *)g_bindings + idx + 12);
-            if (key1 != -1) {
-                Key_SetBinding(key1, "");
-                *(int *)((byte *)g_bindings + idx + 12) = -1;
-            }
-            int key2 = *(int *)((byte *)g_bindings + idx + 16);
-            if (key2 != -1) {
-                Key_SetBinding(key2, "");
-                *(int *)((byte *)g_bindings + idx + 16) = -1;
-            }
-        }
-        Controls_SetConfig(0);
+    switch (key) {
+    case 27:
         g_waitingForKey = 0;
-        g_bindItem = NULL;
         return 1;
-    }
-
-    if (key == 0x1b) {
-        g_waitingForKey = 0;
-        g_bindItem = NULL;
+    case '`':
         return 1;
+    case 127:
+        id = BindingIDFromName(item->dvar);
+        if (id != -1)
+            key = -1;
+        break;
     }
 
     if (key != -1) {
-
-        byte *entry = (byte *)g_bindings;
-        while (entry != (byte *)g_bindings + 56 * 0x14) {
-            if ((((bind_t*)(entry))->bind2) == key) {
-                (((bind_t*)(entry))->bind2) = -1;
+        for (i = 0; i < 56; i++) {
+            if (g_bindings[i].bind2 == key)
+                g_bindings[i].bind2 = -1;
+            if (g_bindings[i].bind1 == key) {
+                g_bindings[i].bind1 = g_bindings[i].bind2;
+                g_bindings[i].bind2 = -1;
             }
-            if ((((bind_t*)(entry))->bind1) == key) {
-
-                (((bind_t*)(entry))->bind1) = (((bind_t*)(entry))->bind2);
-                (((bind_t*)(entry))->bind2) = -1;
-            }
-            entry += 0x14;
         }
     }
 
-    const char *bindName = item->dvar;
-    int bindIdx = -1;
-    for (i = 0; i < 0x38; i++) {
-        if (I_stricmp(bindName, *(const char **)((byte *)g_bindings + i * 0x14)) == 0) {
-            bindIdx = i;
-            break;
-        }
-    }
-
-    if (bindIdx >= 0 && key != -1) {
-        int offset = bindIdx * 0x14;
-        if (*(int *)((byte *)g_bindings + offset + 12) == -1) {
-            *(int *)((byte *)g_bindings + offset + 12) = key;
+    id = BindingIDFromName(item->dvar);
+    if (id != -1) {
+        if (key == -1) {
+            if (g_bindings[id].bind1 != -1) {
+                Key_SetBinding(g_bindings[id].bind1, "");
+                g_bindings[id].bind1 = -1;
+            }
+            if (g_bindings[id].bind2 != -1) {
+                Key_SetBinding(g_bindings[id].bind2, "");
+                g_bindings[id].bind2 = -1;
+            }
+        } else if (g_bindings[id].bind1 == -1) {
+            g_bindings[id].bind1 = key;
+        } else if (g_bindings[id].bind1 != key && g_bindings[id].bind2 == -1) {
+            g_bindings[id].bind2 = key;
         } else {
-            *(int *)((byte *)g_bindings + offset + 16) = key;
+            Key_SetBinding(g_bindings[id].bind1, "");
+            Key_SetBinding(g_bindings[id].bind2, "");
+            g_bindings[id].bind1 = key;
+            g_bindings[id].bind2 = -1;
         }
     }
 
-    Controls_SetConfig(0);
+    Controls_SetConfig(1);
     g_waitingForKey = 0;
-    g_bindItem = NULL;
     return 1;
-}
-
-static int Item_HandleKey_RectContainsPoint(byte *it, float cx, float cy)
-{
-    float rx = (((rectDef_t*)(it))->x), ry = (((rectDef_t*)(it))->y);
-    float rw = (((rectDef_t*)(it))->w), rh = (((rectDef_t*)(it))->h);
-    CalcScreenX(&cx, 4);
-    CalcScreenY(&cy, 4);
-    CalcScreenPlacement(&rx, &ry, &rw, &rh, (((rectDef_t*)(it))->horzAlign), (((rectDef_t*)(it))->vertAlign));
-    if (cx >= rx && rx + rw >= cx && cy >= ry && ry + rh >= cy)
-        return 1;
-    return 0;
 }
 
 qboolean Item_HandleKey(displayContextDef_t *dc, itemDef_t *item, int key, qboolean down)
@@ -4222,7 +4190,7 @@ qboolean Item_HandleKey(displayContextDef_t *dc, itemDef_t *item, int key, qbool
             return 0;
 
         if (key >= 0xc8 && key <= 0xca) {
-            if (!Item_HandleKey_RectContainsPoint(it, (float)((displayContextDef_t *)d)->cursorx, (float)(((displayContextDef_s*)(d))->cursory)))
+            if (!Rect_ContainsPoint((rectDef_t *)it, (float)((displayContextDef_t *)d)->cursorx, (float)(((displayContextDef_s*)(d))->cursory)))
                 return 0;
         }
 
@@ -4306,7 +4274,7 @@ qboolean Item_HandleKey(displayContextDef_t *dc, itemDef_t *item, int key, qbool
             return 0;
 
         if (key >= 0xc8 && key <= 0xca) {
-            if (!Item_HandleKey_RectContainsPoint(it, (float)((displayContextDef_t *)d)->cursorx, (float)(((displayContextDef_s*)(d))->cursory)))
+            if (!Rect_ContainsPoint((rectDef_t *)it, (float)((displayContextDef_t *)d)->cursorx, (float)(((displayContextDef_s*)(d))->cursory)))
                 return 0;
         }
 
@@ -4476,7 +4444,7 @@ static qboolean Rect_ContainsPoint(const rectDef_t *rect, float x, float y)
     r = *rect;
     CalcScreenX(&x, 4);
     CalcScreenY(&y, 4);
-    CalcScreenPlacement(&r.x, &r.y, &r.w, &r.h, r.horzAlign, r.vertAlign);
+    CalcScreenPlacement(&r.x, &r.y, &r.w, &r.h, rect->horzAlign, rect->vertAlign);
     return x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
 }
 
