@@ -5096,7 +5096,7 @@ static const char *Item_Multi_GetText(itemDef_t *item)
     } else {
         fval = (float)atof(Dvar_GetVariantString(item->dvar));
         for (j = 0; j < multiDef->count; j++) {
-            if (fval == multiDef->dvarValue[j])
+            if (multiDef->dvarValue[j] == fval)
                 return multiDef->dvarList[j];
         }
     }
