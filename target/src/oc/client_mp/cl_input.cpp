@@ -1311,24 +1311,25 @@ void CL_AdjustAngles(void)
 
 #define KB_AT(index) (&kb[(index)])
 
-    speed = (float)cls.frametime * 0.0010000000474974513f;
     if (KB_AT(9)->active) {
-        speed *= cl_anglespeedkey->current.value;
+        speed = (float)cls.frametime * cl_anglespeedkey->current.value * 0.001f;
+    } else {
+        speed = (float)cls.frametime * 0.001f;
     }
 
     if (!KB_AT(8)->active) {
         cl = clients;
-        cl->viewangles[1] -= CL_KeyState(KB_AT(1)) * (speed * cl_yawspeed->current.value);
+        cl->viewangles[1] -= CL_KeyState(KB_AT(1)) * speed * cl_yawspeed->current.value;
 
         cl = clients;
-        cl->viewangles[1] += CL_KeyState(KB_AT(0)) * (speed * cl_yawspeed->current.value);
+        cl->viewangles[1] += CL_KeyState(KB_AT(0)) * speed * cl_yawspeed->current.value;
     }
 
     cl = clients;
-    cl->viewangles[0] -= CL_KeyState(KB_AT(4)) * (speed * cl_pitchspeed->current.value);
+    cl->viewangles[0] -= CL_KeyState(KB_AT(4)) * speed * cl_pitchspeed->current.value;
 
     cl = clients;
-    cl->viewangles[0] += CL_KeyState(KB_AT(5)) * (speed * cl_pitchspeed->current.value);
+    cl->viewangles[0] += CL_KeyState(KB_AT(5)) * speed * cl_pitchspeed->current.value;
 
 #undef KB_AT
 }

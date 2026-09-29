@@ -1378,15 +1378,13 @@ const char *CL_GetServerIPAddress(void)
     clientConnection_t *connection = &::clc;
     netadr_t *serverAddress = &connection->serverAddress;
 
-    if (connection->state <= CA_CHALLENGING) {
+    if (connection->state < CA_CONNECTED) {
         memset(szServerIPAddress, 0, 128);
     } else {
-        unsigned short port = serverAddress->port;
-        port = (port >> 8) | (port << 8);
         Com_sprintf(szServerIPAddress, 128, "%i.%i.%i.%i:%i",
                     serverAddress->ip[0], serverAddress->ip[1],
                     serverAddress->ip[2], serverAddress->ip[3],
-                    (int)(short)port);
+                    BigShort(serverAddress->port));
     }
 
     return szServerIPAddress;
@@ -1486,7 +1484,6 @@ void CL_DrawTextPhysicalWithCursor(const char *text, int maxChars, FontHandle fo
 
 void CL_DrawTextWithCursor(const char *text, int maxChars, FontHandle font, float x, float y, int horzAlign, int vertAlign, float xScale, float yScale, const vec_t *color, int style, int cursorPos, int cursor)
 {
-    cursor = (signed char)cursor;
     CalcSplitScreenTextOffset(font, &y);
     CalcScreenPlacement(&x, &y, &xScale, &yScale, horzAlign, vertAlign);
     re.DrawTextWithCursor(text, maxChars, font, x, y, xScale, yScale, color, style, cursorPos, cursor);
