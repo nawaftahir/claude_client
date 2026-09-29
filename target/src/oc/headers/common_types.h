@@ -15455,9 +15455,9 @@ struct uiInfo_t {
     int timeIndex;
     int previousTimes[4];
     uiMenuCommand_t currentMenuType;
-    char findPlayerName[1024];
+    char findPlayerName[960];
     char foundPlayerServerAddresses[16][64];
-    char foundPlayerServerNames[16][64];
+    char foundPlayerServerNames[17][64];
     int numFoundPlayerServers;
     int nextFindPlayerRefresh;
 };

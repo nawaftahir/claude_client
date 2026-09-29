@@ -3047,25 +3047,20 @@ void UI_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAli
 
 }
 
-static int UI_StrContains(const char *str, const char *charset)
+static const char *UI_StrContains(const char *str, const char *charset)
 {
-    const char *s;
-    int ci, si, k;
+    int i;
 
-    if (!charset[0])
-        return str ? 1 : 0;
-
-    for (s = str; *s; s++) {
-        for (k = 0; charset[k]; k++) {
-            if (s[k] == '\0')
-                return 0;
-            if (toupper((signed char)charset[k]) != toupper((signed char)s[k]))
+    while (*str) {
+        for (i = 0; charset[i] && str[i]; i++) {
+            if (toupper((signed char)charset[i]) != toupper((signed char)str[i]))
                 break;
         }
-        if (!charset[k])
-            return 1;
+        if (!charset[i])
+            return str;
+        str++;
     }
-    return 0;
+    return NULL;
 }
 
 #ifndef __EMSCRIPTEN__
@@ -3085,143 +3080,75 @@ static inline __attribute__((always_inline)) void UI_UpdateServerCount(void)
 static void BM_NOINLINE UI_BuildFindPlayerList(void)
 {
     serverStatusInfo_t info;
-    char infoString[0x400];
     char name[0x22];
-    int i, j, statusResult;
-    int *pendingFlag;
-    byte *serverAddr;
-    byte *hostName;
-    byte *hostName2;
-    byte *slotBase;
-    int nextRefresh;
-    const char *charset;
-    int numResults;
+    char infoString[0x400];
+    int i, j;
 
-    nextRefresh = uiInfo->nextFindPlayerRefresh;
-    if (!nextRefresh)
-        return;
-    if (nextRefresh > uiInfo->uiDC.realTime)
+    if (!uiInfo->nextFindPlayerRefresh || uiInfo->nextFindPlayerRefresh > uiInfo->uiDC.realTime)
         return;
 
     UI_UpdateServerCount();
 
     for (i = 0; i < 16; i++) {
-        slotBase = (byte *)&sharedUiInfo + i * 0x8c;
-        serverAddr = (byte *)&sharedUiInfo + 113140 + i * 0x8c;
-        hostName = (byte *)&sharedUiInfo + 113204 + i * 0x8c;
-        hostName2 = (byte *)&sharedUiInfo + 113204 + i * 0x8c;
-        pendingFlag = (int *)((byte *)&sharedUiInfo + 0x1ba7c + i * 0x8c);
+        if (sharedUiInfo.pendingServerStatus.server[i].valid) {
+            if (UI_GetServerStatusInfo(sharedUiInfo.pendingServerStatus.server[i].adrstr, &info)) {
+                numFound++;
+                for (j = 0; j < info.numLines; j++) {
+                    if (!info.lines[j][2] || !info.lines[j][2][0])
+                        continue;
+                    I_strncpyz(name, info.lines[j][3], sizeof(name));
+                    I_CleanStr(name);
+                    if (UI_StrContains(name, uiInfo->findPlayerName)) {
+                        if (uiInfo->numFoundPlayerServers < 15) {
+                            I_strncpyz(uiInfo->foundPlayerServerAddresses[uiInfo->numFoundPlayerServers], sharedUiInfo.pendingServerStatus.server[i].adrstr, 64);
+                            I_strncpyz(uiInfo->foundPlayerServerNames[uiInfo->numFoundPlayerServers], sharedUiInfo.pendingServerStatus.server[i].name, 64);
+                            uiInfo->numFoundPlayerServers++;
+                        } else {
+                            sharedUiInfo.pendingServerStatus.num = sharedUiInfo.serverStatus.numDisplayServers;
+                        }
+                    }
+                }
+                Com_sprintf(uiInfo->foundPlayerServerNames[uiInfo->numFoundPlayerServers], 64, "searching %d/%d...", sharedUiInfo.pendingServerStatus.num, numFound);
+                sharedUiInfo.pendingServerStatus.server[i].valid = 0;
+            }
+        }
 
-        if (!*pendingFlag) {
-            UI_GetServerStatusInfo((const char *)serverAddr, 0);
-            *pendingFlag = 0;
+        if (!sharedUiInfo.pendingServerStatus.server[i].valid
+            || sharedUiInfo.pendingServerStatus.server[i].startTime < uiInfo->uiDC.realTime - ui_serverStatusTimeOut->current.integer) {
+            if (sharedUiInfo.pendingServerStatus.server[i].valid)
+                numTimeOuts++;
+
+            LAN_GetServerStatus(sharedUiInfo.pendingServerStatus.server[i].adrstr, 0, 0);
+            sharedUiInfo.pendingServerStatus.server[i].valid = 0;
 
             UI_UpdateServerCount();
 
             if (sharedUiInfo.pendingServerStatus.num < sharedUiInfo.serverStatus.numDisplayServers) {
-
-                int curServer = sharedUiInfo.pendingServerStatus.num;
-                int dispServer;
-
                 sharedUiInfo.pendingServerStatus.server[i].startTime = uiInfo->uiDC.realTime;
-
-                dispServer = sharedUiInfo.serverStatus.displayServers[curServer];
-                LAN_GetServerAddressString((ui_netSource)->current.integer, dispServer, (char *)serverAddr, 0x40);
-
-                LAN_GetServerInfo((ui_netSource)->current.integer, dispServer, infoString, 0x400);
-
-                I_strncpyz((char *)hostName, Info_ValueForKey(infoString, "hostname"), 0x40);
-
-                *pendingFlag = 1;
-
-                curServer++;
-                sharedUiInfo.pendingServerStatus.num = curServer;
-
-                numResults = uiInfo->numFoundPlayerServers;
-                Com_sprintf((char *)((byte *)uiInfo + 0xc60 + numResults * 64), 0x40, "searching %d/%d...", curServer, numFound);
-            }
-            continue;
-        }
-
-        statusResult = UI_GetServerStatusInfo((const char *)serverAddr, &info);
-
-        if (!statusResult) {
-
-            if (!*pendingFlag)
-                continue;
-
-            {
-                int timeoutVal = uiInfo->uiDC.realTime - (ui_serverStatusTimeOut)->current.integer;
-                if (sharedUiInfo.pendingServerStatus.server[i].startTime >= timeoutVal)
-                    continue;
-            }
-            numTimeOuts++;
-            continue;
-        }
-
-        numFound++;
-
-        if (info.numLines > 0) {
-            for (j = 0; j < info.numLines; j++) {
-                if (!info.lines[j][2] || info.lines[j][2][0] == '\0')
-                    continue;
-
-                I_strncpyz(name, info.lines[j][3], 0x22);
-                I_CleanStr(name);
-
-                charset = uiInfo->findPlayerName;
-
-                if (name[0] == '\0')
-                    continue;
-
-                if (UI_StrContains(name, charset)) {
-
-                    numResults = uiInfo->numFoundPlayerServers;
-                    if (numResults > 14) {
-
-                        sharedUiInfo.pendingServerStatus.num = sharedUiInfo.serverStatus.numDisplayServers;
-                        continue;
-                    }
-
-                    I_strncpyz((char *)((byte *)uiInfo + 0x860 + numResults * 64), (const char *)serverAddr, 0x40);
-                    I_strncpyz((char *)((byte *)uiInfo + 0xc60 + numResults * 64), (const char *)hostName2, 0x40);
-                    uiInfo->numFoundPlayerServers += 1;
-                    continue;
-                }
+                LAN_GetServerAddressString(ui_netSource->current.integer, sharedUiInfo.serverStatus.displayServers[sharedUiInfo.pendingServerStatus.num], sharedUiInfo.pendingServerStatus.server[i].adrstr, 64);
+                LAN_GetServerInfo(ui_netSource->current.integer, sharedUiInfo.serverStatus.displayServers[sharedUiInfo.pendingServerStatus.num], infoString, 0x400);
+                I_strncpyz(sharedUiInfo.pendingServerStatus.server[i].name, Info_ValueForKey(infoString, "hostname"), 64);
+                sharedUiInfo.pendingServerStatus.server[i].valid = 1;
+                sharedUiInfo.pendingServerStatus.num++;
+                Com_sprintf(uiInfo->foundPlayerServerNames[uiInfo->numFoundPlayerServers], 64, "searching %d/%d...", sharedUiInfo.pendingServerStatus.num, numFound);
             }
         }
-
-        Com_sprintf((char *)((byte *)uiInfo + 0xc60 + uiInfo->numFoundPlayerServers * 64), 0x40, "searching %d/%d...", sharedUiInfo.pendingServerStatus.num, numFound);
-        *pendingFlag = 0;
-
-        if (!*pendingFlag)
-            continue;
-
-        {
-            int timeoutVal = uiInfo->uiDC.realTime - (ui_serverStatusTimeOut)->current.integer;
-            if (sharedUiInfo.pendingServerStatus.server[i].startTime >= timeoutVal)
-                continue;
-        }
-        numTimeOuts++;
-
     }
 
     for (i = 0; i < 16; i++) {
-        if (sharedUiInfo.pendingServerStatus.server[i].valid != 0) {
-
-            uiInfo->nextFindPlayerRefresh = uiInfo->uiDC.realTime + 25;
-            return;
-        }
+        if (sharedUiInfo.pendingServerStatus.server[i].valid)
+            break;
     }
 
-    numResults = uiInfo->numFoundPlayerServers;
-    if (numResults == 0) {
-        Com_sprintf((char *)((byte *)uiInfo + 0xc60), 0x40, "no servers found");
+    if (i < 16) {
+        uiInfo->nextFindPlayerRefresh = uiInfo->uiDC.realTime + 25;
     } else {
-        const char *plural = (numResults == 2) ? "" : "s";
-        Com_sprintf(uiInfo->foundPlayerServerNames[numResults - 1], 0x40, "%d server%s found with player %s", numResults - 1, plural, uiInfo->findPlayerName);
+        if (uiInfo->numFoundPlayerServers == 0)
+            Com_sprintf(uiInfo->foundPlayerServerNames[0], 64, "no servers found");
+        else
+            Com_sprintf(uiInfo->foundPlayerServerNames[uiInfo->numFoundPlayerServers], 64, "%d server%s found with player %s", uiInfo->numFoundPlayerServers - 1, uiInfo->numFoundPlayerServers == 2 ? "" : "s", uiInfo->findPlayerName);
+        uiInfo->nextFindPlayerRefresh = 0;
     }
-    uiInfo->nextFindPlayerRefresh = 0;
 }
 
 static void UI_BuildServerStatus_impl(int force)
