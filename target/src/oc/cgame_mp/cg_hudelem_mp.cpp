@@ -449,13 +449,14 @@ void GetHudElemInfo(const hudelem_t *elem, cg_hudelem_t *cghe, char *hudElemStri
 void DrawHudElemString(const char *text, const hudelem_t *elem, cg_hudelem_t *cghe)
 {
     float y;
-    float scaleX;
     float scaleY;
+    float scaleX;
     float dx;
     float dy;
 
     y = OffsetHudElemY(elem, cghe, -(cghe->height - cghe->fontHeight));
-    scaleX = scaleY = CL_NormalizedTextScale(cghe->font, cghe->fontScale);
+    scaleX = CL_NormalizedTextScale(cghe->font, cghe->fontScale);
+    scaleY = scaleX;
     HudElemScaleSize(elem->alignScreen, &scaleX, &scaleY);
     dx = 0.0f;
     dy = cghe->fontHeight;
@@ -512,9 +513,9 @@ void DrawHudElemMaterial(const hudelem_t *elem, cg_hudelem_t *cghe)
 
 void DrawHudElemSprite(bool constantSize, Material *material, const float *origin, float height, float alpha)
 {
-    byte color[4];
     float radius;
     int renderFxFlags;
+    byte color[4];
 
     if (constantSize)
     {
@@ -523,13 +524,13 @@ void DrawHudElemSprite(bool constantSize, Material *material, const float *origi
     }
     else
     {
-        radius = height;
         renderFxFlags = 0;
+        radius = height;
     }
+    color[3] = (byte)I_fround(alpha * 255.0f);
     color[0] = 0xff;
     color[1] = 0xff;
     color[2] = 0xff;
-    color[3] = (byte)I_fround(alpha * 255.0f);
     CL_DrawSprite(material, color, origin, radius, 0.0f, renderFxFlags);
 }
 
