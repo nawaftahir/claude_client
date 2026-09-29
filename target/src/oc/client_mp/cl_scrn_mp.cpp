@@ -75,13 +75,13 @@ extern void CL_ClearScene(void);
 extern void CL_ResetSkeletonCache(int flags);
 extern void CL_SendCmdInternal(void);
 extern void CL_SetCGameTime(void);
-extern qboolean CL_AnyLocalClientChallenging(void);
+extern Bool CL_AnyLocalClientChallenging(void);
 extern void CL_DrawLogo(void);
 extern void CL_LookupColor(int colorIndex, float *outColor);
 extern void Con_DrawConsole(void);
 extern void SND_StopSounds(snd_stopsounds_arg_t flags);
 extern void SCR_DrawCinematic(void);
-extern qboolean Sys_IsMainThread(void);
+extern Bool Sys_IsMainThread(void);
 extern void Sys_LoadingKeepAlive(void);
 extern void Net_DisplayProfile(void);
 extern int FS_FTell(int fh);
@@ -265,240 +265,124 @@ void CL_CubemapShot_f(void)
     }
 }
 
-static void SCR_UpdateFrame(void)
+// retail 0x413170
+void SCR_DrawDemoRecording(void)
 {
-    refexport_t *re = re_ptr_195eca8;
-    static int s_prevConnstate = -1;
-    int endViewBeforeUi = 0;
-    int viewEndedBeforeUi = 0;
-    int viewsIssuedBeforeUi = 0;
+    char string[1024];
+    float color[4];
+    float x;
+    float y;
+    float w;
+    float h;
+    float scale;
 
-    if (!re || !re->BeginFrame) {
+    if (!clc.demorecording)
+        return;
+
+    sprintf(string, "RECORDING %s: %ik", clc.demoName, FS_FTell(clc.demofile) / 1024);
+    CL_LookupColor('7', color);
+    scale = re.NormalizedTextScale(cls.consoleFont, 0.33333334f);
+    x = 5.0f;
+    y = 479.0f;
+    w = scale;
+    h = scale;
+    CalcScreenPlacement(&x, &y, &w, &h, 1, 1);
+    re.DrawText(string, 0x7fffffff, cls.consoleFont, x, y, w, h, color, 0);
+}
+
+// retail 0x4132b0
+qboolean CL_CGameRendering(qboolean renderScreen)
+{
+    return CG_DrawActiveFrame(clients[0].serverTime, (DemoType)(clc.demoplaying != 0), CUBEMAPSHOT_NONE, 0, renderScreen);
+}
+
+// retail 0x413310
+void SCR_DrawScreenField(void)
+{
+    if (!cls.uiStarted) {
+        re.ClearScreen(1, colorBlack, 0.0f, 0);
         return;
     }
 
-    {
-        extern qboolean com_errorEntered;
-        clientConnection_t *clc_check = &::clc;
-        clientActive_t *cl_check = clients;
-        int cs = clc_check->state;
-        if (g_cginit_loading)
-            return;
-        if (cs == CA_PRIMED && cl_check->cgameInitialized && cl_check->newSnapshots) {
-            CL_SetCGameTime();
-            cs = clc_check->state;
-        }
-    }
+    if (clc.state != CA_ACTIVE && clc.state != CA_CINEMATIC)
+        re.ClearScreen(1, colorBlack, 0.0f, 0);
 
-    RE_FUNC(re, 0xa8, re_void_func)();
-    CL_ClearScene();
-    CL_ResetSkeletonCache(0);
+    UI_UpdateTime(cls.realtime);
 
-    byte *cls = cls_ptr_195ecac;
-    int gameLoaded = (((clientStatic_t *)(cls))->uiStarted);
-
-#if COD2_TRACE
-    {
-        static int diagOnce2;
-        if (!diagOnce2) {
-            diagOnce2 = 1;
-            Com_Printf("[diag] SCR_UpdateFrame REACHED gameLoaded(uiStarted)=%d\n", gameLoaded);
-        }
-    }
-#endif
-
-    if (!gameLoaded) {
-        re->ClearScreen(1, (const vec_t *)ptr_195f58c, 0.0f, 0);
-        goto end_frame;
-    }
-
-    clientConnection_t *clc = &::clc;
-    int connstate = clc->state;
-    if (connstate != 8 && connstate != 1) {
-        re->ClearScreen(1, (const vec_t *)ptr_195f58c, 0.0f, 0);
-    }
-
-    UI_UpdateTime((((clientStatic_t *)(cls))->realtime));
-
-    if (connstate >= 3 && connstate <= 8 && UI_GetActiveMenu() == 1) {
-        UI_SetActiveMenu(0);
-    }
-
-    s_prevConnstate = connstate;
-
-    if (UI_IsFullscreen()) {
-
-        clc = &::clc;
-        connstate = clc->state;
-
-        if (connstate < 0) {
-            Com_Error(ERR_FATAL, "SCR_DrawScreenField: bad clc->state");
-        } else if (connstate <= 7) {
-            goto check_ui;
-        } else if (connstate == 8) {
-
-            int needRender = clc->demoplaying != 0;
-            clientActive_t *dv = clients;
-            int serverTime = dv->serverTime;
-
-            int result = CG_DrawActiveFrame(serverTime, (DemoType)needRender, CUBEMAPSHOT_NONE, 0, 0);
-            endViewBeforeUi = 1;
-            if (result == 0) {
-                CL_SendCmdInternal();
-            }
-            goto check_ui;
-        } else {
-            Com_Error(ERR_FATAL, "SCR_DrawScreenField: bad clc->state");
-        }
-    } else {
-
-        clc = &::clc;
-        connstate = clc->state;
-
-        if ((unsigned int)connstate > 8) {
-            Com_Error(ERR_FATAL, "SCR_DrawScreenField: bad clc->state");
-        }
-
-        switch (connstate) {
-        case 0:
+    if (!UI_IsFullscreen()) {
+        switch (clc.state) {
+        case CA_CINEMATIC:
+            SCR_DrawCinematic();
+            break;
+        case CA_LOGO:
+            CL_DrawLogo();
+            if (clc.state != CA_LOGO)
+                return;
+            break;
+        case CA_DISCONNECTED:
             SND_StopSounds((snd_stopsounds_arg_t)0);
             if (Sys_IsMainThread()) {
                 UI_SetActiveMenu(1);
-            } else if (CL_AnyLocalClientChallenging()) {
-                UI_Refresh();
-                UI_DrawConnectScreen();
+                break;
             }
-            goto check_ui;
-
-        case 1:
-            SCR_DrawCinematic();
-            goto check_ui;
-
-        case 2:
-            CL_DrawLogo();
-            clc = &::clc;
-            if (clc->state != 2) {
-                goto end_frame_draw;
-            }
-            goto check_ui;
-
-        case 3:
-        case 4:
-        case 5:
-        case 6:
-        case 7:
+            if (!CL_AnyLocalClientChallenging())
+                break;
+        case CA_CONNECTING:
+        case CA_CHALLENGING:
+        case CA_CONNECTED:
+        case CA_LOADING:
+        case CA_PRIMED:
             UI_Refresh();
             UI_DrawConnectScreen();
-            goto check_ui;
-
-        case 8:
-        {
-            int needRender = clc->demoplaying != 0;
-            clientActive_t *dv = clients;
-            int serverTime = dv->serverTime;
-
-            CG_DrawActiveFrame(serverTime, (DemoType)needRender, CUBEMAPSHOT_NONE, 0, 1);
-            endViewBeforeUi = 1;
-
-            clc = &::clc;
-            if (clc->demorecording) {
-                int pos = FS_FTell(clc->demofile);
-                int posKB = (pos + 0x3ff) >> 10;
-                char buf[1024];
-                float color[4];
-                sprintf(buf, "RECORDING %s: %ik", clc->demoName, posKB);
-
-                CL_LookupColor(0x37, color);
-                float x = 5.0f;
-                float y = 479.0f;
-
-                re = re_ptr_195eca8;
-                cls = cls_ptr_195ecac;
-                FontHandle font = (((clientStatic_t *)(cls))->consoleFont);
-                float fontH = RE_FUNC(re, 0x110, re_font_height_func)(font, 0.333333f);
-                float w = fontH;
-                float h = fontH;
-
-                CalcScreenPlacement(&x, &y, &w, &h, 1, 1);
-
-                RE_FUNC(re, 0x11c, re_draw_string_func)(
-                    buf, 0x7fffffff, font, x, y, w, h, color, 0);
-            }
-            goto check_ui;
+            break;
+        case CA_ACTIVE:
+            if (!CL_CGameRendering(1))
+                CL_SendCmdInternal();
+            SCR_DrawDemoRecording();
+            break;
+        default:
+            Com_Error(ERR_FATAL, "\x15SCR_DrawScreenField: bad clc->state");
+            break;
         }
+    } else {
+        switch (clc.state) {
+        case CA_DISCONNECTED:
+        case CA_CINEMATIC:
+        case CA_LOGO:
+        case CA_CONNECTING:
+        case CA_CHALLENGING:
+        case CA_CONNECTED:
+        case CA_LOADING:
+        case CA_PRIMED:
+            break;
+        case CA_ACTIVE:
+            if (!CL_CGameRendering(0))
+                CL_SendCmdInternal();
+            break;
+        default:
+            Com_Error(ERR_FATAL, "\x15SCR_DrawScreenField: bad clc->state");
+            break;
         }
     }
 
-check_ui:
-    if (endViewBeforeUi) {
-        RE_FUNC(re_ptr_195eca8, 0xb8, re_int_func)(0);
-        viewEndedBeforeUi = 1;
-        RE_FUNC(re_ptr_195eca8, 0xbc, re_void_func)();
-        viewsIssuedBeforeUi = 1;
-    }
+    if ((clients[0].keyCatchers & 8) && clc.state != CA_CINEMATIC)
+        UI_Refresh();
 
-    {
-        clientActive_t *dv = clients;
-#if COD2_TRACE
-        static int uiTraceCount;
-        int activeMenu = UI_GetActiveMenu();
-#endif
-
-#if COD2_TRACE
-        {
-            static int diagOnce;
-            if (!diagOnce) {
-                diagOnce = 1;
-                Com_Printf("[diag] check_ui REACHED state=%d activeMenu=%d keyCatchers=0x%x displayHUD=%d\n",
-                           (&::clc)->state, activeMenu,
-                           dv->keyCatchers, dv->displayHUDWithKeycatchUI);
-            }
-        }
-#endif
-
-#if COD2_TRACE
-        if (uiTraceCount < 80 && (activeMenu || (dv->keyCatchers & 8) || dv->displayHUDWithKeycatchUI)) {
-            if (getenv("MTRACE"))
-                Com_Printf("[menu-trace] SCR check_ui active=%d keyCatchers=0x%x displayHUD=%d state=%d\n",
-                           activeMenu, dv->keyCatchers, dv->displayHUDWithKeycatchUI,
-                           (&::clc)->state);
-            ++uiTraceCount;
-        }
-#endif
-
-        if (dv->keyCatchers & 8)
-            UI_Refresh();
-    }
-
-    if (net_showprofile->current.integer) {
+    if (net_showprofile->current.integer)
         Net_DisplayProfile();
-    }
 
-    if (!viewEndedBeforeUi)
-        RE_FUNC(re_ptr_195eca8, 0xb8, re_int_func)(0);
+    re.EndView(0);
+}
 
-end_frame_draw:
-    re = re_ptr_195eca8;
-    RE_FUNC(re, 0xbc, re_void_func)();
+static void SCR_UpdateFrame(void)
+{
+    re.BeginFrame();
+    CL_ClearScene();
+    CL_ResetSkeletonCache(0);
+    SCR_DrawScreenField();
+    re.DoneRenderingViews();
     Con_DrawConsole();
-    {
-        re_void_func fn = re->EndFrame;
-        if (fn)
-            fn();
-    }
-    Sys_IsMainThread();
-    return;
-
-end_frame:
-    if (!viewsIssuedBeforeUi)
-        RE_FUNC(re_ptr_195eca8, 0xbc, re_void_func)();
-    Con_DrawConsole();
-    {
-        refexport_t *re2 = re_ptr_195eca8;
-        re_void_func fn = re2->EndFrame;
-        if (fn)
-            fn();
-    }
+    re.EndFrame();
     Sys_IsMainThread();
 }
 

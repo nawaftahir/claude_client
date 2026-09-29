@@ -39,6 +39,7 @@ float GetVirtualHeightFromRealHeight(float height)
 void CalcScreenX(float *x, int horzAlign)
 {
     switch (horzAlign) {
+    case 0:
     default:
         *x = *x * SP->scaleVirtualToReal[0] + SP->subScreenLeft + SP->virtualScreenOffsetX;
         break;
@@ -68,6 +69,7 @@ void CalcScreenX(float *x, int horzAlign)
 void CalcScreenY(float *y, int vertAlign)
 {
     switch (vertAlign) {
+    case 0:
     default:
         *y *= SP->scaleVirtualToReal[1];
         break;
@@ -157,68 +159,76 @@ void SetScreenScaling(float safeAreaRatioHorizontal, float safeAreaRatioVertical
 void CalcScreenPlacement(float *x, float *y, float *w, float *h, int horzAlign, int vertAlign)
 {
     switch (horzAlign) {
-    default:
-        *x = *x * SP->scaleVirtualToReal[0] + SP->subScreenLeft + SP->virtualScreenOffsetX;
-        *w *= SP->scaleVirtualToReal[0];
-        break;
     case 1:
-        *x = *x * SP->scaleVirtualToReal[0] + SP->realViewableMin[0];
-        *w *= SP->scaleVirtualToReal[0];
+        *x = SP->scaleVirtualToReal[0] * *x + SP->realViewableMin[0];
+        *w = SP->scaleVirtualToReal[0] * *w;
         break;
     case 2:
-        *x = *x * SP->scaleVirtualToReal[0] + SP->realViewportSize[0] * 0.5f;
-        *w *= SP->scaleVirtualToReal[0];
+        *x = SP->scaleVirtualToReal[0] * *x + SP->realViewportSize[0] * 0.5f;
+        *w = SP->scaleVirtualToReal[0] * *w;
+        break;
+    case 7:
+        *x = SP->scaleVirtualToReal[0] * *x + (SP->realViewableMax[0] + SP->realViewableMin[0]) * 0.5f;
+        *w = SP->scaleVirtualToReal[0] * *w;
         break;
     case 3:
-        *x = *x * SP->scaleVirtualToReal[0] + SP->realViewableMax[0];
-        *w *= SP->scaleVirtualToReal[0];
+        *x = SP->scaleVirtualToReal[0] * *x + SP->realViewableMax[0];
+        *w = SP->scaleVirtualToReal[0] * *w;
         break;
     case 4:
-        *x *= SP->scaleVirtualToFull[0];
-        *w *= SP->scaleVirtualToFull[0];
+        *x = SP->scaleVirtualToFull[0] * *x;
+        *w = SP->scaleVirtualToFull[0] * *w;
+        break;
+    case 6:
+        *x = SP->scaleRealToVirtual[0] * *x + SP->virtualScreenOffsetX;
+        *w = SP->scaleRealToVirtual[0] * *w;
+        break;
+    case 0:
+        *x = SP->scaleVirtualToReal[0] * *x + SP->virtualScreenOffsetX + SP->subScreenLeft;
+        *w = SP->scaleVirtualToReal[0] * *w;
         break;
     case 5:
         break;
-    case 6:
-        *x = *x * SP->scaleRealToVirtual[0] + SP->virtualScreenOffsetX;
-        *w *= SP->scaleRealToVirtual[0];
-        break;
-    case 7:
-        *x = *x * SP->scaleVirtualToReal[0] + (SP->realViewableMin[0] + SP->realViewableMax[0]) * 0.5f;
-        *w *= SP->scaleVirtualToReal[0];
+    default:
+        *x = SP->scaleVirtualToReal[0] * *x + SP->virtualScreenOffsetX + SP->subScreenLeft;
+        *w = SP->scaleVirtualToReal[0] * *w;
         break;
     }
 
     switch (vertAlign) {
-    default:
-        *y *= SP->scaleVirtualToReal[1];
-        *h *= SP->scaleVirtualToReal[1];
-        break;
     case 1:
-        *y = *y * SP->scaleVirtualToReal[1] + SP->realViewableMin[1];
-        *h *= SP->scaleVirtualToReal[1];
+        *y = SP->scaleVirtualToReal[1] * *y + SP->realViewableMin[1];
+        *h = SP->scaleVirtualToReal[1] * *h;
         break;
     case 2:
-        *y = *y * SP->scaleVirtualToReal[1] + SP->realViewportSize[1] * 0.5f;
-        *h *= SP->scaleVirtualToReal[1];
+        *y = SP->scaleVirtualToReal[1] * *y + SP->realViewportSize[1] * 0.5f;
+        *h = SP->scaleVirtualToReal[1] * *h;
+        break;
+    case 7:
+        *y = SP->scaleVirtualToReal[1] * *y + (SP->realViewableMax[1] + SP->realViewableMin[1]) * 0.5f;
+        *h = SP->scaleVirtualToReal[1] * *h;
         break;
     case 3:
-        *y = *y * SP->scaleVirtualToReal[1] + SP->realViewableMax[1];
-        *h *= SP->scaleVirtualToReal[1];
+        *y = SP->scaleVirtualToReal[1] * *y + SP->realViewableMax[1];
+        *h = SP->scaleVirtualToReal[1] * *h;
         break;
     case 4:
-        *y *= SP->scaleVirtualToFull[1];
-        *h *= SP->scaleVirtualToFull[1];
+        *y = SP->scaleVirtualToFull[1] * *y;
+        *h = SP->scaleVirtualToFull[1] * *h;
+        break;
+    case 6:
+        *y = SP->scaleRealToVirtual[1] * *y;
+        *h = SP->scaleRealToVirtual[1] * *h;
+        break;
+    case 0:
+        *y = SP->scaleVirtualToReal[1] * *y;
+        *h = SP->scaleVirtualToReal[1] * *h;
         break;
     case 5:
         break;
-    case 6:
-        *y *= SP->scaleRealToVirtual[1];
-        *h *= SP->scaleRealToVirtual[1];
-        break;
-    case 7:
-        *y = *y * SP->scaleVirtualToReal[1] + (SP->realViewableMin[1] + SP->realViewableMax[1]) * 0.5f;
-        *h *= SP->scaleVirtualToReal[1];
+    default:
+        *y = SP->scaleVirtualToReal[1] * *y;
+        *h = SP->scaleVirtualToReal[1] * *h;
         break;
     }
 }

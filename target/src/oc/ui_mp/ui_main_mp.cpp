@@ -11,6 +11,7 @@ extern const vec4_t colorBlack;
 extern const vec4_t colorLtGrey;
 extern const vec4_t colorRed;
 extern const vec4_t colorWhite;
+extern const vec4_t colorYellow;
 extern clientActive_t clients[1];
 extern cg_t cgArray[1];
 /* see cg_local.h: `cg` is a const pointer to the real object, so `cg->field` folds
@@ -154,7 +155,8 @@ extern qboolean Menus_OpenByName(displayContextDef_t *dc, const char *name);
 extern void Menus_CloseByName(displayContextDef_t *dc, const char *p);
 extern char *Cmd_Args(int startIndex);
 
-static void UI_DrawCenteredText(const char *text, FontHandle font, float scale, float y, const vec_t *color, int style);
+static void Text_PaintCenter(const char *text, FontHandle font, float x, float y, float scale, const vec_t *color);
+const char *UI_ReplaceConversionInt(const char *sourceString, int replaceInt);
 extern Bool IsTalking(void);
 
 extern MaterialHandle CL_RegisterMaterialNoMip(const char *name, int imageTrack);   /* was int -> truncated MaterialHandle on x64 */
@@ -1895,6 +1897,17 @@ const char *UI_ReplaceConversionString(const char *sourceString, const char *rep
     return UI_ReplaceConversions(sourceString, (ConversionArguments *)convArgs);
 }
 
+const char *UI_ReplaceConversionInt(const char *sourceString, int replaceInt)
+{
+    char tempString[32];
+    int convArgs[10];
+    memset(convArgs, 0, sizeof(convArgs));
+    sprintf(tempString, "%d", replaceInt);
+    convArgs[0] = 1;
+    convArgs[1] = (int)tempString;
+    return UI_ReplaceConversions(sourceString, (ConversionArguments *)convArgs);
+}
+
 #ifndef __EMSCRIPTEN__
 void UI_CloseAll(void)
 {
@@ -2380,11 +2393,6 @@ static void __attribute_regparm__(0) UI_BuildServerDisplayList(qboolean force)
 }
 #endif
 
-static int UI_IsActionKey(int key)
-{
-    return (key == 0xc8 || key == 0xc9 || key == 0xd || key == 0xbf);
-}
-
 static void UI_SelectCurrentGameType(void)
 {
     const char *currType;
@@ -2416,189 +2424,191 @@ static int UI_MapCountByGameType(void)
     return c;
 }
 
-static void UI_SelectFirstVisibleMap(int currentMapIdx)
+// retail 0x52fd50; name unknown
+static void UI_SelectFirstActiveMap(void)
 {
-    int numMaps = sharedUiInfo.mapCount;
-    int i, firstVisible = -1;
-    byte *p = (byte *)&sharedUiInfo;
+    int i;
 
-    if (currentMapIdx >= 0 && currentMapIdx < numMaps) {
-        int off = currentMapIdx * 0xa4;
-        if (*(int *)(p + 5108 + off) != 0) {
-
-            int listIdx = 0;
-            for (i = 0; i < numMaps; i++) {
-                if (*(int *)(p + 0x13f4 + i * 0xa4) != 0) {
-                    if (i == currentMapIdx)
-                        break;
-                    listIdx++;
-                }
-            }
-            if (i >= numMaps)
-                listIdx = 0;
-
-            Menu_SetFeederSelection(&uiInfo->uiDC, 0, 4, listIdx, "createserver_maps");
-            UI_SelectCurrentMap();
+    for (i = 0; i < sharedUiInfo.mapCount; i++) {
+        if (sharedUiInfo.mapList[i].active) {
+            Menu_SetFeederSelection(&uiInfo->uiDC, NULL, 4, 0, "createserver_maps");
+            Dvar_SetInt((dvar_t *)ui_currentNetMap, i);
             return;
         }
     }
+}
 
-    if (numMaps > 0) {
-        if (sharedUiInfo.mapList[0].active != 0) {
-            firstVisible = 0;
-        } else {
-            for (i = 1; i < numMaps; i++) {
-                if (*(int *)(p + 0x1498 + (i - 1) * 0xa4) != 0) {
-                    firstVisible = i;
-                    break;
-                }
-            }
+// name unknown
+static int UI_ListIndexForMap(int map)
+{
+    int i;
+    int listIndex;
+
+    listIndex = 0;
+    for (i = 0; i < sharedUiInfo.mapCount; i++) {
+        if (sharedUiInfo.mapList[i].active) {
+            if (i == map)
+                return listIndex;
+            listIndex++;
         }
     }
+    return 0;
+}
 
-    if (firstVisible >= 0) {
-        Menu_SetFeederSelection(&uiInfo->uiDC, 0, 4, 0, "createserver_maps");
-        Dvar_SetInt((dvar_t *)ui_currentNetMap, firstVisible);
+// retail 0x52fda0; name unknown
+static void UI_SetMapFeederSelection(int map)
+{
+    Menu_SetFeederSelection(&uiInfo->uiDC, NULL, 4, UI_ListIndexForMap(map), "createserver_maps");
+}
+
+static qboolean UI_GameType_HandleKey(int flags, float *special, int key, qboolean resetMap)
+{
+    int oldCount;
+    int value;
+
+    if (key == 0xc8 || key == 0xc9 || key == 0xd || key == 0xbf) {
+        oldCount = UI_MapCountByGameType();
+
+        value = ui_gametype->current.integer;
+        if (key == 0xc9) {
+            value--;
+            if (value == 2)
+                value = 1;
+            else if (value < 2)
+                value = sharedUiInfo.numGameTypes - 1;
+        } else {
+            value++;
+            if (value >= sharedUiInfo.numGameTypes)
+                value = 1;
+            else if (value == 2)
+                value = 3;
+        }
+        Dvar_SetInt((dvar_t *)ui_gametype, value);
+
+        if (resetMap && oldCount != UI_MapCountByGameType())
+            Dvar_SetInt((dvar_t *)ui_currentMap, 0);
+        return 1;
     }
+    return 0;
+}
 
-    UI_SelectCurrentMap();
+static qboolean UI_NetGameType_HandleKey(int flags, float *special, int key)
+{
+    int value;
+
+    if (key == 0xc8 || key == 0xc9 || key == 0xd || key == 0xbf) {
+        if (key == 0xc9) {
+            value = ui_netGameType->current.integer;
+            if (!value)
+                value = sharedUiInfo.numGameTypes;
+            value--;
+        } else {
+            value = ui_netGameType->current.integer + 1;
+            if (value == sharedUiInfo.numGameTypes)
+                value = 0;
+        }
+
+        Dvar_SetInt((dvar_t *)ui_netGameType, value);
+        Dvar_SetString((dvar_t *)ui_netGameTypeName, sharedUiInfo.gameTypes[ui_netGameType->current.integer].gameType);
+        UI_MapCountByGameType();
+        if (!sharedUiInfo.mapList[ui_currentNetMap->current.integer].active)
+            UI_SelectFirstActiveMap();
+        else
+            UI_SetMapFeederSelection(ui_currentNetMap->current.integer);
+        UI_SelectCurrentMap();
+        return 1;
+    }
+    return 0;
+}
+
+static qboolean UI_JoinGameType_HandleKey(int flags, float *special, int key)
+{
+    int value;
+
+    if (key == 0xc8 || key == 0xc9 || key == 0xd || key == 0xbf) {
+        if (key == 0xc9) {
+            value = ui_joinGameType->current.integer;
+            if (!value)
+                value = sharedUiInfo.numJoinGameTypes;
+            value--;
+        } else {
+            value = ui_joinGameType->current.integer + 1;
+            if (value == sharedUiInfo.numJoinGameTypes)
+                value = 0;
+        }
+
+        Dvar_SetInt((dvar_t *)ui_joinGameType, value);
+        UI_BuildServerDisplayList(1);
+        return 1;
+    }
+    return 0;
+}
+
+static qboolean UI_NetSource_HandleKey(int flags, float *special, int key)
+{
+    int value;
+
+    if (key == 0xc8 || key == 0xc9 || key == 0xd || key == 0xbf) {
+        if (key == 0xc9) {
+            value = ui_netSource->current.integer;
+            if (!value)
+                value = 3;
+            value--;
+        } else {
+            value = ui_netSource->current.integer + 1;
+            if (value == 3)
+                value = 0;
+        }
+
+        UI_BuildServerDisplayList(1);
+        Dvar_SetInt((dvar_t *)ui_netSource, value);
+        if (ui_netSource->current.integer != 1) {
+            UI_StartServerRefresh(1);
+            UI_BuildServerDisplayList(1);
+        }
+        return 1;
+    }
+    return 0;
+}
+
+static qboolean UI_NetFilter_HandleKey(int flags, float *special, int key)
+{
+    if (key == 0xc8 || key == 0xc9 || key == 0xd || key == 0xbf) {
+        if (key == 0xc9)
+            ui_serverFilterType--;
+        else
+            ui_serverFilterType++;
+
+        if (ui_serverFilterType >= 1)
+            ui_serverFilterType = 0;
+        else if (ui_serverFilterType < 0)
+            ui_serverFilterType = 0;
+
+        UI_BuildServerDisplayList(1);
+        return 1;
+    }
+    return 0;
 }
 
 qboolean UI_OwnerDrawHandleKey(int ownerDraw, int flags, float *special, int key)
 {
-    int idx;
-
-    idx = ownerDraw - 0xcd;
-    if ((unsigned)idx > 0x30)
-        return 0;
-
     switch (ownerDraw) {
     case 0xcd:
-        if (!UI_IsActionKey(key))
-            return 0;
-        {
-            int oldVisCount = UI_MapCountByGameType();
-            int newGT, newVisCount;
-
-            if (key == 0xc9) {
-
-                newGT = (ui_gametype)->current.integer - 1;
-                if (newGT == 2)
-                    newGT = 1;
-                else if (newGT <= 1)
-                    newGT = sharedUiInfo.numGameTypes - 1;
-            } else {
-
-                newGT = (ui_gametype)->current.integer + 1;
-                if (newGT >= sharedUiInfo.numGameTypes)
-                    newGT = 1;
-                else if (newGT == 2)
-                    newGT = 3;
-            }
-
-            Dvar_SetInt((dvar_t *)ui_gametype, newGT);
-            newVisCount = UI_MapCountByGameType();
-
-            if (newVisCount != oldVisCount) {
-                Dvar_SetInt((dvar_t *)ui_currentMap, 0);
-            }
-        }
-        return 1;
-
-    case 0xdc:
-        if (!UI_IsActionKey(key))
-            return 0;
-        {
-            int nextNetSource;
-            if (key == 0xc9) {
-
-                int cur = (ui_netSource)->current.integer;
-                nextNetSource = (cur == 0) ? 2 : cur - 1;
-            } else {
-
-                nextNetSource = (ui_netSource)->current.integer + 1;
-                if (nextNetSource == 3)
-                    nextNetSource = 0;
-            }
-
-            UI_BuildServerDisplayList(1);
-            Dvar_SetInt((dvar_t *)ui_netSource, nextNetSource);
-            if ((ui_netSource)->current.integer != 1) {
-                UI_StartServerRefresh(1);
-                UI_BuildServerDisplayList(1);
-            }
-        }
-        return 0;
-
-    case 0xde:
-        if (!UI_IsActionKey(key))
-            return 0;
-        {
-            int filterType;
-            if (key == 0xc9)
-                filterType = ui_serverFilterType - 1;
-            else
-                filterType = ui_serverFilterType + 1;
-
-            ui_serverFilterType = filterType;
-
-            if (filterType > 0 || filterType < 0)
-                ui_serverFilterType = 0;
-
-            UI_BuildServerDisplayList(1);
-        }
-        return 0;
-
-    case 0xf4:
-        if (!UI_IsActionKey(key))
-            return 0;
-        {
-            int newVal;
-            if (key == 0xc9) {
-
-                int cur = (ui_netGameType)->current.integer;
-                newVal = (cur == 0) ? sharedUiInfo.numGameTypes : cur;
-                newVal--;
-            } else {
-
-                newVal = (ui_netGameType)->current.integer + 1;
-                if (newVal == sharedUiInfo.numGameTypes)
-                    newVal = 0;
-            }
-
-            Dvar_SetInt((dvar_t *)ui_netGameType, newVal);
-            Dvar_SetString((dvar_t *)ui_netGameTypeName, sharedUiInfo.gameTypes[(ui_netGameType)->current.integer].gameType);
-
-            UI_MapCountByGameType();
-            UI_SelectFirstVisibleMap((ui_currentNetMap)->current.integer);
-        }
-        return 1;
-
+        return UI_GameType_HandleKey(flags, special, key, 1);
+    case 0xf5:
+        return UI_NetGameType_HandleKey(flags, special, key);
     case 0xfd:
-        if (!UI_IsActionKey(key))
-            return 0;
-        {
-            int newVal;
-            if (key == 0xc9) {
-
-                int cur = (ui_joinGameType)->current.integer;
-                newVal = (cur == 0) ? sharedUiInfo.numJoinGameTypes : cur;
-                newVal--;
-            } else {
-
-                newVal = (ui_joinGameType)->current.integer + 1;
-                if (newVal == sharedUiInfo.numJoinGameTypes)
-                    newVal = 0;
-            }
-
-            Dvar_SetInt((dvar_t *)ui_joinGameType, newVal);
-            UI_BuildServerDisplayList(1);
-        }
-        return 1;
-
+        return UI_JoinGameType_HandleKey(flags, special, key);
+    case 0xdc:
+        UI_NetSource_HandleKey(flags, special, key);
+        break;
+    case 0xde:
+        UI_NetFilter_HandleKey(flags, special, key);
+        break;
     default:
-        return 0;
+        break;
     }
+    return 0;
 }
 
 const char *UI_FeederItemText(float feederID, int index, int column, MaterialHandle *handle)
@@ -4016,13 +4026,11 @@ int UI_FeederCount(float feederID)
     return 0;
 }
 
-static void UI_DrawCenteredText(const char *text, FontHandle font, float scale, float y, const vec_t *color, int style)
+static void Text_PaintCenter(const char *text, FontHandle font, float x, float y, float scale, const vec_t *color)
 {
     float actualScale = CL_NormalizedTextScale(font, scale);
-    int pixelWidth = CL_TextWidth(text, 0, font);
-    int scaledWidth = (int)((float)pixelWidth * actualScale);
-    float x = 320.0f - (float)(scaledWidth / 2);
-    UI_DrawText(text, 0x7fffffff, font, x, y, 0, 0, scale, color, style);
+    int len = (int)((float)CL_TextWidth(text, 0, font) * actualScale);
+    UI_DrawText(text, 0x7fffffff, font, x - (float)(len / 2), y, 0, 0, scale, color, 6);
 }
 
 static void UI_ReadableSize_wrap(char *buf, int bufsize, int value)
@@ -4166,14 +4174,14 @@ static void UI_DisplayDownloadInfo(const char *downloadName, float centerPoint, 
                     const char *copiedStr = UI_SafeTranslateString("EXE_COPIED");
                     const char *ofStr = UI_SafeTranslateString("EXE_OF");
                     text = va("(%s %s %s %s)", dlSizeBuf, ofStr, totalSizeBuf, copiedStr);
-                    UI_DrawCenteredText(text, font, scale, yStart + 320.0f, ltGrey, 6);
+                    Text_PaintCenter(text, font, centerPoint, yStart + 320.0f, scale, ltGrey);
                 }
             }
         } else {
 
         estimating:
             text = UI_SafeTranslateString("EXE_ESTIMATING");
-            UI_DrawCenteredText(text, font, scale, yEta, ltGrey, 6);
+            Text_PaintCenter(text, font, centerPoint, yEta, scale, ltGrey);
 
             if (downloadSize != 0) {
 
@@ -4185,7 +4193,7 @@ static void UI_DisplayDownloadInfo(const char *downloadName, float centerPoint, 
                 const char *copiedStr = UI_SafeTranslateString("EXE_COPIED");
                 text = va("(%s %s)", dlSizeBuf, copiedStr);
             }
-            UI_DrawCenteredText(text, font, scale, yStart + 320.0f, ltGrey, 6);
+            Text_PaintCenter(text, font, centerPoint, yStart + 320.0f, scale, ltGrey);
 
             if (xferRate == 0)
                 return;
@@ -4201,153 +4209,76 @@ static void UI_DisplayDownloadInfo(const char *downloadName, float centerPoint, 
 
 void UI_DrawConnectScreen(void)
 {
-    byte *legacyBase;
-    FontHandle font;
     uiClientState_t cstate;
-    int bConnectInfoDisplayed;
-    const char *pszGameType;
-    const char *mapDisplayName;
-    const float connectScale = 0.5f;
+    char text[256];
+    char ps[60];
+    FontHandle font;
+    int displayed;
+    int i, len, index, yPrint;
+    int neednewline;
+    const char *s;
 
-    legacyBase = (byte *)legacyHacks;
-    if (!legacyBase)
-        return;
-
-    {
-        clientActive_t *cl = clients;
-        int loading = 0;
-        if ((*(unsigned char *)&((LegacyHacks *)legacyBase)->cl_serverloadmap[0]) != 0 || (*(unsigned char *)&((LegacyHacks *)legacyBase)->cl_serverloadgametype[0]) != 0)
-            loading = 1;
-
-        (void)cl;
-        CG_DrawInformation(loading);
-    }
-
-    font = UI_GetFontHandle(0, connectScale);
+    displayed = 0;
+    CG_DrawInformation(legacyHacks->cl_serverloadmap[0] || legacyHacks->cl_serverloadgametype[0] ? 1 : 0);
+    font = UI_GetFontHandle(0, 0.5f);
 
     GetClientState(&cstate);
 
-    if (g_mapname[0] != '\0') {
+    if (!I_stricmp(cstate.servername, "Auto-Updater")) {
+        if (legacyHacks->cl_downloadName[0])
+            strcpy(text, UI_ReplaceConversionString(UI_SafeTranslateString("EXE_DOWNLOADINGUPDATE"), Dvar_GetString("cl_updateversion")));
+        else
+            strcpy(text, UI_ReplaceConversionString(UI_SafeTranslateString("EXE_CONNECTINGTO"), cstate.servername));
+        Text_PaintCenter(text, font, 320.0f, 55.0f, 0.5f, colorWhite);
+        displayed = 1;
+    } else if (g_mapname[0]) {
+        Text_PaintCenter(UI_SafeTranslateString(UI_GetGameTypeDisplayName(g_gametype)), font, 320.0f, 89.0f, 0.5f, colorWhite);
+        Text_PaintCenter(UI_GetMapDisplayName(g_mapname), font, 320.0f, 119.0f, 0.5f, colorWhite);
+        displayed = 1;
+    }
 
-        int numGameTypes = sharedUiInfo.numGameTypes;
-        pszGameType = g_gametype;
-
-        if (numGameTypes > 0) {
-            int gi;
-            byte *base = (byte *)&sharedUiInfo;
-            for (gi = 0; gi < numGameTypes; gi++) {
-                if (I_stricmp(g_gametype, sharedUiInfo.gameTypes[gi].gameTypeName) == 0) {   /* was base+0x114c+gi*8 (x86) */
-                    pszGameType = sharedUiInfo.gameTypes[gi].gameTypeName;
-                    break;
-                }
+    // server messages (full, bad version, ...) wrapped into lines
+    if (cstate.connState < CA_CONNECTED) {
+        neednewline = 0;
+        index = 0;
+        yPrint = 299;
+        s = UI_SafeTranslateString(cstate.messageString);
+        len = strlen(s);
+        for (i = 0; i < len; i++, index++) {
+            ps[index] = s[i];
+            if (index > 40 && i > 0)
+                neednewline = 1;
+            if (index >= 58 || i == len - 1 || (neednewline && s[i] == ' ')) {
+                ps[index + 1] = 0;
+                Text_PaintCenter(ps, font, 320.0f, (float)yPrint, 0.5f, colorYellow);
+                neednewline = 0;
+                yPrint += 22;
+                index = -1;
             }
-        }
-
-        UI_DrawCenteredText(UI_SafeTranslateString(pszGameType), font, connectScale, 89.0f, (const vec_t *)((void *)&colorWhite), 6);
-
-        {
-            int numMaps = sharedUiInfo.mapCount;
-            int mi;
-            mapDisplayName = g_mapname;
-            for (mi = 0; mi < numMaps; mi++) {
-                if (I_stricmp(g_mapname, sharedUiInfo.mapList[mi].mapName) == 0)   /* was &sharedUiInfo+mi*0xa4+0x1358 (x86) */
-                    break;
-            }
-        }
-
-        UI_DrawCenteredText(mapDisplayName, font, connectScale, 119.0f, (const vec_t *)((void *)&colorWhite), 6);
-
-        bConnectInfoDisplayed = 1;
-
-        if (cstate.connState <= CA_CHALLENGING) {
-            goto draw_tips;
-        }
-    } else {
-        bConnectInfoDisplayed = 0;
-
-        if (cstate.connState <= CA_CHALLENGING) {
-            goto draw_tips;
         }
     }
 
-    goto check_connection_state;
-
-draw_tips:
-
-check_connection_state: {
-    int cs = cstate.connState;
-
-    if (cs == CA_CHALLENGING) {
-
-        if (bConnectInfoDisplayed)
+    switch (cstate.connState) {
+    case CA_CONNECTING:
+        if (displayed)
             return;
-
-        {
-
-            const char *translated;
-            char tempString[64];
-            int convArgs[10];
-            int ci;
-
-            translated = UI_SafeTranslateString("EXE_AWAITINGCHALLENGE");
-
-            for (ci = 0; ci < 10; ci++)
-                convArgs[ci] = bConnectInfoDisplayed;
-
-            sprintf(tempString, "%d", cstate.connectPacketCount);
-            convArgs[0] = 1;
-            convArgs[1] = (int)tempString;
-
-            translated = UI_ReplaceConversions(translated, (ConversionArguments *)convArgs);
-            if (!translated)
-                return;
-
-            {
-                if (I_stricmp(cstate.servername, "localhost") == 0)
-                    return;
-            }
-
-            UI_DrawCenteredText(translated, font, connectScale, 145.0f, (const vec_t *)((void *)&colorWhite), 6);
-        }
-    } else if (cs == CA_CONNECTED) {
-
-        legacyBase = (byte *)legacyHacks;
-        if (!legacyBase || (*(unsigned char *)&((LegacyHacks *)legacyBase)->cl_downloadName[0]) == 0)
+        s = UI_ReplaceConversionInt(UI_SafeTranslateString("EXE_AWAITINGCONNECTION"), cstate.connectPacketCount);
+        break;
+    case CA_CHALLENGING:
+        if (displayed)
             return;
-        UI_DisplayDownloadInfo(((LegacyHacks *)legacyBase)->cl_downloadName, 320.0f, 89.0f, font, connectScale);
-    } else if (cs == CA_CONNECTING) {
-
-        if (bConnectInfoDisplayed)
-            return;
-
-        {
-            const char *translated;
-            char tempString[64];
-            int convArgs[10];
-            int ci;
-
-            translated = UI_SafeTranslateString("EXE_AWAITINGCONNECTION");
-
-            for (ci = 0; ci < 10; ci++)
-                convArgs[ci] = bConnectInfoDisplayed;
-
-            sprintf(tempString, "%d", cstate.connectPacketCount);
-            convArgs[0] = 1;
-            convArgs[1] = (int)tempString;
-
-            translated = UI_ReplaceConversions(translated, (ConversionArguments *)convArgs);
-            if (!translated)
-                return;
-
-            {
-                if (I_stricmp(cstate.servername, "localhost") == 0)
-                    return;
-            }
-
-            UI_DrawCenteredText(translated, font, connectScale, 145.0f, (const vec_t *)((void *)&colorWhite), 6);
-        }
+        s = UI_ReplaceConversionInt(UI_SafeTranslateString("EXE_AWAITINGCHALLENGE"), cstate.connectPacketCount);
+        break;
+    case CA_CONNECTED:
+        if (legacyHacks->cl_downloadName[0])
+            UI_DisplayDownloadInfo(legacyHacks->cl_downloadName, 320.0f, 89.0f, font, 0.5f);
+        return;
+    default:
+        return;
     }
-}
+
+    if (s && I_stricmp(cstate.servername, "localhost"))
+        Text_PaintCenter(s, font, 320.0f, 145.0f, 0.5f, colorWhite);
 }
 #else
 static int UI_PlayerProfilesQsortCompare(const void *arg1, const void *arg2)

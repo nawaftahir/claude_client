@@ -13,9 +13,9 @@ void Sys_InitMainThread(void)
     Com_InitThreadData(0);
 }
 
-qboolean Sys_IsMainThread(void)
+Bool Sys_IsMainThread(void)
 {
-    return GetCurrentThreadId() == threadId[0];
+    return GetCurrentThreadId() == threadId[0] ? 1 : 0;
 }
 
 void Sys_SetValue(int valueIndex, void *data)

@@ -73,7 +73,7 @@ int CL_ClearStaticDownload(void)
 }
 #endif
 
-extern qboolean Sys_IsMainThread(void);
+extern Bool Sys_IsMainThread(void);
 extern int UI_IsFullscreen(void);
 extern void IN_Frame(void);
 extern void Com_Printf(const char *fmt, ...);
@@ -287,7 +287,7 @@ void CL_SwitchToLocalClient(int clientNum);
 Bool CL_GetLocalClientActive(int clientNum);
 int CL_GetLocalClientActiveCount(void);
 Bool CL_AllLocalClientsDisconnected(void);
-qboolean CL_AnyLocalClientChallenging(void);
+Bool CL_AnyLocalClientChallenging(void);
 Bool CL_IsRenderingSplitScreen(void);
 const char *CL_GetUsernameForLocalClient(int controllerIndex);
 void CL_AddReliableCommand(const char *cmd);
@@ -409,10 +409,14 @@ Bool CL_AllLocalClientsDisconnected(void)
     return 1;
 }
 
-qboolean CL_AnyLocalClientChallenging(void)
+Bool CL_AnyLocalClientChallenging(void)
 {
-    if (*(byte *)&clients[0] != 0 && *(int *)&::clc == 4)
-        return 1;
+    int i;
+
+    for (i = 0; i < 1; i++) {
+        if (*(byte *)&clients[i] && (&::clc)[i].state == CA_CHALLENGING)
+            return 1;
+    }
     return 0;
 }
 
@@ -490,9 +494,8 @@ char *CL_AllocSkelMemory(int localClientNum, unsigned int size)
 void CL_ResetSkeletonCache(int localClientNum)
 {
     clientActive_t *client = &clients[localClientNum];
-    client->skelTimeStamp++;
-    if (!client->skelTimeStamp)
-        client->skelTimeStamp = 1;
+    if (!++client->skelTimeStamp)
+        ++client->skelTimeStamp;
     client->skelMemoryStart = (char *)(((intptr_t)client->skelMemory + 15) & ~(intptr_t)15);
     client->skelMemPos = 0;
 }

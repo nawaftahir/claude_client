@@ -387,7 +387,7 @@ extern TraceThreadInfo g_traceThreadInfo[NUMTHREADS];
 void Com_InitThreadData(int threadContext);
 void* Sys_GetValue(int valueIndex);
 void Sys_SetValue(int valueIndex, void* data);
-qboolean Sys_IsMainThread(void);
+unsigned char Sys_IsMainThread(void);
 void Sys_InitMainThread();
 
 void Sys_EnterCriticalSection(int section);
