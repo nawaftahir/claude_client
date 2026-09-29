@@ -776,6 +776,7 @@ void CL_ShutdownRef(void)
     }
 
     StatMon_Reset();
+    Sys_UnloadRenderer();
 }
 
 void CL_InitRenderer(void)
