@@ -315,15 +315,10 @@ qboolean CG_ConsoleCommand(void)
 
 void CG_InitConsoleCommands(void)
 {
-    byte *cmdList = (byte *)commandsList;
-    const char *name;
+    int i;
 
-    name = *(const char **)cmdList;
-    while (name != NULL) {
-        CL_AddCgameCommand(name);
-        cmdList += 8;
-        name = *(const char **)cmdList;
-    }
+    for (i = 0; commandsList[i].cmd; i++)
+        CL_AddCgameCommand(commandsList[i].cmd);
 
     CL_AddCgameCommand("kill");
     CL_AddCgameCommand("give");
