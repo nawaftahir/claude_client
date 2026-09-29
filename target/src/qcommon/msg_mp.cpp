@@ -2208,7 +2208,7 @@ void MSG_WriteDeltaPlayerstate( msg_t *msg, playerState_t *from, playerState_t *
 
 				for ( i = 0; i < 16; ++i )
 				{
-					if ( ( ammobits[j] >> i ) & 1 )
+					if ( ammobits[j] & ( 1 << i ) )
 					{
 						MSG_WriteShort( msg, to->ammo[16 * j + i] );
 					}
@@ -2244,7 +2244,7 @@ void MSG_WriteDeltaPlayerstate( msg_t *msg, playerState_t *from, playerState_t *
 
 			for ( i = 0; i < 16; ++i )
 			{
-				if ( ( clipbits >> i ) & 1 )
+				if ( clipbits & ( 1 << i ) )
 				{
 					MSG_WriteShort( msg, to->ammoclip[16 * j + i] );
 				}
@@ -2455,7 +2455,7 @@ void MSG_ReadDeltaPlayerstate( msg_t *msg, playerState_t *from, playerState_t *t
 
 				for ( j = 0; j < 16; ++j )
 				{
-					if ( ( bitmask >> j ) & 1 )
+					if ( bitmask & ( 1 << j ) )
 					{
 						to->ammo[16 * i + j] = MSG_ReadShort( msg );
 					}
@@ -2473,7 +2473,7 @@ void MSG_ReadDeltaPlayerstate( msg_t *msg, playerState_t *from, playerState_t *t
 
 			for ( j = 0; j < 16; ++j )
 			{
-				if ( ( bitmask >> j ) & 1 )
+				if ( bitmask & ( 1 << j ) )
 				{
 					to->ammoclip[16 * i + j] = MSG_ReadShort( msg );
 				}
