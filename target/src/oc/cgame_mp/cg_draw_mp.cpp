@@ -133,8 +133,8 @@ extern float GetRealHeightFromVirtualHeight(float height);
 extern float GetVirtualWidthFromRealWidth(float width);
 extern float GetVirtualHeightFromRealHeight(float height);
 extern void BG_GetSpreadForWeapon(const playerState_t *ps, int weaponIndex, float *minSpread, float *maxSpread);
-extern float CG_AlignHudElemX(int alignOrg, float x, float width);
-extern float CG_AlignHudElemY(int alignOrg, float y, float height);
+extern float AlignHudElemX(int alignOrg, float x, float width);
+extern float AlignHudElemY(int alignOrg, float y, float height);
 extern void UI_FillRectPhysical(float x, float y, float width, float height, const vec_t *color);
 extern void StatMon_GetStatsArray(const statmonitor_t **array, int *count);
 extern void CL_CloseAllMenus(void);
@@ -1611,20 +1611,20 @@ unsigned int CG_DrawCrosshair(void)
         vw = GetVirtualWidthFromRealWidth(divW * (realW / divW * 0.125f));
         vh = GetVirtualHeightFromRealHeight(divH * (realH / divH * 0.125f));
 
-        ax = CG_AlignHudElemX(4, centerX, sideSize);
-        ay = CG_AlignHudElemY(2, centerY, sideSize);
+        ax = AlignHudElemX(4, centerX, sideSize);
+        ay = AlignHudElemY(2, centerY, sideSize);
         CG_DrawRotatedPic(ax, ay - minOfs - vh, sideSize, sideSize, 2, 2, 0.0f, reticleColor, material);
 
-        ax = CG_AlignHudElemX(0, centerX, sideSize);
-        ay = CG_AlignHudElemY(1, centerY, sideSize);
+        ax = AlignHudElemX(0, centerX, sideSize);
+        ay = AlignHudElemY(1, centerY, sideSize);
         CG_DrawRotatedPic(minOfs + ax, ay, sideSize, sideSize, 2, 2, 90.0f, reticleColor, material);
 
-        ax = CG_AlignHudElemX(4, centerX, sideSize);
-        ay = CG_AlignHudElemY(0, centerY, sideSize);
+        ax = AlignHudElemX(4, centerX, sideSize);
+        ay = AlignHudElemY(0, centerY, sideSize);
         CG_DrawRotatedPic(ax - vw, ay + minOfs, sideSize, sideSize, 2, 2, 180.0f, reticleColor, material);
 
-        ax = CG_AlignHudElemX(8, centerX, sideSize);
-        ay = CG_AlignHudElemY(1, centerY, sideSize);
+        ax = AlignHudElemX(8, centerX, sideSize);
+        ay = AlignHudElemY(1, centerY, sideSize);
         CG_DrawRotatedPic(ax - minOfs - vw, ay - vh, sideSize, sideSize, 2, 2, 270.0f, reticleColor, material);
     }
 
