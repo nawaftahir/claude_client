@@ -2015,42 +2015,38 @@ Bool UI_DrawRecordLevel(rectDef_t *rect)
     return 1;
 }
 
-MaterialHandle UI_FeederItemImage(const float feederID, int index)
+static const char *UI_SelectedMap(int index, int *actual)
 {
-    int numMaps, c, i, mapIndex;
-    mapInfo *map;
+    int i, c;
 
-    if (feederID != 4.0f)
-        return 0;
-
-    numMaps = sharedUiInfo.mapCount;
-    mapIndex = -1;
-
-    if (numMaps > 0) {
-        c = 0;
-        for (i = 0; i < numMaps; i++) {
-            if (sharedUiInfo.mapList[i].active) {
-                if (c == index) {
-                    mapIndex = i;
-                    break;
-                }
-                c++;
+    c = 0;
+    *actual = 0;
+    for (i = 0; i < sharedUiInfo.mapCount; i++) {
+        if (sharedUiInfo.mapList[i].active) {
+            if (c == index) {
+                *actual = i;
+                return sharedUiInfo.mapList[i].mapName;
             }
+            c++;
         }
     }
+    return "";
+}
 
-    if (mapIndex < 0)
-        mapIndex = 0;
+MaterialHandle UI_FeederItemImage(const float feederID, int index)
+{
+    int actual;
 
-    if (numMaps <= mapIndex)
-        return 0;
-
-    map = &sharedUiInfo.mapList[mapIndex];
-    if (!map->levelShot) {
-        map->levelShot = CL_RegisterMaterialNoMip(map->mapLoadName, 3);
+    if (feederID == 4.0f) {
+        UI_SelectedMap(index, &actual);
+        index = actual;
+        if (index >= 0 && index < sharedUiInfo.mapCount) {
+            if (!sharedUiInfo.mapList[index].levelShot)
+                sharedUiInfo.mapList[index].levelShot = CL_RegisterMaterialNoMip(sharedUiInfo.mapList[index].mapLoadName, 3);
+            return sharedUiInfo.mapList[index].levelShot;
+        }
     }
-
-    return map->levelShot;
+    return 0;
 }
 
 #ifndef __EMSCRIPTEN__
@@ -2614,42 +2610,17 @@ qboolean UI_OwnerDrawHandleKey(int ownerDraw, int flags, float *special, int key
 
 const char *UI_FeederItemText(float feederID, int index, int column, MaterialHandle *handle)
 {
+    int actual;
+
     *handle = 0;
 
     if (feederID == 4.0f) {
-
-        int numMaps = sharedUiInfo.mapCount;
-        int count = 0;
-        int i;
-
-        if (numMaps <= 0)
-            return "";
-
-        for (i = 0; i < numMaps; i++) {
-            byte *entry = (byte *)&sharedUiInfo + i * 0xa4;
-            if (*(int *)(entry + 0x13f4)) {
-                if (count == index) {
-
-                    return *(const char **)(entry + 0x1354);
-                }
-                count++;
-            }
-        }
-        return "";
+        return UI_SelectedMap(index, &actual);
     } else if (feederID == 2.0f) {
 
         int pingVal;
 
-        {
-            int serverCount = LAN_GetServerCount((ui_netSource)->current.integer);
-            if (serverCount != sharedUiInfo.serverStatus.serverCount) {
-                sharedUiInfo.serverStatus.serverCount = serverCount;
-                if (sharedUiInfo.serverStatus.numDisplayServers != 0) {
-                    sharedUiInfo.serverStatus.currentServer = -1;
-                    UI_BuildServerDisplayList(1);
-                }
-            }
-        }
+        UI_UpdateServerCount();
 
         if (index < 0 || index >= sharedUiInfo.serverStatus.numDisplayServers)
             return "";
@@ -4233,7 +4204,8 @@ void UI_DrawConnectScreen(void)
         Text_PaintCenter(font, text, 320.0f, 55.0f, 0.5f, colorWhite);
         displayed = 1;
     } else if (g_mapname[0]) {
-        Text_PaintCenter(font, UI_SafeTranslateString(UI_GetGameTypeDisplayName(g_gametype)), 320.0f, 89.0f, 0.5f, colorWhite);
+        s = UI_SafeTranslateString(UI_GetGameTypeDisplayName(g_gametype));
+        Text_PaintCenter(font, s, 320.0f, 89.0f, 0.5f, colorWhite);
         Text_PaintCenter(font, UI_GetMapDisplayName(g_mapname), 320.0f, 119.0f, 0.5f, colorWhite);
         displayed = 1;
     }
@@ -4508,30 +4480,13 @@ const char *UI_SafeTranslateString(const char *reference)
 void UI_FeederSelection(float feederID, int index)
 {
     if (feederID == 4.0f) {
-        int mapVal = (ui_currentNetMap)->current.integer;
-        int offset = mapVal * 164;
-        int cinHandle = *(int *)((byte *)&sharedUiInfo + 4972 + offset);
-        int numMaps, visCount, actual, i;
+        int actual;
 
-        if (cinHandle >= 0) {
-            CIN_StopCinematic(cinHandle);
-            *(int *)((byte *)&sharedUiInfo + 4960 + 12 + offset) = -1;
+        if (sharedUiInfo.mapList[(ui_currentNetMap)->current.integer].cinematic >= 0) {
+            CIN_StopCinematic(sharedUiInfo.mapList[(ui_currentNetMap)->current.integer].cinematic);
+            sharedUiInfo.mapList[(ui_currentNetMap)->current.integer].cinematic = -1;
         }
-
-        numMaps = sharedUiInfo.mapCount;
-        visCount = 0;
-        actual = 0;
-        for (i = 0; i < numMaps; i++) {
-            if (sharedUiInfo.mapList[i].active != 0) {
-                if (visCount == index) {
-                    actual = i;
-                    goto map_found;
-                }
-                visCount++;
-            }
-        }
-        actual = 0;
-    map_found:
+        UI_SelectedMap(index, &actual);
         Dvar_SetInt(ui_currentMap, actual);
         Dvar_SetInt(ui_currentNetMap, actual);
 
