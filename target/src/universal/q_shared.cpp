@@ -611,7 +611,7 @@ int Com_sprintf( char *dest, size_t size, const char *format, ... )
 }
 
 // false when the string lives on the current stack or in this thread's va() buffer
-bool CanKeepStringPointer( const char *string )
+int CanKeepStringPointer( const char *string )
 {
 	int stackLocal;
 	char *vaBuffer;

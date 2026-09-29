@@ -378,9 +378,9 @@ void CL_ParseDownload(msg_t *msg)
         if (clc.download) {
             FS_FCloseFile(clc.download);
 
+            clc.download = 0;
             // rename the file
             FS_SV_Rename(clc.downloadTempName, clc.downloadName);
-            clc.download = 0;
         }
         *clc.downloadTempName = *clc.downloadName = 0;
         legacyHacks->cl_downloadName[0] = 0;

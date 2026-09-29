@@ -155,7 +155,7 @@ extern qboolean Menus_OpenByName(displayContextDef_t *dc, const char *name);
 extern void Menus_CloseByName(displayContextDef_t *dc, const char *p);
 extern char *Cmd_Args(int startIndex);
 
-static void Text_PaintCenter(const char *text, FontHandle font, float x, float y, float scale, const vec_t *color);
+static void Text_PaintCenter(FontHandle font, const char *text, float x, float y, float scale, const vec_t *color);
 const char *UI_ReplaceConversionInt(const char *sourceString, int replaceInt);
 extern Bool IsTalking(void);
 
@@ -402,7 +402,6 @@ int UI_TextHeight(FontHandle font, float scale)
 
 FontHandle UI_GetFontHandle(int fontEnum, float scale)
 {
-    float realHeight;
     if (fontEnum == 2)
         return sharedUiInfo.assets.bigFont;
     if (fontEnum == 3)
@@ -410,21 +409,21 @@ FontHandle UI_GetFontHandle(int fontEnum, float scale)
     if (fontEnum == 5)
         return sharedUiInfo.assets.consoleFont;
 
-    realHeight = GetRealHeightFromVirtualHeight(scale);
+    scale = GetRealHeightFromVirtualHeight(scale);
 
     if (fontEnum == 4) {
-        if (ui_smallFont->current.value >= realHeight)
+        if (scale <= ui_smallFont->current.value)
             return sharedUiInfo.assets.smallFont;
-        if (ui_bigFont->current.value >= realHeight)
+        if (scale >= ui_bigFont->current.value)
             return sharedUiInfo.assets.boldFont;
         return sharedUiInfo.assets.textFont;
     }
 
-    if (realHeight <= ui_smallFont->current.value)
+    if (scale <= ui_smallFont->current.value)
         return sharedUiInfo.assets.smallFont;
-    if (realHeight >= ui_extraBigFont->current.value)
+    if (scale >= ui_extraBigFont->current.value)
         return sharedUiInfo.assets.extraBigFont;
-    if (realHeight >= ui_bigFont->current.value)
+    if (scale >= ui_bigFont->current.value)
         return sharedUiInfo.assets.bigFont;
     return sharedUiInfo.assets.textFont;
 }
@@ -974,29 +973,31 @@ static void UI_VerifyLanguage(void)
 #ifndef __EMSCRIPTEN__
 const char *UI_SafeTranslateString(const char *reference)
 {
-    const char *ref = reference;
+    const char *translated;
 
-    if (ref[0] == 0x15)
-        ref++;
-
-    const char *translated = SEH_StringEd_GetString(ref);
-    if (translated)
-        return translated;
+    // 0x15-prefixed strings are already localized
+    if (reference[0] == 0x15) {
+        reference++;
+    } else {
+        translated = SEH_StringEd_GetString(reference);
+        if (translated)
+            return translated;
+    }
 
     if ((loc_warnings)->current.enabled) {
         if ((loc_warningsAsErrors)->current.enabled) {
-            Com_Error(ERR_LOCALIZATION, "Could not translate string \"%s\"", ref);
+            Com_Error(ERR_LOCALIZATION, "Could not translate string \"%s\"", reference);
         } else {
-            Com_Printf("^3WARNING: Could not translate string \"%s\"\n", ref);
+            Com_Printf("^3WARNING: Could not translate string \"%s\"\n", reference);
         }
 
         strcpy(errorString, "^1UNLOCALIZED(^7");
-        I_strncat(errorString, 0x400, ref);
+        I_strncat(errorString, 0x400, reference);
         I_strncat(errorString, 0x400, "^1)^7");
         return errorString;
     }
 
-    strcpy(errorString, ref);
+    strcpy(errorString, reference);
     return errorString;
 }
 #endif
@@ -4026,7 +4027,7 @@ int UI_FeederCount(float feederID)
     return 0;
 }
 
-static void Text_PaintCenter(const char *text, FontHandle font, float x, float y, float scale, const vec_t *color)
+static void Text_PaintCenter(FontHandle font, const char *text, float x, float y, float scale, const vec_t *color)
 {
     float actualScale = CL_NormalizedTextScale(font, scale);
     int len = (int)((float)CL_TextWidth(text, 0, font) * actualScale);
@@ -4174,14 +4175,14 @@ static void UI_DisplayDownloadInfo(const char *downloadName, float centerPoint, 
                     const char *copiedStr = UI_SafeTranslateString("EXE_COPIED");
                     const char *ofStr = UI_SafeTranslateString("EXE_OF");
                     text = va("(%s %s %s %s)", dlSizeBuf, ofStr, totalSizeBuf, copiedStr);
-                    Text_PaintCenter(text, font, centerPoint, yStart + 320.0f, scale, ltGrey);
+                    Text_PaintCenter(font, text, centerPoint, yStart + 320.0f, scale, ltGrey);
                 }
             }
         } else {
 
         estimating:
             text = UI_SafeTranslateString("EXE_ESTIMATING");
-            Text_PaintCenter(text, font, centerPoint, yEta, scale, ltGrey);
+            Text_PaintCenter(font, text, centerPoint, yEta, scale, ltGrey);
 
             if (downloadSize != 0) {
 
@@ -4193,7 +4194,7 @@ static void UI_DisplayDownloadInfo(const char *downloadName, float centerPoint, 
                 const char *copiedStr = UI_SafeTranslateString("EXE_COPIED");
                 text = va("(%s %s)", dlSizeBuf, copiedStr);
             }
-            Text_PaintCenter(text, font, centerPoint, yStart + 320.0f, scale, ltGrey);
+            Text_PaintCenter(font, text, centerPoint, yStart + 320.0f, scale, ltGrey);
 
             if (xferRate == 0)
                 return;
@@ -4229,11 +4230,11 @@ void UI_DrawConnectScreen(void)
             strcpy(text, UI_ReplaceConversionString(UI_SafeTranslateString("EXE_DOWNLOADINGUPDATE"), Dvar_GetString("cl_updateversion")));
         else
             strcpy(text, UI_ReplaceConversionString(UI_SafeTranslateString("EXE_CONNECTINGTO"), cstate.servername));
-        Text_PaintCenter(text, font, 320.0f, 55.0f, 0.5f, colorWhite);
+        Text_PaintCenter(font, text, 320.0f, 55.0f, 0.5f, colorWhite);
         displayed = 1;
     } else if (g_mapname[0]) {
-        Text_PaintCenter(UI_SafeTranslateString(UI_GetGameTypeDisplayName(g_gametype)), font, 320.0f, 89.0f, 0.5f, colorWhite);
-        Text_PaintCenter(UI_GetMapDisplayName(g_mapname), font, 320.0f, 119.0f, 0.5f, colorWhite);
+        Text_PaintCenter(font, UI_SafeTranslateString(UI_GetGameTypeDisplayName(g_gametype)), 320.0f, 89.0f, 0.5f, colorWhite);
+        Text_PaintCenter(font, UI_GetMapDisplayName(g_mapname), 320.0f, 119.0f, 0.5f, colorWhite);
         displayed = 1;
     }
 
@@ -4250,7 +4251,7 @@ void UI_DrawConnectScreen(void)
                 neednewline = 1;
             if (index >= 58 || i == len - 1 || (neednewline && s[i] == ' ')) {
                 ps[index + 1] = 0;
-                Text_PaintCenter(ps, font, 320.0f, (float)yPrint, 0.5f, colorYellow);
+                Text_PaintCenter(font, ps, 320.0f, (float)yPrint, 0.5f, colorYellow);
                 neednewline = 0;
                 yPrint += 22;
                 index = -1;
@@ -4278,7 +4279,7 @@ void UI_DrawConnectScreen(void)
     }
 
     if (s && I_stricmp(cstate.servername, "localhost"))
-        Text_PaintCenter(s, font, 320.0f, 145.0f, 0.5f, colorWhite);
+        Text_PaintCenter(font, s, 320.0f, 145.0f, 0.5f, colorWhite);
 }
 #else
 static int UI_PlayerProfilesQsortCompare(const void *arg1, const void *arg2)
