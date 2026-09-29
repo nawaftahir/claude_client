@@ -780,7 +780,7 @@ void DObjGetCreateParms( const DObj_s *obj, DObjModel_s *dobjModels, unsigned sh
 	{
 		model->model = obj->models[i];
 		model->boneName = 0;
-		model->ignoreCollision = ( (obj->ignoreCollision >> i) & 1 ) ? qtrue : qfalse;
+		model->ignoreCollision = ( obj->ignoreCollision & (1 << i) ) ? qtrue : qfalse;
 
 		if ( obj->modelParents[i] != 255 )
 		{

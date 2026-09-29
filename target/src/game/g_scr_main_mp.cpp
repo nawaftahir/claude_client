@@ -1177,7 +1177,7 @@ void ScrCmd_GetAttachIgnoreCollision( scr_entref_t entref )
 		Scr_ParamError(0, "bad index");
 	}
 
-	Scr_AddBool( ( ( ent->attachIgnoreCollision >> i ) & 1 ) != 0 );
+	Scr_AddBool( ( ent->attachIgnoreCollision & ( 1 << i ) ) != 0 );
 }
 
 /*

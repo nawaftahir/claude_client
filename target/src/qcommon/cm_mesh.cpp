@@ -455,7 +455,7 @@ static inline void CM_TraceCapsuleThroughTriangle( traceWork_t *tw, CollisionTri
 
 				for ( i = 0; i <= 2; i++ )
 				{
-					if ( (vertToCheck >> i) & 1 )
+					if ( vertToCheck & (1 << i) )
 					{
 						edgeIndex = tri->edges[i];
 
