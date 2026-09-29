@@ -7,14 +7,14 @@ extern float sinf(float x);
 extern float cosf(float x);
 extern float sqrtf(float x);
 
-extern const dvar_t **dvar_compassSize;
-extern const dvar_t **dvar_compassMinRange;
-extern const dvar_t **dvar_compassMinSaturation;
-extern const dvar_t **dvar_compassMaxRange;
-extern const dvar_t **dvar_compassClampDist;
-extern const dvar_t **dvar_compassClampSaturation;
-extern const dvar_t **dvar_compassPingFadeTime;
-extern const dvar_t **dvar_compassFade;
+extern const dvar_t *cg_hudCompassSize;
+extern const dvar_t *cg_hudCompassMinRange;
+extern const dvar_t *cg_hudCompassMinRadius;
+extern const dvar_t *cg_hudCompassMaxRange;
+extern const dvar_t *cg_hudObjectiveMaxRange;
+extern const dvar_t *cg_hudObjectiveMinAlpha;
+extern const dvar_t *cg_hudCompassSoundPingFadeTime;
+extern const dvar_t *hud_fade_compass;
 
 extern float CG_FadeHudMenu(const dvar_t *fadeDvar, int displayStartTime, int duration);
 extern void CG_UpdateCompPointerOrientation(void);
@@ -51,9 +51,8 @@ extern vec_t Vec2Normalize( vec3_t v );
 #define SNAP_PS_CLIENTBASE 0x26bc
 #define SNAP_PI_STRIDE 0xf0
 
-static inline __attribute__((always_inline)) float dvar_value(const dvar_t **dvpp)
+static inline __attribute__((always_inline)) float dvar_value(const dvar_t *dv)
 {
-    const dvar_t *dv = *dvpp;
     return dv->current.value;
 }
 
@@ -63,7 +62,7 @@ void CG_DrawCompassFriendlies(rectDef_t *rect, MaterialHandle material, vec_t *c
 
 void CG_ApplyCompassPointerRadiusScale(float *radiusScale)
 {
-    double rhs = (double)dvar_value(dvar_compassSize) * 43.75;
+    double rhs = (double)dvar_value(cg_hudCompassSize) * 43.75;
     *radiusScale = (float)((double)*radiusScale * rhs);
 }
 
@@ -116,10 +115,10 @@ void CG_CompassAddWeaponPingInfo(centity_t *cent, const vec_t *origin, int msec)
 
 static float CompassDistToRadius(float dist)
 {
-    float maxRange = dvar_value(dvar_compassMaxRange);
-    float minRange = dvar_value(dvar_compassMinRange);
-    float minSat = dvar_value(dvar_compassMinSaturation);
-    float compassSize = dvar_value(dvar_compassSize);
+    float maxRange = dvar_value(cg_hudCompassMaxRange);
+    float minRange = dvar_value(cg_hudCompassMinRange);
+    float minSat = dvar_value(cg_hudCompassMinRadius);
+    float compassSize = dvar_value(cg_hudCompassSize);
 
     float clampedDist = dist;
     if (clampedDist > maxRange)
@@ -138,7 +137,7 @@ void CG_DrawCompassFriendlies(rectDef_t *rect, MaterialHandle material, vec_t *c
     int team;
     int i;
 
-    const dvar_t *fadeDvar = *dvar_compassFade;
+    const dvar_t *fadeDvar = hud_fade_compass;
     int duration = I_fround(fadeDvar->current.value * 1000.0f);
 
     int displayStartTime = cg->compassFadeTime;
@@ -162,7 +161,7 @@ void CG_DrawCompassFriendlies(rectDef_t *rect, MaterialHandle material, vec_t *c
 
     CG_UpdateCompPointerOrientation();
 
-    float compassSize = dvar_value(dvar_compassSize);
+    float compassSize = dvar_value(cg_hudCompassSize);
     centerX = rect->x + 0.5f * compassSize * rect->w;
     centerY = rect->y + rect->h + (-0.5f) * compassSize * rect->h;
 
@@ -324,13 +323,13 @@ draw_friendlies:
             float yawTo = vectoyaw(dirVec);
             yawTo = AngleNormalize360(yawTo - cg->compPointerYaw);
 
-            float clampSat = dvar_value(dvar_compassClampSaturation);
+            float clampSat = dvar_value(cg_hudObjectiveMinAlpha);
             iconAlpha2 = clampSat + (1.0f - clampSat) * 0.5f;
 
-            float compassSize2 = dvar_value(dvar_compassSize);
-            float minRange = dvar_value(dvar_compassMinRange);
-            float maxRange = dvar_value(dvar_compassMaxRange);
-            float minSat = dvar_value(dvar_compassMinSaturation);
+            float compassSize2 = dvar_value(cg_hudCompassSize);
+            float minRange = dvar_value(cg_hudCompassMinRange);
+            float maxRange = dvar_value(cg_hudCompassMaxRange);
+            float minSat = dvar_value(cg_hudCompassMinRadius);
             float rangeFrac = (maxRange - minRange) / (maxRange - minRange);
             float saturation = minSat + rangeFrac * (1.0f - minSat);
             float radius = (float)((double)compassSize2 * 43.75 * (double)saturation);
@@ -340,7 +339,7 @@ draw_friendlies:
             float cosVal = cosf(radians);
 
             float w = compassSize2 * 10.0f;
-            float h = dvar_value(dvar_compassSize) * 10.0f;
+            float h = dvar_value(cg_hudCompassSize) * 10.0f;
             float x = centerX + w * (-0.5f) - radius * sinVal;
             float y = centerY + h * (-0.5f) - radius * cosVal;
 
@@ -362,7 +361,7 @@ draw_friendlies:
             }
 
             int beginFade = actor->beginFadeTime;
-            float pingFadeTime = dvar_value(dvar_compassPingFadeTime);
+            float pingFadeTime = dvar_value(cg_hudCompassSoundPingFadeTime);
             float fadeEnd = (float)beginFade + pingFadeTime * 1000.0f;
             MaterialHandle friendMat = NULL;
             float iconAlpha;
@@ -419,12 +418,12 @@ draw_friendlies:
 
         float dist = sqrtf(posDelta[0] * posDelta[0] + posDelta[1] * posDelta[1]);
 
-        float clampDistVal = dvar_value(dvar_compassClampDist);
-        float maxRangeVal = dvar_value(dvar_compassMaxRange);
-        float minRangeVal = dvar_value(dvar_compassMinRange);
-        float minSatVal = dvar_value(dvar_compassMinSaturation);
-        float clampSatVal = dvar_value(dvar_compassClampSaturation);
-        float compassSzVal = dvar_value(dvar_compassSize);
+        float clampDistVal = dvar_value(cg_hudObjectiveMaxRange);
+        float maxRangeVal = dvar_value(cg_hudCompassMaxRange);
+        float minRangeVal = dvar_value(cg_hudCompassMinRange);
+        float minSatVal = dvar_value(cg_hudCompassMinRadius);
+        float clampSatVal = dvar_value(cg_hudObjectiveMinAlpha);
+        float compassSzVal = dvar_value(cg_hudCompassSize);
 
         float alphaClampedDist;
         if (dist > clampDistVal) {
@@ -454,9 +453,9 @@ draw_friendlies:
         float sinVal2 = sinf(radians2);
         float cosVal2 = cosf(radians2);
 
-        float compassSzFinal = dvar_value(dvar_compassSize);
+        float compassSzFinal = dvar_value(cg_hudCompassSize);
         float w2 = compassSzFinal * 10.0f;
-        float h2 = dvar_value(dvar_compassSize) * 10.0f;
+        float h2 = dvar_value(cg_hudCompassSize) * 10.0f;
 
         float x2 = centerX + w2 * (-0.5f) - radius * sinVal2;
         float y2 = centerY + h2 * (-0.5f) - radius * cosVal2;
@@ -479,7 +478,7 @@ draw_friendlies:
         }
 
         int beginFade2 = cg->compassActors[i].beginFadeTime;
-        float pingFadeTime2 = dvar_value(dvar_compassPingFadeTime);
+        float pingFadeTime2 = dvar_value(cg_hudCompassSoundPingFadeTime);
         float fadeEnd2 = (float)beginFade2 + pingFadeTime2 * 1000.0f;
         MaterialHandle friendMat2 = NULL;
 
@@ -524,7 +523,7 @@ draw_friendlies:
 
             int pingBeginFade = actor2->beginFadeTime;
             cg_t *cg2 = cg;
-            float pingFadeVal = dvar_value(dvar_compassPingFadeTime);
+            float pingFadeVal = dvar_value(cg_hudCompassSoundPingFadeTime);
             float pingEnd = (float)pingBeginFade + pingFadeVal * 1000.0f;
             int cgTime2 = cg2->time;
             if ((float)cgTime2 > pingEnd)
@@ -547,9 +546,9 @@ draw_friendlies:
             float pingSin = sinf(pingRadians);
             float pingCos = cosf(pingRadians);
 
-            float compassSz3 = dvar_value(dvar_compassSize);
+            float compassSz3 = dvar_value(cg_hudCompassSize);
             float pw = compassSz3 * 10.0f;
-            float ph = dvar_value(dvar_compassSize) * 10.0f;
+            float ph = dvar_value(cg_hudCompassSize) * 10.0f;
 
             float px = centerX + pw * (-0.5f) - pingRadius * pingSin;
             float py = centerY + ph * (-0.5f) - pingRadius * pingCos;
@@ -562,7 +561,7 @@ draw_friendlies:
                 pingAlpha = 1.0f;
             } else {
                 float elapsed = (float)(cgTime3 - pingBeginFade);
-                float fadeRange = dvar_value(dvar_compassPingFadeTime) * -1000.0f;
+                float fadeRange = dvar_value(cg_hudCompassSoundPingFadeTime) * -1000.0f;
                 pingAlpha = 1.0f + elapsed / fadeRange;
             }
 

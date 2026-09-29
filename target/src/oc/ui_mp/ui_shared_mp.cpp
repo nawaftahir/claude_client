@@ -1523,7 +1523,7 @@ void Item_ListBox_Paint(displayContextDef_t *dc, itemDef_t *item)
     byte *it = (byte *)item;
     byte *listPtr;
     int count;
-    float sizeH;
+    float size, thumb;
     int startPos;
     int i, j;
     int numColumns;
@@ -1531,7 +1531,6 @@ void Item_ListBox_Paint(displayContextDef_t *dc, itemDef_t *item)
     const char *text;
     float x, y;
     byte *uiInfo;
-    int horzAlign, vertAlign;
 
     listPtr = (byte *)Item_GetListBoxDef(item);
     if (!listPtr)
@@ -1539,45 +1538,38 @@ void Item_ListBox_Paint(displayContextDef_t *dc, itemDef_t *item)
 
     count = UI_FeederCount(((itemDef_t *)it)->special);
 
-    horzAlign = (((rectDef_t*)(it))->horzAlign);
-    vertAlign = (((rectDef_t*)(it))->vertAlign);
-
     if (Window_IsHorizontal((Window *)it)) {
-
-        float hx = (((rectDef_t*)(it))->x) + 1.0f;
-        float hy_bottom = (((rectDef_t*)(it))->y);
-        hy_bottom = hy_bottom + (((rectDef_t*)(it))->h) - 16.0f - 1.0f;
+        x = (((rectDef_t*)(it))->x) + 1.0f;
+        y = (((rectDef_t*)(it))->y) + (((rectDef_t*)(it))->h) - 16.0f - 1.0f;
 
         uiInfo = (byte *)((void *)&sharedUiInfo);
 
         UI_DrawHandlePic(
-            hx, hy_bottom, 16.0f, 16.0f,
-            horzAlign, vertAlign, 0, ((sharedUiInfo_t*)uiInfo)->assets.scrollBarArrowLeft);
+            x, y, 16.0f, 16.0f,
+            ((rectDef_t *)it)->horzAlign, ((rectDef_t *)it)->vertAlign, 0, ((sharedUiInfo_t*)uiInfo)->assets.scrollBarArrowLeft);
 
-        float trackX = hx + 15.0f;
+        x += 16.0f - 1.0f;
 
-        float trackW = (((rectDef_t*)(it))->w) - 32.0f;
+        size = (((rectDef_t*)(it))->w) - 32.0f;
         UI_DrawHandlePic(
-            trackX, hy_bottom, trackW + 1.0f, 16.0f,
-            horzAlign, vertAlign, 0, ((sharedUiInfo_t*)uiInfo)->assets.scrollBar);
+            x, y, size + 1.0f, 16.0f,
+            ((rectDef_t *)it)->horzAlign, ((rectDef_t *)it)->vertAlign, 0, ((sharedUiInfo_t*)uiInfo)->assets.scrollBar);
 
-        float rightArrowX = trackW - 1.0f + trackX;
+        x += size - 1.0f;
         UI_DrawHandlePic(
-            rightArrowX, hy_bottom, 16.0f, 16.0f,
-            horzAlign, vertAlign, 0, ((sharedUiInfo_t *)uiInfo)->assets.scrollBarArrowRight);
+            x, y, 16.0f, 16.0f,
+            ((rectDef_t *)it)->horzAlign, ((rectDef_t *)it)->vertAlign, 0, ((sharedUiInfo_t *)uiInfo)->assets.scrollBarArrowRight);
 
-        int thumbPos = Item_ListBox_ThumbDrawPosition(dc, item);
-        float thumbX = (float)thumbPos;
-        float thumbMax = rightArrowX - 16.0f - 1.0f;
-        if (thumbMax < thumbX)
-            thumbX = thumbMax;
+        thumb = (float)Item_ListBox_ThumbDrawPosition(dc, item);
+        if (thumb > x - 16.0f - 1.0f)
+            thumb = x - 16.0f - 1.0f;
         UI_DrawHandlePic(
-            thumbX, hy_bottom, 16.0f, 16.0f,
-            horzAlign, vertAlign, 0, ((sharedUiInfo_t*)uiInfo)->assets.scrollBarThumb);
+            thumb, y, 16.0f, 16.0f,
+            ((rectDef_t *)it)->horzAlign, ((rectDef_t *)it)->vertAlign, 0, ((sharedUiInfo_t*)uiInfo)->assets.scrollBarThumb);
 
         ListBox_SetEndPos( (listBoxDef_t *)((itemDef_t *)((void *)listPtr)), *(int *)listPtr);
 
-        float size = (((rectDef_t*)(it))->w) - 2.0f;
+        size = (((rectDef_t*)(it))->w) - 2.0f;
 
         if (((listBoxDef_t *)listPtr)->elementStyle != 1)
             return;
@@ -1595,20 +1587,20 @@ void Item_ListBox_Paint(displayContextDef_t *dc, itemDef_t *item)
                     x + 1.0f, y + 1.0f,
                     (((listBoxDef_s*)(listPtr))->elementWidth) - 2.0f,
                     (((listBoxDef_s*)(listPtr))->elementHeight) - 2.0f,
-                    horzAlign, vertAlign, 0, img);
+                    ((rectDef_t *)it)->horzAlign, ((rectDef_t *)it)->vertAlign, 0, img);
             }
 
             if (i == ((itemDef_t *)it)->cursorPos[0]) {
                 UI_DrawRect(x, y,
                             (((listBoxDef_s*)(listPtr))->elementWidth) - 1.0f,
                             (((listBoxDef_s*)(listPtr))->elementHeight) - 1.0f,
-                            horzAlign, vertAlign,
+                            ((rectDef_t *)it)->horzAlign, ((rectDef_t *)it)->vertAlign,
                             ((itemDef_t *)it)->window.borderSize,
                             ((itemDef_t *)it)->window.borderColor);
             }
 
             size -= (((listBoxDef_s*)(listPtr))->elementWidth);
-            if ((((listBoxDef_s*)(listPtr))->elementWidth) > size) {
+            if (size < (((listBoxDef_s*)(listPtr))->elementWidth)) {
                 (((listBoxDef_s*)(listPtr))->drawPadding) = (int)size;
                 return;
             }
@@ -1625,184 +1617,144 @@ void Item_ListBox_Paint(displayContextDef_t *dc, itemDef_t *item)
     numColumns = ((listBoxDef_t *)listPtr)->noScrollBars;
 
     if (numColumns == 0) {
-
-        float scrollX = (((rectDef_t*)(it))->x);
-        scrollX = scrollX + (((rectDef_t*)(it))->w) - 16.0f - 1.0f;
-
-        float scrollY = (((rectDef_t*)(it))->y) + 1.0f;
+        x = (((rectDef_t*)(it))->w) + (((rectDef_t*)(it))->x) - 16.0f - 1.0f;
+        y = (((rectDef_t*)(it))->y) + 1.0f;
 
         uiInfo = (byte *)((void *)&sharedUiInfo);
 
         UI_DrawHandlePic(
-            scrollX, scrollY, 16.0f, 16.0f,
-            horzAlign, vertAlign, 0, *(MaterialHandle *)uiInfo);
+            x, y, 16.0f, 16.0f,
+            ((rectDef_t *)it)->horzAlign, ((rectDef_t *)it)->vertAlign, 0, *(MaterialHandle *)uiInfo);
 
-        float trackY = scrollY + 15.0f;
+        y += 16.0f - 1.0f;
 
         ListBox_SetEndPos( (listBoxDef_t *)((itemDef_t *)((void *)listPtr)), *(int *)listPtr);
 
-        float trackH = (((rectDef_t*)(it))->h) - 32.0f;
+        size = (((rectDef_t*)(it))->h) - 32.0f;
         UI_DrawHandlePic(
-            scrollX, trackY, 16.0f, trackH + 1.0f,
-            horzAlign, vertAlign, 0, ((sharedUiInfo_t*)uiInfo)->assets.scrollBar);
+            x, y, 16.0f, size + 1.0f,
+            ((rectDef_t *)it)->horzAlign, ((rectDef_t *)it)->vertAlign, 0, ((sharedUiInfo_t*)uiInfo)->assets.scrollBar);
 
-        float downArrowY = trackH - 1.0f + trackY;
+        y += size - 1.0f;
         UI_DrawHandlePic(
-            scrollX, downArrowY, 16.0f, 16.0f,
-            horzAlign, vertAlign, 0, ((sharedUiInfo_t*)uiInfo)->assets.scrollBarArrowDown);
+            x, y, 16.0f, 16.0f,
+            ((rectDef_t *)it)->horzAlign, ((rectDef_t *)it)->vertAlign, 0, ((sharedUiInfo_t*)uiInfo)->assets.scrollBarArrowDown);
 
-        int thumbPos2 = Item_ListBox_ThumbDrawPosition(dc, item);
-        float thumbY = (float)thumbPos2;
-        float thumbMax2 = downArrowY - 16.0f - 1.0f;
-        if (thumbMax2 < thumbY)
-            thumbY = thumbMax2;
+        thumb = (float)Item_ListBox_ThumbDrawPosition(dc, item);
+        if (thumb > y - 16.0f - 1.0f)
+            thumb = y - 16.0f - 1.0f;
         UI_DrawHandlePic(
-            scrollX, thumbY, 16.0f, 16.0f,
-            horzAlign, vertAlign, 0, ((sharedUiInfo_t*)uiInfo)->assets.scrollBarThumb);
+            x, thumb, 16.0f, 16.0f,
+            ((rectDef_t *)it)->horzAlign, ((rectDef_t *)it)->vertAlign, 0, ((sharedUiInfo_t*)uiInfo)->assets.scrollBarThumb);
     }
 
-    sizeH = (((rectDef_t*)(it))->h) - 2.0f;
+    size = (((rectDef_t*)(it))->h) - 2.0f;
+    x = (((rectDef_t*)(it))->x) + 1.0f;
+    y = (((rectDef_t*)(it))->y) + 1.0f;
 
     if (((listBoxDef_t *)listPtr)->elementStyle == 1) {
 
-        float ix = (((rectDef_t*)(it))->x) + 1.0f;
-        float iy = (((rectDef_t*)(it))->y) + 1.0f;
-        startPos = *(int *)listPtr;
-
-        if (count <= startPos)
-            return;
-
-        float ix2 = ix + 1.0f;
-        i = startPos;
-
-        while (i < count) {
+        for (i = *(int *)listPtr; i < count; i++) {
 
             MaterialHandle img2 = UI_FeederItemImage(((itemDef_t *)it)->special, i);
             if (img2) {
                 UI_DrawHandlePic(
-                    ix2, iy + 1.0f,
+                    x + 1.0f, y + 1.0f,
                     (((listBoxDef_s*)(listPtr))->elementWidth) - 2.0f,
                     (((listBoxDef_s*)(listPtr))->elementHeight) - 2.0f,
-                    horzAlign, vertAlign, 0, img2);
+                    ((rectDef_t *)it)->horzAlign, ((rectDef_t *)it)->vertAlign, 0, img2);
             }
 
             if (i == ((itemDef_t *)it)->cursorPos[0]) {
-                UI_DrawRect(ix, iy,
+                UI_DrawRect(x, y,
                             (((listBoxDef_s*)(listPtr))->elementWidth) - 1.0f,
                             (((listBoxDef_s*)(listPtr))->elementHeight) - 1.0f,
-                            horzAlign, vertAlign,
+                            ((rectDef_t *)it)->horzAlign, ((rectDef_t *)it)->vertAlign,
                             ((itemDef_t *)it)->window.borderSize,
                             ((itemDef_t *)it)->window.borderColor);
             }
 
             ListBox_SetEndPos( (listBoxDef_t *)((itemDef_t *)((void *)listPtr)), (((listBoxDef_s*)(listPtr))->endPos[0]) + 1);
-            sizeH -= (((listBoxDef_s*)(listPtr))->elementWidth);
-            if ((((listBoxDef_s*)(listPtr))->elementHeight) > sizeH) {
-                (((listBoxDef_s*)(listPtr))->drawPadding) = (int)((((listBoxDef_s*)(listPtr))->elementHeight) - sizeH);
+            size -= (((listBoxDef_s*)(listPtr))->elementWidth);
+            if (size < (((listBoxDef_s*)(listPtr))->elementHeight)) {
+                (((listBoxDef_s*)(listPtr))->drawPadding) = (int)((((listBoxDef_s*)(listPtr))->elementHeight) - size);
                 return;
             }
-            iy += (((listBoxDef_s*)(listPtr))->elementHeight);
-            i++;
+            y += (((listBoxDef_s*)(listPtr))->elementHeight);
         }
         return;
     }
 
-    {
-        float baseX = (((rectDef_t*)(it))->x) + 1.0f;
-        y = (((rectDef_t*)(it))->y) + 1.0f;
-        startPos = *(int *)(listPtr);
+    for (i = *(int *)listPtr; i < count; i++) {
+        if ((((listBoxDef_s*)(listPtr))->numColumns) > 0) {
 
-        if (count <= startPos)
-            return;
+            byte *col;
+            for (j = 0, col = listPtr; j < (((listBoxDef_s*)(listPtr))->numColumns); j++) {
 
-        i = startPos;
-        float preX4 = baseX + 4.0f;
-        float preX2a = baseX + 2.0f;
-        float preX2b = baseX + 2.0f;
-
-        while (1) {
-            int colCount = (((listBoxDef_s*)(listPtr))->numColumns);
-
-            if (colCount > 0) {
-
-                byte *col = listPtr;
-                j = 0;
-                while (j < (((listBoxDef_s*)(listPtr))->numColumns)) {
-
-                    text = UI_FeederItemText(((itemDef_t *)it)->special, i, j, &optionalImage);
-
-                    if (optionalImage) {
-
-                        float imgSize = (float)((((listBoxDef_s*)(col))->columnInfo[0].width));
-                        UI_DrawHandlePic(
-                            (float)((((listBoxDef_s*)(col))->columnInfo[0].pos)) + preX2b,
-                            y + 3.0f,
-                            imgSize, imgSize,
-                            horzAlign, vertAlign, 0, optionalImage);
-                    } else if (text) {
-
-                        float textScale = ((itemDef_t *)it)->textscale;
-                        FontHandle font = UI_GetFontHandle(((itemDef_t *)it)->fontEnum, textScale);
-                        float drawX = (float)((((listBoxDef_s*)(col))->columnInfo[0].pos)) + preX4 + (((itemDef_s*)(it))->textalignx);
-                        float drawY = y + (((listBoxDef_s*)(listPtr))->elementHeight) + (((itemDef_s*)(it))->textaligny);
-                        UI_DrawText(text, (((listBoxDef_s*)(col))->columnInfo[0].maxChars), font,
-                                    drawX, drawY,
-                                    horzAlign, vertAlign,
-                                    textScale,
-                                    ((itemDef_t *)it)->window.foreColor,
-                                    (((itemDef_s*)(it))->textStyle));
-                    }
-                    j++;
-                    col += 0xc;
-                }
-            } else {
-
-                text = UI_FeederItemText(((itemDef_t *)it)->special, i, 0, &optionalImage);
+                text = UI_FeederItemText(((itemDef_t *)it)->special, i, j, &optionalImage);
 
                 if (optionalImage) {
 
+                    float imgSize = (float)((((listBoxDef_s*)(col))->columnInfo[0].width));
                     UI_DrawHandlePic(
-                        preX2a,
-                        y + 2.0f,
-                        (((listBoxDef_s*)(listPtr))->elementWidth) - 4.0f,
-                        (((listBoxDef_s*)(listPtr))->elementHeight) - 4.0f,
-                        horzAlign, vertAlign, 0, optionalImage);
+                        (float)((((listBoxDef_s*)(col))->columnInfo[0].pos)) + x + 2.0f,
+                        y + 3.0f,
+                        imgSize, imgSize,
+                        ((rectDef_t *)it)->horzAlign, ((rectDef_t *)it)->vertAlign, 0, optionalImage);
                 } else if (text) {
 
-                    float textScale2 = ((itemDef_t *)it)->textscale;
-                    FontHandle font2 = UI_GetFontHandle(((itemDef_t *)it)->fontEnum, textScale2);
-                    float drawX2 = preX4;
-                    float drawY2 = y + (((listBoxDef_s*)(listPtr))->elementHeight);
-                    UI_DrawText(text, 0x7fffffff, font2,
-                                drawX2, drawY2,
-                                horzAlign, vertAlign,
-                                textScale2,
+                    float textScale = ((itemDef_t *)it)->textscale;
+                    UI_DrawText(text, (((listBoxDef_s*)(col))->columnInfo[0].maxChars),
+                                UI_GetFontHandle(((itemDef_t *)it)->fontEnum, textScale),
+                                (float)((((listBoxDef_s*)(col))->columnInfo[0].pos)) + (((itemDef_s*)(it))->textalignx) + x + 4.0f,
+                                (((itemDef_s*)(it))->textaligny) + (((listBoxDef_s*)(listPtr))->elementHeight) + y,
+                                ((rectDef_t *)it)->horzAlign, ((rectDef_t *)it)->vertAlign,
+                                textScale,
                                 ((itemDef_t *)it)->window.foreColor,
                                 (((itemDef_s*)(it))->textStyle));
                 }
+                col += 0xc;
             }
+        } else {
 
-            if (i == ((itemDef_t *)it)->cursorPos[0]) {
-                UI_FillRect(preX2a, y + 2.0f,
-                            (((rectDef_t*)(it))->w) - 16.0f - 4.0f,
-                            (((listBoxDef_s*)(listPtr))->elementHeight),
-                            horzAlign, vertAlign,
-                            (float *)(((char *)it + offsetof(itemDef_t, window.outlineColor[0]))));
+            text = UI_FeederItemText(((itemDef_t *)it)->special, i, 0, &optionalImage);
+
+            if (optionalImage) {
+
+                UI_DrawHandlePic(
+                    x + 2.0f,
+                    y + 2.0f,
+                    (((listBoxDef_s*)(listPtr))->elementWidth) - 4.0f,
+                    (((listBoxDef_s*)(listPtr))->elementHeight) - 4.0f,
+                    ((rectDef_t *)it)->horzAlign, ((rectDef_t *)it)->vertAlign, 0, optionalImage);
+            } else if (text) {
+
+                float textScale2 = ((itemDef_t *)it)->textscale;
+                UI_DrawText(text, 0x7fffffff, UI_GetFontHandle(((itemDef_t *)it)->fontEnum, textScale2),
+                            x + 4.0f, y + (((listBoxDef_s*)(listPtr))->elementHeight),
+                            ((rectDef_t *)it)->horzAlign, ((rectDef_t *)it)->vertAlign,
+                            textScale2,
+                            ((itemDef_t *)it)->window.foreColor,
+                            (((itemDef_s*)(it))->textStyle));
             }
-
-            sizeH -= (((listBoxDef_s*)(listPtr))->elementHeight);
-            if ((((listBoxDef_s*)(listPtr))->elementHeight) > sizeH) {
-                (((listBoxDef_s*)(listPtr))->drawPadding) = (int)((((listBoxDef_s*)(listPtr))->elementHeight) - sizeH);
-                return;
-            }
-
-            ListBox_SetEndPos( (listBoxDef_t *)((itemDef_t *)((void *)listPtr)), (((listBoxDef_s*)(listPtr))->endPos[0]) + 1);
-            y += (((listBoxDef_s*)(listPtr))->elementHeight);
-
-            i++;
-            if (i == count)
-                return;
         }
+
+        if (i == ((itemDef_t *)it)->cursorPos[0]) {
+            UI_FillRect(x + 2.0f, y + 2.0f,
+                        (((rectDef_t*)(it))->w) - 16.0f - 4.0f,
+                        (((listBoxDef_s*)(listPtr))->elementHeight),
+                        ((rectDef_t *)it)->horzAlign, ((rectDef_t *)it)->vertAlign,
+                        (float *)(((char *)it + offsetof(itemDef_t, window.outlineColor[0]))));
+        }
+
+        size -= (((listBoxDef_s*)(listPtr))->elementHeight);
+        if (size < (((listBoxDef_s*)(listPtr))->elementHeight)) {
+            (((listBoxDef_s*)(listPtr))->drawPadding) = (int)((((listBoxDef_s*)(listPtr))->elementHeight) - size);
+            return;
+        }
+
+        ListBox_SetEndPos( (listBoxDef_t *)((itemDef_t *)((void *)listPtr)), (((listBoxDef_s*)(listPtr))->endPos[0]) + 1);
+        y += (((listBoxDef_s*)(listPtr))->elementHeight);
     }
 }
 
@@ -1859,23 +1811,20 @@ void Script_SetItemColor(displayContextDef_t *dc, itemDef_t *item, const char **
 void Window_Paint(displayContextDef_t *dc, float (*w_param)[4][32], float fadeAmount, float fadeInAmount, float fadeClamp, float fadeCycle)
 {
     byte *w = (byte *)w_param;
-    float x, y, ww, hh;
+    rectDef_t fillRect;
     float color[4];
     int borderStyle, borderSizeFlag;
     int handle;
 
-    hh = (((rectDef_t*)(w))->h);
-    ww = (((rectDef_t*)(w))->w);
-    y = (((rectDef_t*)(w))->y);
-    x = (((rectDef_t*)(w))->x);
+    fillRect = *(rectDef_t *)w;
 
     if (debugMode) {
         color[0] = 1.0f;
         color[1] = 1.0f;
         color[2] = 1.0f;
         color[3] = 1.0f;
-        UI_DrawRect(x, y, ww, hh,
-                    (((rectDef_t*)(w))->horzAlign), (((rectDef_t*)(w))->vertAlign),
+        UI_DrawRect(((rectDef_t *)w)->x, ((rectDef_t *)w)->y, ((rectDef_t *)w)->w, ((rectDef_t *)w)->h,
+                    ((rectDef_t *)w)->horzAlign, ((rectDef_t *)w)->vertAlign,
                     1.0f, color);
     }
 
@@ -1891,10 +1840,10 @@ void Window_Paint(displayContextDef_t *dc, float (*w_param)[4][32], float fadeAm
     if (borderSizeFlag != 0) {
 
         float bs = ((windowDef_t *)w)->borderSize;
-        x += bs;
-        y += bs;
-        ww -= (bs + 1.0f);
-        hh -= (bs + 1.0f);
+        fillRect.x += bs;
+        fillRect.y += bs;
+        fillRect.w -= (bs + 1.0f);
+        fillRect.h -= (bs + 1.0f);
     }
 
     if (borderStyle <= 7) {
@@ -1904,7 +1853,7 @@ void Window_Paint(displayContextDef_t *dc, float (*w_param)[4][32], float fadeAm
             MaterialHandle background = ((windowDef_t *)w)->background;
             if (background == 0) {
 
-                UI_FillRect(x, y, ww, hh,
+                UI_FillRect(fillRect.x, fillRect.y, fillRect.w, fillRect.h,
                             (((rectDef_t*)(w))->horzAlign), (((rectDef_t*)(w))->vertAlign),
                             (const vec_t *)(((char *)w + offsetof(windowDef_t, backColor[0]))));
                 break;
@@ -1941,7 +1890,7 @@ void Window_Paint(displayContextDef_t *dc, float (*w_param)[4][32], float fadeAm
             }
 
             UI_DrawHandlePic(
-                x, y, ww, hh,
+                fillRect.x, fillRect.y, fillRect.w, fillRect.h,
                 (((rectDef_t*)(w))->horzAlign), (((rectDef_t*)(w))->vertAlign),
                 (float *)(((char *)w + offsetof(windowDef_t, backColor[0]))), ((windowDef_t *)w)->background);
             break;
@@ -1953,7 +1902,7 @@ void Window_Paint(displayContextDef_t *dc, float (*w_param)[4][32], float fadeAm
             if ((((Window *)w)->dynamicFlags[0] & 0x10000))
                 fillColor = (float *)(((char *)w + offsetof(windowDef_t, foreColor[0])));
             UI_DrawHandlePic(
-                x, y, ww, hh,
+                fillRect.x, fillRect.y, fillRect.w, fillRect.h,
                 (((rectDef_t*)(w))->horzAlign), (((rectDef_t*)(w))->vertAlign),
                 fillColor, ((windowDef_t *)w)->background);
             break;
@@ -1966,7 +1915,7 @@ void Window_Paint(displayContextDef_t *dc, float (*w_param)[4][32], float fadeAm
 
                 int result = CIN_PlayCinematic(
                     ((windowDef_t *)w)->cinematicName,
-                    (int)x, (int)y, (int)ww, (int)hh, 0x0a);
+                    (int)fillRect.x, (int)fillRect.y, (int)fillRect.w, (int)fillRect.h, 0x0a);
                 if (result != -1)
                     handle = result;
                 else
@@ -1976,7 +1925,7 @@ void Window_Paint(displayContextDef_t *dc, float (*w_param)[4][32], float fadeAm
             if (handle < 0)
                 break;
             CIN_RunCinematic(handle);
-            CIN_SetExtents(((windowDef_t *)w)->cinematic, (int)x, (int)y, (int)ww, (int)hh);
+            CIN_SetExtents(((windowDef_t *)w)->cinematic, (int)fillRect.x, (int)fillRect.y, (int)fillRect.w, (int)fillRect.h);
             CIN_DrawCinematic(((windowDef_t *)w)->cinematic);
             break;
         }
@@ -1991,7 +1940,7 @@ void Window_Paint(displayContextDef_t *dc, float (*w_param)[4][32], float fadeAm
                 if ((((Window *)w)->dynamicFlags[0] & 0x10000))
                     fillColor = (float *)(((char *)w + offsetof(windowDef_t, foreColor[0])));
                 UI_DrawHandlePic(
-                    x, y, ww, hh,
+                    fillRect.x, fillRect.y, fillRect.w, fillRect.h,
                     (((rectDef_t*)(w))->horzAlign), (((rectDef_t*)(w))->vertAlign),
                     fillColor, background);
             }
@@ -2004,7 +1953,7 @@ void Window_Paint(displayContextDef_t *dc, float (*w_param)[4][32], float fadeAm
             if ((((Window *)w)->dynamicFlags[0] & 0x10000))
                 fillColor = (float *)(((char *)w + offsetof(windowDef_t, foreColor[0])));
             UI_DrawLoadBar(
-                x, y, ww, hh,
+                fillRect.x, fillRect.y, fillRect.w, fillRect.h,
                 (((rectDef_t*)(w))->horzAlign), (((rectDef_t*)(w))->vertAlign),
                 fillColor, ((windowDef_t *)w)->background);
             break;

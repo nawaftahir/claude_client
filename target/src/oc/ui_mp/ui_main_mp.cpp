@@ -3239,7 +3239,7 @@ void UI_RunMenuScript(const char **args)
     char buff[1024];
     char buff2[1024];
     char out[32];
-    char addr[32];
+    char hostName[32];
     char name2[1024];
     char testValue[1024];
     char dvarName[1024];
@@ -3584,8 +3584,8 @@ void UI_RunMenuScript(const char **args)
         if ((ui_netSource)->current.integer == 2)
             return;
 
-        addr[0] = '\0';
         out[0] = '\0';
+        hostName[0] = '\0';
 
         UI_UpdateServerCount();
 
@@ -3596,10 +3596,10 @@ void UI_RunMenuScript(const char **args)
                 LAN_GetServerInfo((ui_netSource)->current.integer,
                                   sharedUiInfo.serverStatus.displayServers[selectedServer],
                                   buff, 0x400);
-                I_strncpyz(out, Info_ValueForKey(buff, "hostname"), 0x20);
-                I_strncpyz(addr, Info_ValueForKey(buff, "addr"), 0x20);
+                I_strncpyz(hostName, Info_ValueForKey(buff, "hostname"), 0x20);
+                I_strncpyz(out, Info_ValueForKey(buff, "addr"), 0x20);
             }
-            UI_AddServerToFavoritesList(out, addr);
+            UI_AddServerToFavoritesList(hostName, out);
         }
         return;
     }
@@ -3608,22 +3608,19 @@ void UI_RunMenuScript(const char **args)
         if ((ui_netSource)->current.integer != 2)
             return;
 
-        {
-            int selectedServer = sharedUiInfo.serverStatus.currentServer;
-            if (selectedServer < 0 || selectedServer >= sharedUiInfo.serverStatus.numDisplayServers)
-                return;
+        if (sharedUiInfo.serverStatus.currentServer < 0
+            || sharedUiInfo.serverStatus.currentServer >= sharedUiInfo.serverStatus.numDisplayServers)
+            return;
 
-            UI_UpdateServerCount();
+        UI_UpdateServerCount();
 
-            LAN_GetServerInfo((ui_netSource)->current.integer,
-                              sharedUiInfo.serverStatus.displayServers[selectedServer],
-                              buff, 0x400);
-            addr[0] = '\0';
-            I_strncpyz(addr, Info_ValueForKey(buff, "addr"), 0x20);
-            if (addr[0] == '\0')
-                return;
-            LAN_RemoveServer(2, addr);
-        }
+        LAN_GetServerInfo((ui_netSource)->current.integer,
+                          sharedUiInfo.serverStatus.displayServers[sharedUiInfo.serverStatus.currentServer],
+                          buff, 0x400);
+        out[0] = '\0';
+        I_strncpyz(out, Info_ValueForKey(buff, "addr"), 0x20);
+        if (strlen(out) > 0)
+            LAN_RemoveServer(2, out);
         return;
     }
 
@@ -3631,11 +3628,11 @@ void UI_RunMenuScript(const char **args)
         if ((ui_netSource)->current.integer != 2)
             return;
 
+        hostName[0] = '\0';
         out[0] = '\0';
-        addr[0] = '\0';
-        I_strncpyz(addr, Dvar_GetVariantString("ui_favoriteName"), 0x20);
-        I_strncpyz(out, Dvar_GetVariantString("ui_favoriteAddress"), 0x20);
-        UI_AddServerToFavoritesList(addr, out);
+        I_strncpyz(out, Dvar_GetVariantString("ui_favoriteName"), 0x20);
+        I_strncpyz(hostName, Dvar_GetVariantString("ui_favoriteAddress"), 0x20);
+        UI_AddServerToFavoritesList(out, hostName);
         return;
     }
 
