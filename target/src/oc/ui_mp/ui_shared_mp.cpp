@@ -970,6 +970,11 @@ qboolean Menu_CheckOnKey(displayContextDef_t *dc, menuDef_t *menu, int key)
     return 0;
 }
 
+static bool Window_IsHorizontal(Window *w)
+{
+    return ((unsigned int)w->staticFlags >> 21) & 1;
+}
+
 bool Window_IsVisible(Window *w)
 {
     return ((unsigned int)w->dynamicFlags[0] >> 2) & 1;
@@ -1010,7 +1015,7 @@ int Item_ListBox_MaxScroll(itemDef_t *item)
     if (!listPtr)
         return 0;
     int visibleRows;
-    if ((((Window *)it)->staticFlags & 0x200000)) {
+    if (Window_IsHorizontal((Window *)it)) {
 
         visibleRows = (int)((((rectDef_t*)(it))->w) / (((listBoxDef_s*)(listPtr))->elementWidth));
     } else {
@@ -1035,7 +1040,7 @@ int Item_ListBox_ThumbPosition(itemDef_t *item)
 
     maxScroll = Item_ListBox_MaxScroll(item);
 
-    if ((((Window *)it)->staticFlags & 0x200000)) {
+    if (Window_IsHorizontal((Window *)it)) {
 
         scrollArea = (((rectDef_t*)(it))->w) - 32.0f - 2.0f;
         ratio = (maxScroll > 0) ? (scrollArea - 16.0f) / (float)maxScroll : 0.0f;
@@ -1050,29 +1055,24 @@ int Item_ListBox_ThumbPosition(itemDef_t *item)
 
 int Item_ListBox_ThumbDrawPosition(displayContextDef_t *dc, itemDef_t *item)
 {
-    byte *it = (byte *)item;
-    byte *d = (byte *)dc;
+    int min, max;
 
-    if ((itemDef_t *)item != itemCapture)
-        return Item_ListBox_ThumbPosition(item);
-
-    if (((unsigned)((Window *)it)->staticFlags >> 21) & 1) {
-
-        int max = (int)((((rectDef_t*)(it))->x) + (((rectDef_t*)(it))->w) - 32.0f - 1.0f);
-        int cursor = ((displayContextDef_t *)d)->cursorx;
-        int minPos = (int)((((rectDef_t*)(it))->x) + 16.0f + 1.0f) + 8;
-        if (cursor < minPos || cursor > max + 8)
+    if (itemCapture == item) {
+        if (Window_IsHorizontal((Window *)item)) {
+            min = (int)(((rectDef_t *)item)->x + 16.0f + 1.0f);
+            max = (int)(((rectDef_t *)item)->x + ((rectDef_t *)item)->w - 32.0f - 1.0f);
+            if (dc->cursorx >= min + 8 && dc->cursorx <= max + 8)
+                return dc->cursorx - 8;
             return Item_ListBox_ThumbPosition(item);
-        return cursor - 8;
-    } else {
-
-        int max = (int)((((rectDef_t*)(it))->y) + (((rectDef_t*)(it))->h) - 32.0f - 1.0f);
-        int cursor = (((displayContextDef_s*)(d))->cursory);
-        int minPos = (int)((((rectDef_t*)(it))->y) + 16.0f + 1.0f) + 8;
-        if (cursor < minPos || cursor > max + 8)
+        } else {
+            min = (int)(((rectDef_t *)item)->y + 16.0f + 1.0f);
+            max = (int)(((rectDef_t *)item)->y + ((rectDef_t *)item)->h - 32.0f - 1.0f);
+            if (dc->cursory >= min + 8 && dc->cursory <= max + 8)
+                return dc->cursory - 8;
             return Item_ListBox_ThumbPosition(item);
-        return cursor - 8;
+        }
     }
+    return Item_ListBox_ThumbPosition(item);
 }
 
 static void Scroll_Slider_SetThumbPos_impl(byte *dc, byte *item)
@@ -1504,7 +1504,7 @@ void Item_ListBox_Paint(displayContextDef_t *dc, itemDef_t *item)
     horzAlign = (((rectDef_t*)(it))->horzAlign);
     vertAlign = (((rectDef_t*)(it))->vertAlign);
 
-    if ((((Window *)it)->staticFlags & 0x200000)) {
+    if (Window_IsHorizontal((Window *)it)) {
 
         float hx = (((rectDef_t*)(it))->x) + 1.0f;
         float hy_bottom = (((rectDef_t*)(it))->y);
@@ -3533,7 +3533,7 @@ int Item_ListBox_OverLB(itemDef_t *item, float x, float y)
     if (!Item_GetListBoxDef(item))
         return 0;
 
-    if ((((Window *)it)->staticFlags & 0x200000)) {
+    if (Window_IsHorizontal((Window *)it)) {
 
         float scrollX = (((rectDef_t*)(it))->x) + (((rectDef_t*)(it))->w) - 16.0f;
         float itemY = (((rectDef_t*)(it))->y);
@@ -3715,7 +3715,7 @@ qboolean Item_ListBox_HandleKey(displayContextDef_t *dc, itemDef_t *item, int ke
     UI_OverrideCursorPos(item);
     max = Item_ListBox_MaxScroll(item);
 
-    if ((((Window *)it)->staticFlags & 0x200000)) {
+    if (Window_IsHorizontal((Window *)it)) {
 
         viewmax = (int)((((rectDef_t*)(it))->w) / (((listBoxDef_s*)(listPtr))->elementWidth));
 
@@ -3970,7 +3970,7 @@ static void Scroll_ListBox_ThumbFunc(displayContextDef_t *dc, void *p)
     if (!listPtr)
         return;
 
-    if ((((Window *)it)->staticFlags & 0x200000)) {
+    if (Window_IsHorizontal((Window *)it)) {
 
         float cursorX = (float)((displayContextDef_t *)d)->cursorx;
         if (cursorX == (((scrollInfo_s*)(scroll))->xStart))
@@ -4419,7 +4419,7 @@ void Item_ListBox_MouseEnter(itemDef_t *item, float x, float y)
     Window_AddDynamicFlags( (Window *)((itemDef_t *)((void *)it)), overLB);
     int horzAlign = (((rectDef_t*)(it))->horzAlign);
     int vertAlign = (((rectDef_t*)(it))->vertAlign);
-    if ((((Window *)it)->staticFlags & 0x200000)) {
+    if (Window_IsHorizontal((Window *)it)) {
         if (((itemDef_t *)it)->window.dynamicFlags[0] & 0x1f00)
             return;
         if (((listBoxDef_t *)listPtr)->elementStyle == 1) {
