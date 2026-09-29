@@ -1,4 +1,4 @@
-#include <string>
+#include "stringed_alloc.h"
 #include "../qcommon/qcommon.h"
 
 unsigned char *SE_LoadFileData( const char *psFileName )
@@ -17,7 +17,7 @@ void SE_FreeFileDataAfterLoad( unsigned char *psLoadedFile )
 
 static int giFilesFound;
 
-static void SE_R_ListFiles( const char *psExtension, const char *psDir, std::string &strResults )
+static void SE_R_ListFiles( const char *psExtension, const char *psDir, se_string &strResults )
 {
 	char **sysFiles;
 	char **dirFiles;
@@ -49,7 +49,7 @@ static void SE_R_ListFiles( const char *psExtension, const char *psDir, std::str
 	FS_FreeFileList(dirFiles, 10);
 }
 
-int SE_BuildFileList( const char *psStartDir, std::string &strResults )
+int SE_BuildFileList( const char *psStartDir, se_string &strResults )
 {
 	giFilesFound = 0;
 	strResults = "";

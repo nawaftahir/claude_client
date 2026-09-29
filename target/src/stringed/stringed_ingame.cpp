@@ -1,6 +1,7 @@
 // stringed_ingame.cpp -- StringEd package parser.
 #include <string>
 #include <map>
+#include "stringed_alloc.h"
 #include <cstring>
 #include <cctype>
 #include <strings.h>
@@ -24,45 +25,17 @@ extern void I_strncpyz( char *dest, const char *src, int destsize );
 extern char *I_strupr( char *s1 );
 extern unsigned char *SE_LoadFileData( const char *psFileName );
 extern void SE_FreeFileDataAfterLoad( unsigned char *psLoadedFile );
-extern int SE_BuildFileList( const char *psStartDir, string &strResults );
+extern int SE_BuildFileList( const char *psStartDir, se_string &strResults );
 
-// Nodes come from the C heap rather than the engine allocators.
-template<class T> class se_alloc
-{
-public:
-	typedef size_t size_type;
-	typedef ptrdiff_t difference_type;
-	typedef T *pointer;
-	typedef const T *const_pointer;
-	typedef T &reference;
-	typedef const T &const_reference;
-	typedef T value_type;
-
-	template<class U> struct rebind { typedef se_alloc<U> other; };
-
-	se_alloc() {}
-	template<class U> se_alloc( const se_alloc<U> & ) {}
-
-	pointer allocate( size_type n ) { return (pointer)malloc( n * sizeof(T) ); }
-	void deallocate( pointer p, size_type n ) { free( p ); }
-	void construct( pointer p, const T &val ) { new( p ) T( val ); }
-	void destroy( pointer p ) { p->~T(); }
-	size_type max_size() const { return (size_type)-1 / sizeof(T); }
-	pointer address( reference x ) const { return &x; }
-	const_pointer address( const_reference x ) const { return &x; }
-	bool operator==( const se_alloc & ) const { return true; }
-	bool operator!=( const se_alloc & ) const { return false; }
-};
-
-typedef map< string, string, less<string>, se_alloc< pair<const string, string> > > mapStringEntries_t;
+typedef map< se_string, se_string, less<se_string>, se_alloc< pair<const se_string, se_string> > > mapStringEntries_t;
 
 class CStringEdPackage
 {
 public:
 	SE_BOOL				m_bEndMarkerFound_ParseOnly;
-	string				m_strCurrentEntryRef_ParseOnly;
-	string				m_strCurrentEntryEnglish_ParseOnly;
-	string				m_strCurrentFileRef_ParseOnly;
+	se_string				m_strCurrentEntryRef_ParseOnly;
+	se_string				m_strCurrentEntryEnglish_ParseOnly;
+	se_string				m_strCurrentFileRef_ParseOnly;
 	mapStringEntries_t	m_StringEntries;
 
 	void *operator new( size_t size )
@@ -90,8 +63,8 @@ private:
 	void	AddEntry( LPCSTR psLocalReference );
 	void	SetString( LPCSTR psLocalReference, LPCSTR psNewString, SE_BOOL bEnglishDebug );
 	SE_BOOL	CheckLineForKeyword( LPCSTR psKeyword, LPCSTR &psLine );
-	string	InsideQuotes( LPCSTR psLine );
-	string	ConvertCRLiterals_Read( string psString );
+	se_string	InsideQuotes( LPCSTR psLine );
+	se_string	ConvertCRLiterals_Read( se_string psString );
 	void	REMKill( char *psBuffer );
 	char	*Filename_PathOnly( LPCSTR psFilename );
 	char	*Filename_WithoutPath( LPCSTR psFilename );
@@ -220,9 +193,9 @@ bool CStringEdPackage::IsStringFormatCorrect( const char *psString )
 }
 
 // change "\n" to '\n' (2-byte char-string to 1-byte ctrl-code)
-string CStringEdPackage::ConvertCRLiterals_Read( string psString )
+se_string CStringEdPackage::ConvertCRLiterals_Read( se_string psString )
 {
-	string str;
+	se_string str;
 	int iLoc;
 
 	str = psString;
@@ -316,9 +289,9 @@ SE_BOOL CStringEdPackage::ReadLine( LPCSTR &psParsePos, char *psDest )
 }
 
 // remove any outside quotes from this supplied line, plus any leading or trailing whitespace
-string CStringEdPackage::InsideQuotes( LPCSTR psLine )
+se_string CStringEdPackage::InsideQuotes( LPCSTR psLine )
 {
-	string str;
+	se_string str;
 
 	str = "";
 
@@ -361,7 +334,7 @@ LPCSTR CStringEdPackage::ParseLine( LPCSTR psLine, bool forceEnglish )
 		if (CheckLineForKeyword( "VERSION", psLine ))
 		{
 			// VERSION 	"1"
-			string strVersionNumber = InsideQuotes( psLine );
+			se_string strVersionNumber = InsideQuotes( psLine );
 			int iVersionNumber = atoi( strVersionNumber.c_str() );
 
 			if (iVersionNumber != iSE_VERSION)
@@ -412,7 +385,7 @@ LPCSTR CStringEdPackage::ParseLine( LPCSTR psLine, bool forceEnglish )
 				strncpy(sThisLanguage, psLine, iCharsToCopy);
 
 				psLine += strlen(sThisLanguage);
-				string strSentence = ConvertCRLiterals_Read( InsideQuotes( psLine ) );
+				se_string strSentence = ConvertCRLiterals_Read( InsideQuotes( psLine ) );
 
 				if ( !IsStringFormatCorrect(strSentence.c_str()) )
 				{
@@ -453,7 +426,7 @@ void CStringEdPackage::AddEntry( LPCSTR psLocalReference )
 	mapStringEntries_t::iterator itEntry = m_StringEntries.find( va("%s_%s",m_strCurrentFileRef_ParseOnly.c_str(), psLocalReference) );
 	if (itEntry == m_StringEntries.end())
 	{
-		string SE_Entry;
+		se_string SE_Entry;
 		m_StringEntries[ va("%s_%s", m_strCurrentFileRef_ParseOnly.c_str(), psLocalReference) ] = SE_Entry;
 	}
 	m_strCurrentEntryRef_ParseOnly = psLocalReference;
@@ -462,7 +435,7 @@ void CStringEdPackage::AddEntry( LPCSTR psLocalReference )
 void CStringEdPackage::SetString( LPCSTR psLocalReference, LPCSTR psNewString, SE_BOOL bEnglishDebug )
 {
 	mapStringEntries_t::iterator itEntry = m_StringEntries.find( va("%s_%s",m_strCurrentFileRef_ParseOnly.c_str(), psLocalReference) );
-	string &Entry = itEntry->second;
+	se_string &Entry = itEntry->second;
 
 	if ( bEnglishDebug )
 	{
@@ -482,7 +455,7 @@ void CStringEdPackage::SetString( LPCSTR psLocalReference, LPCSTR psNewString, S
 	}
 }
 
-static LPCSTR SE_GetFoundFile( string &strResult )
+static LPCSTR SE_GetFoundFile( se_string &strResult )
 {
 	static char sTemp[64];
 
@@ -549,7 +522,7 @@ LPCSTR SE_GetString( LPCSTR psPackageAndStringReference )
 	mapStringEntries_t::iterator itEntry = TheStringPackage->m_StringEntries.find( psPackageAndStringReference );
 	if (itEntry != TheStringPackage->m_StringEntries.end())
 	{
-		string &Entry = itEntry->second;
+		se_string &Entry = itEntry->second;
 		return Entry.c_str();
 	}
 	return NULL;
@@ -580,7 +553,7 @@ void SE_ShutDown( void )
 LPCSTR SE_LoadLanguage( bool forceEnglish )
 {
 	LPCSTR psErrorMessage = NULL;
-	string strResults;
+	se_string strResults;
 
 	SE_NewLanguage();
 
