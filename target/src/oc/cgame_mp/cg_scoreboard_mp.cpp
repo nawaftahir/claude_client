@@ -157,12 +157,6 @@ void CG_DrawScoreboard_GetTeamColor(int team, vec_t *color)
 
 #define CG_SCOREBOARD_CLIENTINFO_OFFSET 0xe0914
 
-static int CG_ScoreboardBannerHeight(void)
-{
-    const dvar_t *dvar = cg_scoreboardBannerHeight;
-    return dvar ? dvar->current.integer : 24;
-}
-
 static clientInfo_t *CG_ScoreboardClientInfo(cg_t *cg, int clientNum)
 {
     if (!cg || clientNum < 0 || clientNum >= 64)
@@ -338,7 +332,7 @@ static float CG_DrawScoreboard_ListBanner(vec_t *color, float y, float listWidth
     float x;
     int columnIndex;
 
-    bannerLineHeight = (float)CG_ScoreboardBannerHeight();
+    bannerLineHeight = (float)cg_scoreboardBannerHeight->current.integer;
     if (!CG_Scoreboard_BeginVisibleLine(cg, drawLine, y, bannerLineHeight, &nextY))
         return y;
 
@@ -671,7 +665,7 @@ float CG_DrawScoreboard_ScoresList(float alpha)
 
     y = CG_Scoreboard_DrawObjective(color, 52.0f);
 
-    bannerHeight = CG_ScoreboardBannerHeight();
+    bannerHeight = cg_scoreboardBannerHeight->current.integer;
     if (cg->teamPlayers[1] || cg->teamPlayers[2]) {
         contentHeight = (float)(bannerHeight * 2 + 8) + 10.0f;
         totalLines = 2;
