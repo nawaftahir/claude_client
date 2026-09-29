@@ -104,9 +104,13 @@ void CL_InitOnceForAllClients( void );
 void CL_Init( void );
 void CL_InitRenderer( void );
 void CL_StartHunkUsers( void );
+void CL_ShutdownHunkUsers( void );
+void CIN_CloseAllVideos( void );
 void SND_Init( void );
 void UI_SetMap( const char *mapname, const char *gametype );
 void Sys_HideSplashWindow( void );
+void Sys_DestroySplashWindow( void );
+void IN_Frame( void );
 void Sys_LoadingKeepAlive( void );
 
 void Com_Printf( const char *fmt, ... );
@@ -624,6 +628,7 @@ void Com_Quit_f()
 	if ( !com_errorEntered )
 	{
 		Com_ClearTempMemory();
+		Sys_DestroySplashWindow();
 		SV_Shutdown("EXE_SERVERQUIT");
 		Com_Close();
 		Com_CloseLogfiles();
@@ -1786,10 +1791,23 @@ done:
 
 
 // empty in the dedicated build
+// retail 0x433820
 void Com_StartHunkUsers( void )
 {
-	UI_SetMap("", "");
-	CL_StartHunkUsers();
+	if ( !__sigsetjmp(*(jmp_buf*)Sys_GetValue(THREAD_VALUE_COM_ERROR), 0) )
+	{
+		UI_SetMap("", "");
+		CL_StartHunkUsers();
+		IN_Frame();
+		Com_EventLoop();
+
+		if ( com_dedicated && !com_dedicated->current.integer )
+			UI_SetActiveMenu(1);
+	}
+	else
+	{
+		Sys_Error( "Error during initialization" );
+	}
 }
 
 /*
@@ -1872,7 +1890,9 @@ Com_Restart
 */
 void Com_Restart()
 {
+	CL_ShutdownHunkUsers();
 	SV_ShutdownGameProgs();
+	CIN_CloseAllVideos();
 	Com_ShutdownDObj();
 	DObjShutdown();
 	XAnimShutdown();

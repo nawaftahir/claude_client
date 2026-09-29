@@ -57,6 +57,9 @@ extern qboolean UI_checkKeyExec(int key);
 extern int CG_KeyInterceptEvent(int key, qboolean down);
 extern void CL_StopLogoOrCinematic(void);
 extern void CL_Disconnect(void);
+extern const dvar_t *nextdemo;
+extern LegacyHacks *legacyHacks;
+int stricmp(const char *str1, const char *str2);
 extern void Dvar_SetString(dvar_t *dvar, const char *value);
 extern int I_strncmp(const char *s0, const char *s1, int n);
 extern void Cmd_ForEach(void (*callback)(const char *));
@@ -1112,214 +1115,166 @@ void Key_Bindlist_f(void)
     }
 }
 
-static inline __attribute__((always_inline))
-qboolean
-CL_DvarEnabledFromImport(void *importPtr)
-{
-    const dvar_t *dvar;
-
-    if (!importPtr)
-        return 0;
-
-    dvar = *(const dvar_t **)importPtr;
-    return dvar && dvar->current.enabled;
-}
-
-static inline __attribute__((always_inline)) void CL_ExecuteKeyBinding(int key, qboolean down, unsigned int time)
-{
-    const char *binding;
-    char cmd[1024];
-
-    if (key < 0 || key >= 256)
-        return;
-
-    binding = keys[key].binding;
-    if (!binding || !binding[0]) {
-        if (down && key >= 0xc8) {
-            Com_Printf("%s is unbound, use controls menu to set.\n", Key_KeynumToString(key, 0));
-        }
-        return;
-    }
-
-    if (binding[0] == '+') {
-        if (down) {
-            Com_sprintf(cmd, sizeof(cmd), "%s %i %i\n", binding, key, time);
-        } else {
-            Com_sprintf(cmd, sizeof(cmd), "-%s %i %i\n", binding + 1, key, time);
-        }
-        Cbuf_AddText(cmd);
-        return;
-    }
-
-    if (down) {
-        Cbuf_AddText(binding);
-        Cbuf_AddText("\n");
-    }
-}
-
-static inline __attribute__((always_inline)) void CL_HandleEscapeKey(qboolean down)
-{
-    clientConnection_t *clc;
-    clientActive_t *cl;
-
-    if (!down)
-        return;
-
-    cl = clients;
-    if (cl->keyCatchers & 1) {
-        Con_ToggleConsole_f();
-        return;
-    }
-
-    if (cl->keyCatchers & 0x10) {
-        Message_Key(0x1b);
-        return;
-    }
-    if (cl->keyCatchers & 8) {
-        UI_KeyEvent(0x1b, 1);
-        return;
-    }
-
-    clc = &::clc;
-    switch (clc->state) {
-    case CA_CINEMATIC:
-    case CA_LOGO:
-        CL_StopLogoOrCinematic();
-        break;
-    case CA_CONNECTING:
-    case CA_CHALLENGING:
-    case CA_CONNECTED:
-        CL_Disconnect();
-        break;
-    case CA_ACTIVE:
-        UI_SetActiveMenu(clc->demoplaying ? 1 : 2);
-        break;
-    default:
-        if (cls.uiStarted)
-            UI_SetActiveMenu(1);
-        break;
-    }
-}
-
-static inline __attribute__((always_inline)) void CL_HandleConsoleToggleKey(qboolean down)
-{
-    clientActive_t *cl;
-
-    if (!down)
-        return;
-
-    cl = clients;
-    if (!(cl->keyCatchers & 1) &&
-        !CL_DvarEnabledFromImport((void *)&com_sv_running) &&
-        CL_DvarEnabledFromImport((void *)&sv_disableClientConsole)) {
-        return;
-    }
-
-    if (keys['`'].binding) {
-        if (Con_IsActive()) {
-            Con_ToggleConsole_f();
-        } else {
-            Con_ToggleConsole_f();
-            Con_ToggleConsoleOutput();
-        }
-    } else {
-        Con_ToggleConsole_f();
-    }
-}
-
+// retail 0x40acf0
 void CL_KeyEvent(int key, const qboolean down, const unsigned int time)
 {
-    clientActive_t *cl;
-    clientConnection_t *clc;
-    qkey_t *keyState;
-    int keyCatchers;
-    qboolean repeated;
-    qboolean bypassUi;
+    char *kb;
+    char cmd[1024];
+    qboolean bypassMenu;
 
-    if (key < 0 || key >= 256)
-        return;
+    bypassMenu = 0;
 
-    cl = clients;
-    clc = &::clc;
-    keyState = &keys[key];
-
-    keyState->down = down;
-    repeated = 0;
-
+    // update auto-repeat status and BUTTON_ANY status
+    keys[key].down = down;
     if (down) {
-        keyState->repeats++;
-        if (keyState->repeats == 1) {
+        keys[key].repeats++;
+        if (keys[key].repeats == 1)
             anykeydown++;
-        } else {
-            repeated = 1;
-        }
     } else {
-        keyState->repeats = 0;
+        keys[key].repeats = 0;
         anykeydown--;
     }
 
-#if COD2_FEATURE_GAMEPAD
-
-    if (down && !repeated && (key < 0xcf || key > 0xde))
-        CL_Gamepad_NoteKbmActive();
-#endif
-
-    if (key == '`' || key == '~') {
-        CL_HandleConsoleToggleKey(down);
-        return;
-    }
-
-    if (key == 0x1b) {
-        CL_HandleEscapeKey(down);
-        return;
-    }
-
-    if (repeated && !(cl->keyCatchers & (1 | 8 | 0x10)))
-        return;
-
-    if (!down) {
-        CL_ExecuteKeyBinding(key, 0, time);
-        if ((cl->keyCatchers & 8) && cls.uiStarted)
-            UI_KeyEvent(key, 0);
-        return;
-    }
-
-    if (cl->cgameInitialized && CG_KeyInterceptEvent(key, down))
-        return;
-
-    keyCatchers = cl->keyCatchers;
-    if (keyCatchers & 1) {
-        Console_Key(key);
-        return;
-    }
-
-    bypassUi = 0;
-    if (keyCatchers & 8) {
-        qboolean bypassMouseInput = CL_DvarEnabledFromImport((void *)&cl_bypassMouseInput);
-        qboolean uiWantsKey = UI_checkKeyExec(key);
-        if (bypassMouseInput && key >= 0xc8 && key <= 0xca) {
-            bypassUi = 1;
-        } else if (!uiWantsKey) {
-            bypassUi = 1;
-        }
-
-        if (!bypassUi) {
-            UI_KeyEvent(key, down);
+    if (key != '`' && key != '~' && !(clients->keyCatchers & 1) && keys[key].binding
+        && !stricmp(keys[key].binding, "devgui")) {
+        if (down && keys[key].repeats == 1) {
+            Cbuf_AddText(keys[key].binding);
             return;
         }
     }
 
-    if (keyCatchers & 0x10) {
-        Message_Key(key);
+    // only a few keys repeat
+    if (down && keys[key].repeats > 1) {
+        if (!(clients->keyCatchers & (1 | 0x10))) {
+            if (!(clients->keyCatchers & 8))
+                return;
+            switch (key) {
+            case 0x9a:
+            case 0x9b:
+            case 0xa3:
+            case 0xa4:
+                break;
+            default:
+                return;
+            }
+        }
+        if (key == '`' || key == '~' || key == 0x1b)
+            return;
+    }
+
+    // console key is hardcoded, so the user can never unbind it
+    if (key == '`' || key == '~') {
+        if (!down)
+            return;
+        if (!(clients->keyCatchers & 1) && !com_sv_running->current.enabled
+            && sv_disableClientConsole->current.enabled)
+            return;
+        if (keys[0xa0].down) {
+            if (!(clients->keyCatchers & 1))
+                Con_ToggleConsole_f();
+            Con_ToggleConsoleOutput();
+        } else {
+            Con_ToggleConsole_f();
+        }
         return;
     }
 
-    if (clc->state == CA_DISCONNECTED) {
+    // any key during a demo or cinematic acts like escape
+    if (down && (key < 0x80 || key == 0xc8) && (clc.demoplaying || clc.state == CA_CINEMATIC || clc.state == CA_LOGO)
+        && !clients->keyCatchers) {
+        Dvar_SetString((dvar_t *)nextdemo, "");
+        key = 0x1b;
+    }
+
+    // escape is always handled special
+    if (key == 0x1b && down) {
+        if (clients->keyCatchers & 0x10) {
+            Message_Key(key);
+            return;
+        }
+        if (!(clients->keyCatchers & 8)) {
+            switch (clc.state) {
+            case CA_ACTIVE:
+                if (!clc.demoplaying && !legacyHacks->cl_serverloadwaiting) {
+                    UI_SetActiveMenu(2);
+                    return;
+                }
+                break;
+            case CA_CINEMATIC:
+            case CA_LOGO:
+                CL_StopLogoOrCinematic();
+                return;
+            case CA_CONNECTING:
+            case CA_CHALLENGING:
+            case CA_CONNECTED:
+                CL_Disconnect();
+                if (com_sv_running->current.enabled)
+                    legacyHacks->sv_killserver = 1;
+                return;
+            default:
+                if (!cls.uiStarted)
+                    return;
+                break;
+            }
+            UI_SetActiveMenu(1);
+            return;
+        }
+        UI_KeyEvent(key, down);
+        return;
+    }
+
+    if (clients->cgameInitialized && CG_KeyInterceptEvent(key, down))
+        return;
+
+    // key up events only perform actions if the game key binding is
+    // a button command (leading + sign)
+    if (!down) {
+        kb = keys[key].binding;
+        if (kb && kb[0] == '+') {
+            Com_sprintf(cmd, sizeof(cmd), "-%s %i %i\n", kb + 1, key, time);
+            Cbuf_AddText(cmd);
+        }
+        if ((clients->keyCatchers & 8) && cls.uiStarted)
+            UI_KeyEvent(key, down);
+        return;
+    }
+
+    if (cl_bypassMouseInput && cl_bypassMouseInput->current.enabled) {
+        if (key == 0xc8 || key == 0xc9 || key == 0xca || !UI_checkKeyExec(key))
+            bypassMenu = 1;
+    }
+
+    // distribute the key down event to the apropriate handler
+    if (clients->keyCatchers & 1) {
+        Console_Key(key);
+        return;
+    }
+    if ((clients->keyCatchers & 8) && !bypassMenu) {
+        UI_KeyEvent(key, down);
+        return;
+    }
+    if (clients->keyCatchers & 0x10) {
+        Message_Key(key);
+        return;
+    }
+    if (clc.state == CA_DISCONNECTED) {
         Console_Key(key);
         return;
     }
 
-    CL_ExecuteKeyBinding(key, 1, time);
+    // send the bound action
+    kb = keys[key].binding;
+    if (!kb) {
+        if (key >= 0xc8)
+            Com_Printf("%s is unbound, use controls menu to set.\n", Key_KeynumToString(key, 0));
+    } else if (kb[0] == '+') {
+        // button commands add keynum and time as parms
+        Com_sprintf(cmd, sizeof(cmd), "%s %i %i\n", kb, key, time);
+        Cbuf_AddText(cmd);
+    } else {
+        Cbuf_AddText(kb);
+        Cbuf_AddText("\n");
+    }
 }
 
 void Key_ClearStates(void)
