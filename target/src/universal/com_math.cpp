@@ -186,7 +186,7 @@ randomf
 */
 float randomf()
 {
-	return rand() / 2147483648.0f;
+	return rand() / 32768.0f;
 }
 
 /*

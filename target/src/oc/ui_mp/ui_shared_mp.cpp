@@ -1075,12 +1075,12 @@ int Item_ListBox_ThumbPosition(itemDef_t *item)
 
         scrollArea = (((rectDef_t*)(it))->w) - 32.0f - 2.0f;
         ratio = (maxScroll > 0) ? (scrollArea - 16.0f) / (float)maxScroll : 0.0f;
-        return (int)(ratio * (float)*(int *)listPtr + (1.0f + (((rectDef_t*)(it))->x) + 16.0f));
+        return (int)(ratio * (float)*(int *)listPtr + (((rectDef_t*)(it))->x) + 1.0f + 16.0f);
     } else {
 
         scrollArea = (((rectDef_t*)(it))->h) - 32.0f - 2.0f;
         ratio = (maxScroll > 0) ? (scrollArea - 16.0f) / (float)maxScroll : 0.0f;
-        return (int)(ratio * (float)*(int *)listPtr + (1.0f + (((rectDef_t*)(it))->y) + 16.0f));
+        return (int)(ratio * (float)*(int *)listPtr + (((rectDef_t*)(it))->y) + 1.0f + 16.0f);
     }
 }
 
