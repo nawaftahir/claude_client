@@ -132,7 +132,6 @@ void CG_ResetPlayerEntity(centity_t *cent)
 static void CG_PlayerFloatSprite(centity_t *cent, MaterialHandle material, float additionalRadiusSize, int height, Bool fixedScreenSize)
 {
     byte *snap;
-    int clientNum;
     struct DObj_s *obj;
     vec3_t origin;
     byte rgbaColor[4];
@@ -143,19 +142,15 @@ static void CG_PlayerFloatSprite(centity_t *cent, MaterialHandle material, float
     snap = (*(byte **)&cg->nextSnap);
 
     if (*(int *)(snap + 0x18) & 0xc00000) {
-        clientNum = cent->nextState.number;
-        if (clientNum == ((snapshot_t *)snap)->ps.clientNum) {
+        if (cent->nextState.number == ((snapshot_t *)snap)->ps.clientNum) {
             if (!cg->renderingThirdPerson)
                 return;
         }
-    } else {
-        clientNum = cent->nextState.number;
     }
 
-    obj = Com_GetClientDObj(clientNum, cent->localClientNum);
+    obj = Com_GetClientDObj(cent->nextState.number, cent->localClientNum);
     if (obj) {
-        unsigned short tag = scr_const.j_head;
-        if (CG_DObjGetWorldTagPos(cent, obj, tag, origin)) {
+        if (CG_DObjGetWorldTagPos(cent, obj, scr_const.j_head, origin)) {
             origin[2] += (float)height + 21.0f;
             goto draw;
         }

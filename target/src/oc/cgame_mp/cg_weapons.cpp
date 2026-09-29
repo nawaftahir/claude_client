@@ -885,11 +885,10 @@ void CG_RegisterItemVisuals(int itemNum)
 void CG_RegisterItems(void)
 {
     char items[0x108];
-    int i;
 
     strcpy(items, CL_GetConfigString(8));
 
-    for (i = 1; i < bg_numItems; i++) {
+    for (int i = 1; i < bg_numItems; i++) {
         int c = (signed char)items[(unsigned int)i >> 2];
 
         if (c <= '9')
@@ -1954,27 +1953,45 @@ void CG_WeaponRunXModelAnims(playerState_t *ps, weaponInfo_t *weapInfo)
     weapInfo->iPrevAnim = weapAnim;
 }
 
-static inline __attribute__((always_inline)) void CG_ResetViewWeaponAnimTree(byte *psBytes, int weaponNum, weaponInfo_t *weapInfo)
+static void CG_ResetViewWeaponAnimTrees(playerState_t *ps)
 {
+    byte *psBytes = (byte *)ps;
     struct XAnimTree_s *tree;
+    weaponInfo_t *weapInfo;
+    int weaponNum;
     int clip;
     int activeAnim;
 
-    tree = DObjGetTree(weapInfo->viewModelDObj);
-    XAnimClearTreeGoalWeights(tree, 0, 0);
-    XAnimSetGoalWeight(tree, 0, 1.0f, 0.0f, weapInfo->viewModelAnimRates[0], 0, 1, 0);
+    for (weaponNum = 1; weaponNum <= BG_GetNumWeapons(); weaponNum++) {
+        weapInfo = &cg_weaponsArray[weaponNum];
+        if (weapInfo->viewModelDObj) {
+            tree = DObjGetTree(weapInfo->viewModelDObj);
+            XAnimClearTreeGoalWeights(tree, 0, 0);
+            XAnimSetGoalWeight(tree, 0, 1.0f, 0.0f, weapInfo->viewModelAnimRates[0], 0, 1, 0);
 
-    clip = BG_ClipForWeapon(weaponNum);
-    activeAnim = *(int *)(((char *)psBytes + offsetof(playerState_t, ammoclip[0])) + clip * 4) ? 1 : 2;
-    CG_SetWeaponXAnimWeights(tree, weapInfo, activeAnim);
+            clip = BG_ClipForWeapon(weaponNum);
+            if (*(int *)(((char *)psBytes + offsetof(playerState_t, ammoclip[0])) + clip * 4))
+                activeAnim = 1;
+            else
+                activeAnim = 2;
+            CG_SetWeaponXAnimWeights(tree, weapInfo, activeAnim);
+        }
+    }
 }
 
-static inline __attribute__((always_inline)) void CG_PlayViewWeaponNotetrackSounds(weaponInfo_t *weapInfo)
+static void CG_PlayViewWeaponNotetrackSounds(void)
 {
     XAnimNotify *notifyList;
+    weaponInfo_t *weapInfo;
+    int weaponIndex;
     int notifyCount;
     int i;
 
+    weaponIndex = BG_GetViewmodelWeaponIndex(&cg->predictedPlayerState);
+    if (!weaponIndex)
+        return;
+
+    weapInfo = &cg_weaponsArray[weaponIndex];
     notifyCount = DObjGetClientNotifyList(&notifyList);
     if (notifyCount <= 0)
         return;
@@ -2004,17 +2021,12 @@ void CG_UpdateViewWeaponAnim(playerState_t *ps)
     weaponInfo_t *weapInfo;
     struct DObj_s *obj;
     int weaponIndex;
-    int weaponNum;
     int partBits[4];
 
     psBytes = (byte *)ps;
 
-    if (*(int *)(psBytes + 4) > 5) {
-        for (weaponNum = 1; weaponNum <= BG_GetNumWeapons(); weaponNum++) {
-            weapInfo = &cg_weaponsArray[weaponNum];
-            if (weapInfo->viewModelDObj)
-                CG_ResetViewWeaponAnimTree(psBytes, weaponNum, weapInfo);
-        }
+    if (*(int *)(psBytes + 4) >= 6) {
+        CG_ResetViewWeaponAnimTrees(ps);
         return;
     }
 
@@ -2040,12 +2052,7 @@ void CG_UpdateViewWeaponAnim(playerState_t *ps)
         DObjCalcSkel((DObj *)obj, partBits);
     }
 
-    weaponIndex = BG_GetViewmodelWeaponIndex(&cg->predictedPlayerState);
-    if (!weaponIndex)
-        return;
-
-    weapInfo = &weapInfoBase[weaponIndex];
-    CG_PlayViewWeaponNotetrackSounds(weapInfo);
+    CG_PlayViewWeaponNotetrackSounds();
 }
 
 #else

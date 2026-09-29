@@ -190,14 +190,13 @@ void CL_DeathMessagePrint(const char *attackerName, const vec_t *attackerColor, 
 void CL_RegisterHudMsgIconMaterial(const char *name)
 {
     int index;
-    int count = registeredIconMaterialCount;
 
-    for (index = 0; index < count; index++) {
+    for (index = 0; index < registeredIconMaterialCount; index++) {
         if (strcmp(hudMsgIconMaterials[index], name) == 0)
             return;
     }
 
-    hudMsgIconMaterials[count] = CopyStringInternal(name);
+    hudMsgIconMaterials[registeredIconMaterialCount] = CopyStringInternal(name);
     registeredIconMaterialCount++;
 }
 

@@ -633,20 +633,17 @@ post_lean:
 }
 void CG_InitView(void)
 {
-    int renderPlayerState;
-
     ((cg_t *)cg)->refdef.time = cg->time;
     (*(int *)&((cg_t *)cg)->refdef.zNear) = 0x3f800000;
 
     if (cg_thirdPerson->current.enabled != 0) {
-        renderPlayerState = 1;
-    } else if (cg->nextSnap->ps.pm_type > 5) {
-        renderPlayerState = 1;
+        cg->renderingThirdPerson = 1;
     } else {
-        renderPlayerState = 0;
+        cg->renderingThirdPerson = 0;
+        if (cg->nextSnap->ps.pm_type >= 6)
+            cg->renderingThirdPerson = 1;
     }
 
-    cg->renderingThirdPerson = renderPlayerState;
     CG_PredictPlayerState();
     CL_ResetSkeletonCache(0);
 
