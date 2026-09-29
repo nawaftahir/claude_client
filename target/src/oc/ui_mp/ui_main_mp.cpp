@@ -3760,6 +3760,19 @@ static void UI_ReadableSize_wrap(char *buf, int bufsize, int value)
     UI_ReadableSize(buf, bufsize, value);
 }
 
+static void UI_PrintTime(char *buf, int bufsize, int time)
+{
+    if (time > 3600) {
+        Com_sprintf(buf, bufsize, "%d %s %d %s", time / 3600, UI_SafeTranslateString("EXE_HOURS"),
+                    (time % 3600) / 60, UI_SafeTranslateString("EXE_MINUTES"));
+    } else if (time > 60) {
+        Com_sprintf(buf, bufsize, "%d %s %d %s", time / 60, UI_SafeTranslateString("EXE_MINUTES"),
+                    time % 60, UI_SafeTranslateString("EXE_SECONDS"));
+    } else {
+        Com_sprintf(buf, bufsize, "%d %s", time, UI_SafeTranslateString("EXE_SECONDS"));
+    }
+}
+
 static void UI_DisplayDownloadInfo(const char *downloadName, float centerPoint, float yStart, FontHandle font, float scale)
 {
     LegacyHacks *legacyBase = legacyHacks;
@@ -3825,106 +3838,55 @@ static void UI_DisplayDownloadInfo(const char *downloadName, float centerPoint, 
         UI_ReadableSize_wrap(dlSizeBuf, 64, downloadCount);
         UI_ReadableSize_wrap(totalSizeBuf, 64, downloadSize);
 
-        if (downloadCount > 0xfff && downloadTime != 0) {
+        if (downloadCount < 0x1000 || !downloadTime) {
 
-            int elapsedMs = uiInfo->uiDC.realTime - downloadTime;
+            text = UI_SafeTranslateString("EXE_ESTIMATING");
+            Text_PaintCenter(font, text, centerPoint, yEta, scale, ltGrey);
+            text = va("(%s %s %s %s)", dlSizeBuf, UI_SafeTranslateString("EXE_OF"), totalSizeBuf, UI_SafeTranslateString("EXE_COPIED"));
+            Text_PaintCenter(font, text, centerPoint, yStart + 320.0f, scale, ltGrey);
+        } else {
 
-            if ((unsigned)(elapsedMs + 999) <= 1998) {
-
+            if ((uiInfo->uiDC.realTime - downloadTime) / 1000)
+                xferRate = downloadCount / ((uiInfo->uiDC.realTime - downloadTime) / 1000);
+            else
                 xferRate = 0;
-                UI_ReadableSize_wrap(xferRateBuf, 64, 0);
-            } else {
 
-                int elapsedSec = elapsedMs / 1000;
-                xferRate = downloadCount / elapsedSec;
-                UI_ReadableSize_wrap(xferRateBuf, 64, xferRate);
-            }
+            UI_ReadableSize_wrap(xferRateBuf, 64, xferRate);
 
-            if (downloadSize == 0 || xferRate == 0) {
+            if (downloadSize && xferRate) {
+                int n = downloadSize / xferRate;
+                int sum, ti;
 
-                goto estimating;
-            }
+                n = n - (((downloadCount / 1024) * n) / (downloadSize / 1024));
 
-            {
-
-                int totalSec = downloadSize / xferRate;
-                int dlCountK = downloadCount >> 10;
-                int dlSizeK;
-                int timeleft;
-                int sum;
-                int ti;
-                int curTle = tleIndex;
-
-                if (downloadSize < 0)
-                    dlSizeK = (downloadSize + 1023) >> 10;
-                else
-                    dlSizeK = downloadSize >> 10;
-
-                tleEstimates[curTle] = totalSec - (dlCountK * totalSec / dlSizeK);
-
-                {
-                    int nextIdx = curTle + 1;
-                    tleIndex = (nextIdx < 80) ? nextIdx : 0;
-                }
+                tleEstimates[tleIndex] = n;
+                tleIndex++;
+                if (tleIndex >= 80)
+                    tleIndex = 0;
 
                 sum = 0;
                 for (ti = 0; ti < 80; ti++)
                     sum += tleEstimates[ti];
-                timeleft = sum / 80;
 
-                if (timeleft > 3600) {
-
-                    int hours = timeleft / 3600;
-                    int remainder = timeleft - hours * 3600;
-                    int minutes = remainder / 60;
-                    Com_sprintf(dlTimeBuf, 64, "%d %s %d %s", hours, UI_SafeTranslateString("EXE_HOURS"),
-                                minutes, UI_SafeTranslateString("EXE_MINUTES"));
-                } else if (timeleft > 60) {
-
-                    int minutes = timeleft / 60;
-                    int secs = timeleft - minutes * 60;
-                    Com_sprintf(dlTimeBuf, 64, "%d %s %d %s", minutes, UI_SafeTranslateString("EXE_MINUTES"),
-                                secs, UI_SafeTranslateString("EXE_SECONDS"));
-                } else {
-
-                    Com_sprintf(dlTimeBuf, 64, "%d %s", timeleft, UI_SafeTranslateString("EXE_SECONDS"));
-                }
-
+                UI_PrintTime(dlTimeBuf, 64, sum / 80);
                 UI_DrawText(dlTimeBuf, 0x7fffffff, font, 264.0f, yEta, 0, 0, scale, ltGrey, 3);
-
-                {
-                    const char *copiedStr = UI_SafeTranslateString("EXE_COPIED");
-                    const char *ofStr = UI_SafeTranslateString("EXE_OF");
-                    text = va("(%s %s %s %s)", dlSizeBuf, ofStr, totalSizeBuf, copiedStr);
-                    Text_PaintCenter(font, text, centerPoint, yStart + 320.0f, scale, ltGrey);
-                }
-            }
-        } else {
-
-        estimating:
-            text = UI_SafeTranslateString("EXE_ESTIMATING");
-            Text_PaintCenter(font, text, centerPoint, yEta, scale, ltGrey);
-
-            if (downloadSize != 0) {
-
-                const char *copiedStr = UI_SafeTranslateString("EXE_COPIED");
-                const char *ofStr = UI_SafeTranslateString("EXE_OF");
-                text = va("(%s %s %s %s)", dlSizeBuf, ofStr, totalSizeBuf, copiedStr);
+                text = va("(%s %s %s %s)", dlSizeBuf, UI_SafeTranslateString("EXE_OF"), totalSizeBuf, UI_SafeTranslateString("EXE_COPIED"));
+                Text_PaintCenter(font, text, centerPoint, yStart + 320.0f, scale, ltGrey);
             } else {
 
-                const char *copiedStr = UI_SafeTranslateString("EXE_COPIED");
-                text = va("(%s %s)", dlSizeBuf, copiedStr);
+                text = UI_SafeTranslateString("EXE_ESTIMATING");
+                Text_PaintCenter(font, text, centerPoint, yEta, scale, ltGrey);
+                if (downloadSize)
+                    text = va("(%s %s %s %s)", dlSizeBuf, UI_SafeTranslateString("EXE_OF"), totalSizeBuf, UI_SafeTranslateString("EXE_COPIED"));
+                else
+                    text = va("(%s %s)", dlSizeBuf, UI_SafeTranslateString("EXE_COPIED"));
+                Text_PaintCenter(font, text, centerPoint, yStart + 320.0f, scale, ltGrey);
             }
-            Text_PaintCenter(font, text, centerPoint, yStart + 320.0f, scale, ltGrey);
 
-            if (xferRate == 0)
-                return;
-        }
-
-        {
-            const char *secStr = UI_SafeTranslateString("EXE_SECONDS");
-            text = va("%s/%s", xferRateBuf, secStr);
-            UI_DrawText(text, 0x7fffffff, font, 200.0f, yXfer, 0, 0, scale, ltGrey, 3);
+            if (xferRate) {
+                text = va("%s/%s", xferRateBuf, UI_SafeTranslateString("EXE_SECONDS"));
+                UI_DrawText(text, 0x7fffffff, font, 200.0f, yXfer, 0, 0, scale, ltGrey, 3);
+            }
         }
     }
 }
