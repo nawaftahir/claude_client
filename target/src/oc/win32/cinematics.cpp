@@ -245,7 +245,7 @@ e_status ROQ_StopCinematicFromHandle(int handle)
 
 void ROQ_SetExtentsFromHandle(int handle, int x, int y, int w, int h)
 {
-    if ((unsigned int)handle <= 0xf && cinTable[handle].status != FMV_EOF) {
+    if (handle >= 0 && handle < 16 && cinTable[handle].status != FMV_EOF) {
         cinTable[handle].xpos = x;
         cinTable[handle].ypos = y;
         cinTable[handle].width = w;
@@ -785,7 +785,7 @@ done:;
 
 void ROQ_DrawCinematic(void)
 {
-    if ((unsigned int)CL_handle <= 0xf) {
+    if (CL_handle >= 0 && CL_handle < 16) {
         ROQ_DrawCinematicFromHandle(CL_handle);
     }
 }
@@ -1382,25 +1382,15 @@ void ROQ_PlayCinematic_f(void)
     const char *arg;
     const char *argv2;
     int systemBits;
-    int h;
 
+    systemBits = 1;
     Com_DPrintf("CL_PlayCinematic_f\n");
     argc = CLC_CONN->state;
 
     if (argc == 1) {
 
-        h = CL_handle;
-        if ((unsigned int)h <= 0xf) {
-            if (cinTable[h].status != FMV_EOF) {
-                currentHandle = h;
-                Com_DPrintf("trFMV::stop(), closing %s\n", cinTable[currentHandle].fileName);
-                if (cinTable[currentHandle].buf) {
-                    if (!cinTable[currentHandle].alterGameState || CLC_CONN->state == 1) {
-                        cinTable[currentHandle].status = FMV_EOF;
-                        RoQShutdown();
-                    }
-                }
-            }
+        if (CL_handle >= 0 && CL_handle < 16) {
+            ROQ_StopCinematicFromHandle(CL_handle);
             SND_StopSounds((snd_stopsounds_arg_t)0);
             CL_handle = -1;
         }
@@ -1410,23 +1400,13 @@ void ROQ_PlayCinematic_f(void)
 
     arg = Cmd_Argv(1);
     argv2 = Cmd_Argv(2);
-    if (!argv2) {
-        systemBits = 1;
-    } else {
-        switch (argv2[0]) {
-        case '1':
+    if (argv2) {
+        if (argv2[0] == '1')
             systemBits = 5;
-            break;
-        case '2':
-            systemBits = 3;
-            break;
-        case '3':
-            systemBits = 0x21;
-            break;
-        default:
-            systemBits = 1;
-            break;
-        }
+        if (argv2[0] == '2')
+            systemBits |= 2;
+        if (argv2[0] == '3')
+            systemBits |= 0x20;
     }
 
     if (systemBits & 0x20) {
@@ -1439,7 +1419,7 @@ void ROQ_PlayCinematic_f(void)
         SND_StopSounds((snd_stopsounds_arg_t)0);
         SND_FadeAllSounds(1.0f, 0);
         do {
-            if ((unsigned int)CL_handle <= 0xf) {
+            if (CL_handle >= 0 && CL_handle < 16) {
                 ROQ_RunCinematicFromHandle(CL_handle);
             }
             if (cinTable[currentHandle].buf) {
