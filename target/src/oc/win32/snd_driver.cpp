@@ -341,11 +341,12 @@ Bool SND_IsStreamChannelFree(int index)
         return 0;
     if (g_snd.chaninfo[index].startDelay)
         return 0;
-    if (AIL_stream_status(milesGlob.handle_stream[index - 32]) != 2)
-        return 0;
-    AIL_close_stream(milesGlob.handle_stream[index - 32]);
-    milesGlob.handle_stream[index - 32] = NULL;
-    return 1;
+    if (AIL_stream_status(milesGlob.handle_stream[index - 32]) == 2) {
+        AIL_close_stream(milesGlob.handle_stream[index - 32]);
+        milesGlob.handle_stream[index - 32] = NULL;
+        return 1;
+    }
+    return 0;
 }
 
 float SND_Get2DChannelVolume(int index)
@@ -419,15 +420,15 @@ void SND_SetStreamChannelPlaybackRate(int index, int rate)
 
 void SND_UpdateStreamChannelReverb(int index)
 {
-    snd_local_t *sndGlob = &g_snd;
-    snd_channel_info_t *chaninfo = &sndGlob->chaninfo[index];
-    const snd_alias_t *pAlias = chaninfo->pAlias0;
+    const snd_alias_t *pAlias = g_snd.chaninfo[index].pAlias0;
     float reverbLevel;
-    if (pAlias != NULL &&
-        ((((const dvar_t *)snd_enableReverb))->current.enabled == 0 || (pAlias->flags & 0x10))) {
-        reverbLevel = 0.0f;
+
+    if (pAlias == NULL) {
+        reverbLevel = g_snd.effect->wetlevel;
+    } else if (((dvar_t *)snd_enableReverb)->current.enabled != 0 && !(pAlias->flags & 0x10)) {
+        reverbLevel = g_snd.effect->wetlevel;
     } else {
-        reverbLevel = sndGlob->effect->wetlevel;
+        reverbLevel = 0;
     }
     AIL_set_stream_reverb_levels(milesGlob.handle_stream[index - 0x20], 1.0f, reverbLevel);
 }
@@ -457,20 +458,16 @@ void SND_Get2DChannelSaveInfo(int index, snd_save_2D_sample_t *info)
 {
     void *handle;
     long int length, offset;
-    snd_local_t *sndGlob;
-    float masterVol;
 
     handle = milesGlob.handle_2D[index - 45];
     AIL_sample_ms_position(handle, &length, &offset);
     info->fraction = (float)(unsigned long int)offset / (float)(unsigned long int)length;
-    sndGlob = &g_snd;
-    info->pitch = sndGlob->chaninfo[index].pitch;
+    info->pitch = g_snd.chaninfo[index].pitch;
     AIL_sample_volume_pan(handle, &info->volume, &info->pan);
-    masterVol = sndGlob->volume;
-    if (masterVol != 0.0f) {
-        info->volume /= masterVol;
+    if (g_snd.volume != 0.0f) {
+        info->volume /= g_snd.volume;
     } else {
-        info->volume = sndGlob->chaninfo[index].basevolume;
+        info->volume = g_snd.chaninfo[index].basevolume;
     }
 }
 
@@ -478,25 +475,20 @@ void SND_Get3DChannelSaveInfo(int index, snd_save_3D_sample_t *info)
 {
     void *handle;
     long unsigned int sampleOffset;
-    int sampleLength;
-    snd_local_t *sndGlob;
-    snd_channel_info_t *chaninfo;
-    float vol, masterVol;
+    long unsigned int sampleLength;
+    float vol;
 
     handle = milesGlob.handle_3D[index];
     sampleOffset = AIL_3D_sample_offset(handle);
     sampleLength = AIL_3D_sample_length(handle);
     info->fraction = (float)sampleOffset / (float)sampleLength;
-    sndGlob = &g_snd;
-    chaninfo = &sndGlob->chaninfo[index];
-    info->pitch = chaninfo->pitch;
+    info->pitch = g_snd.chaninfo[index].pitch;
     vol = AIL_3D_sample_volume(handle);
     info->volume = vol;
-    masterVol = sndGlob->volume;
-    if (masterVol != 0.0f) {
-        info->volume = vol / masterVol;
+    if (g_snd.volume != 0.0f) {
+        info->volume = vol / g_snd.volume;
     } else {
-        info->volume = chaninfo->basevolume;
+        info->volume = g_snd.chaninfo[index].basevolume;
     }
     AIL_3D_position(handle, &info->org[0], &info->org[1], &info->org[2]);
 }
@@ -505,25 +497,21 @@ void SND_GetStreamChannelSaveInfo(int index, snd_save_stream_t *info)
 {
     void *handle;
     long int offset, length;
-    snd_local_t *sndGlob;
-    float masterVol;
 
     handle = milesGlob.handle_stream[index - 0x20];
     AIL_stream_ms_position(handle, &length, &offset);
     info->fraction = (float)(unsigned long int)offset / (float)(unsigned long int)length;
-    sndGlob = &g_snd;
-    info->rate = I_fround((float)AIL_stream_playback_rate(handle) / sndGlob->timescale);
-    info->basevolume = sndGlob->chaninfo[index].basevolume;
+    info->rate = I_fround((float)AIL_stream_playback_rate(handle) / g_snd.timescale);
+    info->basevolume = g_snd.chaninfo[index].basevolume;
     AIL_stream_volume_pan(handle, &info->volume, &info->pan);
-    masterVol = sndGlob->volume;
-    if (masterVol != 0.0f) {
-        info->volume /= masterVol;
+    if (g_snd.volume != 0.0f) {
+        info->volume /= g_snd.volume;
     } else {
-        info->volume = sndGlob->chaninfo[index].basevolume;
+        info->volume = g_snd.chaninfo[index].basevolume;
     }
-    info->org[0] = sndGlob->chaninfo[index].org[0];
-    info->org[1] = sndGlob->chaninfo[index].org[1];
-    info->org[2] = sndGlob->chaninfo[index].org[2];
+    info->org[0] = g_snd.chaninfo[index].org[0];
+    info->org[1] = g_snd.chaninfo[index].org[1];
+    info->org[2] = g_snd.chaninfo[index].org[2];
 }
 
 void SND_EndRawSamples(void)
@@ -656,30 +644,30 @@ void SND_SetRoomtype(int roomtype)
 
 void SND_Update2DChannelReverb(int index)
 {
-    snd_local_t *sndGlob = &g_snd;
-    snd_channel_info_t *chaninfo = &sndGlob->chaninfo[index];
-    const snd_alias_t *pAlias = chaninfo->pAlias0;
+    const snd_alias_t *pAlias = g_snd.chaninfo[index].pAlias0;
     float reverbLevel;
 
-    if (pAlias == NULL || ((((dvar_t *)snd_enableReverb))->current.enabled != 0 && !(pAlias->flags & 0x10))) {
-        reverbLevel = 0;
+    if (pAlias == NULL) {
+        reverbLevel = g_snd.effect->wetlevel;
+    } else if (((dvar_t *)snd_enableReverb)->current.enabled != 0 && !(pAlias->flags & 0x10)) {
+        reverbLevel = g_snd.effect->wetlevel;
     } else {
-        reverbLevel = sndGlob->effect->wetlevel;
+        reverbLevel = 0;
     }
     AIL_set_sample_reverb_levels(milesGlob.handle_2D[index - 45], 1.0f, reverbLevel);
 }
 
 void SND_Update3DChannelReverb(int index)
 {
-    snd_local_t *sndGlob = &g_snd;
-    snd_channel_info_t *chaninfo = &sndGlob->chaninfo[index];
-    const snd_alias_t *pAlias = chaninfo->pAlias0;
+    const snd_alias_t *pAlias = g_snd.chaninfo[index].pAlias0;
     float reverbLevel;
 
-    if (pAlias == NULL || ((((dvar_t *)snd_enableReverb))->current.enabled != 0 && !(pAlias->flags & 0x10))) {
-        reverbLevel = 0;
+    if (pAlias == NULL) {
+        reverbLevel = g_snd.effect->wetlevel;
+    } else if (((dvar_t *)snd_enableReverb)->current.enabled != 0 && !(pAlias->flags & 0x10)) {
+        reverbLevel = g_snd.effect->wetlevel;
     } else {
-        reverbLevel = sndGlob->effect->wetlevel;
+        reverbLevel = 0;
     }
     AIL_set_3D_sample_effects_level(milesGlob.handle_3D[index], reverbLevel);
 }
@@ -719,48 +707,39 @@ static void MSS_SpatializeStream(float *volume, float *pan)
 
 static void MSS_SpatializeStreamImpl(int i, float *volume, float *pan)
 {
-    snd_local_t *sndGlob;
-    snd_channel_info_t *chaninfo;
     const snd_alias_t *pAlias0, *pAlias1;
-    float *orgVec;
     int listenerIdx;
     snd_listener *listener;
-    float *listenerOrigin, *right;
+    float *right;
     float delta[3];
-    float dot;
+    float dist, dot;
     float lerp, oneMinusLerp;
     float fDistMin, fDistMax;
-    float savedVolume, attenuation;
+    float attenuation;
 
-    sndGlob = &g_snd;
-    chaninfo = &sndGlob->chaninfo[i];
-    pAlias0 = chaninfo->pAlias0;
-    pAlias1 = chaninfo->pAlias1;
+    pAlias0 = g_snd.chaninfo[i].pAlias0;
+    pAlias1 = g_snd.chaninfo[i].pAlias1;
 
-    orgVec = chaninfo->org;
+    listenerIdx = SND_GetListenerIndexNearestToOrigin(g_snd.chaninfo[i].org);
+    listener = &g_snd.listeners[listenerIdx];
 
-    listenerIdx = SND_GetListenerIndexNearestToOrigin(orgVec);
-    listener = &sndGlob->listeners[listenerIdx];
-    listenerOrigin = listener->orient.origin;
+    delta[0] = g_snd.chaninfo[i].org[0] - listener->orient.origin[0];
+    delta[1] = g_snd.chaninfo[i].org[1] - listener->orient.origin[1];
+    delta[2] = g_snd.chaninfo[i].org[2] - listener->orient.origin[2];
 
-    delta[0] = orgVec[0] - listenerOrigin[0];
-    delta[1] = orgVec[1] - listenerOrigin[1];
-    delta[2] = orgVec[2] - listenerOrigin[2];
-
-    Vec3Normalize(delta);
+    dist = Vec3Normalize(delta);
 
     right = listener->orient.axis[0];
-    dot = delta[0] * right[-1] + delta[1] * right[0] + delta[2] * right[1];
+    dot = right[2] * delta[2] + right[1] * delta[1] + right[0] * delta[0];
 
-    lerp = chaninfo->lerp;
+    lerp = g_snd.chaninfo[i].lerp;
     oneMinusLerp = 1.0f - lerp;
 
-    fDistMin = oneMinusLerp * pAlias0->fDistMin + lerp * pAlias1->fDistMin;
     fDistMax = oneMinusLerp * pAlias0->fDistMax + lerp * pAlias1->fDistMax;
+    fDistMin = oneMinusLerp * pAlias0->fDistMin + lerp * pAlias1->fDistMin;
 
-    savedVolume = *volume;
-    attenuation = SND_Attenuate(pAlias0->volumeFalloffCurve, savedVolume, fDistMin, fDistMax);
-    *volume = savedVolume * attenuation;
+    attenuation = SND_Attenuate(pAlias0->volumeFalloffCurve, dist, fDistMin, fDistMax);
+    *volume *= attenuation;
     *pan = (1.0f - dot) * 0.5f;
 }
 

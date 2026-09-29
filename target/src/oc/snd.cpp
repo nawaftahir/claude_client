@@ -332,6 +332,9 @@ static __attribute_regparm__(3)
             Com_Error(ERR_DROP, "\025tried to blend between sound aliases '%s' and '%s', but they are looping and at least one of them has a random pitch\n", pAlias0->pszAliasName, pAlias1->pszAliasName);
             return 0;
         }
+    }
+
+    if (flags0 & 1) {
         if (pAlias0->fVolMin != pAlias0->fVolMax || pAlias1->fVolMin != pAlias1->fVolMax) {
             if (!bReport)
                 return 0;
@@ -834,8 +837,6 @@ static int SND_Get2DChannelOverlay(snd_overlay_info_t *info, int maxcount)
 
     if (maxcount > g_snd.max_2D_channels)
         maxcount = g_snd.max_2D_channels;
-    if (maxcount <= 0)
-        return maxcount;
     for (i = 0; i < maxcount; i++) {
         if (SND_Is2DChannelFree(i + 45)) {
             info[i].pszSampleName = NULL;

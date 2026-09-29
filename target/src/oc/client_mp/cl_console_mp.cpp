@@ -977,12 +977,10 @@ const char *Con_TokenizeInput(void)
 
     first = (unsigned char)cmd[0];
     if (first == '\\' || first == '/')
-        goto skip;
-
-    while (isPunctChar((signed char)*cmd)) {
-    skip:
         cmd++;
-    }
+
+    while (isPunctChar((signed char)*cmd))
+        cmd++;
 
     return cmd;
 }

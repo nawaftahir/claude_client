@@ -478,10 +478,9 @@ char *CL_AllocSkelMemory(int localClientNum, unsigned int size)
 void CL_ResetSkeletonCache(int localClientNum)
 {
     clientActive_t *client = &clients[localClientNum];
-    unsigned int count = client->skelTimeStamp + 1;
-    if (!count)
-        count = 1;
-    client->skelTimeStamp = count;
+    client->skelTimeStamp++;
+    if (!client->skelTimeStamp)
+        client->skelTimeStamp = 1;
     client->skelMemoryStart = (char *)(((intptr_t)client->skelMemory + 15) & ~(intptr_t)15);
     client->skelMemPos = 0;
 }
@@ -1582,7 +1581,7 @@ void CL_DrawLogo(void)
     color[3] = 1.0f;
 
     w = (float)cls.vidConfig.width;
-    h0 = (float)(cls.vidConfig.height * 2) / 3.0f;
+    h0 = ((float)cls.vidConfig.height + (float)cls.vidConfig.height) * 0.33333334f;
     h1 = (float)cls.vidConfig.height - h0;
 
     re.DrawStretchPic(0.0f, 0.0f, w, h0, 0.0f, 0.0f, 1.0f, 1.0f, color, cls.logo.material[0]);
