@@ -305,8 +305,8 @@ qboolean CL_CDKeyValidate(const char *key, const char *checksum)
     char chs[8];
     int i;
 
-    for (i = 1; i <= 16; i++) {
-        int ch = (signed char)key[i - 1];
+    for (i = 0; i < 16; i++) {
+        int ch = (signed char)key[i];
         int j;
         crc ^= (unsigned int)ch;
         for (j = 8; j != 0; j--) {
@@ -321,10 +321,10 @@ qboolean CL_CDKeyValidate(const char *key, const char *checksum)
 
     sprintf(chs, (const char *)"%04x", crc);
 
-    if (checksum != NULL && I_strnicmp(chs, checksum, 4) != 0)
-        return 0;
+    if (checksum == NULL || I_strnicmp(chs, checksum, 4) == 0)
+        return 1;
 
-    return 1;
+    return 0;
 }
 
 void CL_SortGlobalServers(void)

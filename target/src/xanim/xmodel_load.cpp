@@ -21,7 +21,7 @@ void XModelConsumeQuat(const unsigned char **pos, short *out)
 	z = out[2];
 
 	temp = 1073676289 - (x * x + y * y + z * z);
-	w = temp > 0 ? (int)floor(I_sqrt((float)temp) + 0.5f) : 0;
+	w = temp > 0 ? (int)floor((double)(0.5f + (float)sqrt((double)temp))) : 0;
 
 	out[3] = w;
 }

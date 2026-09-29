@@ -1045,13 +1045,13 @@ int Item_ListBox_ThumbDrawPosition(displayContextDef_t *dc, itemDef_t *item)
     if ((itemDef_t *)item != itemCapture)
         return Item_ListBox_ThumbPosition(item);
 
-    if ((((Window *)it)->staticFlags & 0x200000)) {
+    if (((unsigned)((Window *)it)->staticFlags >> 21) & 1) {
 
         int max = (int)((((rectDef_t*)(it))->x) + (((rectDef_t*)(it))->w) - 32.0f - 1.0f);
         int cursor = ((displayContextDef_t *)d)->cursorx;
         int minPos = (int)((((rectDef_t*)(it))->x) + 16.0f + 1.0f) + 8;
         if (cursor < minPos || cursor > max + 8)
-            return Item_ListBox_ThumbPosition((itemDef_t *)itemCapture);
+            return Item_ListBox_ThumbPosition(item);
         return cursor - 8;
     } else {
 
@@ -1059,7 +1059,7 @@ int Item_ListBox_ThumbDrawPosition(displayContextDef_t *dc, itemDef_t *item)
         int cursor = (((displayContextDef_s*)(d))->cursory);
         int minPos = (int)((((rectDef_t*)(it))->y) + 16.0f + 1.0f) + 8;
         if (cursor < minPos || cursor > max + 8)
-            return Item_ListBox_ThumbPosition((itemDef_t *)itemCapture);
+            return Item_ListBox_ThumbPosition(item);
         return cursor - 8;
     }
 }

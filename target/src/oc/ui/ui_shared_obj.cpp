@@ -338,19 +338,15 @@ qboolean PC_Int_Parse(int handle, int *i)
 
 qboolean PC_Rect_Parse(int handle, rectDef_t *r)
 {
-    if (!PC_Float_Parse(handle, &r->x))
-        return 0;
-    if (!PC_Float_Parse(handle, &r->y))
-        return 0;
-    if (!PC_Float_Parse(handle, &r->w))
-        return 0;
-    if (!PC_Float_Parse(handle, &r->h))
-        return 0;
-    if (!PC_Int_ParseLine(handle, &r->horzAlign))
-        r->horzAlign = 0;
-    if (!PC_Int_ParseLine(handle, &r->vertAlign))
-        r->vertAlign = 0;
-    return 1;
+    if (PC_Float_Parse(handle, &r->x) && PC_Float_Parse(handle, &r->y) && PC_Float_Parse(handle, &r->w) && PC_Float_Parse(handle, &r->h))
+    {
+        if (!PC_Int_ParseLine(handle, &r->horzAlign))
+            r->horzAlign = 0;
+        if (!PC_Int_ParseLine(handle, &r->vertAlign))
+            r->vertAlign = 0;
+        return 1;
+    }
+    return 0;
 }
 
 qboolean PC_String_Parse(int handle, const char **out)

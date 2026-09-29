@@ -246,7 +246,7 @@ qboolean CG_DrawShellShockSavedScreenBlend(const shellshock_parms_t *parms, int 
     blend = fadeIn;
     if (timeLeft < fadeDuration) {
 
-        blend = I_fround((float)fadeIn * (float)timeLeft / (float)fadeDuration);
+        blend = I_fround((float)timeLeft / (float)fadeDuration * (float)fadeIn);
     }
 
     if (cgp->shellshock.hasSavedScreen != 0) {

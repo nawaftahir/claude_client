@@ -633,20 +633,15 @@ SV_DObjGetBoneIndex
 int SV_DObjGetBoneIndex( const gentity_t *ent, unsigned int boneName )
 {
 	DObj *obj;
-	int result;
 
 	obj = Com_GetServerDObj(ent->s.number);
 
 	if ( !obj )
 	{
-		result = -1;
-	}
-	else
-	{
-		result = DObjGetBoneIndex(obj, boneName);
+		return -1;
 	}
 
-	return result;
+	return DObjGetBoneIndex(obj, boneName);
 }
 
 /*

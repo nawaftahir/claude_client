@@ -1117,17 +1117,12 @@ int BG_GetStackSlotForWeapon( const playerState_t *pPS, int iWeaponIndex, unsign
 		return SLOT_PRIMARY;
 	}
 
-	if ( !pPS->weaponslots[SLOT_PRIMARYB] )
+	if ( pPS->weaponslots[SLOT_PRIMARYB] && !BG_GetWeaponDef(pPS->weaponslots[SLOT_PRIMARYB])->slotStackable )
 	{
-		return SLOT_PRIMARYB;
+		return SLOT_NONE;
 	}
 
-	if ( BG_GetWeaponDef(pPS->weaponslots[SLOT_PRIMARYB])->slotStackable )
-	{
-		return SLOT_PRIMARYB;
-	}
-
-	return SLOT_NONE;
+	return SLOT_PRIMARYB;
 }
 
 // Name from the Mac 1.3 client (bg_weapons).

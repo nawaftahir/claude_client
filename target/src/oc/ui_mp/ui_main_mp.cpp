@@ -1810,7 +1810,7 @@ Bool UI_DrawRecordLevel(rectDef_t *rect)
 
     UI_FillRect(rect->x, rect->y, rect->w, 1.0f, 0, 0, white);
 
-    UI_FillRect(rect->x, rect->y + rect->h - 1.0f, rect->w, 1.0f, 0, 0, white);
+    UI_FillRect(rect->x, rect->h + rect->y - 1.0f, rect->w, 1.0f, 0, 0, white);
 
     UI_FillRect(rect->x, rect->y + 1.0f, 1.0f, rect->h - 2.0f, 0, 0, white);
 

@@ -304,7 +304,7 @@ const char *Scr_GetOpcodePosOfType( unsigned int bufferIndex, unsigned int start
 
 	firstOpcodePos = NULL;
 	firstSourcePos = 0;
-	endCodePos = nextSourceBufData ? nextSourceBufData->codePos - 1 : (const char *)-1;
+	endCodePos = (nextSourceBufData ? nextSourceBufData->codePos : NULL) - 1;
 
 	for ( i = 0; i < scrParserGlob.opcodeLookupLen; i++ )
 	{
@@ -369,7 +369,7 @@ unsigned int Scr_GetClosestSourcePosOfType( unsigned int bufferIndex, unsigned i
 		return 0;
 	}
 
-	endCodePos = nextSourceBufData ? nextSourceBufData->codePos - 1 : (const char *)-1;
+	endCodePos = (nextSourceBufData ? nextSourceBufData->codePos : NULL) - 1;
 
 	for ( i = 0; i < scrParserGlob.opcodeLookupLen; i++ )
 	{
@@ -749,7 +749,12 @@ char* Scr_AddSourceBuffer( const char *filename, const char *extFilename, const 
 				c = *source;
 				source++;
 
-				*dest = c ? c : 10;
+				if ( !c )
+				{
+					c = 10;
+				}
+
+				*dest = c;
 				dest++;
 			}
 
@@ -1081,11 +1086,13 @@ void RuntimeError( const char *codePos, unsigned int index, const char *msg, con
 		}
 		else
 		{
-			abort_on_error = false;
-
 			if ( scrVmPub.abort_on_error || scrVmPub.terminal_error )
 			{
 				abort_on_error = true;
+			}
+			else
+			{
+				abort_on_error = false;
 			}
 
 			RuntimeErrorInternal(abort_on_error ? PMSG_CONSOLE : PMSG_LOGFILE, codePos, index, msg);
