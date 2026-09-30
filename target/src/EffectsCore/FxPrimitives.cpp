@@ -1572,12 +1572,12 @@ void Particle::IntegrateTotalVelocity( int duration, vec3_t outVector )
 {
 	int life;
 	float normDuration;
-	vec4_t velocity;
-	vec4_t velocity2;
-	vec4_t gravity;
+	vec3_t velocity;
+	vec3_t velocity2;
+	vec3_t gravity;
 
 	life = GetDuration();
-	normDuration = duration < life ? (float)duration / life : 1.0f;
+	normDuration = duration >= life ? 1.0f : (float)duration / life;
 	IntegrateVelocity( normDuration, velocity );
 	IntegrateVelocity2( normDuration, velocity2 );
 	IntegrateGravity( duration, gravity );
@@ -1606,9 +1606,9 @@ void Particle::GetTotalVelocityAtTime0( vec3_t outVector )
 
 void Particle::GetTotalVelocity( float normTime, vec3_t outVector, const orientation_t *or_ )
 {
-	vec4_t velocity;
-	vec4_t velocity2;
-	vec4_t gravity;
+	vec3_t velocity;
+	vec3_t velocity2;
+	vec3_t gravity;
 
 	CalcVelocityValue( normTime, velocity, or_ );
 	CalcVelocity2Value( normTime, velocity2, or_ );
