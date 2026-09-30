@@ -191,7 +191,7 @@ float vbr_analysis(VBRState *vbr, spx_word16_t *sig, int len, int pitch, float p
    } else {
       float short_diff, long_diff;
       short_diff = log((ener+1)/(1+vbr->last_energy));
-      long_diff = log((ener+1)/(1+vbr->average_energy));
+      long_diff = log((double)((ener+1)/(1+vbr->average_energy)));
       /*fprintf (stderr, "%f %f\n", short_diff, long_diff);*/
 
       if (long_diff<-5)
