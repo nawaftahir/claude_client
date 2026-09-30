@@ -1,6 +1,9 @@
 #include "../qcommon/qcommon.h"
 #include "../xanim/xanim_public.h"
 
+// float consistency for this file only; the <math.h> float wrappers stay intrinsic (retail)
+#pragma optimize("p", on)
+
 void PerpendicularVector( const vec3_t src, vec3_t dst );
 
 const vec2_t vec2_origin = { 0, 0 };

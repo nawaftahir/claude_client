@@ -18,7 +18,7 @@ qcommon/cm_trace.cpp
 qcommon/cm_world.cpp
 qcommon/cmd.cpp
 universal/com_files.cpp
-universal/com_math.cpp /Op
+universal/com_math.cpp
 universal/com_memory.cpp
 universal/com_playerprofile.cpp
 universal/com_shared.cpp
