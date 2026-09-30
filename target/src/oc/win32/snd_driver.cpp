@@ -195,6 +195,7 @@ void SND_Update3DChannelReverb(int index);
 void SND_Set3DPosition(int index, const vec_t *org);
 static void MSS_SpatializeStream(float *volume, float *pan);
 static void MSS_SpatializeStreamImpl(int i, float *volume, float *pan);
+void SND_SetStreamChannelVolume(int index, float volume, float pan);
 void SND_UpdateStreamChannel(int i, int frametime);
 void SND_Set2DChannelVolume(int index, float volume, float pan);
 void SND_Update2DChannel(int i, int frametime);
@@ -716,22 +717,22 @@ static void MSS_SpatializeStreamImpl(int i, float *volume, float *pan)
     float lerp, oneMinusLerp;
     float fDistMin, fDistMax;
 
-    pAlias0 = g_snd.chaninfo[i].pAlias0;
-    pAlias1 = g_snd.chaninfo[i].pAlias1;
+    pAlias0 = g_snd.chaninfo[32 + i].pAlias0;
+    pAlias1 = g_snd.chaninfo[32 + i].pAlias1;
 
-    listenerIdx = SND_GetListenerIndexNearestToOrigin(g_snd.chaninfo[i].org);
+    listenerIdx = SND_GetListenerIndexNearestToOrigin(g_snd.chaninfo[32 + i].org);
     listener = &g_snd.listeners[listenerIdx];
 
-    delta[0] = g_snd.chaninfo[i].org[0] - listener->orient.origin[0];
-    delta[1] = g_snd.chaninfo[i].org[1] - listener->orient.origin[1];
-    delta[2] = g_snd.chaninfo[i].org[2] - listener->orient.origin[2];
+    delta[0] = g_snd.chaninfo[32 + i].org[0] - listener->orient.origin[0];
+    delta[1] = g_snd.chaninfo[32 + i].org[1] - listener->orient.origin[1];
+    delta[2] = g_snd.chaninfo[32 + i].org[2] - listener->orient.origin[2];
 
     dist = Vec3Normalize(delta);
 
-    right = listener->orient.axis[0];
+    right = listener->orient.axis[1];
     dot = right[2] * delta[2] + right[1] * delta[1] + right[0] * delta[0];
 
-    lerp = g_snd.chaninfo[i].lerp;
+    lerp = g_snd.chaninfo[32 + i].lerp;
     oneMinusLerp = 1.0f - lerp;
 
     fDistMax = oneMinusLerp * pAlias0->fDistMax + lerp * pAlias1->fDistMax;
@@ -741,95 +742,52 @@ static void MSS_SpatializeStreamImpl(int i, float *volume, float *pan)
     *pan = (1.0f - dot) * 0.5f;
 }
 
+// Original name unknown.
+void SND_SetStreamChannelVolume(int index, float volume, float pan)
+{
+    if (g_snd.chaninfo[index].srcChannelCount == 2 && !SND_IsAliasChannel3D((g_snd.chaninfo[index].pAlias0->flags & 0x780) >> 7)) {
+        AIL_set_stream_volume_levels(milesGlob.handle_stream[index - 32], volume, volume);
+    } else {
+        AIL_set_stream_volume_levels(milesGlob.handle_stream[index - 32], (1.0f - pan) * volume, volume * pan);
+    }
+}
+
 void SND_UpdateStreamChannel(int i, int frametime)
 {
-    snd_local_t *sndGlob;
-    snd_channel_info_t *chaninfo;
     const snd_alias_t *pAlias0;
-    int streamIdx;
     float volume, pan;
-    int aliasFlags, channel;
-    float *volTable;
-    float scaledVol;
-    int startDelay;
+    int startDelay, newDelay;
 
-    sndGlob = &g_snd;
-    chaninfo = &sndGlob->chaninfo[i];
-
-    if (chaninfo->paused != 0) {
+    if (g_snd.chaninfo[i].paused != 0) {
         return;
     }
 
-    if (i <= 0x22) {
-        if (!SND_UpdateBackgroundVolume(i - 0x20, frametime)) {
-            return;
-        }
-    }
-
-    pAlias0 = chaninfo->pAlias0;
-    if (pAlias0 == NULL || chaninfo->pAlias1 == NULL) {
+    if (i < 35 && !SND_UpdateBackgroundVolume(i - 32, frametime)) {
         return;
     }
 
-    volume = chaninfo->basevolume;
+    pAlias0 = g_snd.chaninfo[i].pAlias0;
+    volume = g_snd.chaninfo[i].basevolume;
     pan = 0.5f;
 
-    aliasFlags = pAlias0->flags;
-    channel = (aliasFlags & 0x780) >> 7;
-
-    if (SND_IsAliasChannel3D(channel)) {
-
-        streamIdx = i - 0x20;
-        SND_GetCurrent3DPosition(chaninfo->entnum, chaninfo->offset, chaninfo->org);
-        MSS_SpatializeStreamImpl(i, &volume, &pan);
-    } else {
-        streamIdx = i - 0x20;
+    if (SND_IsAliasChannel3D((pAlias0->flags & 0x780) >> 7)) {
+        SND_GetCurrent3DPosition(g_snd.chaninfo[i].entnum, g_snd.chaninfo[i].offset, g_snd.chaninfo[i].org);
+        MSS_SpatializeStreamImpl(i - 32, &volume, &pan);
     }
 
-    sndGlob = &g_snd;
-    chaninfo = &sndGlob->chaninfo[i];
-    if (sndGlob->slaveLerp != 0.0f && chaninfo->master == 0) {
-        aliasFlags = pAlias0->flags;
-        if (aliasFlags & 4) {
-            volume *= SND_GetLerpedSlavePercentage(pAlias0->fSlavePercentage);
-        }
-        aliasFlags = pAlias0->flags;
-    } else {
-        aliasFlags = pAlias0->flags;
+    if (g_snd.slaveLerp != 0.0f && !g_snd.chaninfo[i].master && (pAlias0->flags & 4)) {
+        volume *= SND_GetLerpedSlavePercentage(pAlias0->fSlavePercentage);
     }
 
-    volTable = (float *)sndGlob->channelvol;
-    channel = (aliasFlags & 0x780) >> 7;
-    volume *= volTable[channel * 3];
-    pan = pan;
-    scaledVol = volume * sndGlob->volume;
+    volume *= ((float *)g_snd.channelvol)[((pAlias0->flags & 0x780) >> 7) * 3];
+    SND_SetStreamChannelVolume(i, volume * g_snd.volume, pan);
 
-    if (chaninfo->srcChannelCount == 2) {
-
-        const snd_alias_t *pA = chaninfo->pAlias0;
-        int ch3d = (pA->flags & 0x780) >> 7;
-        if (!SND_IsAliasChannel3D(ch3d)) {
-            AIL_set_stream_volume_levels(milesGlob.handle_stream[streamIdx], scaledVol, scaledVol);
-        } else {
-            float leftVol = pan * scaledVol;
-            float rightVol = (1.0f - pan) * scaledVol;
-            AIL_set_stream_volume_levels(milesGlob.handle_stream[streamIdx], rightVol, leftVol);
-        }
-    } else {
-        float leftVol = pan * scaledVol;
-        float rightVol = (1.0f - pan) * scaledVol;
-        AIL_set_stream_volume_levels(milesGlob.handle_stream[streamIdx], rightVol, leftVol);
-    }
-
-    startDelay = chaninfo->startDelay;
+    startDelay = g_snd.chaninfo[i].startDelay;
     if (startDelay != 0) {
-        int newDelay = startDelay - frametime;
-        if (frametime >= startDelay) {
-            newDelay = 0;
-        }
-        chaninfo->startDelay = newDelay;
+        newDelay = I_max(0, startDelay - frametime);
+        g_snd.chaninfo[i].startDelay = newDelay;
         if (newDelay == 0) {
-            AIL_pause_stream(milesGlob.handle_stream[streamIdx], 0);
+            AIL_pause_stream(milesGlob.handle_stream[i - 32], 0);
         }
     }
 }
@@ -1337,7 +1295,7 @@ void SND_Update3DChannel(int i, int frametime)
     lerp = g_snd.chaninfo[i].lerp;
     volume = g_snd.chaninfo[i].basevolume;
 
-    SND_GetCurrent3DPosition(g_snd.chaninfo[i].entnum, (float *)&g_snd.chaninfo[i].system, org);
+    SND_GetCurrent3DPosition(g_snd.chaninfo[i].entnum, g_snd.chaninfo[i].offset, org);
     SND_Set3DPosition(i, org);
 
     oneMinusLerp = 1.0f - lerp;

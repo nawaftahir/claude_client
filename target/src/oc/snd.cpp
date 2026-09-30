@@ -291,13 +291,17 @@ float SND_Attenuate(SndCurve *volumeFalloffCurve, float radius, float mindist, f
 
 Bool SND_IsAliasChannel3D(int channel)
 {
-    int mask;
-    if ((unsigned int)channel > 10)
+    switch (channel) {
+    case 1:
+    case 2:
+    case 7:
+    case 8:
+    case 9:
+    case 10:
+        return 0;
+    default:
         return 1;
-    mask = 1 << channel;
-    if (!(mask & 0x786))
-        return 1;
-    return 0;
+    }
 }
 
 static __attribute_regparm__(3)
