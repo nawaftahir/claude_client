@@ -322,7 +322,6 @@ void *imp_Com_GetBsp;
 void *imp_Dvar_UnregisterSystem;
 void *imp_Hunk_AllocXAnimClient;
 void *imp_Hunk_AllocXAnimPrecache;
-void *imp_Sys_DirectXFatalError;
 void *imp_bg_iNumWeapons;
 void *imp_bg_itemlist;
 void *imp_bg_numItems;

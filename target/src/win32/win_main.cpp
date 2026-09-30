@@ -487,6 +487,18 @@ void Sys_In_Restart_f( void )
 
 /*
 ==================
+Sys_DirectXFatalError
+==================
+*/
+void Sys_DirectXFatalError( void )
+{
+	MessageBoxA( NULL, Win_LocalizeRef( "WIN_DIRECTX_INIT_BODY" ), Win_LocalizeRef( "WIN_DIRECTX_INIT_TITLE" ), MB_ICONERROR );
+	ShellExecuteA( NULL, "open", "Docs\\TechHelp\\Tech Help\\Information\\DirectX.htm", NULL, NULL, SW_SHOWMAXIMIZED );
+	exit( -1 );
+}
+
+/*
+==================
 Sys_OutOfMemErrorInternal
 ==================
 */

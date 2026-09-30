@@ -530,7 +530,7 @@ void Key_Bind_f(void)
     char cmd[1024];
 
     argc = Cmd_Argc();
-    if (argc < 2) {
+    if (Cmd_Argc() < 2) {
         Com_Printf("bind <key> [command] : attach a command to a key\n");
         return;
     }
