@@ -354,7 +354,8 @@ LPCSTR CStringEdPackage::ParseLine( LPCSTR psLine, bool forceEnglish )
 		if (CheckLineForKeyword("REFERENCE", psLine))
 		{
 			// REFERENCE	GUARD_GOOD_TO_SEE_YOU
-			AddEntry( InsideQuotes( psLine ).c_str() );
+			se_string strReference = InsideQuotes( psLine );
+			AddEntry( strReference.c_str() );
 		}
 		else
 		if (CheckLineForKeyword("ENDMARKER", psLine))

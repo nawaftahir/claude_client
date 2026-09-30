@@ -969,8 +969,9 @@ qboolean CG_DrawFollow(void)
         return 0;
     }
 
-    clientName = cg->bgs.clientinfo[cg->snap->ps.clientNum].name;
-    if (!cg->bgs.clientinfo[cg->snap->ps.clientNum].infoValid)
+    if (cg->bgs.clientinfo[cg->snap->ps.clientNum].infoValid)
+        clientName = cg->bgs.clientinfo[cg->snap->ps.clientNum].name;
+    else
         clientName = "?";
 
     followingString = SEH_LocalizeTextMessage("CGAME_FOLLOWING\x15", "spectator follow string", (msgLocErrType_t)0);

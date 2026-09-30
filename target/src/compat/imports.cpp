@@ -153,5 +153,6 @@ void *imp_Z_VirtualCommitInternal = (void *)Z_VirtualCommitInternal;
 void *imp_Z_VirtualDecommitInternal = (void *)Z_VirtualDecommitInternal;
 void *imp_Sys_DirectXFatalError = (void *)Sys_DirectXFatalError;
 void *imp_Dvar_UnregisterSystem = (void *)Dvar_ClearFlagsFromAll;
+void *imp_Com_GetBsp = (void *)Com_GetBspHeader;
 void *imp_DB_EnumXAssets = (void *)DB_EnumXAssets;
 void *imp_FX_UpdateAndDraw = (void *)FX_UpdateAndDraw;
