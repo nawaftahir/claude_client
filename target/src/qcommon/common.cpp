@@ -1450,7 +1450,8 @@ static void Com_Init_Try_Block_Function( char *commandLine )
 
 	if ( !com_sv_running->current.boolean )
 	{
-		Com_StartHunkUsers();
+		UI_SetMap("", "");
+		CL_StartHunkUsers();
 	}
 }
 
