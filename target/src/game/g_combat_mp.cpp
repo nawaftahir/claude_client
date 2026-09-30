@@ -515,16 +515,16 @@ float CanDamage( gentity_t *targ, const vec3_t centerPos )
 		VectorAdd(eyeOrigin, targ->r.currentOrigin, dest[0]);
 
 		VectorScale(dest[0], 0.5f, dest[0]);
-		VectorMA(dest[0], 15, right, dest[1]);
+		VectorMA(dest[0], fOffset, right, dest[1]);
 
 		dest[1][2] += halfHeight;
-		VectorMA(dest[0], 15, right, dest[2]);
+		VectorMA(dest[0], fOffset, right, dest[2]);
 
 		dest[2][2] -= halfHeight;
-		VectorMA(dest[0], -15, right, dest[3]);
+		VectorMA(dest[0], -fOffset, right, dest[3]);
 
 		dest[3][2] += halfHeight;
-		VectorMA(dest[0], -15, right, dest[4]);
+		VectorMA(dest[0], -fOffset, right, dest[4]);
 
 		dest[4][2] -= halfHeight;
 
