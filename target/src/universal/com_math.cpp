@@ -3564,6 +3564,7 @@ int BoxDistSqrdExceeds( const vec3_t absmin, const vec3_t absmax, const vec3_t o
 	float total;
 	float minsSqrd;
 	float maxsSqrd;
+	float d;
 
 	VectorSubtract(absmin, org, mins);
 	VectorSubtract(absmax, org, maxs);
@@ -3580,7 +3581,16 @@ int BoxDistSqrdExceeds( const vec3_t absmin, const vec3_t absmax, const vec3_t o
 		minsSqrd = mins[i] * mins[i];
 		maxsSqrd = maxs[i] * maxs[i];
 
-		total = maxsSqrd < minsSqrd ? total + maxsSqrd : total + minsSqrd;
+		if ( maxsSqrd < minsSqrd )
+		{
+			d = maxsSqrd;
+		}
+		else
+		{
+			d = minsSqrd;
+		}
+
+		total += d;
 	}
 
 	return total > fogOpaqueDistSqrd;
