@@ -1534,7 +1534,7 @@ int FS_GetOSPath( const char *qpath, char *ospath )
 
 	for ( search = fs_searchpaths; search; search = search->next )
 	{
-		if ( !FS_UseSearchPath(search) )
+		if ( !FS_UseSearchPath(search) || (search->localized && search->language != SEH_GetCurrentLanguage()) )
 			continue;
 		if ( search->iwd )
 			continue;
