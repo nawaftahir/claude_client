@@ -196,6 +196,7 @@ void SND_Set3DPosition(int index, const vec_t *org);
 static void MSS_SpatializeStream(float *volume, float *pan);
 static void MSS_SpatializeStreamImpl(int i, float *volume, float *pan);
 void SND_UpdateStreamChannel(int i, int frametime);
+void SND_Set2DChannelVolume(int index, float volume, float pan);
 void SND_Update2DChannel(int i, int frametime);
 void SND_LoadSoundFile(SoundFile *soundFile);
 int SND_StartAlias2DSample(const snd_alias_t *pAlias0, const snd_alias_t *pAlias1, float lerp, int entnum, float volume, float pitch, int timeshift, float fraction, int startDelay, Bool master, int *pChannel, snd_alias_system_t system);
@@ -835,64 +836,44 @@ void SND_UpdateStreamChannel(int i, int frametime)
 
 void SND_Update2DChannel(int i, int frametime)
 {
-    snd_local_t *sndGlob;
-    snd_channel_info_t *chaninfo;
     const snd_alias_t *pAlias0;
-    int aliasFlags, channel;
-    float volume, scaledVol;
-    float *volTable;
+    float volume;
     int startDelay, newDelay;
 
-    sndGlob = &g_snd;
-    chaninfo = &sndGlob->chaninfo[i];
-
-    if (chaninfo->paused != 0) {
+    if (g_snd.chaninfo[i].paused != 0) {
         return;
     }
 
-    pAlias0 = chaninfo->pAlias0;
-    if (pAlias0 == NULL || chaninfo->pAlias1 == NULL) {
-        return;
+    pAlias0 = g_snd.chaninfo[i].pAlias0;
+    volume = g_snd.chaninfo[i].basevolume;
+
+    if (g_snd.slaveLerp != 0.0f && !g_snd.chaninfo[i].master && (pAlias0->flags & 4)) {
+        volume *= SND_GetLerpedSlavePercentage(pAlias0->fSlavePercentage);
     }
 
-    volume = chaninfo->basevolume;
+    volume *= ((float *)g_snd.channelvol)[((pAlias0->flags & 0x780) >> 7) * 3];
+    SND_Set2DChannelVolume(i, volume * g_snd.volume, 0.5f);
 
-    if (sndGlob->slaveLerp != 0.0f) {
-        if (chaninfo->master == 0) {
-            aliasFlags = pAlias0->flags;
-            if (aliasFlags & 4) {
-                float slavePct = SND_GetLerpedSlavePercentage(pAlias0->fSlavePercentage);
-                volume *= slavePct;
-            }
-            aliasFlags = pAlias0->flags;
-        } else {
-            aliasFlags = pAlias0->flags;
-        }
-    } else {
-        aliasFlags = pAlias0->flags;
-    }
-
-    volTable = (float *)sndGlob->channelvol;
-    channel = (aliasFlags & 0x780) >> 7;
-    scaledVol = volume * volTable[channel * 3] * sndGlob->volume;
-
-    if (chaninfo->srcChannelCount != 2) {
-        scaledVol *= 0.5f;
-    }
-    AIL_set_sample_volume_levels(milesGlob.handle_2D[i - 45], scaledVol, scaledVol);
-
-    startDelay = chaninfo->startDelay;
+    startDelay = g_snd.chaninfo[i].startDelay;
     if (startDelay != 0) {
-        newDelay = startDelay - frametime;
-        if (frametime >= startDelay) {
-            newDelay = 0;
-        }
-        chaninfo->startDelay = newDelay;
+        newDelay = I_max(0, startDelay - frametime);
+        g_snd.chaninfo[i].startDelay = newDelay;
         if (newDelay == 0) {
-            return AIL_resume_sample(milesGlob.handle_2D[i - 45]);
+            AIL_resume_sample(milesGlob.handle_2D[i - 45]);
         }
     }
 }
+
+// Original name unknown.
+void SND_Set2DChannelVolume(int index, float volume, float pan)
+{
+    if (g_snd.chaninfo[index].srcChannelCount == 2) {
+        AIL_set_sample_volume_levels(milesGlob.handle_2D[index - 45], volume, volume);
+    } else {
+        AIL_set_sample_volume_levels(milesGlob.handle_2D[index - 45], (1.0f - pan) * volume, volume * pan);
+    }
+}
+
 
 void SND_LoadSoundFile(SoundFile *soundFile)
 {
@@ -1384,16 +1365,7 @@ void SND_Update3DChannel(int i, int frametime)
 
 void SND_Set2DChannelFromSaveInfo(int index, snd_save_2D_sample_t *info)
 {
-    float pan = info->pan;
-    float vol = info->volume * g_snd.volume;
-
-    if (g_snd.chaninfo[index].srcChannelCount == 2) {
-        AIL_set_sample_volume_levels(milesGlob.handle_2D[index - 45], vol, vol);
-    } else {
-        float leftVol = (1.0f - pan) * vol;
-        float rightVol = pan * vol;
-        AIL_set_sample_volume_levels(milesGlob.handle_2D[index - 45], leftVol, rightVol);
-    }
+    SND_Set2DChannelVolume(index, info->volume * g_snd.volume, info->pan);
 }
 
 Bool SND_InitDriver(void)
