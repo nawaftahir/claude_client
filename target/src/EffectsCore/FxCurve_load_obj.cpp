@@ -21,8 +21,8 @@ const FxCurve *FxCurve_AllocAndCreateWithKeys( const float *keyArray, int dimens
 	int keySize;
 
 	keySize = dimensionCount + 1;
-	needStartKey = 0.0f != keyArray[0];
-	needEndKey = 1.0f != keyArray[( keyCount - 1 ) * keySize];
+	needStartKey = keyArray[0] != 0.0f;
+	needEndKey = keyArray[( keyCount - 1 ) * keySize] != 1.0f;
 	totalKeys = keyCount + ( needStartKey != 0 ) + ( needEndKey != 0 );
 	newCurve = (FxCurve *)Hunk_AllocAlignInternal( keySize * totalKeys * 4 + 8, 4 );
 	newCurve->dimensionCount = dimensionCount;

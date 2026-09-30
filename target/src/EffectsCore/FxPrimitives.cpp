@@ -2098,7 +2098,7 @@ void Tail::UpdateLength()
 void Tail::CalcNewEndpoint( const orientation_t *or_ )
 {
 	float len;
-	vec4_t dir;
+	vec3_t dir;
 
 	VectorSubtract( mEndpoint, mOrigin, dir );
 	len = VectorLength( dir );
