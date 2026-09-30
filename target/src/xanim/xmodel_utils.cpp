@@ -15,9 +15,9 @@ const char *XModelGetName(const XModel *model)
 	return model->name;
 }
 
-int XModelGetFlags(const XModel *model)
+unsigned char XModelGetFlags(const XModel *model)
 {
-	return (unsigned char)model->flags;
+	return model->flags;
 }
 
 const char *XModelGetSurfaceName(const XModel *model, int surfIndex, int lod)
@@ -51,6 +51,11 @@ int XModelGetNumLods(const XModel *model)
 int XModelNumBones(const XModel *model)
 {
 	return model->parts->numBones;
+}
+
+const char *XModelGetLodName(const XModel *model, int lod)
+{
+	return model->lodInfo[lod].filename;
 }
 
 DObjAnimMat *XModelGetBasePose(const XModel *model)

@@ -55,7 +55,7 @@ for r in (l.split() for l in open(sys.argv[1])):
         txt = '\n'.join(L)
         todo = [(None, o, v) for o, v in {'ifelse': cmpflip.ifelse, 'split': cmpflip.splitor}[gen](L, a - 1, b) if txt.count(o) == 1]
     else:
-        f = {'cmp': cmpflip.variants, 'tern': cmpflip.ternaries}[gen]
+        f = {'cmp': cmpflip.variants, 'tern': cmpflip.ternaries, 'flt': cmpflip.floats}[gen]
         todo = [(n, L[n - 1], v) for n in range(a, b + 1) for v in f(L[n - 1]) if sane(L[n - 1], v)]
     if todo: fns.append((r[4], p, todo))
 exps, k = [], 0

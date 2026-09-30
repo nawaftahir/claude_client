@@ -579,7 +579,7 @@ XModel *DObjGetModel(const DObj_s *obj, int modelIndex);
 int XModelGetSurfaces(const XModel *model, XSurface **surfaces, int lod, int **partBits);
 int XModelGetLodForDist(const XModel *model, float dist);
 float XModelGetLodOutDist(const XModel *model);
-int XModelGetFlags(const XModel *model);
+unsigned char XModelGetFlags(const XModel *model);
 const char* XModelGetName(const XModel *model);
 qboolean XModelGetStaticBounds(const XModel *model, float (*axis)[3], float *mins, float *maxs);
 

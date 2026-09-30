@@ -221,3 +221,28 @@ if __name__ == '__main__':
     assert r[0][1] == '\n'.join(['\tif ( a )', '\t{', '\t\tx = 0;', '\t\treturn;', '\t}', '', '\tif ( b->c )', '\t{', '\t\tx = 0;', '\t\treturn;', '\t}']), r[0][1]
     assert r[1][1] == '\n'.join(['\tif (p)', '\t\ty();', '\telse if (q)', '\t\ty();']), r[1][1]
     print('ok')
+
+MATHF = ('log', 'pow', 'sqrt', 'exp', 'atan2', 'atan', 'acos', 'asin', 'sin', 'cos', 'tan', 'floor', 'ceil', 'fabs')
+
+def floats(line):
+    """float-precision flips: toggle `f` on one literal; add/drop a (double) cast on one math-call argument"""
+    if line.lstrip().startswith(('#', '//', '/*', '*')) or 'assert' in line or '"' in line:
+        return []
+    vs = set()
+    for m in re.finditer(r'(?<![\w.])(\d+\.\d*|\.\d+)(e[-+]?\d+)?(f?)(?![\w.])', line):
+        lit = m.group(1) + (m.group(2) or '')
+        vs.add(line[:m.start()] + lit + ('' if m.group(3) else 'f') + line[m.end():])
+    for m in re.finditer(r'\b(%s)\s*\(' % '|'.join(MATHF), line):
+        i = m.end()
+        dep, k = 1, i
+        while k < len(line) and dep:
+            dep += line[k] == '('; dep -= line[k] == ')'
+            k += 1
+        if dep: continue
+        arg = line[i:k - 1]
+        if ',' in arg: continue
+        if arg.startswith('(double)'):
+            vs.add(line[:i] + arg[len('(double)'):].strip() + line[k - 1:])
+        else:
+            vs.add(line[:i] + '(double)(' + arg + ')' + line[k - 1:])
+    return sorted(vs)
