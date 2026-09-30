@@ -64,13 +64,12 @@ void CG_OffhandRegisterDvars(void)
 void CG_DrawOffHandName(rectDef_s *rect, struct Font_s *font, float scale, vec_t *color, int textStyle, int weaponType)
 {
     const dvar_t *hud;
-    float fade;
     float drawColor[4];
     const char *text;
     int weapon;
     int time;
 
-    if (cg->predictedPlayerState.pm_type > 5)
+    if (cg->predictedPlayerState.pm_type >= 6)
         return;
 
     weapon = BG_GetFirstAvailableOffhand( (const playerState_t *)((void *)&cg->predictedPlayerState), weaponType);
@@ -83,9 +82,9 @@ void CG_DrawOffHandName(rectDef_s *rect, struct Font_s *font, float scale, vec_t
     hud = hud_fade_offhand;
 
     time = I_fround(hud->current.value * 1000.0f);
-    fade = CG_FadeHudMenu( (const dvar_t *)((void *)hud), cg->offhandFadeTime, time);
+    drawColor[3] = CG_FadeHudMenu( (const dvar_t *)((void *)hud), cg->offhandFadeTime, time);
 
-    if (fade == 0.0f)
+    if (drawColor[3] == 0.0f)
         return;
 
     *(int *)&drawColor[0] = *(int *)&color[0];
@@ -182,55 +181,52 @@ void CG_SwitchOffHandCmd(void)
     CG_MenuShowNotify(4);
 }
 
+// retail 0x4d1cc0
+static int GetBestOffhand(const playerState_t *ps, int offhandClass)
+{
+    int newOffhand;
+
+    newOffhand = BG_GetFirstAvailableOffhand(ps, offhandClass);
+    if (!newOffhand)
+        return BG_GetFirstEquippedOffhand(ps, offhandClass);
+    return newOffhand;
+}
+
+// retail 0x4d1ce0
+static bool IsOffHandDisplayVisible(void)
+{
+    return cg->predictedPlayerState.pm_type < 6;
+}
+
 void CG_DrawOffHandIcon(rectDef_s *rect, float scale, vec_t *color, MaterialHandle material, int weaponType)
 {
-    const dvar_t *hud;
-    float fade;
     float drawColor[4];
     int weapon;
-    int time;
     MaterialHandle iconMaterial;
     void *weapDef;
 
-    if (cg->predictedPlayerState.pm_type > 5)
+    if (!IsOffHandDisplayVisible())
+        return;
+    if (!GetBestOffhand((const playerState_t *)((void *)&cg->predictedPlayerState), weaponType))
         return;
 
-    weapon = BG_GetFirstAvailableOffhand( (const playerState_t *)((void *)&cg->predictedPlayerState), weaponType);
-    if (weapon == 0) {
-        weapon = BG_GetFirstEquippedOffhand( (const playerState_t *)((void *)&cg->predictedPlayerState), weaponType);
-        if (weapon == 0)
-            return;
-    }
-
-    hud = hud_fade_offhand;
-
-    time = I_fround(hud->current.value * 1000.0f);
-    fade = CG_FadeHudMenu( (const dvar_t *)((void *)hud), cg->offhandFadeTime, time);
-
-    if (fade == 0.0f)
+    drawColor[3] = CG_FadeHudMenu(hud_fade_offhand, cg->offhandFadeTime, I_fround(hud_fade_offhand->current.value * 1000.0f));
+    if (drawColor[3] == 0.0f)
         return;
 
     *(int *)&drawColor[0] = *(int *)&color[0];
     *(int *)&drawColor[1] = *(int *)&color[1];
     *(int *)&drawColor[2] = *(int *)&color[2];
 
-    if (cg->equippedOffHand != 0) {
-        weapDef = BG_GetWeaponDef(cg->equippedOffHand);
-        if (((WeaponDef *)weapDef)->offhandClass == weaponType) {
-            weapon = cg->equippedOffHand;
-            if (weapon == 0)
-                goto find_weapon;
+    weapon = cg->equippedOffHand;
+    if (weapon) {
+        weapDef = BG_GetWeaponDef(weapon);
+        if (((WeaponDef *)weapDef)->offhandClass == weaponType)
             goto draw_icon;
-        }
     }
-
-find_weapon:
-    weapon = BG_GetFirstAvailableOffhand( (const playerState_t *)((void *)&cg->predictedPlayerState), weaponType);
-    if (weapon == 0) {
-        weapon = BG_GetFirstEquippedOffhand( (const playerState_t *)((void *)&cg->predictedPlayerState), weaponType);
-        if (weapon == 0)
-            return;
-    }
+    weapon = GetBestOffhand((const playerState_t *)((void *)&cg->predictedPlayerState), weaponType);
+    if (!weapon)
+        return;
 
 draw_icon:
     iconMaterial = ((cg_weaponsArray))[weapon].hHudIcon;
@@ -257,7 +253,7 @@ void CG_DrawOffHandHighlight(rectDef_s *rect, float scale, vec_t *color, Materia
     float angle;
     float pulse;
 
-    if (cg->predictedPlayerState.pm_type > 5)
+    if (cg->predictedPlayerState.pm_type >= 6)
         return;
 
     weapon = BG_GetFirstAvailableOffhand( (const playerState_t *)((void *)&cg->predictedPlayerState), weaponType);
@@ -334,7 +330,7 @@ void CG_DrawOffHandAmmo(rectDef_s *rect, struct Font_s *font, float scale, vec_t
     char *text;
     void *weapDef;
 
-    if (cg->predictedPlayerState.pm_type > 5)
+    if (cg->predictedPlayerState.pm_type >= 6)
         return;
 
     weapon = BG_GetFirstAvailableOffhand( (const playerState_t *)((void *)&cg->predictedPlayerState), weaponType);

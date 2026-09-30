@@ -260,11 +260,11 @@ static void CG_UpdateHoldBreathSound(void)
 
         if (cg->holdBreathTime < 0) {
             cg->holdBreathTime = 0;
-            if (cg->holdBreathDelay > 0) {
-                cg->holdBreathInTime = 0;
-            } else {
+            if (cg->holdBreathDelay <= 0) {
                 cg->holdBreathInTime = CG_PlayClientSoundAlias(cgs->media.playerBreathInSound);
                 cg->holdBreathDelay = (int)(player_breath_snd_delay->current.value * 1000.0f);
+            } else {
+                cg->holdBreathInTime = 0;
             }
         } else if (cg->holdBreathTime > cg->holdBreathInTime) {
             CG_PlayClientSoundAlias(cgs->media.playerHeartBeatSound);
@@ -274,7 +274,7 @@ static void CG_UpdateHoldBreathSound(void)
     } else {
         if (cg->holdBreathTime >= 0) {
             cg->holdBreathTime += cg->frametime;
-            if ((int)(player_breath_hold_time->current.value * 1000.0f) < cg->holdBreathTime) {
+            if (cg->holdBreathTime > (int)(player_breath_hold_time->current.value * 1000.0f)) {
                 CG_PlayClientSoundAlias(cgs->media.playerBreathGaspSound);
             } else if (cg->holdBreathDelay <= 0) {
                 CG_PlayClientSoundAlias(cgs->media.playerBreathOutSound);
