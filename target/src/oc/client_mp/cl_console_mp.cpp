@@ -253,10 +253,10 @@ void Con_Bottom(void)
 
 static void Con_Dump_f(void)
 {
+    int l, x, i;
+    short *line;
     int f;
     char buffer[0x400];
-    int lineIndex, linewidth, i, trimLen;
-    short *linePtr;
 
     if (Cmd_Argc() != 2) {
         Com_Printf("usage: condump <filename>\n");
@@ -271,35 +271,28 @@ static void Con_Dump_f(void)
         return;
     }
 
-    linewidth = con.linewidth;
-    for (lineIndex = con.currentLine - con.totallines + 1; lineIndex <= con.currentLine; lineIndex++) {
+    // skip empty lines
+    for (l = con.currentLine - con.totallines + 1; l <= con.currentLine; l++) {
+        line = con.textBuffer + (l % con.totallines) * con.linewidth;
+        for (x = 0; x < con.linewidth; x++)
+            if ((line[x] & 0xff) != ' ')
+                break;
+        if (x != con.linewidth)
+            break;
+    }
 
-        linePtr = &con.textBuffer[(lineIndex % con.totallines) * linewidth];
-
-        if (linewidth <= 0) {
-            if (linewidth == 0)
-                continue;
-        } else {
-            int allSpaces = 1;
-            for (i = 0; i < linewidth; i++) {
-                if ((linePtr[i] & 0xFF) != 0x20) {
-                    allSpaces = 0;
-                    break;
-                }
-            }
-            if (allSpaces)
-                continue;
+    // write the remaining lines
+    buffer[con.linewidth] = 0;
+    for (; l <= con.currentLine; l++) {
+        line = con.textBuffer + (l % con.totallines) * con.linewidth;
+        for (i = 0; i < con.linewidth; i++)
+            buffer[i] = line[i] & 0xff;
+        for (x = con.linewidth - 1; x >= 0; x--) {
+            if (buffer[x] == ' ')
+                buffer[x] = 0;
+            else
+                break;
         }
-
-        for (i = 0; i < linewidth; i++) {
-            buffer[i] = (char)(linePtr[i] & 0xFF);
-        }
-
-        trimLen = linewidth - 1;
-        while (trimLen >= 0 && buffer[trimLen] == ' ')
-            trimLen--;
-        buffer[trimLen + 1] = '\0';
-
         I_strncat(buffer, 0x400, "\n");
         FS_Write(buffer, strlen(buffer), f);
     }
@@ -398,6 +391,7 @@ void Con_AutoCompleteFromList(const char **strings, int stringCount, const char 
 {
     int prefixLen = strlen(prefix);
     int stringIndex;
+    int i;
 
     completed[0] = '\0';
 
@@ -412,13 +406,9 @@ void Con_AutoCompleteFromList(const char **strings, int stringCount, const char 
             I_strncpyz(completed, string, sizeofCompleted);
         } else {
 
-            char *p = completed + prefixLen;
-            const char *s = string + prefixLen;
-            while (*p && *p == *s) {
-                p++;
-                s++;
-            }
-            *p = '\0';
+            for (i = prefixLen; string[i] == completed[i] && completed[i]; i++)
+                ;
+            completed[i] = '\0';
         }
     }
 }
