@@ -59,7 +59,7 @@ static int s_clientTalkTime[64];
 Bool Voice_Init(void);
 float Voice_GetVoiceLevel(void);
 void Voice_Playback(void);
-void Voice_IncomingVoiceData(int talker, unsigned char *data, int packetDataSize);
+void Voice_IncomingVoiceData(unsigned char talker, unsigned char *data, int packetDataSize);
 Bool Voice_IsClientTalking(int clientNum);
 void Voice_Shutdown(void);
 int Voice_GetLocalVoiceData(ClientVoicePacket_t *voiceData);
@@ -152,7 +152,7 @@ void Voice_Playback(void)
     Sound_Frame();
 }
 
-void Voice_IncomingVoiceData(int talker, unsigned char *data, int packetDataSize)
+void Voice_IncomingVoiceData(unsigned char talker, unsigned char *data, int packetDataSize)
 {
     short decodedData[4096];
     int talkerIdx;

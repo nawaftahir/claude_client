@@ -614,38 +614,38 @@ void CL_Clientinfo_f(void)
 extern int MSG_ReadByte(msg_t *msg);
 extern void MSG_ReadData(msg_t *msg, void *data, int len);
 extern Bool CL_IsPlayerMuted(int clientNum);
-extern void Voice_IncomingVoiceData(int talker, unsigned char *data, int packetDataSize);
+extern void Voice_IncomingVoiceData(unsigned char talker, unsigned char *data, int packetDataSize);
 void CL_VoicePacket(msg_t *msg)
 {
-    byte voiceData[256];
-    int numPackets, packet, talker, dataLen;
+    VoicePacket_t voicePacket;
+    int numPackets, packet;
 
     numPackets = MSG_ReadByte(msg);
-    if (numPackets > 40 || numPackets <= 0)
+    if (numPackets < 0 || numPackets > 40)
         return;
 
     for (packet = 0; packet < numPackets; packet++) {
-        talker = MSG_ReadByte(msg);
-        dataLen = MSG_ReadByte(msg);
+        voicePacket.talker = MSG_ReadByte(msg);
+        voicePacket.dataSize = MSG_ReadByte(msg);
 
-        if (dataLen < 1 || dataLen > 256) {
-            Com_Printf("Invalid server voice packet of %i bytes\n", dataLen);
+        if (voicePacket.dataSize <= 0 || voicePacket.dataSize > 256) {
+            Com_Printf("Invalid server voice packet of %i bytes\n", voicePacket.dataSize);
             return;
         }
 
-        MSG_ReadData(msg, voiceData, dataLen);
+        MSG_ReadData(msg, voicePacket.data, voicePacket.dataSize);
 
-        if (talker > 63) {
-            Com_Printf("Invalid voice packet - talker was %i\n", talker);
+        if (voicePacket.talker >= 64) {
+            Com_Printf("Invalid voice packet - talker was %i\n", voicePacket.talker);
             return;
         }
 
-        if (CL_IsPlayerMuted(talker))
+        if (CL_IsPlayerMuted(voicePacket.talker))
             continue;
         if (!cl_voice->current.enabled)
             continue;
 
-        Voice_IncomingVoiceData(talker, voiceData, dataLen);
+        Voice_IncomingVoiceData(voicePacket.talker, voicePacket.data, voicePacket.dataSize);
     }
 }
 
