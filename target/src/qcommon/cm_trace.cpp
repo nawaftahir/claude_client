@@ -2004,9 +2004,10 @@ qboolean CM_SightTraceCylinderThroughCylinder( traceWork_t *tw, const vec3_t vSt
 		return qtrue;
 	}
 
+	fEpsilon = fB * (float)SURFACE_CLIP_EPSILON;
 	vDelta[2] = 0.0;
 	fDeltaLen = Vec3NormalizeTo(vDelta, vNormal);
-	fEpsilon = fB * (float)SURFACE_CLIP_EPSILON / fDeltaLen;
+	fEpsilon = fEpsilon / fDeltaLen;
 	fEntry = (-fB - I_sqrt(fDiscriminant)) / fA + fEpsilon;
 
 	if ( fEntry >= trace->fraction )
