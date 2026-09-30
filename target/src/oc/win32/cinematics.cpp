@@ -276,12 +276,12 @@ void ROQ_UploadCinematicFromHandle(int handle)
 
 static void move8_32(byte *src, byte *dst, int spl)
 {
-    double *dsrc;
-    double *ddst;
+    __int64 *dsrc;
+    __int64 *ddst;
     int dspl;
 
-    dsrc = (double *)src;
-    ddst = (double *)dst;
+    dsrc = (__int64 *)src;
+    ddst = (__int64 *)dst;
     dspl = spl >> 3;
 
     ddst[0] = dsrc[0];
@@ -334,12 +334,12 @@ static void move8_32(byte *src, byte *dst, int spl)
 
 static void move4_32(byte *src, byte *dst, int spl)
 {
-    double *dsrc;
-    double *ddst;
+    __int64 *dsrc;
+    __int64 *ddst;
     int dspl;
 
-    dsrc = (double *)src;
-    ddst = (double *)dst;
+    dsrc = (__int64 *)src;
+    ddst = (__int64 *)dst;
     dspl = spl >> 3;
 
     ddst[0] = dsrc[0];
@@ -360,12 +360,12 @@ static void move4_32(byte *src, byte *dst, int spl)
 
 static void blit8_32(byte *src, byte *dst, int spl)
 {
-    double *dsrc;
-    double *ddst;
+    __int64 *dsrc;
+    __int64 *ddst;
     int dspl;
 
-    dsrc = (double *)src;
-    ddst = (double *)dst;
+    dsrc = (__int64 *)src;
+    ddst = (__int64 *)dst;
     dspl = spl >> 3;
 
     ddst[0] = dsrc[0];
@@ -418,12 +418,12 @@ static void blit8_32(byte *src, byte *dst, int spl)
 
 static void blit4_32(byte *src, byte *dst, int spl)
 {
-    double *dsrc;
-    double *ddst;
+    __int64 *dsrc;
+    __int64 *ddst;
     int dspl;
 
-    dsrc = (double *)src;
-    ddst = (double *)dst;
+    dsrc = (__int64 *)src;
+    ddst = (__int64 *)dst;
     dspl = spl >> 3;
 
     ddst[0] = dsrc[0];
@@ -444,12 +444,12 @@ static void blit4_32(byte *src, byte *dst, int spl)
 
 static void blit2_32(byte *src, byte *dst, int spl)
 {
-    double *dsrc;
-    double *ddst;
+    __int64 *dsrc;
+    __int64 *ddst;
     int dspl;
 
-    dsrc = (double *)src;
-    ddst = (double *)dst;
+    dsrc = (__int64 *)src;
+    ddst = (__int64 *)dst;
     dspl = spl >> 3;
 
     ddst[0] = dsrc[0];

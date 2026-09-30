@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Batched line-variant experiments for lab.py: each experiment applies one vary.auto variant in each of up to K
-different near-miss functions. usage (in target/): genvary.py <structdiff.txt> <out.json> [maxdiff=40] [K=10] [gen=cmp|tern|ifelse]
+different near-miss functions. usage (in target/): genvary.py <structdiff.txt> <out.json> [maxdiff=40] [K=10] [gen=cmp|tern|ifelse|split]
 Winners = variants whose own function gained in its batch; confirm them alone with lab.py before merging."""
 import glob, json, os, re, sys
 import cmpflip
@@ -51,9 +51,9 @@ for r in (l.split() for l in open(sys.argv[1])):
     seen.add(loc)
     p, a, b = loc
     L = open(p, errors='replace').read().split('\n')
-    if gen == 'ifelse':  # exact-text block edits, unique in the file
+    if gen in ('ifelse', 'split'):  # exact-text block edits, unique in the file
         txt = '\n'.join(L)
-        todo = [(None, o, v) for o, v in cmpflip.ifelse(L, a - 1, b) if txt.count(o) == 1]
+        todo = [(None, o, v) for o, v in {'ifelse': cmpflip.ifelse, 'split': cmpflip.splitor}[gen](L, a - 1, b) if txt.count(o) == 1]
     else:
         f = {'cmp': cmpflip.variants, 'tern': cmpflip.ternaries}[gen]
         todo = [(n, L[n - 1], v) for n in range(a, b + 1) for v in f(L[n - 1]) if sane(L[n - 1], v)]

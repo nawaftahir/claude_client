@@ -150,6 +150,48 @@ def ifelse(L, a, b):
         out.append(('\n'.join(L[i:e2 + 1]), '\n'.join(new)))
     return out
 
+def _toplevel_or(c):
+    """split a condition at depth-0 '||' -> list of terms, or None"""
+    dep, parts, k = 0, [], 0
+    for j, ch in enumerate(c):
+        dep += ch == '('; dep -= ch == ')'
+        if dep == 0 and c.startswith('||', j):
+            parts.append(c[k:j]); k = j + 2
+        if dep == 0 and ch == '?': return None
+    parts.append(c[k:])
+    return [t.strip() for t in parts] if len(parts) > 1 else None
+
+def splitor(L, a, b):
+    """`if (A || B) body` -> separate ifs (body ends in a jump) or an else-if chain"""
+    out = []
+    for i in range(a, b):
+        m = IFL.match(L[i])
+        if not m or 'assert' in m.group(2): continue
+        ind, cond = m.group(1), m.group(2)
+        terms = _toplevel_or(cond)
+        if not terms: continue
+        t = _block(L, i, ind)
+        if t:
+            s, e = t
+            blk = L[i + 1:e + 1]
+            nxt = L[e].strip()
+            if nxt != '}' or (e + 1 < len(L) and L[e + 1].strip().startswith('else')): continue
+            last = [x.strip() for x in L[s:e] if x.strip()]
+        else:
+            if i + 1 >= len(L) or not L[i + 1].rstrip().endswith(';') or len(L[i + 1]) - len(L[i + 1].lstrip()) <= len(ind): continue
+            if i + 2 < len(L) and L[i + 2].strip().startswith('else'): continue
+            e, blk, last = i + 1, [L[i + 1]], [L[i + 1].strip()]
+        if not last: continue
+        jump = re.match(r'(return\b|break;|continue;|goto\b)', last[-1])
+        new = []
+        for n, term in enumerate(terms):
+            head = L[i][:m.start(2)] + ' ' * (L[i][m.start(2) - 1:m.start(2)] == '(' and cond.startswith(' ')) + term + ' ' * cond.endswith(' ') + L[i][m.end(2):]
+            if n and not jump: head = head.replace('if', 'else if', 1)
+            new += [head] + blk
+            if jump and n < len(terms) - 1: new.append('')
+        out.append(('\n'.join(L[i:e + 1]), '\n'.join(new)))
+    return out
+
 if __name__ == '__main__':
     src = ['\tif ( x == 1 )', '\t{', '\t\ta();', '\t}', '\telse', '\t{', '\t\tb();', '\t\tc();', '\t}',
            '\tif (p) {', '\t\td();', '\t} else {', '\t\te();', '\t}']
@@ -174,4 +216,8 @@ if __name__ == '__main__':
         v = variants(t)
         assert (want in v) if want else not v, (t, v)
         for x in v: assert '-;' not in x and x.count('(') == t.count('('), (t, x)
+    src = ['\tif ( a || b->c )', '\t{', '\t\tx = 0;', '\t\treturn;', '\t}', '\tif (p || q)', '\t\ty();']
+    r = splitor(src, 0, len(src))
+    assert r[0][1] == '\n'.join(['\tif ( a )', '\t{', '\t\tx = 0;', '\t\treturn;', '\t}', '', '\tif ( b->c )', '\t{', '\t\tx = 0;', '\t\treturn;', '\t}']), r[0][1]
+    assert r[1][1] == '\n'.join(['\tif (p)', '\t\ty();', '\telse if (q)', '\t\ty();']), r[1][1]
     print('ok')
