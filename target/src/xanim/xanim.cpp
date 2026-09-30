@@ -603,28 +603,22 @@ void XAnim_GetTimeIndex_unsigned_char_(const XAnimTime *animTime, const unsigned
 
 		while ( 1 )
 		{
-			while ( 1 )
-			{
-				index = (low + high) / 2;
+			index = (low + high) / 2;
 
-				if ( frameIndex < indices[index] )
-					high = index;
-				else
-					break;
+			if ( frameIndex < indices[index] )
+			{
+				high = index;
+				continue;
 			}
 
-			if ( frameIndex >= indices[index + 1] )
-			{
-				low = index + 1;
+			if ( frameIndex < indices[index + 1] )
+				break;
 
-				if ( frameIndex >= indices[--high] )
-				{
-					index = high;
-					break;
-				}
-			}
-			else
+			low = index + 1;
+
+			if ( frameIndex >= indices[--high] )
 			{
+				index = high;
 				break;
 			}
 		}
@@ -776,28 +770,22 @@ void XAnim_GetTimeIndex_unsigned_short_(const XAnimTime *animTime, const unsigne
 
 		while ( 1 )
 		{
-			while ( 1 )
-			{
-				index = (low + high) / 2;
+			index = (low + high) / 2;
 
-				if ( frameIndex < indices[index] )
-					high = index;
-				else
-					break;
+			if ( frameIndex < indices[index] )
+			{
+				high = index;
+				continue;
 			}
 
-			if ( frameIndex >= indices[index + 1] )
-			{
-				low = index + 1;
+			if ( frameIndex < indices[index + 1] )
+				break;
 
-				if ( frameIndex >= indices[--high] )
-				{
-					index = high;
-					break;
-				}
-			}
-			else
+			low = index + 1;
+
+			if ( frameIndex >= indices[--high] )
 			{
+				index = high;
 				break;
 			}
 		}
