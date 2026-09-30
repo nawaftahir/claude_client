@@ -482,13 +482,10 @@ int CL_GetSkelTimeStamp(int localClientNum)
 char *CL_AllocSkelMemory(int localClientNum, unsigned int size)
 {
     clientActive_t *client = &clients[localClientNum];
-    int pos = client->skelMemPos;
-    char *buf = (char *)((intptr_t)pos + (intptr_t)client->skelMemoryStart);
-    unsigned int newPos = pos + ((size + 15) & ~15);
+    char *buf = client->skelMemoryStart + client->skelMemPos;
+    unsigned int newPos = client->skelMemPos + ((size + 15) & ~15);
     client->skelMemPos = newPos;
-    if (newPos > 0x3fff0)
-        return 0;
-    return buf;
+    return newPos > 0x3fff0 ? NULL : buf;
 }
 
 void CL_ResetSkeletonCache(int localClientNum)
@@ -586,7 +583,6 @@ void CL_ReferencedIWDList_f(void)
 void CL_Configstrings_f(void)
 {
     int i;
-    clientActive_t *c;
     int offset;
 
     if (::clc.state != 8) {
@@ -594,11 +590,11 @@ void CL_Configstrings_f(void)
         return;
     }
 
-    c = clients;
     for (i = 0; i < 0x800; i++) {
-        offset = c->gameState.stringOffsets[i];
-        if (offset)
-            Com_Printf("%4i: %s\n", i, c->gameState.stringData + offset);
+        offset = clients[0].gameState.stringOffsets[i];
+        if (!offset)
+            continue;
+        Com_Printf("%4i: %s\n", i, clients[0].gameState.stringData + offset);
     }
 }
 
@@ -679,17 +675,12 @@ void CL_SetupForNewServerMap(const char *pszMapName, const char *pszGametype)
 extern void CL_WriteVoicePacket(void);
 void CL_VoiceTransmit(void)
 {
-    int voiceLen = clients[0].voicePacketCount;
-    clientActive_t *c;
-
-    if (voiceLen <= 0)
-        return;
-
-    if (clients[0].serverTime - clients[0].voicePacketLastTransmit > 199 || voiceLen > 9) {
-        CL_WriteVoicePacket();
-        c = clients;
-        c->voicePacketCount = 0;
-        c->voicePacketLastTransmit = c->serverTime;
+    if (clients[0].voicePacketCount > 0) {
+        if (clients[0].serverTime - clients[0].voicePacketLastTransmit >= 200 || clients[0].voicePacketCount >= 10) {
+            CL_WriteVoicePacket();
+            clients[0].voicePacketCount = 0;
+            clients[0].voicePacketLastTransmit = clients[0].serverTime;
+        }
     }
 }
 
@@ -2144,27 +2135,11 @@ void CL_RunOncePerClientFrame(int msec)
 
 int Client_SendVoiceData(int bytes, char *enc_buffer)
 {
-    clientActive_t *c;
-    int voiceIdx, newIdx;
-
     if (bytes > 0) {
-        c = clients;
-        voiceIdx = c->voicePacketCount;
-
-        memcpy(c->voicePackets[voiceIdx].data, enc_buffer, bytes);
-        c->voicePackets[voiceIdx].dataSize = bytes;
-
-        newIdx = voiceIdx + 1;
-        c->voicePacketCount = newIdx;
-
-        if (newIdx > 0) {
-            if (c->serverTime - c->voicePacketLastTransmit > 199 || newIdx > 9) {
-                CL_WriteVoicePacket();
-                c = clients;
-                c->voicePacketCount = 0;
-                c->voicePacketLastTransmit = c->serverTime;
-            }
-        }
+        memcpy(clients[0].voicePackets[clients[0].voicePacketCount].data, enc_buffer, bytes);
+        clients[0].voicePackets[clients[0].voicePacketCount].dataSize = bytes;
+        clients[0].voicePacketCount++;
+        CL_VoiceTransmit();
     }
 
     return bytes;
@@ -2335,13 +2310,13 @@ Bool CL_PacketEvent(netadr_t from, msg_t *msg, int time)
     int savedServerMessageSequence;
     int savedReliableAcknowledge;
 
-    if (msg->cursize > 3 && *(int *)msg->data == -1)
+    if (msg->cursize >= 4 && *(int *)msg->data == -1)
         return CL_ConnectionlessPacket(from, msg, time);
 
-    if (*(int *)&::clc <= CA_CHALLENGING)
+    if (::clc.state < CA_CONNECTED)
         return 0;
 
-    if (msg->cursize <= 3) {
+    if (msg->cursize < 4) {
         Com_Printf((const char *)"%s: Runt packet\n", NET_AdrToString(from));
         return 1;
     }
@@ -2781,34 +2756,20 @@ void CL_MapLoading(const char *mapname)
 
 void CL_DemoCompleted(void)
 {
-    clientConnection_t *conn = &::clc;
-    connstate_t oldState;
+    int time;
 
-    if (conn->isTimeDemo) {
-        int elapsed = Sys_Milliseconds() - conn->timeDemoStart;
-        if (elapsed > 0) {
-            double seconds = (double)elapsed / 1000.0;
-            double fps = (double)conn->timeDemoFrames * 1000.0 / (double)elapsed;
-            Com_Printf((const char *)"%i frames, %3.1f seconds: %3.1f fps\n", conn->timeDemoFrames, seconds, fps);
-        }
+    if (::clc.isTimeDemo) {
+        time = Sys_Milliseconds() - ::clc.timeDemoStart;
+        if (time > 0)
+            Com_Printf("%i frames, %3.1f seconds: %3.1f fps\n", ::clc.timeDemoFrames, time / 1000.0, ::clc.timeDemoFrames * 1000.0 / time);
     }
 
-    if (conn->timeDemoLog) {
-        FS_FCloseFile(conn->timeDemoLog);
-        conn->timeDemoLog = 0;
+    if (::clc.timeDemoLog) {
+        FS_FCloseFile(::clc.timeDemoLog);
+        ::clc.timeDemoLog = 0;
     }
 
-    SCR_StopCinematic();
-    oldState = conn->state;
-    CL_Disconnect();
-
-    if (oldState <= CA_LOGO)
-        return;
-
-    if (Sys_IsMainThread() && !UI_IsFullscreen() && *(byte *)&clients[0] != 0 && *(int *)&::clc > CA_LOGO)
-        return;
-
-    Com_Error(ERR_DISCONNECT, (const char *)"EXE_DISCONNECTED_FROM_SERVER");
+    CL_Disconnect_f();
 }
 
 void CL_ReadDemoMessage(void)

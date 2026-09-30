@@ -1712,47 +1712,31 @@ const char *UI_ReplaceConversions(const char *sourceString, ConversionArguments 
     int sourceStringLength;
     int index;
     int outputStringCounter;
+    int argIndex;
+    int argLen;
+    int j;
 
     if (!strstr(sourceString, "&&"))
         return sourceString;
 
     sourceStringLength = strlen(sourceString);
     memset(outputString, 0, 0x400);
-
-    if (sourceStringLength <= 0)
-        return va(outputString);
-
     outputStringCounter = 0;
-    index = 0;
 
-    while (index < sourceStringLength) {
-
-        if (memcmp(&sourceString[index], "&&", 2) == 0) {
-
-            int c = (signed char)sourceString[index + 2];
-            {
-
-                extern void *__DefaultRuneLocale;
-                unsigned int *rt = (unsigned int *)__DefaultRuneLocale;
-                if ((unsigned int)c <= 0xff && (rt[13 + c] & 0x400)) {
-
-                    int argIndex = c - '1';
-                    int argLen = strlen(arguments->args[argIndex]);
-                    int j;
-
-                    for (j = 0; j < argLen; j++) {
-                        outputString[outputStringCounter] = arguments->args[argIndex][j];
-                        outputStringCounter++;
-                    }
-                    index += 3;
-                    continue;
-                }
+    for (index = 0; index < sourceStringLength; ) {
+        if (!strncmp(&sourceString[index], "&&", 2) && isdigit(sourceString[index + 2])) {
+            argIndex = sourceString[index + 2] - '1';
+            argLen = strlen(arguments->args[argIndex]);
+            for (j = 0; j < argLen; j++) {
+                outputString[outputStringCounter] = arguments->args[argIndex][j];
+                outputStringCounter++;
             }
+            index += 3;
+        } else {
+            outputString[outputStringCounter] = sourceString[index];
+            outputStringCounter++;
+            index++;
         }
-
-        outputString[outputStringCounter] = sourceString[index];
-        outputStringCounter++;
-        index++;
     }
 
     return va(outputString);
