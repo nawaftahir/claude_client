@@ -938,54 +938,42 @@ static void CM_ClipMoveToEntities_r( moveclip_t *clip, unsigned short nodeIndex,
 
 	while ( 1 )
 	{
-		while ( 1 )
+		node = &cm_world.sectors[nodeIndex];
+
+		if ( !(node->contents.contentsEntities & clip->contentmask) )
 		{
-			while ( 1 )
+			return;
+		}
+
+		for ( entnum = node->contents.entities; entnum; entnum = check->nextEntityInWorldSector )
+		{
+			check = &sv.svEntities[entnum - 1];
+
+			// if it doesn't have any brushes of a type we
+			// are looking for, ignore it
+			if ( !(clip->contentmask & check->linkcontents) )
 			{
-				node = &cm_world.sectors[nodeIndex];
-
-				if ( !(node->contents.contentsEntities & clip->contentmask) )
-				{
-					return;
-				}
-
-				for ( entnum = node->contents.entities; entnum; entnum = check->nextEntityInWorldSector )
-				{
-					check = &sv.svEntities[entnum - 1];
-
-					// if it doesn't have any brushes of a type we
-					// are looking for, ignore it
-					if ( !(clip->contentmask & check->linkcontents) )
-					{
-						continue;
-					}
-
-					SV_ClipMoveToEntity(clip, check, trace);
-				}
-
-				t1 = p[node->tree.axis] - node->tree.dist;
-				t2 = p2[node->tree.axis] - node->tree.dist;
-
-				offset = clip->outerSize[node->tree.axis];
-
-				if ( I_fmin(t1, t2) >= offset )
-				{
-					nodeIndex = node->tree.child[0];
-				}
-				else
-				{
-					break;
-				}
+				continue;
 			}
 
-			if ( I_fmax(t1, t2) <= -offset )
-			{
-				nodeIndex = node->tree.child[1];
-			}
-			else
-			{
-				break;
-			}
+			SV_ClipMoveToEntity(clip, check, trace);
+		}
+
+		t1 = p[node->tree.axis] - node->tree.dist;
+		t2 = p2[node->tree.axis] - node->tree.dist;
+
+		offset = clip->outerSize[node->tree.axis];
+
+		if ( I_fmin(t1, t2) >= offset )
+		{
+			nodeIndex = node->tree.child[0];
+			continue;
+		}
+
+		if ( I_fmax(t1, t2) <= -offset )
+		{
+			nodeIndex = node->tree.child[1];
+			continue;
 		}
 
 		if ( trace->fraction <= p[3] )
@@ -1080,51 +1068,39 @@ static int CM_ClipSightTraceToEntities_r( sightclip_t *clip, unsigned short node
 
 	while ( 1 )
 	{
-		while ( 1 )
+		node = &cm_world.sectors[nodeIndex];
+
+		if ( !(node->contents.contentsEntities & clip->contentmask) )
 		{
-			while ( 1 )
+			return 0;
+		}
+
+		for ( entnum = node->contents.entities; entnum; entnum = check->nextEntityInWorldSector )
+		{
+			check = &sv.svEntities[entnum - 1];
+			hitNum = SV_ClipSightToEntity(clip, check);
+
+			if ( hitNum )
 			{
-				node = &cm_world.sectors[nodeIndex];
-
-				if ( !(node->contents.contentsEntities & clip->contentmask) )
-				{
-					return 0;
-				}
-
-				for ( entnum = node->contents.entities; entnum; entnum = check->nextEntityInWorldSector )
-				{
-					check = &sv.svEntities[entnum - 1];
-					hitNum = SV_ClipSightToEntity(clip, check);
-
-					if ( hitNum )
-					{
-						return hitNum;
-					}
-				}
-
-				t1 = p[node->tree.axis] - node->tree.dist;
-				t2 = p2[node->tree.axis] - node->tree.dist;
-
-				offset = clip->outerSize[node->tree.axis];
-
-				if ( I_fmin(t1, t2) >= offset )
-				{
-					nodeIndex = node->tree.child[0];
-				}
-				else
-				{
-					break;
-				}
+				return hitNum;
 			}
+		}
 
-			if ( I_fmax(t1, t2) <= -offset )
-			{
-				nodeIndex = node->tree.child[1];
-			}
-			else
-			{
-				break;
-			}
+		t1 = p[node->tree.axis] - node->tree.dist;
+		t2 = p2[node->tree.axis] - node->tree.dist;
+
+		offset = clip->outerSize[node->tree.axis];
+
+		if ( I_fmin(t1, t2) >= offset )
+		{
+			nodeIndex = node->tree.child[0];
+			continue;
+		}
+
+		if ( I_fmax(t1, t2) <= -offset )
+		{
+			nodeIndex = node->tree.child[1];
+			continue;
 		}
 
 		diff = t2 - t1;
