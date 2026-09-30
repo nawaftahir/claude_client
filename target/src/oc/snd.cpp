@@ -602,21 +602,20 @@ void SND_UpdateLoopingSounds(void)
 
 Bool SND_UpdateBackgroundVolume(int track, int frametime)
 {
-    int channel = track + 32;
-    float goalrate = g_snd.background[track].goalrate;
-    float goalvolume = g_snd.background[track].goalvolume;
-    float newvol = g_snd.chaninfo[channel].basevolume + goalrate * (float)frametime;
+    int channel;
+    float newvol;
 
-    if (goalrate > 0.0f) {
-        if (newvol > goalvolume)
-            newvol = goalvolume;
-    } else {
-        if (goalvolume > newvol) {
-            if (goalvolume == 0.0f) {
-                SND_StopStreamChannel(channel);
-                return 0;
-            }
-            newvol = goalvolume;
+    channel = track + 32;
+    newvol = (float)frametime * g_snd.background[track].goalrate + g_snd.chaninfo[channel].basevolume;
+
+    if (g_snd.background[track].goalrate > 0.0f) {
+        if (newvol > g_snd.background[track].goalvolume)
+            newvol = g_snd.background[track].goalvolume;
+    } else if (newvol < g_snd.background[track].goalvolume) {
+        newvol = g_snd.background[track].goalvolume;
+        if (newvol == 0.0f) {
+            SND_StopStreamChannel(channel);
+            return 0;
         }
     }
 
