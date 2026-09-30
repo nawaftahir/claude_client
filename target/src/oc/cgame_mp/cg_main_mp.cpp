@@ -1098,13 +1098,21 @@ static inline __attribute__((always_inline)) void CG_InitXAnimTrees(void)
         *(void **)cgsTree = XAnimCreateTree((XAnim *)anims, (Alloc_t)Hunk_AllocXAnimClient);
 }
 
-static inline __attribute__((always_inline)) void CG_ClearEntityDObjHandles(void)
+// retail 0x4ba930 (Kisak name)
+void CG_InitEntities(void)
 {
-    byte *ent = (byte *)cg_entities;
-    int offset;
+    int entityIndex;
 
-    for (offset = 0; offset < 0x89000; offset += 0x224)
-        *(int *)(ent + offset + 0x220) = 0;
+    for (entityIndex = 0; entityIndex < 1024; entityIndex++)
+        cg_entities[entityIndex].localClientNum = 0;
+    ((cg_t *)cg)->predictedPlayerEntity.localClientNum = 0;
+}
+
+// retail 0x4ba960 (Kisak name); only inlined copies are called
+void CG_InitViewDimensions(void)
+{
+    cgs->viewX = 0;
+    CL_GetScreenDimensions((int *)&cgs->viewWidth, (int *)&cgs->viewHeight, (float *)&cgs->viewAspect);
 }
 
 void CG_Init(int serverMessageNum, int serverCommandSequence, int clientNum)
@@ -1112,7 +1120,7 @@ void CG_Init(int serverMessageNum, int serverCommandSequence, int clientNum)
 #    define cgBase ((byte *)cg)
 
 #    define cgsBase ((byte *)cgs)
-    char mapname[0x58];
+    char mapname[64];
     const char *game;
 
     memset((void *)cgs, 0, sizeof(cgs_t));
@@ -1154,11 +1162,10 @@ void CG_Init(int serverMessageNum, int serverCommandSequence, int clientNum)
     CG_AntiBurnInHUD_RegisterDvars();
     CG_InitConsoleCommands();
 
-    ((cgs_t *)cgsBase)->viewX = 0;
-    CL_GetScreenDimensions((int *)&((cgs_t *)cgsBase)->viewWidth, (int *)&((cgs_t *)cgsBase)->viewHeight, (float *)&((cgs_t *)cgsBase)->viewAspect);
+    CG_InitViewDimensions();
 
     game = CL_GetConfigString(2);
-    if (game[0] != 'c' || game[1] != 'o' || game[2] != 'd' || game[3] != '\0')
+    if (strcmp(game, "cod"))
         Com_Error(ERR_DROP, "\x15"
                      "Client/Server game mismatch: %s/%s",
                   "cod", game);
@@ -1176,9 +1183,7 @@ void CG_Init(int serverMessageNum, int serverCommandSequence, int clientNum)
     }
 
     CG_SetupWeaponDef();
-    Com_Printf("", *(int *)(scrMemTreeGlob + 525092), *(int *)(scrMemTreeGlob + 525096));
     CGScr_LoadAnimTrees();
-    Com_Printf("", *(int *)(scrMemTreeGlob + 525092), *(int *)(scrMemTreeGlob + 525096));
 
     bgs = (bgs_t *)((char *)cgBase + offsetof(cg_t, bgs.animScriptData.animations[0].name[0]));
     BG_LoadAnim();
@@ -1209,8 +1214,7 @@ void CG_Init(int serverMessageNum, int serverCommandSequence, int clientNum)
     CG_LoadingString("clients");
     CG_LoadHudMenu();
 
-    CG_ClearEntityDObjHandles();
-    ((cg_t *)cgBase)->predictedPlayerEntity.localClientNum = 0;
+    CG_InitEntities();
     CG_InitLocalEntities();
     CG_InitMarkPolys();
     (*(unsigned char *)&((cg_t *)cgBase)->infoScreenText[0]) = 0;

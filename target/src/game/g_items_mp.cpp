@@ -955,7 +955,7 @@ gentity_t *Drop_Weapon( gentity_t *ent, int iWeaponIndex, unsigned int tag )
 			}
 			else
 			{
-				iDropAmmo = ( iMax == iMin ) ? iMin : rand() % (iMax - iMin) + iMin;
+				iDropAmmo = ( iMax != iMin ) ? rand() % (iMax - iMin) + iMin : iMin;
 
 				if ( iDropAmmo <= 0 )
 				{
@@ -1009,7 +1009,9 @@ gentity_t *Drop_Weapon( gentity_t *ent, int iWeaponIndex, unsigned int tag )
 
 			G_TraceCapsule(&trace, vCenter, itemEnt->r.mins, itemEnt->r.maxs, tagMat[3], ent->s.number, G_ItemClipMask(itemEnt));
 
-			Vec3Lerp(vCenter, tagMat[3], trace.fraction, itemEnt->s.pos.trBase);
+			itemEnt->s.pos.trBase[0] = (tagMat[3][0] - vCenter[0]) * trace.fraction + vCenter[0];
+			itemEnt->s.pos.trBase[1] = (tagMat[3][1] - vCenter[1]) * trace.fraction + vCenter[1];
+			itemEnt->s.pos.trBase[2] = (tagMat[3][2] - vCenter[2]) * trace.fraction + vCenter[2];
 			VectorCopy(itemEnt->s.pos.trBase, itemEnt->r.currentOrigin);
 
 			itemEnt->s.pos.trTime = level.time;
