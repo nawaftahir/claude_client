@@ -63,7 +63,7 @@ DObjAnimMat *XModelGetBasePose(const XModel *model)
 	return &model->parts->skel.Mat;
 }
 
-// unreferenced; byte address half an offset into the base pose
+// retail 0x48ef60, ri.XModelGetBasePoseBone
 char *XModelGetBasePoseOffset(const XModel *model, unsigned int offset)
 {
 	unsigned int half;
