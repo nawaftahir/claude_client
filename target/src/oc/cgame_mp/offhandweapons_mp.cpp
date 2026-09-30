@@ -193,7 +193,7 @@ static int GetBestOffhand(const playerState_t *ps, int offhandClass)
 }
 
 // retail 0x4d1ce0
-static bool IsOffHandDisplayVisible(void)
+static Bool IsOffHandDisplayVisible(void)
 {
     return cg->predictedPlayerState.pm_type < 6;
 }
@@ -236,81 +236,65 @@ draw_icon:
                      drawColor, iconMaterial);
 }
 
+// retail 0x4d1df0
+static void OffHandFlash(const float *baseColor, float *outColor)
+{
+    float flashTime;
+
+    outColor[0] = baseColor[0];
+    outColor[1] = baseColor[1];
+    outColor[2] = baseColor[2];
+    outColor[3] = baseColor[3];
+    flashTime = (float)(cg->time - cg->offhandFlashTime) * 0.001f;
+    if (flashTime < hud_flash_time_offhand->current.value)
+        outColor[3] = baseColor[3] * ((cosf(flashTime / hud_flash_period_offhand->current.value * 6.2831855f) + 1.0f) * 0.5f);
+}
+
+// retail 0x4d1e60
+static int CalcOffHandAmmo(int weaponType)
+{
+    int ammoCount;
+    int weapCount;
+    int i;
+
+    ammoCount = 0;
+    weapCount = BG_GetNumWeapons();
+    for (i = 1; i <= weapCount; i++) {
+        if ((cg->predictedPlayerState.weapons[i >> 5] & (1 << (i & 0x1f)))
+            && ((WeaponDef *)BG_GetWeaponDef(i))->offhandClass == weaponType)
+            ammoCount += cg->predictedPlayerState.ammoclip[BG_ClipForWeapon(i)];
+    }
+    return ammoCount;
+}
+
 void CG_DrawOffHandHighlight(rectDef_s *rect, float scale, vec_t *color, MaterialHandle material, int weaponType)
 {
-    const dvar_t *hud;
-    float fade;
+    float drawColor[4];
     float flashColor[4];
-    int weapon;
-    int time;
-    void *weapDef;
-    int weapCount;
-    int ammoCount;
-    int i;
-    int clip;
-    float timeSinceF;
-    float flashTime;
-    float angle;
-    float pulse;
 
-    if (cg->predictedPlayerState.pm_type >= 6)
+    if (!IsOffHandDisplayVisible())
+        return;
+    if (!GetBestOffhand((const playerState_t *)((void *)&cg->predictedPlayerState), weaponType))
+        return;
+    if (!cg->equippedOffHand)
         return;
 
-    weapon = BG_GetFirstAvailableOffhand( (const playerState_t *)((void *)&cg->predictedPlayerState), weaponType);
-    if (weapon == 0) {
-        weapon = BG_GetFirstEquippedOffhand( (const playerState_t *)((void *)&cg->predictedPlayerState), weaponType);
-        if (weapon == 0)
-            return;
-    }
-
-    if (cg->equippedOffHand == 0)
+    drawColor[3] = CG_FadeHudMenu(hud_fade_offhand, cg->offhandFadeTime, I_fround(hud_fade_offhand->current.value * 1000.0f));
+    if (drawColor[3] == 0.0f)
+        return;
+    if (weaponType != ((WeaponDef *)BG_GetWeaponDef(cg->equippedOffHand))->offhandClass)
         return;
 
-    hud = hud_fade_offhand;
-
-    time = I_fround(hud->current.value * 1000.0f);
-    fade = CG_FadeHudMenu( (const dvar_t *)((void *)hud), cg->offhandFadeTime, time);
-
-    if (fade == 0.0f)
-        return;
-
-    weapDef = BG_GetWeaponDef(cg->equippedOffHand);
-    if (((WeaponDef *)weapDef)->offhandClass != weaponType)
-        return;
-
-    weapCount = BG_GetNumWeapons();
-    ammoCount = 0;
-    for (i = 1; i <= weapCount; i++) {
-        if (!((cg->predictedPlayerState.weapons[i >> 5] >> (i & 0x1f)) & 1))
-            continue;
-        weapDef = BG_GetWeaponDef(i);
-        if (((WeaponDef *)weapDef)->offhandClass != weaponType)
-            continue;
-        clip = BG_ClipForWeapon(i);
-        ammoCount += cg->predictedPlayerState.ammoclip[clip];
-    }
-
-    if (ammoCount == 0) {
-        flashColor[0] = 0.89f;
-        flashColor[1] = 0.18f;
-        flashColor[2] = 0.01f;
+    if (!CalcOffHandAmmo(weaponType)) {
+        drawColor[0] = 0.89f;
+        drawColor[1] = 0.18f;
+        drawColor[2] = 0.01f;
     } else {
-        *(int *)&flashColor[0] = *(int *)&color[0];
-        *(int *)&flashColor[1] = *(int *)&color[1];
-        *(int *)&flashColor[2] = *(int *)&color[2];
+        *(int *)&drawColor[0] = *(int *)&color[0];
+        *(int *)&drawColor[1] = *(int *)&color[1];
+        *(int *)&drawColor[2] = *(int *)&color[2];
     }
-
-    flashColor[3] = fade;
-
-    timeSinceF = (float)(cg->time - cg->offhandFlashTime) / 1000.0f;
-    flashTime = hud_flash_time_offhand->current.value;
-
-    if (flashTime > timeSinceF) {
-        angle = timeSinceF * 6.2831855f / hud_flash_period_offhand->current.value;
-        pulse = cosf(angle) * 0.5f + 0.5f;
-        flashColor[3] = pulse * fade;
-    }
-
+    OffHandFlash(drawColor, flashColor);
     UI_DrawHandlePic(rect->x, rect->y, rect->w,
                      rect->h, rect->horzAlign, rect->vertAlign,
                      flashColor, material);
@@ -318,51 +302,22 @@ void CG_DrawOffHandHighlight(rectDef_s *rect, float scale, vec_t *color, Materia
 
 void CG_DrawOffHandAmmo(rectDef_s *rect, struct Font_s *font, float scale, vec_t *color, int textStyle, int weaponType)
 {
-    const dvar_t *hud;
-    float fade;
     float drawColor[4];
-    int weapon;
-    int time;
-    int weapCount;
     int ammoCount;
-    int i;
-    int clip;
     char *text;
-    void *weapDef;
 
-    if (cg->predictedPlayerState.pm_type >= 6)
+    if (!IsOffHandDisplayVisible())
+        return;
+    if (!GetBestOffhand((const playerState_t *)((void *)&cg->predictedPlayerState), weaponType))
         return;
 
-    weapon = BG_GetFirstAvailableOffhand( (const playerState_t *)((void *)&cg->predictedPlayerState), weaponType);
-    if (weapon == 0) {
-        weapon = BG_GetFirstEquippedOffhand( (const playerState_t *)((void *)&cg->predictedPlayerState), weaponType);
-        if (weapon == 0)
-            return;
-    }
-
-    hud = hud_fade_offhand;
-
-    time = I_fround(hud->current.value * 1000.0f);
-    fade = CG_FadeHudMenu( (const dvar_t *)((void *)hud), cg->offhandFadeTime, time);
-
-    if (fade == 0.0f)
+    drawColor[3] = CG_FadeHudMenu(hud_fade_offhand, cg->offhandFadeTime, I_fround(hud_fade_offhand->current.value * 1000.0f));
+    if (drawColor[3] == 0.0f)
         return;
 
-    weapCount = BG_GetNumWeapons();
-    ammoCount = 0;
-    for (i = 1; i <= weapCount; i++) {
-        if (!((cg->predictedPlayerState.weapons[i >> 5] >> (i & 0x1f)) & 1))
-            continue;
-        weapDef = BG_GetWeaponDef(i);
-        if (((WeaponDef *)weapDef)->offhandClass != weaponType)
-            continue;
-        clip = BG_ClipForWeapon(i);
-        ammoCount += cg->predictedPlayerState.ammoclip[clip];
-    }
-
+    ammoCount = CalcOffHandAmmo(weaponType);
     text = va("%i", ammoCount);
-
-    if (ammoCount == 0) {
+    if (!ammoCount) {
         drawColor[0] = 0.89f;
         drawColor[1] = 0.18f;
         drawColor[2] = 0.01f;
