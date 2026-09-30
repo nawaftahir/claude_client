@@ -884,7 +884,7 @@ void CG_RegisterItemVisuals(int itemNum)
 
 void CG_RegisterItems(void)
 {
-    char items[0x108];
+    char items[0x104];
 
     strcpy(items, CL_GetConfigString(8));
 
