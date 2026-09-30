@@ -765,7 +765,7 @@ void CG_DrawHoldBreathHint(const rectDef_t *rect, struct Font_s *font, float fon
 {
     playerState_t *ps;
     WeaponDef *weaponDef;
-    char binding[264];
+    char binding[256];
     const char *text;
     int textWidth;
     int textOffset;
@@ -797,7 +797,7 @@ void CG_DrawHoldBreathHint(const rectDef_t *rect, struct Font_s *font, float fon
 
     text = UI_ReplaceConversionString(UI_SafeTranslateString("PLATFORM_HOLD_BREATH"), binding);
     textWidth = UI_TextWidth(text, 0, font, fontscale);
-    textOffset = (int)(textWidth * 0.5f + 0.5f);
+    textOffset = I_fround(textWidth * 0.5f);
 
     UI_DrawText(
         text,
