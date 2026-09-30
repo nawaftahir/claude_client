@@ -95,7 +95,7 @@ extern void Dvar_SetBool(dvar_t *dvar, bool value);
 extern void Dvar_SetString(dvar_t *dvar, const char *value);
 extern void UI_SetMap(const char *mapname, const char *gametype);
 extern void SCR_UpdateScreenInternal(void);
-extern void SetScreenScaling(float safeAreaH, float safeAreaV, int vpX, int vpY, float vpW, float vpH);
+extern void SetScreenScaling(float safeAreaH, float safeAreaV, float vpX, float vpY, float vpW, float vpH);
 extern void CalcSplitScreenTextOffset(FontHandle font, float *y);
 extern void CalcScreenPlacement(float *x, float *y, float *w, float *h, int horzAlign, int vertAlign);
 extern void SND_Init(void);

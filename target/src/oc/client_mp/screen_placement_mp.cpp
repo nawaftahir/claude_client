@@ -4,7 +4,7 @@
 extern unsigned char spGlob[];
 #define SP ((struct ScreenPlacementGlob *)spGlob)
 
-extern byte *cls_ptr_195ecac;
+extern clientStatic_t cls;
 
 float GetRealWidthFromVirtualWidth(float width);
 float GetRealHeightFromVirtualHeight(float height);
@@ -13,7 +13,7 @@ float GetVirtualHeightFromRealHeight(float height);
 void CalcScreenX(float *x, int horzAlign);
 void CalcScreenY(float *y, int vertAlign);
 void CalcSplitScreenTextOffset(FontHandle font, float *y);
-void SetScreenScaling(float safeAreaRatioHorizontal, float safeAreaRatioVertical, int viewportX, int viewportY, float viewportWidth, float viewportHeight);
+void SetScreenScaling(float safeAreaRatioHorizontal, float safeAreaRatioVertical, float viewportX, float viewportY, float viewportWidth, float viewportHeight);
 void CalcScreenPlacement(float *x, float *y, float *w, float *h, int horzAlign, int vertAlign);
 
 float GetRealWidthFromVirtualWidth(float width)
@@ -105,59 +105,71 @@ void CalcSplitScreenTextOffset(FontHandle font, float *y)
 
 }
 
-void SetScreenScaling(float safeAreaRatioHorizontal, float safeAreaRatioVertical,
-                      int viewportX, int viewportY, float viewportWidth, float viewportHeight)
+// retail 0x449aa0; name from KisakCOD (SUPPORTED)
+static void ScrPlace_CalcSafeAreaOffsets(float safeAreaRatioHorz, float safeAreaRatioVert,
+                                         float viewportX, float viewportY, float viewportWidth, float viewportHeight,
+                                         float horzAspectScale, float *realViewableMin, float *realViewableMax,
+                                         float *virtualViewableMin, float *virtualViewableMax)
 {
-    float fViewportHeight = viewportHeight;
-    float fViewportWidth = viewportWidth;
-    float fViewportY = (float)viewportY;
-    float fViewportX = (float)viewportX;
+    float displayWidth = (float)cls.vidConfig.width;
+    float displayHeight;
+    float unsafeSize[2];
+    float safeMax[2];
+    float safeLeft, safeTop, clampedRight, clampedBottom;
 
-    SP->realViewportSize[0] = fViewportWidth;
-    SP->realViewportSize[1] = fViewportHeight;
+    unsafeSize[0] = (1.0f - safeAreaRatioHorz) * displayWidth * 0.5f;
+    displayHeight = (float)cls.vidConfig.height;
+    unsafeSize[1] = (1.0f - safeAreaRatioVert) * displayHeight * 0.5f;
 
-    byte *cls = cls_ptr_195ecac;
-    float adjustedRealWidth = fViewportHeight / ((clientStatic_t *)(cls))->vidConfig.aspectRatioPixel * (4.0f / 3.0f);
-    float horzAspectPixelDiff = fViewportWidth - adjustedRealWidth;
-    float horzAspectScale = fViewportWidth / adjustedRealWidth;
+    safeMax[0] = displayWidth - unsafeSize[0];
+    safeMax[1] = displayHeight - unsafeSize[1];
 
-    float displayWidth = (float)(((clientStatic_t *)(cls))->vidConfig.width);
-    float displayHeight = (float)(((clientStatic_t *)(cls))->vidConfig.height);
+    safeLeft = (viewportX - unsafeSize[0] >= 0) ? viewportX : unsafeSize[0];
+    safeTop = (viewportY - unsafeSize[1] >= 0) ? viewportY : unsafeSize[1];
+    clampedRight = (safeMax[0] - (viewportX + viewportWidth) >= 0) ? (viewportX + viewportWidth) : safeMax[0];
+    clampedBottom = (safeMax[1] - (viewportY + viewportHeight) >= 0) ? (viewportY + viewportHeight) : safeMax[1];
 
-    float unsafeHorz = (1.0f - safeAreaRatioHorizontal) * 0.5f * displayWidth;
-    float unsafeVert = (1.0f - safeAreaRatioVertical) * 0.5f * displayHeight;
+    realViewableMin[0] = safeLeft - viewportX;
+    realViewableMin[1] = safeTop - viewportY;
+    realViewableMax[0] = clampedRight - viewportX;
+    realViewableMax[1] = clampedBottom - viewportY;
 
-    float safeRight = displayWidth - unsafeHorz;
-    float safeBottom = displayHeight - unsafeVert;
+    virtualViewableMin[0] = 640.0f / viewportWidth * realViewableMin[0] * horzAspectScale;
+    virtualViewableMin[1] = 480.0f / viewportHeight * realViewableMin[1];
+    virtualViewableMax[0] = 640.0f / viewportWidth * realViewableMax[0] * horzAspectScale;
+    virtualViewableMax[1] = 480.0f / viewportHeight * realViewableMax[1];
+}
 
-    float safeLeft = (fViewportX - unsafeHorz >= 0) ? fViewportX : unsafeHorz;
-    float safeTop = (fViewportY - unsafeVert >= 0) ? fViewportY : unsafeVert;
-    float clampedRight = (safeRight - (fViewportX + fViewportWidth) >= 0) ? (fViewportX + fViewportWidth) : safeRight;
-    float clampedBottom = (safeBottom - (fViewportY + fViewportHeight) >= 0) ? (fViewportY + fViewportHeight) : safeBottom;
+void SetScreenScaling(float safeAreaRatioHorizontal, float safeAreaRatioVertical,
+                      float viewportX, float viewportY, float viewportWidth, float viewportHeight)
+{
+    float adjustedRealWidth;
 
-    SP->realViewableMin[0] = safeLeft - fViewportX;
-    SP->realViewableMin[1] = safeTop - fViewportY;
-    SP->realViewableMax[0] = clampedRight - fViewportX;
-    SP->realViewableMax[1] = clampedBottom - fViewportY;
+    SP->realViewportSize[0] = viewportWidth;
+    SP->realViewportSize[1] = viewportHeight;
 
-    SP->virtualViewableMin[0] = horzAspectScale * SP->realViewableMin[0] * (640.0f / fViewportWidth);
-    SP->virtualViewableMin[1] = SP->realViewableMin[1] * (480.0f / fViewportHeight);
-    SP->virtualViewableMax[0] = horzAspectScale * SP->realViewableMax[0] * (640.0f / fViewportWidth);
-    SP->virtualViewableMax[1] = SP->realViewableMax[1] * (480.0f / fViewportHeight);
-
-    float scaleY = fViewportHeight / 480.0f;
+    adjustedRealWidth = viewportHeight / cls.vidConfig.aspectRatioPixel * (4.0f / 3.0f);
+    ScrPlace_CalcSafeAreaOffsets(safeAreaRatioHorizontal, safeAreaRatioVertical,
+                                 viewportX, viewportY, viewportWidth, viewportHeight,
+                                 viewportWidth / adjustedRealWidth,
+                                 SP->realViewableMin, SP->realViewableMax, SP->virtualViewableMin, SP->virtualViewableMax);
 
     SP->scaleVirtualToReal[0] = adjustedRealWidth / 640.0f;
-    SP->scaleVirtualToReal[1] = scaleY;
-
-    SP->scaleVirtualToFull[0] = fViewportWidth / 640.0f;
-    SP->scaleVirtualToFull[1] = scaleY;
-
+    SP->scaleVirtualToReal[1] = viewportHeight / 480.0f;
+    SP->scaleVirtualToFull[0] = viewportWidth / 640.0f;
+    SP->scaleVirtualToFull[1] = viewportHeight / 480.0f;
     SP->scaleRealToVirtual[0] = 640.0f / adjustedRealWidth;
-    SP->scaleRealToVirtual[1] = 480.0f / fViewportHeight;
+    SP->scaleRealToVirtual[1] = 480.0f / viewportHeight;
+    SP->subScreenLeft = (viewportWidth - adjustedRealWidth) * 0.5f;
+    SP->virtualScreenOffsetX = 640.0f - SP->scaleRealToVirtual[0] * adjustedRealWidth;
+}
 
-    SP->subScreenLeft = 0.5f * horzAspectPixelDiff;
-    SP->virtualScreenOffsetX = 640.0f - adjustedRealWidth * SP->scaleRealToVirtual[0];
+// retail 0x449cd0, unreferenced; name unknown
+void SetScreenScalingInt(float safeAreaRatioHorizontal, float safeAreaRatioVertical,
+                         int viewportX, int viewportY, int viewportWidth, int viewportHeight)
+{
+    SetScreenScaling(safeAreaRatioHorizontal, safeAreaRatioVertical,
+                     (float)viewportX, (float)viewportY, (float)viewportWidth, (float)viewportHeight);
 }
 
 void CalcScreenPlacement(float *x, float *y, float *w, float *h, int horzAlign, int vertAlign)

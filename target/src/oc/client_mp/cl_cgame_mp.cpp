@@ -100,7 +100,7 @@ extern void Dvar_SetInt(dvar_t *dvar, int value);
 extern int Dvar_GetInt(const char *name);
 extern void Dvar_GetUnpackedColorByName(const char *name, float *color);
 extern void CalcScreenPlacement(float *x, float *y, float *w, float *h, int horzAlign, int vertAlign);
-extern void SetScreenScaling(float scaleX, float scaleY, int x, int y, float w, float h);
+extern void SetScreenScaling(float scaleX, float scaleY, float x, float y, float w, float h);
 extern void StatMon_Warning(int type, int threshold, const char *msg);
 extern char *va( const char *format, ... );
 extern unsigned char ColorIndex(unsigned char c);
