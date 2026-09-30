@@ -1081,7 +1081,7 @@ void Cmd_GameCommand_f( gentity_t *ent )
 	{
 		return;
 	}
-	if ( order < 0 || order > sizeof(gc_orders)/sizeof(char *)-1 )
+	if ( order < 0 || order >= sizeof(gc_orders)/sizeof(char *) )
 	{
 		return;
 	}

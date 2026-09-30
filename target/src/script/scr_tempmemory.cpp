@@ -1,7 +1,7 @@
 #include "../qcommon/qcommon.h"
 #include "script_public.h"
 
-int currentPos;
+static int currentPos;
 
 /*
 ==============

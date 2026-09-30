@@ -449,9 +449,8 @@ unsigned int SL_GetStringOfLen( const char *str, unsigned int user, unsigned int
 			stringValue = MT_AllocIndex( len + REFSTRING_STRING_OFFSET, type );
 			newEntry = &scrStringGlob.hashTable[newIndex];
 
-			nextFree = newEntry->status_next & HASH_NEXT_MASK;
-			scrStringGlob.hashTable[0].status_next = nextFree;
-			scrStringGlob.hashTable[nextFree].prev = 0;
+			scrStringGlob.hashTable[0].status_next = newEntry->status_next & HASH_NEXT_MASK;
+			scrStringGlob.hashTable[scrStringGlob.hashTable[0].status_next].prev = 0;
 			scrStringGlob.hashTable[prev].status_next = scrStringGlob.hashTable[prev].status_next & HASH_STAT_MASK | newIndex;
 
 			newEntry->status_next = next | HASH_STAT_MOVABLE;

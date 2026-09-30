@@ -510,12 +510,11 @@ void Key_Unbind_f(void)
 void Key_Unbindall_f(void)
 {
     int keynum;
-    int *modifiedFlags = (&dvar_modifiedFlags);
 
     for (keynum = 0; keynum < 256; ++keynum) {
         if (keys[keynum].binding != NULL && keynum != -1) {
             ReplaceStringInternal((const char **)&keys[keynum].binding, "");
-            *modifiedFlags |= 1;
+            dvar_modifiedFlags |= 1;
         }
     }
 }

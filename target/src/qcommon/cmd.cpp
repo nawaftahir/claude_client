@@ -25,7 +25,7 @@ typedef struct cmd_function_s
 	xcommand_t function;
 } cmd_function_t;
 
-int cmd_argc;
+static int cmd_argc;
 static char *cmd_argv[MAX_STRING_TOKENS] __attribute__((aligned(128)));        // points into cmd_tokenized
 static char cmd_tokenized[BIG_INFO_STRING + MAX_STRING_TOKENS] __attribute__((aligned(128)));         // will have 0 bytes inserted
 static cmd_function_t *cmd_functions;      // possible commands to execute
