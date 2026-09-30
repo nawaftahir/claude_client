@@ -1503,7 +1503,7 @@ void UI_Init(void)
 }
 #endif
 
-static inline __attribute__((always_inline)) void UI_KeyEvent_impl(int key, qboolean down)
+void UI_KeyEvent(int key, qboolean down)
 {
     menuDef_t *menu;
 
@@ -1535,13 +1535,6 @@ static inline __attribute__((always_inline)) void UI_KeyEvent_impl(int key, qboo
     bypassKeyClear = 0;
     Dvar_SetIntByName("cl_paused", 0);
 }
-
-#ifndef __EMSCRIPTEN__
-void UI_KeyEvent(int key, qboolean down)
-{
-    UI_KeyEvent_impl(key, down);
-}
-#endif
 
 #ifndef __EMSCRIPTEN__
 void UI_MouseEvent(int dx, int dy)
@@ -4380,10 +4373,6 @@ void UI_Init(void)
     Dvar_RegisterBool("ui_multiplayer", 1, 0x1040);
 }
 
-void UI_KeyEvent(int key, qboolean down)
-{
-    UI_KeyEvent_impl(key, down);
-}
 
 static void UI_BuildPlayerList(void)
 {

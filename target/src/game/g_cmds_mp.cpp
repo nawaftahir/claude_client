@@ -461,7 +461,7 @@ void Cmd_Take_f( gentity_t *ent )
 		{
 			ent->health -= amount;
 
-			if ( ent->health <= 0 )
+			if ( ent->health < 1 )
 			{
 				ent->health = 1;
 			}

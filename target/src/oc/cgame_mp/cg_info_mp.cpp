@@ -28,10 +28,6 @@ extern void UI_FillRect(float x, float y, float width, float height, int horzAli
 
 extern LegacyHacks *legacyHacks;
 
-#define CG_FIELD_5C 0x5c
-#define CG_FIELD_9C 0x9c
-#define CG_FIELD_DC 0xdc
-#define CG_FIELD_4ED 0x4ed
 
 
 void CG_LoadingString(const char *s);
@@ -50,105 +46,70 @@ void CG_LoadingString(const char *s)
 
 void CG_DrawInformation(qboolean serverLoading)
 {
-    char string[0x400];
-    void *font;
-    char *base;
-    char *pos;
-    const char *configStr;
+    char string[1024];
+    const char *info;
     const char *mapname;
+    const char *text;
     const char *dots;
-    const char *translated;
-    int textWidth;
-    int ms;
-    int phase;
-    float x;
+    FontHandle font;
+    char *s;
 
-    if (serverLoading) {
-
-        base = (char *)::legacyHacks;
-        if (*(char *)(base + CG_FIELD_DC) == 0) {
-
-            *(char *)(base + CG_FIELD_4ED) = 0;
-
-            CG_CloseScriptMenu();
-            CG_CloseScriptMenu();
-
-            base = (char *)::legacyHacks;
-            *(char *)(base + CG_FIELD_4ED) = 1;
-
-            CL_CloseAllMenus();
-
-            SND_StopSounds((snd_stopsounds_arg_t)0);
-
-            base = (char *)::legacyHacks;
-            *(char *)(base + CG_FIELD_DC) = 1;
-        }
-    } else {
-
-        base = (char *)::legacyHacks;
-        *(char *)(base + CG_FIELD_5C) = 0;
-        *(char *)(base + CG_FIELD_9C) = 0;
-        *(char *)(base + CG_FIELD_DC) = 0;
+    if (!serverLoading)
+    {
+        legacyHacks->cl_serverloadmap[0] = 0;
+        legacyHacks->cl_serverloadgametype[0] = 0;
+        legacyHacks->cl_serverloadwaiting = 0;
+    }
+    else if (!legacyHacks->cl_serverloadwaiting)
+    {
+        legacyHacks->ui_scriptMenuAllowResponse = 0;
+        CG_CloseScriptMenu();
+        CG_CloseScriptMenu();
+        legacyHacks->ui_scriptMenuAllowResponse = 1;
+        CL_CloseAllMenus();
+        SND_StopSounds(SND_STOP_ALL);
+        legacyHacks->cl_serverloadwaiting = 1;
     }
 
-    configStr = CL_GetConfigString(0);
-
-    if (serverLoading) {
-
-        base = (char *)::legacyHacks;
-        I_strncpyz(string, base + 0x5c, 0x400);
-    } else {
-
-        mapname = Info_ValueForKey(configStr, "mapname");
-
-        if (*mapname == '\0') {
-
+    info = CL_GetConfigString(0);
+    if (serverLoading)
+    {
+        mapname = legacyHacks->cl_serverloadmap;
+    }
+    else
+    {
+        mapname = Info_ValueForKey(info, "mapname");
+        if (!mapname[0])
             mapname = Dvar_GetString("mapname");
-        }
-
-        I_strncpyz(string, mapname, 0x400);
     }
-
-    pos = string;
-    while (*pos) {
-        *pos = (char)tolower((int)*pos);
-        pos++;
-    }
+    I_strncpyz(string, mapname, sizeof(string));
+    for (s = string; *s; s++)
+        *s = tolower(*s);
 
     UI_DrawMapLevelshot();
 
     if (Dvar_GetInt("com_expectedhunkusage") > 0)
         return;
-
-    if (!serverLoading)
-        return;
-
-    if (!((Bool)g_waitingForServer))
+    if (!serverLoading || !g_waitingForServer)
         return;
 
     font = UI_GetFontHandle(0, 0.5f);
-
-    ms = Sys_Milliseconds();
-
-    phase = (ms / 750) & 3;
-
-    switch (phase) {
-    case 0:
-        dots = "";
-        break;
+    switch ((Sys_Milliseconds() / 750) & 3)
+    {
     case 1:
         dots = ".";
         break;
     case 2:
         dots = "..";
         break;
-    default:
+    case 3:
         dots = "...";
+        break;
+    default:
+        dots = "";
         break;
     }
 
-    translated = UI_SafeTranslateString("CGAME_WAITINGFORSERVERLOAD");
-    textWidth = UI_TextWidth(translated, 0x7fffffff, (struct Font_s *)font, 0.5f);
-    x = (640.0f - (float)textWidth) * 0.5f;
-    UI_DrawText(va("%s%s", translated, dots), 0x7fffffff, (FontHandle)font, x, 452.0f, 0, 0, 0.5f, (const vec_t *)((void *)&colorWhite), 3);
+    text = UI_SafeTranslateString("CGAME_WAITINGFORSERVERLOAD");
+    UI_DrawText(va("%s%s", text, dots), 0x7fffffff, font, (640.0f - UI_TextWidth(text, 0, (struct Font_s *)font, 0.5f)) * 0.5f, 439.0f, 0, 0, 0.5f, colorWhite, 3);
 }
