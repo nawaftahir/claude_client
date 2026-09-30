@@ -641,27 +641,25 @@ void *Hunk_AllocXAnimClient(int size)
     return Hunk_AllocInternal(size);
 }
 
-static inline __attribute__((always_inline)) void CG_PrintAliasSubtitle(const snd_alias_t *pAlias, int msec)
+static inline __attribute__((always_inline)) void CG_SubtitlePrint(int msec, const snd_alias_t *pAlias)
 {
     int minMsec;
     int subtitleWidth;
 
-    if (msec == 0 || pAlias == NULL || pAlias->pszSubtitle == NULL) {
-        return;
-    }
+    if (msec && pAlias->pszSubtitle) {
+        if (cgs->viewAspect > 1.3333334f) {
+            subtitleWidth = cg_subtitleWidthWidescreen->current.integer;
+        } else {
+            subtitleWidth = cg_subtitleWidthStandard->current.integer;
+        }
 
-    if (cgs->viewAspect > 1.3333334f) {
-        subtitleWidth = cg_subtitleWidthWidescreen->current.integer;
-    } else {
-        subtitleWidth = cg_subtitleWidthStandard->current.integer;
-    }
+        minMsec = I_fround(cg_subtitleMinTime->current.value * 1000.0f);
+        if (msec < minMsec) {
+            msec = minMsec;
+        }
 
-    minMsec = I_fround(cg_subtitleMinTime->current.value * 1000.0f);
-    if (minMsec < msec) {
-        minMsec = msec;
+        CL_SubtitlePrint(pAlias->pszSubtitle, msec, subtitleWidth);
     }
-
-    CL_SubtitlePrint(pAlias->pszSubtitle, minMsec, subtitleWidth);
 }
 
 static inline __attribute__((always_inline)) int CG_PlayPickedAlias(const snd_alias_t *pAlias, int entitynum, const vec_t *origin, qboolean master)
@@ -678,7 +676,7 @@ static inline __attribute__((always_inline)) int CG_PlayPickedAlias(const snd_al
         msec = SND_PlaySoundAlias(pAlias, entitynum, origin, 0, SASYS_CGAME);
     }
 
-    CG_PrintAliasSubtitle(pAlias, msec);
+    CG_SubtitlePrint(msec, pAlias);
     return msec;
 }
 
