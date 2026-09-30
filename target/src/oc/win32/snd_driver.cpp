@@ -526,12 +526,10 @@ void SND_EndRawSamples(void)
 
 int SND_RawSamplesTime(void)
 {
-    if (milesGlob.raw.handle != NULL) {
-        long unsigned int pos = AIL_sample_position(milesGlob.raw.handle);
-        double dpos = (double)(unsigned long long)pos;
-        return (int)(dpos * milesGlob.raw.bufRate + milesGlob.raw.sampleTime);
+    if (!milesGlob.raw.handle) {
+        return 0;
     }
-    return 0;
+    return (int)(AIL_sample_position(milesGlob.raw.handle) * milesGlob.raw.bufRate + milesGlob.raw.sampleTime);
 }
 
 void SND_RawSamples(int samples, int rate, int width, int s_channels, const byte *data)

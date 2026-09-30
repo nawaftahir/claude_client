@@ -3669,7 +3669,15 @@ int UI_FeederCount(float feederID)
     } else if (feederID == 13.0f) {
         return sharedUiInfo.serverStatusInfo.numLines;
     }
-    if (feederID == 7.0f || feederID == 20.0f) {
+    if (feederID == 7.0f) {
+        if (uiInfo->uiDC.realTime > uiInfo->playerRefresh) {
+            uiInfo->playerRefresh = uiInfo->uiDC.realTime + 3000;
+            UI_BuildPlayerList();
+        }
+        return sharedUiInfo.playerCount;
+    }
+
+    if (feederID == 20.0f) {
         if (uiInfo->uiDC.realTime > uiInfo->playerRefresh) {
             uiInfo->playerRefresh = uiInfo->uiDC.realTime + 3000;
             UI_BuildPlayerList();
