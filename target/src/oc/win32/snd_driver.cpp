@@ -532,85 +532,72 @@ int SND_RawSamplesTime(void)
     return (int)(AIL_sample_position(milesGlob.raw.handle) * milesGlob.raw.bufRate + milesGlob.raw.sampleTime);
 }
 
+// retail 0x4b4330; name unknown
+static void SND_InitRawSamples(int rate, int width, int s_channels)
+{
+    int format, bufSize;
+    float vol;
+
+    milesGlob.raw.handle = (HSAMPLE)(AIL_allocate_sample_handle( (void *)(milesGlob.driver_2D)));
+    if (milesGlob.raw.handle == NULL) {
+        Com_Error(ERR_DROP, (const char *)"\x15MILES 2D sound sample allocation failed on raw channel\n");
+    }
+    milesGlob.raw.rate = rate;
+    milesGlob.raw.width = width;
+    milesGlob.raw.channels = s_channels;
+    AIL_init_sample(milesGlob.raw.handle);
+
+    if (s_channels == 1) {
+        format = width != 1;
+    } else {
+        format = (width != 1) + 2;
+    }
+    AIL_set_sample_type(milesGlob.raw.handle, format, 0);
+    AIL_set_sample_playback_rate(milesGlob.raw.handle, rate);
+    vol = g_snd.volume * 0.5f;
+    AIL_set_sample_volume_levels(milesGlob.raw.handle, vol, vol);
+    bufSize = AIL_minimum_sample_buffer_size( (void *)(milesGlob.driver_2D), rate, format);
+    milesGlob.raw.bufSize = 0x2000;
+    if (bufSize > 0x2000) {
+        milesGlob.raw.bufSize = bufSize;
+    }
+    milesGlob.raw.buf = (byte *)(Z_MallocInternal(milesGlob.raw.bufSize * 32));
+    milesGlob.raw.sampleTime = 0.0;
+    memset(milesGlob.raw.bufReady, 0, 32);
+    milesGlob.raw.readBuf = 0;
+    milesGlob.raw.writeBuf = 0;
+    milesGlob.raw.bufUsed = 0;
+    milesGlob.raw.bufRate = 1000.0f / (float)(milesGlob.raw.channels * milesGlob.raw.width * milesGlob.raw.rate);
+}
+
 void SND_RawSamples(int samples, int rate, int width, int s_channels, const byte *data)
 {
-    int bytes, copy, format, bufSize;
-    float vol;
-    snd_local_t *sndGlob;
+    int bytes, copy;
 
-    sndGlob = &g_snd;
-    if (sndGlob == NULL || !sndGlob->Initialized2d) {
+    if (!g_snd.Initialized2d) {
         return;
     }
 
     if (milesGlob.raw.handle == NULL) {
-
-        milesGlob.raw.handle = (HSAMPLE)(AIL_allocate_sample_handle( (void *)(milesGlob.driver_2D)));
+        SND_InitRawSamples(rate, width, s_channels);
         if (milesGlob.raw.handle == NULL) {
-            Com_Error(ERR_DROP, (const char *)"\x15MILES 2D sound sample allocation failed on raw channel\n");
-        }
-        milesGlob.raw.rate = rate;
-        milesGlob.raw.width = width;
-        milesGlob.raw.channels = s_channels;
-        AIL_init_sample(milesGlob.raw.handle);
-
-        if (s_channels == 1) {
-            if (width == 1) {
-                format = 0;
-            } else if (width == 2) {
-                format = 1;
-            } else {
-                format = 0;
-            }
-        } else {
-            if (width == 1) {
-                format = 2;
-            } else if (width == 2) {
-                format = 3;
-            } else {
-                format = 0;
-            }
-        }
-        AIL_set_sample_type(milesGlob.raw.handle, format, 0);
-        AIL_set_sample_playback_rate(milesGlob.raw.handle, rate);
-        vol = 0.5f * sndGlob->volume;
-        AIL_set_sample_volume_levels(milesGlob.raw.handle, vol, vol);
-        bufSize = AIL_minimum_sample_buffer_size( (void *)(milesGlob.driver_2D), rate, format);
-        if (bufSize < 0x2001) {
-            bufSize = 0x2000;
-        }
-        milesGlob.raw.bufSize = bufSize;
-        milesGlob.raw.buf = (byte *)(Z_MallocInternal(bufSize * 32));
-        memset(milesGlob.raw.bufReady, 0, 32);
-        milesGlob.raw.readBuf = 0;
-        milesGlob.raw.writeBuf = 0;
-        milesGlob.raw.bufUsed = 0;
-        milesGlob.raw.sampleTime = 0.0;
-        {
-            float bytesPerMs = 1000.0f / (float)(milesGlob.raw.rate * milesGlob.raw.width * milesGlob.raw.channels);
-            milesGlob.raw.bufRate = (double)bytesPerMs;
+            return;
         }
     }
 
-    if (milesGlob.raw.handle == NULL) {
-        return;
-    }
-
-    bytes = width * samples * s_channels;
-    while (bytes != 0) {
-        while (milesGlob.raw.bufReady[milesGlob.raw.writeBuf] != 0) {
+    bytes = samples * width * s_channels;
+    while (bytes) {
+        while (milesGlob.raw.bufReady[milesGlob.raw.writeBuf]) {
             SND_Update();
         }
         copy = milesGlob.raw.bufSize - milesGlob.raw.bufUsed;
-        if (bytes < copy) {
+        if (copy > bytes) {
             copy = bytes;
-            bytes = 0;
-        } else {
-            bytes -= copy;
         }
         Com_Memcpy((void *)(milesGlob.raw.buf + milesGlob.raw.writeBuf * milesGlob.raw.bufSize + milesGlob.raw.bufUsed), (void *)data, copy);
-        data += copy;
         milesGlob.raw.bufUsed += copy;
+        data += copy;
+        bytes -= copy;
         if (milesGlob.raw.bufUsed == milesGlob.raw.bufSize) {
             milesGlob.raw.bufUsed = 0;
             milesGlob.raw.bufReady[milesGlob.raw.writeBuf] = 1;
