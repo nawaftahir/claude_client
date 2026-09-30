@@ -30,6 +30,7 @@ double Sys_BenchmarkGHz( void )
 	LARGE_INTEGER freq;
 	LARGE_INTEGER qpcEnd;
 	LARGE_INTEGER qpcStart;
+	double ghz;
 
 	Sleep( 0 );
 
@@ -50,7 +51,8 @@ double Sys_BenchmarkGHz( void )
 	__asm mov dword ptr tscEnd + 4, edx
 	QueryPerformanceCounter( &qpcEnd );
 
-	return (double)(__int64)( ( tscEnd - tscStart ) * freq.QuadPart ) * 1e-9 / (double)( qpcEnd.QuadPart - qpcStart.QuadPart );
+	ghz = (double)(__int64)( ( tscEnd - tscStart ) * freq.QuadPart ) * 1e-9 / (double)( qpcEnd.QuadPart - qpcStart.QuadPart );
+	return ghz;
 }
 
 /*
