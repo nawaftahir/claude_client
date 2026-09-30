@@ -208,6 +208,7 @@ void SND_RestoreListeners(snd_listener *listeners);
 float SND_GetLerpedSlavePercentage(float baseSlavePercentage);
 float SND_Attenuate(SndCurve *volumeFalloffCurve, float radius, float mindist, float maxdist);
 Bool SND_IsAliasChannel3D(int channel);
+static Bool SND_AnyActiveListeners(void);
 static __attribute_regparm__(3) Bool SND_ValidateSoundAliasBlend(const snd_alias_t *pAlias0, const snd_alias_t *pAlias1, Bool bReport);
 static void SND_PauseSounds(void);
 static void SND_UnpauseSounds(void);
@@ -1131,7 +1132,7 @@ found:
     entchannel = (pAlias0->flags & 0x780) >> 7;
     if (entchannel <= 10 && ((1 << entchannel) & 0x786)) {
 
-    } else if (!g_snd.listeners[0].active) {
+    } else if (!SND_AnyActiveListeners()) {
         Com_Error(ERR_DROP, "attempted to play spatialized alias '%s' while there is no active listener\n", pAlias0->pszAliasName);
     }
 
@@ -1223,48 +1224,21 @@ void SND_Init(void)
     Voice_Init();
 }
 
-static __attribute_regparm__(3) int SND_PlaySoundAlias_Internal(const snd_alias_t *pAlias0, const snd_alias_t *pAlias1, float lerp, int entnum, const vec_t *org, int *pChannel, int timeshift, Bool treatAsMaster, snd_alias_system_t system)
+static Bool SND_AnyActiveListeners(void)
 {
-    const snd_alias_t *secondaryAlias;
-    int channelType;
-    int playType;
+    int i;
+
+    for (i = 0; i < 1; i++) {
+        if (g_snd.listeners[i].active)
+            return 1;
+    }
+    return 0;
+}
+
+static Bool SND_ContinueLoopingSound(const snd_alias_t *pAlias0, const snd_alias_t *pAlias1, float lerp, int entnum, const vec_t *org, int *pChannel)
+{
     int i;
     int rate;
-    int master;
-    float fPitchMin;
-    float fPitchMax;
-    float volMin;
-    float volMax;
-    float pitch;
-    float volume;
-    float oneMinusLerp;
-    float fDistMax;
-
-    if (!g_snd.Initialized2d)
-        return 0;
-
-    if (pChannel)
-        *pChannel = -1;
-
-    if (pAlias0->pszSecondaryAliasName) {
-        secondaryAlias = Com_PickSoundAlias(pAlias0->pszSecondaryAliasName);
-        if (secondaryAlias) {
-            if (!secondaryAlias->pszSecondaryAliasName) {
-                SND_PlaySoundAlias_Internal(secondaryAlias, secondaryAlias, lerp, entnum, org, NULL, timeshift, treatAsMaster, system);
-            } else {
-                Com_Printf("^1Error: a secondaryAlias cannot have a secondary Alias of its own.\nAlias sequence: '%s'->'%s'->'%s'\n",
-                           pAlias0->pszAliasName, pAlias0->pszSecondaryAliasName, secondaryAlias->pszSecondaryAliasName);
-            }
-        }
-    }
-
-    channelType = (pAlias0->flags & 0x780) >> 7;
-
-    if (channelType > 10 || !((1 << channelType) & 0x786)) {
-        fDistMax = (1.0f - lerp) * pAlias0->fDistMax + lerp * pAlias1->fDistMax;
-        if (Vec3DistanceSq(org, g_snd.listeners[0].orient.origin) > fDistMax * fDistMax)
-            return 0;
-    }
 
     for (i = 0; i < g_snd.max_3D_channels; i++) {
         if (g_snd.chaninfo[i].entnum != entnum)
@@ -1286,7 +1260,7 @@ static __attribute_regparm__(3) int SND_PlaySoundAlias_Internal(const snd_alias_
         g_snd.chaninfo[i].lerp = lerp;
         if (pChannel)
             *pChannel = i;
-        return 0;
+        return 1;
     }
 
     for (i = 45; i < 45 + g_snd.max_2D_channels; i++) {
@@ -1308,7 +1282,7 @@ static __attribute_regparm__(3) int SND_PlaySoundAlias_Internal(const snd_alias_
         g_snd.chaninfo[i].lerp = lerp;
         if (pChannel)
             *pChannel = i;
-        return 0;
+        return 1;
     }
 
     for (i = 32; i < 32 + g_snd.max_stream_channels; i++) {
@@ -1333,78 +1307,135 @@ static __attribute_regparm__(3) int SND_PlaySoundAlias_Internal(const snd_alias_
         g_snd.chaninfo[i].lerp = lerp;
         if (pChannel)
             *pChannel = i;
+        return 1;
+    }
+
+    return 0;
+}
+
+static void SND_StopEntityChannel(int entnum, int entchannel)
+{
+    int i;
+
+    for (i = 0; i < g_snd.max_3D_channels; i++) {
+        if (g_snd.chaninfo[i].entnum == entnum && g_snd.chaninfo[i].entchannel == entchannel && !SND_Is3DChannelFree(i))
+            SND_Stop3DChannel(i);
+    }
+    for (i = 32; i < 32 + g_snd.max_stream_channels; i++) {
+        if (g_snd.chaninfo[i].entnum == entnum && g_snd.chaninfo[i].entchannel == entchannel && !SND_IsStreamChannelFree(i))
+            SND_StopStreamChannel(i);
+    }
+    for (i = 45; i < 45 + g_snd.max_2D_channels; i++) {
+        if (g_snd.chaninfo[i].entnum == entnum && g_snd.chaninfo[i].entchannel == entchannel && !SND_Is2DChannelFree(i))
+            SND_Stop2DChannel(i);
+    }
+}
+
+static void SND_ChoosePitchAndVolume(const snd_alias_t *pAlias0, const snd_alias_t *pAlias1, float lerp, float *volume, float *pitch)
+{
+    float volMin;
+    float volMax;
+    float pitchMin;
+    float pitchMax;
+
+    volMin = (1.0f - lerp) * pAlias0->fVolMin + lerp * pAlias1->fVolMin;
+    volMax = (1.0f - lerp) * pAlias0->fVolMax + lerp * pAlias1->fVolMax;
+    pitchMin = (1.0f - lerp) * pAlias0->fPitchMin + lerp * pAlias1->fPitchMin;
+    pitchMax = (1.0f - lerp) * pAlias0->fPitchMax + lerp * pAlias1->fPitchMax;
+    *volume = volMin + randomf() * (volMax - volMin);
+    *pitch = pitchMin + randomf() * (pitchMax - pitchMin);
+}
+
+static int SND_StartAliasSample(const snd_alias_t *pAlias0, const snd_alias_t *pAlias1, float lerp, int entnum, const vec_t *org, float volume, float pitch, int timeshift, Bool treatAsMaster, int *pChannel, snd_alias_system_t system)
+{
+    int flags;
+
+    if (!Com_GetSoundFileMem(pAlias0)) {
+        Com_DPrintf("Tried to play sound '%s' from alias '%s', but it was not successfully loaded.\n",
+                    Com_GetSoundFileName(pAlias0), pAlias0->pszAliasName);
+        if (pChannel)
+            *pChannel = -1;
         return 0;
     }
 
-    channelType = (pAlias0->flags & 0x780) >> 7;
-    if (channelType > 2 && !pAlias0->pszSecondaryAliasName) {
-        for (i = 0; i < g_snd.max_3D_channels; i++) {
-            if (g_snd.chaninfo[i].entnum != entnum)
-                continue;
-            if (g_snd.chaninfo[i].entchannel != channelType)
-                continue;
-            if (!SND_Is3DChannelFree(i))
-                SND_Stop3DChannel(i);
-        }
-        for (i = 32; i < 32 + g_snd.max_stream_channels; i++) {
-            if (g_snd.chaninfo[i].entnum != entnum)
-                continue;
-            if (g_snd.chaninfo[i].entchannel != channelType)
-                continue;
-            if (!SND_IsStreamChannelFree(i))
-                SND_StopStreamChannel(i);
-        }
-        for (i = 45; i < 45 + g_snd.max_2D_channels; i++) {
-            if (g_snd.chaninfo[i].entnum != entnum)
-                continue;
-            if (g_snd.chaninfo[i].entchannel != channelType)
-                continue;
-            if (!SND_Is2DChannelFree(i))
-                SND_Stop2DChannel(i);
-        }
-    }
-
-    oneMinusLerp = 1.0f - lerp;
-    volMin = oneMinusLerp * pAlias0->fVolMin + lerp * pAlias1->fVolMin;
-    volMax = oneMinusLerp * pAlias0->fVolMax + lerp * pAlias1->fVolMax;
-    fPitchMin = oneMinusLerp * pAlias0->fPitchMin + lerp * pAlias1->fPitchMin;
-    fPitchMax = oneMinusLerp * pAlias0->fPitchMax + lerp * pAlias1->fPitchMax;
-    volume = volMin + randomf() * (volMax - volMin);
-    pitch = fPitchMin + randomf() * (fPitchMax - fPitchMin);
-
-    playType = (pAlias0->flags & 0x60) >> 5;
-    if (playType == 1) {
-
-        if (!Com_GetSoundFileMem(pAlias0)) {
-            Com_DPrintf("Tried to play sound '%s' from alias '%s', but it was not successfully loaded.\n",
-                        Com_GetSoundFileName(pAlias0), pAlias0->pszAliasName);
-            if (pChannel)
-                *pChannel = -1;
+    flags = pAlias0->flags;
+    switch ((flags & 0x780) >> 7) {
+    default:
+        if (!snd_enable3D->current.enabled)
+            return 0;
+        if (!SND_AnyActiveListeners()) {
+            Com_Error(ERR_DROP, "attempted to play spatialized alias '%s' while there is no active listener. Most likely this means you tried to play a spatialized sound while not in a level.\n", pAlias0->pszAliasName);
             return 0;
         }
-
-        channelType = (pAlias0->flags & 0x780) >> 7;
-        if (channelType <= 10 && ((1 << channelType) & 0x786)) {
-
-            if (!snd_enable2D->current.enabled)
-                return 0;
-            master = treatAsMaster || (pAlias0->flags & 2);
-            return SND_StartAlias2DSample(pAlias0, pAlias1, lerp, entnum, volume, pitch, timeshift, 0.0f, pAlias0->startDelay, master, pChannel, system);
-        } else {
-
-            if (!snd_enable3D->current.enabled)
-                return 0;
-            if (!g_snd.listeners[0].active) {
-                Com_Error(ERR_DROP, "attempted to play spatialized alias '%s' while there is no active listener. Most likely this means you tried to play a spatialized sound while not in a level.\n", pAlias0->pszAliasName);
-                return 0;
-            }
-            master = treatAsMaster || (pAlias0->flags & 2);
-            return SND_StartAlias3DSample(pAlias0, pAlias1, lerp, entnum, org, volume, pitch, timeshift, 0.0f, pAlias0->startDelay, master, pChannel, system);
-        }
-    } else if (playType >= 2 && playType <= 3) {
-
-        return SND_StartAliasStream(pAlias0, pAlias1, lerp, entnum, org, volume, pitch, timeshift, 0.0f, treatAsMaster, pChannel, system);
+        return SND_StartAlias3DSample(pAlias0, pAlias1, lerp, entnum, org, volume, pitch, timeshift, 0.0f, pAlias0->startDelay, treatAsMaster || (flags & 2), pChannel, system);
+    case 1:
+    case 2:
+    case 7:
+    case 8:
+    case 9:
+    case 10:
+        if (!snd_enable2D->current.enabled)
+            return 0;
+        return SND_StartAlias2DSample(pAlias0, pAlias1, lerp, entnum, volume, pitch, timeshift, 0.0f, pAlias0->startDelay, treatAsMaster || (flags & 2), pChannel, system);
     }
+}
+
+static __attribute_regparm__(3) int SND_PlaySoundAlias_Internal(const snd_alias_t *pAlias0, const snd_alias_t *pAlias1, float lerp, int entnum, const vec_t *org, int *pChannel, int timeshift, Bool treatAsMaster, snd_alias_system_t system)
+{
+    const snd_alias_t *secondaryAlias;
+    int entchannel;
+    int playType;
+    float fDistMax;
+    float volume;
+    float pitch;
+
+    if (!g_snd.Initialized2d)
+        return 0;
+
+    if (pChannel)
+        *pChannel = -1;
+
+    if (pAlias0->pszSecondaryAliasName) {
+        secondaryAlias = Com_PickSoundAlias(pAlias0->pszSecondaryAliasName);
+        if (secondaryAlias) {
+            if (!secondaryAlias->pszSecondaryAliasName) {
+                SND_PlaySoundAlias_Internal(secondaryAlias, secondaryAlias, lerp, entnum, org, NULL, timeshift, treatAsMaster, system);
+            } else {
+                Com_Printf("^1Error: a secondaryAlias cannot have a secondary Alias of its own.\nAlias sequence: '%s'->'%s'->'%s'\n",
+                           pAlias0->pszAliasName, pAlias0->pszSecondaryAliasName, secondaryAlias->pszSecondaryAliasName);
+            }
+        }
+    }
+
+    switch ((pAlias0->flags & 0x780) >> 7) {
+    case 1:
+    case 2:
+    case 7:
+    case 8:
+    case 9:
+    case 10:
+        break;
+    default:
+        fDistMax = (1.0f - lerp) * pAlias0->fDistMax + lerp * pAlias1->fDistMax;
+        if (Vec3DistanceSq(org, g_snd.listeners[0].orient.origin) > fDistMax * fDistMax)
+            return 0;
+        break;
+    }
+
+    if (SND_ContinueLoopingSound(pAlias0, pAlias1, lerp, entnum, org, pChannel))
+        return 0;
+
+    entchannel = (pAlias0->flags & 0x780) >> 7;
+    if (entchannel != 0 && entchannel != 1 && entchannel != 2 && !pAlias0->pszSecondaryAliasName)
+        SND_StopEntityChannel(entnum, entchannel);
+
+    SND_ChoosePitchAndVolume(pAlias0, pAlias1, lerp, &volume, &pitch);
+
+    playType = (pAlias0->flags & 0x60) >> 5;
+    if (playType == 1)
+        return SND_StartAliasSample(pAlias0, pAlias1, lerp, entnum, org, volume, pitch, timeshift, treatAsMaster, pChannel, system);
+    if (playType >= 2 && playType <= 3)
+        return SND_StartAliasStream(pAlias0, pAlias1, lerp, entnum, org, volume, pitch, timeshift, 0.0f, treatAsMaster, pChannel, system);
 
     return 0;
 }

@@ -1416,14 +1416,14 @@ static void PM_CrashLand(playerState_t *ps, pml_t *pml)
 	}
 	else
 	{
-		viewDip = (int)((fallHeight - 12) / 26 * 4 + 4);
+		viewDip = (int)(((fallHeight - 12) / 26 + 1) * 4);
 		if (viewDip > 24)
 			viewDip = 24;
 		BG_AnimScriptEvent(ps, ANIM_ET_LAND, qfalse, qtrue);
 	}
 	if (damage)
 	{
-		if (damage <= 99 && !(pml->groundTrace.surfaceFlags & SURF_SLICK))
+		if (damage < 100 && !(pml->groundTrace.surfaceFlags & SURF_SLICK))
 		{
 			stunTime = 35 * damage + 500;
 			if (stunTime > 2000)
