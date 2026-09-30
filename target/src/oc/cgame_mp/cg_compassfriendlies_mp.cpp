@@ -353,3 +353,119 @@ void CG_DrawCompassFriendlies(rectDef_t *rect, MaterialHandle material, vec_t *c
         UI_DrawHandlePic(x, y, w, h, rect->horzAlign, rect->vertAlign, fadedColor, cgs->media.compassping_enemyfiring);
     }
 }
+
+extern qboolean CG_ServerMaterialName(int index, char *materialName, int maxLen);
+extern MaterialHandle CL_RegisterMaterialNoMip(const char *name, int imageTrack);
+
+void CG_DrawPlayerCompassPointers(const rectDef_t *rect, vec_t *color)
+{
+    float fadeAlpha;
+    float centerX;
+    float centerY;
+    int i;
+    objective_t *obj;
+    vec3_t origin;
+    vec3_t delta;
+    float yaw;
+    float dist;
+    float radius;
+    float frac;
+    float s;
+    float c;
+    float x;
+    float y;
+    float w;
+    vec4_t drawColor;
+    MaterialHandle material;
+    char materialName[64];
+
+    fadeAlpha = CG_FadeHudMenu(hud_fade_compass, cg->compassFadeTime, I_fround(hud_fade_compass->current.value * 1000.0f));
+    if (fadeAlpha == 0.0f)
+        return;
+
+    CG_UpdateCompPointerOrientation();
+
+    centerX = rect->w * cg_hudCompassSize->current.value * 0.5f + rect->x;
+    centerY = cg_hudCompassSize->current.value * 0.5f * rect->h - (cg_hudCompassSize->current.value - 1.0f) * rect->h + rect->y;
+
+    if (!cg->bgs.clientinfo[cg->nextSnap->ps.clientNum].infoValid)
+        return;
+
+    for (i = 0; i < 16; i++)
+    {
+        obj = &cg->nextSnap->ps.objective[i];
+        if (obj->state != 4)
+            continue;
+
+        if (obj->entNum != 1023)
+        {
+            origin[0] = cg_entities[obj->entNum].lerpOrigin[0];
+            origin[1] = cg_entities[obj->entNum].lerpOrigin[1];
+            origin[2] = cg_entities[obj->entNum].lerpOrigin[2];
+        }
+        else
+        {
+            origin[0] = obj->origin[0];
+            origin[1] = obj->origin[1];
+            origin[2] = obj->origin[2];
+        }
+        delta[0] = origin[0] - cg->refdef.vieworg[0];
+        delta[1] = origin[1] - cg->refdef.vieworg[1];
+        delta[2] = origin[2] - cg->refdef.vieworg[2];
+        yaw = AngleNormalize360(vectoyaw(delta) - cg->compPointerYaw);
+        dist = Vec2Length(delta);
+
+        drawColor[0] = color[0];
+        drawColor[1] = color[1];
+        drawColor[2] = color[2];
+        drawColor[3] = color[3];
+
+        if (dist <= cg_hudCompassMaxRange->current.value)
+        {
+            drawColor[3] = 1.0f;
+        }
+        else if (dist >= cg_hudObjectiveMaxRange->current.value)
+        {
+            drawColor[3] = cg_hudObjectiveMinAlpha->current.value;
+        }
+        else
+        {
+            frac = 0.0f;
+            if (cg_hudObjectiveMaxRange->current.value - cg_hudCompassMaxRange->current.value != 0.0f)
+                frac = (dist - cg_hudCompassMaxRange->current.value) / (cg_hudObjectiveMaxRange->current.value - cg_hudCompassMaxRange->current.value);
+            drawColor[3] = 1.0f - (1.0f - cg_hudObjectiveMinAlpha->current.value) * frac;
+        }
+
+        if (dist <= cg_hudCompassMinRange->current.value)
+        {
+            radius = cg_hudCompassMinRadius->current.value;
+        }
+        else if (dist >= cg_hudCompassMaxRange->current.value)
+        {
+            radius = 1.0f;
+        }
+        else
+        {
+            frac = 0.0f;
+            if (cg_hudCompassMaxRange->current.value - cg_hudCompassMinRange->current.value != 0.0f)
+                frac = (cg_hudCompassMaxRange->current.value - dist) / (cg_hudCompassMaxRange->current.value - cg_hudCompassMinRange->current.value);
+            radius = 1.0f - (1.0f - cg_hudCompassMinRadius->current.value) * frac;
+        }
+        radius = cg_hudCompassSize->current.value * radius * 43.75;
+
+        FastSinCos(yaw * 0.017453292f, &s, &c);
+        w = cg_hudCompassSize->current.value * 16.0f;
+        x = centerX - w * 0.5f - s * radius;
+        y = centerY - w * 0.5f - c * radius;
+
+        if (obj->icon && CG_ServerMaterialName(obj->icon, materialName, 64))
+            material = CL_RegisterMaterialNoMip(materialName, 7);
+        else
+            material = cgs->media.objectiveMaterials[0];
+
+        if (fadeAlpha < drawColor[3])
+            drawColor[3] = fadeAlpha;
+
+        UI_DrawHandlePic(x, y, w, w, rect->horzAlign, rect->vertAlign, drawColor, material);
+    }
+}

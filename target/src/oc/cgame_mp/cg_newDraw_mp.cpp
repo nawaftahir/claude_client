@@ -4,6 +4,7 @@
 #include "headers/PC/cgame_mp/cg_local.h"
 #include <math.h>
 #include <string.h>
+#include <stdio.h>
 extern weaponInfo_t cg_weaponsArray[];
 
 extern const dvar_t *cg_drawHealth;
@@ -110,8 +111,8 @@ enum {
     CG_GAME_TYPE = 39,
     CG_KILLER = 50,
     CG_SPECTATORS = 60,
-    CG_CAPFRAGLIMIT = 66,
     CG_1STPLACE = 67,
+    CG_2NDPLACE = 68,
     CG_PLAYER_AMMOCLIP_VALUE = 70,
     CG_HOLD_BREATH_HINT = 71,
     CG_CURSORHINT = 72,
@@ -159,7 +160,8 @@ Bool CG_CheckPlayerForLowAmmo(void);
 Bool CG_CheckPlayerForLowClip(void);
 void CG_DrawPlayerCompassBack(const rectDef_t *rect, MaterialHandle material, vec_t *color);
 static void CG_DrawPlayerStance(const rectDef_t *rect, vec_t *color, struct Font_s *font, float scale, int textStyle);
-static void CG_DrawPlayerAmmoValue(const rectDef_t *rect, struct Font_s *font, float scale, vec_t *color, MaterialHandle material, int textStyle, int type);
+static void CG_DrawPlayerAmmoValue(const rectDef_t *rect, struct Font_s *font, float scale, vec_t *color, int textStyle);
+extern void CG_DrawPlayerCompassPointers(const rectDef_t *rect, vec_t *color);
 void CG_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAlign, float text_x, float text_y, int ownerDraw, int ownerDrawFlags, int align, float special, struct Font_s *font, float scale, vec_t *color, MaterialHandle material, int textStyle);
 
 COD2_ASSERT_FIELD(struct dvar_s, current,        0x08);
@@ -627,9 +629,11 @@ static void __attribute_regparm__(3)
 
 const char *CG_GetKillerText(void)
 {
-    if (!cg->killerName[0])
-        return "";
-    return va("Fragged by %s", (const char *)cg->killerName);
+    const char *s = "";
+
+    if (cg->killerName[0])
+        s = va("Fragged by %s", cg->killerName);
+    return s;
 }
 
 const char *CG_GameTypeString(void)
@@ -808,7 +812,7 @@ void CG_DrawHoldBreathHint(const rectDef_t *rect, struct Font_s *font, float fon
         textStyle);
 }
 
-static inline __attribute__((always_inline)) float CG_FadeHudMenu_inl(const dvar_t *fadeDvar, int displayStartTime, int duration)
+float CG_FadeHudMenu(const dvar_t *fadeDvar, int displayStartTime, int duration)
 {
     float *fadeColor;
 
@@ -826,11 +830,6 @@ static inline __attribute__((always_inline)) float CG_FadeHudMenu_inl(const dvar
     }
 
     return fadeColor[3];
-}
-
-float CG_FadeHudMenu(const dvar_t *fadeDvar, int displayStartTime, int duration)
-{
-    return CG_FadeHudMenu_inl(fadeDvar, displayStartTime, duration);
 }
 
 Bool CG_CheckPlayerForLowAmmo(void)
@@ -925,7 +924,7 @@ void CG_DrawPlayerCompassBack(const rectDef_t *rect, MaterialHandle material, ve
 
     duration = I_fround(1000.0f * hud_fade_compass->current.value);
     displayStartTime = cg->compassFadeTime;
-    alpha = CG_FadeHudMenu_inl(hud_fade_compass, displayStartTime, duration);
+    alpha = CG_FadeHudMenu(hud_fade_compass, displayStartTime, duration);
     color[3] = alpha;
     if (alpha == 0.0f) {
         return;
@@ -974,7 +973,7 @@ static inline __attribute__((always_inline)) int CG_FadeDurationMsec(const dvar_
 
 static inline __attribute__((always_inline)) float CG_HudFadeAlpha(const dvar_t *fadeDvar, int displayStartTime)
 {
-    return CG_FadeHudMenu_inl(fadeDvar, displayStartTime, CG_FadeDurationMsec(fadeDvar));
+    return CG_FadeHudMenu(fadeDvar, displayStartTime, CG_FadeDurationMsec(fadeDvar));
 }
 
 static inline __attribute__((always_inline)) qboolean CG_PlayerOwnsWeapon(const int *weapons, int weaponIndex)
@@ -1036,13 +1035,9 @@ static inline __attribute__((always_inline)) void CG_DrawCenteredTextInRect(cons
                 rect->horzAlign, rect->vertAlign, scale, color, textStyle);
 }
 
-static inline __attribute__((always_inline)) void CG_DrawHudPic(const rectDef_t *rect, MaterialHandle material, const vec_t *color)
+static void CG_DrawHudPic(const rectDef_t *rect, MaterialHandle material, const vec_t *color)
 {
-    if (!rect || !material || !color) {
-        return;
-    }
-
-    UI_DrawHandlePic(rect->x, rect->y, rect->w, rect->h, rect->horzAlign, rect->vertAlign, color, material);
+    CL_DrawStretchPic(rect->x, rect->y, rect->w, rect->h, rect->horzAlign, rect->vertAlign, 0.0f, 0.0f, 1.0f, 1.0f, color, material);
 }
 
 static inline __attribute__((always_inline)) int CG_RoundStanceFadeDuration(float value)
@@ -1265,235 +1260,223 @@ static void CG_DrawPlayerStance(const rectDef_t *rect, vec_t *color, struct Font
     CG_DrawStanceIcon(rect, drawColor, x, y, fadeAlpha);
 }
 
-static void CG_DrawPlayerAmmoValue(const rectDef_t *rect, struct Font_s *font, float scale, vec_t *color, MaterialHandle material, int textStyle, int type)
-{
-    playerState_t *ps;
-    vec_t drawColor[4];
-    vec_t lowColor[4] = { 0.89f, 0.18f, 0.01f, 1.0f };
-    char ammoString[32];
-    char clipString[32];
-    int weaponIndex;
-    int clipIndex;
-    int reserveAmmo;
-    int clipAmmo;
-    qboolean drawReserve;
-    qboolean drawClip;
-    qboolean lowAmmo;
-    qboolean lowClip;
-    float alpha;
-    float pipeX;
-
-    (void)material;
-
-    if (!rect || !font) {
-        return;
-    }
-
-    if (!cg || !cg->predictedPlayerState.weapon) {
-        return;
-    }
-
-    ps = &cg->predictedPlayerState;
-    alpha = CG_HudFadeAlpha(hud_fade_ammodisplay, cg->ammoFadeTime);
-    if (alpha <= 0.0f) {
-        return;
-    }
-
-    weaponIndex = CG_GetDrawWeaponIndex();
-    if (!weaponIndex) {
-        return;
-    }
-
-    reserveAmmo = BG_GetTotalAmmoReserve(ps, weaponIndex);
-    if (reserveAmmo < 0) {
-        reserveAmmo = 0;
-    }
-    if (reserveAmmo > 999) {
-        reserveAmmo = 999;
-    }
-
-    drawClip = 0;
-    clipAmmo = 0;
-    if (!BG_WeaponIsClipOnly(weaponIndex)) {
-        clipIndex = BG_ClipForWeapon(weaponIndex);
-        clipAmmo = ps->ammoclip[clipIndex];
-        if (clipAmmo >= 0) {
-            if (clipAmmo > 999) {
-                clipAmmo = 999;
-            }
-            drawClip = 1;
-        }
-    }
-
-    drawReserve = type == 0 || !drawClip;
-    lowAmmo = CG_CheckPlayerForLowAmmo();
-    lowClip = CG_CheckPlayerForLowClip();
-
-    CG_CopyColor(drawColor, color, alpha);
-    lowColor[3] = alpha;
-
-    if (drawClip) {
-        Com_sprintf(clipString, sizeof(clipString), "%2i", clipAmmo);
-        UI_DrawText(clipString, 0x7fffffff, font, rect->x, rect->y, rect->horzAlign, rect->vertAlign,
-                    scale, lowClip ? lowColor : drawColor, textStyle);
-    }
-
-    if (!drawReserve) {
-        return;
-    }
-
-    Com_sprintf(ammoString, sizeof(ammoString), "%3i", reserveAmmo);
-    if (drawClip) {
-        CG_DrawTextRightAligned(ammoString, rect, font, scale, lowAmmo ? lowColor : drawColor, textStyle);
-        pipeX = rect->x + (rect->w - (float)UI_TextWidth("|", 0, font, scale)) * 0.5f - 5.0f;
-        UI_DrawText("|", 0x7fffffff, font, pipeX, rect->y, rect->horzAlign, rect->vertAlign,
-                    scale, lowAmmo ? lowColor : drawColor, textStyle);
-    } else {
-        CG_DrawCenteredTextInRect(ammoString, rect, font, scale, lowAmmo ? lowColor : drawColor, textStyle);
-    }
-}
-
 static void CG_DrawPlayerAmmoBackdrop(const rectDef_t *rect, MaterialHandle material, vec_t *color)
 {
     vec_t drawColor[4];
-    float alpha;
 
-    if (!cg || !cg->predictedPlayerState.weapon) {
-        return;
+    if (cg->predictedPlayerState.weapon)
+    {
+        drawColor[3] = CG_FadeHudMenu(hud_fade_ammodisplay, cg->ammoFadeTime,
+                                          I_fround(hud_fade_ammodisplay->current.value * 1000.0f));
+        if (drawColor[3] != 0.0f)
+        {
+            if (CG_CheckPlayerForLowAmmo())
+            {
+                drawColor[0] = 0.89f;
+                drawColor[1] = 0.18f;
+                drawColor[2] = 0.01f;
+            }
+            else
+            {
+                drawColor[0] = color[0];
+                drawColor[1] = color[1];
+                drawColor[2] = color[2];
+            }
+            UI_DrawHandlePic(rect->x, rect->y, rect->w, rect->h, rect->horzAlign, rect->vertAlign, drawColor, material);
+        }
     }
-
-    alpha = CG_HudFadeAlpha(hud_fade_ammodisplay, cg->ammoFadeTime);
-    if (alpha <= 0.0f) {
-        return;
-    }
-
-    CG_CopyColor(drawColor, color, alpha);
-    CG_DrawHudPic(rect, material, drawColor);
 }
 
-static inline __attribute__((always_inline)) const char *CG_GetWeaponDisplayText(int weaponIndex)
+static void CG_DrawPlayerAmmoValue(const rectDef_t *rect, struct Font_s *font, float scale, vec_t *color, int textStyle)
 {
-    weaponInfo_t *weapInfo;
-    WeaponDef *weapDef;
+    vec_t ammoColor[4];
+    int ammoVal;
+    bool drawAmmo;
+    char clipString[256];
+    char ammoString[260];
+    bool lowAmmo;
+    bool lowClip;
+    bool drawClip;
+    vec_t flashColor[4];
+    int weapIndex;
+    float x;
+    int clipVal;
 
-    weapInfo = CG_GetDrawWeaponInfo(weaponIndex);
-    if (!weapInfo) {
-        return 0;
+    if (!cg->predictedPlayerState.weapon)
+        return;
+
+    color[3] = CG_FadeHudMenu(hud_fade_ammodisplay, cg->ammoFadeTime,
+                                  I_fround(hud_fade_ammodisplay->current.value * 1000.0f));
+    if (color[3] == 0.0f)
+        return;
+
+    if ((cg->nextSnap->ps.pm_flags & 0x800000) && cg->weaponSelect >= 0 && cg->weaponSelect < BG_GetNumWeapons())
+        weapIndex = cg->weaponSelect;
+    else
+        weapIndex = cg_entities[cg->nextSnap->ps.clientNum].nextState.weapon;
+    if (!weapIndex)
+        return;
+
+    drawAmmo = 1;
+    drawClip = 1;
+    lowAmmo = 0;
+    lowClip = 0;
+    ammoVal = BG_GetTotalAmmoReserve(&cg->predictedPlayerState, weapIndex);
+    if (BG_WeaponIsClipOnly(weapIndex))
+        clipVal = -1;
+    else
+        clipVal = cg->predictedPlayerState.ammoclip[BG_ClipForWeapon(weapIndex)];
+    if (clipVal < 0)
+        drawClip = 0;
+    if (clipVal > 999)
+        clipVal = 999;
+    if (ammoVal < 0)
+        drawAmmo = 0;
+    if (ammoVal > 999)
+        ammoVal = 999;
+
+    if (drawClip)
+    {
+        sprintf(clipString, "%2i", clipVal);
+        lowClip = CG_CheckPlayerForLowClip();
+    }
+    if (drawAmmo)
+    {
+        sprintf(ammoString, "%3i", ammoVal);
+        lowAmmo = CG_CheckPlayerForLowAmmo();
     }
 
-    weapDef = (WeaponDef *)BG_GetWeaponDef(weaponIndex);
-    if (weapDef && weapDef->szModeName && weapDef->szModeName[0] && weapInfo->pszTranslatedModename && weapInfo->pszTranslatedModename[0]) {
-        return va("%s / %s", weapInfo->pszTranslatedDisplayName, weapInfo->pszTranslatedModename);
-    }
-    return weapInfo->pszTranslatedDisplayName;
-}
-
-static inline __attribute__((always_inline)) float CG_WeaponSelectFadeAlpha(const cg_t *cg)
-{
-    float *fadeColor;
-
-    if (CG_AreHudMenusHidden_inl() || !hud_enable->current.enabled) {
-        return 0.0f;
+    if (lowClip)
+    {
+        if (cg->lastClipFlashTime > cg->time || cg->lastClipFlashTime + 800 < cg->time)
+            cg->lastClipFlashTime = cg->time;
+        flashColor[0] = 0.89f;
+        flashColor[1] = 0.18f;
+        flashColor[2] = 0.01f;
+        flashColor[3] = (float)(cg->lastClipFlashTime + 800 - cg->time) * 0.00125f;
+        if (flashColor[3] > color[3])
+            flashColor[3] = color[3];
     }
 
-    fadeColor = CG_FadeColor(cg->weaponSelectTime, 1800, 700);
-    if (!fadeColor) {
-        return 0.0f;
+    if (lowAmmo)
+    {
+        ammoColor[0] = 0.89f;
+        ammoColor[1] = 0.18f;
+        ammoColor[2] = 0.01f;
     }
-    return fadeColor[3];
+    else
+    {
+        ammoColor[0] = color[0];
+        ammoColor[1] = color[1];
+        ammoColor[2] = color[2];
+    }
+    ammoColor[3] = color[3];
+
+    if (drawClip && drawAmmo)
+    {
+        UI_DrawText(clipString, 0x7fffffff, font, rect->x, rect->y, rect->horzAlign, rect->vertAlign, scale, color, textStyle);
+        if (lowClip)
+            UI_DrawText(clipString, 0x7fffffff, font, rect->x, rect->y, rect->horzAlign, rect->vertAlign, scale, flashColor, textStyle);
+        x = rect->x + rect->w - (float)UI_TextWidth(ammoString, 0, font, scale);
+        UI_DrawText(ammoString, 0x7fffffff, font, x, rect->y, rect->horzAlign, rect->vertAlign, scale, ammoColor, textStyle);
+        x = (rect->w - (float)UI_TextWidth("|", 0, font, scale)) * 0.5f + rect->x - 5.0f;
+        UI_DrawText("|", 0x7fffffff, font, x, rect->y, rect->horzAlign, rect->vertAlign, scale, ammoColor, textStyle);
+    }
+    else if (drawClip)
+    {
+        x = (rect->w - (float)UI_TextWidth(clipString, 0, font, scale)) * 0.5f + rect->x;
+        UI_DrawText(clipString, 0x7fffffff, font, x, rect->y, rect->horzAlign, rect->vertAlign, scale, color, textStyle);
+        if (lowClip)
+            UI_DrawText(clipString, 0x7fffffff, font, x, rect->y, rect->horzAlign, rect->vertAlign, scale, flashColor, textStyle);
+    }
+    else if (drawAmmo)
+    {
+        x = (rect->w - (float)UI_TextWidth(ammoString, 0, font, scale)) * 0.5f + rect->x;
+        UI_DrawText(ammoString, 0x7fffffff, font, x, rect->y, rect->horzAlign, rect->vertAlign, scale, ammoColor, textStyle);
+    }
 }
 
 static void CG_DrawPlayerWeaponName(const rectDef_t *rect, struct Font_s *font, float scale, vec_t *color, int textStyle)
 {
+    weaponInfo_t *weapInfo;
+    float *fadeColor;
+    const char *string;
     vec_t drawColor[4];
-    const char *text;
-    int weaponIndex;
-    float alpha;
+    int weapIndex;
+    WeaponDef *weapDef;
+    float x;
 
-    if (!rect || !font) {
-        return;
+    fadeColor = CG_FadeColor(cg->weaponSelectTime, 1800, 700);
+    if (fadeColor)
+    {
+        drawColor[3] = fadeColor[3];
+        drawColor[0] = color[0];
+        drawColor[1] = color[1];
+        drawColor[2] = color[2];
+        weapIndex = CG_GetDrawWeaponIndex();
+        if (weapIndex)
+        {
+            weapInfo = &cg_weaponsArray[weapIndex];
+            weapDef = BG_GetWeaponDef(weapIndex);
+            if (*weapDef->szModeName)
+                string = va("%s / %s", weapInfo->pszTranslatedDisplayName, weapInfo->pszTranslatedModename);
+            else
+                string = va("%s", weapInfo->pszTranslatedDisplayName);
+            x = rect->x + rect->w - (float)UI_TextWidth(string, 0, font, scale) - 28.0f;
+            UI_DrawText(string, 0x7fffffff, font, x, rect->y, rect->horzAlign, rect->vertAlign, scale, drawColor, textStyle);
+        }
     }
-
-    if (!cg) {
-        return;
-    }
-
-    weaponIndex = CG_GetDrawWeaponIndex();
-    text = CG_GetWeaponDisplayText(weaponIndex);
-    if (!text || !*text) {
-        return;
-    }
-
-    alpha = CG_WeaponSelectFadeAlpha(cg);
-    if (alpha <= 0.0f) {
-        return;
-    }
-
-    CG_CopyColor(drawColor, color, alpha);
-    CG_DrawTextRightAligned(text, rect, font, scale, drawColor, textStyle);
 }
 
 static void CG_DrawPlayerWeaponNameBack(const rectDef_t *rect, struct Font_s *font, float scale, vec_t *color, MaterialHandle material)
 {
-    vec_t drawColor[4];
-    rectDef_t backRect;
-    const char *text;
-    int weaponIndex;
-    int textWidth;
-    float alpha;
-
-    if (!rect || !font || !material) {
-        return;
-    }
-
-    if (!cg) {
-        return;
-    }
-
-    weaponIndex = CG_GetDrawWeaponIndex();
-    text = CG_GetWeaponDisplayText(weaponIndex);
-    if (!text || !*text) {
-        return;
-    }
-
-    alpha = CG_WeaponSelectFadeAlpha(cg);
-    if (alpha <= 0.0f) {
-        return;
-    }
-
-    textWidth = UI_TextWidth(text, 0, font, scale);
-    backRect = *rect;
-    backRect.w = (float)textWidth + 36.0f;
-    backRect.x = rect->x + rect->w - backRect.w;
-
-    CG_CopyColor(drawColor, color, alpha);
-    CG_DrawHudPic(&backRect, material, drawColor);
-}
-
-static void CG_DrawPlayerWeaponModeIcon(const rectDef_t *rect, MaterialHandle fallbackMaterial, vec_t *color)
-{
     weaponInfo_t *weapInfo;
+    const char *string;
     vec_t drawColor[4];
-    int weaponIndex;
-    float alpha;
-    MaterialHandle material;
+    int weapIndex;
+    WeaponDef *weapDef;
+    float x;
+    float w;
 
-    if (!cg) {
-        return;
+    drawColor[3] = CG_FadeHudMenu(hud_fade_ammodisplay, cg->weaponSelectTime, 1800);
+    if (drawColor[3] != 0.0f)
+    {
+        drawColor[0] = color[0];
+        drawColor[1] = color[1];
+        drawColor[2] = color[2];
+        weapIndex = CG_GetDrawWeaponIndex();
+        if (weapIndex)
+        {
+            weapInfo = &cg_weaponsArray[weapIndex];
+            weapDef = BG_GetWeaponDef(weapIndex);
+            if (*weapDef->szModeName)
+                string = va("%s / %s", weapInfo->pszTranslatedDisplayName, weapInfo->pszTranslatedModename);
+            else
+                string = va("%s", weapInfo->pszTranslatedDisplayName);
+            w = (float)UI_TextWidth(string, 0, font, scale) + 36.0f;
+            x = rect->x + rect->w - w;
+            UI_DrawHandlePic(x, rect->y, w, rect->h, rect->horzAlign, rect->vertAlign, drawColor, material);
+        }
     }
-
-    alpha = CG_HudFadeAlpha(hud_fade_ammodisplay, cg->weaponSelectTime);
-    if (alpha <= 0.0f) {
-        return;
-    }
-
-    weaponIndex = CG_GetDrawWeaponIndex();
-    weapInfo = CG_GetDrawWeaponInfo(weaponIndex);
-    material = weapInfo && weapInfo->hModeIcon ? weapInfo->hModeIcon : fallbackMaterial;
-    CG_CopyColor(drawColor, color, alpha);
-    CG_DrawHudPic(rect, material, drawColor);
 }
 
+static void CG_DrawPlayerWeaponModeIcon(const rectDef_t *rect, vec_t *color)
+{
+    int weapIndex;
+    weaponInfo_t *weapInfo;
+
+    color[3] = CG_FadeHudMenu(hud_fade_ammodisplay, cg->weaponSelectTime, 1800);
+    if (color[3] != 0.0f)
+    {
+        weapIndex = CG_GetDrawWeaponIndex();
+        if (weapIndex)
+        {
+            weapInfo = &cg_weaponsArray[weapIndex];
+            if (weapInfo->hModeIcon)
+                UI_DrawHandlePic(rect->x, rect->y, rect->w, rect->h, rect->horzAlign, rect->vertAlign, color, weapInfo->hModeIcon);
+        }
+    }
+}
 static void CG_DrawPlayerHealthBar(const rectDef_t *rect, MaterialHandle material, vec_t *color)
 {
     rectDef_t barRect;
@@ -1631,72 +1614,102 @@ static inline __attribute__((always_inline)) void CG_DrawPlayerCompassFriendlies
     CG_DrawCompassFriendlies(rect, material, drawColor);
 }
 
+static void CG_DrawPlayerLocation(const rectDef_t *rect, struct Font_s *font, float scale, vec_t *color, int textStyle)
+{
+    clientInfo_t *ci;
+    const char *s;
+
+    ci = &cg->bgs.clientinfo[cg->nextSnap->ps.clientNum];
+    if (ci->infoValid)
+    {
+        s = CG_GetTranslatedLocationString(ci->location);
+        UI_DrawText(s, 0x7fffffff, font, rect->x, rect->y + rect->h, rect->horzAlign, rect->vertAlign, scale, color, textStyle);
+    }
+}
+
+static void CG_DrawTeamColor(const rectDef_t *rect, vec_t *color)
+{
+    if (cg->bgs.clientinfo[cg->nextSnap->ps.clientNum].infoValid)
+        CG_DrawTeamBackground(rect->x, rect->y, rect->w, rect->h, color[3], cg->bgs.clientinfo[cg->nextSnap->ps.clientNum].team);
+}
+
+static void CG_DrawKiller(const rectDef_t *rect, struct Font_s *font, float scale, vec_t *color, int textStyle)
+{
+    const char *s;
+    float x;
+
+    if (cg->killerName[0])
+    {
+        s = va("Fragged by %s", cg->killerName);
+        x = (rect->w - (float)UI_TextWidth(s, 0, font, scale)) * 0.5f + rect->x;
+        UI_DrawText(s, 0x7fffffff, font, x, rect->y + rect->h, rect->horzAlign, rect->vertAlign, scale, color, textStyle);
+    }
+}
+
+static void CG_DrawPlaceScore(int team, const rectDef_t *rect, struct Font_s *font, float scale, vec_t *color, int textStyle)
+{
+    if (cgs->teamScores[team] != -9999)
+        UI_DrawText(va("%2i", cgs->teamScores[team]), 0x7fffffff, font, rect->x, rect->y,
+                    rect->horzAlign, rect->vertAlign, scale, color, textStyle);
+}
+
+static void CG_DrawGameType(const rectDef_t *rect, struct Font_s *font, float scale, vec_t *color, int textStyle)
+{
+    UI_DrawText(CG_GameTypeString(), 0x7fffffff, font, rect->x, rect->y + rect->h,
+                rect->horzAlign, rect->vertAlign, scale, color, textStyle);
+}
+
 void CG_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAlign, float text_x, float text_y, int ownerDraw, int ownerDrawFlags, int align, float special, struct Font_s *font, float scale, vec_t *color, MaterialHandle material, int textStyle)
 {
     rectDef_t rect;
-    vec_t drawColor[4];
-    const char *text;
 
-    (void)ownerDrawFlags;
-    (void)align;
-    (void)special;
-
-    rect.x = x + text_x;
-    rect.y = y + text_y;
+    rect.x = x;
+    rect.y = y;
     rect.w = w;
     rect.h = h;
     rect.horzAlign = horzAlign;
     rect.vertAlign = vertAlign;
 
-    switch (ownerDraw) {
-    case CG_PLAYER_AMMO_VALUE:
-        CG_DrawPlayerAmmoValue(&rect, font, scale, color, material, textStyle, 0);
-        break;
-    case CG_PLAYER_AMMOCLIP_VALUE:
-        CG_DrawPlayerAmmoValue(&rect, font, scale, color, material, textStyle, 1);
-        break;
+    switch (ownerDraw)
+    {
     case CG_PLAYER_AMMO_BACKDROP:
         CG_DrawPlayerAmmoBackdrop(&rect, material, color);
         break;
-    case CG_PLAYER_STANCE:
-        CG_DrawPlayerStance(&rect, color, font, scale, textStyle);
-        break;
-    case CG_BLUE_SCORE:
-        CG_DrawScore(1, &rect, font, scale, color, material, textStyle);
-        break;
-    case CG_RED_SCORE:
-        CG_DrawScore(0, &rect, font, scale, color, material, textStyle);
-        break;
-    case CG_GAME_TYPE:
-        UI_DrawText(CG_GameTypeString(), 0x7fffffff, font, rect.x, rect.y + rect.h,
-                    rect.horzAlign, rect.vertAlign, scale, color, textStyle);
-        break;
-    case CG_KILLER:
-        CG_DrawCenteredTextInRect(CG_GetKillerText(), &rect, font, scale, color, textStyle);
-        break;
-    case CG_CAPFRAGLIMIT:
-        if (cgs->teamScores[0] != -9999) {
-            text = va("%2i", cgs->teamScores[0]);
-            UI_DrawText(text, 0x7fffffff, font, rect.x, rect.y, rect.horzAlign, rect.vertAlign, scale, color, textStyle);
-        }
-        break;
-    case CG_1STPLACE:
-        if (cgs->teamScores[1] != -9999) {
-            text = va("%2i", cgs->teamScores[1]);
-            UI_DrawText(text, 0x7fffffff, font, rect.x, rect.y, rect.horzAlign, rect.vertAlign, scale, color, textStyle);
-        }
+    case CG_PLAYER_AMMO_VALUE:
+        CG_DrawPlayerAmmoValue(&rect, font, scale, color, textStyle);
         break;
     case CG_HOLD_BREATH_HINT:
         CG_DrawHoldBreathHint(&rect, font, scale, textStyle);
         break;
+    case CG_MANTLE_HINT:
+        CG_DrawMantleHint(&rect, font, scale, textStyle);
+        break;
     case CG_CURSORHINT:
         CG_DrawCursorhint(&rect, font, scale, textStyle);
         break;
-    case CG_PLAYER_BAR_HEALTH:
-        CG_DrawPlayerHealthBar(&rect, material, color);
+    case CG_PLAYER_AMMOCLIP_VALUE:
+        CG_DrawPlayerAmmoValue(&rect, font, scale, color, textStyle);
         break;
-    case CG_MANTLE_HINT:
-        CG_DrawMantleHint(&rect, font, scale, textStyle);
+    case CG_PLAYER_STANCE:
+        CG_DrawPlayerStance(&rect, color, font, scale, textStyle);
+        break;
+    case CG_RED_SCORE:
+        CG_DrawScore(0, &rect, font, scale, color, material, textStyle);
+        break;
+    case CG_BLUE_SCORE:
+        CG_DrawScore(1, &rect, font, scale, color, material, textStyle);
+        break;
+    case CG_PLAYER_LOCATION:
+        CG_DrawPlayerLocation(&rect, font, scale, color, textStyle);
+        break;
+    case CG_TEAM_COLOR:
+        CG_DrawTeamColor(&rect, color);
+        break;
+    case CG_GAME_TYPE:
+        CG_DrawGameType(&rect, font, scale, color, textStyle);
+        break;
+    case CG_KILLER:
+        CG_DrawKiller(&rect, font, scale, color, textStyle);
         break;
     case CG_PLAYER_WEAPON_NAME:
         CG_DrawPlayerWeaponName(&rect, font, scale, color, textStyle);
@@ -1705,7 +1718,7 @@ void CG_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAli
         CG_DrawPlayerWeaponNameBack(&rect, font, scale, color, material);
         break;
     case CG_PLAYER_WEAPON_MODE_ICON:
-        CG_DrawPlayerWeaponModeIcon(&rect, material, color);
+        CG_DrawPlayerWeaponModeIcon(&rect, color);
         break;
     case CG_PLAYER_COMPASS:
         CG_DrawPlayerCompass(&rect, material, color);
@@ -1714,49 +1727,52 @@ void CG_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAli
         CG_DrawPlayerCompassBack(&rect, material, color);
         break;
     case CG_PLAYER_COMPASS_POINTERS:
-        CG_UpdateCompPointerOrientation();
+        CG_DrawPlayerCompassPointers(&rect, color);
         break;
-    case CG_PLAYER_COMPASS_FRIENDS:
-        CG_DrawPlayerCompassFriendliesOwnerdraw(&rect, material, color);
-        break;
-    case CG_DRAW_SHADER:
-        CG_DrawHudPic(&rect, material, color);
+    case CG_PLAYER_BAR_HEALTH:
+        CG_DrawPlayerHealthBar(&rect, material, color);
         break;
     case CG_PLAYER_BAR_HEALTH_BACK:
         CG_DrawPlayerHealthBack(&rect, material, color);
         break;
+    case CG_PLAYER_LOW_HEALTH_OVERLAY:
+        CG_DrawLowHealthOverlay(&rect, material, color);
+        break;
+    case CG_PLAYER_COMPASS_FRIENDS:
+        CG_DrawCompassFriendlies(&rect, material, color);
+        break;
+    case CG_1STPLACE:
+        CG_DrawPlaceScore(0, &rect, font, scale, color, textStyle);
+        break;
+    case CG_2NDPLACE:
+        CG_DrawPlaceScore(1, &rect, font, scale, color, textStyle);
+        break;
+    case CG_DRAW_SHADER:
+        CG_DrawHudPic(&rect, material, color);
+        break;
     case CG_OFFHAND_WEAPON_ICON_FRAG:
         CG_DrawOffHandIcon(&rect, scale, color, material, 1);
-        break;
-    case CG_OFFHAND_WEAPON_ICON_SMOKE:
-        CG_DrawOffHandIcon(&rect, scale, color, material, 2);
         break;
     case CG_OFFHAND_WEAPON_AMMO_FRAG:
         CG_DrawOffHandAmmo(&rect, font, scale, color, textStyle, 1);
         break;
-    case CG_OFFHAND_WEAPON_AMMO_SMOKE:
-        CG_DrawOffHandAmmo(&rect, font, scale, color, textStyle, 2);
-        break;
     case CG_OFFHAND_WEAPON_NAME_FRAG:
         CG_DrawOffHandName(&rect, font, scale, color, textStyle, 1);
-        break;
-    case CG_OFFHAND_WEAPON_NAME_SMOKE:
-        CG_DrawOffHandName(&rect, font, scale, color, textStyle, 2);
         break;
     case CG_OFFHAND_WEAPON_SELECT_FRAG:
         CG_DrawOffHandHighlight(&rect, scale, color, material, 1);
         break;
+    case CG_OFFHAND_WEAPON_ICON_SMOKE:
+        CG_DrawOffHandIcon(&rect, scale, color, material, 2);
+        break;
+    case CG_OFFHAND_WEAPON_AMMO_SMOKE:
+        CG_DrawOffHandAmmo(&rect, font, scale, color, textStyle, 2);
+        break;
+    case CG_OFFHAND_WEAPON_NAME_SMOKE:
+        CG_DrawOffHandName(&rect, font, scale, color, textStyle, 2);
+        break;
     case CG_OFFHAND_WEAPON_SELECT_SMOKE:
         CG_DrawOffHandHighlight(&rect, scale, color, material, 2);
-        break;
-    case CG_PLAYER_LOW_HEALTH_OVERLAY:
-        CG_DrawLowHealthOverlay(&rect, material, color);
-        break;
-    case CG_TEAM_COLOR:
-        CG_CopyColor(drawColor, color, color ? color[3] : 1.0f);
-        CG_DrawTeamBackground(rect.x, rect.y, rect.w, rect.h, drawColor[3], 0);
-        break;
-    default:
         break;
     }
 }
