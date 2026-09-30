@@ -111,6 +111,31 @@ extern int SND_GetListenerIndexNearestToOrigin(const float *org);
 extern void SND_GetCurrent3DPosition(int entnum, const vec_t *offset, vec_t *pos_out);
 extern vec_t Vec3Normalize( vec3_t v );
 extern float Vec3Distance(const vec3_t v1, const vec3_t v2);
+extern float Vec3DistanceSq(const vec3_t v1, const vec3_t v2);
+
+// universal/com_math.h inlines
+static inline int I_sel(const int x, const int y, const int z)
+{
+    if (x >= 0) {
+        return y;
+    }
+    return z;
+}
+
+static inline int I_max(const int x, const int y)
+{
+    return I_sel(x - y, x, y);
+}
+
+static inline float I_sqrt(const float value)
+{
+    return sqrt(value);
+}
+
+static inline float DotProduct(const vec3_t a, const vec3_t b)
+{
+    return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+}
 extern int SND_FindFree2DChannel(int entnum, int channel);
 extern int SND_FindFree3DChannel(int entnum, int channel);
 extern void SND_SetChannelInfo(int index, int entnum, const snd_alias_t *pAlias0, const snd_alias_t *pAlias1, float lerp, const vec_t *origin, float volume, float pitch, int srcChannelCount, int baserate, int total_msec, int start_msec, int startDelay, Bool master, snd_alias_system_t system);
@@ -659,30 +684,19 @@ void SND_Update3DChannelReverb(int index)
 
 void SND_Set3DPosition(int index, const vec_t *org)
 {
-    int listenerIdx;
-    snd_local_t *sndGlob;
-    snd_listener *listener;
-    float *listenerOrigin, *right, *up, *forward;
-    float dx, dy, dz;
-    float x, y, z;
+    vec3_t delta;
+    vec3_t pos;
 
-    listenerIdx = SND_GetListenerIndexNearestToOrigin(org);
-    sndGlob = &g_snd;
-    listener = &sndGlob->listeners[listenerIdx];
-    listenerOrigin = listener->orient.origin;
-    right = listener->orient.axis[0];
-    up = listener->orient.axis[1];
-    forward = listener->orient.axis[2];
+    // 1.0 always spatializes against listener 0
+    delta[0] = org[0] - g_snd.listeners[0].orient.origin[0];
+    delta[1] = org[1] - g_snd.listeners[0].orient.origin[1];
+    delta[2] = org[2] - g_snd.listeners[0].orient.origin[2];
 
-    dx = org[0] - listenerOrigin[0];
-    dy = org[1] - listenerOrigin[1];
-    dz = org[2] - listenerOrigin[2];
+    pos[0] = DotProduct(delta, g_snd.listeners[0].orient.axis[0]);
+    pos[1] = DotProduct(delta, g_snd.listeners[0].orient.axis[1]);
+    pos[2] = DotProduct(delta, g_snd.listeners[0].orient.axis[2]);
 
-    x = dx * right[0] + dy * right[1] + dz * right[2];
-    z = dx * forward[0] + dy * forward[1] + dz * forward[2];
-    y = -(dx * up[0] + dy * up[1] + dz * up[2]);
-
-    AIL_set_3D_position(milesGlob.handle_3D[index], x, y, z);
+    AIL_set_3D_position(milesGlob.handle_3D[index], -pos[1], pos[2], pos[0]);
 }
 
 static void MSS_SpatializeStream(float *volume, float *pan)
@@ -1326,82 +1340,44 @@ got_handle:
 
 void SND_Update3DChannel(int i, int frametime)
 {
-    snd_local_t *sndGlob;
-    byte *ch;
     const snd_alias_t *pAlias0, *pAlias1;
     float lerp, oneMinusLerp;
     float volume;
     float fDistMin, fDistMax;
     float org[3];
-    float dist, attenuation;
-    int aliasFlags, channel;
-    float *volTable;
-    float scaledVol;
     int startDelay, newDelay;
 
-    sndGlob = (&g_snd);
-    ch = (byte *)&sndGlob->chaninfo[i];
+    if (g_snd.chaninfo[i].paused != 0) {
+        return;
+    }
 
-    {
-        snd_channel_info_t *ci = &sndGlob->chaninfo[i];
+    pAlias0 = g_snd.chaninfo[i].pAlias0;
+    pAlias1 = g_snd.chaninfo[i].pAlias1;
+    lerp = g_snd.chaninfo[i].lerp;
+    volume = g_snd.chaninfo[i].basevolume;
 
-        if (ci->paused != 0) {
-            return;
-        }
+    SND_GetCurrent3DPosition(g_snd.chaninfo[i].entnum, (float *)&g_snd.chaninfo[i].system, org);
+    SND_Set3DPosition(i, org);
 
-        pAlias0 = ci->pAlias0;
-        pAlias1 = ci->pAlias1;
-        if (pAlias0 == NULL || pAlias1 == NULL) {
-            return;
-        }
+    oneMinusLerp = 1.0f - lerp;
+    fDistMin = oneMinusLerp * pAlias0->fDistMin + lerp * pAlias1->fDistMin;
+    fDistMax = oneMinusLerp * pAlias0->fDistMax + lerp * pAlias1->fDistMax;
 
-        lerp = ci->lerp;
-        volume = ci->basevolume;
+    volume *= SND_Attenuate(pAlias0->volumeFalloffCurve, I_sqrt(Vec3DistanceSq(org, g_snd.listeners[0].orient.origin)), fDistMin, fDistMax);
 
-        SND_GetCurrent3DPosition(ci->entnum, (float *)&ci->system, org);
-        SND_Set3DPosition(i, org);
+    if (g_snd.slaveLerp != 0.0f && !g_snd.chaninfo[i].master && (pAlias0->flags & 4)) {
+        volume *= SND_GetLerpedSlavePercentage(pAlias0->fSlavePercentage);
+    }
 
-        oneMinusLerp = 1.0f - lerp;
-        fDistMin = oneMinusLerp * pAlias0->fDistMin + lerp * pAlias1->fDistMin;
-        fDistMax = oneMinusLerp * pAlias0->fDistMax + lerp * pAlias1->fDistMax;
+    volume *= ((float *)g_snd.channelvol)[((pAlias0->flags & 0x780) >> 7) * 3];
+    AIL_set_3D_sample_volume(milesGlob.handle_3D[i], pow(g_snd.volume * volume, 0.6f));
 
-        {
-            int listenerIdx = SND_GetListenerIndexNearestToOrigin(org);
-            sndGlob = (&g_snd);
-            dist = Vec3Distance(org, sndGlob->listeners[listenerIdx].orient.origin);
-        }
-        attenuation = SND_Attenuate(pAlias0->volumeFalloffCurve, dist, fDistMin, fDistMax);
-        volume *= attenuation;
-
-        sndGlob = (&g_snd);
-        if (sndGlob->slaveLerp != 0.0f && ci->master == 0) {
-            aliasFlags = pAlias0->flags;
-            if (aliasFlags & 4) {
-                volume *= SND_GetLerpedSlavePercentage(pAlias0->fSlavePercentage);
-            }
-            aliasFlags = pAlias0->flags;
-        } else {
-            aliasFlags = pAlias0->flags;
-        }
-
-        sndGlob = (&g_snd);
-        volTable = (float *)sndGlob->channelvol;
-        channel = (aliasFlags & 0x780) >> 7;
-        scaledVol = volume * volTable[channel * 3] * sndGlob->volume;
-        AIL_set_3D_sample_volume(milesGlob.handle_3D[i], pow(scaledVol, 0.6f));
-
-        {
-            startDelay = sndGlob->chaninfo[i].startDelay;
-            if (startDelay != 0) {
-                newDelay = startDelay - frametime;
-                if (frametime >= startDelay) {
-                    newDelay = 0;
-                }
-                sndGlob->chaninfo[i].startDelay = newDelay;
-                if (newDelay == 0) {
-                    AIL_resume_3D_sample(milesGlob.handle_3D[i]);
-                }
-            }
+    startDelay = g_snd.chaninfo[i].startDelay;
+    if (startDelay != 0) {
+        newDelay = I_max(0, startDelay - frametime);
+        g_snd.chaninfo[i].startDelay = newDelay;
+        if (newDelay == 0) {
+            AIL_resume_3D_sample(milesGlob.handle_3D[i]);
         }
     }
 }
