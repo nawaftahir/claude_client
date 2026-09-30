@@ -461,7 +461,7 @@ int nb_encode(void *state, void *vin, SpeexBits *bits)
          {
             int v1;
             float thresh;
-            v1=(int)floor(st->vbr_quality);
+            v1=(int)floor((double)(st->vbr_quality));
             if (v1==10)
                thresh = vbr_nb_thresh[mode][v1];
             else
