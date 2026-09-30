@@ -319,7 +319,6 @@ const dvar_t *hud_health_pulserate_injured;
 const dvar_t *hud_health_startpulse_critical;
 const dvar_t *hud_health_startpulse_injured;
 void *imp_Com_GetBsp;
-void *imp_Dvar_UnregisterSystem;
 void *imp_Hunk_AllocXAnimClient;
 void *imp_Hunk_AllocXAnimPrecache;
 void *imp_bg_iNumWeapons;
