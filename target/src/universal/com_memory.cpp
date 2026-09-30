@@ -27,10 +27,10 @@ void Z_VirtualFreeInternal( void *ptr )
 	VirtualFree( ptr, 0, MEM_RELEASE );
 }
 
-// unreferenced; its name is not known
-static void Z_FreeRaw( void *ptr )
+// retail 0x42a990, ri.Z_VirtualDecommitInternal
+void Z_VirtualDecommitInternal( void *ptr, int size )
 {
-	free( ptr );
+	VirtualFree( ptr, size, MEM_DECOMMIT );
 }
 
 static void Z_MallocFailed( int size )
@@ -87,15 +87,17 @@ void *Z_VirtualAllocInternal( unsigned int size )
 	return buf;
 }
 
-// unreferenced; its name is not known
-static void *Z_VirtualCommit( int size )
+// retail 0x42aaa0, ri.Z_VirtualReserveInternal
+void *Z_VirtualReserveInternal( int size )
 {
-	return malloc( size );
+	return VirtualAlloc( NULL, size, MEM_RESERVE, PAGE_READWRITE );
 }
 
-// unreferenced; its name is not known
-static void Z_VirtualDecommit()
+// retail 0x42aac0, ri.Z_VirtualCommitInternal
+void Z_VirtualCommitInternal( void *ptr, int size )
 {
+	if ( !VirtualAlloc( ptr, size, MEM_COMMIT, PAGE_READWRITE ) )
+		Sys_OutOfMemErrorInternal( ".\\universal\\com_memory.cpp", 549 );
 }
 
 char *CopyStringInternal( const char *in )
