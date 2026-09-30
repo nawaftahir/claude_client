@@ -300,38 +300,34 @@ static void CM_SortNode( unsigned short nodeIndex, vec2_t mins, vec2_t maxs )
 				node->tree.child[0] = childNodeIndex;
 				cm_world.sectors[childNodeIndex].tree.parent = nodeIndex;
 			}
-
-			goto addEntity;
 		}
-
-		if ( !(ent->linkmax[axis] < dist) )
+		else if ( ent->linkmax[axis] < dist )
 		{
-			goto skipEntity;
-		}
-
-		childNodeIndex = node->tree.child[1];
-
-		if ( !childNodeIndex )
-		{
-			childNodeIndex = CM_AllocWorldSector(mins, maxs);
+			childNodeIndex = node->tree.child[1];
 
 			if ( !childNodeIndex )
 			{
-				goto skipEntity;
-			}
+				childNodeIndex = CM_AllocWorldSector(mins, maxs);
 
-			node->tree.child[1] = childNodeIndex;
-			cm_world.sectors[childNodeIndex].tree.parent = nodeIndex;
+				if ( childNodeIndex )
+				{
+					node->tree.child[1] = childNodeIndex;
+					cm_world.sectors[childNodeIndex].tree.parent = nodeIndex;
+				}
+				else
+				{
+					goto skipEntity;
+				}
+			}
+		}
+		else
+		{
+skipEntity:
+			prevEnt = ent;
+			entnum = ent->nextEntityInWorldSector;
+			continue;
 		}
 
-		goto addEntity;
-
-skipEntity:
-		prevEnt = ent;
-		entnum = ent->nextEntityInWorldSector;
-		continue;
-
-addEntity:
 		entnum = ent->nextEntityInWorldSector;
 
 		CM_AddEntityToNode(ent, childNodeIndex);
@@ -368,38 +364,34 @@ addEntity:
 				node->tree.child[0] = childNodeIndex;
 				cm_world.sectors[childNodeIndex].tree.parent = nodeIndex;
 			}
-
-			goto addStaticModel;
 		}
-
-		if ( !(staticModel->absmax[axis] < dist) )
+		else if ( staticModel->absmax[axis] < dist )
 		{
-			goto skipStaticModel;
-		}
-
-		childNodeIndex = node->tree.child[1];
-
-		if ( !childNodeIndex )
-		{
-			childNodeIndex = CM_AllocWorldSector(mins, maxs);
+			childNodeIndex = node->tree.child[1];
 
 			if ( !childNodeIndex )
 			{
-				goto skipStaticModel;
-			}
+				childNodeIndex = CM_AllocWorldSector(mins, maxs);
 
-			node->tree.child[1] = childNodeIndex;
-			cm_world.sectors[childNodeIndex].tree.parent = nodeIndex;
+				if ( childNodeIndex )
+				{
+					node->tree.child[1] = childNodeIndex;
+					cm_world.sectors[childNodeIndex].tree.parent = nodeIndex;
+				}
+				else
+				{
+					goto skipStaticModel;
+				}
+			}
+		}
+		else
+		{
+skipStaticModel:
+			prevStaticModel = staticModel;
+			modelnum = staticModel->writable.nextModelInWorldSector;
+			continue;
 		}
 
-		goto addStaticModel;
-
-skipStaticModel:
-		prevStaticModel = staticModel;
-		modelnum = staticModel->writable.nextModelInWorldSector;
-		continue;
-
-addStaticModel:
 		modelnum = staticModel->writable.nextModelInWorldSector;
 
 		CM_AddStaticModelToNode(staticModel, childNodeIndex);
