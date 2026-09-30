@@ -34,7 +34,7 @@ void CG_DrawFrameOverlay(float innerLeft, float innerRight, float innerTop, floa
 unsigned int CG_DrawCrosshairNames(void);
 void CG_CheckTimedMenus(void);
 unsigned int CG_DrawMaterial(void);
-unsigned int CG_ShakeCamera(void);
+void CG_ShakeCamera(void);
 qboolean CG_DrawFollow(void);
 void CG_DrawBoldGameMessages(void);
 void CG_DrawTurretCrossHair(void);

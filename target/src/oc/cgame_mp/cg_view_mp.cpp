@@ -79,7 +79,7 @@ extern float BG_GetVerticalBobFactor(const playerState_t *ps, float cycle, float
 extern float BG_GetHorizontalBobFactor(const playerState_t *ps, float cycle, float speed, float maxAmp);
 extern void BG_CalculateViewAngles(viewState_t *vs, vec_t *angles);
 extern void AddLeanToPosition(vec_t *position, const float fViewYaw, const float fLeanFrac, const float fViewRoll, const float fLeanDist);
-extern unsigned int CG_ShakeCamera(void);
+extern void CG_ShakeCamera(void);
 extern void CG_PerturbCamera(void);
 extern void AnglesToAxis( const vec3_t angles, vec3_t axis[3] );
 

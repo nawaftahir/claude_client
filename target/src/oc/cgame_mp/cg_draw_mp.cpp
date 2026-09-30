@@ -177,7 +177,7 @@ static unsigned int CG_DrawCrosshairNames(void);
 void CG_CheckTimedMenus(void);
 static void CG_DrawSoundOverlay(void);
 static unsigned int CG_DrawMaterial(void);
-unsigned int CG_ShakeCamera(void);
+void CG_ShakeCamera(void);
 static qboolean CG_DrawFollow(void);
 void CG_DrawPlayerSprites(void);
 void CG_DrawActive(void);
@@ -906,18 +906,18 @@ unsigned int CG_DrawMaterial(void)
     return 0;
 }
 
-unsigned int CG_ShakeCamera(void)
+void CG_ShakeCamera(void)
 {
     cameraShake_t *shake;
     float sx;
     float bestSize;
     float bestRumble;
-    float phase;
+    float angle;
     int i;
 
     sx = (float)cg->time / 600.0f;
-    bestSize = 0.0f;
     bestRumble = 0.0f;
+    bestSize = 0.0f;
 
     for (i = 0; i < 4; ++i) {
         shake = &cg->cameraShake[i];
@@ -938,18 +938,18 @@ unsigned int CG_ShakeCamera(void)
 
     if (bestSize <= 0.0f) {
         cg->cameraShakePhase = crandom() * 3.14159265358979323846f;
-        return 0;
+        return;
     }
 
     if (bestSize > 1.0f) {
         bestSize = 1.0f;
     }
-
-    phase = cg->cameraShakePhase;
-    cg->refdefViewAngles[0] += (float)sin((double)(sx * 25.132741228718345f + phase)) * bestRumble * 18.0f * bestSize;
-    cg->refdefViewAngles[1] += (float)sin((double)(sx * 47.12388980384689f + phase)) * bestRumble * 16.0f * bestSize;
-    cg->refdefViewAngles[2] += (float)sin((double)(sx * 37.69911184307752f + phase)) * bestRumble * 10.0f * bestSize;
-    return 0;
+    angle = (float)sin(sx * 25.132741228718345f + cg->cameraShakePhase) * bestSize * bestRumble * 18.0f;
+    cg->refdefViewAngles[0] += angle;
+    angle = (float)sin(sx * 47.12388980384689f + cg->cameraShakePhase) * bestSize * bestRumble * 16.0f;
+    cg->refdefViewAngles[1] += angle;
+    angle = (float)sin(sx * 37.69911184307752f + cg->cameraShakePhase) * bestSize * bestRumble * 10.0f;
+    cg->refdefViewAngles[2] += angle;
 }
 
 qboolean CG_DrawFollow(void)
