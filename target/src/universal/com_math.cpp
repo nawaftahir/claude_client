@@ -2129,7 +2129,7 @@ float RotationToYaw( const vec2_t rot )
 	r = zz + rot[1] * rot[1];
 	r = 2.0f / r;
 
-	return (float)(atan2((double)(rot[0] * rot[1] * r), 1.0 - zz * r) * DEGINRAD);
+	return atan2(rot[0] * rot[1] * r, 1.0f - zz * r) * DEGINRAD;
 }
 
 /*
@@ -3080,13 +3080,13 @@ void AxisToAngles( vec3_t axis[3], vec3_t angles )
 	VectorCopy( axis[1], right );
 
 	// get the angle difference between the tmpAxis[2] and axis[2] after they have been reverse-rotated
-	a = (-angles[YAW] * 0.017453292519943295f);
+	a = (-angles[YAW]) * 0.017453292519943295f;
 	FastSinCos(a, &fSin, &fCos);
 
 	temp = fCos * right[0] - fSin * right[1];
 	right[1] = fSin * right[0] + fCos * right[1];
 
-	a = -angles[0] * 0.017453292519943295f;
+	a = (-angles[PITCH]) * 0.017453292519943295f;
 	FastSinCos(a, &fSin, &fCos);
 
 	right[0] = (fSin * right[2]) + (fCos * temp);
