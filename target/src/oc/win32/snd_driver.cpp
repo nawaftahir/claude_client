@@ -700,7 +700,6 @@ static void MSS_SpatializeStreamImpl(int i, float *volume, float *pan)
     float dist, dot;
     float lerp, oneMinusLerp;
     float fDistMin, fDistMax;
-    float attenuation;
 
     pAlias0 = g_snd.chaninfo[i].pAlias0;
     pAlias1 = g_snd.chaninfo[i].pAlias1;
@@ -723,8 +722,7 @@ static void MSS_SpatializeStreamImpl(int i, float *volume, float *pan)
     fDistMax = oneMinusLerp * pAlias0->fDistMax + lerp * pAlias1->fDistMax;
     fDistMin = oneMinusLerp * pAlias0->fDistMin + lerp * pAlias1->fDistMin;
 
-    attenuation = SND_Attenuate(pAlias0->volumeFalloffCurve, dist, fDistMin, fDistMax);
-    *volume *= attenuation;
+    *volume *= SND_Attenuate(pAlias0->volumeFalloffCurve, dist, fDistMin, fDistMax);
     *pan = (1.0f - dot) * 0.5f;
 }
 
