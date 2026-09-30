@@ -822,30 +822,24 @@ qboolean GetCommandHasBinding(const char *command)
 int GetKeyBindings(const char *command, char (*bindings)[128])
 {
     int i;
-    bindings[0][0] = '\0';
-    bindings[1][0] = '\0';
+    int count;
 
-    for (i = 0; i < 0x38; i++) {
-        if (!g_bindings[i].command || I_stricmp(command, g_bindings[i].command) != 0)
-            continue;
-
-        int key1 = g_bindings[i].bind1;
-        if (key1 == -1)
-            break;
-
-        Key_KeynumToStringBuf(key1, bindings[0], 0x80);
-
-        int key2 = g_bindings[i].bind2;
-        if (key2 == -1)
-            return 1;
-
-        Key_KeynumToStringBuf(key2, bindings[1], 0x80);
-        return 2;
+    bindings[0][0] = 0;
+    bindings[1][0] = 0;
+    for (i = 0; i < 56; i++) {
+        if (!I_stricmp(command, g_bindings[i].command)) {
+            if (g_bindings[i].bind1 == -1)
+                break;
+            Key_KeynumToStringBuf(g_bindings[i].bind1, bindings[0], 128);
+            count = 1;
+            if (g_bindings[i].bind2 != -1) {
+                Key_KeynumToStringBuf(g_bindings[i].bind2, bindings[1], 128);
+                count = 2;
+            }
+            return count;
+        }
     }
-
-    *(int *)&bindings[0][0] = 0x5f59454b;
-    *(int *)&bindings[0][4] = 0x4f424e55;
-    *(int *)&bindings[0][8] = 0x00444e55;
+    strcpy(bindings[0], "KEY_UNBOUND");
     return 0;
 }
 
@@ -1238,205 +1232,139 @@ void Menus_CloseAll(displayContextDef_t *dc)
         Menus_Close(dc, dc->Menus[i]);
 }
 
+static bool Item_IsTextField(itemDef_t *item);
+
+// retail 0x538d10
+void ToWindowCoords(float *x, float *y, Window *window)
+{
+    if (window->border) {
+        *x += window->borderSize;
+        *y += window->borderSize;
+    }
+    *x += window->rect[0].x;
+    *y += window->rect[0].y;
+}
+
+// retail 0x538d60
 void Item_SetTextExtents(itemDef_t *item, int *width, int *height, const char *text)
 {
-    byte *it = (byte *)item;
-    const char *textPtr = text;
+    const char *textPtr;
+    FontHandle font;
     int originalWidth;
+    rectDef_t *textRect;
+    rectDef_t newRect;
+    const char *dvarString;
 
-    if (!textPtr) {
-        textPtr = ((itemDef_t *)it)->text;
+    if (text) {
+        textPtr = text;
+    } else {
+        textPtr = item->text;
         if (!textPtr)
             return;
-        if (textPtr[0] == '@')
+        if (*textPtr == '@')
             textPtr = UI_SafeTranslateString(textPtr + 1);
     }
 
-    *width = (int)(((itemDef_s*)(it))->textRect[0].w);
-    *height = (int)((itemDef_t *)it)->textRect[0].h;
+    textRect = &item->textRect[0];
+    *width = (int)textRect->w;
+    *height = (int)textRect->h;
 
-    if (*width != 0
-        && (((((itemDef_s*)(it))->type) != 8 && !(*(void **)&((itemDef_t *)it)->dvar)
-            || (((itemDef_s*)(it))->textalignment) != 1)
-            && (((itemDef_s*)(it))->textalignment) != 3))
+    if (*width && ((item->type != 8 && !item->dvar) || item->textalignment != 1) && item->textalignment != 3)
         return;
 
-
-    FontHandle font = UI_GetFontHandle(((itemDef_t *)it)->fontEnum, ((itemDef_t *)it)->textscale);
-    float scale = ((itemDef_t *)it)->textscale;
-    originalWidth = UI_TextWidth(textPtr, 0, font, scale);
-
-    int itemType = (((itemDef_s*)(it))->type);
-    if (itemType == 8 && ((((itemDef_s*)(it))->textalignment) == 1 || (((itemDef_s*)(it))->textalignment) == 2)) {
-        originalWidth += UI_OwnerDrawWidth(((itemDef_t *)it)->window.ownerDraw, font, scale);
-    } else {
-        switch (itemType) {
-        case 4:
-        case 9:
-        case 16:
-        case 17:
-        case 18:
-            if ((((itemDef_s*)(it))->textalignment) == 1 && (*(void **)&((itemDef_t *)it)->dvar)) {
-                originalWidth += UI_TextWidth(Dvar_GetVariantString(item->dvar), 0, font, scale);
-            }
-        }
-
-        if ((((itemDef_s*)(it))->textalignment) == 3)
-            originalWidth += UI_TextWidth(text, 0, font, scale);
+    font = UI_GetFontHandle(item->fontEnum, item->textscale);
+    originalWidth = UI_TextWidth(textPtr, 0, font, item->textscale);
+    if (item->type == 8 && (item->textalignment == 1 || item->textalignment == 2)) {
+        originalWidth += UI_OwnerDrawWidth(item->window.ownerDraw, font, item->textscale);
+    } else if (Item_IsTextField(item) && item->textalignment == 1 && item->dvar) {
+        dvarString = Dvar_GetVariantString(item->dvar);
+        originalWidth += UI_TextWidth(dvarString, 0, font, item->textscale);
+    } else if (item->textalignment == 3) {
+        originalWidth += UI_TextWidth(text, 0, font, item->textscale);
     }
 
-    *width = UI_TextWidth(textPtr, 0, font, scale);
-    *height = UI_TextHeight(font, scale);
+    *width = UI_TextWidth(textPtr, 0, font, item->textscale);
+    *height = UI_TextHeight(font, item->textscale);
 
-    float textW = (float)*width;
-    float textH = (float)*height;
-    float textX = (((itemDef_s*)(it))->textalignx);
-    float textY = (((itemDef_s*)(it))->textaligny);
-    int horzAlign = (((rectDef_t*)(it))->horzAlign);
-    int vertAlign = (((rectDef_t*)(it))->vertAlign);
-
-    int alignment = (((itemDef_s*)(it))->textalignment);
-    if (alignment == 2) {
-
-        textX -= (float)originalWidth;
-    } else if (alignment == 1 || alignment == 3) {
-
-        textX -= (float)(originalWidth / 2);
-    }
-
-    if (((itemDef_t *)it)->window.border) {
-        textX += ((itemDef_t *)it)->window.borderSize;
-        textY += ((itemDef_t *)it)->window.borderSize;
-    }
-
-    textX += (((rectDef_t*)(it))->x);
-    textY += (((rectDef_t*)(it))->y);
-
-    item->textRect[0].x = textX;
-    item->textRect[0].y = textY;
-    item->textRect[0].w = textW;
-    item->textRect[0].h = textH;
-    item->textRect[0].horzAlign = horzAlign;
-    item->textRect[0].vertAlign = vertAlign;
+    newRect = *textRect;
+    newRect.w = (float)*width;
+    newRect.h = (float)*height;
+    newRect.x = item->textalignx;
+    newRect.y = item->textaligny;
+    newRect.horzAlign = item->window.rect[0].horzAlign;
+    newRect.vertAlign = item->window.rect[0].vertAlign;
+    if (item->textalignment == 2)
+        newRect.x = item->textalignx - (float)originalWidth;
+    else if (item->textalignment == 1 || item->textalignment == 3)
+        newRect.x = item->textalignx - (float)(originalWidth / 2);
+    ToWindowCoords(&newRect.x, &newRect.y, &item->window);
+    *textRect = newRect;
 }
 
 void Item_Text_AutoWrapped_Paint(itemDef_t *item, const char *textPtr, vec_t *color)
 {
-    byte *it = (byte *)item;
-    char buff[0x400];
-    FontHandle font = UI_GetFontHandle(((itemDef_t *)it)->fontEnum, ((itemDef_t *)it)->textscale);
-    float scale = ((itemDef_t *)it)->textscale;
-    int height = UI_TextHeight(font, scale);
-    int textWidth = UI_TextWidth(textPtr, 0, font, scale);
-    int style = (((itemDef_s*)(it))->textStyle);
-    int horzAlign = (((rectDef_t*)(it))->horzAlign);
-    int vertAlign = (((rectDef_t*)(it))->vertAlign);
-    byte *textRect = (byte *)((itemDef_t *)it)->textRect;
-    float lineHeight;
-    int iTargetLineWidth;
-    float y;
-    int len, newLine, newLineWidth;
-    const char *newLinePtr;
     const char *p;
+    const char *newLinePtr;
+    char buff[1024];
+    int height, len, textWidth, newLine, newLineWidth;
+    float y;
+    FontHandle font;
+    float targetWidth;
+    int iTargetLineWidth;
+    rectDef_t newRect;
 
-    float itemW = (((rectDef_t*)(it))->w);
-    if (itemW != 0.0f && (float)textWidth > itemW) {
-
-        int numLines = (int)ceilf((float)textWidth / itemW);
-        iTargetLineWidth = (int)((float)textWidth / (float)numLines);
-    } else {
-        iTargetLineWidth = (int)itemW;
-    }
-
-    y = (((itemDef_s*)(it))->textaligny);
-    buff[0] = '\0';
-    lineHeight = (float)(height + 5);
-
-    if (!textPtr)
-        return;
-
+    newLinePtr = NULL;
+    font = UI_GetFontHandle(item->fontEnum, item->textscale);
+    height = UI_TextHeight(font, item->textscale);
+    textWidth = UI_TextWidth(textPtr, 0, font, item->textscale);
+    if (item->window.rect[0].w != 0.0f && (float)textWidth > item->window.rect[0].w)
+        targetWidth = (float)textWidth / (float)(int)ceil((double)(textWidth / item->window.rect[0].w));
+    else
+        targetWidth = item->window.rect[0].w;
+    iTargetLineWidth = (int)targetWidth;
+    y = item->textaligny;
     len = 0;
+    buff[0] = '\0';
     newLine = 0;
     newLineWidth = 0;
-    newLinePtr = NULL;
     p = textPtr;
-
-    while (p) {
-        unsigned char ch = *p;
-
-        if (ch == ' ' || ch == '\t' || ch == '\n' || ch == '\0') {
-            newLinePtr = p + 1;
+    while (p)
+    {
+        if (*p == ' ' || *p == '\t' || *p == '\n' || *p == '\0')
+        {
             newLine = len;
+            newLinePtr = p + 1;
             newLineWidth = textWidth;
         }
-
-        textWidth = UI_TextWidth(buff, 0, font, scale);
-
-        int shouldBreak = 0;
-        if (newLine) {
-            if ((float)textWidth > (((rectDef_t*)(it))->w))
-                shouldBreak = 1;
-        }
-        if (ch == '\n' || ch == '\0')
-            shouldBreak = 1;
-
-        if (ch == ' ' && textWidth >= iTargetLineWidth)
-            shouldBreak = 1;
-
-        if (shouldBreak) {
-            if (len > 0) {
-
-                float newTextRect[6];
-                newTextRect[0] = (((rectDef_t*)(textRect))->x);
-                newTextRect[1] = (((rectDef_t*)(textRect))->y);
-                newTextRect[2] = (((rectDef_t*)(textRect))->w);
-                newTextRect[3] = (((rectDef_t*)(textRect))->h);
-                *(int *)&newTextRect[4] = (((rectDef_t*)(textRect))->horzAlign);
-                *(int *)&newTextRect[5] = (((rectDef_t*)(textRect))->vertAlign);
-
-                int alignment = (((itemDef_s*)(it))->textalignment);
-                if (alignment == 1) {
-                    newTextRect[0] = (((itemDef_s*)(it))->textalignx) - (float)(newLineWidth / 2);
-                } else if (alignment == 2) {
-                    newTextRect[0] = (((itemDef_s*)(it))->textalignx) + (((rectDef_t*)(textRect))->w) - (float)newLineWidth;
-                } else {
-                    newTextRect[0] = (((itemDef_s*)(it))->textalignx);
-                }
-                newTextRect[1] = y;
-
-                if (((itemDef_t *)it)->window.border) {
-                    newTextRect[0] += ((itemDef_t *)it)->window.borderSize;
-                    newTextRect[1] += ((itemDef_t *)it)->window.borderSize;
-                }
-                newTextRect[0] += (((rectDef_t*)(it))->x);
-                newTextRect[1] += (((rectDef_t*)(it))->y);
-
-                Item_SetTextRect(item, (const rectDef_t *)newTextRect);
-
+        textWidth = UI_TextWidth(buff, 0, font, item->textscale);
+        if ((newLine && textWidth > item->window.rect[0].w) || *p == '\n' || *p == '\0' || (*p == ' ' && textWidth > iTargetLineWidth))
+        {
+            if (len)
+            {
+                newRect = item->textRect[0];
+                if (item->textalignment == 1)
+                    newRect.x = item->textalignx - (float)(newLineWidth / 2);
+                else if (item->textalignment == 2)
+                    newRect.x = item->textalignx - (float)newLineWidth;
+                else
+                    newRect.x = item->textalignx;
+                newRect.y = y;
+                ToWindowCoords(&newRect.x, &newRect.y, &item->window);
+                item->textRect[0] = newRect;
                 buff[newLine] = '\0';
-                UI_DrawText(buff, 0x7fffffff, font,
-                            (((rectDef_t*)(textRect))->x), (((rectDef_t*)(textRect))->y),
-                            horzAlign, vertAlign, scale, color, style);
+                UI_DrawText(buff, 0x7fffffff, font, item->textRect[0].x, item->textRect[0].y, item->window.rect[0].horzAlign, item->window.rect[0].vertAlign, item->textscale, color, item->textStyle);
             }
-
             if (*p == '\0')
                 break;
-
-            y += lineHeight;
+            y += height + 5;
             p = newLinePtr;
             len = 0;
             newLine = 0;
             newLineWidth = 0;
-            if (!p)
-                break;
             continue;
         }
-
-        buff[len] = ch;
-        len++;
-        p++;
-
-        if (len > 0 && buff[len - 1] == '\r')
+        buff[len++] = *p++;
+        if (buff[len - 1] == '\r')
             buff[len - 1] = ' ';
         buff[len] = '\0';
     }
@@ -1444,76 +1372,40 @@ void Item_Text_AutoWrapped_Paint(itemDef_t *item, const char *textPtr, vec_t *co
 
 void Item_Text_Wrapped_Paint(itemDef_t *item, const char *textPtr, vec_t *color)
 {
-    byte *it = (byte *)item;
-    char buff[0x400];
-    FontHandle font = UI_GetFontHandle(((itemDef_t *)it)->fontEnum, ((itemDef_t *)it)->textscale);
-    int height = UI_TextHeight(font, ((itemDef_t *)it)->textscale);
-    float scale = ((itemDef_t *)it)->textscale;
-    int style = (((itemDef_s*)(it))->textStyle);
-    int horzAlign = (((rectDef_t*)(it))->horzAlign);
-    int vertAlign = (((rectDef_t*)(it))->vertAlign);
-    byte *textRect = (byte *)((itemDef_t *)it)->textRect;
-    float y = (((rectDef_t*)(textRect))->y);
-    float lineHeight = (float)(height + 5);
+    char buff[1024];
+    FontHandle font;
+    int height;
+    float x, y;
+    const char *start;
+    const char *p;
 
-    const char *p = strchr(textPtr, 0x0d);
-    if (!p || p[0] == '\0') {
-
-        float x;
-        int alignment = (((itemDef_s*)(it))->textalignment);
-        if (alignment == 1) {
-            int tw = UI_TextWidth(textPtr, 0, font, scale);
-            x = (((rectDef_t*)(textRect))->x) + ((((rectDef_t*)(textRect))->w) - (float)tw) * 0.5f;
-        } else if (alignment == 2) {
-            int tw = UI_TextWidth(textPtr, 0, font, scale);
-            x = (((rectDef_t*)(textRect))->x) + (((rectDef_t*)(textRect))->w) - (float)tw;
-        } else {
-            x = (((rectDef_t*)(textRect))->x);
-        }
-        UI_DrawText(textPtr, 0x7fffffff, font, x, y, horzAlign, vertAlign, scale, color, style);
-        return;
+    font = UI_GetFontHandle(item->fontEnum, item->textscale);
+    height = UI_TextHeight(font, item->textscale);
+    y = item->textRect[0].y;
+    start = textPtr;
+    p = strchr(textPtr, '\r');
+    while (p && *p)
+    {
+        strncpy(buff, start, p - start + 1);
+        buff[p - start] = '\0';
+        if (item->textalignment == 1)
+            x = item->textRect[0].x + (item->textRect[0].w - UI_TextWidth(buff, 0, font, item->textscale)) * 0.5f;
+        else if (item->textalignment == 2)
+            x = item->textRect[0].w + item->textRect[0].x - UI_TextWidth(buff, 0, font, item->textscale);
+        else
+            x = item->textRect[0].x;
+        UI_DrawText(buff, 0x7fffffff, font, x, y, item->window.rect[0].horzAlign, item->window.rect[0].vertAlign, item->textscale, color, item->textStyle);
+        y += height + 5;
+        start = p + 1;
+        p = strchr(p + 1, '\r');
     }
-
-    const char *lineStart = textPtr;
-    while (p && p[0] != '\0') {
-        int lineLen = (int)(p - lineStart);
-        strncpy(buff, lineStart, lineLen + 1);
-        buff[lineLen] = '\0';
-
-        float x;
-        int alignment = (((itemDef_s*)(it))->textalignment);
-        if (alignment == 1) {
-            int tw = UI_TextWidth(buff, 0, font, scale);
-            x = (((rectDef_t*)(textRect))->x) + ((((rectDef_t*)(textRect))->w) - (float)tw) * 0.5f;
-        } else if (alignment == 2) {
-            int tw = UI_TextWidth(buff, 0, font, scale);
-            x = (((rectDef_t*)(textRect))->x) + (((rectDef_t*)(textRect))->w) - (float)tw;
-        } else {
-            x = (((rectDef_t*)(textRect))->x);
-        }
-
-        UI_DrawText(buff, 0x7fffffff, font, x, y, horzAlign, vertAlign, scale, color, style);
-        y += lineHeight;
-        lineStart = p + 1 + lineLen + 1 - (lineLen + 1);
-        lineStart = p + 1;
-
-        p = strchr(lineStart, 0x0d);
-        if (!p || p[0] == '\0')
-            break;
-    }
-
-    float x;
-    int alignment = (((itemDef_s*)(it))->textalignment);
-    if (alignment == 1) {
-        int tw = UI_TextWidth(lineStart, 0, font, scale);
-        x = (((rectDef_t*)(textRect))->x) + ((((rectDef_t*)(textRect))->w) - (float)tw) * 0.5f;
-    } else if (alignment == 2) {
-        int tw = UI_TextWidth(lineStart, 0, font, scale);
-        x = (((rectDef_t*)(textRect))->x) + (((rectDef_t*)(textRect))->w) - (float)tw;
-    } else {
-        x = (((rectDef_t*)(textRect))->x);
-    }
-    UI_DrawText(lineStart, 0x7fffffff, font, x, y, horzAlign, vertAlign, scale, color, style);
+    if (item->textalignment == 1)
+        x = item->textRect[0].x + (item->textRect[0].w - UI_TextWidth(start, 0, font, item->textscale)) * 0.5f;
+    else if (item->textalignment == 2)
+        x = item->textRect[0].w + item->textRect[0].x - UI_TextWidth(start, 0, font, item->textscale);
+    else
+        x = item->textRect[0].x;
+    UI_DrawText(start, 0x7fffffff, font, x, y, item->window.rect[0].horzAlign, item->window.rect[0].vertAlign, item->textscale, color, item->textStyle);
 }
 
 void Item_ListBox_Paint(displayContextDef_t *dc, itemDef_t *item)
@@ -1806,208 +1698,109 @@ void Script_SetItemColor(displayContextDef_t *dc, itemDef_t *item, const char **
     }
 }
 
+// retail 0x533b60
+void Fade(int *flags, float *f, float clamp, int *nextTime, int offsetTime, qboolean bFlags, float fadeAmount, float fadeInAmount, displayContextDef_t *dc)
+{
+    if (*flags & 0x30) {
+        if (dc->realTime > *nextTime) {
+            *nextTime = dc->realTime + offsetTime;
+            if (*flags & 0x10) {
+                *f -= fadeAmount;
+                if (bFlags && *f <= 0.0)
+                    *flags &= ~0x14;
+            } else {
+                *f += fadeInAmount;
+                if (*f >= clamp) {
+                    *f = clamp;
+                    if (bFlags)
+                        *flags &= ~0x20;
+                }
+            }
+        }
+    }
+}
+
+// retail 0x533bd0
 void Window_Paint(displayContextDef_t *dc, float (*w_param)[4][32], float fadeAmount, float fadeInAmount, float fadeClamp, float fadeCycle)
 {
-    byte *w = (byte *)w_param;
+    windowDef_t *w = (windowDef_t *)w_param;
     rectDef_t fillRect;
     float color[4];
-    int borderStyle, borderSizeFlag;
-    int handle;
+    int flags;
 
-    fillRect = *(rectDef_t *)w;
+    fillRect = *(rectDef_t *)&w->rect[0];
 
     if (debugMode) {
-        color[0] = 1.0f;
-        color[1] = 1.0f;
-        color[2] = 1.0f;
-        color[3] = 1.0f;
-        UI_DrawRect(((rectDef_t *)w)->x, ((rectDef_t *)w)->y, ((rectDef_t *)w)->w, ((rectDef_t *)w)->h,
-                    ((rectDef_t *)w)->horzAlign, ((rectDef_t *)w)->vertAlign,
-                    1.0f, color);
+        color[0] = color[1] = color[2] = color[3] = 1.0f;
+        UI_DrawRect(w->rect[0].x, w->rect[0].y, w->rect[0].w, w->rect[0].h, w->rect[0].horzAlign, w->rect[0].vertAlign, 1.0f, color);
     }
 
-    if (!w)
+    if (!w->style && !w->border)
         return;
 
-    borderStyle = ((windowDef_t *)w)->style;
-    borderSizeFlag = ((windowDef_t *)w)->border;
-
-    if (borderStyle == 0 && borderSizeFlag == 0)
-        return;
-
-    if (borderSizeFlag != 0) {
-
-        float bs = ((windowDef_t *)w)->borderSize;
-        fillRect.x += bs;
-        fillRect.y += bs;
-        fillRect.w -= (bs + 1.0f);
-        fillRect.h -= (bs + 1.0f);
+    if (w->border) {
+        fillRect.x += w->borderSize;
+        fillRect.y += w->borderSize;
+        fillRect.w -= w->borderSize + 1.0f;
+        fillRect.h -= w->borderSize + 1.0f;
     }
 
-    if (borderStyle <= 7) {
-        switch (borderStyle) {
-        case 1: {
-
-            MaterialHandle background = ((windowDef_t *)w)->background;
-            if (background == 0) {
-
-                UI_FillRect(fillRect.x, fillRect.y, fillRect.w, fillRect.h,
-                            (((rectDef_t*)(w))->horzAlign), (((rectDef_t*)(w))->vertAlign),
-                            (const vec_t *)(((char *)w + offsetof(windowDef_t, backColor[0]))));
-                break;
-            }
-
-            {
-                int dynFlags = ((windowDef_t *)w)->dynamicFlags[0];
-                int offsetTime = (int)fadeCycle;
-
-                if (dynFlags & 0x30) {
-                    int realtime = dc->realTime;
-                    if (realtime > ((windowDef_t *)w)->nextTime) {
-                        ((windowDef_t *)w)->nextTime = realtime + offsetTime;
-                        if (dynFlags & 0x10) {
-
-                            float fadeAlpha = ((windowDef_t *)w)->backColor[3] - fadeAmount;
-                            ((windowDef_t *)w)->backColor[3] = fadeAlpha;
-                            if (!(fadeAlpha > 0.0f)) {
-                                dynFlags &= 0xffffffeb;
-                            }
-                        } else {
-
-                            float fadeAlpha = ((windowDef_t *)w)->backColor[3] + fadeInAmount;
-                            ((windowDef_t *)w)->backColor[3] = fadeAlpha;
-                            if (!(fadeAlpha < fadeClamp)) {
-                                ((windowDef_t *)w)->backColor[3] = fadeClamp;
-                                dynFlags &= ~0x20;
-                            }
-                        }
-                    }
-                }
-
-                Window_SetDynamicFlags((Window *)((itemDef_t *)w), dynFlags);
-            }
-
-            UI_DrawHandlePic(
-                fillRect.x, fillRect.y, fillRect.w, fillRect.h,
-                (((rectDef_t*)(w))->horzAlign), (((rectDef_t*)(w))->vertAlign),
-                (float *)(((char *)w + offsetof(windowDef_t, backColor[0]))), ((windowDef_t *)w)->background);
-            break;
+    switch (w->style) {
+    case 1:
+        if (w->background) {
+            flags = w->dynamicFlags[0];
+            Fade(&flags, &w->backColor[3], fadeClamp, &w->nextTime, (int)fadeCycle, 1, fadeAmount, fadeInAmount, dc);
+            Window_SetDynamicFlags((Window *)w, flags);
+            UI_DrawHandlePic(fillRect.x, fillRect.y, fillRect.w, fillRect.h, w->rect[0].horzAlign, w->rect[0].vertAlign, w->backColor, w->background);
+        } else {
+            UI_FillRect(fillRect.x, fillRect.y, fillRect.w, fillRect.h, w->rect[0].horzAlign, w->rect[0].vertAlign, w->backColor);
         }
-
-        case 3: {
-
-            float *fillColor = NULL;
-            if ((((Window *)w)->dynamicFlags[0] & 0x10000))
-                fillColor = (float *)(((char *)w + offsetof(windowDef_t, foreColor[0])));
-            UI_DrawHandlePic(
-                fillRect.x, fillRect.y, fillRect.w, fillRect.h,
-                (((rectDef_t*)(w))->horzAlign), (((rectDef_t*)(w))->vertAlign),
-                fillColor, ((windowDef_t *)w)->background);
-            break;
+        break;
+    case 3:
+        UI_DrawHandlePic(fillRect.x, fillRect.y, fillRect.w, fillRect.h, w->rect[0].horzAlign, w->rect[0].vertAlign,
+                         (w->dynamicFlags[0] & 0x10000) ? w->foreColor : NULL, w->background);
+        break;
+    case 7:
+        UI_DrawLoadBar(fillRect.x, fillRect.y, fillRect.w, fillRect.h, w->rect[0].horzAlign, w->rect[0].vertAlign,
+                       (w->dynamicFlags[0] & 0x10000) ? w->foreColor : NULL, w->background);
+        break;
+    case 5:
+        if (w->cinematic == -1) {
+            w->cinematic = CIN_PlayCinematic(w->cinematicName, (int)fillRect.x, (int)fillRect.y, (int)fillRect.w, (int)fillRect.h, 10);
+            if (w->cinematic == -1)
+                w->cinematic = -2;
         }
-
-        case 5: {
-
-            handle = ((windowDef_t *)w)->cinematic;
-            if (handle == -1) {
-
-                int result = CIN_PlayCinematic(
-                    ((windowDef_t *)w)->cinematicName,
-                    (int)fillRect.x, (int)fillRect.y, (int)fillRect.w, (int)fillRect.h, 0x0a);
-                if (result != -1)
-                    handle = result;
-                else
-                    handle = -2;
-                ((windowDef_t *)w)->cinematic = handle;
-            }
-            if (handle < 0)
-                break;
-            CIN_RunCinematic(handle);
-            CIN_SetExtents(((windowDef_t *)w)->cinematic, (int)fillRect.x, (int)fillRect.y, (int)fillRect.w, (int)fillRect.h);
-            CIN_DrawCinematic(((windowDef_t *)w)->cinematic);
-            break;
+        if (w->cinematic >= 0) {
+            CIN_RunCinematic(w->cinematic);
+            CIN_SetExtents(w->cinematic, (int)fillRect.x, (int)fillRect.y, (int)fillRect.w, (int)fillRect.h);
+            CIN_DrawCinematic(w->cinematic);
         }
-
-        case 6: {
-
-            MaterialHandle background = ((windowDef_t *)w)->background;
-            if (background == 0)
-                break;
-            {
-                float *fillColor = NULL;
-                if ((((Window *)w)->dynamicFlags[0] & 0x10000))
-                    fillColor = (float *)(((char *)w + offsetof(windowDef_t, foreColor[0])));
-                UI_DrawHandlePic(
-                    fillRect.x, fillRect.y, fillRect.w, fillRect.h,
-                    (((rectDef_t*)(w))->horzAlign), (((rectDef_t*)(w))->vertAlign),
-                    fillColor, background);
-            }
-            break;
-        }
-
-        case 7: {
-
-            float *fillColor = NULL;
-            if ((((Window *)w)->dynamicFlags[0] & 0x10000))
-                fillColor = (float *)(((char *)w + offsetof(windowDef_t, foreColor[0])));
-            UI_DrawLoadBar(
-                fillRect.x, fillRect.y, fillRect.w, fillRect.h,
-                (((rectDef_t*)(w))->horzAlign), (((rectDef_t*)(w))->vertAlign),
-                fillColor, ((windowDef_t *)w)->background);
-            break;
-        }
-
-        case 0:
-        case 2:
-        case 4:
-        default:
-            break;
-        }
+        break;
+    case 6:
+        if (w->background)
+            UI_DrawHandlePic(fillRect.x, fillRect.y, fillRect.w, fillRect.h, w->rect[0].horzAlign, w->rect[0].vertAlign,
+                             (w->dynamicFlags[0] & 0x10000) ? w->foreColor : NULL, w->background);
+        break;
     }
 
-    borderSizeFlag = ((windowDef_t *)w)->border;
-    if (borderSizeFlag == 1) {
-
-        float *borderColor;
-        if (((windowDef_t *)w)->style == 4) {
-
-            if (((windowDef_t *)w)->borderColor[0] > 0.0f) {
-
+    if (w->border == 1) {
+        if (w->style == 4) {
+            if (w->borderColor[0] > 0.0f) {
                 color[0] = 1.0f;
-                color[1] = 0.5f;
-                color[2] = 0.5f;
+                color[1] = color[2] = 0.5f;
             } else {
-
-                color[0] = 0.5f;
-                color[1] = 0.5f;
+                color[0] = color[1] = 0.5f;
                 color[2] = 1.0f;
             }
             color[3] = 1.0f;
-            borderColor = color;
+            UI_DrawRect(w->rect[0].x, w->rect[0].y, w->rect[0].w, w->rect[0].h, w->rect[0].horzAlign, w->rect[0].vertAlign, w->borderSize, color);
         } else {
-            borderColor = (float *)(((char *)w + offsetof(windowDef_t, borderColor[0])));
+            UI_DrawRect(w->rect[0].x, w->rect[0].y, w->rect[0].w, w->rect[0].h, w->rect[0].horzAlign, w->rect[0].vertAlign, w->borderSize, w->borderColor);
         }
-        UI_DrawRect(
-            (((rectDef_t*)(w))->x), (((rectDef_t*)(w))->y),
-            (((rectDef_t*)(w))->w), (((rectDef_t*)(w))->h),
-            (((rectDef_t*)(w))->horzAlign), (((rectDef_t*)(w))->vertAlign),
-            ((windowDef_t *)w)->borderSize, borderColor);
-    } else if (borderSizeFlag == 2) {
-
-        UI_DrawTopBottom(
-            (((rectDef_t*)(w))->x), (((rectDef_t*)(w))->y),
-            (((rectDef_t*)(w))->w), (((rectDef_t*)(w))->h),
-            (((rectDef_t*)(w))->horzAlign), (((rectDef_t*)(w))->vertAlign),
-            ((windowDef_t *)w)->borderSize, (const vec_t *)(((char *)w + offsetof(windowDef_t, borderColor[0]))));
-        return;
-    } else if (borderSizeFlag == 3) {
-
-        UI_DrawSides(
-            (((rectDef_t*)(w))->x), (((rectDef_t*)(w))->y),
-            (((rectDef_t*)(w))->w), (((rectDef_t*)(w))->h),
-            (((rectDef_t*)(w))->horzAlign), (((rectDef_t*)(w))->vertAlign),
-            ((windowDef_t *)w)->borderSize, (const vec_t *)(((char *)w + offsetof(windowDef_t, borderColor[0]))));
-        return;
+    } else if (w->border == 2) {
+        UI_DrawTopBottom(w->rect[0].x, w->rect[0].y, w->rect[0].w, w->rect[0].h, w->rect[0].horzAlign, w->rect[0].vertAlign, w->borderSize, w->borderColor);
+    } else if (w->border == 3) {
+        UI_DrawSides(w->rect[0].x, w->rect[0].y, w->rect[0].w, w->rect[0].h, w->rect[0].horzAlign, w->rect[0].vertAlign, w->borderSize, w->borderColor);
     }
 }
 
@@ -2379,108 +2172,35 @@ itemDef_t *Menu_SetPrevCursorItem(displayContextDef_t *dc, menuDef_t *menu)
     return NULL;
 }
 
+// retail 0x539040
 void Item_TextColor(displayContextDef_t *dc, itemDef_t *item, vec4_t *newColor)
 {
-    byte *it = (byte *)item;
-    byte *parent = (byte *)item->parent;
-    float *out = (float *)newColor;
-    int flags = ((itemDef_t *)it)->window.dynamicFlags[0];
-    int curTime = dc->realTime;
-    int i;
+    vec4_t lowLight;
+    menuDef_t *parent = item->parent;
+    int flags = item->window.dynamicFlags[0];
 
-    if (flags & 0x30) {
-        int offsetTime = (((menuDef_t*)(parent))->fadeCycle);
-        float fadeAmount = (((menuDef_t*)(parent))->fadeAmount);
-        float fadeInAmount = (((menuDef_t*)(parent))->fadeInAmount);
-        float clamp = (((menuDef_t*)(parent))->fadeClamp);
+    Fade(&flags, &item->window.foreColor[3], parent->fadeClamp, &item->window.nextTime, parent->fadeCycle, 1, parent->fadeAmount, parent->fadeInAmount, dc);
+    Window_SetDynamicFlags(&item->window, flags);
 
-        if (curTime > ((itemDef_t *)it)->window.nextTime) {
-            ((itemDef_t *)it)->window.nextTime = curTime + offsetTime;
-            if (flags & 0x10) {
-
-                float alpha = ((itemDef_t *)it)->window.foreColor[3];
-                alpha -= fadeAmount;
-                ((itemDef_t *)it)->window.foreColor[3] = alpha;
-                if (alpha <= 0.0) {
-                    flags &= ~0x14;
-                }
-            } else {
-
-                float alpha = ((itemDef_t *)it)->window.foreColor[3];
-                alpha += fadeInAmount;
-                ((itemDef_t *)it)->window.foreColor[3] = alpha;
-                if (alpha >= clamp) {
-                    ((itemDef_t *)it)->window.foreColor[3] = clamp;
-                    flags &= ~0x20;
-                }
-            }
-        }
-    }
-
-    Window_SetDynamicFlags((Window *)item, flags);
-
-    int visFlags = ((itemDef_t *)it)->window.dynamicFlags[0];
-    if ((visFlags & 4) && (visFlags & 2)) {
-
-        float lowLight[4];
-        for (i = 0; i < 4; i++)
-            lowLight[i] = *(float *)(((char *)parent + offsetof(menuDef_t, focusColor[0])) + i * 4) * 0.8f;
-
-        float t = sinf((float)(curTime / 22));
-        t = t * 0.5f + 0.5f;
-
-        for (i = 0; i < 4; i++) {
-            float hi = *(float *)(((char *)parent + offsetof(menuDef_t, focusColor[0])) + i * 4);
-            float lo = lowLight[i];
-            out[i] = hi + (lo - hi) * t;
-            if (out[i] < 0.0)
-                out[i] = 0.0;
-            else if (out[i] > 1.0f)
-                out[i] = 1.0f;
-        }
-    } else if ((((itemDef_s*)(it))->textStyle) == 1) {
-
-        int pulseTime = curTime;
-        if (pulseTime < 0)
-            pulseTime += 255;
-        if (!(pulseTime & 0x100)) {
-
-            for (i = 0; i < 4; i++)
-                out[i] = ((itemDef_t *)it)->window.foreColor[i];
-        } else {
-            float lowLight[4];
-            for (i = 0; i < 4; i++)
-                lowLight[i] = ((itemDef_t *)it)->window.foreColor[i] * 0.8f;
-
-            float t = sinf((float)(curTime / 22));
-            t = t * 0.5f + 0.5f;
-
-            for (i = 0; i < 4; i++) {
-                float hi = ((itemDef_t *)it)->window.foreColor[i];
-                float lo = lowLight[i];
-                out[i] = hi + (lo - hi) * t;
-                if (out[i] < 0.0)
-                    out[i] = 0.0;
-                else if (out[i] > 1.0f)
-                    out[i] = 1.0f;
-            }
-        }
+    if (Window_HasFocus(&item->window)) {
+        lowLight[0] = parent->focusColor[0] * 0.8f;
+        lowLight[1] = parent->focusColor[1] * 0.8f;
+        lowLight[2] = parent->focusColor[2] * 0.8f;
+        lowLight[3] = parent->focusColor[3] * 0.8f;
+        LerpColor(parent->focusColor, lowLight, *newColor, (sin((float)(dc->realTime / 75)) + 1.0f) * 0.5f);
+    } else if (item->textStyle == 1 && !((dc->realTime / 256) & 1)) {
+        lowLight[0] = item->window.foreColor[0] * 0.8f;
+        lowLight[1] = item->window.foreColor[1] * 0.8f;
+        lowLight[2] = item->window.foreColor[2] * 0.8f;
+        lowLight[3] = item->window.foreColor[3] * 0.8f;
+        LerpColor(item->window.foreColor, lowLight, *newColor, (sin((float)(dc->realTime / 75)) + 1.0f) * 0.5f);
     } else {
-
-        for (i = 0; i < 4; i++)
-            out[i] = ((itemDef_t *)it)->window.foreColor[i];
+        memcpy(newColor, item->window.foreColor, sizeof(vec4_t));
     }
 
-    const char *dvarTest = ((itemDef_t *)it)->enableDvar;
-    const char *dvarName = ((itemDef_t *)it)->dvarTest;
-    if (dvarTest && dvarTest[0] && dvarName && dvarName[0]) {
-        if ((*(byte *)&((itemDef_t *)it)->dvarFlags) & 3) {
-            if (!Item_EnableShowViaDvar(item, 1)) {
-
-                for (i = 0; i < 4; i++)
-                    out[i] = *(float *)(((char *)parent + offsetof(menuDef_t, disableColor[0])) + i * 4);
-            }
-        }
+    if (item->enableDvar && *item->enableDvar && item->dvarTest && *item->dvarTest) {
+        if ((item->dvarFlags & 3) && !Item_EnableShowViaDvar(item, 1))
+            memcpy(newColor, parent->disableColor, sizeof(vec4_t));
     }
 }
 
@@ -2623,40 +2343,34 @@ void Item_Text_Paint(displayContextDef_t *dc, itemDef_t *item)
 
 static void Item_List_Paint(displayContextDef_t *dc, itemDef_t *item, const char *text)
 {
-    byte *it = (byte *)item;
-    float color[4];
-    int width;
-    int height;
-    int staticFlags;
-    FontHandle font;
+    vec4_t newColor;
+    vec4_t lowLight;
+    menuDef_t *parent;
 
-    if (!text)
-        return;
+    if (Window_HasFocus(&item->window)) {
+        parent = item->parent;
+        lowLight[0] = parent->focusColor[0] * 0.8f;
+        lowLight[1] = parent->focusColor[1] * 0.8f;
+        lowLight[2] = parent->focusColor[2] * 0.8f;
+        lowLight[3] = parent->focusColor[3] * 0.8f;
+        LerpColor(parent->focusColor, lowLight, newColor, (sin((float)(dc->realTime / 75)) + 1.0f) * 0.5f);
+    } else {
+        memcpy(newColor, item->window.foreColor, sizeof(vec4_t));
+    }
 
-    if (text[0] == '@')
+    if (*text == '@')
         text = UI_SafeTranslateString(text + 1);
 
-    if (!text[0])
-        return;
-
-    Item_TextColor(dc, item, (vec4_t *)color);
-    Item_SetTextExtents(item, &width, &height, text);
-
-    staticFlags = ((itemDef_t *)it)->window.staticFlags;
-    if (staticFlags & 0x400000) {
-        Item_Text_Wrapped_Paint(item, text, color);
-        return;
+    if (item->text) {
+        Item_Text_Paint(dc, item);
+        UI_DrawText(text, 0x7fffffff, UI_GetFontHandle(item->fontEnum, item->textscale),
+                    item->textRect[0].x + item->textRect[0].w + 8.0f, item->textRect[0].y,
+                    item->window.rect[0].horzAlign, item->window.rect[0].vertAlign, item->textscale, newColor, item->textStyle);
+    } else {
+        UI_DrawText(text, 0x7fffffff, UI_GetFontHandle(item->fontEnum, item->textscale),
+                    item->textRect[0].x, item->textRect[0].y,
+                    item->window.rect[0].horzAlign, item->window.rect[0].vertAlign, item->textscale, newColor, item->textStyle);
     }
-    if (staticFlags & 0x800000) {
-        Item_Text_AutoWrapped_Paint(item, text, color);
-        return;
-    }
-
-    font = UI_GetFontHandle(((itemDef_t *)it)->fontEnum, ((itemDef_t *)it)->textscale);
-    UI_DrawText(text, 0x7fffffff, font,
-                (((itemDef_s*)(it))->textRect[0].x), (((itemDef_s*)(it))->textRect[0].y),
-                (((rectDef_t*)(it))->horzAlign), (((rectDef_t*)(it))->vertAlign),
-                ((itemDef_t *)it)->textscale, color, (((itemDef_s*)(it))->textStyle));
 }
 
 void Item_TextField_Paint(displayContextDef_t *dc, itemDef_t *item)
