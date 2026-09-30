@@ -443,7 +443,7 @@ qboolean isFloat(const char* string, int size);
 qboolean isInteger(const char* string, int size);
 qboolean isVector(const char* string, int size, int dim);
 qboolean strToVect(const char* string, float *vect, int dim);
-int ColorIndex(unsigned char c);
+unsigned char ColorIndex(unsigned char c);
 const char *Com_GetFilenameSubString(const char *pathname);
 const char *Com_GetExtensionSubString(const char *filename);
 void Com_StripExtension(const char *in, char *out);

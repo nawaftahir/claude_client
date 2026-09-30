@@ -66,7 +66,7 @@ void CL_SetADS(int ads);
 void CL_DrawString(int x, int y, const char *pszString, qboolean bShadow, int iCharHeight);
 void CL_ArchiveClientState(MemoryFile *memFile);
 void CL_SetLodOrigin(const refdef_t *fd);
-void CL_LookupColor(int c, vec_t *color);
+void CL_LookupColor(unsigned char c, vec_t *color);
 void CL_SetUserCmdAimValues(vec_t *kickAngles);
 void CL_UpdateColor(void);
 void CL_SetFullScreenViewport(void);

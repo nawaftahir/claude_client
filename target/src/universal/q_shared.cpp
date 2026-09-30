@@ -21,13 +21,13 @@ const vec4_t colorDkGrey   = { 0.25f, 0.25f, 0.25f, 1.0f };
 const vec4_t colorOrange   = { 1.0f, 0.7f, 0.0f, 1.0f };
 const vec4_t colorLtOrange = { 0.75f, 0.525f, 0.0f, 1.0f };
 
-int ColorIndex( unsigned char c )
+unsigned char ColorIndex( unsigned char c )
 {
 	unsigned char index;
 
 	index = c - '0';
 
-	return index >= 10 ? 7 : index;
+	return index < 10 ? index : 7;
 }
 
 const char *Com_GetFilenameSubString( const char *pathname )

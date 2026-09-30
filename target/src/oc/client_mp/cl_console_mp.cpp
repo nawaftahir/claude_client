@@ -31,7 +31,7 @@ extern const dvar_t *con_restricted;
 
 extern char *CopyStringInternal(const char *in);
 extern "C" void Z_FreeInternal( void *ptr );
-extern int ColorIndex(unsigned char c);
+extern unsigned char ColorIndex(unsigned char c);
 extern int Cmd_Argc(void);
 extern const char *Cmd_Argv( int arg );
 extern void Com_Printf(const char *fmt, ...);
@@ -64,7 +64,7 @@ extern const char *SEH_SafeTranslateString(const char *str);
 extern char *va( const char *format, ... );
 extern void CL_DrawText(const char *text, int maxChars, struct Font_s *font, float x, float y, int horzAlign, int vertAlign, float xScale, float yScale, const float *color, int style);
 extern void Field_Draw(field_t *edit, int x, int y, int horzAlign, int vertAlign);
-extern void CL_LookupColor(int colorIndex, float *color);
+extern void CL_LookupColor(unsigned char c, float *color);
 extern void SCR_DrawSmallStringExt(int x, int y, const char *str, const float *color);
 extern void SCR_DrawConsoleString(int x, int y, const short int *text, int len, const float *color);
 extern int SEH_PrintStrlen(const char *str);
@@ -156,7 +156,7 @@ static int ConDrawInput_CompareStrings(const void *e0, const void *e1);
 static void Con_DrawStringOnHUD(int x, int y, int charHeight, int horzAlign, int vertAlign, const short int *string, int length, float alpha, float msgwndScale, qboolean centerText);
 void Con_DrawSay(int y);
 void Con_ToggleConsoleOutput(void);
-static void Con_DrawOuputWindow(void);
+void Con_DrawOuputWindow(void);
 void Con_PageUp(void);
 void Con_PageDown(void);
 void Con_Top(void);
@@ -462,11 +462,14 @@ static void Con_DrawStringOnHUD(int x, int y, int charHeight, int horzAlign, int
     color[3] = alpha;
 
     fontScale = (float)charHeight / 48.0f;
-    font = (FontHandle)UI_GetFontHandle(centerText ? 4 : 0, fontScale);
-    xScale = re.NormalizedTextScale(font, fontScale);
-
-    if (centerText)
-        x -= (int)((float)re.ConsoleTextWidth(string, length, font) * xScale * 0.5f);
+    if (centerText) {
+        font = UI_GetFontHandle(4, fontScale);
+        xScale = re.NormalizedTextScale(font, fontScale);
+        x += (int)((float)re.ConsoleTextWidth(string, length, font) * xScale * -0.5f);
+    } else {
+        font = UI_GetFontHandle(0, fontScale);
+        xScale = re.NormalizedTextScale(font, fontScale);
+    }
 
     xScale *= msgwndScale;
     yScale = xScale;
@@ -497,10 +500,7 @@ void Con_DrawSay(int y)
     fontScale = 10.0f / 48.0f;
     font = (FontHandle)UI_GetFontHandle(0, fontScale);
 
-    if (*chat_team)
-        label = SEH_SafeTranslateString("EXE_SAYTEAM");
-    else
-        label = SEH_SafeTranslateString("EXE_SAY");
+    label = SEH_SafeTranslateString(*chat_team ? "EXE_SAYTEAM" : "EXE_SAY");
 
     string = va("%s: ", label);
     normalizedScale = re.NormalizedTextScale(font, fontScale);
@@ -525,85 +525,70 @@ void Con_ToggleConsoleOutput(void)
     con.outputVisible = (con.outputVisible == 0) ? 1 : 0;
 }
 
-static BM_NOINLINE void Con_DrawOuputWindow(void)
+static void Con_DrawOutputScrollBar(float x, float y, float width, float height)
+{
+    float barX;
+    float frac;
+
+    barX = x + width - 10.0f;
+    ConDraw_Box(barX, y, 10.0f, height, con_outputBarColor->current.vector);
+    frac = 1.0f - (float)(con.currentLine - con.display) / (con.totallines - 1);
+    ConDraw_Box(barX, (y + height - 10.0f - y) * frac + y, 10.0f, 10.0f, con_outputSliderColor->current.vector);
+}
+
+static void Con_DrawOutputText(float x, float y, float height)
+{
+    vec4_t color;
+    int rowCount;
+    int rowIndex;
+    int lineIndex;
+
+    CL_LookupColor('7', color);
+    rowCount = (int)(height / 16.0f);
+    lineIndex = con.display;
+    if (!con.lineOffset)
+        lineIndex--;
+    y += height;
+    for (rowIndex = 0; rowIndex < rowCount; rowIndex++, lineIndex--) {
+        if (lineIndex < 0)
+            break;
+        if (con.currentLine - lineIndex >= con.totallines)
+            continue;
+        y -= 16.0f;
+        SCR_DrawConsoleString((int)x, (int)y, &con.textBuffer[(lineIndex % con.totallines) * con.linewidth], con.linewidth, color);
+    }
+}
+
+const char *Con_GetVersionString(void)
+{
+    return va("Build %s %s", getBuildNumber(), "win-x86");
+}
+
+static void Con_DrawOutputVersion(float x, float y, float height)
+{
+    SCR_DrawSmallStringExt((int)x, (int)(height - 16.0f + y), Con_GetVersionString(), con_versionColor);
+}
+
+void Con_DrawOuputWindow(void)
 {
     float x;
     float y;
     float width;
     float height;
-    float innerX;
-    float innerY;
-    float innerHeight;
-    float scrollBarX;
-    float scrollBarWidth;
-    float textHeight;
-    float textY;
-    float sliderY;
-    float sliderRange;
-    float sliderFrac;
-    int rowCount;
-    int row;
-    int rowIndex;
-    vec4_t textColor;
-    const char *version;
 
     x = con.screenMin[0];
+    width = con.screenMax[0] - con.screenMin[0];
     y = con.screenMin[1] + 32.0f;
-    width = con.screenMax[0] - x;
     height = con.screenMax[1] - con.screenMin[1] - 32.0f;
-
     ConDraw_Box(x, y, width, height, con_outputWindowColor->current.vector);
 
-    innerX = x + 6.0f;
-    innerY = y + 6.0f;
-    innerHeight = height - 12.0f;
-
-    version = va("Build %s %s", getBuildNumber(), "win-x86");
-    SCR_DrawSmallStringExt((int)innerX, (int)(innerY + innerHeight - 16.0f), version, con_versionColor);
-
-    scrollBarWidth = 10.0f;
-    scrollBarX = innerX + width - 22.0f;
-    ConDraw_Box(scrollBarX, innerY, scrollBarWidth, innerHeight, con_outputBarColor->current.vector);
-
-    sliderFrac = 0.0f;
-    if (con.totallines > 1)
-        sliderFrac = 1.0f - ((float)(con.currentLine - con.display) / (float)(con.totallines - 1));
-    if (sliderFrac < 0.0f)
-        sliderFrac = 0.0f;
-    if (sliderFrac > 1.0f)
-        sliderFrac = 1.0f;
-
-    sliderRange = innerHeight - scrollBarWidth;
-    sliderY = innerY + sliderRange * sliderFrac;
-    ConDraw_Box(scrollBarX, sliderY, scrollBarWidth, scrollBarWidth, con_outputSliderColor->current.vector);
-
-    textHeight = innerHeight - 28.0f;
-    rowCount = (int)(textHeight * 0.0625f);
-    row = con.display;
-    if (con.lineOffset < 1)
-        row--;
-
-    CL_LookupColor('7', textColor);
-    textY = innerY + textHeight;
-
-    for (rowIndex = 0; rowIndex < rowCount && rowIndex != row + 1; rowIndex++) {
-        int textRow = row - rowIndex;
-        int wrappedRow;
-        const short *line;
-
-        if (textRow < 0)
-            break;
-        if (con.currentLine - textRow >= con.totallines)
-            continue;
-
-        textY -= 16.0f;
-        wrappedRow = textRow % con.totallines;
-        if (wrappedRow < 0)
-            wrappedRow += con.totallines;
-
-        line = &con.textBuffer[wrappedRow * con.linewidth];
-        SCR_DrawConsoleString((int)innerX, (int)textY, line, con.linewidth, textColor);
-    }
+    x += 6.0f;
+    y += 6.0f;
+    width -= 12.0f;
+    height -= 12.0f;
+    Con_DrawOutputVersion(x, y, height);
+    Con_DrawOutputScrollBar(x, y, width, height);
+    Con_DrawOutputText(x, y, height - 28.0f);
 }
 
 void Con_PageUp(void)
@@ -661,187 +646,152 @@ static void CL_AddConsoleInfoColor(int iFirstInfo, const vec_t *vColor)
     con.lineOffset++;
 }
 
-static MessageLine *Con_MessageLineForIndex(MessageWindow *msgwnd, int lineIndex)
+static void Con_DrawMessageWindowOldToNew(MessageWindow *msgwnd, int x, int y, int charHeight, int horzAlign, int vertAlign, float alpha, float msgwndScale, qboolean centered)
 {
-    int index;
-
-    if (!msgwnd || !msgwnd->lines || msgwnd->count <= 0)
-        return NULL;
-
-    index = lineIndex % msgwnd->count;
-    if (index < 0)
-        index += msgwnd->count;
-
-    return &msgwnd->lines[index];
-}
-
-static qboolean Con_MessageWindowVisible(void)
-{
-    clientActive_t *cl = clients;
-
-    if (!cl)
-        return 0;
-
-    if (cl->snap.ps.pm_type == 5)
-        return 1;
-
-    if (!(cl->keyCatchers & 8))
-        return 1;
-
-    return cl->displayHUDWithKeycatchUI != 0;
-}
-
-static int Con_MessageLineScrollOffset(MessageWindow *msgwnd, MessageLine *line, int serverTime, int charHeight)
-{
-    int remaining;
-
-    if (!msgwnd || !line || msgwnd->scrolltime <= 0)
-        return 0;
-
-    if (serverTime <= line->endTime)
-        return 0;
-
-    remaining = msgwnd->scrolltime - (serverTime - line->endTime);
-    if (remaining <= 0)
-        return 0;
-
-    return I_fround(((float)remaining / (float)msgwnd->scrolltime) * (float)charHeight);
-}
-
-static qboolean Con_MessageLineAlpha(MessageWindow *msgwnd, MessageLine *line, int serverTime, float baseAlpha, float *drawAlpha)
-{
+    int lineIndex;
+    MessageLine *line;
     int elapsed;
     int remaining;
+    int lineHeight;
+    float drawAlpha;
 
-    if (!msgwnd || !line || !line->startTime)
-        return 0;
+    lineHeight = charHeight;
+    if (centered)
+        lineHeight = charHeight + 4;
 
-    if (line->startTime > serverTime) {
-        line->startTime = 0;
-        return 0;
-    }
-
-    if (serverTime > line->endTime)
-        return 0;
-
-    *drawAlpha = baseAlpha;
-
-    elapsed = serverTime - line->startTime;
-    if (msgwnd->fadein > 0 && elapsed < msgwnd->fadein) {
-        *drawAlpha = ((float)elapsed / (float)msgwnd->fadein) * baseAlpha;
-        return 1;
-    }
-
-    remaining = line->endTime - serverTime;
-    if (msgwnd->fadeout > 0 && remaining < msgwnd->fadeout)
-        *drawAlpha = ((float)remaining / (float)msgwnd->fadeout) * baseAlpha;
-
-    return 1;
-}
-
-static void Con_DrawMessageWindowTopDown(MessageWindow *msgwnd, int x, int y, int charHeight, int horzAlign, int vertAlign, float alpha, float msgwndScale, qboolean reversed)
-{
-    clientActive_t *cl = clients;
-    int serverTime = cl ? cl->serverTime : 0;
-    int lineIndex;
-    int endLine;
-    int v;
-
-    if (!msgwnd || msgwnd->count <= 0)
-        return;
-
-    v = reversed ? y - charHeight : y;
-    endLine = msgwnd->current_line + msgwnd->count;
-
-    for (lineIndex = msgwnd->current_line; lineIndex < endLine; lineIndex++) {
-        MessageLine *line = Con_MessageLineForIndex(msgwnd, lineIndex);
-        float drawAlpha;
-        int scrollOffset;
-
-        if (!line)
-            continue;
-
+    for (lineIndex = msgwnd->current_line; lineIndex < msgwnd->current_line + msgwnd->count; lineIndex++) {
+        line = &msgwnd->lines[lineIndex % msgwnd->count];
         if (!line->startTime)
             continue;
 
-        if (line->startTime > serverTime) {
+        if (line->startTime > clients[0].serverTime) {
             line->startTime = 0;
             continue;
         }
 
-        scrollOffset = Con_MessageLineScrollOffset(msgwnd, line, serverTime, charHeight);
-        if (scrollOffset) {
-            if (reversed)
-                v -= scrollOffset;
-            else
-                v += scrollOffset;
+        elapsed = clients[0].serverTime - line->startTime;
+        if (elapsed < msgwnd->scrolltime)
+            y += I_fround((1.0f - (float)elapsed / msgwnd->scrolltime) * lineHeight);
+    }
+
+    for (lineIndex = msgwnd->current_line + msgwnd->count - 1; lineIndex >= msgwnd->current_line; lineIndex--) {
+        line = &msgwnd->lines[lineIndex % msgwnd->count];
+        if (!line->startTime)
+            continue;
+
+        if (clients[0].serverTime - line->endTime >= 0) {
+            line->startTime = 0;
             continue;
         }
 
-        if (!Con_MessageLineAlpha(msgwnd, line, serverTime, alpha, &drawAlpha))
-            continue;
-
-        Con_DrawStringOnHUD(x, v, charHeight, horzAlign, vertAlign,
-                            line->textBuffer, 78, drawAlpha, msgwndScale, 0);
-
-        if (reversed)
-            v -= charHeight;
-        else
-            v += charHeight;
-    }
-}
-
-static void Con_DrawMessageWindowBottomUp(MessageWindow *msgwnd, int x, int y, int charHeight, int horzAlign, int vertAlign, float alpha, float msgwndScale, qboolean centered)
-{
-    clientActive_t *cl = clients;
-    int serverTime = cl ? cl->serverTime : 0;
-    int lineIndex;
-    int lineHeight;
-
-    if (!msgwnd || msgwnd->count <= 0)
-        return;
-
-    lineHeight = charHeight + (centered ? 4 : 0);
-
-    for (lineIndex = msgwnd->current_line + msgwnd->count - 1; lineIndex >= msgwnd->current_line; lineIndex--) {
-        MessageLine *line = Con_MessageLineForIndex(msgwnd, lineIndex);
-        float drawAlpha;
-
-        if (!line)
-            continue;
-
-        if (!Con_MessageLineAlpha(msgwnd, line, serverTime, alpha, &drawAlpha)) {
-            if (line->startTime && serverTime >= line->endTime)
-                line->startTime = 0;
-            continue;
+        elapsed = clients[0].serverTime - line->startTime;
+        if (elapsed < msgwnd->fadein) {
+            drawAlpha = (float)elapsed * alpha / msgwnd->fadein;
+        } else {
+            remaining = line->endTime - clients[0].serverTime;
+            if (remaining < msgwnd->fadeout)
+                drawAlpha = (float)remaining * alpha / msgwnd->fadeout;
+            else
+                drawAlpha = alpha;
         }
 
         y -= lineHeight;
-        Con_DrawStringOnHUD(x, y, lineHeight, horzAlign, vertAlign,
-                            line->textBuffer, 78, drawAlpha, msgwndScale, centered);
+        Con_DrawStringOnHUD(x, y, lineHeight, horzAlign, vertAlign, line->textBuffer, 78, drawAlpha, msgwndScale, centered);
     }
 }
 
 static void Con_DrawMessageWindow(MessageWindow *msgwnd, int x, int y, int charHeight, int horzAlign, int vertAlign, float alpha, float msgwndScale, msgwnd_mode_t mode)
 {
-    if (!Con_MessageWindowVisible())
+    qboolean up;
+    int lineIndex;
+    int nextIndex;
+    MessageLine *line;
+    int scroll;
+    float drawAlpha;
+    int sameTimeCount;
+    int groupY;
+    int v;
+
+    groupY = 0;
+    if (clients[0].snap.ps.pm_type != 5 && (clients[0].keyCatchers & 8) && !clients[0].displayHUDWithKeycatchUI)
         return;
 
     switch (mode) {
     case MWM_TOPDOWN:
-        Con_DrawMessageWindowTopDown(msgwnd, x, y, charHeight, horzAlign, vertAlign, alpha, msgwndScale, 0);
+        up = 0;
         break;
     case MWM_TOPDOWN_REVERSED:
-        Con_DrawMessageWindowTopDown(msgwnd, x, y, charHeight, horzAlign, vertAlign, alpha, msgwndScale, 1);
+        up = 1;
         break;
     case MWM_BOTTOMUP:
-        Con_DrawMessageWindowBottomUp(msgwnd, x, y, charHeight, horzAlign, vertAlign, alpha, msgwndScale, 0);
-        break;
     case MWM_BOTTOMUP_CENTERED:
-        Con_DrawMessageWindowBottomUp(msgwnd, x, y, charHeight, horzAlign, vertAlign, alpha, msgwndScale, 1);
-        break;
+        Con_DrawMessageWindowOldToNew(msgwnd, x, y, charHeight, horzAlign, vertAlign, alpha, msgwndScale, mode == MWM_BOTTOMUP_CENTERED);
+        return;
     default:
-        break;
+        return;
+    }
+
+    sameTimeCount = 0;
+    v = y;
+    if (up)
+        v -= charHeight;
+
+    for (lineIndex = msgwnd->current_line; lineIndex < msgwnd->current_line + msgwnd->count; lineIndex++) {
+        line = &msgwnd->lines[lineIndex % msgwnd->count];
+        if (!line->startTime)
+            continue;
+
+        if (line->startTime > clients[0].serverTime) {
+            line->startTime = 0;
+            continue;
+        }
+
+        if (clients[0].serverTime > line->endTime) {
+            scroll = msgwnd->scrolltime - (clients[0].serverTime - line->endTime);
+            if (scroll > 0) {
+                if (up)
+                    v -= I_fround((float)scroll / msgwnd->scrolltime * charHeight);
+                else
+                    v += I_fround((float)scroll / msgwnd->scrolltime * charHeight);
+            }
+            continue;
+        }
+
+        drawAlpha = alpha;
+        if (clients[0].serverTime - line->startTime < msgwnd->fadein)
+            drawAlpha = (float)(clients[0].serverTime - line->startTime) / msgwnd->fadein * alpha;
+        else if (line->endTime - clients[0].serverTime < msgwnd->fadeout)
+            drawAlpha = (float)(line->endTime - clients[0].serverTime) / msgwnd->fadeout * alpha;
+
+        if (up) {
+            if (!sameTimeCount) {
+                for (nextIndex = lineIndex + 1; nextIndex < msgwnd->current_line + msgwnd->count; nextIndex++) {
+                    if (msgwnd->lines[nextIndex % msgwnd->count].startTime != line->startTime)
+                        break;
+                    sameTimeCount++;
+                }
+                if (sameTimeCount) {
+                    v -= sameTimeCount * charHeight;
+                    groupY = v;
+                    sameTimeCount++;
+                }
+            } else {
+                v += 2 * charHeight;
+            }
+        }
+
+        Con_DrawStringOnHUD(x, v, charHeight, horzAlign, vertAlign, line->textBuffer, 78, drawAlpha, msgwndScale, 0);
+
+        if (up) {
+            if (sameTimeCount) {
+                sameTimeCount--;
+                if (!sameTimeCount)
+                    v = groupY;
+            }
+            v -= charHeight;
+        } else {
+            v += charHeight;
+        }
     }
 }
 
@@ -1506,14 +1456,20 @@ static void Con_DrawInput(void)
     }
 }
 
-void Con_DrawConsole(void)
+void Con_DrawSolidConsole(void)
 {
-    Con_CheckResize();
-    if (!((clients)->keyCatchers & 1))
-        return;
+    if (!(clients[0].keyCatchers & 1))
+        con.outputVisible = 0;
     if (con.outputVisible)
         Con_DrawOuputWindow();
     Con_DrawInput();
+}
+
+void Con_DrawConsole(void)
+{
+    Con_CheckResize();
+    if (clients[0].keyCatchers & 1)
+        Con_DrawSolidConsole();
 }
 
 void Con_Init(void)

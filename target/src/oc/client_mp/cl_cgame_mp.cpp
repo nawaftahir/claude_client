@@ -103,7 +103,7 @@ extern void CalcScreenPlacement(float *x, float *y, float *w, float *h, int horz
 extern void SetScreenScaling(float scaleX, float scaleY, int x, int y, float w, float h);
 extern void StatMon_Warning(int type, int threshold, const char *msg);
 extern char *va( const char *format, ... );
-extern int ColorIndex(unsigned char c);
+extern unsigned char ColorIndex(unsigned char c);
 extern int atoi(const char *str);
 extern char *strcat(char *dest, const char *src);
 
@@ -210,7 +210,7 @@ void CL_SetADS(int ads);
 void CL_DrawString(int x, int y, const char *pszString, qboolean bShadow, int iCharHeight);
 void CL_ArchiveClientState(MemoryFile *memFile);
 void CL_SetLodOrigin(const refdef_t *fd);
-void CL_LookupColor(int c, vec_t *color);
+void CL_LookupColor(unsigned char c, vec_t *color);
 void CL_SetUserCmdAimValues(vec_t *kickAngles);
 void CL_UpdateColor(void);
 void CL_SetFullScreenViewport(void);
@@ -1205,29 +1205,41 @@ void R_UpdateEffectsNonBolt(void)
     RE->UpdateEffectsNonBolt();
 }
 
-void CL_LookupColor(int c, vec_t *color)
+void CL_LookupColor(unsigned char c, vec_t *color)
 {
-    unsigned int idx = ColorIndex((unsigned char)c);
-    float *src;
+    unsigned int index;
+    const float *src;
 
-    if (idx <= 7) {
-        src = (float *)&g_color_table[idx];
-    } else if ((unsigned char)c == '8') {
-        src = (float *)CL_LOCAL->color_allies;
-    } else if ((unsigned char)c == '9') {
-        src = (float *)CL_LOCAL->color_axis;
-    } else {
+    index = ColorIndex(c);
+    if (index < 8) {
+        src = g_color_table[index];
+        color[0] = src[0];
+        color[1] = src[1];
+        color[2] = src[2];
+        color[3] = src[3];
+        return;
+    }
+
+    switch (c) {
+    case '8':
+        color[0] = CL_LOCAL->color_allies[0];
+        color[1] = CL_LOCAL->color_allies[1];
+        color[2] = CL_LOCAL->color_allies[2];
+        color[3] = CL_LOCAL->color_allies[3];
+        break;
+    case '9':
+        color[0] = CL_LOCAL->color_axis[0];
+        color[1] = CL_LOCAL->color_axis[1];
+        color[2] = CL_LOCAL->color_axis[2];
+        color[3] = CL_LOCAL->color_axis[3];
+        break;
+    default:
         color[0] = 1.0f;
         color[1] = 1.0f;
         color[2] = 1.0f;
         color[3] = 1.0f;
-        return;
+        break;
     }
-
-    color[0] = src[0];
-    color[1] = src[1];
-    color[2] = src[2];
-    color[3] = src[3];
 }
 
 void CL_SetUserCmdAimValues(vec_t *kickAngles)

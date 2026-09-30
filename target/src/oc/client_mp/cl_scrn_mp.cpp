@@ -77,7 +77,7 @@ extern void CL_SendCmdInternal(void);
 extern void CL_SetCGameTime(void);
 extern Bool CL_AnyLocalClientChallenging(void);
 extern void CL_DrawLogo(void);
-extern void CL_LookupColor(int colorIndex, float *outColor);
+extern void CL_LookupColor(unsigned char c, float *outColor);
 extern void Con_DrawConsole(void);
 extern void SND_StopSounds(snd_stopsounds_arg_t flags);
 extern void SCR_DrawCinematic(void);
@@ -99,28 +99,18 @@ void SCR_UpdateScreen(void);
 
 void SCR_DrawSmallStringExt(int x, int y, const char *string, const vec_t *setColor)
 {
-    refexport_t *re = re_ptr_195eca8;
-    byte *cls = cls_ptr_195ecac;
-    FontHandle font = (((clientStatic_t *)(cls))->consoleFont);
+    int fontHeight;
 
-    int fontHeight = RE_FUNC(re, 0x118, re_font_iheight_func)(font);
-
-    RE_FUNC(re, 0x11c, re_draw_string_func)(
-        string, 0x7fffffff, font, (float)x, (float)y + (float)fontHeight,
-        1.0f, 1.0f, setColor, 0);
+    fontHeight = re.TextHeight(cls.consoleFont);
+    re.DrawText(string, 0x7fffffff, cls.consoleFont, (float)x, (float)y + (float)fontHeight, 1.0f, 1.0f, setColor, 0);
 }
 
 void SCR_DrawConsoleString(int x, int y, const short int *string, int maxChars, const vec_t *setColor)
 {
-    refexport_t *re = re_ptr_195eca8;
-    byte *cls = cls_ptr_195ecac;
-    FontHandle font = (((clientStatic_t *)(cls))->consoleFont);
+    int fontHeight;
 
-    int fontHeight = RE_FUNC(re, 0x118, re_font_iheight_func)(font);
-
-    RE_FUNC(re, 0x128, re_draw_console_func)(
-        string, maxChars, (int)font, (float)x, (float)y + (float)fontHeight,
-        1.0f, 1.0f, setColor, 0);
+    fontHeight = re.TextHeight(cls.consoleFont);
+    re.DrawConsoleText(string, maxChars, cls.consoleFont, (float)x, (float)y + (float)fontHeight, 1.0f, 1.0f, setColor, 0);
 }
 
 void SCR_Init(void)

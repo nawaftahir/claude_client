@@ -30,7 +30,7 @@ extern int CL_ScaledMilliseconds(void);
 extern const char *Cmd_Argv( int arg );
 extern void CL_StopLogo(void);
 extern void SND_FadeAllSounds(float, int);
-extern void CL_LookupColor(int, float *);
+extern void CL_LookupColor(unsigned char, float *);
 extern float floorf(float);
 extern float ceilf(float);
 

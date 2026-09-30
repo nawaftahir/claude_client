@@ -74,7 +74,7 @@ static vec4_t colorRedFaded;
 extern const vec_t colorWhite[4];
 extern void UI_DrawHandlePic(float x, float y, float w, float h, int horzAlign, int vertAlign, const vec_t *color, MaterialHandle material);
 extern void CG_DrawStringExt(float x, float y, const char *string, const vec_t *setColor, qboolean forceColor, qboolean shadow, float charHeight, qboolean adjust);
-extern void CL_LookupColor(int c, vec_t *color);
+extern void CL_LookupColor(unsigned char c, vec_t *color);
 extern char *va( const char *format, ... );
 extern unsigned int Scr_GetNumScriptVars(void);
 extern unsigned int Scr_GetNumScriptThreads(void);
