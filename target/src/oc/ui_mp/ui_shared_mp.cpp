@@ -1880,14 +1880,10 @@ void Menu_TransitionItemByName(menuDef_t *menu, const char *p, rectDef_t rectFro
         Window_SetRectEffects0((Window *)item, &rectTo);
 
         rectDef_t newRect = (*(rectDef_t *)&((itemDef_t *)item)->window.rectEffects1[0].x);
-        int dx = (int)(rectTo.x - rectFrom.x);
-        newRect.x = (float)(dx < 0 ? -dx : dx) / amt;
-        int dy = (int)(rectTo.y - rectFrom.y);
-        newRect.y = (float)(dy < 0 ? -dy : dy) / amt;
-        int dw = (int)(rectTo.w - rectFrom.w);
-        newRect.w = (float)(dw < 0 ? -dw : dw) / amt;
-        int dh = (int)(rectTo.h - rectFrom.h);
-        newRect.h = (float)(dh < 0 ? -dh : dh) / amt;
+        newRect.x = (float)abs((int)(rectTo.x - rectFrom.x)) / amt;
+        newRect.y = (float)abs((int)(rectTo.y - rectFrom.y)) / amt;
+        newRect.w = (float)abs((int)(rectTo.w - rectFrom.w)) / amt;
+        newRect.h = (float)abs((int)(rectTo.h - rectFrom.h)) / amt;
 
         Window_SetRectEffects1((Window *)item, &newRect);
 
