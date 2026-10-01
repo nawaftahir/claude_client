@@ -170,19 +170,22 @@ enum StartFrameMode
 {
 	START_FRAME_FIRST,
 	START_FRAME_RANDOM,
-	START_FRAME_FIXED
+	START_FRAME_FIXED,
+	START_FRAME_MODE_COUNT
 };
 
 enum PlayRateMode
 {
 	PLAY_RATE_LIFETIME,
-	PLAY_RATE_FIXED_FPS
+	PLAY_RATE_FIXED_FPS,
+	PLAY_RATE_MODE_COUNT
 };
 
 enum LoopMode
 {
 	LOOP_NONE,
-	LOOP_TIMES
+	LOOP_TIMES,
+	LOOP_MODE_COUNT
 };
 
 union TMediaElement
@@ -1056,7 +1059,7 @@ bool PrimitiveTemplate::ParseSequenceStartFrameMode( const char *val )
 	int mode;
 
 	mode = atoi(val);
-	if ( mode < START_FRAME_FIRST || mode > START_FRAME_FIXED )
+	if ( mode < START_FRAME_FIRST || mode >= START_FRAME_MODE_COUNT )
 		return false;
 	mSequenceStartFrameMode = (StartFrameMode)mode;
 	return true;
@@ -1075,7 +1078,7 @@ bool PrimitiveTemplate::ParseSequencePlayRateMode( const char *val )
 	int mode;
 
 	mode = atoi(val);
-	if ( mode < PLAY_RATE_LIFETIME || mode > PLAY_RATE_FIXED_FPS )
+	if ( mode < PLAY_RATE_LIFETIME || mode >= PLAY_RATE_MODE_COUNT )
 		return false;
 	mSequencePlayRateMode = (PlayRateMode)mode;
 	return true;
@@ -1094,7 +1097,7 @@ bool PrimitiveTemplate::ParseSequenceLoopMode( const char *val )
 	int mode;
 
 	mode = atoi(val);
-	if ( mode < LOOP_NONE || mode > LOOP_TIMES )
+	if ( mode < LOOP_NONE || mode >= LOOP_MODE_COUNT )
 		return false;
 	mSequenceLoopMode = (LoopMode)mode;
 	return true;
