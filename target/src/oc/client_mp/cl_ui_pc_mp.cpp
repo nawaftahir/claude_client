@@ -30,79 +30,62 @@ void LAN_SaveServersToCache(void);
 
 int LAN_AddServer(int source, const char *name, const char *address)
 {
+    int max, *count, i;
     netadr_t adr;
-    int i;
-    byte *base;
-    serverInfo_t *servers;
-    int *count;
+    serverInfo_t *servers = NULL;
 
-    if (source != 2) {
-        return -1;
+    max = MAX_OTHER_SERVERS;
+    count = 0;
+    switch (source) {
+    case 2:
+        count = &cls.numfavoriteservers;
+        servers = &cls.favoriteServers[0];
+        break;
     }
-
-    base = CLS;
-    if ((((clientStatic_t *)(base))->numfavoriteservers) > 127) {
-        return -1;
-    }
-
-    if (!NET_StringToAdr(address, &adr)) {
-        return -2;
-    }
-
-    count = &(((clientStatic_t *)(base))->numfavoriteservers);
-    servers = (((clientStatic_t *)(base))->favoriteServers);
-
-    if (*count > 0) {
+    if (servers && *count < max) {
+        if (!NET_StringToAdr(address, &adr))
+            return -2;
         for (i = 0; i < *count; i++) {
-            if (NET_CompareAdr(servers[i].adr, adr)) {
-                if (*count <= i) {
-                    break;
-                }
-                return 0;
-            }
+            if (NET_CompareAdr(servers[i].adr, adr))
+                break;
         }
+        if (i >= *count) {
+            servers[*count].adr = adr;
+            I_strncpyz(servers[*count].hostName, name, sizeof(servers[*count].hostName));
+            servers[*count].dirty = 1;
+            (*count)++;
+            return 1;
+        }
+        return 0;
     }
-
-    servers[*count].adr = adr;
-    I_strncpyz(servers[*count].hostName, name, 32);
-    servers[*count].dirty = 1;
-    *count += 1;
-    return 1;
+    return -1;
 }
 
 void LAN_RemoveServer(int source, const char *addr)
 {
-    netadr_t comp;
-    int i;
-    int j;
-    byte *base;
-    serverInfo_t *servers;
-    int *count;
+    int *count, i;
+    serverInfo_t *servers = NULL;
 
-    if (source != 2) {
-        return;
+    count = 0;
+    switch (source) {
+    case 2:
+        count = &cls.numfavoriteservers;
+        servers = &cls.favoriteServers[0];
+        break;
     }
-
-    NET_StringToAdr(addr, &comp);
-
-    base = CLS;
-    count = &(((clientStatic_t *)(base))->numfavoriteservers);
-    servers = (((clientStatic_t *)(base))->favoriteServers);
-
-    if (*count <= 0) {
-        return;
-    }
-
-    for (i = 0; i < *count; i++) {
-        if (NET_CompareAdr(servers[i].adr, comp)) {
-
-            if (i < *count - 1) {
-                for (j = i; j < *count - 1; j++) {
-                    Com_Memcpy(&servers[j], &servers[j + 1], sizeof(serverInfo_t));
+    if (servers) {
+        netadr_t comp;
+        NET_StringToAdr(addr, &comp);
+        for (i = 0; i < *count; i++) {
+            if (NET_CompareAdr(comp, servers[i].adr)) {
+                int j = i;
+                while (j < *count - 1) {
+                    Com_Memcpy(&servers[j], &servers[j + 1], sizeof(servers[j]));
+                    j++;
                 }
+                (*count)--;
+                break;
             }
-            *count -= 1;
-            return;
         }
     }
 }
