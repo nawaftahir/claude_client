@@ -1751,18 +1751,20 @@ static bool CG_ShouldDrawGrenadeIndicator(const entityState_t *es)
     offset[0] = es->pos.trBase[0] - cg->predictedPlayerState.origin[0];
     offset[1] = es->pos.trBase[1] - cg->predictedPlayerState.origin[1];
     offset[2] = es->pos.trBase[2] - cg->predictedPlayerState.origin[2];
-    if (offset[2] >= 0.0f)
+    if (offset[2] < 0.0f)
     {
-        if (offset[2] > cg->predictedPlayerState.viewHeightCurrent + cg_hudGrenadeIconMaxHeight->current.value)
+        if (offset[2] < -cg_hudGrenadeIconMaxHeight->current.value)
             return false;
     }
-    else if (offset[2] < -cg_hudGrenadeIconMaxHeight->current.value)
+    else if (offset[2] > cg->predictedPlayerState.viewHeightCurrent + cg_hudGrenadeIconMaxHeight->current.value)
     {
         return false;
     }
 
     maxRange = cg_hudGrenadeIconMaxRange->current.value;
-    return maxRange * maxRange >= offset[0] * offset[0] + offset[1] * offset[1] + offset[2] * offset[2];
+    if (offset[0] * offset[0] + offset[1] * offset[1] + offset[2] * offset[2] > maxRange * maxRange)
+        return false;
+    return true;
 }
 
 static void CG_DrawGrenadePointer(float centerX, float centerY, const float *grenadeOffset, const float *color)
