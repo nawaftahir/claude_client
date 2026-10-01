@@ -605,7 +605,7 @@ int CG_CheckPlayerStanceChange(int newButtons, int changedButtons)
     return 0;
 }
 
-int CG_CheckPlayerTryReload(char buttons)
+int CG_CheckPlayerTryReload(int buttons)
 {
     return (buttons & 0x30)
         && !(cg->predictedPlayerState.pm_flags & 4)
@@ -613,7 +613,7 @@ int CG_CheckPlayerTryReload(char buttons)
         && !(cg->predictedPlayerState.eFlags & 0x300);
 }
 
-int CG_CheckPlayerFireNonTurret(char buttons)
+int CG_CheckPlayerFireNonTurret(int buttons)
 {
     return (buttons & 1) && !(cg->predictedPlayerState.eFlags & 0x300);
 }
