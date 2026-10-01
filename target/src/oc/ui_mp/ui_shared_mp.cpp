@@ -2539,65 +2539,39 @@ void Item_YesNo_Paint(displayContextDef_t *dc, itemDef_t *item)
 
 void Item_Slider_Paint(displayContextDef_t *dc, itemDef_t *item)
 {
-    byte *it = (byte *)item;
-    byte *parent = (byte *)item->parent;
-    float newColor[4];
-    float y;
+    vec4_t newColor;
+    vec4_t lowLight;
     float x;
-    int i;
+    float y;
+    float value;
+    menuDef_t *parent;
 
-    if ((*(void **)&((itemDef_t *)it)->dvar)) {
-        Dvar_GetVariantString(item->dvar);
-        atof(Dvar_GetVariantString(item->dvar));
-    }
+    parent = item->parent;
+    value = item->dvar ? (float)atof(Dvar_GetVariantString(item->dvar)) : 0.0f;
 
-    int flags = ((itemDef_t *)it)->window.dynamicFlags[0];
-    if ((flags & 4) && (flags & 2)) {
-
-        float lowLight[4];
-        for (i = 0; i < 4; i++)
-            lowLight[i] = *(float *)(((char *)parent + offsetof(menuDef_t, focusColor[0])) + i * 4) * 0.8f;
-
-        int curTime = dc->realTime;
-        float t = sinf((float)(curTime / 22));
-        t = t * 0.5f + 0.5f;
-
-        for (i = 0; i < 4; i++) {
-            float hi = *(float *)(((char *)parent + offsetof(menuDef_t, focusColor[0])) + i * 4);
-            float lo = lowLight[i];
-            newColor[i] = hi + (lo - hi) * t;
-            if (newColor[i] < 0.0f)
-                newColor[i] = 0.0f;
-            else if (newColor[i] > 1.0f)
-                newColor[i] = 1.0f;
-        }
+    if (Window_HasFocus(&item->window)) {
+        lowLight[0] = parent->focusColor[0] * 0.8f;
+        lowLight[1] = parent->focusColor[1] * 0.8f;
+        lowLight[2] = parent->focusColor[2] * 0.8f;
+        lowLight[3] = parent->focusColor[3] * 0.8f;
+        LerpColor(parent->focusColor, lowLight, newColor, (sin((float)(dc->realTime / 75)) + 1.0f) * 0.5f);
     } else {
-
-        for (i = 0; i < 4; i++)
-            newColor[i] = ((itemDef_t *)it)->window.foreColor[i];
+        memcpy(newColor, item->window.foreColor, sizeof(vec4_t));
     }
 
-    y = (((rectDef_t*)(it))->y);
-
-    if (((itemDef_t *)it)->text) {
-
+    y = item->window.rect[0].y;
+    if (item->text) {
         Item_Text_Paint(dc, item);
-        x = (((itemDef_s*)(it))->textRect[0].x) + (((itemDef_s*)(it))->textRect[0].w) + 8.0f;
+        x = item->textRect[0].x + item->textRect[0].w + 8.0f;
     } else {
-        x = (((rectDef_t*)(it))->x);
+        x = item->window.rect[0].x;
     }
+    UI_DrawHandlePic(x, y, 96.0f, 16.0f, item->window.rect[0].horzAlign, item->window.rect[0].vertAlign,
+                     newColor, sharedUiInfo.assets.sliderBar);
 
-    byte *uiInfo = (byte *)((void *)&sharedUiInfo);
-    UI_DrawHandlePic(
-        x, y, 96.0f, 16.0f,
-        (((rectDef_t*)(it))->horzAlign), (((rectDef_t*)(it))->vertAlign), newColor,
-        ((sharedUiInfo_t*)uiInfo)->assets.sliderBar);
-
-    float thumbX = Item_Slider_ThumbPosition(item);
-    UI_DrawHandlePic(
-        thumbX - 5.0f, y - 2.0f, 10.0f, 20.0f,
-        (((rectDef_t*)(it))->horzAlign), (((rectDef_t*)(it))->vertAlign), newColor,
-        ((sharedUiInfo_t *)uiInfo)->assets.sliderThumb);
+    x = Item_Slider_ThumbPosition(item);
+    UI_DrawHandlePic(x - 5.0f, y - 2.0f, 10.0f, 20.0f, item->window.rect[0].horzAlign, item->window.rect[0].vertAlign,
+                     newColor, sharedUiInfo.assets.sliderThumb);
 }
 
 void Item_Bind_Paint(displayContextDef_t *dc, itemDef_t *item)
