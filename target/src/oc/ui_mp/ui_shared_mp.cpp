@@ -4396,64 +4396,36 @@ void Menu_Paint(displayContextDef_t *dc, menuDef_t *menu, qboolean forcePaint)
 
 void Menu_PaintAll(displayContextDef_t *dc)
 {
-    byte *d = (byte *)dc;
-    int i, j;
+    vec4_t v;
+    int i;
+    int start;
 
-    (((displayContextDef_s*)(d))->blurRadiusOut) = 0.0f;
-
+    dc->blurRadiusOut = 0.0f;
     if (captureFunc)
         ((void (__cdecl *)(displayContextDef_t *, void *))captureFunc)(dc, captureData);
 
-    int menuCount = ((displayContextDef_t *)d)->menuCount;
-    int openCount = (((displayContextDef_s*)(d))->openMenuCount);
-
-    for (i = 0; i < menuCount; i++) {
-        void *menu = *(void **)((char *)&((displayContextDef_s *)d)->Menus[i]);
-
-#if COD2_TRACE
-        if (getenv("COD2_MENUDIAG")) {
-            const char *nm = menu ? ((menuDef_t *)menu)->window.name : (const char *)0;
-            Com_Printf("[menudiag] i=%d/%d menu=%p name=%p%s\n", i, menuCount, menu,
-                       (void *)nm,
-                       ((uintptr_t)nm > 0x10000) ? "" : " <BAD>");
-        }
-#endif
-
-        int isOpen = 0;
-        for (j = openCount - 1; j >= 0; j--) {
-            if (*(void **)((char *)&((displayContextDef_s *)d)->menuStack[j]) == menu) {
-                isOpen = 1;
-                break;
-            }
-        }
-        if (!isOpen)
-            Menu_Paint(dc, (menuDef_t *)menu, 0);
-        openCount = (((displayContextDef_s*)(d))->openMenuCount);
+    for (i = 0; i < dc->menuCount; i++) {
+        if (!Menus_MenuIsInStack(dc, dc->Menus[i]))
+            Menu_Paint(dc, dc->Menus[i], 0);
     }
 
-    openCount = (((displayContextDef_s*)(d))->openMenuCount);
-    int fullscreenStart = 0;
-    for (i = openCount - 1; i >= 0; i--) {
-        byte *menu = *(byte **)((char *)&((displayContextDef_s *)d)->menuStack[i]);
-        if ((((menuDef_t*)(menu))->fullScreen)) {
-            fullscreenStart = i;
+    start = 0;
+    for (i = dc->openMenuCount - 1; i >= 0; i--) {
+        if (dc->menuStack[i]->fullScreen) {
+            start = i;
             break;
         }
     }
 
-    if (fullscreenStart < openCount) {
-        for (i = fullscreenStart; i < (((displayContextDef_s*)(d))->openMenuCount); i++) {
-            void *menu = *(void **)((char *)&((displayContextDef_s *)d)->menuStack[i]);
-            Menu_Paint(dc, (menuDef_t *)menu, 0);
-        }
-    }
+    for (i = start; i < dc->openMenuCount; i++)
+        Menu_Paint(dc, dc->menuStack[i], 0);
 
     if (debugMode) {
-        float color[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-        float scale = 0.5f;
-        FontHandle font = UI_GetFontHandle(0, scale);
-        const char *fpsText = va("fps: %f", (double)(((displayContextDef_s*)(d))->FPS));
-        UI_DrawText(fpsText, 0x7fffffff, font, 5.0f, 25.0f, 0, 0, scale, color, 0);
+        v[0] = 1.0f;
+        v[1] = 1.0f;
+        v[2] = 1.0f;
+        v[3] = 1.0f;
+        UI_DrawText(va("fps: %f", dc->FPS), 0x7fffffff, UI_GetFontHandle(0, 0.5f), 5.0f, 25.0f, 0, 0, 0.5f, v, 0);
     }
 }
 
