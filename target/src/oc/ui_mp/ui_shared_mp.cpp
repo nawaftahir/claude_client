@@ -2901,7 +2901,9 @@ qboolean Item_SetFocus(displayContextDef_t *dc, itemDef_t *item, float x, float 
     menuDef_t *focusedMenu;
     snd_alias_list_t *sfx;
     int i;
+    int playSound;
 
+    playSound = 0;
     sfx = sharedUiInfo.assets.itemFocusSound;
     if (!item)
         return 0;
@@ -2933,8 +2935,7 @@ qboolean Item_SetFocus(displayContextDef_t *dc, itemDef_t *item, float x, float 
             Window_AddDynamicFlags(&item->window, 2);
             if (item->focusSound)
                 sfx = item->focusSound;
-            if (sfx)
-                UI_PlayLocalSoundAlias(sfx);
+            playSound = 1;
         } else if (oldFocus) {
             Window_AddDynamicFlags(&oldFocus->window, 2);
             if (oldFocus->onFocus)
@@ -2946,9 +2947,10 @@ qboolean Item_SetFocus(displayContextDef_t *dc, itemDef_t *item, float x, float 
             Item_RunScript(dc, item, item->onFocus);
         if (item->focusSound)
             sfx = item->focusSound;
-        if (sfx)
-            UI_PlayLocalSoundAlias(sfx);
+        playSound = 1;
     }
+    if (playSound && sfx)
+        UI_PlayLocalSoundAlias(sfx);
     for (i = 0; i < parent->itemCount; i++) {
         if (parent->items[i] == item) {
             parent->cursorItem[0] = i;
