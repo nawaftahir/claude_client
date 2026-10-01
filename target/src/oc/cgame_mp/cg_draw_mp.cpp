@@ -586,250 +586,205 @@ unsigned int CG_DrawCrosshairNames(void)
     return 0;
 }
 
+int CG_CheckPlayerMovement(usercmd_t oldCmd, usercmd_t newCmd)
+{
+    if (memcmp(oldCmd.angles, newCmd.angles, sizeof(oldCmd.angles)))
+        return 1;
+    return newCmd.forwardmove || newCmd.rightmove;
+}
+
+int CG_CheckPlayerStanceChange(int newButtons, int changedButtons)
+{
+    if (changedButtons & 0x2300)
+    {
+        CG_MenuShowNotify(3);
+        return 1;
+    }
+    if (newButtons & 0x2300)
+        CG_MenuShowNotify(3);
+    return 0;
+}
+
+int CG_CheckPlayerTryReload(char buttons)
+{
+    return (buttons & 0x30)
+        && !(cg->predictedPlayerState.pm_flags & 4)
+        && !(cg->snap->ps.cursorHint & 2)
+        && !(cg->predictedPlayerState.eFlags & 0x300);
+}
+
+int CG_CheckPlayerFireNonTurret(char buttons)
+{
+    return (buttons & 1) && !(cg->predictedPlayerState.eFlags & 0x300);
+}
+
+int CG_CheckPlayerWeaponUsage(int buttons)
+{
+    if (!CG_CheckPlayerFireNonTurret(buttons) && !CG_CheckPlayerTryReload(buttons))
+        return 0;
+    CG_MenuShowNotify(1);
+    return 1;
+}
+
+int CG_CheckPlayerOffHandUsage(int buttons)
+{
+    if (buttons & 0x30000)
+    {
+        CG_MenuShowNotify(4);
+        return 1;
+    }
+    return 0;
+}
+
+int CG_CheckPlayerMiscInput(int buttons)
+{
+    return buttons & 0xffffd4ff;
+}
+
+void CG_CheckForPlayerInput(void)
+{
+    usercmd_t oldCmd;
+    usercmd_t newCmd;
+    int newCmdIndex;
+    int changedButtons;
+    int newInput;
+
+    newCmdIndex = CL_GetCurrentCmdNumber();
+    if (newCmdIndex > 1)
+    {
+        CL_GetUserCmd(newCmdIndex - 1, &oldCmd);
+        CL_GetUserCmd(newCmdIndex, &newCmd);
+        changedButtons = oldCmd.buttons ^ newCmd.buttons;
+        newInput = CG_CheckPlayerMovement(oldCmd, newCmd);
+        if (CG_CheckPlayerWeaponUsage(newCmd.buttons))
+            newInput = 1;
+        if (CG_CheckPlayerOffHandUsage(newCmd.buttons))
+            newInput = 1;
+        if (CG_CheckPlayerStanceChange(newCmd.buttons, changedButtons))
+            newInput = 1;
+        if (newInput || CG_CheckPlayerMiscInput(changedButtons))
+            CG_MenuShowNotify(2);
+    }
+}
+
+void CG_CheckHudHealthDisplay(void)
+{
+    menuDef_t *menu;
+
+    if (CG_CalcPlayerHealth() < hud_health_startpulse_injured->current.value)
+    {
+        CG_MenuShowNotify(0);
+    }
+    else
+    {
+        if (hud_fade_healthbar->current.value != 0.0f
+            && cg->healthFadeTime
+            && (float)(cg->time - cg->healthFadeTime) > hud_fade_healthbar->current.value * 1000.0f)
+        {
+            menu = Menus_FindByName(&cgDC, "Health");
+            if (menu)
+                Window_RemoveDynamicFlags((Window *)menu, 4);
+            cg->healthFadeTime = 0;
+        }
+    }
+}
+
+void CG_CheckHudAmmoDisplay(void)
+{
+    menuDef_t *menu;
+
+    if (CG_CheckPlayerForLowAmmo() || CG_CheckPlayerForLowClip())
+        CG_MenuShowNotify(1);
+    if (hud_fade_ammodisplay->current.value != 0.0f
+        && cg->ammoFadeTime
+        && (float)(cg->time - cg->ammoFadeTime) > hud_fade_ammodisplay->current.value * 1000.0f)
+    {
+        menu = Menus_FindByName(&cgDC, "weaponinfo");
+        if (menu)
+            Window_RemoveDynamicFlags((Window *)menu, 4);
+        cg->ammoFadeTime = 0;
+    }
+}
+
+void CG_CheckHudCompassDisplay(void)
+{
+    menuDef_t *menu;
+
+    if (hud_fade_compass->current.value != 0.0f
+        && cg->compassFadeTime
+        && (float)(cg->time - cg->compassFadeTime) > hud_fade_compass->current.value * 1000.0f)
+    {
+        menu = Menus_FindByName(&cgDC, "Compass");
+        if (menu)
+            Window_RemoveDynamicFlags((Window *)menu, 4);
+        cg->compassFadeTime = 0;
+    }
+}
+
+void CG_CheckHudStanceDisplay(void)
+{
+    menuDef_t *menu;
+
+    if ((cg->nextSnap->ps.eFlags & 8) && (cg->nextSnap->ps.eFlags & 0x100)
+        || (cg->nextSnap->ps.eFlags & 4) && (cg->nextSnap->ps.eFlags & 0x200))
+    {
+        CG_MenuShowNotify(3);
+    }
+    if (hud_fade_stance->current.value != 0.0f
+        && cg->stanceFadeTime
+        && (float)(cg->time - cg->stanceFadeTime) > hud_fade_stance->current.value * 1000.0f)
+    {
+        menu = Menus_FindByName(&cgDC, "stance");
+        if (menu)
+            Window_RemoveDynamicFlags((Window *)menu, 4);
+        cg->stanceFadeTime = 0;
+    }
+}
+
+void CG_CheckHudOffHandDisplay(void)
+{
+    menuDef_t *menu;
+
+    if (hud_fade_offhand->current.value != 0.0f
+        && cg->offhandFadeTime
+        && (float)(cg->time - cg->offhandFadeTime) > hud_fade_offhand->current.value * 1000.0f)
+    {
+        menu = Menus_FindByName(&cgDC, "offhandinfo");
+        if (menu)
+            Window_RemoveDynamicFlags((Window *)menu, 4);
+        cg->offhandFadeTime = 0;
+    }
+}
+
+void CG_CheckHudObjectiveDisplay(void)
+{
+    menuDef_t *menu;
+
+    if (CG_ScoreboardDisplayed())
+    {
+        if (cg->time - cg->scoreFadeTime > 100)
+        {
+            menu = Menus_FindByName(&cgDC, "objectiveinfo");
+            if (menu)
+                Window_RemoveDynamicFlags((Window *)menu, 4);
+        }
+    }
+}
+
 void CG_CheckTimedMenus(void)
 {
-    int serverTime;
-    int timedMenuTime;
-    usercmd_t prevCmd;
-    usercmd_t curCmd;
-    usercmd_t prevCopy;
-    usercmd_t curCopy;
-    int cmdNum;
-    int buttonBits;
-    int buttonChanged;
-    int hasChange;
-    float health;
-    float fadeVal;
-    int showTime;
-    void *menu;
-
-    timedMenuTime = cg->voiceTime;
-    if (timedMenuTime != 0) {
-        serverTime = cg->time;
-        if (serverTime - timedMenuTime > 2500) {
-
-            Menus_CloseByName( (displayContextDef_t *)((void *)&cgDC), (const char *)"voiceMenu");
-            cg->voiceTime = 0;
-        }
-    }
-
-    cmdNum = CL_GetCurrentCmdNumber();
-    if (cmdNum <= 1)
-        goto after_buttons;
-
-    CL_GetUserCmd(cmdNum - 1, &prevCmd);
-    CL_GetUserCmd(cmdNum, &curCmd);
-
-    buttonBits = curCmd.buttons;
-    buttonChanged = buttonBits ^ prevCmd.buttons;
-
-    prevCopy = prevCmd;
-    curCopy = curCmd;
-
-    if (memcmp(prevCopy.angles, curCopy.angles, 12) != 0) {
-        hasChange = 1;
-    } else if (*(unsigned short *)&curCopy.forwardmove != 0) {
-        hasChange = 1;
-    } else {
-        hasChange = 0;
-    }
-
-    if (buttonBits & 0x1) {
-        if (!(cg->predictedPlayerState.eFlags & 0x300)) {
-
-            CG_MenuShowNotify(1);
-            hasChange = 1;
-            buttonBits = curCmd.buttons;
-        }
-    }
-
-    if (buttonBits & 0x30) {
-        if (!((byte)(cg->predictedPlayerState.pm_flags) & 0x4)) {
-            snapshot_t *snap = cg->snap;
-            if (!(snap->ps.cursorHint & 0x2)) {
-                if (!(cg->predictedPlayerState.eFlags & 0x300)) {
-
-                    CG_MenuShowNotify(1);
-                    hasChange = 1;
-                    buttonBits = curCmd.buttons;
-                }
-            }
-        }
-    }
-
-    if (buttonBits & 0x30000) {
-
-        CG_MenuShowNotify(4);
-        hasChange = 1;
-        buttonBits = curCmd.buttons;
-    }
-
-    if (buttonChanged & 0x2300) {
-
-        CG_MenuShowNotify(3);
-        goto do_notify2;
-    }
-
-    if (buttonBits & 0x2300) {
-
-        CG_MenuShowNotify(3);
-    }
-
-    if (!hasChange) {
-        if (!(buttonChanged & 0xffffd4ff))
-            goto after_buttons;
-    }
-
-do_notify2:
-
-    CG_MenuShowNotify(2);
-
-after_buttons:
-
-    health = CG_CalcPlayerHealth();
+    if (cg->voiceTime && cg->time - cg->voiceTime > 2500)
     {
-        float threshold = hud_health_startpulse_injured->current.value;
-        if (threshold <= health) {
-
-            CG_MenuShowNotify(0);
-        }
+        Menus_CloseByName(&cgDC, "voiceMenu");
+        cg->voiceTime = 0;
     }
-
-    fadeVal = hud_fade_healthbar->current.value;
-    if (fadeVal != 0.0f) {
-        showTime = cg->healthFadeTime;
-        if (showTime != 0) {
-            serverTime = cg->time;
-            if ((float)(serverTime - showTime) > fadeVal * 1000.0f) {
-
-                if (CL_GetLocalClientActiveCount() == 1) {
-                    menu = Menus_FindByName((&cgDC), (const char *)"Health");
-                } else {
-                    menu = Menus_FindByName((&cgDC), (const char *)"Health_mp");
-                }
-
-                if (menu)
-                    Window_RemoveDynamicFlags((Window *)menu, 4);
-
-                cg->healthFadeTime = 0;
-            }
-        }
-    }
-
-    if (CG_CheckPlayerForLowAmmo() || CG_CheckPlayerForLowClip()) {
-
-        CG_MenuShowNotify(1);
-    }
-
-    fadeVal = hud_fade_ammodisplay->current.value;
-    if (fadeVal != 0.0f) {
-        showTime = cg->ammoFadeTime;
-        if (showTime != 0) {
-            serverTime = cg->time;
-            if ((float)(serverTime - showTime) > fadeVal * 1000.0f) {
-
-                if (CL_GetLocalClientActiveCount() == 1) {
-                    menu = Menus_FindByName((&cgDC), (const char *)"weaponinfo");
-                } else {
-                    menu = Menus_FindByName((&cgDC), (const char *)"weaponinfo_mp");
-                }
-
-                if (menu)
-                    Window_RemoveDynamicFlags((Window *)menu, 4);
-
-                cg->ammoFadeTime = 0;
-            }
-        }
-    }
-
-    fadeVal = hud_fade_compass->current.value;
-    if (fadeVal != 0.0f) {
-        showTime = cg->compassFadeTime;
-        if (showTime != 0) {
-            serverTime = cg->time;
-            if ((float)(serverTime - showTime) > fadeVal * 1000.0f) {
-
-                if (CL_GetLocalClientActiveCount() == 1) {
-                    menu = Menus_FindByName((&cgDC), (const char *)"Compass");
-                } else {
-                    menu = Menus_FindByName((&cgDC), (const char *)"Compass_mp");
-                }
-
-                if (menu)
-                    Window_RemoveDynamicFlags((Window *)menu, 4);
-
-                cg->compassFadeTime = 0;
-            }
-        }
-    }
-
-    {
-        int ps_eFlags = cg->nextSnap->ps.eFlags;
-        if ((ps_eFlags & 0x8) && (ps_eFlags & 0x100)) {
-
-            CG_MenuShowNotify(3);
-        } else if ((ps_eFlags & 0x4) && (ps_eFlags & 0x200)) {
-
-            CG_MenuShowNotify(3);
-        }
-    }
-
-    fadeVal = hud_fade_stance->current.value;
-    if (fadeVal != 0.0f) {
-        showTime = cg->stanceFadeTime;
-        if (showTime != 0) {
-            serverTime = cg->time;
-            if ((float)(serverTime - showTime) > fadeVal * 1000.0f) {
-
-                if (CL_GetLocalClientActiveCount() == 1) {
-                    menu = Menus_FindByName((&cgDC), (const char *)"stance");
-                } else {
-                    menu = Menus_FindByName((&cgDC), (const char *)"stance_mp");
-                }
-
-                if (menu)
-                    Window_RemoveDynamicFlags((Window *)menu, 4);
-
-                cg->stanceFadeTime = 0;
-            }
-        }
-    }
-
-    fadeVal = hud_fade_offhand->current.value;
-    if (fadeVal != 0.0f) {
-        showTime = cg->offhandFadeTime;
-        if (showTime != 0) {
-            serverTime = cg->time;
-            if ((float)(serverTime - showTime) > fadeVal * 1000.0f) {
-
-                if (CL_GetLocalClientActiveCount() == 1) {
-                    menu = Menus_FindByName((&cgDC), (const char *)"offhandinfo");
-                } else {
-                    menu = Menus_FindByName((&cgDC), (const char *)"offhandinfo_mp");
-                }
-
-                if (menu)
-                    Window_RemoveDynamicFlags((Window *)menu, 4);
-
-                cg->offhandFadeTime = 0;
-            }
-        }
-    }
-
-    if (!CG_ScoreboardDisplayed()) {
-        return;
-    }
-
-    serverTime = cg->time - cg->scoreFadeTime;
-    if (serverTime <= 100) {
-        return;
-    }
-
-    menu = Menus_FindByName((&cgDC), (const char *)"objectiveinfo");
-    if (!menu) {
-        return;
-    }
-    Window_RemoveDynamicFlags((Window *)menu, 4);
+    CG_CheckForPlayerInput();
+    CG_CheckHudHealthDisplay();
+    CG_CheckHudAmmoDisplay();
+    CG_CheckHudCompassDisplay();
+    CG_CheckHudStanceDisplay();
+    CG_CheckHudOffHandDisplay();
+    CG_CheckHudObjectiveDisplay();
 }
 
 static void CG_DrawSoundOverlay(void)
