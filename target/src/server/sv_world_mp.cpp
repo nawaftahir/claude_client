@@ -846,10 +846,6 @@ SV_SightTrace
 */
 void SV_SightTrace( int *hitNum, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, int passEntityNum0, int passEntityNum1, int contentmask )
 {
-	vec3_t temp;
-	sightpointtrace_t spt;
-	sightclip_t clip;
-
 	*hitNum = CM_BoxSightTrace(*hitNum, start, end, mins, maxs, 0, contentmask);
 
 	if ( *hitNum )
@@ -859,6 +855,8 @@ void SV_SightTrace( int *hitNum, const vec3_t start, const vec3_t mins, const ve
 
 	if ( !(maxs[0] - mins[0] + maxs[1] - mins[1] + maxs[2] - mins[2]) )
 	{
+		sightpointtrace_t spt;
+
 		spt.contentmask = contentmask;
 
 		VectorCopy(start, spt.start);
@@ -873,6 +871,9 @@ void SV_SightTrace( int *hitNum, const vec3_t start, const vec3_t mins, const ve
 	}
 	else
 	{
+		vec3_t temp;
+		sightclip_t clip;
+
 		clip.contentmask = contentmask;
 
 		clip.passEntityNum[0] = passEntityNum0;
