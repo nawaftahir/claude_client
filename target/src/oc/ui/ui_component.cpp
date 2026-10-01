@@ -176,10 +176,12 @@ void UI_Component::DrawText(float x, float y, float width, int fontEnum, const f
     int maxChars;
     float drawX;
     float drawY;
+    float textY;
 
     maxChars = (int)(width / UI_Component_g.charWidth);
     drawX = floor(x);
-    drawY = floor(UI_Component_g.charHeight + y);
+    textY = UI_Component_g.charHeight + y;
+    drawY = floor(textY);
     re.DrawText(text, maxChars, cls.consoleFont, drawX, drawY, 1.0f, 1.0f, color, 0);
 }
 
@@ -341,31 +343,31 @@ void UI_ScrollPane::Draw(float x, float y, float width, float height, float comp
             focusRegionStart = focusRegionStart2 - UI_Component_g.charHeight * 4.0f;
             focusRegionEnd = UI_Component_g.charHeight * 5.0f + focusRegionStart2;
         }
-        if (this->comp->pos[1] <= focusRegionStart)
+        if (focusRegionStart < this->comp->pos[1])
         {
-            if (focusRegionEnd > this->comp->pos[1] + innerSize[1])
+            if (focusRegionEnd >= this->comp->pos[1])
             {
-                if (focusRegionStart > this->comp->pos[1] + innerSize[1])
-                {
+                this->comp->pos[1] = focusRegionStart;
+                if (focusRegionStart2 - innerSize[1] / 2.0f > this->comp->pos[1])
                     this->comp->pos[1] = focusRegionStart2 - innerSize[1] / 2.0f;
-                }
-                else
-                {
-                    this->comp->pos[1] = focusRegionEnd - innerSize[1];
-                    if (this->comp->pos[1] > focusRegionStart2 - innerSize[1] / 2.0f)
-                        this->comp->pos[1] = focusRegionStart2 - innerSize[1] / 2.0f;
-                }
+            }
+            else
+            {
+                this->comp->pos[1] = focusRegionStart2 - innerSize[1] / 2.0f;
             }
         }
-        else if (this->comp->pos[1] > focusRegionEnd)
+        else if (focusRegionEnd > this->comp->pos[1] + innerSize[1])
         {
-            this->comp->pos[1] = focusRegionStart2 - innerSize[1] / 2.0f;
-        }
-        else
-        {
-            this->comp->pos[1] = focusRegionStart;
-            if (this->comp->pos[1] < focusRegionStart2 - innerSize[1] / 2.0f)
+            if (focusRegionStart <= this->comp->pos[1] + innerSize[1])
+            {
+                this->comp->pos[1] = focusRegionEnd - innerSize[1];
+                if (focusRegionStart2 - innerSize[1] / 2.0f < this->comp->pos[1])
+                    this->comp->pos[1] = focusRegionStart2 - innerSize[1] / 2.0f;
+            }
+            else
+            {
                 this->comp->pos[1] = focusRegionStart2 - innerSize[1] / 2.0f;
+            }
         }
     }
     SetPos();
@@ -381,22 +383,22 @@ void UI_ScrollPane::Draw(float x, float y, float width, float height, float comp
     DrawPic(scrollbarX, y, UI_Component_g.scrollBarSize, UI_Component_g.scrollBarSize, NULL, sharedUiInfo.assets.scrollBarArrowUp);
     scrollbarY = y + UI_Component_g.scrollBarSize;
     scrollBarSize = innerSize[1] - (UI_Component_g.scrollBarSize + UI_Component_g.scrollBarSize);
-    if (UI_Component_g.scrollBarSize >= scrollBarSize)
-        thumbFiller = scrollBarSize;
-    else
+    if (scrollBarSize > UI_Component_g.scrollBarSize)
         thumbFiller = UI_Component_g.scrollBarSize;
+    else
+        thumbFiller = scrollBarSize;
     DrawPic(scrollbarX, scrollbarY, UI_Component_g.scrollBarSize, scrollBarSize, NULL, sharedUiInfo.assets.scrollBar);
     DrawPic(scrollbarX, scrollbarY + scrollBarSize, UI_Component_g.scrollBarSize, UI_Component_g.scrollBarSize, NULL, sharedUiInfo.assets.scrollBarArrowDown);
     thumbMaxSize = scrollBarSize - thumbFiller;
     thumbStart = this->comp->pos[1] / this->comp->size[1] * thumbMaxSize;
     thumbEnd = (this->comp->pos[1] + innerSize[1]) / this->comp->size[1] * thumbMaxSize + thumbFiller;
-    if (scrollBarSize < thumbEnd)
+    if (thumbEnd > scrollBarSize)
         thumbEnd = scrollBarSize;
     thumbPos[0] = scrollbarX;
     thumbPos[1] = y + UI_Component_g.scrollBarSize + thumbStart;
     thumbSize[0] = UI_Component_g.scrollBarSize;
     thumbSize[1] = thumbEnd - thumbStart;
-    DrawPic(scrollbarX, thumbPos[1], UI_Component_g.scrollBarSize, thumbSize[1], thumbColor, sharedUiInfo.assets.whiteMaterial);
+    DrawPic(scrollbarX, thumbPos[1], thumbSize[0], thumbSize[1], thumbColor, sharedUiInfo.assets.whiteMaterial);
     CheckMouseScroll(1, thumbPos, thumbSize, thumbMaxSize);
 
     if (horScroll)
@@ -406,22 +408,22 @@ void UI_ScrollPane::Draw(float x, float y, float width, float height, float comp
         DrawPicRotate(x, scrollbarY, UI_Component_g.scrollBarSize, UI_Component_g.scrollBarSize, NULL, sharedUiInfo.assets.scrollBarArrowUp);
         scrollbarX = x + UI_Component_g.scrollBarSize;
         scrollBarSize = innerSize[0] - (UI_Component_g.scrollBarSize + UI_Component_g.scrollBarSize);
-        if (UI_Component_g.scrollBarSize >= scrollBarSize)
-            thumbFiller = scrollBarSize;
-        else
+        if (scrollBarSize > UI_Component_g.scrollBarSize)
             thumbFiller = UI_Component_g.scrollBarSize;
+        else
+            thumbFiller = scrollBarSize;
         DrawPicRotate(scrollbarX, scrollbarY, scrollBarSize, UI_Component_g.scrollBarSize, NULL, sharedUiInfo.assets.scrollBar);
         DrawPicRotate(scrollbarX + scrollBarSize, scrollbarY, UI_Component_g.scrollBarSize, UI_Component_g.scrollBarSize, NULL, sharedUiInfo.assets.scrollBarArrowDown);
         thumbMaxSize = scrollBarSize - thumbFiller;
         thumbStart = this->comp->pos[0] / this->comp->size[0] * thumbMaxSize;
         thumbEnd = (this->comp->pos[0] + innerSize[0]) / this->comp->size[0] * thumbMaxSize + thumbFiller;
-        if (scrollBarSize < thumbEnd)
+        if (thumbEnd > scrollBarSize)
             thumbEnd = scrollBarSize;
         thumbPos[0] = x + UI_Component_g.scrollBarSize + thumbStart;
         thumbPos[1] = scrollbarY;
         thumbSize[0] = thumbEnd - thumbStart;
         thumbSize[1] = UI_Component_g.scrollBarSize;
-        DrawPicRotate(thumbPos[0], scrollbarY, thumbSize[0], UI_Component_g.scrollBarSize, thumbColor, sharedUiInfo.assets.whiteMaterial);
+        DrawPicRotate(thumbPos[0], thumbPos[1], thumbSize[0], thumbSize[1], thumbColor, sharedUiInfo.assets.whiteMaterial);
         CheckMouseScroll(0, thumbPos, thumbSize, thumbMaxSize);
     }
 }
@@ -619,7 +621,7 @@ UI_Component *UI_ScrollPane::GetCompAtLocation(float *point)
         GetInnerSize(innerSize);
         if (point[0] < innerSize[0] && point[1] < innerSize[1])
         {
-            Vector2Add(this->comp->pos, point, point);
+            Vector2Add(point, this->comp->pos, point);
             return this->comp->GetCompAtLocation(point);
         }
     }
@@ -758,31 +760,26 @@ void UI_VerticalDivider::Draw(float x, float y, float width, float height, float
 
     if (!this->topComp)
     {
-        if (!this->bottomComp)
+        if (this->bottomComp)
+            this->bottomComp->Draw(x, y, width, height, 0.0f, 0.0f);
+        return;
+    }
+    if (this->bottomComp)
+    {
+        if (this->posY <= compY)
+        {
+            this->bottomComp->Draw(x, y, width, height, 0.0f, 0.0f);
             return;
-        this->bottomComp->Draw(x, y, width, height, 0.0f, 0.0f);
-        return;
+        }
+        topHeight = this->posY - compY;
+        if (topHeight < height)
+        {
+            this->bottomComp->Draw(x, y + this->posY, width, height - topHeight, 0.0f, 0.0f);
+            DrawTop(x, y, width, topHeight);
+            return;
+        }
     }
-    if (!this->bottomComp)
-    {
-        DrawTop(x, y, width, height);
-        return;
-    }
-    if (compY >= this->posY)
-    {
-        this->bottomComp->Draw(x, y, width, height, 0.0f, 0.0f);
-        return;
-    }
-    topHeight = this->posY - compY;
-    if (height > topHeight)
-    {
-        this->bottomComp->Draw(x, y + this->posY, width, height - topHeight, 0.0f, 0.0f);
-        DrawTop(x, y, width, topHeight);
-    }
-    else
-    {
-        DrawTop(x, y, width, height);
-    }
+    DrawTop(x, y, width, height);
 }
 
 bool UI_VerticalDivider::KeyEvent(float *point, int key)
@@ -810,7 +807,9 @@ UI_Component *UI_VerticalDivider::GetCompAtLocation(float *point)
     }
     else
     {
-        if (!this->bottomComp || point[1] < this->posY)
+        if (!this->bottomComp)
+            return this->topComp->GetCompAtLocation(point);
+        if (point[1] < this->posY)
             return this->topComp->GetCompAtLocation(point);
         point[1] -= this->posY;
     }
