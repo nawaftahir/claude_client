@@ -378,3 +378,23 @@
 4aa630	erase	callalign
 424660	randomf	callalign
 4ea200	scal_quant	callalign
+00406670	Con_DrawOutputScrollBar	located	# sim 0.953
+00406870	Con_DrawOutputVersion	located	# sim 0.739
+0040e590	Client_SendVoiceData	located	# sim 0.974
+0040e1a0	CL_PacketEvent	located	# sim 0.972
+0044e4f0	SND_Restore3DChannel	located	# sim 0.986
+0044e820	SND_Restore2DChannel	located	# sim 0.991
+00470ff0	EmitNormalThread	located	# sim 0.763
+004ba0f0	CG_SubtitlePrint	located	# sim 0.685
+004bf210	CG_DrawPlayerCompassBack	located	# sim 0.694
+004bdc50	CG_DrawPlayerWeaponName	located	# sim 0.877
+004bdda0	CG_DrawPlayerWeaponNameBack	located	# sim 0.870
+00413170	SCR_DrawDemoRecording	located	# sim 0.867
+004d33f0	CG_DrawScoreboard_Objective	located	# sim 0.902
+004d39d0	CG_DrawScoreboard_ListBanner	located	# sim 0.950
+0052df40	UI_DeletePlayerProfile	located	# sim 0.932
+00534130	Menu_ClearFocus	located	# sim 0.919
+00535bf0	Item_SetFocus	located	# sim 0.860
+005364d0	Item_MouseEnter	located	# sim 0.821
+005384d0	Menus_HandleOOBClick	located	# sim 0.817
+004068d0	Con_DrawOuputWindow	located	# sim 0.785
