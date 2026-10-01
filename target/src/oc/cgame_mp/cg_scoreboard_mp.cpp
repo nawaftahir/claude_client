@@ -473,10 +473,7 @@ float CG_DrawScoreboard_ListBanner(const float *color, float y, float listWidth,
         {
             if (info[i].type == LCT_SCORE || info[i].type == LCT_PING)
             {
-                if (info[i].type == LCT_SCORE)
-                    text = va("%i", cg->teamScores[team]);
-                else
-                    text = va("%i", cg->teamPings[team]);
+                text = va("%i", info[i].type == LCT_SCORE ? cg->teamScores[team] : cg->teamPings[team]);
                 if (info[i].iAlignment == 2)
                     xAdj = listWidth * info[i].fWidth - UI_TextWidth(text, 0, font, 0.32f);
                 else
@@ -496,6 +493,7 @@ float CG_DrawClientScore(const float *color, float y, const score_t *score, floa
     int fieldCount;
     MaterialHandle material;
     float backColor[4];
+    float textColor[4];
     FontHandle listFont;
     const char *string;
     float scale;
@@ -518,19 +516,19 @@ float CG_DrawClientScore(const float *color, float y, const score_t *score, floa
     if (score->client == cg->clientNum)
     {
         material = CL_RegisterMaterialNoMip("white", 7);
-        backColor[3] = color[3] * 0.2f;
         backColor[0] = color[0];
         backColor[1] = color[1];
         backColor[2] = color[2];
+        backColor[3] = color[3] * 0.2f;
         UI_DrawHandlePic(129.0f, y, listWidth, 12.0f, 0, 0, backColor, material);
     }
     else if (highlight)
     {
         material = CL_RegisterMaterialNoMip("black", 7);
-        backColor[3] = color[3] * 0.15f;
         backColor[0] = color[0];
         backColor[1] = color[1];
         backColor[2] = color[2];
+        backColor[3] = color[3] * 0.15f;
         UI_DrawHandlePic(129.0f, y, listWidth, 12.0f, 0, 0, backColor, material);
     }
 
@@ -606,11 +604,11 @@ float CG_DrawClientScore(const float *color, float y, const score_t *score, floa
             xAdj = listWidth * info[i].fWidth - UI_TextWidth(string, 0x7fffffff, listFont, scale);
         else
             xAdj = 0.0f;
-        backColor[0] = 1.0f;
-        backColor[1] = 1.0f;
-        backColor[2] = 1.0f;
-        backColor[3] = color[3];
-        UI_DrawText(string, 0x7fffffff, listFont, x + xAdj, y + 10.08f, 0, 0, scale, backColor, style);
+        textColor[0] = 1.0f;
+        textColor[1] = 1.0f;
+        textColor[2] = 1.0f;
+        textColor[3] = color[3];
+        UI_DrawText(string, 0x7fffffff, listFont, x + xAdj, y + 10.08f, 0, 0, scale, textColor, style);
     }
     return y + 12.0f;
 }

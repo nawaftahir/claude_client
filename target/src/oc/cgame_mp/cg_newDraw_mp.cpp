@@ -929,7 +929,7 @@ void CG_DrawPlayerCompassBack(const rectDef_t *rect, MaterialHandle material, ve
 
     CL_DrawStretchPic(
         rect->x,
-        rect->y - (cg_hudCompassSize->current.value - 1.0f) * rect->h,
+        rect->y - rect->h * (cg_hudCompassSize->current.value - 1.0f),
         rect->w * cg_hudCompassSize->current.value,
         rect->h * cg_hudCompassSize->current.value,
         rect->horzAlign,
