@@ -301,8 +301,8 @@
 52db50	UI_GetPlayerProfileListIndexFromName	fix	# callalign 10-01
 52dc40	UI_SortPlayerProfiles	fix	# callalign 10-01
 53a290	BindingIDFromName	fix	# callalign 10-01
-4116a0	CL_DrawString	fix	# callalign 10-01
 4376c0	Dvar_SetFromStringByName	fix	# callalign 10-01
 40a690	Key_SetBinding	fix	# callalign 10-01
 44a350	MemFile_ReadFloat	fix	# callalign 10-01
 4aec40	RoQReset	fix	# callalign 10-01
+0	CL_DrawString	drop	# 0x4116a0 = CL_ProfDraw (PINNED), callalign wrong
