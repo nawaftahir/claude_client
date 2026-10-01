@@ -14,11 +14,12 @@ extern int FS_Write(const void *buffer, int len, fileHandle_t h);
 extern void FS_FCloseFile(fileHandle_t h);
 extern void CL_SortGlobalServers(void);
 
-extern byte *cls_ptr_195ecac;
+extern clientStatic_t cls;
 
-#define CLS (*(byte **)&cls_ptr_195ecac)
+#define CLS ((byte *)&cls)
 
 #define MAX_FAVORITESERVERS 128
+#define MAX_OTHER_SERVERS 128
 #define MAX_GLOBALSERVERS 20000
 
 int LAN_AddServer(int source, const char *name, const char *address);
@@ -108,42 +109,27 @@ void LAN_RemoveServer(int source, const char *addr)
 
 void LAN_GetServerAddressString(int source, int n, char *buf, int buflen)
 {
-    byte *base;
-    netadr_t adr;
-
     switch (source) {
     case 0:
-        if ((unsigned int)n > 127) {
-            break;
+        if (n >= 0 && n < MAX_OTHER_SERVERS) {
+            I_strncpyz(buf, NET_AdrToString(cls.localServers[n].adr), buflen);
+            return;
         }
-        base = CLS;
-        adr = (((clientStatic_t *)(base))->localServers)[n].adr;
-        I_strncpyz(buf, NET_AdrToString(adr), buflen);
-        return;
-
+        break;
     case 1:
-        if (n < 0) {
-            break;
+        if (n >= 0 && n < cls.numglobalservers) {
+            I_strncpyz(buf, NET_AdrToString(cls.globalServers[n].adr), buflen);
+            return;
         }
-        base = CLS;
-        if (n >= (((clientStatic_t *)(base))->numglobalservers)) {
-            break;
-        }
-        adr = (((clientStatic_t *)(base))->globalServers)[n].adr;
-        I_strncpyz(buf, NET_AdrToString(adr), buflen);
-        return;
-
+        break;
     case 2:
-        if ((unsigned int)n > 127) {
-            break;
+        if (n >= 0 && n < MAX_OTHER_SERVERS) {
+            I_strncpyz(buf, NET_AdrToString(cls.favoriteServers[n].adr), buflen);
+            return;
         }
-        base = CLS;
-        adr = (((clientStatic_t *)(base))->favoriteServers)[n].adr;
-        I_strncpyz(buf, NET_AdrToString(adr), buflen);
-        return;
+        break;
     }
-
-    *buf = '\0';
+    buf[0] = 0;
 }
 
 void LAN_LoadCachedServers(void)
