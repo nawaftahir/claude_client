@@ -148,7 +148,7 @@ static inline __attribute__((always_inline)) short Con_FillChar(void)
 static void Con_UpdateMessageWindowLine(MessageWindow *msgwnd, qboolean linefeed, int duration);
 static void Con_UpdateMessageWindow(print_msg_type_t type, qboolean linefeed, int duration);
 static void Con_Linefeed(print_msg_type_t type, int duration);
-static unsigned char CL_ConsolePrint_AddLine(print_msg_type_t type, const char *txt, int duration, int linewidth, unsigned char color);
+static int CL_ConsolePrint_AddLine(print_msg_type_t type, const char *txt, int duration, int linewidth, int color);
 static void Con_UpdateMessageWindowLine_impl(MessageWindow *msgwnd, qboolean linefeed, int duration);
 void Con_AutoCompleteFromList(const char **strings, int stringCount, const char *prefix, char *completed, int sizeofCompleted);
 static void ConDraw_Box(float x, float y, float w, float h, const vec_t *color);
@@ -1044,7 +1044,7 @@ static void Con_OneTimeInit(void)
     con.initialized = 1;
 }
 
-static unsigned char CL_ConsolePrint_AddLine(print_msg_type_t type, const char *txt, int duration, int linewidth, unsigned char color)
+static int CL_ConsolePrint_AddLine(print_msg_type_t type, const char *txt, int duration, int linewidth, int color)
 {
     int c;
     int l;
@@ -1127,7 +1127,7 @@ static unsigned char CL_ConsolePrint_AddLine(print_msg_type_t type, const char *
 void CL_ConsolePrint(print_msg_type_t type, const char *txt, int duration, int linewidth)
 {
     const dvar_t *noPrint;
-    unsigned char color;
+    int color;
 
     noPrint = cl_noprint;
     if (!noPrint)
