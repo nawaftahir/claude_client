@@ -2184,8 +2184,8 @@ static void CG_DrawSay(void)
 
 unsigned int CG_Draw2D(void)
 {
-    qboolean drawHudMenus;
-    qboolean drawHudElems;
+    bool drawHudMenus;
+    bool drawHudElems;
     qboolean drewScoreboard;
 
     if (cg->cubemapShot)
