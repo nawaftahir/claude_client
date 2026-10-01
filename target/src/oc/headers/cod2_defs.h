@@ -5898,14 +5898,7 @@ struct Tuple {
     UINT16 v[3];
     UINT32 Score;
 };
-#if !COD2_FEATURE_SCRIPT_DEBUGGER
-
-struct UI_Component {
-    int _vptr$UI_Component;
-    vec2_t size;
-    int selectionParent;
-};
-#endif
+// UI_Component class hierarchy is declared in ui/ui_component.cpp.
 
 struct UI_Component_data_t {
     float screenWidth;
@@ -5920,16 +5913,6 @@ struct UI_Component_data_t {
     int consoleReason;
     char findText[128];
 };
-#if !COD2_FEATURE_SCRIPT_DEBUGGER
-
-struct UI_LinesComponent {
-    int selectedLine;
-    Bool focusOnSelectedLine;
-    Bool focusOnSelectedLineUser;
-    int numLines;
-    vec2_t pos;
-};
-#endif
 
 struct UTCDateTime {
     UInt16 highSeconds;

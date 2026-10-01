@@ -90,20 +90,7 @@ struct SourceLookup {
     int type;
 };
 
-struct UI_ScrollPane {
-    UI_LinesComponent *comp;
-    Bool forceHorScoll;
-    vec2_t mouseHeldScale;
-    vec2_t mouseHeldPos;
-    vec2_t mouseHeldCompPos;
-    Bool mouseWasDown[2];
-};
-
-struct UI_VerticalDivider {
-    UI_ScrollPane *topComp;
-    UI_ScrollPane *bottomComp;
-    float posY;
-};
+// UI_ScrollPane / UI_VerticalDivider are declared in ui/ui_component.cpp.
 
 struct VariableStackBuffer {
     const char *pos;
