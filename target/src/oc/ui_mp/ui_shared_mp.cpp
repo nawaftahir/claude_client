@@ -2576,78 +2576,52 @@ void Item_Slider_Paint(displayContextDef_t *dc, itemDef_t *item)
 
 void Item_Bind_Paint(displayContextDef_t *dc, itemDef_t *item)
 {
-    byte *it = (byte *)item;
-    byte *parent = (byte *)item->parent;
-    float newColor[4];
-    char bindText[0x100];
-    const char *drawText;
-    const char *bindName;
-    float textX;
-    float textY;
-    FontHandle font;
+    vec4_t newColor;
+    vec4_t lowLight;
+    char nameBind[128];
+    float value;
     int maxChars;
-    int i;
+    menuDef_t *parent;
+    editFieldDef_t *editPtr;
 
-    editFieldDef_t *editPtr = Item_GetEditFieldDef(item);
-    if (!editPtr || !editPtr->maxPaintChars)
-        return;
-    maxChars = editPtr->maxPaintChars;
+    parent = item->parent;
+    editPtr = Item_GetEditFieldDef(item);
+    maxChars = 0x7fffffff;
+    if (editPtr && editPtr->maxPaintChars)
+        maxChars = editPtr->maxPaintChars;
 
-    bindName = item->dvar;
-    if (!bindName || !bindName[0])
-        return;
+    value = item->dvar ? (float)atof(Dvar_GetVariantString(item->dvar)) : 0.0f;
 
-    if (g_waitingForKey && g_bindItem == item) {
-        drawText = UI_SafeTranslateString("EXE_KEYWAIT");
-        newColor[0] = 0.8f;
-        newColor[1] = 0.0f;
-        newColor[2] = 0.0f;
-        newColor[3] = 0.8f;
-        goto draw;
-    }
-
-    BindingFromName(bindName, bindText);
-    drawText = bindText;
-
-    int flags = ((itemDef_t *)it)->window.dynamicFlags[0];
-    if ((flags & 4) && (flags & 2)) {
-        float lowLight[4];
-        for (i = 0; i < 4; i++)
-            lowLight[i] = *(float *)(((char *)parent + offsetof(menuDef_t, focusColor[0])) + i * 4) * 0.8f;
-
-        int curTime = dc->realTime;
-        float t = sinf((float)(curTime / 22));
-        t = t * 0.5f + 0.5f;
-
-        for (i = 0; i < 4; i++) {
-            float hi = *(float *)(((char *)parent + offsetof(menuDef_t, focusColor[0])) + i * 4);
-            float lo = lowLight[i];
-            newColor[i] = hi + (lo - hi) * t;
-            if (newColor[i] < 0.0f)
-                newColor[i] = 0.0f;
-            else if (newColor[i] > 1.0f)
-                newColor[i] = 1.0f;
+    if (Window_HasFocus(&item->window)) {
+        if (g_bindItem == item) {
+            lowLight[0] = 0.8f;
+            lowLight[1] = 0.0f;
+            lowLight[2] = 0.0f;
+            lowLight[3] = 0.8f;
+        } else {
+            lowLight[0] = parent->focusColor[0] * 0.8f;
+            lowLight[1] = parent->focusColor[1] * 0.8f;
+            lowLight[2] = parent->focusColor[2] * 0.8f;
+            lowLight[3] = parent->focusColor[3] * 0.8f;
         }
+        LerpColor(parent->focusColor, lowLight, newColor, (sin((float)(dc->realTime / 75)) + 1.0f) * 0.5f);
     } else {
-        for (i = 0; i < 4; i++)
-            newColor[i] = ((itemDef_t *)it)->window.foreColor[i];
+        memcpy(newColor, item->window.foreColor, sizeof(vec4_t));
     }
 
-draw:;
-
-    byte *textRect = (byte *)((itemDef_t *)it)->textRect;
-    if (((itemDef_t *)it)->text) {
+    if (item->text) {
         Item_Text_Paint(dc, item);
-
-        textX = (((itemDef_s*)(it))->textRect[0].x) + (((itemDef_s*)(it))->textRect[0].w) + 8.0f;
+        BindingFromName(item->dvar, nameBind);
+        UI_DrawText(nameBind, maxChars, UI_GetFontHandle(item->fontEnum, item->textscale),
+                    item->textRect[0].x + item->textRect[0].w + 8.0f, item->textRect[0].y,
+                    item->window.rect[0].horzAlign, item->window.rect[0].vertAlign,
+                    item->textscale, newColor, item->textStyle);
     } else {
-        textX = (((itemDef_s*)(it))->textRect[0].x);
+        UI_DrawText("FIXME", maxChars, UI_GetFontHandle(item->fontEnum, item->textscale),
+                    item->textRect[0].x, item->textRect[0].y,
+                    item->window.rect[0].horzAlign, item->window.rect[0].vertAlign,
+                    item->textscale, newColor, item->textStyle);
     }
-    textY = (((rectDef_t*)(textRect))->y);
-    font = UI_GetFontHandle(((itemDef_t *)it)->fontEnum, ((itemDef_t *)it)->textscale);
-    UI_DrawText(drawText, maxChars, font, textX, textY,
-                (((rectDef_t*)(it))->horzAlign), (((rectDef_t*)(it))->vertAlign),
-                ((itemDef_t *)it)->textscale, newColor, (((itemDef_s*)(it))->textStyle));
 }
 
 void Item_OwnerDraw_Paint(displayContextDef_t *dc, itemDef_t *item)
