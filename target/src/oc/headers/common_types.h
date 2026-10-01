@@ -1098,7 +1098,10 @@ struct scr_localVar_t;
 struct script_s;
 struct scrollInfo_s;
 struct searchpath_s;
-struct serverAddress_t;
+struct serverAddress_t {
+    byte ip[4];
+    unsigned short port;
+};
 struct serverFilter_s;
 struct serverInfo_t;
 struct serverStatic_t;

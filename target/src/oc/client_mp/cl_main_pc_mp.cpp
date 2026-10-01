@@ -1,5 +1,8 @@
 #include "common_types.h"
 #include "imports.h"
+#define MAX_GLOBALSERVERS 20000
+
+extern "C" __declspec(dllimport) unsigned short __stdcall ntohs(unsigned short netshort);
 
 extern int qport;
 extern ping_t cl_pinglist[];
@@ -685,188 +688,126 @@ void CL_GlobalServers_f(void)
     NET_OutOfBandPrint(NS_SERVER, to, command);
 }
 
+static void CL_InitServerInfo(serverInfo_t *server, netadr_t adr)
+{
+    server->adr = adr;
+    server->clients = 0;
+    server->hostName[0] = '\0';
+    server->mapName[0] = '\0';
+    server->maxClients = 0;
+    server->maxPing = 0;
+    server->minPing = 0;
+    server->ping = -1;
+    server->game[0] = '\0';
+    server->gameType[0] = '\0';
+    server->netType = 0;
+    server->allowAnonymous = 0;
+    server->dirty = 1;
+    server->requestCount = 0;
+}
+
+// Original name unknown.
+static int CL_RefreshKnownGlobalServer(netadr_t adr)
+{
+    int low;
+    int high;
+    int mid;
+    int cmp;
+
+    low = 0;
+    high = cls.numglobalservers;
+    while (low < high) {
+        mid = (low + high) / 2;
+        cmp = NET_CompareAdrSigned(&adr, &cls.globalServers[mid].adr);
+        if (cmp < 0) {
+            high = mid;
+        } else if (cmp > 0) {
+            low = mid + 1;
+        } else {
+            while (--mid >= 0 && !NET_CompareAdrSigned(&adr, &cls.globalServers[mid].adr))
+                ;
+            mid++;
+            do {
+                CL_InitServerInfo(&cls.globalServers[mid], adr);
+                mid++;
+            } while (mid < cls.numglobalservers && !NET_CompareAdrSigned(&adr, &cls.globalServers[mid].adr));
+            return 1;
+        }
+    }
+    return 0;
+}
+
 void CL_ServersResponsePacket(netadr_t from, msg_t *msg)
 {
+    int i, count, numservers;
+    serverAddress_t addresses[256];
     byte *buffptr;
     byte *buffend;
-    int numservers;
-    byte servers[256][6];
-    byte ip[4];
-    unsigned short port;
     netadr_t adr;
-    int i;
-    int count;
-    clientStatic_t *cls;
-    int low, high, mid;
-    int compare;
 
     Com_PumpMessageLoop();
+    Com_Printf("CL_ServersResponsePacket\n");
 
-    Com_Printf((const char *)"CL_ServersResponsePacket\n");
-
-    cls = (&::cls);
-    cls->waitglobalserverresponse = 0;
-
-    buffptr = msg->data;
-    buffend = msg->data + msg->cursize;
+    cls.waitglobalserverresponse = 0;
 
     numservers = 0;
+    buffptr = msg->data;
+    buffend = buffptr + msg->cursize;
+    while (buffptr + 1 < buffend) {
+        do {
+            if (*buffptr++ == '\\')
+                break;
+        } while (buffptr < buffend);
 
-    while ((unsigned int)(buffptr + 1) < (unsigned int)buffend) {
-        if (*buffptr == '\\')
+        if (buffptr >= buffend - 6)
             break;
-        buffptr++;
-    }
 
-    while ((unsigned int)(buffptr + 1) < (unsigned int)(buffend - 6)) {
+        addresses[numservers].ip[0] = *buffptr++;
+        addresses[numservers].ip[1] = *buffptr++;
+        addresses[numservers].ip[2] = *buffptr++;
+        addresses[numservers].ip[3] = *buffptr++;
 
-        ip[0] = buffptr[1];
-        ip[1] = buffptr[2];
-        ip[2] = buffptr[3];
-        ip[3] = buffptr[4];
-
-        {
-            unsigned short portVal;
-            portVal = ((unsigned short)buffptr[5] << 8) | (unsigned short)buffptr[6];
-
-            port = (unsigned short)((portVal >> 8) | (portVal << 8));
-        }
-
-        buffptr += 7;
-
-        servers[numservers][0] = ip[0];
-        servers[numservers][1] = ip[1];
-        servers[numservers][2] = ip[2];
-        servers[numservers][3] = ip[3];
-        *(unsigned short *)&servers[numservers][4] = port;
+        addresses[numservers].port = (*buffptr++) << 8;
+        addresses[numservers].port += *buffptr++;
+        addresses[numservers].port = ntohs(addresses[numservers].port);
 
         if (*buffptr != '\\')
             break;
 
-        Com_DPrintf((const char *)"server: %d ip: %d.%d.%d.%d:%d\n", numservers, ip[0], ip[1], ip[2], ip[3], (int)port);
+        Com_DPrintf("server: %d ip: %d.%d.%d.%d:%d\n", numservers,
+                    addresses[numservers].ip[0],
+                    addresses[numservers].ip[1],
+                    addresses[numservers].ip[2],
+                    addresses[numservers].ip[3],
+                    addresses[numservers].port);
 
         numservers++;
-        if (numservers == 256)
+        if (numservers >= 256)
             break;
 
-        if (buffptr[1] == 0x45 && buffptr[2] == 0x4f && buffptr[3] == 0x54)
+        if (buffptr[1] == 'E' && buffptr[2] == 'O' && buffptr[3] == 'T')
             break;
-
-        continue;
     }
 
-    cls = (&::cls);
-    count = cls->numglobalservers;
+    count = cls.numglobalservers;
+    for (i = 0; i < numservers && count < MAX_GLOBALSERVERS; i++) {
+        adr.type = NA_IP;
+        adr.ip[0] = addresses[i].ip[0];
+        adr.ip[1] = addresses[i].ip[1];
+        adr.ip[2] = addresses[i].ip[2];
+        adr.ip[3] = addresses[i].ip[3];
+        adr.port = addresses[i].port;
 
-    for (i = 0; i < numservers && count <= 0x4e1f; i++) {
-
-        ip[0] = servers[i][0];
-        ip[1] = servers[i][1];
-        ip[2] = servers[i][2];
-        ip[3] = servers[i][3];
-        port = *(unsigned short *)&servers[i][4];
-
-        adr.type = (netadrtype_t)(4);
-        adr.ip[0] = ip[0];
-        adr.ip[1] = ip[1];
-        adr.ip[2] = ip[2];
-        adr.ip[3] = ip[3];
-        adr.port = port;
-
-        cls = (&::cls);
-        high = cls->numglobalservers;
-        if (high > 0) {
-            low = 0;
-            while (low < high) {
-                cls = (&::cls);
-                mid = (low + high) / 2;
-                compare = NET_CompareAdrSigned(&adr, &cls->globalServers[mid].adr);
-                if (compare < 0) {
-                    high = mid;
-                } else if (compare > 0) {
-                    low = mid + 1;
-                } else {
-
-                    int j = mid;
-                    while (j - 1 >= 0) {
-                        if (NET_CompareAdrSigned(&adr, &cls->globalServers[j - 1].adr) != 0)
-                            break;
-                        j--;
-                    }
-
-                    {
-                        clientStatic_t *clsStatic;
-                        cls = (&::cls);
-                        clsStatic = (clientStatic_t *)cls;
-                        while (1) {
-                            serverInfo_t *srv = &clsStatic->globalServers[j];
-                            srv->adr.type = adr.type;
-                            srv->adr.ip[0] = adr.ip[0];
-                            srv->adr.ip[1] = adr.ip[1];
-                            srv->adr.ip[2] = adr.ip[2];
-                            srv->adr.ip[3] = adr.ip[3];
-                            srv->adr.port = adr.port;
-                            srv->clients = 0;
-                            srv->hostName[0] = '\0';
-                            srv->mapName[0] = '\0';
-                            srv->maxClients = 0;
-                            srv->minPing = 0;
-                            srv->maxPing = 0;
-                            srv->ping = -1;
-                            srv->game[0] = '\0';
-                            srv->gameType[0] = '\0';
-                            srv->netType = 0;
-                            srv->allowAnonymous = 0;
-                            srv->dirty = 1;
-                            srv->requestCount = 0;
-
-                            j++;
-                            if (j >= cls->numglobalservers)
-                                break;
-                            if (NET_CompareAdrSigned(&adr, &clsStatic->globalServers[j].adr) != 0) {
-                                cls = (&::cls);
-                                break;
-                            }
-                        }
-                    }
-                    goto next_server;
-                }
-            }
-            cls = (&::cls);
-        }
-
-        {
-            serverInfo_t *srv = &cls->globalServers[count];
-            srv->adr.type = (netadrtype_t)(4);
-            srv->adr.ip[0] = ip[0];
-            srv->adr.ip[1] = ip[1];
-            srv->adr.ip[2] = ip[2];
-            srv->adr.ip[3] = ip[3];
-            srv->adr.port = port;
-            srv->clients = 0;
-            srv->hostName[0] = '\0';
-            srv->mapName[0] = '\0';
-            srv->maxClients = 0;
-            srv->minPing = 0;
-            srv->maxPing = 0;
-            srv->ping = -1;
-            srv->game[0] = '\0';
-            srv->gameType[0] = '\0';
-            srv->netType = 0;
-            srv->allowAnonymous = 0;
-            srv->dirty = 1;
-            srv->requestCount = 0;
+        if (!CL_RefreshKnownGlobalServer(adr)) {
+            CL_InitServerInfo(&cls.globalServers[count], adr);
             count++;
         }
-
-    next_server:;
     }
 
-    cls->numglobalservers = count;
-    qsort(cls->globalServers, count, sizeof(serverInfo_t), CL_CompareAdrSigned);
+    cls.numglobalservers = count;
+    CL_SortGlobalServers();
 
-    Com_Printf((const char *)"%d servers parsed (total %d)\n", numservers, count);
-
+    Com_Printf("%d servers parsed (total %d)\n", numservers, count);
 }
 
 ping_t *CL_GetFreePing(void)
