@@ -132,134 +132,75 @@ void LAN_GetServerAddressString(int source, int n, char *buf, int buflen)
     buf[0] = 0;
 }
 
+// Original name unknown.
+static qboolean LAN_ReadServerCache(fileHandle_t fileIn)
+{
+    int version;
+    int size;
+
+    if (FS_Read(&version, sizeof(version), fileIn) != sizeof(version))
+        return 0;
+    if (version != 1)
+        return 0;
+    if (FS_Read(&cls.numglobalservers, sizeof(int), fileIn) != sizeof(int)
+        || (unsigned int)cls.numglobalservers >= MAX_GLOBALSERVERS)
+        return 0;
+    if (FS_Read(&cls.numfavoriteservers, sizeof(int), fileIn) != sizeof(int)
+        || (unsigned int)cls.numfavoriteservers >= MAX_FAVORITESERVERS)
+        return 0;
+    if (FS_Read(&size, sizeof(size), fileIn) != sizeof(size)
+        || size != sizeof(cls.globalServers) + sizeof(cls.favoriteServers))
+        return 0;
+    if (FS_Read(cls.globalServers, sizeof(cls.globalServers), fileIn) != sizeof(cls.globalServers))
+        return 0;
+    return FS_Read(cls.favoriteServers, sizeof(cls.favoriteServers), fileIn) == sizeof(cls.favoriteServers);
+}
+
 void LAN_LoadCachedServers(void)
 {
     fileHandle_t fileIn;
-    int version;
-    int size;
-    int success;
-    byte *base;
+    qboolean success;
 
-    if (!FS_SV_FOpenFileRead("servercache.dat", &fileIn)) {
-        base = CLS;
-        (((clientStatic_t *)(base))->numglobalservers) = 0;
-        (((clientStatic_t *)(base))->numfavoriteservers) = 0;
-        return;
+    if (FS_SV_FOpenFileRead("servercache.dat", &fileIn)) {
+        success = LAN_ReadServerCache(fileIn);
+        FS_FCloseFile(fileIn);
+        if (success) {
+            CL_SortGlobalServers();
+            return;
+        }
     }
-
-    success = 0;
-
-    if (FS_Read(&version, 4, fileIn) != 4) {
-        goto done;
-    }
-    if (version != 1) {
-        goto done;
-    }
-
-    base = CLS;
-
-    if (FS_Read(&(((clientStatic_t *)(base))->numglobalservers), 4, fileIn) != 4) {
-        goto done;
-    }
-    if ((unsigned int)(((clientStatic_t *)(base))->numglobalservers) > 19999) {
-        goto done;
-    }
-
-    if (FS_Read(&(((clientStatic_t *)(base))->numfavoriteservers), 4, fileIn) != 4) {
-        goto done;
-    }
-    if ((unsigned int)(((clientStatic_t *)(base))->numfavoriteservers) > 127) {
-        goto done;
-    }
-
-    if (FS_Read(&size, 4, fileIn) != 4) {
-        goto done;
-    }
-    if (size != 0x29c500) {
-        goto done;
-    }
-
-    if (FS_Read((((clientStatic_t *)(base))->globalServers), 0x298100, fileIn) != 0x298100) {
-        goto done;
-    }
-
-    if (FS_Read((((clientStatic_t *)(base))->favoriteServers), 0x4400, fileIn) != 0x4400) {
-        goto done;
-    }
-
-    success = 1;
-
-done:
-    FS_FCloseFile(fileIn);
-    if (!success) {
-        base = CLS;
-        (((clientStatic_t *)(base))->numglobalservers) = 0;
-        (((clientStatic_t *)(base))->numfavoriteservers) = 0;
-    } else {
-        CL_SortGlobalServers();
-    }
+    cls.numglobalservers = 0;
+    cls.numfavoriteservers = 0;
 }
 
 void LAN_SaveServersToCache(void)
 {
-    fileHandle_t fileOut;
+    int i;
     int version;
     int size;
-    byte *base;
-    int d;
-    serverInfo_t *servers;
+    fileHandle_t fileOut;
 
     fileOut = FS_SV_FOpenFileWrite("servercache.dat");
-    if (!fileOut) {
+    if (!fileOut)
         return;
-    }
 
     version = 1;
-    FS_Write(&version, 4, fileOut);
+    FS_Write(&version, sizeof(version), fileOut);
 
-    base = CLS;
-    servers = (((clientStatic_t *)(base))->globalServers);
-
-    d = (((clientStatic_t *)(base))->numglobalservers) - 1;
-    while (d >= 0) {
-        if (servers[d].requestCount > 2) {
-
-            (((clientStatic_t *)(base))->numglobalservers) -= 1;
-            memcpy(&servers[d], &servers[(((clientStatic_t *)(base))->numglobalservers)], sizeof(serverInfo_t));
-            d--;
-            continue;
+    for (i = cls.numglobalservers - 1; i >= 0; i--) {
+        if (cls.globalServers[i].requestCount >= 3
+            || (i && !NET_CompareAdrSigned(&cls.globalServers[i].adr, &cls.globalServers[i - 1].adr))) {
+            cls.numglobalservers--;
+            memcpy(&cls.globalServers[i], &cls.globalServers[cls.numglobalservers], sizeof(serverInfo_t));
         }
-
-        if (d == 0) {
-            break;
-        }
-        if (NET_CompareAdrSigned(&servers[d].adr, &servers[d - 1].adr) == 0) {
-
-            (((clientStatic_t *)(base))->numglobalservers) -= 1;
-            memcpy(&servers[d], &servers[(((clientStatic_t *)(base))->numglobalservers)], sizeof(serverInfo_t));
-            d--;
-            continue;
-        }
-
-        d--;
-        base = CLS;
-        servers = (((clientStatic_t *)(base))->globalServers);
     }
-
     CL_SortGlobalServers();
 
-    base = CLS;
-
-    FS_Write(&(((clientStatic_t *)(base))->numglobalservers), 4, fileOut);
-
-    FS_Write(&(((clientStatic_t *)(base))->numfavoriteservers), 4, fileOut);
-
-    size = 0x298100;
-    FS_Write(&size, 4, fileOut);
-
-    FS_Write((((clientStatic_t *)(base))->globalServers), 0x298100, fileOut);
-
-    FS_Write((((clientStatic_t *)(base))->favoriteServers), 0x4400, fileOut);
-
+    FS_Write(&cls.numglobalservers, sizeof(int), fileOut);
+    FS_Write(&cls.numfavoriteservers, sizeof(int), fileOut);
+    size = sizeof(cls.globalServers) + sizeof(cls.favoriteServers);
+    FS_Write(&size, sizeof(size), fileOut);
+    FS_Write(cls.globalServers, sizeof(cls.globalServers), fileOut);
+    FS_Write(cls.favoriteServers, sizeof(cls.favoriteServers), fileOut);
     FS_FCloseFile(fileOut);
 }
