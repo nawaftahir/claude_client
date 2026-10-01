@@ -10,19 +10,14 @@
 412880	CL_ParseGamestate	fix
 534a60	Menus_Close	fix
 0	CL_Popup	drop
-0	CL_DrawString	drop
 0	CL_DrawStretchPic	drop
 0	Con_CheckResize	drop
-0	CL_ConsoleFixPosition	drop
 0	CL_MouseMove	drop
 0	Message_Close	drop
 0	CL_ExecuteKeyBinding	drop
 0	CL_HandleEscapeKey	drop
 0	CL_ReferencedIWDList_f	drop
-0	CL_CheckForResend	drop
 0	CL_PacketEvent_real	drop
-0	CL_Netchan_PrintProfileStats	drop
-0	CM_SightTraceSphereThroughSphere	drop
 0	BoxOnPlaneSide	drop
 0	Com_ParseVolumeFalloffCurve	drop
 0	SND_UnpauseSounds	drop
@@ -33,13 +28,10 @@
 0	Scr_ParamError	drop
 0	DObjGetCreateParms	drop
 0	ROQ_DrawCinematicFromHandle	drop
-0	ROQ_RunCinematicFromHandle	drop
 0	CL_Rcon_f	drop
 0	CL_ServersResponsePacket	drop
-0	CL_ServerStatus	drop
 0	CL_ServerStatus_f	drop
 0	SND_Is3DChannelFree	drop
-0	SND_GetStreamChannelVolume	drop
 0	CG_DrawStringExt	drop
 0	CG_DrawSmallDevStringColor	drop
 0	CG_DrawBigDevString	drop
@@ -67,17 +59,14 @@
 0	CG_ResetEntity	drop
 0	CG_ProcessSnapshots	drop
 0	CL_ParseSnapshot	drop
-0	LAN_GetServerAddressString	drop
 0	Record_QueueAudioDataForEncoding	drop
 0	UI_OwnerDraw	drop
 0	UI_Refresh	drop
-0	Menu_CheckOnKey	drop
 0	Menu_SetPrevCursorItem	drop
 0	Item_YesNo_Paint	drop
 0	Item_Slider_Paint	drop
 0	Item_Bind_Paint	drop
 0	Script_SetFocus	drop
-0	Item_TextField_HandleKey	drop
 0	Item_GetCursorPosOffset	drop
 428e30	AxisToAngles	fix
 4bb450	CG_ConsoleCommand	fix
@@ -289,3 +278,31 @@
 5384d0	Menus_HandleOOBClick	fix	# sim 0.817
 4d4490	CG_DrawScoreboard_ScoresList	fix	# sim 0.887 + ourcg
 4068d0	Con_DrawOuputWindow	fix	# sim 0.785
+411700	CL_Netchan_PrintProfileStats	fix	# ourcg 10-01
+4b16f0	CL_ServerStatus	fix	# ourcg 10-01
+41c8f0	CM_SightTraceSphereThroughSphere	fix	# ourcg 10-01
+4b2240	LAN_GetServerAddressString	fix	# ourcg 10-01
+4b3ce0	SND_GetStreamChannelVolume	fix	# ourcg 10-01
+4eb8d0	BG_GetFirstEquippedOffhand	fix	# callalign 10-01
+4ebc00	BG_IsPlayerWeaponInSlot	fix	# callalign 10-01
+40d3c0	CL_CheckForResend	fix	# callalign 10-01
+404930	CL_ConsoleFixPosition	fix	# callalign 10-01
+435b50	Dvar_GetInt	fix	# callalign 10-01
+470f80	InitThread	fix	# callalign 10-01
+53aa70	Item_Bind_HandleKey	fix	# callalign 10-01
+537f20	Item_HandleKey	fix	# callalign 10-01
+5373e0	Item_TextField_HandleKey	fix	# callalign 10-01
+538770	Menu_CheckOnKey	fix	# callalign 10-01
+538280	Menu_CloseCinematics	fix	# callalign 10-01
+4960c0	MoveToFront	fix	# callalign 10-01
+4af430	ROQ_RunCinematicFromHandle	fix	# callalign 10-01
+44e1d0	SND_RestoreChanInfo	fix	# callalign 10-01
+462e20	Sys_QueEvent	fix	# callalign 10-01
+52db50	UI_GetPlayerProfileListIndexFromName	fix	# callalign 10-01
+52dc40	UI_SortPlayerProfiles	fix	# callalign 10-01
+53a290	BindingIDFromName	fix	# callalign 10-01
+4116a0	CL_DrawString	fix	# callalign 10-01
+4376c0	Dvar_SetFromStringByName	fix	# callalign 10-01
+40a690	Key_SetBinding	fix	# callalign 10-01
+44a350	MemFile_ReadFloat	fix	# callalign 10-01
+4aec40	RoQReset	fix	# callalign 10-01
