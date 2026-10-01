@@ -2325,15 +2325,15 @@ static void Item_List_Paint(displayContextDef_t *dc, itemDef_t *item, const char
 {
     vec4_t newColor;
     vec4_t lowLight;
-    menuDef_t *parent;
+    float *focusColor;
 
     if (Window_HasFocus(&item->window)) {
-        parent = item->parent;
-        lowLight[0] = parent->focusColor[0] * 0.8f;
-        lowLight[1] = parent->focusColor[1] * 0.8f;
-        lowLight[2] = parent->focusColor[2] * 0.8f;
-        lowLight[3] = parent->focusColor[3] * 0.8f;
-        LerpColor(parent->focusColor, lowLight, newColor, (sin((float)(dc->realTime / 75)) + 1.0f) * 0.5f);
+        focusColor = item->parent->focusColor;
+        lowLight[0] = item->parent->focusColor[0] * 0.8f;
+        lowLight[1] = focusColor[1] * 0.8f;
+        lowLight[2] = focusColor[2] * 0.8f;
+        lowLight[3] = focusColor[3] * 0.8f;
+        LerpColor(focusColor, lowLight, newColor, (sin((float)(dc->realTime / 75)) + 1.0f) * 0.5f);
     } else {
         memcpy(newColor, item->window.foreColor, sizeof(vec4_t));
     }
