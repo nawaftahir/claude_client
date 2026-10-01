@@ -915,12 +915,9 @@ Bool CG_CheckPlayerForLowClip(void)
 
 void CG_DrawPlayerCompassBack(const rectDef_t *rect, MaterialHandle material, vec_t *color)
 {
-    const dvar_t *compassSizeDvar;
     int duration;
     int displayStartTime;
     float alpha;
-    float sizeScale;
-    float height;
 
     duration = I_fround(1000.0f * hud_fade_compass->current.value);
     displayStartTime = cg->compassFadeTime;
@@ -930,14 +927,11 @@ void CG_DrawPlayerCompassBack(const rectDef_t *rect, MaterialHandle material, ve
         return;
     }
 
-    compassSizeDvar = cg_hudCompassSize;
-    sizeScale = compassSizeDvar->current.value;
-    height = rect->h;
     CL_DrawStretchPic(
         rect->x,
-        rect->y - height * (sizeScale - 1.0f),
-        rect->w * sizeScale,
-        height * sizeScale,
+        rect->y - (cg_hudCompassSize->current.value - 1.0f) * rect->h,
+        rect->w * cg_hudCompassSize->current.value,
+        rect->h * cg_hudCompassSize->current.value,
         rect->horzAlign,
         rect->vertAlign,
         0.0f,
@@ -988,10 +982,10 @@ static inline __attribute__((always_inline)) int CG_GetDrawWeaponIndex(void)
 
     ps = &cg->predictedPlayerState;
     weaponIndex = cg->weaponSelect;
-    if (weaponIndex < 0 || weaponIndex >= BG_GetNumWeapons() || !CG_PlayerOwnsWeapon(ps->weapons, weaponIndex)) {
-        weaponIndex = ps->weapon;
+    if (weaponIndex >= 0 && weaponIndex < BG_GetNumWeapons() && CG_PlayerOwnsWeapon(ps->weapons, weaponIndex)) {
+        return weaponIndex;
     }
-    return weaponIndex;
+    return ps->weapon;
 }
 
 static inline __attribute__((always_inline)) weaponInfo_t *CG_GetDrawWeaponInfo(int weaponIndex)

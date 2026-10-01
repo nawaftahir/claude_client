@@ -245,14 +245,12 @@ float CG_DrawScoreboard_Objective(const float *color, float y)
             {
                 textStart++;
             }
-            else if (*textStart == '\n')
+            else if (*textStart == '\n' || (*textStart == '\\' && textStart[1] == 'n'))
             {
-                textStart++;
-                y += 12.0f;
-            }
-            else if (*textStart == '\\' && textStart[1] == 'n')
-            {
-                textStart += 2;
+                if (*textStart == '\n')
+                    textStart++;
+                else
+                    textStart += 2;
                 y += 12.0f;
             }
             else
@@ -396,14 +394,19 @@ void CG_DrawScoreboard_GetTeamColor(int team, vec_t *color)
 {
     float savedAlpha = color[3];
 
-    if (team == 1) {
-        Dvar_GetUnpackedColorByName((const char *)"g_TeamColor_Axis", color);
-    } else if (team == 2) {
-        Dvar_GetUnpackedColorByName((const char *)"g_TeamColor_Allies", color);
-    } else {
+    switch (team)
+    {
+    case 1:
+        Dvar_GetUnpackedColorByName("g_TeamColor_Axis", color);
+        break;
+    case 2:
+        Dvar_GetUnpackedColorByName("g_TeamColor_Allies", color);
+        break;
+    default:
         color[0] = 1.0f;
         color[1] = 1.0f;
         color[2] = 1.0f;
+        break;
     }
 
     color[3] = savedAlpha;
@@ -486,30 +489,6 @@ float CG_DrawScoreboard_ListBanner(const float *color, float y, float listWidth,
     return y + h;
 }
 
-static __forceinline void DrawListString(const char *string, float x, float y, float width, int alignment, FontHandle font, float scale, int style, float alpha)
-{
-    float textColor[4];
-    float xAdj;
-
-    if (!*string)
-        return;
-
-    while (width < UI_TextWidth(string, 0x7fffffff, font, scale))
-        scale -= 0.02f;
-    if (scale < 0.16f)
-        style = 0;
-
-    if (alignment == 2)
-        xAdj = width - UI_TextWidth(string, 0x7fffffff, font, scale);
-    else
-        xAdj = 0.0f;
-    textColor[0] = 1.0f;
-    textColor[1] = 1.0f;
-    textColor[2] = 1.0f;
-    textColor[3] = alpha;
-    UI_DrawText(string, 0x7fffffff, font, x + xAdj, y + 10.08f, 0, 0, scale, textColor, style);
-}
-
 float CG_DrawClientScore(const float *color, float y, const score_t *score, float listWidth, int highlight, int *drawLine, int numDrawn)
 {
     clientInfo_t *ci;
@@ -519,6 +498,8 @@ float CG_DrawClientScore(const float *color, float y, const score_t *score, floa
     float backColor[4];
     FontHandle listFont;
     const char *string;
+    float scale;
+    int style;
     float xAdj;
     float x;
     int i;
@@ -534,18 +515,19 @@ float CG_DrawClientScore(const float *color, float y, const score_t *score, floa
         cg->firstLineVisible = numDrawn;
     cg->lastLineVisible = numDrawn;
 
-    if (score->client == cg->clientNum || highlight)
+    if (score->client == cg->clientNum)
     {
-        if (score->client != cg->clientNum)
-        {
-            material = CL_RegisterMaterialNoMip("black", 7);
-            backColor[3] = color[3] * 0.15f;
-        }
-        else
-        {
-            material = CL_RegisterMaterialNoMip("white", 7);
-            backColor[3] = color[3] * 0.2f;
-        }
+        material = CL_RegisterMaterialNoMip("white", 7);
+        backColor[3] = color[3] * 0.2f;
+        backColor[0] = color[0];
+        backColor[1] = color[1];
+        backColor[2] = color[2];
+        UI_DrawHandlePic(129.0f, y, listWidth, 12.0f, 0, 0, backColor, material);
+    }
+    else if (highlight)
+    {
+        material = CL_RegisterMaterialNoMip("black", 7);
+        backColor[3] = color[3] * 0.15f;
         backColor[0] = color[0];
         backColor[1] = color[1];
         backColor[2] = color[2];
@@ -612,7 +594,23 @@ float CG_DrawClientScore(const float *color, float y, const score_t *score, floa
         default:
             continue;
         }
-        DrawListString(string, x, y, listWidth * info[i].fWidth, info[i].iAlignment, listFont, 0.22f, 3, color[3]);
+        if (!*string)
+            continue;
+        scale = 0.22f;
+        style = 3;
+        while (UI_TextWidth(string, 0x7fffffff, listFont, scale) > listWidth * info[i].fWidth)
+            scale -= 0.02f;
+        if (scale < 0.16f)
+            style = 0;
+        if (info[i].iAlignment == 2)
+            xAdj = listWidth * info[i].fWidth - UI_TextWidth(string, 0x7fffffff, listFont, scale);
+        else
+            xAdj = 0.0f;
+        backColor[0] = 1.0f;
+        backColor[1] = 1.0f;
+        backColor[2] = 1.0f;
+        backColor[3] = color[3];
+        UI_DrawText(string, 0x7fffffff, listFont, x + xAdj, y + 10.08f, 0, 0, scale, backColor, style);
     }
     return y + 12.0f;
 }
@@ -719,9 +717,9 @@ void CG_DrawScoreboard_ScoresList(float alpha)
     numDrawn = 0;
     if (cg->teamPlayers[1] || cg->teamPlayers[2])
     {
-        if (cg->teamScores[2] < cg->teamScores[1])
+        if (cg->teamScores[1] > cg->teamScores[2])
             team = 1;
-        else if (cg->teamScores[2] > cg->teamScores[1])
+        else if (cg->teamScores[1] < cg->teamScores[2])
             team = 2;
         else
             team = lastLeadTeam;
