@@ -1672,18 +1672,19 @@ static void CG_DrawFlashDamage(void)
 
 static void CG_DrawDamageDirectionIndicators(void)
 {
-    float centerX;
     float centerY;
+    float centerX;
     float zoom;
     float halfWidth;
     float height;
     float radius;
-    vec2_t xy[4];
-    vec4_t color;
-    viewDamage_t *damage;
-    int t;
+    float xy[4][2];
+    float color[4];
+    int slot;
     int maxTime;
     float angle;
+    int t;
+    float alpha;
 
     if (!cg->nextSnap)
         return;
@@ -1701,8 +1702,6 @@ static void CG_DrawDamageDirectionIndicators(void)
         centerX = 320.0f;
         centerY = 240.0f;
     }
-    CalcScreenX(&centerX, 0);
-    CalcScreenY(&centerY, 0);
 
     halfWidth = cg_hudDamageIconWidth->current.value * 0.5f;
     height = cg_hudDamageIconHeight->current.value;
@@ -1715,22 +1714,22 @@ static void CG_DrawDamageDirectionIndicators(void)
     xy[2][1] = radius;
     xy[3][0] = halfWidth;
     xy[3][1] = radius;
-
     color[0] = 1.0f;
     color[1] = 1.0f;
     color[2] = 1.0f;
     color[3] = 1.0f;
+    CalcScreenX(&centerX, 0);
+    CalcScreenY(&centerY, 0);
 
-    for (damage = cg->viewDamage; damage < &cg->viewDamage[8]; damage++)
+    for (slot = 0; slot < 8; slot++)
     {
-        maxTime = damage->duration;
-        t = cg->time - damage->time;
+        maxTime = cg->viewDamage[slot].duration;
+        t = cg->time - cg->viewDamage[slot].time;
         if (t > 0 && t < maxTime)
         {
-            angle = vectoyaw(cg->refdef.viewaxis[0]) - damage->yaw;
-            color[3] = 2.0f - ((float)t + (float)t) / (float)maxTime;
-            if (color[3] - 1.0f >= 0.0f)
-                color[3] = 1.0f;
+            angle = vectoyaw(cg->refdef.viewaxis[0]) - cg->viewDamage[slot].yaw;
+            alpha = 2.0f - ((float)t + (float)t) / maxTime;
+            color[3] = alpha - 1.0f >= 0.0f ? 1.0f : alpha;
             CG_DrawRotatedQuadPic(centerX, centerY, xy, angle, color, cgs->media.damageMaterial);
         }
     }
