@@ -1987,10 +1987,17 @@ int Com_AddToString( const char *add, char *msg, int len, int maxlen, int mayAdd
 }
 
 
-// the dedicated build is not localized
+extern dvar_t *loc_language;
+
 char Com_GetDecimalDelimiter( void )
 {
-	return '.';
+	int lang;
+
+	lang = loc_language->current.integer;
+	if ( lang == 1 || lang == 2 || lang == 3 || lang == 4 || lang == 6 || lang == 7 )
+		return ',';
+	else
+		return '.';
 }
 
 /*
