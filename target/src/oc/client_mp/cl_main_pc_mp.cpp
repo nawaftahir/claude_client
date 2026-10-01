@@ -26,6 +26,7 @@ COD2_ASSERT_FIELD(serverStatusRequest_t, retrieved, 0x2024);
 COD2_ASSERT_SIZE(serverStatusRequest_t, 0x2028);
 
 serverStatusRequest_t cl_serverStatusList[16];
+int serverStatusCount;
 static Bool s_playerMute[64];
 extern int NET_CompareAdrSigned(netadr_t *a, netadr_t *b);
 extern qboolean NET_CompareAdr(netadr_t a, netadr_t b);
@@ -1080,107 +1081,81 @@ void CL_Connect_f(void)
     return;
 }
 
+serverStatusRequest_t *CL_GetServerStatus(netadr_t from)
+{
+    int i;
+    int oldest;
+    int oldestTime;
+
+    for (i = 0; i < 16; i++) {
+        if (NET_CompareAdr(from, cl_serverStatusList[i].address))
+            return &cl_serverStatusList[i];
+    }
+    for (i = 0; i < 16; i++) {
+        if (cl_serverStatusList[i].retrieved)
+            return &cl_serverStatusList[i];
+    }
+    oldest = -1;
+    oldestTime = 0;
+    for (i = 0; i < 16; i++) {
+        if (oldest == -1 || cl_serverStatusList[i].startTime < oldestTime) {
+            oldest = i;
+            oldestTime = cl_serverStatusList[i].startTime;
+        }
+    }
+    if (oldest != -1)
+        return &cl_serverStatusList[oldest];
+    serverStatusCount++;
+    return &cl_serverStatusList[serverStatusCount & 15];
+}
+
 int CL_ServerStatus(char *serverAddress, char *serverStatusString, int maxLen)
 {
+    int i;
     netadr_t to;
     serverStatusRequest_t *serverStatus;
-    int i;
 
-    if (serverAddress == NULL) {
+    if (!serverAddress) {
         for (i = 0; i < 16; i++) {
             cl_serverStatusList[i].address.port = 0;
             cl_serverStatusList[i].retrieved = 1;
         }
         return 0;
     }
-
     if (!NET_StringToAdr(serverAddress, &to))
         return 0;
-
-    serverStatus = NULL;
-    for (i = 0; i < 16; i++) {
-        if (NET_CompareAdr(to, cl_serverStatusList[i].address)) {
-            serverStatus = &cl_serverStatusList[i];
-            goto found_entry;
-        }
-    }
-
-    {
-        int idx;
-        for (idx = 0; idx < 16; idx++) {
-            if (cl_serverStatusList[idx].retrieved != 0) {
-                serverStatus = &cl_serverStatusList[idx];
-                goto found_entry;
-            }
-        }
-    }
-
-    {
-        int bestIdx = 0;
-        int oldestTime = cl_serverStatusList[0].startTime;
-        int j;
-
-        for (j = 1; j <= 15; j++) {
-            int entryTime = cl_serverStatusList[j].startTime;
-            if (oldestTime > entryTime) {
-                bestIdx = j;
-                oldestTime = cl_serverStatusList[bestIdx].startTime;
-            }
-        }
-
-        serverStatus = &cl_serverStatusList[bestIdx];
-    }
-
-found_entry:
-
-    if (serverStatusString == NULL) {
-
+    serverStatus = CL_GetServerStatus(to);
+    if (!serverStatusString) {
         serverStatus->retrieved = 1;
         return 0;
     }
-
-    {
-        if (NET_CompareAdr(to, serverStatus->address)) {
-
-            if (serverStatus->pending == 0) {
-
-                I_strncpyz(serverStatusString, serverStatus->string, maxLen);
-                serverStatus->retrieved = 1;
-                serverStatus->startTime = 0;
-                return 1;
-            }
-
-            {
-                int startTime = serverStatus->startTime;
-                int now = Sys_Milliseconds();
-                const dvar_t *resendDvar = cl_serverStatusResendTime;
-                int resendTime = resendDvar->current.integer;
-                if (startTime >= now - resendTime)
-                    return 0;
-            }
-
+    if (NET_CompareAdr(to, serverStatus->address)) {
+        if (!serverStatus->pending) {
+            I_strncpyz(serverStatusString, serverStatus->string, maxLen);
+            serverStatus->retrieved = 1;
+            serverStatus->startTime = 0;
+            return 1;
+        }
+        else if (serverStatus->startTime < Sys_Milliseconds() - cl_serverStatusResendTime->current.integer) {
             serverStatus->print = 0;
             serverStatus->pending = 1;
             serverStatus->retrieved = 0;
             serverStatus->time = 0;
             serverStatus->startTime = Sys_Milliseconds();
-
-            NET_OutOfBandPrint(NS_CLIENT1, to, (const char *)"getstatus");
+            NET_OutOfBandPrint(NS_CLIENT1, to, "getstatus");
             return 0;
         }
     }
-
-    if (serverStatus->retrieved == 0)
+    else if (serverStatus->retrieved) {
+        serverStatus->address = to;
+        serverStatus->print = 0;
+        serverStatus->pending = 1;
+        serverStatus->retrieved = 0;
+        serverStatus->startTime = Sys_Milliseconds();
+        serverStatus->time = 0;
+        NET_OutOfBandPrint(NS_CLIENT1, to, "getstatus");
         return 0;
-
-    serverStatus->address = to;
-    serverStatus->print = 0;
-    serverStatus->pending = 1;
-    serverStatus->retrieved = 0;
-    serverStatus->startTime = Sys_Milliseconds();
-    serverStatus->time = 0;
-
-    NET_OutOfBandPrint(NS_CLIENT1, to, (const char *)"getstatus");
+    }
     return 0;
 }
 
