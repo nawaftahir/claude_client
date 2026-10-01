@@ -1664,7 +1664,7 @@ static void CG_DrawFlashDamage(void)
         col[0] = 0.2f;
         col[1] = 0.0f;
         col[2] = 0.0f;
-        col[3] = redFlash / 5.0f * 0.7f;
+        col[3] = 0.7f * (redFlash / 5.0f);
 
         UI_FillRectPhysical(-10.0f, -10.0f, (float)cls.vidConfig.width + 10.0f, (float)cls.vidConfig.height + 10.0f, col);
     }
@@ -1884,8 +1884,8 @@ static void CG_DrawGrenadeIndicators(void)
         amplitude = (cg_hudGrenadePointerPulseMax->current.value - cg_hudGrenadePointerPulseMin->current.value) * 0.5f;
         color[3] = (float)sin((float)cg->time * cg_hudGrenadePointerPulseFreq->current.value * 0.0062831853f) * amplitude
             + (cg_hudGrenadePointerPulseMin->current.value + amplitude);
-        clamped = color[3] - 1.0f < 0.0f ? color[3] : 1.0f;
-        color[3] = -color[3] < 0.0f ? clamped : 0.0f;
+        clamped = color[3] - 1.0f >= 0.0f ? 1.0f : color[3];
+        color[3] = 0.0f - color[3] >= 0.0f ? 0.0f : clamped;
 
         CG_DrawGrenadePointer(centerX, centerY, grenadeOffset, color);
         CG_DrawGrenadeIcon(centerX, centerY, grenadeOffset, color);
