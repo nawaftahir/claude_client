@@ -90,151 +90,84 @@ int UI_ParseInfos(const char *buf, int max, char **infos)
     return count;
 }
 
-void UI_LoadArenas(void)
+static void UI_LoadArenasFromFile(const char *filename)
 {
-    char dirlist[0x400];
-    int numdirs;
-    char *dirptr;
-    int dirlen;
-    int i;
-    int f;
     int len;
+    fileHandle_t f;
     char buf[0x2000];
-    char filename[0x80];
-    byte *uiInfo;
-    int n;
-    int arenaIdx;
-    const char *mapName;
-    const char *longName;
-    const char *loadscreen;
-    const char *gametypes;
-    const char *token;
-    int j;
 
-    ui_numArenas = 0;
-
-    uiInfo = (byte *)&sharedUiInfo;
-    sharedUiInfo.mapCount = 0;
-
-    numdirs = FS_GetFileList("mp", "arena", FS_LIST_PURE_ONLY, dirlist, 0x400);
-
-    if (numdirs > 0) {
-        dirptr = dirlist;
-        for (i = 0; i < numdirs; i++) {
-            dirlen = strlen(dirptr);
-
-            sprintf(filename, "%s/%s", "mp", dirptr);
-
-            len = FS_FOpenFileByMode(filename, &f, FS_READ);
-            if (f == 0) {
-                Com_Printf("^1file not found: %s\n", filename);
-            } else if (len > 0x1fff) {
-                Com_Printf("^1file too large: %s is %i, max allowed is %i", filename, len, 0x2000);
-                FS_FCloseFile(f);
-            } else {
-                FS_Read(buf, len, f);
-                buf[len] = '\0';
-                FS_FCloseFile(f);
-
-                ui_numArenas += UI_ParseInfos(buf, 64 - ui_numArenas, &ui_arenaInfos[ui_numArenas]);
-            }
-
-            dirptr += dirlen + 1;
-        }
+    len = FS_FOpenFileByMode(filename, &f, FS_READ);
+    if (!f) {
+        Com_Printf("^1file not found: %s\n", filename);
+        return;
+    }
+    if (len >= 0x2000) {
+        Com_Printf("^1file too large: %s is %i, max allowed is %i", filename, len, 0x2000);
+        FS_FCloseFile(f);
+        return;
     }
 
-    if (ui_numArenas <= 0)
-        return;
+    FS_Read(buf, len, f);
+    buf[len] = 0;
+    FS_FCloseFile(f);
 
-    uiInfo = (byte *)&sharedUiInfo;
+    ui_numArenas += UI_ParseInfos(buf, 64 - ui_numArenas, &ui_arenaInfos[ui_numArenas]);
+}
+
+void UI_LoadArenas(void)
+{
+    int numdirs;
+    char filename[128];
+    char dirlist[1024];
+    char *dirptr;
+    int i, n, j;
+    int dirlen;
+    const char *type;
+    const char *token;
+    const char *pszText;
+
+    ui_numArenas = 0;
+    sharedUiInfo.mapCount = 0;
+
+    numdirs = FS_GetFileList("mp", "arena", FS_LIST_PURE_ONLY, dirlist, 1024);
+    dirptr = dirlist;
+    for (i = 0; i < numdirs; i++, dirptr += dirlen + 1) {
+        dirlen = strlen(dirptr);
+        sprintf(filename, "%s/%s", "mp", dirptr);
+        UI_LoadArenasFromFile(filename);
+    }
+
     for (n = 0; n < ui_numArenas; n++) {
-        arenaIdx = sharedUiInfo.mapCount;
+        sharedUiInfo.mapList[sharedUiInfo.mapCount].mapLoadName = String_Alloc(Info_ValueForKey(ui_arenaInfos[n], "map"));
+        sharedUiInfo.mapList[sharedUiInfo.mapCount].mapName = String_Alloc(Info_ValueForKey(ui_arenaInfos[n], "longname"));
+        sharedUiInfo.mapList[sharedUiInfo.mapCount].cinematic = -1;
+        sharedUiInfo.mapList[sharedUiInfo.mapCount].levelShot = 0;
+        sharedUiInfo.mapList[sharedUiInfo.mapCount].imageName =
+            String_Alloc(va("loadscreen_%s", sharedUiInfo.mapList[sharedUiInfo.mapCount].mapLoadName));
+        sharedUiInfo.mapList[sharedUiInfo.mapCount].levelShot =
+            CL_RegisterMaterialNoMip(sharedUiInfo.mapList[sharedUiInfo.mapCount].imageName, 3);
 
-        mapName = Info_ValueForKey(ui_arenaInfos[n], "map");
-        mapName = String_Alloc(mapName);
-        {
-            int off = arenaIdx * 41;
-            sharedUiInfo.mapList[off / 41].mapLoadName = mapName;
-        }
-
-        arenaIdx = sharedUiInfo.mapCount;
-        longName = Info_ValueForKey(ui_arenaInfos[n], "longname");
-        longName = String_Alloc(longName);
-        {
-            int off = arenaIdx * 41;
-            sharedUiInfo.mapList[off / 41].mapName = longName;
-        }
-
-        arenaIdx = sharedUiInfo.mapCount;
-        {
-            int off = arenaIdx * 41;
-            sharedUiInfo.mapList[off / 41].cinematic = -1;
-            sharedUiInfo.mapList[off / 41].levelShot = 0;
-        }
-
-        arenaIdx = sharedUiInfo.mapCount;
-        {
-            int off = arenaIdx * 41;
-            const char *mapStr = sharedUiInfo.mapList[off / 41].mapLoadName;
-            loadscreen = String_Alloc(va("loadscreen_%s", mapStr));
-            sharedUiInfo.mapList[off / 41].imageName = loadscreen;
-        }
-
-        arenaIdx = sharedUiInfo.mapCount;
-        {
-            const char *ls = sharedUiInfo.mapList[arenaIdx].imageName;
-            MaterialHandle mat = CL_RegisterMaterialNoMip(ls, 3);
-            sharedUiInfo.mapList[arenaIdx].levelShot = mat;
-        }
-
-        gametypes = Info_ValueForKey(ui_arenaInfos[n], "type");
-        if (gametypes == NULL || *gametypes == '\0') {
-
-            arenaIdx = sharedUiInfo.mapCount;
-            {
-                int off = arenaIdx * 41;
-                sharedUiInfo.mapList[off / 41].typeBits = -1;
-            }
-        } else {
-
-            arenaIdx = sharedUiInfo.mapCount;
-            {
-                int off = arenaIdx * 41;
-                sharedUiInfo.mapList[off / 41].typeBits = 0;
-            }
-
-            {
-                const char *pszText = gametypes;
-                const char *gtMap;
-                Com_BeginParseSession(va(".arena files : %s", sharedUiInfo.mapList[arenaIdx].mapLoadName));
-
-                while (1) {
-                    token = Com_Parse(&pszText);
-                    if (token == NULL || *token == '\0')
-                        break;
-
-                    int numGT = sharedUiInfo.numGameTypes;
-                    for (j = 0; j < numGT; j++) {
-                        gtMap = sharedUiInfo.gameTypes[j].gameType;
-                        if (I_stricmp(token, gtMap) == 0) {
-                            arenaIdx = sharedUiInfo.mapCount;
-                            {
-                                int off = arenaIdx * 41;
-                                sharedUiInfo.mapList[off / 41].typeBits |= (1 << j);
-                            }
-                            break;
-                        }
-                    }
+        type = Info_ValueForKey(ui_arenaInfos[n], "gametype");
+        if (type && *type) {
+            sharedUiInfo.mapList[sharedUiInfo.mapCount].typeBits = 0;
+            Com_BeginParseSession(va(".arena files : %s", sharedUiInfo.mapList[sharedUiInfo.mapCount].mapLoadName));
+            pszText = type;
+            while (1) {
+                token = Com_Parse(&pszText);
+                if (!token || !*token)
+                    break;
+                for (j = 0; j < sharedUiInfo.numGameTypes; j++) {
+                    if (!I_stricmp(token, sharedUiInfo.gameTypes[j].gameType))
+                        sharedUiInfo.mapList[sharedUiInfo.mapCount].typeBits |= 1 << j;
                 }
-
-                Com_EndParseSession();
             }
+            Com_EndParseSession();
+        } else {
+            sharedUiInfo.mapList[sharedUiInfo.mapCount].typeBits = -1;
         }
 
-        uiInfo = (byte *)&sharedUiInfo;
-        arenaIdx = sharedUiInfo.mapCount;
-        sharedUiInfo.mapCount = arenaIdx + 1;
-        if (arenaIdx + 1 > 0x7f)
-            return;
+        sharedUiInfo.mapCount++;
+        if (sharedUiInfo.mapCount >= 128)
+            break;
     }
 }
