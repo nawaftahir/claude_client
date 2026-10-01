@@ -115,6 +115,19 @@ struct UI_VerticalDivider : UI_Component
 void UI_Component_Init(void);
 int UI_Component_IsCursorHidden(void);
 
+// universal/com_math.h inlines
+static inline void Vector2Copy(const vec2_t a, vec2_t b)
+{
+    b[0] = a[0];
+    b[1] = a[1];
+}
+
+static inline void Vector2Add(const vec2_t a, const vec2_t b, vec2_t c)
+{
+    c[0] = a[0] + b[0];
+    c[1] = a[1] + b[1];
+}
+
 void UI_Component_Init(void)
 {
     memset(&UI_Component_g, 0, sizeof(UI_Component_data_t));
@@ -161,9 +174,13 @@ void UI_Component::DrawPicRotate(float x, float y, float width, float height, fl
 void UI_Component::DrawText(float x, float y, float width, int fontEnum, const float *color, const char *text)
 {
     int maxChars;
+    float drawX;
+    float drawY;
 
     maxChars = (int)(width / UI_Component_g.charWidth);
-    re.DrawText(text, maxChars, cls.consoleFont, floor(x), floor(UI_Component_g.charHeight + y), 1.0f, 1.0f, color, 0);
+    drawX = floor(x);
+    drawY = floor(UI_Component_g.charHeight + y);
+    re.DrawText(text, maxChars, cls.consoleFont, drawX, drawY, 1.0f, 1.0f, color, 0);
 }
 
 void UI_Component::DrawCursor()
@@ -216,9 +233,9 @@ UI_Component::~UI_Component()
 
 UI_Component *UI_Component::GetCompAtLocation(float *point)
 {
-    if (point[0] < 0.0f || point[0] >= this->size[0] || point[1] < 0.0f || point[1] >= this->size[1])
-        return NULL;
-    return this;
+    if (point[0] >= 0.0f && point[0] < this->size[0] && point[1] >= 0.0f && point[1] < this->size[1])
+        return this;
+    return NULL;
 }
 
 void UI_Component::AddText(const char *text)
@@ -252,8 +269,6 @@ static bool InRect(float *point, float *pos, float *size)
 
 void UI_ScrollPane::CheckMouseScroll(int index, float *thumbPos, float *thumbSize, float thumbMaxSize)
 {
-    float *pos;
-
     if (!keys[UIC_K_MOUSE1].down)
     {
         this->mouseWasDown[index] = 0;
@@ -273,11 +288,8 @@ void UI_ScrollPane::CheckMouseScroll(int index, float *thumbPos, float *thumbSiz
         if (!this->mouseWasDown[index])
         {
             this->mouseHeldScale[index] = this->comp->size[index] / thumbMaxSize;
-            this->mouseHeldPos[0] = UI_Component_g.cursorPos[0];
-            this->mouseHeldPos[1] = UI_Component_g.cursorPos[1];
-            pos = this->comp->pos;
-            this->mouseHeldCompPos[0] = pos[0];
-            this->mouseHeldCompPos[1] = pos[1];
+            Vector2Copy(UI_Component_g.cursorPos, this->mouseHeldPos);
+            Vector2Copy(this->comp->pos, this->mouseHeldCompPos);
         }
     }
     else
@@ -446,9 +458,9 @@ int UI_ScrollPane::GetFirstDisplayedLine()
 
     startLineFrac = this->comp->pos[1] / UI_Component_g.charHeight;
     startLine = (int)startLineFrac;
-    if ((float)startLine - startLineFrac >= 0.0f)
-        return startLine;
-    return startLine + 1;
+    if ((float)startLine - startLineFrac < 0.0f)
+        return startLine + 1;
+    return startLine;
 }
 
 int UI_ScrollPane::GetLastDisplayedLine()
@@ -489,7 +501,6 @@ bool UI_ScrollPane::KeyEvent(float *point, int key)
     float vec2_origin[2];
     float innerSize[2];
     float innerPoint[2];
-    UI_LinesComponent *comp;
 
     if (!this->comp)
         return 0;
@@ -512,12 +523,12 @@ bool UI_ScrollPane::KeyEvent(float *point, int key)
             SetPos();
             DisplaySelectedLine();
             return 1;
-        case UIC_K_MWHEELDOWN:
-            this->comp->pos[1] += UI_Component_g.charHeight * 3.0f;
-            SetPos();
-            return 1;
         case UIC_K_MWHEELUP:
             this->comp->pos[1] -= UI_Component_g.charHeight * 3.0f;
+            SetPos();
+            return 1;
+        case UIC_K_MWHEELDOWN:
+            this->comp->pos[1] += UI_Component_g.charHeight * 3.0f;
             SetPos();
             return 1;
         }
@@ -573,9 +584,7 @@ bool UI_ScrollPane::KeyEvent(float *point, int key)
         if (!InRect(point, vec2_origin, innerSize))
             return 0;
     }
-    comp = this->comp;
-    innerPoint[0] = point[0] + comp->pos[0];
-    innerPoint[1] = point[1] + comp->pos[1];
+    Vector2Add(point, this->comp->pos, innerPoint);
     return this->comp->KeyEvent(innerPoint, key);
 }
 
@@ -610,8 +619,7 @@ UI_Component *UI_ScrollPane::GetCompAtLocation(float *point)
         GetInnerSize(innerSize);
         if (point[0] < innerSize[0] && point[1] < innerSize[1])
         {
-            point[0] += this->comp->pos[0];
-            point[1] += this->comp->pos[1];
+            Vector2Add(this->comp->pos, point, point);
             return this->comp->GetCompAtLocation(point);
         }
     }
@@ -636,7 +644,7 @@ void UI_LinesComponent::Init()
 
 bool UI_LinesComponent::SetSelectedLineFocus(int newSelectedLine, bool user)
 {
-    if (newSelectedLine >= user - 1 && newSelectedLine < this->numLines)
+    if (newSelectedLine >= (user ? 0 : -1) && newSelectedLine < this->numLines)
     {
         this->selectedLine = newSelectedLine;
         this->focusOnSelectedLine = 1;
@@ -674,16 +682,16 @@ bool UI_LinesComponent::KeyEvent(float *point, int key)
     {
         if (keys[UIC_K_ALT].down || !keys[UIC_K_CTRL].down || keys[UIC_K_SHIFT].down)
             return 0;
-        if (key == 'g')
+        switch (key)
         {
+        case 'g':
             UI_Component_g.consoleReason = 0;
             Con_ToggleConsole_f();
             return 1;
-        }
-        if (key == UIC_K_MOUSE1)
-        {
+        case UIC_K_MOUSE1:
             if (this->selectedLine == (int)(point[1] / UI_Component_g.charHeight))
                 this->selectedLine = -1;
+            return 0;
         }
         return 0;
     }
@@ -693,23 +701,28 @@ bool UI_LinesComponent::KeyEvent(float *point, int key)
     case 45:
         this->selectedLine = -1;
         return 1;
+    case UIC_K_MOUSE1:
+        SetSelectedLineFocus((int)(point[1] / UI_Component_g.charHeight), 1);
+        return 0;
     case UIC_K_UPARROW:
         DecSelectedLineFocus(0);
         return 1;
     case UIC_K_DOWNARROW:
         IncSelectedLineFocus(0);
         return 1;
-    case UIC_K_MOUSE1:
-        SetSelectedLineFocus((int)(point[1] / UI_Component_g.charHeight), 1);
-        return 0;
     }
     return 0;
 }
 
 void UI_LinesComponent::AddText(const char *text)
 {
+    int lineIndex;
+
     if (!UI_Component_g.consoleReason)
-        SetSelectedLineFocus(atoi(text) - 1, 0);
+    {
+        lineIndex = atoi(text);
+        SetSelectedLineFocus(lineIndex - 1, 0);
+    }
 }
 
 void UI_LinesComponent::ClearFocus()
@@ -776,29 +789,30 @@ bool UI_VerticalDivider::KeyEvent(float *point, int key)
 {
     if (!keys[UIC_K_ALT].down || keys[UIC_K_CTRL].down || keys[UIC_K_SHIFT].down)
         return 0;
-    if (key == UIC_K_UPARROW)
+    switch (key)
     {
+    case UIC_K_UPARROW:
         this->posY -= UI_Component_g.charHeight;
         return 1;
+    case UIC_K_DOWNARROW:
+        this->posY += UI_Component_g.charHeight;
+        return 1;
     }
-    if (key != UIC_K_DOWNARROW)
-        return 0;
-    this->posY += UI_Component_g.charHeight;
-    return 1;
+    return 0;
 }
 
 UI_Component *UI_VerticalDivider::GetCompAtLocation(float *point)
 {
-    if (this->topComp)
+    if (!this->topComp)
     {
-        if (this->bottomComp && point[1] >= this->posY)
-        {
-            point[1] -= this->posY;
-            return this->bottomComp->GetCompAtLocation(point);
-        }
-        return this->topComp->GetCompAtLocation(point);
+        if (!this->bottomComp)
+            return this;
     }
-    if (this->bottomComp)
-        return this->bottomComp->GetCompAtLocation(point);
-    return this;
+    else
+    {
+        if (!this->bottomComp || point[1] < this->posY)
+            return this->topComp->GetCompAtLocation(point);
+        point[1] -= this->posY;
+    }
+    return this->bottomComp->GetCompAtLocation(point);
 }
