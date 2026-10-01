@@ -4399,14 +4399,16 @@ void Menu_PaintAll(displayContextDef_t *dc)
     vec4_t v;
     int i;
     int start;
+    menuDef_t *menu;
 
     dc->blurRadiusOut = 0.0f;
     if (captureFunc)
         ((void (__cdecl *)(displayContextDef_t *, void *))captureFunc)(dc, captureData);
 
     for (i = 0; i < dc->menuCount; i++) {
-        if (!Menus_MenuIsInStack(dc, dc->Menus[i]))
-            Menu_Paint(dc, dc->Menus[i], 0);
+        menu = dc->Menus[i];
+        if (!Menus_MenuIsInStack(dc, menu))
+            Menu_Paint(dc, menu, 0);
     }
 
     start = 0;
