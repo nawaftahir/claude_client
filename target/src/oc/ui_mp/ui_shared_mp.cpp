@@ -2504,63 +2504,37 @@ void Item_TextField_Paint(displayContextDef_t *dc, itemDef_t *item)
 
 void Item_YesNo_Paint(displayContextDef_t *dc, itemDef_t *item)
 {
-    byte *it = (byte *)item;
-    byte *parent = (byte *)item->parent;
-    float newColor[4];
-    float value = 0.0f;
-    int i;
+    vec4_t newColor;
+    vec4_t lowLight;
+    float value;
+    menuDef_t *parent;
+    const char *yesno;
 
-    if ((*(void **)&((itemDef_t *)it)->dvar)) {
-        value = (float)atof(Dvar_GetVariantString(item->dvar));
-    }
+    parent = item->parent;
+    value = item->dvar ? (float)atof(Dvar_GetVariantString(item->dvar)) : 0.0f;
 
-    int flags = ((itemDef_t *)it)->window.dynamicFlags[0];
-    if ((flags & 4) && (flags & 2)) {
-        float lowLight[4];
-        for (i = 0; i < 4; i++)
-            lowLight[i] = *(float *)(((char *)parent + offsetof(menuDef_t, focusColor[0])) + i * 4) * 0.8f;
-
-        int curTime = dc->realTime;
-        float t = sinf((float)(curTime / 22));
-        t = t * 0.5f + 0.5f;
-
-        for (i = 0; i < 4; i++) {
-            float hi = *(float *)(((char *)parent + offsetof(menuDef_t, focusColor[0])) + i * 4);
-            float lo = lowLight[i];
-            newColor[i] = hi + (lo - hi) * t;
-            if (newColor[i] < 0.0f)
-                newColor[i] = 0.0f;
-            else if (newColor[i] > 1.0f)
-                newColor[i] = 1.0f;
-        }
+    if (Window_HasFocus(&item->window)) {
+        lowLight[0] = parent->focusColor[0] * 0.8f;
+        lowLight[1] = parent->focusColor[1] * 0.8f;
+        lowLight[2] = parent->focusColor[2] * 0.8f;
+        lowLight[3] = parent->focusColor[3] * 0.8f;
+        LerpColor(parent->focusColor, lowLight, newColor, (sin((float)(dc->realTime / 75)) + 1.0f) * 0.5f);
     } else {
-        for (i = 0; i < 4; i++)
-            newColor[i] = ((itemDef_t *)it)->window.foreColor[i];
+        memcpy(newColor, item->window.foreColor, sizeof(vec4_t));
     }
 
-    const char *yesNoStr;
-    if (value != 0.0f)
-        yesNoStr = UI_SafeTranslateString("EXE_YES");
-    else
-        yesNoStr = UI_SafeTranslateString("EXE_NO");
+    yesno = UI_SafeTranslateString(value != 0.0f ? "EXE_YES" : "EXE_NO");
 
-    byte *textRect = (byte *)((itemDef_t *)it)->textRect;
-    FontHandle font = UI_GetFontHandle(((itemDef_t *)it)->fontEnum, ((itemDef_t *)it)->textscale);
-    float textX, textY;
-
-    if (((itemDef_t *)it)->text) {
-
+    if (item->text) {
         Item_Text_Paint(dc, item);
-        textX = (((itemDef_s*)(it))->textRect[0].x) + (((itemDef_s*)(it))->textRect[0].w) + 8.0f;
-        textY = (((rectDef_t*)(textRect))->y);
+        UI_DrawText(yesno, 0x7fffffff, UI_GetFontHandle(item->fontEnum, item->textscale),
+                    item->textRect[0].x + item->textRect[0].w + 8.0f, item->textRect[0].y,
+                    item->window.rect[0].horzAlign, item->window.rect[0].vertAlign, item->textscale, newColor, item->textStyle);
     } else {
-        textX = (((itemDef_s*)(it))->textRect[0].x);
-        textY = (((rectDef_t*)(textRect))->y);
+        UI_DrawText(yesno, 0x7fffffff, UI_GetFontHandle(item->fontEnum, item->textscale),
+                    item->textRect[0].x, item->textRect[0].y,
+                    item->window.rect[0].horzAlign, item->window.rect[0].vertAlign, item->textscale, newColor, item->textStyle);
     }
-
-    UI_DrawText(yesNoStr, 0x7fffffff, font, textX, textY,
-                (((rectDef_t*)(it))->horzAlign), (((rectDef_t*)(it))->vertAlign),
-                ((itemDef_t *)it)->textscale, newColor, (((itemDef_s*)(it))->textStyle));
 }
 
 void Item_Slider_Paint(displayContextDef_t *dc, itemDef_t *item)
