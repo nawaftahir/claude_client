@@ -1631,10 +1631,12 @@ static void CG_DrawSpectator(void)
 {
     const char *s;
     FontHandle font;
+    float x;
 
     s = UI_SafeTranslateString("CGAME_SPECTATOR");
     font = UI_GetFontHandle(4, 0.5f);
-    UI_DrawText(s, 0x7fffffff, font, (float)-UI_TextWidth(s, 0, font, 0.5f) * 0.5f, -27.0f, 7, 3, 0.5f, colorWhite, 3);
+    x = (float)-UI_TextWidth(s, 0, font, 0.5f) * 0.5f;
+    UI_DrawText(s, 0x7fffffff, font, x, -27.0f, 7, 3, 0.5f, colorWhite, 3);
 }
 
 static void CG_DrawIntermission(void)
@@ -1662,7 +1664,7 @@ static void CG_DrawFlashDamage(void)
         col[0] = 0.2f;
         col[1] = 0.0f;
         col[2] = 0.0f;
-        col[3] = redFlash * 0.2f * 0.7f;
+        col[3] = redFlash / 5.0f * 0.7f;
 
         UI_FillRectPhysical(-10.0f, -10.0f, (float)cls.vidConfig.width + 10.0f, (float)cls.vidConfig.height + 10.0f, col);
     }
@@ -1841,6 +1843,7 @@ static void CG_DrawGrenadeIndicators(void)
     vec3_t grenadeOffset;
     vec4_t color;
     float amplitude;
+    float clamped;
 
     if (!cg->nextSnap)
         return;
@@ -1881,10 +1884,8 @@ static void CG_DrawGrenadeIndicators(void)
         amplitude = (cg_hudGrenadePointerPulseMax->current.value - cg_hudGrenadePointerPulseMin->current.value) * 0.5f;
         color[3] = (float)sin((float)cg->time * cg_hudGrenadePointerPulseFreq->current.value * 0.0062831853f) * amplitude
             + (cg_hudGrenadePointerPulseMin->current.value + amplitude);
-        if (color[3] - 1.0f >= 0.0f)
-            color[3] = 1.0f;
-        if (color[3] < 0.0f)
-            color[3] = 0.0f;
+        clamped = color[3] - 1.0f < 0.0f ? color[3] : 1.0f;
+        color[3] = -color[3] < 0.0f ? clamped : 0.0f;
 
         CG_DrawGrenadePointer(centerX, centerY, grenadeOffset, color);
         CG_DrawGrenadeIcon(centerX, centerY, grenadeOffset, color);
@@ -2022,7 +2023,7 @@ static void CG_DrawPerformanceWarnings(void)
     {
         const int *entry = (const int *)((const char *)statsArray + i * 8);
         if (entry[0] >= now)
-            UI_DrawHandlePic(x, y, 32.0f, 32.0f, 0, 0, 0, (MaterialHandle)entry[1]);
+            UI_DrawHandlePic(x, y, 32.0f, 32.0f, 1, 0, 0, (MaterialHandle)entry[1]);
         x += 34.0f;
         if (x + 32.0f > 68.0f)
         {
