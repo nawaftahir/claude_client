@@ -2540,118 +2540,62 @@ void Item_Bind_Paint(displayContextDef_t *dc, itemDef_t *item)
 
 void Item_OwnerDraw_Paint(displayContextDef_t *dc, itemDef_t *item)
 {
-    byte *it = (byte *)item;
-    byte *parent;
-    float color[4];
-    int flags, i;
+    vec4_t color;
+    vec4_t lowLight;
+    menuDef_t *parent;
+    int flags;
 
     if (!item)
         return;
 
-    parent = (byte *)item->parent;
-    flags = ((itemDef_t *)it)->window.dynamicFlags[0];
+    parent = item->parent;
+    flags = item->window.dynamicFlags[0];
+    Fade(&flags, &item->window.foreColor[3], parent->fadeClamp, &item->window.nextTime, parent->fadeCycle, 1, parent->fadeAmount, parent->fadeInAmount, dc);
+    Window_SetDynamicFlags(&item->window, flags);
 
-    int offsetTime = (((menuDef_t*)(parent))->fadeCycle);
-    int curTime = dc->realTime;
+    memcpy(color, item->window.foreColor, sizeof(vec4_t));
 
-    if (flags & 0x30) {
-        if (curTime > ((itemDef_t *)it)->window.nextTime) {
-            ((itemDef_t *)it)->window.nextTime = curTime + offsetTime;
-            if (flags & 0x10) {
-                float alpha = ((itemDef_t *)it)->window.foreColor[3] - (((menuDef_t*)(parent))->fadeAmount);
-                ((itemDef_t *)it)->window.foreColor[3] = alpha;
-                if (alpha <= 0.0f)
-                    flags &= ~0x14;
-            } else {
-                float alpha = ((itemDef_t *)it)->window.foreColor[3] + (((menuDef_t*)(parent))->fadeInAmount);
-                ((itemDef_t *)it)->window.foreColor[3] = alpha;
-                if (alpha >= (((menuDef_t*)(parent))->fadeClamp)) {
-                    ((itemDef_t *)it)->window.foreColor[3] = (((menuDef_t*)(parent))->fadeClamp);
-                    flags &= ~0x20;
-                }
-            }
-        }
+    if (Window_HasFocus(&item->window)) {
+        lowLight[0] = parent->focusColor[0] * 0.8f;
+        lowLight[1] = parent->focusColor[1] * 0.8f;
+        lowLight[2] = parent->focusColor[2] * 0.8f;
+        lowLight[3] = parent->focusColor[3] * 0.8f;
+        LerpColor(parent->focusColor, lowLight, color, (sin((float)(dc->realTime / 75)) + 1.0f) * 0.5f);
+    } else if (item->textStyle == 1 && !((dc->realTime / 256) & 1)) {
+        lowLight[0] = item->window.foreColor[0] * 0.8f;
+        lowLight[1] = item->window.foreColor[1] * 0.8f;
+        lowLight[2] = item->window.foreColor[2] * 0.8f;
+        lowLight[3] = item->window.foreColor[3] * 0.8f;
+        LerpColor(item->window.foreColor, lowLight, color, (sin((float)(dc->realTime / 75)) + 1.0f) * 0.5f);
     }
 
-    Window_SetDynamicFlags((Window *)item, flags);
+    if ((item->dvarFlags & 3) && !Item_EnableShowViaDvar(item, 1))
+        memcpy(color, parent->disableColor, sizeof(vec4_t));
 
-    for (i = 0; i < 4; i++)
-        color[i] = ((itemDef_t *)it)->window.foreColor[i];
-
-    int visFlags = ((itemDef_t *)it)->window.dynamicFlags[0];
-    if ((visFlags & 4) && (visFlags & 2)) {
-
-        float lowLight[4];
-        for (i = 0; i < 4; i++)
-            lowLight[i] = *(float *)(((char *)parent + offsetof(menuDef_t, focusColor[0])) + i * 4) * 0.8f;
-        float t = sinf((float)(curTime / 22));
-        t = t * 0.5f + 0.5f;
-        for (i = 0; i < 4; i++) {
-            float hi = *(float *)(((char *)parent + offsetof(menuDef_t, focusColor[0])) + i * 4);
-            color[i] = hi + (lowLight[i] - hi) * t;
-            if (color[i] < 0.0f)
-                color[i] = 0.0f;
-            else if (color[i] > 1.0f)
-                color[i] = 1.0f;
-        }
-    } else if ((((itemDef_s*)(it))->textStyle) == 1) {
-
-        int pt = curTime;
-        if (pt < 0)
-            pt += 255;
-        if (pt & 0x100) {
-            float lowLight[4];
-            for (i = 0; i < 4; i++)
-                lowLight[i] = ((itemDef_t *)it)->window.foreColor[i] * 0.8f;
-            float t = sinf((float)(curTime / 22));
-            t = t * 0.5f + 0.5f;
-            for (i = 0; i < 4; i++) {
-                float hi = ((itemDef_t *)it)->window.foreColor[i];
-                color[i] = hi + (lowLight[i] - hi) * t;
-                if (color[i] < 0.0f)
-                    color[i] = 0.0f;
-                else if (color[i] > 1.0f)
-                    color[i] = 1.0f;
-            }
-        }
-    }
-
-    if ((*(byte *)&((itemDef_t *)it)->dvarFlags) & 3) {
-        if (!Item_EnableShowViaDvar(item, 1)) {
-            for (i = 0; i < 4; i++)
-                color[i] = *(float *)(((char *)parent + offsetof(menuDef_t, disableColor[0])) + i * 4);
-        }
-    }
-
-    float scale = ((itemDef_t *)it)->textscale;
-    int style = (((itemDef_s*)(it))->textStyle);
-    int ownerDraw = ((itemDef_t *)it)->window.ownerDraw;
-    int ownerDrawFlags = ((itemDef_t *)it)->window.ownerDrawFlags;
-    int align = (((itemDef_s*)(it))->textalignment);
-    float special = ((itemDef_t *)it)->special;
-    MaterialHandle material = ((itemDef_t *)it)->window.background;
-    FontHandle font = UI_GetFontHandle(((itemDef_t *)it)->fontEnum, scale);
-
-    if (((itemDef_t *)it)->text && ((itemDef_t *)it)->text[0]) {
-
+    if (item->text) {
         Item_Text_Paint(dc, item);
-        byte *textRect = (byte *)((itemDef_t *)it)->textRect;
-        float ownerX = (((itemDef_s*)(it))->textRect[0].x) + (((rectDef_t*)(textRect))->w) + 8.0f;
-        UI_OwnerDraw(ownerX, (((rectDef_t*)(it))->y), (((rectDef_t*)(it))->w), (((rectDef_t*)(it))->h),
-                     (((rectDef_t*)(it))->horzAlign), (((rectDef_t*)(it))->vertAlign), 0.0f, (((itemDef_s*)(it))->textaligny),
-                     ownerDraw, ownerDrawFlags, align, special, font, scale, color, (MaterialHandle)(intptr_t)material, style);
-    } else if (((itemDef_t *)it)->text) {
-
-        byte *textRect = (byte *)((itemDef_t *)it)->textRect;
-        float ownerX = (((itemDef_s*)(it))->textRect[0].x) + (((rectDef_t*)(textRect))->w);
-        UI_OwnerDraw(ownerX, (((rectDef_t*)(it))->y), (((rectDef_t*)(it))->w), (((rectDef_t*)(it))->h),
-                     (((rectDef_t*)(it))->horzAlign), (((rectDef_t*)(it))->vertAlign), 0.0f, (((itemDef_s*)(it))->textaligny),
-                     ownerDraw, ownerDrawFlags, align, special, font, scale, color, (MaterialHandle)(intptr_t)material, style);
+        if (item->text[0]) {
+            UI_OwnerDraw(item->textRect[0].x + item->textRect[0].w + 8.0f, item->window.rect[0].y,
+                         item->window.rect[0].w, item->window.rect[0].h,
+                         item->window.rect[0].horzAlign, item->window.rect[0].vertAlign,
+                         0.0f, item->textaligny, item->window.ownerDraw, item->window.ownerDrawFlags,
+                         item->alignment, item->special, UI_GetFontHandle(item->fontEnum, item->textscale),
+                         item->textscale, color, item->window.background, item->textStyle);
+        } else {
+            UI_OwnerDraw(item->textRect[0].x + item->textRect[0].w, item->window.rect[0].y,
+                         item->window.rect[0].w, item->window.rect[0].h,
+                         item->window.rect[0].horzAlign, item->window.rect[0].vertAlign,
+                         0.0f, item->textaligny, item->window.ownerDraw, item->window.ownerDrawFlags,
+                         item->alignment, item->special, UI_GetFontHandle(item->fontEnum, item->textscale),
+                         item->textscale, color, item->window.background, item->textStyle);
+        }
     } else {
-
-        UI_OwnerDraw((((rectDef_t*)(it))->x), (((rectDef_t*)(it))->y), (((rectDef_t*)(it))->w), (((rectDef_t*)(it))->h),
-                     (((rectDef_t*)(it))->horzAlign), (((rectDef_t*)(it))->vertAlign), (((itemDef_s*)(it))->textalignx), (((itemDef_s*)(it))->textaligny),
-                     ownerDraw, ownerDrawFlags, align, special, font, scale, color, (MaterialHandle)(intptr_t)material, style);
+        UI_OwnerDraw(item->window.rect[0].x, item->window.rect[0].y,
+                     item->window.rect[0].w, item->window.rect[0].h,
+                     item->window.rect[0].horzAlign, item->window.rect[0].vertAlign,
+                     item->textalignx, item->textaligny, item->window.ownerDraw, item->window.ownerDrawFlags,
+                     item->alignment, item->special, UI_GetFontHandle(item->fontEnum, item->textscale),
+                     item->textscale, color, item->window.background, item->textStyle);
     }
 }
 
