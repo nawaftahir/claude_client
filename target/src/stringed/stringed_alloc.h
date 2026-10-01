@@ -25,7 +25,7 @@ public:
 	void deallocate( pointer p, size_type n ) { free( p ); }
 	void construct( pointer p, const T &val ) { new( p ) T( val ); }
 	void destroy( pointer p ) { p->~T(); }
-	size_type max_size() const { return (size_type)-1 / sizeof(T); }
+	size_type max_size() const { return (size_type)0x7fffffff; }
 	pointer address( reference x ) const { return &x; }
 	const_pointer address( const_reference x ) const { return &x; }
 	bool operator==( const se_alloc & ) const { return true; }
