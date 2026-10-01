@@ -176,12 +176,10 @@ void UI_Component::DrawText(float x, float y, float width, int fontEnum, const f
     int maxChars;
     float drawX;
     float drawY;
-    float textY;
 
     maxChars = (int)(width / UI_Component_g.charWidth);
     drawX = floor(x);
-    textY = UI_Component_g.charHeight + y;
-    drawY = floor(textY);
+    drawY = floor(UI_Component_g.charHeight + y);
     re.DrawText(text, maxChars, cls.consoleFont, drawX, drawY, 1.0f, 1.0f, color, 0);
 }
 
@@ -772,14 +770,20 @@ void UI_VerticalDivider::Draw(float x, float y, float width, float height, float
             return;
         }
         topHeight = this->posY - compY;
-        if (topHeight < height)
+        if (topHeight >= height)
+        {
+            DrawTop(x, y, width, height);
+        }
+        else
         {
             this->bottomComp->Draw(x, y + this->posY, width, height - topHeight, 0.0f, 0.0f);
             DrawTop(x, y, width, topHeight);
-            return;
         }
     }
-    DrawTop(x, y, width, height);
+    else
+    {
+        DrawTop(x, y, width, height);
+    }
 }
 
 bool UI_VerticalDivider::KeyEvent(float *point, int key)
