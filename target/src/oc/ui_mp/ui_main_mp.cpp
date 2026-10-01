@@ -1842,7 +1842,7 @@ Bool UI_DrawRecordLevel(rectDef_t *rect)
 
     UI_FillRect(rect->x, rect->y, rect->w, 1.0f, 0, 0, white);
 
-    UI_FillRect(rect->x, rect->y + rect->h - 1.0f, rect->w, 1.0f, 0, 0, white);
+    UI_FillRect(rect->x, rect->h + rect->y - 1.0f, rect->w, 1.0f, 0, 0, white);
 
     UI_FillRect(rect->x, rect->y + 1.0f, 1.0f, rect->h - 2.0f, 0, 0, white);
 
@@ -2665,10 +2665,10 @@ static void UI_DrawServerRefreshDate(rectDef_t *rect, FontHandle font, float sca
         lowLight[2] = 0.8 * color[2];
         lowLight[3] = 0.8 * color[3];
         LerpColor(color, lowLight, newColor, (sin((double)(uiInfo->uiDC.realTime / 75)) + 1.0) * 0.5);
-        if (LAN_WaitServerResponse(ui_netSource->current.integer))
-            string = UI_SafeTranslateString("EXE_WAITINGFORMASTERSERVERRESPONSE");
-        else
+        if (!LAN_WaitServerResponse(ui_netSource->current.integer))
             string = UI_ReplaceConversionInt(UI_SafeTranslateString("EXE_GETTINGINFOFORSERVERS"), LAN_GetServerCount(ui_netSource->current.integer));
+        else
+            string = UI_SafeTranslateString("EXE_WAITINGFORMASTERSERVERRESPONSE");
         UI_DrawText(string, 0x7fffffff, font, rect->x, rect->y, rect->horzAlign, rect->vertAlign, scale, newColor, textStyle);
     } else {
         I_strncpyz(buff, Dvar_GetVariantString(va("ui_lastServerRefresh_%i", ui_netSource->current.integer)), 64);
