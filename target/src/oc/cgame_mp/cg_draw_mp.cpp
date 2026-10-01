@@ -1938,69 +1938,80 @@ static void CG_DrawVote(void)
 
 static void CG_DrawLagometer(void)
 {
-    float prev;
+    int a;
     int i;
+    float v;
+    float ax;
+    float ay;
+    float aw;
+    float ah;
+    float mid;
+    float range;
+    float vscale;
+    const float *color;
 
-    if (!cg_drawLagometer->current.enabled || cgs->localServer)
+    if (cg_drawLagometer->current.enabled && !cgs->localServer)
     {
-        CG_DrawDisconnect();
-        return;
-    }
+        UI_DrawHandlePic(-55.0f, -140.0f, 48.0f, 48.0f, 3, 3, 0, cgs->media.lagometerMaterial);
 
-    UI_DrawHandlePic(-55.0f, -140.0f, 48.0f, 48.0f, 3, 3, 0, cgs->media.lagometerMaterial);
+        ax = -55.0f;
+        ay = -140.0f;
+        aw = 48.0f;
+        ah = 48.0f;
 
-    prev = 0.0f;
-    for (i = 0; i < 48; ++i) {
-        int idx = (~i + lagometer.frameCount) & 0x7f;
-        float v = (float)lagometer.frameSamples[idx] * 0.0533333346f;
-        float y;
-        float h;
-        const vec_t *col;
-        if (v > prev) {
-            if (v <= 16.0f) {
-                y = -124.0f - v;
-                h = v;
-            } else {
-                y = -140.0f;
-                h = 16.0f;
+        range = ah / 3.0f;
+        mid = ay + range;
+
+        // draw the frame interpolate / extrapolate graph
+        for (a = 0; a < aw; a++)
+        {
+            i = (lagometer.frameCount - a - 1) & 127;
+            v = (float)lagometer.frameSamples[i];
+            vscale = range / 300.0f;
+            v *= vscale;
+            if (v > 0.0f)
+            {
+                if (v > range)
+                    v = range;
+                CL_DrawStretchPic(ax + aw - a, mid - v, 1.0f, v, 3, 3, 0.0f, 0.0f, 0.0f, 0.0f, colorYellow, cgs->media.whiteMaterial);
             }
-            col = colorYellow;
-            CL_DrawStretchPic(-7.0f, y, 1.0f, h, 3, 3, 0, 0, 0, 0, col, cgs->media.whiteMaterial);
-            prev = 0.0f;
-        } else if (v < 0.0f) {
-            float n = -v;
-            if (n > 16.0f)
-                n = 16.0f;
-            CL_DrawStretchPic(-7.0f, -124.0f, 1.0f, n, 3, 3, 0, 0, 0, 0, colorBlue,
-                              cgs->media.whiteMaterial);
-            prev = 0.0f;
-        } else {
-            prev = 0.0f;
+            else if (v < 0.0f)
+            {
+                v = -v;
+                if (v > range)
+                    v = range;
+                CL_DrawStretchPic(ax + aw - a, mid, 1.0f, v, 3, 3, 0.0f, 0.0f, 0.0f, 0.0f, colorBlue, cgs->media.whiteMaterial);
+            }
         }
-    }
 
-    prev = 0.0f;
-    for (i = 0; i < 48; ++i) {
-        int idx = (~i + lagometer.snapshotCount) & 0x7f;
-        float v = (float)lagometer.snapshotSamples[idx];
-        if (v > prev) {
-            float h = v * 0.0266666673f;
-            float y;
-            if (lagometer.snapshotFlags[idx] & 0x1)
-                y = h <= 24.0f ? -92.0f - h : -116.0f;
-            else
-                y = h > 24.0f ? -116.0f : -92.0f - h;
-            CL_DrawStretchPic(-7.0f, y, 1.0f, h, 3, 3, 0, 0, 0, 0, colorGreen,
-                              cgs->media.whiteMaterial);
-        } else if (v < 0.0f) {
-            CL_DrawStretchPic(-7.0f, -116.0f, 1.0f, 24.0f, 3, 3, 0, 0, 0, 0, colorRed,
-                              cgs->media.whiteMaterial);
+        // draw the snapshot latency / drop graph
+        range = ah / 2.0f;
+
+        for (a = 0; a < aw; a++)
+        {
+            i = (lagometer.snapshotCount - a - 1) & 127;
+            v = (float)lagometer.snapshotSamples[i];
+            if (v > 0.0f)
+            {
+                if (lagometer.snapshotFlags[i] & 1)
+                    color = colorYellow;
+                else
+                    color = colorGreen;
+                vscale = range / 900.0f;
+                v = v * vscale;
+                if (v > range)
+                    v = range;
+                CL_DrawStretchPic(ax + aw - a, ay + ah - v, 1.0f, v, 3, 3, 0.0f, 0.0f, 0.0f, 0.0f, color, cgs->media.whiteMaterial);
+            }
+            else if (v < 0.0f)
+            {
+                CL_DrawStretchPic(ax + aw - a, ay + ah - range, 1.0f, range, 3, 3, 0.0f, 0.0f, 0.0f, 0.0f, colorRed, cgs->media.whiteMaterial);
+            }
         }
-        prev = 0.0f;
-    }
 
-    if (cg_nopredict->current.enabled || cg_synchronousClients->current.enabled)
-        CG_DrawBigDevString(-55.0f, -140.0f, "snc", 1.0f, 9);
+        if (cg_nopredict->current.enabled || cg_synchronousClients->current.enabled)
+            CG_DrawBigDevString(ax, ay, "snc", 1.0f, 9);
+    }
 
     CG_DrawDisconnect();
 }
