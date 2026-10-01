@@ -393,7 +393,7 @@ static qkey_t keysData[256];
 qkey_t *keys = keysData;
 struct lagometer_t lagometer;
 int lastLeadTeam;
-static LegacyHacks legacyHacksData;
+LegacyHacks legacyHacksData;
 LegacyHacks *legacyHacks = &legacyHacksData;
 float levelSamples[6];
 const dvar_t *m_filter;

@@ -337,37 +337,40 @@ void IN_KeyDown(kbutton_t *b)
 
 void IN_KeyUp(kbutton_t *b)
 {
-    const char *keyText;
-    int key;
-    int uptime;
+    int k;
+    const char *c;
+    unsigned int uptime;
 
-    keyText = Cmd_Argv(1);
-    if (!keyText[0]) {
-        b->down[1] = 0;
-        b->down[0] = 0;
+    c = Cmd_Argv(1);
+    if (c[0]) {
+        k = atoi(c);
+    } else {
+        // typed manually at the console, assume for unsticking, so clear all
+        b->down[0] = b->down[1] = 0;
         b->active = 0;
         return;
     }
 
-    key = atoi(keyText);
-    if (key == b->down[0]) {
+    if (b->down[0] == k) {
         b->down[0] = 0;
-    } else if (key == b->down[1]) {
+    } else if (b->down[1] == k) {
         b->down[1] = 0;
     } else {
-        return;
+        return;     // key up without coresponding down (menu pass through)
     }
-
     if (b->down[0] || b->down[1]) {
-        return;
+        return;     // some other key is still holding it down
     }
 
     b->active = 0;
-    uptime = atoi(Cmd_Argv(2));
+
+    // save timestamp for partial frame summing
+    c = Cmd_Argv(2);
+    uptime = atoi(c);
     if (uptime) {
         b->msec += uptime - b->downtime;
     } else {
-        b->msec += *(unsigned int *)imp_frame_msec / 2;
+        b->msec += frame_msec / 2;
     }
 
     b->active = 0;
@@ -385,15 +388,11 @@ void IN_UpDown(void)
     stance = &legacyHacks->cl_stance;
     if (*stance > 1) {
         *stance = 1;
-        return;
-    }
-
-    if (*stance == 1) {
+    } else if (*stance > 0) {
         *stance = 0;
-        return;
+    } else {
+        IN_KeyDown(&kb[10]);
     }
-
-    IN_KeyDown(&kb[10]);
 }
 
 void IN_UpUp(void)

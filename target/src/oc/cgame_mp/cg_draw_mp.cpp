@@ -1762,7 +1762,7 @@ static bool CG_ShouldDrawGrenadeIndicator(const entityState_t *es)
     }
 
     maxRange = cg_hudGrenadeIconMaxRange->current.value;
-    if (offset[0] * offset[0] + offset[1] * offset[1] + offset[2] * offset[2] > maxRange * maxRange)
+    if (offset[2] * offset[2] + (offset[0] * offset[0] + offset[1] * offset[1]) > maxRange * maxRange)
         return false;
     return true;
 }

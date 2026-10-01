@@ -1029,7 +1029,7 @@ void G_SpawnTurret( gentity_t *self, const char *weaponinfoname )
 
 	if ( i == MAX_TURRETS )
 	{
-		Com_Error(ERR_DROP, "\x15" "G_SpawnTurret: max number of turrets (%d) exceeded", MAX_TURRETS);
+		Com_Error(ERR_DROP, "\x15" "G_SpawnTurret: max number of turrets (%d) exceeded", i);
 	}
 
 	memset(turretInfo, 0, sizeof(*turretInfo));
@@ -1085,7 +1085,7 @@ void G_SpawnTurret( gentity_t *self, const char *weaponinfoname )
 		turretInfo->arcmin[1] = weapDef->rightArc;
 	}
 
-	turretInfo->arcmin[1] = -turretInfo->arcmin[1];
+	turretInfo->arcmin[1] = turretInfo->arcmin[1] * -1.0f;
 
 	if ( turretInfo->arcmin[1] > 0 )
 	{
@@ -1107,7 +1107,7 @@ void G_SpawnTurret( gentity_t *self, const char *weaponinfoname )
 		turretInfo->arcmin[0] = weapDef->topArc;
 	}
 
-	turretInfo->arcmin[0] = -turretInfo->arcmin[0];
+	turretInfo->arcmin[0] = turretInfo->arcmin[0] * -1.0f;
 
 	if ( turretInfo->arcmin[0] > 0 )
 	{

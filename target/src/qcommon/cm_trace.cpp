@@ -529,7 +529,7 @@ void CM_TraceThroughBrush( traceWork_t *tw, cbrush_t *brush, trace_t *trace )
 
 			if ( d1 > 0 )
 			{
-				if ( d2 >= I_fmin(d1, SURFACE_CLIP_EPSILON) )
+				if ( d2 >= (0.125f - d1 >= 0.0f ? d1 : 0.125f) )
 				{
 					return;
 				}
@@ -576,7 +576,7 @@ void CM_TraceThroughBrush( traceWork_t *tw, cbrush_t *brush, trace_t *trace )
 					}
 
 					allsolid = qfalse;
-					leaveFrac = I_fmin(leaveFrac, frac);
+					leaveFrac = (frac - leaveFrac >= 0.0f ? leaveFrac : frac);
 				}
 			}
 		}
@@ -623,7 +623,7 @@ void CM_TraceThroughBrush( traceWork_t *tw, cbrush_t *brush, trace_t *trace )
 		if ( d1 > 0 )
 		{
 			// if completely in front of face, no intersection with the entire brush
-			if ( d2 >= I_fmin(d1, SURFACE_CLIP_EPSILON) )
+			if ( d2 >= (0.125f - d1 >= 0.0f ? d1 : 0.125f) )
 			{
 				return;
 			}

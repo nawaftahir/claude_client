@@ -34,3 +34,10 @@
 431e70	Com_SetConfigureDvars	located
 431f00	Com_ParseCpuConfig	located
 4321b0	Com_ParseGpuConfig	located
+4c3b70	CG_DrawGrenadeIcon	ourcg
+4c3a00	CG_DrawGrenadePointer	ourcg
+4c4e00	CG_DrawMaterial	ourcg
+4c0c60	CG_DrawSnapshot	ourcg
+4c3cd0	CG_ShouldDrawGrenadeIndicator	ourcg
+4b2300	LAN_ReadServerCache	ourcg
+448640	I_isdigit	callalign

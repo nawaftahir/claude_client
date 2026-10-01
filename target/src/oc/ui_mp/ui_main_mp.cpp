@@ -18,6 +18,7 @@ extern cg_t cgArray[1];
  * into a single absolute access. */
 static cg_t * const cg = &cgArray[0];
 extern LegacyHacks *legacyHacks;
+extern LegacyHacks legacyHacksData;
 
 /* dvar globals */
 extern const dvar_t *cl_voice;
@@ -1415,7 +1416,6 @@ void UI_RegisterDvars(void)
 
 void UI_Init(void)
 {
-    byte *legacyBase;
     int width, height;
     MenuList *menuList;
     int netGameTypeIdx;
@@ -1428,15 +1428,14 @@ void UI_Init(void)
 
     UI_RegisterDvars();
 
-    legacyBase = (byte *)imp_legacyHacksArray;
-    (*(byte *)&((LegacyHacks *)legacyBase)->ui_newScriptMenu[0]) = 0;
-    ((LegacyHacks *)legacyBase)->ui_newScriptMenuIndex = -1;
-    (*(byte *)&((LegacyHacks *)legacyBase)->ui_scriptMenu[0]) = 0;
-    ((LegacyHacks *)legacyBase)->ui_scriptMenuIndex = -1;
-    ((LegacyHacks *)legacyBase)->ui_scriptMenuAllowResponse = 1;
-    (*(byte *)&((LegacyHacks *)legacyBase)->ui_waitingScriptMenu[0]) = 0;
-    ((LegacyHacks *)legacyBase)->ui_waitingScriptMenuIndex = -1;
-    ((LegacyHacks *)legacyBase)->ui_waitingScriptMenuNoMouse = 0;
+    legacyHacksData.ui_newScriptMenu[0] = 0;
+    legacyHacksData.ui_newScriptMenuIndex = -1;
+    legacyHacksData.ui_scriptMenu[0] = 0;
+    legacyHacksData.ui_scriptMenuIndex = -1;
+    legacyHacksData.ui_scriptMenuAllowResponse = 1;
+    legacyHacksData.ui_waitingScriptMenu[0] = 0;
+    legacyHacksData.ui_waitingScriptMenuIndex = -1;
+    legacyHacksData.ui_waitingScriptMenuNoMouse = 0;
 
     String_Init();
     Menu_Setup(&uiInfo->uiDC);
