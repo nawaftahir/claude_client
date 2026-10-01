@@ -51,6 +51,7 @@ extern float Dvar_GetFloat(const char *name);
 extern const char* Dvar_GetString(const char *dvarName);
 extern void Dvar_SetFromStringByName(const char *dvarName, const char *string);
 extern dvar_t* Dvar_FindVar(const char* dvarName);
+void Com_LocalizedFloatToString(float f, char *buffer, unsigned int maxlen, unsigned int numDecimalPlaces);
 extern int UI_PlayLocalSoundAlias(snd_alias_list_t *aliasList);
 extern int UI_PlayLocalSoundAliasByName(const char *name);
 extern void UI_RunMenuScript(const char **args);
@@ -2355,151 +2356,64 @@ static void Item_List_Paint(displayContextDef_t *dc, itemDef_t *item, const char
 
 void Item_TextField_Paint(displayContextDef_t *dc, itemDef_t *item)
 {
-    editFieldDef_t *editPtr;
     char buff[1024];
     vec4_t newColor;
-    FontHandle font;
-    const char *value;
+    vec4_t lowLight;
+    int offset;
+    int maxChars;
+    float x;
     const char *text;
     int width;
     int height;
-    int textLen;
-    int paintOffset;
-    int maxChars;
-    int cursorPos;
-    int cursorChar;
-    float x;
-#if COD2_TRACE
-    const char *traceParent = UI_TraceScriptItemParentName(item);
-    int traceTextField = 0;
-
-    if (traceParent) {
-        static int textFieldTraceCount;
-        if (textFieldTraceCount < 160) {
-            traceTextField = 1;
-            ++textFieldTraceCount;
-        }
-    }
-#endif
+    menuDef_t *parent;
+    editFieldDef_t *editPtr;
+    dvar_t *dvar;
 
     editPtr = Item_GetEditFieldDef(item);
-    if (!editPtr) {
-#if COD2_TRACE
-        if (traceTextField)
-            if (getenv("MTRACE"))
-                Com_Printf("[menu-trace] Item_TextField_Paint no edit parent=%s item=%s type=%d dvar=%s\n",
-                           traceParent,
-                           item->window.name ? item->window.name : "<null>",
-                           item->type,
-                           item->dvar ? item->dvar : "");
-#endif
+    if (!editPtr)
         return;
-    }
 
     Item_Text_Paint(dc, item);
 
-    buff[0] = '\0';
+    buff[0] = 0;
     if (item->dvar) {
-        value = Dvar_GetVariantString(item->dvar);
-        if (value) {
-            I_strncpyz(buff, value, sizeof(buff));
+        if (item->type == 17) {
+            dvar = Dvar_FindVar(item->dvar);
+            if (dvar && dvar->type == 1)
+                Com_LocalizedFloatToString(dvar->current.value, buff, sizeof(buff), 2);
+        } else {
+            I_strncpyz(buff, Dvar_GetVariantString(item->dvar), sizeof(buff));
         }
     }
 
     Item_SetTextExtents(item, &width, &height, buff);
-    Item_TextColor(dc, item, &newColor);
 
-    textLen = 0;
-    while (textLen < (int)sizeof(buff) - 1 && buff[textLen] != '\0') {
-        textLen++;
+    parent = item->parent;
+    if (Window_HasFocus(&item->window)) {
+        lowLight[0] = parent->focusColor[0] * 0.8f;
+        lowLight[1] = parent->focusColor[1] * 0.8f;
+        lowLight[2] = parent->focusColor[2] * 0.8f;
+        lowLight[3] = parent->focusColor[3] * 0.8f;
+        LerpColor(parent->focusColor, lowLight, newColor, (sin((float)(dc->realTime / 75)) + 1.0f) * 0.5f);
+    } else {
+        memcpy(newColor, item->window.foreColor, sizeof(vec4_t));
     }
 
-    paintOffset = editPtr->paintOffset;
-    if (paintOffset < 0) {
-        paintOffset = 0;
-    } else if (paintOffset > textLen) {
-        paintOffset = textLen;
+    offset = (item->text && *item->text) ? 8 : 0;
+    x = item->textRect[0].x + (item->textRect[0].w + offset);
+    text = buff + editPtr->paintOffset;
+    maxChars = editPtr->maxPaintChars ? editPtr->maxPaintChars : 0x7fffffff;
+
+    if (Window_HasFocus(&item->window) && g_editingField) {
+        UI_DrawTextWithCursor(text, maxChars, UI_GetFontHandle(item->fontEnum, item->textscale), x, item->textRect[0].y,
+                              item->window.rect[0].horzAlign, item->window.rect[0].vertAlign,
+                              item->textscale, newColor, item->textStyle,
+                              item->cursorPos[0] - editPtr->paintOffset, Key_GetOverstrikeMode() ? '_' : '|');
+    } else {
+        UI_DrawText(text, maxChars, UI_GetFontHandle(item->fontEnum, item->textscale), x, item->textRect[0].y,
+                    item->textRect[0].horzAlign, item->textRect[0].vertAlign,
+                    item->textscale, newColor, item->textStyle);
     }
-
-    maxChars = editPtr->maxPaintChars;
-    if (maxChars <= 0) {
-        maxChars = 0x7fffffff;
-    } else if (maxChars > (int)sizeof(buff) - 1 - paintOffset) {
-        maxChars = (int)sizeof(buff) - 1 - paintOffset;
-    }
-
-    x = item->textRect[0].x + item->textRect[0].w;
-    if (item->text && item->text[0]) {
-        x += 8.0f;
-    }
-
-    text = buff + paintOffset;
-    font = UI_GetFontHandle(item->fontEnum, item->textscale);
-    if (!font) {
-#if COD2_TRACE
-        if (traceTextField)
-            if (getenv("MTRACE"))
-                Com_Printf("[menu-trace] Item_TextField_Paint no font parent=%s item=%s text='%.80s' dvar=%s scale=%.3f\n",
-                           traceParent,
-                           item->window.name ? item->window.name : "<null>",
-                           text,
-                           item->dvar ? item->dvar : "",
-                           item->textscale);
-#endif
-        return;
-    }
-
-#if COD2_TRACE
-    if (traceTextField)
-        if (getenv("MTRACE"))
-            Com_Printf("[menu-trace] Item_TextField_Paint draw parent=%s item=%s text='%.80s' dvar=%s tr=(%.1f %.1f %.1f %.1f) x=%.1f max=%d offset=%d cursor=%d font=%p color=(%.2f %.2f %.2f %.2f)\n",
-                       traceParent,
-                       item->window.name ? item->window.name : "<null>",
-                       text,
-                       item->dvar ? item->dvar : "",
-                       item->textRect[0].x, item->textRect[0].y,
-                       item->textRect[0].w, item->textRect[0].h,
-                       x, maxChars, paintOffset, item->cursorPos[0],
-                       (void *)font,
-                       newColor[0], newColor[1], newColor[2], newColor[3]);
-#endif
-
-    if (g_editingField && (item->window.staticFlags & 6) == 6) {
-        cursorChar = Key_GetOverstrikeMode() == 1 ? '_' : '|';
-        cursorPos = item->cursorPos[0] - paintOffset;
-        if (cursorPos < -1) {
-            cursorPos = -1;
-        } else if (cursorPos > textLen - paintOffset) {
-            cursorPos = textLen - paintOffset;
-        }
-
-        UI_DrawTextWithCursor(
-            text,
-            maxChars,
-            font,
-            x,
-            item->textRect[0].y,
-            item->window.rect[0].horzAlign,
-            item->window.rect[0].vertAlign,
-            item->textscale,
-            newColor,
-            item->textStyle,
-            cursorPos,
-            cursorChar);
-        return;
-    }
-
-    UI_DrawText(
-        text,
-        maxChars,
-        font,
-        x,
-        item->textRect[0].y,
-        item->window.rect[0].horzAlign,
-        item->window.rect[0].vertAlign,
-        item->textscale,
-        newColor,
-        item->textStyle);
 }
 
 void Item_YesNo_Paint(displayContextDef_t *dc, itemDef_t *item)
