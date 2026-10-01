@@ -1921,7 +1921,8 @@ qboolean CM_SightTraceSphereThroughSphere( traceWork_t *tw, const vec3_t vStart,
 	float fC;
 	float fDiscriminant;
 	float fRadiusSqrd;
-	float fResult;
+	float fEntry;
+	float fEpsilon;
 	vec_t fDeltaLen;
 	vec3_t vNormal;
 
@@ -1950,11 +1951,13 @@ qboolean CM_SightTraceSphereThroughSphere( traceWork_t *tw, const vec3_t vStart,
 		return qtrue;
 	}
 
+	fEpsilon = fB * (float)SURFACE_CLIP_EPSILON;
 	fDeltaLen = Vec3NormalizeTo(vDelta, vNormal);
+	fEpsilon = fEpsilon / fDeltaLen;
 
-	fResult = (-fB - I_sqrt(fDiscriminant)) / fA + fB * (float)SURFACE_CLIP_EPSILON / fDeltaLen;
+	fEntry = (-fB - I_sqrt(fDiscriminant)) / fA + fEpsilon;
 
-	return fResult >= trace->fraction;
+	return fEntry >= trace->fraction;
 }
 
 /*
