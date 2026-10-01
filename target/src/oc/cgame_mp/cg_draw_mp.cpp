@@ -2064,56 +2064,57 @@ static void CG_DrawUpperRight(void)
 
 static void CG_DrawCenterString(void)
 {
-    int totalMsec;
+    char *start;
+    int l;
+    int h;
+    float x;
+    float lineHeight;
+    float y;
+    float scale;
+    float *color;
+    FontHandle font;
+    char linebuffer[1024];
 
     if (!cg->centerPrintTime)
         return;
 
-    totalMsec = (int)(1000.0f * cg_centertime->current.value);
-    CG_FadeColor(cg->centerPrintTime, totalMsec, 100);
-    if (totalMsec == 0) {
+    color = CG_FadeColor(cg->centerPrintTime, (int)(cg_centertime->current.value * 1000.0f), 100);
+    if (!color)
+    {
         cg->centerPrintTime = 0;
         cg->centerPrintPriority = 0;
-    } else {
-        float scale = (float)cg->centerPrintCharWidth * 0.03125f;
-        FontHandle font;
-        int lineHeight;
-        float y;
-        float lineStep;
-        const char *start;
+        return;
+    }
 
-        if (CL_IsRenderingSplitScreen())
-            scale *= 1.25f;
+    start = cg->centerPrint;
+
+    scale = cg->centerPrintCharWidth / 32.0f;
+    h = UI_TextHeight(UI_GetFontHandle(0, scale), scale);
+
+    lineHeight = h * 1.2f;
+    y = cg_centerPrintY->current.value - cg->centerPrintLines * lineHeight;
+
+    while (1)
+    {
+        for (l = 0; l < 75; l++)
+        {
+            if (!start[l] || start[l] == '\n')
+                break;
+            linebuffer[l] = start[l];
+        }
+        linebuffer[l] = 0;
 
         font = UI_GetFontHandle(0, scale);
-        lineHeight = UI_TextHeight(font, scale);
-        y = (float)lineHeight * -1.20000005f * (float)cg->centerPrintLines + cg_centerPrintY->current.value;
-        lineStep = (float)lineHeight * 1.20000005f;
+        x = UI_TextWidth(linebuffer, 0, font, scale) * -0.5;
+        UI_DrawText(linebuffer, 0x7fffffff, font, x, y, 7, 3, scale, color, 3);
 
-        start = cg->centerPrint;
-        while (1) {
-            char line[256];
-            int n = 0;
-            const char *p = start;
-            FontHandle lineFont;
-            int width;
+        y += lineHeight;
 
-            while (*p && *p != '\n' && n < 75)
-                line[n++] = *p++;
-            line[n] = '\0';
-
-            lineFont = UI_GetFontHandle(0, scale);
-            width = UI_TextWidth(line, 0, lineFont, scale);
-            UI_DrawText(line, 0x7fffffff, lineFont, (float)width * -0.5f, y, 7, 3, scale,
-                        (const vec_t *)CG_FadeColor(cg->centerPrintTime, totalMsec, 100), 3);
-            y += lineStep;
-
-            while (*start && *start != '\n')
-                start++;
-            if (*start == '\0')
-                break;
+        while (*start && *start != '\n')
             start++;
-        }
+        if (!*start)
+            break;
+        start++;
     }
 }
 
