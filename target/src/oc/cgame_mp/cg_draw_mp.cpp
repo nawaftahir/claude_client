@@ -7,7 +7,25 @@ extern weaponInfo_t cg_weaponsArray[];
 extern displayContextDef_t cgDC;
 
 extern clientStatic_t cls;
+extern const dvar_t *cg_hudDamageIconHeight;
+extern const dvar_t *cg_hudDamageIconInScope;
+extern const dvar_t *cg_hudDamageIconOffset;
+extern const dvar_t *cg_hudDamageIconWidth;
+extern const dvar_t *cg_hudGrenadeIconHeight;
+extern const dvar_t *cg_hudGrenadeIconInScope;
+extern const dvar_t *cg_hudGrenadeIconMaxHeight;
+extern const dvar_t *cg_hudGrenadeIconMaxRange;
+extern const dvar_t *cg_hudGrenadeIconOffset;
+extern const dvar_t *cg_hudGrenadeIconWidth;
+extern const dvar_t *cg_hudGrenadePointerHeight;
+extern const dvar_t *cg_hudGrenadePointerPivot;
+extern const dvar_t *cg_hudGrenadePointerPulseFreq;
+extern const dvar_t *cg_hudGrenadePointerPulseMax;
+extern const dvar_t *cg_hudGrenadePointerPulseMin;
+extern const dvar_t *cg_hudGrenadePointerWidth;
 extern const dvar_t *cg_centerPrintY;
+extern void CalcScreenX(float *x, int align);
+extern void CalcScreenY(float *y, int align);
 extern const dvar_t *cg_centertime;
 extern const dvar_t *cg_chatHeight;
 extern const dvar_t *cg_chatTime;
@@ -176,7 +194,7 @@ void CG_DrawFrameOverlay(float innerLeft, float innerRight, float innerTop, floa
 static unsigned int CG_DrawCrosshairNames(void);
 void CG_CheckTimedMenus(void);
 static void CG_DrawSoundOverlay(void);
-static unsigned int CG_DrawMaterial(void);
+static void CG_DrawMaterial(void);
 void CG_ShakeCamera(void);
 static qboolean CG_DrawFollow(void);
 void CG_DrawPlayerSprites(void);
@@ -843,22 +861,21 @@ static void CG_DrawSoundOverlay(void)
     }
 }
 
-unsigned int CG_DrawMaterial(void)
+void CG_DrawMaterial(void)
 {
-    char szName[0x58];
+    char szName[64];
     char szSurfaceFlags[0x1000];
     char szContents[0x1000];
     float y;
 
-    if (!CL_PickMaterial((const vec_t *)cg->refdef.vieworg, (const vec_t *)cg->refdef.viewaxis, szName, szSurfaceFlags, szContents, (int)&__mh_execute_header)) {
-        return 0;
+    if (!CL_PickMaterial((const vec_t *)cg->refdef.vieworg, (const vec_t *)cg->refdef.viewaxis, szName, szSurfaceFlags, szContents, 0x1000)) {
+        return;
     }
 
     y = 240.0f;
     y += (float)CG_DrawSmallDevStringColor(8.0f, y, szName, colorWhite, 5);
     y += (float)CG_DrawSmallDevStringColor(8.0f, y, szSurfaceFlags, colorWhite, 5);
     CG_DrawSmallDevStringColor(8.0f, y, szContents, colorWhite, 5);
-    return 0;
 }
 
 void CG_ShakeCamera(void)
@@ -942,23 +959,6 @@ qboolean CG_DrawFollow(void)
     UI_DrawText(clientName, 0x7fffffff, font, x, 65.0f, 7, 1, scale, colorWhite, 3);
 
     return 1;
-}
-
-void CG_DrawBoldGameMessages(void)
-{
-    float *fade;
-    float alpha;
-
-    if (!CG_ScoreboardDisplayed()) {
-        alpha = 1.0f;
-    } else {
-        fade = CG_FadeColor(cg->scoreFadeTime, 100, 100);
-        if (!fade)
-            return;
-        alpha = fade[3];
-    }
-
-    Con_DrawBoldMessages(0, -60, alpha, MWM_BOTTOMUP_CENTERED);
 }
 
 void CG_DrawTurretCrossHair(void)
@@ -1587,19 +1587,599 @@ unsigned int CG_DrawCrosshair(void)
     return 0;
 }
 
-static void CG_Draw2D_DrawBottomOverlays(cg_t *cg)
+static void CG_ScreenFade(void)
 {
-    CG_DrawBoldGameMessages();
+    int msec;
+    int i;
+    float t;
+    float invt;
+    vec4_t color;
 
+    if (cg->fadeRate == 0.0f)
+        return;
+
+    msec = cg->fadeTime - cg->time;
+    if (msec <= 0)
+    {
+        cg->fadeColor1[0] = cg->fadeColor2[0];
+        cg->fadeColor1[3] = cg->fadeColor2[3];
+        cg->fadeColor1[1] = cg->fadeColor2[1];
+        cg->fadeColor1[2] = cg->fadeColor2[2];
+
+        if (cg->fadeColor2[3] == 0.0f)
+        {
+            cg->fadeRate = 0.0f;
+            return;
+        }
+
+        UI_FillRectPhysical(0.0f, 0.0f, (float)cls.vidConfig.width, (float)cls.vidConfig.height, cg->fadeColor1);
+    }
+    else
+    {
+        t = (float)msec * cg->fadeRate;
+        invt = 1.0f - t;
+
+        for (i = 0; i < 4; i++)
+            color[i] = cg->fadeColor2[i] * invt + cg->fadeColor1[i] * t;
+
+        if (color[3] != 0.0f)
+            UI_FillRectPhysical(0.0f, 0.0f, (float)cls.vidConfig.width, (float)cls.vidConfig.height, color);
+    }
+}
+
+static void CG_DrawSpectator(void)
+{
+    const char *s;
+    FontHandle font;
+
+    s = UI_SafeTranslateString("CGAME_SPECTATOR");
+    font = UI_GetFontHandle(4, 0.5f);
+    UI_DrawText(s, 0x7fffffff, font, (float)-UI_TextWidth(s, 0, font, 0.5f) * 0.5f, -27.0f, 7, 3, 0.5f, colorWhite, 3);
+}
+
+static void CG_DrawIntermission(void)
+{
+    CL_CloseAllMenus();
+    cg->showScores = 1;
+    cg->scoreFadeTime = cg->time;
+    CG_DrawScoreboard();
+}
+
+static void CG_DrawFlashDamage(void)
+{
+    float redFlash;
+    vec4_t col;
+
+    if (!cg->nextSnap)
+        return;
+
+    if (cg->v_dmg_time > cg->time)
+    {
+        redFlash = fabsf((float)(cg->v_dmg_time - cg->time) * cg->v_dmg_pitch * 0.002f);
+        if (redFlash > 5.0f)
+            redFlash = 5.0f;
+
+        col[0] = 0.2f;
+        col[1] = 0.0f;
+        col[2] = 0.0f;
+        col[3] = redFlash * 0.2f * 0.7f;
+
+        UI_FillRectPhysical(-10.0f, -10.0f, (float)cls.vidConfig.width + 10.0f, (float)cls.vidConfig.height + 10.0f, col);
+    }
+}
+
+static void CG_DrawDamageDirectionIndicators(void)
+{
+    float centerX;
+    float centerY;
+    float zoom;
+    float halfWidth;
+    float height;
+    float radius;
+    vec2_t xy[4];
+    vec4_t color;
+    viewDamage_t *damage;
+    int t;
+    int maxTime;
+    float angle;
+
+    if (!cg->nextSnap)
+        return;
+
+    if (CG_GetWeapReticleZoom(&zoom))
+    {
+        if (!cg_hudDamageIconInScope->current.enabled)
+            return;
+        CG_CalcCrosshairPosition(&centerX, &centerY);
+        centerX = centerX + 320.0f;
+        centerY = centerY + 240.0f;
+    }
+    else
+    {
+        centerX = 320.0f;
+        centerY = 240.0f;
+    }
+    CalcScreenX(&centerX, 0);
+    CalcScreenY(&centerY, 0);
+
+    halfWidth = cg_hudDamageIconWidth->current.value * 0.5f;
+    height = cg_hudDamageIconHeight->current.value;
+    radius = cg_hudDamageIconOffset->current.value;
+    xy[0][0] = halfWidth;
+    xy[0][1] = height + radius;
+    xy[1][0] = -halfWidth;
+    xy[1][1] = xy[0][1];
+    xy[2][0] = xy[1][0];
+    xy[2][1] = radius;
+    xy[3][0] = halfWidth;
+    xy[3][1] = radius;
+
+    color[0] = 1.0f;
+    color[1] = 1.0f;
+    color[2] = 1.0f;
+    color[3] = 1.0f;
+
+    for (damage = cg->viewDamage; damage < &cg->viewDamage[8]; damage++)
+    {
+        maxTime = damage->duration;
+        t = cg->time - damage->time;
+        if (t > 0 && t < maxTime)
+        {
+            angle = vectoyaw(cg->refdef.viewaxis[0]) - damage->yaw;
+            color[3] = 2.0f - ((float)t + (float)t) / (float)maxTime;
+            if (color[3] - 1.0f >= 0.0f)
+                color[3] = 1.0f;
+            CG_DrawRotatedQuadPic(centerX, centerY, xy, angle, color, cgs->media.damageMaterial);
+        }
+    }
+}
+
+// Original name unknown.
+static bool CG_ShouldDrawGrenadeIndicator(const entityState_t *es)
+{
+    vec3_t offset;
+    float maxRange;
+
+    if (es->eType != 4)
+        return false;
+    if (es->pos.trDelta[0] * es->pos.trDelta[0] + es->pos.trDelta[1] * es->pos.trDelta[1] + es->pos.trDelta[2] * es->pos.trDelta[2] > 1.0f)
+        return false;
+    if (BG_GetWeaponDef(es->weapon)->projExplosion)
+        return false;
+
+    offset[0] = es->pos.trBase[0] - cg->predictedPlayerState.origin[0];
+    offset[1] = es->pos.trBase[1] - cg->predictedPlayerState.origin[1];
+    offset[2] = es->pos.trBase[2] - cg->predictedPlayerState.origin[2];
+    if (offset[2] >= 0.0f)
+    {
+        if (offset[2] > cg->predictedPlayerState.viewHeightCurrent + cg_hudGrenadeIconMaxHeight->current.value)
+            return false;
+    }
+    else if (offset[2] < -cg_hudGrenadeIconMaxHeight->current.value)
+    {
+        return false;
+    }
+
+    maxRange = cg_hudGrenadeIconMaxRange->current.value;
+    return maxRange * maxRange >= offset[0] * offset[0] + offset[1] * offset[1] + offset[2] * offset[2];
+}
+
+static void CG_DrawGrenadePointer(float centerX, float centerY, const float *grenadeOffset, const float *color)
+{
+    float width;
+    float height;
+    float radius;
+    float pivot[2];
+    float yaw;
+    float sinYaw;
+    float cosYaw;
+    float pointerPos[2];
+    vec2_t verts[4];
+
+    width = GetRealWidthFromVirtualWidth(cg_hudGrenadePointerWidth->current.value);
+    height = GetRealHeightFromVirtualHeight(cg_hudGrenadePointerHeight->current.value);
+    radius = GetRealHeightFromVirtualHeight(cg_hudGrenadeIconOffset->current.value);
+    pivot[0] = GetRealWidthFromVirtualWidth(cg_hudGrenadePointerPivot->current.vector[0]);
+    pivot[1] = GetRealHeightFromVirtualHeight(cg_hudGrenadePointerPivot->current.vector[1]);
+
+    yaw = AngleNormalize360(vectoyaw(grenadeOffset) - cg->predictedPlayerState.viewangles[1]);
+    sinYaw = sinf(yaw * 0.017453292f);
+    cosYaw = cosf(yaw * 0.017453292f);
+
+    pointerPos[0] = centerX - sinYaw * radius;
+    pointerPos[1] = centerY - cosYaw * radius;
+
+    verts[0][0] = -pivot[0];
+    verts[0][1] = -pivot[1];
+    verts[1][0] = width - pivot[0];
+    verts[1][1] = -pivot[1];
+    verts[2][0] = width - pivot[0];
+    verts[2][1] = height - pivot[1];
+    verts[3][0] = -pivot[0];
+    verts[3][1] = height - pivot[1];
+
+    CG_DrawRotatedQuadPic(pointerPos[0], pointerPos[1], verts, -yaw, color, cgs->media.grenadePointer);
+}
+
+static void CG_DrawGrenadeIcon(float centerX, float centerY, const float *grenadeOffset, const float *color)
+{
+    float width;
+    float height;
+    float radius;
+    float yaw;
+    float sinYaw;
+    float cosYaw;
+    vec2_t verts[4];
+
+    width = GetRealWidthFromVirtualWidth(cg_hudGrenadeIconWidth->current.value);
+    height = GetRealHeightFromVirtualHeight(cg_hudGrenadeIconHeight->current.value);
+    radius = GetRealHeightFromVirtualHeight(cg_hudGrenadeIconOffset->current.value);
+
+    yaw = AngleNormalize360(vectoyaw(grenadeOffset) - cg->predictedPlayerState.viewangles[1]);
+    sinYaw = sinf(yaw * 0.017453292f);
+    cosYaw = cosf(yaw * 0.017453292f);
+
+    verts[0][0] = centerX - width * 0.5f - sinYaw * radius;
+    verts[1][0] = centerX + width * 0.5f - sinYaw * radius;
+    verts[2][0] = verts[1][0];
+    verts[3][0] = verts[0][0];
+    verts[0][1] = centerY - height * 0.5f - cosYaw * radius;
+    verts[1][1] = verts[0][1];
+    verts[2][1] = centerY + height * 0.5f - cosYaw * radius;
+    verts[3][1] = verts[2][1];
+
+    CL_DrawQuadPic(verts, color, cgs->media.grenadeIcon);
+}
+
+static void CG_DrawGrenadeIndicators(void)
+{
+    float centerX;
+    float centerY;
+    float zoom;
+    int i;
+    const entityState_t *es;
+    vec3_t grenadeOffset;
+    vec4_t color;
+    float amplitude;
+
+    if (!cg->nextSnap)
+        return;
+    if (cg->predictedPlayerState.pm_type == 4)
+        return;
+    if (cg->predictedPlayerState.pm_flags & 0x400000)
+        return;
+
+    if (CG_GetWeapReticleZoom(&zoom))
+    {
+        if (!cg_hudGrenadeIconInScope->current.enabled)
+            return;
+        CG_CalcCrosshairPosition(&centerX, &centerY);
+    }
+    else
+    {
+        centerX = 0.0f;
+        centerY = 0.0f;
+    }
+    CalcScreenX(&centerX, 2);
+    CalcScreenY(&centerY, 2);
+
+    for (i = 0; i < cg->nextSnap->numEntities; i++)
+    {
+        es = &cg->nextSnap->entities[i];
+        if (!CG_ShouldDrawGrenadeIndicator(es))
+            continue;
+
+        grenadeOffset[0] = es->pos.trBase[0] - cg->predictedPlayerState.origin[0];
+        grenadeOffset[1] = es->pos.trBase[1] - cg->predictedPlayerState.origin[1];
+        grenadeOffset[2] = es->pos.trBase[2] - cg->predictedPlayerState.origin[2];
+
+        color[0] = 1.0f;
+        color[1] = 1.0f;
+        color[2] = 1.0f;
+        color[3] = 1.0f;
+
+        amplitude = (cg_hudGrenadePointerPulseMax->current.value - cg_hudGrenadePointerPulseMin->current.value) * 0.5f;
+        color[3] = (float)sin((float)cg->time * cg_hudGrenadePointerPulseFreq->current.value * 0.0062831853f) * amplitude
+            + (cg_hudGrenadePointerPulseMin->current.value + amplitude);
+        if (color[3] - 1.0f >= 0.0f)
+            color[3] = 1.0f;
+        if (color[3] < 0.0f)
+            color[3] = 0.0f;
+
+        CG_DrawGrenadePointer(centerX, centerY, grenadeOffset, color);
+        CG_DrawGrenadeIcon(centerX, centerY, grenadeOffset, color);
+    }
+}
+
+static void CG_DrawVote(void)
+{
+    char yesKey[256];
+    char noKey[256];
+    char keys[256];
+    FontHandle font;
+    int secs;
+
+    if (!cgs->voteTime)
+        return;
+
+    font = UI_GetFontHandle(0, 0.5f);
+
+    if (!GetKeyBindingLocalizedString("vote yes", keys))
+        I_strncpyz(yesKey, "vote yes", 0x100);
+    else
+        I_strncpyz(yesKey, keys, 0x100);
+
+    if (!GetKeyBindingLocalizedString("vote no", keys))
+        I_strncpyz(noKey, "vote no", 0x100);
+    else
+        I_strncpyz(noKey, keys, 0x100);
+
+    secs = (cgs->voteTime - cg->time) / 1000;
+    if (secs < 0)
+        secs = 0;
+
+    UI_DrawText(va("%s(%i):%s", UI_SafeTranslateString("CGAME_VOTE"), secs, cgs->voteString),
+                0x7fffffff, font, 8.0f, 200.0f, 0, 0, 0.5f, colorYellow, 3);
+
+    if (cg->nextSnap->ps.eFlags & 0x10)
+    {
+        UI_DrawText(va("%s:%i, %s:%i", UI_SafeTranslateString("CGAME_YES"), cgs->voteYes,
+                       UI_SafeTranslateString("CGAME_NO"), cgs->voteNo),
+                    0x7fffffff, font, 8.0f, 210.0f, 0, 0, 0.5f, colorYellow, 3);
+    }
+    else
+    {
+        UI_DrawText(va("%s(%s):%i, %s(%s):%i", UI_SafeTranslateString("CGAME_YES"), yesKey,
+                       cgs->voteYes, UI_SafeTranslateString("CGAME_NO"), noKey, cgs->voteNo),
+                    0x7fffffff, font, 8.0f, 210.0f, 0, 0, 0.5f, colorYellow, 3);
+    }
+}
+
+static void CG_DrawLagometer(void)
+{
+    float prev;
+    int i;
+
+    if (!cg_drawLagometer->current.enabled || cgs->localServer)
+    {
+        CG_DrawDisconnect();
+        return;
+    }
+
+    UI_DrawHandlePic(-55.0f, -140.0f, 48.0f, 48.0f, 3, 3, 0, cgs->media.lagometerMaterial);
+
+    prev = 0.0f;
+    for (i = 0; i < 48; ++i) {
+        int idx = (~i + lagometer.frameCount) & 0x7f;
+        float v = (float)lagometer.frameSamples[idx] * 0.0533333346f;
+        float y;
+        float h;
+        const vec_t *col;
+        if (v > prev) {
+            if (v <= 16.0f) {
+                y = -124.0f - v;
+                h = v;
+            } else {
+                y = -140.0f;
+                h = 16.0f;
+            }
+            col = colorYellow;
+            CL_DrawStretchPic(-7.0f, y, 1.0f, h, 3, 3, 0, 0, 0, 0, col, cgs->media.whiteMaterial);
+            prev = 0.0f;
+        } else if (v < 0.0f) {
+            float n = -v;
+            if (n > 16.0f)
+                n = 16.0f;
+            CL_DrawStretchPic(-7.0f, -124.0f, 1.0f, n, 3, 3, 0, 0, 0, 0, colorBlue,
+                              cgs->media.whiteMaterial);
+            prev = 0.0f;
+        } else {
+            prev = 0.0f;
+        }
+    }
+
+    prev = 0.0f;
+    for (i = 0; i < 48; ++i) {
+        int idx = (~i + lagometer.snapshotCount) & 0x7f;
+        float v = (float)lagometer.snapshotSamples[idx];
+        if (v > prev) {
+            float h = v * 0.0266666673f;
+            float y;
+            if (lagometer.snapshotFlags[idx] & 0x1)
+                y = h <= 24.0f ? -92.0f - h : -116.0f;
+            else
+                y = h > 24.0f ? -116.0f : -92.0f - h;
+            CL_DrawStretchPic(-7.0f, y, 1.0f, h, 3, 3, 0, 0, 0, 0, colorGreen,
+                              cgs->media.whiteMaterial);
+        } else if (v < 0.0f) {
+            CL_DrawStretchPic(-7.0f, -116.0f, 1.0f, 24.0f, 3, 3, 0, 0, 0, 0, colorRed,
+                              cgs->media.whiteMaterial);
+        }
+        prev = 0.0f;
+    }
+
+    if (cg_nopredict->current.enabled || cg_synchronousClients->current.enabled)
+        CG_DrawBigDevString(-55.0f, -140.0f, "snc", 1.0f, 9);
+
+    CG_DrawDisconnect();
+}
+
+static void CG_DrawPerformanceWarnings(void)
+{
+    int now;
+    const void *statsArray;
+    int statsCount;
+    int i;
+    float x;
+    float y;
+
+    now = Sys_Milliseconds();
+    StatMon_GetStatsArray((const statmonitor_t **)&statsArray, &statsCount);
+
+    x = 2.0f;
+    y = 200.0f;
+    for (i = 0; i < statsCount; i++)
+    {
+        const int *entry = (const int *)((const char *)statsArray + i * 8);
+        if (entry[0] >= now)
+            UI_DrawHandlePic(x, y, 32.0f, 32.0f, 0, 0, 0, (MaterialHandle)entry[1]);
+        x += 34.0f;
+        if (x + 32.0f > 68.0f)
+        {
+            x = 2.0f;
+            y += 34.0f;
+        }
+    }
+}
+
+static void CG_DrawDebugOverlays(void)
+{
+    if (cg_drawSoundOverlay->current.integer)
+        CG_DrawSoundOverlay();
+    else if (cg_drawScriptUsage->current.enabled)
+        CG_DrawScriptUsage();
+    else if (cg_drawMaterial->current.enabled)
+        CG_DrawMaterial();
+}
+
+static float CG_DrawSnapshot(float y)
+{
+    return y + (float)CG_DrawBigDevStringColor(620.0f, y,
+        va("time:%i snap:%i cmd:%i", cg->nextSnap->serverTime, cg->latestSnapshotNum, cgs->serverCommandSequence),
+        colorWhite, 6);
+}
+
+static void CG_DrawUpperRight(void)
+{
+    float y;
+
+    CL_TrackStatistics(0);
+    y = 0.0f;
+    if (cg_drawSnapshot->current.enabled)
+        y = CG_DrawSnapshot(y);
+    if (cg_drawFPS->current.integer)
+        y = CG_DrawFPS(y);
+}
+
+static void CG_DrawCenterString(void)
+{
+    int totalMsec;
+
+    if (!cg->centerPrintTime)
+        return;
+
+    totalMsec = (int)(1000.0f * cg_centertime->current.value);
+    CG_FadeColor(cg->centerPrintTime, totalMsec, 100);
+    if (totalMsec == 0) {
+        cg->centerPrintTime = 0;
+        cg->centerPrintPriority = 0;
+    } else {
+        float scale = (float)cg->centerPrintCharWidth * 0.03125f;
+        FontHandle font;
+        int lineHeight;
+        float y;
+        float lineStep;
+        const char *start;
+
+        if (CL_IsRenderingSplitScreen())
+            scale *= 1.25f;
+
+        font = UI_GetFontHandle(0, scale);
+        lineHeight = UI_TextHeight(font, scale);
+        y = (float)lineHeight * -1.20000005f * (float)cg->centerPrintLines + cg_centerPrintY->current.value;
+        lineStep = (float)lineHeight * 1.20000005f;
+
+        start = cg->centerPrint;
+        while (1) {
+            char line[256];
+            int n = 0;
+            const char *p = start;
+            FontHandle lineFont;
+            int width;
+
+            while (*p && *p != '\n' && n < 75)
+                line[n++] = *p++;
+            line[n] = '\0';
+
+            lineFont = UI_GetFontHandle(0, scale);
+            width = UI_TextWidth(line, 0, lineFont, scale);
+            UI_DrawText(line, 0x7fffffff, lineFont, (float)width * -0.5f, y, 7, 3, scale,
+                        (const vec_t *)CG_FadeColor(cg->centerPrintTime, totalMsec, 100), 3);
+            y += lineStep;
+
+            while (*start && *start != '\n')
+                start++;
+            if (*start == '\0')
+                break;
+            start++;
+        }
+    }
+}
+
+static void CG_DrawGameMessages(void)
+{
+    int y;
+    float alpha;
+    float *color;
+
+    y = I_fround(cgs->compassY - (cg_hudCompassSize->current.value - 1.0f) * cgs->compassHeight + 12.0f);
+
+    if (cg->showScores)
+    {
+        color = CG_FadeColor(cg->scoreFadeTime, 100, 100);
+        if (!color)
+            return;
+        alpha = color[3];
+    }
+    else
+    {
+        alpha = 1.0f;
+    }
+
+    Con_DrawNotify(6, y, alpha, MWM_BOTTOMUP);
+}
+
+void CG_DrawBoldGameMessages(void)
+{
+    float x;
+    float y;
+    float alpha;
+    float *color;
+
+    x = 0.0f;
+    y = -60.0f;
+
+    if (cg->showScores)
+    {
+        color = CG_FadeColor(cg->scoreFadeTime, 100, 100);
+        if (!color)
+            return;
+        alpha = color[3];
+    }
+    else
+    {
+        alpha = 1.0f;
+    }
+
+    Con_DrawBoldMessages(I_fround(x), I_fround(y), alpha, MWM_BOTTOMUP_CENTERED);
+}
+
+static void CG_DrawMiniConsole(void)
+{
     if (cg_minicon->current.enabled)
         Con_DrawMiniConsole(2, 4, 1.0f);
-    if (cg_subtitles->current.enabled)
-        Con_DrawSubtitles(cg_subtitlePosX->current.integer,
-                          cg_subtitlePosY->current.integer,
-                          cg_subtitleCharHeight->current.integer, 1.0f, (msgwnd_mode_t)2);
+}
 
+static void CG_DrawSubtitles(void)
+{
+    if (cg_subtitles->current.enabled)
+        Con_DrawSubtitles(cg_subtitlePosX->current.integer, cg_subtitlePosY->current.integer,
+                          cg_subtitleCharHeight->current.integer, 1.0f, MWM_BOTTOMUP);
+}
+
+static void CG_DrawSay(void)
+{
     Con_DrawSay((int)cg_hudSayPosition->current.vector[1] + 24);
-    (void)cg;
 }
 
 unsigned int CG_Draw2D(void)
@@ -1607,11 +2187,6 @@ unsigned int CG_Draw2D(void)
     qboolean drawHudMenus;
     qboolean drawHudElems;
     qboolean drewScoreboard;
-    float debugY = 0.0f;
-    int pm_type;
-    byte *cls = ((byte *)&::cls);
-    float screenWidth = (float)((clientStatic_t *)cls)->vidConfig.width;
-    float screenHeight = (float)((clientStatic_t *)cls)->vidConfig.height;
 
     if (cg->cubemapShot)
         return 0;
@@ -1619,60 +2194,38 @@ unsigned int CG_Draw2D(void)
     if (!cg_draw2D->current.enabled)
         return 0;
 
-    if (cg->fadeRate != 0.0f) {
-        int remaining = cg->fadeTime - cg->time;
-        if (remaining <= 0) {
-            cg->fadeColor1[0] = cg->fadeColor2[0];
-            cg->fadeColor1[1] = cg->fadeColor2[1];
-            cg->fadeColor1[2] = cg->fadeColor2[2];
-            cg->fadeColor1[3] = cg->fadeColor2[3];
-            if (cg->fadeColor1[3] == 0.0f)
-                cg->fadeRate = 0.0f;
-            else
-                UI_FillRectPhysical(0.0f, 0.0f, screenWidth, screenHeight, cg->fadeColor1);
-        } else {
-            float t = (float)remaining * cg->fadeRate;
-            float u = 1.0f - t;
-            vec4_t fadeColor;
-            int i;
-            for (i = 0; i < 4; ++i)
-                fadeColor[i] = t * cg->fadeColor1[i] + u * cg->fadeColor2[i];
-            if (fadeColor[3] != 0.0f)
-                UI_FillRectPhysical(0.0f, 0.0f, screenWidth, screenHeight, fadeColor);
-        }
-    }
+    CG_ScreenFade();
 
     drawHudMenus = !CG_AreHudMenusHidden();
     drawHudElems = !CG_AreHudElemsHidden();
 
-    pm_type = cg->nextSnap->ps.pm_type;
-    if (pm_type == 5) {
-        CL_CloseAllMenus();
-        cg->showScores = 1;
-        cg->scoreFadeTime = cg->time;
-        CG_DrawScoreboard();
+    if (cg->nextSnap->ps.pm_type == 5)
+    {
+        CG_DrawIntermission();
         return 0;
     }
 
-    if (pm_type == 4) {
-        if (drawHudMenus) {
-            const char *str = UI_SafeTranslateString("CGAME_SPECTATOR");
-            FontHandle font = UI_GetFontHandle(4, 0.5f);
-            UI_DrawText(str, 0x7fffffff, font,
-                        (float)-UI_TextWidth(str, 0, font, 0.5f) * 0.5f, -27.0f, 7, 3, 0.5f, colorWhite, 3);
+    if (cg->nextSnap->ps.pm_type == 4)
+    {
+        if (drawHudMenus)
+        {
+            CG_DrawSpectator();
             CG_DrawCrosshairNames();
             CG_DrawChatMessages();
         }
-        if (drawHudElems) {
+        if (drawHudElems)
+        {
             CG_Draw2dHudElems(0);
             CG_Draw2dHudElems(1);
         }
-    } else {
-        if (pm_type <= 5)
+    }
+    else
+    {
+        if (cg->nextSnap->ps.pm_type < 6)
             CG_DrawCrosshair();
-
-        if (drawHudMenus) {
-            if (cg->nextSnap->ps.pm_type <= 5)
+        if (drawHudMenus)
+        {
+            if (cg->nextSnap->ps.pm_type < 6)
                 CG_DrawCrosshairNames();
             CG_DrawChatMessages();
         }
@@ -1680,7 +2233,7 @@ unsigned int CG_Draw2D(void)
         if (drawHudElems)
             CG_Draw2dHudElems(0);
         if (drawHudMenus)
-            Menu_PaintAll((&cgDC));
+            Menu_PaintAll(&cgDC);
         CG_Draw2dHudElems(1);
     }
 
@@ -1688,218 +2241,29 @@ unsigned int CG_Draw2D(void)
     if (!drawHudMenus)
         return 0;
 
-    if (!drewScoreboard) {
+    CG_DrawFlashDamage();
+    CG_DrawDamageDirectionIndicators();
+    CG_DrawGrenadeIndicators();
+    if (!drewScoreboard)
+    {
         CG_DrawSpectatorMessage();
         CG_DrawFollow();
     }
-
-    if (cgs->voteTime != 0) {
-        char yesKey[256];
-        char noKey[256];
-        char keys[256];
-        FontHandle font = UI_GetFontHandle(0, 0.5f);
-        int secs;
-
-        if (!GetKeyBindingLocalizedString("vote yes", keys))
-            I_strncpyz(yesKey, "vote yes", 0x100);
-        else
-            I_strncpyz(yesKey, keys, 0x100);
-
-        if (!GetKeyBindingLocalizedString("vote no", keys))
-            I_strncpyz(noKey, "vote no", 0x100);
-        else
-            I_strncpyz(noKey, keys, 0x100);
-
-        secs = (cgs->voteTime - cg->time) / 1000;
-        if (secs < 0)
-            secs = 0;
-
-        UI_DrawText(va("%s(%i):%s", UI_SafeTranslateString("CGAME_VOTE"), secs, cgs->voteString),
-                    0x7fffffff, font, 8.0f, 200.0f, 0, 0, 0.5f, colorYellow, 3);
-
-        if (cg->nextSnap->ps.eFlags & 0x10) {
-            UI_DrawText(va("%s:%i, %s:%i", UI_SafeTranslateString("CGAME_YES"), cgs->voteYes,
-                           UI_SafeTranslateString("CGAME_NO"), cgs->voteNo),
-                        0x7fffffff, font, 8.0f, 210.0f, 0, 0, 0.5f, colorYellow, 3);
-        } else {
-            UI_DrawText(va("%s(%s):%i, %s(%s):%i", UI_SafeTranslateString("CGAME_YES"), yesKey,
-                           cgs->voteYes, UI_SafeTranslateString("CGAME_NO"), noKey, cgs->voteNo),
-                        0x7fffffff, font, 8.0f, 210.0f, 0, 0, 0.5f, colorYellow, 3);
-        }
-    }
-
-    if (cg_drawLagometer->current.enabled && !cgs->localServer) {
-        float prev;
-        int i;
-
-        UI_DrawHandlePic(-55.0f, -140.0f, 48.0f, 48.0f, 3, 3, 0, cgs->media.lagometerMaterial);
-
-        prev = 0.0f;
-        for (i = 0; i < 48; ++i) {
-            int idx = (~i + lagometer.frameCount) & 0x7f;
-            float v = (float)lagometer.frameSamples[idx] * 0.0533333346f;
-            float y;
-            float h;
-            const vec_t *col;
-            if (v > prev) {
-                if (v <= 16.0f) {
-                    y = -124.0f - v;
-                    h = v;
-                } else {
-                    y = -140.0f;
-                    h = 16.0f;
-                }
-                col = colorYellow;
-                CL_DrawStretchPic(-7.0f, y, 1.0f, h, 3, 3, 0, 0, 0, 0, col, cgs->media.whiteMaterial);
-                prev = 0.0f;
-            } else if (v < 0.0f) {
-                float n = -v;
-                if (n > 16.0f)
-                    n = 16.0f;
-                CL_DrawStretchPic(-7.0f, -124.0f, 1.0f, n, 3, 3, 0, 0, 0, 0, colorBlue,
-                                  cgs->media.whiteMaterial);
-                prev = 0.0f;
-            } else {
-                prev = 0.0f;
-            }
-        }
-
-        prev = 0.0f;
-        for (i = 0; i < 48; ++i) {
-            int idx = (~i + lagometer.snapshotCount) & 0x7f;
-            float v = (float)lagometer.snapshotSamples[idx];
-            if (v > prev) {
-                float h = v * 0.0266666673f;
-                float y;
-                if (lagometer.snapshotFlags[idx] & 0x1)
-                    y = h <= 24.0f ? -92.0f - h : -116.0f;
-                else
-                    y = h > 24.0f ? -116.0f : -92.0f - h;
-                CL_DrawStretchPic(-7.0f, y, 1.0f, h, 3, 3, 0, 0, 0, 0, colorGreen,
-                                  cgs->media.whiteMaterial);
-            } else if (v < 0.0f) {
-                CL_DrawStretchPic(-7.0f, -116.0f, 1.0f, 24.0f, 3, 3, 0, 0, 0, 0, colorRed,
-                                  cgs->media.whiteMaterial);
-            }
-            prev = 0.0f;
-        }
-
-        if (cg_nopredict->current.enabled ||
-            cg_synchronousClients->current.enabled)
-            CG_DrawBigDevString(-55.0f, -140.0f, "snc", 1.0f, 9);
-    }
-
-    CG_DrawDisconnect();
-
+    CG_DrawVote();
+    CG_DrawLagometer();
+    CG_DrawPerformanceWarnings();
+    CG_DrawDebugOverlays();
+    CG_DrawUpperRight();
+    if (!drewScoreboard)
     {
-        int now = Sys_Milliseconds();
-        const void *statsArray;
-        int statsCount;
-        StatMon_GetStatsArray( (const statmonitor_t **)(&statsArray), &statsCount);
-        if (statsCount > 0) {
-            float y = 200.0f;
-            int i;
-            for (i = 0; i < statsCount; ++i) {
-                const int *entry = (const int *)((const char *)statsArray + i * 8);
-                if (now <= entry[0])
-                    UI_DrawHandlePic(2.0f, y, 0.0f, 0.0f, 1, 0, 0, (MaterialHandle)entry[1]);
-                y += 34.0f;
-            }
-        }
+        CG_DrawCenterString();
+        if (cg_drawGameMessages->current.enabled)
+            CG_DrawGameMessages();
+        CG_DrawBoldGameMessages();
+        CG_DrawMiniConsole();
+        CG_DrawSubtitles();
+        CG_DrawSay();
     }
-
-    if (cg_drawSoundOverlay->current.integer)
-        CG_DrawSoundOverlay();
-    else if (cg_drawScriptUsage->current.enabled)
-        CG_DrawScriptUsage();
-    else if (cg_drawMaterial->current.enabled)
-        CG_DrawMaterial();
-
-    CL_TrackStatistics(0);
-
-    if (cg_drawSnapshot->current.enabled)
-        CG_DrawBigDevStringColor(620.0f, 0.0f,
-                                 va("time:%i snap:%i cmd:%i", cg->nextSnap->serverTime, cg->latestSnapshotNum,
-                                    cgs->serverCommandSequence),
-                                 colorWhite, 6);
-
-    if (cg_drawFPS->current.integer)
-        debugY = CG_DrawFPS(debugY);
-    (void)debugY;
-
-    if (drewScoreboard)
-        return 0;
-
-    if (cg->centerPrintTime != 0) {
-        int totalMsec = (int)(1000.0f * cg_centertime->current.value);
-        CG_FadeColor(cg->centerPrintTime, totalMsec, 100);
-        if (totalMsec == 0) {
-            cg->centerPrintTime = 0;
-            cg->centerPrintPriority = 0;
-        } else {
-            float scale = (float)cg->centerPrintCharWidth * 0.03125f;
-            FontHandle font;
-            int lineHeight;
-            float y;
-            float lineStep;
-            const char *start;
-
-            if (CL_IsRenderingSplitScreen())
-                scale *= 1.25f;
-
-            font = UI_GetFontHandle(0, scale);
-            lineHeight = UI_TextHeight(font, scale);
-            y = (float)lineHeight * -1.20000005f * (float)cg->centerPrintLines + cg_centerPrintY->current.value;
-            lineStep = (float)lineHeight * 1.20000005f;
-
-            start = cg->centerPrint;
-            while (1) {
-                char line[256];
-                int n = 0;
-                const char *p = start;
-                FontHandle lineFont;
-                int width;
-
-                while (*p && *p != '\n' && n < 75)
-                    line[n++] = *p++;
-                line[n] = '\0';
-
-                lineFont = UI_GetFontHandle(0, scale);
-                width = UI_TextWidth(line, 0, lineFont, scale);
-                UI_DrawText(line, 0x7fffffff, lineFont, (float)width * -0.5f, y, 7, 3, scale,
-                            (const vec_t *)CG_FadeColor(cg->centerPrintTime, totalMsec, 100), 3);
-                y += lineStep;
-
-                while (*start && *start != '\n')
-                    start++;
-                if (*start == '\0')
-                    break;
-                start++;
-            }
-        }
-    }
-
-    if (!cg_drawGameMessages->current.enabled) {
-        CG_Draw2D_DrawBottomOverlays(cg);
-        return 0;
-    } else {
-        float notifyY = floorf(cgs->compassY -
-                               (cg_hudCompassSize->current.value - 1.0f) * cgs->compassHeight + 12.0f + 0.5f);
-        float alpha;
-        if (!CG_ScoreboardDisplayed()) {
-            alpha = 1.0f;
-        } else {
-            float *fade = CG_FadeColor(cg->scoreFadeTime, 100, 100);
-            if (cg->scoreFadeTime == 0 || fade == 0) {
-                CG_Draw2D_DrawBottomOverlays(cg);
-                return 0;
-            }
-            alpha = fade[3];
-        }
-        Con_DrawNotify(6, (int)notifyY, alpha, (msgwnd_mode_t)2);
-        CG_Draw2D_DrawBottomOverlays(cg);
-    }
-
     return 0;
 }
 
