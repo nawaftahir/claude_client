@@ -1893,46 +1893,47 @@ static void CG_DrawGrenadeIndicators(void)
 
 static void CG_DrawVote(void)
 {
-    char yesKey[256];
-    char noKey[256];
-    char keys[256];
+    char szVoteYes[256];
+    char szVoteNo[256];
+    char binding[256];
     FontHandle font;
-    int secs;
+    int sec;
+    const char *s;
 
     if (!cgs->voteTime)
         return;
 
     font = UI_GetFontHandle(0, 0.5f);
 
-    if (!GetKeyBindingLocalizedString("vote yes", keys))
-        I_strncpyz(yesKey, "vote yes", 0x100);
+    if (GetKeyBindingLocalizedString("vote yes", binding))
+        I_strncpyz(szVoteYes, binding, 256);
     else
-        I_strncpyz(yesKey, keys, 0x100);
+        I_strncpyz(szVoteYes, "vote yes", 256);
 
-    if (!GetKeyBindingLocalizedString("vote no", keys))
-        I_strncpyz(noKey, "vote no", 0x100);
+    if (GetKeyBindingLocalizedString("vote no", binding))
+        I_strncpyz(szVoteNo, binding, 256);
     else
-        I_strncpyz(noKey, keys, 0x100);
+        I_strncpyz(szVoteNo, "vote no", 256);
 
-    secs = (cgs->voteTime - cg->time) / 1000;
-    if (secs < 0)
-        secs = 0;
+    sec = (cgs->voteTime - cg->time) / 1000;
+    if (sec < 0)
+        sec = 0;
 
-    UI_DrawText(va("%s(%i):%s", UI_SafeTranslateString("CGAME_VOTE"), secs, cgs->voteString),
-                0x7fffffff, font, 8.0f, 200.0f, 0, 0, 0.5f, colorYellow, 3);
-
-    if (cg->nextSnap->ps.eFlags & 0x10)
+    if (cg->nextSnap->ps.eFlags & 0x100000)
     {
-        UI_DrawText(va("%s:%i, %s:%i", UI_SafeTranslateString("CGAME_YES"), cgs->voteYes,
-                       UI_SafeTranslateString("CGAME_NO"), cgs->voteNo),
-                    0x7fffffff, font, 8.0f, 210.0f, 0, 0, 0.5f, colorYellow, 3);
+        s = va("%s(%i):%s", UI_SafeTranslateString("CGAME_VOTE"), sec, cgs->voteString);
+        UI_DrawText(s, 0x7fffffff, font, 8.0f, 200.0f, 0, 0, 0.5f, colorYellow, 3);
+        s = va("%s:%i, %s:%i", UI_SafeTranslateString("CGAME_YES"), cgs->voteYes,
+               UI_SafeTranslateString("CGAME_NO"), cgs->voteNo);
     }
     else
     {
-        UI_DrawText(va("%s(%s):%i, %s(%s):%i", UI_SafeTranslateString("CGAME_YES"), yesKey,
-                       cgs->voteYes, UI_SafeTranslateString("CGAME_NO"), noKey, cgs->voteNo),
-                    0x7fffffff, font, 8.0f, 210.0f, 0, 0, 0.5f, colorYellow, 3);
+        s = va("%s(%i):%s", UI_SafeTranslateString("CGAME_VOTE"), sec, cgs->voteString);
+        UI_DrawText(s, 0x7fffffff, font, 8.0f, 200.0f, 0, 0, 0.5f, colorYellow, 3);
+        s = va("%s(%s):%i, %s(%s):%i", UI_SafeTranslateString("CGAME_YES"), szVoteYes, cgs->voteYes,
+               UI_SafeTranslateString("CGAME_NO"), szVoteNo, cgs->voteNo);
     }
+    UI_DrawText(s, 0x7fffffff, font, 8.0f, 210.0f, 0, 0, 0.5f, colorYellow, 3);
 }
 
 static void CG_DrawLagometer(void)
