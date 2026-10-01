@@ -233,6 +233,7 @@ int Menu_Count(displayContextDef_t *dc);
 void UI_AddMenuList(displayContextDef_t *dc, MenuList *menuList);
 void Item_MouseLeave(displayContextDef_t *dc, itemDef_t *item);
 float Item_Slider_ThumbPosition(itemDef_t *item);
+bool Window_IsVisible(Window *w);
 qboolean Menu_CheckOnKey(displayContextDef_t *dc, menuDef_t *menu, int key);
 qboolean Menus_AnyFullScreenVisible(displayContextDef_t *dc);
 menuDef_t *Menu_GetFocused(displayContextDef_t *dc);
@@ -952,48 +953,31 @@ float Item_Slider_ThumbPosition(itemDef_t *item)
 
 qboolean Menu_CheckOnKey(displayContextDef_t *dc, menuDef_t *menu, int key)
 {
-    byte *m = (byte *)menu;
-    byte tempItem[0x2a0];
+    itemDef_t it;
+    ItemKeyHandler *handler;
+    itemDef_t *item;
     int i;
 
-#if COD2_TRACE
-    if (getenv("COD2_KEYDIAG")) {
-        Com_Printf("[keydiag] menu=%p name=%s key=0x%x onKey(typed)=%p raw8@onKey=%016llx off=%lld\n",
-                   (void *)menu, menu->window.name ? menu->window.name : "(null)", key,
-                   (void *)menu->onKey, (unsigned long long)*(uintptr_t *)&menu->onKey,
-                   (long long)((char *)&menu->onKey - (char *)menu));
-    }
-#endif
-    ItemKeyHandler *node = menu->onKey;
-    while (node && (uintptr_t)node > 0x10000) {
-        if (node->key == key) {
-            *(void **)&(*(unsigned char *)&((itemDef_t *)tempItem)->parent) = menu;
-            Item_RunScript(dc, (itemDef_t *)tempItem, node->action);
+    for (handler = menu->onKey; handler; handler = (ItemKeyHandler *)handler->next) {
+        if (handler->key == key) {
+            it.parent = menu;
+            Item_RunScript(dc, &it, handler->action);
             return 1;
         }
-        node = (ItemKeyHandler *)node->next;
     }
 
-    int itemCount = (((menuDef_t*)(m))->itemCount);
-    for (i = 0; i < itemCount; i++) {
-        byte *item = *(byte **)((char *)&((menuDef_t *)m)->items[i]);
-
-        if (!((*(byte *)&((itemDef_t *)item)->window.dynamicFlags[0]) & 4))
+    for (i = 0; i < menu->itemCount; i++) {
+        item = menu->items[i];
+        if (!Window_IsVisible(&item->window))
             continue;
-
-        if ((*(byte *)&((itemDef_t *)item)->dvarFlags) & 0xc) {
-            if (!Item_EnableShowViaDvar((itemDef_t *)item, 4))
-                continue;
-        }
-
-        node = ((itemDef_t *)item)->onKey;
-        while (node) {
-            if (node->key == key) {
-                *(void **)&(*(unsigned char *)&((itemDef_t *)tempItem)->parent) = menu;
-                Item_RunScript(dc, (itemDef_t *)tempItem, node->action);
+        if ((item->dvarFlags & 0xc) && !Item_EnableShowViaDvar(item, 4))
+            continue;
+        for (handler = item->onKey; handler; handler = (ItemKeyHandler *)handler->next) {
+            if (handler->key == key) {
+                it.parent = menu;
+                Item_RunScript(dc, &it, handler->action);
                 return 1;
             }
-            node = (ItemKeyHandler *)node->next;
         }
     }
 
