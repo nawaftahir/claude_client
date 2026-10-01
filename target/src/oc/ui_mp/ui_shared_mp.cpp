@@ -4085,63 +4085,37 @@ static void Item_Enum_Paint(displayContextDef_t *dc, itemDef_t *item)
 void Item_Paint(displayContextDef_t *dc, itemDef_t *item)
 {
     byte *it = (byte *)item;
-    byte *parent = (*(byte **)&((itemDef_t *)it)->parent);
-    int flags;
-    rectDef_t newRect;
-#if COD2_TRACE
-    int traceScriptItem = 0;
-#endif
+    menuDef_t *parent;
 
-    flags = ((itemDef_t *)it)->window.dynamicFlags[0];
-#if COD2_TRACE
-    if (parent && ((menuDef_t *)parent)->window.name &&
-        (!I_stricmp(((menuDef_t *)parent)->window.name, "serverinfo_dm") ||
-         !strncmp(((menuDef_t *)parent)->window.name, "team_", 5) ||
-         !I_stricmp(((menuDef_t *)parent)->window.name, "team"))) {
-        static int itemTraceCount;
-        if (itemTraceCount < 240) {
-            traceScriptItem = 1;
-            if (getenv("MTRACE"))
-                Com_Printf("[menu-trace] Item_Paint parent=%s item=%s flags=0x%x type=%d owner=0x%x dvarFlags=0x%x dvar=%s enable=%s\n",
-                           ((menuDef_t *)parent)->window.name,
-                           item->window.name ? item->window.name : "<null>",
-                           flags, item->type, item->window.ownerDraw,
-                           item->dvarFlags,
-                           item->dvar ? item->dvar : "",
-                           item->enableDvar ? item->enableDvar : "");
-            ++itemTraceCount;
-        }
-    }
-#endif
+    parent = item->parent;
 
-    if (flags & 0x2000) {
-        int dcTime = dc->realTime;
-        if (dcTime > ((itemDef_t *)it)->window.nextTime) {
+    if (item->window.dynamicFlags[0] & 0x2000) {
+        if (dc->realTime > item->window.nextTime) {
+            rectDef_t newRect;
+            float rx;
+            float ry;
+            float w;
+            float h;
+            float s;
+            float c;
 
-            ((itemDef_t *)it)->window.nextTime = dcTime + ((itemDef_t *)it)->window.offsetTime[0];
-
-            float w = (((itemDef_s*)(it))->window.rectClient[0].w) * 0.5f;
-            float h = (((itemDef_s*)(it))->window.rectClient[0].h) * 0.5f;
-
-            float rx = (((itemDef_s*)(it))->window.rectClient[0].x) + w - ((itemDef_t *)it)->window.rectEffects0[0].x;
-            float ry = (((itemDef_s*)(it))->window.rectClient[0].y) + h - ((itemDef_t *)it)->window.rectEffects0[0].y;
-
-            float sin_a, cos_a;
-            FastSinCos(0.05235988f, &sin_a, &cos_a);
-
-            newRect = (*(rectDef_t *)&((itemDef_t *)it)->window.rectClient[0].x);
-            newRect.x = rx * cos_a - ry * sin_a + ((itemDef_t *)it)->window.rectEffects0[0].x - w;
-            newRect.y = rx * sin_a + ry * cos_a + ((itemDef_t *)it)->window.rectEffects0[0].y - h;
-
-            Window_SetRectClient( (Window *)(item), &newRect);
-
+            item->window.nextTime = dc->realTime + item->window.offsetTime[0];
+            w = item->window.rectClient[0].w * 0.5f;
+            h = item->window.rectClient[0].h * 0.5f;
+            rx = item->window.rectClient[0].x + w - item->window.rectEffects0[0].x;
+            ry = item->window.rectClient[0].y + h - item->window.rectEffects0[0].y;
+            FastSinCos(0.05235988f, &s, &c);
+            newRect = item->window.rectClient[0];
+            newRect.x = rx * c - ry * s + item->window.rectEffects0[0].x - w;
+            newRect.y = rx * s + ry * c + item->window.rectEffects0[0].y - h;
+            Window_SetRectClient(&item->window, &newRect);
             Item_UpdatePosition((itemDef_t *)item);
 
-            flags = ((itemDef_t *)it)->window.dynamicFlags[0];
         }
     }
 
-    if (flags & 0x80) {
+    if (item->window.dynamicFlags[0] & 0x80) {
+        rectDef_t newRect;
         int dcTime = dc->realTime;
         if (dcTime > ((itemDef_t *)it)->window.nextTime) {
 
@@ -4227,131 +4201,77 @@ void Item_Paint(displayContextDef_t *dc, itemDef_t *item)
         }
     }
 
-    {
-        int ownerDraw = ((itemDef_t *)it)->window.ownerDrawFlags;
-        if (ownerDraw) {
-            if (!UI_OwnerDrawVisible(ownerDraw)) {
-#if COD2_TRACE
-                if (traceScriptItem)
-                    if (getenv("MTRACE"))
-                        Com_Printf("[menu-trace] Item_Paint skip owner parent=%s item=%s owner=0x%x\n",
-                                   ((menuDef_t *)parent)->window.name,
-                                   item->window.name ? item->window.name : "<null>", ownerDraw);
-#endif
-                Window_RemoveDynamicFlags((Window *)item, 4);
-            } else {
-                Window_AddDynamicFlags((Window *)item, 4);
-            }
-        }
+    if (item->window.ownerDrawFlags) {
+        if (!UI_OwnerDrawVisible(item->window.ownerDrawFlags))
+            Window_RemoveDynamicFlags(&item->window, 6);
+        else
+            Window_AddDynamicFlags(&item->window, 4);
     }
 
-    if ((*(byte *)&((itemDef_t *)it)->dvarFlags) & 0xc) {
-        if (!Item_EnableShowViaDvar(item, 4)) {
-#if COD2_TRACE
-            if (traceScriptItem)
-                if (getenv("MTRACE"))
-                    Com_Printf("[menu-trace] Item_Paint skip dvar parent=%s item=%s flagsByte=0x%x enable=%s dvar=%s\n",
-                               ((menuDef_t *)parent)->window.name,
-                               item->window.name ? item->window.name : "<null>",
-                               (*(byte *)&((itemDef_t *)it)->dvarFlags),
-                               item->enableDvar ? item->enableDvar : "",
-                               item->dvar ? item->dvar : "");
-#endif
-
-            flags = ((itemDef_t *)it)->window.dynamicFlags[0];
-            if ((flags & 4) && (flags & 2)) {
-                Menu_HandleKey(dc, (menuDef_t *)parent, 0x9b, 1);
-                Menu_HandleKey(dc, (menuDef_t *)parent, 0x9b, 0);
-            }
-            return;
+    if ((item->dvarFlags & 0xc) && !Item_EnableShowViaDvar(item, 4)) {
+        if (Window_HasFocus(&item->window)) {
+            Menu_HandleKey(dc, parent, 0x9b, 1);
+            Menu_HandleKey(dc, parent, 0x9b, 0);
         }
-    }
-
-    if (!((*(byte *)&((itemDef_t *)it)->window.dynamicFlags[0]) & 4)) {
-#if COD2_TRACE
-        if (traceScriptItem)
-            if (getenv("MTRACE"))
-                Com_Printf("[menu-trace] Item_Paint skip invisible parent=%s item=%s flags=0x%x\n",
-                           ((menuDef_t *)parent)->window.name,
-                           item->window.name ? item->window.name : "<null>",
-                           ((itemDef_t *)it)->window.dynamicFlags[0]);
-#endif
         return;
     }
 
-    if (((itemDef_t *)it)->window.style == 6) {
-        const char *dvarStr = Dvar_GetString(item->dvar);
-        ((itemDef_t *)it)->window.background = CL_RegisterMaterialNoMip(dvarStr, 3);
-    }
+    if (!Window_IsVisible(&item->window))
+        return;
 
-    Window_Paint(dc, (float (*)[4][32])item,
-                 (((menuDef_t*)(parent))->fadeAmount), (((menuDef_t*)(parent))->fadeInAmount),
-                 (((menuDef_t*)(parent))->fadeClamp), (float)(((menuDef_t*)(parent))->fadeCycle));
+    if (item->window.style == 6)
+        item->window.background = CL_RegisterMaterialNoMip(Dvar_GetString(item->dvar), item->imageTrack);
+
+    Window_Paint(dc, (float (*)[4][32])item, parent->fadeAmount, parent->fadeInAmount, parent->fadeClamp, (float)parent->fadeCycle);
 
     if (debugMode) {
-        float adjusted_y;
-        memset(&rect, 0, sizeof(rect));
-        rect.x = (((itemDef_s*)(it))->textRect[0].x);
-        rect.y = (((itemDef_s*)(it))->textRect[0].y);
-        rect.w = (((itemDef_s*)(it))->textRect[0].w);
-        rect.h = ((itemDef_t *)it)->textRect[0].h;
-        rect.horzAlign = (((itemDef_s*)(it))->textRect[0].horzAlign);
-        rect.vertAlign = (((itemDef_s*)(it))->textRect[0].vertAlign);
+        rectDef_t *r;
+        vec4_t color;
 
-        if (rect.w != 0.0f) {
-            adjusted_y = rect.y - rect.h;
-        } else {
-            adjusted_y = rect.y;
-        }
-
-        {
-            float color[4] = { 0.0f, 1.0f, 0.0f, 1.0f };
-            UI_DrawRect(rect.x, adjusted_y, rect.w, rect.h, rect.horzAlign, rect.vertAlign, 1.0f, color);
-        }
+        r = Item_CorrectedTextRect(item);
+        color[1] = color[3] = 1.0f;
+        color[0] = color[2] = 0.0f;
+        UI_DrawRect(r->x, r->y, r->w, r->h, r->horzAlign, r->vertAlign, 1.0f, color);
     }
 
-    if (((itemDef_t *)it)->window.style == 6) {
+    if (item->window.style == 6)
         return;
-    }
 
-    {
-        int itemType = (((itemDef_s*)(it))->type);
-        switch (itemType) {
-        case 0:
-        case 1:
-            Item_Text_Paint(dc, item);
-            break;
-        case 4:
-        case 9:
-        case 0x10:
-        case 0x11:
-        case 0x12:
-            Item_TextField_Paint(dc, item);
-            break;
-        case 6:
-            Item_ListBox_Paint(dc, item);
-            break;
-        case 8:
-            Item_OwnerDraw_Paint(dc, item);
-            break;
-        case 0xa:
-            Item_Slider_Paint(dc, item);
-            break;
-        case 0xb:
-            Item_YesNo_Paint(dc, item);
-            break;
-        case 0x0c:
-            Item_Multi_Paint(dc, item);
-            break;
-        case 0x0d:
-            Item_Enum_Paint(dc, item);
-            break;
-        case 0x0e:
-            Item_Bind_Paint(dc, item);
-            break;
-        default:
-            break;
-        }
+    switch (item->type) {
+    case 8:
+        Item_OwnerDraw_Paint(dc, item);
+        break;
+    case 0:
+    case 1:
+        Item_Text_Paint(dc, item);
+        break;
+    case 4:
+    case 9:
+    case 16:
+    case 17:
+    case 18:
+        Item_TextField_Paint(dc, item);
+        break;
+    case 6:
+        Item_ListBox_Paint(dc, item);
+        break;
+    case 11:
+        Item_YesNo_Paint(dc, item);
+        break;
+    case 12:
+        Item_Multi_Paint(dc, item);
+        break;
+    case 13:
+        Item_Enum_Paint(dc, item);
+        break;
+    case 14:
+        Item_Bind_Paint(dc, item);
+        break;
+    case 10:
+        Item_Slider_Paint(dc, item);
+        break;
+    default:
+        break;
     }
 }
 
