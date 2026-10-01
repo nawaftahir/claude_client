@@ -162,3 +162,4 @@ void Com_LoadSoundAliasFile( const char *loadspec, const char *loadspecCurGame, 
 void Com_MakeSoundAliasesPermanent( snd_alias_list_t *aliasInfo, SoundFileInfo *soundFileInfo );
 bool Com_LoadVolumeFalloffCurve( const char *name, SndCurve *curve );
 void Com_InitDefaultSoundAliasVolumeFalloffCurve( SndCurve *curve );
+int Com_LoadSoundAliasSounds( SoundFileInfo *info );

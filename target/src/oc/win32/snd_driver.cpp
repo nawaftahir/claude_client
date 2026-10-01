@@ -833,30 +833,19 @@ void SND_Set2DChannelVolume(int index, float volume, float pan)
 }
 
 
-void SND_LoadSoundFile(SoundFile *soundFile)
+// Original name unknown (KisakCOD calls it SND_LoadFromBuffer). The third
+// parameter is pushed by every caller but never read in 1.0; its type is unknown.
+static MssSound *SND_LoadFromBuffer(void *buffer, const char *realname, const void *unused)
 {
     snd_local_t *sndGlob;
-    char realname[256];
-    void *buffer;
     AILMIXINFO mixinfo;
-    int datasize, totalSize, rate;
+    int datasize, totalSize;
+    unsigned int rate, samples;
     MssSound *sound;
     int targetBits, targetChannels;
     int procFormat;
 
     sndGlob = &g_snd;
-    if (!sndGlob->Initialized2d) {
-        soundFile->fileMem = NULL;
-        return;
-    }
-
-    sprintf(realname, (const char *)"sound/%s", soundFile->soundName);
-    if (FS_ReadFile(realname, &buffer) < 0) {
-        Com_Printf((const char *)"^1ERROR: Sound file '%s' not found\n", realname);
-        soundFile->fileMem = NULL;
-        return;
-    }
-
     if (!AIL_WAV_info(buffer, &mixinfo)) {
         Com_Printf((const char *)"^1ERROR: Sound file '%s' is in an invalid or corrupted format\n", realname);
         sound = NULL;
@@ -869,32 +858,20 @@ void SND_LoadSoundFile(SoundFile *soundFile)
 
         sound = (MssSound *)Hunk_AllocInternal(totalSize);
         Com_Memcpy(sound->data, (void *)mixinfo.Info.data_ptr, mixinfo.Info.data_len);
-        sound->info.format = mixinfo.Info.format;
-        sound->info.data_ptr = mixinfo.Info.data_ptr;
-        sound->info.data_len = mixinfo.Info.data_len;
-        sound->info.rate = mixinfo.Info.rate;
-        sound->info.bits = mixinfo.Info.bits;
-        sound->info.channels = mixinfo.Info.channels;
-        sound->info.samples = mixinfo.Info.samples;
-        sound->info.block_size = mixinfo.Info.block_size;
+        sound->info = mixinfo.Info;
         sound->info.data_ptr = sound->data;
         sound->info.initial_ptr = sound->data;
     } else {
 
-        rate = (int)mixinfo.Info.rate;
-        while ((unsigned int)rate > (unsigned int)sndGlob->playback_rate) {
+        rate = mixinfo.Info.rate;
+        samples = mixinfo.Info.samples;
+        while (rate > (unsigned int)sndGlob->playback_rate) {
             rate >>= 1;
-            mixinfo.Info.samples >>= 1;
+            samples >>= 1;
         }
 
-        targetBits = (int)mixinfo.Info.bits;
-        if (targetBits >= sndGlob->playback_bits) {
-            targetBits = sndGlob->playback_bits;
-        }
-        targetChannels = (int)mixinfo.Info.channels;
-        if (targetChannels >= sndGlob->playback_channels) {
-            targetChannels = sndGlob->playback_channels;
-        }
+        targetBits = (int)mixinfo.Info.bits - sndGlob->playback_bits >= 0 ? sndGlob->playback_bits : (int)mixinfo.Info.bits;
+        targetChannels = (int)mixinfo.Info.channels - sndGlob->playback_channels >= 0 ? sndGlob->playback_channels : (int)mixinfo.Info.channels;
 
         if (targetChannels == 1) {
             if (mixinfo.Info.format == 0x11)
@@ -917,14 +894,34 @@ void SND_LoadSoundFile(SoundFile *soundFile)
         sound->info.rate = rate;
         sound->info.bits = targetBits;
         sound->info.channels = targetChannels;
-        sound->info.samples = mixinfo.Info.samples;
+        sound->info.samples = samples;
         sound->info.block_size = mixinfo.Info.block_size;
         sound->info.initial_ptr = sound->data;
 
         AIL_process_digital_audio(sound->data, datasize, rate, procFormat, 1, &mixinfo);
     }
 
-    soundFile->fileMem = sound;
+    return sound;
+}
+
+void SND_LoadSoundFile(SoundFile *soundFile)
+{
+    char realname[256];
+    void *buffer;
+
+    if (!g_snd.Initialized2d) {
+        soundFile->fileMem = NULL;
+        return;
+    }
+
+    sprintf(realname, (const char *)"sound/%s", soundFile->soundName);
+    if (FS_ReadFile(realname, &buffer) < 0) {
+        Com_Printf((const char *)"^1ERROR: Sound file '%s' not found\n", realname);
+        soundFile->fileMem = NULL;
+        return;
+    }
+
+    soundFile->fileMem = SND_LoadFromBuffer(buffer, realname, NULL);
     FS_FreeFile(buffer);
 }
 

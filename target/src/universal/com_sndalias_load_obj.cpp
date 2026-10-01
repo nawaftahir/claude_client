@@ -1242,6 +1242,47 @@ qboolean Com_SubtitleReferenceExists( const char *reference )
 	return found;
 }
 
+void SND_LoadSoundFile( SoundFile *soundFile );
+extern const dvar_t *snd_touchStreamFilesOnLoad;
+extern dvar_t *fs_copyfiles;
+
+int Com_LoadSoundAliasSounds( SoundFileInfo *info )
+{
+	int missing;
+	int i;
+	SoundFile *soundFile;
+
+	missing = 0;
+	for ( i = 0; i < info->count; i++ )
+	{
+		soundFile = &info->files[i];
+		if ( soundFile->type == SAT_LOADED )
+		{
+			SND_LoadSoundFile(soundFile);
+			if ( !soundFile->fileMem )
+			{
+				missing++;
+			}
+		}
+		else
+		{
+			if ( snd_touchStreamFilesOnLoad->current.boolean || fs_copyfiles->current.boolean )
+			{
+				soundFile->isStreamFound = FS_TouchFile(va("sound/%s", soundFile->soundName));
+			}
+			else
+			{
+				soundFile->isStreamFound = 1;
+			}
+			if ( !soundFile->isStreamFound )
+			{
+				Com_Printf("^1ERROR: Streamed sound file '%s' not found\n", soundFile->soundName);
+			}
+		}
+	}
+	return missing;
+}
+
 static char com_subtitleReference[MAX_STRING_CHARS];
 
 const char *Com_GetSubtitleStringEdReference( const char *text )

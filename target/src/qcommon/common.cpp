@@ -629,6 +629,7 @@ void Com_Quit_f()
 	{
 		Com_ClearTempMemory();
 		Sys_DestroySplashWindow();
+		CL_Shutdown();
 		SV_Shutdown("EXE_SERVERQUIT");
 		Com_Close();
 		Com_CloseLogfiles();
