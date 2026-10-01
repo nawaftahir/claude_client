@@ -2573,325 +2573,259 @@ int UI_OwnerDrawWidth(int ownerDraw, FontHandle font, float scale)
     }
 }
 
+static void UI_DrawGameType(rectDef_t *rect, FontHandle font, float scale, vec_t *color, int textStyle)
+{
+    const char *text;
+
+    if (sharedUiInfo.gameTypes[ui_gametype->current.integer].gameTypeName[0])
+        text = UI_SafeTranslateString(sharedUiInfo.gameTypes[ui_gametype->current.integer].gameTypeName);
+    else
+        text = UI_SafeTranslateString("EXE_ALL");
+    UI_DrawText(text, 0x7fffffff, font, rect->x, rect->y, rect->horzAlign, rect->vertAlign, scale, color, textStyle);
+}
+
+static void UI_DrawNetGameType(rectDef_t *rect, FontHandle font, float scale, vec_t *color, int textStyle)
+{
+    const char *text;
+
+    if (ui_netGameType->current.integer > sharedUiInfo.numGameTypes) {
+        Dvar_SetInt((dvar_t *)ui_netGameType, 0);
+        Dvar_SetString((dvar_t *)ui_netGameTypeName, sharedUiInfo.gameTypes[0].gameType);
+    }
+    if (sharedUiInfo.gameTypes[ui_netGameType->current.integer].gameTypeName[0])
+        text = UI_SafeTranslateString(sharedUiInfo.gameTypes[ui_netGameType->current.integer].gameTypeName);
+    else
+        text = UI_SafeTranslateString("EXE_ALL");
+    UI_DrawText(text, 0x7fffffff, font, rect->x, rect->y, rect->horzAlign, rect->vertAlign, scale, color, textStyle);
+}
+
+static void UI_DrawJoinGameType(rectDef_t *rect, FontHandle font, float scale, vec_t *color, int textStyle)
+{
+    const char *text;
+
+    if (ui_joinGameType->current.integer > sharedUiInfo.numJoinGameTypes)
+        Dvar_SetInt((dvar_t *)ui_joinGameType, 0);
+    if (sharedUiInfo.joinGameTypes[ui_joinGameType->current.integer].gameTypeName[0])
+        text = UI_SafeTranslateString(sharedUiInfo.joinGameTypes[ui_joinGameType->current.integer].gameTypeName);
+    else
+        text = UI_SafeTranslateString("EXE_ALL");
+    UI_DrawText(text, 0x7fffffff, font, rect->x, rect->y, rect->horzAlign, rect->vertAlign, scale, color, textStyle);
+}
+
+static void UI_DrawNetMapPreview(rectDef_t *rect, float scale, vec_t *color)
+{
+    if (sharedUiInfo.serverStatus.currentServerPreview > 0) {
+        UI_DrawHandlePic(rect->x, rect->y, rect->w, rect->h, rect->horzAlign, rect->vertAlign, color, sharedUiInfo.serverStatus.currentServerPreview);
+    } else {
+        UI_DrawHandlePic(rect->x, rect->y, rect->w, rect->h, rect->horzAlign, rect->vertAlign, color, CL_RegisterMaterialNoMip("menu/art/unknownmap", 3));
+    }
+}
+
+static void UI_DrawNetMapCinematic(rectDef_t *rect, float scale, vec_t *color)
+{
+    if (ui_currentNetMap->current.integer >= sharedUiInfo.mapCount)
+        Dvar_SetInt((dvar_t *)ui_currentNetMap, 0);
+
+    if (sharedUiInfo.serverStatus.currentServerCinematic >= 0) {
+        CIN_RunCinematic(sharedUiInfo.serverStatus.currentServerCinematic);
+        CIN_SetExtents(sharedUiInfo.serverStatus.currentServerCinematic, (int)rect->x, (int)rect->y, (int)rect->w, (int)rect->h);
+        CIN_DrawCinematic(sharedUiInfo.serverStatus.currentServerCinematic);
+    } else {
+        UI_DrawNetMapPreview(rect, scale, color);
+    }
+}
+
+static void UI_DrawNetFilter(rectDef_t *rect, FontHandle font, float scale, vec_t *color, int textStyle)
+{
+    const char *text;
+
+    if (ui_serverFilterType < 0 || ui_serverFilterType > 1)
+        ui_serverFilterType = 0;
+    text = SEH_LocalizeTextMessage(va("EXE_SERVERFILTER\x14%s", serverFilters[ui_serverFilterType].description), "server filter", LOCMSG_SAFE);
+    UI_DrawText(text, 0x7fffffff, font, rect->x, rect->y, rect->horzAlign, rect->vertAlign, scale, color, textStyle);
+}
+
+static void UI_DrawNetSource(rectDef_t *rect, FontHandle font, float scale, vec_t *color, int textStyle)
+{
+    const char *text;
+
+    text = SEH_LocalizeTextMessage(va("EXE_NETSOURCE\x14%s", netSources[ui_netSource->current.integer]), "net source", LOCMSG_SAFE);
+    UI_DrawText(text, 0x7fffffff, font, rect->x, rect->y, rect->horzAlign, rect->vertAlign, scale, color, textStyle);
+}
+
+static void UI_DrawServerRefreshDate(rectDef_t *rect, FontHandle font, float scale, vec_t *color, int textStyle)
+{
+    char buff[64];
+    vec4_t lowLight, newColor;
+    const char *string;
+
+    if (sharedUiInfo.serverStatus.refreshActive) {
+        lowLight[0] = 0.8 * color[0];
+        lowLight[1] = 0.8 * color[1];
+        lowLight[2] = 0.8 * color[2];
+        lowLight[3] = 0.8 * color[3];
+        LerpColor(color, lowLight, newColor, (sin((double)(uiInfo->uiDC.realTime / 75)) + 1.0) * 0.5);
+        if (LAN_WaitServerResponse(ui_netSource->current.integer))
+            string = UI_SafeTranslateString("EXE_WAITINGFORMASTERSERVERRESPONSE");
+        else
+            string = UI_ReplaceConversionInt(UI_SafeTranslateString("EXE_GETTINGINFOFORSERVERS"), LAN_GetServerCount(ui_netSource->current.integer));
+        UI_DrawText(string, 0x7fffffff, font, rect->x, rect->y, rect->horzAlign, rect->vertAlign, scale, newColor, textStyle);
+    } else {
+        I_strncpyz(buff, Dvar_GetVariantString(va("ui_lastServerRefresh_%i", ui_netSource->current.integer)), 64);
+        string = UI_ReplaceConversionString(UI_SafeTranslateString("EXE_REFRESHTIME"), buff);
+        UI_DrawText(string, 0x7fffffff, font, rect->x, rect->y, rect->horzAlign, rect->vertAlign, scale, color, textStyle);
+    }
+}
+
+static void UI_DrawKeyBindStatus(rectDef_t *rect, FontHandle font, float scale, vec_t *color, int textStyle)
+{
+    const char *string;
+
+    if (Display_KeyBindPending())
+        string = "EXE_KEYWAIT";
+    else
+        string = "EXE_KEYCHANGE";
+    UI_DrawText(UI_SafeTranslateString(string), 0x7fffffff, font, rect->x, rect->y, rect->horzAlign, rect->vertAlign, scale, color, textStyle);
+}
+
+static void UI_DrawLocalTalking(rectDef_t *rect, vec_t *color)
+{
+    if ((sv_voice)->current.enabled && (cl_voice)->current.enabled && IsTalking())
+        UI_DrawHandlePic(rect->x, rect->y, rect->w, rect->h, rect->horzAlign, rect->vertAlign, color, CL_RegisterMaterialNoMip("voice_on", 7));
+}
+
+static int UI_GetTalkerClientNum(int num)
+{
+    int client;
+    int talker;
+
+    talker = 0;
+    for (client = 0; client < 64; client++) {
+        if (CL_IsPlayerTalking(client)) {
+            if (talker == num)
+                return client;
+            talker++;
+        }
+    }
+    return -1;
+}
+
+// Original name unknown.
+static int UI_GetPlayerListIndex(int client)
+{
+    int index;
+
+    for (index = 0; index < 64; index++) {
+        if (sharedUiInfo.playerClientNums[index] == client)
+            return index;
+    }
+    return -1;
+}
+
+static void UI_DrawTalkerNum(int num, rectDef_t *rect, FontHandle font, vec_t *color, float scale, int textStyle)
+{
+    int client;
+    int index;
+    MaterialHandle material;
+    float actualScale;
+    int textHeight;
+
+    client = UI_GetTalkerClientNum(num);
+    if (client < 0)
+        return;
+
+    UI_BuildPlayerList();
+    index = UI_GetPlayerListIndex(client);
+
+    material = CL_RegisterMaterialNoMip("voice_on", 7);
+    actualScale = CL_NormalizedTextScale(font, scale);
+    textHeight = (int)(CL_TextHeight(font) * actualScale);
+    UI_DrawHandlePic(rect->x, rect->y, rect->w, rect->h, rect->horzAlign, rect->vertAlign, color, material);
+    UI_DrawText(sharedUiInfo.playerNames[index], 32, font, rect->x + rect->w + 2.0f, (rect->h - (float)textHeight) * 0.5f + (float)textHeight + rect->y, rect->horzAlign, rect->vertAlign, scale, color, textStyle);
+}
+
 void UI_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAlign, float text_x, float text_y, int ownerDraw, int ownerDrawFlags, int align, float special, FontHandle font, float scale, vec_t *color, MaterialHandle material, int textStyle)
 {
+    rectDef_t rect;
 
-    float rect[6];
-    const char *text;
-    clientActive_t *clBase;
-
-    clBase = clients;
-    if (clBase->cgameInitialized != 0) {
+    if (clients->cgameInitialized)
         CG_OwnerDraw(x, y, w, h, horzAlign, vertAlign, text_x, text_y, ownerDraw, ownerDrawFlags, align, special, font, scale, color, material, textStyle);
-    }
 
-    rect[0] = x + text_x;
-    rect[1] = y + text_y;
-    *(int *)&rect[2] = *(int *)&w;
-    rect[3] = h;
-    *(int *)&rect[4] = horzAlign;
-    *(int *)&rect[5] = vertAlign;
+    rect.x = x + text_x;
+    rect.y = y + text_y;
+    rect.w = w;
+    rect.h = h;
+    rect.horzAlign = horzAlign;
+    rect.vertAlign = vertAlign;
 
     switch (ownerDraw) {
-    case 205:
-    {
-        const char *gtName = sharedUiInfo.gameTypes[(ui_gametype)->current.integer].gameTypeName;
-        if (gtName[0] == '\0')
-            gtName = "EXE_ALL";
-        text = UI_SafeTranslateString(gtName);
-        UI_DrawText(text, 0x7fffffff, font, rect[0], rect[1], 0, 0, scale, color, textStyle);
-        return;
-    }
-
-    case 206:
-    {
-        UI_DrawMapPreview((const rectDef_t *)rect, color, 1);
-        return;
-    }
-
-    case 220:
-    {
-        text = SEH_LocalizeTextMessage(
-            va("EXE_NETSOURCE\x14%s", netSources[(ui_netSource)->current.integer]),
-            "net source", LOCMSG_SAFE);
-        UI_DrawText(text, 0x7fffffff, font, rect[0], rect[1], 0, 0, scale, color, textStyle);
-        return;
-    }
-
-    case 221:
-    {
-        MaterialHandle lsHandle = sharedUiInfo.serverStatus.currentServerPreview;
-        if (!lsHandle) {
-            lsHandle = CL_RegisterMaterialNoMip("menu/art/unknownmap", 3);
-        }
-        UI_DrawHandlePic(rect[0], rect[1], rect[2], rect[3], *(int *)&rect[4], *(int *)&rect[5], color, lsHandle);
-        return;
-    }
-
-    case 222:
-    {
-        int filterType = 0;
-        if ((unsigned int)ui_serverFilterType < 2)
-            filterType = ui_serverFilterType;
-        ui_serverFilterType = filterType;
-        text = SEH_LocalizeTextMessage(
-            va("EXE_SERVERFILTER\x14%s", serverFilters[filterType].description),
-            "server filter", LOCMSG_SAFE);
-        UI_DrawText(text, 0x7fffffff, font, rect[0], rect[1], 0, 0, scale, color, textStyle);
-        return;
-    }
-
-    case 244:
-    {
-        UI_DrawMapPreview((const rectDef_t *)rect, color, 0);
-        return;
-    }
-
-    case 245:
-    {
-        int gtIdx = (ui_netGameType)->current.integer;
-        if (gtIdx > sharedUiInfo.numGameTypes) {
-            Dvar_SetInt((dvar_t *)ui_netGameType, 0);
-            Dvar_SetString((dvar_t *)ui_netGameTypeName, sharedUiInfo.gameTypes[0].gameType);
-            gtIdx = (ui_netGameType)->current.integer;
-        }
-        {
-            const char *gtName = sharedUiInfo.gameTypes[gtIdx].gameTypeName;
-            if (gtName[0] == '\0')
-                gtName = "EXE_ALL";
-            text = UI_SafeTranslateString(gtName);
-            UI_DrawText(text, 0x7fffffff, font, rect[0], rect[1], 0, 0, scale, color, textStyle);
-        }
-        return;
-    }
-
-    case 246:
-    {
-        int netMap = (ui_currentNetMap)->current.integer;
-        if (netMap >= sharedUiInfo.mapCount) {
-            Dvar_SetInt((dvar_t *)ui_currentNetMap, 0);
-        }
-        {
-            int cinHandle = sharedUiInfo.serverStatus.currentServerCinematic;
-            if (cinHandle < 0) {
-
-                MaterialHandle img = sharedUiInfo.serverStatus.currentServerPreview;
-                if (!img) {
-                    img = CL_RegisterMaterialNoMip("menu/art/unknownmap", 3);
-                }
-                UI_DrawHandlePic(rect[0], rect[1], rect[2], rect[3], *(int *)&rect[4], *(int *)&rect[5], color, img);
-            } else {
-                CIN_RunCinematic(cinHandle);
-                CIN_SetExtents(cinHandle, (int)rect[0], (int)rect[1], (int)rect[2], (int)rect[3]);
-                CIN_DrawCinematic(cinHandle);
-            }
-        }
-        return;
-    }
-
-    case 247:
-    {
-        int refreshing = sharedUiInfo.serverStatus.refreshActive;
-        if (refreshing) {
-
-            vec_t lowLight[4], newColor[4];
-            int serverCount;
-            int waitResponse;
-            const char *countText;
-
-            lowLight[0] = color[0] * 0.8f;
-            lowLight[1] = color[1] * 0.8f;
-            lowLight[2] = color[2] * 0.8f;
-            lowLight[3] = color[3] * 0.8f;
-
-            {
-                int realTime = uiInfo->uiDC.realTime;
-                float phase = (float)(realTime % 1000);
-                float sinVal;
-                {
-                    double sv;
-                    extern double sin(double);
-                    sv = sin((double)phase);
-                    sinVal = (float)(sv * 0.5 + 0.5);
-                }
-                LerpColor(color, lowLight, newColor, sinVal);
-            }
-
-            waitResponse = LAN_WaitServerResponse((ui_netSource)->current.integer);
-            if (waitResponse) {
-                countText = UI_SafeTranslateString("EXE_WAITINGFORMASTERSERVERRESPONSE");
-            } else {
-                serverCount = LAN_GetServerCount((ui_netSource)->current.integer);
-                {
-                    char tempString[64];
-                    int convArgs[10];
-                    int ci;
-
-                    text = UI_SafeTranslateString("EXE_GETTINGINFOFORSERVERS");
-
-                    for (ci = 0; ci < 10; ci++)
-                        convArgs[ci] = 0;
-                    sprintf(tempString, "%d", serverCount);
-                    convArgs[0] = 1;
-                    convArgs[1] = (int)tempString;
-                    countText = UI_ReplaceConversions(text, (ConversionArguments *)convArgs);
-                }
-            }
-
-            UI_DrawText(countText, 0x7fffffff, font, rect[0], rect[1], 0, 0, scale, newColor, textStyle);
-        } else {
-
-            char tempString[64];
-            int convArgs[10];
-            int ci;
-
-            I_strncpyz(tempString, Dvar_GetVariantString(va("ui_lastServerRefresh_%i", (ui_netSource)->current.integer)), 64);
-            text = UI_SafeTranslateString("EXE_REFRESHTIME");
-
-            for (ci = 0; ci < 10; ci++)
-                convArgs[ci] = 0;
-            convArgs[0] = 1;
-            convArgs[1] = (int)tempString;
-            text = UI_ReplaceConversions(text, (ConversionArguments *)convArgs);
-
-            UI_DrawText(text, 0x7fffffff, font, rect[0], rect[1], 0, 0, scale, color, textStyle);
-        }
-        return;
-    }
-
-    case 250:
-    {
-        const char *keyStr;
-        if (Display_KeyBindPending())
-            keyStr = "EXE_KEYWAIT";
-        else
-            keyStr = "EXE_KEYCHANGE";
-        text = UI_SafeTranslateString(keyStr);
-        UI_DrawText(text, 0x7fffffff, font, rect[0], rect[1], *(int *)&rect[4], *(int *)&rect[5], scale, color, textStyle);
-        return;
-    }
-
-    case 252:
-    {
-        int jgtIdx = (ui_joinGameType)->current.integer;
-        if (jgtIdx > sharedUiInfo.numJoinGameTypes) {
-            Dvar_SetInt((dvar_t *)ui_joinGameType, 0);
-            jgtIdx = (ui_joinGameType)->current.integer;
-        }
-        {
-            const char *gtName = sharedUiInfo.joinGameTypes[jgtIdx].gameTypeName;
-            if (gtName[0] == '\0')
-                gtName = "EXE_ALL";
-            text = UI_SafeTranslateString(gtName);
-            UI_DrawText(text, 0x7fffffff, font, rect[0], rect[1], 0, 0, scale, color, textStyle);
-        }
-        return;
-    }
-
-    case 253:
+    case 254:
     {
         int cinHandle = sharedUiInfo.previewMovie;
         if (cinHandle <= -2)
             return;
-        cinHandle = CIN_PlayCinematic(
-            sharedUiInfo.movieList[sharedUiInfo.movieIndex],
-            0, 0, 0, 0, 10);
+        cinHandle = CIN_PlayCinematic(sharedUiInfo.movieList[sharedUiInfo.movieIndex], 0, 0, 0, 0, 10);
         sharedUiInfo.previewMovie = cinHandle;
         if (cinHandle < 0) {
             sharedUiInfo.previewMovie = -2;
             return;
         }
         CIN_RunCinematic(cinHandle);
-        CIN_SetExtents(cinHandle, (int)rect[0], (int)rect[1], (int)rect[2], (int)rect[3]);
+        CIN_SetExtents(cinHandle, (int)rect.x, (int)rect.y, (int)rect.w, (int)rect.h);
         CIN_DrawCinematic(cinHandle);
         return;
     }
-
-    case 254:
-    {
-        UI_DrawMapPreview((const rectDef_t *)rect, color, 1);
-        return;
-    }
-
-    case 263:
-        UI_DrawRecordLevel((rectDef_t *)rect);
-        return;
-
-    case 264:
-    {
-        if ((sv_voice)->current.enabled == 0 || (cl_voice)->current.enabled == 0)
-            return;
-        if (!IsTalking())
-            return;
-        {
-            MaterialHandle voiceMat = CL_RegisterMaterialNoMip("voice_on", 7);
-            UI_DrawHandlePic(rect[0], rect[1], rect[2], rect[3], *(int *)&rect[4], *(int *)&rect[5], color, voiceMat);
-        }
-        return;
-    }
-
+    case 205:
+        UI_DrawGameType(&rect, font, scale, color, textStyle);
+        break;
+    case 245:
+        UI_DrawNetGameType(&rect, font, scale, color, textStyle);
+        break;
+    case 253:
+        UI_DrawJoinGameType(&rect, font, scale, color, textStyle);
+        break;
+    case 206:
+        UI_DrawMapPreview(&rect, color, 1);
+        break;
+    case 244:
+        UI_DrawMapPreview(&rect, color, 0);
+        break;
+    case 255:
+        UI_DrawMapPreview(&rect, color, 1);
+        break;
+    case 221:
+        UI_DrawNetMapPreview(&rect, scale, color);
+        break;
+    case 246:
+        UI_DrawNetMapCinematic(&rect, scale, color);
+        break;
+    case 222:
+        UI_DrawNetFilter(&rect, font, scale, color, textStyle);
+        break;
+    case 220:
+        UI_DrawNetSource(&rect, font, scale, color, textStyle);
+        break;
+    case 247:
+        UI_DrawServerRefreshDate(&rect, font, scale, color, textStyle);
+        break;
+    case 250:
+        UI_DrawKeyBindStatus(&rect, font, scale, color, textStyle);
+        break;
     case 265:
+        UI_DrawRecordLevel(&rect);
+        break;
     case 266:
+        UI_DrawLocalTalking(&rect, color);
+        break;
     case 267:
     case 268:
     case 269:
     case 270:
-    {
-        int targetTalker = ownerDraw - 265;
-        int talkerCount = 0;
-        int clientNum;
-        int pi;
-
-        for (pi = 0; pi < 64; pi++) {
-            if (!CL_IsPlayerTalking(pi))
-                continue;
-            if (talkerCount == targetTalker)
-                break;
-            talkerCount++;
-        }
-
-        clientNum = pi;
-        if (clientNum < 0)
-            return;
-
-        if (clientNum >= 64)
-            clientNum = -1;
-
-        {
-            MaterialHandle voiceMat;
-            float actualScale;
-            int textHeight;
-            int num;
-
-            UI_BuildPlayerList();
-
-            for (num = 0; num < 64; num++) {
-                if (sharedUiInfo.playerClientNums[num] == clientNum)
-                    break;
-            }
-            if (num >= 64)
-                num = -1;
-
-            voiceMat = CL_RegisterMaterialNoMip("voice_on", 7);
-            actualScale = CL_NormalizedTextScale(font, scale);
-            textHeight = CL_TextHeight(font);
-
-            UI_DrawHandlePic(rect[0], rect[1], rect[2], rect[3], *(int *)&rect[4], *(int *)&rect[5], color, voiceMat);
-
-            {
-                float scaledHeight = (float)((int)((float)textHeight * actualScale));
-                float textY = rect[1] + (rect[3] - scaledHeight) * 0.5f + scaledHeight;
-                float textX = rect[0] + rect[2] + 2.0f;
-                UI_DrawText(sharedUiInfo.playerNames[num], 32, font, textX, textY, *(int *)&rect[4], *(int *)&rect[5], scale, color, textStyle);
-            }
-        }
-        return;
-    }
-
+        UI_DrawTalkerNum(ownerDraw - 267, &rect, font, color, scale, textStyle);
+        break;
     default:
         return;
     }
-
 }
 
 static const char *UI_StrContains(const char *str, const char *charset)
