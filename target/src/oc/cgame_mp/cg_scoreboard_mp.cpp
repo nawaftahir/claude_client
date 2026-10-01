@@ -689,6 +689,8 @@ void CG_DrawScoreboard_ScoresList(float alpha)
     int numDrawn;
     int team;
     int otherTeam;
+    int axisScore;
+    int alliesScore;
 
     drawScrollbar = 0;
     cg->scoresOffBottom = 0;
@@ -715,9 +717,11 @@ void CG_DrawScoreboard_ScoresList(float alpha)
     numDrawn = 0;
     if (cg->teamPlayers[1] || cg->teamPlayers[2])
     {
-        if (cg->teamScores[1] > cg->teamScores[2])
+        axisScore = cg->teamScores[1];
+        alliesScore = cg->teamScores[2];
+        if (alliesScore < axisScore)
             team = 1;
-        else if (cg->teamScores[1] < cg->teamScores[2])
+        else if (alliesScore > axisScore)
             team = 2;
         else
             team = lastLeadTeam;
