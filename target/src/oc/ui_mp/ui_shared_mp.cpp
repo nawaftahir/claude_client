@@ -3838,10 +3838,12 @@ static qboolean Rect_ContainsPoint(const rectDef_t *rect, float x, float y)
 static rectDef_t *Item_CorrectedTextRect(itemDef_t *item)
 {
     static rectDef_t rect;
+    const rectDef_t *textRect;
 
     memset(&rect, 0, sizeof(rect));
     if (item) {
-        rect = item->textRect[0];
+        textRect = &item->textRect[0];
+        rect = *textRect;
         if (rect.w != 0.0f)
             rect.y -= rect.h;
     }
