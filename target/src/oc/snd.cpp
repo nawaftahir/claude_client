@@ -338,7 +338,7 @@ static __attribute_regparm__(3)
         return 0;
     }
 
-    if ((flags0 & 0x60) != (flags1 & 0x60)) {
+    if ((pAlias0->flags & 0x60) >> 5 != (pAlias1->flags & 0x60) >> 5) {
         if (!bReport)
             return 0;
         Com_Error(ERR_DROP, "\025tried to blend between sound aliases '%s' and '%s', but they are not both loaded or both streamed\n", pAlias0->pszAliasName, pAlias1->pszAliasName);
