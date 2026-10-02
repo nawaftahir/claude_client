@@ -75,28 +75,23 @@ void CG_DrawStringExt(float x, float y, const char *string, const vec_t *setColo
     UI_DrawText(string, 0x7fffffff, font, x, baselineY, 1, 1, fontScale, setColor, style);
 }
 
-int CG_DrawDevString(float x, float y, const char *s, const vec_t *color, int align_in, FontHandle font, int style)
+int CG_DrawDevString(float x, float y, const char *s, const vec_t *color, int align, FontHandle font, int style)
 {
-    int align = align_in;
-    if ((align & 3) != 1) {
-        CL_TextWidth(s, 0, font);
+    int height;
+
+    if ((align & 3) != 1)
+        x = (float)CL_TextWidth(s, 0, font);
+
+    height = CL_TextHeight(font);
+    if ((align & 0xc) != 8) {
+        if ((align & 0xc) == 0xc)
+            y += height * 0.5f;
+        else
+            y += height;
     }
 
-    int step = CL_TextHeight(font);
-    float fStep = (float)step;
-
-    int vertAlign = align & 0xC;
-    if (vertAlign != 8) {
-        if (vertAlign == 0xC) {
-            fStep *= 0.5f;
-        }
-        y += fStep;
-    }
-
-    int textWidth = CL_TextWidth(s, 0, font);
-    CL_DrawText(s, 0x7fffffff, font, -(float)textWidth, y, 3, 1, 1.0f, 1.0f, color, style);
-
-    return step;
+    CL_DrawText(s, 0x7fffffff, font, -(float)CL_TextWidth(s, 0, font), y, 3, 1, 1.0f, 1.0f, color, style);
+    return height;
 }
 
 int CG_DrawBigDevString(float x, float y, const char *s, float alpha, int align)
