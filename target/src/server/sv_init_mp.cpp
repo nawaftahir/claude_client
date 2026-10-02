@@ -1079,6 +1079,9 @@ void SV_Shutdown( const char *finalmsg )
 
 	Com_Printf("---------------------------\n");
 
+	// disconnect any local clients
+	CL_Disconnect();
+
 	if ( !bLoading )
 	{
 		return;

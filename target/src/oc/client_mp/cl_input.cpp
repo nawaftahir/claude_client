@@ -274,11 +274,6 @@ static inline __attribute__((always_inline)) float CL_KeyState(kbutton_t *key)
     return (float)msec / (float)frame_msec;
 }
 
-static inline __attribute__((always_inline)) int CL_KeyMoveValue(kbutton_t *key)
-{
-    return (int)(CL_KeyState(key) * 127.0f);
-}
-
 static float I_fsel(const float x, const float y, const float z)
 {
     return x >= 0.0f ? y : z;
@@ -1313,6 +1308,19 @@ void CL_AdjustAngles(void)
 #undef KB_AT
 }
 
+void CL_StanceButtonUpdate(void)
+{
+    clientActive_t *cl = clients;
+
+    if (cl->stanceHeld && (int)com_frameTime - cl->stanceTime >= cl_stanceHoldTime->current.integer) {
+        if (cl->stancePosition == 2)
+            legacyHacks->cl_stance = 0;
+        else
+            legacyHacks->cl_stance = 2;
+        cl->stanceHeld = 0;
+    }
+}
+
 void CL_KeyMove(usercmd_t *cmd)
 {
     clientActive_t *cl;
@@ -1326,30 +1334,52 @@ void CL_KeyMove(usercmd_t *cmd)
 
     (void)cl;
 
-    {
-        int clStance = legacyHacks->cl_stance;
-        if (clStance == 1)
-            cmd->buttons |= 0x200;
-        else if (clStance == 2)
+    if (KB_AT(25)->active || KB_AT(11)->active) {
+        if (KB_AT(25)->active) {
             cmd->buttons |= 0x100;
+            cmd->buttons &= ~0x200;
+        } else {
+            cmd->buttons |= 0x200;
+            cmd->buttons &= ~0x100;
+        }
+        cmd->buttons |= 0x2000;
+    } else {
+        int clStance;
+        CL_StanceButtonUpdate();
+        clStance = legacyHacks->cl_stance;
+        switch (clStance) {
+        case 1:
+            cmd->buttons |= 0x200;
+            cmd->buttons &= ~0x100;
+            break;
+        case 2:
+            cmd->buttons |= 0x100;
+            cmd->buttons &= ~0x200;
+            break;
+        default:
+            cmd->buttons &= ~0x300;
+            break;
+        }
+        cmd->buttons &= ~0x2000;
     }
 
-    if (((KB_AT(9)->active != 0) == (cl->usingAds == 0)) || PM_IsBinocularsADS(&cl->snap.ps)) {
+    if ((KB_AT(9)->active == (cl->usingAds == 0)) || PM_IsBinocularsADS(&cl->snap.ps)) {
         cmd->buttons |= 0x1000;
     } else {
         cmd->buttons &= ~0x1000;
     }
 
+    side = 0;
     if (KB_AT(8)->active) {
-        side = CL_KeyMoveValue(KB_AT(1)) - CL_KeyMoveValue(KB_AT(0));
-    } else {
-        side = 0;
+        side += (int)(CL_KeyState(KB_AT(1)) * 127.0f);
+        side += (int)(CL_KeyState(KB_AT(0)) * -127.0f);
     }
 
-    side += CL_KeyMoveValue(KB_AT(7));
-    side -= CL_KeyMoveValue(KB_AT(6));
+    side += (int)(CL_KeyState(KB_AT(7)) * 127.0f);
+    side += (int)(CL_KeyState(KB_AT(6)) * -127.0f);
 
-    forward = CL_KeyMoveValue(KB_AT(2)) - CL_KeyMoveValue(KB_AT(3));
+    forward = (int)(CL_KeyState(KB_AT(2)) * 127.0f);
+    forward += (int)(CL_KeyState(KB_AT(3)) * -127.0f);
 
     cmd->forwardmove = ClampChar(forward);
     cmd->rightmove = ClampChar(side);

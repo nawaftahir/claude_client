@@ -199,28 +199,29 @@ void CL_Netchan_SendOOBPacket(int iLength, const void *pData, netadr_t to)
     NetProf_AddPacket(&((clientConnection_t *)clc_base)->pOOBProf->send, iLength, 0);
 }
 
+// Original name unknown.
+static void CL_Netchan_DrawProfileLine(const char *line, int y)
+{
+    CL_DrawString(0x20, y, line, 0, 0xa);
+}
+
 void CL_Netchan_PrintProfileStats(qboolean bPrintToConsole)
 {
     char szLine[1024];
-    int iYPos;
-    int iTotalBPSSent;
-    int iTotalBPSRecieved;
-    byte *clc_base;
+    int iTotalBPSSent = 0;
+    int iTotalBPSRecieved = 0;
+    int iYPos = 0x50;
     netProfileInfo_t *pOOBProf;
     netProfileInfo_t *pProf;
 
-    clc_base = (byte *)&::clc;
-
-    pProf = ((clientConnection_t *)clc_base)->netchan.pProf;
-    if (pProf != NULL) {
-        NetProf_UpdateStatistics(&pProf->send);
-        NetProf_UpdateStatistics(&pProf->recieve);
+    if (clc.netchan.pProf) {
+        NetProf_UpdateStatistics(&clc.netchan.pProf->send);
+        NetProf_UpdateStatistics(&clc.netchan.pProf->recieve);
     }
 
-    pOOBProf = ((clientConnection_t *)clc_base)->pOOBProf;
-    if (pOOBProf != NULL) {
-        NetProf_UpdateStatistics(&pOOBProf->send);
-        NetProf_UpdateStatistics(&pOOBProf->recieve);
+    if (clc.pOOBProf) {
+        NetProf_UpdateStatistics(&clc.pOOBProf->send);
+        NetProf_UpdateStatistics(&clc.pOOBProf->recieve);
     }
 
     if (bPrintToConsole) {
@@ -230,18 +231,18 @@ void CL_Netchan_PrintProfileStats(qboolean bPrintToConsole)
     Com_sprintf(szLine, 0x400, "====================");
     if (bPrintToConsole) {
         Com_Printf("%s\n", szLine);
-        iYPos = 0x50;
     } else {
-        CL_DrawString(0x20, 0x5a, szLine, 0, 0xa);
         iYPos = 0x5a;
+        CL_Netchan_DrawProfileLine(szLine, iYPos);
     }
 
     Com_sprintf(szLine, 0x400, "Client Network Profile:");
     if (bPrintToConsole) {
         Com_Printf("%s\n\n", szLine);
     } else {
-        CL_DrawString(0x20, iYPos + 0xa, szLine, 0, 0xa);
-        iYPos += 0x14;
+        iYPos += 0xa;
+        CL_Netchan_DrawProfileLine(szLine, iYPos);
+        iYPos += 0xa;
     }
 
     Com_sprintf(szLine, 0x400, "      Source    bps   max   min frag%%");
@@ -249,14 +250,13 @@ void CL_Netchan_PrintProfileStats(qboolean bPrintToConsole)
         Com_Printf("%s\n", szLine);
     } else {
         iYPos += 0xa;
-        CL_DrawString(0x20, iYPos, szLine, 0, 0xa);
+        CL_Netchan_DrawProfileLine(szLine, iYPos);
     }
 
-    clc_base = (byte *)&::clc;
-    pOOBProf = ((clientConnection_t *)clc_base)->pOOBProf;
-    if (pOOBProf != NULL) {
-        iTotalBPSSent = pOOBProf->send.iBytesPerSecond;
-        iTotalBPSRecieved = pOOBProf->recieve.iBytesPerSecond;
+    if (clc.pOOBProf) {
+        pOOBProf = clc.pOOBProf;
+        iTotalBPSSent += pOOBProf->send.iBytesPerSecond;
+        iTotalBPSRecieved += pOOBProf->recieve.iBytesPerSecond;
 
         Com_sprintf(szLine, 0x400, "    OOB Sent: %5i %5i %5i    -",
                     iTotalBPSSent,
@@ -266,7 +266,7 @@ void CL_Netchan_PrintProfileStats(qboolean bPrintToConsole)
             Com_Printf("%s\n", szLine);
         } else {
             iYPos += 0xa;
-            CL_DrawString(0x20, iYPos, szLine, 0, 0xa);
+            CL_Netchan_DrawProfileLine(szLine, iYPos);
         }
 
         Com_sprintf(szLine, 0x400, "OOB Recieved: %5i %5i %5i    -",
@@ -277,7 +277,7 @@ void CL_Netchan_PrintProfileStats(qboolean bPrintToConsole)
             Com_Printf("%s\n", szLine);
         } else {
             iYPos += 0xa;
-            CL_DrawString(0x20, iYPos, szLine, 0, 0xa);
+            CL_Netchan_DrawProfileLine(szLine, iYPos);
         }
     } else {
 
@@ -286,7 +286,7 @@ void CL_Netchan_PrintProfileStats(qboolean bPrintToConsole)
             Com_Printf("%s\n", szLine);
         } else {
             iYPos += 0xa;
-            CL_DrawString(0x20, iYPos, szLine, 0, 0xa);
+            CL_Netchan_DrawProfileLine(szLine, iYPos);
         }
 
         Com_sprintf(szLine, 0x400, "OOB Recieved:     0     0     0    -");
@@ -294,16 +294,12 @@ void CL_Netchan_PrintProfileStats(qboolean bPrintToConsole)
             Com_Printf("%s\n", szLine);
         } else {
             iYPos += 0xa;
-            CL_DrawString(0x20, iYPos, szLine, 0, 0xa);
+            CL_Netchan_DrawProfileLine(szLine, iYPos);
         }
-
-        iTotalBPSSent = 0;
-        iTotalBPSRecieved = 0;
     }
 
-    clc_base = (byte *)&::clc;
-    pProf = ((clientConnection_t *)clc_base)->netchan.pProf;
-    if (pProf != NULL) {
+    if (clc.netchan.pProf) {
+        pProf = clc.netchan.pProf;
         iTotalBPSSent += pProf->send.iBytesPerSecond;
         iTotalBPSRecieved += pProf->recieve.iBytesPerSecond;
 
@@ -316,7 +312,7 @@ void CL_Netchan_PrintProfileStats(qboolean bPrintToConsole)
             Com_Printf("%s\n", szLine);
         } else {
             iYPos += 0xa;
-            CL_DrawString(0x20, iYPos, szLine, 0, 0xa);
+            CL_Netchan_DrawProfileLine(szLine, iYPos);
         }
 
         Com_sprintf(szLine, 0x400, "    Recieved: %5i %5i %5i  %3i%%",
@@ -328,7 +324,7 @@ void CL_Netchan_PrintProfileStats(qboolean bPrintToConsole)
             Com_Printf("%s\n", szLine);
         } else {
             iYPos += 0xa;
-            CL_DrawString(0x20, iYPos, szLine, 0, 0xa);
+            CL_Netchan_DrawProfileLine(szLine, iYPos);
         }
     } else {
 
@@ -337,7 +333,7 @@ void CL_Netchan_PrintProfileStats(qboolean bPrintToConsole)
             Com_Printf("%s\n", szLine);
         } else {
             iYPos += 0xa;
-            CL_DrawString(0x20, iYPos, szLine, 0, 0xa);
+            CL_Netchan_DrawProfileLine(szLine, iYPos);
         }
 
         Com_sprintf(szLine, 0x400, "    Recieved:     0     0     0    0%");
@@ -345,13 +341,8 @@ void CL_Netchan_PrintProfileStats(qboolean bPrintToConsole)
             Com_Printf("%s\n", szLine);
         } else {
             iYPos += 0xa;
-            CL_DrawString(0x20, iYPos, szLine, 0, 0xa);
+            CL_Netchan_DrawProfileLine(szLine, iYPos);
         }
-    }
-
-    iYPos += 0xa;
-    if (!bPrintToConsole) {
-        CL_DrawString(0x20, iYPos, szLine, 0, 0xa);
     }
 
     Com_sprintf(szLine, 0x400, "       Total: %5i",
@@ -359,6 +350,7 @@ void CL_Netchan_PrintProfileStats(qboolean bPrintToConsole)
     if (bPrintToConsole) {
         Com_Printf("%s\n", szLine);
     } else {
-        CL_DrawString(0x20, iYPos + 0xa, szLine, 0, 0xa);
+        iYPos += 0xa;
+        CL_Netchan_DrawProfileLine(szLine, iYPos);
     }
 }

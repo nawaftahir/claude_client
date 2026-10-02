@@ -68,6 +68,15 @@ build/lib/%.lib: src/lib/%.def
 	@mkdir -p $(dir $@)
 	@wine /opt/msvc710/Vc7/bin/lib.exe /nologo /machine:x86 /def:$(call win,$<) /out:$(call win,$@) > $@.log 2>&1 || (cat $@.log; false)
 
+# the retail mss32.lib also carries MSS_auto_cleanup (plain object, not LTCG)
+build/lib/mss_auto.obj: src/lib/mss_auto.c
+	@mkdir -p $(dir $@)
+	@cd src && $(CL) /nologo /c /O2 /MT /DNDEBUG /Fo..\\build\\lib\\mss_auto.obj lib\\mss_auto.c > ../$@.log 2>&1 || (cat ../$@.log; false)
+
+build/lib/mss32.lib: src/lib/mss32.def build/lib/mss_auto.obj
+	@wine /opt/msvc710/Vc7/bin/lib.exe /nologo /machine:x86 /def:$(call win,$<) /out:build\\lib\\mss32_imp.lib > $@.log 2>&1 || (cat $@.log; false)
+	@wine /opt/msvc710/Vc7/bin/lib.exe /nologo /out:$(call win,$@) build\\lib\\mss32_imp.lib build\\lib\\mss_auto.obj >> $@.log 2>&1 || (cat $@.log; false)
+
 $(OUT): $(OBJS) $(IMPLIBS) src/tus.txt
 	@printf '%s\n' $(call win,$(OBJS)) > build/objs.rsp
 	$(LINK) $(LFLAGS) /OUT:$(call win,$@) @build\\objs.rsp $(LIBS) > build/link.log 2>&1; tail -1 build/link.log

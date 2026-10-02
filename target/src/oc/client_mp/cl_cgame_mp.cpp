@@ -1174,9 +1174,12 @@ void CL_SetADS(int ads)
 void CL_DrawString(int x, int y, const char *pszString, qboolean bShadow, int iCharHeight)
 {
     clientActive_t *cl = CL_LOCAL;
+    float fy;
+
     if (!cl->cgameInitialized)
         return;
-    CG_DrawStringExt((float)x, (float)y, pszString, 0, 0, bShadow, (float)iCharHeight, 1);
+    fy = (float)y;
+    CG_DrawStringExt((float)x, fy, pszString, 0, 0, bShadow, (float)iCharHeight, 1);
 }
 
 void CL_ArchiveClientState(MemoryFile *memFile)

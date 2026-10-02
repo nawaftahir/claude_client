@@ -1,6 +1,14 @@
 #include "../qcommon/qcommon.h"
 #include "../qcommon/netchan.h"
 
+void CL_DrawString( int x, int y, const char *pszString, int bShadow, int iCharHeight );
+
+// Original name unknown.
+static void SV_Netchan_DrawProfileLine( const char *line, int y )
+{
+	CL_DrawString(32, y, line, 0, 8);
+}
+
 
 /*
 ==============
@@ -173,10 +181,11 @@ void SV_Netchan_PrintProfileStats( int bPrintToConsole )
 	int iTotalMinSent = 9999;
 	int iTotalMaxRecieved = 0;
 	int iTotalMinRecieved = 9999;
+	int iYPos = 80;
 	int iFragmentTotal;
 	netProfileInfo_t *pProf;
 	client_t *cl;
-	char szClientName[17];
+	char szClientName[32];
 	char szLine[1024];
 
 	if ( !svs.clients )
@@ -197,12 +206,23 @@ void SV_Netchan_PrintProfileStats( int bPrintToConsole )
 	{
 		Com_Printf("%s\n", szLine);
 	}
+	else
+	{
+		iYPos = 90;
+		SV_Netchan_DrawProfileLine(szLine, iYPos);
+	}
 
 	Com_sprintf(szLine, 1024, "Server Network Profile:");
 
 	if ( bPrintToConsole )
 	{
 		Com_Printf("%s\n\n", szLine);
+	}
+	else
+	{
+		iYPos += 10;
+		SV_Netchan_DrawProfileLine(szLine, iYPos);
+		iYPos += 10;
 	}
 
 	Com_sprintf(szLine, 1024, "                    | Sent To                | Recieved From          | Total Source Traffic   |");
@@ -211,12 +231,22 @@ void SV_Netchan_PrintProfileStats( int bPrintToConsole )
 	{
 		Com_Printf("%s\n", szLine);
 	}
+	else
+	{
+		iYPos += 10;
+		SV_Netchan_DrawProfileLine(szLine, iYPos);
+	}
 
 	Com_sprintf(szLine, 1024, "              Source|   bps|  max|  min|frag%%|   bps|  max|  min|frag%%|   bps|  max|  min|frag%%|");
 
 	if ( bPrintToConsole )
 	{
 		Com_Printf("%s\n", szLine);
+	}
+	else
+	{
+		iYPos += 10;
+		SV_Netchan_DrawProfileLine(szLine, iYPos);
 	}
 
 	if ( svs.pOOBProf )
@@ -295,6 +325,11 @@ void SV_Netchan_PrintProfileStats( int bPrintToConsole )
 	{
 		Com_Printf("%s\n", szLine);
 	}
+	else
+	{
+		iYPos += 10;
+		SV_Netchan_DrawProfileLine(szLine, iYPos);
+	}
 
 	if ( svs.pOOBProf )
 	{
@@ -328,6 +363,11 @@ void SV_Netchan_PrintProfileStats( int bPrintToConsole )
 		{
 			Com_Printf("%s\n", szLine);
 		}
+		else
+		{
+			iYPos += 10;
+			SV_Netchan_DrawProfileLine(szLine, iYPos);
+		}
 	}
 	else
 	{
@@ -336,6 +376,11 @@ void SV_Netchan_PrintProfileStats( int bPrintToConsole )
 		if ( bPrintToConsole )
 		{
 			Com_Printf("%s\n", szLine);
+		}
+		else
+		{
+			iYPos += 10;
+			SV_Netchan_DrawProfileLine(szLine, iYPos);
 		}
 	}
 
@@ -381,6 +426,11 @@ void SV_Netchan_PrintProfileStats( int bPrintToConsole )
 			{
 				Com_Printf("%s\n", szLine);
 			}
+			else
+			{
+				iYPos += 10;
+				SV_Netchan_DrawProfileLine(szLine, iYPos);
+			}
 		}
 		else
 		{
@@ -391,6 +441,11 @@ void SV_Netchan_PrintProfileStats( int bPrintToConsole )
 			if ( bPrintToConsole )
 			{
 				Com_Printf("%s\n", szLine);
+			}
+			else
+			{
+				iYPos += 10;
+				SV_Netchan_DrawProfileLine(szLine, iYPos);
 			}
 		}
 	}
