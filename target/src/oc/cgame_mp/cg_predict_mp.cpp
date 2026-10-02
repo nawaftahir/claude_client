@@ -118,31 +118,19 @@ static void CG_InterpolatePlayerState(qboolean grabAngles)
 
     f = cg->frameInterpolation;
 
-    {
-        int nextBob = next->ps.bobCycle;
-        int prevBob = prev->ps.bobCycle;
-        int adjusted = nextBob;
-        if (nextBob < prevBob)
-            adjusted = nextBob + 256;
-        out->bobCycle = prevBob + (int)((float)(adjusted - prevBob) * f);
-    }
+    i = next->ps.bobCycle;
+    if (i < prev->ps.bobCycle)
+        i += 256;
+    out->bobCycle = prev->ps.bobCycle + (int)((i - prev->ps.bobCycle) * cg->frameInterpolation);
 
     out->aimSpreadScale = prev->ps.aimSpreadScale +
-                          (next->ps.aimSpreadScale - prev->ps.aimSpreadScale) * f;
+                          (next->ps.aimSpreadScale - prev->ps.aimSpreadScale) * cg->frameInterpolation;
 
-    if (grabAngles) {
-
-        for (i = 0; i < 3; i++) {
-            out->origin[i] = prev->ps.origin[i] + (next->ps.origin[i] - prev->ps.origin[i]) * f;
-            out->velocity[i] = prev->ps.velocity[i] + (next->ps.velocity[i] - prev->ps.velocity[i]) * f;
-        }
-    } else {
-
-        for (i = 0; i < 3; i++) {
-            out->origin[i] = prev->ps.origin[i] + (next->ps.origin[i] - prev->ps.origin[i]) * f;
+    for (i = 0; i < 3; i++) {
+        out->origin[i] = prev->ps.origin[i] + (next->ps.origin[i] - prev->ps.origin[i]) * f;
+        if (!grabAngles)
             out->viewangles[i] = LerpAngle(prev->ps.viewangles[i], next->ps.viewangles[i], f);
-            out->velocity[i] = prev->ps.velocity[i] + (next->ps.velocity[i] - prev->ps.velocity[i]) * f;
-        }
+        out->velocity[i] = prev->ps.velocity[i] + (next->ps.velocity[i] - prev->ps.velocity[i]) * f;
     }
 
     out->viewHeightCurrent = prev->ps.viewHeightCurrent +
