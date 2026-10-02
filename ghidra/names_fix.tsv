@@ -304,4 +304,4 @@
 44a350	MemFile_ReadFloat	fix	# callalign 10-01
 4aec40	RoQReset	fix	# callalign 10-01
 0	CL_DrawString	drop	# 0x4116a0 = CL_ProfDraw (PINNED), callalign wrong
-52c300	Load_ScriptMenu	drop	# path helper (name unknown); Load_ScriptMenu = 52c400
+52c400	Load_ScriptMenu	fix	# 52c300 is the path helper (name unknown)
