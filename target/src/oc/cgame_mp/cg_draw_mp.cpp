@@ -383,17 +383,14 @@ void CG_AddLagometerFrameInfo(void)
 
 void CG_AddLagometerSnapshotInfo(snapshot_t *snap)
 {
-    int index;
     if (!snap) {
-        index = lagometer.snapshotCount;
-        lagometer.snapshotSamples[index & 0x7f] = -1;
-        lagometer.snapshotCount = index + 1;
+        lagometer.snapshotSamples[lagometer.snapshotCount & 0x7f] = -1;
+        lagometer.snapshotCount++;
         return;
     }
-    index = lagometer.snapshotCount;
-    lagometer.snapshotSamples[index & 0x7f] = *(int *)((byte *)snap + 4);
-    lagometer.snapshotFlags[index & 0x7f] = *(int *)snap;
-    lagometer.snapshotCount = index + 1;
+    lagometer.snapshotSamples[lagometer.snapshotCount & 0x7f] = snap->ping;
+    lagometer.snapshotFlags[lagometer.snapshotCount & 0x7f] = snap->snapFlags;
+    lagometer.snapshotCount++;
 }
 
 void CG_DrawDisconnect(void)

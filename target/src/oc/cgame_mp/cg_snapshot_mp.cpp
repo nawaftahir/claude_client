@@ -625,39 +625,28 @@ void CG_SetInitialSnapshot(snapshot_t *snap_param)
     cg->nextSnap = NULL;
 }
 
-static inline __attribute__((always_inline)) char *CG_ReadNextSnapshot(void)
+static snapshot_t *CG_ReadNextSnapshot(void)
 {
-    int snapshotNum;
-    int latestNum;
-    char *dest;
+    snapshot_t *dest;
 
-    latestNum = cg->latestSnapshotNum;
-    snapshotNum = cgs->processedSnapshotNum;
-
-    if (latestNum > snapshotNum + 0x3e8) {
+    if (cg->latestSnapshotNum > cgs->processedSnapshotNum + 1000) {
         Com_Printf("WARNING: CG_ReadNextSnapshot: way out of range, %i > %i\n",
-                   latestNum, snapshotNum);
+                   cg->latestSnapshotNum, cgs->processedSnapshotNum);
     }
 
-    while (snapshotNum < latestNum) {
+    while (cgs->processedSnapshotNum < cg->latestSnapshotNum) {
+        if (cg->snap == &cg->activeSnapshots[0])
+            dest = &cg->activeSnapshots[1];
+        else
+            dest = &cg->activeSnapshots[0];
 
-        dest = (char *)&cg->activeSnapshots[0];
-        if ((char *)cg->snap == dest)
-            dest = (char *)&cg->activeSnapshots[1];
-
-        snapshotNum++;
-        cgs->processedSnapshotNum = snapshotNum;
-
-        if (CL_GetSnapshot(cgs->processedSnapshotNum, (snapshot_t *)dest)) {
-
-            CG_AddLagometerSnapshotInfo( (snapshot_t *)(dest));
+        cgs->processedSnapshotNum++;
+        if (CL_GetSnapshot(cgs->processedSnapshotNum, dest)) {
+            CG_AddLagometerSnapshotInfo(dest);
             return dest;
         }
 
         CG_AddLagometerSnapshotInfo(NULL);
-
-        snapshotNum = cgs->processedSnapshotNum;
-        latestNum = cg->latestSnapshotNum;
     }
 
     return NULL;
@@ -665,18 +654,12 @@ static inline __attribute__((always_inline)) char *CG_ReadNextSnapshot(void)
 
 void CG_ProcessSnapshots(void)
 {
+    snapshot_t *snap;
     int n;
-    int cgTime;
-    int snapTime;
-    char *snap;
-    char *curSnap;
-    char *nextSnap;
 
     CL_GetCurrentSnapshotNumber(&n, &cg->latestSnapshotTime);
-
     if (n != cg->latestSnapshotNum) {
         if (n < cg->latestSnapshotNum) {
-
             Com_Error(ERR_DROP, (const char *)"\x15"
                                        "CG_ProcessSnapshots: n < cg->latestSnapshotNum");
         }
@@ -685,70 +668,49 @@ void CG_ProcessSnapshots(void)
 
     cg->bgs.latestSnapshotTime = cg->latestSnapshotTime;
 
-    for (;;) {
-        curSnap = (char *)cg->snap;
+    while (!cg->snap) {
+        snap = CG_ReadNextSnapshot();
+        if (!snap)
+            return;
 
-        if (curSnap == NULL) {
+        if (!(snap->snapFlags & 2)) {
+            CG_SetInitialSnapshot(snap);
+            CG_SetNextSnap(snap);
+            CG_TransitionSnapshot();
+        }
+    }
+
+    CG_SetFrameInterpolation();
+
+    for (;;) {
+        if (cg->nextSnap == cg->snap || cg->cubemapShot) {
             snap = CG_ReadNextSnapshot();
             if (!snap)
-                return;
+                break;
 
-            if (((snapshot_t *)snap)->snapFlags & 2) {
-                continue;
-            }
-
-            CG_SetInitialSnapshot((snapshot_t *)snap);
-            CG_SetNextSnap((snapshot_t *)snap);
-            CG_TransitionSnapshot();
-            continue;
-        }
-
-        nextSnap = (char *)cg->nextSnap;
-
-        if (nextSnap != NULL) {
-            CG_SetFrameInterpolation();
-        }
-
-        if (nextSnap != NULL && nextSnap != curSnap) {
-            curSnap = (char *)cg->snap;
-            nextSnap = (char *)cg->nextSnap;
-            cgTime = cg->time;
-
-            if (cgTime < ((snapshot_t *)curSnap)->serverTime ||
-                cgTime >= ((snapshot_t *)nextSnap)->serverTime) {
+            if ((cg->nextSnap->snapFlags ^ snap->snapFlags) & 4) {
+                CG_SetInitialSnapshot(snap);
+                CG_SetNextSnap(snap);
                 CG_TransitionSnapshot();
                 continue;
             }
 
-            return;
-        }
-
-        snap = CG_ReadNextSnapshot();
-        if (!snap) {
-            snapTime = ((snapshot_t *)curSnap)->serverTime;
-            if (cg->time < snapTime) {
-                cg->time = snapTime;
-                cg->bgs.time = snapTime;
+            if (snap->serverTime - cg->nextSnap->serverTime < 0) {
+                Com_Error(ERR_DROP, (const char *)"\x15"
+                                           "CG_ProcessSnapshots: Server time went backwards");
             }
-            return;
+
+            CG_SetNextSnap(snap);
         }
 
-        if (((snapshot_t *)snap)->snapFlags & 2) {
-            continue;
-        }
+        if (cg->time - cg->snap->serverTime >= 0 && cg->time - cg->nextSnap->serverTime < 0)
+            break;
 
-        if ((((snapshot_t *)snap)->snapFlags ^ ((snapshot_t *)curSnap)->snapFlags) & 4) {
-            CG_SetInitialSnapshot((snapshot_t *)snap);
-            CG_SetNextSnap((snapshot_t *)snap);
-            CG_TransitionSnapshot();
-            continue;
-        }
+        CG_TransitionSnapshot();
+    }
 
-        if (((snapshot_t *)snap)->serverTime < ((snapshot_t *)curSnap)->serverTime) {
-            Com_Error(ERR_DROP, (const char *)"\x15"
-                                       "CG_ProcessSnapshots: Server time went backwards");
-        }
-
-        CG_SetNextSnap((snapshot_t *)snap);
+    if (cg->time - cg->snap->serverTime < 0) {
+        cg->time = cg->snap->serverTime;
+        cg->bgs.time = cg->snap->serverTime;
     }
 }
