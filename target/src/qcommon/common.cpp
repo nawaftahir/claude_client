@@ -312,6 +312,10 @@ Com_Shutdown
 void Com_Shutdown( const char *finalmsg )
 {
 	Com_ShutdownInternal(finalmsg);
+#ifndef DEDICATED
+	UI_SetMap("", "");
+	CL_StartHunkUsers();
+#endif
 }
 
 /*

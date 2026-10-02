@@ -30,10 +30,11 @@ enum
 	MT_NODE_SIZE = 0x10
 };
 
-struct ALIGNED(8) MemoryNode
+struct MemoryNode
 {
 	unsigned short prev;
 	unsigned short next;
+	unsigned int padding;
 };
 
 struct scrMemTreePub_t

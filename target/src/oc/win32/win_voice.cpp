@@ -63,6 +63,8 @@ void Voice_IncomingVoiceData(unsigned char talker, unsigned char *data, int pack
 Bool Voice_IsClientTalking(int clientNum);
 void Voice_Shutdown(void);
 int Voice_GetLocalVoiceData(ClientVoicePacket_t *voiceData);
+Bool Voice_StartRecording(void);
+Bool Voice_StopRecording(void);
 
 Bool Voice_Init(void)
 {
@@ -208,11 +210,7 @@ void Voice_Shutdown(void)
         Sound_DestroySample((dsound_sample_t *)s_clientSamples[i]);
     }
 
-    if (recording) {
-        Record_Stop(currentRecordingSample);
-        Record_DestroySample(currentRecordingSample);
-        recording = 0;
-    }
+    Voice_StopRecording();
 
     Record_Shutdown();
     Encode_Shutdown();
@@ -228,27 +226,44 @@ void Voice_Shutdown(void)
 
 int Voice_GetLocalVoiceData(ClientVoicePacket_t *voiceData)
 {
-    float scaler;
 
     if (!g_voice_initialized)
         return 0;
 
+    if (!recording)
+        Voice_StartRecording();
+
+    if (winvoice_mic_scaler->current.value != voice_current_scaler) {
+        voice_current_scaler = winvoice_mic_scaler->current.value;
+        if (voice_current_scaler >= 0.5) {
+            if (voice_current_scaler > 1.5)
+                voice_current_scaler = 1.5f;
+        } else {
+            voice_current_scaler = 0.5f;
+        }
+    }
+
+    Record_Frame();
+    return 0;
+}
+
+Bool Voice_StartRecording(void)
+{
     if (!recording) {
         currentRecordingSample = Record_NewSample();
         Record_Start(currentRecordingSample);
         recording = 1;
         count++;
     }
+    return 1;
+}
 
-    scaler = winvoice_mic_scaler->current.value;
-    if (scaler != voice_current_scaler) {
-        voice_current_scaler = scaler;
-        if (scaler < 0.5f)
-            voice_current_scaler = 0.5f;
-        else if (scaler > 1.5f)
-            voice_current_scaler = 1.5f;
-    }
-
-    Record_Frame();
-    return 0;
+Bool Voice_StopRecording(void)
+{
+    if (!recording)
+        return 0;
+    Record_Stop(currentRecordingSample);
+    Record_DestroySample(currentRecordingSample);
+    recording = 0;
+    return 1;
 }
