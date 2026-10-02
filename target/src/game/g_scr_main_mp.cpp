@@ -780,7 +780,7 @@ void GScr_SetDvar()
 		return;
 	}
 
-	flags = (Scr_GetNumParam() > 2 && Scr_GetInt(2));
+	flags = (Scr_GetNumParam() >= 3 && Scr_GetInt(2));
 
 	Dvar_SetFromStringByName(dvarName, dvarValue);
 

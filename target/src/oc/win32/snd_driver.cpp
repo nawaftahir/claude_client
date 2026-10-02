@@ -1120,158 +1120,93 @@ int SND_StartAlias3DSample(const snd_alias_t *pAlias0, const snd_alias_t *pAlias
 
 int SND_StartAliasStreamOnChannel(const snd_alias_t *pAlias0, const snd_alias_t *pAlias1, float lerp, int entnum, const vec_t *org, float volume, float pitch, int timeshift, float fraction, int startDelay, Bool master, int index, snd_alias_system_t system)
 {
-    int streamIdx;
-    void *handle;
+    HSTREAM handle;
     char realname[256];
     int filetype;
     int srcChannelCount;
     int baserate;
-    snd_local_t *sndGlob;
-    int aliasFlags, channel;
-    float *volTable;
-    float scaledVol;
-    float pan;
-    float reverbLevel;
     long int total_msec;
     int start_msec;
-    byte *chanBase;
+    float realVolume;
+    float pan;
+    float reverbLevel;
     float *to;
 
-    if (pAlias0->soundFile->isStreamFound == 0) {
-        Com_DPrintf((const char *)"Tried to play streamed sound '%s' from alias '%s', but it was not found at load time.\n", Com_GetSoundFileName(pAlias0), pAlias0->pszAliasName);
+    if (!pAlias0->soundFile->isStreamFound) {
+        Com_DPrintf("Tried to play streamed sound '%s' from alias '%s', but it was not found at load time.\n", Com_GetSoundFileName(pAlias0), pAlias0->pszAliasName);
         return 0;
     }
 
-    streamIdx = index - 0x20;
-    if (milesGlob.handle_stream[streamIdx] != NULL) {
-        AIL_close_stream(milesGlob.handle_stream[streamIdx]);
-        milesGlob.handle_stream[streamIdx] = NULL;
+    if (milesGlob.handle_stream[index - 32]) {
+        AIL_close_stream(milesGlob.handle_stream[index - 32]);
+        milesGlob.handle_stream[index - 32] = NULL;
     }
 
-    sprintf(realname, (const char *)"sound/%s", Com_GetSoundFileName(pAlias0));
-
-    if (mss_q3fs->current.enabled != 0) {
-        handle = AIL_open_stream( (void *)(milesGlob.driver_2D), realname, 0);
-        if (handle != NULL) {
-            goto got_handle;
-        }
-
-    }
-
-    handle = AIL_open_stream( (void *)(milesGlob.driver_2D), FS_ShortOSFilePath(realname), 0);
-    if (handle == NULL) {
-        Com_Printf((const char *)"Couldn't play stream '%s' from alias '%s' - %s\n", realname, pAlias0->pszAliasName, AIL_last_error());
+    sprintf(realname, "sound/%s", Com_GetSoundFileName(pAlias0));
+    handle = (HSTREAM)AIL_open_stream((void *)milesGlob.driver_2D, mss_q3fs->current.enabled ? realname : FS_ShortOSFilePath(realname), 0);
+    if (!handle) {
+        Com_Printf("Couldn't play stream '%s' from alias '%s' - %s\n", realname, pAlias0->pszAliasName, AIL_last_error());
         return 0;
     }
 
-got_handle:
-
-    milesGlob.handle_stream[streamIdx] = (HSTREAM)(handle);
-
-    AIL_stream_info(handle, &filetype, NULL, NULL, NULL);
-    srcChannelCount = (filetype & 2) ? 2 : 1;
-
+    milesGlob.handle_stream[index - 32] = handle;
+    AIL_stream_info(handle, NULL, &filetype, NULL, NULL);
+    srcChannelCount = ((filetype & 2) != 0) + 1;
     baserate = AIL_stream_playback_rate(handle);
-    sndGlob = (&g_snd);
-    AIL_set_stream_playback_rate(handle, I_fround((float)baserate * pitch * sndGlob->timescale));
+    AIL_set_stream_playback_rate(handle, I_fround((float)baserate * g_snd.timescale * pitch));
 
-    aliasFlags = pAlias0->flags;
-    scaledVol = sndGlob->volume * volume;
-    volTable = (float *)sndGlob->channelvol;
-    channel = (aliasFlags & 0x780) >> 7;
-    scaledVol *= volTable[channel * 3];
+    realVolume = g_snd.volume * g_snd.channelvol->channelvol[(pAlias0->flags & 0x780) >> 7].volume * volume;
+    if (g_snd.slaveLerp != 0.0f && !master && (pAlias0->flags & 4))
+        realVolume = SND_GetLerpedSlavePercentage(pAlias0->fSlavePercentage) * realVolume;
 
-    if (sndGlob->slaveLerp != 0.0f && !master) {
-        if (aliasFlags & 4) {
-            scaledVol *= SND_GetLerpedSlavePercentage(pAlias0->fSlavePercentage);
-        }
-    }
-
-    if (srcChannelCount == 1) {
-        pan = 0.5f;
-    } else {
+    pan = 0.5f;
+    if (srcChannelCount != 1)
         pan = 1.0f;
-    }
-    AIL_set_stream_volume_levels(handle, pan * scaledVol, pan * scaledVol);
-
+    AIL_set_stream_volume_levels(handle, pan * realVolume, pan * realVolume);
     AIL_set_stream_loop_count(handle, ~pAlias0->flags & 1);
 
-    if ((((dvar_t *)snd_enableReverb))->current.enabled != 0 && !((byte)(pAlias0->flags) & 0x10)) {
+    if (!snd_enableReverb->current.enabled || (pAlias0->flags & 0x10))
+        reverbLevel = 0.0f;
+    else
         reverbLevel = g_snd.effect->wetlevel;
-    } else {
-        reverbLevel = 0;
-    }
     AIL_set_stream_reverb_levels(handle, 1.0f, reverbLevel);
 
     AIL_stream_ms_position(handle, &total_msec, NULL);
-    if (timeshift >= total_msec) {
+    if (timeshift >= total_msec)
         return 0;
-    }
-    if (total_msec == 0) {
-        Com_Printf((const char *)"^1ERROR: Sound file '%s' is zero length, invalid\n", realname);
+    if (!total_msec) {
+        Com_Printf("^1ERROR: Sound file '%s' is zero length, invalid\n", realname);
         return 0;
     }
 
-    if (fraction != 0.0f) {
+    start_msec = timeshift;
+    if (fraction != 0.0f)
         start_msec = I_fround((float)total_msec * fraction);
-    } else {
-        start_msec = timeshift;
-    }
-
-    if (start_msec != 0) {
+    if (start_msec)
         startDelay = 0;
-    }
-
     AIL_set_stream_ms_position(handle, start_msec);
-
-    if (!startDelay) {
-        if (!g_snd.paused || !g_snd.pauseSettings[(pAlias0->flags & 0x780) >> 7])
-            AIL_pause_stream(handle, 0);
-    }
+    if (!startDelay && (!g_snd.paused || !g_snd.pauseSettings[(pAlias0->flags & 0x780) >> 7]))
+        AIL_pause_stream(handle, 0);
 
     total_msec += startDelay;
     if (pAlias0->flags & 1)
         total_msec = 0;
 
-    {
-        sndGlob = (&g_snd);
-        to = sndGlob->chaninfo[index].org;
-        to[0] = org[0];
-        to[1] = org[1];
-        to[2] = org[2];
-    }
-
+    to = g_snd.chaninfo[index].org;
+    to[0] = org[0];
+    to[1] = org[1];
+    to[2] = org[2];
     SND_SetChannelInfo(index, entnum, pAlias0, pAlias1, lerp, org, volume, pitch, srcChannelCount, baserate, (int)total_msec, start_msec, startDelay, master, system);
 
-    {
-        sndGlob = (&g_snd);
-        int chFlags = sndGlob->chaninfo[index].pAlias0->flags;
-        channel = (chFlags & 0x780) >> 7;
+    if (SND_IsAliasChannel3D((g_snd.chaninfo[index].pAlias0->flags & 0x780) >> 7)) {
+        MSS_SpatializeStreamImpl(index - 32, &volume, &pan);
+        realVolume = g_snd.volume * g_snd.channelvol->channelvol[(pAlias0->flags & 0x780) >> 7].volume * volume;
+        if (g_snd.slaveLerp != 0.0f && !master && (pAlias0->flags & 4))
+            realVolume = SND_GetLerpedSlavePercentage(pAlias0->fSlavePercentage) * realVolume;
+        AIL_set_stream_volume_levels(handle, (1.0f - pan) * realVolume, pan * realVolume);
     }
 
-    if (SND_IsAliasChannel3D(channel)) {
-
-        MSS_SpatializeStreamImpl(streamIdx, &volume, &pan);
-
-        sndGlob = (&g_snd);
-        aliasFlags = pAlias0->flags;
-        scaledVol = sndGlob->volume * volume;
-        volTable = (float *)sndGlob->channelvol;
-        channel = (aliasFlags & 0x780) >> 7;
-        scaledVol *= volTable[channel * 3];
-
-        if (sndGlob->slaveLerp != 0.0f && !master && (aliasFlags & 4)) {
-            scaledVol *= SND_GetLerpedSlavePercentage(pAlias0->fSlavePercentage);
-        }
-
-        {
-            float leftVol = pan * scaledVol;
-            float rightVol = (1.0f - pan) * scaledVol;
-            AIL_set_stream_volume_levels(handle, rightVol, leftVol);
-        }
-    }
-
-    return (int)total_msec;
+    return total_msec;
 }
 
 void SND_Update3DChannel(int i, int frametime)
