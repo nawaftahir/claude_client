@@ -39,30 +39,11 @@ extern void BG_AddPredictableEventToPlayerstate(int newEvent, int eventParm, pla
 extern void CG_AdjustPositionForMover(const vec_t *in, int moverNum, int fromTime, int toTime, vec_t *out, vec_t *outDeltaAngles);
 extern void Com_Printf(const char *fmt, ...);
 
-extern const dvar_t **dvar_nopredict;
-extern const dvar_t **dvar_synchronous;
-extern const dvar_t **dvar_developer;
-extern const dvar_t **dvar_autoPickup;
-extern const dvar_t **dvar_errorDecay;
-
-static inline int dvar_get_int_safe(const dvar_t **pp)
-{
-    if (!pp || !*pp)
-        return 0;
-    return (*pp)->current.integer;
-}
-static inline float dvar_get_float_safe(const dvar_t **pp)
-{
-    if (!pp || !*pp)
-        return 0.0f;
-    return (*pp)->current.value;
-}
-static inline int dvar_get_bool_safe(const dvar_t **pp)
-{
-    if (!pp || !*pp)
-        return 0;
-    return (*pp)->current.enabled;
-}
+extern const dvar_t *cg_nopredict;
+extern const dvar_t *cg_synchronousClients;
+extern const dvar_t *cg_showmiss;
+extern const dvar_t *cg_predictItems;
+extern const dvar_t *cg_errorDecay;
 
 #define REAL_PS_SIZE 0x26a8
 
@@ -196,7 +177,7 @@ void CG_PredictPlayerState(void)
         goto cleanup;
     }
 
-    if (dvar_get_bool_safe(dvar_nopredict) || dvar_get_bool_safe(dvar_synchronous)) {
+    if (cg_nopredict->current.enabled || cg_synchronousClients->current.enabled) {
         CG_InterpolatePlayerState(1);
         goto cleanup;
     }
@@ -226,7 +207,7 @@ void CG_PredictPlayerState(void)
     {
         usercmd_t oldestCmd;
         if (!CL_GetUserCmd(oldest, &oldestCmd)) {
-            if (dvar_get_int_safe(dvar_developer) != 0)
+            if (cg_showmiss->current.integer != 0)
                 Com_Printf("CG_PredictPlayerState: CMD_BACKUP exceeded\n");
             goto cleanup;
         }
@@ -278,7 +259,7 @@ void CG_PredictPlayerState(void)
 
             ps->delta_angles[1] += (int)(deltaAngles[1] * (65536.0f / 360.0f)) & 0xffff;
 
-            if (dvar_get_int_safe(dvar_developer) != 0) {
+            if (cg_showmiss->current.integer != 0) {
 
                 float *oldOrig = &((playerState_t *)oldPlayerState)->origin[0];
                 isMatch = (oldOrig[0] == oldOrigin[0] &&
@@ -298,10 +279,10 @@ void CG_PredictPlayerState(void)
                 float *predictedError;
                 float errorDecayVal;
 
-                if (dvar_get_int_safe(dvar_developer) != 0)
+                if (cg_showmiss->current.integer != 0)
                     Com_Printf("Prediction miss: %f\n", (double)len);
 
-                errorDecayVal = dvar_get_float_safe(dvar_errorDecay);
+                errorDecayVal = cg_errorDecay->current.value;
                 predictedError = cg->predictedError;
 
                 if (errorDecayVal == 0.0f) {
@@ -318,7 +299,7 @@ void CG_PredictPlayerState(void)
                     if (t < 0.0f)
                         t = 0.0f;
 
-                    if (t > 0.0f && dvar_get_int_safe(dvar_developer) != 0)
+                    if (t > 0.0f && cg_showmiss->current.integer != 0)
                         Com_Printf("Double prediction decay: %f\n", (double)t);
 
                     predictedError[0] *= t;
@@ -349,7 +330,7 @@ void CG_PredictPlayerState(void)
                         entityState_t *ent = &cent->nextState;
 
                         if (ent->eType == 3 && !inDeadState) {
-                            if (dvar_get_bool_safe(dvar_autoPickup) == 0)
+                            if (cg_predictItems->current.enabled == 0)
                                 continue;
 
                             cg_time = cg->time;
@@ -387,7 +368,7 @@ void CG_PredictPlayerState(void)
 
 postPredict:
 
-    if (dvar_get_int_safe(dvar_developer) > 1) {
+    if (cg_showmiss->current.integer > 1) {
         Com_Printf("[%i : %i] ", cg_pmove[0].cmd.serverTime, cg->time);
     }
 
@@ -402,7 +383,7 @@ postPredict:
             ps->origin, deltaAngles);
     } else {
 
-        if (dvar_get_int_safe(dvar_developer) != 0)
+        if (cg_showmiss->current.integer != 0)
             Com_Printf("not moved\n");
     }
 
