@@ -210,7 +210,7 @@ void CG_AntiBurnInHUD_RegisterDvars(void)
     hud_healthOverlay_phaseEnd_pulseDuration = Dvar_RegisterInt("hud_healthOverlay_phaseEnd_pulseDuration", 700, 0, 1000, 0x1080);
 }
 
-static inline __attribute__((always_inline)) Bool CG_AreHudMenusHidden_inl(void)
+Bool CG_AreHudMenusHidden(void)
 {
     if ((CL_GetKeyCatchers() & 8) && !CL_GetDisplayHUDWithKeycatchUI()) {
         return 1;
@@ -220,11 +220,6 @@ static inline __attribute__((always_inline)) Bool CG_AreHudMenusHidden_inl(void)
         return 0;
     }
     return 1;
-}
-
-Bool CG_AreHudMenusHidden(void)
-{
-    return CG_AreHudMenusHidden_inl();
 }
 
 float CG_CalcPlayerHealth(void)
@@ -815,7 +810,7 @@ float CG_FadeHudMenu(const dvar_t *fadeDvar, int displayStartTime, int duration)
 {
     float *fadeColor;
 
-    if (CG_AreHudMenusHidden_inl() || !hud_enable->current.enabled) {
+    if (CG_AreHudMenusHidden() || !hud_enable->current.enabled) {
         return 0.0f;
     }
 

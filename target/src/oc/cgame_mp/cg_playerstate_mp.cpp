@@ -221,48 +221,27 @@ void CG_DamageFeedback(int yawByte, int pitchByte, int damage)
     CG_MenuShowNotify(0);
 }
 
-void CG_TransitionPlayerState(playerState_t *ps, playerState_t *ops)
+static void CG_CheckPlayerstateEvents(playerState_t *ps, playerState_t *ops)
 {
     char *cent;
     int i;
-    int idx;
     int event;
 
-    if (ps->damageEvent != ops->damageEvent) {
-
-        if (ps->damageCount != 0) {
-            CG_DamageFeedback(ps->damageYaw, ps->damagePitch, ps->damageCount);
-        }
-    }
-
     cent = (char *)cg + CG_OFF_2826C;
-
-    i = ps->eventSequence - 4;
-
-    while (i < ps->eventSequence) {
-
-        if (i < ops->eventSequence) {
-
-            if (i < ops->eventSequence - 4) {
-                i++;
-                continue;
-            }
-            idx = i & 3;
-            event = ps->events[idx];
-            if (event == ops->events[idx]) {
-                i++;
-                continue;
-            }
-        } else {
-
-            idx = i & 3;
-            event = ps->events[idx];
+    for (i = ps->eventSequence - 4; i < ps->eventSequence; i++) {
+        if (i >= ops->eventSequence
+            || (i > ops->eventSequence - 4 && ps->events[i & 3] != ops->events[i & 3])) {
+            event = ps->events[i & 3];
+            CG_INT(cent, CENT_EVENT_PARM) = ps->eventParms[i & 3];
+            CG_EntityEvent((centity_t *)cent, event);
         }
-
-        CG_INT(cent, CENT_EVENT_PARM) = ps->eventParms[idx];
-
-        CG_EntityEvent((centity_t *)cent, event);
-
-        i++;
     }
+}
+
+void CG_TransitionPlayerState(playerState_t *ps, playerState_t *ops)
+{
+    if (ps->damageEvent != ops->damageEvent && ps->damageCount)
+        CG_DamageFeedback(ps->damageYaw, ps->damagePitch, ps->damageCount);
+
+    CG_CheckPlayerstateEvents(ps, ops);
 }
