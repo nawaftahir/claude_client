@@ -17,51 +17,41 @@ qboolean Sys_RemoveDirTree( const char *dir )
 	char path[MAX_OSPATH];
 	struct _finddata_t fdata;
 	intptr_t handle;
-	const char *wildcard;
 	bool hasSlash;
 	bool failed;
 	int len;
 
 	len = strlen( dir );
-	if ( dir[len - 1] == '\\' || dir[len - 1] == '/' )
-	{
-		hasSlash = true;
-		wildcard = "%s*";
-	}
-	else
-	{
-		hasSlash = false;
-		wildcard = "%s\\*";
-	}
+	hasSlash = dir[len - 1] == '\\' || dir[len - 1] == '/';
 	// the retail call passes fdata.name as a spare argument
-	Com_sprintf( path, sizeof( path ), wildcard, dir, fdata.name );
+	Com_sprintf( path, sizeof( path ), hasSlash ? "%s*" : "%s\\*", dir, fdata.name );
 
 	handle = _findfirst( path, &fdata );
-	if ( handle == -1 )
-		return _rmdir( dir ) != -1;
-
-	failed = false;
-	do
+	if ( handle != -1 )
 	{
-		if ( fdata.name[0] == '.' && ( !fdata.name[1] || ( fdata.name[1] == '.' && !fdata.name[2] ) ) )
-			continue;
+		failed = false;
+		do
+		{
+			if ( fdata.name[0] == '.' && ( !fdata.name[1] || ( fdata.name[1] == '.' && !fdata.name[2] ) ) )
+				continue;
 
-		Com_sprintf( path, sizeof( path ), hasSlash ? "%s%s" : "%s\\%s", dir, fdata.name );
+			Com_sprintf( path, sizeof( path ), hasSlash ? "%s%s" : "%s\\%s", dir, fdata.name );
 
-		if ( fdata.attrib & _A_SUBDIR )
-			failed = !Sys_RemoveDirTree( path );
-		else
-			failed = remove( path ) == -1;
+			if ( fdata.attrib & _A_SUBDIR )
+				failed = !Sys_RemoveDirTree( path );
+			else
+				failed = remove( path ) == -1;
+
+			if ( failed )
+				break;
+		}
+		while ( _findnext( handle, &fdata ) != -1 );
+
+		_findclose( handle );
 
 		if ( failed )
-			break;
+			return qfalse;
 	}
-	while ( _findnext( handle, &fdata ) != -1 );
-
-	_findclose( handle );
-
-	if ( failed )
-		return qfalse;
 
 	return _rmdir( dir ) != -1;
 }
