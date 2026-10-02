@@ -252,3 +252,4 @@
 52c400	Load_ScriptMenu	callsite
 4c5630	CG_DrawSpectatorMessage	callsite
 4c5600	CG_GetBoundSpectatorCommand	kisak
+4cb310	CG_ReverbCmd	string

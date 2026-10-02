@@ -689,14 +689,6 @@ void CG_MapRestart(qboolean savepersist)
     CL_SyncTimes();
 }
 
-static int CG_ParseFadeTimeArg(int argIndex)
-{
-    int fadeTime;
-
-    fadeTime = I_fround((float)atof(CG_Argv(argIndex)) * 1000.0f);
-    return fadeTime > 0 ? fadeTime : 0;
-}
-
 static void CG_RemoveChatEscapeChar(char *text)
 {
     int i;
@@ -881,18 +873,28 @@ static void CG_ConfigStringModified(void)
 
 static void CG_ReverbCmd(void)
 {
+    int prio;
+    float dryLevel;
+    float wetLevel;
+    float fadeSeconds;
+    const char *roomstring;
+    float fval;
+    int fadeTime;
 
     if (Cmd_Argc() != 6) {
         Com_Printf("ERROR: CG_ReverbCmd called with %i args (should be 6)\n", Cmd_Argc());
         return;
     }
 
-    SND_SetEnvironmentEffects(
-        atoi(CG_Argv(1)),
-        CG_Argv(2),
-        (float)atof(CG_Argv(3)),
-        (float)atof(CG_Argv(4)),
-        CG_ParseFadeTimeArg(5));
+    prio = atoi(CG_Argv(1));
+    dryLevel = (float)atof(CG_Argv(3));
+    wetLevel = (float)atof(CG_Argv(4));
+    fadeSeconds = (float)atof(CG_Argv(5));
+    roomstring = CG_Argv(2);
+    fval = (float)I_fround(fadeSeconds * 1000.0f);
+    fadeTime = (int)((0.0f - fval >= 0.0f) ? 0.0f : fval);
+
+    SND_SetEnvironmentEffects(prio, roomstring, dryLevel, wetLevel, fadeTime);
 }
 
 static void CG_LocalSoundCmd(void)
