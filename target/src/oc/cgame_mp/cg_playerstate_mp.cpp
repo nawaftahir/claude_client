@@ -133,90 +133,49 @@ void CG_Respawn(void)
 
 void CG_DamageFeedback(int yawByte, int pitchByte, int damage)
 {
-    float count;
-    float negCount;
-    vec3_t dir;
+    float kick;
+    float yaw;
+    float pitch;
     vec3_t angles;
-    float dot;
+    vec3_t dir;
     int slot;
     int i;
-    char *snap;
 
-    CG_INT(cg, CG_OFF_2BE48) = CG_INT(cg, CG_OFF_25BB0);
+    cg->attackerTime = cg->time;
 
-    count = (float)damage * 0.2f;
-
-    if (count < 5.0f) {
-        count = 5.0f;
-        negCount = -5.0f;
-    } else if (count > 90.0f) {
-        count = 90.0f;
-        negCount = -90.0f;
-    } else {
-        negCount = -count;
-    }
+    kick = damage * 0.2f;
+    if (kick < 5.0f)
+        kick = 5.0f;
+    else if (kick > 90.0f)
+        kick = 90.0f;
 
     if (yawByte == 255 && pitchByte == 255) {
-
-        CG_FLOAT(cg, CG_OFF_2BF14) = 0.0f;
-        CG_FLOAT(cg, CG_OFF_2BF10) = negCount;
+        cg->v_dmg_roll = 0.0f;
+        cg->v_dmg_pitch = -kick;
     } else {
-
-        float yaw = (float)yawByte / 255.0f * 360.0f;
-
-        float pitch = (float)pitchByte / 255.0f * 360.0f;
-
+        pitch = pitchByte / 255.0f * 360.0f;
+        yaw = yawByte / 255.0f * 360.0f;
         angles[0] = pitch;
         angles[1] = yaw;
         angles[2] = 0.0f;
-
         AngleVectors(angles, dir, NULL, NULL);
 
-        {
-            float *up = (float *)((char *)cg + CG_OFF_285A0);
-            float *right = (float *)((char *)cg + CG_OFF_28594);
-
-            dot = dir[0] * up[0] + dir[1] * up[1] + dir[2] * up[2];
-            CG_FLOAT(cg, CG_OFF_2BF14) = dot * negCount;
-
-            dot = dir[0] * right[0] + dir[1] * right[1] + dir[2] * right[2];
-            CG_FLOAT(cg, CG_OFF_2BF10) = dot * count;
-        }
+        cg->v_dmg_roll = -((dir[0] * cg->refdef.viewaxis[2][0] + dir[1] * cg->refdef.viewaxis[2][1] + dir[2] * cg->refdef.viewaxis[2][2]) * kick);
+        cg->v_dmg_pitch = (dir[0] * cg->refdef.viewaxis[1][0] + dir[1] * cg->refdef.viewaxis[1][1] + dir[2] * cg->refdef.viewaxis[1][2]) * kick;
 
         slot = 0;
-        {
-
-            char *p = (char *)cg;
-            for (i = 1; i < 8; i++) {
-                p += 12;
-                if (CG_INT(p, CG_OFF_2BE74) < CG_INT(cg, CG_OFF_2BE74 + slot * 12)) {
-                    slot = i;
-                }
-            }
+        for (i = 1; i < 8; i++) {
+            if (cg->viewDamage[i].time < cg->viewDamage[slot].time)
+                slot = i;
         }
 
-        snap = CG_PTR(cg, CG_SNAP_PTR);
-        CG_INT(cg, CG_OFF_2BE74 + slot * 12) = CG_INT(snap, 8);
-
-        {
-            const dvar_t *damageIconTime = cg_hudDamageIconTime;
-            CG_INT(cg, CG_OFF_2BE74 + slot * 12 + 4) =
-                damageIconTime ? damageIconTime->current.integer : 2000;
-        }
-
-        {
-            float r = randomf();
-            float jitteredYaw = yaw + (r - 0.5f) * 20.0f;
-            float normYaw = AngleNormalize360(jitteredYaw);
-            CG_FLOAT(cg, CG_OFF_2BE74 + slot * 12 + 8) = normYaw;
-        }
-
+        cg->viewDamage[slot].time = cg->snap->serverTime;
+        cg->viewDamage[slot].duration = cg_hudDamageIconTime->current.integer;
+        cg->viewDamage[slot].yaw = AngleNormalize360(yaw + (randomf() - 0.5f) * 20.0f);
     }
 
-    CG_INT(cg, CG_OFF_2BF0C) = CG_INT(cg, CG_OFF_25BB0) + 500;
-
-    snap = CG_PTR(cg, CG_SNAP_PTR);
-    CG_INT(cg, CG_OFF_2BED4) = CG_INT(snap, 8);
+    cg->v_dmg_time = cg->time + 500;
+    cg->damageTime = cg->snap->serverTime;
 
     CG_MenuShowNotify(0);
 }
