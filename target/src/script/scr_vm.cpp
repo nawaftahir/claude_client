@@ -1837,7 +1837,7 @@ const char* Scr_GetNextCodepos( VariableValue *top, const char *pos, int opcode,
 			case 0x4f:
 			case 0x50:
 			case 0x54:
-				if ( scrVmPub.function_count > 31 )
+				if ( scrVmPub.function_count >= 32 )
 				{
 					goto LABEL_11;
 				}
@@ -1857,7 +1857,7 @@ const char* Scr_GetNextCodepos( VariableValue *top, const char *pos, int opcode,
 				{
 					goto LABEL_11;
 				}
-				if ( scrVmPub.function_count > 31 )
+				if ( scrVmPub.function_count >= 32 )
 				{
 					goto LABEL_11;
 				}
@@ -1880,7 +1880,7 @@ const char* Scr_GetNextCodepos( VariableValue *top, const char *pos, int opcode,
 			case 94:
 			case 96:
 				value = *top;
-				AddRefToValue( &value );
+				AddRefToValue( value.type, value.u );
 				Scr_CastBool( &value );
 				offset = Scr_ReadUnsignedShort( &pos );
 				if ( !scrVarPub.error_message )
@@ -1896,7 +1896,7 @@ const char* Scr_GetNextCodepos( VariableValue *top, const char *pos, int opcode,
 			case 95:
 			case 97:
 				value = *top;
-				AddRefToValue( &value );
+				AddRefToValue( value.type, value.u );
 				Scr_CastBool( &value );
 				offset = Scr_ReadUnsignedShort( &pos );
 				if ( !scrVarPub.error_message )

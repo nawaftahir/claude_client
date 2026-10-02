@@ -278,6 +278,58 @@ store:
     *shake = temp;
 }
 
+extern int Com_sprintf(char *dest, size_t size, const char *format, ...);
+
+// Original name unknown.
+int CG_DrawFieldWidth(int width, int value, int charWidth)
+{
+    char num[16], *ptr;
+    int l;
+    int totalWidth;
+
+    totalWidth = 0;
+    if (width < 1)
+        return 0;
+
+    if (width > 5)
+        width = 5;
+
+    switch (width)
+    {
+    case 1:
+        value = value > 9 ? 9 : value;
+        value = value < 0 ? 0 : value;
+        break;
+    case 2:
+        value = value > 99 ? 99 : value;
+        value = value < -9 ? -9 : value;
+        break;
+    case 3:
+        value = value > 999 ? 999 : value;
+        value = value < -99 ? -99 : value;
+        break;
+    case 4:
+        value = value > 9999 ? 9999 : value;
+        value = value < -999 ? -999 : value;
+        break;
+    }
+
+    Com_sprintf(num, sizeof(num), "%i", value);
+    l = strlen(num);
+    if (l > width)
+        l = width;
+
+    ptr = num;
+    while (*ptr && l)
+    {
+        totalWidth += charWidth;
+        ptr++;
+        l--;
+    }
+
+    return totalWidth;
+}
+
 void CG_DrawTeamBackground(float x, float y, float w, float h, float alpha, int team)
 {
     vec4_t color;

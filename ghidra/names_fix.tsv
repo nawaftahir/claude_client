@@ -33,8 +33,6 @@
 0	CL_ServerStatus_f	drop
 0	SND_Is3DChannelFree	drop
 0	CG_DrawStringExt	drop
-0	CG_DrawSmallDevStringColor	drop
-0	CG_DrawBigDevString	drop
 0	CG_DrawPlayerCompass	drop
 0	CG_DrawChatMessages	drop
 0	CG_DrawWeapReticle	drop

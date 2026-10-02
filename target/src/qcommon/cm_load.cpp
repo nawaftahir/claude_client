@@ -164,7 +164,7 @@ void CM_SaveLump( int lumpType, const void *data, int len, int *checksum )
 	CM_SwapHeader(&header, numLumps);
 	oldHeader = header;
 
-	h = FS_OpenFileForWrite(cm.name);
+	h = FS_OpenFileOverwrite(cm.name);
 
 	if ( !h )
 	{

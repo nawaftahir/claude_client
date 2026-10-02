@@ -1609,6 +1609,22 @@ void CL_Record_f(void)
     FS_Write(compressedBuf, compressedSize, conn->demofile);
 }
 
+void CL_NextDemo(void)
+{
+    char v[1024];
+
+    I_strncpyz(v, nextdemo->current.string, sizeof(v));
+    v[sizeof(v) - 1] = 0;
+    Com_DPrintf("CL_NextDemo: %s\n", v);
+    if (!v[0])
+        return;
+
+    Dvar_SetString((dvar_t *)nextdemo, "");
+    Cbuf_AddText(v);
+    Cbuf_AddText("\n");
+    Cbuf_Execute();
+}
+
 void CL_ShutdownHunkUsers(void)
 {
     if (!cls.hunkUsersStarted)

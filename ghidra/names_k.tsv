@@ -235,3 +235,15 @@
 4c5350	CG_DrawVote	fuzzy
 4c20d0	CG_DrawCenterString	fuzzy
 4c19f0	CG_DrawLagometer	fuzzy
+421480	FS_ShortOSFilePath	callsite
+4bc3e0	CG_DrawBigDevString	callsite
+4bc430	CG_DrawBigDevStringColor	callsite
+4bc450	CG_DrawSmallDevString	callsite
+4bc4a0	CG_DrawSmallDevStringColor	callsite
+4bc4c0	CG_IsFullViewport	callsite
+4bc500	CG_TileClear	callsite
+4c0a20	CG_DrawFieldWidth	callsite
+4cbf40	CG_RandomPerturbation	callsite
+4cc020	CG_PrintPerturbations	callsite
+4625e0	Sys_FunctionsMatch	callsite
+4626c0	Sys_FunctionChecksum	callsite

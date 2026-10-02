@@ -99,14 +99,60 @@ int CG_DrawDevString(float x, float y, const char *s, const vec_t *color, int al
     return step;
 }
 
+int CG_DrawBigDevString(float x, float y, const char *s, float alpha, int align)
+{
+    vec4_t c;
+    c[0] = 1.0f;
+    c[1] = 1.0f;
+    c[2] = 1.0f;
+    c[3] = alpha;
+
+    return CG_DrawDevString(x, y, s, c, align, cgs->media.bigDevFont, 0);
+}
+
 int CG_DrawBigDevStringColor(float x, float y, const char *s, const vec_t *color, int align)
 {
     return CG_DrawDevString(x, y, s, color, align, cgs->media.bigDevFont, 0);
 }
 
+int CG_DrawSmallDevString(float x, float y, const char *s, float alpha, int align)
+{
+    vec4_t c;
+    c[0] = 1.0f;
+    c[1] = 1.0f;
+    c[2] = 1.0f;
+    c[3] = alpha;
+
+    return CG_DrawDevString(x, y, s, c, align, cgs->media.smallDevFont, 0);
+}
+
 int CG_DrawSmallDevStringColor(float x, float y, const char *s, const vec_t *color, int align)
 {
     return CG_DrawDevString(x, y, s, color, align, cgs->media.smallDevFont, 0);
+}
+
+// Original name unknown.
+byte CG_IsFullViewport(void)
+{
+    return cgs->viewX == cg->refdef.x
+        && cgs->viewY == cg->refdef.y
+        && cgs->viewWidth == cg->refdef.width
+        && cgs->viewHeight == cg->refdef.height;
+}
+
+void CG_TileClear(void)
+{
+
+    if (CG_IsFullViewport()) {
+        return;
+    }
+
+    CL_SetFullScreenViewport();
+    CL_SetViewport(
+        cg->refdef.x,
+        cg->refdef.y,
+        cg->refdef.width,
+        cg->refdef.height);
 }
 
 float *CG_FadeColor(int startMsec, int totalMsec, int fadeMsec)
@@ -318,34 +364,7 @@ void CG_UpdateCompPointerOrientation(void)
     cg->compPointerYaw = AngleNormalize360(fDiff + cg->refdefViewAngles[1]);
 }
 
-void CG_TileClear(void)
-{
 
-    if (cgs->viewX == cg->refdef.x &&
-        cgs->viewY == cg->refdef.y &&
-        cgs->viewWidth == cg->refdef.width &&
-        cgs->viewHeight == cg->refdef.height) {
-        return;
-    }
-
-    CL_SetFullScreenViewport();
-    CL_SetViewport(
-        cg->refdef.x,
-        cg->refdef.y,
-        cg->refdef.width,
-        cg->refdef.height);
-}
-
-int CG_DrawBigDevString(float x, float y, const char *s, float alpha, int align)
-{
-    vec4_t c;
-    c[0] = 1.0f;
-    c[1] = 1.0f;
-    c[2] = 1.0f;
-    c[3] = alpha;
-
-    return CG_DrawDevString(x, y, s, c, align, cgs->media.bigDevFont, 0);
-}
 
 void CG_DrawRotatedPicPhysical(float x, float y, float width, float height, float angle, const vec_t *color, MaterialHandle material)
 {

@@ -134,6 +134,64 @@ qboolean CG_DrawShellShockSavedScreenBlend(const shellshock_parms_t *parms, int 
 void CG_SetShellShockParmsFromDvars(shellshock_parms_t *parms);
 void CG_UpdateShellShock(const shellshock_parms_t *parms, int start, int duration);
 
+extern const vec3_t vec3_origin;
+extern float randomf();
+extern float crandom();
+
+static inline void FastSinCos(const float value, float *pSin, float *pCos)
+{
+    __asm
+    {
+        push eax
+        push ecx
+        fld value
+        fsincos
+        mov ecx, pCos
+        mov eax, pSin
+        fstp dword ptr [ecx]
+        fstp dword ptr [eax]
+        pop ecx
+        pop eax
+    }
+}
+
+// Original name unknown.
+static void CG_RandomPerturbation(const float *prev, float *out, float minDist)
+{
+    float angle;
+    float radius;
+    float s;
+    float c;
+    float delta[2];
+    float minDistSq;
+
+    minDistSq = minDist * minDist;
+    do
+    {
+        angle = crandom() * 3.1415927f;
+        FastSinCos(angle, &s, &c);
+        radius = randomf();
+        out[0] = radius * c;
+        out[1] = radius * s;
+        delta[0] = out[0] - prev[0];
+        delta[1] = out[1] - prev[1];
+    } while (delta[1] * delta[1] + delta[0] * delta[0] < minDistSq);
+}
+
+// Original name unknown.
+void CG_PrintPerturbations(void)
+{
+    vec2_t table[128];
+    unsigned int i;
+
+    CG_RandomPerturbation(vec3_origin, table[0], 0.5f);
+    for (i = 1; i < 128; i++)
+        CG_RandomPerturbation(table[i - 1], table[i], 0.5f);
+
+    for (i = 0; i < 128; i++)
+        Com_Printf("\t{%f, %f},\n", table[i][0], table[i][1]);
+}
+
 void CG_PerturbCamera(void)
 {
     float rot[3][3];

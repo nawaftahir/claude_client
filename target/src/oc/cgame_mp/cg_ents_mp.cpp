@@ -58,6 +58,8 @@ extern void DObjCalcAnim(const DObj *obj, int *partBits);
 extern void DObjCalcSkel(DObj *obj, int *partBits);
 extern void AxisCopy( const vec3_t in[3], vec3_t out[3] );
 extern void AnglesToAxis( const vec3_t angles, vec3_t axis[3] );
+extern void ConvertQuatToMat(const DObjAnimMat *mat, vec3_t axis[3]);
+extern void MatrixMultiply(const float in1[3][3], const float in2[3][3], float out[3][3]);
 extern void MatrixTransformVector43(const vec3_t in1, const float in2[4][3], vec3_t out);
 extern int BG_GetNumWeapons(void);
 extern int CG_PlaySoundAlias(int entitynum, const vec_t *origin, snd_alias_list_t *aliasList);
@@ -109,6 +111,26 @@ void CG_Missile(centity_t *cent);
 void CG_ScriptMover(centity_t *cent);
 void CG_ProcessEntity(centity_t *cent);
 void CG_AddPacketEntities(void);
+
+// Original name unknown.
+qboolean CG_FlareInViewCone(const centity_t *cent, int atTime)
+{
+    vec3_t origin;
+    vec3_t dir;
+    float dist;
+    float dot;
+
+    BG_EvaluateTrajectory(&cent->currentState.pos, atTime, origin);
+    dir[0] = cg->refdef.vieworg[0] - origin[0];
+    dir[1] = cg->refdef.vieworg[1] - origin[1];
+    dir[2] = cg->refdef.vieworg[2] - origin[2];
+    dist = Vec3Normalize(dir);
+    if (dist > 255.0f)
+        return 0;
+
+    dot = cg->refdef.viewaxis[0][2] * dir[2] + cg->refdef.viewaxis[0][1] * dir[1] + cg->refdef.viewaxis[0][0] * dir[0];
+    return !(dot > -0.94f - (dist * (1.0f / 255.0f)) * 0.057f);
+}
 
 struct XAnim_s *CG_GetMG42Anims(centity_t *cent)
 {

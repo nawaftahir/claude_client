@@ -208,7 +208,7 @@ static void Com_LoadedSoundList( snd_alias_system_t system )
 				break;
 			}
 		}
-		if ( j != i )
+		if ( j < i )
 		{
 			continue;
 		}
@@ -252,7 +252,7 @@ static void Com_StreamedSoundList( snd_alias_system_t system )
 				break;
 			}
 		}
-		if ( j != i )
+		if ( j < i )
 		{
 			continue;
 		}
@@ -322,11 +322,11 @@ void Com_LoadSoundAliases( const char *loadspec, const char *loadspecCurGame, sn
 	{
 		Com_InitVolumeFalloffCurves();
 	}
-	if ( !I_strnicmpInline(loadspec, "maps/mp/", 8) )
+	if ( !strnicmp(loadspec, "maps/mp/", 8) )
 	{
 		Com_StripExtension(loadspec + 8, mapName);
 	}
-	else if ( !I_strnicmpInline(loadspec, "maps/", 5) )
+	else if ( !strnicmp(loadspec, "maps/", 5) )
 	{
 		Com_StripExtension(loadspec + 5, mapName);
 	}

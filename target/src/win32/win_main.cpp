@@ -285,6 +285,78 @@ void Sys_ArchiveInfo( int checksum )
 	Dvar_SetInt( sys_configSum, checksum );
 }
 
+// Original name unknown.
+qboolean Sys_FunctionsMatch( const unsigned char *func1, const unsigned char *func2 )
+{
+	unsigned char marker[32] = { 0xC3, 0x90, 0x90, 0x00 };
+	int len;
+	int i;
+	int j;
+	int k;
+	const unsigned char *code1;
+	const unsigned char *code2;
+
+	if ( func1[0] == 0xE9 )
+		code1 = func1 + *(int *)( func1 + 1 ) + 5;
+	else
+		code1 = func1;
+	if ( func2[0] == 0xE9 )
+		code2 = func2 + *(int *)( func2 + 1 ) + 5;
+	else
+		code2 = func2;
+
+	for ( i = 0; i < 1024; i++ )
+	{
+		for ( k = 0; marker[k]; k++ )
+		{
+			if ( code1[i + k] != marker[k] )
+				break;
+		}
+		if ( !marker[k] )
+			break;
+	}
+	len = i + 2;
+
+	for ( j = 0; j < len; j++ )
+	{
+		if ( code1[j] == 0xE8
+			&& code1 + j + *(int *)( code1 + j + 1 ) + 5 == code2 + j + *(int *)( code2 + j + 1 ) + 5 )
+		{
+			j += 4;
+			continue;
+		}
+		if ( code1[j] != code2[j] )
+			return qfalse;
+	}
+	return qtrue;
+}
+
+// Original name unknown.
+unsigned int Sys_FunctionChecksum( const unsigned char *func )
+{
+	unsigned char marker[32] = { 0xC3, 0x90, 0x90, 0x00 };
+	const unsigned char *code;
+	int len;
+	int i;
+
+	if ( func[0] == 0xE9 )
+		code = func + *(int *)( func + 1 ) + 5;
+	else
+		code = func;
+
+	for ( len = 0; len < 1024; len++ )
+	{
+		for ( i = 0; marker[i]; i++ )
+		{
+			if ( code[len + i] != marker[i] )
+				break;
+		}
+		if ( !marker[i] )
+			break;
+	}
+	return Com_BlockChecksum( (void *)code, len + 2 );
+}
+
 WinVars_t g_wv;
 
 static void Sys_ShutdownEvents( void );

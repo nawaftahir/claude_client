@@ -1132,7 +1132,7 @@ const char *FS_ShortOSFilePath( const char *qpath )
 
 	for ( search = fs_searchpaths; search; search = search->next )
 	{
-		if ( !FS_UseSearchPath(search) )
+		if ( !FS_UseSearchPath(search) || (search->localized && search->language != SEH_GetCurrentLanguage()) )
 			continue;
 		if ( search->dir )
 		{
@@ -1553,12 +1553,34 @@ int FS_GetOSPath( const char *qpath, char *ospath )
 
 /*
 ==============
-FS_OpenFileForWrite
+FS_OpenFileOverwrite
+
+Opens an existing loose file for writing, clearing its read-only attribute.
 ==============
 */
-int FS_OpenFileForWrite( const char *filename )
+fileHandle_t FS_OpenFileOverwrite( const char *qpath )
 {
-	return 0;
+	char ospath[MAX_OSPATH];
+	DWORD attrib;
+
+	if ( FS_GetOSPath(qpath, ospath) < 0 )
+	{
+		Com_Error(ERR_DROP, "FS_FOpenFileOverWrite: Failed to open %s for writing.  It either does not exist or is in a iwd file.", qpath);
+		return 0;
+	}
+
+	if ( fs_debug->current.integer )
+	{
+		Com_Printf("FS_FOpenFileOverWrite: %s\n", ospath);
+	}
+
+	attrib = GetFileAttributesA(ospath);
+	if ( (attrib & ~FILE_ATTRIBUTE_READONLY) != attrib )
+	{
+		SetFileAttributesA(ospath, attrib & ~FILE_ATTRIBUTE_READONLY);
+	}
+
+	return FS_GetHandleAndOpenFile(qpath, ospath, "wb", FS_THREAD_MAIN);
 }
 
 static iwd_t *FS_LoadZipFile( char *zipfile, const char *basename )
