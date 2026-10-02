@@ -2161,6 +2161,18 @@ int Client_SendVoiceData(int bytes, char *enc_buffer)
     return bytes;
 }
 
+// Original name unknown.
+static void CL_DisconnectPacket(netadr_t from)
+{
+    if (!clc.state)
+        return;
+    if (!NET_CompareAdr(from, clc.netchan.remoteAddress))
+        return;
+    if (cls.realtime - clc.lastPacketTime < 3000)
+        return;
+    Com_Error(ERR_DROP, "EXE_SERVER_DISCONNECTED");
+}
+
 Bool CL_ConnectionlessPacket(netadr_t from, msg_t *msg, int time)
 {
     clientConnection_t *conn = &::clc;
@@ -2253,11 +2265,7 @@ Bool CL_ConnectionlessPacket(netadr_t from, msg_t *msg, int time)
     }
 
     if (I_stricmp(cmd, (const char *)"disconnect") == 0) {
-        if (conn->state && NET_CompareAdr(from, conn->netchan.remoteAddress) &&
-            cls.realtime - conn->lastPacketTime > 2999) {
-            Com_Error(ERR_DROP, (const char *)"EXE_SERVER_DISCONNECTED");
-        }
-
+        CL_DisconnectPacket(from);
         return 1;
     }
 
