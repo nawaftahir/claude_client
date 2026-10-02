@@ -152,300 +152,247 @@ static void CG_InterpolatePlayerState(qboolean grabAngles)
                           (next->ps.fWeaponPosFrac - prev->ps.fWeaponPosFrac) * f;
 }
 
-void CG_PredictPlayerState(void)
+static inline void FastSinCos(const float value, float *pSin, float *pCos)
 {
-    byte *oldPlayerState;
-    playerState_t *ps;
-    snapshot_t *nextSnap;
-    int cmdNum, oldest;
-    usercmd_t curCmd;
-    qboolean moved;
-    WeaponDef *weapDef;
-    int cg_time;
-
+    __asm
     {
-    LargeLocal ll(REAL_PS_SIZE);
-    oldPlayerState = (byte *)ll.GetBuf();
-
-    if (cg->demoType != 0) {
-        CG_InterpolatePlayerState(0);
-        goto cleanup;
+        push eax
+        push ecx
+        fld value
+        fsincos
+        mov ecx, pCos
+        mov eax, pSin
+        fstp dword ptr [ecx]
+        fstp dword ptr [eax]
+        pop ecx
+        pop eax
     }
-    nextSnap = cg->nextSnap;
-    if (nextSnap->ps.pm_flags & 0x400000) {
+}
+
+static inline bool VectorCompare(const vec3_t v1, const vec3_t v2)
+{
+    return v1[0] == v2[0] && v1[1] == v2[1] && v1[2] == v2[2];
+}
+
+static inline vec_t VectorLength(const vec3_t v)
+{
+    return sqrtf(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+}
+
+static void CG_TouchItem(centity_t *cent)
+{
+    if (!cg_predictItems->current.enabled)
+        return;
+    if (!BG_PlayerTouchesItem(&cg->predictedPlayerState, &cent->currentState, cg->time))
+        return;
+    if (cent->miscTime == cg->time)
+        return;
+    if (!BG_CanItemBeGrabbed(&cent->currentState, &cg->predictedPlayerState, 1))
+        return;
+
+    cent->nextState.eFlags |= 0x20;
+    cent->miscTime = cg->time;
+    BG_AddPredictableEventToPlayerstate(0x90, cent->nextState.index.item, &cg->predictedPlayerState);
+}
+
+static void CG_TouchTriggerPrediction(void)
+{
+    int i;
+    int spectator;
+    centity_t *cent;
+    entityState_t *ent;
+    unsigned int cmodel;
+    trace_t trace;
+
+    if (cg->predictedPlayerState.pm_type >= 6)
+        return;
+
+    spectator = cg->predictedPlayerState.pm_type == 4;
+    if (cg->predictedPlayerState.pm_type != 0 && cg->predictedPlayerState.pm_type != 1 && !spectator)
+        return;
+
+    for (i = 0; i < cg_numTriggerEntities; i++) {
+        cent = cg_triggerEntities[i];
+        ent = &cent->nextState;
+
+        if (ent->eType == 3 && !spectator) {
+            CG_TouchItem(cent);
+            continue;
+        }
+
+        if (ent->solid != 0xffffff)
+            continue;
+
+        cmodel = ent->index.brushmodel;
+        if (!cmodel)
+            continue;
+
+        CM_BoxTrace(&trace, cg->predictedPlayerState.origin, cg->predictedPlayerState.origin,
+                    cg_pmove[0].mins, cg_pmove[0].maxs, cmodel, -1);
+    }
+}
+
+// Name from CoD4; original CoD2 name unknown.
+static void CG_PredictPlayerState_Internal(void)
+{
+    playerState_t *oldPlayerState;
+    int cmdNum, current;
+    usercmd_t oldestCmd;
+    usercmd_t latestCmd;
+    qboolean moved;
+    vec3_t adjusted;
+    vec3_t deltaAngles;
+    vec3_t delta;
+    float len;
+    float f;
+    LargeLocal oldPlayerStateBuf(REAL_PS_SIZE);
+
+    oldPlayerState = (playerState_t *)oldPlayerStateBuf.GetBuf();
+
+    if (cg->demoType || (cg->nextSnap->ps.pm_flags & 0x400000)) {
         CG_InterpolatePlayerState(0);
-        goto cleanup;
+        return;
     }
 
     if (cg_nopredict->current.enabled || cg_synchronousClients->current.enabled) {
         CG_InterpolatePlayerState(1);
-        goto cleanup;
+        return;
     }
 
-    ps = &cg->predictedPlayerState;
-
-    cg_pmove[0].ps = ps;
+    cg_pmove[0].ps = &cg->predictedPlayerState;
     cg_pmove[0].handler = 0;
+    if (cg->predictedPlayerState.pm_type >= 6)
+        cg_pmove[0].tracemask = 0x810011;
+    else
+        cg_pmove[0].tracemask = 0x2810011;
+    if (cg->nextSnap->ps.pm_type == 4)
+        cg_pmove[0].tracemask &= ~0x2010000;
 
-    {
-        int mask;
-        if (ps->pm_type < 6)
-            mask = 0x2810011;
-        else
-            mask = 0x810011;
-
-        nextSnap = cg->nextSnap;
-        if (nextSnap->ps.pm_type == 4)
-            mask &= ~0x02010000;
-
-        cg_pmove[0].tracemask = mask;
+    current = CL_GetCurrentCmdNumber();
+    cmdNum = current - 127;
+    if (!CL_GetUserCmd(cmdNum, &oldestCmd)) {
+        if (cg_showmiss->current.integer)
+            Com_Printf("exceeded PACKET_BACKUP on commands\n");
+        return;
     }
 
-    cmdNum = CL_GetCurrentCmdNumber();
-    oldest = cmdNum - 127;
+    memcpy(oldPlayerState, &cg->predictedPlayerState, REAL_PS_SIZE);
+    CL_GetUserCmd(current, &latestCmd);
 
-    {
-        usercmd_t oldestCmd;
-        if (!CL_GetUserCmd(oldest, &oldestCmd)) {
-            if (cg_showmiss->current.integer != 0)
-                Com_Printf("CG_PredictPlayerState: CMD_BACKUP exceeded\n");
-            goto cleanup;
-        }
-    }
-
-    memcpy(oldPlayerState, ps, REAL_PS_SIZE);
-
-    CL_GetUserCmd(cmdNum, &curCmd);
-
-    nextSnap = cg->nextSnap;
-    memcpy(ps, &nextSnap->ps, REAL_PS_SIZE);
-
-    cg->physicsTime = nextSnap->serverTime;
-
-    ps->oldVelocity[0] = ((playerState_t *)oldPlayerState)->oldVelocity[0];
-    ps->oldVelocity[1] = ((playerState_t *)oldPlayerState)->oldVelocity[1];
-
-    nextSnap = cg->nextSnap;
-    if (nextSnap->ps.commandTime >= curCmd.serverTime)
-        goto postPredict;
+    memcpy(&cg->predictedPlayerState, &cg->nextSnap->ps, REAL_PS_SIZE);
+    cg->physicsTime = cg->nextSnap->serverTime;
+    cg->predictedPlayerState.oldVelocity[0] = oldPlayerState->oldVelocity[0];
+    cg->predictedPlayerState.oldVelocity[1] = oldPlayerState->oldVelocity[1];
 
     moved = 0;
-    for (; oldest <= cmdNum; oldest++) {
+    if (cg->nextSnap->ps.commandTime < latestCmd.serverTime) {
+        for (; cmdNum <= current; cmdNum++) {
+            CL_GetUserCmd(cmdNum, &cg_pmove[0].cmd);
 
-        CL_GetUserCmd(oldest, &cg_pmove[0].cmd);
+            if (cg_pmove[0].cmd.serverTime <= cg->predictedPlayerState.commandTime)
+                continue;
+            if (cg_pmove[0].cmd.serverTime > latestCmd.serverTime)
+                continue;
+            if (!CL_GetUserCmd(cmdNum - 1, &cg_pmove[0].oldcmd))
+                continue;
 
-        if (cg_pmove[0].cmd.serverTime <= ps->commandTime)
-            continue;
+            if (cg->predictedPlayerState.commandTime == oldPlayerState->commandTime) {
+                CG_AdjustPositionForMover(cg->predictedPlayerState.origin, cg->predictedPlayerState.groundEntityNum,
+                                          cg->physicsTime, cg->oldTime, adjusted, deltaAngles);
+                cg->predictedPlayerState.delta_angles[1] += (int)(deltaAngles[1] * (65536.0f / 360.0f)) & 0xffff;
 
-        if (cg_pmove[0].cmd.serverTime > curCmd.serverTime)
-            continue;
-
-        if (!CL_GetUserCmd(oldest - 1, &cg_pmove[0].oldcmd))
-            continue;
-
-        if (ps->commandTime == ((playerState_t *)oldPlayerState)->commandTime) {
-            vec3_t oldOrigin;
-            vec3_t deltaAngles;
-            vec3_t delta;
-            float len;
-            int isMatch;
-
-            CG_AdjustPositionForMover(
-                ps->origin,
-                ps->groundEntityNum,
-                cg->oldTime,
-                cg->physicsTime,
-                oldOrigin, deltaAngles);
-
-            ps->delta_angles[1] += (int)(deltaAngles[1] * (65536.0f / 360.0f)) & 0xffff;
-
-            if (cg_showmiss->current.integer != 0) {
-
-                float *oldOrig = &((playerState_t *)oldPlayerState)->origin[0];
-                isMatch = (oldOrig[0] == oldOrigin[0] &&
-                           oldOrig[1] == oldOrigin[1] &&
-                           oldOrig[2] == oldOrigin[2]);
-                if (!isMatch) {
-                    Com_Printf("CG_PredictPlayerState: prediction not matched\n");
-                }
-            }
-
-            delta[0] = ((playerState_t *)oldPlayerState)->origin[0] - oldOrigin[0];
-            delta[1] = ((playerState_t *)oldPlayerState)->origin[1] - oldOrigin[1];
-            delta[2] = ((playerState_t *)oldPlayerState)->origin[2] - oldOrigin[2];
-
-            len = sqrtf(delta[0] * delta[0] + delta[1] * delta[1] + delta[2] * delta[2]);
-            if (len > 0.1f) {
-                float *predictedError;
-                float errorDecayVal;
-
-                if (cg_showmiss->current.integer != 0)
-                    Com_Printf("Prediction miss: %f\n", (double)len);
-
-                errorDecayVal = cg_errorDecay->current.value;
-                predictedError = cg->predictedError;
-
-                if (errorDecayVal == 0.0f) {
-
-                    predictedError[0] = 0.0f;
-                    predictedError[1] = 0.0f;
-                    predictedError[2] = 0.0f;
-                } else {
-                    float t;
-                    int cg_time_val = cg->time;
-                    int errorTime = cg->predictedErrorTime;
-
-                    t = 1.0f - (float)(cg_time_val - errorTime) / errorDecayVal;
-                    if (t < 0.0f)
-                        t = 0.0f;
-
-                    if (t > 0.0f && cg_showmiss->current.integer != 0)
-                        Com_Printf("Double prediction decay: %f\n", (double)t);
-
-                    predictedError[0] *= t;
-                    predictedError[1] *= t;
-                    predictedError[2] *= t;
+                if (cg_showmiss->current.integer) {
+                    if (!VectorCompare(oldPlayerState->origin, adjusted))
+                        Com_Printf("prediction error\n");
                 }
 
-                predictedError[0] += delta[0];
-                predictedError[1] += delta[1];
-                predictedError[2] += delta[2];
+                delta[0] = oldPlayerState->origin[0] - adjusted[0];
+                delta[1] = oldPlayerState->origin[1] - adjusted[1];
+                delta[2] = oldPlayerState->origin[2] - adjusted[2];
+                len = VectorLength(delta);
+                if (len > 0.1f) {
+                    if (cg_showmiss->current.integer)
+                        Com_Printf("Prediction miss: %f\n", len);
 
-                cg->predictedErrorTime = cg->oldTime;
-            }
-        }
-
-        Pmove(&cg_pmove[0]);
-
-        {
-            int pm_type;
-            pm_type = ps->pm_type;
-
-            if (pm_type <= 5) {
-                int inDeadState = (pm_type == 4);
-                if (pm_type <= 1 || inDeadState) {
-                    int j;
-                    for (j = 0; j < cg_numTriggerEntities; j++) {
-                        centity_t *cent = cg_triggerEntities[j];
-                        entityState_t *ent = &cent->nextState;
-
-                        if (ent->eType == 3 && !inDeadState) {
-                            if (cg_predictItems->current.enabled == 0)
-                                continue;
-
-                            cg_time = cg->time;
-
-                            if (!BG_PlayerTouchesItem(ps, &cent->currentState, cg_time))
-                                continue;
-                            if (cent->miscTime == cg_time)
-                                continue;
-                            if (!BG_CanItemBeGrabbed(&cent->currentState, ps, 1))
-                                continue;
-
-                            cent->nextState.eFlags |= 0x20;
-                            cent->miscTime = cg_time;
-                            BG_AddPredictableEventToPlayerstate(0x90, cent->nextState.index.item, ps);
-                            continue;
-                        }
-
-                        if (ent->solid == 0xffffff) {
-                            unsigned int cmodel = ent->index.brushmodel;
-                            if (cmodel != 0) {
-                                trace_t trace;
-                                CM_BoxTrace(&trace,
-                                            ps->origin, ps->origin,
-                                            cg_pmove[0].mins, cg_pmove[0].maxs,
-                                            cmodel, -1);
-                            }
-                        }
+                    if (cg_errorDecay->current.value != 0.0f) {
+                        f = (cg_errorDecay->current.value - (float)(cg->time - cg->predictedErrorTime)) / cg_errorDecay->current.value;
+                        if (f < 0.0f)
+                            f = 0.0f;
+                        if (f > 0.0f && cg_showmiss->current.integer)
+                            Com_Printf("Double prediction decay: %f\n", f);
+                        cg->predictedError[0] *= f;
+                        cg->predictedError[1] *= f;
+                        cg->predictedError[2] *= f;
+                    } else {
+                        cg->predictedError[0] = 0.0f;
+                        cg->predictedError[1] = 0.0f;
+                        cg->predictedError[2] = 0.0f;
                     }
+
+                    cg->predictedError[0] += delta[0];
+                    cg->predictedError[1] += delta[1];
+                    cg->predictedError[2] += delta[2];
+                    cg->predictedErrorTime = cg->oldTime;
                 }
             }
+
+            Pmove(&cg_pmove[0]);
+            CG_TouchTriggerPrediction();
+            moved = 1;
         }
-
-        moved = 1;
     }
 
-postPredict:
-
-    if (cg_showmiss->current.integer > 1) {
+    if (cg_showmiss->current.integer > 1)
         Com_Printf("[%i : %i] ", cg_pmove[0].cmd.serverTime, cg->time);
-    }
 
-    if (moved) {
-
-        vec3_t deltaAngles;
-        CG_AdjustPositionForMover(
-            ps->origin,
-            ps->groundEntityNum,
-            cg->physicsTime,
-            cg->time,
-            ps->origin, deltaAngles);
+    if (!moved) {
+        if (cg_showmiss->current.integer)
+            Com_Printf("no prediction run\n");
     } else {
-
-        if (cg_showmiss->current.integer != 0)
-            Com_Printf("not moved\n");
+        CG_AdjustPositionForMover(cg->predictedPlayerState.origin, cg->predictedPlayerState.groundEntityNum,
+                                  cg->physicsTime, cg->time, cg->predictedPlayerState.origin, deltaAngles);
     }
 
-    CG_TransitionPlayerState(ps, (playerState_t *)oldPlayerState);
+    CG_TransitionPlayerState(&cg->predictedPlayerState, oldPlayerState);
+}
 
-cleanup:
-    ;
-    }
+void CG_PredictPlayerState(void)
+{
+    playerState_t *ps;
+    centity_t *cent;
+    WeaponDef *weapDef;
+    float fZoom;
+    float size;
+    float angle;
+    float fSin;
+    float fCos;
+
+    CG_PredictPlayerState_Internal();
 
     ps = &cg->predictedPlayerState;
-
-    {
-        centity_t *cent = &cg_entities[ps->clientNum];
-
-        cent->lerpOrigin[0] = ps->origin[0];
-        cent->lerpOrigin[1] = ps->origin[1];
-        cent->lerpOrigin[2] = ps->origin[2];
-
-        BG_EvaluateTrajectory(
-            (trajectory_t *)&cent->currentState.apos.trType,
-            cg->time,
-            cent->lerpAngles);
-    }
+    cent = &cg_entities[ps->clientNum];
+    cent->lerpOrigin[0] = ps->origin[0];
+    cent->lerpOrigin[1] = ps->origin[1];
+    cent->lerpOrigin[2] = ps->origin[2];
+    BG_EvaluateTrajectory(&cent->currentState.apos, cg->time, cent->lerpAngles);
 
     weapDef = BG_GetWeaponDef(ps->weapon);
-    nextSnap = cg->nextSnap;
-
-    if (nextSnap->ps.pm_flags & 0x800000) {
-        float fZoom;
-        if (CG_GetWeapReticleZoom(&fZoom)) {
-            if (weapDef->adsViewErrorMax != 0.0f) {
-                if (cg->adsViewErrorDone == 0) {
-                    float size, angle, sinAngle, cosAngle;
-                    float *kickYaw = &cg->offsetAngles[0];
-                    float *kickPitch = &cg->offsetAngles[1];
-
-                    cg->adsViewErrorDone = 1;
-
-                    size = flrand(weapDef->adsViewErrorMin, weapDef->adsViewErrorMax);
-                    angle = randomf() * 2.0f * 3.14159265358979323846f;
-
-                    cosAngle = cosf(angle);
-                    sinAngle = sinf(angle);
-
-                    *kickYaw = AngleNormalize360(*kickYaw + sinAngle * size);
-                    *kickPitch = AngleNormalize360(*kickPitch + cosAngle * size);
-                }
-            }
+    if ((cg->nextSnap->ps.pm_flags & 0x800000) && CG_GetWeapReticleZoom(&fZoom)) {
+        if (weapDef->adsViewErrorMax != 0.0f && !cg->adsViewErrorDone) {
+            cg->adsViewErrorDone = 1;
+            size = flrand(weapDef->adsViewErrorMin, weapDef->adsViewErrorMax);
+            angle = randomf() * (2.0f * 3.14159265358979323846f);
+            FastSinCos(angle, &fSin, &fCos);
+            cg->offsetAngles[0] = AngleNormalize360(fSin * size + cg->offsetAngles[0]);
+            cg->offsetAngles[1] = AngleNormalize360(fCos * size + cg->offsetAngles[1]);
         }
     } else {
         cg->adsViewErrorDone = 0;
     }
 
-    {
-        entityState_t *es = &cg->predictedPlayerEntity.nextState;
-        entityState_t *cur = &cg->predictedPlayerEntity.currentState;
-
-        es->number = (unsigned short)ps->clientNum;
-        BG_PlayerStateToEntityState(ps, es, 0, 0);
-
-        memcpy(cur, es, sizeof(entityState_t));
-    }
+    cg->predictedPlayerEntity.nextState.number = (unsigned short)ps->clientNum;
+    BG_PlayerStateToEntityState(ps, &cg->predictedPlayerEntity.nextState, 0, 0);
+    memcpy(&cg->predictedPlayerEntity.currentState, &cg->predictedPlayerEntity.nextState, sizeof(entityState_t));
 }
 
 static void Trace_CalcBounds(const vec_t *start, const vec_t *mins, const vec_t *maxs, float fraction, const vec_t *end, vec3_t *bounds)
