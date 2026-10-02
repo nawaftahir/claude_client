@@ -149,10 +149,10 @@ static const serverFilter_t serverFilters[1];
 static char menuBuf2[32768];
 static int ui_serverFilterType;
 
+extern qboolean Menus_OpenByName(displayContextDef_t *dc, const char *name);
 extern void Menus_CloseAll(displayContextDef_t *dc);
 extern qboolean Menus_AnyFullScreenVisible(displayContextDef_t *dc);
 extern void LAN_SaveServersToCache(void);
-extern qboolean Menus_OpenByName(displayContextDef_t *dc, const char *name);
 extern void Menus_CloseByName(displayContextDef_t *dc, const char *p);
 extern char *Cmd_Args(int startIndex);
 

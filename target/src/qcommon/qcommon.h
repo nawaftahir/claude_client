@@ -80,36 +80,6 @@ typedef struct
 
 void Sys_SnapVector(vec3_t v);
 
-void Sys_Init (void);
-int Sys_Milliseconds (void);
-
-#define Sys_MilliSeconds Sys_Milliseconds
-
-sysEvent_t Sys_GetEvent( void );
-
-void Sys_Print( const char *msg );
-const char *Sys_GetCurrentUser( void );
-
-void Sys_Error( const char *error, ...);
-void Sys_Quit(void);
-char *Sys_GetClipboardData( void );
-
-void Sys_ShowConsole( int level, qboolean quitOnClose );
-
-char **Sys_ListFiles( const char *directory, const char *extension, const char *filter, int *numfiles, qboolean wantsubs );
-void Sys_FreeFileList( char **list );
-char *Sys_Cwd( void );
-void Sys_StreamSeek( fileHandle_t f, int offset, int origin );
-void Sys_EndStreamedFile( fileHandle_t f );
-qboolean Sys_DirectoryHasContents(const char *dir);
-void Sys_Mkdir( const char *path );
-char *Sys_Cwd( void );
-void Sys_SetDefaultCDPath(const char *path);
-const char *Sys_DefaultCDPath(void);
-void Sys_SetDefaultInstallPath(const char *path);
-char *Sys_DefaultInstallPath(void);
-void Sys_SetDefaultHomePath(const char *path);
-const char *Sys_DefaultHomePath(void);
 
 int Com_AddToString(const char *add, char *msg, int len, int maxlen, int mayAddQuotes);
 int Com_ModifyMsec( int msec );
@@ -498,6 +468,7 @@ void Com_PrintMessage( print_msg_type_t channel, const char *msg );
 void CL_ConsolePrint( print_msg_type_t type, const char *txt, int duration, int linewidth );
 void CL_RunOncePerClientFrame( int msec );
 void CL_Shutdown( void );
+qboolean UI_SetActiveMenu( int menu );
 void Sys_NormalExit( void );
 void SV_AddDedicatedCommands( void );
 void CL_Frame( void );
@@ -512,6 +483,37 @@ void Com_WriteConfigToFile(const char *contents);
 
 qboolean Com_SafeMode( void );
 int Com_Milliseconds( void );
+
+void Sys_Init (void);
+int Sys_Milliseconds (void);
+
+#define Sys_MilliSeconds Sys_Milliseconds
+
+sysEvent_t Sys_GetEvent( void );
+
+void Sys_Print( const char *msg );
+const char *Sys_GetCurrentUser( void );
+
+void Sys_Error( const char *error, ...);
+void Sys_Quit(void);
+char *Sys_GetClipboardData( void );
+
+void Sys_ShowConsole( int level, qboolean quitOnClose );
+
+char **Sys_ListFiles( const char *directory, const char *extension, const char *filter, int *numfiles, qboolean wantsubs );
+void Sys_FreeFileList( char **list );
+char *Sys_Cwd( void );
+void Sys_StreamSeek( fileHandle_t f, int offset, int origin );
+void Sys_EndStreamedFile( fileHandle_t f );
+qboolean Sys_DirectoryHasContents(const char *dir);
+void Sys_Mkdir( const char *path );
+char *Sys_Cwd( void );
+void Sys_SetDefaultCDPath(const char *path);
+const char *Sys_DefaultCDPath(void);
+void Sys_SetDefaultInstallPath(const char *path);
+char *Sys_DefaultInstallPath(void);
+void Sys_SetDefaultHomePath(const char *path);
+const char *Sys_DefaultHomePath(void);
 
 void Com_DvarDump(print_msg_type_t channel);
 
