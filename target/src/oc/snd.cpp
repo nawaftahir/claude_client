@@ -1668,7 +1668,7 @@ static __attribute_regparm__(3) void SND_StartBackground(int track, const snd_al
     if (!*(unsigned char *)((char *)snd_enableStream + 8))
         return;
 
-    SND_StartAliasStreamOnChannel(pAlias, pAlias, 0.0f, 0x400, (vec_t *)&g_snd.listeners[0].orient.origin, g_snd.chaninfo[channel].basevolume, pitch, 0, 0.0f, pAlias->startDelay, (pAlias->flags >> 1) & 1, channel, system);
+    SND_StartAliasStreamOnChannel(pAlias, pAlias, 0.0f, 0x400, (vec_t *)&g_snd.listeners[0].orient.origin, g_snd.chaninfo[channel].basevolume, pitch, 0, 0.0f, pAlias->startDelay, ((unsigned int)pAlias->flags >> 1) & 1, channel, system);
 }
 
 static void SND_StopBackground(int track, int fadetime)

@@ -643,17 +643,16 @@ const char *CG_GameTypeString(void)
 
 int CG_KeyInterceptEvent(int key, qboolean down)
 {
-    int dv = down;
-    if (!dv || !CG_ScoreboardDisplayed()) {
+    if (!down || !CG_ScoreboardDisplayed()) {
         return 0;
     }
 
-    if (key == 0xce || key == 0xa4) {
+    if (key == 0xce || key == 0xa4 || key == 0xb8) {
         CG_ScrollScoreboardUp();
         return 1;
     }
 
-    if (key == 0xcd || key == 0xa3) {
+    if (key == 0xcd || key == 0xa3 || key == 0xbe) {
         CG_ScrollScoreboardDown();
         return 1;
     }

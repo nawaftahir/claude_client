@@ -626,8 +626,8 @@ void CG_Player(centity_t *cent)
     ((GfxEntity *)body)->origin[1] = cent->lerpOrigin[1];
     ((GfxEntity *)body)->origin[2] = cent->lerpOrigin[2];
 
-    ((GfxEntity *)body)->lighting.baseCoords[0] = cent->lerpOrigin[0];
-    ((GfxEntity *)body)->lighting.baseCoords[1] = cent->lerpOrigin[1];
+    ((GfxEntity *)body)->lighting.baseCoords[0] = ((GfxEntity *)body)->origin[0];
+    ((GfxEntity *)body)->lighting.baseCoords[1] = ((GfxEntity *)body)->origin[1];
 
     {
         float z = ((GfxEntity *)body)->origin[2] + es->fTorsoHeight;
