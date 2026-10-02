@@ -1281,14 +1281,15 @@ static void CG_DrawPlayerAmmoValue(const rectDef_t *rect, struct Font_s *font, f
     int ammoVal;
     bool drawAmmo;
     char clipString[256];
-    char ammoString[260];
-    bool lowAmmo;
-    bool lowClip;
+    char ammoString[256];
+    Bool lowAmmo;
+    Bool lowClip;
     bool drawClip;
     vec_t flashColor[4];
     int weapIndex;
     float x;
     int clipVal;
+    centity_t *cent;
 
     if (!cg->predictedPlayerState.weapon)
         return;
@@ -1298,10 +1299,11 @@ static void CG_DrawPlayerAmmoValue(const rectDef_t *rect, struct Font_s *font, f
     if (color[3] == 0.0f)
         return;
 
+    cent = &cg_entities[cg->nextSnap->ps.clientNum];
     if ((cg->nextSnap->ps.pm_flags & 0x800000) && cg->weaponSelect >= 0 && cg->weaponSelect < BG_GetNumWeapons())
         weapIndex = cg->weaponSelect;
     else
-        weapIndex = cg_entities[cg->nextSnap->ps.clientNum].nextState.weapon;
+        weapIndex = cent->nextState.weapon;
     if (!weapIndex)
         return;
 
@@ -1342,7 +1344,7 @@ static void CG_DrawPlayerAmmoValue(const rectDef_t *rect, struct Font_s *font, f
         flashColor[1] = 0.18f;
         flashColor[2] = 0.01f;
         flashColor[3] = (float)(cg->lastClipFlashTime + 800 - cg->time) * 0.00125f;
-        if (flashColor[3] > color[3])
+        if (color[3] < flashColor[3])
             flashColor[3] = color[3];
     }
 
@@ -1360,22 +1362,25 @@ static void CG_DrawPlayerAmmoValue(const rectDef_t *rect, struct Font_s *font, f
     }
     ammoColor[3] = color[3];
 
-    if (drawClip && drawAmmo)
+    if (drawClip)
     {
-        UI_DrawText(clipString, 0x7fffffff, font, rect->x, rect->y, rect->horzAlign, rect->vertAlign, scale, color, textStyle);
-        if (lowClip)
-            UI_DrawText(clipString, 0x7fffffff, font, rect->x, rect->y, rect->horzAlign, rect->vertAlign, scale, flashColor, textStyle);
-        x = rect->x + rect->w - (float)UI_TextWidth(ammoString, 0, font, scale);
-        UI_DrawText(ammoString, 0x7fffffff, font, x, rect->y, rect->horzAlign, rect->vertAlign, scale, ammoColor, textStyle);
-        x = (rect->w - (float)UI_TextWidth("|", 0, font, scale)) * 0.5f + rect->x - 5.0f;
-        UI_DrawText("|", 0x7fffffff, font, x, rect->y, rect->horzAlign, rect->vertAlign, scale, ammoColor, textStyle);
-    }
-    else if (drawClip)
-    {
-        x = (rect->w - (float)UI_TextWidth(clipString, 0, font, scale)) * 0.5f + rect->x;
-        UI_DrawText(clipString, 0x7fffffff, font, x, rect->y, rect->horzAlign, rect->vertAlign, scale, color, textStyle);
-        if (lowClip)
-            UI_DrawText(clipString, 0x7fffffff, font, x, rect->y, rect->horzAlign, rect->vertAlign, scale, flashColor, textStyle);
+        if (drawAmmo)
+        {
+            UI_DrawText(clipString, 0x7fffffff, font, rect->x, rect->y, rect->horzAlign, rect->vertAlign, scale, color, textStyle);
+            if (lowClip)
+                UI_DrawText(clipString, 0x7fffffff, font, rect->x, rect->y, rect->horzAlign, rect->vertAlign, scale, flashColor, textStyle);
+            x = rect->x + rect->w - (float)UI_TextWidth(ammoString, 0, font, scale);
+            UI_DrawText(ammoString, 0x7fffffff, font, x, rect->y, rect->horzAlign, rect->vertAlign, scale, ammoColor, textStyle);
+            x = (rect->w - (float)UI_TextWidth("|", 0, font, scale)) * 0.5f + rect->x - 5.0f;
+            UI_DrawText("|", 0x7fffffff, font, x, rect->y, rect->horzAlign, rect->vertAlign, scale, ammoColor, textStyle);
+        }
+        else
+        {
+            x = (rect->w - (float)UI_TextWidth(clipString, 0, font, scale)) * 0.5f + rect->x;
+            UI_DrawText(clipString, 0x7fffffff, font, x, rect->y, rect->horzAlign, rect->vertAlign, scale, color, textStyle);
+            if (lowClip)
+                UI_DrawText(clipString, 0x7fffffff, font, x, rect->y, rect->horzAlign, rect->vertAlign, scale, flashColor, textStyle);
+        }
     }
     else if (drawAmmo)
     {
