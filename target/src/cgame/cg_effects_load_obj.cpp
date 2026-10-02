@@ -61,7 +61,7 @@ static const char *CG_ParseImpactEffects( const char *filename, const char *buf,
 			return va("unknown surface type '%s' in second column of file '%s'", token, filename);
 		token = Com_ParseOnLine(&buf);
 		len = strlen(token);
-		if ( len > 63 )
+		if ( len >= 64 )
 			return va("effect filename '%s' in third column of file '%s' is longer than %i characters", token, filename, 63);
 		effectName = (char *)Hunk_AllocateTempMemoryInternal(len + 1);
 		szEffectFile[iEffectType * SURF_TYPECOUNT + iSurfaceType] = effectName;

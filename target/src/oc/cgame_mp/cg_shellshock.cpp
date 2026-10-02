@@ -37,7 +37,6 @@ extern const dvar_t *cg_shock_volume_weapon;
 
 extern const dvar_t *cg_shock_viewKickFadeTime;
 
-extern int _snd_local_listener;
 
 extern vec_t Vec3Normalize( vec3_t v );
 extern void Vec3Cross(const vec3_t v0, const vec3_t v1, vec3_t cross);
@@ -444,288 +443,195 @@ void CG_SetShellShockParmsFromDvars(shellshock_parms_t *parms)
     *(int *)&parms->mouse.sensitivity = dvar_get_int(cg_shock_mouse_sensitivityscale);
 }
 
-static inline __attribute__((always_inline)) void CG_DeactivateShellShockSound(cg_t *cgp)
+// Name from CoD4; original CoD2 name unknown.
+static void EndShellShockSound(void)
 {
     SND_DeactivateChannelVolumes(3, 0);
     SND_DeactivateEnvironmentEffects(2, 0);
 
-    if (cgp->shellshock.loopEndTime != 0) {
-        cgp->shellshock.loopEndTime = 0;
+    if (cg->shellshock.loopEndTime != 0) {
+        cg->shellshock.loopEndTime = 0;
 
         {
-            void *alias = CL_PickSoundAlias("shellshock_loop_end");
-            SND_PlaySoundAlias((const snd_alias_t *)alias, 0x3ff, (const vec_t *)_snd_local_listener, 0, (snd_alias_system_t)1);
+            void *alias = CL_PickSoundAlias("shellshock_end_abort");
+            SND_PlaySoundAlias((const snd_alias_t *)alias, 0x3ff, vec3_origin, 0, (snd_alias_system_t)1);
         }
     }
 }
 
-static inline __attribute__((always_inline)) void CG_ResetShellShockMotion(cg_t *cgp)
+// Name from CoD4; original CoD2 name unknown.
+static void EndShellShockLookControl(void)
 {
-
-    cgp->shellshock.sensitivity = 1.0f;
-
+    cg->shellshock.sensitivity = 1.0f;
     CL_CapTurnRate(0.0f, 0.0f);
+}
+
+// Name from CoD4; original CoD2 name unknown.
+static void EndShellShockCamera(void)
+{
+    cg->shellshock.viewDelta[0] = 0.0f;
+    cg->shellshock.viewDelta[1] = 0.0f;
+}
+
+// Name from CoD4; original CoD2 name unknown.
+void EndShellShock(void)
+{
+    EndShellShockSound();
+    EndShellShockLookControl();
+    EndShellShockCamera();
+    CL_SetUserCmdInShellshock(0);
+}
+
+// Name from CoD4; original CoD2 name unknown.
+static void UpdateShellShockSound(const shellshock_parms_t *parms, int time, int duration)
+{
+    float channelvolume[11];
+    float fade;
+    void *alias0;
+    void *alias1;
+    void *alias;
+    int dt;
+    int end;
+    int i;
+
+    if (parms->sound.use == 0) {
+        EndShellShockSound();
+        return;
+    }
+
+    dt = parms->sound.modEndDelay - time + parms->sound.fadeOutTime + duration;
+    if (dt < parms->sound.fadeOutTime)
+        fade = (float)dt / parms->sound.fadeOutTime;
+    else if (time < parms->sound.fadeInTime)
+        fade = (float)time / parms->sound.fadeInTime;
+    else
+        fade = 1.0f;
+
+    if (fade < 0.0f)
+        fade = 0.0f;
+
+    if (fade != 0.0f) {
+        for (i = 0; i < 11; i++)
+            channelvolume[i] = (parms->sound.channelvolume[i] - 1.0f) * fade + 1.0f;
+        SND_SetChannelVolumes(3, channelvolume, 0);
+        SND_SetEnvironmentEffects(2, parms->sound.roomtype,
+                                  fade * parms->sound.drylevel,
+                                  fade * parms->sound.wetlevel, 0);
+    } else {
+        SND_DeactivateChannelVolumes(3, 0);
+        SND_DeactivateEnvironmentEffects(2, 0);
+    }
+
+    dt = parms->sound.loopEndDelay - time + duration + parms->sound.loopFadeTime;
+    if (dt > 0) {
+        alias0 = CL_PickSoundAlias("shellshock_loop");
+        alias1 = CL_PickSoundAlias("shellshock_loop_silent");
+        if (parms->sound.loopFadeTime) {
+            fade = 1.0f - (float)dt / parms->sound.loopFadeTime;
+            if (fade < 0.0f)
+                fade = 0.0f;
+        }
+        SND_PlayBlendedSoundAliases((const snd_alias_t *)alias0, (const snd_alias_t *)alias1, fade, 0x3ff, vec3_origin, 0, (snd_alias_system_t)1);
+    }
+
+    end = parms->sound.loopEndDelay - time + cg->time + duration;
+    if (cg->time < end) {
+        if (cg->shellshock.loopEndTime) {
+            cg->shellshock.loopEndTime = 0;
+            alias = CL_PickSoundAlias("shellshock_end_abort");
+            SND_PlaySoundAlias((const snd_alias_t *)alias, 0x3ff, vec3_origin, 0, (snd_alias_system_t)1);
+        }
+    } else if (end != cg->shellshock.loopEndTime) {
+        cg->shellshock.loopEndTime = end;
+        alias = CL_PickSoundAlias("shellshock_end");
+        SND_PlaySoundAlias((const snd_alias_t *)alias, 0x3ff, vec3_origin, cg->time - end, (snd_alias_system_t)1);
+    }
+}
+
+// Name from CoD4; original CoD2 name unknown.
+static void UpdateShellShockLookControl(const shellshock_parms_t *parms, int time, int duration)
+{
+    float fade;
+    float scale;
+
+    if (parms->mouse.use) {
+        if (duration - time >= parms->mouse.fadeTime)
+            fade = 1.0f;
+        else if (duration - time > 0)
+            fade = (float)(duration - time) / parms->mouse.fadeTime;
+        else
+            goto endLook;
+
+        if (fade == 1.0f) {
+            cg->shellshock.sensitivity = parms->mouse.sensitivity;
+            CL_CapTurnRate(parms->mouse.maxPitchSpeed, parms->mouse.maxYawSpeed);
+        } else {
+            cg->shellshock.sensitivity = (parms->mouse.sensitivity - 1.0f) * fade + 1.0f;
+            scale = 1.0f / fade;
+            CL_CapTurnRate(parms->mouse.maxPitchSpeed * scale, parms->mouse.maxYawSpeed * scale);
+        }
+        return;
+    }
+
+endLook:
+    EndShellShockLookControl();
+}
+
+// Name from CoD4; original CoD2 name unknown.
+static float CubicInterpolate(float t, float x0, float x1, float x2, float x3)
+{
+    float a;
+    float b;
+    float c;
+
+    a = x3 - x2 + x1 - x0;
+    b = x0 - x1 - a;
+    c = x2 - x0;
+    return ((t * a + b) * t + c) * t + x1;
+}
+
+// Name from CoD4; original CoD2 name unknown.
+static void UpdateShellShockCamera(const shellshock_parms_t *parms, int time, int duration)
+{
+    int dt;
+    float scale;
+    float radius;
+    float t;
+    int base;
+    const float *perturb;
+
+    dt = duration - time;
+    if (dt <= 0) {
+        EndShellShockCamera();
+        return;
+    }
+
+    scale = 1.0f;
+    if (dt < parms->view.fadeTime)
+        scale = (float)dt / parms->view.fadeTime;
+    radius = ((3.0f - scale * 2.0f) * scale * scale) * parms->view.kickRadius;
+
+    t = (float)time * parms->view.kickRate;
+    base = FastFloor(t);
+    t = t - (float)base;
+    perturb = cg_perturbations[(base + 61 * duration) & 0x7f];
+
+    cg->shellshock.viewDelta[0] = CubicInterpolate(t, perturb[0], perturb[2], perturb[4], perturb[6]) * radius;
+    cg->shellshock.viewDelta[1] = CubicInterpolate(t, perturb[1], perturb[3], perturb[5], perturb[7]) * radius;
 }
 
 void CG_UpdateShellShock(const shellshock_parms_t *parms, int start, int duration)
 {
-    cg_t *cgp;
     int time;
-    int timeSinceStart;
-    float fade;
-    float channelvolume[11];
-    int i;
-    int loopTimeLeft;
-    int loopFadeOut;
 
-    cgp = cg;
-    time = cgp->time - start;
-
+    time = cg->time - start;
     if (start == 0 || time < 0) {
-
-        CG_DeactivateShellShockSound(cgp);
-
-        CG_ResetShellShockMotion(cgp);
-
-        cgp->shellshock.viewDelta[0] = 0.0f;
-        cgp->shellshock.viewDelta[1] = 0.0f;
-
-        CL_SetUserCmdInShellshock(0);
+        EndShellShock();
         return;
     }
 
-    if (parms->sound.use == 0) {
-
-        SND_DeactivateChannelVolumes(3, 0);
-        SND_DeactivateEnvironmentEffects(2, 0);
-
-        if (cgp->shellshock.loopEndTime != 0) {
-            cgp->shellshock.loopEndTime = 0;
-            {
-                void *alias = CL_PickSoundAlias("shellshock_loop_end");
-                SND_PlaySoundAlias((const snd_alias_t *)alias, 0x3ff, (const vec_t *)_snd_local_listener, 0, (snd_alias_system_t)1);
-            }
-        }
-        goto check_mouse;
-    }
-
-    {
-
-        int soundFadeOut = parms->sound.fadeOutTime;
-        int soundFadeIn = parms->sound.fadeInTime;
-        int totalWithFade = duration + parms->sound.modEndDelay + soundFadeOut;
-        int soundTimeLeft = totalWithFade - time;
-
-        if (soundFadeOut > soundTimeLeft) {
-
-            if (time < soundFadeIn) {
-
-                fade = (float)time / (float)soundFadeIn;
-            } else {
-                fade = 1.0f;
-            }
-        } else {
-
-            fade = (float)soundTimeLeft / (float)soundFadeOut;
-        }
-
-        if (fade < 0.0f) {
-            fade = 0.0f;
-        }
-
-        if (fade == 0.0f) {
-
-            SND_DeactivateChannelVolumes(3, 0);
-            SND_DeactivateEnvironmentEffects(2, 0);
-        } else {
-
-            for (i = 0; i < 11; i++) {
-                channelvolume[i] = (parms->sound.channelvolume[i] - 1.0f) * fade + 1.0f;
-            }
-
-            SND_SetChannelVolumes(3, channelvolume, 0);
-
-            SND_SetEnvironmentEffects(2, parms->sound.roomtype,
-                                      fade * parms->sound.drylevel,
-                                      fade * parms->sound.wetlevel, 0);
-        }
-    }
-
-    {
-
-        int loopFadeOutVal = parms->sound.loopEndDelay;
-        loopTimeLeft = duration + loopFadeOutVal + parms->sound.loopFadeTime - time;
-
-        if (loopTimeLeft > 0) {
-
-            void *pAlias0 = CL_PickSoundAlias("shellshock_loop");
-            void *pAlias1 = CL_PickSoundAlias("shellshock_loop2");
-            int loopFadeIn = parms->sound.loopFadeTime;
-
-            if (loopFadeIn == 0) {
-
-            } else {
-
-                fade = 1.0f - (float)loopTimeLeft / (float)loopFadeIn;
-
-                if (fade < 0.0f)
-                    fade = 0.0f;
-            }
-
-            SND_PlayBlendedSoundAliases((const snd_alias_t *)pAlias0, (const snd_alias_t *)pAlias1, fade, 0x3ff, (const vec_t *)_snd_local_listener, 0, (snd_alias_system_t)1);
-
-            loopFadeOutVal = parms->sound.loopEndDelay;
-        }
-
-        cgp = cg;
-        {
-            int cgTime = cgp->time;
-            int loopEndTime = cgTime - time + duration + loopFadeOutVal;
-
-            if (cgTime < loopEndTime) {
-
-                if (cgp->shellshock.loopEndTime != 0) {
-
-                    cgp->shellshock.loopEndTime = 0;
-
-                    {
-                        void *alias = CL_PickSoundAlias("shellshock_loop_end");
-                        SND_PlaySoundAlias((const snd_alias_t *)alias, 0x3ff, (const vec_t *)_snd_local_listener, 0, (snd_alias_system_t)1);
-                    }
-                }
-            } else {
-
-                if (cgp->shellshock.loopEndTime != loopEndTime) {
-
-                    cgp->shellshock.loopEndTime = loopEndTime;
-
-                    {
-                        int delayMs = cgTime - loopEndTime;
-                        void *alias = CL_PickSoundAlias("shellshock_end");
-                        SND_PlaySoundAlias((const snd_alias_t *)alias, 0x3ff, (const vec_t *)_snd_local_listener, delayMs, (snd_alias_system_t)1);
-                    }
-                }
-            }
-        }
-    }
-
-check_mouse: {
-
-    int mouseEnabled = parms->mouse.use;
-    int timeSinceStart2 = duration - time;
-
-    if (mouseEnabled == 0) {
-
-        cgp = cg;
-        CG_ResetShellShockMotion(cgp);
-
-        timeSinceStart2 = duration - time;
-        goto check_viewkick;
-    }
-
-    {
-
-        int mouseFadeIn = parms->mouse.fadeTime;
-        if (timeSinceStart2 >= mouseFadeIn) {
-
-            cgp = cg;
-            cgp->shellshock.sensitivity = parms->mouse.sensitivity;
-
-            CL_CapTurnRate(parms->mouse.maxPitchSpeed, parms->mouse.maxYawSpeed);
-        } else if (timeSinceStart2 <= 0) {
-
-            cgp = cg;
-            CG_ResetShellShockMotion(cgp);
-        } else {
-
-            float t = (float)timeSinceStart2 / (float)mouseFadeIn;
-
-            if (t == 1.0f) {
-
-                cgp = cg;
-                cgp->shellshock.sensitivity = parms->mouse.sensitivity;
-                CL_CapTurnRate(parms->mouse.maxPitchSpeed, parms->mouse.maxYawSpeed);
-            } else {
-
-                cgp = cg;
-                float sensitivity = parms->mouse.sensitivity;
-                cgp->shellshock.sensitivity = (sensitivity - 1.0f) * t + 1.0f;
-
-                float minRate = parms->mouse.maxPitchSpeed / t;
-                float maxRate = parms->mouse.maxYawSpeed / t;
-                CL_CapTurnRate(minRate, maxRate);
-            }
-        }
-    }
-}
-
-check_viewkick:
-
-    timeSinceStart = duration - time;
-    if (timeSinceStart <= 0) {
-
-        cgp = cg;
-        cgp->shellshock.viewDelta[0] = 0.0f;
-        cgp->shellshock.viewDelta[1] = 0.0f;
-    } else {
-
-        int viewKickTime = parms->view.fadeTime;
-        float t;
-        float amplitude;
-
-        if (timeSinceStart >= viewKickTime) {
-            t = 1.0f;
-            amplitude = (-2.0f + 3.0f) * t * t;
-        } else {
-
-            t = (float)timeSinceStart / (float)viewKickTime;
-            amplitude = (-2.0f * t + 3.0f) * t * t;
-        }
-
-        amplitude = amplitude * parms->view.kickRadius;
-
-        {
-            float phase = (float)time * parms->view.kickRate;
-            int phaseFloor = (int)floorf(phase);
-            float frac = phase - (float)phaseFloor;
-
-            int idx = (phaseFloor + duration * 61) & 0x7f;
-            int byteOff = idx * 8;
-            byte *base = (byte *)cg_perturbations + byteOff;
-
-            float x0 = *(float *)(base + 0);
-            float x1 = *(float *)(base + 8);
-            float x2 = *(float *)(base + 16);
-            float x3 = *(float *)(base + 24);
-
-            float coeff_a = x3 - x2 + x1 - x0;
-            float c_x = x2 - x0;
-            float b_x = x0 - x1 - coeff_a;
-            b_x = (coeff_a * frac + b_x) * frac;
-            c_x = (c_x + b_x) * frac;
-            float resultX = x1 + c_x;
-
-            cgp = cg;
-            cgp->shellshock.viewDelta[0] = amplitude * resultX;
-
-            float y0 = *(float *)(base + 4);
-            float y1 = *(float *)(base + 12);
-            float y2 = *(float *)(base + 20);
-            float y3 = *(float *)(base + 28);
-
-            float coeff_a_y = y3 - y2 + y1 - y0;
-            float yxmm2 = y2 - y0;
-            float yxmm1 = y0 - y1 - coeff_a_y;
-            float ytmp = coeff_a_y * frac;
-            yxmm1 += ytmp;
-            yxmm1 *= frac;
-            yxmm2 += yxmm1;
-            yxmm2 *= frac;
-            float resultY = y1 + yxmm2;
-
-            cgp->shellshock.viewDelta[1] = amplitude * resultY;
-        }
-    }
-
+    UpdateShellShockSound(parms, time, duration);
+    UpdateShellShockLookControl(parms, time, duration);
+    UpdateShellShockCamera(parms, time, duration);
     CL_SetUserCmdInShellshock(time < duration ? 1 : 0);
 }

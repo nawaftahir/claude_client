@@ -2163,6 +2163,8 @@ static void FS_DisplayPath(int bLanguageCull)
 	searchpath_t* s;
 	int i;
 
+	Com_Printf("Current language: %s\n", SEH_GetLanguageName(SEH_GetCurrentLanguage()));
+
 	if (fs_ignoreLocalized->current.boolean)
 	{
 		Com_Printf("    localized assets are being ignored\n");
@@ -2177,9 +2179,19 @@ static void FS_DisplayPath(int bLanguageCull)
 			continue;
 		}
 
+		if (bLanguageCull && s->localized && s->language != SEH_GetCurrentLanguage())
+		{
+			continue;
+		}
+
 		if (s->iwd)
 		{
 			Com_Printf("%s (%i files)\n", s->iwd, s->iwd->numFiles);
+
+			if (s->localized)
+			{
+				Com_Printf("    localized assets iwd file for %s\n", SEH_GetLanguageName(s->language));
+			}
 
 			if (fs_numServerIwds)
 			{
@@ -2196,6 +2208,11 @@ static void FS_DisplayPath(int bLanguageCull)
 		else
 		{
 			Com_Printf("%s/%s\n", s->dir, s->dir->gamedir);
+
+			if (s->localized)
+			{
+				Com_Printf("    localized assets game folder for %s\n", SEH_GetLanguageName(s->language));
+			}
 		}
 	}
 

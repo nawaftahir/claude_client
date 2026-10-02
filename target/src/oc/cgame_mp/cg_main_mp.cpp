@@ -359,7 +359,7 @@ void CG_Shutdown(void);
 static void *Hunk_AllocXAnimPrecache(int size);
 void *Hunk_AllocXAnimClient(int size);
 int CG_PlaySoundAliasAsMasterByName(int entitynum, const vec_t *origin, const char *aliasname);
-void CG_GetDObjOrientation(int dobjHandle, orientation_t *orient);
+void CG_GetDObjOrientation(int dobjHandle, float (*axis)[3]);
 void CG_PlaySmokeGrenadesAtTime(int gametime);
 int CG_PlaySoundAlias(int entitynum, const vec_t *origin, snd_alias_list_t *aliasList);
 int CG_PlaySoundAliasByName(int entitynum, const vec_t *origin, const char *aliasname);
@@ -685,27 +685,23 @@ int CG_PlaySoundAliasAsMasterByName(int entitynum, const vec_t *origin, const ch
     return CG_PlayPickedAlias(CL_PickSoundAlias(aliasname), entitynum, origin, 1);
 }
 
-void CG_GetDObjOrientation(int dobjHandle, orientation_t *orient)
+// Retail fills axis[0..2] and the origin in row 3.
+void CG_GetDObjOrientation(int dobjHandle, float (*axis)[3])
 {
-    const byte *cent;
+    centity_t *cent;
 
-    if ((unsigned int)dobjHandle <= 0x3ff) {
-        cent = (const byte *)cg_entities + dobjHandle * 548;
-        orient->origin[0] = ((centity_t *)cent)->lerpOrigin[0];
-        orient->origin[1] = ((centity_t *)cent)->lerpOrigin[1];
-        orient->origin[2] = ((centity_t *)cent)->lerpOrigin[2];
-        AnglesToAxis((const vec_t *)&((centity_t *)cent)->lerpAngles[0], orient->axis);
-        return;
+    if (dobjHandle >= 0 && dobjHandle < 1024) {
+        cent = &cg_entities[dobjHandle];
+        axis[3][0] = cent->lerpOrigin[0];
+        axis[3][1] = cent->lerpOrigin[1];
+        axis[3][2] = cent->lerpOrigin[2];
+        AnglesToAxis(cent->lerpAngles, axis);
+    } else if (dobjHandle >= 1024 && dobjHandle < 1152) {
+        axis[3][0] = cg->viewModelOrigin[0];
+        axis[3][1] = cg->viewModelOrigin[1];
+        axis[3][2] = cg->viewModelOrigin[2];
+        AxisCopy(cg->viewModelAxis, axis);
     }
-
-    if ((unsigned int)(dobjHandle - 0x400) > 0x7f) {
-        return;
-    }
-
-    orient->origin[0] = *(const float *)((const byte *)&cgArray + 180412);
-    orient->origin[1] = *(const float *)((const byte *)&cgArray + 180416);
-    orient->origin[2] = *(const float *)((const byte *)&cgArray + 180420);
-    AxisCopy((vec3_t *)&cg->viewModelAxis[0][0], orient->axis);
 }
 
 #ifndef __EMSCRIPTEN__
@@ -750,42 +746,40 @@ static inline __attribute__((always_inline)) byte *CG_FindSmokeGrenadeEntityStat
 
 void CG_PlaySmokeGrenadesAtTime(int gametime)
 {
-    vec3_t up = { 0.0f, 0.0f, 1.0f };
-    EffectTemplate *smokeFx = (EffectTemplate *)cgs->smokeGrenadeFx;
-    int minTime;
     byte *smokeGrenadeES;
+    int smokeTime;
+    vec3_t up;
 
-    if (!smokeFx)
+    if (!cgs->smokeGrenadeFx)
         return;
 
     Com_Printf("Playing smoke grenades at time %i\n", gametime);
 
-    minTime = gametime - (int)(FX_GetEffectLength(smokeFx) + 1.0f);
-    smokeGrenadeES = CG_FindSmokeGrenadeEntityState(minTime, gametime);
+    smokeGrenadeES = CG_FindSmokeGrenadeEntityState(gametime - (int)(FX_GetEffectLength((EffectTemplate *)cgs->smokeGrenadeFx) + 1.0f), gametime);
+    if (smokeGrenadeES) {
+        FX_Rewind(*(int *)(smokeGrenadeES + 0x54));
+        FX_WarpTime(gametime + 120000);
+        Com_Printf("Warping FX time to %i to kill off existing effects\n", gametime + 120000);
 
-    if (!smokeGrenadeES) {
+        do {
+            smokeTime = *(int *)(smokeGrenadeES + 0x54);
+
+            Com_Printf("Warping FX time to %i\n", smokeTime);
+            FX_WarpTime(smokeTime);
+
+            Com_Printf("Playing smoke grenade at time %i\n", smokeTime);
+            up[0] = 0.0f;
+            up[1] = 0.0f;
+            up[2] = 1.0f;
+            FX_PlayEffect((EffectTemplate *)cgs->smokeGrenadeFx, (const vec_t *)(smokeGrenadeES + 0x18), up);
+
+            smokeGrenadeES = CG_FindSmokeGrenadeEntityState(smokeTime + 1, gametime);
+        } while (smokeGrenadeES);
+    } else {
         FX_Rewind(gametime);
-        FX_WarpTime(gametime + 0x1d4c0);
-        goto done;
+        FX_WarpTime(gametime + 120000);
     }
 
-    FX_Rewind(*(int *)(smokeGrenadeES + 0x54));
-    FX_WarpTime(gametime + 0x1d4c0);
-    Com_Printf("Warping FX time to %i to kill off existing effects\n", gametime + 0x1d4c0);
-
-    do {
-        int smokeTime = *(int *)(smokeGrenadeES + 0x54);
-
-        Com_Printf("Warping FX time to %i\n", smokeTime);
-        FX_WarpTime(smokeTime);
-
-        Com_Printf("Playing smoke grenade at time %i\n", smokeTime);
-        FX_PlayEffect(smokeFx, (const vec_t *)(smokeGrenadeES + 0x18), up);
-
-        smokeGrenadeES = CG_FindSmokeGrenadeEntityState(smokeTime + 1, gametime);
-    } while (smokeGrenadeES);
-
-done:
     Com_Printf("Done with smoke grenades, now warping FX time to current time %i\n", gametime);
     FX_WarpTime(gametime);
 }

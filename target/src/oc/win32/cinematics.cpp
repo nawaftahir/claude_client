@@ -1224,62 +1224,75 @@ int ROQ_PlayCinematic(const char *arg, int x, int y, int w, int h, int systemBit
 }
 
 
+// Original name unknown.
+static void ROQ_GetDrawRect(float aspect, int *x, int *y, int *w, int *h)
+{
+    float barSize;
+    int barFloor;
+    int barCeil;
+
+    if (aspect == cls.vidConfig.aspectRatioWindow) {
+        *x = 0;
+        *y = 0;
+        *w = cls.vidConfig.width;
+        *h = cls.vidConfig.height;
+    } else if (aspect > cls.vidConfig.aspectRatioWindow) {
+        barSize = ((float)cls.vidConfig.height - (cls.vidConfig.aspectRatioWindow / aspect) * (float)cls.vidConfig.height) * 0.5f;
+        barFloor = FastFloor(barSize);
+        barCeil = FastCeil(barSize);
+        *x = 0;
+        *y = barFloor;
+        *w = cls.vidConfig.width;
+        *h = cls.vidConfig.height - 2 * barCeil;
+    } else {
+        barSize = ((float)cls.vidConfig.width - (aspect / cls.vidConfig.aspectRatioWindow) * (float)cls.vidConfig.width) * 0.5f;
+        barFloor = FastFloor(barSize);
+        barCeil = FastCeil(barSize);
+        *x = barFloor;
+        *y = 0;
+        *w = cls.vidConfig.width - 2 * barCeil;
+        *h = cls.vidConfig.height;
+    }
+}
+
+// Original name unknown.
+static void ROQ_DrawLetterBox(int x, int y, int w, int h, const float *color)
+{
+    float barSize;
+    int barTop;
+    int barBottom;
+    refexport_t *re;
+
+    barSize = ((float)cls.vidConfig.height * (1.0f / 480.0f)) * 105.0f;
+    barTop = FastFloor(barSize);
+    barBottom = FastCeil(barSize);
+
+    re = (refexport_t *)(void *)((void *)&::re);
+    ((void (*)(float, float, float, float, float, float, float, float, const vec_t *, int))re->DrawStretchPic)(
+        (float)x, (float)y, (float)w, (float)barTop,
+        0.0f, 0.0f, 0.0f, 0.0f, color, (int)cls.whiteMaterial);
+    ((void (*)(float, float, float, float, float, float, float, float, const vec_t *, int))re->DrawStretchPic)(
+        (float)x, (float)(y + h - barBottom), (float)w, (float)barBottom,
+        0.0f, 0.0f, 0.0f, 0.0f, color, (int)cls.whiteMaterial);
+}
+
 void ROQ_DrawCinematicFromHandle(int handle)
 {
     byte *buf;
-    float aspect;
     float clearColor[4];
     int x, y, w, h;
-    clientStatic_t *cls;
     refexport_t *re;
-    float screenAspect;
-    int screenW, screenH;
-    float barSize;
-    int barSizeCeil;
-    float xf, wf;
-    int material;
 
-    if ((unsigned int)handle > 0xf || cinTable[handle].status == FMV_EOF) {
-        goto done;
-    }
+    if (handle < 0 || handle >= 16 || cinTable[handle].status == FMV_EOF)
+        return;
     buf = cinTable[handle].buf;
-    if (!buf) {
-        goto done;
-    }
+    if (!buf)
+        return;
 
-    aspect = (float)cinTable[handle].width / (float)cinTable[handle].height;
     CL_LookupColor(0x30, clearColor);
+    ROQ_GetDrawRect((float)cinTable[handle].width / cinTable[handle].height, &x, &y, &w, &h);
 
-    cls = (&::cls);
-    screenAspect = cls->vidConfig.aspectRatioWindow;
-
-    if (aspect == screenAspect) {
-
-        w = cls->vidConfig.width;
-        h = cls->vidConfig.height;
-        x = 0;
-        y = 0;
-    } else if (aspect > screenAspect) {
-
-        h = cls->vidConfig.height;
-        barSize = ((float)h - screenAspect / aspect * (float)h) * 0.5f;
-        y = (int)floorf(barSize);
-        barSizeCeil = (int)ceilf(barSize);
-        h = h - barSizeCeil * 2;
-        w = cls->vidConfig.width;
-        x = 0;
-    } else {
-
-        w = cls->vidConfig.width;
-        barSize = ((float)w - aspect / screenAspect * (float)w) * 0.5f;
-        x = (int)floorf(barSize);
-        barSizeCeil = (int)ceilf(barSize);
-        w = w - barSizeCeil * 2;
-        h = cls->vidConfig.height;
-        y = 0;
-    }
-
-        re = (refexport_t *)(void *)((void *)&re);
+    re = (refexport_t *)(void *)((void *)&::re);
     ((void (*)(int, const vec_t *, float, int))re->ClearScreen)(1, clearColor, 0.0f, 0);
 
     ((void (*)(int, int, int, int, int, int, byte *, int, int))re->DrawStretchRaw)(
@@ -1287,24 +1300,8 @@ void ROQ_DrawCinematicFromHandle(int handle)
         buf, handle, cinTable[handle].dirty);
     cinTable[handle].dirty = 0;
 
-    if (cinTable[handle].letterBox) {
-
-        cls = (&::cls);
-        barSize = (float)cls->vidConfig.height / 480.0f * 105.0f;
-        barSizeCeil = (int)ceilf(barSize);
-        xf = (float)x;
-        wf = (float)w;
-        material = (int)(cls->whiteMaterial);
-
-        re = (refexport_t *)(void *)((void *)&re);
-        ((void (*)(float, float, float, float, float, float, float, float, const vec_t *, int))re->DrawStretchPic)(
-            xf, (float)y, wf, (float)(int)floorf(barSize),
-            0.0f, 0.0f, 0.0f, 0.0f, clearColor, material);
-        ((void (*)(float, float, float, float, float, float, float, float, const vec_t *, int))re->DrawStretchPic)(
-            xf, (float)(y + h - barSizeCeil), wf, (float)barSizeCeil,
-            0.0f, 0.0f, 0.0f, 0.0f, clearColor, material);
-    }
-done:;
+    if (cinTable[handle].letterBox)
+        ROQ_DrawLetterBox(x, y, w, h, clearColor);
 }
 
 void ROQ_DrawCinematic(void)

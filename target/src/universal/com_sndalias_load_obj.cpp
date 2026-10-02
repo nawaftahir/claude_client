@@ -1464,7 +1464,6 @@ void Com_ProcessSoundAliasFileLocalization( const char *sourceFile, const char *
 	int columnFields[256];
 	snd_alias_build_t alias;
 	char path[256];
-	const char *tempFile = "soundaliases/temp.csv";
 	int hasName;
 	int hasFile;
 
@@ -1483,10 +1482,10 @@ void Com_ProcessSoundAliasFileLocalization( const char *sourceFile, const char *
 		Com_Printf("WARNING: Could not read sound alias file %s\n", path);
 		return;
 	}
-	f = FS_FOpenFileWrite(tempFile);
+	f = FS_FOpenFileWrite("soundaliases/temp.csv");
 	if ( !f )
 	{
-		Com_Printf("WARNING: Could not open output file %s for writing\n", tempFile);
+		Com_Printf("WARNING: Could not open output file %s for writing\n", "soundaliases/temp.csv");
 		return;
 	}
 	Com_BeginParseSession(path);
@@ -1689,7 +1688,7 @@ void Com_ProcessSoundAliasFileLocalization( const char *sourceFile, const char *
 	}
 	Com_EndParseSession();
 	FS_FCloseFile(f);
-	FS_BuildOSPath(fs_basepath->current.string, fs_gamedir, tempFile, tempOSPath);
+	FS_BuildOSPath(fs_basepath->current.string, fs_gamedir, "soundaliases/temp.csv", tempOSPath);
 	FS_BuildOSPath(fs_basepath->current.string, fs_gamedir, path, aliasOSPath);
 	if ( localizedCount )
 	{

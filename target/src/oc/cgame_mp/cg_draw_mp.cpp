@@ -376,9 +376,8 @@ void CG_CalculateFPS(void)
 
 void CG_AddLagometerFrameInfo(void)
 {
-    int index = lagometer.frameCount;
-    lagometer.frameSamples[index & 0x7f] = cg->time - cg->latestSnapshotTime;
-    lagometer.frameCount = index + 1;
+    lagometer.frameSamples[lagometer.frameCount & 0x7f] = cg->time - cg->latestSnapshotTime;
+    lagometer.frameCount++;
 }
 
 void CG_AddLagometerSnapshotInfo(snapshot_t *snap)
@@ -1846,6 +1845,23 @@ static bool CG_ShouldDrawGrenadeIndicator(const entityState_t *es)
     return true;
 }
 
+static inline void FastSinCos(const float value, float *pSin, float *pCos)
+{
+    __asm
+    {
+        push eax
+        push ecx
+        fld value
+        fsincos
+        mov ecx, pCos
+        mov eax, pSin
+        fstp dword ptr [ecx]
+        fstp dword ptr [eax]
+        pop ecx
+        pop eax
+    }
+}
+
 static void CG_DrawGrenadePointer(float centerX, float centerY, const float *grenadeOffset, const float *color)
 {
     float width;
@@ -1861,24 +1877,21 @@ static void CG_DrawGrenadePointer(float centerX, float centerY, const float *gre
     width = GetRealWidthFromVirtualWidth(cg_hudGrenadePointerWidth->current.value);
     height = GetRealHeightFromVirtualHeight(cg_hudGrenadePointerHeight->current.value);
     radius = GetRealHeightFromVirtualHeight(cg_hudGrenadeIconOffset->current.value);
-    pivot[0] = GetRealWidthFromVirtualWidth(cg_hudGrenadePointerPivot->current.vector[0]);
-    pivot[1] = GetRealHeightFromVirtualHeight(cg_hudGrenadePointerPivot->current.vector[1]);
+    pivot[0] = cg_hudGrenadePointerPivot->current.vector[0];
+    pivot[1] = cg_hudGrenadePointerPivot->current.vector[1];
+    pivot[0] = GetRealWidthFromVirtualWidth(pivot[0]);
+    pivot[1] = GetRealHeightFromVirtualHeight(pivot[1]);
 
     yaw = AngleNormalize360(vectoyaw(grenadeOffset) - cg->predictedPlayerState.viewangles[1]);
-    sinYaw = sinf(yaw * 0.017453292f);
-    cosYaw = cosf(yaw * 0.017453292f);
+    FastSinCos(yaw * 0.017453292f, &sinYaw, &cosYaw);
 
     pointerPos[0] = centerX - sinYaw * radius;
     pointerPos[1] = centerY - cosYaw * radius;
 
-    verts[0][0] = -pivot[0];
-    verts[0][1] = -pivot[1];
-    verts[1][0] = width - pivot[0];
-    verts[1][1] = -pivot[1];
-    verts[2][0] = width - pivot[0];
-    verts[2][1] = height - pivot[1];
-    verts[3][0] = -pivot[0];
-    verts[3][1] = height - pivot[1];
+    verts[0][0] = verts[3][0] = -pivot[0];
+    verts[1][0] = verts[2][0] = width - pivot[0];
+    verts[0][1] = verts[1][1] = -pivot[1];
+    verts[2][1] = verts[3][1] = height - pivot[1];
 
     CG_DrawRotatedQuadPic(pointerPos[0], pointerPos[1], verts, -yaw, color, cgs->media.grenadePointer);
 }
@@ -1898,17 +1911,12 @@ static void CG_DrawGrenadeIcon(float centerX, float centerY, const float *grenad
     radius = GetRealHeightFromVirtualHeight(cg_hudGrenadeIconOffset->current.value);
 
     yaw = AngleNormalize360(vectoyaw(grenadeOffset) - cg->predictedPlayerState.viewangles[1]);
-    sinYaw = sinf(yaw * 0.017453292f);
-    cosYaw = cosf(yaw * 0.017453292f);
+    FastSinCos(yaw * 0.017453292f, &sinYaw, &cosYaw);
 
-    verts[0][0] = centerX - width * 0.5f - sinYaw * radius;
-    verts[1][0] = centerX + width * 0.5f - sinYaw * radius;
-    verts[2][0] = verts[1][0];
-    verts[3][0] = verts[0][0];
-    verts[0][1] = centerY - height * 0.5f - cosYaw * radius;
-    verts[1][1] = verts[0][1];
-    verts[2][1] = centerY + height * 0.5f - cosYaw * radius;
-    verts[3][1] = verts[2][1];
+    verts[0][0] = verts[3][0] = centerX - width * 0.5f - sinYaw * radius;
+    verts[1][0] = verts[2][0] = centerX + width * 0.5f - sinYaw * radius;
+    verts[0][1] = verts[1][1] = centerY - height * 0.5f - cosYaw * radius;
+    verts[2][1] = verts[3][1] = centerY + height * 0.5f - cosYaw * radius;
 
     CL_DrawQuadPic(verts, color, cgs->media.grenadeIcon);
 }

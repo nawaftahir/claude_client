@@ -43,6 +43,13 @@ static inline vec_t Vec2Length(const vec2_t v)
     return I_sqrt(v[0] * v[0] + v[1] * v[1]);
 }
 
+static inline void VectorCopy(const vec3_t a, vec3_t b)
+{
+    b[0] = a[0];
+    b[1] = a[1];
+    b[2] = a[2];
+}
+
 static inline void FastSinCos(const float value, float *pSin, float *pCos)
 {
     __asm
@@ -133,6 +140,9 @@ void CompassIconSize(float *w, float *h)
     *w = cg_hudCompassSize->current.value * 10.0f;
     *h = cg_hudCompassSize->current.value * 10.0f;
 }
+
+// float consistency from here on (retail)
+#pragma optimize("p", on)
 
 // retail 0x4d4af0
 void CG_DrawCompassFriendlies(rectDef_t *rect, MaterialHandle material, vec_t *color)
@@ -398,7 +408,7 @@ void CG_DrawPlayerCompassPointers(const rectDef_t *rect, vec_t *color)
     CG_UpdateCompPointerOrientation();
 
     centerX = rect->w * cg_hudCompassSize->current.value * 0.5f + rect->x;
-    centerY = cg_hudCompassSize->current.value * 0.5f * rect->h - (cg_hudCompassSize->current.value - 1.0f) * rect->h + rect->y;
+    centerY = (cg_hudCompassSize->current.value * 0.5f) * rect->h - (cg_hudCompassSize->current.value - 1.0f) * rect->h + rect->y;
 
     if (!cg->bgs.clientinfo[cg->nextSnap->ps.clientNum].infoValid)
         return;
@@ -410,17 +420,9 @@ void CG_DrawPlayerCompassPointers(const rectDef_t *rect, vec_t *color)
             continue;
 
         if (obj->entNum != 1023)
-        {
-            origin[0] = cg_entities[obj->entNum].lerpOrigin[0];
-            origin[1] = cg_entities[obj->entNum].lerpOrigin[1];
-            origin[2] = cg_entities[obj->entNum].lerpOrigin[2];
-        }
+            VectorCopy(cg_entities[obj->entNum].lerpOrigin, origin);
         else
-        {
-            origin[0] = obj->origin[0];
-            origin[1] = obj->origin[1];
-            origin[2] = obj->origin[2];
-        }
+            VectorCopy(obj->origin, origin);
         delta[0] = origin[0] - cg->refdef.vieworg[0];
         delta[1] = origin[1] - cg->refdef.vieworg[1];
         delta[2] = origin[2] - cg->refdef.vieworg[2];

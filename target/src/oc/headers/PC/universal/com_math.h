@@ -437,4 +437,31 @@ static inline int I_fround(const float x)
 
     return result;
 }
+static inline int FastCeil(const float x)
+{
+    // fistp rounds to nearest; 0.5 - 2^-30 sends non-integers up and keeps
+    // exact integers in place
+    const double bias = 0.5 - 1.0 / (1 << 30);
+    int result;
+
+    __asm fld x
+    __asm fadd bias
+    __asm fistp result
+
+    return result;
+}
+// Original name unknown.
+static inline int FastFloor(const float x)
+{
+    // fistp rounds to nearest; 0.5 - 2^-30 sends non-integers down and keeps
+    // exact integers in place
+    const double bias = 0.5 - 1.0 / (1 << 30);
+    int result;
+
+    __asm fld x
+    __asm fsub bias
+    __asm fistp result
+
+    return result;
+}
 #endif

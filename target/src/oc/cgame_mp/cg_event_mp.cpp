@@ -366,17 +366,17 @@ void CG_EntityEvent(centity_t *cent, int event)
     if (cg_debugEvents->current.enabled != 0) {
 
         Com_Printf((const char *)"ent:%3i  event:%3i ", es->number, event);
+    }
 
-        if (cg_debugEvents->current.enabled != 0) {
+    if (cg_debugEvents->current.enabled != 0) {
 
-            char **eventNames = CG_EventNames();
-            Com_Printf((const char *)"CG_EntityEvent:%s\n", eventNames[event]);
-        }
+        char **eventNames = CG_EventNames();
+        Com_Printf((const char *)"CG_EntityEvent:%s\n", eventNames[event]);
     }
 
     clientNum = es->clientNum;
 
-    if ((unsigned int)clientNum >= 0x40) {
+    if (clientNum < 0 || clientNum >= 64) {
         clientNum = 0;
     }
 
@@ -385,7 +385,7 @@ void CG_EntityEvent(centity_t *cent, int event)
         BG_GetWeaponDef(weapon);
     }
 
-    if (event >= 1 && event <= 23) {
+    if (event >= 1 && event < 24) {
 
         int sndIdx = event - 1;
 
@@ -414,7 +414,7 @@ void CG_EntityEvent(centity_t *cent, int event)
         return;
     }
 
-    if (event >= 24 && event <= 46) {
+    if (event >= 24 && event < 47) {
 
         int sndIdx = event - 24;
 
@@ -442,7 +442,7 @@ void CG_EntityEvent(centity_t *cent, int event)
         return;
     }
 
-    if (event >= 47 && event <= 69) {
+    if (event >= 47 && event < 70) {
 
         int sndIdx = event - 47;
 
@@ -470,7 +470,7 @@ void CG_EntityEvent(centity_t *cent, int event)
         return;
     }
 
-    if (event >= 70 && event <= 92) {
+    if (event >= 70 && event < 93) {
 
         int sndIdx = event - 70;
 
@@ -496,7 +496,7 @@ void CG_EntityEvent(centity_t *cent, int event)
         return;
     }
 
-    if (event >= 93 && event <= 115) {
+    if (event >= 93 && event < 116) {
 
         int sndIdx = event - 93;
 
@@ -520,7 +520,7 @@ void CG_EntityEvent(centity_t *cent, int event)
         return;
     }
 
-    if (event >= 116 && event <= 138) {
+    if (event >= 116 && event < 139) {
 
         int sndIdx = event - 116;
 
@@ -569,15 +569,6 @@ void CG_EntityEvent(centity_t *cent, int event)
     }
 
     {
-        int jmpIdx = event - 0x8b;
-        if ((unsigned int)jmpIdx > 0x3b) {
-
-            char **eventNames = CG_EventNames();
-
-            Com_Error(ERR_DROP, (const char *)"\x15Unknown event: '%s'", eventNames[event]);
-            return;
-        }
-
         switch (event) {
 
         case 0x93:
@@ -587,13 +578,6 @@ void CG_EntityEvent(centity_t *cent, int event)
         case 0xaa:
         case 0xab:
         case 0xac:
-            return;
-
-        case 0xb2:
-        case 0xb8:
-        case 0xc0:
-        case 0xc1:
-            Com_Error(ERR_DROP, (const char *)"\x15Unknown event: '%s'", CG_EventNames()[event]);
             return;
 
         case 0x8b: {
@@ -606,7 +590,7 @@ void CG_EntityEvent(centity_t *cent, int event)
             if (clientNum != cg->predictedPlayerState.clientNum) {
 
                 char **eventNames2 = CG_EventNames();
-                Com_DPrintf((const char *)"Event %s just for client %i was sent to other clients\n", eventNames2[0x8c], clientNum);
+                Com_DPrintf((const char *)"Event %s just for client %i was sent to other clients\n", eventNames2[event], clientNum);
                 return;
             }
 
@@ -621,7 +605,7 @@ void CG_EntityEvent(centity_t *cent, int event)
         case 0x8d: {
             if (clientNum != cg->predictedPlayerState.clientNum) {
                 char **eventNames2 = CG_EventNames();
-                Com_DPrintf((const char *)"Event %s just for client %i was sent to other clients\n", eventNames2[0x8d], clientNum);
+                Com_DPrintf((const char *)"Event %s just for client %i was sent to other clients\n", eventNames2[event], clientNum);
                 return;
             }
 
@@ -636,7 +620,7 @@ void CG_EntityEvent(centity_t *cent, int event)
         case 0x8e: {
             if (clientNum != cg->predictedPlayerState.clientNum) {
                 char **eventNames2 = CG_EventNames();
-                Com_DPrintf((const char *)"Event %s just for client %i was sent to other clients\n", eventNames2[0x8e], clientNum);
+                Com_DPrintf((const char *)"Event %s just for client %i was sent to other clients\n", eventNames2[event], clientNum);
                 return;
             }
 
@@ -651,7 +635,7 @@ void CG_EntityEvent(centity_t *cent, int event)
         case 0x8f: {
             if (clientNum != cg->predictedPlayerState.clientNum) {
                 char **eventNames2 = CG_EventNames();
-                Com_DPrintf((const char *)"Event %s just for client %i was sent to other clients\n", eventNames2[0x8f], clientNum);
+                Com_DPrintf((const char *)"Event %s just for client %i was sent to other clients\n", eventNames2[event], clientNum);
                 return;
             }
 
@@ -1452,18 +1436,9 @@ void CG_EntityEvent(centity_t *cent, int event)
             return;
         }
 
-        default: {
-            {
-                static unsigned char unhandledSeen[256];
-                unsigned int e = (unsigned int)event;
-                if (e < 256 && !unhandledSeen[e]) {
-                    unhandledSeen[e] = 1;
-                    Com_DPrintf("CG_EntityEvent: unhandled event '%s' (%d) -- not yet reconstructed (warned once)\n",
-                                CG_EventNames()[event], event);
-                }
-            }
+        default:
+            Com_Error(ERR_DROP, (const char *)"\x15Unknown event: '%s'", CG_EventNames()[event]);
             return;
-        }
 
         }
     }

@@ -371,15 +371,25 @@ qboolean PC_Char_Parse(int handle, char *out)
     return 1;
 }
 
+// Name from CoD4; original CoD2 name unknown.
+static void UI_ParseMenuMaterial(const char *key, const char *value)
+{
+    MaterialHandle material;
+    char name[64];
+
+    material = (MaterialHandle)CL_RegisterMaterialNoMip(value, 3);
+    Com_sprintf(name, 64, (const char *)"$%s", key);
+    I_strlwr(name);
+    CL_Material_Duplicate(material, name);
+}
+
 void UI_MapLoadInfo(const char *filename)
 {
     void *loadfile;
     const char *parse;
     const char *token;
     char key[256];
-    char name[64];
-    int tokenLen;
-    MaterialHandle material;   /* was int -> truncated the 8-byte handle on x64 */
+    unsigned int tokenLen;
     const char *value;
 
     if (!filename[0])
@@ -399,24 +409,22 @@ void UI_MapLoadInfo(const char *filename)
         if (!token[0])
             break;
 
-        tokenLen = strlen(token);
-        if (tokenLen + 1 > 255) {
+        tokenLen = strlen(token) + 1;
+        if (tokenLen >= 256) {
             Com_EndParseSession();
-            Com_Error( (errorParm_t)(1), (const char *)"key '%s' is %i > %i characters long", key, tokenLen, 255);
+            Com_Error( (errorParm_t)(1), (const char *)"key '%s' is %i > %i characters long", key, tokenLen - 1, 255);
         }
 
-        memcpy(key, token, tokenLen + 1);
+        memcpy(key, token, tokenLen);
 
         value = Com_ParseOnLine(&parse);
         if (!value[0]) {
             Com_EndParseSession();
             Com_Error( (errorParm_t)(1), (const char *)"key '%s' missing value in '%s'\n", key, filename);
+            break;
         }
 
-        material = (MaterialHandle)CL_RegisterMaterialNoMip(value, 3);
-        Com_sprintf(name, 64, (const char *)"$%s", key);
-        I_strlwr(name);
-        CL_Material_Duplicate(material, name);
+        UI_ParseMenuMaterial(key, value);
     }
 
     Com_EndParseSession();

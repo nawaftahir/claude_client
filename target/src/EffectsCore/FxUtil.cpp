@@ -1222,10 +1222,68 @@ void FX_Reset()
 	theFxScheduler->Clean(false, 0);
 }
 
+struct DObj_s;
+struct DObjAnimMat
+{
+	vec4_t quat;
+	vec3_t trans;
+	float transWeight;
+};
+
+extern const dvar_t *fx_debugBolt;
+extern const vec4_t colorRed;
+extern const vec4_t colorGreen;
+extern const vec4_t colorBlue;
+
+DObj_s *Com_GetClientDObj( int handle, int localClientNum );
+int DObjNumBones( const DObj_s *obj );
+DObjAnimMat *DObjGetRotTransArray( const DObj_s *obj );
+void CG_DObjCalcBoneGeneric( int handle, int localClientNum, int boneIndex );
+void CG_GetDObjOrientation( int dobjHandle, float (*axis)[3] );
+void ConvertQuatToMat( const DObjAnimMat *mat, float axis[3][3] );
+void AxisCopy( const float in[3][3], float out[3][3] );
+void CL_AddDebugLine( const float *start, const float *end, const float *color, int depthTest, int duration, int fromServer );
+
 bool FX_GetBoneOrientation( const FxBoltInfo *bolt, orientation_t *orient )
 {
-	printf("FX_GetBoneOrientation called!\n");
-	return false;
+	float dobjAxis[4][3];
+	float boneAxis[3][3];
+	vec3_t end;
+	DObj_s *obj;
+	DObjAnimMat *boneMtx;
+
+	CG_GetDObjOrientation(bolt->dobjHandle, dobjAxis);
+	if ( bolt->boneIndex < 0 )
+	{
+		VectorCopy(dobjAxis[3], orient->origin);
+		AxisCopy(dobjAxis, orient->axis);
+		return true;
+	}
+
+	obj = Com_GetClientDObj(bolt->dobjHandle, 0);
+	if ( !obj || bolt->boneIndex >= DObjNumBones(obj) )
+		return false;
+
+	CG_DObjCalcBoneGeneric(bolt->dobjHandle, 0, bolt->boneIndex);
+	boneMtx = DObjGetRotTransArray(obj);
+	if ( !boneMtx )
+		return false;
+
+	boneMtx += bolt->boneIndex;
+	ConvertQuatToMat(boneMtx, boneAxis);
+	MatrixMultiply(boneAxis, dobjAxis, orient->axis);
+	MatrixTransformVector43(boneMtx->trans, dobjAxis, orient->origin);
+
+	if ( fx_debugBolt->current.decimal != 0.0f )
+	{
+		VectorMA(orient->origin, fx_debugBolt->current.decimal, orient->axis[0], end);
+		CL_AddDebugLine(orient->origin, end, colorRed, 1, 0, 0);
+		VectorMA(orient->origin, fx_debugBolt->current.decimal, orient->axis[1], end);
+		CL_AddDebugLine(orient->origin, end, colorGreen, 1, 0, 0);
+		VectorMA(orient->origin, fx_debugBolt->current.decimal, orient->axis[2], end);
+		CL_AddDebugLine(orient->origin, end, colorBlue, 1, 0, 0);
+	}
+	return true;
 }
 
 void FX_InitServer()

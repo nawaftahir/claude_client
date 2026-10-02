@@ -5,6 +5,7 @@
 
 extern clientConnection_t clc;
 extern byte *cl_ptr;
+extern clientActive_t clients[1];
 extern dvar_t *net_profile;
 #if defined(COD2_X64) || defined(_M_X64) || defined(__x86_64__)
 extern int clc_x64_lastChallenge;
@@ -42,6 +43,26 @@ void CL_Netchan_AddOOBProfilePacket(int iLength);
 void CL_Netchan_SendOOBPacket(int iLength, const void *pData, netadr_t to);
 void CL_Netchan_PrintProfileStats(qboolean bPrintToConsole);
 
+static void CL_Netchan_Encode(byte *data, int size)
+{
+    const char *string;
+    byte key;
+    int index;
+    int i;
+
+    string = clc.serverCommands[clc.serverCommandSequence & 0x7f];
+    index = 0;
+    key = (byte)clients[0].serverId ^ (byte)clc.challenge ^ (byte)clc.serverMessageSequence;
+
+    for (i = 0; i < size; i++) {
+        if (!string[index])
+            index = 0;
+        key ^= string[index] << (i & 1);
+        index++;
+        *data++ ^= key;
+    }
+}
+
 void CL_Netchan_Decode(byte *data, int size)
 {
     byte *clc_base;
@@ -62,6 +83,7 @@ void CL_Netchan_Decode(byte *data, int size)
     reliableAcknowledge = ((clientConnection_t *)clc_base)->reliableAcknowledge;
     string = ((clientConnection_t *)clc_base)->reliableCommands[reliableAcknowledge & 0x7f];
 
+    index = 0;
     key = (byte)(((clientConnection_t *)clc_base)->serverMessageSequence);
     challenge = ((clientConnection_t *)clc_base)->challenge;
 #if defined(COD2_X64) || defined(_M_X64) || defined(__x86_64__)
@@ -71,7 +93,6 @@ void CL_Netchan_Decode(byte *data, int size)
 #endif
     key ^= (byte)challenge;
 
-    index = 0;
 #if defined(COD2_X64) || defined(_M_X64) || defined(__x86_64__)
     beforeTraceLen = size < (int)sizeof(beforeTrace) ? size : (int)sizeof(beforeTrace);
     for (i = 0; i < beforeTraceLen; ++i) {
@@ -79,19 +100,11 @@ void CL_Netchan_Decode(byte *data, int size)
     }
 #endif
     for (i = 0; i < size; i++) {
-        byte ch;
-
-        if (string[index] == '\0') {
-            ch = (unsigned char)string[0];
-            index = 1;
-        } else {
-            ch = (unsigned char)string[index];
-            index++;
-        }
-
-        key ^= (byte)(ch << (i & 1));
-
-        data[i] ^= key;
+        if (!string[index])
+            index = 0;
+        key ^= string[index] << (i & 1);
+        index++;
+        *data++ ^= key;
     }
 
 #if defined(COD2_X64) || defined(_M_X64) || defined(__x86_64__)
@@ -129,44 +142,7 @@ void CL_Netchan_TransmitNextFragment(netchan_t *chan)
 
 void CL_Netchan_Transmit(netchan_t *chan, byte *data, int length)
 {
-    byte *clc_base;
-    int serverCommandSequence;
-    const char *string;
-    byte key;
-    int index;
-    int dataSize;
-    byte *encodeData;
-    int i;
-
-    dataSize = length - 9;
-    encodeData = data + 9;
-
-    clc_base = (byte *)&::clc;
-
-    serverCommandSequence = ((clientConnection_t *)clc_base)->serverCommandSequence;
-    string = ((clientConnection_t *)clc_base)->serverCommands[serverCommandSequence & 0x7f];
-
-    key = (byte)((*(clientActive_t **)cl_ptr)->serverId);
-    key ^= (byte)(((clientConnection_t *)clc_base)->challenge);
-    key ^= (byte)(*(int *)(clc_base + CLC_SERVERMSGSEQ_OFF));
-
-    index = 0;
-    for (i = 0; i < dataSize; i++) {
-        byte ch;
-
-        if (string[index] == '\0') {
-            ch = (unsigned char)string[0];
-            index = 1;
-        } else {
-            ch = (unsigned char)string[index];
-            index++;
-        }
-
-        key ^= (byte)(ch << (i & 1));
-
-        encodeData[i] ^= key;
-    }
-
+    CL_Netchan_Encode(data + 9, length - 9);
     Netchan_Transmit(chan, length, data);
 }
 

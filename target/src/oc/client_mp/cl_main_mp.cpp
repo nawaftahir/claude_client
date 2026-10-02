@@ -2175,7 +2175,6 @@ static void CL_DisconnectPacket(netadr_t from)
 
 Bool CL_ConnectionlessPacket(netadr_t from, msg_t *msg, int time)
 {
-    clientConnection_t *conn = &::clc;
     char *printBuf;
     const char *cmd;
 
@@ -2203,54 +2202,54 @@ Bool CL_ConnectionlessPacket(netadr_t from, msg_t *msg, int time)
     }
 
     if (I_stricmp(cmd, (const char *)"challengeResponse") == 0) {
-        if (conn->state != CA_CONNECTING) {
+        if (clc.state != CA_CONNECTING) {
             Com_Printf((const char *)"Unwanted challenge response received.  Ignored.\n");
             return 0;
         }
 
-        conn->challenge = atoi(Cmd_Argv(1));
+        clc.challenge = atoi(Cmd_Argv(1));
 #if defined(COD2_X64) || defined(_M_X64) || defined(__x86_64__)
-        clc_x64_lastChallenge = conn->challenge;
+        clc_x64_lastChallenge = clc.challenge;
 #endif
-        conn->state = CA_CHALLENGING;
-        conn->connectPacketCount = 0;
-        conn->connectTime = -99999;
-        conn->serverAddress = from;
-        Com_DPrintf((const char *)"challenge: %d\n", conn->challenge);
+        clc.state = CA_CHALLENGING;
+        clc.connectPacketCount = 0;
+        clc.connectTime = -99999;
+        clc.serverAddress = from;
+        Com_DPrintf((const char *)"challenge: %d\n", clc.challenge);
         return 1;
     }
 
     if (I_stricmp(cmd, (const char *)"connectResponse") == 0) {
-        if (conn->state > CA_CHALLENGING) {
+        if (clc.state > CA_CHALLENGING) {
             Com_Printf((const char *)"Dup connect received.  Ignored.\n");
             return 0;
         }
 
-        if (conn->state != CA_CHALLENGING) {
+        if (clc.state != CA_CHALLENGING) {
             Com_Printf((const char *)"connectResponse packet while not connecting.  Ignored.\n");
             return 0;
         }
 
-        if (!NET_CompareBaseAdr(from, conn->serverAddress)) {
+        if (!NET_CompareBaseAdr(from, clc.serverAddress)) {
             const char *expected;
             const char *actual;
 
             Com_Printf((const char *)"connectResponse from a different address.  Ignored.\n");
-            expected = NET_AdrToString(conn->serverAddress);
+            expected = NET_AdrToString(clc.serverAddress);
             actual = NET_AdrToString(from);
             Com_Printf((const char *)"%s should have been %s\n", actual, expected);
             return 0;
         }
 
-        if (autoupdateChecked && NET_CompareAdr(cls.autoupdateServer, conn->serverAddress)) {
+        if (autoupdateChecked && NET_CompareAdr(cls.autoupdateServer, clc.serverAddress)) {
             if (cl_updateavailable->current.enabled)
                 autoupdateStarted = 1;
         }
 
-        Netchan_Setup(NS_CLIENT1, &conn->netchan, from, ::qport);
-        conn->state = CA_CONNECTED;
-        conn->lastPacketSentTime = cls.realtime;
-        conn->lastPacketTime = -9999;
+        Netchan_Setup(NS_CLIENT1, &clc.netchan, from, ::qport);
+        clc.state = CA_CONNECTED;
+        clc.lastPacketSentTime = cls.realtime;
+        clc.lastPacketTime = -9999;
         return 1;
     }
 
@@ -2281,14 +2280,14 @@ Bool CL_ConnectionlessPacket(netadr_t from, msg_t *msg, int time)
     if (I_stricmp(cmd, (const char *)"print") == 0) {
         const char *text = MSG_ReadBigString(msg);
 
-        I_strncpyz(conn->serverMessage, text, sizeof(conn->serverMessage));
+        I_strncpyz(clc.serverMessage, text, sizeof(clc.serverMessage));
         Com_sprintf(printBuf, 0x4000, (const char *)"%s", text);
         Com_PrintMessage((print_msg_type_t)0, printBuf);
         return 1;
     }
 
     if (I_stricmp(cmd, (const char *)"error") == 0) {
-        if (conn->state && NET_CompareBaseAdr(from, conn->serverAddress)) {
+        if (clc.state && NET_CompareBaseAdr(from, clc.serverAddress)) {
             Com_Error(ERR_DROP, (const char *)"%s", MSG_ReadBigString(msg));
             return 1;
         }
@@ -2306,23 +2305,22 @@ Bool CL_ConnectionlessPacket(netadr_t from, msg_t *msg, int time)
     }
 
     if (I_strncmp(cmd, (const char *)"needcdkey", 9) == 0) {
-        I_strncpyz(conn->serverMessage, (const char *)"EXE_AWAITINGCDKEYAUTH", sizeof(conn->serverMessage));
+        I_strncpyz(clc.serverMessage, (const char *)"EXE_AWAITINGCDKEYAUTH", sizeof(clc.serverMessage));
         SEH_LocalizeTextMessage((const char *)"EXE_AWAITINGCDKEYAUTH", (const char *)"need cd key message", LOCMSG_SAFE);
-        Com_Printf((const char *)"%s\n", conn->serverMessage);
+        Com_Printf((const char *)"%s\n", clc.serverMessage);
         CL_RequestAuthorization();
         return 1;
     }
 
     if (I_stricmp(cmd, (const char *)"loadingnewmap") == 0) {
-        if (NET_CompareBaseAdr(from, conn->serverAddress)) {
+        if (NET_CompareBaseAdr(from, clc.serverAddress)) {
             char mapname[64];
             const char *gametype;
 
             I_strncpyz(mapname, MSG_ReadStringLine(msg), sizeof(mapname));
             gametype = MSG_ReadStringLine(msg);
             CL_SetupForNewServerMap(mapname, gametype);
-            if (conn->state <= CA_CONNECTED)
-                conn->state = CA_CONNECTED;
+            clc.state = CA_CONNECTED;
             UI_DrawConnectScreen();
         }
 

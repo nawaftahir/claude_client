@@ -2,7 +2,7 @@
 #include "g_shared.h"
 
 // build date of the 1.0 release
-#define BUILD_DATE "Oct 24 2005"
+#define BUILD_DATE "Oct  6 2005"
 
 
 level_locals_t level;

@@ -627,7 +627,6 @@ Bool SND_UpdateBackgroundVolume(int track, int frametime)
 void SND_DeactivateEnvironmentEffects(int priority, int fademsec)
 {
     snd_enveffect *effect;
-    float fadetime;
     int newPriority;
 
     effect = &g_snd.envEffects[priority];
@@ -641,17 +640,15 @@ void SND_DeactivateEnvironmentEffects(int priority, int fademsec)
         newPriority--;
     }
 
-    if (fademsec <= 0)
-        fadetime = 1.0f;
-    else
-        fadetime = (float)fademsec;
+    if (fademsec < 1)
+        fademsec = 1;
 
     g_snd.effect = &g_snd.envEffects[newPriority];
     SND_SetRoomtype(g_snd.effect->roomtype);
     g_snd.effect->drylevel = effect->drylevel;
-    g_snd.effect->dryrate = (g_snd.effect->drygoal - effect->drylevel) / fadetime;
+    g_snd.effect->dryrate = (g_snd.effect->drygoal - effect->drylevel) / (float)fademsec;
     g_snd.effect->wetlevel = effect->wetlevel;
-    g_snd.effect->wetrate = (g_snd.effect->wetgoal - effect->wetlevel) / fadetime;
+    g_snd.effect->wetrate = (g_snd.effect->wetgoal - effect->wetlevel) / (float)fademsec;
 }
 
 void SND_SetEnvironmentEffects(int priority, const char *roomstring, float drylevel, float wetlevel, int fademsec)

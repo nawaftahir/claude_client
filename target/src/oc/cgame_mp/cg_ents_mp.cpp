@@ -220,17 +220,26 @@ static void CG_mg42_DoControllers(const centity_t *cent, int *partBits)
     }
 }
 
+// Name from CoD4; original CoD2 name unknown.
+static void CG_Player_DoControllers(const centity_t *cent, int *partBits)
+{
+    const entityState_t *es = &cent->nextState;
+    struct DObj_s *obj = (struct DObj_s *)Com_GetClientDObj(es->number, cent->localClientNum);
+    clientInfo_t *ci = &cg->bgs.clientinfo[es->clientNum];
+
+    if (ci->infoValid)
+        BG_Player_DoControllers(obj, es, partBits, ci, cg->frametime);
+}
+
 static inline __attribute__((always_inline)) void CG_RunDObjControllers(const centity_t *cent, int *partBits)
 {
-    if (cent->nextState.eType == 1) {
-        const entityState_t *es = &cent->nextState;
-        clientInfo_t *ci = &cg->bgs.clientinfo[es->clientNum];
-        struct DObj_s *obj = (struct DObj_s *)Com_GetClientDObj(es->number, cent->localClientNum);
-
-        if (ci->infoValid)
-            BG_Player_DoControllers(obj, es, partBits, ci, cg->frametime);
-    } else if (cent->nextState.eType == 9) {
+    switch (cent->nextState.eType) {
+    case 1:
+        CG_Player_DoControllers(cent, partBits);
+        break;
+    case 9:
         CG_mg42_DoControllers(cent, partBits);
+        break;
     }
 }
 
@@ -264,18 +273,20 @@ void CG_ProcessClientNoteTracks(int clientNum)
 
     for (i = 0; i < listSize; ++i)
     {
-        if (noteList[i].type != 1)
-            continue;
-
-        if (!stricmp(noteList[i].name, "anim_gunhand = \"left\""))
+        switch (noteList[i].type)
         {
-            cg->bgs.clientinfo[clientNum].leftHandGun = 1;
-            cg->bgs.clientinfo[clientNum].dobjDirty = 1;
-        }
-        else if (!stricmp(noteList[i].name, "anim_gunhand = \"right\""))
-        {
-            cg->bgs.clientinfo[clientNum].leftHandGun = 0;
-            cg->bgs.clientinfo[clientNum].dobjDirty = 1;
+        case 1:
+            if (!stricmp(noteList[i].name, "anim_gunhand = \"left\""))
+            {
+                cg->bgs.clientinfo[clientNum].leftHandGun = 1;
+                cg->bgs.clientinfo[clientNum].dobjDirty = 1;
+            }
+            else if (!stricmp(noteList[i].name, "anim_gunhand = \"right\""))
+            {
+                cg->bgs.clientinfo[clientNum].leftHandGun = 0;
+                cg->bgs.clientinfo[clientNum].dobjDirty = 1;
+            }
+            break;
         }
     }
 }
@@ -427,7 +438,7 @@ void CG_DObjCalcBoneGeneric(int handle, int localClientNum, int boneIndex)
     DObjGetHierarchyBits(obj, boneIndex, partBits);
     DObjCalcAnim(obj, partBits);
 
-    if (handle <= 1023) {
+    if (handle < 1024) {
         cent = &(((centity_t *)cg_entities))[handle];
         CG_RunDObjControllers(cent, partBits);
     }
@@ -553,7 +564,8 @@ void CG_EntityEffects(centity_t *cent)
 static struct DObj_s *CG_PreProcess_GetDObj(int iEntNum, int iEntType, struct XModel *model)
 {
     DObjModel_s dobjModel;
-    struct XAnimTree_s *tree = 0;
+    struct XAnimTree_s *tree;
+    struct XAnim_s *anims;
     struct DObj_s *pDObj;
 
     pDObj = (struct DObj_s *)Com_GetClientDObj(iEntNum, 0);
@@ -567,11 +579,10 @@ static struct DObj_s *CG_PreProcess_GetDObj(int iEntNum, int iEntType, struct XM
     if (!model)
         return 0;
 
-    if (iEntType == 9) {
-        struct XAnim_s *anims = CG_GetMG42Anims(&(((centity_t *)cg_entities))[iEntNum]);
-        if (anims)
-            tree = (struct XAnimTree_s *)XAnimCreateTree((XAnim *)anims, (Alloc_t)CG_AllocAnimTree);
-    }
+    if (iEntType == 9 && (anims = CG_GetMG42Anims(&(((centity_t *)cg_entities))[iEntNum])) != 0)
+        tree = (struct XAnimTree_s *)XAnimCreateTree((XAnim *)anims, (Alloc_t)CG_AllocAnimTree);
+    else
+        tree = 0;
 
     (((centity_t *)cg_entities))[iEntNum].tree = tree;
     dobjModel.model = model;
@@ -643,7 +654,9 @@ qboolean CG_DObjGetWorldTagPos(const centity_t *cent, struct DObj_s *obj, unsign
     ent_axis[3][0] = cent->lerpOrigin[0];
     ent_axis[3][1] = cent->lerpOrigin[1];
     ent_axis[3][2] = cent->lerpOrigin[2];
-    MatrixTransformVector43(mat->trans, ent_axis, pos);
+    pos[0] = mat->trans[1] * ent_axis[1][0] + mat->trans[0] * ent_axis[0][0] + mat->trans[2] * ent_axis[2][0] + ent_axis[3][0];
+    pos[1] = mat->trans[1] * ent_axis[1][1] + mat->trans[0] * ent_axis[0][1] + mat->trans[2] * ent_axis[2][1] + ent_axis[3][1];
+    pos[2] = mat->trans[1] * ent_axis[1][2] + mat->trans[0] * ent_axis[0][2] + mat->trans[2] * ent_axis[2][2] + ent_axis[3][2];
     return 1;
 }
 

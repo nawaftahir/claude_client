@@ -116,7 +116,7 @@ void CG_Shutdown(void);
 void *Hunk_AllocXAnimPrecache(int size);
 void *Hunk_AllocXAnimClient(int size);
 int CG_PlaySoundAliasAsMasterByName(int entitynum, const vec_t *origin, const char *aliasname);
-void CG_GetDObjOrientation(int dobjHandle, orientation_t *orient);
+void CG_GetDObjOrientation(int dobjHandle, float (*axis)[3]);
 void CG_PlaySmokeGrenadesAtTime(int gametime);
 int CG_PlaySoundAlias(int entitynum, const vec_t *origin, snd_alias_list_t *aliasList);
 int CG_PlaySoundAliasByName(int entitynum, const vec_t *origin, const char *aliasname);

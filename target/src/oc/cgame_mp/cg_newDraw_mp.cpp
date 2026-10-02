@@ -847,22 +847,21 @@ Bool CG_CheckPlayerForLowAmmo(void)
 
     ammoIndex = BG_AmmoForWeapon(weaponIndex);
     currentAmmo = BG_GetTotalAmmoReserve(ps, weaponIndex);
-    if (currentAmmo >= 1000) {
+    if (currentAmmo > 999) {
         currentAmmo = 999;
     }
 
     maxAmmo = BG_GetAmmoTypeMax(ammoIndex);
-    if (maxAmmo < 0) {
-        return 0;
-    }
     if (maxAmmo > 999) {
         maxAmmo = 999;
-    }
-
-    if (0.2f * (float)maxAmmo < (float)currentAmmo) {
+    } else if (maxAmmo < 0) {
         return 0;
     }
-    return 1;
+
+    if ((float)currentAmmo <= (float)maxAmmo * 0.2f) {
+        return 1;
+    }
+    return 0;
 }
 
 Bool CG_CheckPlayerForLowClip(void)

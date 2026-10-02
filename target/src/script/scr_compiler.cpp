@@ -2346,7 +2346,7 @@ void EmitCall( sval_u func_name, sval_u params, bool bStatement, scr_block_s *bl
 
 		param_count = EmitExpressionList(params, block);
 
-		if ( param_count > 255 )
+		if ( param_count >= 256 )
 		{
 			CompileError(sourcePos.stringValue, "parameter count exceeds 256");
 			return;

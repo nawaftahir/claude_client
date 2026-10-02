@@ -2510,13 +2510,15 @@ void Flash::Draw()
 {
 	int i;
 	vec4_t rgba;
+	FxHelper *helper;
 
 	for ( i = 0; i <= 2; i++ )
 		rgba[i] = ClampFloat( mRefEnt.dlightColor[i], 0.0f, 1.0f );
 	rgba[3] = 1.0f;
 	Byte4PackRgba( rgba, mRefEnt.materialRGBA );
-	VectorCopy( theFxHelper->mCamera.vieworg, mRefEnt.origin );
-	VectorMA( mRefEnt.origin, 8.0f, theFxHelper->mCamera.frustum[0], mRefEnt.origin );
+	helper = theFxHelper;
+	VectorCopy( helper->mCamera.vieworg, mRefEnt.origin );
+	VectorMA( mRefEnt.origin, 8.0f, helper->mCamera.frustum[0], mRefEnt.origin );
 	mRefEnt.radius[0] = 12.0f;
 	mRefEnt.radius[1] = mRefEnt.radius[0];
 	FX_AddFxToScene( this, 4 );

@@ -100,17 +100,15 @@ void __attribute_regparm__(1) CG_RegisterGraphics(const char *mapname)
     CG_LoadingString(" - inline models");
     cgs->numInlineModels = CM_NumInlineModels();
 
-    if (cgs->numInlineModels > 1) {
-        for (i = 1; i < cgs->numInlineModels; i++) {
-            cgs->inlineDrawModel[i] = CL_RegisterInlineModel(i);
+    for (i = 1; i < cgs->numInlineModels; i++) {
+        cgs->inlineDrawModel[i] = CL_RegisterInlineModel(i);
 
-            GfxBrushModel *model = cgs->inlineDrawModel[i];
-            CL_ModelBounds(model, mins, maxs);
+        GfxBrushModel *model = cgs->inlineDrawModel[i];
+        CL_ModelBounds(model, mins, maxs);
 
-            for (j = 0; j < 3; j++) {
-                float mid = (float)(mins[j] + (maxs[j] - mins[j]) * 0.5);
-                cgs->inlineModelMidpoints[i][j] = mid;
-            }
+        for (j = 0; j < 3; j++) {
+            float mid = (float)(mins[j] + (maxs[j] - mins[j]) * 0.5);
+            cgs->inlineModelMidpoints[i][j] = mid;
         }
     }
 
@@ -120,6 +118,7 @@ void __attribute_regparm__(1) CG_RegisterGraphics(const char *mapname)
         if (str[0] == '\0')
             continue;
 
+        SCR_UpdateScreen();
         cgs->gameModels[i] = CL_RegisterModel(str);
     }
 

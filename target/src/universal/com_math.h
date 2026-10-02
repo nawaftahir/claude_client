@@ -326,6 +326,31 @@ TU_STATIC int const FastCeil(const float x)
 
 /*
 ==============
+FastFloor
+
+Original name unknown.
+==============
+*/
+TU_STATIC int const FastFloor(const float x)
+{
+#ifdef _MSC_VER
+	// fistp rounds to nearest; 0.5 - 2^-30 sends non-integers down and keeps
+	// exact integers in place
+	const double bias = 0.5 - 1.0 / (1 << 30);
+	int result;
+
+	__asm fld x
+	__asm fsub bias
+	__asm fistp result
+
+	return result;
+#else
+	return (int)floor(x);
+#endif
+}
+
+/*
+==============
 I_rsqrt
 ==============
 */

@@ -273,6 +273,9 @@ char *Sys_ConsoleInput(void)
     return s_wcd.returnedText;
 }
 
+// Q_IsColorString plus the CoD2 digit check.
+#define I_IsColorString(p) ((p) && *(p) == '^' && *((p) + 1) && *((p) + 1) != '^' && *((p) + 1) >= '0' && *((p) + 1) <= '9')
+
 void Conbuf_AppendText(const char *pMsg)
 {
     char buffer[CONSOLE_BUFFER_SIZE * 2];
@@ -280,52 +283,50 @@ void Conbuf_AppendText(const char *pMsg)
     const char *msg;
     int bufLen;
     int i = 0;
+    static unsigned long s_totalChars;
 
-    if (!pMsg)
-        return;
+    if (strlen(pMsg) > CONSOLE_BUFFER_SIZE - 1)
+        msg = pMsg + strlen(pMsg) - CONSOLE_BUFFER_SIZE + 1;
+    else
+        msg = pMsg;
 
-    for (msg = pMsg; *msg && ((b - buffer) < (int)sizeof(buffer) - 2); msg++) {
-        if (*msg == '\n' && msg[1] == '\r') {
-            *b++ = '\r';
-            *b++ = '\n';
-            msg++;
-        } else if (*msg == '\r') {
-            *b++ = '\r';
-            *b++ = '\n';
-        } else if (*msg == '\n') {
-            *b++ = '\r';
-            *b++ = '\n';
-        } else if (msg[0] == '^' && msg[1] && msg[1] != '^') {
-            msg++;
+    while (msg[i] && ((b - buffer) < sizeof(buffer) - 1)) {
+        if (msg[i] == '\n' && msg[i + 1] == '\r') {
+            b[0] = '\r';
+            b[1] = '\n';
+            b += 2;
+            i++;
+        } else if (msg[i] == '\r') {
+            b[0] = '\r';
+            b[1] = '\n';
+            b += 2;
+        } else if (msg[i] == '\n') {
+            b[0] = '\r';
+            b[1] = '\n';
+            b += 2;
+        } else if (I_IsColorString(&msg[i])) {
+            i++;
         } else {
-            *b++ = *msg;
+            *b = msg[i];
+            b++;
         }
+        i++;
     }
-    *b = '\0';
-    bufLen = (int)(b - buffer);
-    (void)i;
+    *b = 0;
+    bufLen = b - buffer;
 
-    if (!s_wcd.hwndBuffer) {
-        fputs(buffer, stdout);
-        fflush(stdout);
-        return;
+    s_totalChars += bufLen;
+
+    if (s_totalChars > CONSOLE_BUFFER_SIZE) {
+        SendMessageA(s_wcd.hwndBuffer, EM_SETSEL, 0, -1);
+        s_totalChars = bufLen;
+    } else {
+        SendMessageA(s_wcd.hwndBuffer, EM_SETSEL, 0xFFFF, 0xFFFF);
     }
 
-    if (bufLen > 0) {
-        SendMessage(s_wcd.hwndBuffer, EM_SETREADONLY, FALSE, 0);
-
-        if (GetWindowTextLength(s_wcd.hwndBuffer) + bufLen >= CONSOLE_BUFFER_SIZE) {
-            SendMessage(s_wcd.hwndBuffer, EM_SETSEL, 0, CONSOLE_BUFFER_SIZE / 2);
-            SendMessage(s_wcd.hwndBuffer, EM_REPLACESEL, FALSE, (LPARAM) "");
-        }
-
-        SendMessage(s_wcd.hwndBuffer, EM_SETSEL, (WPARAM)-1, (LPARAM)-1);
-        SendMessage(s_wcd.hwndBuffer, EM_REPLACESEL, FALSE, (LPARAM)buffer);
-        SendMessage(s_wcd.hwndBuffer, EM_LINESCROLL, 0, 0xffff);
-        SendMessage(s_wcd.hwndBuffer, EM_SCROLLCARET, 0, 0);
-
-        SendMessage(s_wcd.hwndBuffer, EM_SETREADONLY, TRUE, 0);
-    }
+    SendMessageA(s_wcd.hwndBuffer, EM_LINESCROLL, 0, 0xffff);
+    SendMessageA(s_wcd.hwndBuffer, EM_SCROLLCARET, 0, 0);
+    SendMessageA(s_wcd.hwndBuffer, EM_REPLACESEL, 0, (LPARAM)buffer);
 }
 
 void Sys_SetErrorText(const char *buf)

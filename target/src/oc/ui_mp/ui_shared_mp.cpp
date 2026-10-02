@@ -1774,8 +1774,8 @@ void Window_Paint(displayContextDef_t *dc, float (*w_param)[4][32], float fadeAm
                 color[0] = 1.0f;
                 color[1] = color[2] = 0.5f;
             } else {
-                color[0] = color[1] = 0.5f;
                 color[2] = 1.0f;
+                color[0] = color[1] = 0.5f;
             }
             color[3] = 1.0f;
             UI_DrawRect(w->rect[0].x, w->rect[0].y, w->rect[0].w, w->rect[0].h, w->rect[0].horzAlign, w->rect[0].vertAlign, w->borderSize, color);

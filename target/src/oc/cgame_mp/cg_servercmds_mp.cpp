@@ -158,187 +158,110 @@ void CG_ParseCodinfo(void)
     }
 }
 
+#define I_IsColorString(p) ((p) && *(p) == '^' && *((p) + 1) && *((p) + 1) != '^' && *((p) + 1) >= '0' && *((p) + 1) <= '9')
+
 #ifndef __EMSCRIPTEN__
 static void __attribute_regparm__(1) CG_AddToTeamChat(const char *str)
 {
-    int chatHeight;
-    int row;
-    char *dst;
     int len;
+    char *p, *ls;
     int lastcolor;
-    char *lastSpace;
-    const char *p;
+    int chatHeight;
 
     chatHeight = cg_chatHeight->current.integer;
-    if (chatHeight == 0 || cg_chatTime->current.integer <= 0) {
-        cgs->teamLastChatPos = 0;
-        cgs->teamChatPos = 0;
+    if (!chatHeight || cg_chatTime->current.integer <= 0) {
+        cgs->teamChatPos = cgs->teamLastChatPos = 0;
         return;
     }
 
-    row = cgs->teamChatPos % chatHeight;
-    dst = cgs->teamChatMsgs[row];
-    *dst = '\0';
-
     len = 0;
+
+    p = cgs->teamChatMsgs[cgs->teamChatPos % chatHeight];
+    *p = 0;
+
     lastcolor = '7';
-    lastSpace = NULL;
-    p = str;
 
-    for (;;) {
-        const char *savedp;
-        char ch;
-
-        if (*p == '\0') {
-            break;
-        }
-
+    ls = NULL;
+    while (*str) {
         if (len > 0x59) {
-            if (lastSpace != NULL) {
-                int backDist = (int)(dst - lastSpace);
-                p = p - backDist + 1;
-                dst = lastSpace;
+            if (ls) {
+                str -= (p - ls);
+                str++;
+                p -= (p - ls);
             }
+            *p = 0;
 
-            *dst = '\0';
+            cgs->teamChatMsgTimes[cgs->teamChatPos % chatHeight] = cg->time;
 
-            row = cgs->teamChatPos % chatHeight;
-            cgs->teamChatMsgTimes[row] = cg->time;
             cgs->teamChatPos++;
-
-            row = cgs->teamChatPos % chatHeight;
-            dst = cgs->teamChatMsgs[row];
-            *dst++ = '^';
-            *dst++ = (char)lastcolor;
-
+            p = cgs->teamChatMsgs[cgs->teamChatPos % chatHeight];
+            *p++ = '^';
+            *p++ = lastcolor;
             len = 0;
-            lastSpace = NULL;
+            ls = NULL;
         }
 
-        savedp = p;
-        if (*p == '^') {
-            p++;
-            ch = savedp[1];
-            if (ch != '\0' && ch != '^' && ch > '/' && ch <= '9') {
-                *dst++ = '^';
-                lastcolor = (signed char)ch;
-                *dst++ = ch;
-                p = savedp + 2;
-                continue;
-            }
-
-            len++;
-            ch = *savedp;
-        } else {
-            p++;
-            len++;
-            ch = *savedp;
+        if (I_IsColorString(str)) {
+            *p++ = *str++;
+            lastcolor = *str;
+            *p++ = *str++;
+            continue;
         }
-
-        if (ch == ' ') {
-            lastSpace = dst;
+        if (*str == ' ') {
+            ls = p;
         }
-        *dst++ = ch;
+        *p++ = *str++;
+        len++;
     }
+    *p = 0;
 
-    *dst = '\0';
-
-    row = cgs->teamChatPos % chatHeight;
-    cgs->teamChatMsgTimes[row] = cg->time;
+    cgs->teamChatMsgTimes[cgs->teamChatPos % chatHeight] = cg->time;
     cgs->teamChatPos++;
 
-    if (chatHeight < cgs->teamChatPos - cgs->teamLastChatPos) {
+    if (cgs->teamChatPos - cgs->teamLastChatPos > chatHeight)
         cgs->teamLastChatPos = cgs->teamChatPos - chatHeight;
-    }
 }
 
 static void CG_OpenScriptMenu(void)
 {
     int menuIndex;
     const char *pszMenu;
-    unsigned char noMouseControl;
-    char *cgui;
-    int result;
-    const char *arg2;
-#if COD2_TRACE
-    static int traceCount;
-#endif
+    Bool noMouseControl;
 
+    noMouseControl = 1;
     menuIndex = atoi(CG_Argv(1));
-#if COD2_TRACE
-    if (traceCount < 16) {
-        if (getenv("MTRACE"))
-            Com_Printf("[menu-trace] client open command indexArg='%s' arg2='%s' argc=%d\n",
-                       CG_Argv(1), Cmd_Argc() > 2 ? CG_Argv(2) : "", Cmd_Argc());
-    }
-#endif
 
-    if ((unsigned int)menuIndex > 31) {
-        Com_Printf((const char *)"Server tried to open a bad script menu index: %i\n", menuIndex);
-        Cbuf_AddText(va((const char *)"cmd mr %i bad\n", menuIndex));
-        return;
-    }
-
-    pszMenu = CL_GetConfigString(menuIndex + 0x4de);
-#if COD2_TRACE
-    if (traceCount < 16) {
-        if (getenv("MTRACE"))
-            Com_Printf("[menu-trace] client menu index=%d configstring='%s'\n", menuIndex, pszMenu);
-    }
-#endif
-
-    if (*pszMenu == '\0') {
-        Com_Printf((const char *)"Server tried to open a non-loaded script menu index: %i\n", menuIndex);
-        Cbuf_AddText(va((const char *)"cmd mr %i bad\n", menuIndex));
-        return;
-    }
-
-    if (Cmd_Argc() > 2) {
-        arg2 = CG_Argv(2);
-        if (arg2 != NULL) {
-            arg2 = CG_Argv(2);
-            noMouseControl = (*arg2 != '\0') ? 1 : 0;
-        } else {
-            noMouseControl = 0;
-        }
-    } else {
-        noMouseControl = 0;
-    }
-
-    I_strncpyz(CGUI_PTR + 0x2e4, pszMenu, 0x100);
-    *(int *)(CGUI_PTR + 0x3e4) = menuIndex;
-
-    if (noMouseControl) {
-        result = CL_Popup((const char *)"UIMENU_SCRIPT_POPUP_NO_MOUSE");
-    } else {
-        result = CL_Popup((const char *)"UIMENU_SCRIPT_POPUP");
-    }
-#if COD2_TRACE
-    if (traceCount++ < 16) {
-        if (getenv("MTRACE"))
-            Com_Printf("[menu-trace] client popup menu='%s' noMouse=%u result=%d\n",
-                       pszMenu, noMouseControl, result);
-    }
-#endif
-
-    if (result) {
-        return;
-    }
-
-    *(CGUI_PTR + 0x2e4) = '\0';
-    *(int *)(CGUI_PTR + 0x3e4) = -1;
-
-    cgui = CGUI_PTR;
-    if ((*(unsigned char *)&((LegacyHacks *)cgui)->ui_waitingScriptMenu[0]) != '\0') {
-        if (I_stricmp(pszMenu, ((char *)cgui + offsetof(LegacyHacks, ui_waitingScriptMenu[0]))) == 0) {
+    if (menuIndex >= 0 && menuIndex < 32) {
+        pszMenu = CL_GetConfigString(menuIndex + 0x4de);
+        if (!*pszMenu) {
+            Com_Printf("Server tried to open a non-loaded script menu index: %i\n", menuIndex);
+            Cbuf_AddText(va("cmd mr %i bad\n", menuIndex));
             return;
         }
-        Cbuf_AddText(va((const char *)"cmd mr %i noop\n", *(int *)(CGUI_PTR + 0x4e8)));
+
+        if (Cmd_Argc() <= 2 || !CG_Argv(2) || !*CG_Argv(2))
+            noMouseControl = 0;
+
+        I_strncpyz(legacyHacks->ui_newScriptMenu, pszMenu, sizeof(legacyHacks->ui_newScriptMenu));
+        legacyHacks->ui_newScriptMenuIndex = menuIndex;
+
+        if (!CL_Popup(noMouseControl ? "UIMENU_SCRIPT_POPUP_NO_MOUSE" : "UIMENU_SCRIPT_POPUP")) {
+            legacyHacks->ui_newScriptMenu[0] = 0;
+            legacyHacks->ui_newScriptMenuIndex = -1;
+            if (legacyHacks->ui_waitingScriptMenu[0]) {
+                if (!I_stricmp(pszMenu, legacyHacks->ui_waitingScriptMenu))
+                    return;
+                Cbuf_AddText(va("cmd mr %i noop\n", legacyHacks->ui_waitingScriptMenuIndex));
+            }
+            I_strncpyz(legacyHacks->ui_waitingScriptMenu, pszMenu, sizeof(legacyHacks->ui_waitingScriptMenu));
+            legacyHacks->ui_waitingScriptMenuIndex = menuIndex;
+            legacyHacks->ui_waitingScriptMenuNoMouse = noMouseControl;
+        }
+        return;
     }
 
-    I_strncpyz(CGUI_PTR + 0x3e8, pszMenu, 0x100);
-    *(int *)(CGUI_PTR + 0x4e8) = menuIndex;
-    *(unsigned char *)(CGUI_PTR + 0x4ec) = noMouseControl;
+    Com_Printf("Server tried to open a bad script menu index: %i\n", menuIndex);
+    Cbuf_AddText(va("cmd mr %i bad\n", menuIndex));
 }
 
 void CG_CheckOpenWaitingScriptMenu(void)
@@ -634,7 +557,7 @@ void CG_MapRestart(qboolean savepersist)
 {
     char *cgui;
 
-    if (CG_DvarCurrentBool((void *)&cg_showmiss)) {
+    if (cg_showmiss->current.integer) {
         Com_Printf((const char *)"CG_MapRestart\n");
     }
 
@@ -658,9 +581,9 @@ void CG_MapRestart(qboolean savepersist)
 
     memset(cg->viewDamage, 0, sizeof(cg->viewDamage));
 
-    *(int *)&cg->fWeapSelectFrac[0] = 0;
-    *(int *)&cg->fWeapSelectFrac[1] = 0;
-    *(int *)&cg->fWeapSelectFrac[2] = 0;
+    cg->fWeapSelectFrac[0] = 0.0f;
+    cg->fWeapSelectFrac[1] = 0.0f;
+    cg->fWeapSelectFrac[2] = 0.0f;
     cg->iWeapSelectLastDrawTime = 0;
 
     Dvar_SetBool((dvar_t *)cg_thirdPerson, false);

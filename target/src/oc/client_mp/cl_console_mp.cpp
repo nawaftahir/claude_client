@@ -1314,7 +1314,7 @@ static void ConDrawInput_DetailedDvarMatch(const char *str)
 {
     const dvar_t *dvar;
     bool hasLatchedValue;
-    int infoLineCount;
+    int lineCount;
     char dvarInfo[1024];
 
     if (I_strnicmp(str, conDrawInputGlob.inputText, conDrawInputGlob.inputTextLen))
@@ -1324,27 +1324,28 @@ static void ConDrawInput_DetailedDvarMatch(const char *str)
 
     dvar = Dvar_FindVar(str);
     hasLatchedValue = Dvar_HasLatchedValue(dvar);
-    ConDrawInput_Box(hasLatchedValue ? 3 : 2, con_inputHintBoxColor->current.vector);
+    lineCount = hasLatchedValue ? 3 : 2;
+    ConDrawInput_Box(lineCount, con_inputHintBoxColor->current.vector);
     ConDrawInput_DrawText(str, 24, con_inputDvarMatchColor);
-    conDrawInputGlob.x += 300.0f;
+    conDrawInputGlob.x += 200.0f;
     ConDrawInput_DrawText(Dvar_DisplayableValue(dvar), 40, con_inputDvarValueColor);
     conDrawInputGlob.y += conDrawInputGlob.fontHeight;
     conDrawInputGlob.x = conDrawInputGlob.leftX;
     if (hasLatchedValue) {
         ConDrawInput_Text("  latched value", con_inputDvarInactiveValueColor);
-        conDrawInputGlob.x += 300.0f;
+        conDrawInputGlob.x += 200.0f;
         ConDrawInput_DrawText(Dvar_DisplayableLatchedValue(dvar), 40, con_inputDvarInactiveValueColor);
         conDrawInputGlob.y += conDrawInputGlob.fontHeight;
         conDrawInputGlob.x = conDrawInputGlob.leftX;
     }
     ConDrawInput_Text("  default", con_inputDvarInactiveValueColor);
-    conDrawInputGlob.x += 300.0f;
+    conDrawInputGlob.x += 200.0f;
     ConDrawInput_DrawText(Dvar_DisplayableResetValue(dvar), 40, con_inputDvarInactiveValueColor);
     conDrawInputGlob.y += conDrawInputGlob.fontHeight;
     conDrawInputGlob.y += conDrawInputGlob.fontHeight;
     conDrawInputGlob.x = conDrawInputGlob.leftX;
-    Dvar_DomainToString_GetLines(dvar->type, dvar->domain, dvarInfo, sizeof(dvarInfo), &infoLineCount);
-    ConDrawInput_Box(infoLineCount + 1, con_inputHintBoxColor->current.vector);
+    Dvar_DomainToString_GetLines(dvar->type, dvar->domain, dvarInfo, sizeof(dvarInfo), &lineCount);
+    ConDrawInput_Box(lineCount + 1, con_inputHintBoxColor->current.vector);
     ConDrawInput_Text(dvarInfo, con_inputDvarInfoColor);
     conDrawInputGlob.y += conDrawInputGlob.fontHeight;
     conDrawInputGlob.x = conDrawInputGlob.leftX;

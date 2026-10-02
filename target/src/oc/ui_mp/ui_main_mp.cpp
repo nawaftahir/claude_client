@@ -1014,41 +1014,34 @@ const char *UI_SafeTranslateString(const char *reference)
 #ifndef __EMSCRIPTEN__
 static void UI_AddServerToFavoritesList(const char *name, const char *address)
 {
-    const char *message;
-    const char *dvarMessage;
-    int addResult;
+    int res;
 
-    if (!name[0]) {
-        message = UI_SafeTranslateString("EXE_FAVORITENAMEEMPTY");
-        Com_Printf("%s\n", message);
+    if (strlen(name) == 0) {
+        Com_Printf("%s\n", UI_SafeTranslateString("EXE_FAVORITENAMEEMPTY"));
         Dvar_SetStringByName("ui_favorite_message", "@EXE_FAVORITENAMEEMPTY");
         return;
     }
 
-    if (!address[0]) {
-        message = UI_SafeTranslateString("EXE_FAVORITEADDRESSEMPTY");
-        Com_Printf("%s\n", message);
+    if (strlen(address) == 0) {
+        Com_Printf("%s\n", UI_SafeTranslateString("EXE_FAVORITEADDRESSEMPTY"));
         Dvar_SetStringByName("ui_favorite_message", "@EXE_FAVORITEADDRESSEMPTY");
         return;
     }
 
-    addResult = LAN_AddServer(2, name, address);
-    if (addResult == 0) {
-        message = UI_SafeTranslateString("EXE_FAVORITEINLIST");
-        dvarMessage = "@EXE_FAVORITEINLIST";
-    } else if (addResult == -1) {
-        message = UI_SafeTranslateString("EXE_FAVORITELISTFULL");
-        dvarMessage = "@EXE_FAVORITELISTFULL";
-    } else if (addResult == -2) {
-        message = UI_SafeTranslateString("EXE_BADSERVERADDRESS");
-        dvarMessage = "@EXE_BADSERVERADDRESS";
+    res = LAN_AddServer(2, name, address);
+    if (res == 0) {
+        Com_Printf("%s\n", UI_SafeTranslateString("EXE_FAVORITEINLIST"));
+        Dvar_SetStringByName("ui_favorite_message", "@EXE_FAVORITEINLIST");
+    } else if (res == -1) {
+        Com_Printf("%s\n", UI_SafeTranslateString("EXE_FAVORITELISTFULL"));
+        Dvar_SetStringByName("ui_favorite_message", "@EXE_FAVORITELISTFULL");
+    } else if (res == -2) {
+        Com_Printf("%s\n", UI_SafeTranslateString("EXE_BADSERVERADDRESS"));
+        Dvar_SetStringByName("ui_favorite_message", "@EXE_BADSERVERADDRESS");
     } else {
-        message = UI_SafeTranslateString("EXE_FAVORITEADDED");
-        dvarMessage = "@EXE_FAVORITEADDED";
+        Com_Printf(va("%s\n", UI_SafeTranslateString("EXE_FAVORITEADDED")), address);
+        Dvar_SetStringByName("ui_favorite_message", "@EXE_FAVORITEADDED");
     }
-
-    Com_Printf("%s\n", message);
-    Dvar_SetStringByName("ui_favorite_message", dvarMessage);
 }
 #endif
 
@@ -1579,6 +1572,7 @@ qboolean UI_SetActiveMenu(int menu)
 {
     menuDef_t *pFocus;
     const char *errorMsg;
+    const char *newMenu;
 
     if (Menu_Count(&uiInfo->uiDC) <= 0)
         return 0;
@@ -1642,7 +1636,8 @@ qboolean UI_SetActiveMenu(int menu)
         pFocus = Menu_GetFocused(&uiInfo->uiDC);
         if (pFocus && uiInfo->currentMenuType != UIMENU_SCRIPT_POPUP && uiInfo->currentMenuType != UIMENU_SCRIPT_POPUP_NO_MOUSE)
             return 0;
-        if (pFocus && !I_stricmp(pFocus->window.name, legacyHacks->ui_newScriptMenu))
+        newMenu = legacyHacks->ui_newScriptMenu;
+        if (pFocus && !I_stricmp(pFocus->window.name, newMenu))
             return 1;
         uiInfo->currentMenuType = UIMENU_SCRIPT_POPUP;
         if (menu == UIMENU_SCRIPT_POPUP_NO_MOUSE) {
@@ -1651,7 +1646,7 @@ qboolean UI_SetActiveMenu(int menu)
         }
         Key_SetCatcher(8);
         Menus_CloseAll(&uiInfo->uiDC);
-        strcpy(legacyHacks->ui_scriptMenu, legacyHacks->ui_newScriptMenu);
+        strcpy(legacyHacks->ui_scriptMenu, newMenu);
         legacyHacks->ui_scriptMenuIndex = legacyHacks->ui_newScriptMenuIndex;
         legacyHacks->ui_newScriptMenu[0] = 0;
         legacyHacks->ui_newScriptMenuIndex = -1;
@@ -3125,10 +3120,7 @@ void UI_RunMenuScript(const char **args)
             const char *mapName = *(const char **)((byte *)&sharedUiInfo.mapList[0].mapLoadName + offset * 4);
             Cbuf_ExecuteText(2, va("wait ; wait ; map %s\n", mapName));
         }
-        return;
-    }
-
-    if (I_stricmp(name, "resetDefaults") == 0) {
+    } else if (I_stricmp(name, "resetDefaults") == 0) {
         Cbuf_ExecuteText(0, "dvar_restart\n");
         Cbuf_ExecuteText(0, "exec default_mp.cfg\n");
         Cbuf_ExecuteText(0, "exec language.cfg\n");
@@ -3137,10 +3129,7 @@ void UI_RunMenuScript(const char **args)
         Dvar_SetBoolByName("com_introPlayed", 1);
         Dvar_SetBoolByName("com_recommendedSet", 1);
         Cbuf_ExecuteText(2, "vid_restart\n");
-        return;
-    }
-
-    if (I_stricmp(name, "getCDKey") == 0) {
+    } else if (I_stricmp(name, "getCDKey") == 0) {
         CLUI_GetCDKey(buff, 0x11, buff2, 5);
         Dvar_SetStringByName("cdkey1", "");
         Dvar_SetStringByName("cdkey2", "");
@@ -3166,10 +3155,7 @@ void UI_RunMenuScript(const char **args)
                 Dvar_SetStringByName("cdkey5", out);
             }
         }
-        return;
-    }
-
-    if (I_stricmp(name, "verifyCDKey") == 0) {
+    } else if (I_stricmp(name, "verifyCDKey") == 0) {
         buff[0] = '\0';
         I_strncat(buff, 0x400, Dvar_GetVariantString("cdkey1"));
         I_strncat(buff, 0x400, Dvar_GetVariantString("cdkey2"));
@@ -3183,127 +3169,64 @@ void UI_RunMenuScript(const char **args)
         } else {
             Dvar_SetStringByName("ui_cdkeyvalid", UI_SafeTranslateString("EXE_CDKEYINVALID"));
         }
-        return;
-    }
-
-    if (I_stricmp(name, "loadArenas") == 0) {
+    } else if (I_stricmp(name, "loadArenas") == 0) {
         UI_LoadArenas();
         UI_SelectCurrentGameType();
         UI_MapCountByGameType();
         Menu_SetFeederSelection(&uiInfo->uiDC, 0, 4, 0, "createserver_maps");
         UI_SelectCurrentMap();
-        return;
-    }
-
-    if (I_stricmp(name, "loadGameInfo") == 0) {
+    } else if (I_stricmp(name, "loadGameInfo") == 0) {
         UI_GetGameTypesList();
-        return;
-    }
-
-    if (I_stricmp(name, "LoadMods") == 0) {
+    } else if (I_stricmp(name, "LoadMods") == 0) {
         UI_LoadMods();
-        return;
-    }
-
-    if (I_stricmp(name, "voteTypeMap") == 0) {
+    } else if (I_stricmp(name, "voteTypeMap") == 0) {
         Cbuf_ExecuteText(2, va("callvote typemap %s %s\n", sharedUiInfo.gameTypes[ui_netGameType->current.integer].gameType,
                                sharedUiInfo.mapList[ui_currentNetMap->current.integer].mapLoadName));
-        return;
-    }
-
-    if (I_stricmp(name, "voteMap") == 0) {
+    } else if (I_stricmp(name, "voteMap") == 0) {
         if (ui_currentNetMap->current.integer >= 0 && ui_currentNetMap->current.integer < sharedUiInfo.mapCount)
             Cbuf_ExecuteText(2, va("callvote map %s\n", sharedUiInfo.mapList[ui_currentNetMap->current.integer].mapLoadName));
-        return;
-    }
-
-    if (I_stricmp(name, "voteGame") == 0) {
+    } else if (I_stricmp(name, "voteGame") == 0) {
         const char *gtName = sharedUiInfo.gameTypes[(ui_netGameType)->current.integer].gameType;
         Cbuf_ExecuteText(2, va("callvote g_gametype %s\n", gtName));
-        return;
-    }
-
-    if (I_stricmp(name, "saveControls") == 0) {
+    } else if (I_stricmp(name, "saveControls") == 0) {
         Controls_SetConfig(1);
-        return;
-    }
-
-    if (I_stricmp(name, "loadControls") == 0) {
+    } else if (I_stricmp(name, "loadControls") == 0) {
         Controls_GetConfig();
-        return;
-    }
-
-    if (I_stricmp(name, "clearError") == 0) {
+    } else if (I_stricmp(name, "clearError") == 0) {
         Dvar_SetStringByName("com_errorMessage", "");
         Dvar_SetBoolByName("com_isNotice", 0);
-        return;
-    }
-
-    if (I_stricmp(name, "RefreshServers") == 0) {
+    } else if (I_stricmp(name, "RefreshServers") == 0) {
         UI_StartServerRefresh(1);
         UI_BuildServerDisplayList(1);
-        return;
-    }
-
-    if (I_stricmp(name, "RefreshFilter") == 0) {
+    } else if (I_stricmp(name, "RefreshFilter") == 0) {
         UI_StartServerRefresh(0);
         UI_BuildServerDisplayList(1);
-        return;
-    }
-
-    if (I_stricmp(name, "addPlayerProfiles") == 0) {
+    } else if (I_stricmp(name, "addPlayerProfiles") == 0) {
         UI_AddPlayerProfiles();
-        return;
-    }
-
-    if (I_stricmp(name, "sortPlayerProfiles") == 0) {
+    } else if (I_stricmp(name, "sortPlayerProfiles") == 0) {
         uiInfo->playerProfileStatus.sortDir = !uiInfo->playerProfileStatus.sortDir;
         UI_SortPlayerProfiles(0);
-        return;
-    }
-
-    if (I_stricmp(name, "selectActivePlayerProfile") == 0) {
+    } else if (I_stricmp(name, "selectActivePlayerProfile") == 0) {
         UI_SelectActivePlayerProfile();
-        return;
-    }
-
-    if (I_stricmp(name, "createPlayerProfile") == 0) {
+    } else if (I_stricmp(name, "createPlayerProfile") == 0) {
         UI_CreatePlayerProfile();
-        return;
-    }
-
-    if (I_stricmp(name, "deletePlayerProfile") == 0) {
+    } else if (I_stricmp(name, "deletePlayerProfile") == 0) {
         UI_DeletePlayerProfile();
-        return;
-    }
-
-    if (I_stricmp(name, "loadPlayerProfile") == 0) {
+    } else if (I_stricmp(name, "loadPlayerProfile") == 0) {
         UI_LoadPlayerProfile();
-        return;
-    }
-
-    if (I_stricmp(name, "LoadMovies") == 0) {
+    } else if (I_stricmp(name, "LoadMovies") == 0) {
         UI_LoadMovies();
-        return;
-    }
-
-    if (I_stricmp(name, "playMovie") == 0) {
+    } else if (I_stricmp(name, "playMovie") == 0) {
         int cinHandle = sharedUiInfo.previewMovie;
         if (cinHandle >= 0)
             CIN_StopCinematic(cinHandle);
         Cbuf_ExecuteText(2, va("cinematic %s 2\n",
                                sharedUiInfo.movieList[sharedUiInfo.movieIndex]));
-        return;
-    }
-
-    if (I_stricmp(name, "RunMod") == 0) {
+    } else if (I_stricmp(name, "RunMod") == 0) {
         Dvar_SetStringByName("fs_game",
                              *(const char **)((byte *)&sharedUiInfo + 25972 + sharedUiInfo.modIndex * 8));
         Cbuf_ExecuteText(2, "vid_restart;");
-        return;
-    }
-
-    if (I_stricmp(name, "closeJoin") == 0) {
+    } else if (I_stricmp(name, "closeJoin") == 0) {
         if (sharedUiInfo.serverStatus.refreshActive) {
             UI_StopServerRefresh();
             sharedUiInfo.serverStatus.nextDisplayRefresh = 0;
@@ -3314,18 +3237,12 @@ void UI_RunMenuScript(const char **args)
             Menus_CloseByName(&uiInfo->uiDC, "joinserver");
             Menus_OpenByName(&uiInfo->uiDC, "main");
         }
-        return;
-    }
-
-    if (I_stricmp(name, "StopRefresh") == 0) {
+    } else if (I_stricmp(name, "StopRefresh") == 0) {
         UI_StopServerRefresh();
         sharedUiInfo.serverStatus.nextDisplayRefresh = 0;
         sharedUiInfo.nextServerStatusRefresh = 0;
         uiInfo->nextFindPlayerRefresh = 0;
-        return;
-    }
-
-    if (I_stricmp(name, "ServerStatus") == 0) {
+    } else if (I_stricmp(name, "ServerStatus") == 0) {
 
         UI_UpdateServerCount();
 
@@ -3345,19 +3262,13 @@ void UI_RunMenuScript(const char **args)
             UI_BuildServerStatus(1);
 #endif
         }
-        return;
-    }
-
-    if (I_stricmp(name, "UpdateFilter") == 0) {
+    } else if (I_stricmp(name, "UpdateFilter") == 0) {
         if ((ui_netSource)->current.integer == 0) {
             UI_StartServerRefresh(1);
         }
         UI_BuildServerDisplayList(1);
         UI_FeederSelection(2.0f, 0);
-        return;
-    }
-
-    if (I_stricmp(name, "JoinServer") == 0) {
+    } else if (I_stricmp(name, "JoinServer") == 0) {
         Dvar_SetBoolByName("cg_thirdPerson", 0);
 
         UI_UpdateServerCount();
@@ -3372,35 +3283,23 @@ void UI_RunMenuScript(const char **args)
                                        buff, 0x400);
             Cbuf_ExecuteText(2, va("connect %s\n", buff));
         }
-        return;
-    }
-
-    if (I_stricmp(name, "Quit") == 0) {
+    } else if (I_stricmp(name, "Quit") == 0) {
         Cbuf_ExecuteText(0, "quit");
-        return;
-    }
-
-    if (I_stricmp(name, "Controls") == 0) {
+    } else if (I_stricmp(name, "Controls") == 0) {
         Dvar_SetIntByName("cl_paused", 1);
         Key_SetCatcher(8);
         Menus_CloseAll(&uiInfo->uiDC);
         Menus_OpenByName(&uiInfo->uiDC, "setup_menu2");
-        return;
-    }
-
-    if (I_stricmp(name, "Leave") == 0) {
+    } else if (I_stricmp(name, "Leave") == 0) {
         Cbuf_ExecuteText(2, "disconnect\n");
         Key_SetCatcher(8);
         Menus_CloseAll(&uiInfo->uiDC);
         Menus_OpenByName(&uiInfo->uiDC, "main");
-        return;
-    }
-
-    if (I_stricmp(name, "ServerSort") == 0) {
+    } else if (I_stricmp(name, "ServerSort") == 0) {
         if (!Int_Parse(args, &sortColumn))
             return;
 
-        if (sharedUiInfo.serverStatus.sortKey == sortColumn) {
+        if (sortColumn == sharedUiInfo.serverStatus.sortKey) {
             int dir = sharedUiInfo.serverStatus.sortDir;
             sharedUiInfo.serverStatus.sortDir = !dir;
         }
@@ -3408,42 +3307,26 @@ void UI_RunMenuScript(const char **args)
         sharedUiInfo.serverStatus.sortKey = sortColumn;
         qsort(sharedUiInfo.serverStatus.displayServers,
               sharedUiInfo.serverStatus.numDisplayServers, 4, UI_ServersQsortCompare);
-        return;
-    }
-
-    if (I_stricmp(name, "nextSkirmish") == 0)
-        return;
-
-    if (I_stricmp(name, "SkirmishStart") == 0)
-        return;
-
-    if (I_stricmp(name, "closeingame") == 0) {
+    } else if (I_stricmp(name, "nextSkirmish") == 0) {
+    } else if (I_stricmp(name, "SkirmishStart") == 0) {
+    } else if (I_stricmp(name, "closeingame") == 0) {
         Key_SetCatcher(Key_GetCatcher() & ~8);
         Key_ClearStates();
         Dvar_SetIntByName("cl_paused", 0);
         Menus_CloseAll(&uiInfo->uiDC);
-        return;
-    }
-
-    if (I_stricmp(name, "voteKick") == 0) {
+    } else if (I_stricmp(name, "voteKick") == 0) {
         int sel = uiInfo->playerIndex;
         if (sel < 0 || sel >= sharedUiInfo.playerCount)
             return;
         Cbuf_ExecuteText(2, va("callvote kick \"%s\"\n",
                                sharedUiInfo.playerNames[sel]));
-        return;
-    }
-
-    if (I_stricmp(name, "voteTempBan") == 0) {
+    } else if (I_stricmp(name, "voteTempBan") == 0) {
         int sel = uiInfo->playerIndex;
         if (sel < 0 || sel >= sharedUiInfo.playerCount)
             return;
         Cbuf_ExecuteText(2, va("callvote tempBanUser \"%s\"\n",
                                sharedUiInfo.playerNames[sel]));
-        return;
-    }
-
-    if (I_stricmp(name, "addFavorite") == 0) {
+    } else if (I_stricmp(name, "addFavorite") == 0) {
         if ((ui_netSource)->current.integer == 2)
             return;
 
@@ -3464,10 +3347,7 @@ void UI_RunMenuScript(const char **args)
             }
             UI_AddServerToFavoritesList(hostName, out);
         }
-        return;
-    }
-
-    if (I_stricmp(name, "deleteFavorite") == 0) {
+    } else if (I_stricmp(name, "deleteFavorite") == 0) {
         if ((ui_netSource)->current.integer != 2)
             return;
 
@@ -3484,10 +3364,7 @@ void UI_RunMenuScript(const char **args)
         I_strncpyz(out, Info_ValueForKey(buff, "addr"), 0x20);
         if (strlen(out) > 0)
             LAN_RemoveServer(2, out);
-        return;
-    }
-
-    if (I_stricmp(name, "createFavorite") == 0) {
+    } else if (I_stricmp(name, "createFavorite") == 0) {
         if ((ui_netSource)->current.integer != 2)
             return;
 
@@ -3496,59 +3373,34 @@ void UI_RunMenuScript(const char **args)
         I_strncpyz(out, Dvar_GetVariantString("ui_favoriteName"), 0x20);
         I_strncpyz(hostName, Dvar_GetVariantString("ui_favoriteAddress"), 0x20);
         UI_AddServerToFavoritesList(out, hostName);
-        return;
-    }
-
-    if (I_stricmp(name, "update") == 0) {
+    } else if (I_stricmp(name, "update") == 0) {
         if (String_Parse(args, name2, 0x400))
             UI_Update(name2);
-        return;
-    }
-
-    if (I_stricmp(name, "startSingleplayer") == 0) {
+    } else if (I_stricmp(name, "startSingleplayer") == 0) {
         Cbuf_ExecuteText(2, "startSingleplayer\n");
-        return;
-    }
-
-    if (I_stricmp(name, "getLanguage") == 0) {
+    } else if (I_stricmp(name, "getLanguage") == 0) {
         Dvar_SetIntByName("ui_language", Dvar_GetInt("loc_language"));
         UI_VerifyLanguage();
-        return;
-    }
-
-    if (I_stricmp(name, "verifyLanguage") == 0) {
+    } else if (I_stricmp(name, "verifyLanguage") == 0) {
         UI_VerifyLanguage();
-        return;
-    }
-
-    if (I_stricmp(name, "updateLanguage") == 0) {
+    } else if (I_stricmp(name, "updateLanguage") == 0) {
         Dvar_SetIntByName("loc_language", Dvar_GetInt("ui_language"));
         UI_VerifyLanguage();
         Cbuf_ExecuteText(2, "vid_restart\n");
-        return;
-    }
-
-    if (I_stricmp(name, "mutePlayer") == 0) {
+    } else if (I_stricmp(name, "mutePlayer") == 0) {
         int sel = uiInfo->playerIndex;
         if (sel < 0 || sel >= sharedUiInfo.playerCount)
             return;
         CL_MutePlayer(sharedUiInfo.playerClientNums[sel]);
-        return;
-    }
-
-    if (I_stricmp(name, "openMenuOnDvar") == 0 || I_stricmp(name, "openMenuOnDvarNot") == 0) {
+    } else if (I_stricmp(name, "openMenuOnDvar") == 0 || I_stricmp(name, "openMenuOnDvarNot") == 0) {
         if (UI_GetOpenOrCloseMenuOnDvarArgs(args, name, dvarName, testValue, menuName))
             UI_OpenMenuOnDvar(name, menuName, dvarName, testValue);
-        return;
-    }
-
-    if (I_stricmp(name, "closeMenuOnDvar") == 0 || I_stricmp(name, "closeMenuOnDvarNot") == 0) {
+    } else if (I_stricmp(name, "closeMenuOnDvar") == 0 || I_stricmp(name, "closeMenuOnDvarNot") == 0) {
         if (UI_GetOpenOrCloseMenuOnDvarArgs(args, name, dvarName, testValue, menuName))
             UI_CloseMenuOnDvar(name, menuName, dvarName, testValue);
-        return;
+    } else {
+        Com_Printf("unknown UI script %s\n", name);
     }
-
-    Com_Printf("unknown UI script %s\n", name);
 }
 
 #ifndef __EMSCRIPTEN__

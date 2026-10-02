@@ -176,6 +176,7 @@ void CG_SpawnTracer(vec_t *pstart, vec_t *pend);
 void CG_WhizbySound(vec_t *vStart, vec_t *vEnd);
 void CG_BulletHitClientEvent(int sourceEntityNum, vec_t *position, int surfType, int event);
 void CG_AddPlayerWeapon(GfxEntity *parent, playerState_t *ps, centity_t *cent, qboolean bDrawGun);
+static void WeaponFlash(int dobjHandle, int weaponNum, int bViewFlash, const vec_t *origin, unsigned int flashTag);
 void CG_AddViewWeapon(playerState_t *ps);
 void CG_BulletHitEvent(int sourceEntityNum, vec_t *position, vec_t *normal, vec_t *reflected, int surfType, int event);
 void CG_DrawTracer(vec_t *start, vec_t *finish);
@@ -331,41 +332,43 @@ void CG_HoldBreathInit(void)
     cg->holdBreathFrac = 0.0f;
 }
 
+// Name from CoD4; original CoD2 name unknown.
+static void ParseWeaponDefFiles(const char **ppszFiles, int iNumFiles)
+{
+    const char *name;
+    int i;
+
+    for (i = 0; i < iNumFiles; i++) {
+        name = ppszFiles[i];
+        if (BG_GetWeaponIndexForName(name, 0) != i + 1)
+            Com_Error(ERR_DROP, "Weapon index mismatch for '%s'", name);
+    }
+}
+
 void CG_SetupWeaponDef(void)
 {
     char szString[0x2000];
     char *pszFiles[0x7f];
     char *scan;
     int iNumFiles;
-    int i;
 
     memset(pszFiles, 0, sizeof(pszFiles));
+    iNumFiles = 0;
     strcpy(szString, CL_GetConfigString(7));
-
-    pszFiles[0] = szString;
-    iNumFiles = 1;
     scan = szString;
+    pszFiles[iNumFiles++] = szString;
 
     while (*scan) {
-        if (*scan != ' ') {
+        if (*scan == ' ') {
+            *scan++ = '\0';
+            if (*scan && *scan != ' ')
+                pszFiles[iNumFiles++] = scan;
+        } else {
             scan++;
-            continue;
         }
-
-        *scan++ = '\0';
-        if (!*scan)
-            break;
-
-        if (*scan != ' ')
-            pszFiles[iNumFiles++] = scan;
     }
 
-    for (i = 0; i < iNumFiles; i++) {
-        const char *name = pszFiles[i];
-
-        if (BG_GetWeaponIndexForName(name, 0) != i + 1)
-            Com_Error(ERR_DROP, "Weapon index mismatch for '%s'", name);
-    }
+    ParseWeaponDefFiles((const char **)pszFiles, iNumFiles);
 }
 
 static inline __attribute__((always_inline)) void CG_SelectWeaponIndex_core(int weaponIndex)
@@ -490,58 +493,6 @@ static qboolean CG_IsLocalClientEntity(cg_t *cg, entityState_t *ent)
     return (snap->ps.pm_flags & 0xc00000) && ent->number == snap->ps.clientNum;
 }
 
-static inline __attribute__((always_inline)) void CG_GetFireWeaponSoundOrigin(centity_t *cent, entityState_t *ent, weaponInfo_t *weapInfo, vec_t *origin)
-{
-    unsigned int tagFlash;
-
-    tagFlash = scr_const.tag_flash;
-
-    if (CG_IsLocalClientEntity(cg, ent)) {
-        struct DObj_s *viewModel = weapInfo->viewModelDObj;
-
-        if (viewModel && CG_DObjGetViewModelTagPos(viewModel, tagFlash, origin))
-            return;
-    } else {
-        struct DObj_s *obj = (DObj_s *)(Com_GetClientDObj(ent->number, cent->localClientNum));
-
-        if (obj && CG_DObjGetWorldTagPos(cent, obj, tagFlash, origin))
-            return;
-    }
-
-    BG_EvaluateTrajectory(&ent->pos, cg->time, origin);
-}
-
-static inline __attribute__((always_inline)) void CG_PlayFireWeaponEffect(centity_t *cent, entityState_t *ent, int barrel)
-{
-    snapshot_t *snap;
-    weaponInfo_t *weapInfo;
-    void *fx;
-    unsigned int flashTag;
-    int bolt[2];
-    qboolean localTurret;
-
-    if (ent->eType != 9)
-        return;
-
-    snap = cg->nextSnap;
-    localTurret = 0;
-    if (!cg->renderingThirdPerson && (snap->ps.eFlags & 0x300) && snap->ps.viewlocked_entNum == ent->number)
-        localTurret = 1;
-
-    weapInfo = &cg_weaponsArray[ent->weapon];
-    fx = (void *)(localTurret ? weapInfo->viewFlashEffect : weapInfo->worldFlashEffect);
-    if (!fx)
-        return;
-
-    flashTag = *s_barrelTags[barrel];
-    bolt[0] = ent->number;
-    bolt[1] = FX_GetBoneIndex(ent->number, flashTag);
-    if (bolt[1] < 0)
-        return;
-
-    FX_PlayEntityEffect( (EffectTemplate *)(fx), (vec_t *)&((centity_t *)cent)->lerpOrigin[0], 0, (const FxBoltInfo *)(bolt));
-}
-
 void CG_FireWeapon(centity_t *cent, int event, int barrel)
 {
     entityState_t *ent;
@@ -550,14 +501,20 @@ void CG_FireWeapon(centity_t *cent, int event, int barrel)
     snd_alias_list_t *fireSound;
     vec3_t origin;
     int duration;
+    qboolean localTurret;
+    struct DObj_s *viewModel;
+    struct DObj_s *obj;
+    int hasTag;
 
     ent = &cent->nextState;
     if (!ent->weapon)
         return;
 
-    if (ent->weapon > BG_GetNumWeapons())
+    if (ent->weapon > BG_GetNumWeapons()) {
         Com_Error(ERR_DROP, "\x15"
                      "CG_FireWeapon: ent->weapon > BG_GetNumWeapons()");
+        return;
+    }
 
     weapInfo = &cg_weaponsArray[ent->weapon];
     BG_GetWeaponDef(ent->weapon);
@@ -566,7 +523,11 @@ void CG_FireWeapon(centity_t *cent, int event, int barrel)
     if (CG_IsLocalClientEntity(cg, ent))
         BG_WeaponFireRecoil(&cg->predictedPlayerState, cg->vGunSpeed, cg->kickAVel);
 
-    CG_PlayFireWeaponEffect(cent, ent, barrel);
+    localTurret = 0;
+    if (ent->eType == 9 && !cg->renderingThirdPerson && (cg->nextSnap->ps.eFlags & 0x300) && cg->nextSnap->ps.viewlocked_entNum == ent->number)
+        localTurret = 1;
+    if (ent->eType == 9)
+        WeaponFlash(ent->number, ent->weapon, localTurret, cent->lerpOrigin, *s_barrelTags[barrel]);
 
     fireSound = weapInfo->flashSound;
     if (weapInfo->flashSoundPlayer && CG_IsLocalClientEntity(cg, ent))
@@ -580,9 +541,17 @@ void CG_FireWeapon(centity_t *cent, int event, int barrel)
     }
 
     if (fireSound) {
-        CG_GetFireWeaponSoundOrigin(cent, ent, weapInfo, origin);
+        if (CG_IsLocalClientEntity(cg, ent)) {
+            viewModel = weapInfo->viewModelDObj;
+            hasTag = viewModel && CG_DObjGetViewModelTagPos(viewModel, scr_const.tag_flash, origin);
+        } else {
+            obj = (DObj_s *)(Com_GetClientDObj(ent->number, cent->localClientNum));
+            hasTag = obj && CG_DObjGetWorldTagPos(cent, obj, scr_const.tag_flash, origin);
+        }
+        if (!hasTag)
+            BG_EvaluateTrajectory(&ent->pos, cg->time, origin);
         duration = CG_PlaySoundAlias(ent->number, origin, fireSound);
-        if (ent->eType == 1)
+        if (cent->nextState.eType == 1)
             CG_CompassAddWeaponPingInfo(cent, origin, duration);
     }
 
@@ -888,52 +857,56 @@ void CG_RegisterItems(void)
     }
 }
 
+// Name from CoD4; original CoD2 name unknown.
+static void ChangeViewmodelDobj(int weaponIdx, const char *handModel)
+{
+    weaponInfo_t *weapInfo;
+    WeaponDef *weapDef;
+    struct XAnimTree_s *pAnimTree;
+    DObjModel_s dobjModels[2];
+    int dobjHandle;
+    char modelFile[64];
+
+    if (!weaponIdx)
+        return;
+
+    weapDef = (WeaponDef *)BG_GetWeaponDef(weaponIdx);
+    weapInfo = &cg_weaponsArray[weaponIdx];
+    if (!weapInfo->viewModelDObj)
+        return;
+
+    if (!weapDef->szGunXModel[0])
+        return;
+
+    pAnimTree = DObjGetTree(weapInfo->viewModelDObj);
+    dobjHandle = weaponIdx + 0x400;
+    Com_SafeClientDObjFree(dobjHandle);
+
+    dobjModels[0].boneName = 0;
+    dobjModels[0].ignoreCollision = 0;
+    dobjModels[1].boneName = "tag_weapon";
+    dobjModels[1].ignoreCollision = 0;
+    dobjModels[0].model = CL_RegisterModel(handModel);
+
+    sprintf(modelFile, "%s%s", "xmodel/", weapDef->szGunXModel);
+    dobjModels[1].model = CL_RegisterModel(modelFile);
+
+    if (XModelBad(dobjModels[0].model) || XModelBad(dobjModels[1].model))
+        CG_Weapons_SetToDefault(weaponIdx, dobjModels);
+
+    Com_ClientDObjCreate(dobjModels, 2, pAnimTree, dobjHandle);
+    weapInfo->viewModelDObj = (DObj_s *)(Com_GetClientDObj(dobjHandle, 0));
+    I_strncpyz(weapInfo->handModel, handModel, 0x40);
+    DObjUpdateClientInfo(weapInfo->viewModelDObj, 0.05f);
+}
+
 void CG_UpdateHandViewmodels(const char *handModel)
 {
     int weaponIdx;
 
     for (weaponIdx = 1; weaponIdx <= BG_GetNumWeapons(); weaponIdx++) {
-        weaponInfo_t *weapInfo;
-        WeaponDef *weapDef;
-        struct XAnimTree_s *pAnimTree;
-        DObjModel_s dobjModels[2];
-        int dobjHandle;
-        char modelFile[64];
-
-        weapInfo = &cg_weaponsArray[weaponIdx];
-        if (!strcmp(weapInfo->handModel, handModel))
-            continue;
-
-        if (!weaponIdx)
-            continue;
-
-        weapDef = (WeaponDef *)BG_GetWeaponDef(weaponIdx);
-        if (!weapInfo->viewModelDObj)
-            continue;
-
-        if (!weapDef->szGunXModel[0])
-            continue;
-
-        pAnimTree = DObjGetTree(weapInfo->viewModelDObj);
-        dobjHandle = weaponIdx + 0x400;
-        Com_SafeClientDObjFree(dobjHandle);
-
-        dobjModels[0].boneName = 0;
-        dobjModels[0].ignoreCollision = 0;
-        dobjModels[1].boneName = "tag_weapon";
-        dobjModels[1].ignoreCollision = 0;
-        dobjModels[0].model = CL_RegisterModel(handModel);
-
-        sprintf(modelFile, "%s%s", "xmodel/", weapDef->szGunXModel);
-        dobjModels[1].model = CL_RegisterModel(modelFile);
-
-        if (XModelBad(dobjModels[0].model) || XModelBad(dobjModels[1].model))
-            CG_Weapons_SetToDefault(weaponIdx, dobjModels);
-
-        Com_ClientDObjCreate(dobjModels, 2, pAnimTree, dobjHandle);
-        weapInfo->viewModelDObj = (DObj_s *)(Com_GetClientDObj(dobjHandle, 0));
-        I_strncpyz(weapInfo->handModel, handModel, 0x40);
-        DObjUpdateClientInfo(weapInfo->viewModelDObj, 0.05f);
+        if (strcmp(cg_weaponsArray[weaponIdx].handModel, handModel))
+            ChangeViewmodelDobj(weaponIdx, handModel);
     }
 }
 
@@ -1067,6 +1040,28 @@ void CG_BulletHitClientEvent(int sourceEntityNum, vec_t *position, int surfType,
     CG_WhizbySound(muzzle, position);
 }
 
+// Name from CoD4; original CoD2 name unknown.
+static void WeaponFlash(int dobjHandle, int weaponNum, int bViewFlash, const vec_t *origin, unsigned int flashTag)
+{
+    void *fx;
+    int bolt[2];
+
+    if (bViewFlash)
+        fx = cg_weaponsArray[weaponNum].viewFlashEffect;
+    else
+        fx = cg_weaponsArray[weaponNum].worldFlashEffect;
+
+    if (!fx)
+        return;
+
+    bolt[0] = dobjHandle;
+    bolt[1] = FX_GetBoneIndex(dobjHandle, flashTag);
+    if (bolt[1] < 0)
+        return;
+
+    FX_PlayEntityEffect( (EffectTemplate *)(fx), origin, 0, (const FxBoltInfo *)(bolt));
+}
+
 void CG_AddPlayerWeapon(GfxEntity *parent, playerState_t *ps, centity_t *cent, qboolean bDrawGun)
 {
     entityState_t *ent;
@@ -1179,30 +1174,10 @@ void CG_AddPlayerWeapon(GfxEntity *parent, playerState_t *ps, centity_t *cent, q
     if (!bDrawGun)
         return;
 
-    {
-        int bolt[2];
-        void *fx;
-        const vec_t *origin;
-
-        if (bViewModel) {
-            fx = weapInfo->viewFlashEffect;
-            origin = cg->viewModelOrigin;
-            bolt[0] = CG_WeaponDObjHandle(weaponNum);
-        } else {
-            fx = weapInfo->worldFlashEffect;
-            origin = cent->lerpOrigin;
-            bolt[0] = ent->number;
-        }
-
-        if (!fx)
-            return;
-
-        bolt[1] = FX_GetBoneIndex(bolt[0], *s_barrelTags[0]);
-        if (bolt[1] < 0)
-            return;
-
-        FX_PlayEntityEffect( (EffectTemplate *)(fx), origin, 0, (const FxBoltInfo *)(bolt));
-    }
+    if (bViewModel)
+        WeaponFlash(CG_WeaponDObjHandle(weaponNum), weaponNum, 1, cg->viewModelOrigin, scr_const.tag_flash);
+    else
+        WeaponFlash(ent->number, weaponNum, 0, cent->lerpOrigin, scr_const.tag_flash);
 }
 
 void CG_AddViewWeapon(playerState_t *ps)

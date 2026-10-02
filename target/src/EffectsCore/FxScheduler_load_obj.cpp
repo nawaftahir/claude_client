@@ -169,8 +169,6 @@ void FX_CreateDefaultEffect()
 		Com_Error(ERR_DROP, "^1ERROR: could not load default effect file '%s'", "misc/missing_fx");
 }
 
-static inline void FX_StripExtensionLower( const char *in, char *out );
-
 FxEffectDef *FX_RegisterEffect( const char *name )
 {
 	FxEffectDef *fx;
@@ -178,10 +176,10 @@ FxEffectDef *FX_RegisterEffect( const char *name )
 
 	if ( *name == '/' || *name == '\\' )
 		name++;
-	if ( !I_strnicmpInline(name, "fx/", 3) )
+	if ( !strnicmp(name, "fx/", 3) )
 	{
-		name += 3;
-		FX_StripExtensionLower(name, baseName);
+		Com_StripExtension(name + 3, baseName);
+		strlwr(baseName);
 		fx = FX_TryRegisterEffect(baseName);
 		if ( fx )
 			return fx;
@@ -348,8 +346,3 @@ void MediaHandles::AddEffect( FxEffectDef *fx )
 	AddHandle(item);
 }
 
-static inline void FX_StripExtensionLower( const char *in, char *out )
-{
-	Com_StripExtension(in, out);
-	strlwr(out);
-}

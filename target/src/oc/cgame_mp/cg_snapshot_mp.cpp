@@ -114,6 +114,20 @@ extern void XAnimSetTime(XAnimTree *tree, unsigned int animIndex, float time);
         ((int *)(v))[2] = 0; \
     } while (0)
 
+static inline void VectorClear(vec3_t v)
+{
+    v[0] = 0;
+    v[1] = 0;
+    v[2] = 0;
+}
+
+static inline void VectorCopy(const vec3_t a, vec3_t b)
+{
+    b[0] = a[0];
+    b[1] = a[1];
+    b[2] = a[2];
+}
+
 static void CG_ResetEntity(char *cent);
 void CG_SetNextSnap(snapshot_t *snap);
 void CG_SetInitialSnapshot(snapshot_t *snap);
@@ -150,9 +164,7 @@ static void CG_ResetEntity(char *centPtr)
     clientInfo_t *corpseInfo;
     XAnimTree_s *pXAnimTree;
 
-    cent->lightingOrigin[0] = 0;
-    cent->lightingOrigin[1] = 0;
-    cent->lightingOrigin[2] = 0;
+    VectorClear(cent->lightingOrigin);
     cent->currentState = cent->nextState;
     cent->bTrailMade = 0;
     cent->cullIn = 0;
@@ -170,9 +182,7 @@ static void CG_ResetEntity(char *centPtr)
         ci = &cg->bgs.clientinfo[cent->nextState.clientNum];
         ci->lerpMoveDir = cent->nextState.angles2[1];
         ci->lerpLean = cent->nextState.leanf;
-        ci->playerAngles[0] = cent->lerpAngles[0];
-        ci->playerAngles[1] = cent->lerpAngles[1];
-        ci->playerAngles[2] = cent->lerpAngles[2];
+        VectorCopy(cent->lerpAngles, ci->playerAngles);
         cent->lerpAngles[0] = 0;
         cent->lerpAngles[2] = 0;
         CG_ResetPlayerEntity(cent);
@@ -223,7 +233,6 @@ static void CG_ClearClientInfos_Inline(char *dest, char *src, char *tagBase, int
 
 static void CG_TransitionSnapshot(void)
 {
-    snapshot_t *snap;
     centity_t *cent;
     int i;
 
@@ -242,16 +251,15 @@ static void CG_TransitionSnapshot(void)
         }
     }
 
-    snap = cg->nextSnap;
-    cg->snap = snap;
+    cg->snap = cg->nextSnap;
 
-    if (snap->ps.pm_flags & 0xc00000) {
-        cent = &cg_entities[snap->ps.clientNum];
+    if (cg->snap->ps.pm_flags & 0xc00000) {
+        cent = &cg_entities[cg->snap->ps.clientNum];
         memcpy(&cent->currentState, &cent->nextState, sizeof(cent->currentState));
     }
 
-    for (i = 0; i < snap->numEntities; i++) {
-        cent = &cg_entities[snap->entities[i].number];
+    for (i = 0; i < cg->snap->numEntities; i++) {
+        cent = &cg_entities[cg->snap->entities[i].number];
         memcpy(&cent->currentState, &cent->nextState, sizeof(cent->currentState));
     }
 }
@@ -259,259 +267,161 @@ static void CG_TransitionSnapshot(void)
 // Original name unknown.
 static void CG_UpdateKillCam(void)
 {
-    snapshot_t *nextSnap;
+    centity_t *cent;
+    int corpseIndex;
+    XAnimTree *pXAnimTree;
+    unsigned int anim;
+    XAnim_s *anims;
     int i;
 
-    if (!cg->inKillCam) {
-        if (!cg->nextSnap->ps.deltaTime)
-            return;
-
+    if (!cg->inKillCam && cg->nextSnap->ps.deltaTime) {
         cg->inKillCam = 1;
         CG_SetEquippedOffHand(0);
         CG_PlaySmokeGrenadesAtTime(cg->time);
-        if (!cg->inKillCam)
-            return;
     }
-
-    if (cg->nextSnap->ps.deltaTime)
-        return;
-
-    cg->inKillCam = 0;
-    CG_PlaySmokeGrenadesAtTime(cg->time);
-
-    nextSnap = cg->nextSnap;
-    for (i = 0; i < nextSnap->numEntities; i++) {
-        centity_t *cent = &cg_entities[nextSnap->entities[i].number];
-        char *corpseCI;
-        XAnimTree *savedTree;
-        int animState;
-        void *anims;
-
-        if (cent->nextState.eType != 2)
-            continue;
-
-        corpseCI = (char *)cgs + cent->nextState.number * CI_STRIDE - 0x6bf0 + 4;
-        savedTree = *(XAnimTree **)(corpseCI + CI_PXANIMTREE);
-        animState = *(int *)(corpseCI + 0x390) & ~0x200;
-        anims = XAnimGetAnims(savedTree);
-
-        if (!animState)
-            continue;
-        if (XAnimIsLooped((const struct XAnim_s *)anims, animState))
-            continue;
-        if (XAnimGetNumChildren((const struct XAnim_s *)anims, animState) != 0)
-            continue;
-
-        XAnimSetTime(savedTree, animState, 1.0f);
-    }
-}
-
-void CG_SetNextSnap(snapshot_t *snap_param)
-{
-    char centInPrevSnapshot[1024];
-    char *snap = (char *)snap_param;
-    char *prevSnap;
-    int i;
-
-    memset(centInPrevSnapshot, 0, 0x400);
-
-    prevSnap = (char *)cg->nextSnap;
-
-    if (prevSnap) {
-        for (i = 0; i < ((snapshot_t *)prevSnap)->numEntities; i++) {
-            int entNum = ((snapshot_t *)prevSnap)->entities[i].number;
-
-            cg_entities[entNum].nextValid = 0;
-            centInPrevSnapshot[entNum] = 1;
-        }
-
-        {
-            int playerNum = ((snapshot_t *)prevSnap)->ps.clientNum;
-            char *playerEnt = (char *)&cg_entities[playerNum];
-            if (((centity_t *)playerEnt)->nextValid) {
-                ((centity_t *)playerEnt)->nextValid = 0;
-                centInPrevSnapshot[playerNum] = 1;
+    if (cg->inKillCam && !cg->nextSnap->ps.deltaTime) {
+        cg->inKillCam = 0;
+        CG_PlaySmokeGrenadesAtTime(cg->time);
+        for (i = 0; i < cg->nextSnap->numEntities; ++i) {
+            cent = &cg_entities[cg->nextSnap->entities[i].number];
+            if (cent->nextState.eType == 2) {
+                corpseIndex = cent->nextState.number - 64;
+                pXAnimTree = cgs->corpseinfo[corpseIndex].pXAnimTree;
+                anim = cgs->corpseinfo[corpseIndex].legs.animationNumber & 0xFFFFFDFF;
+                anims = XAnimGetAnims(pXAnimTree);
+                if (anim && !XAnimIsLooped(anims, anim) && !XAnimGetNumChildren(anims, anim))
+                    XAnimSetTime(pXAnimTree, anim, 1.0f);
             }
         }
     }
+}
 
-    cg->nextSnap = (snapshot_t *)snap;
+void CG_SetNextSnap(snapshot_t *snap)
+{
+    char centInPrevSnapshot[1024];
+    entityState_t *es;
+    clientState_t *clientState;
+    clientInfo_t *ci;
+    centity_t *cent;
+    const char *modelName;
+    int entnum;
+    int num;
+    int i;
 
+    memset(centInPrevSnapshot, 0, sizeof(centInPrevSnapshot));
+    if (cg->nextSnap) {
+        for (num = 0; num < cg->nextSnap->numEntities; num++) {
+            entnum = cg->nextSnap->entities[num].number;
+            cg_entities[entnum].nextValid = 0;
+            centInPrevSnapshot[entnum] = 1;
+        }
+        entnum = cg->nextSnap->ps.clientNum;
+        if (cg_entities[entnum].nextValid) {
+            cg_entities[entnum].nextValid = 0;
+            centInPrevSnapshot[entnum] = 1;
+        }
+    }
+
+    cg->nextSnap = snap;
     if (!snap) {
-
         CG_ClearSolidList();
         return;
     }
 
     CL_ResetSkeletonCache(0);
 
-    {
-        int delta = ((snapshot_t *)snap)->serverTime - cg->snap->serverTime;
-
-        if (!delta || (cg->frameInterpolation = (float)(cg->time - cg->snap->serverTime) / delta) < 0.0f)
-            cg->frameInterpolation = 0.0f;
-    }
-
-    CG_ExecuteNewServerCommands(((snapshot_t *)snap)->serverCommandSequence);
-
+    CG_SetFrameInterpolation();
+    CG_ExecuteNewServerCommands(snap->serverCommandSequence);
     CG_CheckOpenWaitingScriptMenu();
 
-    for (i = 0; i < ((snapshot_t *)snap)->numClients; i++) {
-        clientState_t *cs = &((snapshot_t *)snap)->clients[i];
-        clientInfo_t *ci = &cg->bgs.clientinfo[cs->clientIndex];
-        const char *configStr;
-        int part;
+    for (num = 0; num < snap->numClients; num++) {
+        clientState = &snap->clients[num];
+        ci = &cg->bgs.clientinfo[clientState->clientIndex];
 
-        ci->oldteam = ci->infoValid ? ci->team : cs->team;
+        ci->oldteam = ci->infoValid ? ci->team : clientState->team;
         ci->infoValid = 1;
         ci->nextValid = 1;
-        ci->clientNum = cs->clientIndex;
-        ci->team = cs->team;
+        ci->clientNum = clientState->clientIndex;
+        ci->team = clientState->team;
 
-        if (strcmp(ci->name, cs->name)) {
+        if (strcmp(ci->name, clientState->name)) {
             if (ci->name[0])
-                CG_BoldGameMessage(va("%s^7 %s %s", ci->name, UI_SafeTranslateString("CGAME_PLAYERRENAMES"), cs->name));
-            I_strncpyz(ci->name, cs->name, sizeof(ci->name));
+                CG_BoldGameMessage(va("%s^7 %s %s", ci->name, UI_SafeTranslateString("CGAME_PLAYERRENAMES"), clientState->name));
+            I_strncpyz(ci->name, clientState->name, sizeof(ci->name));
         }
 
-        configStr = CL_GetConfigString(cs->modelindex + 0x14e);
-        if (strcmp(ci->model, configStr)) {
-            I_strncpyz(ci->model, configStr, sizeof(ci->model));
+        modelName = CL_GetConfigString(clientState->modelindex + 0x14e);
+        if (strcmp(ci->model, modelName)) {
+            I_strncpyz(ci->model, modelName, sizeof(ci->model));
             ci->dobjDirty = 1;
         }
 
-        for (part = 0; part < 6; part++) {
-            configStr = CL_GetConfigString(cs->attachModelIndex[part] + 0x14e);
-            if (strcmp(ci->attachModelNames[part], configStr)) {
-                I_strncpyz(ci->attachModelNames[part], configStr, sizeof(ci->attachModelNames[part]));
+        for (i = 0; i < 6; i++) {
+            modelName = CL_GetConfigString(clientState->attachModelIndex[i] + 0x14e);
+            if (strcmp(ci->attachModelNames[i], modelName)) {
+                I_strncpyz(ci->attachModelNames[i], modelName, sizeof(ci->attachModelNames[i]));
                 ci->dobjDirty = 1;
             }
 
-            configStr = CL_GetConfigString(cs->attachTagIndex[part] + 0x6e);
-            if (strcmp(ci->attachTagNames[part], configStr)) {
-                I_strncpyz(ci->attachTagNames[part], configStr, sizeof(ci->attachTagNames[part]));
+            modelName = CL_GetConfigString(clientState->attachTagIndex[i] + 0x6e);
+            if (strcmp(ci->attachTagNames[i], modelName)) {
+                I_strncpyz(ci->attachTagNames[i], modelName, sizeof(ci->attachTagNames[i]));
                 ci->dobjDirty = 1;
             }
         }
     }
 
-    cg->identifyClientNum = ((snapshot_t *)snap)->ps.stats[3];
-    cg->identifyClientHealth = ((snapshot_t *)snap)->ps.stats[4];
+    cg->identifyClientNum = snap->ps.stats[3];
+    cg->identifyClientHealth = snap->ps.stats[4];
 
-    {
-        int entnum = ((snapshot_t *)snap)->ps.clientNum;
-
-        if (((snapshot_t *)snap)->ps.pm_flags & 0xc00000) {
-
-            char *playerEnt = CG_EntityPtr(entnum);
-
-            ((centity_t *)playerEnt)->nextState.number = (unsigned short)entnum;
-
-            BG_PlayerStateToEntityState(&((snapshot_t *)snap)->ps, (entityState_t *)(playerEnt + ES_BINSIZE), 0, 0);
-
-            ((centity_t *)playerEnt)->nextValid = 1;
-
-            {
-                char *oldSnap = (char *)cg->snap;
-
-                if (cg->mapRestart ||
-                    ((snapshot_t *)snap)->ps.stats[5] != ((snapshot_t *)oldSnap)->ps.stats[5] ||
-                    entnum != ((snapshot_t *)oldSnap)->ps.clientNum) {
-
-                    memcpy((char *)&((snapshot_t *)oldSnap)->ps, (char *)&((snapshot_t *)snap)->ps, sizeof(playerState_t));
-
-                    CG_ResetEntity(playerEnt);
-                    CG_Respawn();
-                } else if (!centInPrevSnapshot[entnum] ||
-                           (((centity_t *)playerEnt)->currentState.eFlags ^ ((centity_t *)playerEnt)->nextState.eFlags) & 2) {
-
-                    memcpy((char *)&((snapshot_t *)oldSnap)->ps, (char *)&((snapshot_t *)snap)->ps, sizeof(playerState_t));
-                    CG_ResetEntity(playerEnt);
-
-                    cg->predictedError[0] = 0.0f;
-                    cg->predictedError[1] = 0.0f;
-                    cg->predictedError[2] = 0.0f;
-                }
-
+    entnum = snap->ps.clientNum;
+    if (snap->ps.pm_flags & 0xc00000) {
+        cent = &cg_entities[entnum];
+        cent->nextState.number = (unsigned short)entnum;
+        BG_PlayerStateToEntityState(&snap->ps, &cent->nextState, 0, 0);
+        cent->nextValid = 1;
+        if (!cg->mapRestart && snap->ps.stats[5] == cg->snap->ps.stats[5] && entnum == cg->snap->ps.clientNum) {
+            if (!centInPrevSnapshot[entnum] || ((cent->nextState.eFlags ^ cent->currentState.eFlags) & 2)) {
+                memcpy(&cg->snap->ps, &snap->ps, sizeof(cg->snap->ps));
+                CG_ResetEntity((char *)cent);
+                cg->predictedError[0] = 0.0f;
+                cg->predictedError[1] = 0.0f;
+                cg->predictedError[2] = 0.0f;
             }
         } else {
-
-            char *oldSnap = (char *)cg->snap;
-
-            if (cg->mapRestart ||
-                ((snapshot_t *)snap)->ps.stats[5] != ((snapshot_t *)oldSnap)->ps.stats[5] ||
-                entnum != ((snapshot_t *)oldSnap)->ps.clientNum) {
-
-                memcpy(&((snapshot_t *)oldSnap)->ps, &((snapshot_t *)snap)->ps, sizeof(playerState_t));
-                CG_Respawn();
-            }
+            memcpy(&cg->snap->ps, &snap->ps, sizeof(cg->snap->ps));
+            CG_ResetEntity((char *)cent);
+            CG_Respawn();
         }
+    } else if (cg->mapRestart || snap->ps.stats[5] != cg->snap->ps.stats[5] || entnum != cg->snap->ps.clientNum) {
+        memcpy(&cg->snap->ps, &snap->ps, sizeof(cg->snap->ps));
+        CG_Respawn();
     }
 
-    {
-        int numEnts = ((snapshot_t *)snap)->numEntities;
-        for (i = 0; i < numEnts; i++) {
-            char *snapEnt = (char *)&((snapshot_t *)snap)->entities[i];
-            int entNum = ((entityState_t *)snapEnt)->number ;
-            char *cent = CG_EntityPtr(entNum);
-
-            memcpy(cent + ES_BINSIZE, snapEnt, ES_BINSIZE);
-
-            ((centity_t *)cent)->nextValid = 1;
-
-            if (!centInPrevSnapshot[entNum] || ((((entityState_t *)snapEnt)->eFlags ^ ((centity_t *)cent)->currentState.eFlags) & 2))
-                CG_ResetEntity(cent);
-        }
+    for (num = 0; num < snap->numEntities; num++) {
+        es = &snap->entities[num];
+        entnum = es->number;
+        cent = &cg_entities[entnum];
+        memcpy(&cent->nextState, es, sizeof(cent->nextState));
+        cent->nextValid = 1;
+        if (!centInPrevSnapshot[entnum] || ((es->eFlags ^ cent->currentState.eFlags) & 2))
+            CG_ResetEntity((char *)cent);
     }
 
-    {
-        int numClients = ((snapshot_t *)snap)->numClients;
-        for (i = 0; i < numClients; i++) {
-            char *clState = (char *)snap + SNAP_CLIENTS + i * CLSTATE_STRIDE;
-            int clientNum = *(int *)(clState + 0xc) ;
-            CG_UpdatePlayerDObj( (centity_t *)(CG_EntityPtr(clientNum)));
-        }
-    }
+    for (num = 0; num < snap->numClients; num++)
+        CG_UpdatePlayerDObj(&cg_entities[snap->clients[num].clientIndex]);
 
-    {
-        int viewModelIndex = ((snapshot_t *)snap)->ps.viewmodelIndex;
-        if (viewModelIndex > 0) {
-            const char *cfgStr = CL_GetConfigString(viewModelIndex + 0x14e);
-            CG_UpdateHandViewmodels(cfgStr);
-        }
-    }
+    if (snap->ps.viewmodelIndex > 0)
+        CG_UpdateHandViewmodels(CL_GetConfigString(snap->ps.viewmodelIndex + 0x14e));
 
     CG_BuildSolidList();
-
     CG_UpdateKillCam();
 
-    {
-        int numEnts = ((snapshot_t *)snap)->numEntities;
-        for (i = 0; i < numEnts; i++) {
-            char *snapEnt = (char *)&((snapshot_t *)snap)->entities[i];
-            int entNum = ((entityState_t *)snapEnt)->number ;
-            CG_CheckEvents( (centity_t *)(CG_EntityPtr(entNum)));
-        }
-    }
+    for (num = 0; num < snap->numEntities; num++)
+        CG_CheckEvents(&cg_entities[snap->entities[num].number]);
 
-    {
-        int isDemo = cg->demoType;
-
-        if (!isDemo) {
-            char *nextSnap = (char *)cg->nextSnap;
-            if (!(((snapshot_t *)nextSnap)->ps.pm_flags & 0x400000)) {
-
-                if (!cg_nopredict->current.enabled && !cg_synchronousClients->current.enabled)
-                    return;
-            }
-        }
-
-        {
-            char *oldSnap = (char *)cg->snap;
-            char *newSnap = (char *)cg->nextSnap;
-            CG_TransitionPlayerState( (playerState_t *)((char *)&((snapshot_t *)newSnap)->ps), (playerState_t *)((char *)&((snapshot_t *)oldSnap)->ps));
-        }
-    }
+    if (cg->demoType || (cg->nextSnap->ps.pm_flags & 0x400000) || cg_nopredict->current.enabled || cg_synchronousClients->current.enabled)
+        CG_TransitionPlayerState(&cg->nextSnap->ps, &cg->snap->ps);
 }
 
 void CG_SetInitialSnapshot(snapshot_t *snap_param)
@@ -618,7 +528,7 @@ void CG_ProcessSnapshots(void)
             if (!snap)
                 break;
 
-            if ((cg->nextSnap->snapFlags ^ snap->snapFlags) & 4) {
+            if ((snap->snapFlags ^ cg->nextSnap->snapFlags) & 4) {
                 CG_SetInitialSnapshot(snap);
                 CG_SetNextSnap(snap);
                 CG_TransitionSnapshot();
@@ -640,7 +550,6 @@ void CG_ProcessSnapshots(void)
     }
 
     if (cg->time - cg->snap->serverTime < 0) {
-        cg->time = cg->snap->serverTime;
-        cg->bgs.time = cg->snap->serverTime;
+        cg->bgs.time = cg->time = cg->snap->serverTime;
     }
 }

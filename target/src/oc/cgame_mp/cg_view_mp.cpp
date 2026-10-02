@@ -653,6 +653,118 @@ void CG_InitView(void)
     FX_AdjustTime(cg->time);
 }
 
+static inline void Vec3LerpFrom(const vec3_t from, const vec3_t to, float frac, vec3_t out)
+{
+    out[0] = from[0] + (to[0] - from[0]) * frac;
+    out[1] = from[1] + (to[1] - from[1]) * frac;
+    out[2] = from[2] + (to[2] - from[2]) * frac;
+}
+
+// Name from CoD4; original CoD2 name unknown.
+static void CG_UpdateThirdPerson(void)
+{
+    if (cg_thirdPerson->current.enabled != 0 ||
+        cg->nextSnap->ps.pm_type >= 6) {
+        cg->renderingThirdPerson = 1;
+    } else {
+        cg->renderingThirdPerson = 0;
+    }
+}
+
+// Name from CoD4; original CoD2 name unknown.
+static void CG_UpdateTestFX(void)
+{
+    if (cg->testFxRespawnTime >= 1) {
+        if (cg->time > cg->testFxRespawnTime + cg->testFxTime) {
+            FX_PlaySimpleEffect(FX_RegisterEffect(cg->testFxName), cg->testFxPos);
+            cg->testFxTime = cg->time;
+        }
+    }
+}
+
+// Name from CoD4; original CoD2 name unknown.
+static void DumpAnims(void)
+{
+    int dumpClient = cg_dumpAnims->current.integer;
+    if (dumpClient >= 0 && cg_paused->current.integer == 0) {
+        struct DObj_s *obj = Com_GetClientDObj(dumpClient, 0);
+        if (obj != 0) {
+            Com_Printf("client:\n");
+            DObjDisplayAnim(obj);
+        }
+    }
+}
+
+// Name from CoD4; original CoD2 name unknown.
+static void CG_KickAngles(void)
+{
+    WeaponDef *weapDef;
+    int weapIndex;
+    int t;
+    int i;
+    float ft;
+    float idealCenterSpeed;
+    float kickChange;
+
+    weapIndex = BG_GetViewmodelWeaponIndex(&cg->predictedPlayerState);
+    weapDef = BG_GetWeaponDef(weapIndex);
+    for (t = cg->frametime; t > 0; t -= 5) {
+        ft = (float)(t > 5 ? 5 : t) * 0.001f;
+        for (i = 0; i < 3; i++) {
+            if (cg->kickAVel[i] == 0.0f && cg->kickAngles[i] == 0.0f)
+                continue;
+            if (cg->kickAngles[i] != 0.0f) {
+                idealCenterSpeed = cg->kickAngles[i] > 0.0f ? -1.0f : 1.0f;
+                if (weapIndex) {
+                    if (cg->predictedPlayerState.fWeaponPosFrac > 0.5f)
+                        idealCenterSpeed *= weapDef->fAdsViewKickCenterSpeed;
+                    else
+                        idealCenterSpeed *= weapDef->fHipViewKickCenterSpeed;
+                } else {
+                    idealCenterSpeed *= 2400.0f;
+                }
+                cg->kickAVel[i] += idealCenterSpeed * ft;
+            }
+            kickChange = cg->kickAVel[i] * ft;
+            if (cg->kickAngles[i] * kickChange < 0.0f)
+                kickChange *= 0.06f;
+            if ((cg->kickAngles[i] + kickChange) * cg->kickAngles[i] >= 0.0f) {
+                cg->kickAngles[i] = cg->kickAngles[i] + kickChange;
+                if (cg->kickAngles[i] == 0.0f) {
+                    cg->kickAVel[i] = 0.0f;
+                } else if (fabs(cg->kickAngles[i]) > 10.0f) {
+                    cg->kickAngles[i] = cg->kickAngles[i] > 0.0f ? 10.0f : -10.0f;
+                    cg->kickAVel[i] = 0.0f;
+                }
+            } else {
+                cg->kickAngles[i] = 0.0f;
+                cg->kickAVel[i] = 0.0f;
+            }
+        }
+    }
+}
+
+// Name from CoD4; original CoD2 name unknown.
+static void CG_UpdateEntInfo(void)
+{
+    struct DObj_s *obj;
+    centity_t *cent;
+    int num;
+    int entnum;
+
+    for (num = 0; num < cg->nextSnap->numEntities; num++) {
+        entnum = cg->nextSnap->entities[num].number;
+        obj = Com_GetClientDObj(entnum, 0);
+        if (obj) {
+            CG_DObjUpdateInfo(obj);
+            CG_ProcessClientNoteTracks(entnum);
+        }
+        cent = &cg_entities[entnum];
+        if (cent->nextState.eType < 10)
+            CG_CalcEntityLerpPositions(cent);
+    }
+}
+
 qboolean CG_DrawActiveFrame(int serverTime, DemoType demoType,
                             CubemapShot cubemapShot, int cubemapSize,
                             qboolean renderScreen)
@@ -677,165 +789,137 @@ qboolean CG_DrawActiveFrame(int serverTime, DemoType demoType,
     CG_AddLagometerFrameInfo();
     cg->bgs.frametime = cg->frametime;
 
-    if (cg->infoScreenText[0] != '\0') {
-        bgs = 0;
-        return 0;
-    }
+    if (cg->infoScreenText[0] == '\0') {
+        bgs = &cg->bgs;
 
-    bgs = &cg->bgs;
+        CG_ProcessSnapshots();
 
-    CG_ProcessSnapshots();
-
-    {
-        LegacyHacks *legacyHacks = (LegacyHacks *)::legacyHacks;
-        nextSnap = cg->nextSnap;
-        if (!cg->renderScreen ||
-            nextSnap == 0 ||
-            (nextSnap->snapFlags & 2) != 0 ||
-            (legacyHacks->cl_serverloadmap[0] != '\0' &&
-             legacyHacks->cl_serverloadgametype[0] != '\0')) {
-            bgs = 0;
-            return 0;
-        }
-        legacyHacks->cl_serverloadwaiting = 0;
-    }
-
-    cg->clientFrame++;
-
-    {
-        float frac = cg->frameInterpolation;
-        snap = cg->snap;
-        nextSnap = cg->nextSnap;
-        float *vieworg = cg->refdef.vieworg;
-
-        vieworg[0] = snap->ps.origin[0] + (nextSnap->ps.origin[0] - snap->ps.origin[0]) * frac;
-        vieworg[1] = snap->ps.origin[1] + (nextSnap->ps.origin[1] - snap->ps.origin[1]) * frac;
-        vieworg[2] = snap->ps.origin[2] + (nextSnap->ps.origin[2] - snap->ps.origin[2]) * frac;
-
-        vieworg[2] += (float)cg->nextSnap->ps.viewHeightCurrent;
-    }
-
-    CL_SetLodOrigin(&cg->refdef);
-
-    FX_AdjustTime(cg->time - cg->nextSnap->ps.deltaTime);
-
-    {
-        snapshot_t *shockSnap = cg->snap;
-        int shockIndex = shockSnap->ps.shellshockIndex;
-        if (shockIndex != 0) {
-            cg->shellshock.parms = &cgs->shellshockParms[shockIndex];
-            cg->shellshock.startTime = shockSnap->ps.shellshockTime;
-            cg->shellshock.duration = shockSnap->ps.shellshockDuration;
-        } else {
-            cg->shellshock.parms = &cgs->shellshockParms[0];
-            cg->shellshock.startTime = cg->testShock.time;
-            cg->shellshock.duration = cg->testShock.duration;
-        }
-        CG_UpdateShellShock(cg->shellshock.parms,
-                            cg->shellshock.startTime,
-                            cg->shellshock.duration);
-    }
-
-    if (cg_thirdPerson->current.enabled != 0 ||
-        cg->nextSnap->ps.pm_type > 5) {
-        cg->renderingThirdPerson = 1;
-    } else {
-        cg->renderingThirdPerson = 0;
-    }
-
-    cg->kickAVel[0] = 0;
-    cg->kickAVel[1] = 0;
-    cg->kickAVel[2] = 0;
-    cg->kickAngles[0] = 0;
-    cg->kickAngles[1] = 0;
-    cg->kickAngles[2] = 0;
-
-    CL_ResetSkeletonCache(0);
-    CG_AddPacketEntities();
-    R_UpdateEffectsNonBolt();
-    CG_AddLocalEntities();
-    CL_Input();
-    CG_PredictPlayerState();
-
-    CG_UpdateViewWeaponAnim(&cg->predictedPlayerState);
-    CG_CalcViewValues();
-
-    SND_SetListener(cg->nextSnap->ps.clientNum, cg->refdef.vieworg, cg->refdef.viewaxis);
-
-    CG_AddViewWeapon(&cg->predictedPlayerState);
-    CL_FX_AdjustCamera(&cg->refdef);
-
-    if (cg->testFxRespawnTime > 0) {
-        if (cg->time > cg->testFxRespawnTime + cg->testFxTime) {
-            FX_PlaySimpleEffect(FX_RegisterEffect(cg->testFxName), cg->testFxPos);
-            cg->testFxTime = cg->time;
-        }
-    }
-
-    if ((cg->nextSnap->ps.pm_flags & 0xc00000) != 0) {
-        struct DObj_s *obj = Com_GetClientDObj(cg->nextSnap->ps.clientNum, 0);
-        if (obj != 0) {
-            CG_DObjUpdateInfo(obj);
-            CG_ProcessClientNoteTracks(cg->nextSnap->ps.clientNum);
-        }
-        CG_CalcEntityLerpPositions(&cg->predictedPlayerEntity);
-        CG_ProcessEntity(&cg->predictedPlayerEntity);
-    }
-
-    {
-        int viewlockedEnt = cg->predictedPlayerState.viewlocked_entNum;
-        if (viewlockedEnt != 0x3ff) {
-            CG_ProcessEntity(&cg_entities[viewlockedEnt]);
-        }
-    }
-
-    {
-        int dumpClient = cg_dumpAnims->current.integer;
-        if (dumpClient >= 0 && cg_paused->current.integer == 0) {
-            struct DObj_s *obj = Com_GetClientDObj(dumpClient, 0);
-            if (obj != 0) {
-                Com_Printf("client:\n");
-                DObjDisplayAnim(obj);
+        if (cg->renderScreen && cg->nextSnap && !(cg->nextSnap->snapFlags & 2)
+            && !(legacyHacks->cl_serverloadmap[0] && legacyHacks->cl_serverloadgametype[0])) {
+            // Retail tests the load state twice.
+            if (legacyHacks->cl_serverloadmap[0] && legacyHacks->cl_serverloadgametype[0]) {
+                bgs = 0;
+                return 0;
             }
-        }
-    }
+            legacyHacks->cl_serverloadwaiting = 0;
 
-    R_UpdateEffectsBolt();
+            cg->clientFrame++;
 
-    {
-        int delayedHandle = CL_BeginDelayedDrawing();
-
-        CG_DrawPlayerSprites();
-        CG_Draw3dHudElems();
-        CG_Draw2D();
-        CL_EndDelayedDrawing(delayedHandle);
-
-        if (cg->weaponSelect < 0 || cg->weaponSelect > BG_GetNumWeapons()) {
-            int slot;
-            Com_Printf("WARNING: Invalid weaponSelect setting %i (out of range 0 - %i)\n",
-                       cg->weaponSelect, BG_GetNumWeapons());
-            for (slot = 1; slot != 3; slot++) {
-                int w = (signed char)((char *)&cg->predictedPlayerState)[0x554 + slot];
-                if (w != 0)
-                    cg->weaponSelect = w;
+            {
+                float frac = cg->frameInterpolation;
+                snap = cg->snap;
+                nextSnap = cg->nextSnap;
+                Vec3LerpFrom(snap->ps.origin, nextSnap->ps.origin, frac, cg->refdef.vieworg);
+                cg->refdef.vieworg[2] += (float)cg->nextSnap->ps.viewHeightCurrent;
             }
-            cg->weaponSelect = 0;
-        }
 
-        CG_DrawActive();
-        CL_IssueDelayedDrawing(delayedHandle);
-    }
+            CL_SetLodOrigin(&cg->refdef);
+
+            FX_AdjustTime(cg->time - cg->nextSnap->ps.deltaTime);
+
+            {
+                snapshot_t *shockSnap = cg->snap;
+                int shockIndex = shockSnap->ps.shellshockIndex;
+                if (shockIndex == 0) {
+                    cg->shellshock.parms = &cgs->shellshockParms[0];
+                    cg->shellshock.startTime = cg->testShock.time;
+                    cg->shellshock.duration = cg->testShock.duration;
+                } else {
+                    cg->shellshock.parms = &cgs->shellshockParms[shockIndex];
+                    cg->shellshock.startTime = shockSnap->ps.shellshockTime;
+                    cg->shellshock.duration = shockSnap->ps.shellshockDuration;
+                }
+                CG_UpdateShellShock(cg->shellshock.parms,
+                                    cg->shellshock.startTime,
+                                    cg->shellshock.duration);
+            }
+
+            CG_UpdateThirdPerson();
+
+            CG_UpdateEntInfo();
+
+            if (cg->nextSnap->ps.pm_flags & 0x800000) {
+                CG_KickAngles();
+            } else {
+                cg->kickAVel[0] = 0;
+                cg->kickAVel[1] = 0;
+                cg->kickAVel[2] = 0;
+                cg->kickAngles[0] = 0;
+                cg->kickAngles[1] = 0;
+                cg->kickAngles[2] = 0;
+            }
+
+            CL_ResetSkeletonCache(0);
+            CG_AddPacketEntities();
+            R_UpdateEffectsNonBolt();
+            CG_AddLocalEntities();
+            CL_Input();
+            CG_PredictPlayerState();
+
+            CG_UpdateViewWeaponAnim(&cg->predictedPlayerState);
+            CG_CalcViewValues();
+
+            SND_SetListener(cg->nextSnap->ps.clientNum, cg->refdef.vieworg, cg->refdef.viewaxis);
+
+            CG_AddViewWeapon(&cg->predictedPlayerState);
+            CL_FX_AdjustCamera(&cg->refdef);
+
+            CG_UpdateTestFX();
+
+            if ((cg->nextSnap->ps.pm_flags & 0xc00000) != 0) {
+                struct DObj_s *obj = Com_GetClientDObj(cg->nextSnap->ps.clientNum, 0);
+                if (obj != 0) {
+                    CG_DObjUpdateInfo(obj);
+                    CG_ProcessClientNoteTracks(cg->nextSnap->ps.clientNum);
+                }
+                CG_CalcEntityLerpPositions(&cg->predictedPlayerEntity);
+                CG_ProcessEntity(&cg->predictedPlayerEntity);
+            }
+
+            {
+                int viewlockedEnt = cg->predictedPlayerState.viewlocked_entNum;
+                if (viewlockedEnt != 0x3ff) {
+                    CG_ProcessEntity(&cg_entities[viewlockedEnt]);
+                }
+            }
+
+            DumpAnims();
+
+            R_UpdateEffectsBolt();
+
+            {
+                int delayedHandle = CL_BeginDelayedDrawing();
+
+                CG_DrawPlayerSprites();
+                CG_Draw3dHudElems();
+                CG_Draw2D();
+                CL_EndDelayedDrawing(delayedHandle);
+
+                if (cg->weaponSelect < 0 || cg->weaponSelect > BG_GetNumWeapons()) {
+                    Com_Printf("WARNING: Invalid weaponSelect setting %i (out of range 0 - %i)\n",
+                               cg->weaponSelect, BG_GetNumWeapons());
+                    cg->weaponSelect = 0;
+                }
+
+                CG_DrawActive();
+                CL_IssueDelayedDrawing(delayedHandle);
+            }
 
 #if COD2_FEATURE_RUMBLE
 
-    {
-        extern void CG_UpdateRumble(void);
-        CG_UpdateRumble();
-    }
+            {
+                extern void CG_UpdateRumble(void);
+                CG_UpdateRumble();
+            }
 #endif
 
+            bgs = 0;
+            return 1;
+        }
+    }
+
     bgs = 0;
-    return 1;
+    return 0;
 }
 
 const unsigned char colorWhiteFaded[160] = {

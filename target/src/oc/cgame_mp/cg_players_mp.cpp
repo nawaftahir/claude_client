@@ -73,9 +73,8 @@ void CG_UpdatePlayerDObj(centity_t *cent)
     es = &cent->nextState;
     clientNum = es->clientNum;
 
-    ci = (byte *)(((char *)cg + offsetof(cg_t, bgs.clientinfo[0].infoValid)) + clientNum * CI_STRIDE);
-
     obj = Com_GetClientDObj(clientNum, cent->localClientNum);
+    ci = (byte *)(((char *)cg + offsetof(cg_t, bgs.clientinfo[0].infoValid)) + clientNum * CI_STRIDE);
     BG_UpdatePlayerDObj(obj, es, (clientInfo_t *)ci, 0);
 }
 

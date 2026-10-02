@@ -200,21 +200,16 @@ void CG_UpdateCompassOrientation(void)
     cg->compassLastTime = currentTime;
     float fDiff = AngleSubtract(cg->compassYaw, fTargetYaw);
 
-    if (iTotalTime <= 0) {
-        cg->compassYaw = AngleNormalize360(fDiff + fTargetYaw);
-        return;
-    }
-
     while (iTotalTime > 0) {
-        float dt;
+        int step;
         if (iTotalTime > 5) {
+            step = 5;
             iTotalTime -= 5;
-            dt = 5.0f;
         } else {
-            dt = (float)iTotalTime;
+            step = iTotalTime;
             iTotalTime = 0;
         }
-        float fTimeStep = dt * 0.001f;
+        float fTimeStep = (float)step * 0.001f;
 
         if (fabsf(fDiff) < 0.25f) {
             if (fabsf(cg->compassSpeed) < 1.0f) {
@@ -232,35 +227,29 @@ void CG_UpdateCompassOrientation(void)
             cg->compassSpeed += fTimeStep * 1000.0f;
         }
 
-        float vel = cg->compassSpeed;
-        vel -= vel * 2.0f * fTimeStep;
-        cg->compassSpeed = vel;
+        cg->compassSpeed = cg->compassSpeed - fTimeStep * cg->compassSpeed * 2.0f;
 
-        if (vel > 0.0f) {
+        if (cg->compassSpeed > 0.0f) {
             if (fDiff > 0.0f) {
-                vel -= vel * 3.5f * fTimeStep;
-                cg->compassSpeed = vel;
+                cg->compassSpeed = cg->compassSpeed - fTimeStep * cg->compassSpeed * 3.5f;
             }
-            vel -= fTimeStep;
-            cg->compassSpeed = vel;
-            if (vel < 0.0f) {
+            cg->compassSpeed = cg->compassSpeed - fTimeStep;
+            if (cg->compassSpeed < 0.0f) {
                 cg->compassSpeed = 0.0f;
             }
         } else {
             if (fDiff < 0.0f) {
-                vel -= vel * 3.5f * fTimeStep;
-                cg->compassSpeed = vel;
+                cg->compassSpeed = cg->compassSpeed - fTimeStep * cg->compassSpeed * 3.5f;
             }
-            vel += fTimeStep;
-            if (vel > 0.0f)
-                vel = 0.0f;
-            cg->compassSpeed = vel;
+            cg->compassSpeed = fTimeStep + cg->compassSpeed;
+            if (cg->compassSpeed > 0.0f) {
+                cg->compassSpeed = 0.0f;
+            }
         }
 
-        vel = cg->compassSpeed;
-        if (vel > 30000.0f) {
+        if (cg->compassSpeed > 30000.0f) {
             cg->compassSpeed = 30000.0f;
-        } else if (vel < -30000.0f) {
+        } else if (cg->compassSpeed < -30000.0f) {
             cg->compassSpeed = -30000.0f;
         }
     }

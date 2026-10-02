@@ -371,62 +371,44 @@ void CL_AddCgameCommand(const char *cmdName)
 
 void CL_ConfigstringModified(void)
 {
+    const char *old, *s;
+    int i, index;
+    const char *dup;
     gameState_t oldGs;
-    int index;
-    const char *s;
-    int i, len;
+    int len;
     clientActive_t *cl;
 
     index = atoi(Cmd_Argv(1));
-    if ((unsigned int)index > 0x7ff) {
-        Com_Error(ERR_DROP, "CL_ConfigstringModified: bad index");
-    }
-
+    if (index < 0 || index >= 0x800)
+        Com_Error(ERR_DROP, "\x15" "configstring > MAX_CONFIGSTRINGS");
     s = Cmd_Argv(2);
 
     cl = CL_LOCAL;
+    old = cl->gameState.stringData + cl->gameState.stringOffsets[index];
+    if (!strcmp(old, s))
+        return;
 
-    {
-        int offset = cl->gameState.stringOffsets[index];
-        const char *old = cl->gameState.stringData + offset;
-        if (strcmp(old, s) == 0)
-            return;
-    }
-
-    memcpy(&oldGs, &cl->gameState, sizeof(gameState_t));
-
-    memset(&cl->gameState, 0, sizeof(gameState_t));
+    oldGs = cl->gameState;
+    memset(&cl->gameState, 0, sizeof(cl->gameState));
     cl->gameState.dataCount = 1;
 
     for (i = 0; i < 0x800; i++) {
-        const char *dup;
-
-        if (i == index) {
+        if (i == index)
             dup = s;
-        } else {
-            int oldOff = oldGs.stringOffsets[i];
-            dup = oldGs.stringData + oldOff;
-        }
-
-        if (*dup == '\0')
+        else
+            dup = oldGs.stringData + oldGs.stringOffsets[i];
+        if (!dup[0])
             continue;
-
-        len = strlen(dup) + 1;
-        cl = CL_LOCAL;
-        int writePos = cl->gameState.dataCount;
-        if (writePos + len > 0x3e80) {
-            Com_Error(ERR_DROP, "CL_ConfigstringModified: overflow");
-            writePos = cl->gameState.dataCount;
-        }
-
-        cl->gameState.stringOffsets[i] = writePos;
-        memcpy(cl->gameState.stringData + writePos, dup, len);
-        cl->gameState.dataCount = writePos + len;
+        len = strlen(dup);
+        if (len + 1 + cl->gameState.dataCount > 16000)
+            Com_Error(ERR_DROP, "\x15MAX_GAMESTATE_CHARS exceeded");
+        cl->gameState.stringOffsets[i] = cl->gameState.dataCount;
+        memcpy(cl->gameState.stringData + cl->gameState.dataCount, dup, len + 1);
+        cl->gameState.dataCount += len + 1;
     }
 
-    if (index == 1) {
+    if (index == 1)
         CL_SystemInfoChanged();
-    }
 }
 
 qboolean CL_GetServerCommand(int serverCommandNumber)
@@ -1291,16 +1273,8 @@ void CL_DrawStretchPic(float x, float y, float w, float h, int horzAlign, int ve
 void CL_SyncTimes(void)
 {
     clientConnection_t *clui = CLUI_STATE;
-    if (clui->state != 8)
-        return;
-
-    {
-        clientActive_t *cl = CL_LOCAL;
-        if (cl->snap.snapFlags & 2)
-            return;
-    }
-
-    CL_FirstSnapshot();
+    if (clui->state == 8)
+        CL_FirstSnapshot();
 }
 
 // retail 0x402e70
