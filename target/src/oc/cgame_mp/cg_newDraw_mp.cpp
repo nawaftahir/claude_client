@@ -1120,12 +1120,12 @@ static void CG_DrawPlayerStance(const rectDef_t *rect, vec_t *color, struct Font
 
     if (cg->proneBlockedEndTime > cg->time) {
         int width;
+        float halfWidth;
         float pulseDegrees;
-        float textX;
 
         proneStr = UI_SafeTranslateString("CGAME_PRONE_BLOCKED");
         width = UI_TextWidth(proneStr, 0, font, scale);
-        textX = -((float)width * 0.5f);
+        halfWidth = (float)width * 0.5f;
         pulseDegrees = (float)(cg->proneBlockedEndTime - cg->time) / 1500.0f * 540.0f;
         drawColor[3] = (float)fabs(sin(pulseDegrees * 0.017453292f));
 
@@ -1133,7 +1133,7 @@ static void CG_DrawPlayerStance(const rectDef_t *rect, vec_t *color, struct Font
             proneStr,
             0x7fffffff,
             font,
-            textX,
+            -halfWidth,
             cg_hudProneY->current.value,
             7,
             3,
@@ -1153,19 +1153,19 @@ static void CG_DrawPlayerStance(const rectDef_t *rect, vec_t *color, struct Font
         const char *hintLineCmds[3];
         char keyBinding[256];
         const char *standCmds[3][6] = {
-            { NULL, NULL, NULL, NULL, NULL, NULL },
+            { NULL },
             { "gocrouch", "togglecrouch", "lowerstance", "+movedown", NULL, NULL },
-            { "goprone", "+prone", NULL, NULL, NULL, NULL }
+            { "goprone", "+prone", NULL }
         };
         const char *duckCmds[3][6] = {
-            { "+gostand", "raisestance", "+moveup", NULL, NULL, NULL },
-            { NULL, NULL, NULL, NULL, NULL, NULL },
+            { "+gostand", "raisestance", "+moveup", NULL },
+            { NULL },
             { "goprone", "lowerstance", "toggleprone", "+prone", NULL, NULL }
         };
         const char *proneCmds[3][6] = {
-            { "+gostand", "toggleprone", NULL, NULL, NULL, NULL },
+            { "+gostand", "toggleprone", NULL },
             { "gocrouch", "togglecrouch", "raisestance", "+movedown", "+moveup", NULL },
-            { NULL, NULL, NULL, NULL, NULL, NULL }
+            { NULL }
         };
         const char *hintTypeStrings[3] = {
             "PLATFORM_STANCEHINT_STAND",
