@@ -484,17 +484,24 @@ char *GetMenuBuffer(const char *filename)
     return menuBuf2;
 }
 
-qboolean Load_ScriptMenu(const char *pszMenu, int imageTrack)
+// Original name unknown.
+MenuList *UI_LoadScriptMenuList(const char *pszMenu, int imageTrack)
 {
     char szMenuFile[256];
-    MenuList *menuList;
 
     strcpy(szMenuFile, "ui_mp/scriptmenus/");
 
     I_strncat(szMenuFile, 0x100, pszMenu);
     I_strncat(szMenuFile, 0x100, ".menu");
 
-    menuList = UI_LoadMenu(szMenuFile, imageTrack);
+    return UI_LoadMenu(szMenuFile, imageTrack);
+}
+
+qboolean Load_ScriptMenu(const char *pszMenu, int imageTrack)
+{
+    MenuList *menuList;
+
+    menuList = UI_LoadScriptMenuList(pszMenu, imageTrack);
     if (!menuList)
         return 0;
 
@@ -1934,6 +1941,40 @@ static void UI_StopServerRefresh(void)
     if (count > 0)
         Com_Printf("%d servers not listed (filtered out by game browser settings)\n", count);
 }
+
+static void UI_DoServerRefresh(void)
+{
+    int wait;
+
+    wait = 0;
+    if (!sharedUiInfo.serverStatus.refreshActive)
+        return;
+
+    if (ui_netSource->current.integer != 2) {
+        if (ui_netSource->current.integer == 0) {
+            if (!LAN_GetServerCount(ui_netSource->current.integer))
+                wait = 1;
+        } else if (LAN_WaitServerResponse(ui_netSource->current.integer)) {
+            wait = 1;
+        }
+    }
+
+    if (uiInfo->uiDC.realTime < sharedUiInfo.serverStatus.refreshtime) {
+        if (wait)
+            return;
+    }
+
+    UI_UpdateServerCount();
+
+    if (LAN_UpdateDirtyPings(ui_netSource->current.integer)) {
+        sharedUiInfo.serverStatus.refreshtime = uiInfo->uiDC.realTime + 1000;
+    } else if (!wait) {
+        UI_BuildServerDisplayList(2);
+        UI_StopServerRefresh();
+    }
+
+    UI_BuildServerDisplayList(0);
+}
 #endif
 
 #ifndef __EMSCRIPTEN__
@@ -2999,8 +3040,6 @@ static void UI_REGPARM1 UI_BuildServerStatus(int force)
 
 void UI_Refresh(void)
 {
-    int netSource;
-    int needRebuild;
 #if COD2_TRACE
     static int refreshTraceCount;
     static int fileTraceCount;
@@ -3045,55 +3084,7 @@ void UI_Refresh(void)
 #endif
 
     Menu_PaintAll(&uiInfo->uiDC);
-
-    if (sharedUiInfo.serverStatus.refreshActive) {
-        netSource = (ui_netSource)->current.integer;
-
-        if (netSource == 2) {
-            needRebuild = 0;
-        } else if (netSource == 0) {
-            needRebuild = LAN_GetServerCount(0) == 0;
-        } else {
-            needRebuild = LAN_WaitServerResponse(netSource) != 0;
-        }
-
-        if (uiInfo->uiDC.realTime < sharedUiInfo.serverStatus.refreshtime) {
-            if (needRebuild)
-                goto after_browser;
-        }
-
-        UI_UpdateServerCount();
-
-        if (LAN_UpdateDirtyPings(netSource)) {
-            sharedUiInfo.serverStatus.refreshtime = uiInfo->uiDC.realTime + 1000;
-        } else {
-            if (needRebuild)
-                goto rebuild_browser;
-
-            UI_BuildServerDisplayList(2);
-
-            if (sharedUiInfo.serverStatus.refreshActive) {
-                int listedServers = sharedUiInfo.serverStatus.numDisplayServers;
-                int listedPlayers = sharedUiInfo.serverStatus.numPlayersOnServers;
-                int filteredServers;
-
-                sharedUiInfo.serverStatus.refreshActive = 0;
-                Com_Printf("%d servers listed in browser with %d players.\n",
-                           listedServers, listedPlayers);
-
-                filteredServers = LAN_GetServerCount(netSource) - listedServers;
-                if (filteredServers > 0) {
-                    Com_Printf("%d servers not listed (filtered out by game browser settings)\n",
-                               filteredServers);
-                }
-            }
-        }
-
-    rebuild_browser:
-        UI_BuildServerDisplayList(0);
-    }
-
-after_browser:
+    UI_DoServerRefresh();
     UI_BuildServerStatus(0);
     UI_BuildFindPlayerList();
 

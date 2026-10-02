@@ -248,3 +248,5 @@
 4625e0	Sys_FunctionsMatch	callsite
 4626c0	Sys_FunctionChecksum	callsite
 4bf070	CG_ObjectiveIconMaterial	unknown
+533200	UI_DoServerRefresh	callsite
+52c400	Load_ScriptMenu	callsite
