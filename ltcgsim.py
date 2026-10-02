@@ -101,7 +101,7 @@ for oi in reversed(range(len(objs))):
         if f not in done: dfs(f)
 print('fns', len(defs), 'compiled', len(idx), 'cut targets', len(cuts))
 import json
-json.dump({'cuts': cuts, 'order': idx}, open('build/ltcgsim.json', 'w'))
+json.dump({'cuts': cuts, 'order': idx, 'pre': pre, 'calls': calls}, open('build/ltcgsim.json', 'w'))
 for w in want:
     ks = [k for k in defs if w in k]
     for k in ks:

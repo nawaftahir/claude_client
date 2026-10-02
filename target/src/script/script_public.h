@@ -987,6 +987,7 @@ void Scr_TerminateRunningThread(unsigned int localId);
 void Scr_SetLoading(int bLoading);
 VariableStackBuffer* VM_ArchiveStack(int size, const char *codePos, VariableValue *top, unsigned int localVarCount, unsigned int *localId);
 void VM_TrimStack(unsigned int startLocalId, VariableStackBuffer *stackValue, bool fromEndon);
+void VM_TerminateStack(unsigned int endLocalId, unsigned int startLocalId, VariableStackBuffer *stackValue);
 void Scr_CancelNotifyList(unsigned int notifyListOwnerId);
 unsigned short Scr_ExecThread(int callbackHook, unsigned int numArgs);
 void Scr_AddExecThread(int handle, unsigned int paramcount);
@@ -1129,8 +1130,8 @@ void RemoveVariable(unsigned int parentId, unsigned int index);
 void RemoveNextVariable(unsigned int index);
 void RemoveArrayVariable(unsigned int parentId, unsigned int unsignedValue);
 void RemoveObjectVariable(unsigned int parentId, unsigned int id);
-void RemoveRefToObject(unsigned int id);
 void RemoveRefToValue(int type, VariableUnion u);
+void RemoveRefToObject(unsigned int id);
 inline void RemoveRefToValue(VariableValue *value)
 {
 	RemoveRefToValue(value->type, value->u);
