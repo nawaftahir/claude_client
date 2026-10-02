@@ -2972,7 +2972,7 @@ static void BM_NOINLINE UI_BuildFindPlayerList(void)
     }
 }
 
-static void UI_BuildServerStatus_impl(int force)
+static void UI_REGPARM1 UI_BuildServerStatus(int force)
 {
     int serverStatusVisible = uiInfo->nextFindPlayerRefresh;
 
@@ -3031,11 +3031,6 @@ static void UI_BuildServerStatus_impl(int force)
             }
         }
     }
-}
-
-static void UI_REGPARM1 UI_BuildServerStatus(int force)
-{
-    UI_BuildServerStatus_impl(force);
 }
 
 void UI_Refresh(void)

@@ -154,7 +154,7 @@ COD2_ASSERT_FIELD(itemInfo_t, ammoPickupSound,  0x20);
 COD2_ASSERT_FIELD(centity_t, localClientNum, 0x220);
 COD2_ASSERT_FIELD(centity_t, bMuzzleFlash,   0x1e2);
 
-static void __attribute_regparm__(3) CG_PlayADSAnim(int unusedWeapon, XAnimTree *pAnimTree, int animIndex);
+static void CG_PlayADSAnim(XAnimTree *pAnimTree, int animIndex);
 static inline __attribute__((always_inline)) qboolean CG_CanCycleWeapon(cg_t **cgOut, int *serverTimeOut);
 int CG_WeaponDObjHandle(int weaponNum);
 #ifndef __EMSCRIPTEN__
@@ -188,7 +188,7 @@ void CG_NextWeapon_f(void);
 void CG_WeaponRunXModelAnims(playerState_t *ps, weaponInfo_t *weapInfo);
 void CG_UpdateViewWeaponAnim(playerState_t *ps);
 
-static void CG_PlayADSAnim_impl(XAnimTree *pAnimTree, int animIndex)
+static void CG_PlayADSAnim(XAnimTree *pAnimTree, int animIndex)
 {
     if (animIndex == 0x15) {
 
@@ -202,12 +202,6 @@ static void CG_PlayADSAnim_impl(XAnimTree *pAnimTree, int animIndex)
 
     XAnimSetTime(pAnimTree, 0x15, cg->predictedPlayerState.fWeaponPosFrac);
     XAnimSetTime(pAnimTree, 0x16, 1.0f - cg->predictedPlayerState.fWeaponPosFrac);
-}
-
-static void __attribute_regparm__(3) CG_PlayADSAnim(int unusedWeapon, XAnimTree *pAnimTree, int animIndex)
-{
-    (void)unusedWeapon;
-    CG_PlayADSAnim_impl(pAnimTree, animIndex);
 }
 
 int CG_WeaponDObjHandle(int weaponNum)
@@ -496,20 +490,13 @@ static qboolean CG_IsLocalClientEntity(cg_t *cg, entityState_t *ent)
     return (snap->ps.pm_flags & 0xc00000) && ent->number == snap->ps.clientNum;
 }
 
-static inline __attribute__((always_inline)) qboolean CG_IsLocalClientEntity_inl(cg_t *cg, entityState_t *ent)
-{
-    snapshot_t *snap = cg->nextSnap;
-
-    return (snap->ps.pm_flags & 0xc00000) && ent->number == snap->ps.clientNum;
-}
-
 static inline __attribute__((always_inline)) void CG_GetFireWeaponSoundOrigin(centity_t *cent, entityState_t *ent, weaponInfo_t *weapInfo, vec_t *origin)
 {
     unsigned int tagFlash;
 
     tagFlash = scr_const.tag_flash;
 
-    if (CG_IsLocalClientEntity_inl(cg, ent)) {
+    if (CG_IsLocalClientEntity(cg, ent)) {
         struct DObj_s *viewModel = weapInfo->viewModelDObj;
 
         if (viewModel && CG_DObjGetViewModelTagPos(viewModel, tagFlash, origin))
@@ -576,17 +563,17 @@ void CG_FireWeapon(centity_t *cent, int event, int barrel)
     BG_GetWeaponDef(ent->weapon);
     cent->bMuzzleFlash = 1;
 
-    if (CG_IsLocalClientEntity_inl(cg, ent))
+    if (CG_IsLocalClientEntity(cg, ent))
         BG_WeaponFireRecoil(&cg->predictedPlayerState, cg->vGunSpeed, cg->kickAVel);
 
     CG_PlayFireWeaponEffect(cent, ent, barrel);
 
     fireSound = weapInfo->flashSound;
-    if (weapInfo->flashSoundPlayer && CG_IsLocalClientEntity_inl(cg, ent))
+    if (weapInfo->flashSoundPlayer && CG_IsLocalClientEntity(cg, ent))
         fireSound = weapInfo->flashSoundPlayer;
 
     if (event == 0xa0) {
-        if (weapInfo->lastShotSoundPlayer && CG_IsLocalClientEntity_inl(cg, ent))
+        if (weapInfo->lastShotSoundPlayer && CG_IsLocalClientEntity(cg, ent))
             fireSound = weapInfo->lastShotSoundPlayer;
         else if (weapInfo->lastShotSound)
             fireSound = weapInfo->lastShotSound;
@@ -1919,7 +1906,7 @@ void CG_WeaponRunXModelAnims(playerState_t *ps, weaponInfo_t *weapInfo)
     flags = ((playerState_t *)psBytes)->pm_flags;
     adsIn = (flags & 0x40) && !(flags & 0x10);
     if (weapDef->bADSPositionInfo)
-        CG_PlayADSAnim(weaponIndex, pAnimTree, adsIn ? 0x15 : 0x16);
+        CG_PlayADSAnim(pAnimTree, adsIn ? 0x15 : 0x16);
 
     weapAnim = ((playerState_t *)psBytes)->weapAnim;
     if (weapAnim == weapInfo->iPrevAnim)
