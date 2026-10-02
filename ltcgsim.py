@@ -43,45 +43,59 @@ def bare(k):
     return re.sub(r'^_', '', re.sub(r'@\d+$', '', k))
 order = [l.split('#')[0].split()[0] for l in open(tus) if l.split('#')[0].split()]
 objs = [os.path.join(objdir, re.sub(r'\.[^.]*$', '.obj', f)) for f in order]
-defs, fns_of, symorder, calls = {}, {}, {}, {}
-for oi, p in enumerate(objs):
-    secs, syms, rel = coff(p)
-    tag = os.path.basename(p)
-    dpos = {}
-    ip = p[:-4] + '.i'
-    if os.path.exists(ip):  # children are visited in the caller TU's first-declaration order (lab-pinned)
-        for m in re.finditer(r'([A-Za-z_]\w*)\s*\(', open(ip, errors='replace').read()):
-            dpos.setdefault(m.group(1), m.start())
-    for ov in os.environ.get('OVR', '').split():  # what-if: tu.obj:Name<Other = declare Name just before Other
-        t, rule = ov.split(':', 1); a, b = rule.split('<')
-        if t == tag and b in dpos: dpos[a] = dpos[b] - 1
-    tag = os.path.basename(p)
-    seckey = {}
-    fl = []
-    so = {}
-    for idx, s in enumerate(syms):
-        if not s: continue
-        name, val, sec, typ, cls = s
-        key = name if cls == 2 else tag + ':' + name
-        if typ & 0x20 and sec > 0 and cls in (2, 3):  # function defined here
-            if key not in defs:
-                defs[key] = oi
-                fl.append((sec, key))
-            seckey.setdefault(sec, key)
-        if typ & 0x20 and cls in (2, 3) and key not in so:
-            so[key] = len(so)
-    fl.sort()  # section number = definition order
-    fns_of[oi] = [k for _, k in fl]
-    for sec, key in fl:
-        out = []
-        for va, si, ty in rel.get(sec, ()):
-            if ty != 0x14: continue  # REL32 = call/jmp
-            s = syms[si]
-            if not s or not (s[3] & 0x20): continue
-            ck = s[0] if s[4] == 2 else tag + ':' + s[0]
-            if ck != key and ck not in out: out.append(ck)
-        out.sort(key=lambda k: (dpos.get(bare(k), 1 << 40), so.get(k, 1 << 30)))
-        calls[key] = out
+import pickle
+stamp = [(p, os.path.getmtime(p), os.path.getmtime(p[:-4] + '.i') if os.path.exists(p[:-4] + '.i') else 0) for p in objs]
+cache = os.path.join(objdir, 'ltcgsim.pkl')
+P = None
+if os.path.exists(cache):
+    P = pickle.load(open(cache, 'rb'))
+    if P['stamp'] != stamp: P = None
+if P is None:  # parse once; OVR/sort applied below
+    defs, fns_of, raw, dposs, sos = {}, {}, {}, {}, {}
+    for oi, p in enumerate(objs):
+        secs, syms, rel = coff(p)
+        tag = os.path.basename(p)
+        dpos = {}
+        ip = p[:-4] + '.i'
+        if os.path.exists(ip):  # children are visited in the caller TU's first-declaration order (lab-pinned)
+            for m in re.finditer(r'([A-Za-z_]\w*)\s*\(', open(ip, errors='replace').read()):
+                dpos.setdefault(m.group(1), m.start())
+        fl, so = [], {}
+        for idx_, s in enumerate(syms):
+            if not s: continue
+            name, val, sec, typ, cls = s
+            key = name if cls == 2 else tag + ':' + name
+            if typ & 0x20 and sec > 0 and cls in (2, 3):  # function defined here
+                if key not in defs:
+                    defs[key] = oi
+                    fl.append((sec, key))
+            if typ & 0x20 and cls in (2, 3) and key not in so:
+                so[key] = len(so)
+        fl.sort()  # section number = definition order
+        fns_of[oi] = [k for _, k in fl]
+        for sec, key in fl:
+            out = []
+            for va, si, ty in rel.get(sec, ()):
+                if ty != 0x14: continue  # REL32 = call/jmp
+                s = syms[si]
+                if not s or not (s[3] & 0x20): continue
+                ck = s[0] if s[4] == 2 else tag + ':' + s[0]
+                if ck != key and ck not in out: out.append(ck)
+            raw[key] = (oi, out)
+        dposs[oi], sos[oi] = dpos, so
+    P = {'stamp': stamp, 'defs': defs, 'fns_of': fns_of, 'raw': raw, 'dposs': dposs, 'sos': sos}
+    pickle.dump(P, open(cache, 'wb'))
+defs, fns_of = P['defs'], P['fns_of']
+tags = [os.path.basename(p) for p in objs]
+for ov in os.environ.get('OVR', '').split():  # what-if: tu.obj:Name<Other = declare Name just before Other
+    t, rule = ov.split(':', 1); a, b = rule.split('<')
+    for oi, tg in enumerate(tags):
+        d = P['dposs'][oi]
+        if tg == t and b in d: d[a] = d[b] - 1
+calls = {}
+for key, (oi, out) in P['raw'].items():
+    d, so = P['dposs'][oi], P['sos'][oi]
+    calls[key] = sorted(out, key=lambda k: (d.get(bare(k), 1 << 40), so.get(k, 1 << 30)))
 idx, pre = {}, {}
 on, done, cuts, path = set(), set(), {}, {}
 stack = []
