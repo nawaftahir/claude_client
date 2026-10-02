@@ -556,13 +556,13 @@ static struct XModel *CG_GetXModel(const char *modelName)
 static void CG_CreateDObj(DObjModel_s *dobjModels, unsigned short numModels, struct XAnimTree_s *tree, int handle, clientInfo_t *ci)
 {
     int weaponNum;
-    struct XModel *weaponModel;
+    weaponInfo_t *weapInfo;
 
     weaponNum = ci->iDObjWeapon;
     if (weaponNum) {
-        weaponModel = cg_weaponsArray[weaponNum].worldSurfModel;
-        if (weaponModel) {
-            dobjModels[numModels].model = weaponModel;
+        weapInfo = &cg_weaponsArray[weaponNum];
+        if (weapInfo->worldSurfModel) {
+            dobjModels[numModels].model = weapInfo->worldSurfModel;
             dobjModels[numModels].boneName = ci->leftHandGun ? cg_weaponleftbone->current.string : cg_weaponrightbone->current.string;
             dobjModels[numModels].ignoreCollision = 0;
             ++numModels;
