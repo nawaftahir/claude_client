@@ -978,44 +978,28 @@ static void Con_CheckResize(void)
     con.display = con.currentLine;
 }
 
+// Name from CoD4; original CoD2 name unknown.
+static void Con_InitMessageWindow(MessageWindow *msgwnd, MessageLine *lines, int lineCount, int padding, int scrollTime, int fadeIn, int fadeOut)
+{
+    msgwnd->lines = lines;
+    msgwnd->current_line = 0;
+    msgwnd->count = lineCount;
+    msgwnd->padding = padding;
+    msgwnd->scrolltime = scrollTime;
+    msgwnd->fadein = fadeIn;
+    msgwnd->fadeout = fadeOut;
+}
+
 static void Con_InitMessageBuffers(void)
 {
     MessageBuffer *messageBuffer;
 
     messageBuffer = con.messageBufferArray;
 
-    messageBuffer->gamemsg.scrolltime = 250;
-    messageBuffer->gamemsg.fadein = 250;
-    messageBuffer->boldgamemsg.scrolltime = 250;
-    messageBuffer->boldgamemsg.fadein = 250;
-    messageBuffer->subtitle.scrolltime = 250;
-    messageBuffer->subtitle.fadein = 250;
-
-    messageBuffer->gamemsg.lines = messageBuffer->gamemsg_lines;
-    messageBuffer->gamemsg.current_line = 0;
-    messageBuffer->gamemsg.count = 8;
-    messageBuffer->gamemsg.padding = 3;
-    messageBuffer->gamemsg.fadeout = 500;
-
-    messageBuffer->boldgamemsg.lines = messageBuffer->boldgamemsg_lines;
-    messageBuffer->boldgamemsg.current_line = 0;
-    messageBuffer->boldgamemsg.count = 8;
-    messageBuffer->boldgamemsg.padding = 3;
-    messageBuffer->boldgamemsg.fadeout = 500;
-
-    messageBuffer->subtitle.lines = messageBuffer->subtitle_lines;
-    messageBuffer->subtitle.current_line = 0;
-    messageBuffer->subtitle.count = 8;
-    messageBuffer->subtitle.padding = 3;
-    messageBuffer->subtitle.fadeout = 500;
-
-    messageBuffer->minicon.lines = messageBuffer->minicon_lines;
-    messageBuffer->minicon.current_line = 0;
-    messageBuffer->minicon.count = con_miniconlines->current.integer;
-    messageBuffer->minicon.padding = 0;
-    messageBuffer->minicon.scrolltime = 0;
-    messageBuffer->minicon.fadein = 0;
-    messageBuffer->minicon.fadeout = 0;
+    Con_InitMessageWindow(&messageBuffer->gamemsg, messageBuffer->gamemsg_lines, 8, 3, 250, 250, 500);
+    Con_InitMessageWindow(&messageBuffer->boldgamemsg, messageBuffer->boldgamemsg_lines, 8, 3, 250, 250, 500);
+    Con_InitMessageWindow(&messageBuffer->subtitle, messageBuffer->subtitle_lines, 8, 3, 250, 250, 500);
+    Con_InitMessageWindow(&messageBuffer->minicon, messageBuffer->minicon_lines, con_miniconlines->current.integer, 0, 0, 0, 0);
 
     con.messageBuffer = messageBuffer;
 }
