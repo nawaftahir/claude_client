@@ -242,50 +242,33 @@ void Item_SetCursorPos(itemDef_t *item, int cursorPos)
     item->cursorPos[0] = cursorPos;
 }
 
+// Q_IsColorString plus the CoD2 digit check.
+#define I_IsColorString(p) ((p) && *(p) == '^' && *((p) + 1) && *((p) + 1) != '^' && *((p) + 1) >= '0' && *((p) + 1) <= '9')
+
 int Item_GetCursorPosOffset(const itemDef_t *item, const char *text, int delta)
 {
     int pos;
-    char c;
 
     pos = item->cursorPos[0];
-
-    if (delta > 0) {
-
-        while (1) {
-            const char *cp = text + pos;
-
-            if (cp != NULL && *cp == '^') {
-                c = *(cp + 1);
-                if (c != '\0' && c != '^' && c > '/' && c <= '9') {
-                    pos += 2;
-                    continue;
-                }
+    if (delta <= 0) {
+        while (pos) {
+            if (!delta)
+                break;
+            if (pos >= 2 && I_IsColorString(&text[pos - 2])) {
+                pos -= 2;
+            } else {
+                pos--;
+                delta++;
             }
-            if (*cp == '\0')
-                break;
-            if (delta == 0)
-                break;
-            pos += 1;
-            delta -= 1;
         }
     } else {
-
-        while (pos != 0) {
-            if (delta == 0)
+        while (1) {
+            while (I_IsColorString(&text[pos]))
+                pos += 2;
+            if (!text[pos] || !delta)
                 break;
-
-            if (pos > 1) {
-                const char *cp = text + pos;
-                if (cp != (const char *)2 && *(cp - 2) == '^') {
-                    c = *(unsigned char *)(cp - 1);
-                    if (c != '\0' && c != '^' && c > '/' && c <= '9') {
-                        pos -= 2;
-                        continue;
-                    }
-                }
-            }
-            pos -= 1;
-            delta += 1;
+            pos++;
+            delta--;
         }
     }
 

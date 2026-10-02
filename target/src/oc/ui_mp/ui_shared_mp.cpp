@@ -4098,14 +4098,16 @@ void Item_Paint(displayContextDef_t *dc, itemDef_t *item)
             float h;
             float s;
             float c;
+            rectDef_t *r;
 
             item->window.nextTime = dc->realTime + item->window.offsetTime[0];
-            w = item->window.rectClient[0].w * 0.5f;
-            h = item->window.rectClient[0].h * 0.5f;
-            rx = item->window.rectClient[0].x + w - item->window.rectEffects0[0].x;
-            ry = item->window.rectClient[0].y + h - item->window.rectEffects0[0].y;
+            r = &item->window.rectClient[0];
+            w = r->w * 0.5f;
+            h = r->h * 0.5f;
+            rx = r->x + w - item->window.rectEffects0[0].x;
+            ry = r->y + h - item->window.rectEffects0[0].y;
             FastSinCos(0.05235988f, &s, &c);
-            newRect = item->window.rectClient[0];
+            newRect = *r;
             newRect.x = rx * c - ry * s + item->window.rectEffects0[0].x - w;
             newRect.y = rx * s + ry * c + item->window.rectEffects0[0].y - h;
             Window_SetRectClient(&item->window, &newRect);

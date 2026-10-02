@@ -183,14 +183,14 @@ static void CG_Obituary(entityState_t *ent)
     clientInfo_t *victimCI;
     clientInfo_t *attackerCI;
 
-    victimColor[0] = 1.0f;
-    victimColor[1] = 1.0f;
-    victimColor[2] = 1.0f;
-    victimColor[3] = 1.0f;
     attackerColor[0] = 1.0f;
     attackerColor[1] = 1.0f;
     attackerColor[2] = 1.0f;
     attackerColor[3] = 1.0f;
+    victimColor[0] = 1.0f;
+    victimColor[1] = 1.0f;
+    victimColor[2] = 1.0f;
+    victimColor[3] = 1.0f;
     iconColor[0] = 1.0f;
     iconColor[1] = 1.0f;
     iconColor[2] = 1.0f;
@@ -282,9 +282,9 @@ static void CG_Obituary(entityState_t *ent)
     }
     else
     {
+        attacker = 0x3fe;
         attackerCI = NULL;
         attackerName[0] = '\0';
-        attacker = 0x3fe;
     }
 
     if (attacker == target)
@@ -295,7 +295,7 @@ static void CG_Obituary(entityState_t *ent)
     {
         const char *msg;
 
-        if (attackerCI->oldteam && attackerCI->oldteam == victimCI->oldteam)
+        if (attackerCI->oldteam && victimCI->oldteam == attackerCI->oldteam)
             msg = va("CGAME_YOUKILLED\x15^1&&2^7 %s\x14%s", targetName, "CGAME_TEAMMATE");
         else
             msg = va("CGAME_YOUKILLED\x15%s", targetName);
@@ -307,7 +307,7 @@ static void CG_Obituary(entityState_t *ent)
     {
         const char *msg;
 
-        if (attackerCI->oldteam && attackerCI->oldteam == victimCI->oldteam)
+        if (attackerCI->oldteam && victimCI->oldteam == attackerCI->oldteam)
             msg = va("CGAME_YOUWEREKILLED\x15^1&&2^7 %s\x14%s", attackerName, "CGAME_TEAMMATE");
         else
             msg = va("CGAME_YOUWEREKILLED\x15%s", attackerName);
