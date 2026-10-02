@@ -100,17 +100,21 @@ void SCR_UpdateScreen(void);
 void SCR_DrawSmallStringExt(int x, int y, const char *string, const vec_t *setColor)
 {
     int fontHeight;
+    float fy;
 
     fontHeight = re.TextHeight(cls.consoleFont);
-    re.DrawText(string, 0x7fffffff, cls.consoleFont, (float)x, (float)y + (float)fontHeight, 1.0f, 1.0f, setColor, 0);
+    fy = (float)y + (float)fontHeight;
+    re.DrawText(string, 0x7fffffff, cls.consoleFont, (float)x, fy, 1.0f, 1.0f, setColor, 0);
 }
 
 void SCR_DrawConsoleString(int x, int y, const short int *string, int maxChars, const vec_t *setColor)
 {
     int fontHeight;
+    float fy;
 
     fontHeight = re.TextHeight(cls.consoleFont);
-    re.DrawConsoleText(string, maxChars, cls.consoleFont, (float)x, (float)y + (float)fontHeight, 1.0f, 1.0f, setColor, 0);
+    fy = (float)y + (float)fontHeight;
+    re.DrawConsoleText(string, maxChars, cls.consoleFont, (float)x, fy, 1.0f, 1.0f, setColor, 0);
 }
 
 void SCR_Init(void)

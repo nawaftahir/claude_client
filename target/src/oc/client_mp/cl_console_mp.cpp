@@ -517,13 +517,11 @@ void Con_ToggleConsoleOutput(void)
 
 static void Con_DrawOutputScrollBar(float x, float y, float width, float height)
 {
-    float barX;
     float frac;
 
-    barX = x + width - 10.0f;
-    ConDraw_Box(barX, y, 10.0f, height, con_outputBarColor->current.vector);
+    ConDraw_Box(x + width - 10.0f, y, 10.0f, height, con_outputBarColor->current.vector);
     frac = 1.0f - (float)(con.currentLine - con.display) / (con.totallines - 1);
-    ConDraw_Box(barX, (y + height - 10.0f - y) * frac + y, 10.0f, 10.0f, con_outputSliderColor->current.vector);
+    ConDraw_Box(x + width - 10.0f, (y + height - 10.0f - y) * frac + y, 10.0f, 10.0f, con_outputSliderColor->current.vector);
 }
 
 static void Con_DrawOutputText(float x, float y, float height)
@@ -556,7 +554,10 @@ const char *Con_GetVersionString(void)
 
 static void Con_DrawOutputVersion(float x, float y, float height)
 {
-    SCR_DrawSmallStringExt((int)x, (int)(height - 16.0f + y), Con_GetVersionString(), con_versionColor);
+    const char *version;
+
+    version = Con_GetVersionString();
+    SCR_DrawSmallStringExt((int)x, (int)(height - 16.0f + y), version, con_versionColor);
 }
 
 void Con_DrawOuputWindow(void)
