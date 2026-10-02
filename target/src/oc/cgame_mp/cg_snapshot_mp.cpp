@@ -129,146 +129,76 @@ static char *CG_ClientInfoPtr(char *cg, int clientNum)
     return (char *)&((cg_t *)cg)->bgs.clientinfo[clientNum];
 }
 
-static void CG_ResetEntity(char *cent)
+// Name from CoD4; original CoD2 name unknown.
+static void CG_CopyCorpseInfo(clientInfo_t *corpseInfo, const clientInfo_t *ci)
 {
-    int eType;
+    int attachIndex;
 
-    VectorClear3((char *)((centity_t *)cent)->lightingOrigin);
+    memcpy(corpseInfo, ci, sizeof(clientInfo_t));
+    for (attachIndex = 0; attachIndex < 6; attachIndex++) {
+        if (!I_stricmp(corpseInfo->attachTagNames[attachIndex], "J_Spine4")) {
+            corpseInfo->attachModelNames[attachIndex][0] = 0;
+            corpseInfo->attachTagNames[attachIndex][0] = 0;
+        }
+    }
+}
 
-    memcpy(cent, cent + ES_BINSIZE, ES_BINSIZE) ;
+static void CG_ResetEntity(char *centPtr)
+{
+    centity_t *cent = (centity_t *)centPtr;
+    clientInfo_t *ci;
+    clientInfo_t *corpseInfo;
+    XAnimTree_s *pXAnimTree;
 
-    ((centity_t *)cent)->bTrailMade = 0;
-    ((centity_t *)cent)->cullIn = 0;
+    cent->lightingOrigin[0] = 0;
+    cent->lightingOrigin[1] = 0;
+    cent->lightingOrigin[2] = 0;
+    cent->currentState = cent->nextState;
+    cent->bTrailMade = 0;
+    cent->cullIn = 0;
+    BG_EvaluateTrajectory(&cent->nextState.pos, cg->time, cent->lerpOrigin);
+    BG_EvaluateTrajectory(&cent->nextState.apos, cg->time, cent->lerpAngles);
 
-    BG_EvaluateTrajectory(&((centity_t *)cent)->nextState.pos, cg->time, ((centity_t *)cent)->lerpOrigin);
-
-    BG_EvaluateTrajectory(&((centity_t *)cent)->nextState.apos, cg->time, ((centity_t *)cent)->lerpAngles);
-
-    eType = ((centity_t *)cent)->nextState.eType;
-
-    switch (eType) {
+    switch (cent->nextState.eType) {
     case 0:
     case 4:
-
-        ((centity_t *)cent)->previousEventSequence = 0;
+        cent->previousEventSequence = 0;
         break;
 
     case 1:
-    {
-        char *ci;
-        int clientNum;
-
-        ((centity_t *)cent)->previousEventSequence = ((centity_t *)cent)->nextState.eventSequence;
-
-        clientNum = ((centity_t *)cent)->nextState.clientNum;
-        ci = (char *)&((cg_t *)cg)->bgs.clientinfo[clientNum] - 0x14 ;
-
-        *(int *)(((char *)ci + offsetof(clientInfo_t, name[8])) + 0x3e0)  = *(int *)(cent + 0x15c) ;
-
-        *(int *)(((char *)ci + offsetof(clientInfo_t, name[8])) + 0x3e4)  = ((centity_t *)cent)->nextState.leanf;
-
-        {
-            char *to = ((char *)ci + offsetof(clientInfo_t, angles[0][0]));
-            VectorCopy3((char *)((centity_t *)cent)->lerpAngles, to);
-        }
-
-        *(int *)((char *)((centity_t *)cent)->lerpAngles) = 0;
-        *(int *)((char *)((centity_t *)cent)->lerpAngles + 8) = 0;
-
-        CG_ResetPlayerEntity((centity_t *)cent);
+        cent->previousEventSequence = cent->nextState.eventSequence;
+        ci = &cg->bgs.clientinfo[cent->nextState.clientNum];
+        ci->lerpMoveDir = cent->nextState.angles2[1];
+        ci->lerpLean = cent->nextState.leanf;
+        ci->playerAngles[0] = cent->lerpAngles[0];
+        ci->playerAngles[1] = cent->lerpAngles[1];
+        ci->playerAngles[2] = cent->lerpAngles[2];
+        cent->lerpAngles[0] = 0;
+        cent->lerpAngles[2] = 0;
+        CG_ResetPlayerEntity(cent);
         break;
-    }
 
     case 2:
-    {
-        char *ci;
-        char *corpseInfo;
-        char *corpseBase;
-        void *pXAnimTree;
-        int entNum;
-        int clientNum;
-
-        clientNum = ((centity_t *)cent)->nextState.clientNum;
-        ci = (char *)&((cg_t *)cg)->bgs.clientinfo[clientNum];
-
-        entNum = ((centity_t *)cent)->nextState.number;
-
-        {
-            char *cgs_ptr = (char *)cgs;
-
-            corpseBase = cgs_ptr + entNum * CI_STRIDE - 0x6bf0;
-            corpseInfo = corpseBase + 4;
-        }
-
-        pXAnimTree = ((clientInfo_t *)corpseInfo)->pXAnimTree;
-
-        if (((centity_t *)cent)->nextState.eFlags & 8) {
-            int attachIndex;
-
-            memcpy(corpseInfo, ci, CI_STRIDE);
-
-            {
-                char *tagSrc = corpseBase + 0x204;
-                char *modelDst = corpseInfo;
-                for (attachIndex = 0; attachIndex < 6; attachIndex++) {
-                    if (I_stricmp(tagSrc, (const char *)"J_Spine4") == 0) {
-                        *(char *)(modelDst + 0x80)  = 0;
-                        *(char *)(modelDst + 0x200)  = 0;
-                    }
-                    tagSrc += 0x40;
-                    modelDst += 0x40;
-                }
-            }
-
-            ((clientInfo_t *)corpseInfo)->pXAnimTree = (XAnimTree_s *)(pXAnimTree);
-
-            XAnimCloneAnimTree((const struct XAnimTree_s *)((clientInfo_t *)ci)->pXAnimTree, (struct XAnimTree_s *)pXAnimTree);
-
-            ((centity_t *)cent)->previousEventSequence = 0;
+        ci = &cg->bgs.clientinfo[cent->nextState.clientNum];
+        corpseInfo = &cgs->corpseinfo[cent->nextState.number - 64];
+        pXAnimTree = corpseInfo->pXAnimTree;
+        if (cent->nextState.eFlags & 0x80000) {
+            CG_CopyCorpseInfo(corpseInfo, ci);
+            corpseInfo->pXAnimTree = pXAnimTree;
+            XAnimCloneAnimTree(ci->pXAnimTree, pXAnimTree);
+            cent->previousEventSequence = 0;
         } else {
-
-            if (((clientInfo_t *)corpseInfo)->model[0] != 0) {
-
-                if (((clientInfo_t *)corpseInfo)->clientNum != ((clientInfo_t *)ci)->clientNum) {
-
-                    goto do_corpse_copy_from_ci;
-                }
-
-            } else {
-
-            do_corpse_copy_from_ci: {
-                int attachIndex;
-                char *src = ci;
-
-                memcpy(corpseInfo, src, CI_STRIDE);
-
-                {
-                    char *tagSrc = corpseBase + 0x204;
-                    char *modelDst = corpseInfo;
-                    for (attachIndex = 0; attachIndex < 6; attachIndex++) {
-                        if (I_stricmp(tagSrc, (const char *)"J_Spine4") == 0) {
-                            *(char *)(modelDst + 0x80)  = 0;
-                            *(char *)(modelDst + 0x200)  = 0;
-                        }
-                        tagSrc += 0x40;
-                        modelDst += 0x40;
-                    }
-                }
-
-                ((clientInfo_t *)corpseInfo)->pXAnimTree = (XAnimTree_s *)(pXAnimTree);
+            if (!corpseInfo->model[0] || corpseInfo->clientNum != ci->clientNum) {
+                CG_CopyCorpseInfo(corpseInfo, ci);
+                corpseInfo->pXAnimTree = pXAnimTree;
             }
-            }
-
-            ((centity_t *)cent)->previousEventSequence = ((centity_t *)cent)->nextState.eventSequence;
+            cent->previousEventSequence = cent->nextState.eventSequence;
         }
-
-        ((clientInfo_t *)corpseInfo)->dobjDirty = 1;
+        corpseInfo->dobjDirty = 1;
         break;
-    }
 
     default:
-
-        ((centity_t *)cent)->previousEventSequence = ((centity_t *)cent)->nextState.eventSequence;
+        cent->previousEventSequence = cent->nextState.eventSequence;
         break;
     }
 }
