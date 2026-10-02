@@ -32,7 +32,7 @@ void G_DebugBox( const float *origin, const float *mins, const float *maxs, floa
 	{
 		for ( j = 0; j < 3; j++ )
 		{
-			v[i][j] = ( ( i >> j ) & 1 ) ? maxs[j] : mins[j];
+			v[i][j] = ( i & ( 1 << j ) ) ? maxs[j] : mins[j];
 		}
 		fRotated[0] = v[i][0] * fCos - v[i][1] * fSin;
 		fRotated[1] = v[i][0] * fSin + v[i][1] * fCos;
