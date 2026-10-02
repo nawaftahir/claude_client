@@ -2230,6 +2230,11 @@ Bool CL_ConnectionlessPacket(netadr_t from, msg_t *msg, int time)
             return 0;
         }
 
+        if (autoupdateChecked && NET_CompareAdr(cls.autoupdateServer, conn->serverAddress)) {
+            if (cl_updateavailable->current.enabled)
+                autoupdateStarted = 1;
+        }
+
         Netchan_Setup(NS_CLIENT1, &conn->netchan, from, ::qport);
         conn->state = CA_CONNECTED;
         conn->lastPacketSentTime = cls.realtime;
