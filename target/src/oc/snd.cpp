@@ -1447,14 +1447,13 @@ int SND_PlayLocalSoundAliasByName(const char *aliasname, snd_alias_system_t syst
 {
     const snd_alias_t *pAlias;
 
-    if (!aliasname)
-        return 0;
+    if (aliasname) {
+        pAlias = Com_PickSoundAlias(aliasname);
+        if (pAlias)
+            return SND_PlaySoundAlias_Internal(pAlias, pAlias, 0.0f, g_snd.listeners[0].entnum, g_snd.listeners[0].orient.origin, NULL, 0, 0, system);
+    }
 
-    pAlias = Com_PickSoundAlias(aliasname);
-    if (!pAlias)
-        return 0;
-
-    return SND_PlaySoundAlias_Internal(pAlias, pAlias, 0.0f, g_snd.listeners[0].entnum, g_snd.listeners[0].orient.origin, NULL, 0, 0, system);
+    return 0;
 }
 
 int SND_PlayLocalSoundAlias(snd_alias_list_t *aliasList, snd_alias_system_t system)
