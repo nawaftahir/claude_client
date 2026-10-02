@@ -905,6 +905,12 @@ const char *FS_ReferencedIwdPureChecksums()
 	return fs_referencedIwdPureChecksums;
 }
 
+enum snd_stopsounds_arg_t
+{
+	SND_STOP_STREAMED = 8
+};
+void SND_StopSounds( snd_stopsounds_arg_t which );
+
 void FS_PureServerSetLoadedIwds(const char *paksums, const char *paknames)
 {
 	int j, k;
@@ -971,6 +977,7 @@ foundIwd:
 	}
 
 reload:
+	SND_StopSounds(SND_STOP_STREAMED);
 	FS_ShutdownServerIwdNames();
 	fs_numServerIwds = numPakSums;
 
