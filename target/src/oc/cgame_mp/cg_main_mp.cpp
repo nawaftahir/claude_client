@@ -680,16 +680,6 @@ static inline __attribute__((always_inline)) int CG_PlayPickedAlias(const snd_al
     return msec;
 }
 
-static inline __attribute__((always_inline)) int CG_LocalSoundEntityNum(void)
-{
-    return cgArray[0].nextSnap->ps.clientNum;
-}
-
-static inline __attribute__((always_inline)) const vec_t *CG_LocalSoundOrigin(void)
-{
-    return cgArray[0].nextSnap->ps.origin;
-}
-
 int CG_PlaySoundAliasAsMasterByName(int entitynum, const vec_t *origin, const char *aliasname)
 {
     return CG_PlayPickedAlias(CL_PickSoundAlias(aliasname), entitynum, origin, 1);
@@ -821,12 +811,12 @@ void CG_SafeTranslateHudElemString(int index, char *hudElemString)
 
 int CG_PlayClientSoundAliasByName(const char *aliasname)
 {
-    return CG_PlayPickedAlias(CL_PickSoundAlias(aliasname), CG_LocalSoundEntityNum(), CG_LocalSoundOrigin(), 0);
+    return CG_PlaySoundAliasByName(cgArray[0].nextSnap->ps.clientNum, cgArray[0].nextSnap->ps.origin, aliasname);
 }
 
 int CG_PlayClientSoundAlias(snd_alias_list_t *aliasList)
 {
-    return CG_PlayPickedAlias(Com_PickSoundAliasFromList(aliasList), CG_LocalSoundEntityNum(), CG_LocalSoundOrigin(), 0);
+    return CG_PlaySoundAlias(cgArray[0].nextSnap->ps.clientNum, cgArray[0].nextSnap->ps.origin, aliasList);
 }
 
 int CG_PlayEntitySoundAlias(int entitynum, snd_alias_list_t *aliasList)
