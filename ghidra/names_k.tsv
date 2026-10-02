@@ -250,3 +250,5 @@
 4bf070	CG_ObjectiveIconMaterial	unknown
 533200	UI_DoServerRefresh	callsite
 52c400	Load_ScriptMenu	callsite
+4c5630	CG_DrawSpectatorMessage	callsite
+4c5600	CG_GetBoundSpectatorCommand	kisak

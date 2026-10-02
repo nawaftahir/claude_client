@@ -128,6 +128,8 @@ extern qboolean CG_ScoreboardDisplayed(void);
 extern void Con_DrawBoldMessages(int xPos, int yPos, float alpha, msgwnd_mode_t mode);
 extern float *CG_FadeColor(int startMsec, int totalMsec, int fadeMsec);
 extern void Controls_GetConfig(void);
+extern int Key_GetCatcher(void);
+extern const dvar_t *cg_descriptiveText;
 extern int GetKeyBindingLocalizedString(const char *command, char *keys);
 extern void I_strncpyz(char *dest, const char *src, int destsize);
 extern char *I_CleanStr(char *string);
@@ -204,7 +206,7 @@ static void __attribute_regparm__(2) CG_CalcCrosshairPosition(float *x, float *y
 static float CG_DrawFPS(float y);
 void CG_DrawBoldGameMessages(void);
 void CG_DrawTurretCrossHair(void);
-static unsigned int CG_DrawSpectatorMessage(void);
+static void CG_DrawSpectatorMessage(void);
 void CG_StartShakeCamera(float scale, int duration, const vec_t *src, float radius);
 static float CG_DrawWeapReticle(void);
 unsigned int CG_DrawCrosshair(void);
@@ -1028,26 +1030,57 @@ void CG_DrawTurretCrossHair(void)
     UI_DrawHandlePic(316.0f, 236.0f, 8.0f, 8.0f, 0, 0, color, cgs->media.whiteMaterial);
 }
 
-static unsigned int CG_DrawSpectatorMessage(void)
+static const char *CG_GetBoundSpectatorCommand(const char *command, const char *altCommand)
 {
-    const char *text;
+    char binding[256];
+
+    if (GetKeyBindingLocalizedString(command, binding))
+        return command;
+    if (GetKeyBindingLocalizedString(altCommand, binding))
+        return altCommand;
+    return command;
+}
+
+static void CG_DrawSpectatorMessage(void)
+{
+    const char *commands[5];
+    const char *messages[5];
+    char binding[256];
+    const char *str;
     FontHandle font;
-    float scale;
-    int textWidth;
+    float lineHeight;
+    float y;
+    int lineNum;
+    int i;
 
-    if (!cg || !cg->snap)
-        return 0;
+    if (!cg_descriptiveText->current.enabled || (Key_GetCatcher() & 8)
+        || !(cg->nextSnap->ps.pm_flags & 0x3000000))
+        return;
 
-    if (cg->snap->ps.pm_type != 5)
-        return 0;
+    Controls_GetConfig();
+    font = UI_GetFontHandle(0, 0.20833333f);
+    lineNum = 0;
+    lineHeight = (float)UI_TextHeight(font, 0.20833333f);
+    y = 436.0f - (lineHeight + lineHeight);
 
-    text = UI_SafeTranslateString("CGAME_SPECTATOR");
-    scale = CL_IsRenderingSplitScreen() ? 0.5f : (1.0f / 3.0f);
-    font = UI_GetFontHandle(0, scale);
-    textWidth = UI_TextWidth(text, 0, font, scale);
-    UI_DrawText(text, 0x7fffffff, font, (float)(-textWidth) * 0.5f, 40.0f, 7, 1, scale, colorWhite, 3);
+    if (cg->nextSnap->ps.pm_flags & 0x1000000) {
+        commands[lineNum] = "+attack";
+        messages[lineNum++] = "PLATFORM_FOLLOWNEXTPLAYER";
+        commands[lineNum] = CG_GetBoundSpectatorCommand("toggleads", "+speed");
+        messages[lineNum++] = "PLATFORM_FOLLOWPREVIOUSPLAYER";
+    }
+    if (cg->nextSnap->ps.pm_flags & 0x2000000) {
+        commands[lineNum] = CG_GetBoundSpectatorCommand("+melee", "+melee_breath");
+        messages[lineNum++] = "PLATFORM_FOLLOWSTOP";
+    }
 
-    return 1;
+    for (i = 0; i < lineNum; i++) {
+        if (!GetKeyBindingLocalizedString(commands[i], binding))
+            I_strncpyz(binding, UI_SafeTranslateString("KEY_UNBOUND"), 256);
+        str = UI_ReplaceConversionString(UI_SafeTranslateString(messages[i]), binding);
+        UI_DrawText(str, 0x7fffffff, font, 240.0f, y, 0, 0, 0.20833333f, colorWhite, 3);
+        y = y + lineHeight;
+    }
 }
 
 void CG_DrawPlayerSprites(void)

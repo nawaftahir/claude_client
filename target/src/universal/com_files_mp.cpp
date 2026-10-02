@@ -215,6 +215,53 @@ int FS_Read2( void *buffer, int len, fileHandle_t f )
 	return FS_Read(buffer, len, f);
 }
 
+// Original name unknown.
+qboolean FS_FileMatchesDisk( const char *qpath, const char *ospath )
+{
+	void *fsData;
+	int fsLen;
+	FILE *f;
+	int diskLen;
+	byte *diskData;
+	int i;
+	qboolean different;
+
+	fsLen = FS_ReadFile( qpath, &fsData );
+	if ( fsLen == -1 )
+		return 0;
+
+	f = fopen( ospath, "rb" );
+	different = qtrue;
+	if ( f )
+	{
+		fseek( f, 0, SEEK_END );
+		diskLen = ftell( f );
+		fseek( f, 0, SEEK_SET );
+
+		if ( diskLen > 0 )
+		{
+			diskData = (byte *)Z_Malloc( diskLen );
+			fread( diskData, 1, diskLen, f );
+
+			if ( diskLen == fsLen )
+			{
+				for ( i = 0; i < diskLen; i++ )
+				{
+					if ( diskData[i] != ((byte *)fsData)[i] )
+						break;
+				}
+				if ( i == diskLen )
+					different = qfalse;
+			}
+			free( diskData );
+		}
+		fclose( f );
+	}
+
+	FS_FreeFile( fsData );
+	return !different;
+}
+
 /*
 =======================
 Sys_ConcatenateFileLists
