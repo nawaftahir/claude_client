@@ -1396,6 +1396,7 @@ void CG_AddPlayerWeapon(GfxEntity *parent, playerState_t *ps, centity_t *cent, q
             GfxEntity *skinEnt;
 
             memset(&gun, 0, sizeof(gun));
+            gun.reType = RT_DOBJ;
             gun.renderFxFlags = 0x8c;
             gun.materialRGBA[0] = 0xff;
             gun.materialRGBA[1] = 0xff;
@@ -1439,7 +1440,7 @@ void CG_AddPlayerWeapon(GfxEntity *parent, playerState_t *ps, centity_t *cent, q
         AxisCopy(parent->axis, cg->viewModelAxis);
         AxisToAngles(cg->viewModelAxis, cg->viewModelAngles);
 
-        if (weapInfo->viewModelDObj) {
+        {
             int boneIndex;
 
             boneIndex = DObjGetBoneIndex(weapInfo->viewModelDObj, scr_const.tag_brass);
@@ -1448,10 +1449,10 @@ void CG_AddPlayerWeapon(GfxEntity *parent, playerState_t *ps, centity_t *cent, q
                 if (rotTransArray) {
                     vec3_t entAxis[4];
 
-                    AxisCopy(parent->axis, entAxis);
-                    entAxis[3][0] = parent->origin[0];
-                    entAxis[3][1] = parent->origin[1];
-                    entAxis[3][2] = parent->origin[2];
+                    VectorCopy(parent->axis[0], entAxis[0]);
+                    VectorCopy(parent->axis[1], entAxis[1]);
+                    VectorCopy(parent->axis[2], entAxis[2]);
+                    VectorCopy(parent->origin, entAxis[3]);
                     MatrixTransformVector43(rotTransArray[boneIndex].trans, entAxis, ejectBrassCasingOrigin);
                 }
             }

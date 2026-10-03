@@ -124,19 +124,10 @@ void SCR_Init(void)
 
 float CL_GetMenuBlurRadius(void)
 {
-    clientActive_t *cl_local = clients;
-    if (!(cl_local->keyCatchers & 8))
-        return 0.0f;
+    if ((clients->keyCatchers & 8) && cls.uiStarted && clc.state != 1)
+        return UI_GetBlurRadius();
 
-    byte *cls = cls_ptr_195ecac;
-    if ((((clientStatic_t *)(cls))->uiStarted) == 0)
-        return 0.0f;
-
-    clientConnection_t *clc = &::clc;
-    if (clc->state == 1)
-        return 0.0f;
-
-    return UI_GetBlurRadius();
+    return 0.0f;
 }
 
 static void CL_CubemapShotUsage(void)

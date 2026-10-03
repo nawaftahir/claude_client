@@ -366,3 +366,8 @@
 4cf6c0	CalculateWeaponPosition_SaveOffsetMovement	fix	# own match
 4cf770	CalculateWeaponPosition	fix	# caller order, Kisak shape
 4cf9c0	CalculateWeaponPostion_PositionToADS	fix	# own match
+4c8570	CG_CalcVrect	fix	# own match, Q3 name
+4c9120	CG_CalcCubemapViewValues	fix	# CoD4 name, tail-called from CG_CalcViewValues
+4c9340	CG_CalcTurretViewValues	fix	# name unknown; "Turret has no bone: tag_player"
+4c9420	CG_SetViewModelFromRefdef	fix	# own match, name unknown
+4c94d0	CG_ApplyViewAnimation	fix	# CoD4 name, tag_camera

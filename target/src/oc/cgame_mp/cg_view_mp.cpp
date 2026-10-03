@@ -82,6 +82,17 @@ extern void AddLeanToPosition(vec_t *position, const float fViewYaw, const float
 extern void CG_ShakeCamera(void);
 extern void CG_PerturbCamera(void);
 extern void AnglesToAxis( const vec3_t angles, vec3_t axis[3] );
+extern void AxisToAngles( vec3_t axis[3], vec3_t angles );
+extern void MatrixMultiply43( const float in1[4][3], const float in2[4][3], float out[4][3] );
+extern void ConvertQuatToMat( const DObjAnimMat *mat, float axis[3][3] );
+extern int DObjGetBoneIndex( const DObj *obj, unsigned int boneName );
+extern DObjAnimMat *DObjGetRotTransArray( const DObj_s *obj );
+extern weaponInfo_t cg_weaponsArray[];
+extern scr_const_t scr_const;
+extern void VectorMA( const vec3_t v, float s, const vec3_t b, vec3_t o );
+extern float crandom( void );
+extern void Com_Error( errorParm_t code, const char *fmt, ... );
+extern qboolean CG_DObjGetWorldTagPos( const centity_t *cent, struct DObj_s *obj, unsigned int tagName, vec_t *pos );
 
 void CG_FxRestart(void);
 void CG_FxTest(void);
@@ -221,6 +232,19 @@ void CG_FxSetTestPosition(void)
 
     Com_Printf((const char *)"\n\nFX Testing position set to: (%f, %f, %f)\n\n",
                (double)result[0], (double)result[1], (double)result[2]);
+}
+
+// Name from Q3.
+static void CG_CalcVrect(int size)
+{
+    cg->refdef.width = cgs->viewWidth * size / 100;
+    cg->refdef.width &= ~1;
+    cg->refdef.height = cgs->viewHeight * size / 100;
+    cg->refdef.height &= ~1;
+    cg->refdef.x = (cgs->viewWidth - cg->refdef.width) / 2 + cgs->viewX;
+    cg->refdef.y = (cgs->viewHeight - cg->refdef.height) / 2 + cgs->viewY;
+    SetScreenScaling(1.0f, 1.0f, (float)cg->refdef.x, (float)cg->refdef.y,
+                     (float)cg->refdef.width, (float)cg->refdef.height);
 }
 
 static void CG_OffsetThirdPersonView(void)
@@ -416,190 +440,116 @@ static void CG_OffsetFirstPersonView(void)
 }
 
 
-static void CG_CalcViewValues(void)
+// Name from CoD4.
+static void CG_CalcCubemapViewValues(void)
 {
-    playerState_t *ps;
-    int framerate;
-    int bobX, bobY;
-    int viewX, viewY;
-    float bobCycle, speed, menuBlur;
+    cg->refdef.x = 0;
+    cg->refdef.y = 0;
+    cg->refdef.width = cg->cubemapSize + 2;
+    cg->refdef.height = cg->refdef.width;
+    cg->refdef.fov_x = (float)(atan2((double)(cg->cubemapSize + 2), (double)cg->cubemapSize) * 114.59155902616465);
+    cg->refdef.fov_y = cg->refdef.fov_x;
+    cg->refdef.vieworg[0] = cg->predictedPlayerState.origin[0];
+    cg->refdef.vieworg[1] = cg->predictedPlayerState.origin[1];
+    cg->refdef.vieworg[2] = cg->predictedPlayerState.viewHeightCurrent + cg->predictedPlayerState.origin[2];
 
-    memset(&cg->refdef, 0, sizeof(refdef_t));
-
-    menuBlur = CL_GetMenuBlurRadius();
-    {
-        float cgBlur = *(float *)((char *)&cgDC + 0x28);
-        cg->refdef.blurRadius = __builtin_sqrtf(cgBlur * cgBlur + menuBlur * menuBlur);
+    switch (cg->cubemapShot) {
+    case 1:
+        cg->refdef.viewaxis[0][0] = 0.0f;
+        cg->refdef.viewaxis[0][1] = 0.0f;
+        cg->refdef.viewaxis[0][2] = 1.0f;
+        cg->refdef.viewaxis[1][0] = 0.0f;
+        cg->refdef.viewaxis[1][1] = 1.0f;
+        cg->refdef.viewaxis[1][2] = 0.0f;
+        cg->refdef.viewaxis[2][0] = -1.0f;
+        cg->refdef.viewaxis[2][1] = 0.0f;
+        cg->refdef.viewaxis[2][2] = 0.0f;
+        break;
+    case 2:
+        cg->refdef.viewaxis[0][0] = 0.0f;
+        cg->refdef.viewaxis[0][1] = 0.0f;
+        cg->refdef.viewaxis[0][2] = -1.0f;
+        cg->refdef.viewaxis[1][0] = 0.0f;
+        cg->refdef.viewaxis[1][1] = 1.0f;
+        cg->refdef.viewaxis[1][2] = 0.0f;
+        cg->refdef.viewaxis[2][0] = 1.0f;
+        cg->refdef.viewaxis[2][1] = 0.0f;
+        cg->refdef.viewaxis[2][2] = 0.0f;
+        break;
+    case 3:
+        cg->refdef.viewaxis[0][0] = -1.0f;
+        cg->refdef.viewaxis[0][1] = 0.0f;
+        cg->refdef.viewaxis[0][2] = 0.0f;
+        cg->refdef.viewaxis[1][0] = 0.0f;
+        cg->refdef.viewaxis[1][1] = -1.0f;
+        cg->refdef.viewaxis[1][2] = 0.0f;
+        cg->refdef.viewaxis[2][0] = 0.0f;
+        cg->refdef.viewaxis[2][1] = 0.0f;
+        cg->refdef.viewaxis[2][2] = 1.0f;
+        break;
+    case 4:
+        cg->refdef.viewaxis[0][0] = 1.0f;
+        cg->refdef.viewaxis[0][1] = 0.0f;
+        cg->refdef.viewaxis[0][2] = 0.0f;
+        cg->refdef.viewaxis[1][0] = 0.0f;
+        cg->refdef.viewaxis[1][1] = 1.0f;
+        cg->refdef.viewaxis[1][2] = 0.0f;
+        cg->refdef.viewaxis[2][0] = 0.0f;
+        cg->refdef.viewaxis[2][1] = 0.0f;
+        cg->refdef.viewaxis[2][2] = 1.0f;
+        break;
+    case 5:
+        cg->refdef.viewaxis[0][0] = 0.0f;
+        cg->refdef.viewaxis[0][1] = -1.0f;
+        cg->refdef.viewaxis[0][2] = 0.0f;
+        cg->refdef.viewaxis[1][0] = 1.0f;
+        cg->refdef.viewaxis[1][1] = 0.0f;
+        cg->refdef.viewaxis[1][2] = 0.0f;
+        cg->refdef.viewaxis[2][0] = 0.0f;
+        cg->refdef.viewaxis[2][1] = 0.0f;
+        cg->refdef.viewaxis[2][2] = 1.0f;
+        break;
+    case 6:
+        cg->refdef.viewaxis[0][0] = 0.0f;
+        cg->refdef.viewaxis[0][1] = 1.0f;
+        cg->refdef.viewaxis[0][2] = 0.0f;
+        cg->refdef.viewaxis[1][0] = -1.0f;
+        cg->refdef.viewaxis[1][1] = 0.0f;
+        cg->refdef.viewaxis[1][2] = 0.0f;
+        cg->refdef.viewaxis[2][0] = 0.0f;
+        cg->refdef.viewaxis[2][1] = 0.0f;
+        cg->refdef.viewaxis[2][2] = 1.0f;
+        break;
     }
+}
 
-    if (cg->cubemapShot != 0) {
-        int size = cg->cubemapSize;
-        cg->refdef.x = 0;
-        cg->refdef.y = 0;
-        cg->refdef.width = size + 2;
-        cg->refdef.height = cg->refdef.width;
-        cg->refdef.fov_x = (float)(atan2((double)cg->refdef.width, (double)size) * 114.591559f);
-        cg->refdef.fov_y = cg->refdef.fov_x;
+// Original name unknown.
+static void CG_CalcTurretViewValues(void)
+{
+    centity_t *cent;
+    struct DObj_s *obj;
 
-        cg->refdef.vieworg[0] = cg->predictedPlayerState.origin[0];
-        cg->refdef.vieworg[1] = cg->predictedPlayerState.origin[1];
-        cg->refdef.vieworg[2] = cg->predictedPlayerState.origin[2];
-        cg->refdef.vieworg[2] = cg->refdef.vieworg[2] + cg->predictedPlayerState.viewHeightCurrent;
-
-        if (cg->cubemapShot > 6)
-            return;
-
-        switch (cg->cubemapShot) {
-        case 1:
-            cg->refdef.viewaxis[0][0] = 0.0f;
-            cg->refdef.viewaxis[0][1] = 0.0f;
-            cg->refdef.viewaxis[0][2] = 1.0f;
-            cg->refdef.viewaxis[1][0] = 0.0f;
-            cg->refdef.viewaxis[1][1] = 1.0f;
-            cg->refdef.viewaxis[1][2] = 0.0f;
-            cg->refdef.viewaxis[2][0] = -1.0f;
-            cg->refdef.viewaxis[2][1] = 0.0f;
-            cg->refdef.viewaxis[2][2] = 0.0f;
-            return;
-        case 2:
-            cg->refdef.viewaxis[0][0] = 0.0f;
-            cg->refdef.viewaxis[0][1] = 0.0f;
-            cg->refdef.viewaxis[0][2] = -1.0f;
-            cg->refdef.viewaxis[1][0] = 0.0f;
-            cg->refdef.viewaxis[1][1] = 1.0f;
-            cg->refdef.viewaxis[1][2] = 0.0f;
-            cg->refdef.viewaxis[2][0] = 1.0f;
-            cg->refdef.viewaxis[2][1] = 0.0f;
-            cg->refdef.viewaxis[2][2] = 0.0f;
-            return;
-        case 3:
-            cg->refdef.viewaxis[0][0] = -1.0f;
-            cg->refdef.viewaxis[0][1] = 0.0f;
-            cg->refdef.viewaxis[0][2] = 0.0f;
-            cg->refdef.viewaxis[1][0] = 0.0f;
-            cg->refdef.viewaxis[1][1] = -1.0f;
-            cg->refdef.viewaxis[1][2] = 0.0f;
-            cg->refdef.viewaxis[2][0] = 0.0f;
-            cg->refdef.viewaxis[2][1] = 0.0f;
-            cg->refdef.viewaxis[2][2] = 1.0f;
-            return;
-        case 4:
-            cg->refdef.viewaxis[0][0] = 1.0f;
-            cg->refdef.viewaxis[0][1] = 0.0f;
-            cg->refdef.viewaxis[0][2] = 0.0f;
-            cg->refdef.viewaxis[1][0] = 0.0f;
-            cg->refdef.viewaxis[1][1] = 1.0f;
-            cg->refdef.viewaxis[1][2] = 0.0f;
-            cg->refdef.viewaxis[2][0] = 0.0f;
-            cg->refdef.viewaxis[2][1] = 0.0f;
-            cg->refdef.viewaxis[2][2] = 1.0f;
-            return;
-        case 5:
-            cg->refdef.viewaxis[0][0] = 0.0f;
-            cg->refdef.viewaxis[0][1] = -1.0f;
-            cg->refdef.viewaxis[0][2] = 0.0f;
-            cg->refdef.viewaxis[1][0] = 1.0f;
-            cg->refdef.viewaxis[1][1] = 0.0f;
-            cg->refdef.viewaxis[1][2] = 0.0f;
-            cg->refdef.viewaxis[2][0] = 0.0f;
-            cg->refdef.viewaxis[2][1] = 0.0f;
-            cg->refdef.viewaxis[2][2] = 1.0f;
-            return;
-        case 6:
-            cg->refdef.viewaxis[0][0] = 0.0f;
-            cg->refdef.viewaxis[0][1] = 1.0f;
-            cg->refdef.viewaxis[0][2] = 0.0f;
-            cg->refdef.viewaxis[1][0] = -1.0f;
-            cg->refdef.viewaxis[1][1] = 0.0f;
-            cg->refdef.viewaxis[1][2] = 0.0f;
-            cg->refdef.viewaxis[2][0] = 0.0f;
-            cg->refdef.viewaxis[2][1] = 0.0f;
-            cg->refdef.viewaxis[2][2] = 1.0f;
-            return;
-        default:
-            return;
-        }
-    }
-
-    if (cg->nextSnap->ps.pm_type == 5)
-        framerate = 100;
-    else
-        framerate = cg_viewsize->current.integer;
-
-    {
-        int screenX = cgs->viewX;
-        int screenY = cgs->viewY;
-        int screenW = cgs->viewWidth;
-        int screenH = cgs->viewHeight;
-
-        bobX = (framerate * screenW) / 100;
-        bobX &= ~1;
-        bobY = (framerate * screenH) / 100;
-        bobY &= ~1;
-
-        viewX = screenX + (screenW - bobX) / 2;
-        viewY = screenY + (screenH - bobY) / 2;
-
-        cg->refdef.x = viewX;
-        cg->refdef.y = viewY;
-        cg->refdef.width = bobX;
-        cg->refdef.height = bobY;
-    }
-
-    SetScreenScaling(1.0f, 1.0f, viewX, viewY, bobX, bobY);
-
-    if (cg->predictedPlayerState.pm_type == 5) {
-        cg->refdef.vieworg[0] = cg->predictedPlayerState.origin[0];
-        cg->refdef.vieworg[1] = cg->predictedPlayerState.origin[1];
-        cg->refdef.vieworg[2] = cg->predictedPlayerState.origin[2];
-        cg->refdefViewAngles[0] = cg->predictedPlayerState.viewangles[0];
-        cg->refdefViewAngles[1] = cg->predictedPlayerState.viewangles[1];
-        cg->refdefViewAngles[2] = cg->predictedPlayerState.viewangles[2];
-        AnglesToAxis(cg->refdefViewAngles, cg->refdef.viewaxis);
-        CG_CalcFov();
+    if (!(cg->predictedPlayerState.eFlags & 0x300))
         return;
-    }
 
-    ps = &cg->predictedPlayerState;
+    cent = &cg_entities[cg->predictedPlayerState.viewlocked_entNum];
+    obj = Com_GetClientDObj(cent->nextState.number, cent->localClientNum);
+    if (!obj)
+        return;
 
-    cg->fBobCycle = (float)BG_GetBobCycle(ps);
-    cg->xyspeed = BG_GetSpeed(ps, cg->time);
-    bobCycle = cg->fBobCycle;
-    speed = cg->xyspeed;
+    if (!CG_DObjGetWorldTagPos(cent, obj, scr_const.tag_player, cg->refdef.vieworg))
+        Com_Error(ERR_DROP, "\x15Turret has no bone: tag_player");
 
-    cg->refdef.vieworg[0] = ps->origin[0];
-    cg->refdef.vieworg[1] = ps->origin[1];
-    cg->refdef.vieworg[2] = ps->origin[2];
-
-    cg->refdefViewAngles[0] = ps->viewangles[0];
-    cg->refdefViewAngles[1] = ps->viewangles[1];
-    cg->refdefViewAngles[2] = ps->viewangles[2];
-
+    if (cg->predictedPlayerState.viewlocked == 2 && !cg->renderingThirdPerson)
     {
-        const dvar_t *errorDecay = cg_errorDecay;
-        float decay = errorDecay->current.value;
-        if (decay > 0.0f) {
-            float t = (decay - (float)(cg->time - cg->predictedErrorTime)) / decay;
-            if (t > 0.0f && t < 1.0f) {
-                cg->refdef.vieworg[0] += t * cg->predictedError[0];
-                cg->refdef.vieworg[1] += t * cg->predictedError[1];
-                cg->refdef.vieworg[2] += t * cg->predictedError[2];
-            } else {
-                cg->predictedErrorTime = 0;
-            }
-        }
+        cg->refdefViewAngles[0] = crandom() * BG_GetWeaponDef(cent->nextState.weapon)->vertViewJitter + cg->refdefViewAngles[0];
+        cg->refdefViewAngles[1] = crandom() * BG_GetWeaponDef(cent->nextState.weapon)->horizViewJitter + cg->refdefViewAngles[1];
     }
+}
 
-    if (!cg->renderingThirdPerson)
-        CG_OffsetFirstPersonView();
-    else
-        CG_OffsetThirdPersonView();
-
-
-    CG_ShakeCamera();
-
-    AnglesToAxis(cg->refdefViewAngles, cg->refdef.viewaxis);
-
+// Original name unknown.
+static void CG_SetViewModelFromRefdef(void)
+{
     cg->viewModelOrigin[0] = cg->refdef.vieworg[0];
     cg->viewModelOrigin[1] = cg->refdef.vieworg[1];
     cg->viewModelOrigin[2] = cg->refdef.vieworg[2];
@@ -615,20 +565,143 @@ static void CG_CalcViewValues(void)
     cg->viewModelAngles[0] = cg->refdefViewAngles[0];
     cg->viewModelAngles[1] = cg->refdefViewAngles[1];
     cg->viewModelAngles[2] = cg->refdefViewAngles[2];
+}
 
-    {
-        unsigned int pmType = (unsigned int)cg->predictedPlayerState.pm_type;
+// Name from CoD4.
+static void CG_ApplyViewAnimation(void)
+{
+    int weaponIndex;
+    weaponInfo_t *weapInfo;
+    int boneIndex;
+    DObjAnimMat *boneMtx;
+    float out[4][3];
+    float viewMtx[4][3];
+    float boneAxis[4][3];
 
-        if ((pmType - 4) <= 1 || cg->renderingThirdPerson ||
-            (cg->predictedPlayerState.eFlags & 0x300)) {
-            CG_PerturbCamera();
-            CG_CalcFov();
-            return;
-        }
+    if (cg->predictedPlayerState.pm_type == 4 || cg->predictedPlayerState.pm_type == 5)
+        return;
+    if (cg->renderingThirdPerson)
+        return;
+    if (cg->predictedPlayerState.eFlags & 0x300)
+        return;
+
+    weaponIndex = BG_GetViewmodelWeaponIndex(&cg->predictedPlayerState);
+    if (weaponIndex <= 0)
+        return;
+
+    weapInfo = &cg_weaponsArray[weaponIndex];
+    if (!weapInfo->viewModelDObj)
+        return;
+
+    boneIndex = DObjGetBoneIndex(weapInfo->viewModelDObj, scr_const.tag_camera);
+    if (boneIndex < 0)
+        return;
+
+    boneMtx = DObjGetRotTransArray(weapInfo->viewModelDObj);
+    if (!boneMtx)
+        return;
+
+    boneMtx += boneIndex;
+    ConvertQuatToMat(boneMtx, boneAxis);
+    boneAxis[3][0] = boneMtx->trans[0];
+    boneAxis[3][1] = boneMtx->trans[1];
+    boneAxis[3][2] = boneMtx->trans[2];
+    viewMtx[0][0] = cg->refdef.viewaxis[0][0];
+    viewMtx[0][1] = cg->refdef.viewaxis[0][1];
+    viewMtx[0][2] = cg->refdef.viewaxis[0][2];
+    viewMtx[1][0] = cg->refdef.viewaxis[1][0];
+    viewMtx[1][1] = cg->refdef.viewaxis[1][1];
+    viewMtx[1][2] = cg->refdef.viewaxis[1][2];
+    viewMtx[2][0] = cg->refdef.viewaxis[2][0];
+    viewMtx[2][1] = cg->refdef.viewaxis[2][1];
+    viewMtx[2][2] = cg->refdef.viewaxis[2][2];
+    viewMtx[3][0] = cg->refdef.vieworg[0];
+    viewMtx[3][1] = cg->refdef.vieworg[1];
+    viewMtx[3][2] = cg->refdef.vieworg[2];
+    MatrixMultiply43(boneAxis, viewMtx, out);
+    cg->refdef.viewaxis[0][0] = out[0][0];
+    cg->refdef.viewaxis[0][1] = out[0][1];
+    cg->refdef.viewaxis[0][2] = out[0][2];
+    cg->refdef.viewaxis[1][0] = out[1][0];
+    cg->refdef.viewaxis[1][1] = out[1][1];
+    cg->refdef.viewaxis[1][2] = out[1][2];
+    cg->refdef.viewaxis[2][0] = out[2][0];
+    cg->refdef.viewaxis[2][1] = out[2][1];
+    cg->refdef.viewaxis[2][2] = out[2][2];
+    cg->refdef.vieworg[0] = out[3][0];
+    cg->refdef.vieworg[1] = out[3][1];
+    cg->refdef.vieworg[2] = out[3][2];
+    AxisToAngles(cg->refdef.viewaxis, cg->refdefViewAngles);
+}
+
+static void CG_CalcViewValues(void)
+{
+    int size;
+    float menuBlur;
+    float f;
+
+    memset(&cg->refdef, 0, sizeof(refdef_t));
+
+    menuBlur = CL_GetMenuBlurRadius();
+    cg->refdef.blurRadius = sqrtf(cgDC.blurRadiusOut * cgDC.blurRadiusOut + menuBlur * menuBlur);
+
+    if (cg->cubemapShot) {
+        CG_CalcCubemapViewValues();
+        return;
     }
 
-    CG_PerturbCamera();
+    if (cg->nextSnap->ps.pm_type == 5)
+        size = 100;
+    else
+        size = cg_viewsize->current.integer;
+    CG_CalcVrect(size);
 
+    if (cg->predictedPlayerState.pm_type == 5) {
+        cg->refdef.vieworg[0] = cg->predictedPlayerState.origin[0];
+        cg->refdef.vieworg[1] = cg->predictedPlayerState.origin[1];
+        cg->refdef.vieworg[2] = cg->predictedPlayerState.origin[2];
+        cg->refdefViewAngles[0] = cg->predictedPlayerState.viewangles[0];
+        cg->refdefViewAngles[1] = cg->predictedPlayerState.viewangles[1];
+        cg->refdefViewAngles[2] = cg->predictedPlayerState.viewangles[2];
+        AnglesToAxis(cg->refdefViewAngles, cg->refdef.viewaxis);
+        CG_CalcFov();
+        return;
+    }
+
+    cg->fBobCycle = BG_GetBobCycle(&cg->predictedPlayerState);
+    cg->xyspeed = BG_GetSpeed(&cg->predictedPlayerState, cg->time);
+
+    cg->refdef.vieworg[0] = cg->predictedPlayerState.origin[0];
+    cg->refdef.vieworg[1] = cg->predictedPlayerState.origin[1];
+    cg->refdef.vieworg[2] = cg->predictedPlayerState.origin[2];
+    cg->refdefViewAngles[0] = cg->predictedPlayerState.viewangles[0];
+    cg->refdefViewAngles[1] = cg->predictedPlayerState.viewangles[1];
+    cg->refdefViewAngles[2] = cg->predictedPlayerState.viewangles[2];
+
+    if (cg_errorDecay->current.value > 0.0f) {
+        f = (cg_errorDecay->current.value - (float)(cg->time - cg->predictedErrorTime)) / cg_errorDecay->current.value;
+        if (f > 0.0f && f < 1.0f)
+            VectorMA(cg->refdef.vieworg, f, cg->predictedError, cg->refdef.vieworg);
+        else
+            cg->predictedErrorTime = 0;
+    }
+
+    CG_CalcTurretViewValues();
+
+    if (cg->renderingThirdPerson)
+        CG_OffsetThirdPersonView();
+    else
+        CG_OffsetFirstPersonView();
+
+
+    CG_ShakeCamera();
+
+    AnglesToAxis(cg->refdefViewAngles, cg->refdef.viewaxis);
+
+    CG_SetViewModelFromRefdef();
+    CG_ApplyViewAnimation();
+
+    CG_PerturbCamera();
     CG_CalcFov();
 }
 void CG_InitView(void)
