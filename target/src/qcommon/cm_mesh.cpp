@@ -509,7 +509,7 @@ static inline void CM_TraceCapsuleThroughTriangle( traceWork_t *tw, CollisionTri
 
 								trace->fraction = 0.0f;
 
-								if ( Square(tw->radius) > offsetLenSq )
+								if ( offsetLenSq < Square(tw->radius) )
 								{
 									trace->startsolid = qtrue;
 								}
@@ -594,7 +594,7 @@ static inline void CM_TraceCapsuleThroughTriangle( traceWork_t *tw, CollisionTri
 
 							trace->fraction = 0.0f;
 
-							if ( Square(tw->radius) > offsetLenSq )
+							if ( offsetLenSq < Square(tw->radius) )
 							{
 								trace->startsolid = qtrue;
 							}
@@ -700,7 +700,7 @@ static inline void CM_TraceCapsuleThroughBorder( traceWork_t *tw, CollisionBorde
 			VectorSet(trace->normal, border->distEq[0], border->distEq[1], 0.0f);
 			trace->fraction = 0.0f;
 
-			if ( Square(tw->radius) > offsetLenSq )
+			if ( offsetLenSq < Square(tw->radius) )
 			{
 				trace->startsolid = qtrue;
 			}
@@ -757,7 +757,7 @@ static inline void CM_TraceCapsuleThroughBorder( traceWork_t *tw, CollisionBorde
 				VectorSet(trace->normal, border->distEq[0], border->distEq[1], 0.0f);
 				trace->fraction = 0.0f;
 
-				if ( Square(tw->radius) > offsetLenSq )
+				if ( offsetLenSq < Square(tw->radius) )
 				{
 					trace->startsolid = qtrue;
 				}
