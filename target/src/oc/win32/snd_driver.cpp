@@ -64,7 +64,7 @@ extern "C" __declspec(dllimport) void __stdcall AIL_set_sample_reverb_levels(voi
 extern "C" __declspec(dllimport) void __stdcall AIL_set_sample_ms_position(void *S, int ms);
 extern "C" __declspec(dllimport) long unsigned int __stdcall AIL_sample_position(void *S);
 extern "C" __declspec(dllimport) void __stdcall AIL_set_3D_sample_volume(void *S, float volume);
-extern "C" __declspec(dllimport) void __stdcall AIL_set_3D_sample_distances(void *S, float min_dist, float max_dist);
+extern "C" __declspec(dllimport) void __stdcall AIL_set_3D_sample_distances(void *S, float max_dist, float min_dist);
 extern "C" __declspec(dllimport) void __stdcall AIL_set_3D_sample_loop_count(void *S, int count);
 extern "C" __declspec(dllimport) void __stdcall AIL_set_3D_sample_effects_level(void *S, float level);
 extern "C" __declspec(dllimport) void __stdcall AIL_set_3D_sample_info(void *S, void *info);
@@ -401,17 +401,10 @@ float SND_Get3DChannelVolume(int index)
 float SND_GetStreamChannelVolume(int index)
 {
     float left, right;
-    snd_local_t *sndGlob;
-    snd_channel_info_t *chaninfo;
-    const snd_alias_t *pAlias;
-    int channel;
+
     AIL_stream_volume_levels(milesGlob.handle_stream[index - 0x20], &left, &right);
-    sndGlob = &g_snd;
-    chaninfo = &sndGlob->chaninfo[index];
-    if (chaninfo->srcChannelCount == 2) {
-        pAlias = chaninfo->pAlias0;
-        channel = (pAlias->flags & 0x780) >> 7;
-        if (!SND_IsAliasChannel3D(channel)) {
+    if (g_snd.chaninfo[index].srcChannelCount == 2) {
+        if (!SND_IsAliasChannel3D((g_snd.chaninfo[index].pAlias0->flags & 0x780) >> 7)) {
             return left;
         }
     }
@@ -847,7 +840,6 @@ void SND_Set2DChannelVolume(int index, float volume, float pan)
 // parameter is pushed by every caller but never read in 1.0; its type is unknown.
 static MssSound *SND_LoadFromBuffer(void *buffer, const char *realname, const void *unused)
 {
-    snd_local_t *sndGlob;
     AILMIXINFO mixinfo;
     int datasize, totalSize;
     unsigned int rate, samples;
@@ -855,16 +847,15 @@ static MssSound *SND_LoadFromBuffer(void *buffer, const char *realname, const vo
     int targetBits, targetChannels;
     int procFormat;
 
-    sndGlob = &g_snd;
     if (!AIL_WAV_info(buffer, &mixinfo)) {
         Com_Printf((const char *)"^1ERROR: Sound file '%s' is in an invalid or corrupted format\n", realname);
         sound = NULL;
     } else if ((totalSize = (int)mixinfo.Info.data_len + 0x24) == 0) {
         Com_Printf((const char *)"^1ERROR: Sound file '%s' is zero length, invalid\n", realname);
         sound = NULL;
-    } else if (mixinfo.Info.rate <= (unsigned long int)sndGlob->playback_rate &&
-               ((long int)mixinfo.Info.bits <= sndGlob->playback_bits || mixinfo.Info.format == 0x11) &&
-               (long int)mixinfo.Info.channels <= sndGlob->playback_channels) {
+    } else if (mixinfo.Info.rate <= (unsigned long int)g_snd.playback_rate &&
+               ((long int)mixinfo.Info.bits <= g_snd.playback_bits || mixinfo.Info.format == 0x11) &&
+               (long int)mixinfo.Info.channels <= g_snd.playback_channels) {
 
         sound = (MssSound *)Hunk_AllocInternal(totalSize);
         Com_Memcpy(sound->data, (void *)mixinfo.Info.data_ptr, mixinfo.Info.data_len);
@@ -875,13 +866,13 @@ static MssSound *SND_LoadFromBuffer(void *buffer, const char *realname, const vo
 
         rate = mixinfo.Info.rate;
         samples = mixinfo.Info.samples;
-        while (rate > (unsigned int)sndGlob->playback_rate) {
+        while (rate > (unsigned int)g_snd.playback_rate) {
             rate >>= 1;
             samples >>= 1;
         }
 
-        targetBits = (int)mixinfo.Info.bits - sndGlob->playback_bits >= 0 ? sndGlob->playback_bits : (int)mixinfo.Info.bits;
-        targetChannels = (int)mixinfo.Info.channels - sndGlob->playback_channels >= 0 ? sndGlob->playback_channels : (int)mixinfo.Info.channels;
+        targetBits = (int)mixinfo.Info.bits - g_snd.playback_bits >= 0 ? g_snd.playback_bits : (int)mixinfo.Info.bits;
+        targetChannels = (int)mixinfo.Info.channels - g_snd.playback_channels >= 0 ? g_snd.playback_channels : (int)mixinfo.Info.channels;
 
         if (targetChannels == 1) {
             if (mixinfo.Info.format == 0x11)
@@ -940,17 +931,13 @@ int SND_StartAlias2DSample(const snd_alias_t *pAlias0, const snd_alias_t *pAlias
     int index, channel, aliasFlags, sampleType;
     void *handle;
     byte *sound;
-    snd_local_t *sndGlob;
     float scaledVol, volMul;
-    float *volTable;
     long int total_msec;
     int start_msec;
     int channels, bits, format;
     float reverbLevel;
 
-    aliasFlags = pAlias0->flags;
-    channel = (aliasFlags & 0x780) >> 7;
-    index = SND_FindFree2DChannel(entnum, channel);
+    index = SND_FindFree2DChannel(entnum, (pAlias0->flags & 0x780) >> 7);
     if (pChannel != NULL) {
         *pChannel = index;
     }
@@ -983,15 +970,13 @@ int SND_StartAlias2DSample(const snd_alias_t *pAlias0, const snd_alias_t *pAlias
     AIL_set_sample_address(handle, (void *)((MssSound *)sound)->info.data_ptr, (int)((MssSound *)sound)->info.data_len);
     AIL_set_sample_adpcm_block_size(handle, (int)((MssSound *)sound)->info.block_size);
 
-    sndGlob = (&g_snd);
-    AIL_set_sample_playback_rate(handle, I_fround((float)((MssSound *)sound)->info.rate * pitch * sndGlob->timescale));
+    AIL_set_sample_playback_rate(handle, I_fround((float)((MssSound *)sound)->info.rate * g_snd.timescale * pitch));
 
     aliasFlags = pAlias0->flags;
-    volTable = (float *)sndGlob->channelvol;
     channel = (aliasFlags & 0x780) >> 7;
-    scaledVol = volume * sndGlob->volume * volTable[channel * 3];
+    scaledVol = g_snd.volume * ((float *)g_snd.channelvol)[channel * 3] * volume;
 
-    if (sndGlob->slaveLerp != 0.0f && !master && (aliasFlags & 4)) {
+    if (g_snd.slaveLerp != 0.0f && !master && (aliasFlags & 4)) {
         scaledVol *= SND_GetLerpedSlavePercentage(pAlias0->fSlavePercentage);
     }
 
@@ -1041,22 +1026,16 @@ int SND_StartAlias3DSample(const snd_alias_t *pAlias0, const snd_alias_t *pAlias
     int index, channel, aliasFlags;
     void *handle;
     byte *sound;
-    snd_local_t *sndGlob;
     float scaledVol;
-    float *volTable;
     float fDistMin, fDistMax, oneMinusLerp;
     float dist, attenuation;
     int playbackRate, total_msec, start_msec;
 
-    aliasFlags = pAlias0->flags;
-    channel = (aliasFlags & 0x780) >> 7;
-    index = SND_FindFree3DChannel(entnum, channel);
-    if (pChannel != NULL) {
+    index = SND_FindFree3DChannel(entnum, (pAlias0->flags & 0x780) >> 7);
+    if (pChannel)
         *pChannel = index;
-    }
-    if (index < 0) {
+    if (index < 0)
         return 0;
-    }
 
     handle = milesGlob.handle_3D[index];
     sound = (byte *)Com_GetSoundFileMem(pAlias0);
@@ -1069,31 +1048,28 @@ int SND_StartAlias3DSample(const snd_alias_t *pAlias0, const snd_alias_t *pAlias
 
     {
         int listenerIdx = SND_GetListenerIndexNearestToOrigin(org);
-        sndGlob = (&g_snd);
-        dist = Vec3Distance(org, sndGlob->listeners[listenerIdx].orient.origin);
+        dist = Vec3Distance(org, g_snd.listeners[listenerIdx].orient.origin);
     }
     attenuation = SND_Attenuate(pAlias0->volumeFalloffCurve, dist, fDistMin, fDistMax);
 
     aliasFlags = pAlias0->flags;
-    sndGlob = (&g_snd);
-    volTable = (float *)sndGlob->channelvol;
     channel = (aliasFlags & 0x780) >> 7;
-    scaledVol = attenuation * volume * volTable[channel * 3] * sndGlob->volume;
+    scaledVol = volume * attenuation * ((float *)g_snd.channelvol)[channel * 3];
+    scaledVol = scaledVol * g_snd.volume;
 
-    if (sndGlob->slaveLerp != 0.0f && !master && (aliasFlags & 4)) {
+    if (g_snd.slaveLerp != 0.0f && !master && (aliasFlags & 4)) {
         scaledVol *= SND_GetLerpedSlavePercentage(pAlias0->fSlavePercentage);
     }
 
     AIL_set_3D_sample_volume(handle, pow(scaledVol, 0.6f));
-    AIL_set_3D_sample_distances(handle, pAlias0->fDistMin, pAlias0->fDistMax);
+    AIL_set_3D_sample_distances(handle, pAlias0->fDistMax, pAlias0->fDistMin);
 
     playbackRate = AIL_3D_sample_playback_rate(handle);
-    sndGlob = (&g_snd);
-    AIL_set_3D_sample_playback_rate(handle, I_fround((float)playbackRate * pitch * sndGlob->timescale));
+    AIL_set_3D_sample_playback_rate(handle, I_fround((float)playbackRate * pitch * g_snd.timescale));
     SND_Set3DPosition(index, org);
 
     AIL_set_3D_sample_loop_count(handle, ~pAlias0->flags & 1);
-    AIL_set_3D_sample_effects_level(handle, sndGlob->effect->wetlevel);
+    AIL_set_3D_sample_effects_level(handle, g_snd.effect->wetlevel);
 
     total_msec = I_fround((float)(((MssSound *)sound)->info.samples * 1000) * g_snd.timescale / playbackRate);
 

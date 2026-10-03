@@ -60,7 +60,7 @@
 0x00000001 0x80000000 0x00000000 0x00000000 Portal
 */
 
-infoParm_t infoParms[] =
+static infoParm_t infoParms[] =
 {
 	{ "bark", 0, SURF_BARK, 0, 0 },
 	{ "brick", 0, SURF_BRICK, 0, 0 },

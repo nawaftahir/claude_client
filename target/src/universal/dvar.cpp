@@ -3,9 +3,9 @@
 #include "dvar.h"
 
 dvar_t *sortedDvars;
-dvar_t *dvar_cheats;
+static dvar_t *dvar_cheats;
 int dvar_modifiedFlags;
-dvar_t dvarPool[MAX_DVARS];
+static dvar_t dvarPool[MAX_DVARS];
 int dvarCount;
 
 static const char *s_dvarOffString = "off";

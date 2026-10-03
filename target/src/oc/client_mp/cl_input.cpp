@@ -799,155 +799,83 @@ void CL_WriteVoicePacket(void)
 
 void CL_WritePacket(void)
 {
-    clientConnection_t *clc_ptr;
-    clientActive_t *cl_ptr;
     msg_t buf;
     byte data[MAX_MSGLEN];
+    byte dataCompressed[MAX_MSGLEN];
+    int i, j;
+    usercmd_t *cmd, *oldcmd;
     usercmd_t nullcmd;
-    byte compressedBuf[MAX_MSGLEN];
+    int packetNum;
+    int oldPacketNum;
+    int count, key;
     int compressedSize;
-    int i;
-    int key;
-    usercmd_t *lastCmd;
 
-    clc_ptr = &::clc;
-
-    if (clc_ptr->demoplaying)
-        return;
-    if (clc_ptr->state == 1 || clc_ptr->state == 2)
+    if (::clc.demoplaying || ::clc.state == 1 || ::clc.state == 2)
         return;
 
-    cl_ptr = clients;
+    MSG_SetDefaultUserCmd(&clients[0].snap.ps, &nullcmd);
+    oldcmd = &nullcmd;
 
-    MSG_SetDefaultUserCmd(&cl_ptr->snap.ps, &nullcmd);
+    MSG_Init(&buf, data, sizeof(data));
+    MSG_WriteByte(&buf, clients[0].serverId);
+    MSG_WriteLong(&buf, ::clc.serverMessageSequence);
+    MSG_WriteLong(&buf, ::clc.serverCommandSequence);
 
-    MSG_Init(&buf, data, MAX_MSGLEN);
-
-    MSG_WriteByte(&buf, cl_ptr->serverId);
-
-    MSG_WriteLong(&buf, clc_ptr->serverMessageSequence);
-    MSG_WriteLong(&buf, clc_ptr->serverCommandSequence);
-
-    i = clc_ptr->reliableAcknowledge + 1;
-    while (i <= clc_ptr->reliableSequence) {
+    for (i = ::clc.reliableAcknowledge + 1; i <= ::clc.reliableSequence; i++) {
         MSG_WriteBits(&buf, 2, 3);
         MSG_WriteLong(&buf, i);
-        {
-            int idx = (i & 0x7f) << 10;
-            MSG_WriteString(&buf, (const char *)&clc_ptr->reliableCommands[i & 0x7f]);
-        }
-        i++;
+        MSG_WriteString(&buf, (const char *)&::clc.reliableCommands[i & 0x7f]);
     }
 
-    {
-        clientActive_t *cl2 = clients;
-        const dvar_t *packetdup = cl_packetdup;
-        int cmdNum = clc_ptr->netchan.outgoingSequence;
-        int dupIdx = (cmdNum - packetdup->current.integer - 1) & 0x1f;
-        compressedSize = cl2->cmdNumber - cl2->outPackets[dupIdx].p_cmdNumber;
-    }
-
-    if (compressedSize > 0x20) {
+    oldPacketNum = (::clc.netchan.outgoingSequence - cl_packetdup->current.integer - 1) & 0x1f;
+    count = clients[0].cmdNumber - clients[0].outPackets[oldPacketNum].p_cmdNumber;
+    if (count > 0x20) {
+        count = 0x20;
         Com_Printf((const char *)"MAX_PACKET_USERCMDS\n");
-        compressedSize = 0x20;
     }
 
-    if (compressedSize <= 0) {
-        lastCmd = &nullcmd;
-        goto write_footer;
-    }
+    if (count >= 1) {
+        if (cl_showSend->current.enabled)
+            Com_Printf((const char *)"(%i)", count);
 
-    {
-        const dvar_t *showSend = cl_showSend;
-        if (showSend->current.enabled) {
-            Com_Printf((const char *)"(%i)", compressedSize);
-        }
-    }
-
-    {
-        const dvar_t *nodelta = cl_nodelta;
-        clientActive_t *cl3 = clients;
-        int snap = cl3->snap.valid;
-
-        if (nodelta->current.enabled || !snap) {
-            goto write_nodelta;
-        } else {
-            clientConnection_t *clc2 = &::clc;
-            if (clc2->demowaiting || clc2->serverMessageSequence != cl3->snap.messageNum) {
-                goto write_nodelta;
-            }
-
+        if (cl_nodelta->current.enabled || !clients[0].snap.valid || ::clc.demowaiting
+            || ::clc.serverMessageSequence != clients[0].snap.messageNum)
+            MSG_WriteBits(&buf, 1, 3);
+        else
             MSG_WriteBits(&buf, 0, 3);
+
+        MSG_WriteByte(&buf, count);
+
+        key = ::clc.checksumFeed;
+        key ^= ::clc.serverMessageSequence;
+        key ^= Com_HashKey(::clc.serverCommands[::clc.serverCommandSequence & 0x7f], 0x20);
+
+        for (i = 0; i < count; i++) {
+            j = (clients[0].cmdNumber - count + i + 1) & 0x7f;
+            cmd = &clients[0].cmds[j];
+            MSG_WriteDeltaUsercmdKey(&buf, key, oldcmd, cmd);
+            oldcmd = cmd;
         }
     }
-
-    goto write_cmdcount;
-
-write_nodelta:
-    MSG_WriteBits(&buf, 1, 3);
-
-write_cmdcount:
-    MSG_WriteByte(&buf, compressedSize);
-
-    {
-        clientConnection_t *clc3 = &::clc;
-        key = clc3->serverMessageSequence;
-        key ^= clc3->checksumFeed;
-        {
-            key ^= Com_HashKey(clc3->serverCommands[clc3->serverCommandSequence & 0x7f], 0x20);
-        }
-    }
-
-    if (compressedSize > 0) {
-        usercmd_t *prevCmd = &nullcmd;
-        clientActive_t *cl4 = clients;
-        for (i = 0; i != compressedSize; i++) {
-            int idx = (cl4->cmdNumber - compressedSize + 1 + i) & 0x7f;
-
-            usercmd_t *curCmd = &cl4->cmds[idx];
-            MSG_WriteDeltaUsercmdKey(&buf, key, prevCmd, curCmd);
-            prevCmd = curCmd;
-        }
-        lastCmd = prevCmd;
-    } else {
-        lastCmd = &nullcmd;
-    }
-
-write_footer:
 
     MSG_WriteBits(&buf, 3, 3);
 
-    {
-        byte *msgData = buf.data;
-        memcpy(compressedBuf, msgData, 9);
-        compressedSize = 9 + MSG_WriteBitsCompress(msgData + 9, compressedBuf + 9, buf.cursize - 9);
-    }
+    memcpy(dataCompressed, buf.data, 9);
+    compressedSize = MSG_WriteBitsCompress(buf.data + 9, dataCompressed + 9, buf.cursize - 9) + 9;
 
-    {
-        clientConnection_t *clc4 = &::clc;
-        clientActive_t *cl5 = clients;
-        int slot = clc4->netchan.outgoingSequence & 0x1f;
+    packetNum = ::clc.netchan.outgoingSequence & 0x1f;
+    clients[0].outPackets[packetNum].p_realtime = cls.realtime;
+    clients[0].outPackets[packetNum].p_serverTime = oldcmd->serverTime;
+    clients[0].outPackets[packetNum].p_cmdNumber = clients[0].cmdNumber;
+    ::clc.lastPacketSentTime = cls.realtime;
 
-        cl5->outPackets[slot].p_realtime = cls.realtime;
-        cl5->outPackets[slot].p_serverTime = lastCmd->serverTime;
-        cl5->outPackets[slot].p_cmdNumber = cl5->cmdNumber;
-        clc4->lastPacketSentTime = cls.realtime;
+    if (cl_showSend->current.enabled)
+        Com_Printf((const char *)"%i ", compressedSize);
 
-        {
-            const dvar_t *showSend2 = cl_showSend;
-            if (showSend2->current.enabled) {
-                Com_Printf((const char *)"%i ", compressedSize);
-            }
-        }
+    CL_Netchan_Transmit(&::clc.netchan, dataCompressed, compressedSize);
 
-        CL_Netchan_Transmit(&clc4->netchan, compressedBuf, compressedSize);
-
-        if (clc4->netchan.unsentFragments) {
-            do {
-                CL_Netchan_TransmitNextFragment(&clc4->netchan);
-            } while ((&::clc)->netchan.unsentFragments);
-        }
-    }
+    while (::clc.netchan.unsentFragments)
+        CL_Netchan_TransmitNextFragment(&::clc.netchan);
 }
 
 void CL_InitInput(void)
@@ -1269,7 +1197,6 @@ void IN_MLookUp(void)
 
 void CL_AdjustAngles(void)
 {
-    clientActive_t *cl;
     float speed;
 
 #define KB_AT(index) (&kb[(index)])
@@ -1281,18 +1208,11 @@ void CL_AdjustAngles(void)
     }
 
     if (!KB_AT(8)->active) {
-        cl = clients;
-        cl->viewangles[1] -= CL_KeyState(KB_AT(1)) * speed * cl_yawspeed->current.value;
-
-        cl = clients;
-        cl->viewangles[1] += CL_KeyState(KB_AT(0)) * speed * cl_yawspeed->current.value;
+        clients[0].viewangles[1] -= CL_KeyState(KB_AT(1)) * speed * cl_yawspeed->current.value;
+        clients[0].viewangles[1] += CL_KeyState(KB_AT(0)) * speed * cl_yawspeed->current.value;
     }
-
-    cl = clients;
-    cl->viewangles[0] -= CL_KeyState(KB_AT(4)) * speed * cl_pitchspeed->current.value;
-
-    cl = clients;
-    cl->viewangles[0] += CL_KeyState(KB_AT(5)) * speed * cl_pitchspeed->current.value;
+    clients[0].viewangles[0] -= CL_KeyState(KB_AT(4)) * speed * cl_pitchspeed->current.value;
+    clients[0].viewangles[0] += CL_KeyState(KB_AT(5)) * speed * cl_pitchspeed->current.value;
 
 #undef KB_AT
 }

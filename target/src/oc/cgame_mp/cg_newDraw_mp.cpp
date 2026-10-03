@@ -32,7 +32,6 @@ extern const dvar_t *hud_health_pulserate_critical;
 extern const dvar_t *hud_deathQuoteFadeTime;
 static vec4_t color;
 static char szErrorString[1024];
-static const float pulseMags[4];
 static vec4_t color_00302d80;   /* duplicate decl removed (C++ redefinition -> C2086) */
 static const dvar_t *hud_fadeout_speed;
 static const dvar_t *hud_enable;
@@ -645,90 +644,52 @@ int CG_KeyInterceptEvent(int key, qboolean down)
     return 0;
 }
 
+inline float I_fclamp(const float val, const float min, const float max);
+
 void CG_PulseLowHealthOverlay(float healthRatio)
 {
-    float targetAlpha;
-    int pulseIndex;
-    int phaseThreeDuration;
-    int nextPulseThresholdTime;
+    float pulseMags[4] = { 1.0f, 0.8f, 0.6f, 0.3f };
 
-    if (cg->healthOverlayOldHealth > healthRatio && hud_healthOverlay_pulseStart->current.value > healthRatio) {
+    if (healthRatio < cg->healthOverlayOldHealth && healthRatio < hud_healthOverlay_pulseStart->current.value) {
         cg->healthOverlayLastHitTime = cg->time;
         cg->healthOverlayPulseIndex = 0;
     }
-
     cg->healthOverlayOldHealth = healthRatio;
-    if (cg->healthOverlayPulseTime + cg->healthOverlayPulseDuration > cg->time) {
-        return;
-    }
-
-    if (hud_healthOverlay_pulseStart->current.value > healthRatio) {
-        if (!cg->healthOverlayHurt) {
+    if (cg->healthOverlayPulseDuration + cg->healthOverlayPulseTime <= cg->time
+        && (healthRatio < hud_healthOverlay_pulseStart->current.value || cg->healthOverlayHurt)) {
+        if (!cg->healthOverlayHurt)
             cg->healthOverlayHurt = 1;
+        cg->healthOverlayPulseTime = cg->time;
+        cg->healthOverlayFromAlpha = cg->healthOverlayToAlpha;
+        if ((unsigned int)cg->healthOverlayPulseIndex < 4) {
+            switch (cg->healthOverlayPulsePhase) {
+            case 0:
+                cg->healthOverlayToAlpha = I_fclamp(pulseMags[cg->healthOverlayPulseIndex], 0.0f, 1.0f);
+                cg->healthOverlayPulseDuration = hud_healthOverlay_phaseOne_pulseDuration->current.integer;
+                cg->healthOverlayPulsePhase = 1;
+                break;
+            case 1:
+                cg->healthOverlayToAlpha = I_fclamp(pulseMags[cg->healthOverlayPulseIndex] * hud_healthOverlay_phaseTwo_toAlphaMultiplier->current.value, 0.0f, 1.0f);
+                cg->healthOverlayPulseDuration = hud_healthOverlay_phaseTwo_pulseDuration->current.integer;
+                cg->healthOverlayPulsePhase = 2;
+                break;
+            case 2:
+                cg->healthOverlayToAlpha = I_fclamp(pulseMags[cg->healthOverlayPulseIndex] * hud_healthOverlay_phaseThree_toAlphaMultiplier->current.value, 0.0f, 1.0f);
+                cg->healthOverlayPulseDuration = hud_healthOverlay_phaseThree_pulseDuration->current.integer;
+                cg->healthOverlayPulsePhase = 0;
+                if (cg->time >= hud_healthOverlay_regenPauseTime->current.integer + cg->healthOverlayLastHitTime
+                    - 3 * (hud_healthOverlay_phaseThree_pulseDuration->current.integer
+                        + hud_healthOverlay_phaseTwo_pulseDuration->current.integer
+                        + hud_healthOverlay_phaseOne_pulseDuration->current.integer))
+                    ++cg->healthOverlayPulseIndex;
+                break;
+            }
+        } else {
+            cg->healthOverlayHurt = 0;
+            cg->healthOverlayToAlpha = hud_healthOverlay_phaseEnd_toAlpha->current.value;
+            cg->healthOverlayPulseDuration = hud_healthOverlay_phaseEnd_pulseDuration->current.integer;
+            cg->healthOverlayPulsePhase = 0;
         }
-    } else if (!cg->healthOverlayHurt) {
-        return;
-    }
-
-    cg->healthOverlayPulseTime = cg->time;
-    cg->healthOverlayFromAlpha = cg->healthOverlayToAlpha;
-    pulseIndex = cg->healthOverlayPulseIndex;
-    if (pulseIndex > 3) {
-        cg->healthOverlayHurt = 0;
-        cg->healthOverlayToAlpha = hud_healthOverlay_phaseEnd_toAlpha->current.value;
-        cg->healthOverlayPulseDuration = hud_healthOverlay_phaseEnd_pulseDuration->current.integer;
-        cg->healthOverlayPulsePhase = 0;
-        return;
-    }
-
-    if (cg->healthOverlayPulsePhase == 0) {
-        targetAlpha = pulseMags[pulseIndex];
-        if (targetAlpha < 0.0f) {
-            targetAlpha = 0.0f;
-        } else if (targetAlpha > 1.0f) {
-            targetAlpha = 1.0f;
-        }
-
-        cg->healthOverlayToAlpha = targetAlpha;
-        cg->healthOverlayPulseDuration = hud_healthOverlay_phaseOne_pulseDuration->current.integer;
-        cg->healthOverlayPulsePhase = 1;
-        return;
-    }
-
-    if (cg->healthOverlayPulsePhase == 1) {
-        targetAlpha = pulseMags[pulseIndex] * hud_healthOverlay_phaseTwo_toAlphaMultiplier->current.value;
-        if (targetAlpha < 0.0f) {
-            targetAlpha = 0.0f;
-        } else if (targetAlpha > 1.0f) {
-            targetAlpha = 1.0f;
-        }
-
-        cg->healthOverlayToAlpha = targetAlpha;
-        cg->healthOverlayPulseDuration = hud_healthOverlay_phaseTwo_pulseDuration->current.integer;
-        cg->healthOverlayPulsePhase = 2;
-        return;
-    }
-
-    if (cg->healthOverlayPulsePhase != 2) {
-        return;
-    }
-
-    targetAlpha = pulseMags[pulseIndex] * hud_healthOverlay_phaseThree_toAlphaMultiplier->current.value;
-    if (targetAlpha < 0.0f) {
-        targetAlpha = 0.0f;
-    } else if (targetAlpha > 1.0f) {
-        targetAlpha = 1.0f;
-    }
-
-    cg->healthOverlayToAlpha = targetAlpha;
-    phaseThreeDuration = hud_healthOverlay_phaseThree_pulseDuration->current.integer;
-    cg->healthOverlayPulseDuration = phaseThreeDuration;
-    cg->healthOverlayPulsePhase = 0;
-
-    nextPulseThresholdTime = cg->healthOverlayLastHitTime + hud_healthOverlay_regenPauseTime->current.integer;
-    nextPulseThresholdTime -= (hud_healthOverlay_phaseOne_pulseDuration->current.integer + hud_healthOverlay_phaseTwo_pulseDuration->current.integer + phaseThreeDuration) * 3;
-    if (cg->time >= nextPulseThresholdTime) {
-        cg->healthOverlayPulseIndex = pulseIndex + 1;
     }
 }
 

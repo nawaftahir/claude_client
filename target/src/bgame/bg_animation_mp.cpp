@@ -8,9 +8,9 @@ bgs_t *bgs;
 // Original name unknown; unreferenced.
 static const float unusedConstant = 50.0f;
 
-const char *globalFilename = "mp/playeranim.script";
+static const char *globalFilename = "mp/playeranim.script";
 
-animStringItem_t animStateStr[] =
+static animStringItem_t animStateStr[] =
 {
 	{"RELAXED", -1},
 	{"QUERY", -1},
@@ -20,7 +20,7 @@ animStringItem_t animStateStr[] =
 	{NULL, -1},
 };
 
-animStringItem_t animMoveTypesStr[] =
+static animStringItem_t animMoveTypesStr[] =
 {
 	{"** UNUSED **", -1},
 	{"IDLE", -1},
@@ -67,7 +67,7 @@ animStringItem_t animMoveTypesStr[] =
 	{NULL, -1},
 };
 
-animStringItem_t animEventTypesStr[] =
+static animStringItem_t animEventTypesStr[] =
 {
 	{"PAIN", -1},
 	{"DEATH", -1},
@@ -92,7 +92,7 @@ animStringItem_t animEventTypesStr[] =
 	{NULL, -1},
 };
 
-animStringItem_t animBodyPartsStr[] =
+static animStringItem_t animBodyPartsStr[] =
 {
 	{"** UNUSED **", -1},
 	{"LEGS", -1},
@@ -103,7 +103,7 @@ animStringItem_t animBodyPartsStr[] =
 };
 
 // Unreferenced.
-animStringItem_t animImpactDirStr[] =
+static animStringItem_t animImpactDirStr[] =
 {
 	{"** UNUSED **", -1},
 	{"BEHIND", -1},
@@ -114,7 +114,7 @@ animStringItem_t animImpactDirStr[] =
 	{NULL, -1},
 };
 
-animStringItem_t animConditionMountedStr[] =
+static animStringItem_t animConditionMountedStr[] =
 {
 	{"** UNUSED **", -1},
 	{"MG42", -1},
@@ -122,7 +122,7 @@ animStringItem_t animConditionMountedStr[] =
 	{NULL, -1},
 };
 
-animStringItem_t weaponTypeStr[] =
+static animStringItem_t weaponTypeStr[] =
 {
 	{ "RIFLE", -1, },
 	{ "MG", -1, },
@@ -138,7 +138,7 @@ animStringItem_t weaponTypeStr[] =
 	{NULL, -1},
 };
 
-animStringItem_t animConditionImpactPointsStr[] =
+static animStringItem_t animConditionImpactPointsStr[] =
 {
 	{ "HIP", -1, },
 	{ "ADS", -1, },
@@ -146,7 +146,7 @@ animStringItem_t animConditionImpactPointsStr[] =
 	{NULL, -1},
 };
 
-animStringItem_t animConditionLeaningStr[] =
+static animStringItem_t animConditionLeaningStr[] =
 {
 	{ "NOT", -1, },
 	{ "LEFT", -1, },
@@ -155,7 +155,7 @@ animStringItem_t animConditionLeaningStr[] =
 	{NULL, -1},
 };
 
-animStringItem_t animConditionsStr[] =
+static animStringItem_t animConditionsStr[] =
 {
 	{"PLAYERANIMTYPE", -1},
 	{"WEAPONCLASS", -1},
@@ -210,7 +210,7 @@ typedef struct
 	animStringItem_t *values;
 } animConditionTable_t;
 
-animConditionTable_t animConditionsTable[NUM_ANIM_CONDITIONS] =
+static animConditionTable_t animConditionsTable[NUM_ANIM_CONDITIONS] =
 {
 	{ ANIM_CONDTYPE_BITFLAGS, weaponStrings },
 	{ ANIM_CONDTYPE_BITFLAGS, weaponTypeStr },
@@ -223,7 +223,7 @@ animConditionTable_t animConditionsTable[NUM_ANIM_CONDITIONS] =
 	{ ANIM_CONDTYPE_VALUE,    animConditionLeaningStr },
 };
 
-uint16_t* controller_names[] =
+static uint16_t* controller_names[] =
 {
 	&scr_const.back_low,
 	&scr_const.back_mid,

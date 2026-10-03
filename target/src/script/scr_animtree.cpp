@@ -1,7 +1,7 @@
 #include "../qcommon/qcommon.h"
 #include "script_public.h"
 
-scrAnimGlob_t scrAnimGlob;
+static scrAnimGlob_t scrAnimGlob;
 scrAnimPub_t scrAnimPub;
 
 /*

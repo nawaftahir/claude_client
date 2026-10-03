@@ -86,7 +86,7 @@ extern field_t g_consoleField;
 extern int nextHistoryLine;
 extern int historyLine;
 /* migrated from the ILP32 data blob to typed C (x64 port Stage 2). */
-char *frenchNumberKeysMap[10] = {
+static char *frenchNumberKeysMap[10] = {
     "\xff" "fd",
     "&",
     "\xff" "fd",
@@ -175,7 +175,7 @@ void Field_AdjustScroll(field_t *edit)
 	float len;
 	int strLen;
 
-	fontScale = edit->charHeight / 48.0f;
+	fontScale = edit->charHeight * 0.020833334f;
 	lineWidth = (float)edit->widthInPixels;
 	if ( edit->fixedSize )
 	{
@@ -1241,7 +1241,7 @@ void Key_ClearStates(void)
     }
 }
 
-keyname_t keynames[99] = {
+static keyname_t keynames[99] = {
     { (char *)&str_002a6bf0, 0x9 },
     { (char *)&str_002a6bf4, 0xd },
     { (char *)&str_002a6bfc, 0x1b },
@@ -1342,7 +1342,7 @@ keyname_t keynames[99] = {
     { (char *)&str_002a6eac, 0x93 },
     { 0, 0x0 }
 };
-keyname_t keynames_localized[100] = {
+static keyname_t keynames_localized[100] = {
     { (char *)&str_002a6808, 0x9 },
     { (char *)&str_002a6810, 0xd },
     { (char *)&str_002a681c, 0x1b },

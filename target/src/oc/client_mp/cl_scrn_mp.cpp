@@ -155,47 +155,36 @@ static void CL_CubemapShotUsage(void)
 
 void CL_CubemapShot_f(void)
 {
-    char szBaseName[100];
+    char szBaseName[64];
     float rgb[3];
     float n0, n1;
-    byte isLightingShot;
+    int size;
     int side;
+    byte isLightingShot;
 
-    clientActive_t *cl_local = clients;
-    if (cl_local->cgameInitialized == 0) {
+    if (!clients[0].cgameInitialized) {
         Com_Printf("must be in a map to use this command\n");
         return;
     }
-
-    if (Cmd_Argc() <= 2) {
+    if (Cmd_Argc() < 3 || strlen(Cmd_Argv(2)) > 40) {
         CL_CubemapShotUsage();
         return;
     }
-
-    const char *baseArg = Cmd_Argv(2);
-    if (strlen(baseArg) > 40) {
-        CL_CubemapShotUsage();
-        return;
-    }
-
     strcpy(szBaseName, Cmd_Argv(2));
-    int size = atoi(Cmd_Argv(1));
-
-    if ((unsigned int)(size - 4) > 0x3fc) {
-        CL_CubemapShotUsage();
-        return;
-    }
-    if ((size - 1) & size) {
+    size = atoi(Cmd_Argv(1));
+    if (size < 4 || size > 1024 || (size & (size - 1))) {
         CL_CubemapShotUsage();
         return;
     }
 
+    isLightingShot = 0;
     rgb[0] = 0.0f;
     rgb[1] = 0.0f;
     rgb[2] = 0.0f;
-
+    n0 = 1.0f;
+    n1 = 1.333f;
     if (Cmd_Argc() == 7) {
-        if (stricmp(Cmd_Argv(3), "lighting") != 0) {
+        if (stricmp(Cmd_Argv(3), "lighting")) {
             CL_CubemapShotUsage();
             return;
         }
@@ -203,60 +192,35 @@ void CL_CubemapShot_f(void)
         rgb[1] = (float)atof(Cmd_Argv(5));
         rgb[2] = (float)atof(Cmd_Argv(6));
         isLightingShot = 1;
-        n0 = 1.0f;
-        n1 = 1.333f;
     } else if (Cmd_Argc() == 6) {
-        if (stricmp(Cmd_Argv(3), "fresnel") != 0) {
+        if (stricmp(Cmd_Argv(3), "fresnel")) {
             CL_CubemapShotUsage();
             return;
         }
         n0 = (float)atof(Cmd_Argv(4));
         n1 = (float)atof(Cmd_Argv(5));
-        if (n0 < 1.0f) {
+        if (n0 < 1.0f || n1 < 1.0f) {
             CL_CubemapShotUsage();
             return;
         }
-        if (n1 < 1.0f) {
-            CL_CubemapShotUsage();
-            return;
-        }
-        isLightingShot = 0;
-    } else if (Cmd_Argc() == 3) {
-        isLightingShot = 0;
-        n0 = 1.0f;
-        n1 = 1.333f;
-    } else {
+    } else if (Cmd_Argc() != 3) {
         CL_CubemapShotUsage();
         return;
     }
 
     CL_ResetSkeletonCache(0);
-
-    refexport_t *re = re_ptr_195eca8;
-    for (side = 1; side <= 6; side++) {
-        RE_FUNC(re, 0xec, re_int2_func)(size, 1);
-        RE_FUNC(re, 0xa8, re_void_func)();
+    for (side = 1; side < 7; side++) {
+        RE_FUNC(re_ptr_195eca8, 0xec, re_int2_func)(size, 1);
+        RE_FUNC(re_ptr_195eca8, 0xa8, re_void_func)();
         CL_ClearScene();
-
-        clientConnection_t *clc_local = &::clc;
-        int needRender = clc_local->demoplaying != 0;
-        clientActive_t *dv = clients;
-        int serverTime = dv->serverTime;
-
-        CG_DrawActiveFrame(serverTime, (DemoType)needRender, (CubemapShot)side, size, 0);
-        RE_FUNC(re, 0xac, re_void_func)();
-        RE_FUNC(re, 0xf0, re_int_func)(side);
+        CG_DrawActiveFrame(clients[0].serverTime, (DemoType)(clc.demoplaying != 0), (CubemapShot)side, size, 0);
+        RE_FUNC(re_ptr_195eca8, 0xac, re_void_func)();
+        RE_FUNC(re_ptr_195eca8, 0xf0, re_int_func)(side);
     }
-
-    if (isLightingShot) {
-        RE_FUNC(re, 0xf8, re_floatp_func)(rgb);
-    }
-
-    for (side = 1; side <= 6; side++) {
-        re_write_cubemap_func writeFn = RE_FUNC(re_ptr_195eca8, 0xf4, re_write_cubemap_func);
-        const char *filename = va("env/%s%s.tga", szBaseName, szShotName[side - 1]);
-        writeFn(filename, side, n0, n1);
-    }
+    if (isLightingShot)
+        RE_FUNC(re_ptr_195eca8, 0xf8, re_floatp_func)(rgb);
+    for (side = 1; side < 7; side++)
+        RE_FUNC(re_ptr_195eca8, 0xf4, re_write_cubemap_func)(va("env/%s%s.tga", szBaseName, szShotName[side - 1]), side, n0, n1);
 }
 
 // retail 0x413170
@@ -287,7 +251,10 @@ void SCR_DrawDemoRecording(void)
 // retail 0x4132b0
 qboolean CL_CGameRendering(qboolean renderScreen)
 {
-    return CG_DrawActiveFrame(clients[0].serverTime, (DemoType)(clc.demoplaying != 0), CUBEMAPSHOT_NONE, 0, renderScreen);
+    DemoType demoType;
+
+    demoType = (DemoType)(clc.demoplaying != 0);
+    return CG_DrawActiveFrame(clients[0].serverTime, demoType, CUBEMAPSHOT_NONE, 0, renderScreen);
 }
 
 // retail 0x413310
@@ -315,12 +282,13 @@ void SCR_DrawScreenField(void)
             break;
         case CA_DISCONNECTED:
             SND_StopSounds((snd_stopsounds_arg_t)0);
-            if (Sys_IsMainThread()) {
+            if (!Sys_IsMainThread()) {
+                if (!CL_AnyLocalClientChallenging())
+                    break;
+            } else {
                 UI_SetActiveMenu(1);
                 break;
             }
-            if (!CL_AnyLocalClientChallenging())
-                break;
         case CA_CONNECTING:
         case CA_CHALLENGING:
         case CA_CONNECTED:
@@ -341,8 +309,11 @@ void SCR_DrawScreenField(void)
     } else {
         switch (clc.state) {
         case CA_DISCONNECTED:
+            break;
         case CA_CINEMATIC:
+            break;
         case CA_LOGO:
+            break;
         case CA_CONNECTING:
         case CA_CHALLENGING:
         case CA_CONNECTED:

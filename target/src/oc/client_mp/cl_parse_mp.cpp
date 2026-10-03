@@ -29,7 +29,7 @@ extern int cl_connectedToPureServer;
  * 2048 B on x64. The 8 live entries point at the reconstructed string literals
  * in common.c; entries [8..255] are NULL. (x64 port Stage 2 pilot; cf. the
  * noticeErrors / holdrand typed-data migrations.) */
-char *svc_strings[256] = {
+static char *svc_strings[256] = {
     "svc_nop",
     "svc_gamestate",
     "svc_configstring",
@@ -114,8 +114,6 @@ void CL_SystemInfoChanged(void)
 {
     char *key;
     char *value;
-    clientActive_t *cla;
-    clientConnection_t *clc;
     char *systemInfo;
     const char *s;
 
@@ -125,15 +123,12 @@ void CL_SystemInfoChanged(void)
     LargeLocal value_large_local(0x2000);
     value = (char *)value_large_local.GetBuf();
 
-    cla = clients;
-    clc = &::clc;
-
-    systemInfo = cla->gameState.stringData + cla->gameState.stringOffsets[1];
+    systemInfo = clients[0].gameState.stringData + clients[0].gameState.stringOffsets[1];
 
     {
         const char *sid_str = Info_ValueForKey(systemInfo, "sv_serverid");
         int sid_val = atoi(sid_str);
-        cla->serverId = sid_val;
+        clients[0].serverId = sid_val;
     }
 
     if ((&::clc)->demoplaying != 0) {

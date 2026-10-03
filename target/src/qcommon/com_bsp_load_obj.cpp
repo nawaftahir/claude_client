@@ -24,7 +24,7 @@ struct comBspGlob_t
 	int checksum;
 };
 
-comBspGlob_t comBspGlob;
+static comBspGlob_t comBspGlob;
 
 bool Com_IsBspLoaded()
 {

@@ -10,7 +10,7 @@ struct pushed_t
 };
 
 pushed_t pushed[MAX_GENTITIES];
-pushed_t *pushed_p;
+static pushed_t *pushed_p;
 
 const char *hintStrings[] =
 {

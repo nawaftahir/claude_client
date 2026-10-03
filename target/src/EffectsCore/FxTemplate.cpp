@@ -359,7 +359,7 @@ template<class T> inline void Swap( T &a, T &b )
 }
 
 extern const FxFlagEntry fxAttributeFlags[24];
-const FxFlagEntry fxAttributeFlags[24] =
+static const FxFlagEntry fxAttributeFlags[24] =
 {
 	{ "depthHack", { FX_DEPTH_HACK, 0 } },
 	{ "setShaderTime", { FX_SET_SHADER_TIME, 0 } },
@@ -388,7 +388,7 @@ const FxFlagEntry fxAttributeFlags[24] =
 };
 
 extern const FxFlagEntry fxSpawnFlags[13];
-const FxFlagEntry fxSpawnFlags[13] =
+static const FxFlagEntry fxSpawnFlags[13] =
 {
 	{ "org2fromTrace", { 0, FX_ORG2_FROM_TRACE } },
 	{ "traceImpactFx", { 0, FX_TRACE_IMPACT_FX } },

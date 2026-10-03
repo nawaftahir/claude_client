@@ -271,7 +271,7 @@ static void CG_OffsetThirdPersonView(void)
     view[1] = *(float *)(origin + 4);
     view[2] = *(float *)(origin + 8) + 8.0f;
 
-    *(float *)(viewAngles + 0) *= 0.5f;
+    *(float *)(viewAngles + 0) *= 0.5;
 
     *(float *)(viewAngles + 4) -= (cg_thirdPersonAngle)->current.value;
 
@@ -335,7 +335,7 @@ static void CG_OffsetThirdPersonView(void)
         }
 
         angle = atan2((double)dz, (double)dist2d);
-        ((cg_t *)cg)->refdefViewAngles[0] = (float)(angle * -57.29577951308232);
+        ((cg_t *)cg)->refdefViewAngles[0] = (float)(angle * -57.295776f);
     }
 }
 

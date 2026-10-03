@@ -4,7 +4,7 @@
 void CG_Trace( trace_t *results, const float *start, const float *mins, const float *maxs, const float *end, int skipNumber, int mask );
 int CG_PointContents( const float *point, int passEntityNum, int contentMask );
 
-viewLerpWaypoint_s viewLerp_StandCrouch[] =
+static viewLerpWaypoint_s viewLerp_StandCrouch[] =
 {
 	{ 0, 60, 0},
 	{ 1, 59.5, 0},
@@ -17,7 +17,7 @@ viewLerpWaypoint_s viewLerp_StandCrouch[] =
 	{ -1, 0, 0},
 };
 
-viewLerpWaypoint_s viewLerp_CrouchStand[] =
+static viewLerpWaypoint_s viewLerp_CrouchStand[] =
 {
 	{ 0, 40, 0},
 	{ 5, 40.5, 0},
@@ -30,7 +30,7 @@ viewLerpWaypoint_s viewLerp_CrouchStand[] =
 	{ -1, 0, 0},
 };
 
-viewLerpWaypoint_s viewLerp_CrouchProne[] =
+static viewLerpWaypoint_s viewLerp_CrouchProne[] =
 {
 	{ 0, 40, 0},
 	{ 11, 38, 0},
@@ -46,14 +46,14 @@ viewLerpWaypoint_s viewLerp_CrouchProne[] =
 };
 
 // unreferenced
-viewLerpWaypoint_s viewLerp_CrouchProneLinear[] =
+static viewLerpWaypoint_s viewLerp_CrouchProneLinear[] =
 {
 	{ 0, 40, 0},
 	{ 100, 11, 0},
 	{ -1, 0, 0},
 };
 
-viewLerpWaypoint_s viewLerp_ProneCrouch[] =
+static viewLerpWaypoint_s viewLerp_ProneCrouch[] =
 {
 	{ 0, 11, 0},
 	{ 5, 10, 0},

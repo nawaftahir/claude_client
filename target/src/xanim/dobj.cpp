@@ -1,7 +1,7 @@
 #include "../qcommon/qcommon.h"
 #include "../script/script_public.h"
 
-unsigned int g_empty;
+static unsigned int g_empty;
 
 void DObjInit()
 {

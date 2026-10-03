@@ -3,23 +3,23 @@
 const vec4_t colorBlack    = { 0.0f, 0.0f, 0.0f, 1.0f };
 const vec4_t colorRed      = { 1.0f, 0.0f, 0.0f, 1.0f };
 const vec4_t colorGreen    = { 0.0f, 1.0f, 0.0f, 1.0f };
-const vec4_t colorLtGreen  = { 0.0f, 0.7f, 0.0f, 1.0f };
+static const vec4_t colorLtGreen  = { 0.0f, 0.7f, 0.0f, 1.0f };
 const vec4_t colorBlue     = { 0.0f, 0.0f, 1.0f, 1.0f };
-const vec4_t colorLtBlue   = { 0.0f, 0.0f, 0.75f, 1.0f };
+static const vec4_t colorLtBlue   = { 0.0f, 0.0f, 0.75f, 1.0f };
 const vec4_t colorYellow   = { 1.0f, 1.0f, 0.0f, 1.0f };
-const vec4_t colorLtYellow = { 0.75f, 0.75f, 0.0f, 1.0f };
-const vec4_t colorMdYellow = { 0.5f, 0.5f, 0.0f, 1.0f };
-const vec4_t colorMagenta  = { 1.0f, 0.0f, 1.0f, 1.0f };
-const vec4_t colorCyan     = { 0.0f, 1.0f, 1.0f, 1.0f };
-const vec4_t colorLtCyan   = { 0.0f, 0.75f, 0.75f, 1.0f };
-const vec4_t colorMdCyan   = { 0.0f, 0.5f, 0.5f, 1.0f };
-const vec4_t colorDkCyan   = { 0.0f, 0.25f, 0.25f, 1.0f };
+static const vec4_t colorLtYellow = { 0.75f, 0.75f, 0.0f, 1.0f };
+static const vec4_t colorMdYellow = { 0.5f, 0.5f, 0.0f, 1.0f };
+static const vec4_t colorMagenta  = { 1.0f, 0.0f, 1.0f, 1.0f };
+static const vec4_t colorCyan     = { 0.0f, 1.0f, 1.0f, 1.0f };
+static const vec4_t colorLtCyan   = { 0.0f, 0.75f, 0.75f, 1.0f };
+static const vec4_t colorMdCyan   = { 0.0f, 0.5f, 0.5f, 1.0f };
+static const vec4_t colorDkCyan   = { 0.0f, 0.25f, 0.25f, 1.0f };
 const vec4_t colorWhite    = { 1.0f, 1.0f, 1.0f, 1.0f };
 const vec4_t colorLtGrey   = { 0.75f, 0.75f, 0.75f, 1.0f };
-const vec4_t colorMdGrey   = { 0.5f, 0.5f, 0.5f, 1.0f };
-const vec4_t colorDkGrey   = { 0.25f, 0.25f, 0.25f, 1.0f };
-const vec4_t colorOrange   = { 1.0f, 0.7f, 0.0f, 1.0f };
-const vec4_t colorLtOrange = { 0.75f, 0.525f, 0.0f, 1.0f };
+static const vec4_t colorMdGrey   = { 0.5f, 0.5f, 0.5f, 1.0f };
+static const vec4_t colorDkGrey   = { 0.25f, 0.25f, 0.25f, 1.0f };
+static const vec4_t colorOrange   = { 1.0f, 0.7f, 0.0f, 1.0f };
+static const vec4_t colorLtOrange = { 0.75f, 0.525f, 0.0f, 1.0f };
 
 unsigned char ColorIndex( unsigned char c )
 {
@@ -655,8 +655,8 @@ char *va( const char *format, ... )
 	return buf;
 }
 
-va_info_t va_info[NUMTHREADS];
-jmp_buf g_com_error[NUMTHREADS];
+static va_info_t va_info[NUMTHREADS];
+static jmp_buf g_com_error[NUMTHREADS];
 TraceThreadInfo g_traceThreadInfo[NUMTHREADS];
 
 void Com_InitThreadData( int threadContext )
@@ -680,7 +680,7 @@ void Com_WideToNarrow( const char *in, char *out, int len )
 }
 
 // two buffers so compares work without stomping on each other
-char infoValue[2][BIG_INFO_VALUE];
+static char infoValue[2][BIG_INFO_VALUE];
 
 // searches a string of the form \key\value\key\value
 const char *Info_ValueForKey( const char *s, const char *key )

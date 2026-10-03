@@ -621,8 +621,8 @@ private:
 };
 
 FxMemMgr<PrimitiveTemplate> PrimitiveTemplate::gmMemMgr;
-FxEffectDef *effectTemplateArray[256];
-int effectTemplateArrayCount;
+static FxEffectDef *effectTemplateArray[256];
+static int effectTemplateArrayCount;
 FxMemMgr<ScheduledEffect> ScheduledEffect::s_memMgr;
 FxScheduler *theFxSchedulers[2];
 FxScheduler *theFxScheduler;

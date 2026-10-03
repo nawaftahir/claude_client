@@ -10,19 +10,19 @@
 #include "../xanim/xanim_public.h"
 
 // storage with no remaining references; size from the layout, name unknown
-char com_unreferenced0[0x16c];
+static char com_unreferenced0[0x16c];
 
-errorParm_t com_errorType;
-int com_unreferenced1;
+static errorParm_t com_errorType;
+static int com_unreferenced1;
 fileHandle_t logfile;
 
 dvar_t *com_viewlog;
 dvar_t *com_developer;
-dvar_t *com_developer_script;
-dvar_t *com_timescale;
+static dvar_t *com_developer_script;
+static dvar_t *com_timescale;
 float com_timescaleValue;
-dvar_t *com_fixedtime;
-dvar_t *com_maxfps;
+static dvar_t *com_fixedtime;
+static dvar_t *com_maxfps;
 dvar_t *com_sv_running;
 dvar_t *com_logfile;
 dvar_t *version;
@@ -32,29 +32,29 @@ dvar_t *cl_paused;
 dvar_t *nextmap;
 dvar_t *com_expectedHunkUsage;
 dvar_t *sv_paused;
-int com_unreferenced2;
-dvar_t *com_animCheck;
+static int com_unreferenced2;
+static dvar_t *com_animCheck;
 dvar_t *com_recommendedSet;
 
 int com_frameTime;
-int com_lastFrameTime;
-float com_codeTimeScale;
-int com_frameNumber;
+static int com_lastFrameTime;
+static float com_codeTimeScale;
+static int com_frameNumber;
 qboolean com_errorEntered;
 int com_fixedConsolePosition;
-qboolean com_fullyInitialized;
+static qboolean com_fullyInitialized;
 
 char com_errorMessage[MAXPRINTMSG] __attribute__((aligned(128)));
 
-dvar_t *ui_errorMessage;
-dvar_t *ui_errorTitle;
+static dvar_t *ui_errorMessage;
+static dvar_t *ui_errorTitle;
 
 #define MAX_PUSHED_EVENTS 256
-int com_pushedEventsHead;
-int com_pushedEventsTail;
-sysEvent_t com_pushedEvents[MAX_PUSHED_EVENTS] __attribute__((aligned(128)));
+static int com_pushedEventsHead;
+static int com_pushedEventsTail;
+static sysEvent_t com_pushedEvents[MAX_PUSHED_EVENTS] __attribute__((aligned(128)));
 
-char com_unreferenced3[0x488];
+static char com_unreferenced3[0x488];
 
 static qboolean com_safemode;
 static int com_unreferenced4;

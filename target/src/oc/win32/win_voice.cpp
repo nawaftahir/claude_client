@@ -3,7 +3,7 @@
 #include "bytematch.h"
 #include <stdio.h>
 
-int g_voice_initialized = 0x0;
+static int g_voice_initialized = 0x0;
 
 extern dvar_t *Dvar_RegisterBool(const char *dvarName, bool value, unsigned short flags);
 extern dvar_t *Dvar_RegisterFloat(const char *dvarName, float value, float min, float max, unsigned short flags);
@@ -233,14 +233,12 @@ int Voice_GetLocalVoiceData(ClientVoicePacket_t *voiceData)
     if (!recording)
         Voice_StartRecording();
 
-    if (winvoice_mic_scaler->current.value != voice_current_scaler) {
+    if (voice_current_scaler != winvoice_mic_scaler->current.value) {
         voice_current_scaler = winvoice_mic_scaler->current.value;
-        if (voice_current_scaler >= 0.5) {
-            if (voice_current_scaler > 1.5)
-                voice_current_scaler = 1.5f;
-        } else {
+        if (voice_current_scaler < 0.5)
             voice_current_scaler = 0.5f;
-        }
+        else if (voice_current_scaler > 1.5)
+            voice_current_scaler = 1.5f;
     }
 
     Record_Frame();

@@ -9,22 +9,22 @@
 int I_strlen(const char *s);
 
 int com_fileAccessed = 0;
-int fs_loadStack;
+static int fs_loadStack;
 char fs_gamedir[MAX_OSPATH];
 
 dvar_t *fs_debug;
 dvar_t *fs_homepath;
 dvar_t *fs_basepath;
-dvar_t *fs_basegame;
-dvar_t *fs_useOldAssets;
+static dvar_t *fs_basegame;
+static dvar_t *fs_useOldAssets;
 dvar_t *fs_cdpath;
 dvar_t *fs_copyfiles;
-dvar_t *fs_gameDirVar;
+static dvar_t *fs_gameDirVar;
 dvar_t *fs_restrict;
 dvar_t *fs_ignoreLocalized;
 
 searchpath_t *fs_searchpaths;
-int fs_packFiles;
+static int fs_packFiles;
 int fs_fakeChkSum;
 int fs_checksumFeed;
 fileHandleData_t fsh[MAX_FILE_HANDLES];
@@ -36,8 +36,8 @@ int fs_numServerReferencedIwds;
 int fs_serverReferencedIwds[MAX_IWDFILES];
 const char *fs_serverReferencedIwdNames[MAX_IWDFILES];
 
-char lastValidBase[MAX_OSPATH];
-char lastValidGame[MAX_OSPATH];
+static char lastValidBase[MAX_OSPATH];
+static char lastValidGame[MAX_OSPATH];
 
 #define MAX_FOUND_FILES 0x1000
 

@@ -57,7 +57,7 @@ typedef struct directive_s
 
 #define TOKEN_HEAP_SIZE		4096
 
-int numtokens;
+static int numtokens;
 /*
 int tokenheapinitialized;				//true when the token heap is initialized
 token_t token_heap[TOKEN_HEAP_SIZE];	//heap with tokens
@@ -2336,7 +2336,7 @@ int PC_DollarDirective_evalfloat(source_t *source)
 // Returns:					-
 // Changes Globals:		-
 //============================================================================
-directive_t dollardirectives[20] =
+static directive_t dollardirectives[20] =
 {
 	{"evalint", PC_DollarDirective_evalint},
 	{"evalfloat", PC_DollarDirective_evalfloat},
@@ -2766,7 +2766,7 @@ void FreeSource(source_t *source)
 
 #define MAX_SOURCEFILES		64
 
-source_t *sourceFiles[MAX_SOURCEFILES];
+static source_t *sourceFiles[MAX_SOURCEFILES];
 
 int PC_LoadSourceHandle(const char *filename)
 {

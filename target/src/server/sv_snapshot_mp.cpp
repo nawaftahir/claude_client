@@ -7,8 +7,8 @@ SV_GetClientPositionsAtTime
 ===============
 */
 // The frame biases are initialized data, not constants.
-int sv_clientPosStartFrameBias = 2;
-int sv_clientPosEndFrameBias = 1;
+static int sv_clientPosStartFrameBias = 2;
+static int sv_clientPosEndFrameBias = 1;
 
 /*
 ====================

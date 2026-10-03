@@ -116,7 +116,7 @@ void __attribute_regparm__(1) CG_RegisterGraphics(const char *mapname)
     for (i = 1; i < 256; i++) {
         str = CL_GetConfigString(0x14e + i);
         if (str[0] == '\0')
-            continue;
+            break;
 
         SCR_UpdateScreen();
         cgs->gameModels[i] = CL_RegisterModel(str);
@@ -125,7 +125,7 @@ void __attribute_regparm__(1) CG_RegisterGraphics(const char *mapname)
     for (i = 1; i < 64; i++) {
         str = CL_GetConfigString(0x34e + i);
         if (str[0] == '\0')
-            continue;
+            break;
         cgs->fxs[i] = (EffectTemplate *)(FX_RegisterEffect(str));
     }
 

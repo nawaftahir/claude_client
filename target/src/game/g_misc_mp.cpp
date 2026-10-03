@@ -1,7 +1,7 @@
 #include "../qcommon/qcommon.h"
 #include "g_shared.h"
 
-turretInfo_s turretInfoStore[MAX_TURRETS];
+static turretInfo_s turretInfoStore[MAX_TURRETS];
 
 /*QUAKED info_null (0 0.5 0) (-4 -4 -4) (4 4 4)
 Used as a positional target for calculations in the utilities (spotlights, etc), but removed during gameplay.

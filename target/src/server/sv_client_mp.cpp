@@ -10,7 +10,7 @@
 
 float FX_GetVisibility( const vec3_t start, const vec3_t end );
 
-int botport = 0;
+static int botport = 0;
 
 typedef struct
 {
@@ -643,17 +643,17 @@ void SV_DirectConnect( netadr_t from )
 	// see if the challenge is valid (local clients don't need to challenge)
 	if ( !NET_IsLocalAddress( from ) )
 	{
-		for ( i = 0, chal = svs.challenges ; i < MAX_CHALLENGES ; i++, chal++ )
+		for ( i = 0 ; i < MAX_CHALLENGES ; i++ )
 		{
-			if ( NET_CompareAdr( from, chal->adr ) )
+			if ( NET_CompareAdr( from, svs.challenges[i].adr ) )
 			{
-				if ( challenge == chal->challenge )
+				if ( challenge == svs.challenges[i].challenge )
 				{
-					guid = chal->guid;
 					break;
 				}
 			}
 		}
+		guid = svs.challenges[i].guid;
 		if ( i == MAX_CHALLENGES )
 		{
 			NET_OutOfBandPrint( NS_SERVER, from, "error\nEXE_BAD_CHALLENGE" );
@@ -715,7 +715,7 @@ void SV_DirectConnect( netadr_t from )
 		{
 			Com_Printf( "%s:reconnect\n", NET_AdrToString( from ) );
 
-			if ( cl->state > CS_ZOMBIE )
+			if ( cl->state >= CS_CONNECTED )
 				SV_FreeClient(cl);
 
 			newcl = cl;
@@ -1695,7 +1695,7 @@ static void SV_RetransmitDownload_f( client_t *cl );
 static void SV_MutePlayer_f( client_t *cl );
 static void SV_UnmutePlayer_f( client_t *cl );
 
-ucmd_t ucmds[] =
+static ucmd_t ucmds[] =
 {
 	{"userinfo",     SV_UpdateUserinfo_f,     },
 	{"disconnect",   SV_Disconnect_f,         },

@@ -10,7 +10,7 @@ const vec2_t vec2_origin = { 0, 0 };
 const vec3_t vec3_origin = { 0, 0, 0 };
 const vec4_t vec4_origin = { 0, 0, 0, 0 };
 
-vec3_t bytedirs[] =
+static vec3_t bytedirs[] =
 {
 	{ -0.52573103,  0.0,  0.85065103 },
 	{ -0.44286299,  0.238856,  0.86418802 },
@@ -1548,7 +1548,7 @@ void AxisClear( vec3_t axis[3] )
 }
 
 extern const float identityMatrix44[4][4];
-const float identityMatrix44[4][4] =
+static const float identityMatrix44[4][4] =
 {
 	{ 1, 0, 0, 0 },
 	{ 0, 1, 0, 0 },
@@ -3668,7 +3668,7 @@ void VectorRotate( const vec3_t vIn, const vec3_t vRotation, vec3_t out )
 	{
 		if ( vRotation[i] != 0 )
 		{
-			dAngle = vRotation[i] * M_PI / 180.0f;
+			dAngle = vRotation[i] * M_PI / 180.0;
 			SinCos(dAngle, &s, &c);
 			vWork[nIndex[i][0]] = va[nIndex[i][0]] * c - va[nIndex[i][1]] * s;
 			vWork[nIndex[i][1]] = va[nIndex[i][0]] * s + va[nIndex[i][1]] * c;

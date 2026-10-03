@@ -3,14 +3,14 @@
 #include "../qcommon/qcommon.h"
 
 // Unreferenced storage; original declarations unknown (sized from the layout).
-int fxDvarUnknown0[16];
+static int fxDvarUnknown0[16];
 dvar_t *fx_enable;
 dvar_t *fx_draw;
 dvar_t *fx_cull;
 dvar_t *fx_sort;
 dvar_t *fx_profile;
-int fxDvarUnknown1;
+static int fxDvarUnknown1;
 dvar_t *fx_freeze;
-int fxDvarUnknown2;
+static int fxDvarUnknown2;
 dvar_t *fx_visMinTraceDist;
 static int unusedStorage[16];

@@ -116,28 +116,16 @@ void CG_ExecuteNewServerCommands(int latestSequence);
 void CG_ParseServerinfo(void)
 {
     const char *info;
-    const char *val;
     const char *mapname;
-    const char *ext;
 
     info = CL_GetConfigString(0);
-
-    val = Info_ValueForKey(info, (const char *)"sv_hostname");
-    strncpy(cgs->szHostName, val, 0x100);
-
-    val = Info_ValueForKey(info, (const char *)"g_gametype");
-    strncpy(cgs->gametype, val, 0x20);
-
-    if (cgs->localServer == 0) {
-        Dvar_SetStringByName((const char *)"g_gametype", cgs->gametype);
-    }
-
-    val = Info_ValueForKey(info, (const char *)"sv_maxclients");
-    cgs->maxclients = atoi(val);
-
-    mapname = Info_ValueForKey(info, (const char *)"mapname");
-    ext = GetBspExtension();
-    Com_sprintf(cgs->mapname, 0x40, (const char *)"maps/mp/%s.%s", mapname, ext);
+    strncpy(cgs->szHostName, Info_ValueForKey(info, "sv_hostname"), 0x100);
+    strncpy(cgs->gametype, Info_ValueForKey(info, "g_gametype"), 0x20);
+    if (!cgs->localServer)
+        Dvar_SetStringByName("g_gametype", cgs->gametype);
+    cgs->maxclients = atoi(Info_ValueForKey(info, "sv_maxclients"));
+    mapname = Info_ValueForKey(info, "mapname");
+    Com_sprintf(cgs->mapname, 0x40, "maps/mp/%s.%s", mapname, GetBspExtension());
 }
 
 void CG_ParseCodinfo(void)

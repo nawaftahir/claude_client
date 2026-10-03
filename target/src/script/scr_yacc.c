@@ -60,8 +60,8 @@ typedef struct
 static yy_buffer_state *yy_current_buffer = 0;
 static char *yy_c_buf_p = 0;
 static int yy_start = 0;
-FILE *yyin = 0;
-FILE *yyout = 0;
+static FILE *yyin = 0;
+static FILE *yyout = 0;
 static sval_u yaccResult;
 unsigned int g_out_pos;
 static unsigned int g_sourcePos;

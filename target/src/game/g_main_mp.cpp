@@ -9,10 +9,10 @@ level_locals_t level;
 bgs_t level_bgs;
 
 // 64 bytes of storage nothing in the game references
-char g_unusedStorage[64];
+static char g_unusedStorage[64];
 
 gentity_t g_entities[MAX_GENTITIES];
-gclient_t g_clients[MAX_CLIENTS];
+static gclient_t g_clients[MAX_CLIENTS];
 
 entityHandler_t entityHandlers[] =
 {
@@ -50,7 +50,7 @@ dvar_t *g_useholdtime;
 dvar_t *g_useholdspawndelay;
 dvar_t *g_inactivity;
 dvar_t *g_debugDamage;
-dvar_t *g_debugBullets;
+static dvar_t *g_debugBullets;
 dvar_t *g_weaponAmmoPools;
 dvar_t *g_maxDroppedWeapons;
 dvar_t *g_motd;
@@ -65,14 +65,14 @@ dvar_t *voice_localEcho;
 dvar_t *voice_global;
 dvar_t *voice_deadChat;
 dvar_t *g_voiceChatTalkingDuration;
-dvar_t *g_log;
-dvar_t *g_logSync;
+static dvar_t *g_log;
+static dvar_t *g_logSync;
 dvar_t *g_allowVote;
-dvar_t *g_unusedDvar0;	// registered nowhere, name unknown
+static dvar_t *g_unusedDvar0;	// registered nowhere, name unknown
 dvar_t *g_deadChat;
-dvar_t *g_listEntity;
+static dvar_t *g_listEntity;
 dvar_t *g_banIPs;
-dvar_t *g_unusedDvar1;	// registered nowhere, name unknown
+static dvar_t *g_unusedDvar1;	// registered nowhere, name unknown
 dvar_t *g_smoothClients;
 dvar_t *g_ScoresBanner_Allies;
 dvar_t *g_ScoresBanner_Axis;
@@ -91,8 +91,8 @@ dvar_t *player_meleeWidth;
 dvar_t *player_meleeHeight;
 dvar_t *g_antilag;
 dvar_t *g_oldVoting;
-dvar_t *g_voteAbstainWeight;
-dvar_t *g_dumpAnims;
+static dvar_t *g_voteAbstainWeight;
+static dvar_t *g_dumpAnims;
 
 /*
 ==================

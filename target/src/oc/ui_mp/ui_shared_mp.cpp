@@ -3654,9 +3654,9 @@ static void Item_SetMouseOver(itemDef_t *item, qboolean focus)
 {
     if (item) {
         if (focus)
-            item->window.dynamicFlags[0] |= 1;
+            Window_AddDynamicFlags(&item->window, 1);
         else
-            item->window.dynamicFlags[0] &= ~1;
+            Window_RemoveDynamicFlags(&item->window, 1);
     }
 }
 
@@ -4364,7 +4364,7 @@ void Menus_HandleOOBClick(displayContextDef_t *dc, menuDef_t *menu, int key, qbo
     Display_CloseCinematics(dc);
 }
 
-commandDef_t commandList[29] = {
+static commandDef_t commandList[29] = {
     { (const char *)&str_002abdc4, (void (*)())&Script_FadeIn },
     { (const char *)&str_002abdcc, (void (*)())&Script_FadeOut },
     { (const char *)&str_002abdd4, (void (*)())&Script_Show },
@@ -4395,8 +4395,8 @@ commandDef_t commandList[29] = {
     { "getautoupdate", (void (*)())&Script_GetAutoUpdate },
     { (const char *)&str_002abf34, (void (*)())&Script_ScriptMenuResponse }
 };
-int scriptCommandCount = sizeof(commandList) / sizeof(commandDef_t);
-bind_t g_bindings[56] = {
+static int scriptCommandCount = sizeof(commandList) / sizeof(commandDef_t);
+static bind_t g_bindings[56] = {
     { (char *)&str_002abf48, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
     { (char *)&str_002abf50, 0xc9, 0xffffffff, 0xffffffff, 0xffffffff },
     { (char *)&str_002abf58, 0x77, 0xffffffff, 0xffffffff, 0xffffffff },

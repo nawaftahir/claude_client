@@ -5,7 +5,7 @@
 #include <stdlib.h>
 
 
-int samples_in_partial_audio_buffer = 0x0;
+static int samples_in_partial_audio_buffer = 0x0;
 
 extern char enc_buffer[4096];
 extern int enc_buffer_pos;

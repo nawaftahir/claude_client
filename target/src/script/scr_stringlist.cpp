@@ -1,7 +1,7 @@
 #include "../qcommon/qcommon.h"
 #include "script_public.h"
 
-scrStringGlob_t scrStringGlob;
+static scrStringGlob_t scrStringGlob;
 
 RefString *GetRefString( const char *str );
 void SL_RemoveRefToString( unsigned int stringValue );

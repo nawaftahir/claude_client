@@ -27,14 +27,14 @@ extern dvar_t *sv_voice;
 
 extern serverStatusDvar_t serverStatusDvars[23];
 
-char etaText[18] = { 0x45, 0x58, 0x45, 0x5f, 0x45, 0x53, 0x54, 0x5f, 0x54, 0x49, 0x4d, 0x45, 0x5f, 0x4c, 0x45, 0x46, 0x54, 0x0 };
-int tleEstimates[80] = { 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c };
-char xferText[15] = { 0x45, 0x58, 0x45, 0x5f, 0x54, 0x52, 0x41, 0x4e, 0x53, 0x5f, 0x52, 0x41, 0x54, 0x45, 0x0 };
+static char etaText[18] = { 0x45, 0x58, 0x45, 0x5f, 0x45, 0x53, 0x54, 0x5f, 0x54, 0x49, 0x4d, 0x45, 0x5f, 0x4c, 0x45, 0x46, 0x54, 0x0 };
+static int tleEstimates[80] = { 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c };
+static char xferText[15] = { 0x45, 0x58, 0x45, 0x5f, 0x54, 0x52, 0x41, 0x4e, 0x53, 0x5f, 0x52, 0x41, 0x54, 0x45, 0x0 };
 
-const char *MonthAbbrev[12] = { (const char *)&str_002a9d68, (const char *)&str_002a9d80, (const char *)&str_002a9d98, (const char *)&str_002a9dac, (const char *)&str_002a9dc0, (const char *)&str_002a9dd4, (const char *)&str_002a9de8, (const char *)&str_002a9dfc, (const char *)&str_002a9e14, (const char *)&str_002a9e2c, (const char *)&str_002a9e44, (const char *)&str_002a9e5c };
-const char *netSources[3] = { (const char *)&str_002a9e74, (const char *)&str_002a9e80, (const char *)&str_002a9e90 };
+static const char *MonthAbbrev[12] = { (const char *)&str_002a9d68, (const char *)&str_002a9d80, (const char *)&str_002a9d98, (const char *)&str_002a9dac, (const char *)&str_002a9dc0, (const char *)&str_002a9dd4, (const char *)&str_002a9de8, (const char *)&str_002a9dfc, (const char *)&str_002a9e14, (const char *)&str_002a9e2c, (const char *)&str_002a9e44, (const char *)&str_002a9e5c };
+static const char *netSources[3] = { (const char *)&str_002a9e74, (const char *)&str_002a9e80, (const char *)&str_002a9e90 };
 
-int lastColumn = 0xffffffff;
+static int lastColumn = 0xffffffff;
 
 #ifndef __EMSCRIPTEN__
 #    define UI_REGPARM1 __attribute__((regparm(1)))
@@ -1081,52 +1081,51 @@ static bool UI_DvarValueTest(const char *cmd, const char *dvarName, const char *
 
 static void UI_CloseMenuOnDvar(const char *cmd, const char *menuName, const char *dvarName, const char *testValue)
 {
-    if (UI_DvarValueTest(cmd, dvarName, testValue, I_stricmp(cmd, "closeMenuOnDvar") == 0))
+    bool wantMatch;
+
+    wantMatch = I_stricmp(cmd, "closeMenuOnDvar") == 0;
+    if (UI_DvarValueTest(cmd, dvarName, testValue, wantMatch))
         Menus_CloseByName(&uiInfo->uiDC, menuName);
 }
 
 static void UI_OpenMenuOnDvar(const char *cmd, const char *menuName, const char *dvarName, const char *testValue)
 {
-    if (UI_DvarValueTest(cmd, dvarName, testValue, I_stricmp(cmd, "openMenuOnDvar") == 0))
+    bool wantMatch;
+
+    wantMatch = I_stricmp(cmd, "openMenuOnDvar") == 0;
+    if (UI_DvarValueTest(cmd, dvarName, testValue, wantMatch))
         Menus_OpenByName(&uiInfo->uiDC, menuName);
 }
 #endif
 
 static void UI_AddServerStatusDvarRows(serverStatusInfo_t *info)
 {
-    int index = 0;
-    int dvarIndex;
+    int i, j, index;
+    const char *tmp1, *tmp2;
 
-    for (dvarIndex = 0; serverStatusDvars[dvarIndex].name; dvarIndex++) {
-        int j;
-
+    index = 0;
+    for (i = 0; serverStatusDvars[i].name; i++) {
         for (j = 0; j < info->numLines; j++) {
-            const char *oldName;
-            const char *oldValue;
-            const serverStatusDvar_t *dvar;
-
-            if (!info->lines[j][1] || info->lines[j][1][0] != '\0')
+            if (!info->lines[j][1] || info->lines[j][1][0])
                 continue;
-
-            dvar = &serverStatusDvars[dvarIndex];
-            if (I_stricmp(dvar->name, info->lines[j][0]) != 0)
-                continue;
-
-            oldName = info->lines[index][0];
-            oldValue = info->lines[index][3];
-            info->lines[index][0] = info->lines[j][0];
-            info->lines[index][3] = info->lines[j][3];
-            info->lines[j][0] = oldName;
-            info->lines[j][3] = oldValue;
-
-            if (dvar->altName[0])
-                info->lines[index][0] = dvar->altName;
-
-            if (dvar->type == 1)
-                info->lines[index][3] = atoi(info->lines[index][3]) ? "@EXE_YES" : "@EXE_NO";
-
-            index++;
-            break;
+            if (!I_stricmp(serverStatusDvars[i].name, info->lines[j][0])) {
+                // swap lines
+                tmp1 = info->lines[index][0];
+                tmp2 = info->lines[index][3];
+                info->lines[index][0] = info->lines[j][0];
+                info->lines[index][3] = info->lines[j][3];
+                info->lines[j][0] = tmp1;
+                info->lines[j][3] = tmp2;
+                if (strlen(serverStatusDvars[i].altName))
+                    info->lines[index][0] = serverStatusDvars[i].altName;
+                if (serverStatusDvars[i].type == 1) {
+                    if (atoi(info->lines[index][3]))
+                        info->lines[index][3] = "@EXE_YES";
+                    else
+                        info->lines[index][3] = "@EXE_NO";
+                }
+                index++;
+            }
         }
     }
 }
@@ -2065,44 +2064,29 @@ static void UI_RemoveDuplicateFromFavorites(int serverIndex)
 #ifndef __EMSCRIPTEN__
 static void UI_BinaryInsertServer(int serverIndex)
 {
-    int numDisplay = sharedUiInfo.serverStatus.numDisplayServers;
-    int *displayServers = sharedUiInfo.serverStatus.displayServers;
-    int lo, hi, mid, testIdx, cmp, position, lastCmp;
-    int source = (ui_netSource)->current.integer;
-    int sortKey = sharedUiInfo.serverStatus.sortKey;
-    int sortDir = sharedUiInfo.serverStatus.sortDir;
+    int mid, offset, res, len;
 
-    lo = 0;
-    hi = numDisplay;
-    position = 0;
-    lastCmp = 0;
-
-    while (hi > 0) {
-        mid = hi / 2;
-        testIdx = lo + mid;
-
-        cmp = LAN_CompareServers(source, sortKey, sortDir, serverIndex, displayServers[testIdx]);
-        lastCmp = cmp;
-
-        if (cmp == 0) {
-            UI_InsertServerAtPosition(serverIndex, testIdx);
+    len = sharedUiInfo.serverStatus.numDisplayServers;
+    mid = len;
+    offset = 0;
+    res = 0;
+    while (mid > 0) {
+        mid = len >> 1;
+        res = LAN_CompareServers(ui_netSource->current.integer, sharedUiInfo.serverStatus.sortKey, sharedUiInfo.serverStatus.sortDir,
+                                 serverIndex, sharedUiInfo.serverStatus.displayServers[offset + mid]);
+        if (res == 0) {
+            UI_InsertServerAtPosition(serverIndex, offset + mid);
             return;
-        } else if (cmp > 0) {
-            hi -= mid;
-            position = testIdx + 1;
-            lo = position;
-            hi--;
+        } else if (res > 0) {
+            offset += mid;
+            len -= mid;
         } else {
-            hi -= mid;
+            len -= mid;
         }
     }
-
-    if (lastCmp >= 0)
-        position = lo + 1;
-    else
-        position = lo;
-
-    UI_InsertServerAtPosition(serverIndex, position);
+    if (res > 0)
+        offset++;
+    UI_InsertServerAtPosition(serverIndex, offset);
 }
 #endif
 
@@ -2253,8 +2237,8 @@ static int UI_MapCountByGameType(void)
 {
     int i, c, game;
 
-    c = 0;
     game = ui_netGameType->current.integer;
+    c = 0;
     for (i = 0; i < sharedUiInfo.mapCount; i++) {
         sharedUiInfo.mapList[i].active = 0;
         if (sharedUiInfo.mapList[i].typeBits & (1 << game)) {
@@ -2969,62 +2953,28 @@ static void BM_NOINLINE UI_BuildFindPlayerList(void)
 
 static void UI_REGPARM1 UI_BuildServerStatus(int force)
 {
-    int serverStatusVisible = uiInfo->nextFindPlayerRefresh;
-
-    if (serverStatusVisible)
+    if (uiInfo->nextFindPlayerRefresh)
         return;
 
-    if (force) {
-
+    if (!force) {
+        if (!sharedUiInfo.nextServerStatusRefresh || sharedUiInfo.nextServerStatusRefresh > uiInfo->uiDC.realTime)
+            return;
+    } else {
         Menu_SetFeederSelection(&uiInfo->uiDC, 0, 0xd, 0, 0);
         sharedUiInfo.serverStatusInfo.numLines = 0;
         LAN_GetServerStatus(0, 0, 0);
+    }
+
+    UI_UpdateServerCount();
+
+    if (sharedUiInfo.serverStatus.currentServer < 0 || sharedUiInfo.serverStatus.currentServer > sharedUiInfo.serverStatus.numDisplayServers || sharedUiInfo.serverStatus.numDisplayServers == 0)
+        return;
+
+    if (UI_GetServerStatusInfo(sharedUiInfo.serverStatusAddress, &sharedUiInfo.serverStatusInfo)) {
+        sharedUiInfo.nextServerStatusRefresh = 0;
+        UI_GetServerStatusInfo(sharedUiInfo.serverStatusAddress, 0);
     } else {
-        int nextRefresh = sharedUiInfo.nextServerStatusRefresh;
-        if (nextRefresh == 0)
-            return;
-        if (nextRefresh > uiInfo->uiDC.realTime)
-            return;
-    }
-
-    {
-        int serverCount = LAN_GetServerCount((ui_netSource)->current.integer);
-        if (serverCount != sharedUiInfo.serverStatus.serverCount) {
-            sharedUiInfo.serverStatus.serverCount = serverCount;
-            if (sharedUiInfo.serverStatus.numDisplayServers != 0) {
-                sharedUiInfo.serverStatus.currentServer = -1;
-                UI_BuildServerDisplayList(1);
-            }
-        }
-    }
-
-    {
-        int selectedServer = sharedUiInfo.serverStatus.currentServer;
-        int numServers;
-
-        if (selectedServer < 0)
-            return;
-        numServers = sharedUiInfo.serverStatus.numDisplayServers;
-        if (selectedServer > numServers)
-            return;
-        if (numServers == 0)
-            return;
-
-        {
-            int result;
-            const char *serverAddress = sharedUiInfo.serverStatusAddress;
-            serverStatusInfo_t *statusInfo = &sharedUiInfo.serverStatusInfo;
-
-            result = UI_GetServerStatusInfo(serverAddress, statusInfo);
-            if (result) {
-
-                sharedUiInfo.nextServerStatusRefresh = 0;
-                UI_GetServerStatusInfo(serverAddress, 0);
-            } else {
-
-                sharedUiInfo.nextServerStatusRefresh = uiInfo->uiDC.realTime + 500;
-            }
-        }
+        sharedUiInfo.nextServerStatusRefresh = uiInfo->uiDC.realTime + 500;
     }
 }
 
@@ -3444,11 +3394,6 @@ static void Text_PaintCenter(FontHandle font, const char *text, float x, float y
     UI_DrawText(text, 0x7fffffff, font, x - (float)(len / 2), y, 0, 0, scale, color, 6);
 }
 
-static void UI_ReadableSize_wrap(char *buf, int bufsize, int value)
-{
-    UI_ReadableSize(buf, bufsize, value);
-}
-
 static void UI_PrintTime(char *buf, int bufsize, int time)
 {
     if (time > 3600) {
@@ -3508,29 +3453,26 @@ static void UI_DisplayDownloadInfo(const char *downloadName, float centerPoint, 
     }
 
     {
-        float yDl = yStart + 210.0f;
-        float yEta = yStart + 235.0f;
-        float yXfer = yStart + 260.0f;
         const vec_t *ltGrey = (const vec_t *)((void *)&colorLtGrey);
 
-        UI_DrawText(UI_SafeTranslateString(dlText), 64, font, 24.0f, yDl, 0, 0, scale, ltGrey, 3);
-        UI_DrawText(UI_SafeTranslateString(etaText), 64, font, 24.0f, yEta, 0, 0, scale, ltGrey, 3);
-        UI_DrawText(UI_SafeTranslateString(xferText), 64, font, 24.0f, yXfer, 0, 0, scale, ltGrey, 3);
+        UI_DrawText(UI_SafeTranslateString(dlText), 64, font, 24.0f, yStart + 210.0f, 0, 0, scale, ltGrey, 3);
+        UI_DrawText(UI_SafeTranslateString(etaText), 64, font, 24.0f, yStart + 235.0f, 0, 0, scale, ltGrey, 3);
+        UI_DrawText(UI_SafeTranslateString(xferText), 64, font, 24.0f, yStart + 260.0f, 0, 0, scale, ltGrey, 3);
 
         if (downloadSize > 0)
             text = va("%s (%d%%)", downloadName, downloadCount * 100 / downloadSize);
         else
             text = downloadName;
 
-        UI_DrawText(text, 0x7fffffff, font, 192.0f, yDl, 0, 0, scale, ltGrey, 3);
+        UI_DrawText(text, 0x7fffffff, font, 192.0f, yStart + 210.0f, 0, 0, scale, ltGrey, 3);
 
-        UI_ReadableSize_wrap(dlSizeBuf, 64, downloadCount);
-        UI_ReadableSize_wrap(totalSizeBuf, 64, downloadSize);
+        UI_ReadableSize(dlSizeBuf, 64, downloadCount);
+        UI_ReadableSize(totalSizeBuf, 64, downloadSize);
 
         if (downloadCount < 0x1000 || !downloadTime) {
 
             text = UI_SafeTranslateString("EXE_ESTIMATING");
-            Text_PaintCenter(font, text, centerPoint, yEta, scale, ltGrey);
+            Text_PaintCenter(font, text, centerPoint, yStart + 235.0f, scale, ltGrey);
             text = va("(%s %s %s %s)", dlSizeBuf, UI_SafeTranslateString("EXE_OF"), totalSizeBuf, UI_SafeTranslateString("EXE_COPIED"));
             Text_PaintCenter(font, text, centerPoint, yStart + 340.0f, scale, ltGrey);
         } else {
@@ -3540,11 +3482,12 @@ static void UI_DisplayDownloadInfo(const char *downloadName, float centerPoint, 
             else
                 xferRate = 0;
 
-            UI_ReadableSize_wrap(xferRateBuf, 64, xferRate);
+            UI_ReadableSize(xferRateBuf, 64, xferRate);
 
             if (downloadSize && xferRate) {
                 int n = downloadSize / xferRate;
-                int sum, ti;
+                int sum = 0;
+                int ti;
 
                 n = n - (((downloadCount / 1024) * n) / (downloadSize / 1024));
 
@@ -3553,18 +3496,17 @@ static void UI_DisplayDownloadInfo(const char *downloadName, float centerPoint, 
                 if (tleIndex >= 80)
                     tleIndex = 0;
 
-                sum = 0;
                 for (ti = 0; ti < 80; ti++)
                     sum += tleEstimates[ti];
 
                 UI_PrintTime(dlTimeBuf, 64, sum / 80);
-                UI_DrawText(dlTimeBuf, 0x7fffffff, font, 264.0f, yEta, 0, 0, scale, ltGrey, 3);
+                UI_DrawText(dlTimeBuf, 0x7fffffff, font, 264.0f, yStart + 235.0f, 0, 0, scale, ltGrey, 3);
                 text = va("(%s %s %s %s)", dlSizeBuf, UI_SafeTranslateString("EXE_OF"), totalSizeBuf, UI_SafeTranslateString("EXE_COPIED"));
                 Text_PaintCenter(font, text, centerPoint, yStart + 320.0f, scale, ltGrey);
             } else {
 
                 text = UI_SafeTranslateString("EXE_ESTIMATING");
-                Text_PaintCenter(font, text, centerPoint, yEta, scale, ltGrey);
+                Text_PaintCenter(font, text, centerPoint, yStart + 235.0f, scale, ltGrey);
                 if (downloadSize)
                     text = va("(%s %s %s %s)", dlSizeBuf, UI_SafeTranslateString("EXE_OF"), totalSizeBuf, UI_SafeTranslateString("EXE_COPIED"));
                 else
@@ -3573,8 +3515,7 @@ static void UI_DisplayDownloadInfo(const char *downloadName, float centerPoint, 
             }
 
             if (xferRate) {
-                text = va("%s/%s", xferRateBuf, UI_SafeTranslateString("EXE_SECONDS"));
-                UI_DrawText(text, 0x7fffffff, font, 200.0f, yXfer, 0, 0, scale, ltGrey, 3);
+                UI_DrawText(va("%s/%s", xferRateBuf, UI_SafeTranslateString("EXE_SECONDS")), 0x7fffffff, font, 200.0f, yStart + 260.0f, 0, 0, scale, ltGrey, 3);
             }
         }
     }
@@ -4695,7 +4636,7 @@ void UI_DrawText(const char *text, int maxChars, FontHandle font, float x, float
 }
 #endif
 
-serverStatusDvar_t serverStatusDvars[23] = {
+static serverStatusDvar_t serverStatusDvars[23] = {
     { (const char *)&str_002a714c, (const char *)&str_002a9ab8, (sscType_t)0x0 },
     { (const char *)&str_002a9ad0, (const char *)&str_002a9ad8, (sscType_t)0x0 },
     { (const char *)&str_002a9af0, (const char *)&str_002a9af8, (sscType_t)0x1 },

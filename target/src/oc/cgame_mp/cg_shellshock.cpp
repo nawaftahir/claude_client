@@ -91,7 +91,7 @@ static inline int float_seconds_to_ms(float val)
 }
 
 /* migrated from the ILP32 data blob to typed C (x64 port Stage 2). */
-const char *cg_shock_dvar_names[30] = {
+static const char *cg_shock_dvar_names[30] = {
     "cg_shock_screenBlendTime",
     "cg_shock_screenBlendFadeTime",
     "cg_shock_viewKickPeriod",

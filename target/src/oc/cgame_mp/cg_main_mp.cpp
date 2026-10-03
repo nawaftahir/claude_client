@@ -288,7 +288,7 @@ extern itemInfo_t cg_itemsArray[CG_MAX_ITEMS];
 static Bool g_ambientStarted;
 static Bool g_mapLoaded;
 /* migrated from the ILP32 data blob to typed C (x64 port Stage 2). */
-const char *cg_soundRoomTypes[27] = {
+static const char *cg_soundRoomTypes[27] = {
     "generic",
     "paddedcell",
     "room",
@@ -321,7 +321,7 @@ const char *cg_soundRoomTypes[27] = {
 /* cg_drawSoundOverlayStrings: migrated from the ILP32 data blob to typed C
  * (re-lays-out per target; 4 entries + [4]=NULL; trailing blob bytes were
  * inter-symbol padding). (x64 port Stage 2.) */
-const char *cg_drawSoundOverlayStrings[5] = {
+static const char *cg_drawSoundOverlayStrings[5] = {
     "None", "3D",
     "Stream", "2D",
     /* [4] = NULL */
@@ -331,7 +331,7 @@ const char *cg_drawSoundOverlayStrings[5] = {
  * target). 4 live entries + [4]=NULL; blob's extra trailing bytes were
  * inter-symbol padding (next symbol cl_shownet distinct). Targets are the
  * reconstructed literals in common.c. (x64 port Stage 2.) */
-const char *cg_drawFpsNames[5] = {
+static const char *cg_drawFpsNames[5] = {
     "Off",  /* "Off"     */
     "Simple",  /* "Simple"  */
     "Verbose",
@@ -372,12 +372,10 @@ void CG_Init(int serverMessageNum, int serverCommandSequence, int clientNum);
 
 void CG_GetEntityOrientation(int entnum, vec_t *origin_out, vec3_t *axis_out)
 {
-    char *ent = (char *)cg_entities + entnum * 548;
-    vec_t *origin = (vec_t *)((centity_t *)ent)->lerpOrigin;
-    origin_out[0] = origin[0];
-    origin_out[1] = origin[1];
-    origin_out[2] = origin[2];
-    AnglesToAxis((vec_t *)((centity_t *)ent)->lerpAngles, axis_out);
+    origin_out[0] = cg_entities[entnum].lerpOrigin[0];
+    origin_out[1] = cg_entities[entnum].lerpOrigin[1];
+    origin_out[2] = cg_entities[entnum].lerpOrigin[2];
+    AnglesToAxis(cg_entities[entnum].lerpAngles, axis_out);
 }
 
 int CG_CrosshairPlayer(void)

@@ -4,7 +4,7 @@
 
 #define SECTOR_HEAD 1
 
-cm_world_t cm_world;
+static cm_world_t cm_world;
 
 /*
 ================

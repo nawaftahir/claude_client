@@ -3,7 +3,7 @@
 #include "imports.h"
 
 
-int g_current_decode_bandwidth_setting = 0x0;
+static int g_current_decode_bandwidth_setting = 0x0;
 
 #ifdef __cplusplus
 extern "C" {

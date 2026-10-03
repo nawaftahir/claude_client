@@ -2,11 +2,11 @@
 #include "../script/script_public.h"
 
 extern dvar_t *com_developer;
-XAnimInfo g_xAnimInfo[4096];
-unsigned int g_end;
-XAnimClientNotify g_notifyList[128];
-int g_notifyListSize = 0;
-bool g_anim_developer;
+static XAnimInfo g_xAnimInfo[4096];
+static unsigned int g_end;
+static XAnimClientNotify g_notifyList[128];
+static int g_notifyListSize = 0;
+static bool g_anim_developer;
 
 void XAnimSetNotifyIndex(const XAnimTree_s *tree, XAnimInfo *info, const XAnimEntry *entry);
 void XAnimCalcParts_unsigned_short_(const XAnimParts_s *parts, const unsigned char *animToModel, float time, float weightScale, DObjAnimMat *rotTransArray, int *ignorePartBits);

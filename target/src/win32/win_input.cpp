@@ -14,7 +14,7 @@ static int window_center_x, window_center_y;
 
 static dvar_t *in_mouse;
 
-qboolean in_appactive;
+static qboolean in_appactive;
 
 int Key_GetCatcher( void );
 void CL_MouseEvent( int dx, int dy );

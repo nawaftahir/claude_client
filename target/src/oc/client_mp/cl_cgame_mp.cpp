@@ -376,21 +376,19 @@ void CL_ConfigstringModified(void)
     const char *dup;
     gameState_t oldGs;
     int len;
-    clientActive_t *cl;
 
     index = atoi(Cmd_Argv(1));
     if (index < 0 || index >= 0x800)
         Com_Error(ERR_DROP, "\x15" "configstring > MAX_CONFIGSTRINGS");
     s = Cmd_Argv(2);
 
-    cl = CL_LOCAL;
-    old = cl->gameState.stringData + cl->gameState.stringOffsets[index];
+    old = clients[0].gameState.stringData + clients[0].gameState.stringOffsets[index];
     if (!strcmp(old, s))
         return;
 
-    oldGs = cl->gameState;
-    memset(&cl->gameState, 0, sizeof(cl->gameState));
-    cl->gameState.dataCount = 1;
+    oldGs = clients[0].gameState;
+    memset(&clients[0].gameState, 0, sizeof(clients[0].gameState));
+    clients[0].gameState.dataCount = 1;
 
     for (i = 0; i < 0x800; i++) {
         if (i == index)
@@ -400,11 +398,11 @@ void CL_ConfigstringModified(void)
         if (!dup[0])
             continue;
         len = strlen(dup);
-        if (len + 1 + cl->gameState.dataCount > 16000)
+        if (len + 1 + clients[0].gameState.dataCount > 16000)
             Com_Error(ERR_DROP, "\x15MAX_GAMESTATE_CHARS exceeded");
-        cl->gameState.stringOffsets[i] = cl->gameState.dataCount;
-        memcpy(cl->gameState.stringData + cl->gameState.dataCount, dup, len + 1);
-        cl->gameState.dataCount += len + 1;
+        clients[0].gameState.stringOffsets[i] = clients[0].gameState.dataCount;
+        memcpy(clients[0].gameState.stringData + clients[0].gameState.dataCount, dup, len + 1);
+        clients[0].gameState.dataCount += len + 1;
     }
 
     if (index == 1)
@@ -592,7 +590,7 @@ qboolean CL_DObjCreateSkelForBone(struct DObj_s *obj, int boneIndex, int localCl
         return 0;
     }
 
-    if (timeStamp != warnCount) {
+    if (warnCount != timeStamp) {
         warnCount = timeStamp;
         Com_Printf("^3WARNING: CL_SKEL_MEMORY_SIZE exceeded - not calculating skeleton\n");
     }
@@ -822,17 +820,14 @@ qboolean CL_Popup(const char *menu)
 
     if (!I_stricmp(menu, "UIMENU_WM_QUICKMESSAGE")) {
         UI_SetActiveMenu(UIMENU_WM_QUICKMESSAGE);
-        return 1;
-    }
-    if (!I_stricmp(menu, "UIMENU_WM_AUTOUPDATE")) {
+    } else if (!I_stricmp(menu, "UIMENU_WM_AUTOUPDATE")) {
         UI_SetActiveMenu(UIMENU_WM_AUTOUPDATE);
-        return 1;
+    } else if (!I_strnicmp(menu, "UIMENU_SCRIPT_POPUP", 19)) {
+        if (!I_stricmp(menu, "UIMENU_SCRIPT_POPUP_NO_MOUSE"))
+            return UI_SetActiveMenu(UIMENU_SCRIPT_POPUP_NO_MOUSE);
+        return UI_SetActiveMenu(UIMENU_SCRIPT_POPUP);
     }
-    if (I_strnicmp(menu, "UIMENU_SCRIPT_POPUP", 19))
-        return 1;
-    if (!I_stricmp(menu, "UIMENU_SCRIPT_POPUP_NO_MOUSE"))
-        return UI_SetActiveMenu(UIMENU_SCRIPT_POPUP_NO_MOUSE);
-    return UI_SetActiveMenu(UIMENU_SCRIPT_POPUP);
+    return 1;
 }
 
 void CL_ClosePopup(const char *menu)
@@ -1382,4 +1377,4 @@ void CL_SetCGameTime(void)
     }
 }
 
-const vec4_t g_color_table[36] = { { 0.0f, 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f }, { 1.0f, 1.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f }, { 0.0f, 1.0f, 1.0f, 1.0f }, { 1.0f, 0.0f, 1.0f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 2.164135E-39f, 2.163334E-39f, 2.163334E-39f, 2.163334E-39f }, { 2.163334E-39f, 2.163334E-39f, 2.163334E-39f, 2.163334E-39f }, { 2.163334E-39f, 2.163334E-39f, 2.163334E-39f, 2.163334E-39f }, { 2.163334E-39f, 2.163334E-39f, 2.163334E-39f, 2.163334E-39f }, { 2.163334E-39f, 2.163334E-39f, 2.163334E-39f, 2.163334E-39f }, { 2.163334E-39f, 2.163334E-39f, 2.163334E-39f, 2.163334E-39f }, { 2.163334E-39f, 2.163334E-39f, 2.163334E-39f, 2.163334E-39f }, { 2.163334E-39f, 2.163334E-39f, 2.163334E-39f, 2.163334E-39f }, { 2.163334E-39f, 2.163334E-39f, 2.164221E-39f, 2.163334E-39f }, { 2.163334E-39f, 2.163334E-39f, 2.163334E-39f, 2.163334E-39f }, { 2.163334E-39f, 2.163334E-39f, 2.163334E-39f, 2.163334E-39f }, { 2.164135E-39f, 2.163334E-39f, 2.163334E-39f, 2.163334E-39f }, { 2.163334E-39f, 2.163334E-39f, 2.163334E-39f, 2.163334E-39f }, { 2.163334E-39f, 2.163671E-39f, 2.163711E-39f, 2.163842E-39f }, { 2.163983E-39f, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 2.20311E-39f, 2.203044E-39f, 2.202998E-39f, 2.202981E-39f }, { 2.202952E-39f, 2.202906E-39f, 2.203169E-39f, 2.20314E-39f }, { 2.202618E-39f, 2.202645E-39f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 0.0f /* raw 0x7FFFFFFF (non-finite) */, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 0.0f /* raw 0x7FFFFFFF (non-finite) */, 0.0f, 0.0f, 0.0f }, { 2.224965E-39f, 2.225545E-39f, 2.225545E-39f, 2.225642E-39f }, { 2.225642E-39f, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f, 0.0f } };
+static const vec4_t g_color_table[36] = { { 0.0f, 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f }, { 1.0f, 1.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f }, { 0.0f, 1.0f, 1.0f, 1.0f }, { 1.0f, 0.0f, 1.0f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 2.164135E-39f, 2.163334E-39f, 2.163334E-39f, 2.163334E-39f }, { 2.163334E-39f, 2.163334E-39f, 2.163334E-39f, 2.163334E-39f }, { 2.163334E-39f, 2.163334E-39f, 2.163334E-39f, 2.163334E-39f }, { 2.163334E-39f, 2.163334E-39f, 2.163334E-39f, 2.163334E-39f }, { 2.163334E-39f, 2.163334E-39f, 2.163334E-39f, 2.163334E-39f }, { 2.163334E-39f, 2.163334E-39f, 2.163334E-39f, 2.163334E-39f }, { 2.163334E-39f, 2.163334E-39f, 2.163334E-39f, 2.163334E-39f }, { 2.163334E-39f, 2.163334E-39f, 2.163334E-39f, 2.163334E-39f }, { 2.163334E-39f, 2.163334E-39f, 2.164221E-39f, 2.163334E-39f }, { 2.163334E-39f, 2.163334E-39f, 2.163334E-39f, 2.163334E-39f }, { 2.163334E-39f, 2.163334E-39f, 2.163334E-39f, 2.163334E-39f }, { 2.164135E-39f, 2.163334E-39f, 2.163334E-39f, 2.163334E-39f }, { 2.163334E-39f, 2.163334E-39f, 2.163334E-39f, 2.163334E-39f }, { 2.163334E-39f, 2.163671E-39f, 2.163711E-39f, 2.163842E-39f }, { 2.163983E-39f, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 2.20311E-39f, 2.203044E-39f, 2.202998E-39f, 2.202981E-39f }, { 2.202952E-39f, 2.202906E-39f, 2.203169E-39f, 2.20314E-39f }, { 2.202618E-39f, 2.202645E-39f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 0.0f /* raw 0x7FFFFFFF (non-finite) */, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 0.0f /* raw 0x7FFFFFFF (non-finite) */, 0.0f, 0.0f, 0.0f }, { 2.224965E-39f, 2.225545E-39f, 2.225545E-39f, 2.225642E-39f }, { 2.225642E-39f, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f, 0.0f } };

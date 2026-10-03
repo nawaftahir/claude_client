@@ -1,7 +1,7 @@
 #include "../qcommon/qcommon.h"
 #include "script_public.h"
 
-scrCompileGlob_t scrCompileGlob;
+static scrCompileGlob_t scrCompileGlob;
 scrCompilePub_t scrCompilePub;
 
 void EmitByte( byte value );

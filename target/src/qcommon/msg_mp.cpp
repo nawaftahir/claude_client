@@ -11,7 +11,7 @@
 #define KEY_MASK_MOVERIGHT  4
 #define KEY_MASK_MOVELEFT   8
 
-unsigned int kbitmask[] =
+static unsigned int kbitmask[] =
 {
 	0x00000000, 0x00000001, 0x00000003,
 	0x00000007, 0x0000000F, 0x0000001F,
@@ -28,7 +28,7 @@ unsigned int kbitmask[] =
 
 #define OBJF( x ) # x, offsetof( objective_t, x )
 
-netField_t objectiveFields[] =
+static netField_t objectiveFields[] =
 {
 	{ OBJF( origin[0] ), 0},
 	{ OBJF( origin[1] ), 0},
@@ -40,7 +40,7 @@ netField_t objectiveFields[] =
 
 #define HEF( x ) # x, offsetof( hudelem_t, x )
 
-netField_t hudElemFields[] =
+static netField_t hudElemFields[] =
 {
 	{ HEF( y ), -99},
 	{ HEF( type ), 4},
@@ -77,7 +77,7 @@ netField_t hudElemFields[] =
 };
 
 // Q3 TA frequency table
-int msg_hData[256] =
+static int msg_hData[256] =
 {
 	250315,			// 0
 	41193,			// 1

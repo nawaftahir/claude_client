@@ -41,7 +41,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define PUNCTABLE
 
 //longer punctuations first
-punctuation_t default_punctuations[] =
+static punctuation_t default_punctuations[] =
 {
 	//binary operators
 	{">>=",P_RSHIFT_ASSIGN, NULL},

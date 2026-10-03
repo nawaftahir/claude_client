@@ -10,11 +10,11 @@ typedef struct
 	int		cursize;
 } cmd_t;
 
-int			cmd_wait;
-cmd_t		s_cmdText;
+static int			cmd_wait;
+static cmd_t		s_cmdText;
 cmd_t		&cmd_text = s_cmdText;
 // each command buffer sits on a 128-byte boundary
-byte		cmd_text_buf[MAX_CMD_BUFFER] __attribute__((aligned(128)));
+static byte		cmd_text_buf[MAX_CMD_BUFFER] __attribute__((aligned(128)));
 
 typedef struct cmd_function_s
 {

@@ -18,20 +18,20 @@ static const char *netsrcString[2] =
 	"server"
 };
 
-dvar_t      *showpackets;
-dvar_t      *showdrop;
-dvar_t      *packetDebug;
+static dvar_t      *showpackets;
+static dvar_t      *showdrop;
+static dvar_t      *packetDebug;
 dvar_t      *net_profile;
 dvar_t      *net_showprofile;
 dvar_t      *net_lanauthorize;
 int qport;
-int net_iProfilingOn;
+static int net_iProfilingOn;
 
 void CL_Netchan_PrintProfileStats( int bPrintToConsole );
 
 // Unreferenced: a 32-aligned .bss object of up to this size sits between
 // net_iProfilingOn and loopbacks. The binary is stripped, so only its extent is known.
-byte net_chan_unused[0x60];
+static byte net_chan_unused[0x60];
 
 // there needs to be enough loopback messages to hold a complete
 // gamestate of maximum size
@@ -50,7 +50,7 @@ typedef struct
 	int get, send;
 } loopback_t;
 
-loopback_t loopbacks[2];
+static loopback_t loopbacks[2];
 
 // Local client index for the "[client %i]" traces; always 0 on a dedicated
 // server. Original name unknown: the copy is emitted at the end of this TU.

@@ -1685,10 +1685,10 @@ void CL_Record_f(void)
     MSG_WriteLong(&buf, conn->serverCommandSequence);
 
     for (i = 0; i < 2048; ++i) {
-        if (!active->gameState.stringOffsets[i])
+        if (!clients[0].gameState.stringOffsets[i])
             continue;
 
-        s = active->gameState.stringData + active->gameState.stringOffsets[i];
+        s = clients[0].gameState.stringData + clients[0].gameState.stringOffsets[i];
         MSG_WriteByte(&buf, 2);
         MSG_WriteShort(&buf, i);
         MSG_WriteBigString(&buf, s);
@@ -2698,8 +2698,8 @@ void CL_Snd_Restart_f(void)
 }
 
 // retail globals, names from CoD1 (SUPPORTED)
-qboolean autoupdateStarted;
-char autoupdateFilename[64];
+static qboolean autoupdateStarted;
+static char autoupdateFilename[64];
 
 void CL_Disconnect(void)
 {

@@ -19,7 +19,7 @@ struct BspHeader
 };
 
 clipMap_t cm;
-int cm_unused;	// unreferenced; original name unknown
+static int cm_unused;	// unreferenced; original name unknown
 clipMapExtra_t cme;
 
 /*

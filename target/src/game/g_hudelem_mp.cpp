@@ -4,11 +4,11 @@
 
 game_hudelem_t g_hudelems[MAX_HUDELEMS_TOTAL];
 
-const char *g_he_font[] = { "default", "bigfixed", "smallfixed" };
-const char *g_he_alignx[] = { "left", "center", "right" };
-const char *g_he_aligny[] = { "top", "middle", "bottom" };
+static const char *g_he_font[] = { "default", "bigfixed", "smallfixed" };
+static const char *g_he_alignx[] = { "left", "center", "right" };
+static const char *g_he_aligny[] = { "top", "middle", "bottom" };
 
-const char *g_he_horzalign[] =
+static const char *g_he_horzalign[] =
 {
 	"subleft",
 	"left",
@@ -20,7 +20,7 @@ const char *g_he_horzalign[] =
 	"center_safearea"
 };
 
-const char *g_he_vertalign[] =
+static const char *g_he_vertalign[] =
 {
 	"subtop",
 	"top",

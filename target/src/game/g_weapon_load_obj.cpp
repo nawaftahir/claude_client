@@ -1,7 +1,7 @@
 #include "../qcommon/qcommon.h"
 #include "g_shared.h"
 
-const char *accuracyDirName[] =
+static const char *accuracyDirName[] =
 {
 	"aivsai",
 	"aivsplayer",

@@ -6,16 +6,16 @@ qboolean BG_SetPlayerWeaponForSlot( playerState_t *ps, int slot, int weaponIndex
 
 
 int bg_iNumWeapons;
-WeaponDef *bg_weaponDefs[MAX_WEAPONS];
+static WeaponDef *bg_weaponDefs[MAX_WEAPONS];
 
-WeaponDef *bg_weapAmmoTypes[MAX_WEAPONS];
-int bg_iNumAmmoTypes;
+static WeaponDef *bg_weapAmmoTypes[MAX_WEAPONS];
+static int bg_iNumAmmoTypes;
 
-WeaponDef *bg_sharedAmmoCaps[MAX_WEAPONS];
-int bg_iNumSharedAmmoCaps;
+static WeaponDef *bg_sharedAmmoCaps[MAX_WEAPONS];
+static int bg_iNumSharedAmmoCaps;
 
-WeaponDef *bg_weapClips[MAX_WEAPONS];
-int bg_iNumWeapClips;
+static WeaponDef *bg_weapClips[MAX_WEAPONS];
+static int bg_iNumWeapClips;
 
 WeaponDef *BG_GetWeaponDef( int iWeapon );
 int BG_GetNumWeapons();

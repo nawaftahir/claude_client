@@ -5,12 +5,12 @@
 #include "bg_public.h"
 #undef Mantle_IsWeaponInactive
 
-dvar_t *mantle_enable;
-dvar_t *mantle_debug;
-dvar_t *mantle_check_range;
-dvar_t *mantle_check_radius;
-dvar_t *mantle_check_angle;
-dvar_t *mantle_view_yawcap;
+static dvar_t *mantle_enable;
+static dvar_t *mantle_debug;
+static dvar_t *mantle_check_range;
+static dvar_t *mantle_check_radius;
+static dvar_t *mantle_check_angle;
+static dvar_t *mantle_view_yawcap;
 
 enum MantleAnims
 {

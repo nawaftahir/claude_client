@@ -11,7 +11,8 @@ extern char *va( const char *format, ... );
 extern void Com_Printf(const char *msg, ...);
 extern void SCR_UpdateScreen(void);
 extern void CG_CloseScriptMenu(void);
-extern void CL_CloseAllMenus(void);
+extern qboolean UI_IsFullscreen(void);
+extern void UI_KeyEvent(int key, int down);
 extern void SND_StopSounds(snd_stopsounds_arg_t flags);
 extern const char *CL_GetConfigString(int index);
 extern const char *Info_ValueForKey( const char *s, const char *key );
@@ -66,7 +67,12 @@ void CG_DrawInformation(qboolean serverLoading)
         CG_CloseScriptMenu();
         CG_CloseScriptMenu();
         legacyHacks->ui_scriptMenuAllowResponse = 1;
-        CL_CloseAllMenus();
+        if (!UI_IsFullscreen())
+        {
+            UI_KeyEvent(0x1b, 1);
+            UI_KeyEvent(0x1b, 1);
+            UI_KeyEvent(0x1b, 1);
+        }
         SND_StopSounds(SND_STOP_ALL);
         legacyHacks->cl_serverloadwaiting = 1;
     }

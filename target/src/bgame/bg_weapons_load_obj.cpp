@@ -7,7 +7,7 @@ static const int unusedConstant = 366;
 static int g_playerAnimTypeNamesCount;
 static const char *g_playerAnimTypeNames[32];
 
-const char *szWeapTypeNames[] =
+static const char *szWeapTypeNames[] =
 {
 	"bullet",
 	"grenade",
@@ -15,21 +15,21 @@ const char *szWeapTypeNames[] =
 	"binoculars"
 };
 
-const char *szWeapSlotNames[] =
+static const char *szWeapSlotNames[] =
 {
 	"none",
 	"primary",
 	"primaryb"
 };
 
-const char *szProjectileExplosionNames[] =
+static const char *szProjectileExplosionNames[] =
 {
 	"grenade",
 	"rocket",
 	"none"
 };
 
-const char *szWeapOverlayReticleNames[] =
+static const char *szWeapOverlayReticleNames[] =
 {
 	"none",
 	"crosshair",
@@ -38,7 +38,7 @@ const char *szWeapOverlayReticleNames[] =
 	"binoculars"
 };
 
-const char *szWeapClassNames[] =
+static const char *szWeapClassNames[] =
 {
 	"rifle",
 	"mg",
@@ -52,14 +52,14 @@ const char *szWeapClassNames[] =
 	"item"
 };
 
-const char *szWeapStanceNames[] =
+static const char *szWeapStanceNames[] =
 {
 	"stand",
 	"duck",
 	"prone"
 };
 
-const char *offhandClassNames[] =
+static const char *offhandClassNames[] =
 {
 	"None",
 	"Frag Grenade",
@@ -67,7 +67,7 @@ const char *offhandClassNames[] =
 };
 
 #define WEF( x ) # x,(intptr_t)&( (WeaponFullDef*)0 )->x
-cspField_t weaponDefFields[] =
+static cspField_t weaponDefFields[] =
 {
 	{ WEF( displayName ), CSPFT_STRING, },
 	{ "AIOverlayDescription", (intptr_t)&( (WeaponFullDef*)0 )->overlayName, CSPFT_STRING, },
@@ -441,7 +441,7 @@ cspField_t weaponDefFields[] =
 BG_LoadDefaultWeaponDef
 ===============
 */
-WeaponDef bg_defaultWeaponDefs;
+static WeaponDef bg_defaultWeaponDefs;
 
 /*
 ===============

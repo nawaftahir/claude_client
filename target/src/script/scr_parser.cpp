@@ -1,7 +1,7 @@
 #include "../qcommon/qcommon.h"
 #include "script_public.h"
 
-scrParserGlob_t scrParserGlob;
+static scrParserGlob_t scrParserGlob;
 scrParserPub_t scrParserPub;
 
 unsigned int Scr_GetSourceBuffer( const char *codePos );

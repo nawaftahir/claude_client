@@ -1,7 +1,7 @@
 #include "../qcommon/qcommon.h"
 #include "com_sndalias.h"
 
-g_sa_t g_sa;
+static g_sa_t g_sa;
 
 static inline int Com_SoundAliasRandom()
 {

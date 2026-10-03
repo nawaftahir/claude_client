@@ -3,5 +3,5 @@
 #include "../qcommon/qcommon.h"
 
 // Unreferenced storage; original declarations unknown (sized from the layout).
-int dedicatedDvarUnknown[9];
+static int dedicatedDvarUnknown[9];
 dvar_t *com_dedicated;

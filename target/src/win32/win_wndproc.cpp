@@ -32,10 +32,10 @@ void Key_ClearStates( void );
 void Com_TouchMemory( void );
 void SND_SetHWND( HWND hwnd );
 
-dvar_t *vid_xpos;
-dvar_t *vid_ypos;
+static dvar_t *vid_xpos;
+static dvar_t *vid_ypos;
 dvar_t *r_fullscreen;
-dvar_t *r_autopriority;
+static dvar_t *r_autopriority;
 
 static UINT MSH_MOUSEWHEEL;
 

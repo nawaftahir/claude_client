@@ -892,7 +892,6 @@ qboolean Item_Parse(int handle, const char (*item)[4])
             return 0;
         }
     }
-    return 0;
 }
 
 qboolean MenuParse_itemDef(const char (*item)[4], int handle)
@@ -1974,7 +1973,7 @@ MenuList *UI_LoadMenu(const char *menuFile, int imageTrack)
     return &g_load.menuList;
 }
 
-keywordHash_t itemParseKeywords[67] = {
+static keywordHash_t itemParseKeywords[67] = {
     { (char *)"name", (qboolean(*)())&ItemParse_name, 0x0 },
     { (char *)"text", (qboolean(*)())&ItemParse_text, 0x0 },
     { (char *)"textfile", (qboolean(*)())&ItemParse_textfile, 0x0 },
@@ -2043,7 +2042,7 @@ keywordHash_t itemParseKeywords[67] = {
     { 0, 0, 0x0 },
     { 0 }
 };
-keywordHash_t menuParseKeywords[35] = {
+static keywordHash_t menuParseKeywords[35] = {
     { (char *)"name", (qboolean(*)())&MenuParse_name, 0x0 },
     { (char *)"fullscreen", (qboolean(*)())&MenuParse_fullscreen, 0x0 },
     { (char *)"rect", (qboolean(*)())&MenuParse_rect, 0x0 },

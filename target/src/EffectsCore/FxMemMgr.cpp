@@ -10,8 +10,8 @@ struct FxMemBlock
 	FxMemBlock *prev;
 };
 
-FxMemBlock fx_memBlocks[64];
-int fx_memHighWater;
+static FxMemBlock fx_memBlocks[64];
+static int fx_memHighWater;
 
 void Com_DPrintf( const char *fmt, ... );
 

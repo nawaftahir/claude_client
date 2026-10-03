@@ -8,9 +8,9 @@ void Sys_LoadingKeepAlive( void );
 qboolean gameInitialized = qfalse;
 
 // the cache sits on a 128-byte boundary
-char g_sv_skel_memory[MAX_GENTITIES * MAX_MODELS] __attribute__((aligned(128)));
-char *g_sv_skel_memory_start;
-int g_sv_skel_warn_count;
+static char g_sv_skel_memory[MAX_GENTITIES * MAX_MODELS] __attribute__((aligned(128)));
+static char *g_sv_skel_memory_start;
+static int g_sv_skel_warn_count;
 
 int sv_serverId_value;
 

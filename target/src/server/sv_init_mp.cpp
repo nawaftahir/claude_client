@@ -41,8 +41,8 @@ dvar_t *sv_iwds;
 dvar_t *sv_iwdNames;
 dvar_t *sv_referencedIwds;
 dvar_t *sv_referencedIwdNames;
-dvar_t *sv_allowedClan1;
-dvar_t *sv_allowedClan2;
+static dvar_t *sv_allowedClan1;
+static dvar_t *sv_allowedClan2;
 
 extern dvar_t *com_expectedHunkUsage;
 

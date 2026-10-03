@@ -6,15 +6,15 @@ const dvar_t *snd_touchStreamFilesOnLoad;
 const dvar_t *snd_khz;
 const dvar_t *snd_bits;
 const dvar_t *snd_stereo;
-const dvar_t *snd_volume;
+static const dvar_t *snd_volume;
 const dvar_t *snd_enableReverb;
 extern struct snd_local_t g_snd;
-const dvar_t *snd_slaveFadeTime;
-const dvar_t *snd_enable2D;
-const dvar_t *snd_enable3D;
-const dvar_t *snd_enableStream;
+static const dvar_t *snd_slaveFadeTime;
+static const dvar_t *snd_enable2D;
+static const dvar_t *snd_enable3D;
+static const dvar_t *snd_enableStream;
 /* migrated from the ILP32 data blob to typed C (x64 port Stage 2). */
-const char *snd_roomStrings[32] = {
+static const char *snd_roomStrings[32] = {
     "generic",
     "paddedcell",
     "room",

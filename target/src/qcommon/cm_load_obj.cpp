@@ -16,8 +16,8 @@ struct cm_bsp_lumps_t
 	cmvis_lump_t lumps[LUMP_COUNT];
 };
 
-char *cmod_base;
-byte *cm_lumpData;
+static char *cmod_base;
+static byte *cm_lumpData;
 
 static void CM_InitBoxHull( void );
 

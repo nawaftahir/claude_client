@@ -3255,9 +3255,9 @@ void Scr_ToLower()
 
 	s = Scr_GetString(0);
 
-	for ( i = 0; i < MAX_STRING_CHARS; i++, s++ )
+	for ( i = 0; i < MAX_STRING_CHARS; i++ )
 	{
-		c = tolower(*s);
+		c = tolower(*s++);
 		tempString[i] = c;
 
 		if ( !c )
@@ -5729,7 +5729,7 @@ scr_function_t functions[] =
 	{ "issplitscreen", Scr_IsSplitscreen, qfalse, },
 };
 
-scr_method_t methods[] =
+static scr_method_t methods[] =
 {
 	{ "attach", ScrCmd_attach, qfalse, },
 	{ "detach", ScrCmd_detach, qfalse, },

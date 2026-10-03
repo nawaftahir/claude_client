@@ -8,7 +8,7 @@ void SE_Init();
 void SE_ShutDown();
 
 
-languageInfo_t g_languages[MAX_LANGUAGES] =
+static languageInfo_t g_languages[MAX_LANGUAGES] =
 {
 	{ "english", 0 },
 	{ "french", 0 },
@@ -26,7 +26,7 @@ languageInfo_t g_languages[MAX_LANGUAGES] =
 	{ "leet", 0 }
 };
 
-int g_currentAsian;
+static int g_currentAsian;
 
 // Original name and purpose unknown; unreferenced.
 const int stringedHooksUnused = 2;

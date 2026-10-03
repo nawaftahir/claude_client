@@ -1,11 +1,11 @@
 #include "../qcommon/qcommon.h"
 #include "bg_public.h"
 
-dvar_t *jump_height;
-dvar_t *jump_stepSize;
-dvar_t *jump_slowdownEnable;
-dvar_t *jump_ladderPushVel;
-dvar_t *jump_spreadAdd;
+static dvar_t *jump_height;
+static dvar_t *jump_stepSize;
+static dvar_t *jump_slowdownEnable;
+static dvar_t *jump_ladderPushVel;
+static dvar_t *jump_spreadAdd;
 
 #define JUMP_LAND_SLOWDOWN_TIME 1800
 

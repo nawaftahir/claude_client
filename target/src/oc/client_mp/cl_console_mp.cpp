@@ -461,15 +461,12 @@ void Con_DrawSay(int y)
 {
     clientActive_t *cl = clients;
     const dvar_t *hudSayPosition;
-    const char *label;
     const char *string;
-    field_t *field;
     FontHandle font;
     float fontScale;
     float normalizedScale;
     int x;
     int fontHeight;
-    int textWidth;
 
     if (!(cl->keyCatchers & 0x10))
         return;
@@ -477,9 +474,10 @@ void Con_DrawSay(int y)
     fontScale = 10.0f / 48.0f;
     font = (FontHandle)UI_GetFontHandle(0, fontScale);
 
-    label = SEH_SafeTranslateString(*chat_team ? "EXE_SAYTEAM" : "EXE_SAY");
-
-    string = va("%s: ", label);
+    if (*chat_team)
+        string = va("%s: ", SEH_SafeTranslateString("EXE_SAYTEAM"));
+    else
+        string = va("%s: ", SEH_SafeTranslateString("EXE_SAY"));
     normalizedScale = re.NormalizedTextScale(font, fontScale);
 
     hudSayPosition = cg_hudSayPosition;
@@ -491,10 +489,8 @@ void Con_DrawSay(int y)
                 1, 1, normalizedScale, normalizedScale,
                 (const float *)((void *)&colorWhite), 3);
 
-    textWidth = re.TextWidth(string, 0, font);
-    field = ((field_t *)chatField);
-    Field_Draw(field, x + (int)((float)textWidth * normalizedScale), y,
-               1, 1);
+    x += (int)((float)re.TextWidth(string, 0, font) * normalizedScale);
+    Field_Draw((field_t *)chatField, x, y, 1, 1);
 }
 
 void Con_ToggleConsoleOutput(void)
@@ -861,21 +857,15 @@ const char *Con_TokenizeInput(void)
 
 Bool Con_AnySpaceAfterCommand(void)
 {
-    const char *p = (const char *)&g_consoleField;
-    int offset = 0;
+    int charIndex;
 
-    while (isPunctChar((signed char)p[0x18 + offset]))
-        offset++;
-
-    {
-        const char *scan = p + 0x18 + offset;
-        while (*scan) {
-            if (isPunctChar((signed char)*scan))
-                return 1;
-            scan++;
-        }
+    for (charIndex = 0; isspace(g_consoleField.buffer[charIndex]); ++charIndex)
+        ;
+    while (g_consoleField.buffer[charIndex]) {
+        if (isspace(g_consoleField.buffer[charIndex]))
+            return 1;
+        ++charIndex;
     }
-
     return 0;
 }
 
@@ -1998,14 +1988,14 @@ void Con_Close(void)
 }
 #endif
 
-const vec4_t con_versionColor = { 1.0f, 1.0f, 0.0f, 1.0f };
+static const vec4_t con_versionColor = { 1.0f, 1.0f, 0.0f, 1.0f };
 
-const vec4_t con_inputDvarMatchColor = { 1.0f, 1.0f, 0.8f, 1.0f };
+static const vec4_t con_inputDvarMatchColor = { 1.0f, 1.0f, 0.8f, 1.0f };
 
-const vec4_t con_inputCommandMatchColor = { 0.8f, 0.8f, 1.0f, 1.0f };
+static const vec4_t con_inputCommandMatchColor = { 0.8f, 0.8f, 1.0f, 1.0f };
 
-const vec4_t con_inputDvarValueColor = { 1.0f, 1.0f, 1.0f, 1.0f };
+static const vec4_t con_inputDvarValueColor = { 1.0f, 1.0f, 1.0f, 1.0f };
 
-const vec4_t con_inputDvarInfoColor = { 0.8f, 0.8f, 1.0f, 1.0f };
+static const vec4_t con_inputDvarInfoColor = { 0.8f, 0.8f, 1.0f, 1.0f };
 
-const vec4_t con_inputDvarInactiveValueColor = { 0.8f, 0.8f, 0.8f, 1.0f };
+static const vec4_t con_inputDvarInactiveValueColor = { 0.8f, 0.8f, 0.8f, 1.0f };

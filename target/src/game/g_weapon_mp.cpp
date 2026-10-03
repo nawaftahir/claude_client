@@ -11,7 +11,7 @@ void G_CalcMuzzlePoints( gentity_t *ent, weaponParms *wp );
 // melee trace pattern: centre, then the four corners
 extern const vec2_t traceOffsets[];
 
-const vec2_t traceOffsets[] =
+static const vec2_t traceOffsets[] =
 {
 	{ 0.000000, 0.000000},
 	{ 1.000000, 1.000000},

@@ -471,7 +471,7 @@ void Scr_GetClientField( gclient_t *client, int offset )
 	}
 }
 
-const game_client_field_t g_client_fields[] =
+static const game_client_field_t g_client_fields[] =
 {
 	{ "name", CFOFS( sess.cs.name ), F_LSTRING, ClientScr_ReadOnly, NULL },
 	{ "sessionteam", 0, F_STRING, ClientScr_SetSessionTeam, ClientScr_GetSessionTeam },

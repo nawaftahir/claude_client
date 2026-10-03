@@ -252,6 +252,9 @@ float CG_DrawScoreboard_Objective(const float *color, float y)
                 else
                     textStart += 2;
                 y += 12.0f;
+                whiteSpace = NULL;
+                textEnd = textStart;
+                continue;
             }
             else
             {

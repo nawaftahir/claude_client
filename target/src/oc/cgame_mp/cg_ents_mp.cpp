@@ -495,9 +495,12 @@ void CG_CalcEntityLerpPositions(centity_t *cent)
 {
     clientInfo_t *ci;
 
-    if (cent->currentState.pos.trType == TR_INTERPOLATE ||
-        (cent->currentState.pos.trType == TR_LINEAR_STOP && cent->currentState.number < 64))
-    {
+    if (cent->currentState.pos.trType == TR_INTERPOLATE) {
+        CG_InterpolateEntityPosition(cent);
+        return;
+    }
+
+    if (cent->currentState.pos.trType == TR_LINEAR_STOP && cent->currentState.number < 64) {
         CG_InterpolateEntityPosition(cent);
         return;
     }
@@ -505,37 +508,29 @@ void CG_CalcEntityLerpPositions(centity_t *cent)
     BG_EvaluateTrajectory(&cent->currentState.pos, cg->time, cent->lerpOrigin);
     BG_EvaluateTrajectory(&cent->currentState.apos, cg->time, cent->lerpAngles);
 
-    if (cent->nextState.eType == 1 || cent->nextState.eType == 2)
-    {
-        if (cent->nextState.eType == 1)
-            ci = &cg->bgs.clientinfo[cent->nextState.clientNum];
-        else
-            ci = CG_CorpseInfoForEntityNum(cent->nextState.number);
+    ci = NULL;
+    if (cent->nextState.eType == 1)
+        ci = &cg->bgs.clientinfo[cent->nextState.clientNum];
+    else if (cent->nextState.eType == 2)
+        ci = CG_CorpseInfoForEntityNum(cent->nextState.number);
 
+    if (ci) {
         ci->lerpMoveDir = cent->nextState.angles2[1];
         ci->playerAngles[0] = cent->lerpAngles[0];
         ci->playerAngles[1] = cent->lerpAngles[1];
         ci->playerAngles[2] = cent->lerpAngles[2];
-        cent->lerpAngles[0] = 0.0f;
         cent->lerpAngles[2] = 0.0f;
+        cent->lerpAngles[0] = 0.0f;
         ci->lerpLean = cent->nextState.leanf;
     }
 
     if (cent != &cg->predictedPlayerEntity)
-    {
-        CG_AdjustPositionForMover(cent->lerpOrigin,
-                                  cent->currentState.groundEntityNum,
-                                  cg->snap->serverTime,
-                                  cg->time,
-                                  cent->lerpOrigin,
-                                  0);
-    }
+        CG_AdjustPositionForMover(cent->lerpOrigin, cent->currentState.groundEntityNum, cg->snap->serverTime, cg->time, cent->lerpOrigin, NULL);
 }
 
 void CG_EntityEffects(centity_t *cent)
 {
     int loopSound = cent->nextState.loopSound;
-    int constantLight;
 
     if (loopSound) {
         if (cent->nextState.solid == 0xffffff) {
@@ -551,13 +546,16 @@ void CG_EntityEffects(centity_t *cent)
         }
     }
 
-    constantLight = cent->nextState.constantLight;
-    if (constantLight) {
-        CL_AddLightToScene(cent->lerpOrigin,
-                           (float)(((unsigned int)constantLight >> 24) * 4),
-                           (float)(constantLight & 0xff) / 255.0f,
-                           (float)((constantLight >> 8) & 0xff) / 255.0f,
-                           (float)((constantLight >> 16) & 0xff) / 255.0f);
+    if (cent->nextState.constantLight) {
+        int cl;
+        int i, r, g, b;
+
+        cl = cent->nextState.constantLight;
+        r = cl & 255;
+        g = (cl >> 8) & 255;
+        b = (cl >> 16) & 255;
+        i = ((cl >> 24) & 255) * 4;
+        CL_AddLightToScene(cent->lerpOrigin, (float)i, (float)r / 255.0f, (float)g / 255.0f, (float)b / 255.0f);
     }
 }
 
@@ -574,10 +572,11 @@ static struct DObj_s *CG_PreProcess_GetDObj(int iEntNum, int iEntType, struct XM
             return pDObj;
 
         CG_SafeDObjFree(iEntNum);
+        pDObj = 0;
     }
 
     if (!model)
-        return 0;
+        return pDObj;
 
     if (iEntType == 9 && (anims = CG_GetMG42Anims(&(((centity_t *)cg_entities))[iEntNum])) != 0)
         tree = (struct XAnimTree_s *)XAnimCreateTree((XAnim *)anims, (Alloc_t)CG_AllocAnimTree);

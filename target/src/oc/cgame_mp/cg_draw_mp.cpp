@@ -1240,13 +1240,13 @@ static void __attribute_regparm__(2) CG_CalcCrosshairPosition(float *x, float *y
         const vec_t *axis = cg->refdef.viewaxis[1];
         horiz = gunDir[0] * axis[0] + gunDir[1] * axis[1] + gunDir[2] * axis[2];
     }
-    *x = horiz / (forward * (float)tan((double)cg->refdef.fov_x * 0.008726646259971648)) * -320.0f;
+    *x = horiz / (forward * (float)tan((double)(cg->refdef.fov_x * 0.0087266462f))) * -320.0f;
 
     {
         const vec_t *axis = cg->refdef.viewaxis[2];
         vert = gunDir[0] * axis[0] + gunDir[1] * axis[1] + gunDir[2] * axis[2];
     }
-    *y = vert / (forward * (float)tan((double)cg->refdef.fov_y * 0.008726646259971648)) * -240.0f;
+    *y = vert / (forward * (float)tan((double)(cg->refdef.fov_y * 0.0087266462f))) * -240.0f;
 }
 
 #ifndef __EMSCRIPTEN__

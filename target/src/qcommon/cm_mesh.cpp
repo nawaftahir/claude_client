@@ -155,6 +155,7 @@ void CM_PositionTestCapsuleInTriangle( traceWork_t *tw, CollisionTriangle_t *tri
 			trace->startsolid = qtrue;
 			trace->allsolid = qtrue;
 			trace->fraction = 0.0f;
+			return;
 		}
 	}
 	else
@@ -437,8 +438,8 @@ static inline void CM_TraceCapsuleThroughTriangle( traceWork_t *tw, CollisionTri
 				t = DotProduct(start, tri->tvec) - tri->tvec[3];
 
 				vertToCheck = s + t > 1.0f;
-				vertToCheck = vertToCheck | ((s < 0.0f) ? 2 : 0);
-				vertToCheck = vertToCheck | ((t < 0.0f) ? 4 : 0);
+				vertToCheck = vertToCheck | ((s < 0.0f) << 1);
+				vertToCheck = vertToCheck | ((t < 0.0f) << 2);
 
 				if ( vertToCheck == 0 )
 				{
@@ -453,7 +454,7 @@ static inline void CM_TraceCapsuleThroughTriangle( traceWork_t *tw, CollisionTri
 					return;
 				}
 
-				for ( i = 0; i <= 2; i++ )
+				for ( i = 0; i < 3; i++ )
 				{
 					if ( vertToCheck & (1 << i) )
 					{

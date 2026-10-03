@@ -173,7 +173,7 @@ static signed int compare_use( const void *num1, const void *num2 )
 }
 
 extern const vec3_t useRadius;
-const vec3_t useRadius = { 192.0f, 192.0f, 96.0f };
+static const vec3_t useRadius = { 192.0f, 192.0f, 96.0f };
 
 /*
 ===============

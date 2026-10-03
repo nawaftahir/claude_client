@@ -25,7 +25,7 @@ extern void Com_Printf(const char *fmt, ...);
 #endif
 
 __attribute__((used, packed, aligned(4)))
-const char *staticNULL[] = {
+static const char *staticNULL[] = {
     "",
     NULL,
     NULL,

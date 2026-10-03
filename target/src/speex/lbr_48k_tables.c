@@ -34,7 +34,7 @@
 #endif
 
 
-int dummy_epic_48k_variable=0;
+static int dummy_epic_48k_variable=0;
 #ifdef EPIC_48K
 
 extern const signed char gain_cdbk_ulbr[192] = {

@@ -2,7 +2,7 @@
 #include "../qcommon/qcommon.h"
 
 // Unreferenced storage; original declarations unknown (sized from the layout).
-int locDvarUnknown[8];
+static int locDvarUnknown[8];
 dvar_t *loc_language;
 dvar_t *loc_forceEnglish;
 dvar_t *loc_translate;

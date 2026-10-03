@@ -34,7 +34,7 @@ extern const dvar_t *hud_fade_offhand;
  * target). Blob extent was 12 B of pointers + 20 B inter-symbol padding (next
  * symbol hintStrings distinct; indexed [weaponType] in 0..2). [0] is the empty
  * literal (literals32.c); the other two are in common.c. (x64 port Stage 2.) */
-const char *offhandStrings[3] = {
+static const char *offhandStrings[3] = {
     "",
     "WEAPON_FRAGGRENADE",
     "WEAPON_SMOKEGRENADE",
@@ -182,13 +182,13 @@ void CG_SwitchOffHandCmd(void)
 }
 
 // retail 0x4d1cc0
-static int GetBestOffhand(const playerState_t *ps, int offhandClass)
+static int GetBestOffhand(int offhandClass)
 {
     int newOffhand;
 
-    newOffhand = BG_GetFirstAvailableOffhand(ps, offhandClass);
+    newOffhand = BG_GetFirstAvailableOffhand(&cg->predictedPlayerState, offhandClass);
     if (!newOffhand)
-        return BG_GetFirstEquippedOffhand(ps, offhandClass);
+        return BG_GetFirstEquippedOffhand(&cg->predictedPlayerState, offhandClass);
     return newOffhand;
 }
 
@@ -203,11 +203,10 @@ void CG_DrawOffHandIcon(rectDef_s *rect, float scale, vec_t *color, MaterialHand
     float drawColor[4];
     int weapon;
     MaterialHandle iconMaterial;
-    void *weapDef;
 
     if (!IsOffHandDisplayVisible())
         return;
-    if (!GetBestOffhand((const playerState_t *)((void *)&cg->predictedPlayerState), weaponType))
+    if (!GetBestOffhand(weaponType))
         return;
 
     drawColor[3] = CG_FadeHudMenu(hud_fade_offhand, cg->offhandFadeTime, I_fround(hud_fade_offhand->current.value * 1000.0f));
@@ -219,16 +218,12 @@ void CG_DrawOffHandIcon(rectDef_s *rect, float scale, vec_t *color, MaterialHand
     *(int *)&drawColor[2] = *(int *)&color[2];
 
     weapon = cg->equippedOffHand;
-    if (weapon) {
-        weapDef = BG_GetWeaponDef(weapon);
-        if (((WeaponDef *)weapDef)->offhandClass == weaponType)
-            goto draw_icon;
+    if (!weapon || BG_GetWeaponDef(weapon)->offhandClass != weaponType) {
+        weapon = GetBestOffhand(weaponType);
+        if (!weapon)
+            return;
     }
-    weapon = GetBestOffhand((const playerState_t *)((void *)&cg->predictedPlayerState), weaponType);
-    if (!weapon)
-        return;
 
-draw_icon:
     iconMaterial = ((cg_weaponsArray))[weapon].hHudIcon;
 
     UI_DrawHandlePic(rect->x, rect->y, rect->w,
@@ -274,7 +269,7 @@ void CG_DrawOffHandHighlight(rectDef_s *rect, float scale, vec_t *color, Materia
 
     if (!IsOffHandDisplayVisible())
         return;
-    if (!GetBestOffhand((const playerState_t *)((void *)&cg->predictedPlayerState), weaponType))
+    if (!GetBestOffhand(weaponType))
         return;
     if (!cg->equippedOffHand)
         return;
@@ -308,7 +303,7 @@ void CG_DrawOffHandAmmo(rectDef_s *rect, struct Font_s *font, float scale, vec_t
 
     if (!IsOffHandDisplayVisible())
         return;
-    if (!GetBestOffhand((const playerState_t *)((void *)&cg->predictedPlayerState), weaponType))
+    if (!GetBestOffhand(weaponType))
         return;
 
     drawColor[3] = CG_FadeHudMenu(hud_fade_offhand, cg->offhandFadeTime, I_fround(hud_fade_offhand->current.value * 1000.0f));

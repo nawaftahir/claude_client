@@ -117,8 +117,8 @@ static inline const char* Scr_ReadCodePos( const char **pos )
 }
 
 char g_EndPos;
-jmp_buf g_script_error[MAX_VM_STACK_DEPTH + 1];
-int g_script_error_level;
+static jmp_buf g_script_error[MAX_VM_STACK_DEPTH + 1];
+static int g_script_error_level;
 
 scrVmGlob_t scrVmGlob __attribute__((aligned(128)));
 scrVmPub_t scrVmPub __attribute__((aligned(128)));

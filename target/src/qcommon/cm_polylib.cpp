@@ -15,8 +15,8 @@ typedef struct
 	vec3_t p[4];
 } winding_t;
 
-int c_active_windings;
-int c_peak_windings;
+static int c_active_windings;
+static int c_peak_windings;
 
 winding_t *AllocWinding( int points )
 {

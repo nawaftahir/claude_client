@@ -3,9 +3,9 @@
 #include "imports.h"
 
 
-int g_current_bandwidth_setting = 0x0;
-int g_frame_size = 0x0;
-int g_speex_initialized = 0x0;
+static int g_current_bandwidth_setting = 0x0;
+static int g_frame_size = 0x0;
+static int g_speex_initialized = 0x0;
 
 #ifdef __cplusplus
 extern "C" {

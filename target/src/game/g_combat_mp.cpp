@@ -2,7 +2,7 @@
 #include "g_shared.h"
 
 
-const char *g_HitLocNames[] =
+static const char *g_HitLocNames[] =
 {
 	"none",
 	"helmet",
@@ -29,8 +29,8 @@ const char *g_HitLocNames[] =
 unsigned char bulletPriorityMap[] = { 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 0 };
 unsigned char riflePriorityMap[] = { 1, 9, 9, 9, 8, 7, 6, 6, 6, 6, 5, 5, 4, 4, 4, 4, 3, 3, 0 };
 
-float g_fHitLocDamageMult[HITLOC_NUM];
-unsigned short g_HitLocConstNames[HITLOC_NUM];
+static float g_fHitLocDamageMult[HITLOC_NUM];
+static unsigned short g_HitLocConstNames[HITLOC_NUM];
 
 /*
 ============

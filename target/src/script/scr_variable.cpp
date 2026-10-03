@@ -3,10 +3,10 @@
 
 unsigned int FindVariableIndexHash( unsigned int parentId, unsigned int name );
 
-scrVarGlob_t scrVarGlob;
+static scrVarGlob_t scrVarGlob;
 scrVarPub_t scrVarPub;
 
-struct scr_classStruct_t scrClassMap[] =
+static struct scr_classStruct_t scrClassMap[] =
 {
 	{ 0, 0, 'e', "entity" },
 	{ 0, 0, 'h', "hudelem" },

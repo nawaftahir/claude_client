@@ -110,7 +110,7 @@ typedef refexport_t *(*GetRefAPI_t)( int apiVersion, refimport_t *rimp );
 const char *Dvar_EnumToString( const dvar_t *dvar );
 
 static const char *gfx_driverNames[] = { "d3d", NULL };
-HMODULE hGfxDll;
+static HMODULE hGfxDll;
 
 /*
 ==================
