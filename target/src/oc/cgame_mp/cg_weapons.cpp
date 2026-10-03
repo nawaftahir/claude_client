@@ -65,6 +65,8 @@ extern void CL_RegisterHudMsgIconMaterial(const char *name);
 extern qboolean CG_ScoreboardDisplayed(void);
 extern void CG_ScrollScoreboardUp(void);
 extern void CG_ScrollScoreboardDown(void);
+extern void CG_GameMessage(const char *msg);
+extern const char *SEH_LocalizeTextMessage(const char *msg, const char *context, msgLocErrType_t errType);
 extern const char *CG_Argv(int arg);
 extern int BG_GetWeaponSlotForName(const char *pszSlotName);
 extern void CG_MenuShowNotify(int menuToShow);
@@ -135,7 +137,6 @@ extern itemInfo_t cg_itemsArray[];
 extern weaponInfo_t cg_weaponsArray[];
 extern gitem_t bg_itemlist[];
 extern const int bg_numItems;
-static const int iSlotPreferenceOrder[2];
 static scr_string_t *s_barrelTags[4] = { &scr_const.tag_flash, &scr_const.tag_flash_11, &scr_const.tag_flash_2, &scr_const.tag_flash_22 };
 
 COD2_ASSERT_FIELD(WeaponDef, szGunXModel,       0x0c);
@@ -166,7 +167,6 @@ COD2_ASSERT_FIELD(centity_t, localClientNum, 0x220);
 COD2_ASSERT_FIELD(centity_t, bMuzzleFlash,   0x1e2);
 
 static void CG_PlayADSAnim(XAnimTree *pAnimTree, int animIndex);
-static inline __attribute__((always_inline)) qboolean CG_CanCycleWeapon(cg_t **cgOut, int *serverTimeOut);
 int CG_WeaponDObjHandle(int weaponNum);
 #ifndef __EMSCRIPTEN__
 void CG_Weapons_SetToDefault(int weaponNum, DObjModel_s *dobjModels);
@@ -191,7 +191,7 @@ static void WeaponFlash(int dobjHandle, int weaponNum, int bViewFlash, const vec
 void CG_AddViewWeapon(playerState_t *ps);
 void CG_BulletHitEvent(int sourceEntityNum, vec_t *position, vec_t *normal, vec_t *reflected, int surfType, int event);
 void CG_DrawTracer(vec_t *start, vec_t *finish);
-void CG_WeaponSlot_f(qboolean next, qboolean ignoreEmpty);
+void CG_WeaponSlot_f(void);
 qboolean CG_SelectFirstWeaponNotInSlot(qboolean bNext, qboolean bIgnoreEmpty);
 void CG_CycleWeap(qboolean bNext, qboolean bIgnoreEmpty);
 void CG_OutOfAmmoChange(void);
@@ -1761,376 +1761,325 @@ void CG_DrawTracer(vec_t *start, vec_t *finish)
     CL_AddPolyToScene(cgs->media.tracerMaterial, 0x1f, 4, verts);
 }
 
-void CG_WeaponSlot_f(qboolean next, qboolean ignoreEmpty)
+static qboolean CG_WeaponSelectable(int weapon)
 {
-    int serverTime;
-    cg_t *cgTmp;
-    int slot;
-    int weaponIndex;
-    int oldWeaponIndex;
-    int oldAltWeaponIndex;
-
-    (void)next;
-    (void)ignoreEmpty;
-
-    if (!CG_CanCycleWeapon(&cgTmp, &serverTime))
-        return;
-
-    cg->weaponSelectTime = serverTime;
-
-    slot = BG_GetWeaponSlotForName(CG_Argv(1));
-    if (!slot)
-        slot = atoi(CG_Argv(1));
-
-    if ((unsigned int)(slot - 1) > 1)
-        return;
-
-    weaponIndex = (signed char)cg->predictedPlayerState.weaponslots[slot];
-    if (!weaponIndex)
-        return;
-
-    if (((cg->predictedPlayerState.weapons[weaponIndex >> 5] >> (weaponIndex & 0x1f)) & 1) == 0)
-        return;
-
-    oldWeaponIndex = cg->weaponSelect;
-    if (oldWeaponIndex == weaponIndex)
-        return;
-
-    oldAltWeaponIndex = ((WeaponDef *)BG_GetWeaponDef(oldWeaponIndex))->iAltWeaponIndex;
-    cg->weaponSelect = weaponIndex;
-    CG_MenuShowNotify(1);
-
-    if (weaponIndex != oldAltWeaponIndex)
-        CL_SetADS(0);
+    return (cg->predictedPlayerState.weapons[weapon >> 5] & (1 << (weapon & 0x1f))) != 0;
 }
 
-qboolean CG_SelectFirstWeaponNotInSlot(qboolean bNext, qboolean bIgnoreEmpty)
+void CG_AltWeapon_f(void)
 {
-    int weaponIndex;
-    int step;
+    int alt;
 
-    if (bNext) {
-        step = 1;
-        weaponIndex = 1;
-    } else {
-        int n = BG_GetNumWeapons();
-        if (n <= 0)
-            return 0;
-        step = -1;
-        weaponIndex = n;
+    if (!cg->nextSnap)
+        return;
+    if (cg->predictedPlayerState.pm_flags & 0x8000)
+        return;
+    if (!(cg->nextSnap->ps.pm_flags & 0x800000))
+        return;
+    if (cg->predictedPlayerState.eFlags & 0x300)
+        return;
+    if (cg->time - cg->weaponSelectTime < cg_weaponCycleDelay->current.integer)
+        return;
+
+    alt = BG_GetWeaponDef(cg->weaponSelect)->iAltWeaponIndex;
+    if (!alt)
+    {
+        CG_GameMessage(SEH_LocalizeTextMessage("CGAME_THIS_WEAPON_HAS_NO_ALTERNATE", "game message", (msgLocErrType_t)0));
+        return;
     }
 
-    for (; weaponIndex > 0 && weaponIndex <= BG_GetNumWeapons(); weaponIndex += step) {
-        if (!((cg->predictedPlayerState.weapons[weaponIndex >> 5] >> (weaponIndex & 0x1f)) & 1))
-            continue;
+    if (CG_WeaponSelectable(alt))
+        CG_SelectWeaponIndex(alt);
+}
 
-        if (BG_IsPlayerWeaponInSlot(&cg->predictedPlayerState, weaponIndex, 1))
-            continue;
-
-        if (BG_GetStackSlotForWeapon(&cg->predictedPlayerState, weaponIndex, (weapSlot_t)(0)))
-            continue;
-
-        if (!BG_DoesWeaponNeedSlot(weaponIndex))
-            continue;
-
-        if (bIgnoreEmpty && !BG_WeaponAmmo(&cg->predictedPlayerState, weaponIndex))
-            continue;
-
-        cg->weaponSelectTime = cg->time;
-        if (cg->weaponSelect != weaponIndex) {
-            int oldAlt = ((WeaponDef *)BG_GetWeaponDef(cg->weaponSelect))->iAltWeaponIndex;
-            cg->weaponSelect = weaponIndex;
-            CG_MenuShowNotify(1);
-            if (oldAlt != weaponIndex)
-                CL_SetADS(0);
-        }
-        return 1;
+void CG_NextWeapon_f(void)
+{
+    if (cg->showScores)
+    {
+        CG_ScrollScoreboardUp();
+        return;
     }
 
-    return 0;
-}
-
-static qboolean CG_HasWeapon(cg_t *cg, int weaponIndex)
-{
-    return ((cg->predictedPlayerState.weapons[weaponIndex >> 5] >> (weaponIndex & 0x1f)) & 1) != 0;
-}
-
-static int CG_WeaponInSlot(cg_t *cg, int slot)
-{
-    return (signed char)cg->predictedPlayerState.weaponslots[slot];
-}
-
-static int CG_StepWeaponSlot(int slot, int step)
-{
-    slot += step;
-    if (slot < 1)
-        return 2;
-    if (slot > 2)
-        return 1;
-    return slot;
-}
-
-static inline __attribute__((always_inline)) qboolean CG_SelectWeaponFromSlots(qboolean bNext, qboolean bIgnoreEmpty)
-{
-    playerState_t *ps;
-    int step;
-    int slot;
-
-    step = bNext ? 1 : -1;
-    slot = bNext ? 1 : 2;
-
-    for (; slot >= 1 && slot <= 2; slot += step) {
-        int weaponIndex;
-
-        ps = &cg->predictedPlayerState;
-        weaponIndex = CG_WeaponInSlot(cg, slot);
-        if (!weaponIndex)
-            continue;
-
-        if (bIgnoreEmpty && !BG_WeaponAmmo(ps, weaponIndex))
-            continue;
-
-        CG_SelectWeaponIndex(weaponIndex);
-        return 1;
-    }
-
-    return 0;
-}
-
-static inline __attribute__((always_inline)) qboolean CG_SelectOtherWeaponSlot(cg_t *cg, playerState_t *ps, int currentSlot, int step, int loopedSlot, qboolean bIgnoreEmpty)
-{
-    int slot;
-
-    slot = currentSlot;
-    for (;;) {
-        int weaponIndex;
-
-        slot = CG_StepWeaponSlot(slot, step);
-        if (slot == loopedSlot)
-            return 0;
-
-        weaponIndex = CG_WeaponInSlot(cg, slot);
-        if (!weaponIndex)
-            continue;
-
-        if (bIgnoreEmpty && !BG_WeaponAmmo(ps, weaponIndex))
-            continue;
-
-        CG_SelectWeaponIndex(weaponIndex);
-        return 1;
-    }
-}
-
-static inline __attribute__((always_inline)) qboolean CG_SelectNextNonSlotWeapon(qboolean bNext, qboolean bIgnoreEmpty)
-{
-    playerState_t *ps;
-    int numWeapons;
-    int step;
-    int loopedWeapon;
-    int currentWeapon;
-    int weaponIndex;
-
-    ps = &cg->predictedPlayerState;
-    numWeapons = BG_GetNumWeapons();
-    if (numWeapons <= 0)
-        return 0;
-
-    step = bNext ? 1 : -1;
-    loopedWeapon = bNext ? 1 : numWeapons;
-    currentWeapon = cg->weaponSelect;
-    weaponIndex = currentWeapon;
-
-    for (;;) {
-        weaponIndex = ((weaponIndex + step + numWeapons - 1) % numWeapons) + 1;
-        if (weaponIndex == loopedWeapon)
-            return 0;
-
-        ps = &cg->predictedPlayerState;
-
-        if (!CG_HasWeapon(cg, weaponIndex))
-            continue;
-
-        if (BG_IsPlayerWeaponAnAlt(weaponIndex, currentWeapon))
-            continue;
-
-        if (BG_IsPlayerWeaponInSlot(ps, weaponIndex, 1))
-            continue;
-
-        if (BG_GetStackSlotForWeapon(ps, weaponIndex, (weapSlot_t)(0)))
-            continue;
-
-        if (bIgnoreEmpty && !BG_WeaponAmmo(ps, weaponIndex))
-            continue;
-
-        if (!BG_DoesWeaponNeedSlot(weaponIndex))
-            continue;
-
-        CG_SelectWeaponIndex(weaponIndex);
-        return 1;
-    }
-}
-
-void CG_CycleWeap(qboolean bNext, qboolean bIgnoreEmpty)
-{
-    snapshot_t *snap;
-    playerState_t *ps;
-    int currentWeapon;
-    int currentSlot;
-    int step;
-
-    snap = cg->nextSnap;
-    if (!snap)
+    if (!cg->nextSnap)
+        return;
+    if (cg->predictedPlayerState.pm_flags & 0x8000)
+        return;
+    if (!(cg->nextSnap->ps.pm_flags & 0x800000))
+        return;
+    if (cg->time - cg->weaponSelectTime < cg_weaponCycleDelay->current.integer)
         return;
 
-    if ((((byte *)&snap->ps.pm_flags)[2] & 0x80) == 0)
+    cg->weaponSelectTime = cg->time;
+    CG_CycleWeap(1, 0);
+}
+
+void CG_PrevWeapon_f(void)
+{
+    if (cg->showScores)
+    {
+        CG_ScrollScoreboardDown();
         return;
-
-    ps = &cg->predictedPlayerState;
-    currentWeapon = cg->weaponSelect;
-    step = bNext ? 1 : -1;
-
-    currentSlot = BG_IsPlayerWeaponInSlot(ps, currentWeapon, 1);
-    if (!currentSlot)
-        currentSlot = BG_GetStackSlotForWeapon(ps, currentWeapon, (weapSlot_t)(0));
-
-    if (currentSlot) {
-        if (CG_SelectOtherWeaponSlot(cg, ps, currentSlot, step, bNext ? 1 : 2, bIgnoreEmpty))
-            return;
-
-        if (CG_SelectFirstWeaponNotInSlot(bNext, bIgnoreEmpty))
-            return;
-
-        if (CG_SelectWeaponFromSlots(bNext, bIgnoreEmpty))
-            return;
-    } else {
-        if (CG_SelectNextNonSlotWeapon(bNext, bIgnoreEmpty))
-            return;
-
-        if (CG_SelectWeaponFromSlots(bNext, bIgnoreEmpty))
-            return;
-
-        if (CG_SelectFirstWeaponNotInSlot(bNext, bIgnoreEmpty))
-            return;
     }
 
-    currentWeapon = cg->weaponSelect;
-    if (currentWeapon && !CG_HasWeapon(cg, currentWeapon))
-        CG_SelectWeaponIndex(0);
+    if (!cg->nextSnap)
+        return;
+    if (cg->predictedPlayerState.pm_flags & 0x8000)
+        return;
+    if (!(cg->nextSnap->ps.pm_flags & 0x800000))
+        return;
+    if (cg->time - cg->weaponSelectTime < cg_weaponCycleDelay->current.integer)
+        return;
+
+    cg->weaponSelectTime = cg->time;
+    CG_CycleWeap(0, 0);
 }
 
 void CG_OutOfAmmoChange(void)
 {
-    playerState_t *ps;
-    int currentWeapon;
-    WeaponDef *currentDef;
+    WeaponDef *weapDef;
+    int slots[2];
     int i;
 
     if (!cg->nextSnap)
         return;
 
-    ps = &cg->predictedPlayerState;
-    currentWeapon = cg->predictedPlayerState.weapon;
-    currentDef = (WeaponDef *)BG_GetWeaponDef(currentWeapon);
+    weapDef = BG_GetWeaponDef(cg->predictedPlayerState.weapon);
 
-    if (currentDef->bSlotStackable) {
-        for (i = 1; i <= BG_GetNumWeapons(); i++) {
-            WeaponDef *newDef;
-
-            if (!((cg->predictedPlayerState.weapons[i >> 5] >> (i & 0x1f)) & 1))
+    if (weapDef->bSlotStackable)
+    {
+        for (i = 1; i <= BG_GetNumWeapons(); i++)
+        {
+            if (!CG_WeaponSelectable(i))
                 continue;
-
-            newDef = (WeaponDef *)BG_GetWeaponDef(i);
-            if (!newDef->bSlotStackable)
+            if (!BG_GetWeaponDef(i)->bSlotStackable)
                 continue;
-
-            if (newDef->weapSlot != currentDef->weapSlot)
+            if (BG_GetWeaponDef(i)->weapSlot != weapDef->weapSlot)
                 continue;
-
-            if (!BG_WeaponAmmo(ps, i))
-                continue;
-
-            CG_SelectWeaponIndex(i);
-            return;
+            if (BG_WeaponAmmo(&cg->predictedPlayerState, i))
+            {
+                CG_SelectWeaponIndex(i);
+                return;
+            }
         }
     }
 
-    if (BG_IsPlayerWeaponInSlot(ps, currentWeapon, 1)) {
-        for (i = 0; i < 2; i++) {
-            int slot = iSlotPreferenceOrder[i];
-            int newWeapon = (signed char)cg->predictedPlayerState.weaponslots[slot];
+    if (BG_IsPlayerWeaponInSlot(&cg->predictedPlayerState, cg->predictedPlayerState.weapon, 1))
+    {
+        slots[0] = 1;
+        slots[1] = 2;
 
-            if (!newWeapon)
+        for (i = 0; i < sizeof(slots) / sizeof(slots[0]); i++)
+        {
+            if (!cg->predictedPlayerState.weaponslots[slots[i]])
                 continue;
-
-            if (!BG_WeaponAmmo(ps, newWeapon))
-                continue;
-
-            CG_SelectWeaponIndex(newWeapon);
-            return;
+            if (BG_WeaponAmmo(&cg->predictedPlayerState, (signed char)cg->predictedPlayerState.weaponslots[slots[i]]))
+            {
+                CG_SelectWeaponIndex((signed char)cg->predictedPlayerState.weaponslots[slots[i]]);
+                return;
+            }
         }
     }
 
     CG_CycleWeap(1, 1);
 }
 
-static inline __attribute__((always_inline)) qboolean CG_CanCycleWeapon(cg_t **cgOut, int *serverTimeOut)
+void CG_WeaponSlot_f(void)
 {
-    snapshot_t *ps;
-    int serverTime;
-    const dvar_t *cycleDelay;
+    int slot;
+    int weapon;
 
-    ps = cg->nextSnap;
-    if (!ps)
-        return 0;
+    if (!cg->nextSnap)
+        return;
+    if (cg->predictedPlayerState.pm_flags & 0x8000)
+        return;
+    if (!(cg->nextSnap->ps.pm_flags & 0x800000))
+        return;
+    if (cg->time - cg->weaponSelectTime < cg_weaponCycleDelay->current.integer)
+        return;
+    cg->weaponSelectTime = cg->time;
 
-    if (*(short *)&cg->predictedPlayerState.pm_flags < 0)
-        return 0;
+    slot = BG_GetWeaponSlotForName(CG_Argv(1));
+    if (!slot)
+        slot = atoi(CG_Argv(1));
+    if (slot <= 0 || slot >= 3)
+        return;
 
-    if ((((byte *)&ps->ps.pm_flags)[2] & 0x80) == 0)
-        return 0;
+    weapon = (signed char)cg->predictedPlayerState.weaponslots[slot];
+    if (!weapon)
+        return;
+    if (!CG_WeaponSelectable(weapon))
+        return;
 
-    serverTime = cg->time;
-    cycleDelay = cg_weaponCycleDelay;
-    if (serverTime - cg->weaponSelectTime < cycleDelay->current.integer)
-        return 0;
-
-    *cgOut = cg;
-    *serverTimeOut = serverTime;
-    return 1;
+    CG_SelectWeaponIndex(weapon);
 }
 
-void CG_PrevWeapon_f(void)
+static qboolean CG_SelectFirstWeaponInSlot(qboolean next, qboolean checkAmmo)
 {
-    int serverTime;
-    cg_t *cgTmp;
+    int slot;
+    int step;
 
-    if (CG_ScoreboardDisplayed()) {
-        CG_ScrollScoreboardDown();
-        return;
+    if (next)
+    {
+        step = 1;
+        slot = 1;
+    }
+    else
+    {
+        step = -1;
+        slot = 2;
     }
 
-    if (!CG_CanCycleWeapon(&cgTmp, &serverTime))
-        return;
+    for (; slot >= 1 && slot < 3; slot += step)
+    {
+        if (!cg->predictedPlayerState.weaponslots[slot])
+            continue;
+        if (!checkAmmo || BG_WeaponAmmo(&cg->predictedPlayerState, (signed char)cg->predictedPlayerState.weaponslots[slot]))
+        {
+            CG_SelectWeaponIndex((signed char)cg->predictedPlayerState.weaponslots[slot]);
+            return 1;
+        }
+    }
 
-    cg->weaponSelectTime = serverTime;
-    CG_CycleWeap(0, 0);
+    return 0;
 }
 
-void CG_NextWeapon_f(void)
+qboolean CG_SelectFirstWeaponNotInSlot(qboolean next, qboolean checkAmmo)
 {
-    int serverTime;
-    cg_t *cgTmp;
+    WeaponDef *weapDef;
+    int weapon;
+    int step;
 
-    if (CG_ScoreboardDisplayed()) {
-        CG_ScrollScoreboardUp();
-        return;
+    if (next)
+    {
+        step = 1;
+        weapon = 1;
+    }
+    else
+    {
+        weapon = BG_GetNumWeapons();
+        step = -1;
     }
 
-    if (!CG_CanCycleWeapon(&cgTmp, &serverTime))
+    for (; weapon >= 1 && weapon <= BG_GetNumWeapons(); weapon += step)
+    {
+        if (!CG_WeaponSelectable(weapon))
+            continue;
+        if (BG_IsPlayerWeaponInSlot(&cg->predictedPlayerState, weapon, 1))
+            continue;
+
+        weapDef = BG_GetWeaponDef(weapon);
+        if (weapDef->bSlotStackable && weapDef->weapSlot > 0 && weapDef->weapSlot <= 2)
+        {
+            if (!cg->predictedPlayerState.weaponslots[1]
+                || BG_GetWeaponDef((signed char)cg->predictedPlayerState.weaponslots[1])->bSlotStackable
+                || !cg->predictedPlayerState.weaponslots[2]
+                || BG_GetWeaponDef((signed char)cg->predictedPlayerState.weaponslots[2])->bSlotStackable)
+                continue;
+        }
+        if (weapDef->weapClass == 9)
+            continue;
+        if (weapDef->offhandClass)
+            continue;
+        if (checkAmmo && !BG_WeaponAmmo(&cg->predictedPlayerState, weapon))
+            continue;
+
+        CG_SelectWeaponIndex(weapon);
+        return 1;
+    }
+
+    return 0;
+}
+
+void CG_CycleWeap(qboolean next, qboolean checkAmmo)
+{
+    WeaponDef *weapDef;
+    int slot;
+    int endSlot;
+    int step;
+    int endWeapon;
+    int weapon;
+
+    if (!cg->nextSnap)
+        return;
+    if (!(cg->nextSnap->ps.pm_flags & 0x800000))
         return;
 
-    cg->weaponSelectTime = serverTime;
-    CG_CycleWeap(1, 0);
+    if (next)
+    {
+        step = 1;
+        endSlot = 1;
+        endWeapon = 1;
+    }
+    else
+    {
+        step = -1;
+        endSlot = 2;
+        endWeapon = BG_GetNumWeapons();
+    }
+
+    weapon = cg->weaponSelect;
+    slot = BG_IsPlayerWeaponInSlot(&cg->predictedPlayerState, weapon, 1);
+    if (!slot)
+        slot = BG_GetStackSlotForWeapon(&cg->predictedPlayerState, weapon, (weapSlot_t)0);
+
+    if (slot)
+    {
+        for (slot = (slot + step + 1) % 2 + 1; slot != endSlot; slot = (slot + step + 1) % 2 + 1)
+        {
+            if (!cg->predictedPlayerState.weaponslots[slot])
+                continue;
+            if (!checkAmmo || BG_WeaponAmmo(&cg->predictedPlayerState, (signed char)cg->predictedPlayerState.weaponslots[slot]))
+            {
+                CG_SelectWeaponIndex((signed char)cg->predictedPlayerState.weaponslots[slot]);
+                return;
+            }
+        }
+
+        if (CG_SelectFirstWeaponNotInSlot(next, checkAmmo))
+            return;
+        CG_SelectFirstWeaponInSlot(next, checkAmmo);
+    }
+    else
+    {
+        while (1)
+        {
+            weapon = (BG_GetNumWeapons() + step - 1 + weapon) % BG_GetNumWeapons() + 1;
+            if (weapon == endWeapon)
+                break;
+            if (!CG_WeaponSelectable(weapon))
+                continue;
+            if (BG_IsPlayerWeaponAnAlt(weapon, cg->weaponSelect))
+                continue;
+            if (BG_IsPlayerWeaponInSlot(&cg->predictedPlayerState, weapon, 1))
+                continue;
+
+            weapDef = BG_GetWeaponDef(weapon);
+            if (weapDef->bSlotStackable && weapDef->weapSlot > 0 && weapDef->weapSlot <= 2)
+            {
+                if (!cg->predictedPlayerState.weaponslots[1]
+                    || BG_GetWeaponDef((signed char)cg->predictedPlayerState.weaponslots[1])->bSlotStackable
+                    || !cg->predictedPlayerState.weaponslots[2]
+                    || BG_GetWeaponDef((signed char)cg->predictedPlayerState.weaponslots[2])->bSlotStackable)
+                    continue;
+            }
+            if (checkAmmo && !BG_WeaponAmmo(&cg->predictedPlayerState, weapon))
+                continue;
+            if (weapDef->weapClass == 9)
+                continue;
+            if (weapDef->offhandClass)
+                continue;
+
+            CG_SelectWeaponIndex(weapon);
+            return;
+        }
+
+        if (CG_SelectFirstWeaponInSlot(next, checkAmmo))
+            return;
+        CG_SelectFirstWeaponNotInSlot(next, checkAmmo);
+    }
+
+    if (!CG_WeaponSelectable(cg->weaponSelect))
+        CG_SelectWeaponIndex(0);
 }
 
 static inline __attribute__((always_inline)) void CG_SetWeaponXAnimWeights(struct XAnimTree_s *tree, weaponInfo_t *weapInfo, int activeAnim)

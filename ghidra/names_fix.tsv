@@ -371,3 +371,8 @@
 4c9340	CG_CalcTurretViewValues	fix	# name unknown; "Turret has no bone: tag_player"
 4c9420	CG_SetViewModelFromRefdef	fix	# own match, name unknown
 4c94d0	CG_ApplyViewAnimation	fix	# CoD4 name, tag_camera
+4d0590	CG_WeaponSelectable	fix	# CoD1 name, own match
+4d05b0	CG_AltWeapon_f	fix	# CoD1 name, CGAME_THIS_WEAPON_HAS_NO_ALTERNATE, unreferenced
+4d0920	CG_SelectFirstWeaponInSlot	fix	# CoD1 name
+4d09a0	CG_SelectFirstWeaponNotInSlot	fix	# own match
+4d0ac0	CG_CycleWeap	fix	# own match

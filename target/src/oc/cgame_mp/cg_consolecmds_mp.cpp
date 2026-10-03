@@ -35,7 +35,7 @@ void CG_ScoresUp_f(void);
 void CG_ScoresDown_f(void);
 void CG_PrevWeapon_f(void);
 void CG_NextWeapon_f(void);
-void CG_WeaponSlot_f(qboolean next, qboolean ignoreEmpty);
+void CG_WeaponSlot_f(void);
 void CG_FxSetTestPosition(void);
 void CG_FxTest(void);
 void CG_FxRestart(void);
@@ -59,7 +59,7 @@ static const consoleCommand_t commandsList[] = {
     { "-scores", CG_ScoresUp_f },
     { "weapprev", CG_PrevWeapon_f },
     { "weapnext", CG_NextWeapon_f },
-    { "weaponslot", (void (*)(void))CG_WeaponSlot_f },
+    { "weaponslot", CG_WeaponSlot_f },
     { "fxSetTestPosition", CG_FxSetTestPosition },
     { "fxTest", CG_FxTest },
     { "fxRestart", CG_FxRestart },
