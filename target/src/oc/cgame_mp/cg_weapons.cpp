@@ -371,7 +371,7 @@ void CG_SetupWeaponDef(void)
     ParseWeaponDefFiles((const char **)pszFiles, iNumFiles);
 }
 
-static inline __attribute__((always_inline)) void CG_SelectWeaponIndex_core(int weaponIndex)
+void CG_SelectWeaponIndex(int weaponIndex)
 {
     int oldWeaponIndex;
     qboolean keepAds;
@@ -388,11 +388,6 @@ static inline __attribute__((always_inline)) void CG_SelectWeaponIndex_core(int 
 
     if (!keepAds)
         CL_SetADS(0);
-}
-
-void CG_SelectWeaponIndex(int weaponIndex)
-{
-    CG_SelectWeaponIndex_core(weaponIndex);
 }
 
 static qboolean __attribute_regparm__(3) CG_CalcMuzzlePoint(int entityNum, vec_t *muzzle, unsigned int flashTag)
@@ -1600,7 +1595,7 @@ static inline __attribute__((always_inline)) qboolean CG_SelectWeaponFromSlots(q
         if (bIgnoreEmpty && !BG_WeaponAmmo(ps, weaponIndex))
             continue;
 
-        CG_SelectWeaponIndex_core(weaponIndex);
+        CG_SelectWeaponIndex(weaponIndex);
         return 1;
     }
 
@@ -1626,7 +1621,7 @@ static inline __attribute__((always_inline)) qboolean CG_SelectOtherWeaponSlot(c
         if (bIgnoreEmpty && !BG_WeaponAmmo(ps, weaponIndex))
             continue;
 
-        CG_SelectWeaponIndex_core(weaponIndex);
+        CG_SelectWeaponIndex(weaponIndex);
         return 1;
     }
 }
@@ -1675,7 +1670,7 @@ static inline __attribute__((always_inline)) qboolean CG_SelectNextNonSlotWeapon
         if (!BG_DoesWeaponNeedSlot(weaponIndex))
             continue;
 
-        CG_SelectWeaponIndex_core(weaponIndex);
+        CG_SelectWeaponIndex(weaponIndex);
         return 1;
     }
 }
@@ -1725,7 +1720,7 @@ void CG_CycleWeap(qboolean bNext, qboolean bIgnoreEmpty)
 
     currentWeapon = cg->weaponSelect;
     if (currentWeapon && !CG_HasWeapon(cg, currentWeapon))
-        CG_SelectWeaponIndex_core(0);
+        CG_SelectWeaponIndex(0);
 }
 
 void CG_OutOfAmmoChange(void)
@@ -1759,7 +1754,7 @@ void CG_OutOfAmmoChange(void)
             if (!BG_WeaponAmmo(ps, i))
                 continue;
 
-            CG_SelectWeaponIndex_core(i);
+            CG_SelectWeaponIndex(i);
             return;
         }
     }
@@ -1775,7 +1770,7 @@ void CG_OutOfAmmoChange(void)
             if (!BG_WeaponAmmo(ps, newWeapon))
                 continue;
 
-            CG_SelectWeaponIndex_core(newWeapon);
+            CG_SelectWeaponIndex(newWeapon);
             return;
         }
     }
@@ -1857,62 +1852,85 @@ static inline __attribute__((always_inline)) void CG_SetWeaponXAnimWeights(struc
     }
 }
 
+// Original name unknown.
+static void CG_StartWeaponXAnim(struct XAnimTree_s *tree, int weaponIndex, int activeAnim)
+{
+    int i;
+    weaponInfo_t *weapInfo;
+
+    weapInfo = &cg_weaponsArray[weaponIndex];
+    for (i = 0; i < 20; i++) {
+        if (activeAnim == i + 1)
+            XAnimSetGoalWeight(tree, i + 1, 1.0f, 0.0f, weapInfo->viewModelAnimRates[i + 1], 0, 1, 1);
+        else
+            XAnimSetGoalWeight(tree, i + 1, 0.0f, 0.0f, weapInfo->viewModelAnimRates[i + 1], 0, 0, 0);
+    }
+}
+
 void CG_WeaponRunXModelAnims(playerState_t *ps, weaponInfo_t *weapInfo)
 {
-    static const int weapAnimToXAnim[20] = {
-        0, 1, 3, 5, 6, 18, 19, 20, 7, 13,
-        12, 8, 9, 10, 11, 15, 14, 17, 16, 4
-    };
-    byte *psBytes;
     WeaponDef *weapDef;
     struct XAnimTree_s *pAnimTree;
     int weaponIndex;
-    int weapAnim;
-    int maskedAnim;
-    int activeAnim;
-    int flags;
+    int i;
     qboolean adsIn;
 
-    psBytes = (byte *)ps;
     pAnimTree = DObjGetTree(weapInfo->viewModelDObj);
     weaponIndex = BG_GetViewmodelWeaponIndex(ps);
     weapDef = (WeaponDef *)BG_GetWeaponDef(weaponIndex);
 
-    flags = ((playerState_t *)psBytes)->pm_flags;
-    adsIn = (flags & 0x40) && !(flags & 0x10);
+    adsIn = 0;
+    if (ps->weaponstate == 5 && ps->weaponTime - weapDef->iPositionReloadTransTime > 0) {
+        adsIn = 0;
+    } else if (ps->pm_flags & 0x40) {
+        adsIn = 1;
+        if (ps->pm_flags & 0x10)
+            adsIn = 0;
+    }
     if (weapDef->bADSPositionInfo)
         CG_PlayADSAnim(pAnimTree, adsIn ? 0x15 : 0x16);
 
-    weapAnim = ((playerState_t *)psBytes)->weapAnim;
-    if (weapAnim == weapInfo->iPrevAnim)
+    if (ps->weapAnim == weapInfo->iPrevAnim)
         return;
 
-    maskedAnim = weapAnim & ~0x200;
-    if (maskedAnim == 0) {
-        int i;
-        int clip;
-
+    switch (ps->weapAnim & ~0x200) {
+    case 0:
         for (i = 1; i < 0x15; i++) {
             if (!XAnimHasFinished(pAnimTree, i)) {
                 weapInfo->iPrevAnim = -1;
                 return;
             }
         }
-
-        clip = BG_ClipForWeapon(weaponIndex);
-        activeAnim = *(int *)(((char *)psBytes + offsetof(playerState_t, ammoclip[0])) + clip * 4) ? 1 : 2;
-    } else if (maskedAnim <= 0x13) {
-        activeAnim = weapAnimToXAnim[maskedAnim];
-    } else {
-        activeAnim = 1;
+        if (!ps->ammoclip[BG_ClipForWeapon(weaponIndex)])
+            CG_StartWeaponXAnim(pAnimTree, weaponIndex, 2);
+        else
+            CG_StartWeaponXAnim(pAnimTree, weaponIndex, 1);
+        break;
+    case 2: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 3); break;
+    case 3: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 5); break;
+    case 4: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 6); break;
+    case 5: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 18); break;
+    case 6: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 19); break;
+    case 7: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 20); break;
+    case 8: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 7); break;
+    case 9: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 13); break;
+    case 10: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 12); break;
+    case 11: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 8); break;
+    case 12: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 9); break;
+    case 13: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 10); break;
+    case 14: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 11); break;
+    case 15: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 15); break;
+    case 16: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 14); break;
+    case 17: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 17); break;
+    case 18: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 16); break;
+    case 19: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 4); break;
+    default:
+        CG_StartWeaponXAnim(pAnimTree, weaponIndex, 1);
+        Com_Printf("CG_WeaponRunXModelAnims: Unknown weapon animation %i\n", ps->weapAnim & ~0x200);
+        break;
     }
 
-    CG_SetWeaponXAnimWeights(pAnimTree, &cg_weaponsArray[weaponIndex], activeAnim);
-
-    if (maskedAnim > 0x13)
-        Com_Printf("CG_WeaponRunXModelAnims: Unknown weapon animation %i\n", maskedAnim);
-
-    weapInfo->iPrevAnim = weapAnim;
+    weapInfo->iPrevAnim = ps->weapAnim;
 }
 
 static void CG_ResetViewWeaponAnimTrees(playerState_t *ps)
@@ -1945,30 +1963,26 @@ static void CG_PlayViewWeaponNotetrackSounds(void)
 {
     XAnimNotify *notifyList;
     weaponInfo_t *weapInfo;
+    snd_alias_list_t *aliasList;
     int weaponIndex;
     int notifyCount;
     int i;
 
+    aliasList = 0;
     weaponIndex = BG_GetViewmodelWeaponIndex(&cg->predictedPlayerState);
     if (!weaponIndex)
         return;
 
     weapInfo = &cg_weaponsArray[weaponIndex];
     notifyCount = DObjGetClientNotifyList(&notifyList);
-    if (notifyCount <= 0)
-        return;
-
     for (i = 0; i < notifyCount; i++) {
-        snd_alias_list_t *aliasList = 0;
-        const char *name = notifyList[i].name;
-
-        if (!stricmp(name, "noteTrackSoundA"))
+        if (!stricmp(notifyList[i].name, "noteTrackSoundA"))
             aliasList = weapInfo->noteTrackSound[0];
-        else if (!stricmp(name, "noteTrackSoundB"))
+        else if (!stricmp(notifyList[i].name, "noteTrackSoundB"))
             aliasList = weapInfo->noteTrackSound[1];
-        else if (!stricmp(name, "noteTrackSoundC"))
+        else if (!stricmp(notifyList[i].name, "noteTrackSoundC"))
             aliasList = weapInfo->noteTrackSound[2];
-        else if (!stricmp(name, "noteTrackSoundD"))
+        else if (!stricmp(notifyList[i].name, "noteTrackSoundD"))
             aliasList = weapInfo->noteTrackSound[3];
 
         if (aliasList)

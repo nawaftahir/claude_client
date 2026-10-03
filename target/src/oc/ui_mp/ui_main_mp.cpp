@@ -3532,7 +3532,7 @@ static void UI_DisplayDownloadInfo(const char *downloadName, float centerPoint, 
             text = UI_SafeTranslateString("EXE_ESTIMATING");
             Text_PaintCenter(font, text, centerPoint, yEta, scale, ltGrey);
             text = va("(%s %s %s %s)", dlSizeBuf, UI_SafeTranslateString("EXE_OF"), totalSizeBuf, UI_SafeTranslateString("EXE_COPIED"));
-            Text_PaintCenter(font, text, centerPoint, yStart + 320.0f, scale, ltGrey);
+            Text_PaintCenter(font, text, centerPoint, yStart + 340.0f, scale, ltGrey);
         } else {
 
             if ((uiInfo->uiDC.realTime - downloadTime) / 1000)

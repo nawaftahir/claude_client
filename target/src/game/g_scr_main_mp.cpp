@@ -5088,7 +5088,7 @@ void GScr_OpenFile()
 
 	f = NULL;
 
-	if ( Scr_GetNumParam() < 2 )
+	if ( Scr_GetNumParam() <= 1 )
 	{
 		return;
 	}

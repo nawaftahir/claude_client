@@ -1039,87 +1039,89 @@ int SND_GetSoundOverlay(snd_overlay_type_t type, snd_overlay_info_t *info, int m
     }
 }
 
-static __attribute_regparm__(3) int SND_StartAliasStream(const snd_alias_t *pAlias0, const snd_alias_t *pAlias1, float lerp, int entnum, const vec_t *org, float volume, float pitch, int timeshift, float fraction, Bool treatAsMaster, int *pChannel, snd_alias_system_t system)
+// Original name unknown (KisakCOD: SND_FindFreeStreamChannel).
+static int SND_FindFreeStreamChannel(void)
 {
-    int entchannel;
-    int index;
-    int channel;
     int i;
+
+    for (i = 3; i < g_snd.max_stream_channels; i++) {
+        if (SND_IsStreamChannelFree(i + 32))
+            return i + 32;
+    }
+
+    return -1;
+}
+
+// Original name unknown (KisakCOD: SND_FindReplaceableChannel).
+static int SND_FindReplaceableChannel(int entnum, int entchannel, int first, int count)
+{
     int diff;
-    vec3_t listenerOrg;
-    float distNew, distOld;
+    int best;
+    int i;
 
-    entchannel = (pAlias0->flags & 0x780) >> 7;
+    best = -1;
 
-    if (g_snd.max_stream_channels > 3) {
-        for (i = 3; i < g_snd.max_stream_channels; i++) {
-            channel = i + 32;
-            if (SND_IsStreamChannelFree(channel)) {
-                if (channel >= 0)
-                    goto found;
-                goto scan_replace;
+    for (i = first; i < first + count; i++) {
+        if (g_snd.chaninfo[i].entchannel > entchannel)
+            continue;
+
+        if (best < 0) {
+            best = i;
+            continue;
+        }
+
+        if (g_snd.chaninfo[i].entnum != g_snd.chaninfo[best].entnum) {
+            if (g_snd.chaninfo[i].entnum == entnum) {
+                best = i;
+                continue;
             }
-        }
-    }
-
-scan_replace:
-    index = g_snd.max_stream_channels + 32;
-    if (index <= 0x23) {
-        channel = -1;
-        goto after_scan;
-    }
-
-    channel = -1;
-
-    for (i = 0x23; i < index; i++) {
-        if (entchannel < g_snd.chaninfo[i].entchannel)
-            goto snd_next;
-
-        if (channel < 0) {
-            channel = i;
-            goto snd_next;
+            if (g_snd.chaninfo[best].entnum == entnum)
+                continue;
         }
 
-        if (g_snd.chaninfo[i].entnum != g_snd.chaninfo[channel].entnum) {
-            if (entnum == g_snd.chaninfo[i].entnum) {
-                channel = i;
-                goto snd_next;
-            }
-            if (entnum == g_snd.chaninfo[channel].entnum)
-                goto snd_next;
-        }
-
-        if (g_snd.chaninfo[channel].entchannel != g_snd.chaninfo[i].entchannel) {
-            diff = g_snd.chaninfo[i].entchannel - g_snd.chaninfo[channel].entchannel;
-        } else if (g_snd.chaninfo[channel].endtime != g_snd.chaninfo[i].endtime) {
-            diff = g_snd.chaninfo[channel].endtime - g_snd.chaninfo[i].endtime;
-        } else {
-            goto snd_next;
+        diff = g_snd.chaninfo[i].entchannel - g_snd.chaninfo[best].entchannel;
+        if (!diff) {
+            diff = g_snd.chaninfo[i].endtime - g_snd.chaninfo[best].endtime;
+            if (!diff)
+                continue;
         }
 
         if (diff < 0)
-            channel = i;
-    snd_next:;
+            best = i;
     }
 
-    if (channel < 0)
-        goto after_scan;
+    return best;
+}
 
-    listenerOrg[0] = g_snd.listeners[0].orient.origin[0];
-    listenerOrg[1] = g_snd.listeners[0].orient.origin[1];
-    listenerOrg[2] = g_snd.listeners[0].orient.origin[2];
+static __attribute_regparm__(3) int SND_StartAliasStream(const snd_alias_t *pAlias0, const snd_alias_t *pAlias1, float lerp, int entnum, const vec_t *org, float volume, float pitch, int timeshift, float fraction, Bool treatAsMaster, int *pChannel, snd_alias_system_t system)
+{
+    int entchannel;
+    int channel;
+    vec3_t listenerOrg;
+    float distNew;
+    float distOld;
 
-    if (g_snd.chaninfo[channel].pAlias0 == pAlias0) {
-        distNew = Vec3DistanceSq(org, listenerOrg);
-        distOld = Vec3DistanceSq(g_snd.chaninfo[channel].org, listenerOrg);
-        if (!(distOld > distNew))
-            goto no_channel;
+    entchannel = (pAlias0->flags & 0x780) >> 7;
+
+    channel = SND_FindFreeStreamChannel();
+    if (channel < 0) {
+        channel = SND_FindReplaceableChannel(entnum, entchannel, 35, g_snd.max_stream_channels - 3);
+        if (channel >= 0) {
+            if (g_snd.chaninfo[channel].pAlias0 != pAlias0) {
+                SND_StopStreamChannel(channel);
+            } else {
+                listenerOrg[0] = g_snd.listeners[0].orient.origin[0];
+                listenerOrg[1] = g_snd.listeners[0].orient.origin[1];
+                listenerOrg[2] = g_snd.listeners[0].orient.origin[2];
+                distNew = Vec3DistanceSq(org, listenerOrg);
+                if (distNew < Vec3DistanceSq(g_snd.chaninfo[channel].org, listenerOrg))
+                    SND_StopStreamChannel(channel);
+                else
+                    channel = -1;
+            }
+        }
     }
 
-    SND_StopStreamChannel(channel);
-
-after_scan:
-found:
     if (pChannel)
         *pChannel = channel;
 
@@ -1129,22 +1131,21 @@ found:
     if (!*(unsigned char *)((char *)snd_enableStream + 8))
         return 0;
 
-    entchannel = (pAlias0->flags & 0x780) >> 7;
-    if (entchannel <= 10 && ((1 << entchannel) & 0x786)) {
-
-    } else if (!SND_AnyActiveListeners()) {
-        Com_Error(ERR_DROP, "attempted to play spatialized alias '%s' while there is no active listener\n", pAlias0->pszAliasName);
+    switch ((pAlias0->flags & 0x780) >> 7) {
+    case 1:
+    case 2:
+    case 7:
+    case 8:
+    case 9:
+    case 10:
+        break;
+    default:
+        if (!SND_AnyActiveListeners())
+            Com_Error(ERR_DROP, "attempted to play spatialized alias '%s' while there is no active listener\n", pAlias0->pszAliasName);
+        break;
     }
 
-    if (treatAsMaster || (pAlias0->flags & 2)) {
-        return SND_StartAliasStreamOnChannel(pAlias0, pAlias1, lerp, entnum, org, volume, pitch, timeshift, fraction, pAlias0->startDelay, 1, channel, system);
-    }
-
-    return SND_StartAliasStreamOnChannel(pAlias0, pAlias1, lerp, entnum, org, volume, pitch, timeshift, fraction, pAlias0->startDelay, 0, channel, system);
-
-no_channel:
-    channel = -1;
-    goto after_scan;
+    return SND_StartAliasStreamOnChannel(pAlias0, pAlias1, lerp, entnum, org, volume, pitch, timeshift, fraction, pAlias0->startDelay, treatAsMaster || (pAlias0->flags & 2), channel, system);
 }
 
 static __attribute_regparm__(2) void SND_SaveChanInfo(snd_channel_info_t *chaninfo, MemoryFile *memFile)
@@ -1494,51 +1495,17 @@ int SND_FindFree2DChannel(int entnum, int entchannel)
 {
     int i;
     int best;
-    int diff;
-    int total;
 
     for (i = 0; i < g_snd.max_2D_channels; i++) {
         if (SND_Is2DChannelFree(i + 45))
             return i + 45;
     }
 
-    total = g_snd.max_2D_channels + 45;
-    best = -1;
+    best = SND_FindReplaceableChannel(entnum, entchannel, 45, g_snd.max_2D_channels);
 
-    for (i = 45; i < total; i++) {
-        if (entchannel < g_snd.chaninfo[i].entchannel)
-            continue;
+    if (best >= 0)
+        SND_Stop2DChannel(best);
 
-        if (best < 0) {
-            best = i;
-            continue;
-        }
-
-        if (g_snd.chaninfo[i].entnum != g_snd.chaninfo[best].entnum) {
-            if (entnum == g_snd.chaninfo[i].entnum) {
-                best = i;
-                continue;
-            }
-            if (entnum == g_snd.chaninfo[best].entnum)
-                continue;
-        }
-
-        if (g_snd.chaninfo[best].entchannel != g_snd.chaninfo[i].entchannel) {
-            diff = g_snd.chaninfo[i].entchannel - g_snd.chaninfo[best].entchannel;
-        } else if (g_snd.chaninfo[i].endtime != g_snd.chaninfo[best].endtime) {
-            diff = g_snd.chaninfo[i].endtime - g_snd.chaninfo[best].endtime;
-        } else {
-            continue;
-        }
-
-        if (diff < 0)
-            best = i;
-    }
-
-    if (best < 0)
-        return -1;
-
-    SND_Stop2DChannel(best);
     return best;
 }
 
@@ -1546,52 +1513,17 @@ int SND_FindFree3DChannel(int entnum, int entchannel)
 {
     int i;
     int best;
-    int diff;
 
     for (i = 0; i < g_snd.max_3D_channels; i++) {
         if (SND_Is3DChannelFree(i))
             return i;
     }
 
-    if (g_snd.max_3D_channels <= 0)
-        return -1;
+    best = SND_FindReplaceableChannel(entnum, entchannel, 0, g_snd.max_3D_channels);
 
-    best = -1;
+    if (best >= 0)
+        SND_Stop3DChannel(best);
 
-    for (i = 0; i < g_snd.max_3D_channels; i++) {
-        if (entchannel < g_snd.chaninfo[i].entchannel)
-            continue;
-
-        if (best < 0) {
-            best = i;
-            continue;
-        }
-
-        if (g_snd.chaninfo[i].entnum != g_snd.chaninfo[best].entnum) {
-            if (entnum == g_snd.chaninfo[i].entnum) {
-                best = i;
-                continue;
-            }
-            if (entnum == g_snd.chaninfo[best].entnum)
-                continue;
-        }
-
-        if (g_snd.chaninfo[best].entchannel != g_snd.chaninfo[i].entchannel) {
-            diff = g_snd.chaninfo[i].entchannel - g_snd.chaninfo[best].entchannel;
-        } else if (g_snd.chaninfo[i].endtime != g_snd.chaninfo[best].endtime) {
-            diff = g_snd.chaninfo[i].endtime - g_snd.chaninfo[best].endtime;
-        } else {
-            continue;
-        }
-
-        if (diff < 0)
-            best = i;
-    }
-
-    if (best < 0)
-        return -1;
-
-    SND_Stop3DChannel(best);
     return best;
 }
 

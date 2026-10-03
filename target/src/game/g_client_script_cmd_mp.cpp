@@ -611,13 +611,13 @@ void PlayerCmd_getFractionMaxAmmo( scr_entref_t entref )
 	{
 		weapDef = BG_GetWeaponDef(iWeaponIndex);
 
-		if ( BG_GetAmmoTypeMax(weapDef->ammoIndex) <= 0 )
+		if ( BG_GetAmmoTypeMax(weapDef->ammoIndex) < 1 )
 		{
 			Scr_AddFloat(1.0f);
 			return;
 		}
 
-		if ( pSelf->client->ps.ammo[weapDef->ammoIndex] <= 0 )
+		if ( pSelf->client->ps.ammo[weapDef->ammoIndex] < 1 )
 		{
 			Scr_AddFloat(0.0f);
 			return;

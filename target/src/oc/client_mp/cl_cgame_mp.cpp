@@ -817,11 +817,7 @@ void CL_LoadSoundAliases(const char *loadspec)
 
 qboolean CL_Popup(const char *menu)
 {
-    if (clc.state != CA_ACTIVE)
-        return 0;
-    if (clc.demoplaying)
-        return 0;
-    if (UI_IsFullscreen())
+    if (clc.state != CA_ACTIVE || clc.demoplaying || UI_IsFullscreen())
         return 0;
 
     if (!I_stricmp(menu, "UIMENU_WM_QUICKMESSAGE")) {

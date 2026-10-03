@@ -48,19 +48,16 @@ union DvarLimits
 	} decimal;
 };
 
-typedef struct
+typedef union DvarValue
 {
-	union
-	{
-		bool boolean;
-		int integer;
-		float decimal;
-		// vector dvars point to a separately allocated vec4, which keeps
-		// sizeof(dvar_t) at 36
-		float *vector;
-		const char *string;
-		unsigned char color[4];
-	};
+	bool boolean;
+	int integer;
+	float decimal;
+	// vector dvars point to a separately allocated vec4, which keeps
+	// sizeof(dvar_t) at 36
+	float *vector;
+	const char *string;
+	unsigned char color[4];
 } DvarValue;
 
 typedef struct dvar_s

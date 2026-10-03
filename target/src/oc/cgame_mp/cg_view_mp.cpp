@@ -636,12 +636,11 @@ void CG_InitView(void)
     ((cg_t *)cg)->refdef.time = cg->time;
     (*(int *)&((cg_t *)cg)->refdef.zNear) = 0x3f800000;
 
-    if (cg_thirdPerson->current.enabled != 0) {
+    if (cg_thirdPerson->current.enabled != 0 ||
+        cg->nextSnap->ps.pm_type >= 6) {
         cg->renderingThirdPerson = 1;
     } else {
         cg->renderingThirdPerson = 0;
-        if (cg->nextSnap->ps.pm_type >= 6)
-            cg->renderingThirdPerson = 1;
     }
 
     CG_PredictPlayerState();

@@ -1536,8 +1536,7 @@ void MSG_WriteDeltaField( msg_t *msg, byte *from, byte *to, const netField_t *fi
 		else
 		{
 			MSG_WriteBit1( msg );
-			*(int *)&fullFloat = *(int *)toF;
-			MSG_WriteAngle16( msg, fullFloat );
+			MSG_WriteAngle16( msg, *toF );
 		}
 	}
 	else
@@ -1550,12 +1549,7 @@ void MSG_WriteDeltaField( msg_t *msg, byte *from, byte *to, const netField_t *fi
 		{
 			MSG_WriteBit1( msg );
 			value = *(int *)toF;
-			bits = field->bits;
-
-			if ( bits <= 0 )
-			{
-				bits = -bits;
-			}
+			bits = field->bits > 0 ? field->bits : -field->bits;
 
 			partialBits = bits & 7;
 
@@ -1718,128 +1712,122 @@ void MSG_WriteDeltaClient( msg_t *msg, clientState_t *from, clientState_t *to, q
 
 void MSG_ReadDeltaField( msg_t *msg, byte *from, byte *to, const netField_t *field, qboolean print )
 {
-	float *fromF;
-	float *toF;
+	int *fromF;
+	int *toF;
 	int trunc;
-	unsigned int isSigned;
+	int isSigned;
 	int bits;
 	int partialBits;
 	int value;
 	int i;
 
-	fromF = (float *)( from + field->offset );
-	toF = (float *)( to + field->offset );
+	fromF = (int *)( from + field->offset );
+	toF = (int *)( to + field->offset );
 
 	if ( !MSG_ReadBit( msg ) )
 	{
-		*(int *)toF = *(int *)fromF;
+		*toF = *fromF;
 		return;
 	}
 
-	if ( !field->bits )
+	if ( field->bits == 0 )
 	{
 		if ( !MSG_ReadBit( msg ) )
 		{
-			*toF = 0.0;
+			*toF = 0;
 			return;
 		}
 
-		if ( !MSG_ReadBit( msg ) )
+		if ( MSG_ReadBit( msg ) == 0 )
 		{
 			trunc = MSG_ReadBits( msg, 5 );
-			trunc += MSG_ReadByte( msg ) << 5;
-			trunc -= FLOAT_INT_BIAS;
-			*toF = (float)trunc;
+			trunc = 32 * MSG_ReadByte( msg ) + trunc - FLOAT_INT_BIAS;
+			*(float *)toF = (float)trunc;
 
 			if ( print )
 			{
 				Com_Printf( "%s:%i ", field->name, trunc );
 			}
-
-			return;
 		}
-
-		*(int *)toF = MSG_ReadLong( msg );
-
-		if ( print )
+		else
 		{
-			Com_Printf( "%s:%f ", field->name, *toF );
+			*toF = MSG_ReadLong( msg );
+
+			if ( print )
+			{
+				Com_Printf( "%s:%f ", field->name, *(float *)toF );
+			}
 		}
-
-		return;
 	}
-
-	if ( field->bits == -99 )
+	else if ( field->bits == -99 )
 	{
 		if ( !MSG_ReadBit( msg ) )
 		{
-			*toF = 0.0;
+			*toF = 0;
 			return;
 		}
 
-		if ( !MSG_ReadBit( msg ) )
+		if ( MSG_ReadBit( msg ) == 0 )
 		{
 			trunc = MSG_ReadBits( msg, 2 );
-			trunc += MSG_ReadByte( msg ) * 4;
-			trunc -= HUDELEM_COORD_BIAS;
-			*toF = (float)trunc;
+			trunc = 4 * MSG_ReadByte( msg ) + trunc - HUDELEM_COORD_BIAS;
+			*(float *)toF = (float)trunc;
 
 			if ( print )
 			{
 				Com_Printf( "%s:%i ", field->name, trunc );
 			}
-
-			return;
 		}
-
-		*(int *)toF = MSG_ReadLong( msg );
-
-		if ( print )
+		else
 		{
-			Com_Printf( "%s:%f ", field->name, *toF );
+			*toF = MSG_ReadLong( msg );
+
+			if ( print )
+			{
+				Com_Printf( "%s:%f ", field->name, *(float *)toF );
+			}
 		}
-
-		return;
 	}
-
-	if ( field->bits == -100 )
+	else if ( field->bits == -100 )
 	{
 		if ( !MSG_ReadBit( msg ) )
 		{
-			*toF = 0.0;
+			*toF = 0;
+		}
+		else
+		{
+			*(float *)toF = MSG_ReadAngle16( msg );
+		}
+	}
+	else
+	{
+		if ( !MSG_ReadBit( msg ) )
+		{
+			*toF = 0;
 			return;
 		}
 
-		*toF = MSG_ReadAngle16( msg );
-		return;
-	}
+		isSigned = field->bits < 0;
+		bits = !isSigned ? field->bits : -field->bits;
+		partialBits = bits & 7;
+		value = partialBits ? MSG_ReadBits( msg, partialBits ) : 0;
 
-	if ( !MSG_ReadBit( msg ) )
-	{
-		*(int *)toF = 0;
-		return;
-	}
+		for ( i = partialBits; i < bits; i += 8 )
+		{
+			value |= MSG_ReadByte( msg ) << i;
+		}
 
-	isSigned = (unsigned int)field->bits >> 31;
-	bits = isSigned ? -field->bits : field->bits;
-	partialBits = bits & 7;
-	value = partialBits ? MSG_ReadBits( msg, partialBits ) : 0;
+		if ( isSigned && ( value & ( 1 << ( bits - 1 ) ) ) )
+		{
+			value |= ~( ( 1 << bits ) - 1 );
+		}
 
-	for ( i = partialBits; i < bits; i += 8 )
-	{
-		value |= MSG_ReadByte( msg ) << i;
-	}
+		*toF = value;
 
-	if ( isSigned && ( ( value >> ( bits - 1 ) ) & 1 ) )
-	{
-		value |= ~( ( 1 << bits ) - 1 );
-	}
-
-	*(int *)toF = value;
-
-	if ( print )
-	{
-		Com_Printf( "%s:%i ", field->name, *(int *)toF );
+		if ( print )
+		{
+			Com_Printf( "%s:%i ", field->name, value );
+		}
 	}
 }
 
@@ -2038,7 +2026,7 @@ void MSG_WriteDeltaPlayerstate( msg_t *msg, playerState_t *from, playerState_t *
 	int *toF;
 	float fullFloat;
 	int trunc;
-	float value;
+	int value;
 	int bits;
 	int partialBits;
 
@@ -2110,22 +2098,21 @@ void MSG_WriteDeltaPlayerstate( msg_t *msg, playerState_t *from, playerState_t *
 			}
 			else
 			{
-				// the integer is carried in a float slot and shifted as raw bits
-				value = *(float *)toF;
-				bits = field->bits < 0 ? -field->bits : field->bits;
+				value = *toF;
+				bits = field->bits > 0 ? field->bits : -field->bits;
 				partialBits = bits & 7;
 
 				if ( partialBits )
 				{
-					MSG_WriteBits( msg, *(int *)&value, partialBits );
+					MSG_WriteBits( msg, value, partialBits );
 					bits -= partialBits;
-					*(int *)&value >>= partialBits;
+					value >>= partialBits;
 				}
 
 				while ( bits )
 				{
-					MSG_WriteByte( msg, *(int *)&value );
-					*(int *)&value >>= 8;
+					MSG_WriteByte( msg, value );
+					value >>= 8;
 					bits -= 8;
 				}
 			}
@@ -2371,14 +2358,8 @@ void MSG_ReadDeltaPlayerstate( msg_t *msg, playerState_t *from, playerState_t *t
 		}
 		else
 		{
-			bitmask = field->bits;
-			isSigned = bitmask < 0;
-
-			if ( isSigned )
-			{
-				bitmask = -bitmask;
-			}
-
+			isSigned = field->bits < 0;
+			bitmask = isSigned ? -field->bits : field->bits;
 			partialBits = bitmask & 7;
 			value = partialBits ? MSG_ReadBits( msg, partialBits ) : 0;
 

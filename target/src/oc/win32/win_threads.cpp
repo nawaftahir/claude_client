@@ -27,3 +27,9 @@ void *Sys_GetValue(int valueIndex)
 {
     return g_threadValues[valueIndex];
 }
+
+// Original name unknown.
+Bool Sys_ReturnFalse(void)
+{
+    return 0;
+}

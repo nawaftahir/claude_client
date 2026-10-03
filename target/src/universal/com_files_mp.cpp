@@ -740,6 +740,9 @@ void FS_SetRestrictions( void )
 		if ( !FS_UseSearchPath(path) )
 			continue;
 
+		if ( path->localized && path->language != SEH_GetCurrentLanguage() )
+			continue;
+
 		if ( path->iwd && (path->iwd->checksum ^ 0x2261994) != -1277981599 )
 		{
 			Com_Error( ERR_FATAL, "Corrupted iw0.iwd: %u", path->iwd->checksum );

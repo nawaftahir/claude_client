@@ -4185,7 +4185,7 @@ struct FxChannelInstance {
 
 struct FxImpactTable {
     const char *name;
-    FxImpactEntry *table;
+    struct FxEffectDef **table;
 };
 
 struct FxMemMgr_Cloud {

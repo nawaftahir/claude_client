@@ -283,8 +283,6 @@ static void Com_SoundList_f()
 void Com_UnloadSoundAliasSounds( snd_alias_system_t system )
 {
 	snd_alias_t *head;
-	snd_alias_t *alias;
-	int type;
 	int i;
 	int j;
 
@@ -292,20 +290,18 @@ void Com_UnloadSoundAliasSounds( snd_alias_system_t system )
 	head = g_sa.aliasInfo[system].head;
 	for ( i = 0; i < g_sa.aliasInfo[system].count; i++ )
 	{
-		alias = &head[i];
-		type = (alias->flags >> 5) & 3;
-		if ( type != SAT_LOADED && type != SAT_PRIMED )
+		if ( ((head[i].flags >> 5) & 3) != SAT_LOADED && ((head[i].flags >> 5) & 3) != SAT_PRIMED )
 		{
 			continue;
 		}
 		for ( j = 0; j < i; j++ )
 		{
-			if ( head[j].soundFile->soundName == alias->soundFile->soundName && ((head[j].flags >> 5) & 3) == type )
+			if ( head[j].soundFile->soundName == head[i].soundFile->soundName && ((head[j].flags >> 5) & 3) == ((head[i].flags >> 5) & 3) )
 			{
 				break;
 			}
 		}
-		alias->soundFile->fileMem = NULL;
+		head[i].soundFile->fileMem = NULL;
 	}
 }
 

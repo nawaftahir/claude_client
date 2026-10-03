@@ -1037,6 +1037,7 @@ static int CL_ConsolePrint_AddLine(print_msg_type_t type, const char *txt, int d
     int targetLineWidth;
     int maxLinewidth;
     float printLen;
+    const char *p;
 
     if (type == PMSG_CONSOLE || type == PMSG_LOGFILE)
         maxLinewidth = con.linewidth;
@@ -1055,19 +1056,20 @@ static int CL_ConsolePrint_AddLine(print_msg_type_t type, const char *txt, int d
         }
     }
 
-    if (con.prevType != type && con.lineOffset > 0)
+    if (type != con.prevType && con.lineOffset > 0)
         Con_Linefeed(con.prevType, duration);
 
+    p = txt;
     lineBroken = 0;
-    while ((c = (unsigned char)*txt) != 0) {
-        if (*txt == '^' && txt[1] && txt[1] != '^' && (unsigned char)txt[1] >= '0' && (unsigned char)txt[1] <= '9') {
-            color = ColorIndex(txt[1]);
-            txt += 2;
+    while ((c = *(unsigned char *)p) != 0) {
+        if (*p == '^' && p[1] && p[1] != '^' && (unsigned char)p[1] >= '0' && (unsigned char)p[1] <= '9') {
+            color = ColorIndex(p[1]);
+            p += 2;
             continue;
         }
 
         for (l = 0; l < linewidth; l++) {
-            if ((unsigned char)txt[l] <= ' ')
+            if ((unsigned char)p[l] <= ' ')
                 break;
         }
 
@@ -1076,7 +1078,7 @@ static int CL_ConsolePrint_AddLine(print_msg_type_t type, const char *txt, int d
             lineBroken = 1;
         }
 
-        txt++;
+        p++;
 
         switch (c) {
         case '\n':
@@ -1102,7 +1104,7 @@ static int CL_ConsolePrint_AddLine(print_msg_type_t type, const char *txt, int d
         if (type)
             Con_Linefeed(type, duration);
         else
-            Con_UpdateMessageWindow(PMSG_CONSOLE, 0, duration);
+            Con_UpdateMessageWindow(type, 0, duration);
     }
 
     con.prevType = type;

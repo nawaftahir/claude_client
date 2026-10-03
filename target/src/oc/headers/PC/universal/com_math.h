@@ -195,6 +195,7 @@ struct refexport_t {
     void (*SetLodOrigin)(const refdef_t *refdef);
 };
 
+// Slot order pinned from the 1.0 client CL_InitRef stores (169 slots).
 struct refimport_t {
     void (*Printf)(int print_level, const char *fmt, ...);
     void (*Error)(errorParm_t code, const char *fmt, ...);
@@ -214,6 +215,9 @@ struct refimport_t {
     void (*Hunk_ShowTempMemory)(void *mark);
     void * (*Hunk_AllocateTempMemoryHighInternal)(int size);
     void (*Hunk_ClearTempMemoryHigh)();
+    void (*HiAlloc)();
+    void (*HiSetOffset)();
+    void (*HiOffToPtr)();
     void (*Sys_DirectXFatalError)();
     void (*Sys_ShowSplashWindow)();
     void (*Sys_HideSplashWindow)();
@@ -229,7 +233,7 @@ struct refimport_t {
     const dvar_t * (*Dvar_RegisterVec4)(const char *dvarName, float x, float y, float z, float w, float min, float max, int flags);
     void (*Dvar_UnregisterSystem)(int sysFlag);
     void (*Dvar_ChangeResetValue)(const dvar_t *dvar, DvarValue value);
-    Bool (*Dvar_IsAtDefaultValue)(const dvar_t *dvar);
+    int (*Dvar_IsAtDefaultValue)(const dvar_t *dvar);
     void (*Dvar_ClearModified)(const dvar_t *dvar);
     void (*Dvar_SetModified)(const dvar_t *dvar);
     void (*Dvar_UpdateEnumDomain)(const dvar_t *dvar, const char **stringTable);
@@ -251,7 +255,7 @@ struct refimport_t {
     void (*Dvar_SetVec3ByName)(const char *dvarName, float x, float y, float z);
     void (*Dvar_SetVec4ByName)(const char *dvarName, float x, float y, float z, float w);
     void (*Dvar_SetFromStringByName)(const char *dvarName, const char *value);
-    Bool (*Dvar_GetBool)(const char *dvarName);
+    int (*Dvar_GetBool)(const char *dvarName);
     int (*Dvar_GetInt)(const char *dvarName);
     float (*Dvar_GetFloat)(const char *name);
     const char * (*Dvar_GetString)(const char *dvarName);
@@ -263,20 +267,20 @@ struct refimport_t {
     int (*Cmd_Argc)();
     char * (*Cmd_Argv)(int arg);
     void (*Cbuf_ExecuteText)(int exec_when, const char *text);
-    qboolean (*Com_SaveDvarsToBuffer)(const char **dvar_names, int count, char *buf, int bufsize);
-    qboolean (*Com_LoadDvarsFromBuffer)(const char **dvar_names, int count, const char *buf, const char *path);
-    const dheader_s * (*Com_GetBsp)(int *fileSize, unsigned int *checksum);
-    unsigned int (*SEH_ReadCharFromString)(const char **ppsText, qboolean *pbIsTrailingPunctuation);
+    int (*Com_SaveDvarsToBuffer)(const char **dvar_names, int count, char *buf, int bufsize);
+    int (*Com_LoadDvarsFromBuffer)(const char **dvar_names, int count, const char *buf, const char *path);
+    void * (*Com_GetBsp)(int *fileSize, unsigned int *checksum);
+    unsigned int (*SEH_ReadCharFromString)(const char **ppsText, int *pbIsTrailingPunctuation);
     void (*CL_UpdateDebugData)();
-    void (*CL_FlushDebugData)(qboolean fromServer);
+    void (*CL_FlushDebugData)(int fromServer);
     void (*StatMon_Warning)(int type, int duration, const char *materialName);
     int (*FS_ReadFile)(const char *qpath, void **buffer);
     void (*FS_FreeFile)(void *buffer);
-    int (*FS_FOpenFileRead)(const char *filename, fileHandle_t *file, qboolean uniqueFILE);
-    const char * * (*FS_ListFiles)(const char *dir, const char *ext, int flags, int *count, int);
-    void (*FS_FreeFileList)(const char **list, int count);
-    qboolean (*FS_FileExists)(const char *path);
-    qboolean (*FS_WriteFile)(const char *path, const void *buffer, int size);
+    int (*FS_FOpenFileRead)(const char *filename, fileHandle_t *file, int uniqueFILE);
+    char ** (*FS_ListFiles)(const char *path, const char *extension, int behavior, int *numfiles, int allocTrackType);
+    void (*FS_FreeFileList)(char **list, int allocTrackType);
+    int (*FS_FileExists)(const char *path);
+    int (*FS_WriteFile)(const char *path, const void *buffer, int size);
     int (*FS_FOpenFileByMode)(const char *qpath, fileHandle_t *f, fsMode_t mode);
     void (*FS_FCloseFile)(fileHandle_t h);
     int (*FS_Read)(void *buffer, int len, fileHandle_t h);
@@ -284,9 +288,9 @@ struct refimport_t {
     void (*CM_SaveLump)(int lumpnum, byte *newLump, int size, int *checksum);
     void (*CM_BoxTrace)(trace_t *results, const vec_t *start, const vec_t *end, const vec_t *mins, const vec_t *maxs, clipHandle_t model, int brushmask);
     int (*CM_BoxSightTrace)(int oldHitNum, const vec_t *start, const vec_t *end, const vec_t *mins, const vec_t *maxs, clipHandle_t model, int brushmask);
-    Bool (*CM_RayTriangleIntersect)();
+    int (*CM_RayTriangleIntersect)();
     struct XModel * (*XModelPrecache)(const char *name, Alloc_t Alloc, Alloc_t AllocColl);
-    int (*XModelGetSurfaces)(const XModel *model, struct XSurface_s ***surfaces, int lod, int **partBits);
+    int (*XModelGetSurfaces)(const XModel *model, void ***surfaces, int lod, int **partBits);
     int (*XModelBad)(const XModel *model);
     void (*Hunk_OverrideDataForFile)(int type, const char *name, void *data);
     int (*XModelGetNumLods)(const XModel *model);
@@ -297,20 +301,23 @@ struct refimport_t {
     const char * (*XModelGetName)(const XModel *model);
     unsigned char (*XModelGetFlags)(const XModel *model);
     int (*XModelNumBones)(const XModel *model);
-    const trXSkin_t * (*XModelGetSkins)(const XModel *model);
+    void * (*XModelGetSkins)(const XModel *model);
     int (*XModelGetMemUsage)(const XModel *model);
     const char * (*XModelGetLodName)(const XModel *model, int lod);
-    const DObjAnimMat * (*XModelGetBasePose)(const XModel *model);
-    const DObjAnimMat * (*XModelGetBasePoseBone)(const XModel *model, int skelMatBoneOffset);
+    void * (*XModelGetBasePose)(const XModel *model);
+    void * (*XModelGetBasePoseBone)(const XModel *model, int skelMatBoneOffset);
     int (*DObjBad)(const DObj *obj);
     void (*DB_EnumXAssets)(int type, void (*func)(union XAssetHeader, void *), void *data, int overrides);
+    void *(*Sys_GetValue)(int valueIndex);
+    int (*Sys_IsMainThread)();
+    void (*Sys_ReturnFalse)();
     void (*DObjGetBounds)(const DObj *obj, vec_t *mins, vec_t *maxs);
-    XSurface * (*DObjGetSurface)(const DObj *obj, int modelIndex, int subMatIndex, int lod);
+    void * (*DObjGetSurface)(const DObj *obj, int modelIndex, int subMatIndex, int lod);
     int (*DObjGetNumModels)(const DObj *obj);
     int (*DObjGetNumSurfaces)(const DObj *obj, char *lods);
-    int (*DObjGetSurfaces)(const DObj *obj, DSurface *surfaces, int *partBits, char *lods);
+    int (*DObjGetSurfaceList)(const DObj *obj, void *surfaces, int *partBits, char *lods);
     int * (*DObjGetPartBits)();
-    DObjAnimMat * (*DObjGetRotTransArray)(const DObj *obj);
+    void * (*DObjGetRotTransArray)(const DObj *obj);
     int (*DObjSkelAreBonesUpToDate)(const DObj *obj, int *partBits);
     int (*DObjGetMatOffset)(const DObj *obj, int modelIndex);
     struct XModel * (*DObjGetModel)(const DObj *obj, int modelIndex);
@@ -318,23 +325,47 @@ struct refimport_t {
     void (*DObjCreate)(DObjModel_s *dobjModels, unsigned int numModels, XAnimTree_s *tree, char *buf, unsigned int entnum);
     int (*DObjGetAllocSkelSize)(const DObj *obj);
     void (*DObjCreateSkel)(const DObj *obj, char *buf, int timeStamp);
-    void (*DObjCalcAnim)(const DObj *obj, int *partBits);
-    void (*DObjCalcSkel)(const DObj *obj, int *partBits);
+    void (*DObjCalcAnim)();
+    void (*DObjCalcSkel)();
     int (*DObjNumBones)(const DObj *obj);
-    void (*DObjGetBoneInfo)(const DObj *obj, XBoneInfo **boneInfo);
+    void (*DObjGetBoneInfo)(const DObj *obj, void *boneInfo);
     int (*DObjGetLodForDist)(const DObj *obj, int modelIndex, float dist);
-    float (*DObjGetLodOutDist)(const DObj *obj);
+    float (*DObjGetMaxLodOutDist)(const DObj *obj);
     void (*DObjCompleteHierarchyBits)(const DObj *obj, int *partBits);
     void (*DObjSetModel)(DObj *obj, const XModel *model);
     void (*CIN_UploadCinematic)(int handle);
     int (*CIN_PlayCinematic)(const char *arg, int x, int y, int w, int h, int systemBits);
     e_status (*CIN_RunCinematic)(int handle);
-    void (*CG_DObjCalcPose)(const centity_t *cent, const struct DObj_s *obj, int *partBits);
-    const char * (*CL_GetHudMsgIconMaterialName)(int index);
-
-#ifndef COD2_BYTEMATCH
+    void (*CG_DObjCalcPose)();
+    void (*CG_CullIn)();
+    void (*CG_UsedDObjCalcPose)();
+    void (*CG_AddMarks)();
+    void (*GetRealWidthFromVirtualWidth)();
+    void (*GetRealHeightFromVirtualHeight)();
+    void (*GetVirtualWidthFromRealWidth)();
+    void (*GetVirtualHeightFromRealHeight)();
     void * (*CM_GetPlaneNum)(int planeNum);
-#endif
+    void (*slot148)();
+    void (*slot149)();
+    void (*slot150)();
+    void (*slot151)();
+    void (*slot152)();
+    void (*slot153)();
+    void (*slot154)();
+    void (*slot155)();
+    void (*slot156)();
+    void (*slot157)();
+    void (*slot158)();
+    void (*slot159)();
+    void (*slot160)();
+    void (*slot161)();
+    void (*slot162)();
+    void (*slot163)();
+    void (*slot164)();
+    void (*FX_UpdateNonBolt)();
+    void (*FX_UpdateBolt)();
+    void (*FX_UpdateAndDraw)();
+    const char * (*CL_GetHudMsgIconMaterialName)(int index);
 };
 
 struct sightclip_t {
@@ -425,7 +456,7 @@ struct weaponParms {
     vec3_t gunForward;
     WeaponDef *weapDef;
 };
-static inline int I_fround(const float x)
+inline int I_fround(const float x)
 {
     // fistp rounds to nearest; the bias sends exact halves up
     const double bias = 1.0 / (1 << 30);

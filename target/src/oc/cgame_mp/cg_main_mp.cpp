@@ -1152,7 +1152,8 @@ void CG_Init(int serverMessageNum, int serverCommandSequence, int clientNum)
                      "Client/Server game mismatch: %s/%s",
                   "cod", game);
 
-    ((cgs_t *)cgsBase)->levelStartTime = atoi(CL_GetConfigString(0xd));
+    game = CL_GetConfigString(0xd);
+    ((cgs_t *)cgsBase)->levelStartTime = atoi(game);
     SCR_UpdateScreen();
 
     if (!com_sv_running->current.enabled)

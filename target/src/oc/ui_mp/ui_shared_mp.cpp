@@ -673,17 +673,15 @@ void Script_ScriptMenuResponse(displayContextDef_t *dc, itemDef_t *item, const c
     if (!String_Parse(args, val, 0x400))
         return;
 
-    iIndex = -1;
-    for (int i = 0; i < 0x20; i++) {
-        const char *cs = CL_GetConfigString(0x4de + i);
+    for (iIndex = 0; iIndex < 0x20; iIndex++) {
+        const char *cs = CL_GetConfigString(0x4de + iIndex);
         if (cs[0] == '\0')
             continue;
-        const char *menuName = item->parent->window.name;
-        if (I_stricmp(menuName, cs) == 0) {
-            iIndex = i;
+        if (!I_stricmp(item->parent->window.name, cs))
             break;
-        }
     }
+    if (iIndex == 0x20)
+        iIndex = -1;
 
     Cbuf_ExecuteText(2, va("cmd mr %i %i %s\n", Dvar_GetInt("sv_serverId"), iIndex, val));
 }

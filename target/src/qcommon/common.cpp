@@ -2168,7 +2168,6 @@ Com_GetConfigureDvarValues
 static void Com_GetConfigureDvarValues( int dvarCount, const char **text, char *dvarValues )
 {
 	int dvarIndex;
-	char *cur = dvarValues;
 
 	for ( dvarIndex = 0; dvarIndex < dvarCount; dvarIndex++ )
 	{
@@ -2182,10 +2181,7 @@ static void Com_GetConfigureDvarValues( int dvarCount, const char **text, char *
 			Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: entry '%s' in dvar value column %i is longer than %i\n", token, dvarIndex, 0x1f );
 
 		if ( dvarValues )
-		{
-			I_strncpyz( cur, token, 0x20 );
-			cur += 0x20;
-		}
+			I_strncpyz( &dvarValues[0x20 * dvarIndex], token, 0x20 );
 	}
 
 	{

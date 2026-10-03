@@ -14,7 +14,7 @@ extern dvar_t *bg_fallDamageMaxHeight;
 extern const dvar_t *cg_nopredict;
 extern const dvar_t *cg_synchronousClients;
 
-extern char **cg_uiglob;
+extern LegacyHacks *legacyHacks;
 
 extern void Com_Printf(const char *msg, ...);
 extern void Com_DPrintf(const char *msg, ...);
@@ -50,7 +50,8 @@ extern void CG_CalcEntityLerpPositions(centity_t *cent);
 extern void CG_CheckOpenWaitingScriptMenu(void);
 extern void ByteToDir(const int b, vec3_t dir);
 extern void AngleVectors( const vec3_t angles, vec3_t forward, vec3_t right, vec3_t up );
-extern void FX_PlayEffect(const EffectTemplate *effect, const vec_t *origin, const vec_t *forward);
+extern void FX_PlayOrientedEffect(const EffectTemplate *fx, const vec_t *origin, const vec_t *forward, const vec_t *up);
+extern void MakeNormalVectors(const vec3_t forward, vec3_t right, vec3_t up);
 extern void FX_PlayEntityEffect(const EffectTemplate *fx, const vec_t *org, const vec3_t *axis, const FxBoltInfo *bolt);
 extern void FX_WarpTime(int time);
 extern int FX_GetBoneIndex(int modelIndex, unsigned int boneName);
@@ -117,8 +118,6 @@ extern char *va( const char *format, ... );
 #define CGS_SND_BULLET_FLESH 0xbcec
 #define CGS_SND_GRENADE_BOUNCE 0xbd48
 #define CGS_FXLOOKUP 0xc200
-#define CGS_FX_CUSTOM 0x5f80
-#define CGS_FX_DEATHFX 0x67c0
 
 static const float f_0_01 = 0.009999999776482582f;
 static const float f_4_0 = 4.0f;
@@ -131,26 +130,18 @@ static const float f_neg16 = -16.0f;
 static const float f_1_4 = 1.399999976158142f;
 static const float f_2_8 = 2.799999952316284f;
 
-#define WEAPON_DATA_STRIDE 109
+// Impact effect table rows, SURF_TYPECOUNT entries each (cg_effects_load_obj g_TypeName).
+#define SURF_TYPECOUNT 23
+#define ENTITYNUM_WORLD 1022
+#define IMPACT_GRENADE_BOUNCE 8
+#define IMPACT_GRENADE_EXPLODE 9
+#define IMPACT_ROCKET_EXPLODE 10
 
-static int weaponDataOffset(int weapon)
+static inline void VectorCopy(const vec3_t a, vec3_t b)
 {
-    return weapon * WEAPON_DATA_STRIDE;
-}
-
-static char *CG_WeaponInfoBase(void)
-{
-    return ((char *)cg_weaponsArray);
-}
-
-static char *CG_ItemInfoBase(void)
-{
-    return ((char *)cg_itemsArray);
-}
-
-static char *BG_ItemListBase(void)
-{
-    return (char *)((void *)&bg_itemlist);
+    b[0] = a[0];
+    b[1] = a[1];
+    b[2] = a[2];
 }
 
 static char **CG_EventNames(void)
@@ -330,6 +321,67 @@ static inline bool CG_IsLocalEntity(const entityState_t *ent)
     return false;
 }
 
+void CG_ItemPickup(int itemNum)
+{
+    int weapIndex;
+    WeaponDef *weapDef;
+
+    weapIndex = bg_itemlist[itemNum].giTag;
+    if (bg_itemlist[itemNum].giType != IT_WEAPON)
+        return;
+
+    weapDef = BG_GetWeaponDef(weapIndex);
+    if (weapDef->weapClass == WEAPCLASS_ITEM)
+        return;
+
+    if (weapDef->offhandClass)
+    {
+        if (!cg->equippedOffHand)
+            CG_SetEquippedOffHand(weapIndex);
+    }
+    else if (!cg->weaponSelect)
+    {
+        CG_SelectWeaponIndex(weapIndex);
+    }
+}
+
+void CG_PlayFx(centity_t *cent, const float *angles)
+{
+    const EffectTemplate *fx;
+    int fxId;
+    vec3_t forward;
+    vec3_t up;
+
+    fxId = cent->nextState.eventParm;
+    if (fxId > 0 && fxId < 64)
+    {
+        fx = cgs->fxs[fxId];
+        AngleVectors(angles, forward, NULL, up);
+        FX_PlayOrientedEffect(fx, cent->lerpOrigin, forward, up);
+    }
+    else
+    {
+        Com_Printf("ERROR: CG_PlayFx called with invalid effect id %i\n", fxId);
+    }
+}
+
+void CG_PlayFxOnTag(centity_t *cent, int eventParm)
+{
+    const char *tagAndEffect;
+    const EffectTemplate *fx;
+    FxBoltInfo bolt;
+    scr_string_t tagName;
+
+    tagAndEffect = CL_GetConfigString(eventParm + 0x38e);
+    fx = cgs->fxs[10 * (tagAndEffect[0] - '0') + tagAndEffect[1] - '0'];
+    bolt.dobjHandle = cent->nextState.number;
+    tagName = SL_GetString(tagAndEffect + 2, 0);
+    bolt.boneIndex = FX_GetBoneIndex(bolt.dobjHandle, tagName);
+    Scr_SetString(&tagName, 0);
+    if (bolt.boneIndex >= 0)
+        FX_PlayEntityEffect(fx, cent->lerpOrigin, NULL, &bolt);
+}
+
 void CG_EntityEvent(centity_t *cent, int event)
 {
     entityState_t *es;
@@ -340,10 +392,9 @@ void CG_EntityEvent(centity_t *cent, int event)
     int entNum;
     float dir[3];
     float reflect[3];
-    float forward[3];
-    float up[3];
+    vec3_t axis[3];
+    const EffectTemplate *fx;
     char *snap;
-    int idx;
     int weapon;
 
     if (event == 0) {
@@ -594,11 +645,8 @@ void CG_EntityEvent(centity_t *cent, int event)
                 return;
             }
 
-            char *ui = *cg_uiglob;
-            if (*(int *)(ui + 0xc)  != 0)
-                return;
-
-            *(int *)(ui + 0x8)  = 0;
+            if (!legacyHacks->cl_stanceTemp)
+                legacyHacks->cl_stance = 0;
             return;
         }
 
@@ -609,11 +657,8 @@ void CG_EntityEvent(centity_t *cent, int event)
                 return;
             }
 
-            char *ui = *cg_uiglob;
-            if (*(int *)(ui + 0xc)  != 0)
-                return;
-
-            *(int *)(ui + 0x8)  = 1;
+            if (!legacyHacks->cl_stanceTemp)
+                legacyHacks->cl_stance = 1;
             return;
         }
 
@@ -624,11 +669,8 @@ void CG_EntityEvent(centity_t *cent, int event)
                 return;
             }
 
-            char *ui = *cg_uiglob;
-            if (*(int *)(ui + 0xc)  != 0)
-                return;
-
-            *(int *)(ui + 0x8)  = 2;
+            if (!legacyHacks->cl_stanceTemp)
+                legacyHacks->cl_stance = 2;
             return;
         }
 
@@ -677,205 +719,88 @@ void CG_EntityEvent(centity_t *cent, int event)
         }
 
         case 0x90:
-        case 0x91: {
+        case 0x91:
+        {
             int itemIndex = es->eventParm;
-            if (itemIndex <= 0)
-                return;
-            if (itemIndex >= bg_numItems)
+            if (itemIndex < 1 || itemIndex >= bg_numItems)
                 return;
 
-            char *itemDefs = CG_ItemInfoBase();
-            char *itemData = itemDefs + itemIndex * 9 * 4;
+            itemInfo_t *item = &cg_itemsArray[itemIndex];
+            if (event == 0x90)
+                CG_PlayEntitySoundAlias(es->number, item->pickupSound);
+            else if (event == 0x91)
+                CG_PlayEntitySoundAlias(es->number, item->ammoPickupSound);
 
-            if (event == 0x90) {
-
-                CG_PlayEntitySoundAlias(es->number,
-                                        *(snd_alias_list_t **)(itemData + 0x1c) );
-            } else {
-
-                CG_PlayEntitySoundAlias(es->number,
-                                        *(snd_alias_list_t **)(itemData + 0x20) );
-            }
-
-            snap = (char *)cg->nextSnap;
-            if (!(*(int *)(snap + SNAP_FLAGS) & 0xc00000))
-                return;
-            if (es->number != *(int *)(snap + SNAP_PS_CLIENTNUM))
-                return;
-
-            {
-                int itemid = itemIndex;
-                char *itemInfoBase = BG_ItemListBase();
-                char *item = itemInfoBase + itemid * (1 + 2 * 5) * 4;
-                int weapId = *(int *)(item + 0x20) ;
-                if (*(int *)(item + 0x1c)  != 1)
-                    return;
-
-                char *weapDef = (char *)BG_GetWeaponDef(weapId);
-
-                if ((*(int *)&((WeaponDef *)weapDef)->weapClass)  == 9)
-                    return;
-
-                if ((*(int *)&((WeaponDef *)weapDef)->offhandClass)  != 0) {
-
-                    if (cg->equippedOffHand != 0)
-                        return;
-
-                    CG_SetEquippedOffHand(weapId);
-                } else {
-
-                    if (cg->weaponSelect != 0)
-                        return;
-
-                    CG_SelectWeaponIndex(weapId);
-                }
-            }
+            if (CG_IsLocalEntity(es))
+                CG_ItemPickup(itemIndex);
             return;
         }
 
         case 0x96:
-        {
-            if (isFirstPerson) {
-                weapon = es->weapon;
-                int wepOff = weaponDataOffset(weapon);
-                char *wepDefs = CG_WeaponInfoBase();
-                char *wepData = wepDefs + wepOff * 4;
-                int alias = (*(int *)&((weaponInfo_t *)wepData)->reloadSoundPlayer) ;
-                if (alias != 0) {
-
-                    CG_PlayEntitySoundAlias(es->number, (snd_alias_list_t *)(alias));
+            if (isFirstPerson)
+            {
+                if (cg_weaponsArray[es->weapon].reloadSoundPlayer)
+                {
+                    CG_PlayEntitySoundAlias(es->number, cg_weaponsArray[es->weapon].reloadSoundPlayer);
                     return;
                 }
-
-                alias = (*(int *)&((weaponInfo_t *)wepData)->reloadEmptySoundPlayer) ;
-                if (alias != 0) {
-                    CG_PlayEntitySoundAlias(es->number, (snd_alias_list_t *)(alias));
-                    return;
-                }
-            } else {
-                weapon = es->weapon;
-                int wepOff = weaponDataOffset(weapon);
-                char *wepDefs = CG_WeaponInfoBase();
-                char *wepData = wepDefs + wepOff * 4;
-
-                int alias = (*(int *)&((weaponInfo_t *)wepData)->reloadSound) ;
-                if (alias != 0) {
-                    CG_PlayEntitySoundAlias(es->number, (snd_alias_list_t *)(alias));
-                    return;
-                }
-
-                alias = (*(int *)&((weaponInfo_t *)wepData)->reloadEmptySound) ;
-                if (alias != 0) {
-                    CG_PlayEntitySoundAlias(es->number, (snd_alias_list_t *)(alias));
+                if (cg_weaponsArray[es->weapon].reloadEmptySoundPlayer)
+                {
+                    CG_PlayEntitySoundAlias(es->number, cg_weaponsArray[es->weapon].reloadEmptySoundPlayer);
                     return;
                 }
             }
+            if (cg_weaponsArray[es->weapon].reloadSound)
+            {
+                CG_PlayEntitySoundAlias(es->number, cg_weaponsArray[es->weapon].reloadSound);
+                return;
+            }
+            if (cg_weaponsArray[es->weapon].reloadEmptySound)
+                CG_PlayEntitySoundAlias(es->number, cg_weaponsArray[es->weapon].reloadEmptySound);
             return;
-        }
 
         case 0x97:
-        {
-            if (isFirstPerson) {
-                weapon = es->weapon;
-                int wepOff = weaponDataOffset(weapon);
-                char *wepDefs = CG_WeaponInfoBase();
-                char *wepData = wepDefs + wepOff * 4;
-                int alias = (*(int *)&((weaponInfo_t *)wepData)->reloadEmptySoundPlayer) ;
-                if (alias != 0) {
-
-                    CG_PlayEntitySoundAlias(es->number, (snd_alias_list_t *)(alias));
+            if (isFirstPerson)
+            {
+                if (cg_weaponsArray[es->weapon].reloadEmptySoundPlayer)
+                {
+                    CG_PlayEntitySoundAlias(es->number, cg_weaponsArray[es->weapon].reloadEmptySoundPlayer);
                     return;
                 }
-
-                alias = (*(int *)&((weaponInfo_t *)wepData)->reloadSoundPlayer) ;
-                if (alias != 0) {
-                    CG_PlayEntitySoundAlias(es->number, (snd_alias_list_t *)(alias));
-                    return;
-                }
-            } else {
-                weapon = es->weapon;
-                int wepOff = weaponDataOffset(weapon);
-                char *wepDefs = CG_WeaponInfoBase();
-                char *wepData = wepDefs + wepOff * 4;
-
-                int alias = (*(int *)&((weaponInfo_t *)wepData)->reloadEmptySound) ;
-                if (alias != 0) {
-                    CG_PlayEntitySoundAlias(es->number, (snd_alias_list_t *)(alias));
-                    return;
-                }
-
-                alias = (*(int *)&((weaponInfo_t *)wepData)->reloadSound) ;
-                if (alias != 0) {
-                    CG_PlayEntitySoundAlias(es->number, (snd_alias_list_t *)(alias));
+                if (cg_weaponsArray[es->weapon].reloadSoundPlayer)
+                {
+                    CG_PlayEntitySoundAlias(es->number, cg_weaponsArray[es->weapon].reloadSoundPlayer);
                     return;
                 }
             }
+            if (cg_weaponsArray[es->weapon].reloadEmptySound)
+            {
+                CG_PlayEntitySoundAlias(es->number, cg_weaponsArray[es->weapon].reloadEmptySound);
+                return;
+            }
+            if (cg_weaponsArray[es->weapon].reloadSound)
+                CG_PlayEntitySoundAlias(es->number, cg_weaponsArray[es->weapon].reloadSound);
             return;
-        }
 
         case 0x98:
-        {
-            if (isFirstPerson) {
-                weapon = es->weapon;
-                int wepOff = weaponDataOffset(weapon);
-                char *wepDefs = CG_WeaponInfoBase();
-                char *wepData = wepDefs + wepOff * 4;
-                int alias = (*(int *)&((weaponInfo_t *)wepData)->reloadStartSoundPlayer) ;
-                if (alias != 0) {
-
-                    CG_PlayEntitySoundAlias(es->number, (snd_alias_list_t *)(alias));
-                    return;
-                }
-
-                alias = (*(int *)&((weaponInfo_t *)wepData)->reloadStartSound) ;
-                if (alias != 0) {
-                    CG_PlayEntitySoundAlias(es->number, (snd_alias_list_t *)(alias));
-                }
-            } else {
-                weapon = es->weapon;
-                int wepOff = weaponDataOffset(weapon);
-                char *wepDefs = CG_WeaponInfoBase();
-                char *wepData = wepDefs + wepOff * 4;
-
-                int alias = (*(int *)&((weaponInfo_t *)wepData)->reloadEndSound) ;
-                if (alias != 0) {
-                    CG_PlayEntitySoundAlias(es->number, (snd_alias_list_t *)(alias));
-                }
+            if (isFirstPerson && cg_weaponsArray[es->weapon].reloadStartSoundPlayer)
+            {
+                CG_PlayEntitySoundAlias(es->number, cg_weaponsArray[es->weapon].reloadStartSoundPlayer);
+                return;
             }
+            if (cg_weaponsArray[es->weapon].reloadStartSound)
+                CG_PlayEntitySoundAlias(es->number, cg_weaponsArray[es->weapon].reloadStartSound);
             return;
-        }
 
         case 0x99:
-        {
-            if (isFirstPerson) {
-                weapon = es->weapon;
-                int wepOff = weaponDataOffset(weapon);
-                char *wepDefs = CG_WeaponInfoBase();
-                char *wepData = wepDefs + wepOff * 4;
-                int alias = (*(int *)&((weaponInfo_t *)wepData)->reloadEndSoundPlayer) ;
-                if (alias != 0) {
-
-                    CG_PlayEntitySoundAlias(es->number, (snd_alias_list_t *)(alias));
-                    return;
-                }
-
-                alias = (*(int *)&((weaponInfo_t *)wepData)->reloadEndSound) ;
-                if (alias != 0) {
-                    CG_PlayEntitySoundAlias(es->number, (snd_alias_list_t *)(alias));
-                }
-            } else {
-                weapon = es->weapon;
-                int wepOff = weaponDataOffset(weapon);
-                char *wepDefs = CG_WeaponInfoBase();
-                char *wepData = wepDefs + wepOff * 4;
-
-                int alias = (*(int *)&((weaponInfo_t *)wepData)->reloadStartSound) ;
-                if (alias != 0) {
-                    CG_PlayEntitySoundAlias(es->number, (snd_alias_list_t *)(alias));
-                }
+            if (isFirstPerson && cg_weaponsArray[es->weapon].reloadEndSoundPlayer)
+            {
+                CG_PlayEntitySoundAlias(es->number, cg_weaponsArray[es->weapon].reloadEndSoundPlayer);
+                return;
             }
+            if (cg_weaponsArray[es->weapon].reloadEndSound)
+                CG_PlayEntitySoundAlias(es->number, cg_weaponsArray[es->weapon].reloadEndSound);
             return;
-        }
 
         case 0x92:
         {
@@ -923,62 +848,35 @@ void CG_EntityEvent(centity_t *cent, int event)
         }
 
         case 0x9a:
-        {
-            weapon = es->weapon;
-            int wepOff = weaponDataOffset(weapon);
-            char *wepDefs = CG_WeaponInfoBase();
-            char *wepData = wepDefs + wepOff * 4;
-            int alias = (*(int *)&((weaponInfo_t *)wepData)->raiseSound) ;
-            if (alias != 0) {
-
-                CG_PlayEntitySoundAlias(es->number, (snd_alias_list_t *)(alias));
-            }
+            if (cg_weaponsArray[es->weapon].raiseSound)
+                CG_PlayEntitySoundAlias(es->number, cg_weaponsArray[es->weapon].raiseSound);
             return;
-        }
 
         case 0x9b:
-        {
-            weapon = es->weapon;
-            int wepOff = weaponDataOffset(weapon);
-            char *wepDefs = CG_WeaponInfoBase();
-            char *wepData = wepDefs + wepOff * 4;
-            int alias = (*(int *)&((weaponInfo_t *)wepData)->putawaySound) ;
-            if (alias != 0) {
-
-                CG_PlayEntitySoundAlias(es->number, (snd_alias_list_t *)(alias));
-            }
+            if (cg_weaponsArray[es->weapon].putawaySound)
+                CG_PlayEntitySoundAlias(es->number, cg_weaponsArray[es->weapon].putawaySound);
             return;
-        }
 
         case 0x9c:
-        {
-            weapon = es->weapon;
-            int wepOff = weaponDataOffset(weapon);
-            char *wepDefs = CG_WeaponInfoBase();
-            char *wepData = wepDefs + wepOff * 4;
-            int alias = (*(int *)&((weaponInfo_t *)wepData)->altSwitchSound) ;
-            if (alias != 0) {
-
-                CG_PlayEntitySoundAlias(es->number, (snd_alias_list_t *)(alias));
-            }
+            if (cg_weaponsArray[es->weapon].altSwitchSound)
+                CG_PlayEntitySoundAlias(es->number, cg_weaponsArray[es->weapon].altSwitchSound);
             return;
-        }
 
         case 0xb0:
         {
 
-            CG_FireWeapon(cent, 0xb0, 0);
+            CG_FireWeapon(cent, event, 0);
 
-            CG_FireWeapon(cent, 0xb0, 1);
+            CG_FireWeapon(cent, event, 1);
             return;
         }
 
         case 0xb1:
         {
 
-            CG_FireWeapon(cent, 0xb1, 2);
+            CG_FireWeapon(cent, event, 2);
 
-            CG_FireWeapon(cent, 0xb1, 3);
+            CG_FireWeapon(cent, event, 3);
             return;
         }
 
@@ -987,7 +885,7 @@ void CG_EntityEvent(centity_t *cent, int event)
 
             CG_StartShakeCamera(0.05f, 100, (const vec_t *)position, 100.0f);
 
-            CG_FireWeapon(cent, 0xaf, 0);
+            CG_FireWeapon(cent, event, 0);
 
             {
                 int ep = eventParm;
@@ -1011,18 +909,9 @@ void CG_EntityEvent(centity_t *cent, int event)
         }
 
         case 0x9d:
-        {
-            weapon = es->weapon;
-            int wepOff = weaponDataOffset(weapon);
-            char *wepDefs = CG_WeaponInfoBase();
-            char *wepData = wepDefs + wepOff * 4;
-            int alias = (*(int *)&((weaponInfo_t *)wepData)->pullbackSound) ;
-            if (alias != 0) {
-
-                CG_PlayEntitySoundAlias(es->number, (snd_alias_list_t *)(alias));
-            }
+            if (cg_weaponsArray[es->weapon].pullbackSound)
+                CG_PlayEntitySoundAlias(es->number, cg_weaponsArray[es->weapon].pullbackSound);
             return;
-        }
 
         case 0x9e:
         case 0x9f:
@@ -1033,67 +922,38 @@ void CG_EntityEvent(centity_t *cent, int event)
             return;
         }
 
-        case 0xa1: {
-            if (isFirstPerson) {
-                weapon = es->weapon;
-                int wepOff = weaponDataOffset(weapon);
-                char *wepDefs = CG_WeaponInfoBase();
-                char *wepData = wepDefs + wepOff * 4;
-                int alias = (*(int *)&((weaponInfo_t *)wepData)->rechamberSoundPlayer) ;
-                if (alias != 0) {
-
-                    CG_PlayEntitySoundAlias(es->number, (snd_alias_list_t *)(alias));
-                    return;
-                }
-
-                alias = (*(int *)&((weaponInfo_t *)wepData)->rechamberSound) ;
-                if (alias != 0) {
-                    CG_PlayEntitySoundAlias(es->number, (snd_alias_list_t *)(alias));
-                }
-            } else {
-                weapon = es->weapon;
-                int wepOff = weaponDataOffset(weapon);
-                char *wepDefs = CG_WeaponInfoBase();
-                char *wepData = wepDefs + wepOff * 4;
-                int alias = (*(int *)&((weaponInfo_t *)wepData)->meleeSwipeSound) ;
-                if (alias != 0) {
-
-                    CG_PlayEntitySoundAlias(es->number, (snd_alias_list_t *)(alias));
-                }
+        case 0xa1:
+            if (isFirstPerson && cg_weaponsArray[es->weapon].rechamberSoundPlayer)
+            {
+                CG_PlayEntitySoundAlias(es->number, cg_weaponsArray[es->weapon].rechamberSoundPlayer);
+                return;
             }
+            if (cg_weaponsArray[es->weapon].rechamberSound)
+                CG_PlayEntitySoundAlias(es->number, cg_weaponsArray[es->weapon].rechamberSound);
             return;
-        }
 
         case 0xa2: {
 
-            CG_EjectWeaponBrass(es, 0xa2);
+            CG_EjectWeaponBrass(es, event);
             return;
         }
 
-        case 0xa3: {
-            weapon = es->weapon;
-            int wepOff = weaponDataOffset(weapon);
-            char *wepDefs = CG_WeaponInfoBase();
-            char *wepData = wepDefs + wepOff * 4;
-            int alias = (*(int *)&((weaponInfo_t *)wepData)->meleeSwipeSound) ;
-            if (alias != 0) {
-
-                CG_PlayEntitySoundAlias(es->number, (snd_alias_list_t *)(alias));
-            }
+        case 0xa3:
+            if (cg_weaponsArray[es->weapon].meleeSwipeSound)
+                CG_PlayEntitySoundAlias(es->number, cg_weaponsArray[es->weapon].meleeSwipeSound);
             return;
-        }
 
         case 0xa5:
         {
 
-            CG_PrepOffHand(es, 0xa5, es->eventParm);
+            CG_PrepOffHand(es, event, es->eventParm);
             return;
         }
 
         case 0xa6:
         {
 
-            CG_UseOffHand(cent, 0xa6, es->eventParm);
+            CG_UseOffHand(cent, event, es->eventParm);
             return;
         }
 
@@ -1122,22 +982,18 @@ void CG_EntityEvent(centity_t *cent, int event)
 
         case 0xc5:
         {
-
             dir[0] = 0.0f;
             dir[1] = 0.0f;
             dir[2] = 1.0f;
 
-            CG_PlaySoundAlias(0x3fe, position,
-                              cgs->media.grenadeExplodeSound[0]);
+            CG_PlaySoundAlias(ENTITYNUM_WORLD, position, cgs->media.grenadeExplodeSound[0]);
 
+            fx = cgs->media.fx->table[IMPACT_GRENADE_EXPLODE * SURF_TYPECOUNT];
+            if (fx)
             {
-                char *fxLookup = (char *)cgs->media.fx;
-                char *fxData = *(char **)(fxLookup + 4);
-                EffectTemplate *effect = *(EffectTemplate **)(fxData + 0x33c);
-                if (effect) {
-
-                    FX_PlayEffect(effect, position, dir);
-                }
+                VectorCopy(dir, axis[0]);
+                MakeNormalVectors(axis[0], axis[1], axis[2]);
+                FX_PlayEntityEffect(fx, position, axis, NULL);
             }
             return;
         }
@@ -1145,217 +1001,112 @@ void CG_EntityEvent(centity_t *cent, int event)
         case 0xb5:
         case 0xb6:
         case 0xb7:
-        {
-
             ByteToDir(es->eventParm, dir);
-
             ByteToDir(es->dmgFlags, reflect);
-
-            CG_BulletHitEvent(es->otherEntityNum, position,
-                              dir, reflect, es->surfType, event);
+            CG_BulletHitEvent(es->otherEntityNum, position, dir, reflect, es->surfType, event);
             return;
-        }
 
         case 0xb9:
         case 0xba:
-        {
-
-            CG_BulletHitClientEvent(es->otherEntityNum, position,
-                                    es->surfType, event);
+            CG_BulletHitClientEvent(es->otherEntityNum, position, es->surfType, event);
             return;
-        }
 
         case 0xbb:
         {
-
             ByteToDir(es->eventParm, dir);
 
-            int surfType = es->surfType;
-            CG_PlaySoundAlias(0x3fe, position,
-                              cgs->media.grenadeBounceSound[surfType]);
+            CG_PlaySoundAlias(ENTITYNUM_WORLD, position, cgs->media.grenadeBounceSound[es->surfType]);
 
+            fx = cgs->media.fx->table[IMPACT_GRENADE_BOUNCE * SURF_TYPECOUNT + es->surfType];
+            if (fx)
             {
-                char *fxLookup = (char *)cgs->media.fx;
-                char *fxData = *(char **)(fxLookup + 4);
-                EffectTemplate *effect = *(EffectTemplate **)(fxData + 0x2e0 + surfType * 4);
-                if (effect) {
-
-                    FX_PlayEffect(effect, position, dir);
-                }
+                VectorCopy(dir, axis[0]);
+                MakeNormalVectors(axis[0], axis[1], axis[2]);
+                FX_PlayEntityEffect(fx, position, axis, NULL);
             }
             return;
         }
 
         case 0xbc:
         {
-
             ByteToDir(es->eventParm, dir);
 
-            int surfType2 = es->surfType;
-            CG_PlaySoundAlias(0x3fe, position,
-                              cgs->media.grenadeExplodeSound[surfType2]);
+            CG_PlaySoundAlias(ENTITYNUM_WORLD, position, cgs->media.grenadeExplodeSound[es->surfType]);
 
+            fx = cgs->media.fx->table[IMPACT_GRENADE_EXPLODE * SURF_TYPECOUNT + es->surfType];
+            if (fx)
             {
-                char *fxLookup = (char *)cgs->media.fx;
-                char *fxData = *(char **)(fxLookup + 4);
-                EffectTemplate *effect = *(EffectTemplate **)(fxData + 0x33c + surfType2 * 4);
-                if (effect) {
-
-                    FX_PlayEffect(effect, position, dir);
-                }
+                VectorCopy(dir, axis[0]);
+                MakeNormalVectors(axis[0], axis[1], axis[2]);
+                FX_PlayEntityEffect(fx, position, axis, NULL);
             }
 
-            weapon = es->weapon;
+            fx = cg_weaponsArray[es->weapon].projExplosionEffect;
+            if (fx)
             {
-                int wepOff = weaponDataOffset(weapon);
-                char *wepDefs = CG_WeaponInfoBase();
-                EffectTemplate *effect = *(EffectTemplate **)(wepDefs + 0x164 + wepOff * 4);
-                if (effect) {
-
-                    FX_PlayEffect(effect, position, dir);
-                }
-
-                weapon = es->weapon;
-                wepOff = weaponDataOffset(weapon);
-
-                int sndAlias = *(int *)(wepDefs + 0x168 + wepOff * 4);
-                if (sndAlias != 0) {
-
-                    CG_PlaySoundAlias(0x3fe, position, (snd_alias_list_t *)(sndAlias));
-                }
-            }
-            return;
-        }
-
-        case 0xbd:
-        {
-
-            ByteToDir(es->eventParm, dir);
-
-            weapon = es->weapon;
-            {
-                int wepOff = weaponDataOffset(weapon);
-                char *wepDefs = CG_WeaponInfoBase();
-
-                int surfType3 = es->surfType;
-                CG_PlaySoundAlias(0x3fe, position,
-                                  cgs->media.rocketExplodeSound[surfType3]);
-
-                {
-                    char *fxLookup = (char *)cgs->media.fx;
-                    char *fxData = *(char **)(fxLookup + 4);
-                    int surfType4 = es->surfType;
-                    EffectTemplate *effect = *(EffectTemplate **)(fxData + 0x398 + surfType4 * 4);
-                    if (effect) {
-
-                        FX_PlayEffect(effect, position, dir);
-                    }
-                }
-
-                weapon = es->weapon;
-                wepOff = weaponDataOffset(weapon);
-                EffectTemplate *effect = *(EffectTemplate **)(wepDefs + 0x164 + wepOff * 4);
-                if (effect) {
-
-                    FX_PlayEffect(effect, position, dir);
-                }
-
-                weapon = es->weapon;
-                wepOff = weaponDataOffset(weapon);
-                int sndAlias = *(int *)(wepDefs + 0x168 + wepOff * 4);
-                if (sndAlias != 0) {
-
-                    CG_PlaySoundAlias(0x3fe, position, (snd_alias_list_t *)(sndAlias));
-                }
+                VectorCopy(dir, axis[0]);
+                MakeNormalVectors(axis[0], axis[1], axis[2]);
+                FX_PlayEntityEffect(fx, position, axis, NULL);
             }
 
-            cg->nomarks = 0;
-            return;
-        }
-
-        case 0xbe:
-        {
-
-            cg->nomarks = 1;
-
-            ByteToDir(es->eventParm, dir);
-
-            int surfType5 = es->surfType;
-            CG_PlaySoundAlias(0x3fe, position,
-                              cgs->media.rocketExplodeSound[surfType5]);
-
-            {
-                char *fxLookup = (char *)cgs->media.fx;
-                char *fxData = *(char **)(fxLookup + 4);
-                int surfType6 = es->surfType;
-                EffectTemplate *effect = *(EffectTemplate **)(fxData + 0x398 + surfType6 * 4);
-                if (effect) {
-
-                    FX_PlayEffect(effect, position, dir);
-                }
-            }
-
-            weapon = es->weapon;
-            {
-                int wepOff = weaponDataOffset(weapon);
-                char *wepDefs = CG_WeaponInfoBase();
-                EffectTemplate *effect = *(EffectTemplate **)(wepDefs + 0x164 + wepOff * 4);
-                if (effect) {
-
-                    FX_PlayEffect(effect, position, dir);
-                }
-
-                weapon = es->weapon;
-                wepOff = weaponDataOffset(weapon);
-
-                int sndAlias = *(int *)(wepDefs + 0x168 + wepOff * 4);
-                if (sndAlias != 0) {
-
-                    CG_PlaySoundAlias(0x3fe, position, (snd_alias_list_t *)(sndAlias));
-                }
-            }
-
-            cg->nomarks = 0;
+            if (cg_weaponsArray[es->weapon].projExplosionSound)
+                CG_PlaySoundAlias(ENTITYNUM_WORLD, position, cg_weaponsArray[es->weapon].projExplosionSound);
             return;
         }
 
         case 0xbf:
         {
-
             ByteToDir(es->eventParm, dir);
 
-            weapon = es->weapon;
+            if (cg_weaponsArray[es->weapon].projExplosionEffect)
             {
-                int wepOff = weaponDataOffset(weapon);
-                char *wepDefs = CG_WeaponInfoBase();
-                EffectTemplate *effect = *(EffectTemplate **)(wepDefs + 0x164 + wepOff * 4);
-                if (effect) {
-
-                    FX_WarpTime(es->time);
-
-                    weapon = es->weapon;
-                    wepOff = weaponDataOffset(weapon);
-                    effect = *(EffectTemplate **)(wepDefs + 0x164 + wepOff * 4);
-                    FX_PlayEffect(effect, position, dir);
-
-                    FX_WarpTime(cg->time);
-                }
-
-                weapon = es->weapon;
-                wepOff = weaponDataOffset(weapon);
-                int sndAlias = *(int *)(wepDefs + 0x168 + wepOff * 4);
-                if (sndAlias == 0)
-                    return;
-
-                if (*(char *)((char *)es + 0x0a)  & 1) {
-                    int cgTime2 = cg->time;
-                    int esTime = es->time;
-                    if (cgTime2 - esTime > 49)
-                        return;
-                }
-
-                CG_PlaySoundAlias(0x3fe, position, (snd_alias_list_t *)(sndAlias));
+                FX_WarpTime(es->time);
+                VectorCopy(dir, axis[0]);
+                MakeNormalVectors(axis[0], axis[1], axis[2]);
+                FX_PlayEntityEffect(cg_weaponsArray[es->weapon].projExplosionEffect, position, axis, NULL);
+                FX_WarpTime(cg->time);
             }
+
+            if (!cg_weaponsArray[es->weapon].projExplosionSound)
+                return;
+
+            if ((es->eFlags & 0x10000) && cg->time - es->time >= 50)
+                return;
+
+            CG_PlaySoundAlias(ENTITYNUM_WORLD, position, cg_weaponsArray[es->weapon].projExplosionSound);
+            return;
+        }
+
+        case 0xbe:
+            cg->nomarks = 1;
+            // fall through
+
+        case 0xbd:
+        {
+            ByteToDir(es->eventParm, dir);
+
+            CG_PlaySoundAlias(ENTITYNUM_WORLD, position, cgs->media.rocketExplodeSound[es->surfType]);
+
+            fx = cgs->media.fx->table[IMPACT_ROCKET_EXPLODE * SURF_TYPECOUNT + es->surfType];
+            if (fx)
+            {
+                VectorCopy(dir, axis[0]);
+                MakeNormalVectors(axis[0], axis[1], axis[2]);
+                FX_PlayEntityEffect(fx, position, axis, NULL);
+            }
+
+            fx = cg_weaponsArray[es->weapon].projExplosionEffect;
+            if (fx)
+            {
+                VectorCopy(dir, axis[0]);
+                MakeNormalVectors(axis[0], axis[1], axis[2]);
+                FX_PlayEntityEffect(fx, position, axis, NULL);
+            }
+
+            if (cg_weaponsArray[es->weapon].projExplosionSound)
+                CG_PlaySoundAlias(ENTITYNUM_WORLD, position, cg_weaponsArray[es->weapon].projExplosionSound);
+
+            cg->nomarks = 0;
             return;
         }
 
@@ -1375,64 +1126,21 @@ void CG_EntityEvent(centity_t *cent, int event)
             return;
         }
 
-        case 0xc4:
-        {
-            int duration = es->angles2[1];
-            int esTime = es->time;
-            float intensity = es->angles2[0];
-            CG_StartShakeCamera(intensity, esTime, (const vec_t *)position, *(float *)&duration);
-            return;
-        }
-
         case 0xc6:
             CG_Obituary(es);
             return;
 
         case 0xc2:
-        {
-
-            float *angles = (float *)es->apos.trBase;
-
-            int fxIndex = cent->nextState.eventParm;
-            int fxIdx = fxIndex - 1;
-            if ((unsigned int)fxIdx > 62) {
-
-                Com_Printf((const char *)"ERROR: CG_PlayFx called with invalid effect id %i\n", fxIndex);
-                return;
-            }
-
-            EffectTemplate *effect = *(EffectTemplate **)((char *)cgs + CGS_FX_DEATHFX + fxIdx * 4);
-
-            AngleVectors(angles, forward, 0, up);
-
-            FX_PlayEffect(effect, position, forward);
+            CG_PlayFx(cent, es->apos.trBase);
             return;
-        }
 
         case 0xc3:
+            CG_PlayFxOnTag(cent, es->eventParm);
+            return;
+
+        case 0xc4:
         {
-            int csIndex2 = es->eventParm + 0x38e;
-            const char *csStr2 = CL_GetConfigString(csIndex2);
-
-            {
-                signed char c0 = csStr2[0];
-                signed char c1 = csStr2[1];
-                int fxIdx2 = c1 + c0 * 10;
-                EffectTemplate *effect = *(EffectTemplate **)((char *)cgs + CGS_FX_CUSTOM + fxIdx2 * 4);
-                FxBoltInfo boltInfo;
-                scr_string_t tagName;
-
-                boltInfo.dobjHandle = cent->nextState.number;
-                tagName = SL_GetString(csStr2 + 2, 0);
-                boltInfo.boneIndex = FX_GetBoneIndex(boltInfo.dobjHandle, tagName);
-
-                Scr_SetString(&tagName, 0);
-
-                if (boltInfo.boneIndex < 0)
-                    return;
-
-                FX_PlayEntityEffect(effect, position, 0, &boltInfo);
-            }
+            CG_StartShakeCamera(es->angles2[0], es->time, position, es->angles2[1]);
             return;
         }
 

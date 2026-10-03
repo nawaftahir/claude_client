@@ -646,14 +646,21 @@ void SND_DriverPreUpdate(int frametime)
 {
 }
 
+static float MSS_GetWetLevel(const snd_alias_t *pAlias)
+{
+    if (!pAlias)
+        return g_snd.effect->wetlevel;
+
+    if (!((dvar_t *)snd_enableReverb)->current.enabled || (pAlias->flags & 0x10))
+        return 0.0f;
+
+    return g_snd.effect->wetlevel;
+}
+
 void SND_SetRoomtype(int roomtype)
 {
-    snd_local_t *sndGlob;
-    float reverbLevel;
     AIL_set_digital_master_room_type( (void *)(milesGlob.driver_2D), roomtype);
-    sndGlob = &g_snd;
-    reverbLevel = sndGlob->effect->wetlevel;
-    AIL_set_digital_master_reverb_levels( (void *)(milesGlob.driver_2D), 1.0f, reverbLevel);
+    AIL_set_digital_master_reverb_levels( (void *)(milesGlob.driver_2D), 1.0f, MSS_GetWetLevel(NULL));
     AIL_set_3D_room_type( (void *)(milesGlob.provider_3D), roomtype);
 }
 

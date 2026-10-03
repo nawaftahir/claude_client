@@ -84,13 +84,13 @@ const char *Win_LocalizeRef(const char *ref)
         if (*key == '\0')
             break;
 
-        match = strcmp(key, ref);
+        match = strcmp(key, ref) == 0;
 
         value = Com_Parse(&strings);
         if (*value == '\0')
             break;
 
-        if (match == 0) {
+        if (match) {
             Com_EndParseSession();
             return va("%s", value);
         }

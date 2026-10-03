@@ -69,7 +69,6 @@ void CG_InitMarkPolys(void)
 void CG_AddMarks(void)
 {
     MarkPoly *markPoly;
-    FxHelper **fxSlot;
 
     if (!CG_MARKS_DVAR->current.enabled)
         return;
@@ -79,12 +78,10 @@ void CG_AddMarks(void)
     if (markPoly == &cg->activeMarkPolys)
         return;
 
-    fxSlot = (FxHelper **)((void *)&theFxHelper);
-
     do {
 
-        if (!(*fxSlot)->CullSphere(markPoly->origin, markPoly->radius,
-                                   (*fxSlot)->mCamera.numPlanes)) {
+        if (!theFxHelper->CullSphere(markPoly->origin, markPoly->radius,
+                                     theFxHelper->mCamera.numPlanes)) {
 
             markPoly->lastFrameDrawn = cg->clientFrame;
 

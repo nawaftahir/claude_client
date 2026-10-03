@@ -921,9 +921,9 @@ static void CG_Turret(centity_t *cent)
     ent.origin[0] = cent->lerpOrigin[0];
     ent.origin[1] = cent->lerpOrigin[1];
     ent.origin[2] = cent->lerpOrigin[2];
-    ent.lighting.origin[0] = cent->lerpOrigin[0];
-    ent.lighting.origin[1] = cent->lerpOrigin[1];
-    ent.lighting.origin[2] = cent->lerpOrigin[2] + 32.0f;
+    ent.lighting.origin[0] = ent.origin[0];
+    ent.lighting.origin[1] = ent.origin[1];
+    ent.lighting.origin[2] = ent.origin[2] + 32.0f;
     ent.renderFxFlags = 0x80;
     AnglesToAxis(cent->lerpAngles, ent.axis);
     ent.reType = (refEntityType_t)(0);

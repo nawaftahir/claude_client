@@ -27,12 +27,10 @@ inline int G_ItemClipMask( gentity_t *ent )
 {
 	int mask;
 
-	mask = ent->clipmask;
-
-	if ( !ent->clipmask )
-	{
+	if ( ent->clipmask )
+		mask = ent->clipmask;
+	else
 		mask = CONTENTS_SOLID | CONTENTS_GLASS | CONTENTS_MISSILECLIP | CONTENTS_ITEMCLIP;
-	}
 
 	return mask;
 }

@@ -66,7 +66,7 @@ float Q_fabs( float f );
 float Q_acos( float c );
 
 #ifndef TU_STATIC
-#define TU_STATIC static inline   /* one copy per TU that uses it */
+#define TU_STATIC inline
 #endif
 
 TU_STATIC int I_fround(const float x);

@@ -1750,7 +1750,7 @@ Returns a uniqued list of files that match the given criteria
 from all search paths
 ===============
 */
-char **FS_ListFilteredFiles(searchpath_t *searchPath, const char *path, const char *extension, const char *filter, FsListBehavior behavior, int *numfiles, int allocType)
+char **FS_ListFilteredFiles(searchpath_t *searchPaths, const char *path, const char *extension, const char *filter, FsListBehavior behavior, int *numfiles, int allocType)
 {
 	int nfiles;
 	char            **listCopy;
@@ -1764,6 +1764,7 @@ char **FS_ListFilteredFiles(searchpath_t *searchPath, const char *path, const ch
 	char zpath[MAX_ZPATH];
 	char sanitizedPath[MAX_OSPATH];
 	bool isDirSearch;
+	searchpath_t *searchPath;
 
 	FS_CheckFileSystemStarted();
 
@@ -1799,9 +1800,14 @@ char **FS_ListFilteredFiles(searchpath_t *searchPath, const char *path, const ch
 	//
 	// search through the path, one element at a time, adding to list
 	//
-	for ( ; searchPath ; searchPath = searchPath->next )
+	for ( searchPath = searchPaths ; searchPath ; searchPath = searchPath->next )
 	{
 		if ( !FS_UseSearchPath(searchPath) )
+		{
+			continue;
+		}
+
+		if ( searchPath->localized && searchPath->language != SEH_GetCurrentLanguage() )
 		{
 			continue;
 		}
@@ -1825,38 +1831,45 @@ char **FS_ListFilteredFiles(searchpath_t *searchPath, const char *path, const ch
 					// check for directory match
 					name = buildBuffer[i].name;
 					//
-					if ( !filter )
+					if ( filter )
+					{
+						if ( !Com_FilterPath( filter, name, qfalse ) )
+						{
+							continue;
+						}
+					}
+					else
 					{
 						zpathLen = FS_ReturnPath( name, zpath, &depth );
 
-						if ( depth != pathDepth || pathLength > zpathLen || (pathLength > 0 && name[pathLength] != '/') || I_strnicmp(name, sanitizedPath, pathLength) )
+						if ( pathDepth != depth || pathLength > zpathLen || (pathLength > 0 && name[pathLength] != '/') || I_strnicmp(name, sanitizedPath, pathLength) )
 						{
 							continue;
 						}
 
 						// check for extension match
-						if ( !isDirSearch )
+						if ( isDirSearch )
 						{
-							if ( extensionLength )
+							if ( name[strlen( name ) - 1] != '/' )
 							{
-								length = I_strlen( name );
-								if ( length <= extensionLength )
-								{
-									continue;
-								}
-								if ( name[length - extensionLength - 1] != '.' )
-								{
-									continue;
-								}
-								if ( I_stricmp( name + length - extensionLength, extension ) )
-								{
-									continue;
-								}
+								continue;
 							}
 						}
-						else if ( name[strlen( name ) - 1] != '/' )
+						else if ( extensionLength )
 						{
-							continue;
+							length = I_strlen( name );
+							if ( length <= extensionLength )
+							{
+								continue;
+							}
+							if ( name[length - extensionLength - 1] != '.' )
+							{
+								continue;
+							}
+							if ( I_stricmp( name + length - extensionLength, extension ) )
+							{
+								continue;
+							}
 						}
 
 						temp = pathLength;
@@ -1872,10 +1885,6 @@ char **FS_ListFilteredFiles(searchpath_t *searchPath, const char *path, const ch
 							szTrimmedName[strlen(szTrimmedName) - 1] = '\0';
 							name = szTrimmedName;
 						}
-					}
-					else if ( !Com_FilterPath( filter, name, qfalse ) )
-					{
-						continue;
 					}
 
 					// unique the match

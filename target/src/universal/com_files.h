@@ -108,7 +108,7 @@ static_assert((sizeof(searchpath_t) == 20), "ERROR: searchpath_t size is invalid
 #endif
 
 #ifndef TU_STATIC
-#define TU_STATIC static inline   /* one copy per TU that uses it */
+#define TU_STATIC inline
 #endif
 
 /*

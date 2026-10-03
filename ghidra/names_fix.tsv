@@ -9,9 +9,7 @@
 4d8170	CG_Trace	fix
 412880	CL_ParseGamestate	fix
 534a60	Menus_Close	fix
-0	CL_Popup	drop
 0	CL_DrawStretchPic	drop
-0	Con_CheckResize	drop
 0	CL_MouseMove	drop
 0	Message_Close	drop
 0	CL_ExecuteKeyBinding	drop
@@ -55,7 +53,6 @@
 0	G_DebugCircle	drop
 0	CG_PlayerTurretPositionAndBlend	drop
 0	CG_ResetEntity	drop
-0	CG_ProcessSnapshots	drop
 0	CL_ParseSnapshot	drop
 0	Record_QueueAudioDataForEncoding	drop
 0	UI_OwnerDraw	drop
@@ -305,3 +302,40 @@
 4aec40	RoQReset	fix	# callalign 10-01
 0	CL_DrawString	drop	# 0x4116a0 = CL_ProfDraw (PINNED), callalign wrong
 52c400	Load_ScriptMenu	fix	# 52c300 is the path helper (name unknown)
+524310	PlayerCmd_getFractionMaxAmmo	fix
+5238b0	PlayerCmd_takeWeapon	fix
+402ac0	CL_StartLoading	fix
+555db0	CIsin	fix
+555ce0	CIcos	fix
+555a90	CIacos	fix
+47f3c0	Scr_ExecCode	fix
+4023e0	CL_Popup	fix
+403c60	Con_CheckResize	fix
+40a4c0	Key_StringToKeynum	fix
+40cd20	CL_Snd_Restart_f	fix
+40cf40	CL_DownloadsComplete	fix
+42e280	Com_SortTempSoundAliases_r	fix
+4505f0	SV_Status_f	fix
+453420	SV_UserinfoChanged	fix
+47fc40	Scr_GetAnimTree	fix
+48be00	XAnimLoadNotifyInfo	fix
+4b1730	CL_ServerStatus	fix
+4bca40	CG_UpdateCompPointerOrientation	fix
+4bd7e0	CG_DrawPlayerAmmoValue	fix
+4c6880	CG_AddPacketEntities	fix
+4c7c00	CG_DObjCalcBoneGeneric	fix
+4c7df0	Byte4PackRgba	fix
+4c8a20	CG_KickAngles	fix
+4cc560	CG_SetShellShockParmsFromDvars	fix
+4cd480	CG_StartWeaponXAnim	fix
+4cd520	CG_PlayADSAnim	fix
+4d3a30	CG_DrawScoreboard_ListBanner	fix
+4d9880	CG_ProcessSnapshots	fix
+4f2c60	BG_AnimScriptAnimation	fix
+4fe8a0	GScr_print3d	fix
+506820	GScr_FReadLn	fix
+506c00	GScr_ClientClaimTrigger	fix
+50deb0	BG_GetMarkDir	fix
+4c8630	CG_OffsetThirdPersonView	fix
+4c8bb0	CG_OffsetFirstPersonView	fix
+4c89d0	CG_StepOffset	fix
