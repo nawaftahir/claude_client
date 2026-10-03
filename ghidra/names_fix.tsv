@@ -15,18 +15,14 @@
 0	CL_ExecuteKeyBinding	drop
 0	CL_HandleEscapeKey	drop
 0	CL_ReferencedIWDList_f	drop
-0	CL_PacketEvent_real	drop
 0	BoxOnPlaneSide	drop
 0	Com_ParseVolumeFalloffCurve	drop
-0	SND_UnpauseSounds	drop
 0	SV_Map_f	drop
 0	SV_GameClientNum	drop
 0	Sys_Error	drop
 0	Scr_GetNextCodepos	drop
 0	Scr_ParamError	drop
 0	DObjGetCreateParms	drop
-0	ROQ_DrawCinematicFromHandle	drop
-0	CL_Rcon_f	drop
 0	CL_ServersResponsePacket	drop
 0	CL_ServerStatus_f	drop
 0	SND_Is3DChannelFree	drop
@@ -34,11 +30,9 @@
 0	CG_DrawPlayerCompass	drop
 0	CG_DrawChatMessages	drop
 0	CG_DrawWeapReticle	drop
-0	CG_Draw2D	drop
 0	CG_AdjustPositionForMover	drop
 0	CG_General	drop
 0	CG_ScriptMover	drop
-0	CG_CalcViewValues	drop
 0	CG_UpdateShellShock	drop
 0	CG_Madd	drop
 0	CG_WhizbySound	drop
@@ -49,9 +43,7 @@
 0	CG_GetHudElemInfo	drop
 0	CG_Draw2dHudElems	drop
 0	vbr_analysis	drop
-0	Scr_AddEntity	drop
 0	G_DebugCircle	drop
-0	CG_PlayerTurretPositionAndBlend	drop
 0	CG_ResetEntity	drop
 0	CL_ParseSnapshot	drop
 0	Record_QueueAudioDataForEncoding	drop
@@ -339,3 +331,38 @@
 4c8630	CG_OffsetThirdPersonView	fix
 4c8bb0	CG_OffsetFirstPersonView	fix
 4c89d0	CG_StepOffset	fix
+4114a0	CL_Netchan_Encode	fix	# ourcg exact
+44ab70	SND_FindReplaceableChannel	fix	# ourcg exact
+49bf70	FX_GetBoneOrientation	fix	# ourcg exact
+4afcf0	ROQ_DrawCinematicFromHandle	fix	# ourcg exact
+4b48b0	SND_LoadSoundFile	fix	# ourcg exact
+4b5590	Voice_Shutdown	fix	# ourcg exact
+4baf00	CG_Shutdown	fix	# ourcg exact
+4bed00	CG_PulseLowHealthOverlay	fix	# ourcg exact
+4c5a40	CG_Draw2D	fix	# ourcg exact
+4c7cc0	CG_ProcessEntity	fix	# ourcg exact
+4c96a0	CG_CalcViewValues	fix	# ourcg exact
+4d0190	CG_AddViewWeapon	fix	# ourcg exact
+4d2b40	CG_AddLocalEntities	fix	# ourcg exact
+4d8ea0	CG_UpdateKillCam	fix	# ourcg exact
+52e8b0	UI_OpenMenuOnDvar	fix	# ourcg exact
+52e910	UI_CloseMenuOnDvar	fix	# ourcg exact
+530ea0	UI_BuildServerStatus	fix	# ourcg exact
+541980	MSS_auto_cleanup	fix	# ourcg exact
+4d85b0	CG_PredictPlayerState_Internal	fix	# ourcg exact (call-site)
+430690	Com_Shutdown	fix	# ourcg exact (call-site)
+4305f0	Com_ShutdownInternal	fix	# ourcg exact (call-site)
+496fd0	FX_AddPrimitive	fix	# ourcg exact (call-site)
+44be60	SND_UnpauseSounds	fix	# ourcg exact (call-site)
+50afd0	Scr_AddEntity	fix	# ourcg exact (call-site)
+47f280	Scr_AddExecThread	fix	# ourcg exact (call-site)
+47f1a0	Scr_ExecEntThreadNum	fix	# ourcg exact (call-site)
+47f0c0	Scr_ExecThread	fix	# ourcg exact (call-site)
+4cf0e0	CalculateWeaponPosition_Sway	fix	# own match
+4cf1b0	CalculateWeaponPosition_SwayMovement	fix	# own match
+4cf1d0	CalculateWeaponPosition_BasePosition_movement	fix	# caller order, Kisak shape
+4cf570	CalculateWeaponPosition_BasePosition	fix	# was Drop_Item (wrong)
+4cf5e0	CalculateWeaponPosition_ToWorldPosition	fix	# own match
+4cf6c0	CalculateWeaponPosition_SaveOffsetMovement	fix	# own match
+4cf770	CalculateWeaponPosition	fix	# caller order, Kisak shape
+4cf9c0	CalculateWeaponPostion_PositionToADS	fix	# own match

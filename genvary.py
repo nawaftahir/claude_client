@@ -40,18 +40,43 @@ def sane(o, v):
         if dep < 0: return False
     return dep == o.count('(') - o.count(')')
 
+STMT = re.compile(r'^(\s+)(?!if\b|else\b|for\b|while\b|do\b|return\b|break\b|continue\b|case\b|default\b|switch\b|goto\b)[^{}/#]*;\s*$')
+DECL = re.compile(r'^\s*(const\s+|unsigned\s+|signed\s+|struct\s+)*\w+[\s\*]+\w+(\[[^]]*\])?\s*(=.*)?;')
+def ids(t): return set(re.findall(r'[A-Za-z_]\w*', t))
+def lhs(t):
+    m = re.match(r'\s*([^=;]+?)\s*([-+*/|&^]|<<|>>)?=[^=]', t)
+    return ids(m.group(1)) if m else None
+def swaps(L, a, b):
+    out = []
+    for i in range(a, b - 1):
+        x, y = L[i], L[i + 1]
+        mx, my = STMT.match(x), STMT.match(y)
+        if not (mx and my) or mx.group(1) != my.group(1) or DECL.match(x) or DECL.match(y): continue
+        lx, ly = lhs(x), lhs(y)
+        if lx is None and ly is None: continue  # two calls: order is observable
+        # independent: neither writes what the other reads (calls may touch anything: allow only if the other is a pure store)
+        if (lx and lx & ids(y.split('=', 1)[-1] if ly else y)) or (ly and ly & ids(x.split('=', 1)[-1] if lx else x)): continue
+        if lx and ly and (lx & ly): continue
+        if ('(' in x and ly is None) or ('(' in y and lx is None): pass
+        if ('(' in x.split('=',1)[-1] and '(' in y.split('=',1)[-1]): continue
+        out.append((x + '\n' + y, y + '\n' + x))
+    return out
+
 maxd = int(sys.argv[3]) if len(sys.argv) > 3 else 40
 K = int(sys.argv[4]) if len(sys.argv) > 4 else 10
 gen = sys.argv[5] if len(sys.argv) > 5 else 'cmp'
 fns, seen = [], set()
 for r in (l.split() for l in open(sys.argv[1])):
-    if len(r) < 5 or r[0] == 'sched' or not (0 < int(r[1]) <= maxd): continue
+    if len(r) < 5 or (r[0] == "sched" and gen != "swap") or not (0 < int(r[1]) <= maxd): continue
     loc = locate(r[4])
     if not loc or loc in seen: continue
     seen.add(loc)
     p, a, b = loc
     L = open(p, errors='replace').read().split('\n')
-    if gen in ('ifelse', 'split'):  # exact-text block edits, unique in the file
+    if gen == 'swap':  # adjacent independent statements, same block
+        txt = '\n'.join(L)
+        todo = [(None, o, v) for o, v in swaps(L, a - 1, b) if txt.count(o) == 1]
+    elif gen in ('ifelse', 'split'):  # exact-text block edits, unique in the file
         txt = '\n'.join(L)
         todo = [(None, o, v) for o, v in {'ifelse': cmpflip.ifelse, 'split': cmpflip.splitor}[gen](L, a - 1, b) if txt.count(o) == 1]
     else:

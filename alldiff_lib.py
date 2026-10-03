@@ -22,7 +22,10 @@ for f in (() if os.environ.get('NAMES_NOFIX') else ('../ghidra/names_fix.tsv',))
             if len(r) > 2 and r[2] == 'located': located.add(r[1])
 for _k in dropped: names.pop(_k, None)
 def plain(m):
-    if m.startswith('?'): return m[1:].split('@')[0]
+    if m.startswith('?'):
+        p = m[1:].split('@@')[0].split('@')
+        if len(p) >= 2 and p[1] and (p[1] + '::' + p[0]) in names: return p[1] + '::' + p[0]
+        return p[0]
     return m.lstrip('_')
 def norm(code, start, lim):
     out = []

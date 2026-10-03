@@ -13,7 +13,10 @@ d, base = section('build/CoD2MP_s.exe')
 cd, cbase = section('../../cod2engineold/binaries/windows/1.0/CoD2MP_s.exe')
 from alldiff_lib import names
 def plain(m):
-    if m.startswith('?'): return m[1:].split('@')[0]
+    if m.startswith('?'):
+        p = m[1:].split('@@')[0].split('@')
+        if len(p) >= 2 and p[1] and (p[1] + '::' + p[0]) in names: return p[1] + '::' + p[0]
+        return p[0]
     return m.lstrip('_')
 def norm(code, start, lim):
     out = []

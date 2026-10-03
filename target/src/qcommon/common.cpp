@@ -1840,7 +1840,8 @@ void Com_CheckSyncFrame( void )
 
 void Com_Frame( void )
 {
-	Com_SyncThreads();
+	_controlfp( _PC_24, _MCW_PC );
+	_controlfp( _MCW_EM, _MCW_EM );
 
 	if ( !__sigsetjmp(*(jmp_buf*)Sys_GetValue(THREAD_VALUE_COM_ERROR), 0) )
 	{
@@ -1848,12 +1849,11 @@ void Com_Frame( void )
 		com_frameNumber++;
 	}
 
-	if ( !com_errorEntered )
+	if ( com_errorEntered )
 	{
-		return;
+		Com_ErrorCleanup();
+		Com_StartHunkUsers();
 	}
-
-	Com_ErrorCleanup();
 }
 
 /*

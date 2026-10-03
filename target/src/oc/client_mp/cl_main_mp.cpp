@@ -2528,19 +2528,10 @@ void CL_Init(void)
 
 void CL_ShutdownAll(void)
 {
-    void (*syncRenderThread)(void) = re.SyncRenderThread;
+    if (re.SyncRenderThread)
+        re.SyncRenderThread();
 
-    if (syncRenderThread)
-        syncRenderThread();
-
-    if (cls.hunkUsersStarted) {
-        CL_ShutdownCGame();
-        CL_ShutdownUI();
-        cls.whiteMaterial = 0;
-        cls.consoleMaterial = 0;
-        cls.consoleFont = 0;
-        cls.hunkUsersStarted = 0;
-    }
+    CL_ShutdownHunkUsers();
 
     if (re.Shutdown)
         ((void (*)(int))re.Shutdown)(0);
