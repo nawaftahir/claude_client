@@ -119,8 +119,7 @@ void CG_FxTest(void)
         cg->testFxTime = cg->time;
 
         if (Cmd_Argc() == 3) {
-            double d = atof(CG_Argv(2));
-            cg->testFxRespawnTime = (int)(d * 1000.0);
+            cg->testFxRespawnTime = (int)(atof(CG_Argv(2)) * 1000.0);
         } else {
             cg->testFxRespawnTime = 0;
         }
@@ -340,6 +339,83 @@ static void CG_OffsetThirdPersonView(void)
     }
 }
 
+static void CG_StepOffset(void)
+{
+    int timeDelta;
+
+    timeDelta = cg->time - cg->stepTime;
+    if (timeDelta < 0)
+        cg->stepTime = cg->time;
+    if (timeDelta < 100)
+        cg->refdef.vieworg[2] -= (float)(100 - timeDelta) * cg->stepChange * 0.01f;
+}
+
+static void CG_OffsetFirstPersonView(void)
+{
+    viewState_t vs;
+    vec3_t angles;
+    vec3_t right;
+    float delta;
+    float deltaB;
+    float f;
+    float floorZ;
+
+    if (cg->nextSnap->ps.pm_type == 5)
+        return;
+    if (cg->predictedPlayerState.eFlags & 0x300)
+        return;
+
+    vs.ps = &cg->predictedPlayerState;
+    if (cg->damageTime)
+        vs.damageTime = cg->damageTime - cg->predictedPlayerState.deltaTime;
+    else
+        vs.damageTime = 0;
+    vs.time = cg->time - cg->predictedPlayerState.deltaTime;
+    vs.v_dmg_pitch = cg->v_dmg_pitch;
+    vs.v_dmg_roll = cg->v_dmg_roll;
+    vs.xyspeed = cg->xyspeed;
+    vs.frametime = (float)cg->frametime * 0.001f;
+    vs.fLastIdleFactor = cg->playerEntity.fLastIdleFactor;
+    vs.weapIdleTime = &cg->weapIdleTime;
+    BG_CalculateViewAngles(&vs, angles);
+
+    cg->refdefViewAngles[0] += angles[0];
+    cg->refdefViewAngles[1] += angles[1];
+    cg->refdefViewAngles[2] += angles[2];
+
+    cg->refdef.vieworg[2] += cg->predictedPlayerState.viewHeightCurrent;
+
+    delta = BG_GetVerticalBobFactor(&cg->predictedPlayerState, cg->fBobCycle, cg->xyspeed, bg_bobMax->current.value);
+    cg->refdef.vieworg[2] += delta;
+
+    deltaB = BG_GetHorizontalBobFactor(&cg->predictedPlayerState, cg->fBobCycle, cg->xyspeed, bg_bobMax->current.value);
+    AngleVectors(cg->refdefViewAngles, NULL, right, NULL);
+    cg->refdef.vieworg[0] += right[0] * deltaB;
+    cg->refdef.vieworg[1] += right[1] * deltaB;
+    cg->refdef.vieworg[2] += right[2] * deltaB;
+
+    delta = (float)(cg->time - cg->landTime);
+    if (delta < 0.0f)
+        cg->landTime = cg->time - 450;
+    if (delta < 150.0f) {
+        f = delta / 150.0f;
+        cg->refdef.vieworg[2] += cg->landChange * f;
+    } else if (delta < 450.0f) {
+        delta -= 150.0f;
+        f = 1.0f - delta / 300.0f;
+        cg->refdef.vieworg[2] += cg->landChange * f;
+    }
+
+    CG_StepOffset();
+
+    AddLeanToPosition(cg->refdef.vieworg, cg->refdefViewAngles[1], cg->predictedPlayerState.leanf, 16.0f, 20.0f);
+
+    floorZ = cg->predictedPlayerState.origin[2] + 8.0f;
+    if (cg->refdef.vieworg[2] < floorZ)
+        cg->refdef.vieworg[2] = floorZ;
+}
+
+
 static void CG_CalcViewValues(void)
 {
     playerState_t *ps;
@@ -514,87 +590,11 @@ static void CG_CalcViewValues(void)
         }
     }
 
-    if (cg->renderingThirdPerson)
-        goto do_third_person;
+    if (!cg->renderingThirdPerson)
+        CG_OffsetFirstPersonView();
+    else
+        CG_OffsetThirdPersonView();
 
-    if (ps->eFlags & 0x300)
-        goto post_lean;
-
-    {
-        viewState_t viewState;
-        float viewAnglesResult[3];
-        float bobMax = (float)bg_bobMax->current.integer;
-
-        viewState.ps = ps;
-        viewState.damageTime = cg->v_dmg_time;
-        viewState.time = cg->time;
-        viewState.v_dmg_pitch = cg->v_dmg_pitch;
-        viewState.v_dmg_roll = cg->v_dmg_roll;
-        viewState.xyspeed = speed;
-        viewState.frametime = (float)cg->frametime * 0.001f;
-        viewState.fLastIdleFactor = cg->playerEntity.fLastIdleFactor;
-        viewState.weapIdleTime = &cg->weapIdleTime;
-
-        BG_CalculateViewAngles(&viewState, viewAnglesResult);
-
-        cg->refdefViewAngles[0] += viewAnglesResult[0];
-        cg->refdefViewAngles[1] += viewAnglesResult[1];
-        cg->refdefViewAngles[2] += viewAnglesResult[2];
-
-        cg->refdef.vieworg[2] += ps->viewHeightCurrent;
-
-        {
-            float vbob = BG_GetVerticalBobFactor(ps, bobCycle, speed, bobMax);
-            cg->refdef.vieworg[2] += vbob;
-        }
-
-        {
-            float hbob = BG_GetHorizontalBobFactor(ps, bobCycle, speed, bobMax);
-            float forward[3], right[3], up[3];
-            AngleVectors(cg->refdefViewAngles, forward, right, up);
-            cg->refdef.vieworg[0] += hbob * forward[0];
-            cg->refdef.vieworg[1] += hbob * forward[1];
-            cg->refdef.vieworg[2] += hbob * forward[2];
-        }
-
-        {
-            int delta = cg->time - cg->landTime;
-            if (delta < 150) {
-                cg->refdef.vieworg[2] += (float)delta / 150.0f * cg->landChange;
-            } else if (delta < 450) {
-                cg->refdef.vieworg[2] +=
-                    (((float)delta - 150.0f) / -300.0f + 1.0f) * cg->landChange;
-            }
-        }
-
-        {
-            int elapsed = cg->time - cg->stepTime;
-            if (elapsed < 0)
-                cg->stepTime = cg->time;
-            if (elapsed >= 100) {
-
-            } else {
-                cg->refdef.vieworg[2] +=
-                    (float)(100 - elapsed) * cg->stepChange / -100.0f;
-            }
-        }
-
-        AddLeanToPosition(cg->refdef.vieworg, cg->refdefViewAngles[1],
-                          ps->leanf, 16.0f, 20.0f);
-
-        {
-            float minZ = cg->predictedPlayerState.origin[2] + 8.0f;
-            if (minZ > cg->refdef.vieworg[2])
-                cg->refdef.vieworg[2] = minZ;
-        }
-    }
-
-    goto post_lean;
-
-do_third_person:
-    CG_OffsetThirdPersonView();
-
-post_lean:
 
     CG_ShakeCamera();
 

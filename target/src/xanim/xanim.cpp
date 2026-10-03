@@ -973,8 +973,8 @@ void TransformToQuatRefFrame( const float *rot, float *trans )
 void XAnimCalcRelDeltaParts(const XAnimParts_s *parts, float weightScale, float time1, float time2, XAnimSimpleRotPos *rotPos, int quatIndex)
 {
 	float Q[2][2];
-	vec4_t vec1;
-	vec4_t vec2;
+	vec3_t vec1;
+	vec3_t vec2;
 	vec3_t pos;
 	float rotWeightScale;
 	XAnimDeltaPart *deltaPart;
@@ -1624,14 +1624,19 @@ void XAnimUpdateOldTime(XAnimTree_s *tree, unsigned int infoIndex, XAnimState *s
 	{
 		info = &g_xAnimInfo[index];
 		state = &info->state;
-		bWeight = 0;
-
 		if ( parentHasWeight && state->weight != 0.0f )
 			bWeight = 1;
+		else
+			bWeight = 0;
 
 		childHasWeight = bWeight;
 
-		if ( parentHasWeight && dtime < state->goalTime )
+		if ( !parentHasWeight || state->goalTime <= dtime )
+		{
+			state->weight = state->goalWeight;
+			state->goalTime = 0.0f;
+		}
+		else
 		{
 			state->weight += (state->goalWeight - state->weight) * dtime / state->goalTime;
 
@@ -1640,25 +1645,18 @@ void XAnimUpdateOldTime(XAnimTree_s *tree, unsigned int infoIndex, XAnimState *s
 
 			state->goalTime = state->goalTime - dtime;
 		}
-		else
-		{
-			state->weight = state->goalWeight;
-			state->goalTime = 0.0f;
-		}
-
-		bTime = 0;
 
 		if ( childHasWeight || state->goalWeight != 0.0f )
-			bTime = 1;
-
-		parentHasTime = bTime;
+			parentHasTime = 1;
+		else
+			parentHasTime = 0;
 		entry = &tree->anims->entries[infoIndex];
 		numAnims = entry->numAnims;
 
 		if ( !numAnims )
 		{
 			parts = entry->u.parts;
-			childHasTime = 0.0f != parts->frequency;
+			childHasTime = parts->frequency != 0.0f;
 		}
 		else
 		{

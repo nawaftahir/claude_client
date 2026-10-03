@@ -1082,8 +1082,7 @@ Player movement occurs as a result of packet events, which
 happen before SV_Frame is called
 ==================
 */
-void UI_SetMap( const char *mapname, const char *gametype );
-void CL_StartHunkUsers( void );
+void CL_FlushDebugData( qboolean fromServer );
 
 void SV_Frame( int msec )
 {
@@ -1101,8 +1100,6 @@ void SV_Frame( int msec )
 			Com_Shutdown("EXE_SERVERKILLED");
 		}
 
-		UI_SetMap("", "");
-		CL_StartHunkUsers();
 		engineState->serverKilled = false;
 		return;
 	}
@@ -1252,6 +1249,10 @@ void SV_Frame( int msec )
 	{
 		sv.timeResidual -= frameMsec;
 		svs.time += frameMsec;
+
+#ifndef DEDICATED
+		CL_FlushDebugData(qtrue);
+#endif
 
 		// let everything in the world think and move
 		SV_RunFrame();

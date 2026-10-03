@@ -183,45 +183,41 @@ static void Com_LoadedSoundList( snd_alias_system_t system )
 {
 	int totalSize;
 	snd_alias_t *head;
-	snd_alias_t *alias;
 	int i;
 	int j;
 	int size;
 
-	totalSize = 0;
 	if ( !g_sa.initialized[system] )
 	{
 		return;
 	}
+	totalSize = 0;
 	head = g_sa.aliasInfo[system].head;
 	for ( i = 0; i < g_sa.aliasInfo[system].count; i++ )
 	{
-		alias = &head[i];
-		if ( ((alias->flags & 0x60) >> 5) != SAT_LOADED )
+		if ( ((head[i].flags & 0x60) >> 5) != SAT_LOADED )
 		{
 			continue;
 		}
 		for ( j = 0; j < i; j++ )
 		{
-			if ( ((head[j].flags & 0x60) >> 5) == SAT_LOADED && head[j].soundFile->soundName == alias->soundFile->soundName )
+			if ( ((head[j].flags & 0x60) >> 5) == SAT_LOADED && head[j].soundFile->soundName == head[i].soundFile->soundName )
 			{
-				break;
+				goto next;
 			}
 		}
-		if ( j < i )
+		if ( head[i].soundFile->fileMem )
 		{
-			continue;
-		}
-		if ( alias->soundFile->fileMem )
-		{
-			size = SND_GetSoundFileSize(alias->soundFile->fileMem);
+			size = SND_GetSoundFileSize(head[i].soundFile->fileMem);
 			totalSize += size;
-			Com_Printf("%-64s %7.1f KB\n", alias->soundFile->soundName, (float)size * 0.0009765625f);
+			Com_Printf("%-64s %7.1f KB\n", head[i].soundFile->soundName, (float)size * 0.0009765625f);
 		}
 		else
 		{
-			Com_Printf("%-64s FAILED TO LOAD\n", alias->soundFile->soundName);
+			Com_Printf("%-64s FAILED TO LOAD\n", head[i].soundFile->soundName);
 		}
+next:
+		;
 	}
 	Com_Printf("\ntotal usage %7.3f MB\n", (float)totalSize * 0.00000095367431640625f);
 }
@@ -229,7 +225,6 @@ static void Com_LoadedSoundList( snd_alias_system_t system )
 static void Com_StreamedSoundList( snd_alias_system_t system )
 {
 	snd_alias_t *head;
-	snd_alias_t *alias;
 	int i;
 	int j;
 
@@ -240,30 +235,27 @@ static void Com_StreamedSoundList( snd_alias_system_t system )
 	head = g_sa.aliasInfo[system].head;
 	for ( i = 0; i < g_sa.aliasInfo[system].count; i++ )
 	{
-		alias = &head[i];
-		if ( ((alias->flags & 0x60) >> 5) != SAT_STREAMED )
+		if ( ((head[i].flags & 0x60) >> 5) != SAT_STREAMED )
 		{
 			continue;
 		}
 		for ( j = 0; j < i; j++ )
 		{
-			if ( ((head[j].flags & 0x60) >> 5) == SAT_STREAMED && head[j].soundFile->soundName == alias->soundFile->soundName )
+			if ( ((head[j].flags & 0x60) >> 5) == SAT_STREAMED && head[j].soundFile->soundName == head[i].soundFile->soundName )
 			{
-				break;
+				goto next;
 			}
 		}
-		if ( j < i )
+		if ( head[i].soundFile->isStreamFound )
 		{
-			continue;
-		}
-		if ( alias->soundFile->isStreamFound )
-		{
-			Com_Printf("%-64s\n", alias->soundFile->soundName);
+			Com_Printf("%-64s\n", head[i].soundFile->soundName);
 		}
 		else
 		{
-			Com_Printf("%-64s FILE NOT FOUND\n", alias->soundFile->soundName);
+			Com_Printf("%-64s FILE NOT FOUND\n", head[i].soundFile->soundName);
 		}
+next:
+		;
 	}
 }
 

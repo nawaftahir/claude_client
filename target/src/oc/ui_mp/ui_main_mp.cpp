@@ -341,7 +341,7 @@ void UI_DrawText(const char *text, int maxChars, FontHandle font, float x, float
 void UI_DrawTextWithCursor(const char *text, int maxChars, FontHandle font, float x, float y, int horzAlign, int vertAlign, float scale, const vec_t *color, int style, int cursorPos, char cursor);
 static void UI_StartServerRefresh(qboolean full);
 static void __attribute_regparm__(0) UI_BuildServerDisplayList(qboolean force);
-static inline __attribute__((always_inline)) void UI_UpdateServerCount(void);
+static void UI_UpdateServerCount(void);
 qboolean UI_OwnerDrawHandleKey(int ownerDraw, int flags, float *special, int key);
 const char *UI_FeederItemText(float feederID, int index, int column, MaterialHandle *handle);
 void UI_DrawRect(float x, float y, float width, float height, int horzAlign, int vertAlign, float size, const vec_t *color);
@@ -2880,7 +2880,7 @@ static const char *UI_StrContains(const char *str, const char *charset)
 }
 
 #ifndef __EMSCRIPTEN__
-static inline __attribute__((always_inline)) void UI_UpdateServerCount(void)
+static void UI_UpdateServerCount(void)
 {
     int serverCount = LAN_GetServerCount((ui_netSource)->current.integer);
     if (sharedUiInfo.serverStatus.serverCount != serverCount) {

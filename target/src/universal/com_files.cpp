@@ -1750,11 +1750,12 @@ Returns a uniqued list of files that match the given criteria
 from all search paths
 ===============
 */
-char **FS_ListFilteredFiles(searchpath_t *searchPaths, const char *path, const char *extension, const char *filter, FsListBehavior behavior, int *numfiles, int allocType)
+char **FS_ListFilteredFiles(searchpath_t *searchPath, const char *path, const char *extension, const char *filter, FsListBehavior behavior, int *numfiles, int allocType)
 {
 	int nfiles;
 	char            **listCopy;
 	char            *list[MAX_FOUND_FILES];
+	searchpath_t    *search;
 	int i;
 	int pathLength;
 	int extensionLength;
@@ -1764,7 +1765,6 @@ char **FS_ListFilteredFiles(searchpath_t *searchPaths, const char *path, const c
 	char zpath[MAX_ZPATH];
 	char sanitizedPath[MAX_OSPATH];
 	bool isDirSearch;
-	searchpath_t *searchPath;
 
 	FS_CheckFileSystemStarted();
 
@@ -1800,27 +1800,27 @@ char **FS_ListFilteredFiles(searchpath_t *searchPaths, const char *path, const c
 	//
 	// search through the path, one element at a time, adding to list
 	//
-	for ( searchPath = searchPaths ; searchPath ; searchPath = searchPath->next )
+	for ( search = searchPath ; search ; search = search->next )
 	{
-		if ( !FS_UseSearchPath(searchPath) )
+		if ( !FS_UseSearchPath(search) )
 		{
 			continue;
 		}
 
-		if ( searchPath->localized && searchPath->language != SEH_GetCurrentLanguage() )
+		if ( search->localized && search->language != SEH_GetCurrentLanguage() )
 		{
 			continue;
 		}
 
 		// is the element a pak file?
-		if ( searchPath->iwd )
+		if ( search->iwd )
 		{
 			//ZOID:  If we are pure, don't search for files on paks that
 			// aren't on the pure list
-			if ( searchPath->localized || FS_IwdIsPure(searchPath->iwd) )
+			if ( search->localized || FS_IwdIsPure(search->iwd) )
 			{
 				// look through all the pak file elements
-				iwd = searchPath->iwd;
+				iwd = search->iwd;
 				buildBuffer = iwd->buildBuffer;
 				for ( i = 0; i < iwd->numFiles; i++ )
 				{
@@ -1833,16 +1833,19 @@ char **FS_ListFilteredFiles(searchpath_t *searchPaths, const char *path, const c
 					//
 					if ( filter )
 					{
+						// case insensitive
 						if ( !Com_FilterPath( filter, name, qfalse ) )
 						{
 							continue;
 						}
+						// unique the match
+						nfiles = FS_AddFileToList( name, list, nfiles, allocType );
 					}
 					else
 					{
 						zpathLen = FS_ReturnPath( name, zpath, &depth );
 
-						if ( pathDepth != depth || pathLength > zpathLen || (pathLength > 0 && name[pathLength] != '/') || I_strnicmp(name, sanitizedPath, pathLength) )
+						if ( depth != pathDepth || pathLength > zpathLen || (pathLength > 0 && name[pathLength] != '/') || I_strnicmp(name, sanitizedPath, pathLength) )
 						{
 							continue;
 						}
@@ -1857,6 +1860,7 @@ char **FS_ListFilteredFiles(searchpath_t *searchPaths, const char *path, const c
 						}
 						else if ( extensionLength )
 						{
+							// unique the match
 							length = I_strlen( name );
 							if ( length <= extensionLength )
 							{
@@ -1878,28 +1882,28 @@ char **FS_ListFilteredFiles(searchpath_t *searchPaths, const char *path, const c
 							temp++;     // include the '/'
 						}
 
-						name += temp;
 						if ( isDirSearch )
 						{
-							strcpy(szTrimmedName, name);
+							strcpy(szTrimmedName, &name[temp]);
 							szTrimmedName[strlen(szTrimmedName) - 1] = '\0';
-							name = szTrimmedName;
+							nfiles = FS_AddFileToList(szTrimmedName, list, nfiles, allocType);
+						}
+						else
+						{
+							nfiles = FS_AddFileToList( name + temp, list, nfiles, allocType );
 						}
 					}
-
-					// unique the match
-					nfiles = FS_AddFileToList( name, list, nfiles, allocType );
 				}
 			}
 		}
-		else if ( searchPath->dir && (!fs_restrict->current.boolean && !fs_numServerIwds || behavior) )     // scan for files in the filesystem
+		else if ( search->dir && (!fs_restrict->current.boolean && !fs_numServerIwds || behavior) )     // scan for files in the filesystem
 		{
 			int numSysFiles;
 			char    **sysFiles;
 			char    *name;
 			char netpath[MAX_OSPATH];
 
-			FS_BuildOSPath(searchPath->dir->path, searchPath->dir->gamedir, sanitizedPath, netpath);
+			FS_BuildOSPath(search->dir->path, search->dir->gamedir, sanitizedPath, netpath);
 			sysFiles = Sys_ListFiles( netpath, extension, filter, &numSysFiles, isDirSearch );
 			for ( i = 0 ; i < numSysFiles ; i++ )
 			{

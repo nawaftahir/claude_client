@@ -25,14 +25,31 @@ extern void Com_Error(errorParm_t code, const char *fmt, ...);
 #define CG_MARKS_DVAR cg_marks
 #define FX_HELPER_PTR (((FxHelper *)theFxHelper))
 
-static inline __attribute__((always_inline)) unsigned char ColorFloatToByte(float f)
+// universal/com_math.h inlines
+inline int I_sel(const int x, const int y, const int z)
 {
-    int val = I_fround(f * 255.0f);
-    if (val - 255 >= 0)
-        return 255;
-    if (val <= 0)
-        return 0;
-    return (unsigned char)val;
+    if (x >= 0)
+        return y;
+    return z;
+}
+
+inline int I_max(const int x, const int y)
+{
+    return I_sel(x - y, x, y);
+}
+
+inline int I_min(const int x, const int y)
+{
+    return I_sel(y - x, x, y);
+}
+
+// Name from CoD4 com_pack; body at retail 0x4c7df0.
+static void Byte4PackVertexColor(const float *from, unsigned char *to)
+{
+    to[2] = (unsigned char)I_max(0, I_min(255, I_fround(from[0] * 255.0f)));
+    to[1] = (unsigned char)I_max(0, I_min(255, I_fround(from[1] * 255.0f)));
+    to[0] = (unsigned char)I_max(0, I_min(255, I_fround(from[2] * 255.0f)));
+    to[3] = (unsigned char)I_max(0, I_min(255, I_fround(from[3] * 255.0f)));
 }
 
 void CG_InitMarkPolys(void);
@@ -141,10 +158,7 @@ void CG_ImpactMark(MaterialHandle markMaterial, const vec_t *origin, const vec_t
         markFragments,
         markMaterial);
 
-    nativeColor.array[1] = ColorFloatToByte(color[0]);
-    nativeColor.array[2] = ColorFloatToByte(color[1]);
-    nativeColor.array[3] = ColorFloatToByte(color[2]);
-    nativeColor.array[0] = ColorFloatToByte(color[3]);
+    Byte4PackVertexColor(color, nativeColor.array);
 
     if (fragmentCount <= 0)
         return;

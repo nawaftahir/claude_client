@@ -3695,9 +3695,7 @@ Scr_GetAnimTree
 */
 scr_animtree_t Scr_GetAnimTree( unsigned int index ) // untested
 {
-	int id;
 	VariableValue *value;
-	scr_animtree_t tree;
 
 	if ( index < scrVmPub.outparamcount )
 	{
@@ -3705,22 +3703,19 @@ scr_animtree_t Scr_GetAnimTree( unsigned int index ) // untested
 
 		if ( value->type == VAR_INTEGER )
 		{
-			id = value->u.intValue;
-
-			if ( id <= scrAnimPub.xanim_num[SCR_XANIM_SERVER] && scrAnimPub.xanim_lookup[SCR_XANIM_SERVER][id].anims )
+			if ( value->u.intValue <= scrAnimPub.xanim_num[SCR_XANIM_SERVER] )
 			{
-				tree.anims = scrAnimPub.xanim_lookup[SCR_XANIM_SERVER][id].anims;
-				return tree;
+				if ( scrAnimPub.xanim_lookup[SCR_XANIM_SERVER][value->u.intValue].anims )
+					return scrAnimPub.xanim_lookup[SCR_XANIM_SERVER][value->u.intValue];
 			}
 
 			scrVarPub.error_message = "bad anim tree";
-
-			goto cleanup;
+		}
+		else
+		{
+			scrVarPub.error_message = va("type %s is not an animtree", var_typename[value->type]);
 		}
 
-		scrVarPub.error_message = va("type %s is not an animtree", var_typename[value->type]);
-
-cleanup:
 		RemoveRefToValue(value);
 		value->type = VAR_UNDEFINED;
 
@@ -3728,11 +3723,9 @@ cleanup:
 		Scr_ErrorInternal();
 	}
 
-error:
 	Scr_Error(va("parameter %d does not exist", index + 1));
 
-	tree.anims = scrAnimPub.xanim_lookup[SCR_XANIM_SERVER][0].anims;
-	return tree;
+	return scrAnimPub.xanim_lookup[SCR_XANIM_SERVER][0];
 }
 
 /*

@@ -629,70 +629,51 @@ static void CG_RemoveChatEscapeChar(char *text)
 
 static void CG_ParseScores(void)
 {
-    int scoreCount;
     int i;
+    int icon;
+    int team;
 
-    if (!cg) {
-        return;
+    cg->numScores = atoi(CG_Argv(1));
+    if (cg->numScores > 64) {
+        cg->numScores = 64;
     }
 
-    scoreCount = atoi(CG_Argv(1));
-    if (scoreCount > 64) {
-        scoreCount = 64;
-    }
-    if (scoreCount < 0) {
-        scoreCount = 0;
-    }
-
-    cg->numScores = scoreCount;
     memset(cg->teamScores, 0, sizeof(cg->teamScores));
-    memset(cg->teamPings, 0, sizeof(cg->teamPings));
-    memset(cg->teamPlayers, 0, sizeof(cg->teamPlayers));
-    memset(cg->scores, 0, sizeof(cg->scores));
-
     cg->teamScores[1] = atoi(CG_Argv(2));
     cg->teamScores[2] = atoi(CG_Argv(3));
 
-    for (i = 0; i < scoreCount; ++i) {
-        int argBase;
-        int client;
-        int iconIndex;
-        int team;
-        score_t *score;
+    memset(cg->scores, 0, sizeof(cg->scores));
+    memset(cg->teamPings, 0, sizeof(cg->teamPings));
+    memset(cg->teamPlayers, 0, sizeof(cg->teamPlayers));
 
-        argBase = 4 + i * 5;
-        score = &cg->scores[i];
-        client = atoi(CG_Argv(argBase));
-        if (client < 0 || client > 63) {
-            client = 0;
+    for (i = 0; i < cg->numScores; i++) {
+        cg->scores[i].client = atoi(CG_Argv(i * 5 + 4));
+        cg->scores[i].score = atoi(CG_Argv(i * 5 + 5));
+        cg->scores[i].ping = atoi(CG_Argv(i * 5 + 6));
+        cg->scores[i].deaths = atoi(CG_Argv(i * 5 + 7));
+        icon = atoi(CG_Argv(i * 5 + 8));
+        if (icon > 0 && icon <= 8) {
+            cg->scores[i].hStatusIcon = CL_RegisterMaterialNoMip(CL_GetConfigString(icon + 0x16), 7);
         }
 
-        score->client = client;
-        score->score = atoi(CG_Argv(argBase + 1));
-        score->ping = atoi(CG_Argv(argBase + 2));
-        score->deaths = atoi(CG_Argv(argBase + 3));
-        iconIndex = atoi(CG_Argv(argBase + 4));
-
-        if ((unsigned int)(iconIndex - 1) <= 7) {
-            score->hStatusIcon = CL_RegisterMaterialNoMip(CL_GetConfigString(iconIndex + 0x16), 7);
+        if (cg->scores[i].client < 0 || cg->scores[i].client >= 64) {
+            cg->scores[i].client = 0;
         }
 
-        if (cg->bgs.clientinfo[client].infoValid) {
-            cg->bgs.clientinfo[client].score = score->score;
-            team = cg->bgs.clientinfo[client].team;
+        cg->bgs.clientinfo[cg->scores[i].client].score = cg->scores[i].score;
+        if (cg->bgs.clientinfo[cg->scores[i].client].infoValid) {
+            team = cg->bgs.clientinfo[cg->scores[i].client].team;
         } else {
             team = 0;
         }
+        cg->scores[i].team = team;
 
-        if ((unsigned int)team < 4) {
-            score->team = team;
-            cg->teamPlayers[team]++;
-            cg->teamPings[team] += score->ping;
-        }
+        cg->teamPlayers[cg->scores[i].team]++;
+        cg->teamPings[cg->scores[i].team] += cg->scores[i].ping;
     }
 
-    for (i = 0; i < 4; ++i) {
-        if (cg->teamPlayers[i] > 0 && cg->teamPings[i] > 0) {
+    for (i = 0; i < 4; i++) {
+        if (cg->teamPlayers[i] >= 1 && cg->teamPings[i] >= 1) {
             cg->teamPings[i] /= cg->teamPlayers[i];
         } else {
             cg->teamPings[i] = 0;

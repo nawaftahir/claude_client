@@ -409,7 +409,7 @@ void G_MoverTeam( gentity_t *ent )
 
 			if ( part->client )
 			{
-				part->client->ps.delta_angles[YAW] -= (unsigned short)(int)(push->deltayaw * 182.04445f);
+				part->client->ps.delta_angles[YAW] -= ANGLE2SHORT(push->deltayaw);
 				VectorCopy(push->origin, part->client->ps.origin);
 			}
 

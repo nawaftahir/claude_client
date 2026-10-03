@@ -15,6 +15,18 @@ typedef unsigned char Boolean;
 #        define ERR_FATAL 0
 #    endif
 #    include "headers/PC/win32/win32_syscon_api.h"
+typedef int fileHandle_t;
+#    include "../../universal/dvar.h"
+
+typedef enum
+{
+    SE_NONE = 0,
+    SE_KEY,
+    SE_CHAR,
+    SE_MOUSE,
+    SE_CONSOLE,
+    SE_PACKET
+} sysEventType_t;
 
 #    define SYSCON_CLASS "CoD2 WinConsole"
 #    define SYSCON_TITLE "CoD2 Console"
@@ -33,6 +45,11 @@ extern void Sys_Error(const char *error, ...);
 extern void Com_Printf(const char *fmt, ...);
 extern void Cbuf_AddText(const char *text);
 extern void Sys_Quit(void);
+extern void Sys_QueEvent(int time, sysEventType_t type, int value, int value2, int ptrLength, void *ptr);
+extern dvar_t *com_dedicated;
+extern dvar_t *com_viewlog;
+extern char *CopyStringInternal(const char *in);
+extern char *va(const char *format, ...);
 
 void Sys_CreateConsole(HINSTANCE hInstance);
 void Sys_DestroyConsole(void);
@@ -46,14 +63,9 @@ extern Boolean gConsoleRunning;
 typedef struct {
     HWND hWnd;
     HWND hwndBuffer;
-    HWND hwndButtonClear;
-    HWND hwndButtonCopy;
-    HWND hwndButtonQuit;
-    HWND hwndErrorBox;
-    HWND hwndErrorText;
     HWND hwndLogo;
-    HBITMAP hbmLogo;
-    HDC hDC;
+    HBRUSH hbrEditBackground;
+    HBRUSH hbrErrorBackground;
     HFONT hfBufferFont;
     HWND hwndInputLine;
     char errorString[512];
@@ -71,44 +83,59 @@ static WinConData s_wcd;
 
 static LONG WINAPI ConWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    char *cmdString;
+    int bufferHeight;
+    int bufferWidth;
+    int width;
+    int height;
+
     switch (uMsg) {
+    case WM_SIZE:
+        width = LOWORD(lParam);
+        height = HIWORD(lParam);
+        bufferWidth = width - 15;
+        bufferHeight = height - 100;
+        SetWindowPos(s_wcd.hwndBuffer, 0, 5, 70, bufferWidth, bufferHeight, 0);
+        SetWindowPos(s_wcd.hwndInputLine, 0, 5, 70 + bufferHeight + 8, bufferWidth, 20, 0);
+        s_wcd.windowWidth = width;
+        s_wcd.windowHeight = height;
+        break;
+
     case WM_ACTIVATE:
         if (LOWORD(wParam) != WA_INACTIVE)
             SetFocus(s_wcd.hwndInputLine);
+
+        if (com_dedicated && !com_dedicated->current.integer && com_viewlog) {
+            // if the viewlog is open, check to see if it's being minimized
+            if (com_viewlog->current.integer == 1) {
+                if (HIWORD(wParam))
+                    Dvar_SetInt(com_viewlog, 2);
+            } else if (com_viewlog->current.integer == 2) {
+                if (!HIWORD(wParam))
+                    Dvar_SetInt(com_viewlog, 1);
+            }
+        }
         break;
 
     case WM_CLOSE:
-
-        if (s_wcd.quitOnClose) {
+        if (com_dedicated && com_dedicated->current.integer) {
+            cmdString = CopyStringInternal("quit");
+            Sys_QueEvent(0, SE_CONSOLE, 0, 0, strlen(cmdString) + 1, cmdString);
+        } else if (s_wcd.quitOnClose) {
             PostQuitMessage(0);
         } else {
             Sys_ShowConsole(0, qfalse);
+            Dvar_SetInt(com_viewlog, 0);
         }
         return 0;
 
-    case WM_CTLCOLORSTATIC:
-        if ((HWND)lParam == s_wcd.hwndBuffer) {
-            SetBkColor((HDC)wParam, RGB(0x00, 0x00, 0x80));
-            SetTextColor((HDC)wParam, RGB(0xff, 0xff, 0xff));
-            return (LONG)(LONG_PTR)GetStockObject(BLACK_BRUSH);
-        }
+    case WM_CREATE:
+        s_wcd.hbrEditBackground = CreateSolidBrush(RGB(0x56, 0x75, 0x64));
+        s_wcd.hbrErrorBackground = CreateSolidBrush(RGB(0x80, 0x80, 0x80));
         break;
 
-    case WM_COMMAND:
-        if (wParam == COPY_ID) {
-            SendMessage(s_wcd.hwndBuffer, EM_SETSEL, 0, -1);
-            SendMessage(s_wcd.hwndBuffer, WM_COPY, 0, 0);
-        } else if (wParam == QUIT_ID) {
-            if (s_wcd.quitOnClose)
-                PostQuitMessage(0);
-            else
-                Cbuf_AddText("quit\n");
-        } else if (wParam == CLEAR_ID) {
-            SendMessage(s_wcd.hwndBuffer, EM_SETSEL, 0, -1);
-            SendMessage(s_wcd.hwndBuffer, EM_REPLACESEL, FALSE, (LPARAM) "");
-            UpdateWindow(s_wcd.hwndBuffer);
-        }
-        break;
+    case WM_ERASEBKGND:
+        return DefWindowProc(hWnd, uMsg, wParam, lParam);
     }
 
     return DefWindowProc(hWnd, uMsg, wParam, lParam);
@@ -116,6 +143,8 @@ static LONG WINAPI ConWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 
 static LONG WINAPI InputLineWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    char inputBuffer[1024];
+
     switch (uMsg) {
     case WM_KILLFOCUS:
         if ((HWND)wParam == s_wcd.hWnd) {
@@ -126,10 +155,11 @@ static LONG WINAPI InputLineWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 
     case WM_CHAR:
         if (wParam == 13) {
-            GetWindowText(s_wcd.hwndInputLine, s_wcd.consoleText, sizeof(s_wcd.consoleText) - 2);
-            SetWindowText(s_wcd.hwndInputLine, "");
-            Com_Printf("]%s\n", s_wcd.consoleText);
+            GetWindowText(s_wcd.hwndInputLine, inputBuffer, sizeof(inputBuffer));
+            strncat(s_wcd.consoleText, inputBuffer, sizeof(s_wcd.consoleText) - strlen(s_wcd.consoleText) - 5);
             strcat(s_wcd.consoleText, "\n");
+            SetWindowText(s_wcd.hwndInputLine, "");
+            Conbuf_AppendText(va("]%s\n", inputBuffer));
 
             return 0;
         }
@@ -144,6 +174,7 @@ void Sys_CreateConsole(HINSTANCE hInstance)
     WNDCLASS wc;
     RECT rect;
     HDC hDC;
+    HBITMAP hbmLogo;
     int nHeight;
     int swidth, sheight;
     int DEDSTYLE = WS_POPUPWINDOW | WS_CAPTION | WS_MINIMIZEBOX;
@@ -188,19 +219,19 @@ void Sys_CreateConsole(HINSTANCE hInstance)
     if (s_wcd.hWnd == NULL)
         return;
 
-    s_wcd.hDC = GetDC(s_wcd.hWnd);
-    nHeight = -MulDiv(8, GetDeviceCaps(s_wcd.hDC, LOGPIXELSY), 72);
+    hDC = GetDC(s_wcd.hWnd);
+    nHeight = -MulDiv(8, GetDeviceCaps(hDC, LOGPIXELSY), 72);
     s_wcd.hfBufferFont = CreateFont(nHeight, 0, 0, 0, FW_LIGHT, 0, 0, 0, DEFAULT_CHARSET,
                                     OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
                                     FF_MODERN | FIXED_PITCH, SYSCON_FONT);
-    ReleaseDC(s_wcd.hWnd, s_wcd.hDC);
+    ReleaseDC(s_wcd.hWnd, hDC);
 
-    s_wcd.hbmLogo = (HBITMAP)LoadImageA(NULL, SYSCON_LOGO, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+    hbmLogo = (HBITMAP)LoadImageA(NULL, SYSCON_LOGO, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
 
-    if (s_wcd.hbmLogo) {
+    if (hbmLogo) {
         s_wcd.hwndLogo = CreateWindowEx(0, "Static", NULL, WS_CHILD | WS_VISIBLE | SS_BITMAP,
                                         5, 5, 0, 0, s_wcd.hWnd, (HMENU)1, hInstance, NULL);
-        SendMessage(s_wcd.hwndLogo, STM_SETIMAGE, 0, (LPARAM)s_wcd.hbmLogo);
+        SendMessage(s_wcd.hwndLogo, STM_SETIMAGE, 0, (LPARAM)hbmLogo);
     }
 
     s_wcd.hwndInputLine = CreateWindowEx(0, "edit", NULL,

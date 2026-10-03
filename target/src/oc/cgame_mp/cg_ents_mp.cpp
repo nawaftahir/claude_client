@@ -231,7 +231,7 @@ static void CG_Player_DoControllers(const centity_t *cent, int *partBits)
         BG_Player_DoControllers(obj, es, partBits, ci, cg->frametime);
 }
 
-static inline __attribute__((always_inline)) void CG_RunDObjControllers(const centity_t *cent, int *partBits)
+static void CG_RunDObjControllers(const centity_t *cent, int *partBits)
 {
     switch (cent->nextState.eType) {
     case 1:
@@ -635,10 +635,10 @@ DObjAnimMat *CG_DObjGetLocalTagMatrix(const centity_t *cent, struct DObj_s *obj,
 
     CG_DObjCalcBone(cent, obj, boneIndex);
     mat = DObjGetRotTransArray(obj);
-    if (!mat)
+    if (mat)
+        return &mat[boneIndex];
+    else
         return 0;
-
-    return &mat[boneIndex];
 }
 
 qboolean CG_DObjGetWorldTagPos(const centity_t *cent, struct DObj_s *obj, unsigned int tagName, vec_t *pos)
@@ -979,7 +979,6 @@ void CG_ProcessEntity(centity_t *cent)
 
 void CG_AddPacketEntities(void)
 {
-    snapshot_t *snap;
     int num;
     int viewlocked_entNum;
 
@@ -990,11 +989,11 @@ void CG_AddPacketEntities(void)
     cg->autoAnglesSlow[2] = 0.0f;
 
     cg->autoAngles[0] = 0.0f;
-    cg->autoAngles[1] = (float)(360 * (cg->time & 0x7ff)) * 0.00048828125f;
+    cg->autoAngles[1] = (float)(360 * (cg->time & 0x7ff)) / 2048.0f;
     cg->autoAngles[2] = 0.0f;
 
     cg->autoAnglesFast[0] = 0.0f;
-    cg->autoAnglesFast[1] = (float)(360 * (cg->time & 0x3ff)) * 0.0009765625f;
+    cg->autoAnglesFast[1] = (float)(360 * (cg->time & 0x3ff)) / 1024.0f;
     cg->autoAnglesFast[2] = 0.0f;
 
     AnglesToAxis(cg->autoAnglesSlow, cg->autoAxisSlow);
@@ -1002,16 +1001,13 @@ void CG_AddPacketEntities(void)
     AnglesToAxis(cg->autoAnglesFast, cg->autoAxisFast);
 
     viewlocked_entNum = cg->predictedPlayerState.viewlocked_entNum;
-    snap = cg->nextSnap;
-    for (num = 0; num < snap->numEntities; ++num) {
-        int entityNum = snap->entities[num].number;
-        centity_t *cent;
+    for (num = 0; num < cg->nextSnap->numEntities; ++num) {
+        if (cg->nextSnap->entities[num].number != viewlocked_entNum) {
+            centity_t *cent;
 
-        if (entityNum == viewlocked_entNum)
-            continue;
-
-        cent = &(((centity_t *)cg_entities))[entityNum];
-        if (cent->nextState.eType <= 9)
-            CG_ProcessEntity(cent);
+            cent = &(((centity_t *)cg_entities))[cg->nextSnap->entities[num].number];
+            if (cent->nextState.eType < 10)
+                CG_ProcessEntity(cent);
+        }
     }
 }

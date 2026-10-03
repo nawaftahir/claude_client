@@ -210,21 +210,6 @@ int CG_WeaponDObjHandle(int weaponNum)
     return weaponNum + 0x400;
 }
 
-static inline __attribute__((always_inline)) qboolean CG_HasAssetName(const char *name)
-{
-    return name && name[0];
-}
-
-static inline __attribute__((always_inline)) float CG_WeaponAnimRate(struct XAnim_s *anims, int animIndex, int durationMsec)
-{
-    float animRate = 0.0f;
-
-    if (durationMsec > 0)
-        animRate = (float)XAnimGetLengthMsec(anims, animIndex) / (float)durationMsec;
-
-    return animRate;
-}
-
 static void CG_SetHoldBreathChannelVolumes(float frac)
 {
     float volumes[11];
@@ -566,6 +551,7 @@ void CG_RegisterWeapon(int weaponNum)
     char modelFile[64];
     int dobjHandle;
     int i;
+    float animRate;
 
     removeMeWhenMPStopsCrashingInHere = weaponNum;
 
@@ -587,7 +573,7 @@ void CG_RegisterWeapon(int weaponNum)
     weapInfo->iPrevAnim = -1;
 
     if (weapDef->szGunXModel[0]) {
-        if (!CG_HasAssetName(weapDef->szHandXModel))
+        if (!weapDef->szHandXModel || !weapDef->szHandXModel[0])
             Com_Error(ERR_DROP, "\x15"
                          "CG_RegisterWeapon: No hand model specified for [%s]",
                       weapDef->szDisplayName);
@@ -606,7 +592,7 @@ void CG_RegisterWeapon(int weaponNum)
         if (XModelBad(dobjModels[0].model) || XModelBad(dobjModels[1].model))
             CG_Weapons_SetToDefault(weaponNum, dobjModels);
 
-        if (!CG_HasAssetName(weapDef->szXAnims[1]))
+        if (!weapDef->szXAnims[1] || !weapDef->szXAnims[1][0])
             Com_Error(ERR_DROP, "\x15"
                          "CG_RegisterWeapon: No idle anim specified for [%s]",
                       weapDef->szDisplayName);
@@ -630,18 +616,54 @@ void CG_RegisterWeapon(int weaponNum)
         for (i = 0; i < 0x17; i++)
             weapInfo->viewModelAnimRates[i] = 1.0f;
 
-        weapInfo->viewModelAnimRates[4] = CG_WeaponAnimRate(pAnims, 4, weapDef->iHoldFireTime);
-        weapInfo->viewModelAnimRates[7] = CG_WeaponAnimRate(pAnims, 7, weapDef->iMeleeTime);
-        weapInfo->viewModelAnimRates[8] = CG_WeaponAnimRate(pAnims, 8, weapDef->iReloadTime);
-        weapInfo->viewModelAnimRates[9] = CG_WeaponAnimRate(pAnims, 9, weapDef->iReloadEmptyTime);
-        weapInfo->viewModelAnimRates[10] = CG_WeaponAnimRate(pAnims, 10, weapDef->iReloadStartTime);
-        weapInfo->viewModelAnimRates[11] = CG_WeaponAnimRate(pAnims, 11, weapDef->iReloadTime);
-        weapInfo->viewModelAnimRates[12] = CG_WeaponAnimRate(pAnims, 12, weapDef->iRaiseTime);
-        weapInfo->viewModelAnimRates[13] = CG_WeaponAnimRate(pAnims, 13, weapDef->iDropTime);
-        weapInfo->viewModelAnimRates[14] = CG_WeaponAnimRate(pAnims, 14, weapDef->iAltRaiseTime);
-        weapInfo->viewModelAnimRates[15] = CG_WeaponAnimRate(pAnims, 15, weapDef->iAltDropTime);
-        weapInfo->viewModelAnimRates[16] = CG_WeaponAnimRate(pAnims, 16, weapDef->quickRaiseTime);
-        weapInfo->viewModelAnimRates[17] = CG_WeaponAnimRate(pAnims, 17, weapDef->quickDropTime);
+        animRate = 0.0f;
+        if (weapDef->iHoldFireTime > 0)
+            animRate = (float)XAnimGetLengthMsec(pAnims, 4) / (float)weapDef->iHoldFireTime;
+        weapInfo->viewModelAnimRates[4] = animRate;
+        animRate = 0.0f;
+        if (weapDef->iMeleeTime > 0)
+            animRate = (float)XAnimGetLengthMsec(pAnims, 7) / (float)weapDef->iMeleeTime;
+        weapInfo->viewModelAnimRates[7] = animRate;
+        animRate = 0.0f;
+        if (weapDef->iReloadTime > 0)
+            animRate = (float)XAnimGetLengthMsec(pAnims, 8) / (float)weapDef->iReloadTime;
+        weapInfo->viewModelAnimRates[8] = animRate;
+        animRate = 0.0f;
+        if (weapDef->iReloadEmptyTime > 0)
+            animRate = (float)XAnimGetLengthMsec(pAnims, 9) / (float)weapDef->iReloadEmptyTime;
+        weapInfo->viewModelAnimRates[9] = animRate;
+        animRate = 0.0f;
+        if (weapDef->iReloadStartTime > 0)
+            animRate = (float)XAnimGetLengthMsec(pAnims, 10) / (float)weapDef->iReloadStartTime;
+        weapInfo->viewModelAnimRates[10] = animRate;
+        animRate = 0.0f;
+        if (weapDef->iReloadTime > 0)
+            animRate = (float)XAnimGetLengthMsec(pAnims, 11) / (float)weapDef->iReloadTime;
+        weapInfo->viewModelAnimRates[11] = animRate;
+        animRate = 0.0f;
+        if (weapDef->iRaiseTime > 0)
+            animRate = (float)XAnimGetLengthMsec(pAnims, 12) / (float)weapDef->iRaiseTime;
+        weapInfo->viewModelAnimRates[12] = animRate;
+        animRate = 0.0f;
+        if (weapDef->iDropTime > 0)
+            animRate = (float)XAnimGetLengthMsec(pAnims, 13) / (float)weapDef->iDropTime;
+        weapInfo->viewModelAnimRates[13] = animRate;
+        animRate = 0.0f;
+        if (weapDef->iAltRaiseTime > 0)
+            animRate = (float)XAnimGetLengthMsec(pAnims, 14) / (float)weapDef->iAltRaiseTime;
+        weapInfo->viewModelAnimRates[14] = animRate;
+        animRate = 0.0f;
+        if (weapDef->iAltDropTime > 0)
+            animRate = (float)XAnimGetLengthMsec(pAnims, 15) / (float)weapDef->iAltDropTime;
+        weapInfo->viewModelAnimRates[15] = animRate;
+        animRate = 0.0f;
+        if (weapDef->quickRaiseTime > 0)
+            animRate = (float)XAnimGetLengthMsec(pAnims, 16) / (float)weapDef->quickRaiseTime;
+        weapInfo->viewModelAnimRates[16] = animRate;
+        animRate = 0.0f;
+        if (weapDef->quickDropTime > 0)
+            animRate = (float)XAnimGetLengthMsec(pAnims, 17) / (float)weapDef->quickDropTime;
+        weapInfo->viewModelAnimRates[17] = animRate;
 
         if (weapDef->szXAnims[21][0] && XAnimIsLooped(pAnims, 0x15))
             Com_Error(ERR_DROP, "\x15"
@@ -1993,9 +2015,7 @@ static void CG_PlayViewWeaponNotetrackSounds(void)
 void CG_UpdateViewWeaponAnim(playerState_t *ps)
 {
     byte *psBytes;
-    weaponInfo_t *weapInfoBase;
     weaponInfo_t *weapInfo;
-    struct DObj_s *obj;
     int weaponIndex;
     int partBits[4];
 
@@ -2011,21 +2031,19 @@ void CG_UpdateViewWeaponAnim(playerState_t *ps)
         return;
 
     CG_RegisterWeapon(weaponIndex);
-    weapInfoBase = cg_weaponsArray;
-    weapInfo = &weapInfoBase[weaponIndex];
+    weapInfo = &((weaponInfo_t *)cg_weaponsArray)[weaponIndex];
     CG_WeaponRunXModelAnims(ps, weapInfo);
 
-    obj = weapInfo->viewModelDObj;
-    DObjUpdateClientInfo(obj, (float)cg->frametime * 0.0010000000474974513f);
+    DObjUpdateClientInfo(weapInfo->viewModelDObj, (float)cg->frametime * 0.0010000000474974513f);
 
     partBits[0] = -1;
     partBits[1] = -1;
     partBits[2] = -1;
     partBits[3] = -1;
 
-    if (!CL_DObjCreateSkelForBones(obj, partBits, 0)) {
-        DObjCalcAnim(obj, partBits);
-        DObjCalcSkel((DObj *)obj, partBits);
+    if (!CL_DObjCreateSkelForBones(weapInfo->viewModelDObj, partBits, 0)) {
+        DObjCalcAnim(weapInfo->viewModelDObj, partBits);
+        DObjCalcSkel((DObj *)weapInfo->viewModelDObj, partBits);
     }
 
     CG_PlayViewWeaponNotetrackSounds();

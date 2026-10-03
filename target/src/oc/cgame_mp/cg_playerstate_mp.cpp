@@ -63,13 +63,7 @@ void CG_TransitionPlayerState(playerState_t *ps, playerState_t *ops);
 #define CG_FLOAT(base, off) (*(float *)((char *)(base) + (off)))
 #define CG_PTR(base, off) (*(char **)((char *)(base) + (off)))
 
-static inline __attribute__((always_inline)) void VectorClear3Int(void *base, int off)
-{
-    float *v = (float *)((char *)base + off);
-    v[0] = 0.0f;
-    v[1] = 0.0f;
-    v[2] = 0.0f;
-}
+#define VectorClear(v) ((v)[0] = (v)[1] = (v)[2] = 0.0f)
 
 void CG_Respawn(void)
 {
@@ -90,12 +84,12 @@ void CG_Respawn(void)
     CG_INT(cg, CG_OFF_2BDEC) = 0;
     CG_INT(cg, CG_OFF_2BE30) = 0;
 
-    VectorClear3Int(cg, CG_OFF_285D4);
-    VectorClear3Int(cg, CG_OFF_285E0);
-    VectorClear3Int(cg, CG_OFF_285EC);
+    VectorClear(&CG_FLOAT(cg, CG_OFF_285D4));
+    VectorClear(&CG_FLOAT(cg, CG_OFF_285E0));
+    VectorClear(&CG_FLOAT(cg, CG_OFF_285EC));
 
-    VectorClear3Int(cg, CG_OFF_2C03C);
-    VectorClear3Int(cg, CG_OFF_2C030);
+    VectorClear(&CG_FLOAT(cg, CG_OFF_2C03C));
+    VectorClear(&CG_FLOAT(cg, CG_OFF_2C030));
 
     CG_FLOAT(cg, CG_OFF_2BF1C) = 0.0f;
 
@@ -106,14 +100,14 @@ void CG_Respawn(void)
     CG_FLOAT(cg, CG_OFF_2BF10) = 0.0f;
     CG_FLOAT(cg, CG_OFF_2BF14) = 0.0f;
 
-    VectorClear3Int(cg, CG_OFF_2C0A4);
-    VectorClear3Int(cg, CG_OFF_2C0B0);
+    VectorClear(&CG_FLOAT(cg, CG_OFF_2C0A4));
+    VectorClear(&CG_FLOAT(cg, CG_OFF_2C0B0));
 
     memset((char *)cg + CG_OFF_2BE74, 0, 0x60);
 
     memset((char *)cg + CG_OFF_2C50C, 0, 0x90);
 
-    VectorClear3Int(cg, CG_OFF_284C4);
+    VectorClear(&CG_FLOAT(cg, CG_OFF_284C4));
 
     CG_INT(cg, CG_OFF_2CD10) = 0;
 

@@ -5337,7 +5337,7 @@ GScr_FGetArg
 */
 void GScr_FGetArg()
 {
-	if ( Scr_GetNumParam() < 2 )
+	if ( Scr_GetNumParam() <= 1 )
 	{
 		Com_Printf("freadline requires at least 2 parameters (file, string)\n");
 		Scr_AddString("");

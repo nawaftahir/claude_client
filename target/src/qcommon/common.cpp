@@ -1515,6 +1515,8 @@ void Com_WriteDefaultsToFile( const char *filename )
 	FS_FCloseFile(f);
 }
 
+extern const dvar_t *com_playerProfile;
+
 /*
 ===============
 Com_WriteConfiguration
@@ -1535,7 +1537,11 @@ void Com_WriteConfiguration( void )
 		return;
 
 	dvar_modifiedFlags &= ~DVAR_ARCHIVE;
-	I_strncpyz(filename, CONFIG_NAME, sizeof(filename));
+
+	if ( !com_playerProfile->current.string[0] )
+		return;
+
+	Com_BuildPlayerProfilePath(filename, sizeof(filename), "config_mp.cfg");
 	Com_WriteConfigToFile( filename );
 }
 

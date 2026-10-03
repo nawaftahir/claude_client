@@ -822,8 +822,6 @@ static qboolean Sys_IsGameProcess( DWORD id )
 	char *i;
 	qboolean isGame;
 
-	isGame = qfalse;
-
 	process = OpenProcess( PROCESS_ALL_ACCESS, FALSE, id );
 	if ( !process )
 		return qfalse;
@@ -833,6 +831,7 @@ static qboolean Sys_IsGameProcess( DWORD id )
 	if ( snapshot == INVALID_HANDLE_VALUE )
 		return qfalse;
 
+	isGame = qfalse;
 	me.dwSize = sizeof( me );
 
 	if ( Module32First( snapshot, &me ) )
@@ -994,7 +993,7 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	g_wv.hInstance = hInstance;
 	I_strncpyz( sys_cmdline, lpCmdLine, sizeof( sys_cmdline ) );
 
-	Sys_CreateConsole( g_wv.hInstance );
+	Sys_CreateConsole( hInstance );
 
 	Sys_CreateSplashWindow();
 	Sys_ShowSplashWindow();

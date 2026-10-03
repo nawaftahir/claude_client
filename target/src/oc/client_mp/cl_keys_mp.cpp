@@ -385,7 +385,7 @@ char *Key_KeynumToString(int keynum, qboolean translate)
     return tinystr;
 }
 
-static inline __attribute__((always_inline)) void Key_SetBindingInternal(int keynum, const char *binding)
+void Key_SetBinding(int keynum, const char *binding)
 {
     if (keynum == -1)
         return;
@@ -393,21 +393,11 @@ static inline __attribute__((always_inline)) void Key_SetBindingInternal(int key
     dvar_modifiedFlags |= 1;
 }
 
-static inline __attribute__((always_inline)) char *Key_GetBindingInternal(int keynum)
+char *Key_GetBinding(int keynum)
 {
     if (keynum == -1)
         return (char *)"";
     return keys[keynum].binding;
-}
-
-void Key_SetBinding(int keynum, const char *binding)
-{
-    Key_SetBindingInternal(keynum, binding);
-}
-
-char *Key_GetBinding(int keynum)
-{
-    return Key_GetBindingInternal(keynum);
 }
 
 void CL_InitKeyCommands(void)
@@ -504,7 +494,7 @@ void Key_Unbind_f(void)
         return;
     }
 
-    Key_SetBindingInternal(keynum, "");
+    Key_SetBinding(keynum, "");
 }
 
 void Key_Unbindall_f(void)
@@ -569,10 +559,10 @@ void Key_Bind_f(void)
         }
     }
 
-    Key_SetBindingInternal(keynum, cmd);
+    Key_SetBinding(keynum, cmd);
 }
 
-static inline __attribute__((always_inline)) void Field_PasteClipboard(field_t *edit)
+void Field_PasteClipboard(field_t *edit)
 {
     char *cbd;
     int len;
@@ -738,16 +728,11 @@ void Field_KeyDownEvent(field_t *edit, int key)
 		Field_AdjustScroll(edit);
 }
 
-static inline __attribute__((always_inline)) void Message_Close(void)
-{
-    (clients)->keyCatchers &= ~0x10;
-    Field_Clear(chatField);
-}
-
 void Message_Key(int key)
 {
     if (key == K_ESCAPE) {
-        Message_Close();
+        (clients)->keyCatchers &= ~0x10;
+        Field_Clear(chatField);
         return;
     }
 
@@ -766,7 +751,8 @@ void Message_Key(int key)
                 CL_AddReliableCommand(buffer);
             }
         }
-        Message_Close();
+        (clients)->keyCatchers &= ~0x10;
+        Field_Clear(chatField);
         return;
     }
 

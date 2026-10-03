@@ -165,19 +165,26 @@ void Com_LoadSoundAliasChannel( const char *token, const char *sourceFile, snd_a
 
 void Com_LoadSoundAliasType( const char *token, const char *sourceFile, snd_alias_build_t *alias )
 {
-	if ( !I_stricmp(token, "streamed") || !I_stricmp(token, "primed") )
+	if ( !I_stricmp(token, "streamed") )
 	{
 		alias->type = SAT_STREAMED;
+		return;
 	}
-	else if ( !I_stricmp(token, "loaded") )
+
+	if ( !I_stricmp(token, "primed") )
+	{
+		alias->type = SAT_STREAMED;
+		return;
+	}
+
+	if ( !I_stricmp(token, "loaded") )
 	{
 		alias->type = SAT_LOADED;
+		return;
 	}
-	else
-	{
-		Com_Printf("^1ERROR: Sound alias file %s: Unknown sound type '%s'; should be primed, streamed or loaded\n", sourceFile, token);
-		alias->error = true;
-	}
+
+	Com_Printf("^1ERROR: Sound alias file %s: Unknown sound type '%s'; should be primed, streamed or loaded\n", sourceFile, token);
+	alias->error = true;
 }
 
 void Com_LoadSoundAliasLooping( const char *token, const char *sourceFile, snd_alias_build_t *alias )

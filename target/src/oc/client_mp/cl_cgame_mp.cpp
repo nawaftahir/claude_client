@@ -616,7 +616,7 @@ qboolean CL_DObjCreateSkelForBones(const struct DObj_s *obj, int *partBits, int 
         return 0;
     }
 
-    if (timeStamp != warnCount_00f13084) {
+    if (warnCount_00f13084 != timeStamp) {
         warnCount_00f13084 = timeStamp;
         Com_Printf("^3WARNING: CL_SKEL_MEMORY_SIZE exceeded - not calculating skeleton\n");
     }

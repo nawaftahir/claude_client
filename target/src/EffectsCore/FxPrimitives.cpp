@@ -2215,9 +2215,9 @@ void Emitter::Draw()
 bool Emitter::Update()
 {
 	const orientation_t *orient;
-	vec4_t prevOrigin;
-	vec4_t bindVelocity;
-	vec3_t localAxis[4];
+	vec3_t prevOrigin;
+	vec3_t bindVelocity;
+	vec3_t localAxis[3];
 	int i;
 
 	orient = 0;

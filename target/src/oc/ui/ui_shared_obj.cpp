@@ -12,7 +12,13 @@ extern char *va( const char *format, ... );
 
 extern keywordHash_t *itemParseKeywordHash[512];
 static char string_00f3b9c0[4096];
-static unsigned char g_load[0x640];
+static struct
+{
+    loadAssets_t loadAssets;
+    MenuList menuList;
+    itemDef_t *items[256];
+    menuDef_t *menus[128];
+} g_load;
 static char menuBuf[32768];
 static keywordHash_t *menuParseKeywordHash[512];
 static char menuBuf1[4096];
@@ -174,46 +180,6 @@ static Bool __attribute_regparm__(2) UI_ParseMenuInternal(const char *menuFile, 
 MenuList *UI_LoadMenus(const char *menuFile, int imageTrack);
 MenuList *UI_LoadMenu(const char *menuFile, int imageTrack);
 
-#if defined(COD2_X64)
-/* g_load's x86 hand-packed layout (loadAssets@0, MenuList@56, itemDef_t*[256]@64,
- * menuDef_t*[128]@1088, packed into a 0x640 blob) relies on 4-byte pointers and
- * overflows/overlaps with 8-byte pointers on x64. Use separate typed storage. */
-static loadAssets_t s_ui_loadAssets;
-static MenuList     s_ui_menuList;
-static itemDef_t   *s_ui_itemStorage[256];   /* itemCount capped at 0xff */
-static menuDef_t   *s_ui_menuStorage[128];   /* menuCount capped at 0x7f */
-static inline loadAssets_t *UI_LoadAssets(void)      { return &s_ui_loadAssets; }
-static inline MenuList     *UI_MenuList(void)         { return &s_ui_menuList; }
-static inline itemDef_t   **UI_MenuItemStorage(void) { return s_ui_itemStorage; }
-static inline menuDef_t   **UI_MenuStorage(void)      { return s_ui_menuStorage; }
-#define UI_LOAD_CLEAR() do { \
-    memset(&s_ui_loadAssets, 0, sizeof(s_ui_loadAssets)); \
-    memset(&s_ui_menuList,   0, sizeof(s_ui_menuList)); \
-    memset(s_ui_itemStorage, 0, sizeof(s_ui_itemStorage)); \
-    memset(s_ui_menuStorage, 0, sizeof(s_ui_menuStorage)); \
-} while (0)
-#else
-static inline __attribute__((always_inline)) loadAssets_t *UI_LoadAssets(void)
-{
-    return (loadAssets_t *)g_load;
-}
-
-static inline __attribute__((always_inline)) MenuList *UI_MenuList(void)
-{
-    return (MenuList *)(g_load + sizeof(loadAssets_t));
-}
-
-static inline __attribute__((always_inline)) itemDef_t **UI_MenuItemStorage(void)
-{
-    return (itemDef_t **)(g_load + 64);
-}
-
-static inline __attribute__((always_inline)) menuDef_t **UI_MenuStorage(void)
-{
-    return (menuDef_t **)(g_load + 1088);
-}
-#define UI_LOAD_CLEAR() memset(g_load, 0, sizeof(g_load))
-#endif
 
 int KeywordHash_Key(const char *keyword)
 {
@@ -755,7 +721,7 @@ void Menu_PostParse(menuDef_t *menu)
     int size = ((menuDef_t *)menu)->itemCount * (int)sizeof(itemDef_t *);   /* was *4 (x86 ptr) */
     void *items = UI_Alloc(size, 4);
     (*(void **)&((menuDef_t *)menu)->items) = items;
-    memcpy(items, (void *)UI_MenuItemStorage(), size);   /* was g_load + 64 */
+    memcpy(items, g_load.items, size);
     if (((menuDef_t *)menu)->fullScreen) {
         UiRectangle rect;
         rect = menu->window.rect[0];
@@ -879,7 +845,7 @@ void Window_Init(Window *w)
 
 void Menu_Init(menuDef_t *menu, int imageTrack)
 {
-    loadAssets_t *load = UI_LoadAssets();
+    loadAssets_t *load = &g_load.loadAssets;
 
     memset(menu, 0, sizeof(menuDef_t));
     menu->cursorItem[0] = -1;
@@ -888,7 +854,7 @@ void Menu_Init(menuDef_t *menu, int imageTrack)
     menu->fadeClamp = load->fadeClamp;
     menu->fadeCycle = load->fadeCycle;
     menu->imageTrack = imageTrack;
-    menu->items = UI_MenuItemStorage();
+    menu->items = g_load.items;
     Window_Init(&menu->window);
 }
 
@@ -1006,7 +972,7 @@ static bool Menu_New(int handle, int imageTrack)
         return false;
     }
     Menu_PostParse(menu);
-    menuList = UI_MenuList();
+    menuList = &g_load.menuList;
     if (menuList->menuCount >= 128)
         Com_Error(ERR_DROP, "\x15Menu_New: \x14" "EXE_ERR_OUT_OF_MEMORY");
     menuList->menus[menuList->menuCount++] = menu;
@@ -1749,7 +1715,7 @@ qboolean ItemParse_execKeyInt(const char (*item)[4], int handle)
 
 static qboolean UI_ParseAssetGlobalDef(int handle, int imageTrack)
 {
-    loadAssets_t *load = UI_LoadAssets();
+    loadAssets_t *load = &g_load.loadAssets;
     pc_token_t token;
     const char *tempStr;
     snd_alias_list_t *alias;
@@ -1953,8 +1919,8 @@ MenuList *UI_LoadMenus(const char *menuFile, int imageTrack)
     fileHandle_t f;
     int len;
 
-    UI_LOAD_CLEAR();
-    UI_MenuList()->menus = UI_MenuStorage();
+    memset(&g_load, 0, sizeof(g_load));
+    g_load.menuList.menus = g_load.menus;
 
     len = FS_FOpenFileByMode(menuFile, &f, FS_READ);
     if (!f) {
@@ -1991,13 +1957,13 @@ MenuList *UI_LoadMenus(const char *menuFile, int imageTrack)
     }
 
     Com_EndParseSession();
-    return UI_MenuList();
+    return &g_load.menuList;
 }
 
 MenuList *UI_LoadMenu(const char *menuFile, int imageTrack)
 {
-    UI_LOAD_CLEAR();
-    UI_MenuList()->menus = UI_MenuStorage();
+    memset(&g_load, 0, sizeof(g_load));
+    g_load.menuList.menus = g_load.menus;
 
     if (!UI_ParseMenuInternal(menuFile, imageTrack)) {
         Com_Printf("^3WARNING: menu file not found: %s\n", menuFile);
@@ -2005,7 +1971,7 @@ MenuList *UI_LoadMenu(const char *menuFile, int imageTrack)
             Com_Error(ERR_DROP, "default menu file not found");
     }
 
-    return UI_MenuList();
+    return &g_load.menuList;
 }
 
 keywordHash_t itemParseKeywords[67] = {

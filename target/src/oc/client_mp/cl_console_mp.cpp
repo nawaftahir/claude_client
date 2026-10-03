@@ -100,13 +100,6 @@ extern const vec4_t con_inputDvarInfoColor;
 static int registeredIconMaterialCount;
 static const char *hudMsgIconMaterials[256];
 
-static inline __attribute__((always_inline)) clientActive_t *Con_GetClientActive(void)
-{
-    clientActive_t *cl = clients;
-
-    return cl ? cl : (clientActive_t *)imp_clients;
-}
-
 static inline void MsgWnd_Clear(MessageWindow *wnd)
 {
 
@@ -139,12 +132,6 @@ static void Con_ChatModeTeam_f(void);
 void Con_Bottom(void);
 static void Con_Dump_f(void);
 void Con_Shutdown(void);
-#ifndef __EMSCRIPTEN__
-static inline __attribute__((always_inline)) short Con_FillChar(void)
-{
-    return (short)((ColorIndex(0x37) << 8) | 0x20);
-}
-#endif
 static void Con_UpdateMessageWindowLine(MessageWindow *msgwnd, qboolean linefeed, int duration);
 static void Con_UpdateMessageWindow(print_msg_type_t type, qboolean linefeed, int duration);
 static void Con_Linefeed(print_msg_type_t type, int duration);
@@ -323,7 +310,7 @@ static void Con_CopyCurrentConsoleLineText(short *text)
         text[i] = con.textBuffer[textOffset + i];
 
     for (i = len; i < 78; i++)
-        text[i] = Con_FillChar();
+        text[i] = (short)((ColorIndex(0x37) << 8) | 0x20);
 }
 
 #ifndef __EMSCRIPTEN__
@@ -384,7 +371,7 @@ static void Con_Linefeed(print_msg_type_t type, int duration)
     con.currentLine++;
 
     for (i = 0; i < con.linewidth; i++)
-        con.textBuffer[(con.currentLine % con.totallines) * con.linewidth + i] = Con_FillChar();
+        con.textBuffer[(con.currentLine % con.totallines) * con.linewidth + i] = (short)((ColorIndex(0x37) << 8) | 0x20);
 }
 
 void Con_AutoCompleteFromList(const char **strings, int stringCount, const char *prefix, char *completed, int sizeofCompleted)
@@ -849,7 +836,7 @@ static void ConDrawInput_DvarMatch(const char *str)
     conDrawInputGlob.x = conDrawInputGlob.leftX;
 }
 
-static inline __attribute__((always_inline)) int isPunctChar(int c)
+static int isPunctChar(int c)
 {
     return isspace(c);
 }
@@ -941,7 +928,7 @@ static void Con_CheckResize(void)
         con.linewidth = width;
         con.totallines = 0x10000 / con.linewidth;
         for (i = 0; i < 0x10000; i++)
-            con.textBuffer[i] = Con_FillChar();
+            con.textBuffer[i] = (short)((ColorIndex(0x37) << 8) | 0x20);
     } else {
         oldwidth = con.linewidth;
         con.linewidth = width;
@@ -959,7 +946,7 @@ static void Con_CheckResize(void)
 
         memcpy(tbuf, con.textBuffer, 0x20000);
         for (i = 0; i < 0x10000; i++)
-            con.textBuffer[i] = Con_FillChar();
+            con.textBuffer[i] = (short)((ColorIndex(0x37) << 8) | 0x20);
 
         for (i = 0; i < numlines; i++) {
             for (j = 0; j < numchars; j++) {
@@ -1192,14 +1179,14 @@ void Con_Close(void)
     clients[0].keyCatchers &= ~1;
 }
 
-static inline __attribute__((always_inline)) void ConDrawInput_DrawText(const char *text, int maxChars, const vec_t *color)
+static void ConDrawInput_DrawText(const char *text, int maxChars, const vec_t *color)
 {
     FontHandle font = cls.consoleFont;
 
     re.DrawText(text, maxChars, font, conDrawInputGlob.x, conDrawInputGlob.y + conDrawInputGlob.fontHeight, 1.0f, 1.0f, color, 0);
 }
 
-static inline __attribute__((always_inline)) void ConDrawInput_NextLine(void)
+static void ConDrawInput_NextLine(void)
 {
     conDrawInputGlob.y += conDrawInputGlob.fontHeight;
     conDrawInputGlob.x = conDrawInputGlob.leftX;
@@ -1626,7 +1613,7 @@ static void Con_CheckResize(void)
     if (newLinewidth == oldLinewidth)
         return;
 
-    fillChar = Con_FillChar();
+    fillChar = (short)((ColorIndex(0x37) << 8) | 0x20);
 
     if (newLinewidth <= 0) {
         con.linewidth = 78;
@@ -1713,7 +1700,7 @@ static void Con_Linefeed(print_msg_type_t type, int duration)
     if (con.linewidth <= 0 || con.totallines <= 0)
         return;
 
-    fillChar = Con_FillChar();
+    fillChar = (short)((ColorIndex(0x37) << 8) | 0x20);
     for (cursor = 0; cursor < con.linewidth; cursor++) {
         int textIndex = (con.currentLine % con.totallines) * con.linewidth + cursor;
         con.textBuffer[textIndex] = fillChar;
@@ -1723,7 +1710,7 @@ static void Con_Linefeed(print_msg_type_t type, int duration)
 static void Con_Clear_f(void)
 {
     int i;
-    short fillChar = Con_FillChar();
+    short fillChar = (short)((ColorIndex(0x37) << 8) | 0x20);
 
     for (i = 0; i < 65536; i++)
         con.textBuffer[i] = fillChar;
@@ -2007,7 +1994,7 @@ void Con_Close(void)
 
     Field_Clear((&g_consoleField));
     Con_ClearAllMessageWindows();
-    Con_GetClientActive()->keyCatchers &= ~1;
+    clients->keyCatchers &= ~1;
 }
 #endif
 

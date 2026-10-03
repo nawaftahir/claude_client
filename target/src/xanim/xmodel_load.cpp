@@ -26,6 +26,8 @@ void XModelConsumeQuat(const unsigned char **pos, short *out)
 	out[3] = w;
 }
 
+// Retail XModelCalcBasePose is /Op (store-reload on every int->float convert).
+#pragma optimize("p", on)
 void XModelCalcBasePose(XModelParts *modelParts)
 {
 	int numRootBones;
@@ -79,6 +81,7 @@ void XModelCalcBasePose(XModelParts *modelParts)
 	memset(modelParts->skel.partBits.skel, 255, sizeof(modelParts->skel.partBits.skel));
 }
 
+#pragma optimize("p", off)
 XModelParts *XModelPartsLoadFile(XModel *model, const char *name, void *(*Alloc)(int))
 {
 	XModelParts *modelParts;
@@ -139,7 +142,7 @@ XModelParts *XModelPartsLoadFile(XModel *model, const char *name, void *(*Alloc)
 	boneNames = (unsigned short *)Alloc(size);
 	model->memUsage += size;
 
-	if ( numBones > 127 )
+	if ( numBones >= 128 )
 	{
 		FS_FreeFile(buf);
 		Com_Printf("^1ERROR: xmodel '%s' has more than %d bones\n", name, 127);

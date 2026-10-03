@@ -279,7 +279,7 @@ void SCR_DrawDemoRecording(void)
     x = 5.0f;
     y = 479.0f;
     w = scale;
-    h = scale;
+    h = w;
     CalcScreenPlacement(&x, &y, &w, &h, 1, 1);
     re.DrawText(string, 0x7fffffff, cls.consoleFont, x, y, w, h, color, 0);
 }

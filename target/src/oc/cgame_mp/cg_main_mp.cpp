@@ -491,7 +491,7 @@ static Bool CG_ReplaceDirective(int *searchPos, int *dstLen, char *dstString)
     return 1;
 }
 
-static inline __attribute__((always_inline)) void CG_LocalizeHudElemString(const char *message, const char *messageType, char *hudElemString)
+static void CG_LocalizeHudElemString(const char *message, const char *messageType, char *hudElemString)
 {
     const char *localizedString;
     int searchPos;
@@ -641,7 +641,7 @@ void *Hunk_AllocXAnimClient(int size)
     return Hunk_AllocInternal(size);
 }
 
-static inline __attribute__((always_inline)) void CG_SubtitlePrint(int msec, const snd_alias_t *pAlias)
+static void CG_SubtitlePrint(int msec, const snd_alias_t *pAlias)
 {
     int minMsec;
     int subtitleWidth;
@@ -654,35 +654,25 @@ static inline __attribute__((always_inline)) void CG_SubtitlePrint(int msec, con
         }
 
         minMsec = I_fround(cg_subtitleMinTime->current.value * 1000.0f);
-        if (msec < minMsec) {
+        if (minMsec - msec >= 0)
             msec = minMsec;
-        }
 
         CL_SubtitlePrint(pAlias->pszSubtitle, msec, subtitleWidth);
     }
 }
 
-static inline __attribute__((always_inline)) int CG_PlayPickedAlias(const snd_alias_t *pAlias, int entitynum, const vec_t *origin, qboolean master)
-{
-    int msec;
-
-    if (pAlias == NULL) {
-        return 0;
-    }
-
-    if (master) {
-        msec = SND_PlaySoundAliasAsMaster(pAlias, entitynum, origin, 0, SASYS_CGAME);
-    } else {
-        msec = SND_PlaySoundAlias(pAlias, entitynum, origin, 0, SASYS_CGAME);
-    }
-
-    CG_SubtitlePrint(msec, pAlias);
-    return msec;
-}
-
 int CG_PlaySoundAliasAsMasterByName(int entitynum, const vec_t *origin, const char *aliasname)
 {
-    return CG_PlayPickedAlias(CL_PickSoundAlias(aliasname), entitynum, origin, 1);
+    const snd_alias_t *alias;
+    int msec;
+
+    alias = CL_PickSoundAlias(aliasname);
+    if (!alias)
+        return 0;
+
+    msec = SND_PlaySoundAliasAsMaster(alias, entitynum, origin, 0, SASYS_CGAME);
+    CG_SubtitlePrint(msec, alias);
+    return msec;
 }
 
 // Retail fills axis[0..2] and the origin in row 3.
@@ -705,7 +695,7 @@ void CG_GetDObjOrientation(int dobjHandle, float (*axis)[3])
 }
 
 #ifndef __EMSCRIPTEN__
-static inline __attribute__((always_inline)) byte *CG_FindSmokeGrenadeEntityState(int minTime, int gametime)
+static byte *CG_FindSmokeGrenadeEntityState(int minTime, int gametime)
 {
     byte *snap = (byte *)cg->nextSnap;
     int entityCount = ((snapshot_t *)snap)->numEntities;
@@ -786,12 +776,30 @@ void CG_PlaySmokeGrenadesAtTime(int gametime)
 
 int CG_PlaySoundAlias(int entitynum, const vec_t *origin, snd_alias_list_t *aliasList)
 {
-    return CG_PlayPickedAlias(Com_PickSoundAliasFromList(aliasList), entitynum, origin, 0);
+    const snd_alias_t *alias;
+    int msec;
+
+    alias = Com_PickSoundAliasFromList(aliasList);
+    if (!alias)
+        return 0;
+
+    msec = SND_PlaySoundAlias(alias, entitynum, origin, 0, SASYS_CGAME);
+    CG_SubtitlePrint(msec, alias);
+    return msec;
 }
 
 int CG_PlaySoundAliasByName(int entitynum, const vec_t *origin, const char *aliasname)
 {
-    return CG_PlayPickedAlias(CL_PickSoundAlias(aliasname), entitynum, origin, 0);
+    const snd_alias_t *alias;
+    int msec;
+
+    alias = CL_PickSoundAlias(aliasname);
+    if (!alias)
+        return 0;
+
+    msec = SND_PlaySoundAlias(alias, entitynum, origin, 0, SASYS_CGAME);
+    CG_SubtitlePrint(msec, alias);
+    return msec;
 }
 
 void CG_SafeTranslateHudElemString(int index, char *hudElemString)
@@ -816,12 +824,20 @@ int CG_PlayClientSoundAlias(snd_alias_list_t *aliasList)
 int CG_PlayEntitySoundAlias(int entitynum, snd_alias_list_t *aliasList)
 {
     const vec_t *origin;
+    const snd_alias_t *alias;
+    int msec;
 
     origin = (const vec_t *)((const byte *)cg_entities + entitynum * 548 + 0x108);
-    return CG_PlayPickedAlias(Com_PickSoundAliasFromList(aliasList), entitynum, origin, 0);
+    alias = Com_PickSoundAliasFromList(aliasList);
+    if (!alias)
+        return 0;
+
+    msec = SND_PlaySoundAlias(alias, entitynum, origin, 0, SASYS_CGAME);
+    CG_SubtitlePrint(msec, alias);
+    return msec;
 }
 
-static inline __attribute__((always_inline)) void CG_RegisterSurfaceSoundAliases(const char *aliasBase, snd_alias_list_t **dest)
+static void CG_RegisterSurfaceSoundAliases(const char *aliasBase, snd_alias_list_t **dest)
 {
     char aliasName[256];
     int surfaceType;
@@ -832,63 +848,44 @@ static inline __attribute__((always_inline)) void CG_RegisterSurfaceSoundAliases
     }
 }
 
-static inline __attribute__((always_inline)) void CG_RegisterSoundAlias(byte *cgsBase, int offset, const char *aliasName)
-{
-    *(snd_alias_list_t **)(cgsBase + offset) = Com_FindSoundAlias(aliasName);
-}
-
 static void CG_RegisterSounds(void)
 {
-    CG_RegisterSoundAlias((byte *)cgs, 0xbc84, "player_out_of_ammo");
-    CG_RegisterSoundAlias((byte *)cgs, 0xbc88, "land_damage");
+    cgs->media.noAmmoSound = Com_FindSoundAlias("player_out_of_ammo");
+    cgs->media.landDmgSound = Com_FindSoundAlias("land_damage");
 
-    CG_RegisterSurfaceSoundAliases("grenade_bounce", (snd_alias_list_t **)((byte *)cgs + 0xbc90));
-    CG_RegisterSurfaceSoundAliases("grenade_explode", (snd_alias_list_t **)((byte *)cgs + 0xbcec));
-    CG_RegisterSurfaceSoundAliases("rocket_explode", (snd_alias_list_t **)((byte *)cgs + 0xbd48));
-    CG_RegisterSurfaceSoundAliases("bullet_small", (snd_alias_list_t **)((byte *)cgs + 0xbda4));
-    CG_RegisterSurfaceSoundAliases("bulletspray_small", (snd_alias_list_t **)((byte *)cgs + 0xbe00));
-    CG_RegisterSurfaceSoundAliases("bullet_large", (snd_alias_list_t **)((byte *)cgs + 0xbe5c));
-    CG_RegisterSurfaceSoundAliases("step_run", (snd_alias_list_t **)((byte *)cgs + 0xbeb8));
-    CG_RegisterSurfaceSoundAliases("step_run_plr", (snd_alias_list_t **)((byte *)cgs + 0xbf14));
-    CG_RegisterSurfaceSoundAliases("step_walk", (snd_alias_list_t **)((byte *)cgs + 0xbf70));
-    CG_RegisterSurfaceSoundAliases("step_walk_plr", (snd_alias_list_t **)((byte *)cgs + 0xbfcc));
-    CG_RegisterSurfaceSoundAliases("step_prone", (snd_alias_list_t **)((byte *)cgs + 0xc028));
-    CG_RegisterSurfaceSoundAliases("step_prone_plr", (snd_alias_list_t **)((byte *)cgs + 0xc084));
-    CG_RegisterSurfaceSoundAliases("land", (snd_alias_list_t **)((byte *)cgs + 0xc0e0));
-    CG_RegisterSurfaceSoundAliases("land_plr", (snd_alias_list_t **)((byte *)cgs + 0xc13c));
+    CG_RegisterSurfaceSoundAliases("grenade_bounce", cgs->media.grenadeBounceSound);
+    CG_RegisterSurfaceSoundAliases("grenade_explode", cgs->media.grenadeExplodeSound);
+    CG_RegisterSurfaceSoundAliases("rocket_explode", cgs->media.rocketExplodeSound);
+    CG_RegisterSurfaceSoundAliases("bullet_small", cgs->media.bulletHitSmallSound);
+    CG_RegisterSurfaceSoundAliases("bulletspray_small", cgs->media.shotgunHitSound);
+    CG_RegisterSurfaceSoundAliases("bullet_large", cgs->media.bulletHitLargeSound);
+    CG_RegisterSurfaceSoundAliases("step_run", cgs->media.stepRunSound);
+    CG_RegisterSurfaceSoundAliases("step_run_plr", cgs->media.stepRunSoundPlayer);
+    CG_RegisterSurfaceSoundAliases("step_walk", cgs->media.stepWalkSound);
+    CG_RegisterSurfaceSoundAliases("step_walk_plr", cgs->media.stepWalkSoundPlayer);
+    CG_RegisterSurfaceSoundAliases("step_prone", cgs->media.stepProneSound);
+    CG_RegisterSurfaceSoundAliases("step_prone_plr", cgs->media.stepProneSoundPlayer);
+    CG_RegisterSurfaceSoundAliases("land", cgs->media.landSound);
+    CG_RegisterSurfaceSoundAliases("land_plr", cgs->media.landSoundPlayer);
 
-    CG_RegisterSoundAlias((byte *)cgs, 0xc198, "gear_rattle_run");
-    CG_RegisterSoundAlias((byte *)cgs, 0xc19c, "gear_rattle_plr_run");
-    CG_RegisterSoundAlias((byte *)cgs, 0xc1a0, "gear_rattle_walk");
-    CG_RegisterSoundAlias((byte *)cgs, 0xc1a4, "gear_rattle_plr_walk");
-    CG_RegisterSoundAlias((byte *)cgs, 0xc1a8, "movement_foliage");
-    CG_RegisterSoundAlias((byte *)cgs, 0xc1ac, "whizby");
-    CG_RegisterSoundAlias((byte *)cgs, 0xc1b0, "melee_swing_large");
-    CG_RegisterSoundAlias((byte *)cgs, 0xc1b4, "melee_swing_small");
-    CG_RegisterSoundAlias((byte *)cgs, 0xc1b8, "melee_hit");
-    CG_RegisterSoundAlias((byte *)cgs, 0xc1bc, "melee_hit_other");
-    CG_RegisterSoundAlias((byte *)cgs, 0xc1c0, "weap_sniper_heartbeat");
-    CG_RegisterSoundAlias((byte *)cgs, 0xc1c4, "weap_sniper_breathin");
-    CG_RegisterSoundAlias((byte *)cgs, 0xc1c8, "weap_sniper_breathout");
-    CG_RegisterSoundAlias((byte *)cgs, 0xc1cc, "weap_sniper_breathgasp");
-    CG_RegisterSoundAlias((byte *)cgs, 0xc1d0, "weap_offhand_select");
+    cgs->media.runningEquipmentSound = Com_FindSoundAlias("gear_rattle_run");
+    cgs->media.runningEquipmentSoundPlayer = Com_FindSoundAlias("gear_rattle_plr_run");
+    cgs->media.walkingEquipmentSound = Com_FindSoundAlias("gear_rattle_walk");
+    cgs->media.walkingEquipmentSoundPlayer = Com_FindSoundAlias("gear_rattle_plr_walk");
+    cgs->media.foliageMovement = Com_FindSoundAlias("movement_foliage");
+    cgs->media.bulletWhizby = Com_FindSoundAlias("whizby");
+    cgs->media.meleeSwingLarge = Com_FindSoundAlias("melee_swing_large");
+    cgs->media.meleeSwingSmall = Com_FindSoundAlias("melee_swing_small");
+    cgs->media.meleeHit = Com_FindSoundAlias("melee_hit");
+    cgs->media.meleeHitOther = Com_FindSoundAlias("melee_hit_other");
+    cgs->media.playerHeartBeatSound = Com_FindSoundAlias("weap_sniper_heartbeat");
+    cgs->media.playerBreathInSound = Com_FindSoundAlias("weap_sniper_breathin");
+    cgs->media.playerBreathOutSound = Com_FindSoundAlias("weap_sniper_breathout");
+    cgs->media.playerBreathGaspSound = Com_FindSoundAlias("weap_sniper_breathgasp");
+    cgs->media.playerSwapOffhand = Com_FindSoundAlias("weap_offhand_select");
 }
 
-static inline __attribute__((always_inline)) LegacyHacks *CG_LegacyHacks(void)
-{
-    return (LegacyHacks *)::legacyHacks;
-}
-
-static inline __attribute__((always_inline)) void CG_ResetLegacyHackLoadingFlags(void)
-{
-    LegacyHacks *legacyHacks = CG_LegacyHacks();
-
-    legacyHacks->cl_serverloadmap[0] = 0;
-    legacyHacks->cl_serverloadgametype[0] = 0;
-    legacyHacks->cl_serverloadwaiting = 0;
-}
-
-static inline __attribute__((always_inline)) void CG_RegisterDvars(void)
+static void CG_RegisterDvars(void)
 {
     cg_drawGun = Dvar_RegisterBool("cg_drawGun", 1, 0x1080);
     cg_cursorHints = Dvar_RegisterInt("cg_cursorHints", 4, 0, 4, 0x1001);
@@ -1040,31 +1037,20 @@ static inline __attribute__((always_inline)) void CG_RegisterDvars(void)
     cg_constantSizeHeadIcons = Dvar_RegisterBool("cg_constantSizeHeadIcons", 0, 0x1080);
     cg_headIconMinScreenRadius = Dvar_RegisterFloat("cg_headIconMinScreenRadius", 0.0199999996f, 0.0f, 1.0f, 0x1001);
     cg_blood = Dvar_RegisterBool("cg_blood", 1, 0x1001);
-    CG_ResetLegacyHackLoadingFlags();
+    ((LegacyHacks *)::legacyHacks)->cl_serverloadmap[0] = 0;
+    ((LegacyHacks *)::legacyHacks)->cl_serverloadgametype[0] = 0;
+    ((LegacyHacks *)::legacyHacks)->cl_serverloadwaiting = 0;
     cg_weaponleftbone = Dvar_RegisterString("cg_weaponleftbone", "tag_weapon_left", 0x1000);
     cg_weaponrightbone = Dvar_RegisterString("cg_weaponrightbone", "tag_weapon_right", 0x1000);
     ((cgs_t *)cgs)->localServer = com_sv_running->current.enabled;
-    CG_LegacyHacks()->cl_stance = 0;
+    ((LegacyHacks *)::legacyHacks)->cl_stance = 0;
     CL_SetADS(0);
     (*(unsigned char *)&((cg_t *)cg)->objectiveText[0]) = 0;
     CG_OffhandRegisterDvars();
     BG_RegisterDvars();
 }
 
-static inline __attribute__((always_inline)) void CG_InitBgsCallbacks(void)
-{
-    byte *cgBase = (byte *)cg;
-
-    (*(void **)&((cg_t *)cgBase)->bgs.animScriptData.soundAlias) = (void *)Com_FindSoundAlias;
-    (*(void **)&((cg_t *)cgBase)->bgs.animScriptData.playSoundAlias) = (void *)CG_PlayEntitySoundAlias;
-    (*(void **)&((cg_t *)cgBase)->bgs.GetXModel) = (void *)CG_GetXModel;
-    (*(void **)&((cg_t *)cgBase)->bgs.CreateDObj) = (void *)CG_CreateDObj;
-    (*(void **)&((cg_t *)cgBase)->bgs.SafeDObjFree) = (void *)Com_SafeClientDObjFree;
-    (*(void **)&((cg_t *)cgBase)->bgs.AllocXAnim) = (void *)Hunk_AllocXAnimClient;
-    ((cg_t *)cgBase)->bgs.anim_user = 0;
-}
-
-static inline __attribute__((always_inline)) void CG_InitXAnimTrees(void)
+static void CG_InitXAnimTrees(void)
 {
     byte *cgBase = (byte *)cg;
     byte *cgsBase = (byte *)cgs;
@@ -1115,7 +1101,13 @@ void CG_Init(int serverMessageNum, int serverCommandSequence, int clientNum)
 
     CG_RegisterDvars();
 
-    CG_InitBgsCallbacks();
+    (*(void **)&((cg_t *)cgBase)->bgs.animScriptData.soundAlias) = (void *)Com_FindSoundAlias;
+    (*(void **)&((cg_t *)cgBase)->bgs.animScriptData.playSoundAlias) = (void *)CG_PlayEntitySoundAlias;
+    (*(void **)&((cg_t *)cgBase)->bgs.GetXModel) = (void *)CG_GetXModel;
+    (*(void **)&((cg_t *)cgBase)->bgs.CreateDObj) = (void *)CG_CreateDObj;
+    (*(void **)&((cg_t *)cgBase)->bgs.SafeDObjFree) = (void *)Com_SafeClientDObjFree;
+    (*(void **)&((cg_t *)cgBase)->bgs.AllocXAnim) = (void *)Hunk_AllocXAnimClient;
+    ((cg_t *)cgBase)->bgs.anim_user = 0;
 
     *(int *)(cgBase + 4) = clientNum;
     ((cg_t *)cgBase)->drawHud = 1;

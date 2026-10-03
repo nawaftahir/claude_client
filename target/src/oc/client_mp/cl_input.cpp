@@ -236,17 +236,7 @@ static const inputCommandDef_t s_inputCommands[] = {
 void CL_Input(void);
 void CL_SendCmd(void);
 
-static inline __attribute__((always_inline)) qboolean CL_ConsumeButtonPress(kbutton_t *button)
-{
-
-    if (*(const unsigned short *)&button->active) {
-        button->wasPressed = 0;
-        return 1;
-    }
-    return 0;
-}
-
-static inline __attribute__((always_inline)) float CL_KeyState(kbutton_t *key)
+float CL_KeyState(kbutton_t *key)
 {
     int msec;
 
@@ -1128,10 +1118,9 @@ void CL_CmdButtons(usercmd_t *cmd)
 #define CONSUME(index, bit)                          \
     do {                                             \
         kbutton_t *b__ = KB_AT(index);               \
-        if (*(const unsigned short *)&b__->active) { \
+        if (b__->active || b__->wasPressed)          \
             cmd->buttons |= (bit);                   \
-            b__->wasPressed = 0;                     \
-        }                                            \
+        b__->wasPressed = 0;                         \
     } while (0)
 
     CONSUME(14, 0x1);
@@ -1153,8 +1142,8 @@ void CL_CmdButtons(usercmd_t *cmd)
         cmd->buttons |= 0x40000;
     }
 
-    if ((int)(cl_->snap.ps.pm_type - 2) <= 2 && CL_ConsumeButtonPress(KB_AT(12))) {
-        cmd->buttons |= 0x400;
+    if (cl_->snap.ps.pm_type == 2 || cl_->snap.ps.pm_type == 3 || cl_->snap.ps.pm_type == 4) {
+        CONSUME(12, 0x400);
     }
 
     if (cl_->cgameInShellshock) {

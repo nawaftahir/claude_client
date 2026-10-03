@@ -212,7 +212,7 @@ static float CG_DrawWeapReticle(void);
 unsigned int CG_DrawCrosshair(void);
 unsigned int CG_Draw2D(void);
 
-static inline __attribute__((always_inline)) qboolean CG_UpdateCameraShakeStrength(cameraShake_t *shake)
+static qboolean CG_UpdateCameraShakeStrength(cameraShake_t *shake)
 {
     float elapsed;
     float distanceScale;

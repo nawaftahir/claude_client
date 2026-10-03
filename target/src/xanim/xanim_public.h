@@ -670,12 +670,12 @@ inline unsigned short XModelDataReadUnsignedShort(const unsigned char **pos)
 
 inline float XModelDataReadFloat(const unsigned char **pos)
 {
-	float value;
+	int value;
 
-	memcpy(&value, *pos, sizeof(value));
+	value = *(const int *)*pos;
 	*pos += sizeof(value);
 
-	return value;
+	return *(float *)&value;
 }
 
 inline int XModelDataReadInt(const unsigned char **pos)

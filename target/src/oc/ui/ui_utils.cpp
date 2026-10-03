@@ -192,16 +192,6 @@ void Window_SetOffsetTime(Window *w, int offsetTime)
     w->offsetTime[0] = offsetTime;
 }
 
-static inline __attribute__((always_inline)) void CopyRect(byte *dst, const byte *src)
-{
-    *(int *)(dst) = *(int *)(src);
-    *(int *)(dst + 4) = *(int *)(src + 4);
-    *(int *)(dst + 8) = *(int *)(src + 8);
-    *(int *)(dst + 12) = *(int *)(src + 12);
-    *(int *)(dst + 16) = *(int *)(src + 16);
-    *(int *)(dst + 20) = *(int *)(src + 20);
-}
-
 void Window_SetRect(Window *w, const UiRectangle *rect)
 {
     w->rect[0] = *rect;
@@ -234,7 +224,7 @@ void Menu_SetCursorItem(menuDef_t *menu, int cursorItem)
 
 void Item_SetTextRect(itemDef_t *item, const rectDef_t *textRect)
 {
-    CopyRect((byte *)item->textRect, (const byte *)textRect);
+    item->textRect[0] = *textRect;
 }
 
 void Item_SetCursorPos(itemDef_t *item, int cursorPos)

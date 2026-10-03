@@ -485,7 +485,9 @@ char *CL_AllocSkelMemory(int localClientNum, unsigned int size)
     char *buf = client->skelMemoryStart + client->skelMemPos;
     unsigned int newPos = client->skelMemPos + ((size + 15) & ~15);
     client->skelMemPos = newPos;
-    return newPos > 0x3fff0 ? NULL : buf;
+    if (newPos > 0x3fff0)
+        return NULL;
+    return buf;
 }
 
 void CL_ResetSkeletonCache(int localClientNum)
@@ -1637,6 +1639,7 @@ void CL_Record_f(void)
     int i;
     int compressedSize;
     int len;
+    char *s;
 
     if (Cmd_Argc() > 2) {
         Com_Printf((const char *)"record <demoname>\n");
@@ -1657,13 +1660,10 @@ void CL_Record_f(void)
         I_strncpyz(demoName, Cmd_Argv(1), sizeof(demoName));
         Com_sprintf(name, sizeof(name), (const char *)"demos/%s.dm_%d", demoName, 1);
     } else {
-        number = 0;
-        for (;;) {
+        for (number = 0; number <= 9999; number++) {
             Com_sprintf(demoName, sizeof(demoName), (const char *)"demo%04i", number);
             Com_sprintf(name, sizeof(name), (const char *)"demos/%s.dm_%d", demoName, 1);
             if (!FS_FileExists(name))
-                break;
-            if (++number == 10000)
                 break;
         }
     }
@@ -1685,13 +1685,13 @@ void CL_Record_f(void)
     MSG_WriteLong(&buf, conn->serverCommandSequence);
 
     for (i = 0; i < 2048; ++i) {
-        int offset = active->gameState.stringOffsets[i];
-        if (!offset)
+        if (!active->gameState.stringOffsets[i])
             continue;
 
+        s = active->gameState.stringData + active->gameState.stringOffsets[i];
         MSG_WriteByte(&buf, 2);
         MSG_WriteShort(&buf, i);
-        MSG_WriteBigString(&buf, active->gameState.stringData + offset);
+        MSG_WriteBigString(&buf, s);
     }
 
     memset(&nullstate, 0, sizeof(nullstate));

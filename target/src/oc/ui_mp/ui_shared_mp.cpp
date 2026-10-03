@@ -3510,53 +3510,40 @@ qboolean Item_HandleKey(displayContextDef_t *dc, itemDef_t *item, int key, qbool
 
 void Item_ListBox_MouseEnter(itemDef_t *item, float x, float y)
 {
-    byte *it = (byte *)item;
-    byte *listPtr = (byte *)Item_GetListBoxDef(item);
+    rectDef_t r;
+    listBoxDef_s *listPtr;
+
+    listPtr = Item_GetListBoxDef(item);
     if (!listPtr)
         return;
-    Window_RemoveDynamicFlags( (Window *)((itemDef_t *)((void *)it)), 0x1f00);
-    int overLB = Item_ListBox_OverLB(item, x, y);
-    Window_AddDynamicFlags( (Window *)((itemDef_t *)((void *)it)), overLB);
-    int horzAlign = (((rectDef_t*)(it))->horzAlign);
-    int vertAlign = (((rectDef_t*)(it))->vertAlign);
-    if (Window_IsHorizontal((Window *)it)) {
-        if (((itemDef_t *)it)->window.dynamicFlags[0] & 0x1f00)
-            return;
-        if (((listBoxDef_t *)listPtr)->elementStyle == 1) {
-            float itemX = (((rectDef_t*)(it))->x), itemY = (((rectDef_t*)(it))->y);
-            float rectW = (((rectDef_t*)(it))->h) - 16.0f;
-            int headerH = (((listBoxDef_s*)(listPtr))->drawPadding);
-            float rectH = (((rectDef_t*)(it))->w) - (float)headerH;
-            float cx = x, cy = y;
-            float rx = itemX, ry = itemY, rw = rectH, rh = rectW;
-            CalcScreenX(&cx, 4);
-            CalcScreenY(&cy, 4);
-            CalcScreenPlacement(&rx, &ry, &rw, &rh, horzAlign, vertAlign);
-            if (cx < rx || cx > rx + rw || cy < ry || cy > ry + rh)
-                return;
-            int cursorPos = (int)((x - itemX) / (((listBoxDef_s*)(listPtr))->elementWidth)) + *(int *)listPtr;
-            ListBox_SetCursorPos((listBoxDef_t *)((itemDef_t *)listPtr), cursorPos);
-            if ((((listBoxDef_s*)(listPtr))->cursorPos[0]) >= (((listBoxDef_s*)(listPtr))->endPos[0]))
-                ListBox_SetCursorPos((listBoxDef_t *)((itemDef_t *)listPtr), (((listBoxDef_s*)(listPtr))->endPos[0]));
+    Window_RemoveDynamicFlags(&item->window, 0x1f00);
+    item->window.dynamicFlags[0] |= Item_ListBox_OverLB(item, x, y);
+    r.horzAlign = item->window.rect[0].horzAlign;
+    r.vertAlign = item->window.rect[0].vertAlign;
+    if (Window_IsHorizontal(&item->window)) {
+        if (!(item->window.dynamicFlags[0] & 0x1f00)) {
+            if (listPtr->elementStyle == 1) {
+                r.x = item->window.rect[0].x;
+                r.y = item->window.rect[0].y;
+                r.h = item->window.rect[0].h - 16.0f;
+                r.w = item->window.rect[0].w - listPtr->drawPadding;
+                if (Rect_ContainsPoint(&r, x, y)) {
+                    listPtr->cursorPos[0] = (int)((x - r.x) / listPtr->elementWidth) + listPtr->startPos[0];
+                    if (listPtr->cursorPos[0] >= listPtr->endPos[0])
+                        listPtr->cursorPos[0] = listPtr->endPos[0];
+                }
+            }
         }
-    } else {
-        if (((itemDef_t *)it)->window.dynamicFlags[0] & 0x1f00)
-            return;
-        float itemY = (((rectDef_t*)(it))->y);
-        float rectW = (((rectDef_t*)(it))->w) - 16.0f;
-        int headerH = (((listBoxDef_s*)(listPtr))->drawPadding);
-        float rectH = (((rectDef_t*)(it))->h) - (float)headerH;
-        float cx = x, cy = y;
-        float rx = (((rectDef_t*)(it))->x), ry = itemY, rw = rectW, rh = rectH;
-        CalcScreenX(&cx, 4);
-        CalcScreenY(&cy, 4);
-        CalcScreenPlacement(&rx, &ry, &rw, &rh, horzAlign, vertAlign);
-        if (cx < rx || cx > rx + rw || cy < ry || cy > ry + rh)
-            return;
-        int cursorPos = (int)((y - 2.0f - itemY) / (((listBoxDef_s*)(listPtr))->elementHeight)) + *(int *)listPtr;
-        ListBox_SetCursorPos((listBoxDef_t *)((itemDef_t *)listPtr), cursorPos);
-        if ((((listBoxDef_s*)(listPtr))->cursorPos[0]) > (((listBoxDef_s*)(listPtr))->endPos[0]))
-            ListBox_SetCursorPos((listBoxDef_t *)((itemDef_t *)listPtr), (((listBoxDef_s*)(listPtr))->endPos[0]));
+    } else if (!(item->window.dynamicFlags[0] & 0x1f00)) {
+        r.x = item->window.rect[0].x;
+        r.y = item->window.rect[0].y;
+        r.w = item->window.rect[0].w - 16.0f;
+        r.h = item->window.rect[0].h - listPtr->drawPadding;
+        if (Rect_ContainsPoint(&r, x, y)) {
+            listPtr->cursorPos[0] = (int)((y - 2.0f - r.y) / listPtr->elementHeight) + listPtr->startPos[0];
+            if (listPtr->cursorPos[0] > listPtr->endPos[0])
+                listPtr->cursorPos[0] = listPtr->endPos[0];
+        }
     }
 }
 

@@ -1618,7 +1618,6 @@ static void SND_StopBackground(int track, int fadetime)
 void SND_PlayAmbientAlias(const snd_alias_t *pAlias, int fadetime, snd_alias_system_t system)
 {
     int tracknum;
-    int curTrack;
     snd_background_info_t *trackptr;
     const snd_alias_t *curAlias;
     int curFlags, newFlags;
@@ -1629,8 +1628,8 @@ void SND_PlayAmbientAlias(const snd_alias_t *pAlias, int fadetime, snd_alias_sys
     if (!pAlias)
         return;
 
-    curTrack = g_snd.ambient_track;
-    tracknum = curTrack + 32;
+    tracknum = g_snd.ambient_track + 32;
+    trackptr = &g_snd.background[g_snd.ambient_track];
 
     if (!SND_IsStreamChannelFree(tracknum)) {
 
@@ -1649,13 +1648,10 @@ void SND_PlayAmbientAlias(const snd_alias_t *pAlias, int fadetime, snd_alias_sys
                 g_snd.chaninfo[tracknum].pAlias0 = pAlias;
                 g_snd.chaninfo[tracknum].pAlias1 = pAlias;
                 volume = pAlias->fVolMin + randomf() * (pAlias->fVolMax - pAlias->fVolMin);
-                if (fadetime != 0) {
-                    trackptr = &g_snd.background[curTrack];
+                if (fadetime != 0)
                     trackptr->goalrate = (volume - trackptr->goalvolume) / (float)fadetime;
-                } else {
-                    trackptr = &g_snd.background[curTrack];
+                else
                     trackptr->goalrate = 0.0f;
-                }
                 trackptr->goalvolume = volume;
                 return;
             }

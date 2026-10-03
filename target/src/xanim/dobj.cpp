@@ -233,7 +233,7 @@ void DObjGetHierarchyBits(DObj_s *obj, int boneIndex, int *partBits)
 		{
 			partBits[boneIndex >> 5] |= 1 << (boneIndex & 0x1F);
 
-			if ( (byte)(((byte)(duplicatePartBits[boneIndex >> 5] >> (boneIndex & 0x1F)) ^ 1) & 1) )
+			if ( !( duplicatePartBits[boneIndex >> 5] & ( 1 << ( boneIndex & 0x1F ) ) ) )
 			{
 				newBoneIndex = localBoneIndex - parts->numRootBones;
 
@@ -250,14 +250,10 @@ void DObjGetHierarchyBits(DObj_s *obj, int boneIndex, int *partBits)
 			}
 			else
 			{
-				for ( pos = duplicateParts; ; pos += 2 )
-				{
-					if ( boneIndex == *pos - 1 )
-					{
-						boneIndex = pos[1] - 1;
-						goto out;
-					}
-				}
+				for ( pos = duplicateParts; boneIndex != *pos - 1; pos += 2 )
+					;
+
+				boneIndex = pos[1] - 1;
 			}
 
 		out:
@@ -333,7 +329,7 @@ void DObjCompleteHierarchyBits(DObj_s *obj, int *partBits)
 			continue;
 		}
 
-		if ( (byte)(((byte)(duplicatePartBits[boneIndex >> 5] >> (boneIndex & 0x1F)) ^ 1) & 1) )
+		if ( !( duplicatePartBits[boneIndex >> 5] & ( 1 << ( boneIndex & 0x1F ) ) ) )
 		{
 			newBoneIndex = localBoneIndex - parts->numRootBones;
 

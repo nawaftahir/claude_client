@@ -1868,6 +1868,11 @@ qboolean MSG_ReadDeltaStruct( msg_t *msg, byte *from, byte *to, int number, int 
 
 	if ( MSG_ReadBit( msg ) == 1 )
 	{
+		if ( cl_shownet && ( cl_shownet->current.integer >= 2 || cl_shownet->current.integer == -1 ) )
+		{
+			Com_Printf( "%3i: #%-3i remove\n", msg->readcount, number );
+		}
+
 		return qtrue;
 	}
 
@@ -1885,7 +1890,15 @@ qboolean MSG_ReadDeltaStruct( msg_t *msg, byte *from, byte *to, int number, int 
 		return qfalse;
 	}
 
-	print = qfalse;
+	if ( cl_shownet && ( cl_shownet->current.integer >= 2 || cl_shownet->current.integer == -1 ) )
+	{
+		print = qtrue;
+		Com_Printf( "%3i: #%-3i ", msg->readcount, *(int *)to );
+	}
+	else
+	{
+		print = qfalse;
+	}
 
 	*(int *)to = number;
 

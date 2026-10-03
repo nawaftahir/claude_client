@@ -171,16 +171,6 @@ COD2_ASSERT_FIELD(WeaponDef,     overlayReticle, 0x278);
 COD2_ASSERT_FIELD(WeaponDef,     bWideListIcon,  0x344);
 COD2_ASSERT_FIELD(playerState_t, fWeaponPosFrac, 0xdc);
 
-static qboolean CG_DrawHealthEnabled(void)
-{
-    const dvar_t *drawHealth = Dvar_FindVar("cg_drawHealth");
-
-    if (drawHealth)
-        cg_drawHealth = drawHealth;
-
-    return drawHealth && drawHealth->current.enabled;
-}
-
 void CG_AntiBurnInHUD_RegisterDvars(void)
 {
     hud_fadeout_speed = Dvar_RegisterFloat("hud_fadeout_speed", 0.1f, 0.0f, 1.0f, 0x1001);
@@ -935,40 +925,12 @@ void CG_DrawPlayerCompassBack(const rectDef_t *rect, MaterialHandle material, ve
         material);
 }
 
-static inline __attribute__((always_inline)) void CG_CopyColor(vec_t out[4], const vec_t *in, float alpha)
-{
-    if (in) {
-        out[0] = in[0];
-        out[1] = in[1];
-        out[2] = in[2];
-        out[3] = in[3] * alpha;
-    } else {
-        out[0] = 1.0f;
-        out[1] = 1.0f;
-        out[2] = 1.0f;
-        out[3] = alpha;
-    }
-}
-
-static inline __attribute__((always_inline)) int CG_FadeDurationMsec(const dvar_t *fadeDvar)
-{
-    if (!fadeDvar) {
-        return 0;
-    }
-    return I_fround(fadeDvar->current.value * 1000.0f);
-}
-
-static inline __attribute__((always_inline)) float CG_HudFadeAlpha(const dvar_t *fadeDvar, int displayStartTime)
-{
-    return CG_FadeHudMenu(fadeDvar, displayStartTime, CG_FadeDurationMsec(fadeDvar));
-}
-
-static inline __attribute__((always_inline)) qboolean CG_PlayerOwnsWeapon(const int *weapons, int weaponIndex)
+static qboolean CG_PlayerOwnsWeapon(const int *weapons, int weaponIndex)
 {
     return (weapons[weaponIndex >> 5] & (1 << (weaponIndex & 31))) != 0;
 }
 
-static inline __attribute__((always_inline)) int CG_GetDrawWeaponIndex(void)
+static int CG_GetDrawWeaponIndex(void)
 {
     playerState_t *ps;
     int weaponIndex;
@@ -981,66 +943,9 @@ static inline __attribute__((always_inline)) int CG_GetDrawWeaponIndex(void)
     return ps->weapon;
 }
 
-static inline __attribute__((always_inline)) weaponInfo_t *CG_GetDrawWeaponInfo(int weaponIndex)
-{
-    weaponInfo_t *weapons;
-
-    if (weaponIndex <= 0 || weaponIndex >= BG_GetNumWeapons()) {
-        return 0;
-    }
-
-    weapons = cg_weaponsArray;
-    if (!weapons) {
-        return 0;
-    }
-    return &weapons[weaponIndex];
-}
-
-static inline __attribute__((always_inline)) void CG_DrawTextRightAligned(const char *text, const rectDef_t *rect, struct Font_s *font, float scale, const vec_t *color, int textStyle)
-{
-    int width;
-
-    if (!text || !*text || !rect || !font) {
-        return;
-    }
-
-    width = UI_TextWidth(text, 0, font, scale);
-    UI_DrawText(text, 0x7fffffff, font, rect->x + rect->w - (float)width, rect->y,
-                rect->horzAlign, rect->vertAlign, scale, color, textStyle);
-}
-
-static inline __attribute__((always_inline)) void CG_DrawCenteredTextInRect(const char *text, const rectDef_t *rect, struct Font_s *font, float scale, const vec_t *color, int textStyle)
-{
-    int width;
-
-    if (!text || !*text || !rect || !font) {
-        return;
-    }
-
-    width = UI_TextWidth(text, 0, font, scale);
-    UI_DrawText(text, 0x7fffffff, font, rect->x + (rect->w - (float)width) * 0.5f, rect->y + rect->h,
-                rect->horzAlign, rect->vertAlign, scale, color, textStyle);
-}
-
 static void CG_DrawHudPic(const rectDef_t *rect, MaterialHandle material, const vec_t *color)
 {
     CL_DrawStretchPic(rect->x, rect->y, rect->w, rect->h, rect->horzAlign, rect->vertAlign, 0.0f, 0.0f, 1.0f, 1.0f, color, material);
-}
-
-static inline __attribute__((always_inline)) int CG_RoundStanceFadeDuration(float value)
-{
-#if defined(_MSC_VER) && defined(_M_IX86)
-    int result;
-    const double roundEpsilon = 1.0 / 1073741824.0;
-
-    __asm fld value
-    __asm fadd roundEpsilon
-    __asm fistp result
-
-    return result;
-#else
-    return I_fround(value);
-#endif
 }
 
 static void CG_DrawStanceIcon(const rectDef_t *rect, vec_t *drawColor, float x, float y, float fadeAlpha)
@@ -1091,7 +996,7 @@ static void CG_DrawPlayerStance(const rectDef_t *rect, vec_t *color, struct Font
     const char *proneStr;
     int duration;
 
-    duration = CG_RoundStanceFadeDuration(1000.0f * hud_fade_stance->current.value);
+    duration = I_fround(1000.0f * hud_fade_stance->current.value);
     fadeAlpha = CG_FadeHudMenu(hud_fade_stance, cg->stanceFadeTime, duration);
 
     if (fadeAlpha == 0.0f) {
@@ -1469,141 +1374,204 @@ static void CG_DrawPlayerWeaponModeIcon(const rectDef_t *rect, vec_t *color)
         }
     }
 }
-static void CG_DrawPlayerHealthBar(const rectDef_t *rect, MaterialHandle material, vec_t *color)
+inline float I_fsel(const float x, const float y, const float z)
 {
-    rectDef_t barRect;
-    vec_t drawColor[4];
-    float health;
-    float alpha;
-
-    if (!CG_DrawHealthEnabled()) {
-        return;
-    }
-
-    if (!cg) {
-        return;
-    }
-
-    health = CG_CalcPlayerHealth();
-    if (health <= 0.0f) {
-        return;
-    }
-
-    alpha = CG_HudFadeAlpha(hud_fade_healthbar, cg->healthFadeTime);
-    if (alpha <= 0.0f) {
-        return;
-    }
-
-    barRect = *rect;
-    barRect.w *= health;
-    CG_CopyColor(drawColor, color, alpha);
-    CG_DrawHudPic(&barRect, material, drawColor);
+    return x >= 0.0f ? y : z;
 }
 
-static void CG_DrawPlayerHealthBack(const rectDef_t *rect, MaterialHandle material, vec_t *color)
+inline float I_fclamp(const float val, const float min, const float max)
 {
-    vec_t drawColor[4];
-    float alpha;
-
-    if (!CG_DrawHealthEnabled()) {
-        return;
-    }
-
-    if (!cg) {
-        return;
-    }
-
-    alpha = CG_HudFadeAlpha(hud_fade_healthbar, cg->healthFadeTime);
-    if (alpha <= 0.0f) {
-        return;
-    }
-
-    CG_CopyColor(drawColor, color, alpha);
-    CG_DrawHudPic(rect, material, drawColor);
+    return I_fsel(min - val, min, I_fsel(val - max, max, val));
 }
 
-static inline __attribute__((always_inline)) void CG_DrawLowHealthOverlay(const rectDef_t *rect, MaterialHandle material, vec_t *color)
+void CG_DrawPlayerBarHealth(const rectDef_t *rect, MaterialHandle material, vec_t *color)
 {
-    vec_t drawColor[4];
     float health;
-    float alpha;
-    int elapsed;
+    float frac;
+    float scale;
+    playerState_t *ps;
+    float x;
+    float y;
+    float w;
+    float h;
 
-    if (!CG_DrawHealthEnabled()) {
+    if (!cg_drawHealth->current.enabled)
         return;
-    }
-
-    if (!cg) {
-        return;
-    }
 
     health = CG_CalcPlayerHealth();
-    CG_PulseLowHealthOverlay(health);
+    color[3] = CG_FadeHudMenu(hud_fade_healthbar, cg->healthFadeTime, I_fround(hud_fade_healthbar->current.value * 1000.0f));
+    if (color[3] == 0.0f)
+        return;
 
-    alpha = cg->healthOverlayToAlpha;
-    if (cg->healthOverlayPulseDuration > 0) {
-        elapsed = cg->time - cg->healthOverlayPulseTime;
-        if (elapsed >= 0 && elapsed < cg->healthOverlayPulseDuration) {
-            float frac = (float)elapsed / (float)cg->healthOverlayPulseDuration;
-            alpha = cg->healthOverlayFromAlpha + (cg->healthOverlayToAlpha - cg->healthOverlayFromAlpha) * frac;
+    ps = &cg->nextSnap->ps;
+    frac = I_fclamp(health, 0.0f, 1.0f);
+
+    if (health > 0.0f)
+    {
+        x = rect->x;
+        y = rect->y;
+        w = health * rect->w;
+        h = rect->h;
+        if (frac > 0.5f)
+        {
+            scale = 1.0f - frac;
+            color[0] = scale * color[0] + scale * color[0];
+            color[2] = scale * color[2] + scale * color[2];
+        }
+        else
+        {
+            color[1] = (frac + 0.2f) * color[1] + 0.3f;
+        }
+        CL_DrawStretchPic(x, y, w, h, rect->horzAlign, rect->vertAlign, 0.0f, 0.0f, health, 1.0f, color, material);
+    }
+
+    if (cg->lastHealthClient != ps->clientNum)
+    {
+        cg->lastHealthClient = ps->clientNum;
+        cg->lastHealth = health;
+        cg->lastHealthLerpDelay = 1;
+    }
+    else if (health < cg->lastHealth)
+    {
+        if (cg->lastHealthLerpDelay)
+        {
+            cg->lastHealthLerpDelay -= cg->frametime;
+            if (cg->lastHealthLerpDelay < 0)
+                cg->lastHealthLerpDelay = 0;
+        }
+        else
+        {
+            cg->lastHealth = cg->lastHealth - (float)cg->frametime * 0.0012f;
+            if (cg->lastHealth <= health)
+            {
+                cg->lastHealth = health;
+                cg->lastHealthLerpDelay = 1;
+            }
         }
     }
-
-    if (alpha <= 0.0f) {
-        return;
-    }
-    if (alpha > 1.0f) {
-        alpha = 1.0f;
+    else
+    {
+        cg->lastHealth = health;
+        cg->lastHealthLerpDelay = 1;
     }
 
-    CG_CopyColor(drawColor, color, alpha);
-    CG_DrawHudPic(rect, material, drawColor);
+    if (cg->lastHealth > health)
+    {
+        x = health * rect->w + rect->x;
+        y = rect->y;
+        w = (cg->lastHealth - health) * rect->w;
+        h = rect->h;
+        color[0] = 1.0f;
+        color[1] = 0.0f;
+        color[2] = 0.0f;
+        CL_DrawStretchPic(x, y, w, h, rect->horzAlign, rect->vertAlign, health, 0.0f, cg->lastHealth, 1.0f, color, material);
+    }
 }
 
-static inline __attribute__((always_inline)) void CG_DrawPlayerCompass(const rectDef_t *rect, MaterialHandle material, vec_t *color)
+void CG_DrawPlayerBarHealthBack(const rectDef_t *rect, MaterialHandle material, vec_t *color)
 {
-    rectDef_t compassRect;
-    vec_t drawColor[4];
-    float scale;
+    int flashTime;
+    float health;
+    float fadeAlpha;
+    float x;
+    float y;
+    float w;
+    float h;
+
+    if (!cg_drawHealth->current.enabled)
+        return;
+
+    fadeAlpha = CG_FadeHudMenu(hud_fade_healthbar, cg->healthFadeTime, I_fround(hud_fade_healthbar->current.value * 1000.0f));
+    if (fadeAlpha == 0.0f)
+        return;
+
+    color[3] = fadeAlpha;
+    x = rect->x;
+    y = rect->y;
+    w = rect->w;
+    h = rect->h;
+    CL_DrawStretchPic(x, y, w, h, rect->horzAlign, rect->vertAlign, 0.0f, 0.0f, 1.0f, 1.0f, color, material);
+
+    health = CG_CalcPlayerHealth();
+    if (health == 0.0f)
+        return;
+
+    if (health < hud_health_startpulse_critical->current.value)
+        flashTime = I_fround(hud_health_pulserate_critical->current.value * 1000.0f);
+    else if (health < hud_health_startpulse_injured->current.value)
+        flashTime = I_fround(hud_health_pulserate_injured->current.value * 1000.0f);
+    else
+        return;
+
+    if (flashTime)
+    {
+        if (cg->lastHealthPulseTime > cg->time || flashTime + cg->lastHealthPulseTime < cg->time)
+            cg->lastHealthPulseTime = cg->time;
+        color[0] = 0.89f;
+        color[1] = 0.18f;
+        color[2] = 0.01f;
+        color[3] = (float)(cg->lastHealthPulseTime - cg->time + flashTime) / (float)flashTime;
+        if (fadeAlpha < color[3])
+            color[3] = fadeAlpha;
+        CL_DrawStretchPic(x, y, w, h, rect->horzAlign, rect->vertAlign, 0.0f, 0.0f, 1.0f, 1.0f, color, material);
+    }
+}
+
+float CG_FadeLowHealthOverlay(void)
+{
+    int elapsed;
+
+    elapsed = cg->time - cg->healthOverlayPulseTime;
+    if (elapsed < 0)
+        elapsed = 0;
+
+    if (cg->healthOverlayPulseDuration <= 0 || elapsed >= cg->healthOverlayPulseDuration)
+        return cg->healthOverlayToAlpha;
+
+    return ((float)elapsed / (float)cg->healthOverlayPulseDuration) * (cg->healthOverlayToAlpha - cg->healthOverlayFromAlpha)
+        + cg->healthOverlayFromAlpha;
+}
+
+void CG_DrawPlayerLowHealthOverlay(const rectDef_t *rect, MaterialHandle material, vec_t *color)
+{
+    float healthRatio;
+
+    healthRatio = CG_CalcPlayerHealth();
+    if (healthRatio == 0.0f)
+        return;
+
+    CG_PulseLowHealthOverlay(healthRatio);
+    color[3] = CG_FadeLowHealthOverlay();
+    if (color[3] == 0.0f)
+        return;
+
+    CL_DrawStretchPic(rect->x, rect->y, rect->w, rect->h, rect->horzAlign, rect->vertAlign, 0.0f, 0.0f, 1.0f, 1.0f, color, material);
+}
+
+void CG_DrawPlayerCompass(const rectDef_t *rect, MaterialHandle material, vec_t *color)
+{
+    int duration;
+    int displayStartTime;
     float alpha;
+    float x;
+    float y;
+    float w;
+    float h;
 
-    if (!cg) {
+    duration = I_fround(1000.0f * hud_fade_compass->current.value);
+    displayStartTime = cg->compassFadeTime;
+    alpha = CG_FadeHudMenu(hud_fade_compass, displayStartTime, duration);
+    color[3] = alpha;
+    if (alpha == 0.0f) {
         return;
     }
 
-    alpha = CG_HudFadeAlpha(hud_fade_compass, cg->compassFadeTime);
-    if (alpha <= 0.0f) {
-        return;
-    }
-
-    scale = cg_hudCompassSize->current.value;
-    compassRect = *rect;
-    compassRect.y -= rect->h * (scale - 1.0f);
-    compassRect.w *= scale;
-    compassRect.h *= scale;
-
+    x = rect->x;
+    y = rect->y - (cg_hudCompassSize->current.value - 1.0f) * rect->h;
+    w = rect->w * cg_hudCompassSize->current.value;
+    h = rect->h * cg_hudCompassSize->current.value;
     CG_UpdateCompassOrientation();
-    CG_CopyColor(drawColor, color, alpha);
-    CG_DrawRotatedPic(compassRect.x, compassRect.y, compassRect.w, compassRect.h,
-                      compassRect.horzAlign, compassRect.vertAlign, cg->compassYaw, drawColor, material);
-}
-
-static inline __attribute__((always_inline)) void CG_DrawPlayerCompassFriendliesOwnerdraw(rectDef_t *rect, MaterialHandle material, vec_t *color)
-{
-    vec_t drawColor[4];
-    float alpha;
-
-    if (!cg) {
-        return;
-    }
-
-    alpha = CG_HudFadeAlpha(hud_fade_compass, cg->compassFadeTime);
-    if (alpha <= 0.0f) {
-        return;
-    }
-
-    CG_CopyColor(drawColor, color, alpha);
-    CG_DrawCompassFriendlies(rect, material, drawColor);
+    CG_DrawRotatedPic(x, y, w, h, rect->horzAlign, rect->vertAlign, cg->compassYaw, color, material);
 }
 
 static void CG_DrawPlayerLocation(const rectDef_t *rect, struct Font_s *font, float scale, vec_t *color, int textStyle)
@@ -1722,13 +1690,13 @@ void CG_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAli
         CG_DrawPlayerCompassPointers(&rect, color);
         break;
     case CG_PLAYER_BAR_HEALTH:
-        CG_DrawPlayerHealthBar(&rect, material, color);
+        CG_DrawPlayerBarHealth(&rect, material, color);
         break;
     case CG_PLAYER_BAR_HEALTH_BACK:
-        CG_DrawPlayerHealthBack(&rect, material, color);
+        CG_DrawPlayerBarHealthBack(&rect, material, color);
         break;
     case CG_PLAYER_LOW_HEALTH_OVERLAY:
-        CG_DrawLowHealthOverlay(&rect, material, color);
+        CG_DrawPlayerLowHealthOverlay(&rect, material, color);
         break;
     case CG_PLAYER_COMPASS_FRIENDS:
         CG_DrawCompassFriendlies(&rect, material, color);
