@@ -1141,6 +1141,8 @@ void CG_DrawChatMessages(void)
     const char *msg;
     vec4_t color;
     float alphaPercent;
+    float y;
+    float w;
     int chatHeight;
     int hudChatX;
     int hudChatY;
@@ -1181,8 +1183,9 @@ void CG_DrawChatMessages(void)
         color[1] *= 0.25f;
         color[2] *= 0.25f;
         color[3] = alphaPercent * 0.6f;
-        UI_DrawHandlePic(0.0f, (float)(hudChatY + (i - cgs->teamChatPos) * 10),
-                         (float)(UI_TextWidth(msg, 0, font, 1.0f / 3.0f) + 24), 10.0f, 1, 1, color,
+        y = (float)(hudChatY + (i - cgs->teamChatPos) * 10);
+        w = (float)(UI_TextWidth(msg, 0, font, 1.0f / 3.0f) + 24);
+        UI_DrawHandlePic(0.0f, y, w, 10.0f, 1, 1, color,
                          cgs->media.whiteMaterial);
 
         color[0] = 1.0f;
