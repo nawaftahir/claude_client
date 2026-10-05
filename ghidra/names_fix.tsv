@@ -376,3 +376,6 @@
 4d0920	CG_SelectFirstWeaponInSlot	fix	# CoD1 name
 4d09a0	CG_SelectFirstWeaponNotInSlot	fix	# own match
 4d0ac0	CG_CycleWeap	fix	# own match
+4bf730	CG_UpdateCursorHints	fix	# Kisak name, own match
+4bf780	CG_GetWeaponUseString	fix	# Kisak name, own match
+4bf920	CG_DrawCursorhint	fix	# helper-split parent

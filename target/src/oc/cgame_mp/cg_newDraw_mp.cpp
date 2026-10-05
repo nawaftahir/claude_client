@@ -284,11 +284,54 @@ const char *CG_GetUseString(void)
     return UI_ReplaceConversionString(SEH_LocalizeTextMessage(hintString, "Hint String", (msgLocErrType_t)0), binding);
 }
 
+static void CG_UpdateCursorHints(void)
+{
+    if (!cg->renderingThirdPerson)
+    {
+        if (cg->nextSnap->ps.cursorHint)
+        {
+            cg->cursorHintTime = cg->time;
+            cg->cursorHintFade = cg_hintFadeTime->current.integer;
+            cg->cursorHintIcon = cg->nextSnap->ps.cursorHint;
+            cg->cursorHintString = cg->nextSnap->ps.cursorHintString;
+        }
+    }
+}
+
+static const char *CG_GetWeaponUseString(void)
+{
+    WeaponDef *weapDef;
+    int weaponIndex;
+    const char *displayString;
+    char binding[0x100];
+
+    weapDef = (WeaponDef *)BG_GetWeaponDef(cg->cursorHintIcon - 4);
+    weaponIndex = cg->cursorHintIcon - 4;
+    GetKeyBindingLocalizedString("+activate", binding);
+
+    if (BG_DoesWeaponNeedSlot(weaponIndex) && !BG_GetEmptySlotForWeapon(&cg->predictedPlayerState, weaponIndex))
+    {
+        if (((WeaponDef *)BG_GetWeaponDef(cg->predictedPlayerState.weapon))->weapSlot == weapDef->weapSlot)
+        {
+            if (cg->predictedPlayerState.weapon == weaponIndex)
+                return NULL;
+        }
+        else if ((signed char)cg->predictedPlayerState.weaponslots[weapDef->weapSlot] == weaponIndex)
+        {
+            return NULL;
+        }
+        displayString = UI_SafeTranslateString("PLATFORM_SWAPWEAPONS");
+    }
+    else
+    {
+        displayString = UI_SafeTranslateString("PLATFORM_PICKUPNEWWEAPON");
+    }
+
+    return UI_ReplaceConversionString(displayString, binding);
+}
+
 static void CG_DrawCursorhint(const rectDef_t *rect, struct Font_s *font, float fontscale, int textStyle)
 {
-    snapshot_t *snap;
-    int cursorHintValue;
-    int cursorHintString;
     MaterialHandle hintIcon;
     float *fadeColor;
     float scale;
@@ -296,213 +339,101 @@ static void CG_DrawCursorhint(const rectDef_t *rect, struct Font_s *font, float 
     float widthScale;
     float widthOfs;
     const char *text;
-    float length;
-    int cursorHintsDvarVal;
+    float textWidth;
+    float textHeight;
+    float x;
+    float y;
     char binding[0x100];
 
     if (!cg_cursorHints->current.integer)
         return;
 
-    if (!cg->renderingThirdPerson) {
+    CG_UpdateCursorHints();
 
-        snap = cg->nextSnap;
-        if (snap->ps.cursorHint) {
-
-            cg->cursorHintTime = cg->time;
-            cg->cursorHintFade = cg_hintFadeTime->current.integer;
-            cg->cursorHintIcon = snap->ps.cursorHint;
-            cg->cursorHintString = snap->ps.cursorHintString;
-        }
-    }
-
-    cursorHintValue = cg->cursorHintIcon;
-    hintIcon = cgs->media.hintMaterials[cursorHintValue];
+    hintIcon = cgs->media.hintMaterials[cg->cursorHintIcon];
     if (!hintIcon)
         return;
 
     fadeColor = CG_FadeColor(cg->cursorHintTime, cg->cursorHintFade, 100);
-    if (!fadeColor) {
-
+    if (!fadeColor)
+    {
         cg->cursorHintIcon = 0;
         return;
     }
 
     Controls_GetConfig();
 
-    cursorHintsDvarVal = cg_cursorHints->current.integer;
-
-    if (cursorHintsDvarVal == 3) {
-
-        float sinVal = sinf((float)cg->time / 150.0f);
-        fadeColor[3] *= sinVal * 0.5f + 0.5f;
-
-        cursorHintsDvarVal = cg_cursorHints->current.integer;
-    }
-
-    if (cursorHintsDvarVal <= 2) {
-        if (cursorHintsDvarVal == 2) {
-
-            int startTime = cg->cursorHintTime;
-            scale = (float)(startTime % 1000) / 100.0f;
-        } else {
-
-            float sinVal = sinf((float)cg->time / 150.0f);
-            scale = (sinVal * 0.5f + 0.5f) * 10.0f;
-        }
-        halfscale = 0.5f * scale;
-    } else {
-
-        scale = 0.0f;
-        halfscale = 0.0f;
-    }
-
-    cursorHintValue = cg->cursorHintIcon;
-    text = NULL;
     widthScale = 1.0f;
     widthOfs = 0.0f;
 
-    if ((unsigned)(cursorHintValue - 5) <= 0x7f) {
+    if (cg_cursorHints->current.integer == 3)
+        fadeColor[3] *= (sinf((float)cg->time / 150.0f) + 1.0f) * 0.5f;
 
-        WeaponDef *weapDef;
-        int weapIdx = cursorHintValue - 4;
-
-        weapDef = (WeaponDef *)BG_GetWeaponDef(weapIdx);
-
-        if (weapDef->bWideListIcon) {
-
-            widthOfs = rect->w * -0.5f;
-            widthScale = 2.0f;
-        }
-
-        if (weapDef->weapClass == 7) {
-
-            cursorHintString = cg->cursorHintString;
-            if (cursorHintString >= 0) {
-                text = CG_GetUseString();
-            }
-
-        } else {
-
-            WeaponDef *pickupWeapDef;
-
-            weapIdx = cg->cursorHintIcon - 4;
-            pickupWeapDef = (WeaponDef *)BG_GetWeaponDef(weapIdx);
-
-            GetKeyBindingLocalizedString("+activate", binding);
-
-            if (BG_DoesWeaponNeedSlot(weapIdx)) {
-                int emptySlot = BG_GetEmptySlotForWeapon(&cg->predictedPlayerState, weapIdx);
-                if (emptySlot == 0) {
-
-                    WeaponDef *currentWeapDef;
-                    int currentWeap = cg->predictedPlayerState.weapon;
-                    currentWeapDef = (WeaponDef *)BG_GetWeaponDef(currentWeap);
-
-                    if (currentWeapDef->weapSlot == pickupWeapDef->weapSlot) {
-
-                        if (cg->predictedPlayerState.weapon == weapIdx) {
-                            text = NULL;
-                            goto draw_icon;
-                        }
-
-                        text = UI_ReplaceConversionString(UI_SafeTranslateString("PLATFORM_SWAPWEAPONS"), binding);
-                        goto check_text;
-                    }
-
-                    if ((signed char)cg->predictedPlayerState.weaponslots[pickupWeapDef->weapSlot] == weapIdx) {
-                        text = NULL;
-                        goto draw_icon;
-                    }
-
-                    text = UI_ReplaceConversionString(UI_SafeTranslateString("PLATFORM_SWAPWEAPONS"), binding);
-                    goto check_text;
-                }
-            }
-
-            text = UI_ReplaceConversionString(UI_SafeTranslateString("PLATFORM_PICKUPNEWWEAPON"), binding);
-            goto check_text;
-        }
-    } else {
-
-        cursorHintString = cg->cursorHintString;
-
-        if (cursorHintString < 0) {
-
-            if (cursorHintValue == 3) {
-
-                GetKeyBindingLocalizedString("+activate", binding);
-                text = UI_ReplaceConversionString(UI_SafeTranslateString("PLATFORM_PICKUPHEALTH"), binding);
-                widthScale = 1.0f;
-                widthOfs = 0.0f;
-            } else {
-
-                widthScale = 1.0f;
-                widthOfs = 0.0f;
-                text = NULL;
-                goto draw_icon;
-            }
-        } else {
-
-            text = CG_GetUseString();
-        }
+    if (cg_cursorHints->current.integer >= 3)
+    {
+        halfscale = 0.0f;
+        scale = 0.0f;
+    }
+    else
+    {
+        if (cg_cursorHints->current.integer == 2)
+            scale = (float)(cg->cursorHintTime % 1000) / 100.0f;
+        else
+            scale = (sinf((float)cg->time / 150.0f) + 1.0f) * 0.5f * 10.0f;
+        halfscale = scale * 0.5f;
     }
 
-check_text:
+    if (cg->cursorHintIcon >= 5 && cg->cursorHintIcon <= 132)
+    {
+        if (((WeaponDef *)BG_GetWeaponDef(cg->cursorHintIcon - 4))->bWideListIcon)
+        {
+            widthScale = 2.0f;
+            widthOfs = rect->w * -0.5f;
+        }
 
-    if (text && *text) {
+        if (((WeaponDef *)BG_GetWeaponDef(cg->cursorHintIcon - 4))->weapClass == 7)
+        {
+            if (cg->cursorHintString < 0)
+                goto draw_icon;
+            text = CG_GetUseString();
+        }
+        else
+        {
+            text = CG_GetWeaponUseString();
+        }
+    }
+    else if (cg->cursorHintString >= 0)
+    {
+        text = CG_GetUseString();
+    }
+    else if (cg->cursorHintIcon == 3)
+    {
+        GetKeyBindingLocalizedString("+activate", binding);
+        text = UI_ReplaceConversionString(UI_SafeTranslateString("PLATFORM_PICKUPHEALTH"), binding);
+    }
+    else
+    {
+        goto draw_icon;
+    }
 
-        float textWidth;
-        int textHeight;
-        float textX, textY;
-        float iconW;
-
+    if (text && *text)
+    {
         textWidth = (float)UI_TextWidth(text, 0, font, fontscale);
-        textHeight = UI_TextHeight(font, fontscale);
-
-        textX = (widthScale * rect->w + scale + textWidth) * -0.5f;
-        textY = -0.5f * rect->h + rect->y;
-
-        UI_DrawText(
-            text,
-            0x7fffffff,
-            font,
-            textX,
-            rect->y + (float)textHeight * 0.5f,
-            rect->horzAlign,
-            rect->vertAlign,
-            fontscale,
-            fadeColor,
-            textStyle);
-
-        iconW = widthScale * rect->w;
-        UI_DrawHandlePic(
-            textX + textWidth,
-            textY,
-            iconW + scale,
-            scale + rect->h,
-            rect->horzAlign,
-            rect->vertAlign,
-            fadeColor,
-            hintIcon);
+        textHeight = (float)UI_TextHeight(font, fontscale);
+        x = (widthScale * rect->w + textWidth + scale) * -0.5f;
+        y = rect->y - rect->h * 0.5f;
+        UI_DrawText(text, 0x7fffffff, font, x, textHeight * 0.5f + rect->y,
+                    rect->horzAlign, rect->vertAlign, fontscale, fadeColor, textStyle);
+        UI_DrawHandlePic(x + textWidth, y, widthScale * rect->w + scale, rect->h + scale, rect->horzAlign,
+                         rect->vertAlign, fadeColor, hintIcon);
         return;
     }
 
 draw_icon:
-
-    {
-        float iconW = widthScale * rect->w;
-        float iconX = (rect->w + halfscale + widthOfs) * -0.5f + rect->x;
-        UI_DrawHandlePic(
-            iconX,
-            rect->y - halfscale,
-            iconW + scale,
-            scale + rect->h,
-            rect->horzAlign,
-            rect->vertAlign,
-            fadeColor,
-            hintIcon);
-    }
+    UI_DrawHandlePic(rect->x - (halfscale + rect->w + widthOfs) * 0.5f, rect->y - halfscale, widthScale * rect->w + scale,
+                     rect->h + scale, rect->horzAlign, rect->vertAlign, fadeColor, hintIcon);
 }
+
 
 void CG_DrawMantleHint(const rectDef_t *rect, struct Font_s *font, float fontscale, int textStyle)
 {
