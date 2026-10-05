@@ -42,7 +42,7 @@ void CG_DrawPlayerSprites(void);
 void CG_DrawActive(void);
 unsigned int CG_DrawChatMessages(void);
 float CG_DrawWeapReticle(void);
-unsigned int CG_DrawCrosshair(void);
+void CG_DrawCrosshair(void);
 unsigned int CG_Draw2D(void);
 
 void CG_DrawStringExt(float x, float y, const char *string, const vec_t *setColor, qboolean forceColor, qboolean shadow, float charHeight, qboolean adjust);

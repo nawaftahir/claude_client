@@ -382,3 +382,13 @@
 4c14d0	CG_DrawChatMessages	fix	# retail shape, 207->142 diffs, regalloc left
 4c34a0	CG_ScanForCrosshairEntity	fix	# Q3 name, own match
 4c3560	CG_DrawCrosshairNames	fix
+4c2ac0	CG_CalcCrosshairColor	fix	# Kisak name, own match
+4c2c50	AllowedToDrawCrosshair	fix	# Kisak name, own match
+4c2c90	CG_DrawAdsAimIndicator	fix
+4c2d60	CG_TransitionToAds	fix
+4c2df0	CG_DrawReticleCenter	fix
+4c2ed0	CG_CalcReticleSpread	fix
+4c2f80	CG_CalcReticleColor	fix	# Kisak name, own match
+4c2fd0	CG_CalcReticleImageOffset	fix
+4c3050	CG_DrawReticleSides	fix
+4c32a0	CG_DrawCrosshair	fix

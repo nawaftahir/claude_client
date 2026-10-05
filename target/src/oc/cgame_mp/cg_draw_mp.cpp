@@ -209,7 +209,7 @@ void CG_DrawTurretCrossHair(void);
 static void CG_DrawSpectatorMessage(void);
 void CG_StartShakeCamera(float scale, int duration, const vec_t *src, float radius);
 static float CG_DrawWeapReticle(void);
-unsigned int CG_DrawCrosshair(void);
+void CG_DrawCrosshair(void);
 unsigned int CG_Draw2D(void);
 
 static qboolean CG_UpdateCameraShakeStrength(cameraShake_t *shake)
@@ -1417,205 +1417,211 @@ float CG_DrawWeapReticle(void)
     return 1.0f - zoomFrac;
 }
 
-unsigned int CG_DrawCrosshair(void)
+static void CG_CalcCrosshairColor(float alpha, float *color)
 {
-    playerState_t *ps = &cg->predictedPlayerState;
-    qboolean drawHudMenus;
-    int weapIndex;
-    WeaponDef *weapDef;
-    weaponInfo_t *weapons;
-    MaterialHandle material;
-    vec4_t color;
-    vec4_t reticleColor;
-    float posLerp;
-    float transScale;
-    float centerX;
-    float centerY;
-    int pmFlags;
-    int weaponstate;
-
-    if (cg->renderingThirdPerson)
-        return 0;
-
-    drawHudMenus = !CG_AreHudMenusHidden();
-    posLerp = ps->fWeaponPosFrac;
-
-    if (ps->eFlags & 0x300) {
-        if (drawHudMenus && ps->viewlocked_entNum != 0x3ff)
-            CG_DrawTurretCrossHair();
-        return 0;
-    }
-
-    weapIndex = BG_GetViewmodelWeaponIndex(ps);
-    if (weapIndex == 0)
-        return 0;
-
-    weapDef = (WeaponDef *)BG_GetWeaponDef(weapIndex);
-    CG_DrawWeapReticle();
-
-    if (!drawHudMenus)
-        return 0;
-
-    pmFlags = ps->pm_flags;
-    if (pmFlags & 0x100000) {
+    if (cg->predictedPlayerState.pm_flags & 0x100000) {
         color[0] = 0.25f;
         color[1] = 1.0f;
         color[2] = 0.25f;
-    } else if (pmFlags & 0x200000) {
-        if (!cg_crosshairEnemyColor->current.enabled) {
-            color[0] = 1.0f;
-            color[1] = 1.0f;
-            color[2] = 1.0f;
-        } else {
-            color[0] = 1.0f;
-            color[1] = 0.25f;
-            color[2] = 0.25f;
-        }
+    } else if ((cg->predictedPlayerState.pm_flags & 0x200000) && cg_crosshairEnemyColor->current.enabled) {
+        color[0] = 1.0f;
+        color[1] = 0.25f;
+        color[2] = 0.25f;
     } else {
         color[0] = 1.0f;
         color[1] = 1.0f;
         color[2] = 1.0f;
     }
+    color[3] = alpha * cg_crosshairAlpha->current.value;
+}
 
-    color[3] = posLerp * cg_crosshairAlpha->current.value;
-    if (color[3] < 0.01f)
-        return 0;
-
-    if (posLerp == 1.0f && cg_drawGun->current.enabled)
-        return 0;
+static bool AllowedToDrawCrosshair(void)
+{
     if (cg_paused->current.integer)
         return 0;
     if (!cg_drawCrosshair->current.enabled)
         return 0;
-
-    weaponstate = ps->weaponstate;
-    if ((unsigned int)(weaponstate - 10) <= 1 || weaponstate == 5 ||
-        (unsigned int)(weaponstate - 1) <= 1)
+    if (cg->predictedPlayerState.weaponstate == 10 || cg->predictedPlayerState.weaponstate == 11
+        || cg->predictedPlayerState.weaponstate == 5 || cg->predictedPlayerState.weaponstate == 1
+        || cg->predictedPlayerState.weaponstate == 2)
         return 0;
+    return 1;
+}
 
-    CG_CalcCrosshairPosition(&centerX, &centerY);
+static void CG_DrawAdsAimIndicator(int weapIndex, const WeaponDef *weapDef, const float *color, float centerX, float centerY, float transScale)
+{
+    MaterialHandle material;
+    float w;
 
-    if (posLerp == 0.0f) {
-        transScale = 1.0f;
+    if (!cg_drawGun->current.enabled && transScale < 1.0f) {
+        material = cg_weaponsArray[weapIndex].hReticleCenter;
+        if (material) {
+            w = (1.5f - transScale) * (float)weapDef->iReticleCenterSize;
+            CL_DrawStretchPic(centerX - w * 0.5f, centerY - w * 0.5f, w, w, 2, 2, 0.0f, 0.0f, 1.0f, 1.0f, color, material);
+        }
+    }
+}
+
+static void CG_TransitionToAds(const WeaponDef *weapDef, float posLerp, float *transScale, float *transShift)
+{
+    float f;
+
+    if (cg->playerEntity.bPositionToADS) {
+        f = posLerp - (1.0f - weapDef->fAdsCrosshairInFrac);
+        if (f <= 0.0f)
+            return;
+        f = f / weapDef->fAdsCrosshairInFrac;
     } else {
-        float adsFrac = cg->playerEntity.bPositionToADS ? weapDef->fAdsCrosshairInFrac : weapDef->fAdsCrosshairOutFrac;
-        float zoomFrac = posLerp - (1.0f - adsFrac);
-        float scaled;
-        if (zoomFrac <= 0.0f) {
-            transScale = 1.0f;
-        } else {
-            scaled = zoomFrac / adsFrac;
-            if (scaled <= 0.0f)
-                transScale = 1.0f;
-            else
-                transScale = scaled * -0.5f + 1.0f;
-        }
-
-        if (!cg_drawGun->current.enabled && transScale < 1.0f) {
-            weapons = &(cg_weaponsArray)[weapIndex];
-            material = weapons->hReticleCenter;
-            if (material) {
-                float size = (float)weapDef->iReticleCenterSize * (1.5f - transScale);
-                float half = size * -0.5f;
-                CL_DrawStretchPic(centerX + half, centerY + half, size, size, 2, 2,
-                                  0.0f, 0.0f, 1.0f, 1.0f, color, material);
-            }
-        }
+        f = posLerp - (1.0f - weapDef->fAdsCrosshairOutFrac);
+        if (f <= 0.0f)
+            return;
+        f = f / weapDef->fAdsCrosshairOutFrac;
     }
 
-    if (posLerp == 1.0f && !cg_drawGun->current.enabled)
-        return 0;
-
-    if (!cg_crosshairDynamic->current.enabled) {
-        centerX = 0.0f;
-        centerY = 0.0f;
+    if (f > 0.0f) {
+        *transScale = 1.0f - f * 0.5f;
+        *transShift = 480.0f / cg->refdef.fov_y * weapDef->fAdsAimPitch * f;
     }
+}
 
-    weapons = &(cg_weaponsArray)[weapIndex];
-    material = weapons->hReticleCenter;
+static void CG_DrawReticleCenter(int weapIndex, const WeaponDef *weapDef, const float *color, float centerX, float centerY, float transScale)
+{
+    MaterialHandle material;
+    float drawSize;
+
+    material = cg_weaponsArray[weapIndex].hReticleCenter;
     if (material) {
-        float centerSize = (float)weapDef->iReticleCenterSize;
-        float drawSize;
-        float half;
-        if (weapDef->weapType == WEAPTYPE_GRENADE) {
-            int grenadeTime = ps->grenadeTimeLeft;
-            if (grenadeTime != 0 && weapDef->bCookOffHold)
-                centerSize += (float)(grenadeTime % 1000) / 100.0f;
-        }
-        drawSize = centerSize * transScale;
-        if (CL_IsRenderingSplitScreen())
-            drawSize += drawSize;
-        half = drawSize * -0.5f;
-        CL_DrawStretchPic(half + centerX, centerY + half, drawSize, drawSize, 2, 2,
+        drawSize = (float)weapDef->iReticleCenterSize;
+        if (weapDef->weapType == WEAPTYPE_GRENADE && cg->predictedPlayerState.grenadeTimeLeft && weapDef->bCookOffHold)
+            drawSize = (float)(cg->predictedPlayerState.grenadeTimeLeft % 1000) * 0.01f + drawSize;
+        drawSize = drawSize * transScale;
+        CL_DrawStretchPic(centerX - drawSize * 0.5f, centerY - drawSize * 0.5f, drawSize, drawSize, 2, 2,
                           0.0f, 0.0f, 1.0f, 1.0f, color, material);
     }
+}
 
-    weapons = &(cg_weaponsArray)[weapIndex];
-    material = weapons->hReticleSide;
+static void CG_CalcReticleSpread(const WeaponDef *weapDef, int weapIndex, const float *drawSize, float transScale, float *spread)
+{
+    float minSpread;
+    float maxSpread;
+    float f;
+    float scale;
+
+    BG_GetSpreadForWeapon(&cg->predictedPlayerState, weapIndex, &minSpread, &maxSpread);
+    f = ((maxSpread - minSpread) * (cg->predictedPlayerState.aimSpreadScale * (1.0f / 255.0f)) + minSpread) * transScale;
+    scale = (float)(tan((double)(f * 0.017453292f)) / tan((double)(cg->refdef.fov_y * 0.017453292f * 0.5f)) * 240.0f);
+    if (scale < (float)weapDef->iReticleMinOfs)
+        scale = (float)weapDef->iReticleMinOfs;
+    spread[0] = scale - weapDef->fHipReticleSidePos * drawSize[0];
+    spread[1] = scale - weapDef->fHipReticleSidePos * drawSize[1];
+}
+
+static void CG_CalcReticleColor(const float *baseColor, float alpha, float *reticleColor)
+{
+    reticleColor[0] = baseColor[0];
+    reticleColor[1] = baseColor[1];
+    reticleColor[2] = baseColor[2];
+    reticleColor[3] = (1.0f - cg->predictedPlayerState.aimSpreadScale * (1.0f / 255.0f)) * cg_crosshairAlpha->current.value * alpha;
+    if (reticleColor[3] < cg_crosshairAlphaMin->current.value)
+        reticleColor[3] = cg_crosshairAlphaMin->current.value;
+}
+
+static void CG_CalcReticleImageOffset(const float *drawSize, float *imageTexelOffset)
+{
+    imageTexelOffset[0] = GetVirtualWidthFromRealWidth(
+        (float)cgs->viewWidth * (GetRealWidthFromVirtualWidth(drawSize[0]) / (float)cgs->viewWidth * 0.125f));
+    imageTexelOffset[1] = GetVirtualHeightFromRealHeight(
+        (float)cgs->viewHeight * (GetRealHeightFromVirtualHeight(drawSize[1]) / (float)cgs->viewHeight * 0.125f));
+}
+
+static void CG_DrawReticleSides(int weapIndex, const WeaponDef *weapDef, const float *baseColor, float centerX, float centerY, float transScale)
+{
+    MaterialHandle material;
+    vec4_t reticleColor;
+    vec2_t drawSize;
+    vec2_t drawPos;
+    vec2_t spread;
+    vec2_t imageTexelOffset;
+
+    material = cg_weaponsArray[weapIndex].hReticleSide;
     if (!material)
-        return 0;
+        return;
 
-    CG_DrawWeapReticle();
-    reticleColor[0] = color[0];
-    reticleColor[1] = color[1];
-    reticleColor[2] = color[2];
-    {
-        float alpha = transScale * cg_crosshairAlpha->current.value *
-                      (ps->aimSpreadScale / -255.0f + 1.0f);
-        float alphaMin = (cg_crosshairAlphaMin)->current.value;
-        reticleColor[3] = alpha >= alphaMin ? alpha : alphaMin;
+    CG_CalcReticleColor(baseColor, CG_DrawWeapReticle(), reticleColor);
+    drawSize[0] = (float)weapDef->iReticleSideSize * transScale;
+    drawSize[1] = drawSize[0];
+    CG_CalcReticleSpread(weapDef, weapIndex, drawSize, transScale, spread);
+    CG_CalcReticleImageOffset(drawSize, imageTexelOffset);
+
+    drawPos[0] = centerX - drawSize[0] * 0.5f;
+    drawPos[1] = centerY - drawSize[1] - spread[1] - imageTexelOffset[1];
+    CG_DrawRotatedPic(drawPos[0], drawPos[1], drawSize[0], drawSize[1], 2, 2, 0.0f, reticleColor, material);
+
+    drawPos[0] = centerX + spread[0];
+    drawPos[1] = centerY - drawSize[1] * 0.5f;
+    CG_DrawRotatedPic(drawPos[0], drawPos[1], drawSize[0], drawSize[1], 2, 2, 90.0f, reticleColor, material);
+
+    drawPos[0] = centerX - drawSize[0] * 0.5f - imageTexelOffset[0];
+    drawPos[1] = centerY + spread[1];
+    CG_DrawRotatedPic(drawPos[0], drawPos[1], drawSize[0], drawSize[1], 2, 2, 180.0f, reticleColor, material);
+
+    drawPos[0] = centerX - drawSize[0] - spread[0] - imageTexelOffset[0];
+    drawPos[1] = centerY - drawSize[1] * 0.5f - imageTexelOffset[1];
+    CG_DrawRotatedPic(drawPos[0], drawPos[1], drawSize[0], drawSize[1], 2, 2, 270.0f, reticleColor, material);
+}
+
+void CG_DrawCrosshair(void)
+{
+    playerState_t *ps = &cg->predictedPlayerState;
+    float posLerp;
+    bool drawHud;
+    float reticleAlpha;
+    float centerX;
+    float centerY;
+    int weapIndex;
+    WeaponDef *weapDef;
+    vec4_t color;
+    float transScale;
+    float transShift;
+
+    posLerp = ps->fWeaponPosFrac;
+    if (cg->renderingThirdPerson)
+        return;
+
+    drawHud = !CG_AreHudMenusHidden();
+    transScale = 1.0f;
+    transShift = 0.0f;
+    if (ps->eFlags & 0x300) {
+        if (drawHud && ps->viewlocked_entNum != 0x3ff)
+            CG_DrawTurretCrossHair();
+        return;
     }
 
-    {
-        float sideSizeF = (float)weapDef->iReticleSideSize * transScale;
-        float sideSize;
-        float realW, realH;
-        float spreadMin, spreadMax, spread;
-        double spreadTan, fovTan;
-        float minOfs;
-        float divW, divH;
-        float vw, vh;
-        float ax, ay;
+    weapIndex = BG_GetViewmodelWeaponIndex(ps);
+    if (!weapIndex)
+        return;
 
-        if (CL_IsRenderingSplitScreen())
-            sideSize = sideSizeF + sideSizeF;
-        else
-            sideSize = sideSizeF;
+    weapDef = (WeaponDef *)BG_GetWeaponDef(weapIndex);
+    reticleAlpha = CG_DrawWeapReticle();
+    if (!drawHud)
+        return;
 
-        BG_GetSpreadForWeapon(ps, weapIndex, &spreadMin, &spreadMax);
-        spread = ((spreadMax - spreadMin) * (ps->aimSpreadScale / 255.0f) + spreadMin) * transScale;
-        spreadTan = tan((double)spread * 0.017453292519943295);
-        fovTan = tan((double)cg->refdef.fov_y * 0.017453292519943295 * 0.5);
-        minOfs = spreadTan * 240.0 / fovTan;
-        if ( minOfs < (float)weapDef->iReticleMinOfs )
-            minOfs = (float)weapDef->iReticleMinOfs;
-        minOfs -= sideSizeF * weapDef->fHipReticleSidePos;
-
-        realW = GetRealWidthFromVirtualWidth(sideSize);
-        realH = GetRealHeightFromVirtualHeight(sideSize);
-        divW = (float)cgs->viewWidth;
-        divH = (float)cgs->viewHeight;
-        vw = GetVirtualWidthFromRealWidth(divW * (realW / divW * 0.125f));
-        vh = GetVirtualHeightFromRealHeight(divH * (realH / divH * 0.125f));
-
-        ax = AlignHudElemX(4, centerX, sideSize);
-        ay = AlignHudElemY(2, centerY, sideSize);
-        CG_DrawRotatedPic(ax, ay - minOfs - vh, sideSize, sideSize, 2, 2, 0.0f, reticleColor, material);
-
-        ax = AlignHudElemX(0, centerX, sideSize);
-        ay = AlignHudElemY(1, centerY, sideSize);
-        CG_DrawRotatedPic(minOfs + ax, ay, sideSize, sideSize, 2, 2, 90.0f, reticleColor, material);
-
-        ax = AlignHudElemX(4, centerX, sideSize);
-        ay = AlignHudElemY(0, centerY, sideSize);
-        CG_DrawRotatedPic(ax - vw, ay + minOfs, sideSize, sideSize, 2, 2, 180.0f, reticleColor, material);
-
-        ax = AlignHudElemX(8, centerX, sideSize);
-        ay = AlignHudElemY(1, centerY, sideSize);
-        CG_DrawRotatedPic(ax - minOfs - vw, ay - vh, sideSize, sideSize, 2, 2, 270.0f, reticleColor, material);
+    CG_CalcCrosshairColor(reticleAlpha, color);
+    if (color[3] >= 0.01f && (posLerp != 1.0f || !cg_drawGun->current.enabled) && AllowedToDrawCrosshair()) {
+        CG_CalcCrosshairPosition(&centerX, &centerY);
+        if (posLerp != 0.0f) {
+            CG_TransitionToAds(weapDef, posLerp, &transScale, &transShift);
+            CG_DrawAdsAimIndicator(weapIndex, weapDef, color, centerX, centerY, transScale);
+        }
+        if (posLerp != 1.0f || cg_drawGun->current.enabled) {
+            if (!cg_crosshairDynamic->current.enabled) {
+                centerX = 0.0f;
+                centerY = transShift;
+            }
+            CG_DrawReticleCenter(weapIndex, weapDef, color, centerX, centerY, transScale);
+            CG_DrawReticleSides(weapIndex, weapDef, color, centerX, centerY, transScale);
+        }
     }
-
-    return 0;
 }
 
 static void CG_ScreenFade(void)
