@@ -1376,91 +1376,75 @@ static float CG_DrawFPS(float y)
     return y;
 }
 
-float CG_DrawWeapReticle(void)
+static void CG_DrawAdsOverlay(int weapIndex, const WeaponDef *weapDef, const float *color, const float *crosshairPos)
 {
-    playerState_t *ps = &cg->predictedPlayerState;
-    int weapIndex = BG_GetViewmodelWeaponIndex(ps);
-    WeaponDef *weapDef = (WeaponDef *)BG_GetWeaponDef(weapIndex);
-    float zoom = ps->fWeaponPosFrac;
-    float zoomFrac;
-    float adsFrac;
-    vec4_t color;
-    vec2_t crosshairPos;
-    weaponInfo_t *weaponInfo;
     MaterialHandle material;
     vec2_t drawPos;
     vec2_t drawSize;
 
-    if ((!weapDef->szOverlayMaterial || !weapDef->szOverlayMaterial[0]) && !weapDef->overlayReticle)
+    material = cg_weaponsArray[weapIndex].hADSOverlay;
+    if (!material)
+        return;
+
+    drawSize[0] = weapDef->overlayWidth;
+    drawSize[1] = weapDef->overlayHeight;
+    if (drawSize[0] <= 320.0f && drawSize[1] <= 240.0f) {
+        drawPos[0] = crosshairPos[0] - drawSize[0];
+        drawPos[1] = crosshairPos[1] - drawSize[1];
+        CL_DrawStretchPic(drawPos[0], drawPos[1], drawSize[0], drawSize[1], 2, 2,
+                          0.0f, 0.0f, 1.0f, 1.0f, color, material);
+
+        drawPos[0] = crosshairPos[0];
+        drawPos[1] = crosshairPos[1] - drawSize[1];
+        CL_DrawStretchPic(drawPos[0], drawPos[1], drawSize[0], drawSize[1], 2, 2,
+                          1.0f, 0.0f, 0.0f, 1.0f, color, material);
+
+        drawPos[0] = crosshairPos[0] - drawSize[0];
+        drawPos[1] = crosshairPos[1];
+        CL_DrawStretchPic(drawPos[0], drawPos[1], drawSize[0], drawSize[1], 2, 2,
+                          0.0f, 1.0f, 1.0f, 0.0f, color, material);
+
+        drawPos[0] = crosshairPos[0];
+        drawPos[1] = crosshairPos[1];
+        CL_DrawStretchPic(drawPos[0], drawPos[1], drawSize[0], drawSize[1], 2, 2,
+                          1.0f, 1.0f, 0.0f, 0.0f, color, material);
+
+        drawPos[0] = crosshairPos[0] - drawSize[0];
+        drawPos[1] = crosshairPos[1] - drawSize[1];
+        CalcScreenPlacement(&drawPos[0], &drawPos[1], &drawSize[0], &drawSize[1], 2, 2);
+        CG_DrawFrameOverlay(drawPos[0], drawPos[0] + drawSize[0] * 2.0f,
+                            drawPos[1], drawPos[1] + drawSize[1] * 2.0f, color, material);
+    } else {
+        drawPos[0] = crosshairPos[0] - drawSize[0] * 0.5f;
+        drawPos[1] = crosshairPos[1] - drawSize[1] * 0.5f;
+        CL_DrawStretchPic(drawPos[0], drawPos[1], drawSize[0], drawSize[1], 2, 2,
+                          0.0f, 0.0f, 1.0f, 1.0f, color, material);
+
+        CalcScreenPlacement(&drawPos[0], &drawPos[1], &drawSize[0], &drawSize[1], 2, 2);
+        CG_DrawFrameOverlay(drawPos[0], drawPos[0] + drawSize[0],
+                            drawPos[1], drawPos[1] + drawSize[1], color, material);
+    }
+}
+
+float CG_DrawWeapReticle(void)
+{
+    int weapIndex;
+    WeaponDef *weapDef;
+    float zoomFrac;
+    vec4_t color;
+    vec2_t crosshairPos;
+
+    if (!CG_GetWeapReticleZoom(&zoomFrac))
         return 1.0f;
 
-    if (zoom == 0.0f)
-        return 1.0f;
-
-    adsFrac = cg->playerEntity.bPositionToADS ? weapDef->fAdsZoomInFrac : weapDef->fAdsZoomOutFrac;
-    zoomFrac = zoom - (1.0f - adsFrac);
-    if (zoomFrac > 0.0f)
-        zoomFrac /= adsFrac;
-
-    if (zoomFrac <= 0.01f)
-        return 1.0f;
-
-    if (zoomFrac > 1.0f)
-        zoomFrac = 1.0f;
-
-    weapIndex = BG_GetViewmodelWeaponIndex(ps);
+    weapIndex = BG_GetViewmodelWeaponIndex(&cg->predictedPlayerState);
     weapDef = (WeaponDef *)BG_GetWeaponDef(weapIndex);
     color[0] = 1.0f;
     color[1] = 1.0f;
     color[2] = 1.0f;
     color[3] = zoomFrac;
-
     CG_CalcCrosshairPosition(&crosshairPos[0], &crosshairPos[1]);
-
-    weaponInfo = &(cg_weaponsArray)[weapIndex];
-    material = weaponInfo->hADSOverlay;
-    if (material) {
-        drawSize[0] = weapDef->overlayWidth;
-        drawSize[1] = weapDef->overlayHeight;
-
-        if (drawSize[0] > 320.0f || drawSize[1] > 240.0f) {
-            drawPos[0] = crosshairPos[0] - drawSize[0] * 0.5f;
-            drawPos[1] = crosshairPos[1] - drawSize[1] * 0.5f;
-            CL_DrawStretchPic(drawPos[0], drawPos[1], drawSize[0], drawSize[1], 2, 2,
-                              0.0f, 0.0f, 1.0f, 1.0f, color, material);
-
-            CalcScreenPlacement(&drawPos[0], &drawPos[1], &drawSize[0], &drawSize[1], 2, 2);
-            CG_DrawFrameOverlay(drawPos[0], drawPos[0] + drawSize[0],
-                                drawPos[1], drawPos[1] + drawSize[1], color, material);
-        } else {
-            drawPos[0] = crosshairPos[0] - drawSize[0];
-            drawPos[1] = crosshairPos[1] - drawSize[1];
-            CL_DrawStretchPic(drawPos[0], drawPos[1], drawSize[0], drawSize[1], 2, 2,
-                              0.0f, 0.0f, 1.0f, 1.0f, color, material);
-
-            drawPos[0] = crosshairPos[0];
-            drawPos[1] = crosshairPos[1] - drawSize[1];
-            CL_DrawStretchPic(drawPos[0], drawPos[1], drawSize[0], drawSize[1], 2, 2,
-                              1.0f, 0.0f, 0.0f, 1.0f, color, material);
-
-            drawPos[0] = crosshairPos[0] - drawSize[0];
-            drawPos[1] = crosshairPos[1];
-            CL_DrawStretchPic(drawPos[0], drawPos[1], drawSize[0], drawSize[1], 2, 2,
-                              0.0f, 1.0f, 1.0f, 0.0f, color, material);
-
-            drawPos[0] = crosshairPos[0];
-            drawPos[1] = crosshairPos[1];
-            CL_DrawStretchPic(drawPos[0], drawPos[1], drawSize[0], drawSize[1], 2, 2,
-                              1.0f, 1.0f, 0.0f, 0.0f, color, material);
-
-            drawPos[0] = crosshairPos[0] - drawSize[0];
-            drawPos[1] = crosshairPos[1] - drawSize[1];
-            CalcScreenPlacement(&drawPos[0], &drawPos[1], &drawSize[0], &drawSize[1], 2, 2);
-            CG_DrawFrameOverlay(drawPos[0], drawPos[0] + drawSize[0] * 2.0f,
-                                drawPos[1], drawPos[1] + drawSize[1] * 2.0f, color, material);
-        }
-    }
-
+    CG_DrawAdsOverlay(weapIndex, weapDef, color, crosshairPos);
     return 1.0f - zoomFrac;
 }
 

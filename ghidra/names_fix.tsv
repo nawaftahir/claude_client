@@ -379,3 +379,4 @@
 4bf730	CG_UpdateCursorHints	fix	# Kisak name, own match
 4bf780	CG_GetWeaponUseString	fix	# Kisak name, own match
 4bf920	CG_DrawCursorhint	fix	# helper-split parent
+4c26e0	CG_DrawAdsOverlay	fix
