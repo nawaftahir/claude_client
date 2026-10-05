@@ -201,7 +201,7 @@ void CG_ShakeCamera(void);
 static qboolean CG_DrawFollow(void);
 void CG_DrawPlayerSprites(void);
 void CG_DrawActive(void);
-static unsigned int CG_DrawChatMessages(void);
+static void CG_DrawChatMessages(void);
 static void __attribute_regparm__(2) CG_CalcCrosshairPosition(float *x, float *y);
 static float CG_DrawFPS(float y);
 void CG_DrawBoldGameMessages(void);
@@ -1135,82 +1135,63 @@ void CG_DrawActive(void)
     CG_TileClear();
 }
 
-unsigned int CG_DrawChatMessages(void)
+void CG_DrawChatMessages(void)
 {
     FontHandle font;
     const char *msg;
     vec4_t color;
     float alphaPercent;
-    float backgroundAlpha;
-    float y;
-    float timeRemaining;
     int chatHeight;
     int hudChatX;
     int hudChatY;
-    int chatTime;
-    int index;
     int i;
-    int textWidth;
 
     chatHeight = cg_chatHeight->current.integer;
-    if (!chatHeight) {
-        return 0;
-    }
+    if (!chatHeight)
+        return;
 
     hudChatX = (int)cg_hudChatPosition->current.vector[0];
     hudChatY = (int)cg_hudChatPosition->current.vector[1];
-    if (cgs->teamLastChatPos == cgs->teamChatPos) {
-        return 0;
-    }
+    if (cgs->teamLastChatPos == cgs->teamChatPos)
+        return;
 
-    index = cgs->teamLastChatPos % chatHeight;
-    chatTime = cg_chatTime->current.integer;
-    if (cg->time - cgs->teamChatMsgTimes[index] > chatTime) {
-        ++cgs->teamLastChatPos;
-    }
+    if (cg->time - cgs->teamChatMsgTimes[cgs->teamLastChatPos % chatHeight] > cg_chatTime->current.integer)
+        cgs->teamLastChatPos++;
 
     font = UI_GetFontHandle(0, 1.0f / 3.0f);
-    for (i = cgs->teamChatPos - 1; i >= cgs->teamLastChatPos; --i) {
-        index = i % chatHeight;
-        timeRemaining = (float)chatTime - (float)(cg->time - cgs->teamChatMsgTimes[index]);
-        if (timeRemaining > 200.0f) {
+    for (i = cgs->teamChatPos - 1; i >= cgs->teamLastChatPos; i--) {
+        alphaPercent = (float)cg_chatTime->current.integer - (float)(cg->time - cgs->teamChatMsgTimes[i % chatHeight]);
+        if (alphaPercent > 200.0f) {
             alphaPercent = 1.0f;
-            backgroundAlpha = 0.60000002f;
         } else {
-            alphaPercent = timeRemaining / 200.0f;
-            if (alphaPercent <= 0.0f) {
+            alphaPercent *= 0.005f;
+            if (alphaPercent <= 0.0f)
                 continue;
-            }
-
-            backgroundAlpha = alphaPercent * 0.60000002f;
         }
 
-        msg = cgs->teamChatMsgs[index];
-        if (msg[0] == '^' && msg[1] && msg[1] != '^' && msg[1] >= '0' && msg[1] <= '9') {
+        msg = cgs->teamChatMsgs[i % chatHeight];
+        if (msg && msg[0] == '^' && msg[1] && msg[1] != '^' && msg[1] >= '0' && msg[1] <= '9') {
             CL_LookupColor((unsigned char)msg[1], color);
         } else {
             color[0] = 1.0f;
             color[1] = 1.0f;
             color[2] = 1.0f;
         }
-
         color[0] *= 0.25f;
         color[1] *= 0.25f;
         color[2] *= 0.25f;
-        color[3] = backgroundAlpha;
-
-        y = (float)(hudChatY - (cgs->teamChatPos - i) * 10);
-        textWidth = UI_TextWidth(msg, 0, font, 1.0f / 3.0f);
-        UI_DrawHandlePic(0.0f, y, (float)(textWidth + 24), 10.0f, 1, 1, color, cgs->media.whiteMaterial);
+        color[3] = alphaPercent * 0.6f;
+        UI_DrawHandlePic(0.0f, (float)(hudChatY + (i - cgs->teamChatPos) * 10),
+                         (float)(UI_TextWidth(msg, 0, font, 1.0f / 3.0f) + 24), 10.0f, 1, 1, color,
+                         cgs->media.whiteMaterial);
 
         color[0] = 1.0f;
         color[1] = 1.0f;
         color[2] = 1.0f;
         color[3] = alphaPercent;
-        UI_DrawText(msg, 0x7fffffff, font, (float)hudChatX, y + 9.0f, 1, 1, 1.0f / 3.0f, color, 3);
+        UI_DrawText(msg, 0x7fffffff, font, (float)hudChatX, (float)(hudChatY + 9 + (i - cgs->teamChatPos) * 10),
+                    1, 1, 1.0f / 3.0f, color, 3);
     }
-
-    return 0;
 }
 
 static void __attribute_regparm__(2) CG_CalcCrosshairPosition(float *x, float *y)

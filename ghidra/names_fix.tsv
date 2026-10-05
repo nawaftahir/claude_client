@@ -28,7 +28,6 @@
 0	SND_Is3DChannelFree	drop
 0	CG_DrawStringExt	drop
 0	CG_DrawPlayerCompass	drop
-0	CG_DrawChatMessages	drop
 0	CG_DrawWeapReticle	drop
 0	CG_AdjustPositionForMover	drop
 0	CG_General	drop
@@ -380,3 +379,4 @@
 4bf780	CG_GetWeaponUseString	fix	# Kisak name, own match
 4bf920	CG_DrawCursorhint	fix	# helper-split parent
 4c26e0	CG_DrawAdsOverlay	fix
+4c14d0	CG_DrawChatMessages	fix	# retail shape, 207->142 diffs, regalloc left
