@@ -165,7 +165,7 @@ void CG_ClearSolidList(void);
 int CG_PointContents(const vec_t *point, int passEntityNum, int contentmask);
 void CG_PredictPlayerState(void);
 void CG_ClipMoveToEntities(const vec_t *start, const vec_t *mins, const vec_t *maxs, const vec_t *end, int skipNumber, int mask, int capsule, trace_t *tr);
-void CG_TraceCapsule(trace_t *result, const vec_t *start, const vec_t *mins, const vec_t *maxs, const vec_t *end, int skipNumber, int mask);
+
 void CG_BuildSolidList(void);
 
 qboolean CG_ScoreboardDisplayed(void);

@@ -43,7 +43,7 @@ extern void YawToAxis(float yaw, vec3_t axis[3]);
 extern void MatrixMultiply43(const float in1[4][3], const float in2[4][3], float out[4][3]);
 extern void AxisToAngles( vec3_t axis[3], vec3_t angles );
 extern void VectorAngleMultiply(float *trans, float yaw);
-extern void CG_TraceCapsule(trace_t *result, const vec_t *start, const vec_t *mins, const vec_t *maxs, const vec_t *end, int skipNumber, int mask);
+extern void CG_Trace(trace_t *result, const vec_t *start, const vec_t *mins, const vec_t *maxs, const vec_t *end, int skipNumber, int mask);
 extern DObjAnimMat *CG_DObjGetLocalTagMatrix(const centity_t *cent, struct DObj_s *obj, unsigned int tagName);
 extern const char *CL_GetConfigString(int index);
 extern MaterialHandle CL_RegisterMaterial(const char *name, int flags);
@@ -541,7 +541,7 @@ static void CG_PlayerTurretPositionAndBlend(centity_t *cent)
             end[1] = cent->lerpOrigin[1];
             end[2] = cent->lerpOrigin[2];
 
-            CG_TraceCapsule((trace_t *)trace, start, traceBounds, traceBounds,
+            CG_Trace((trace_t *)trace, start, traceBounds, traceBounds,
                             end, cent->nextState.number, 0x2810011);
 
             if (*(float *)trace < 1.0f) {

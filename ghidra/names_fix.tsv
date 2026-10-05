@@ -380,3 +380,5 @@
 4bf920	CG_DrawCursorhint	fix	# helper-split parent
 4c26e0	CG_DrawAdsOverlay	fix
 4c14d0	CG_DrawChatMessages	fix	# retail shape, 207->142 diffs, regalloc left
+4c34a0	CG_ScanForCrosshairEntity	fix	# Q3 name, own match
+4c3560	CG_DrawCrosshairNames	fix

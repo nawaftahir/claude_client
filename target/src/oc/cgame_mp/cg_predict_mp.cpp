@@ -53,7 +53,6 @@ static void CG_InterpolatePlayerState(qboolean grabAngles);
 void CG_PredictPlayerState(void);
 static void Trace_CalcBounds(const vec_t *start, const vec_t *mins, const vec_t *maxs, float fraction, const vec_t *end, vec3_t *bounds);
 void CG_ClipMoveToEntities(const vec_t *start, const vec_t *mins, const vec_t *maxs, const vec_t *end, int skipNumber, int mask, int capsule, trace_t *tr);
-void CG_TraceCapsule(trace_t *result, const vec_t *start, const vec_t *mins, const vec_t *maxs, const vec_t *end, int skipNumber, int mask);
 void CG_BuildSolidList(void);
 
 void CG_ClearSolidList(void)
@@ -508,23 +507,6 @@ void CG_ClipMoveToEntities(const vec_t *start, const vec_t *mins, const vec_t *m
     }
 }
 #endif
-
-void CG_TraceCapsule(trace_t *result, const vec_t *start, const vec_t *mins, const vec_t *maxs, const vec_t *end, int skipNumber, int mask)
-{
-    CM_BoxTrace(result, start, end, mins, maxs, 0, mask);
-
-    if (result->fraction == 1.0f) {
-        result->entityNum = 1023;
-    } else {
-        result->entityNum = 1022;
-    }
-
-    if (result->fraction == 0.0f) {
-        return;
-    }
-
-    CG_ClipMoveToEntities(start, mins, maxs, end, skipNumber, mask, 1, result);
-}
 
 void CG_BuildSolidList(void)
 {

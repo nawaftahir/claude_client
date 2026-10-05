@@ -116,7 +116,7 @@ extern int UI_TextHeight(FontHandle font, float fontScale);
 extern void UI_DrawText(const char *text, int maxChars, FontHandle font, float x, float y, int horzAlign, int vertAlign, float scale, const vec_t *color, int style);
 extern MaterialHandle CL_RegisterMaterial(const char *name, int flags);
 extern void CG_TranslateHudElemMessage(const char *message, const char *messageType, char *hudElemString);
-extern void CG_TraceCapsule(trace_t *result, const vec_t *start, const vec_t *mins, const vec_t *maxs, const vec_t *end, int skipNumber, int mask);
+extern void CG_Trace(trace_t *result, const vec_t *start, const vec_t *mins, const vec_t *maxs, const vec_t *end, int skipNumber, int mask);
 extern int BG_GetViewmodelWeaponIndex(const playerState_t *ps);
 extern WeaponDef * BG_GetWeaponDef(int iWeapon);
 extern int BG_GetNumWeapons(void);
@@ -193,7 +193,7 @@ static void CG_DrawDisconnect(void);
 void CG_PriorityCenterPrint(const char *str, float charWidth, int priority);
 bool CG_GetWeapReticleZoom(float *pfZoom);
 void CG_DrawFrameOverlay(float innerLeft, float innerRight, float innerTop, float innerBottom, const vec_t *color, MaterialHandle material);
-static unsigned int CG_DrawCrosshairNames(void);
+static void CG_DrawCrosshairNames(void);
 void CG_CheckTimedMenus(void);
 static void CG_DrawSoundOverlay(void);
 static void CG_DrawMaterial(void);
@@ -554,104 +554,89 @@ void CG_DrawFrameOverlay(float innerLeft, float innerRight, float innerTop, floa
     }
 }
 
-unsigned int CG_DrawCrosshairNames(void)
+extern const vec3_t vec3_origin;
+
+static void CG_ScanForCrosshairEntity(void)
 {
     trace_t trace;
     vec3_t start;
     vec3_t end;
-    vec3_t traceMins = { 0.0f, 0.0f, 0.0f };
-    vec3_t traceMaxs = { 0.0f, 0.0f, 0.0f };
-    float *baseColor;
-    clientInfo_t *localClientInfo;
-    clientInfo_t *targetClientInfo;
-    char *name;
-    FontHandle font;
-    vec4_t actualColor;
-    float healthFrac;
-    int targetClientNum;
-    int x;
-    int y;
-
-    if (!cg_drawCrosshairNames->current.enabled) {
-        return 0;
-    }
-
-    if (cg->renderingThirdPerson) {
-        return 0;
-    }
 
     start[0] = cg->refdef.vieworg[0];
     start[1] = cg->refdef.vieworg[1];
     start[2] = cg->refdef.vieworg[2];
-    end[0] = start[0] + cg->refdef.viewaxis[0][0] * 8192.0f;
-    end[1] = start[1] + cg->refdef.viewaxis[0][1] * 8192.0f;
-    end[2] = start[2] + cg->refdef.viewaxis[0][2] * 8192.0f;
-    CG_TraceCapsule(&trace, start, traceMins, traceMaxs, end, cg->snap->ps.clientNum, 0x2000001);
-
-    if (trace.entityNum <= 63) {
+    end[0] = cg->refdef.vieworg[0] + cg->refdef.viewaxis[0][0] * 8192.0f;
+    end[1] = cg->refdef.vieworg[1] + cg->refdef.viewaxis[0][1] * 8192.0f;
+    end[2] = cg->refdef.vieworg[2] + cg->refdef.viewaxis[0][2] * 8192.0f;
+    CG_Trace(&trace, start, vec3_origin, vec3_origin, end, cg->snap->ps.clientNum, 0x2000001);
+    if (trace.entityNum < 64) {
         cg->crosshairClientNum = trace.entityNum;
         cg->crosshairClientTime = cg->time;
     }
+}
 
-    baseColor = CG_FadeColor(cg->crosshairClientTime, 150, 100);
-    if (!baseColor) {
-        return 0;
-    }
+void CG_DrawCrosshairNames(void)
+{
+    float *color;
+    char *name;
+    vec4_t textColor;
+    float x;
+    float y;
+    int clientNum;
 
-    targetClientNum = cg->crosshairClientNum;
-    if (targetClientNum < 0 || targetClientNum > 64) {
-        return 0;
-    }
+    if (!cg_drawCrosshairNames->current.enabled)
+        return;
+    if (cg->renderingThirdPerson)
+        return;
 
-    localClientInfo = &cg->bgs.clientinfo[cg->snap->ps.clientNum];
-    if (!localClientInfo->infoValid || !localClientInfo->team) {
-        return 0;
-    }
+    CG_ScanForCrosshairEntity();
+    color = CG_FadeColor(cg->crosshairClientTime, 150, 100);
+    if (!color)
+        return;
+    if (cg->crosshairClientNum > 64)
+        return;
 
-    targetClientInfo = &cg->bgs.clientinfo[targetClientNum];
-    if (!targetClientInfo->infoValid) {
-        return 0;
-    }
+    clientNum = cg->snap->ps.clientNum;
+    if (!cg->bgs.clientinfo[clientNum].infoValid)
+        return;
+    if (!cg->bgs.clientinfo[clientNum].team)
+        return;
+    if (!cg->bgs.clientinfo[cg->crosshairClientNum].infoValid)
+        return;
+    if (cg->bgs.clientinfo[clientNum].team != 3
+        && cg->bgs.clientinfo[cg->crosshairClientNum].team != cg->bgs.clientinfo[clientNum].team)
+        return;
 
-    if (localClientInfo->team != 3 && localClientInfo->team != targetClientInfo->team) {
-        return 0;
-    }
-
-    name = (char *)va("%s", targetClientInfo->name);
-    if (!name || !name[0]) {
-        return 0;
-    }
+    name = (char *)va("%s", cg->bgs.clientinfo[cg->crosshairClientNum].name);
+    if (!name)
+        return;
+    if (!name[0])
+        return;
     I_CleanStr(name);
 
-    x = cg_drawCrosshairNamesPosX->current.integer;
-    y = cg_drawCrosshairNamesPosY->current.integer + 16;
-
-    if (cg->crosshairClientNum != cg->identifyClientNum) {
-        actualColor[0] = 1.0f;
-        actualColor[1] = 1.0f;
-        actualColor[2] = 1.0f;
-    } else {
-        healthFrac = (float)cg->identifyClientHealth / 100.0f;
-        if (healthFrac < 0.0f) {
-            healthFrac = 0.0f;
-        } else if (healthFrac > 1.0f) {
-            healthFrac = 1.0f;
-        }
-
-        actualColor[2] = 0.0f;
-        if (healthFrac > 0.5f) {
-            actualColor[0] = (1.0f - healthFrac) * 2.0f;
-            actualColor[1] = 1.0f;
+    x = (float)cg_drawCrosshairNamesPosX->current.integer;
+    y = (float)(cg_drawCrosshairNamesPosY->current.integer + 16);
+    if (cg->crosshairClientNum == cg->identifyClientNum) {
+        textColor[1] = (float)cg->identifyClientHealth * 0.01f;
+        if (textColor[1] > 1.0f)
+            textColor[1] = 1.0f;
+        else if (textColor[1] < 0.0f)
+            textColor[1] = 0.0f;
+        textColor[2] = 0.0f;
+        if (textColor[1] > 0.5) {
+            textColor[0] = (1.0f - textColor[1]) + (1.0f - textColor[1]);
+            textColor[1] = 1.0f;
         } else {
-            actualColor[0] = 1.0f;
-            actualColor[1] = healthFrac * 2.0f;
+            textColor[1] = textColor[1] + textColor[1];
+            textColor[0] = 1.0f;
         }
+    } else {
+        textColor[0] = 1.0f;
+        textColor[2] = 1.0f;
+        textColor[1] = 1.0f;
     }
-
-    actualColor[3] = baseColor[3] * 0.60000002f;
-    font = UI_GetFontHandle(0, 1.0f / 3.0f);
-    UI_DrawText(name, 0x7fffffff, font, (float)x, (float)y, 0, 0, 1.0f / 3.0f, actualColor, 3);
-    return 0;
+    textColor[3] = color[3] * 0.6f;
+    UI_DrawText(name, 0x7fffffff, UI_GetFontHandle(0, 1.0f / 3.0f), x, y, 0, 0, 1.0f / 3.0f, textColor, 3);
 }
 
 int CG_CheckPlayerMovement(usercmd_t oldCmd, usercmd_t newCmd)
