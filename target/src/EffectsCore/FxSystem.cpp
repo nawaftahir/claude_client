@@ -18,6 +18,8 @@ struct refexport_t
 	void *unused21[4];
 	void (*AddPolyToScene)( Material *material, int lmapIndex, int vertCount, const GfxWorldVertex *verts );
 	void (*AddLightToScene)( const float *org, float radius, float r, float g, float b );
+	void *unused27[43];
+	void (*AddPlume)( const float *origin, int score, const float *color, int duration );
 };
 extern refexport_t re;
 
@@ -63,6 +65,7 @@ struct FxHelper
 	void Trace( trace_t *tr, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, int skipEntNum, int flags );
 	void AddFxToScene( GfxEntity *ent, XModel *model );
 	void SetIgnorePrecacheErrors( bool ignore );
+	void AddPlume( const float *origin, int score, const float *color, int duration );
 	const char *GetMaterialName( Material *material );
 	void Archive( FxArchive *arch );
 	int GetMaterialSubimageCount( Material *material );
@@ -283,6 +286,11 @@ void FxHelper::AddFxToScene( GfxEntity *ent, XModel *model )
 void FxHelper::SetIgnorePrecacheErrors( bool ignore )
 {
 	re.SetIgnorePrecacheErrors(ignore);
+}
+
+void FxHelper::AddPlume( const float *origin, int score, const float *color, int duration )
+{
+	re.AddPlume(origin, score, color, duration);
 }
 
 const char *FxHelper::GetMaterialName( Material *material )

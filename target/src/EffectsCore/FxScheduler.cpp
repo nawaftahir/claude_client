@@ -111,6 +111,7 @@ struct FxHelper
 {
 	int GetSeed();
 	void SetIgnorePrecacheErrors( bool ignore );
+	void AddPlume( const float *origin, int score, const float *color, int duration );
 	bool CullSpherePreviousFrame( const vec3_t worldPos, float radius );
 
 	int time;
@@ -581,6 +582,7 @@ typedef dvar_s dvar_t;
 
 extern dvar_t *fx_enable;
 extern dvar_t *fx_freeze;
+extern const dvar_t *fx_count;
 
 void FX_Print( const char *fmt, ... );
 FxEffectDef *FX_RegisterEffect( const char *name );
@@ -805,7 +807,7 @@ void FxScheduler::PlayEffect( const FxEffectDef *fx, const vec3_t origin, const 
 				delay = (int)( index * spacing );
 			else
 				delay = (int)FxRange_GetVal( &primTemp->mSpawnDelay );
-			if ( delay <= 0 )
+			if ( delay < 1 )
 			{
 				CreateEffect( fx, primTemp, bolt, or_.origin, or_.axis, -delay, index );
 			}
@@ -837,6 +839,8 @@ void FxScheduler::PlayEffect( const FxEffectDef *fx, const vec3_t origin, const 
 			}
 		}
 	}
+	if ( numAdded && fx_count->current.boolean )
+		theFxHelper->AddPlume( or_.origin, numAdded, colorYellow, 3000 );
 }
 
 float FxScheduler::GetEffectLength( const FxEffectDef *fx )
