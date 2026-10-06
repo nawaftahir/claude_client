@@ -1028,17 +1028,36 @@ void CL_CmdButtons(usercmd_t *cmd)
 #undef KB_AT
 }
 
+// retail 0x408180
+static void CL_FinishMove(usercmd_t *cmd)
+{
+    clientActive_t *cl;
+    int serverTime;
+    int i;
+
+    cl = clients;
+    cmd->weapon = (byte)cl->cgameUserCmdValue;
+    cmd->offHandIndex = (byte)cl->cgameUserHoldableValue;
+
+    serverTime = cl->serverTime;
+    if (serverTime - cl->snap.serverTime > 5000)
+        serverTime = cl->snap.serverTime + 5000;
+    cmd->serverTime = serverTime;
+
+    for (i = 0; i < 3; ++i)
+        cmd->angles[i] = ((int)((clients[0].viewangles[i] + clients[0].cgameKickAngles[i]) * 182.04444885253906f)) & 0xffff;
+}
+
 usercmd_t CL_CreateCmd(void)
 {
     clientActive_t *cl;
     usercmd_t cmd;
-    float oldPitch;
-    float pitchDelta;
-    int currentCmdTime;
-    int i;
+    vec3_t oldAngles;
 
     cl = clients;
-    oldPitch = cl->viewangles[0];
+    oldAngles[0] = cl->viewangles[0];
+    oldAngles[1] = cl->viewangles[1];
+    oldAngles[2] = cl->viewangles[2];
 
     CL_AdjustAngles();
 
@@ -1048,25 +1067,12 @@ usercmd_t CL_CreateCmd(void)
     CL_KeyMove(&cmd);
     CL_MouseMove(&cmd);
 
-    pitchDelta = cl->viewangles[0] - oldPitch;
-    if (pitchDelta > 90.0f) {
-        cl->viewangles[0] = oldPitch + 90.0f;
-    } else if (-pitchDelta > 90.0f) {
-        cl->viewangles[0] = oldPitch - 90.0f;
-    }
+    if (cl->viewangles[0] - oldAngles[0] > 90.0f)
+        cl->viewangles[0] = oldAngles[0] + 90.0f;
+    else if (oldAngles[0] - cl->viewangles[0] > 90.0f)
+        cl->viewangles[0] = oldAngles[0] - 90.0f;
 
-    cmd.weapon = (byte)cl->cgameUserCmdValue;
-    cmd.offHandIndex = (byte)cl->cgameUserHoldableValue;
-
-    currentCmdTime = cl->serverTime;
-    if (cl->serverTime - cl->snap.serverTime >= 5001) {
-        currentCmdTime = cl->snap.serverTime + 5000;
-    }
-    cmd.serverTime = currentCmdTime;
-
-    for (i = 0; i < 3; ++i) {
-        cmd.angles[i] = ((int)((cl->viewangles[i] + cl->cgameKickAngles[i]) * 182.04444885253906f)) & 0xffff;
-    }
+    CL_FinishMove(&cmd);
 
     return cmd;
 }
