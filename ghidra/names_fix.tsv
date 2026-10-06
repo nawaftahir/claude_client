@@ -394,3 +394,6 @@
 52d320	UI_OwnerDraw	fix	# jump table + callees 10-06
 52c5a0	UI_DrawPreviewCinematic	fix	# Q3 split
 52c6d0	UI_DrawMapCinematic	fix	# jmp thunk
+4d1480	CG_DrawTracer	fix	# caller CG_AddMovingTracer 10-06
+4d1390	ScaleTracer	fix	# Kisak
+4d1340	CalcTracerFinalScale	fix	# Kisak

@@ -1650,106 +1650,99 @@ void CG_BulletHitEvent(int sourceEntityNum, vec_t *position, vec_t *normal, vec_
     CG_WhizbySound(muzzle, position);
 }
 
-static float CG_TracerScaleForDistance(float dist, float width, float tracerScale, float minDist, float distRange)
+// retail 0x4d1340; Kisak name (SUPPORTED)
+static float CalcTracerFinalScale(float tracerScaleDistRange, float dist, float tracerScale)
 {
-    if (minDist != 0.0f)
-        dist -= minDist;
+    float scale;
 
-    if (dist <= 0.0f)
-        return width;
-
-    if (distRange > 0.0f) {
-        float scale = (dist / distRange) * tracerScale;
-
+    if (tracerScaleDistRange > 0.0f) {
+        scale = dist / tracerScaleDistRange * tracerScale;
         if (scale < 1.0f)
-            scale = 1.0f;
-        else if (scale > tracerScale)
-            scale = tracerScale;
-
-        return width * scale;
+            return 1.0f;
+        if (scale > tracerScale)
+            return tracerScale;
+        return scale;
     }
-
-    return width * tracerScale;
+    return tracerScale;
 }
 
-void CG_DrawTracer(vec_t *start, vec_t *finish)
+// retail 0x4d1390; Kisak name (SUPPORTED)
+static void ScaleTracer(const float *start, const float *finish, float *startWidth, float *finishWidth)
 {
-    vec3_t dir;
-    vec3_t right;
-    vec_t *viewOrg;
-    vec_t *viewAxis0;
-    vec_t *viewAxis1;
-    float forwardDot;
-    float rightDot;
-    float width;
-    float startWidth;
-    float finishWidth;
+    float startDist;
+    float finishDist;
     float tracerScale;
     float tracerScaleMinDist;
     float tracerScaleDistRange;
-    GfxWorldVertex verts[4];
 
-    dir[0] = finish[0] - start[0];
-    dir[1] = finish[1] - start[1];
-    dir[2] = finish[2] - start[2];
-
-    viewOrg = cg->refdef.vieworg;
-    viewAxis0 = cg->refdef.viewaxis[1];
-    viewAxis1 = cg->refdef.viewaxis[2];
-
-    forwardDot = dir[0] * viewAxis0[0] + dir[1] * viewAxis0[1] + dir[2] * viewAxis0[2];
-    rightDot = dir[0] * viewAxis1[0] + dir[1] * viewAxis1[1] + dir[2] * viewAxis1[2];
-
-    right[0] = rightDot * viewAxis0[0] - forwardDot * viewAxis1[0];
-    right[1] = rightDot * viewAxis0[1] - forwardDot * viewAxis1[1];
-    right[2] = rightDot * viewAxis0[2] - forwardDot * viewAxis1[2];
-    Vec3Normalize(right);
-
-    width = cg_tracerWidth->current.value;
     tracerScale = cg_tracerScale->current.value;
     tracerScaleMinDist = cg_tracerScaleMinDist->current.value;
     tracerScaleDistRange = cg_tracerScaleDistRange->current.value;
-
-    if (tracerScale == 1.0f) {
-        startWidth = width;
-        finishWidth = width;
-    } else {
-        startWidth = CG_TracerScaleForDistance(Vec3Distance(start, viewOrg), width, tracerScale,
-                                               tracerScaleMinDist, tracerScaleDistRange);
-        finishWidth = CG_TracerScaleForDistance(Vec3Distance(finish, viewOrg), width, tracerScale,
-                                                tracerScaleMinDist, tracerScaleDistRange);
+    if (tracerScale != 1.0f) {
+        startDist = Vec3Distance(start, cg->refdef.vieworg);
+        finishDist = Vec3Distance(finish, cg->refdef.vieworg);
+        if (tracerScaleMinDist != 0.0f) {
+            startDist = startDist - tracerScaleMinDist;
+            finishDist = finishDist - tracerScaleMinDist;
+        }
+        if (startDist > 0.0f)
+            *startWidth = CalcTracerFinalScale(tracerScaleDistRange, startDist, tracerScale) * *startWidth;
+        if (finishDist > 0.0f)
+            *finishWidth = CalcTracerFinalScale(tracerScaleDistRange, finishDist, tracerScale) * *finishWidth;
     }
+}
 
-    verts[0].xyz[0] = finish[0] + right[0] * finishWidth;
-    verts[0].xyz[1] = finish[1] + right[1] * finishWidth;
-    verts[0].xyz[2] = finish[2] + right[2] * finishWidth;
+// Q3 CG_Tracer shape
+void CG_DrawTracer(vec_t *start, vec_t *finish)
+{
+    vec3_t forward;
+    vec3_t right;
+    vec3_t line;
+    float scale;
+    float startWidth;
+    float finishWidth;
+    GfxWorldVertex verts[4];
+
+    forward[0] = finish[0] - start[0];
+    forward[1] = finish[1] - start[1];
+    forward[2] = finish[2] - start[2];
+
+    line[0] = forward[0] * cg->refdef.viewaxis[1][0] + forward[1] * cg->refdef.viewaxis[1][1] + forward[2] * cg->refdef.viewaxis[1][2];
+    line[1] = forward[0] * cg->refdef.viewaxis[2][0] + forward[1] * cg->refdef.viewaxis[2][1] + forward[2] * cg->refdef.viewaxis[2][2];
+
+    VectorScale(cg->refdef.viewaxis[1], line[1], right);
+    scale = -line[0];
+    right[0] = cg->refdef.viewaxis[2][0] * scale + right[0];
+    right[1] = cg->refdef.viewaxis[2][1] * scale + right[1];
+    right[2] = cg->refdef.viewaxis[2][2] * scale + right[2];
+    Vec3Normalize(right);
+
+    startWidth = cg_tracerWidth->current.value;
+    finishWidth = cg_tracerWidth->current.value;
+    ScaleTracer(start, finish, &startWidth, &finishWidth);
+
+    VectorMA(finish, finishWidth, right, verts[0].xyz);
     verts[0].color.packed = 0xffffffff;
     verts[0].texCoord[0] = 1.0f;
     verts[0].texCoord[1] = 1.0f;
     verts[0].lmapCoord[0] = 1.0f;
     verts[0].lmapCoord[1] = 1.0f;
 
-    verts[1].xyz[0] = finish[0] - right[0] * finishWidth;
-    verts[1].xyz[1] = finish[1] - right[1] * finishWidth;
-    verts[1].xyz[2] = finish[2] - right[2] * finishWidth;
+    VectorMA(finish, -finishWidth, right, verts[1].xyz);
     verts[1].color.packed = 0xffffffff;
     verts[1].texCoord[0] = 1.0f;
     verts[1].texCoord[1] = 0.0f;
     verts[1].lmapCoord[0] = 1.0f;
     verts[1].lmapCoord[1] = 0.0f;
 
-    verts[2].xyz[0] = start[0] - right[0] * startWidth;
-    verts[2].xyz[1] = start[1] - right[1] * startWidth;
-    verts[2].xyz[2] = start[2] - right[2] * startWidth;
+    VectorMA(start, -startWidth, right, verts[2].xyz);
     verts[2].color.packed = 0xffffffff;
     verts[2].texCoord[0] = 0.0f;
     verts[2].texCoord[1] = 0.0f;
     verts[2].lmapCoord[0] = 0.0f;
     verts[2].lmapCoord[1] = 0.0f;
 
-    verts[3].xyz[0] = start[0] + right[0] * startWidth;
-    verts[3].xyz[1] = start[1] + right[1] * startWidth;
-    verts[3].xyz[2] = start[2] + right[2] * startWidth;
+    VectorMA(start, startWidth, right, verts[3].xyz);
     verts[3].color.packed = 0xffffffff;
     verts[3].texCoord[0] = 0.0f;
     verts[3].texCoord[1] = 1.0f;
@@ -1757,7 +1750,6 @@ void CG_DrawTracer(vec_t *start, vec_t *finish)
     verts[3].lmapCoord[1] = 1.0f;
 
     CL_DefaultVertexFrames(4, verts);
-
     CL_AddPolyToScene(cgs->media.tracerMaterial, 0x1f, 4, verts);
 }
 
