@@ -96,14 +96,7 @@ SL_ConvertToString
 */
 const char *SL_ConvertToString( unsigned int stringValue )
 {
-	if ( stringValue )
-	{
-		return GetRefString( stringValue )->str;
-	}
-	else
-	{
-		return NULL;
-	}
+	return stringValue ? GetRefString( stringValue )->str : NULL;
 }
 
 /*
