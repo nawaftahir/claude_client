@@ -844,13 +844,24 @@ void CG_WhizbySound(vec_t *vStart, vec_t *vEnd)
     CG_PlaySoundAlias(0x3fe, vProjPos, cgs->media.bulletWhizby);
 }
 
+// retail 0x4d1850, name unknown: tracer + whizby for a bullet hit
+static void CG_BulletHitTracer(int sourceEntityNum, vec_t *position, unsigned int flashTag)
+{
+    vec3_t muzzle;
+
+    if (cg_tracerChance->current.value <= 0.0f)
+        return;
+    if (!CG_CalcMuzzlePoint(sourceEntityNum, muzzle, flashTag))
+        return;
+    if (!((cg->nextSnap->ps.pm_flags & 0xc00000) && sourceEntityNum == cg->nextSnap->ps.clientNum)
+        && (float)rand() < cg_tracerChance->current.value * 32768.0f)
+        CG_SpawnTracer(muzzle, position);
+    CG_WhizbySound(muzzle, position);
+}
+
 void CG_BulletHitClientEvent(int sourceEntityNum, vec_t *position, int surfType, int event)
 {
-    snapshot_t *snap;
     snd_alias_list_t *alias;
-    unsigned int flashTag;
-    vec3_t muzzle;
-    float tracerChance;
 
     if (event == 0xb9)
         alias = cgs->media.bulletHitSmallSound[surfType];
@@ -860,32 +871,7 @@ void CG_BulletHitClientEvent(int sourceEntityNum, vec_t *position, int surfType,
         alias = cgs->media.shotgunHitSound[surfType];
 
     CG_PlaySoundAlias(0x3fe, position, alias);
-
-    flashTag = *s_barrelTags[0];
-    tracerChance = cg_tracerChance->current.value;
-    if (tracerChance <= 0.0f)
-        return;
-
-    if (!CG_CalcMuzzlePoint(sourceEntityNum, muzzle, flashTag))
-        return;
-
-    snap = cg->nextSnap;
-    if (!((snap->ps.pm_flags & 0xc00000) && snap->ps.clientNum == sourceEntityNum)) {
-        int randInt = rand();
-        float randValue;
-
-        if (randInt < 0) {
-            unsigned int adjusted = ((unsigned int)randInt >> 1) | (randInt & 1);
-            randValue = (float)adjusted * 2.0f;
-        } else {
-            randValue = (float)randInt;
-        }
-
-        if (2147483648.0f * tracerChance > randValue)
-            CG_SpawnTracer(muzzle, position);
-    }
-
-    CG_WhizbySound(muzzle, position);
+    CG_BulletHitTracer(sourceEntityNum, position, *s_barrelTags[0]);
 }
 
 void CG_RegisterItemVisuals(int itemNum)
@@ -1539,30 +1525,23 @@ void CG_AddViewWeapon(playerState_t *ps)
 
 void CG_BulletHitEvent(int sourceEntityNum, vec_t *position, vec_t *normal, vec_t *reflected, int surfType, int event)
 {
-    byte *fxTable;
-    snapshot_t *snap;
     snd_alias_list_t *alias;
-    void *fxNormal;
-    void *fxReflect;
-    unsigned int flashTag;
-    vec3_t muzzle;
-    float tracerChance;
+    // table rows: 23 surface types each
+    const FxEffectDef *fxNormal;
+    const FxEffectDef *fxReflect;
 
     if (event == 0xb6) {
         alias = cgs->media.bulletHitSmallSound[surfType];
-        fxTable = cgs->media.fx ? (byte *)cgs->media.fx->table : NULL;
-        fxNormal = fxTable ? *(void **)(fxTable + surfType * 4) : NULL;
-        fxReflect = fxTable ? *(void **)(fxTable + 0x5c + surfType * 4) : NULL;
+        fxNormal = cgs->media.fx->table[surfType];
+        fxReflect = cgs->media.fx->table[1 * 23 + surfType];
     } else if (event == 0xb7) {
         alias = cgs->media.bulletHitLargeSound[surfType];
-        fxTable = cgs->media.fx ? (byte *)cgs->media.fx->table : NULL;
-        fxNormal = fxTable ? *(void **)(fxTable + 0xb8 + surfType * 4) : NULL;
-        fxReflect = fxTable ? *(void **)(fxTable + 0x114 + surfType * 4) : NULL;
+        fxNormal = cgs->media.fx->table[2 * 23 + surfType];
+        fxReflect = cgs->media.fx->table[3 * 23 + surfType];
     } else {
         alias = cgs->media.shotgunHitSound[surfType];
-        fxTable = cgs->media.fx ? (byte *)cgs->media.fx->table : NULL;
-        fxNormal = fxTable ? *(void **)(fxTable + 0x170 + surfType * 4) : NULL;
-        fxReflect = fxTable ? *(void **)(fxTable + 0x1cc + surfType * 4) : NULL;
+        fxNormal = cgs->media.fx->table[4 * 23 + surfType];
+        fxReflect = cgs->media.fx->table[5 * 23 + surfType];
     }
 
     if (!cg_blood->current.enabled && surfType == 7) {
@@ -1578,31 +1557,7 @@ void CG_BulletHitEvent(int sourceEntityNum, vec_t *position, vec_t *normal, vec_
     if (fxReflect)
         FX_PlayEffect((EffectTemplate *)fxReflect, position, reflected);
 
-    flashTag = *s_barrelTags[0];
-    tracerChance = cg_tracerChance->current.value;
-    if (tracerChance <= 0.0f)
-        return;
-
-    if (!CG_CalcMuzzlePoint(sourceEntityNum, muzzle, flashTag))
-        return;
-
-    snap = cg->nextSnap;
-    if (!((snap->ps.pm_flags & 0xc00000) && snap->ps.clientNum == sourceEntityNum)) {
-        int randInt = rand();
-        float randValue;
-
-        if (randInt < 0) {
-            unsigned int adjusted = ((unsigned int)randInt >> 1) | (randInt & 1);
-            randValue = (float)adjusted * 2.0f;
-        } else {
-            randValue = (float)randInt;
-        }
-
-        if (2147483648.0f * tracerChance > randValue)
-            CG_SpawnTracer(muzzle, position);
-    }
-
-    CG_WhizbySound(muzzle, position);
+    CG_BulletHitTracer(sourceEntityNum, position, *s_barrelTags[0]);
 }
 
 static qboolean CG_WeaponSelectable(int weapon)
