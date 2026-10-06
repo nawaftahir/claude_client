@@ -133,7 +133,6 @@ static void ConDrawInput_IncrMatchCounter(const char *str);
 void Con_ClearNotify(void);
 void Con_ClearSubtitles(void);
 static void ConDrawInput_DvarMatch(const char *str);
-static int isPunctChar(int c);
 const char *Con_TokenizeInput(void);
 Bool Con_AnySpaceAfterCommand(void);
 static void Con_CheckResize(void);
@@ -902,18 +901,13 @@ void Con_AutoCompleteFromList(const char **strings, int stringCount, const char 
 const char *Con_TokenizeInput(void)
 {
     const char *cmd;
-    unsigned char first;
 
-    Cmd_TokenizeString((const char *)&g_consoleField + 0x18);
+    Cmd_TokenizeString(g_consoleField.buffer);
     cmd = Cmd_Argv(0);
-
-    first = (unsigned char)cmd[0];
-    if (first == '\\' || first == '/')
-        cmd++;
-
-    while (isPunctChar((signed char)*cmd))
-        cmd++;
-
+    if (*cmd == '\\' || *cmd == '/')
+        ++cmd;
+    while (isspace(*cmd))
+        ++cmd;
     return cmd;
 }
 
@@ -936,11 +930,6 @@ static void Con_ClearMessageWindow(MessageWindow *wnd)
     if (!wnd)
         return;
     MsgWnd_Clear(wnd);
-}
-
-static int isPunctChar(int c)
-{
-    return isspace(c);
 }
 
 static void ConDrawInput_Text(const char *str, const vec_t *color)
