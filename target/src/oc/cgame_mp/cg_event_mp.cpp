@@ -314,7 +314,7 @@ static void CG_Obituary(entityState_t *ent)
         CL_DeathMessagePrint(attackerName, attackerColor, targetName, victimColor, iconShader, iconWidth, 1.4f, iconColor, iconHorzFlip);
 }
 
-static inline bool CG_IsLocalEntity(const entityState_t *ent)
+static __forceinline bool CG_IsLocalEntity(const entityState_t *ent)
 {
     const snapshot_t *snap = cg->nextSnap;
 
@@ -399,6 +399,7 @@ void CG_EntityEvent(centity_t *cent, int event)
     const EffectTemplate *fx;
     char *snap;
     int weapon;
+    float height;
 
     if (event == 0) {
 
@@ -592,30 +593,16 @@ void CG_EntityEvent(centity_t *cent, int event)
                                 cgs->media.landDmgSound);
 
         if (clientNum == cg->predictedPlayerState.clientNum) {
-
-            float ssMinVal = bg_fallDamageMinHeight->current.value;
-            float parm = (float)eventParm * f_0_01;
-            float ssMaxVal = bg_fallDamageMaxHeight->current.value;
-            float delta = ssMaxVal - ssMinVal;
-            float shellshock = parm * delta + ssMinVal;
-
-            if (shellshock > f_12_0) {
-
-                float tilt = (shellshock - f_12_0) / f_26_0;
-                tilt = tilt * f_4_0 + f_4_0;
-                int tiltInt = (int)tilt;
-
-                float tiltVal;
-                if (tiltInt > 24) {
-                    tiltVal = f_24_0;
-                } else if (tiltInt <= 0) {
+            // fall height in units from the damage fraction
+            height = (bg_fallDamageMaxHeight->current.value - bg_fallDamageMinHeight->current.value)
+                * ((float)eventParm * 0.01f) + bg_fallDamageMinHeight->current.value;
+            if (!(height <= 12.0f)) {
+                eventParm = (int)(((height - 12.0f) * (1.0f / 26.0f) + 1.0f) * 4.0f);
+                if (eventParm > 24)
+                    eventParm = 24;
+                else if (eventParm <= 0)
                     return;
-                } else {
-                    tiltVal = (float)tiltInt;
-                }
-
-                cg->landChange = -tiltVal;
-
+                cg->landChange = -(float)eventParm;
                 cg->landTime = cg->time;
             }
         }
@@ -691,32 +678,20 @@ void CG_EntityEvent(centity_t *cent, int event)
             if (cg_synchronousClients->current.enabled != 0)
                 return;
 
-            int cgTime = cg->time;
-            int prevTime = cg->stepTime;
-            int timeDiff = cgTime - prevTime;
-            float viewAngle = 0.0f;
-
-            if (timeDiff <= 99) {
-
-                int remaining = 100 - timeDiff;
-                viewAngle = (float)remaining * cg->stepChange;
-                viewAngle /= f_100_0;
-                viewAngle *= f_0_9;
+            // smooth out stair climbing, q3 EV_STEP
+            int deltaTime = cg->time - cg->stepTime;
+            float oldStep;
+            if (deltaTime < 100) {
+                oldStep = (float)(100 - deltaTime) * cg->stepChange / 100.0f;
+                oldStep *= 0.9f;
+            } else {
+                oldStep = 0.0f;
             }
-
-            int parmAdj = eventParm - 128;
-            viewAngle += (float)parmAdj;
-            cg->stepChange = viewAngle;
-
-            float curAngle = cg->stepChange;
-            if (curAngle > f_24_0) {
-
+            cg->stepChange = (float)(eventParm - 128) + oldStep;
+            if (cg->stepChange > 24.0f)
                 cg->stepChange = 24.0f;
-            } else if (curAngle < f_neg16) {
-
+            else if (cg->stepChange < -16.0f)
                 cg->stepChange = -16.0f;
-            }
-
             cg->stepTime = cg->time;
             return;
         }
