@@ -911,7 +911,10 @@ int SND_StartAliasStreamOnChannel(const snd_alias_t *pAlias0, const snd_alias_t 
     }
 
     sprintf(realname, "sound/%s", Com_GetSoundFileName(pAlias0));
-    handle = (HSTREAM)AIL_open_stream((void *)milesGlob.driver_2D, mss_q3fs->current.enabled ? realname : FS_ShortOSFilePath(realname), 0);
+    if (mss_q3fs->current.enabled)
+        handle = (HSTREAM)AIL_open_stream((void *)milesGlob.driver_2D, realname, 0);
+    else
+        handle = (HSTREAM)AIL_open_stream((void *)milesGlob.driver_2D, FS_ShortOSFilePath(realname), 0);
     if (!handle) {
         Com_Printf("Couldn't play stream '%s' from alias '%s' - %s\n", realname, pAlias0->pszAliasName, AIL_last_error());
         return 0;
@@ -919,7 +922,7 @@ int SND_StartAliasStreamOnChannel(const snd_alias_t *pAlias0, const snd_alias_t 
 
     milesGlob.handle_stream[index - 32] = handle;
     AIL_stream_info(handle, NULL, &filetype, NULL, NULL);
-    srcChannelCount = ((filetype & 2) != 0) + 1;
+    srcChannelCount = (filetype & 2) ? 2 : 1;
     baserate = AIL_stream_playback_rate(handle);
     AIL_set_stream_playback_rate(handle, I_fround((float)baserate * g_snd.timescale * pitch));
 
@@ -947,9 +950,10 @@ int SND_StartAliasStreamOnChannel(const snd_alias_t *pAlias0, const snd_alias_t 
         return 0;
     }
 
-    start_msec = timeshift;
     if (fraction != 0.0f)
         start_msec = I_fround((float)total_msec * fraction);
+    else
+        start_msec = timeshift;
     if (start_msec)
         startDelay = 0;
     AIL_set_stream_ms_position(handle, start_msec);
@@ -960,10 +964,9 @@ int SND_StartAliasStreamOnChannel(const snd_alias_t *pAlias0, const snd_alias_t 
     if (pAlias0->flags & 1)
         total_msec = 0;
 
-    to = g_snd.chaninfo[index].org;
-    to[0] = org[0];
-    to[1] = org[1];
-    to[2] = org[2];
+    g_snd.chaninfo[index].org[0] = org[0];
+    g_snd.chaninfo[index].org[1] = org[1];
+    g_snd.chaninfo[index].org[2] = org[2];
     SND_SetChannelInfo(index, entnum, pAlias0, pAlias1, lerp, org, volume, pitch, srcChannelCount, baserate, (int)total_msec, start_msec, startDelay, master, system);
 
     if (SND_IsAliasChannel3D((g_snd.chaninfo[index].pAlias0->flags & 0x780) >> 7)) {
