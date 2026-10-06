@@ -852,54 +852,53 @@ static void CG_PlayLoopedFx(centity_t *cent)
     int repeat;
     int fxIndex;
     EffectTemplate *fx;
-    vec_t *forward = s1->origin2;
+    const vec_t *forward;
     float cullDist;
-    float forwardLenSq;
 
     if (cg->time >= cent->dl_time) {
         repeat = (int)s1->angles2[1];
-        if (repeat > cg->time - cent->dl_time)
+        if (cg->time - cent->dl_time < repeat)
             return;
 
         do {
             cent->dl_time += repeat;
-        } while (repeat <= cg->time - cent->dl_time);
+        } while (cg->time - cent->dl_time >= repeat);
     } else {
         cent->dl_time = cg->time;
     }
 
     cullDist = s1->angles2[0];
     if (cullDist != 0.0f) {
-        float distSq = Vec3DistanceSq(cg->refdef.vieworg, cent->lerpOrigin);
-        if (distSq >= cullDist * cullDist)
+        if (Vec3DistanceSq(cg->refdef.vieworg, cent->lerpOrigin) >= cullDist * cullDist)
             return;
     }
 
     fxIndex = s1->scale;
-    if ((unsigned int)(fxIndex - 1) > 0x3e) {
-        Com_Printf((const char *)"ERROR: CG_PlayFx called with invalid effect id %i\n", fxIndex);
-        return;
-    }
+    if (fxIndex > 0 && fxIndex < 64) {
+        fx = cgs->fxs[fxIndex];
+        forward = s1->origin2;
+        if (forward[0] * forward[0] + forward[1] * forward[1] + forward[2] * forward[2] != 0.0f) {
+            if (!s1->eventParm) {
+                FX_PlayEffect(fx, cent->lerpOrigin, forward);
+            } else {
+                vec3_t up;
+                float dot;
+                float scale;
 
-    fx = cgs->fxs[fxIndex];
-    forwardLenSq = forward[0] * forward[0] + forward[1] * forward[1] + forward[2] * forward[2];
-    if (forwardLenSq != 0.0f) {
-        if (s1->eventParm) {
-            vec3_t up;
-            float scale;
-
-            ByteToDir(s1->eventParm, up);
-            scale = -(up[0] * forward[0] + up[1] * forward[1] + up[2] * forward[2]);
-            up[0] += scale * forward[0];
-            up[1] += scale * forward[1];
-            up[2] += scale * forward[2];
-            Vec3Normalize(up);
-            FX_PlayOrientedEffect(fx, cent->lerpOrigin, forward, up);
+                ByteToDir(s1->eventParm, up);
+                dot = up[1] * forward[1] + up[2] * forward[2] + up[0] * forward[0];
+                scale = -dot;
+                up[0] = scale * forward[0] + up[0];
+                up[1] = scale * forward[1] + up[1];
+                up[2] = scale * forward[2] + up[2];
+                Vec3Normalize(up);
+                FX_PlayOrientedEffect(fx, cent->lerpOrigin, forward, up);
+            }
         } else {
-            FX_PlayEffect(fx, cent->lerpOrigin, forward);
+            FX_PlaySimpleEffect(fx, cent->lerpOrigin);
         }
     } else {
-        FX_PlaySimpleEffect(fx, cent->lerpOrigin);
+        Com_Printf("ERROR: CG_PlayFx called with invalid effect id %i\n", fxIndex);
     }
 }
 
