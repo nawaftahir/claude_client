@@ -10,6 +10,11 @@ struct XModelLodOverride
 
 static XModelLodOverride xmodelLodOverride[4];
 
+const char *XModelGetLodName(const XModel *model, int lod)
+{
+	return model->lodInfo[lod].filename;
+}
+
 const char *XModelGetName(const XModel *model)
 {
 	return model->name;
@@ -51,11 +56,6 @@ int XModelGetNumLods(const XModel *model)
 int XModelNumBones(const XModel *model)
 {
 	return model->parts->numBones;
-}
-
-const char *XModelGetLodName(const XModel *model, int lod)
-{
-	return model->lodInfo[lod].filename;
 }
 
 DObjAnimMat *XModelGetBasePose(const XModel *model)
@@ -108,3 +108,4 @@ void XModelSetLodOverride(int lod, float dist)
 	xmodelLodOverride[lod].dist = dist;
 	xmodelLodOverride[lod].enabled = dist >= 0;
 }
+

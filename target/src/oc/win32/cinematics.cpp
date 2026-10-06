@@ -67,6 +67,93 @@ void ROQ_PlayCinematic_f(void);
 static void RoQ_init(void);
 static void RoQInterrupt(void);
 
+e_status ROQ_StopCinematicFromHandle(int handle);
+static void RoQ_init(void);
+e_status ROQ_RunCinematicFromHandle(int handle);
+
+extern int Com_sprintf(char *dest, size_t size, const char *format, ...);
+extern int I_stricmp(const char *s1, const char *s2);
+extern void Com_Error(errorParm_t level, const char *fmt, ...);
+extern void Com_Memset(void *dest, const int val, int count);
+extern int FS_Read(void *buffer, int len, fileHandle_t f);
+extern void SND_RawSamples(int samples, int rate, int width, int channels, const byte *data);
+extern void Con_Close(void);
+
+#define ROQ_QUAD_INFO 0x1001
+#define ROQ_CODEBOOK 0x1002
+#define ROQ_QUAD_VQ 0x1011
+#define ROQ_QUAD_JPEG 0x1012
+#define ROQ_QUAD_HANG 0x1013
+#define ROQ_PACKET 0x1030
+#define ZA_SOUND_MONO 0x1020
+#define ZA_SOUND_STEREO 0x1021
+extern "C" void Com_Memcpy( void *dest, const void *src, int count );
+
+#define VQ2TO4(a, b, c, d) { \
+    *c++ = a[0]; \
+    *d++ = a[0]; \
+    *d++ = a[0]; \
+    *c++ = a[1]; \
+    *d++ = a[1]; \
+    *d++ = a[1]; \
+    *c++ = b[0]; \
+    *d++ = b[0]; \
+    *d++ = b[0]; \
+    *c++ = b[1]; \
+    *d++ = b[1]; \
+    *d++ = b[1]; \
+    *d++ = a[0]; \
+    *d++ = a[0]; \
+    *d++ = a[1]; \
+    *d++ = a[1]; \
+    *d++ = b[0]; \
+    *d++ = b[0]; \
+    *d++ = b[1]; \
+    *d++ = b[1]; \
+    a += 2; b += 2; }
+#define VQ2TO2(a, b, c, d) { \
+    *c++ = *a; \
+    *d++ = *a; \
+    *d++ = *a; \
+    *c++ = *b; \
+    *d++ = *b; \
+    *d++ = *b; \
+    *d++ = *a; \
+    *d++ = *a; \
+    *d++ = *b; \
+    *d++ = *b; \
+    a++; b++; }
+
+void ROQ_RunCinematic(void)
+{
+    if (CL_handle >= 0 && CL_handle < 16) {
+        ROQ_RunCinematicFromHandle(CL_handle);
+    }
+}
+
+void ROQ_CloseAllVideos(void)
+{
+    int i;
+
+    for (i = 0; i < 16; i++) {
+        if (cinTable[i].fileName[0] != 0) {
+            ROQ_StopCinematicFromHandle(i);
+        }
+    }
+}
+
+static int CIN_findHandle(void)
+{
+    int i;
+    for (i = 0; i < 16; i++) {
+        if (cinTable[i].fileName[0] == '\0') {
+            return i;
+        }
+    }
+    Com_Error(ERR_DROP, "CIN_findHandle: none free");
+    return 0;
+}
+
 static void RllSetupTable(void)
 {
     int z;
@@ -139,155 +226,6 @@ long RllDecodeStereoToMono(unsigned char *from, short *to, unsigned int size, ch
     }
 
     return size;
-}
-
-static void recurseQuad(long startX, long startY, long quadSize, long xOff, long yOff)
-{
-    byte *scroff;
-    long bigx, bigy, lowx, lowy, useY;
-    long offset;
-
-    offset = cinTable[currentHandle].screenDelta;
-
-    lowx = lowy = 0;
-    bigx = cinTable[currentHandle].xsize;
-    bigy = cinTable[currentHandle].ysize;
-
-    if (bigx > cinTable[currentHandle].CIN_WIDTH) bigx = cinTable[currentHandle].CIN_WIDTH;
-    if (bigy > cinTable[currentHandle].CIN_HEIGHT) bigy = cinTable[currentHandle].CIN_HEIGHT;
-
-    if ((startX >= lowx) && (startX + quadSize) <= (bigx) && (startY + quadSize) <= (bigy) && (startY >= lowy) && quadSize <= 8) {
-        useY = startY;
-        scroff = cin.linbuf + (useY + ((cinTable[currentHandle].CIN_HEIGHT - bigy) >> 1) + yOff) * (cinTable[currentHandle].samplesPerLine) + (((startX + xOff)) * cinTable[currentHandle].samplesPerPixel);
-
-        cin.qStatus[0][cinTable[currentHandle].onQuad] = scroff;
-        cin.qStatus[1][cinTable[currentHandle].onQuad++] = scroff + offset;
-    }
-
-    if (quadSize != 4) {
-        quadSize >>= 1;
-        recurseQuad(startX, startY, quadSize, xOff, yOff);
-        recurseQuad(startX + quadSize, startY, quadSize, xOff, yOff);
-        recurseQuad(startX, startY + quadSize, quadSize, xOff, yOff);
-        recurseQuad(startX + quadSize, startY + quadSize, quadSize, xOff, yOff);
-    }
-}
-
-static void RoQPrepMcomp(long int xoff, long int yoff)
-{
-    long int i;
-    long int j;
-    long int x;
-    long int y;
-    long int temp;
-    long int temp2;
-
-    i = cinTable[currentHandle].samplesPerLine;
-    j = cinTable[currentHandle].samplesPerPixel;
-    if (cinTable[currentHandle].xsize == cinTable[currentHandle].ysize * 4 && !cinTable[currentHandle].half) {
-        j += j;
-        i += i;
-    }
-
-    for (y = 0; y < 16; y++) {
-        temp2 = (y + yoff - 8) * i;
-        for (x = 0; x < 16; x++) {
-            temp = (x + xoff - 8) * j;
-            cin.mcomp[x * 16 + y] = cinTable[currentHandle].normalBuffer0 - (temp2 + temp);
-        }
-    }
-}
-
-static void RoQShutdown(void)
-{
-    if (!cinTable[currentHandle].buf) {
-        return;
-    }
-
-    if (cinTable[currentHandle].status == FMV_IDLE) {
-        return;
-    }
-    Com_DPrintf("finished cinematic\n");
-    cinTable[currentHandle].status = FMV_IDLE;
-
-    if (cinTable[currentHandle].sound) {
-        SND_EndRawSamples();
-    }
-
-    if (cinTable[currentHandle].iFile) {
-        FS_FCloseFile(cinTable[currentHandle].iFile);
-        cinTable[currentHandle].iFile = 0;
-    }
-
-    if (cinTable[currentHandle].alterGameState) {
-        CLC_CONN->state = cinTable[currentHandle].previousGameState;
-        CL_handle = -1;
-        if (CLC_CONN->state == 0 && nextmap->current.string[0]) {
-            Cbuf_AddText(va("%s\n", nextmap->current.string));
-            Dvar_SetString(nextmap, "");
-            UI_SetActiveMenu(1);
-        } else {
-            UI_SetActiveMenu(0);
-        }
-    }
-
-    if (re.SyncRenderThread) {
-        re.SyncRenderThread();
-    }
-
-    memset(&cinTable[currentHandle], 0, sizeof(cinTable[currentHandle]));
-    currentHandle = -1;
-}
-
-e_status ROQ_StopCinematicFromHandle(int handle)
-{
-    if (handle < 0 || handle >= 16 || cinTable[handle].status == FMV_EOF) {
-        return FMV_EOF;
-    }
-    currentHandle = handle;
-    Com_DPrintf("trFMV::stop(), closing %s\n", cinTable[currentHandle].fileName);
-    if (!cinTable[currentHandle].buf) {
-        return FMV_EOF;
-    }
-    if (cinTable[currentHandle].alterGameState) {
-        if (CLC_CONN->state != 1) {
-            return cinTable[currentHandle].status;
-        }
-    }
-    cinTable[currentHandle].status = FMV_EOF;
-    RoQShutdown();
-    return FMV_EOF;
-}
-
-void ROQ_SetExtentsFromHandle(int handle, int x, int y, int w, int h)
-{
-    if (handle >= 0 && handle < 16 && cinTable[handle].status != FMV_EOF) {
-        cinTable[handle].xpos = x;
-        cinTable[handle].ypos = y;
-        cinTable[handle].width = w;
-        cinTable[handle].height = h;
-        cinTable[handle].dirty = 1;
-    }
-}
-
-void ROQ_UploadCinematicFromHandle(int handle)
-{
-    if (handle >= 0 && handle < 16 && cinTable[handle].buf) {
-        if (cinTable[handle].playonwalls <= 0 && cinTable[handle].dirty) {
-            if (cinTable[handle].playonwalls == 0) {
-                cinTable[handle].playonwalls = -1;
-            } else if (cinTable[handle].playonwalls == -1) {
-                cinTable[handle].playonwalls = -2;
-            } else {
-                cinTable[handle].dirty = 0;
-            }
-        }
-        if (!cl_inGameVideo->current.enabled) {
-            if (cinTable[handle].playonwalls == 1) {
-                cinTable[handle].playonwalls = 0;
-            }
-        }
-    }
 }
 
 static void move8_32(byte *src, byte *dst, int spl)
@@ -558,37 +496,6 @@ static void blitVQQuad32fs(byte **status, unsigned char *data)
     } while (status[index] != NULL);
 }
 
-extern int Com_sprintf(char *dest, size_t size, const char *format, ...);
-extern int I_stricmp(const char *s1, const char *s2);
-extern void Com_Error(errorParm_t level, const char *fmt, ...);
-extern void Com_Memset(void *dest, const int val, int count);
-extern int FS_Read(void *buffer, int len, fileHandle_t f);
-extern void SND_RawSamples(int samples, int rate, int width, int channels, const byte *data);
-extern void Con_Close(void);
-
-static int CIN_findHandle(void)
-{
-    int i;
-    for (i = 0; i < 16; i++) {
-        if (cinTable[i].fileName[0] == '\0') {
-            return i;
-        }
-    }
-    Com_Error(ERR_DROP, "CIN_findHandle: none free");
-    return 0;
-}
-
-#define ROQ_QUAD_INFO 0x1001
-#define ROQ_CODEBOOK 0x1002
-#define ROQ_QUAD_VQ 0x1011
-#define ROQ_QUAD_JPEG 0x1012
-#define ROQ_QUAD_HANG 0x1013
-#define ROQ_PACKET 0x1030
-#define ZA_SOUND_MONO 0x1020
-#define ZA_SOUND_STEREO 0x1021
-
-extern "C" void Com_Memcpy( void *dest, const void *src, int count );
-
 static void ROQ_GenYUVTables(void)
 {
     float t_ub, t_vr, t_ug, t_vg;
@@ -608,42 +515,6 @@ static void ROQ_GenYUVTables(void)
         ROQ_YY_tab[i] = (long)((i << 6) | (i >> 2));
     }
 }
-
-#define VQ2TO4(a, b, c, d) { \
-    *c++ = a[0]; \
-    *d++ = a[0]; \
-    *d++ = a[0]; \
-    *c++ = a[1]; \
-    *d++ = a[1]; \
-    *d++ = a[1]; \
-    *c++ = b[0]; \
-    *d++ = b[0]; \
-    *d++ = b[0]; \
-    *c++ = b[1]; \
-    *d++ = b[1]; \
-    *d++ = b[1]; \
-    *d++ = a[0]; \
-    *d++ = a[0]; \
-    *d++ = a[1]; \
-    *d++ = a[1]; \
-    *d++ = b[0]; \
-    *d++ = b[0]; \
-    *d++ = b[1]; \
-    *d++ = b[1]; \
-    a += 2; b += 2; }
-
-#define VQ2TO2(a, b, c, d) { \
-    *c++ = *a; \
-    *d++ = *a; \
-    *d++ = *a; \
-    *c++ = *b; \
-    *d++ = *b; \
-    *d++ = *b; \
-    *d++ = *a; \
-    *d++ = *a; \
-    *d++ = *b; \
-    *d++ = *b; \
-    a++; b++; }
 
 static unsigned short yuv_to_rgb(long y, long u, long v)
 {
@@ -926,6 +797,38 @@ static void decodeCodeBook(byte *input, unsigned short roq_flags)
     }
 }
 
+static void recurseQuad(long startX, long startY, long quadSize, long xOff, long yOff)
+{
+    byte *scroff;
+    long bigx, bigy, lowx, lowy, useY;
+    long offset;
+
+    offset = cinTable[currentHandle].screenDelta;
+
+    lowx = lowy = 0;
+    bigx = cinTable[currentHandle].xsize;
+    bigy = cinTable[currentHandle].ysize;
+
+    if (bigx > cinTable[currentHandle].CIN_WIDTH) bigx = cinTable[currentHandle].CIN_WIDTH;
+    if (bigy > cinTable[currentHandle].CIN_HEIGHT) bigy = cinTable[currentHandle].CIN_HEIGHT;
+
+    if ((startX >= lowx) && (startX + quadSize) <= (bigx) && (startY + quadSize) <= (bigy) && (startY >= lowy) && quadSize <= 8) {
+        useY = startY;
+        scroff = cin.linbuf + (useY + ((cinTable[currentHandle].CIN_HEIGHT - bigy) >> 1) + yOff) * (cinTable[currentHandle].samplesPerLine) + (((startX + xOff)) * cinTable[currentHandle].samplesPerPixel);
+
+        cin.qStatus[0][cinTable[currentHandle].onQuad] = scroff;
+        cin.qStatus[1][cinTable[currentHandle].onQuad++] = scroff + offset;
+    }
+
+    if (quadSize != 4) {
+        quadSize >>= 1;
+        recurseQuad(startX, startY, quadSize, xOff, yOff);
+        recurseQuad(startX + quadSize, startY, quadSize, xOff, yOff);
+        recurseQuad(startX, startY + quadSize, quadSize, xOff, yOff);
+        recurseQuad(startX + quadSize, startY + quadSize, quadSize, xOff, yOff);
+    }
+}
+
 static void setupQuad(long xOff, long yOff)
 {
     long numQuadCels, i, x, y;
@@ -981,6 +884,31 @@ static void readQuadInfo(byte *qData)
 
     cinTable[currentHandle].t[0] = (0 - (unsigned int)cin.linbuf) + (unsigned int)cin.linbuf + cinTable[currentHandle].screenDelta;
     cinTable[currentHandle].t[1] = (0 - ((unsigned int)cin.linbuf + cinTable[currentHandle].screenDelta)) + (unsigned int)cin.linbuf;
+}
+
+static void RoQPrepMcomp(long int xoff, long int yoff)
+{
+    long int i;
+    long int j;
+    long int x;
+    long int y;
+    long int temp;
+    long int temp2;
+
+    i = cinTable[currentHandle].samplesPerLine;
+    j = cinTable[currentHandle].samplesPerPixel;
+    if (cinTable[currentHandle].xsize == cinTable[currentHandle].ysize * 4 && !cinTable[currentHandle].half) {
+        j += j;
+        i += i;
+    }
+
+    for (y = 0; y < 16; y++) {
+        temp2 = (y + yoff - 8) * i;
+        for (x = 0; x < 16; x++) {
+            temp = (x + xoff - 8) * j;
+            cin.mcomp[x * 16 + y] = cinTable[currentHandle].normalBuffer0 - (temp2 + temp);
+        }
+    }
 }
 
 static void RoQReset(void)
@@ -1137,6 +1065,154 @@ static void ROQ_SetLoopingFromHandle(int handle, qboolean loop)
     cinTable[handle].looping = loop;
 }
 
+static void RoQShutdown(void)
+{
+    if (!cinTable[currentHandle].buf) {
+        return;
+    }
+
+    if (cinTable[currentHandle].status == FMV_IDLE) {
+        return;
+    }
+    Com_DPrintf("finished cinematic\n");
+    cinTable[currentHandle].status = FMV_IDLE;
+
+    if (cinTable[currentHandle].sound) {
+        SND_EndRawSamples();
+    }
+
+    if (cinTable[currentHandle].iFile) {
+        FS_FCloseFile(cinTable[currentHandle].iFile);
+        cinTable[currentHandle].iFile = 0;
+    }
+
+    if (cinTable[currentHandle].alterGameState) {
+        CLC_CONN->state = cinTable[currentHandle].previousGameState;
+        CL_handle = -1;
+        if (CLC_CONN->state == 0 && nextmap->current.string[0]) {
+            Cbuf_AddText(va("%s\n", nextmap->current.string));
+            Dvar_SetString(nextmap, "");
+            UI_SetActiveMenu(1);
+        } else {
+            UI_SetActiveMenu(0);
+        }
+    }
+
+    if (re.SyncRenderThread) {
+        re.SyncRenderThread();
+    }
+
+    memset(&cinTable[currentHandle], 0, sizeof(cinTable[currentHandle]));
+    currentHandle = -1;
+}
+
+e_status ROQ_StopCinematicFromHandle(int handle)
+{
+    if (handle < 0 || handle >= 16 || cinTable[handle].status == FMV_EOF) {
+        return FMV_EOF;
+    }
+    currentHandle = handle;
+    Com_DPrintf("trFMV::stop(), closing %s\n", cinTable[currentHandle].fileName);
+    if (!cinTable[currentHandle].buf) {
+        return FMV_EOF;
+    }
+    if (cinTable[currentHandle].alterGameState) {
+        if (CLC_CONN->state != 1) {
+            return cinTable[currentHandle].status;
+        }
+    }
+    cinTable[currentHandle].status = FMV_EOF;
+    RoQShutdown();
+    return FMV_EOF;
+}
+
+void ROQ_SetExtentsFromHandle(int handle, int x, int y, int w, int h)
+{
+    if (handle >= 0 && handle < 16 && cinTable[handle].status != FMV_EOF) {
+        cinTable[handle].xpos = x;
+        cinTable[handle].ypos = y;
+        cinTable[handle].width = w;
+        cinTable[handle].height = h;
+        cinTable[handle].dirty = 1;
+    }
+}
+
+e_status ROQ_RunCinematicFromHandle(int handle)
+{
+    int start;
+    unsigned int thisTime;
+    int frame;
+
+    if (handle < 0 || handle >= 16 || cinTable[handle].status == FMV_EOF) return FMV_EOF;
+
+    if (cin.currentHandle != handle) {
+        currentHandle = handle;
+        cin.currentHandle = currentHandle;
+        cinTable[currentHandle].status = FMV_EOF;
+        RoQReset();
+    }
+
+    if (cinTable[handle].playonwalls < -1) {
+        return cinTable[handle].status;
+    }
+
+    currentHandle = handle;
+
+    if (cinTable[currentHandle].alterGameState) {
+        if (CLC_CONN->state != CA_CINEMATIC) {
+            return cinTable[currentHandle].status;
+        }
+    }
+
+    if (cinTable[currentHandle].status == FMV_IDLE) {
+        return cinTable[currentHandle].status;
+    }
+
+    thisTime = CL_ScaledMilliseconds();
+    if (cinTable[currentHandle].material && fabs((float)(thisTime - cinTable[currentHandle].lastTime)) > 100.0f) {
+        cinTable[currentHandle].startTime += thisTime - cinTable[currentHandle].lastTime;
+    }
+
+    if (cinTable[currentHandle].sound) {
+        frame = SND_RawSamplesTime() * cinTable[currentHandle].roqFPS / 1000 + 1;
+    } else {
+        frame = (thisTime - cinTable[currentHandle].startTime) * cinTable[currentHandle].roqFPS / 1000;
+    }
+
+    if (cinTable[currentHandle].tfps < frame) {
+        cinTable[currentHandle].tfps = frame;
+        cinTable[currentHandle].lastFrameTime = thisTime;
+    } else if ((thisTime - cinTable[currentHandle].lastFrameTime) * cinTable[currentHandle].roqFPS > 4000) {
+        cinTable[currentHandle].status = FMV_EOF;
+    }
+
+    start = cinTable[currentHandle].startTime;
+    while ((cinTable[currentHandle].tfps != cinTable[currentHandle].numQuads)
+        && (cinTable[currentHandle].status == FMV_PLAY)) {
+        RoQInterrupt();
+        if (start != cinTable[currentHandle].startTime) {
+            cinTable[currentHandle].tfps = (CL_ScaledMilliseconds() - cinTable[currentHandle].startTime) * cinTable[currentHandle].roqFPS / 1000;
+            start = cinTable[currentHandle].startTime;
+        }
+    }
+
+    cinTable[currentHandle].lastTime = thisTime;
+
+    if (cinTable[currentHandle].status == FMV_LOOPED) {
+        cinTable[currentHandle].status = FMV_PLAY;
+    }
+
+    if (cinTable[currentHandle].status == FMV_EOF) {
+        if (cinTable[currentHandle].looping) {
+            RoQReset();
+        } else {
+            RoQShutdown();
+        }
+    }
+
+    return cinTable[currentHandle].status;
+}
+
 int ROQ_PlayCinematic(const char *arg, int x, int y, int w, int h, int systemBits)
 {
     unsigned short RoQID;
@@ -1222,7 +1298,6 @@ int ROQ_PlayCinematic(const char *arg, int x, int y, int w, int h, int systemBit
     RoQShutdown();
     return -1;
 }
-
 
 // Original name unknown.
 static void ROQ_GetDrawRect(float aspect, int *x, int *y, int *w, int *h)
@@ -1311,100 +1386,6 @@ void ROQ_DrawCinematic(void)
     }
 }
 
-void ROQ_CloseAllVideos(void)
-{
-    int i;
-
-    for (i = 0; i < 16; i++) {
-        if (cinTable[i].fileName[0] != 0) {
-            ROQ_StopCinematicFromHandle(i);
-        }
-    }
-}
-
-e_status ROQ_RunCinematicFromHandle(int handle)
-{
-    int start;
-    unsigned int thisTime;
-    int frame;
-
-    if (handle < 0 || handle >= 16 || cinTable[handle].status == FMV_EOF) return FMV_EOF;
-
-    if (cin.currentHandle != handle) {
-        currentHandle = handle;
-        cin.currentHandle = currentHandle;
-        cinTable[currentHandle].status = FMV_EOF;
-        RoQReset();
-    }
-
-    if (cinTable[handle].playonwalls < -1) {
-        return cinTable[handle].status;
-    }
-
-    currentHandle = handle;
-
-    if (cinTable[currentHandle].alterGameState) {
-        if (CLC_CONN->state != CA_CINEMATIC) {
-            return cinTable[currentHandle].status;
-        }
-    }
-
-    if (cinTable[currentHandle].status == FMV_IDLE) {
-        return cinTable[currentHandle].status;
-    }
-
-    thisTime = CL_ScaledMilliseconds();
-    if (cinTable[currentHandle].material && fabs((float)(thisTime - cinTable[currentHandle].lastTime)) > 100.0f) {
-        cinTable[currentHandle].startTime += thisTime - cinTable[currentHandle].lastTime;
-    }
-
-    if (cinTable[currentHandle].sound) {
-        frame = SND_RawSamplesTime() * cinTable[currentHandle].roqFPS / 1000 + 1;
-    } else {
-        frame = (thisTime - cinTable[currentHandle].startTime) * cinTable[currentHandle].roqFPS / 1000;
-    }
-
-    if (cinTable[currentHandle].tfps < frame) {
-        cinTable[currentHandle].tfps = frame;
-        cinTable[currentHandle].lastFrameTime = thisTime;
-    } else if ((thisTime - cinTable[currentHandle].lastFrameTime) * cinTable[currentHandle].roqFPS > 4000) {
-        cinTable[currentHandle].status = FMV_EOF;
-    }
-
-    start = cinTable[currentHandle].startTime;
-    while ((cinTable[currentHandle].tfps != cinTable[currentHandle].numQuads)
-        && (cinTable[currentHandle].status == FMV_PLAY)) {
-        RoQInterrupt();
-        if (start != cinTable[currentHandle].startTime) {
-            cinTable[currentHandle].tfps = (CL_ScaledMilliseconds() - cinTable[currentHandle].startTime) * cinTable[currentHandle].roqFPS / 1000;
-            start = cinTable[currentHandle].startTime;
-        }
-    }
-
-    cinTable[currentHandle].lastTime = thisTime;
-
-    if (cinTable[currentHandle].status == FMV_LOOPED) {
-        cinTable[currentHandle].status = FMV_PLAY;
-    }
-
-    if (cinTable[currentHandle].status == FMV_EOF) {
-        if (cinTable[currentHandle].looping) {
-            RoQReset();
-        } else {
-            RoQShutdown();
-        }
-    }
-
-    return cinTable[currentHandle].status;
-}
-
-void ROQ_RunCinematic(void)
-{
-    if (CL_handle >= 0 && CL_handle < 16) {
-        ROQ_RunCinematicFromHandle(CL_handle);
-    }
-}
-
 void ROQ_PlayCinematic_f(void)
 {
     const char *arg;
@@ -1449,3 +1430,24 @@ void ROQ_PlayCinematic_f(void)
         } while (cinTable[currentHandle].buf == NULL && cinTable[currentHandle].status == FMV_PLAY);
     }
 }
+
+void ROQ_UploadCinematicFromHandle(int handle)
+{
+    if (handle >= 0 && handle < 16 && cinTable[handle].buf) {
+        if (cinTable[handle].playonwalls <= 0 && cinTable[handle].dirty) {
+            if (cinTable[handle].playonwalls == 0) {
+                cinTable[handle].playonwalls = -1;
+            } else if (cinTable[handle].playonwalls == -1) {
+                cinTable[handle].playonwalls = -2;
+            } else {
+                cinTable[handle].dirty = 0;
+            }
+        }
+        if (!cl_inGameVideo->current.enabled) {
+            if (cinTable[handle].playonwalls == 1) {
+                cinTable[handle].playonwalls = 0;
+            }
+        }
+    }
+}
+

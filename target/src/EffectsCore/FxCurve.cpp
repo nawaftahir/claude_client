@@ -13,6 +13,20 @@ struct FxCurveIterator
 
 float FxCurve_Interpolate1d( const float *key, float t );
 
+float FxCurve_Interpolate1d( const float *key, float t )
+{
+	float t0;
+	float t1;
+	float v0;
+	float v1;
+
+	t0 = key[0];
+	t1 = key[2];
+	v0 = key[1];
+	v1 = key[3];
+	return ( t - t0 ) * ( v1 - v0 ) / ( t1 - t0 ) + v0;
+}
+
 void FxCurveIterator_Create( FxCurveIterator *createe, const FxCurve *master )
 {
 	createe->master = master;
@@ -55,16 +69,3 @@ float FxCurve_Integrate( const FxCurve *curve, float normDuration )
 	return result;
 }
 
-float FxCurve_Interpolate1d( const float *key, float t )
-{
-	float t0;
-	float t1;
-	float v0;
-	float v1;
-
-	t0 = key[0];
-	t1 = key[2];
-	v0 = key[1];
-	v1 = key[3];
-	return ( t - t0 ) * ( v1 - v0 ) / ( t1 - t0 ) + v0;
-}

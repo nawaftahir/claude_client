@@ -348,15 +348,11 @@ float FxRange_GetValPct( const FxRange *range, float pct );
 
 extern bool g_rendererExists;
 
-// Original name unknown.
-template<class T> inline void Swap( T &a, T &b )
-{
-	T temp;
-
-	temp = a;
-	a = b;
-	b = temp;
-}
+void FX_Print( const char *fmt, ... );
+Material *FX_RegisterMaterial( const char *name );
+XModel *FX_ModelRegister( const char *name );
+void FxRange_SetRange( FxRange *range, float min, float max );
+float FxRange_GetValPct( const FxRange *range, float pct );
 
 extern const FxFlagEntry fxAttributeFlags[24];
 static const FxFlagEntry fxAttributeFlags[24] =
@@ -386,7 +382,6 @@ static const FxFlagEntry fxAttributeFlags[24] =
 	{ "blocksSight", { FX_BLOCKS_SIGHT, 0 } },
 	{ "disableFarPlaneCulling", { FX_DISABLE_FAR_PLANE_CULLING, 0 } }
 };
-
 extern const FxFlagEntry fxSpawnFlags[13];
 static const FxFlagEntry fxSpawnFlags[13] =
 {
@@ -404,6 +399,14 @@ static const FxFlagEntry fxSpawnFlags[13] =
 	{ "absoluteVel", { FX_ABSOLUTE_VEL, 0 } },
 	{ "absoluteAccel", { FX_ABSOLUTE_VEL2, 0 } }
 };
+
+// Renderer exports; only the slot used here (client re 0x60f080).
+struct refexport_t
+{
+	void *unused0[4];
+	Material *(*RegisterMaterial)( const char *name, int baseImageFlags, int imageTrack );
+};
+extern refexport_t re;
 
 void PrimitiveTemplate::Init()
 {
@@ -446,6 +449,22 @@ void PrimitiveTemplate::Init()
 	mSequenceLoopMode = LOOP_NONE;
 	mSequenceLoopTimes = 1;
 	spawnFrustumCullRadius = 0.0f;
+}
+
+void FxRange_SetRange( FxRange *range, float min, float max )
+{
+	range->min = min;
+	range->max = max;
+}
+
+// Original name unknown.
+template<class T> inline void Swap( T &a, T &b )
+{
+	T temp;
+
+	temp = a;
+	a = b;
+	b = temp;
 }
 
 void PrimitiveTemplate::Shutdown()
@@ -2002,14 +2021,6 @@ void FX_Print( const char *fmt, ... )
 	Com_Printf(msg);
 }
 
-// Renderer exports; only the slot used here (client re 0x60f080).
-struct refexport_t
-{
-	void *unused0[4];
-	Material *(*RegisterMaterial)( const char *name, int baseImageFlags, int imageTrack );
-};
-extern refexport_t re;
-
 Material *FX_RegisterMaterial( const char *name )
 {
 	return re.RegisterMaterial(name, 3, 6);
@@ -2043,12 +2054,6 @@ bool FX_PrimTypeIsEmitter( PrimType type )
 	}
 }
 
-void FxRange_SetRange( FxRange *range, float min, float max )
-{
-	range->min = min;
-	range->max = max;
-}
-
 float FxRange_GetVal( const FxRange *range )
 {
 	if ( range->min == range->max )
@@ -2060,3 +2065,4 @@ float FxRange_GetValPct( const FxRange *range, float pct )
 {
 	return range->min + ( range->max - range->min ) * pct;
 }
+

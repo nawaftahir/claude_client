@@ -4,6 +4,16 @@
 vec3_t playerMins = { -15.0, -15.0, 0.0 };
 vec3_t playerMaxs = { 15.0, 15.0, 70.0 };
 
+void SetClientViewAngle( gentity_t *ent, const vec3_t angle );
+void G_GetPlayerViewOrigin( gentity_t *ent, vec3_t origin );
+void G_GetPlayerViewDirection( const gentity_t *ent, vec3_t forward, vec3_t right, vec3_t up );
+const char *ClientConnect( int clientNum, unsigned short scriptPersId );
+void ClientBegin( int clientNum );
+void ClientSpawn( gentity_t *ent, const vec3_t spawn_origin, const vec3_t spawn_angles );
+void ClientDisconnect( int clientNum );
+unsigned int G_GetNonPVSFriendlyInfo( 	gentity_t *pSelf, vec3_t vPosition, int iLastUpdateEnt );
+void G_BroadcastVoice( gentity_t *talker, VoicePacket_t *voicePacket );
+
 /*
 ==================
 SetClientViewAngle
@@ -828,3 +838,4 @@ void G_BroadcastVoice( gentity_t *talker, VoicePacket_t *voicePacket )
 		}
 	}
 }
+

@@ -32,6 +32,68 @@ gentity_t* Scr_GetEntity( unsigned int index );
 void Scr_GetEnt();
 void GScr_SetDynamicEntityField( gentity_t *ent, unsigned int index );
 
+qboolean G_SpawnString( const char *key, const char *defaultString, const char **out );
+qboolean G_SpawnFloat( const char *key, const char *defaultString, float *out );
+qboolean G_SpawnInt( const char *key, const char *defaultString, int *out );
+qboolean G_SpawnVector( const char *key, const char *defaultString, float *out );
+void Scr_ReadOnlyField( gentity_t *self, int offset );
+unsigned int G_SetEntityScriptVariableInternal( const char *key, const char *value );
+void G_SetEntityScriptVariable( const char *key, const char *value, gentity_t *ent );
+void G_ParseEntityFields( gentity_t *ent );
+void G_SpawnStruct();
+void G_DuplicateScriptFields( gentity_t *dest, const gentity_t *source );
+void G_CallSpawn(void);
+qboolean G_CallSpawnEntity( gentity_t *ent );
+void GScr_AddFieldsForEntity();
+void GScr_AddFieldsForRadiant();
+int Scr_SetEntityField( int entnum, int offset );
+void Scr_SetGenericField( byte *b, int type, int ofs );
+int Scr_SetObjectField( unsigned int classnum, int entnum, int offset );
+void Scr_GetGenericField( byte *b, int type, int ofs );
+void Scr_GetObjectField( unsigned int classnum, int entnum, int offset );
+void Scr_FreeEntityConstStrings( gentity_t *ent );
+void Scr_FreeEntity( gentity_t *ent );
+void Scr_AddEntity( gentity_t *ent );
+gentity_t* Scr_GetEntity( unsigned int index );
+void Scr_FreeHudElem( game_hudelem_t *hud );
+void Scr_AddHudElem( game_hudelem_t *hud );
+game_hudelem_t* Scr_GetHudElem( unsigned int index );
+unsigned short Scr_ExecEntThread( gentity_t *ent, int handle, unsigned int paramcount );
+void Scr_AddExecEntThread( gentity_t *ent, int handle, unsigned int paramcount );
+void Scr_Notify( gentity_t *ent, unsigned short stringValue, unsigned int paramcount );
+void Scr_GetEnt();
+void Scr_GetEntArray();
+void GScr_SetDynamicEntityField( gentity_t *ent, unsigned int index );
+void G_SpawnEntitiesFromString( void );
+void G_LoadStructs();
+
+spawn_t spawns[] =
+{
+	{ "info_null", SP_info_null },
+	{ "info_notnull", SP_info_notnull },
+	{ "func_group", SP_info_null },
+	{ "trigger_multiple", SP_trigger_multiple },
+	{ "trigger_radius", SP_trigger_radius },
+	{ "trigger_disk", SP_trigger_disk },
+	{ "trigger_hurt", SP_trigger_hurt },
+	{ "trigger_once", SP_trigger_once },
+	{ "light", SP_light },
+	{ "misc_model", SP_misc_model },
+	{ "misc_mg42", SP_turret },
+	{ "misc_turret", SP_turret },
+	{ "corona", SP_corona },
+	{ "trigger_use", trigger_use },
+	{ "trigger_use_touch", trigger_use_touch },
+	{ "trigger_damage", SP_trigger_damage },
+	{ "trigger_lookat", SP_trigger_lookat },
+	{ "script_brushmodel", SP_script_brushmodel },
+	{ "script_model", SP_script_model },
+	{ "script_origin", SP_script_origin },
+	{ "script_struct", G_FreeEntity },
+	{ NULL, NULL },
+};
+#define NUMSPAWNS   ( sizeof( spawns ) / sizeof( spawn_t ) )
+
 /*
 ===============
 G_SpawnString
@@ -98,34 +160,6 @@ void Scr_ReadOnlyField( gentity_t *self, int offset )
 	Scr_Error("Tried to set a read only entity field");
 }
 
-spawn_t spawns[] =
-{
-	{ "info_null", SP_info_null },
-	{ "info_notnull", SP_info_notnull },
-	{ "func_group", SP_info_null },
-	{ "trigger_multiple", SP_trigger_multiple },
-	{ "trigger_radius", SP_trigger_radius },
-	{ "trigger_disk", SP_trigger_disk },
-	{ "trigger_hurt", SP_trigger_hurt },
-	{ "trigger_once", SP_trigger_once },
-	{ "light", SP_light },
-	{ "misc_model", SP_misc_model },
-	{ "misc_mg42", SP_turret },
-	{ "misc_turret", SP_turret },
-	{ "corona", SP_corona },
-	{ "trigger_use", trigger_use },
-	{ "trigger_use_touch", trigger_use_touch },
-	{ "trigger_damage", SP_trigger_damage },
-	{ "trigger_lookat", SP_trigger_lookat },
-	{ "script_brushmodel", SP_script_brushmodel },
-	{ "script_model", SP_script_model },
-	{ "script_origin", SP_script_origin },
-	{ "script_struct", G_FreeEntity },
-	{ NULL, NULL },
-};
-
-#define NUMSPAWNS   ( sizeof( spawns ) / sizeof( spawn_t ) )
-
 /*
 ==============
 G_SetEntityScriptVariableInternal
@@ -188,7 +222,6 @@ void G_SetEntityScriptVariable( const char *key, const char *value, gentity_t *e
 
 	GScr_SetDynamicEntityField(ent, index);
 }
-
 
 void G_ParseEntityField( const char *key, const char *value, gentity_t *ent )
 {
@@ -293,7 +326,6 @@ void G_SpawnStruct()
 		Scr_SetStructField(structId, index);
 	}
 }
-
 
 void G_DuplicateEntityFields( gentity_t *dest, const gentity_t *source )
 {
@@ -787,6 +819,16 @@ void Scr_AddEntity( gentity_t *ent )
 
 /*
 ===============
+GScr_SetDynamicEntityField
+===============
+*/
+void GScr_SetDynamicEntityField( gentity_t *ent, unsigned int index )
+{
+	Scr_SetDynamicEntityField(ent->s.number, CLASS_NUM_ENTITY, index);
+}
+
+/*
+===============
 Scr_GetEntity
 ===============
 */
@@ -1031,16 +1073,6 @@ void Scr_GetEntArray()
 	}
 }
 
-/*
-===============
-GScr_SetDynamicEntityField
-===============
-*/
-void GScr_SetDynamicEntityField( gentity_t *ent, unsigned int index )
-{
-	Scr_SetDynamicEntityField(ent->s.number, CLASS_NUM_ENTITY, index);
-}
-
 /*QUAKED worldspawn (0 0 0) ? NO_GT_WOLF NO_GT_STOPWATCH NO_GT_CHECKPOINT NO_LMS
 
 Every map should have exactly one worldspawn.
@@ -1151,3 +1183,4 @@ void G_LoadStructs()
 
 	SV_ResetEntityParsePoint();
 }
+

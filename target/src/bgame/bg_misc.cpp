@@ -266,6 +266,266 @@ SCE_CONST int singleClientEvents[] =
 
 void BG_EvaluateTrajectory( const trajectory_t *tr, int atTime, vec3_t result );
 
+void BG_RegisterDvars();
+gitem_t* BG_FindItemForWeapon( int weapon );
+gitem_t* G_FindItem( const char *pickupName );
+qboolean BG_PlayerTouchesItem( const playerState_t *ps, const entityState_t *item, int atTime );
+qboolean BG_CanItemBeGrabbed( const entityState_t *ent, const playerState_t *ps, qboolean bTouched );
+void BG_EvaluateTrajectory( const trajectory_t *tr, int atTime, vec3_t result );
+void BG_EvaluateTrajectoryDelta( const trajectory_t *tr, int atTime, vec3_t result );
+void BG_GetMarkDir( const vec3_t dir, const vec3_t normal, vec3_t out );
+void BG_AddPredictableEventToPlayerstate( int newEvent, int eventParm, playerState_t *ps );
+void BG_PlayerStateToEntityState( playerState_t *ps, entityState_t *s, qboolean snap, byte handler );
+void BG_LerpHudColors( const hudelem_t *elem, int time, hudelem_color_t *toColor );
+
+/*
+============
+BG_CheckProneValid
+============
+*/
+static qboolean BG_CheckProneValid( int passEntityNum, const vec3_t vPos, float fSize,  float fHeight,float fYaw,
+                                    float *pfTorsoHeight, float *pfTorsoPitch, float *pfWaistPitch, qboolean bAlreadyProne, qboolean bOnGround,
+                                    const vec3_t vGroundNormal, byte handler, int proneCheckType,  float prone_feet_dist)
+{
+	int contentMask;
+	trace_t trace;
+	vec3_t vEnd;
+	vec3_t vForward;
+	vec3_t vMins;
+	vec3_t vMaxs;
+	vec3_t vFeetPos;
+	vec3_t vDelta;
+	vec3_t vRight;
+	vec3_t vUp;
+	vec3_t vStart;
+	vec3_t vTorsoPos;
+	vec3_t vWaistPos;
+	float fTorsoPitch;
+	float fWaistPitch;
+	float dist;
+	float fFirstTraceDist;
+	float fTraceHeight;
+	float fWaistDistance;
+	int bFirstTraceHit;
+	float fPitchDiff;
+	void (*traceFunc)(trace_t *, const float *, const float *, const float *, const float *, int, int);
+	byte bLocational;
+	bFirstTraceHit = qfalse;
+	bLocational = qtrue;
+	traceFunc = pmoveHandlers[handler].trace;
+	VectorSet(vMins, -fSize, -fSize, 0);
+	VectorAdd(vMins, vPos, vMins);
+	VectorSet(vMaxs, fSize, fSize, fHeight);
+	VectorAdd(vMaxs, vPos, vMaxs);
+	if ( !proneCheckType )
+	{
+		contentMask = CONTENTS_SOLID | CONTENTS_GLASS | CONTENTS_PLAYERCLIP | CONTENTS_UNKNOWN;
+	}
+	else
+	{
+		contentMask = CONTENTS_SOLID | CONTENTS_GLASS | CONTENTS_MONSTERCLIP | CONTENTS_UNKNOWN;
+	}
+	if ( !bAlreadyProne )
+	{
+		VectorSet(vMins, -fSize, -fSize, 0);
+		VectorSet(vMaxs, fSize, fSize, fHeight);
+		VectorCopy(vPos, vEnd);
+		VectorCopy(vPos, vForward);
+		vForward[2] = vForward[2] + 10.0f;
+		traceFunc(&trace, vEnd, vMins, vMaxs, vForward, passEntityNum, contentMask);
+		if ( trace.allsolid )
+		{
+			return qfalse;
+		}
+	}
+	if ( bOnGround && vGroundNormal && vGroundNormal[2] < 0.7f )
+	{
+		return qfalse;
+	}
+	VectorSet(vMins, -6.0f, -6.0f, -6.0f);
+	VectorSet(vMaxs, 6.0f, 6.0f, 6.0f);
+	VectorSet(vForward, 0, fYaw - 180.0f, 0);
+	AngleVectors(vForward, vDelta, vRight, vUp);
+	fFirstTraceDist = fHeight - 6.0f;
+	fTraceHeight = fFirstTraceDist - 6.0f;
+	VectorCopy(vPos, vEnd);
+	vEnd[2] = vEnd[2] + fFirstTraceDist;
+	VectorMA(vEnd, prone_feet_dist - 6.0f, vDelta, vForward);
+	traceFunc(&trace, vEnd, vMins, vMaxs, vForward, passEntityNum, contentMask);
+	if ( trace.fraction < 1.0f )
+	{
+		if ( !bOnGround )
+		{
+			return qfalse;
+		}
+		bFirstTraceHit = qtrue;
+		fWaistDistance = (prone_feet_dist - 6.0f) * trace.fraction + 6.0f;
+		if ( fSize + 2.0f > fWaistDistance )
+		{
+			return qfalse;
+		}
+		if ( fFirstTraceDist * 0.7f + 48.0f > fWaistDistance )
+		{
+			bFirstTraceHit = qfalse;
+			vForward[2] = vForward[2] + 22.0f;
+			VectorSubtract(vForward, vEnd, vFeetPos);
+			dist = Vec3NormalizeTo(vFeetPos, vDelta);
+			traceFunc(&trace, vEnd, vMins, vMaxs, vForward, passEntityNum, contentMask);
+			if ( trace.fraction < 1.0f )
+			{
+				bFirstTraceHit = qtrue;
+				fWaistDistance = trace.fraction * dist + 6.0f;
+				if ( fFirstTraceDist * 0.7f + 48.0f > fWaistDistance )
+				{
+					return qfalse;
+				}
+			}
+			else
+			{
+				fWaistDistance = prone_feet_dist;
+			}
+		}
+	}
+	else
+	{
+		fWaistDistance = prone_feet_dist;
+	}
+	Vec3Lerp(vEnd, vForward, trace.fraction, vWaistPos);
+	VectorMA(vPos, 48.0f, vDelta, vEnd);
+	vEnd[2] = vEnd[2] + fFirstTraceDist;
+	VectorCopy(vEnd, vForward);
+	vForward[2] = vForward[2] - (fSize * 2.5f + fFirstTraceDist - 6.0f);
+	traceFunc(&trace, vEnd, vMins, vMaxs, vForward, passEntityNum, contentMask);
+	if ( trace.fraction == 1.0f )
+	{
+		goto fail;
+	}
+	if ( trace.normal[2] < 0.7f )
+	{
+		return qfalse;
+	}
+	fPitchDiff = (fSize * 2.5f + fFirstTraceDist - 6.0f) * trace.fraction + 6.0f;
+	Vec3Lerp(vEnd, vForward, trace.fraction, vTorsoPos);
+	vTorsoPos[2] = vTorsoPos[2] - 6.0f;
+	if ( bFirstTraceHit )
+	{
+		if ( fWaistDistance - fPitchDiff < fPitchDiff * -0.75f )
+		{
+			goto fail;
+		}
+		VectorSubtract(vWaistPos, vTorsoPos, vFeetPos);
+		VectorMA(vFeetPos, 6.0f, vDelta, vFeetPos);
+		vFeetPos[2] = vFeetPos[2] + 6.0f;
+		Vec3Normalize(vFeetPos);
+		VectorMA(vEnd, prone_feet_dist - 6.0f - 48.0f, vFeetPos, vForward);
+		vForward[0] = (vPos[0] + (prone_feet_dist - 6.0f) * vDelta[0] + vForward[0]) * 0.5f;
+		vForward[1] = (vPos[1] + (prone_feet_dist - 6.0f) * vDelta[1] + vForward[1]) * 0.5f;
+		traceFunc(&trace, vEnd, vMins, vMaxs, vForward, passEntityNum, contentMask);
+		if ( trace.fraction < 1.0f )
+		{
+			Vec3Lerp(vEnd, vForward, trace.fraction, vEnd);
+			vEnd[2] = vEnd[2] + 18.0f;
+			vForward[2] = vForward[2] + 18.0f;
+			traceFunc(&trace, vEnd, vMins, vMaxs, vForward, passEntityNum, contentMask);
+			if ( trace.fraction < 1.0f )
+			{
+				goto fail;
+			}
+		}
+		Vec3Lerp(vEnd, vForward, trace.fraction, vWaistPos);
+	}
+	VectorCopy(vWaistPos, vEnd);
+	VectorCopy(vEnd, vForward);
+	vForward[2] = vForward[2] - ((vEnd[2] - vTorsoPos[2]) * 2.0f + fSize);
+	traceFunc(&trace, vEnd, vMins, vMaxs, vForward, passEntityNum, contentMask);
+	if ( trace.fraction == 1.0f )
+	{
+		goto fail;
+	}
+	if ( trace.normal[2] < 0.7f )
+	{
+		return qfalse;
+	}
+	Vec3Lerp(vEnd, vForward, trace.fraction, vWaistPos);
+	vWaistPos[2] = vWaistPos[2] - 6.0f;
+	VectorCopy(vPos, vStart);
+	VectorSubtract(vTorsoPos, vStart, vFeetPos);
+	fTorsoPitch = vectopitch(vFeetPos);
+	VectorSubtract(vWaistPos, vTorsoPos, vFeetPos);
+	fWaistPitch = vectopitch(vFeetPos);
+	dist = AngleSubtract(fWaistPitch, fTorsoPitch);
+	if ( dist < -50.0f || dist > 70.0f )
+	{
+		bLocational = qfalse;
+	}
+	VectorSet(vMins, -0.0f, -0.0f, -0.0f);
+	VectorSet(vMaxs, 0.0f, 0.0f, 0.0f);
+	VectorCopy(vStart, vEnd);
+	vEnd[2] = vEnd[2] + 5.0f;
+	VectorCopy(vTorsoPos, vForward);
+	vForward[2] = vForward[2] + 5.0f;
+	traceFunc(&trace, vEnd, vMins, vMaxs, vForward, passEntityNum, contentMask);
+	if ( trace.fraction < 1.0f )
+	{
+		bLocational = qfalse;
+	}
+	VectorCopy(vForward, vEnd);
+	VectorCopy(vWaistPos, vForward);
+	vForward[2] = vForward[2] + 5.0f;
+	traceFunc(&trace, vEnd, vMins, vMaxs, vForward, passEntityNum, contentMask);
+	if ( trace.fraction < 1.0f )
+	{
+		bLocational = qfalse;
+	}
+	if ( pfTorsoHeight )
+	{
+		*pfTorsoHeight = 0;
+	}
+	if ( pfTorsoPitch )
+	{
+		VectorSubtract(vStart, vTorsoPos, vFeetPos);
+		*pfTorsoPitch = AngleNormalize180(vectopitch(vFeetPos));
+	}
+	if ( pfWaistPitch )
+	{
+		VectorSubtract(vTorsoPos, vWaistPos, vFeetPos);
+		*pfWaistPitch = AngleNormalize180(vectopitch(vFeetPos));
+	}
+	if ( bLocational )
+	{
+		return qtrue;
+	}
+fail:
+	if ( !bOnGround )
+	{
+		if ( pfTorsoHeight )
+		{
+			*pfTorsoHeight = 0;
+		}
+		if ( pfTorsoPitch )
+		{
+			*pfTorsoPitch = 0;
+		}
+		if ( pfWaistPitch )
+		{
+			*pfWaistPitch = 0;
+		}
+		return qtrue;
+	}
+	return qfalse;
+}
+/*
+============
+BG_CheckProne
+============
+*/
+qboolean BG_CheckProne(int passEntityNum, const vec3_t vPos, float fSize, float fHeight, float fYaw,
+                       float *pfTorsoHeight, float *pfTorsoPitch, float *pfWaistPitch, qboolean bAlreadyProne, qboolean bOnGround,
+                       const vec3_t vGroundNormal, byte handler, int proneCheckType, float prone_feet_dist)
+{
+	return BG_CheckProneValid(passEntityNum, vPos, fSize, fHeight, fYaw, pfTorsoHeight, pfTorsoPitch, pfWaistPitch, bAlreadyProne, bOnGround, vGroundNormal, handler, proneCheckType, prone_feet_dist);
+}
+
 /*
 ================
 BG_RegisterDvars
@@ -839,323 +1099,6 @@ void BG_PlayerStateToEntityState( playerState_t *ps, entityState_t *s, qboolean 
 }
 
 /*
-============
-BG_CheckProneValid
-============
-*/
-static qboolean BG_CheckProneValid( int passEntityNum, const vec3_t vPos, float fSize,  float fHeight,float fYaw,
-                                    float *pfTorsoHeight, float *pfTorsoPitch, float *pfWaistPitch, qboolean bAlreadyProne, qboolean bOnGround,
-                                    const vec3_t vGroundNormal, byte handler, int proneCheckType,  float prone_feet_dist)
-{
-	int contentMask;
-	trace_t trace;
-	vec3_t vEnd;
-	vec3_t vForward;
-	vec3_t vMins;
-	vec3_t vMaxs;
-	vec3_t vFeetPos;
-	vec3_t vDelta;
-	vec3_t vRight;
-	vec3_t vUp;
-	vec3_t vStart;
-	vec3_t vTorsoPos;
-	vec3_t vWaistPos;
-	float fTorsoPitch;
-	float fWaistPitch;
-	float dist;
-	float fFirstTraceDist;
-	float fTraceHeight;
-	float fWaistDistance;
-	int bFirstTraceHit;
-	float fPitchDiff;
-	void (*traceFunc)(trace_t *, const float *, const float *, const float *, const float *, int, int);
-	byte bLocational;
-
-	bFirstTraceHit = qfalse;
-	bLocational = qtrue;
-
-	traceFunc = pmoveHandlers[handler].trace;
-
-	VectorSet(vMins, -fSize, -fSize, 0);
-	VectorAdd(vMins, vPos, vMins);
-
-	VectorSet(vMaxs, fSize, fSize, fHeight);
-	VectorAdd(vMaxs, vPos, vMaxs);
-
-	if ( !proneCheckType )
-	{
-		contentMask = CONTENTS_SOLID | CONTENTS_GLASS | CONTENTS_PLAYERCLIP | CONTENTS_UNKNOWN;
-	}
-	else
-	{
-		contentMask = CONTENTS_SOLID | CONTENTS_GLASS | CONTENTS_MONSTERCLIP | CONTENTS_UNKNOWN;
-	}
-
-	if ( !bAlreadyProne )
-	{
-		VectorSet(vMins, -fSize, -fSize, 0);
-		VectorSet(vMaxs, fSize, fSize, fHeight);
-
-		VectorCopy(vPos, vEnd);
-		VectorCopy(vPos, vForward);
-
-		vForward[2] = vForward[2] + 10.0f;
-
-		traceFunc(&trace, vEnd, vMins, vMaxs, vForward, passEntityNum, contentMask);
-
-		if ( trace.allsolid )
-		{
-			return qfalse;
-		}
-	}
-
-	if ( bOnGround && vGroundNormal && vGroundNormal[2] < 0.7f )
-	{
-		return qfalse;
-	}
-
-	VectorSet(vMins, -6.0f, -6.0f, -6.0f);
-	VectorSet(vMaxs, 6.0f, 6.0f, 6.0f);
-	VectorSet(vForward, 0, fYaw - 180.0f, 0);
-
-	AngleVectors(vForward, vDelta, vRight, vUp);
-
-	fFirstTraceDist = fHeight - 6.0f;
-	fTraceHeight = fFirstTraceDist - 6.0f;
-	VectorCopy(vPos, vEnd);
-	vEnd[2] = vEnd[2] + fFirstTraceDist;
-
-	VectorMA(vEnd, prone_feet_dist - 6.0f, vDelta, vForward);
-
-	traceFunc(&trace, vEnd, vMins, vMaxs, vForward, passEntityNum, contentMask);
-
-	if ( trace.fraction < 1.0f )
-	{
-		if ( !bOnGround )
-		{
-			return qfalse;
-		}
-
-		bFirstTraceHit = qtrue;
-		fWaistDistance = (prone_feet_dist - 6.0f) * trace.fraction + 6.0f;
-
-		if ( fSize + 2.0f > fWaistDistance )
-		{
-			return qfalse;
-		}
-
-		if ( fFirstTraceDist * 0.7f + 48.0f > fWaistDistance )
-		{
-			bFirstTraceHit = qfalse;
-			vForward[2] = vForward[2] + 22.0f;
-			VectorSubtract(vForward, vEnd, vFeetPos);
-
-			dist = Vec3NormalizeTo(vFeetPos, vDelta);
-
-			traceFunc(&trace, vEnd, vMins, vMaxs, vForward, passEntityNum, contentMask);
-
-			if ( trace.fraction < 1.0f )
-			{
-				bFirstTraceHit = qtrue;
-				fWaistDistance = trace.fraction * dist + 6.0f;
-
-				if ( fFirstTraceDist * 0.7f + 48.0f > fWaistDistance )
-				{
-					return qfalse;
-				}
-			}
-			else
-			{
-				fWaistDistance = prone_feet_dist;
-			}
-		}
-	}
-	else
-	{
-		fWaistDistance = prone_feet_dist;
-	}
-
-	Vec3Lerp(vEnd, vForward, trace.fraction, vWaistPos);
-	VectorMA(vPos, 48.0f, vDelta, vEnd);
-
-	vEnd[2] = vEnd[2] + fFirstTraceDist;
-	VectorCopy(vEnd, vForward);
-
-	vForward[2] = vForward[2] - (fSize * 2.5f + fFirstTraceDist - 6.0f);
-
-	traceFunc(&trace, vEnd, vMins, vMaxs, vForward, passEntityNum, contentMask);
-
-	if ( trace.fraction == 1.0f )
-	{
-		goto fail;
-	}
-
-	if ( trace.normal[2] < 0.7f )
-	{
-		return qfalse;
-	}
-
-	fPitchDiff = (fSize * 2.5f + fFirstTraceDist - 6.0f) * trace.fraction + 6.0f;
-	Vec3Lerp(vEnd, vForward, trace.fraction, vTorsoPos);
-	vTorsoPos[2] = vTorsoPos[2] - 6.0f;
-
-	if ( bFirstTraceHit )
-	{
-		if ( fWaistDistance - fPitchDiff < fPitchDiff * -0.75f )
-		{
-			goto fail;
-		}
-
-		VectorSubtract(vWaistPos, vTorsoPos, vFeetPos);
-		VectorMA(vFeetPos, 6.0f, vDelta, vFeetPos);
-
-		vFeetPos[2] = vFeetPos[2] + 6.0f;
-		Vec3Normalize(vFeetPos);
-
-		VectorMA(vEnd, prone_feet_dist - 6.0f - 48.0f, vFeetPos, vForward);
-
-		vForward[0] = (vPos[0] + (prone_feet_dist - 6.0f) * vDelta[0] + vForward[0]) * 0.5f;
-		vForward[1] = (vPos[1] + (prone_feet_dist - 6.0f) * vDelta[1] + vForward[1]) * 0.5f;
-
-		traceFunc(&trace, vEnd, vMins, vMaxs, vForward, passEntityNum, contentMask);
-
-		if ( trace.fraction < 1.0f )
-		{
-			Vec3Lerp(vEnd, vForward, trace.fraction, vEnd);
-
-			vEnd[2] = vEnd[2] + 18.0f;
-			vForward[2] = vForward[2] + 18.0f;
-
-			traceFunc(&trace, vEnd, vMins, vMaxs, vForward, passEntityNum, contentMask);
-
-			if ( trace.fraction < 1.0f )
-			{
-				goto fail;
-			}
-		}
-
-		Vec3Lerp(vEnd, vForward, trace.fraction, vWaistPos);
-	}
-
-	VectorCopy(vWaistPos, vEnd);
-	VectorCopy(vEnd, vForward);
-
-	vForward[2] = vForward[2] - ((vEnd[2] - vTorsoPos[2]) * 2.0f + fSize);
-
-	traceFunc(&trace, vEnd, vMins, vMaxs, vForward, passEntityNum, contentMask);
-
-	if ( trace.fraction == 1.0f )
-	{
-		goto fail;
-	}
-
-	if ( trace.normal[2] < 0.7f )
-	{
-		return qfalse;
-	}
-
-	Vec3Lerp(vEnd, vForward, trace.fraction, vWaistPos);
-	vWaistPos[2] = vWaistPos[2] - 6.0f;
-
-	VectorCopy(vPos, vStart);
-	VectorSubtract(vTorsoPos, vStart, vFeetPos);
-
-	fTorsoPitch = vectopitch(vFeetPos);
-	VectorSubtract(vWaistPos, vTorsoPos, vFeetPos);
-
-	fWaistPitch = vectopitch(vFeetPos);
-	dist = AngleSubtract(fWaistPitch, fTorsoPitch);
-
-	if ( dist < -50.0f || dist > 70.0f )
-	{
-		bLocational = qfalse;
-	}
-
-	VectorSet(vMins, -0.0f, -0.0f, -0.0f);
-	VectorSet(vMaxs, 0.0f, 0.0f, 0.0f);
-
-	VectorCopy(vStart, vEnd);
-	vEnd[2] = vEnd[2] + 5.0f;
-
-	VectorCopy(vTorsoPos, vForward);
-	vForward[2] = vForward[2] + 5.0f;
-
-	traceFunc(&trace, vEnd, vMins, vMaxs, vForward, passEntityNum, contentMask);
-
-	if ( trace.fraction < 1.0f )
-	{
-		bLocational = qfalse;
-	}
-
-	VectorCopy(vForward, vEnd);
-	VectorCopy(vWaistPos, vForward);
-	vForward[2] = vForward[2] + 5.0f;
-
-	traceFunc(&trace, vEnd, vMins, vMaxs, vForward, passEntityNum, contentMask);
-
-	if ( trace.fraction < 1.0f )
-	{
-		bLocational = qfalse;
-	}
-
-	if ( pfTorsoHeight )
-	{
-		*pfTorsoHeight = 0;
-	}
-
-	if ( pfTorsoPitch )
-	{
-		VectorSubtract(vStart, vTorsoPos, vFeetPos);
-		*pfTorsoPitch = AngleNormalize180(vectopitch(vFeetPos));
-	}
-
-	if ( pfWaistPitch )
-	{
-		VectorSubtract(vTorsoPos, vWaistPos, vFeetPos);
-		*pfWaistPitch = AngleNormalize180(vectopitch(vFeetPos));
-	}
-
-	if ( bLocational )
-	{
-		return qtrue;
-	}
-fail:
-	if ( !bOnGround )
-	{
-		if ( pfTorsoHeight )
-		{
-			*pfTorsoHeight = 0;
-		}
-
-		if ( pfTorsoPitch )
-		{
-			*pfTorsoPitch = 0;
-		}
-
-		if ( pfWaistPitch )
-		{
-			*pfWaistPitch = 0;
-		}
-
-		return qtrue;
-	}
-
-	return qfalse;
-}
-
-/*
-============
-BG_CheckProne
-============
-*/
-qboolean BG_CheckProne(int passEntityNum, const vec3_t vPos, float fSize, float fHeight, float fYaw,
-                       float *pfTorsoHeight, float *pfTorsoPitch, float *pfWaistPitch, qboolean bAlreadyProne, qboolean bOnGround,
-                       const vec3_t vGroundNormal, byte handler, int proneCheckType, float prone_feet_dist)
-{
-	return BG_CheckProneValid(passEntityNum, vPos, fSize, fHeight, fYaw, pfTorsoHeight, pfTorsoPitch, pfWaistPitch, bAlreadyProne, bOnGround, vGroundNormal, handler, proneCheckType, prone_feet_dist);
-}
-
-/*
 ==================
 BG_LerpHudColors
 ==================
@@ -1187,3 +1130,4 @@ void BG_LerpHudColors( const hudelem_t *elem, int time, hudelem_color_t *toColor
 		*toColor = elem->color;
 	}
 }
+

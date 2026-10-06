@@ -10,6 +10,8 @@ static const char *punctuation[] =
 
 static ParseThreadInfo g_parse = { { { "", 1, false, true, false, false, true, false, "", "", 1, NULL } } };
 
+char *Com_Parse( const char **data_p );
+
 ParseThreadInfo *Com_GetParseThreadInfo()
 {
 	return &g_parse;
@@ -1015,3 +1017,4 @@ void Com_Parse3DMatrix( const char **buf_p, int z, int y, int x, float *m )
 
 	Com_MatchToken( buf_p, ")", qfalse );
 }
+

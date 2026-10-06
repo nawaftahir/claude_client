@@ -24,6 +24,15 @@ const char *hintStrings[] =
 
 void trigger_use( gentity_t *ent );
 
+gentity_t *G_TestEntityPosition( gentity_t *ent, vec3_t org );
+void G_CreateRotationMatrix( const vec3_t angles, vec3_t matrix[3] );
+void G_TransposeMatrix( const vec3_t matrix[3], vec3_t transpose[3] );
+void G_RotatePoint( vec3_t point, const vec3_t matrix[3] );
+void G_RunMover( gentity_t *ent );
+void use_trigger_use( gentity_t *ent, gentity_t *other, gentity_t *activator );
+void trigger_use( gentity_t *ent );
+void trigger_use_touch( gentity_t *ent );
+
 /*
 ============
 G_TestEntityPosition
@@ -217,7 +226,6 @@ qboolean G_TryPushingEntity( gentity_t *check, gentity_t *pusher, vec3_t move, v
 	return qfalse;
 }
 
-
 bool G_MoverPush( gentity_t *pusher, vec3_t move, vec3_t amove, gentity_t **obstacle )
 {
 	int i, e;
@@ -372,7 +380,6 @@ bool G_MoverPush( gentity_t *pusher, vec3_t move, vec3_t amove, gentity_t **obst
 	return moved;
 }
 
-
 void G_MoverTeam( gentity_t *ent )
 {
 	vec3_t move;
@@ -495,7 +502,6 @@ void use_trigger_use( gentity_t *ent, gentity_t *other, gentity_t *activator )
 	;
 }
 
-
 void trigger_use_shared( gentity_t *self )
 {
 	int i;
@@ -582,3 +588,4 @@ void trigger_use_touch( gentity_t *ent )
 {
 	trigger_use_shared( ent );
 }
+

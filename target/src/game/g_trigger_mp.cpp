@@ -1,6 +1,28 @@
 #include "../qcommon/qcommon.h"
 #include "g_shared.h"
 
+void G_Trigger( gentity_t *self, gentity_t *other );
+void InitTrigger( gentity_t *self );
+void InitSentientTrigger( gentity_t *self );
+void multi_trigger( gentity_t *ent, gentity_t *activator );
+void Touch_Multi( gentity_t *self, gentity_t *other, qboolean bTouched );
+void hurt_use( gentity_t *self, gentity_t *other, gentity_t *activator );
+void SP_trigger_hurt( gentity_t *self );
+qboolean Respond_trigger_damage( gentity_t *pEnt, int iMOD );
+void Activate_trigger_damage( gentity_t *pEnt, gentity_t *pOther, int iDamage, int iMOD );
+void Use_trigger_damage( gentity_t *pEnt, gentity_t *pOther, gentity_t *pActivator );
+void Pain_trigger_damage( gentity_t *pSelf, gentity_t *pAttacker, int iDamage, const vec3_t vPoint, int iMod, const vec3_t vDir, int hitLoc );
+void Die_trigger_damage( gentity_t *pSelf, gentity_t *pInflictor, gentity_t *pAttacker, int iDamage, int iMod, int iWeapon, const vec3_t vDir, int hitLoc, int timeOffset );
+void SP_trigger_damage( gentity_t *pSelf );
+void G_CheckHitTriggerDamage( gentity_t *pActivator, const vec3_t vStart, const vec3_t vEnd, int iDamage, int iMOD );
+void SP_trigger_lookat( gentity_t *self );
+
+/*
+==============================================================================
+trigger_hurt
+==============================================================================
+*/
+
 /*
 ==============
 G_Trigger
@@ -48,7 +70,6 @@ void InitTrigger( gentity_t *self )
 	self->r.svFlags = SVF_NOCLIENT;
 	self->s.eFlags |= EF_NONSOLID_BMODEL;
 }
-
 
 void InitTriggerWait( gentity_t *ent, int spawnflag )
 {
@@ -134,7 +155,6 @@ void SP_trigger_multiple( gentity_t *ent )
 	SV_LinkEntity(ent);
 }
 
-
 void SP_trigger_radius( gentity_t *ent )
 {
 	float radius, height;
@@ -182,7 +202,6 @@ void SP_trigger_radius( gentity_t *ent )
 	SV_LinkEntity(ent);
 }
 
-
 void SP_trigger_disk( gentity_t *ent )
 {
 	float radius;
@@ -211,14 +230,6 @@ void SP_trigger_disk( gentity_t *ent )
 
 	SV_LinkEntity(ent);
 }
-
-/*
-==============================================================================
-
-trigger_hurt
-
-==============================================================================
-*/
 
 /*QUAKED trigger_hurt (.5 .5 .5) ? START_OFF - SILENT NO_PROTECTION SLOW ONCE
 Any entity that touches this will be hurt.
@@ -567,7 +578,6 @@ void G_CheckHitTriggerDamage( gentity_t *pActivator, const vec3_t vStart, const 
 	}
 }
 
-
 void G_GrenadeTouchTriggerDamage( gentity_t *pActivator, const vec3_t vStart, const vec3_t vEnd, int iDamage, int iMOD )
 {
 	int i;
@@ -631,3 +641,4 @@ void SP_trigger_lookat( gentity_t *self )
 
 	SV_LinkEntity(self);
 }
+

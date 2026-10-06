@@ -236,33 +236,7 @@ static const inputCommandDef_t s_inputCommands[] = {
 void CL_Input(void);
 void CL_SendCmd(void);
 
-float CL_KeyState(kbutton_t *key)
-{
-    int msec;
-
-    msec = key->msec;
-    key->msec = 0;
-
-    if (key->active) {
-        if (!key->downtime) {
-            msec = com_frameTime;
-        } else {
-            msec += com_frameTime - key->downtime;
-        }
-
-        key->downtime = com_frameTime;
-    }
-
-    if (msec <= 0) {
-        return 0.0f;
-    }
-
-    if (msec >= frame_msec) {
-        return 1.0f;
-    }
-
-    return (float)msec / (float)frame_msec;
-}
+void CL_WritePacket(void);
 
 static float I_fsel(const float x, const float y, const float z)
 {
@@ -359,6 +333,34 @@ void IN_KeyUp(kbutton_t *b)
     }
 
     b->active = 0;
+}
+
+float CL_KeyState(kbutton_t *key)
+{
+    int msec;
+
+    msec = key->msec;
+    key->msec = 0;
+
+    if (key->active) {
+        if (!key->downtime) {
+            msec = com_frameTime;
+        } else {
+            msec += com_frameTime - key->downtime;
+        }
+
+        key->downtime = com_frameTime;
+    }
+
+    if (msec <= 0) {
+        return 0.0f;
+    }
+
+    if (msec >= frame_msec) {
+        return 1.0f;
+    }
+
+    return (float)msec / (float)frame_msec;
 }
 
 void IN_UpDown(void)
@@ -764,6 +766,376 @@ void CL_MouseEvent(int dx, int dy)
     }
 }
 
+void CL_AdjustAngles(void)
+{
+    float speed;
+
+#define KB_AT(index) (&kb[(index)])
+
+    if (KB_AT(9)->active) {
+        speed = (float)cls.frametime * cl_anglespeedkey->current.value * 0.001f;
+    } else {
+        speed = (float)cls.frametime * 0.001f;
+    }
+
+    if (!KB_AT(8)->active) {
+        clients[0].viewangles[1] -= CL_KeyState(KB_AT(1)) * speed * cl_yawspeed->current.value;
+        clients[0].viewangles[1] += CL_KeyState(KB_AT(0)) * speed * cl_yawspeed->current.value;
+    }
+    clients[0].viewangles[0] -= CL_KeyState(KB_AT(4)) * speed * cl_pitchspeed->current.value;
+    clients[0].viewangles[0] += CL_KeyState(KB_AT(5)) * speed * cl_pitchspeed->current.value;
+
+#undef KB_AT
+}
+
+void CL_StanceButtonUpdate(void)
+{
+    clientActive_t *cl = clients;
+
+    if (cl->stanceHeld && (int)com_frameTime - cl->stanceTime >= cl_stanceHoldTime->current.integer) {
+        if (cl->stancePosition == 2)
+            legacyHacks->cl_stance = 0;
+        else
+            legacyHacks->cl_stance = 2;
+        cl->stanceHeld = 0;
+    }
+}
+
+void CL_KeyMove(usercmd_t *cmd)
+{
+    clientActive_t *cl;
+    int *legacyStance;
+    int side;
+    int forward;
+
+#define KB_AT(index) (&kb[(index)])
+
+    cl = clients;
+
+    (void)cl;
+
+    if (KB_AT(25)->active || KB_AT(11)->active) {
+        if (KB_AT(25)->active) {
+            cmd->buttons |= 0x100;
+            cmd->buttons &= ~0x200;
+        } else {
+            cmd->buttons |= 0x200;
+            cmd->buttons &= ~0x100;
+        }
+        cmd->buttons |= 0x2000;
+    } else {
+        int clStance;
+        CL_StanceButtonUpdate();
+        clStance = legacyHacks->cl_stance;
+        switch (clStance) {
+        case 1:
+            cmd->buttons |= 0x200;
+            cmd->buttons &= ~0x100;
+            break;
+        case 2:
+            cmd->buttons |= 0x100;
+            cmd->buttons &= ~0x200;
+            break;
+        default:
+            cmd->buttons &= ~0x300;
+            break;
+        }
+        cmd->buttons &= ~0x2000;
+    }
+
+    if ((KB_AT(9)->active == (cl->usingAds == 0)) || PM_IsBinocularsADS(&cl->snap.ps)) {
+        cmd->buttons |= 0x1000;
+    } else {
+        cmd->buttons &= ~0x1000;
+    }
+
+    side = 0;
+    if (KB_AT(8)->active) {
+        side += (int)(CL_KeyState(KB_AT(1)) * 127.0f);
+        side += (int)(CL_KeyState(KB_AT(0)) * -127.0f);
+    }
+
+    side += (int)(CL_KeyState(KB_AT(7)) * 127.0f);
+    side += (int)(CL_KeyState(KB_AT(6)) * -127.0f);
+
+    forward = (int)(CL_KeyState(KB_AT(2)) * 127.0f);
+    forward += (int)(CL_KeyState(KB_AT(3)) * -127.0f);
+
+    cmd->forwardmove = ClampChar(forward);
+    cmd->rightmove = ClampChar(side);
+
+#if COD2_FEATURE_GAMEPAD
+
+    CL_Gamepad_Move(cmd);
+#endif
+
+#undef KB_AT
+}
+
+void CL_MouseMove(usercmd_t *cmd)
+{
+    float mx, my;
+    float accelSensitivity;
+    float rate;
+    float cap;
+    float yaw, pitch;
+
+    // allow mouse smoothing
+    if (m_filter->current.enabled) {
+        mx = (float)(clients->mouseDx[0] + clients->mouseDx[1]) * 0.5f;
+        my = (float)(clients->mouseDy[0] + clients->mouseDy[1]) * 0.5f;
+    } else {
+        mx = (float)clients->mouseDx[clients->mouseIndex];
+        my = (float)clients->mouseDy[clients->mouseIndex];
+    }
+    clients->mouseIndex ^= 1;
+    clients->mouseDx[clients->mouseIndex] = 0;
+    clients->mouseDy[clients->mouseIndex] = 0;
+
+    if (frame_msec <= 0)
+        return;
+
+    rate = sqrt(mx * mx + my * my) / (float)frame_msec;
+    accelSensitivity = rate * cl_mouseAccel->current.value + cl_sensitivity->current.value;
+    accelSensitivity *= clients->cgameSensitivity;
+
+    if (rate != 0.0f && cl_showMouseRate->current.enabled)
+        Com_Printf("%f : %f\n", rate, accelSensitivity);
+
+    if (clients->snap.ps.pm_flags & 0x8000)
+        return;
+
+    if (clients->snap.ps.eFlags & 0x300) {
+        mx *= 2.5;
+        my *= 2.0f;
+    } else {
+        mx *= accelSensitivity;
+        my *= accelSensitivity;
+    }
+
+    if (!mx && !my)
+        return;
+
+    // add mouse X/Y movement to cmd
+    if (kb[8].active) {
+        cmd->rightmove = ClampChar(cmd->rightmove + (int)(mx * m_side->current.value));
+    } else {
+        yaw = mx * m_yaw->current.value;
+        if (clients->cgameMaxYawSpeed != 0.0f) {
+            cap = (float)frame_msec * clients->cgameMaxYawSpeed * 0.001f;
+            yaw = I_fmax(-cap, I_fmin(cap, yaw));
+        }
+        clients->viewangles[1] -= yaw;
+    }
+
+    if ((kb[13].active || cl_freelook->current.enabled) && !kb[8].active) {
+        pitch = my * m_pitch->current.value;
+        if (clients->cgameMaxPitchSpeed != 0.0f) {
+            cap = (float)frame_msec * clients->cgameMaxPitchSpeed * 0.001f;
+            pitch = I_fmax(-cap, I_fmin(cap, pitch));
+        }
+        clients->viewangles[0] += pitch;
+    } else {
+        cmd->forwardmove = ClampChar(cmd->forwardmove - (int)(my * m_forward->current.value));
+    }
+}
+
+void IN_DownDown(void)
+{
+    IN_KeyDown(&kb[11]);
+    if (kb[25].active || kb[11].active )
+        legacyHacks->cl_stanceTemp = 1;
+    else
+        legacyHacks->cl_stanceTemp = 0;
+}
+
+void IN_DownUp(void)
+{
+    IN_KeyUp(&kb[11]);
+    if (kb[25].active || kb[11].active )
+        legacyHacks->cl_stanceTemp = 1;
+    else
+        legacyHacks->cl_stanceTemp = 0;
+}
+
+void IN_Prone_Down(void)
+{
+    IN_KeyDown(&kb[25]);
+    if (kb[25].active || kb[11].active )
+        legacyHacks->cl_stanceTemp = 1;
+    else
+        legacyHacks->cl_stanceTemp = 0;
+}
+
+void IN_Prone_Up(void)
+{
+    IN_KeyUp(&kb[25]);
+    if (kb[25].active || kb[11].active )
+        legacyHacks->cl_stanceTemp = 1;
+    else
+        legacyHacks->cl_stanceTemp = 0;
+}
+
+void IN_MLookUp(void)
+{
+    kb[13].active = 0;
+    if ((cl_freelook)->current.enabled == 0) {
+        clientActive_t *cl = clients;
+        cl->viewangles[0] = (float)cl->snap.ps.delta_angles[0] * -0.0054931640625f;
+    }
+}
+
+void CL_CmdButtons(usercmd_t *cmd)
+{
+    clientActive_t *cl_ = clients;
+#define KB_AT(index) (&kb[(index)])
+#define CONSUME(index, bit)                          \
+    do {                                             \
+        kbutton_t *b__ = KB_AT(index);               \
+        if (b__->active || b__->wasPressed)          \
+            cmd->buttons |= (bit);                   \
+        b__->wasPressed = 0;                         \
+    } while (0)
+
+    CONSUME(14, 0x1);
+    CONSUME(15, 0x8000);
+    CONSUME(16, 0x10000);
+    CONSUME(17, 0x20000);
+    CONSUME(18, 0x4000);
+    CONSUME(19, 0x4);
+    CONSUME(20, 0x8);
+    CONSUME(21, 0x10);
+    CONSUME(22, 0x20);
+    CONSUME(23, 0x40);
+    CONSUME(24, 0x80);
+    CONSUME(25, 0x100);
+    CONSUME(26, 0x200);
+    CONSUME(10, 0x400);
+
+    if (cl_->keyCatchers && !cl_bypassMouseInput->current.enabled) {
+        cmd->buttons |= 0x40000;
+    }
+
+    if (cl_->snap.ps.pm_type == 2 || cl_->snap.ps.pm_type == 3 || cl_->snap.ps.pm_type == 4) {
+        CONSUME(12, 0x400);
+    }
+
+    if (cl_->cgameInShellshock) {
+        cmd->buttons |= 0x800;
+    }
+
+#undef CONSUME
+#undef KB_AT
+}
+
+usercmd_t CL_CreateCmd(void)
+{
+    clientActive_t *cl;
+    usercmd_t cmd;
+    float oldPitch;
+    float pitchDelta;
+    int currentCmdTime;
+    int i;
+
+    cl = clients;
+    oldPitch = cl->viewangles[0];
+
+    CL_AdjustAngles();
+
+    memset(&cmd, 0, sizeof(cmd));
+
+    CL_CmdButtons(&cmd);
+    CL_KeyMove(&cmd);
+    CL_MouseMove(&cmd);
+
+    pitchDelta = cl->viewangles[0] - oldPitch;
+    if (pitchDelta > 90.0f) {
+        cl->viewangles[0] = oldPitch + 90.0f;
+    } else if (-pitchDelta > 90.0f) {
+        cl->viewangles[0] = oldPitch - 90.0f;
+    }
+
+    cmd.weapon = (byte)cl->cgameUserCmdValue;
+    cmd.offHandIndex = (byte)cl->cgameUserHoldableValue;
+
+    currentCmdTime = cl->serverTime;
+    if (cl->serverTime - cl->snap.serverTime >= 5001) {
+        currentCmdTime = cl->snap.serverTime + 5000;
+    }
+    cmd.serverTime = currentCmdTime;
+
+    for (i = 0; i < 3; ++i) {
+        cmd.angles[i] = ((int)((cl->viewangles[i] + cl->cgameKickAngles[i]) * 182.04444885253906f)) & 0xffff;
+    }
+
+    return cmd;
+}
+
+void CL_CreateNewCommands(void)
+{
+    clientConnection_t *clc;
+    clientActive_t *cl;
+
+    clc = &::clc;
+    if (clc->state >= CA_PRIMED) {
+        int cmdNum;
+
+        cl = clients;
+        cmdNum = ++cl->cmdNumber & 127;
+        cl->cmds[cmdNum] = CL_CreateCmd();
+    }
+}
+
+qboolean CL_ReadyToSendPacket(void)
+{
+    clientConnection_t *clc;
+    clientActive_t *cl;
+    outPacket_t *outPacket;
+    int realtime;
+
+    clc = &::clc;
+    if (clc->demoplaying || clc->state == CA_CINEMATIC || clc->state == CA_LOGO) {
+        return 0;
+    }
+
+    realtime = cls.realtime;
+
+    if (clc->downloadTempName[0] && realtime - clc->lastPacketSentTime < 50) {
+        return 0;
+    }
+
+    if (clc->state != CA_ACTIVE && clc->state != CA_PRIMED && !clc->downloadTempName[0]
+        && realtime - clc->lastPacketSentTime < 1000) {
+        return 0;
+    }
+
+    if (clc->serverAddress.type == NA_LOOPBACK) {
+        return 1;
+    }
+
+    if (Sys_IsLANAddress(clc->serverAddress)) {
+        return 1;
+    }
+
+    cl = clients;
+    outPacket = &cl->outPackets[(clc->netchan.outgoingSequence - 1) & 31];
+    return cls.realtime - outPacket->p_realtime >= 1000 / cl_maxpackets->current.integer;
+}
+
+void CL_SendCmdInternal(void)
+{
+    CL_CreateNewCommands();
+
+    if (!CL_ReadyToSendPacket()) {
+        if (cl_showSend->current.enabled) {
+            Com_Printf((const char *)". ");
+        }
+        return;
+    }
+
+    CL_WritePacket();
+}
+
 void CL_WriteVoicePacket(void)
 {
     clientConnection_t *clc;
@@ -876,6 +1248,23 @@ void CL_WritePacket(void)
 
     while (::clc.netchan.unsentFragments)
         CL_Netchan_TransmitNextFragment(&::clc.netchan);
+}
+
+void CL_SendCmd(void)
+{
+    int state = (&::clc)->state;
+    if (state < CA_CONNECTED || state == CA_ACTIVE)
+        return;
+    CL_SendCmdInternal();
+}
+
+void CL_Input(void)
+{
+    if ((&::clc)->state != 8)
+        return;
+    CL_SyncGpu();
+    IN_Frame();
+    CL_SendCmdInternal();
 }
 
 void CL_InitInput(void)
@@ -1039,389 +1428,3 @@ void CL_ShutdownInput(void)
 #endif
 }
 
-void CL_CmdButtons(usercmd_t *cmd)
-{
-    clientActive_t *cl_ = clients;
-#define KB_AT(index) (&kb[(index)])
-#define CONSUME(index, bit)                          \
-    do {                                             \
-        kbutton_t *b__ = KB_AT(index);               \
-        if (b__->active || b__->wasPressed)          \
-            cmd->buttons |= (bit);                   \
-        b__->wasPressed = 0;                         \
-    } while (0)
-
-    CONSUME(14, 0x1);
-    CONSUME(15, 0x8000);
-    CONSUME(16, 0x10000);
-    CONSUME(17, 0x20000);
-    CONSUME(18, 0x4000);
-    CONSUME(19, 0x4);
-    CONSUME(20, 0x8);
-    CONSUME(21, 0x10);
-    CONSUME(22, 0x20);
-    CONSUME(23, 0x40);
-    CONSUME(24, 0x80);
-    CONSUME(25, 0x100);
-    CONSUME(26, 0x200);
-    CONSUME(10, 0x400);
-
-    if (cl_->keyCatchers && !cl_bypassMouseInput->current.enabled) {
-        cmd->buttons |= 0x40000;
-    }
-
-    if (cl_->snap.ps.pm_type == 2 || cl_->snap.ps.pm_type == 3 || cl_->snap.ps.pm_type == 4) {
-        CONSUME(12, 0x400);
-    }
-
-    if (cl_->cgameInShellshock) {
-        cmd->buttons |= 0x800;
-    }
-
-#undef CONSUME
-#undef KB_AT
-}
-
-void CL_MouseMove(usercmd_t *cmd)
-{
-    float mx, my;
-    float accelSensitivity;
-    float rate;
-    float cap;
-    float yaw, pitch;
-
-    // allow mouse smoothing
-    if (m_filter->current.enabled) {
-        mx = (float)(clients->mouseDx[0] + clients->mouseDx[1]) * 0.5f;
-        my = (float)(clients->mouseDy[0] + clients->mouseDy[1]) * 0.5f;
-    } else {
-        mx = (float)clients->mouseDx[clients->mouseIndex];
-        my = (float)clients->mouseDy[clients->mouseIndex];
-    }
-    clients->mouseIndex ^= 1;
-    clients->mouseDx[clients->mouseIndex] = 0;
-    clients->mouseDy[clients->mouseIndex] = 0;
-
-    if (frame_msec <= 0)
-        return;
-
-    rate = sqrt(mx * mx + my * my) / (float)frame_msec;
-    accelSensitivity = rate * cl_mouseAccel->current.value + cl_sensitivity->current.value;
-    accelSensitivity *= clients->cgameSensitivity;
-
-    if (rate != 0.0f && cl_showMouseRate->current.enabled)
-        Com_Printf("%f : %f\n", rate, accelSensitivity);
-
-    if (clients->snap.ps.pm_flags & 0x8000)
-        return;
-
-    if (clients->snap.ps.eFlags & 0x300) {
-        mx *= 2.5;
-        my *= 2.0f;
-    } else {
-        mx *= accelSensitivity;
-        my *= accelSensitivity;
-    }
-
-    if (!mx && !my)
-        return;
-
-    // add mouse X/Y movement to cmd
-    if (kb[8].active) {
-        cmd->rightmove = ClampChar(cmd->rightmove + (int)(mx * m_side->current.value));
-    } else {
-        yaw = mx * m_yaw->current.value;
-        if (clients->cgameMaxYawSpeed != 0.0f) {
-            cap = (float)frame_msec * clients->cgameMaxYawSpeed * 0.001f;
-            yaw = I_fmax(-cap, I_fmin(cap, yaw));
-        }
-        clients->viewangles[1] -= yaw;
-    }
-
-    if ((kb[13].active || cl_freelook->current.enabled) && !kb[8].active) {
-        pitch = my * m_pitch->current.value;
-        if (clients->cgameMaxPitchSpeed != 0.0f) {
-            cap = (float)frame_msec * clients->cgameMaxPitchSpeed * 0.001f;
-            pitch = I_fmax(-cap, I_fmin(cap, pitch));
-        }
-        clients->viewangles[0] += pitch;
-    } else {
-        cmd->forwardmove = ClampChar(cmd->forwardmove - (int)(my * m_forward->current.value));
-    }
-}
-
-void IN_DownDown(void)
-{
-    IN_KeyDown(&kb[11]);
-    if (kb[25].active || kb[11].active )
-        legacyHacks->cl_stanceTemp = 1;
-    else
-        legacyHacks->cl_stanceTemp = 0;
-}
-
-void IN_DownUp(void)
-{
-    IN_KeyUp(&kb[11]);
-    if (kb[25].active || kb[11].active )
-        legacyHacks->cl_stanceTemp = 1;
-    else
-        legacyHacks->cl_stanceTemp = 0;
-}
-
-void IN_Prone_Down(void)
-{
-    IN_KeyDown(&kb[25]);
-    if (kb[25].active || kb[11].active )
-        legacyHacks->cl_stanceTemp = 1;
-    else
-        legacyHacks->cl_stanceTemp = 0;
-}
-
-void IN_Prone_Up(void)
-{
-    IN_KeyUp(&kb[25]);
-    if (kb[25].active || kb[11].active )
-        legacyHacks->cl_stanceTemp = 1;
-    else
-        legacyHacks->cl_stanceTemp = 0;
-}
-
-void IN_MLookUp(void)
-{
-    kb[13].active = 0;
-    if ((cl_freelook)->current.enabled == 0) {
-        clientActive_t *cl = clients;
-        cl->viewangles[0] = (float)cl->snap.ps.delta_angles[0] * -0.0054931640625f;
-    }
-}
-
-void CL_AdjustAngles(void)
-{
-    float speed;
-
-#define KB_AT(index) (&kb[(index)])
-
-    if (KB_AT(9)->active) {
-        speed = (float)cls.frametime * cl_anglespeedkey->current.value * 0.001f;
-    } else {
-        speed = (float)cls.frametime * 0.001f;
-    }
-
-    if (!KB_AT(8)->active) {
-        clients[0].viewangles[1] -= CL_KeyState(KB_AT(1)) * speed * cl_yawspeed->current.value;
-        clients[0].viewangles[1] += CL_KeyState(KB_AT(0)) * speed * cl_yawspeed->current.value;
-    }
-    clients[0].viewangles[0] -= CL_KeyState(KB_AT(4)) * speed * cl_pitchspeed->current.value;
-    clients[0].viewangles[0] += CL_KeyState(KB_AT(5)) * speed * cl_pitchspeed->current.value;
-
-#undef KB_AT
-}
-
-void CL_StanceButtonUpdate(void)
-{
-    clientActive_t *cl = clients;
-
-    if (cl->stanceHeld && (int)com_frameTime - cl->stanceTime >= cl_stanceHoldTime->current.integer) {
-        if (cl->stancePosition == 2)
-            legacyHacks->cl_stance = 0;
-        else
-            legacyHacks->cl_stance = 2;
-        cl->stanceHeld = 0;
-    }
-}
-
-void CL_KeyMove(usercmd_t *cmd)
-{
-    clientActive_t *cl;
-    int *legacyStance;
-    int side;
-    int forward;
-
-#define KB_AT(index) (&kb[(index)])
-
-    cl = clients;
-
-    (void)cl;
-
-    if (KB_AT(25)->active || KB_AT(11)->active) {
-        if (KB_AT(25)->active) {
-            cmd->buttons |= 0x100;
-            cmd->buttons &= ~0x200;
-        } else {
-            cmd->buttons |= 0x200;
-            cmd->buttons &= ~0x100;
-        }
-        cmd->buttons |= 0x2000;
-    } else {
-        int clStance;
-        CL_StanceButtonUpdate();
-        clStance = legacyHacks->cl_stance;
-        switch (clStance) {
-        case 1:
-            cmd->buttons |= 0x200;
-            cmd->buttons &= ~0x100;
-            break;
-        case 2:
-            cmd->buttons |= 0x100;
-            cmd->buttons &= ~0x200;
-            break;
-        default:
-            cmd->buttons &= ~0x300;
-            break;
-        }
-        cmd->buttons &= ~0x2000;
-    }
-
-    if ((KB_AT(9)->active == (cl->usingAds == 0)) || PM_IsBinocularsADS(&cl->snap.ps)) {
-        cmd->buttons |= 0x1000;
-    } else {
-        cmd->buttons &= ~0x1000;
-    }
-
-    side = 0;
-    if (KB_AT(8)->active) {
-        side += (int)(CL_KeyState(KB_AT(1)) * 127.0f);
-        side += (int)(CL_KeyState(KB_AT(0)) * -127.0f);
-    }
-
-    side += (int)(CL_KeyState(KB_AT(7)) * 127.0f);
-    side += (int)(CL_KeyState(KB_AT(6)) * -127.0f);
-
-    forward = (int)(CL_KeyState(KB_AT(2)) * 127.0f);
-    forward += (int)(CL_KeyState(KB_AT(3)) * -127.0f);
-
-    cmd->forwardmove = ClampChar(forward);
-    cmd->rightmove = ClampChar(side);
-
-#if COD2_FEATURE_GAMEPAD
-
-    CL_Gamepad_Move(cmd);
-#endif
-
-#undef KB_AT
-}
-
-usercmd_t CL_CreateCmd(void)
-{
-    clientActive_t *cl;
-    usercmd_t cmd;
-    float oldPitch;
-    float pitchDelta;
-    int currentCmdTime;
-    int i;
-
-    cl = clients;
-    oldPitch = cl->viewangles[0];
-
-    CL_AdjustAngles();
-
-    memset(&cmd, 0, sizeof(cmd));
-
-    CL_CmdButtons(&cmd);
-    CL_KeyMove(&cmd);
-    CL_MouseMove(&cmd);
-
-    pitchDelta = cl->viewangles[0] - oldPitch;
-    if (pitchDelta > 90.0f) {
-        cl->viewangles[0] = oldPitch + 90.0f;
-    } else if (-pitchDelta > 90.0f) {
-        cl->viewangles[0] = oldPitch - 90.0f;
-    }
-
-    cmd.weapon = (byte)cl->cgameUserCmdValue;
-    cmd.offHandIndex = (byte)cl->cgameUserHoldableValue;
-
-    currentCmdTime = cl->serverTime;
-    if (cl->serverTime - cl->snap.serverTime >= 5001) {
-        currentCmdTime = cl->snap.serverTime + 5000;
-    }
-    cmd.serverTime = currentCmdTime;
-
-    for (i = 0; i < 3; ++i) {
-        cmd.angles[i] = ((int)((cl->viewangles[i] + cl->cgameKickAngles[i]) * 182.04444885253906f)) & 0xffff;
-    }
-
-    return cmd;
-}
-
-void CL_CreateNewCommands(void)
-{
-    clientConnection_t *clc;
-    clientActive_t *cl;
-
-    clc = &::clc;
-    if (clc->state >= CA_PRIMED) {
-        int cmdNum;
-
-        cl = clients;
-        cmdNum = ++cl->cmdNumber & 127;
-        cl->cmds[cmdNum] = CL_CreateCmd();
-    }
-}
-
-qboolean CL_ReadyToSendPacket(void)
-{
-    clientConnection_t *clc;
-    clientActive_t *cl;
-    outPacket_t *outPacket;
-    int realtime;
-
-    clc = &::clc;
-    if (clc->demoplaying || clc->state == CA_CINEMATIC || clc->state == CA_LOGO) {
-        return 0;
-    }
-
-    realtime = cls.realtime;
-
-    if (clc->downloadTempName[0] && realtime - clc->lastPacketSentTime < 50) {
-        return 0;
-    }
-
-    if (clc->state != CA_ACTIVE && clc->state != CA_PRIMED && !clc->downloadTempName[0]
-        && realtime - clc->lastPacketSentTime < 1000) {
-        return 0;
-    }
-
-    if (clc->serverAddress.type == NA_LOOPBACK) {
-        return 1;
-    }
-
-    if (Sys_IsLANAddress(clc->serverAddress)) {
-        return 1;
-    }
-
-    cl = clients;
-    outPacket = &cl->outPackets[(clc->netchan.outgoingSequence - 1) & 31];
-    return cls.realtime - outPacket->p_realtime >= 1000 / cl_maxpackets->current.integer;
-}
-
-void CL_SendCmdInternal(void)
-{
-    CL_CreateNewCommands();
-
-    if (!CL_ReadyToSendPacket()) {
-        if (cl_showSend->current.enabled) {
-            Com_Printf((const char *)". ");
-        }
-        return;
-    }
-
-    CL_WritePacket();
-}
-
-void CL_Input(void)
-{
-    if ((&::clc)->state != 8)
-        return;
-    CL_SyncGpu();
-    IN_Frame();
-    CL_SendCmdInternal();
-}
-
-void CL_SendCmd(void)
-{
-    int state = (&::clc)->state;
-    if (state < CA_CONNECTED || state == CA_ACTIVE)
-        return;
-    CL_SendCmdInternal();
-}

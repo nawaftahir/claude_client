@@ -1,5 +1,37 @@
 #include "../qcommon/qcommon.h"
 
+char *SV_ExpandNewlines( char *in );
+qboolean SV_IsFirstTokenEqual( const char *str1, const char *str2 );
+int SV_GetReliableSequence( client_t *client, const char *cmd );
+void SV_CopyReliableCommands( client_t *client );
+void SV_AddServerCommand( client_t *client, int type, const char *cmd );
+void SV_SendServerCommand( client_t *cl, int type, const char *fmt, ... );
+void SV_VoicePacket( netadr_t from, msg_t *msg );
+void SVC_Status( netadr_t from );
+void SVC_GameCompleteStatus( netadr_t from );
+void SVC_Info( netadr_t from );
+void SV_ConnectionlessPacket( netadr_t from, msg_t *msg );
+void SV_PacketEvent( netadr_t from, msg_t *msg );
+void SV_CalcPings( void );
+void SV_FreeClientScriptId( client_t *cl );
+void SV_CheckTimeouts( void );
+qboolean SV_CheckPaused( void );
+void SV_RunFrame();
+void SV_BotUserMove( client_t *cl );
+void SV_UpdateBots();
+void SV_Frame( int msec );
+
+/* --- from src/adopted/server/sv_client_mp.cpp --- */
+
+/*
+==================
+SV_Frame
+Player movement occurs as a result of packet events, which
+happen before SV_Frame is called
+==================
+*/
+void CL_FlushDebugData( qboolean fromServer );
+
 /*
 ===============
 SV_ExpandNewlines
@@ -982,8 +1014,6 @@ void SV_RunFrame()
 	G_RunFrame(svs.time);
 }
 
-/* --- from src/adopted/server/sv_client_mp.cpp --- */
-
 /*
 ==================
 SV_BotUserMove
@@ -1073,16 +1103,6 @@ void SV_UpdateBots()
 #endif
 	}
 }
-
-/*
-==================
-SV_Frame
-
-Player movement occurs as a result of packet events, which
-happen before SV_Frame is called
-==================
-*/
-void CL_FlushDebugData( qboolean fromServer );
 
 void SV_Frame( int msec )
 {
@@ -1284,3 +1304,4 @@ void SV_Frame( int msec )
 	SV_MasterHeartbeat( HEARTBEAT_GAME );
 #endif
 }
+

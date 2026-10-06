@@ -20,6 +20,14 @@ typedef struct ipFilterList_s
 static ipFilterList_t ipFilters;
 
 
+void UpdateIPBans( void );
+void AddIP( const char *str );
+void G_ProcessIPBans( void );
+void Svcmd_AddIP_f( void );
+void Svcmd_RemoveIP_f( void );
+void    Svcmd_EntityList_f( void );
+qboolean ConsoleCommand();
+
 qboolean StringToFilter( const char *s, ipFilter_t *f )
 {
 	char num[128];
@@ -271,7 +279,6 @@ void    Svcmd_EntityList_f( void )
 	}
 }
 
-
 gclient_t *ClientForString( const char *s )
 {
 	gclient_t *cl;
@@ -362,3 +369,4 @@ qboolean ConsoleCommand()
 
 	return qfalse;
 }
+

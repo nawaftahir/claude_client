@@ -1,6 +1,9 @@
 #include "../qcommon/qcommon.h"
 #include "g_shared.h"
 
+qboolean OnSameTeam( gentity_t *ent1, gentity_t *ent2 );
+void CheckTeamStatus();
+
 /*
 ==============
 OnSameTeam
@@ -117,3 +120,4 @@ void CheckTeamStatus()
 		}
 	}
 }
+

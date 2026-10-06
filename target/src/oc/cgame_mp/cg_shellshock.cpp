@@ -65,30 +65,12 @@ extern int SND_PlaySoundAlias(const snd_alias_t *pAlias, int entnum, const vec_t
 extern void CL_CapTurnRate(float min_rate, float max_rate);
 extern void CL_SetUserCmdInShellshock(int inShellshock);
 
-static inline float dvar_get_float(const dvar_t *dvar)
-{
-    return dvar->current.value;
-}
-
-static inline int dvar_get_int(const dvar_t *dvar)
-{
-    return dvar->current.integer;
-}
-
-static inline int dvar_get_bool(const dvar_t *dvar)
-{
-    return (int)dvar->current.enabled;
-}
-
-static inline const dvar_t *dvar_get_ptr(const dvar_t *dvar)
-{
-    return dvar;
-}
-
-static inline int float_seconds_to_ms(float val)
-{
-    return I_fround(val * 1000.0f);
-}
+void CG_PerturbCamera(void);
+qboolean CG_SaveShellShockDvars(const char *name);
+qboolean CG_LoadShellShockDvars(const char *name);
+qboolean CG_DrawShellShockSavedScreenBlend(const shellshock_parms_t *parms, int start, int duration);
+void CG_SetShellShockParmsFromDvars(shellshock_parms_t *parms);
+void CG_UpdateShellShock(const shellshock_parms_t *parms, int start, int duration);
 
 /* migrated from the ILP32 data blob to typed C (x64 port Stage 2). */
 static const char *cg_shock_dvar_names[30] = {
@@ -123,19 +105,41 @@ static const char *cg_shock_dvar_names[30] = {
     "cg_shock_mouse_sensitivityscale",
     "cg_shock_mouse_fadeTime",
 };
-
 static vec2_t cg_perturbations[131];
-
 void CG_PerturbCamera(void);
 qboolean CG_SaveShellShockDvars(const char *name);
 qboolean CG_LoadShellShockDvars(const char *name);
 qboolean CG_DrawShellShockSavedScreenBlend(const shellshock_parms_t *parms, int start, int duration);
 void CG_SetShellShockParmsFromDvars(shellshock_parms_t *parms);
 void CG_UpdateShellShock(const shellshock_parms_t *parms, int start, int duration);
-
 extern const vec3_t vec3_origin;
 extern float randomf();
 extern float crandom();
+
+static inline float dvar_get_float(const dvar_t *dvar)
+{
+    return dvar->current.value;
+}
+
+static inline int dvar_get_int(const dvar_t *dvar)
+{
+    return dvar->current.integer;
+}
+
+static inline int dvar_get_bool(const dvar_t *dvar)
+{
+    return (int)dvar->current.enabled;
+}
+
+static inline const dvar_t *dvar_get_ptr(const dvar_t *dvar)
+{
+    return dvar;
+}
+
+static inline int float_seconds_to_ms(float val)
+{
+    return I_fround(val * 1000.0f);
+}
 
 static inline void FastSinCos(const float value, float *pSin, float *pCos)
 {
@@ -152,6 +156,19 @@ static inline void FastSinCos(const float value, float *pSin, float *pCos)
         pop ecx
         pop eax
     }
+}
+
+// Name from CoD4; original CoD2 name unknown.
+static float CubicInterpolate(float t, float x0, float x1, float x2, float x3)
+{
+    float a;
+    float b;
+    float c;
+
+    a = x3 - x2 + x1 - x0;
+    b = x0 - x1 - a;
+    c = x2 - x0;
+    return ((t * a + b) * t + c) * t + x1;
 }
 
 // Original name unknown.
@@ -210,6 +227,50 @@ void CG_PerturbCamera(void)
         AxisCopy(cg->refdef.viewaxis, axis);
         MatrixMultiply(rot, axis, cg->refdef.viewaxis);
     }
+}
+
+qboolean CG_DrawShellShockSavedScreenBlend(const shellshock_parms_t *parms, int start, int duration)
+{
+    cg_t *cgp;
+    int timeLeft;
+    int blend;
+    int fadeDuration;
+    int fadeIn;
+
+    if (start == 0 || duration <= 0) {
+
+        cgp = cg;
+        cgp->shellshock.hasSavedScreen = 0;
+        return 0;
+    }
+
+    cgp = cg;
+    timeLeft = start + duration - cgp->time;
+
+    if (timeLeft <= 0) {
+
+        cgp->shellshock.hasSavedScreen = 0;
+        return 0;
+    }
+
+    fadeIn = parms->screenBlend.effectTime;
+    fadeDuration = parms->screenBlend.fadeTime;
+
+    blend = fadeIn;
+    if (timeLeft < fadeDuration) {
+
+        blend = I_fround((float)timeLeft / (float)fadeDuration * (float)fadeIn);
+    }
+
+    if (cgp->shellshock.hasSavedScreen != 0) {
+
+        CL_BlendSavedScreen(blend);
+    }
+
+    CL_SaveScreen();
+
+    cgp->shellshock.hasSavedScreen = 1;
+    return 1;
 }
 
 qboolean CG_SaveShellShockDvars(const char *name)
@@ -271,50 +332,6 @@ qboolean CG_LoadShellShockDvars(const char *name)
     Z_FreeInternal(buf);
 
     return result;
-}
-
-qboolean CG_DrawShellShockSavedScreenBlend(const shellshock_parms_t *parms, int start, int duration)
-{
-    cg_t *cgp;
-    int timeLeft;
-    int blend;
-    int fadeDuration;
-    int fadeIn;
-
-    if (start == 0 || duration <= 0) {
-
-        cgp = cg;
-        cgp->shellshock.hasSavedScreen = 0;
-        return 0;
-    }
-
-    cgp = cg;
-    timeLeft = start + duration - cgp->time;
-
-    if (timeLeft <= 0) {
-
-        cgp->shellshock.hasSavedScreen = 0;
-        return 0;
-    }
-
-    fadeIn = parms->screenBlend.effectTime;
-    fadeDuration = parms->screenBlend.fadeTime;
-
-    blend = fadeIn;
-    if (timeLeft < fadeDuration) {
-
-        blend = I_fround((float)timeLeft / (float)fadeDuration * (float)fadeIn);
-    }
-
-    if (cgp->shellshock.hasSavedScreen != 0) {
-
-        CL_BlendSavedScreen(blend);
-    }
-
-    CL_SaveScreen();
-
-    cgp->shellshock.hasSavedScreen = 1;
-    return 1;
 }
 
 void CG_SetShellShockParmsFromDvars(shellshock_parms_t *parms)
@@ -578,19 +595,6 @@ endLook:
 }
 
 // Name from CoD4; original CoD2 name unknown.
-static float CubicInterpolate(float t, float x0, float x1, float x2, float x3)
-{
-    float a;
-    float b;
-    float c;
-
-    a = x3 - x2 + x1 - x0;
-    b = x0 - x1 - a;
-    c = x2 - x0;
-    return ((t * a + b) * t + c) * t + x1;
-}
-
-// Name from CoD4; original CoD2 name unknown.
 static void UpdateShellShockCamera(const shellshock_parms_t *parms, int time, int duration)
 {
     int dt;
@@ -635,3 +639,4 @@ void CG_UpdateShellShock(const shellshock_parms_t *parms, int start, int duratio
     UpdateShellShockCamera(parms, time, duration);
     CL_SetUserCmdInShellshock(time < duration ? 1 : 0);
 }
+

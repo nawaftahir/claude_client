@@ -568,3 +568,4 @@ LPCSTR SE_LoadLanguage( bool forceEnglish )
 
 	return psErrorMessage;
 }
+

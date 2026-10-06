@@ -31,12 +31,8 @@ extern void XAnimFreeTree(struct XAnimTree_s *tree, Free_t Free);
 extern int BG_GetNumWeapons(void);
 extern void AxisCopy( const vec3_t in[3], vec3_t out[3] );
 extern void I_strncpyz(char *dest, const char *src, int destsize);
-#if !defined(__EMSCRIPTEN__) && !defined(__x86_64__)
 extern void *memcpy(void *dest, const void *src, unsigned int n);
-#endif
-#if !defined(__EMSCRIPTEN__) && !defined(__x86_64__)
 extern void *memset(void *s, int c, unsigned int n);
-#endif
 #if defined(__x86_64__) || defined(_M_X64)
 #    include <string.h>
 #endif
@@ -370,518 +366,10 @@ int CG_PlayEntitySoundAlias(int entitynum, snd_alias_list_t *aliasList);
 static void CG_RegisterSounds(void);
 void CG_Init(int serverMessageNum, int serverCommandSequence, int clientNum);
 
-void CG_GetEntityOrientation(int entnum, vec_t *origin_out, vec3_t *axis_out)
-{
-    origin_out[0] = cg_entities[entnum].lerpOrigin[0];
-    origin_out[1] = cg_entities[entnum].lerpOrigin[1];
-    origin_out[2] = cg_entities[entnum].lerpOrigin[2];
-    AnglesToAxis(cg_entities[entnum].lerpAngles, axis_out);
-}
-
-int CG_CrosshairPlayer(void)
-{
-    if (cgArray[0].time > cgArray[0].crosshairClientTime + 0x3e8)
-        return -1;
-    return cgArray[0].crosshairClientNum;
-}
-
-void CG_GameMessage(const char *msg)
-{
-    CL_ConsolePrint((print_msg_type_t)1, msg, 0, cg_gameMessageWidth->current.integer);
-}
-
-void CG_BoldGameMessage(const char *msg)
-{
-    CL_ConsolePrint((print_msg_type_t)2, msg, 0, cg_gameBoldMessageWidth->current.integer);
-}
-
-const char *CG_Argv(int arg)
-{
-    Cmd_ArgvBuffer(arg, (char *)&buffer, 0x400);
-    return (const char *)&buffer;
-}
-
-void CG_StartAmbient(void)
-{
-    const char *infoString;
-    const snd_alias_t *alias;
-    int fadeTime;
-    int diff;
-
-    infoString = CL_GetConfigString(3);
-    alias = CL_PickSoundAlias(Info_ValueForKey(infoString, "n"));
-    fadeTime = atoi(Info_ValueForKey(infoString, "t"));
-    diff = fadeTime - cg->time;
-    if (diff < 0 || cg->time == 0)
-        diff = 0;
-    SND_PlayAmbientAlias(alias, diff, (snd_alias_system_t)(1));
-}
-
-Bool CG_PlaySoundOnFirstClient(void)
-{
-    return 1;
-}
-
-Bool CG_PlaySoundOnCurrentLocalClient(int entitynum, const vec_t *origin, const char *aliasname)
-{
-    return 1;
-}
-
-static Bool CG_ReplaceDirective(int *searchPos, int *dstLen, char *dstString)
-{
-    char keyBinding[0x100];
-    char directive[0x100];
-    char srcString[0x100];
-    char *pFound;
-    char *pEnd;
-    int directiveLen;
-    int bindingLen;
-    int newStringLen;
-    int beginLen;
-    int endLen;
-
-    memcpy(srcString, dstString, *dstLen);
-    srcString[*dstLen] = '\0';
-
-    pFound = (char *)strstr(srcString + *searchPos, (const char *)"[{");
-    if (!pFound)
-        return 0;
-
-    pEnd = (char *)strstr(pFound, (const char *)"}]");
-    if (!pEnd)
-        return 0;
-
-    directiveLen = (int)(pEnd - pFound) - 2;
-    if (directiveLen == 0)
-        return 0;
-
-    Controls_GetConfig();
-
-    memcpy(directive, pFound + 2, directiveLen);
-    directive[directiveLen] = '\0';
-
-    if (!GetKeyBindingLocalizedString(directive, keyBinding)) {
-
-        I_strncpyz(keyBinding, UI_SafeTranslateString((const char *)"KEY_UNBOUND"), 0x100);
-    }
-
-    bindingLen = (int)strlen(keyBinding);
-
-    newStringLen = *dstLen - directiveLen + bindingLen - 4;
-
-    if (newStringLen + 1 > 0x100)
-        return 0;
-
-    beginLen = (int)(pFound - srcString);
-
-    dstString += beginLen;
-    memcpy(dstString, keyBinding, bindingLen);
-    dstString += bindingLen;
-
-    endLen = newStringLen - beginLen - bindingLen;
-    memcpy(dstString, pEnd + 2, endLen);
-    dstString[endLen] = '\0';
-
-    *searchPos = bindingLen + beginLen;
-
-    *dstLen = newStringLen;
-
-    return 1;
-}
-
-static void CG_LocalizeHudElemString(const char *message, const char *messageType, char *hudElemString)
-{
-    const char *localizedString;
-    int searchPos;
-    int stringLen;
-
-    localizedString = SEH_LocalizeTextMessage(message, messageType, (msgLocErrType_t)0);
-    stringLen = (int)strlen(localizedString);
-
-    if (stringLen + 1 > 0x100) {
-        return;
-    }
-
-    memcpy(hudElemString, localizedString, stringLen);
-    hudElemString[stringLen] = '\0';
-
-    searchPos = 0;
-    while (CG_ReplaceDirective(&searchPos, &stringLen, hudElemString)) {
-    }
-}
-
-void CG_TranslateHudElemMessage(const char *message, const char *messageType, char *hudElemString)
-{
-    CG_LocalizeHudElemString(message, messageType, hudElemString);
-}
-
-static void CG_LoadHudMenu(void)
-{
-    MenuList *menuList;
-    menuDef_t *menu;
-
-    menuList = UI_LoadMenus("ui_mp/hud.txt", 7);
-    UI_AddMenuList(&cgDC, menuList);
-
-    if (CL_GetLocalClientActiveCount() == 1) {
-        menu = Menus_FindByName(&cgDC, "Compass");
-    } else {
-        menu = Menus_FindByName(&cgDC, "Compass_mp");
-    }
-
-    if (menu != NULL) {
-        cgs_t *m = (cgs_t *)cgs;
-        m->compassWidth = menu->window.rect[0].w;
-        m->compassHeight = menu->window.rect[0].h;
-        m->compassY = menu->window.rect[0].y;
-    }
-}
-
-void CG_InitVote(void)
-{
-    cgs_t *m = (cgs_t *)cgs;
-    m->voteTime = atoi(CL_GetConfigString(0xf));
-    m->voteYes = atoi(CL_GetConfigString(0x11));
-    m->voteNo = atoi(CL_GetConfigString(0x12));
-    I_strncpyz(m->voteString, SEH_LocalizeTextMessage(CL_GetConfigString(0x10), "vote string", (msgLocErrType_t)0), sizeof(m->voteString));
-}
-
-static struct XModel *CG_GetXModel(const char *modelName)
-{
-    return CL_RegisterModel(modelName);
-}
-
-static void CG_CreateDObj(DObjModel_s *dobjModels, unsigned short numModels, struct XAnimTree_s *tree, int handle, clientInfo_t *ci)
-{
-    int weaponNum;
-    weaponInfo_t *weapInfo;
-
-    weaponNum = ci->iDObjWeapon;
-    if (weaponNum) {
-        weapInfo = &cg_weaponsArray[weaponNum];
-        if (weapInfo->worldSurfModel) {
-            dobjModels[numModels].model = weapInfo->worldSurfModel;
-            dobjModels[numModels].boneName = ci->leftHandGun ? cg_weaponleftbone->current.string : cg_weaponrightbone->current.string;
-            dobjModels[numModels].ignoreCollision = 0;
-            ++numModels;
-        }
-    }
-
-    Com_ClientDObjCreate(dobjModels, numModels, tree, handle);
-}
-
-void CG_FreeWeapons(void)
-{
-    weaponInfo_t *weapons = (weaponInfo_t *)cg_weaponsArray;
-    int i;
-
-    for (i = 1; i <= BG_GetNumWeapons(); ++i) {
-        Com_SafeClientDObjFree(CG_WeaponDObjHandle(i));
-        if (weapons[i].tree) {
-            XAnimFreeTree(weapons[i].tree, 0);
-            weapons[i].tree = NULL;
-        }
-    }
-
-    memset((void *)cg_itemsArray, 0, CG_MAX_ITEMS * sizeof(itemInfo_t));
-    memset((void *)cg_weaponsArray, 0, CG_MAX_WEAPONS * sizeof(weaponInfo_t));
-}
-
-void CG_Shutdown(void)
-{
-    byte *cgBase;
-    byte *cgsBase;
-    int i;
-
-    CL_TrackStatistics(0);
-    SND_FadeAllSounds(1.0f, 0);
-    g_ambientStarted = 0;
-    g_mapLoaded = 0;
-    Mantle_ShutdownAnims();
-    CG_FreeWeapons();
-    CG_FreeClientDObjInfo();
-    CG_FreeEntityDObjInfo();
-    CL_FreeWeaponInfoMemory();
-    FX_FreeSystem();
-
-    cgBase = (byte *)cg;
-    for (i = 0; i < 64; ++i, cgBase += 0x4b8) {
-        struct XAnimTree_s *tree = ((cg_t *)cgBase)->bgs.clientinfo[0].pXAnimTree;
-        if (tree) {
-            XAnimFreeTree(tree, 0);
-            ((cg_t *)cgBase)->bgs.clientinfo[0].pXAnimTree = NULL;
-        }
-    }
-
-    cgsBase = (byte *)cgs;
-    for (i = 0; i < 8; ++i, cgsBase += 0x4b8) {
-        struct XAnimTree_s *tree = ((cgs_t *)cgsBase)->corpseinfo[0].pXAnimTree;
-        if (tree) {
-            XAnimFreeTree(tree, 0);
-            ((cgs_t *)cgsBase)->corpseinfo[0].pXAnimTree = NULL;
-        }
-    }
-
-    if (cgs->localServer == 0) {
-        Scr_ShutdownGameStrings();
-    }
-
-    memset((void *)cg, 0, sizeof(cg_t));
-}
-
-static void *Hunk_AllocXAnimPrecache(int size)
-{
-    return Hunk_AllocAlignInternal(size, 4);
-}
-
-void *Hunk_AllocXAnimClient(int size)
-{
-    return Hunk_AllocInternal(size);
-}
-
-static void CG_SubtitlePrint(int msec, const snd_alias_t *pAlias)
-{
-    int minMsec;
-    int subtitleWidth;
-
-    if (msec && pAlias->pszSubtitle) {
-        if (cgs->viewAspect > 1.3333334f) {
-            subtitleWidth = cg_subtitleWidthWidescreen->current.integer;
-        } else {
-            subtitleWidth = cg_subtitleWidthStandard->current.integer;
-        }
-
-        minMsec = I_fround(cg_subtitleMinTime->current.value * 1000.0f);
-        if (minMsec - msec >= 0)
-            msec = minMsec;
-
-        CL_SubtitlePrint(pAlias->pszSubtitle, msec, subtitleWidth);
-    }
-}
-
-int CG_PlaySoundAliasAsMasterByName(int entitynum, const vec_t *origin, const char *aliasname)
-{
-    const snd_alias_t *alias;
-    int msec;
-
-    alias = CL_PickSoundAlias(aliasname);
-    if (!alias)
-        return 0;
-
-    msec = SND_PlaySoundAliasAsMaster(alias, entitynum, origin, 0, SASYS_CGAME);
-    CG_SubtitlePrint(msec, alias);
-    return msec;
-}
-
-// Retail fills axis[0..2] and the origin in row 3.
-void CG_GetDObjOrientation(int dobjHandle, float (*axis)[3])
-{
-    centity_t *cent;
-
-    if (dobjHandle >= 0 && dobjHandle < 1024) {
-        cent = &cg_entities[dobjHandle];
-        axis[3][0] = cent->lerpOrigin[0];
-        axis[3][1] = cent->lerpOrigin[1];
-        axis[3][2] = cent->lerpOrigin[2];
-        AnglesToAxis(cent->lerpAngles, axis);
-    } else if (dobjHandle >= 1024 && dobjHandle < 1152) {
-        axis[3][0] = cg->viewModelOrigin[0];
-        axis[3][1] = cg->viewModelOrigin[1];
-        axis[3][2] = cg->viewModelOrigin[2];
-        AxisCopy(cg->viewModelAxis, axis);
-    }
-}
-
-#ifndef __EMSCRIPTEN__
-static byte *CG_FindSmokeGrenadeEntityState(int minTime, int gametime)
-{
-    byte *snap = (byte *)cg->nextSnap;
-    int entityCount = ((snapshot_t *)snap)->numEntities;
-    int bestTime = 0;
-    int bestIndex = 0;
-    qboolean found = 0;
-    int i;
-
-    for (i = 0; i < entityCount; i++) {
-        byte *es = (byte *)(((char *)snap + offsetof(snapshot_t, entities[0].number)) + i * 0xf0);
-        int eventTime;
-
-        if ((*(byte *)(es + 0xa) & 1) == 0)
-            continue;
-
-        if (minTime > ((entityState_t *)es)->time2)
-            continue;
-
-        eventTime = ((entityState_t *)es)->time;
-        if (minTime > eventTime)
-            continue;
-
-        if (gametime < eventTime)
-            continue;
-
-        if (!found || eventTime < bestTime) {
-            bestIndex = i;
-            bestTime = eventTime;
-            found = 1;
-        }
-    }
-
-    if (!found)
-        return NULL;
-
-    return (byte *)(((char *)snap + offsetof(snapshot_t, entities[0].number)) + bestIndex * 0xf0);
-}
-
-void CG_PlaySmokeGrenadesAtTime(int gametime)
-{
-    byte *smokeGrenadeES;
-    int smokeTime;
-    vec3_t up;
-
-    if (!cgs->smokeGrenadeFx)
-        return;
-
-    Com_Printf("Playing smoke grenades at time %i\n", gametime);
-
-    smokeGrenadeES = CG_FindSmokeGrenadeEntityState(gametime - (int)(FX_GetEffectLength((EffectTemplate *)cgs->smokeGrenadeFx) + 1.0f), gametime);
-    if (smokeGrenadeES) {
-        FX_Rewind(*(int *)(smokeGrenadeES + 0x54));
-        FX_WarpTime(gametime + 120000);
-        Com_Printf("Warping FX time to %i to kill off existing effects\n", gametime + 120000);
-
-        do {
-            smokeTime = *(int *)(smokeGrenadeES + 0x54);
-
-            Com_Printf("Warping FX time to %i\n", smokeTime);
-            FX_WarpTime(smokeTime);
-
-            Com_Printf("Playing smoke grenade at time %i\n", smokeTime);
-            up[0] = 0.0f;
-            up[1] = 0.0f;
-            up[2] = 1.0f;
-            FX_PlayEffect((EffectTemplate *)cgs->smokeGrenadeFx, (const vec_t *)(smokeGrenadeES + 0x18), up);
-
-            smokeGrenadeES = CG_FindSmokeGrenadeEntityState(smokeTime + 1, gametime);
-        } while (smokeGrenadeES);
-    } else {
-        FX_Rewind(gametime);
-        FX_WarpTime(gametime + 120000);
-    }
-
-    Com_Printf("Done with smoke grenades, now warping FX time to current time %i\n", gametime);
-    FX_WarpTime(gametime);
-}
-
-int CG_PlaySoundAlias(int entitynum, const vec_t *origin, snd_alias_list_t *aliasList)
-{
-    const snd_alias_t *alias;
-    int msec;
-
-    alias = Com_PickSoundAliasFromList(aliasList);
-    if (!alias)
-        return 0;
-
-    msec = SND_PlaySoundAlias(alias, entitynum, origin, 0, SASYS_CGAME);
-    CG_SubtitlePrint(msec, alias);
-    return msec;
-}
-
-int CG_PlaySoundAliasByName(int entitynum, const vec_t *origin, const char *aliasname)
-{
-    const snd_alias_t *alias;
-    int msec;
-
-    alias = CL_PickSoundAlias(aliasname);
-    if (!alias)
-        return 0;
-
-    msec = SND_PlaySoundAlias(alias, entitynum, origin, 0, SASYS_CGAME);
-    CG_SubtitlePrint(msec, alias);
-    return msec;
-}
-
-void CG_SafeTranslateHudElemString(int index, char *hudElemString)
-{
-    if (index == 0) {
-        return;
-    }
-
-    CG_LocalizeHudElemString(CL_GetConfigString(index + 0x51e), "hudelem string", hudElemString);
-}
-
-int CG_PlayClientSoundAliasByName(const char *aliasname)
-{
-    return CG_PlaySoundAliasByName(cgArray[0].nextSnap->ps.clientNum, cgArray[0].nextSnap->ps.origin, aliasname);
-}
-
-int CG_PlayClientSoundAlias(snd_alias_list_t *aliasList)
-{
-    return CG_PlaySoundAlias(cgArray[0].nextSnap->ps.clientNum, cgArray[0].nextSnap->ps.origin, aliasList);
-}
-
-int CG_PlayEntitySoundAlias(int entitynum, snd_alias_list_t *aliasList)
-{
-    const vec_t *origin;
-    const snd_alias_t *alias;
-    int msec;
-
-    origin = (const vec_t *)((const byte *)cg_entities + entitynum * 548 + 0x108);
-    alias = Com_PickSoundAliasFromList(aliasList);
-    if (!alias)
-        return 0;
-
-    msec = SND_PlaySoundAlias(alias, entitynum, origin, 0, SASYS_CGAME);
-    CG_SubtitlePrint(msec, alias);
-    return msec;
-}
-
-static void CG_RegisterSurfaceSoundAliases(const char *aliasBase, snd_alias_list_t **dest)
-{
-    char aliasName[256];
-    int surfaceType;
-
-    for (surfaceType = 0; surfaceType < 0x17; surfaceType++) {
-        sprintf(aliasName, "%s_%s", aliasBase, Com_SurfaceTypeToName(surfaceType));
-        dest[surfaceType] = Com_FindSoundAlias(aliasName);
-    }
-}
-
-static void CG_RegisterSounds(void)
-{
-    cgs->media.noAmmoSound = Com_FindSoundAlias("player_out_of_ammo");
-    cgs->media.landDmgSound = Com_FindSoundAlias("land_damage");
-
-    CG_RegisterSurfaceSoundAliases("grenade_bounce", cgs->media.grenadeBounceSound);
-    CG_RegisterSurfaceSoundAliases("grenade_explode", cgs->media.grenadeExplodeSound);
-    CG_RegisterSurfaceSoundAliases("rocket_explode", cgs->media.rocketExplodeSound);
-    CG_RegisterSurfaceSoundAliases("bullet_small", cgs->media.bulletHitSmallSound);
-    CG_RegisterSurfaceSoundAliases("bulletspray_small", cgs->media.shotgunHitSound);
-    CG_RegisterSurfaceSoundAliases("bullet_large", cgs->media.bulletHitLargeSound);
-    CG_RegisterSurfaceSoundAliases("step_run", cgs->media.stepRunSound);
-    CG_RegisterSurfaceSoundAliases("step_run_plr", cgs->media.stepRunSoundPlayer);
-    CG_RegisterSurfaceSoundAliases("step_walk", cgs->media.stepWalkSound);
-    CG_RegisterSurfaceSoundAliases("step_walk_plr", cgs->media.stepWalkSoundPlayer);
-    CG_RegisterSurfaceSoundAliases("step_prone", cgs->media.stepProneSound);
-    CG_RegisterSurfaceSoundAliases("step_prone_plr", cgs->media.stepProneSoundPlayer);
-    CG_RegisterSurfaceSoundAliases("land", cgs->media.landSound);
-    CG_RegisterSurfaceSoundAliases("land_plr", cgs->media.landSoundPlayer);
-
-    cgs->media.runningEquipmentSound = Com_FindSoundAlias("gear_rattle_run");
-    cgs->media.runningEquipmentSoundPlayer = Com_FindSoundAlias("gear_rattle_plr_run");
-    cgs->media.walkingEquipmentSound = Com_FindSoundAlias("gear_rattle_walk");
-    cgs->media.walkingEquipmentSoundPlayer = Com_FindSoundAlias("gear_rattle_plr_walk");
-    cgs->media.foliageMovement = Com_FindSoundAlias("movement_foliage");
-    cgs->media.bulletWhizby = Com_FindSoundAlias("whizby");
-    cgs->media.meleeSwingLarge = Com_FindSoundAlias("melee_swing_large");
-    cgs->media.meleeSwingSmall = Com_FindSoundAlias("melee_swing_small");
-    cgs->media.meleeHit = Com_FindSoundAlias("melee_hit");
-    cgs->media.meleeHitOther = Com_FindSoundAlias("melee_hit_other");
-    cgs->media.playerHeartBeatSound = Com_FindSoundAlias("weap_sniper_heartbeat");
-    cgs->media.playerBreathInSound = Com_FindSoundAlias("weap_sniper_breathin");
-    cgs->media.playerBreathOutSound = Com_FindSoundAlias("weap_sniper_breathout");
-    cgs->media.playerBreathGaspSound = Com_FindSoundAlias("weap_sniper_breathgasp");
-    cgs->media.playerSwapOffhand = Com_FindSoundAlias("weap_offhand_select");
-}
+void *Hunk_AllocXAnimClient(int size);
+static void CG_SubtitlePrint(int msec, const snd_alias_t *pAlias);
+int CG_PlaySoundAlias(int entitynum, const vec_t *origin, snd_alias_list_t *aliasList);
+int CG_PlaySoundAliasByName(int entitynum, const vec_t *origin, const char *aliasname);
 
 static void CG_RegisterDvars(void)
 {
@@ -1048,6 +536,449 @@ static void CG_RegisterDvars(void)
     BG_RegisterDvars();
 }
 
+// Retail fills axis[0..2] and the origin in row 3.
+void CG_GetDObjOrientation(int dobjHandle, float (*axis)[3])
+{
+    centity_t *cent;
+
+    if (dobjHandle >= 0 && dobjHandle < 1024) {
+        cent = &cg_entities[dobjHandle];
+        axis[3][0] = cent->lerpOrigin[0];
+        axis[3][1] = cent->lerpOrigin[1];
+        axis[3][2] = cent->lerpOrigin[2];
+        AnglesToAxis(cent->lerpAngles, axis);
+    } else if (dobjHandle >= 1024 && dobjHandle < 1152) {
+        axis[3][0] = cg->viewModelOrigin[0];
+        axis[3][1] = cg->viewModelOrigin[1];
+        axis[3][2] = cg->viewModelOrigin[2];
+        AxisCopy(cg->viewModelAxis, axis);
+    }
+}
+
+void CG_GetEntityOrientation(int entnum, vec_t *origin_out, vec3_t *axis_out)
+{
+    origin_out[0] = cg_entities[entnum].lerpOrigin[0];
+    origin_out[1] = cg_entities[entnum].lerpOrigin[1];
+    origin_out[2] = cg_entities[entnum].lerpOrigin[2];
+    AnglesToAxis(cg_entities[entnum].lerpAngles, axis_out);
+}
+
+int CG_CrosshairPlayer(void)
+{
+    if (cgArray[0].time > cgArray[0].crosshairClientTime + 0x3e8)
+        return -1;
+    return cgArray[0].crosshairClientNum;
+}
+
+void CG_GameMessage(const char *msg)
+{
+    CL_ConsolePrint((print_msg_type_t)1, msg, 0, cg_gameMessageWidth->current.integer);
+}
+
+void CG_BoldGameMessage(const char *msg)
+{
+    CL_ConsolePrint((print_msg_type_t)2, msg, 0, cg_gameBoldMessageWidth->current.integer);
+}
+
+const char *CG_Argv(int arg)
+{
+    Cmd_ArgvBuffer(arg, (char *)&buffer, 0x400);
+    return (const char *)&buffer;
+}
+
+static void CG_RegisterSurfaceSoundAliases(const char *aliasBase, snd_alias_list_t **dest)
+{
+    char aliasName[256];
+    int surfaceType;
+
+    for (surfaceType = 0; surfaceType < 0x17; surfaceType++) {
+        sprintf(aliasName, "%s_%s", aliasBase, Com_SurfaceTypeToName(surfaceType));
+        dest[surfaceType] = Com_FindSoundAlias(aliasName);
+    }
+}
+
+static void CG_RegisterSounds(void)
+{
+    cgs->media.noAmmoSound = Com_FindSoundAlias("player_out_of_ammo");
+    cgs->media.landDmgSound = Com_FindSoundAlias("land_damage");
+
+    CG_RegisterSurfaceSoundAliases("grenade_bounce", cgs->media.grenadeBounceSound);
+    CG_RegisterSurfaceSoundAliases("grenade_explode", cgs->media.grenadeExplodeSound);
+    CG_RegisterSurfaceSoundAliases("rocket_explode", cgs->media.rocketExplodeSound);
+    CG_RegisterSurfaceSoundAliases("bullet_small", cgs->media.bulletHitSmallSound);
+    CG_RegisterSurfaceSoundAliases("bulletspray_small", cgs->media.shotgunHitSound);
+    CG_RegisterSurfaceSoundAliases("bullet_large", cgs->media.bulletHitLargeSound);
+    CG_RegisterSurfaceSoundAliases("step_run", cgs->media.stepRunSound);
+    CG_RegisterSurfaceSoundAliases("step_run_plr", cgs->media.stepRunSoundPlayer);
+    CG_RegisterSurfaceSoundAliases("step_walk", cgs->media.stepWalkSound);
+    CG_RegisterSurfaceSoundAliases("step_walk_plr", cgs->media.stepWalkSoundPlayer);
+    CG_RegisterSurfaceSoundAliases("step_prone", cgs->media.stepProneSound);
+    CG_RegisterSurfaceSoundAliases("step_prone_plr", cgs->media.stepProneSoundPlayer);
+    CG_RegisterSurfaceSoundAliases("land", cgs->media.landSound);
+    CG_RegisterSurfaceSoundAliases("land_plr", cgs->media.landSoundPlayer);
+
+    cgs->media.runningEquipmentSound = Com_FindSoundAlias("gear_rattle_run");
+    cgs->media.runningEquipmentSoundPlayer = Com_FindSoundAlias("gear_rattle_plr_run");
+    cgs->media.walkingEquipmentSound = Com_FindSoundAlias("gear_rattle_walk");
+    cgs->media.walkingEquipmentSoundPlayer = Com_FindSoundAlias("gear_rattle_plr_walk");
+    cgs->media.foliageMovement = Com_FindSoundAlias("movement_foliage");
+    cgs->media.bulletWhizby = Com_FindSoundAlias("whizby");
+    cgs->media.meleeSwingLarge = Com_FindSoundAlias("melee_swing_large");
+    cgs->media.meleeSwingSmall = Com_FindSoundAlias("melee_swing_small");
+    cgs->media.meleeHit = Com_FindSoundAlias("melee_hit");
+    cgs->media.meleeHitOther = Com_FindSoundAlias("melee_hit_other");
+    cgs->media.playerHeartBeatSound = Com_FindSoundAlias("weap_sniper_heartbeat");
+    cgs->media.playerBreathInSound = Com_FindSoundAlias("weap_sniper_breathin");
+    cgs->media.playerBreathOutSound = Com_FindSoundAlias("weap_sniper_breathout");
+    cgs->media.playerBreathGaspSound = Com_FindSoundAlias("weap_sniper_breathgasp");
+    cgs->media.playerSwapOffhand = Com_FindSoundAlias("weap_offhand_select");
+}
+
+void CG_StartAmbient(void)
+{
+    const char *infoString;
+    const snd_alias_t *alias;
+    int fadeTime;
+    int diff;
+
+    infoString = CL_GetConfigString(3);
+    alias = CL_PickSoundAlias(Info_ValueForKey(infoString, "n"));
+    fadeTime = atoi(Info_ValueForKey(infoString, "t"));
+    diff = fadeTime - cg->time;
+    if (diff < 0 || cg->time == 0)
+        diff = 0;
+    SND_PlayAmbientAlias(alias, diff, (snd_alias_system_t)(1));
+}
+
+Bool CG_PlaySoundOnFirstClient(void)
+{
+    return 1;
+}
+
+Bool CG_PlaySoundOnCurrentLocalClient(int entitynum, const vec_t *origin, const char *aliasname)
+{
+    return 1;
+}
+
+int CG_PlayClientSoundAlias(snd_alias_list_t *aliasList)
+{
+    return CG_PlaySoundAlias(cgArray[0].nextSnap->ps.clientNum, cgArray[0].nextSnap->ps.origin, aliasList);
+}
+
+int CG_PlayClientSoundAliasByName(const char *aliasname)
+{
+    return CG_PlaySoundAliasByName(cgArray[0].nextSnap->ps.clientNum, cgArray[0].nextSnap->ps.origin, aliasname);
+}
+
+int CG_PlayEntitySoundAlias(int entitynum, snd_alias_list_t *aliasList)
+{
+    const vec_t *origin;
+    const snd_alias_t *alias;
+    int msec;
+
+    origin = (const vec_t *)((const byte *)cg_entities + entitynum * 548 + 0x108);
+    alias = Com_PickSoundAliasFromList(aliasList);
+    if (!alias)
+        return 0;
+
+    msec = SND_PlaySoundAlias(alias, entitynum, origin, 0, SASYS_CGAME);
+    CG_SubtitlePrint(msec, alias);
+    return msec;
+}
+
+static void CG_SubtitlePrint(int msec, const snd_alias_t *pAlias)
+{
+    int minMsec;
+    int subtitleWidth;
+
+    if (msec && pAlias->pszSubtitle) {
+        if (cgs->viewAspect > 1.3333334f) {
+            subtitleWidth = cg_subtitleWidthWidescreen->current.integer;
+        } else {
+            subtitleWidth = cg_subtitleWidthStandard->current.integer;
+        }
+
+        minMsec = I_fround(cg_subtitleMinTime->current.value * 1000.0f);
+        if (minMsec - msec >= 0)
+            msec = minMsec;
+
+        CL_SubtitlePrint(pAlias->pszSubtitle, msec, subtitleWidth);
+    }
+}
+
+int CG_PlaySoundAlias(int entitynum, const vec_t *origin, snd_alias_list_t *aliasList)
+{
+    const snd_alias_t *alias;
+    int msec;
+
+    alias = Com_PickSoundAliasFromList(aliasList);
+    if (!alias)
+        return 0;
+
+    msec = SND_PlaySoundAlias(alias, entitynum, origin, 0, SASYS_CGAME);
+    CG_SubtitlePrint(msec, alias);
+    return msec;
+}
+
+int CG_PlaySoundAliasByName(int entitynum, const vec_t *origin, const char *aliasname)
+{
+    const snd_alias_t *alias;
+    int msec;
+
+    alias = CL_PickSoundAlias(aliasname);
+    if (!alias)
+        return 0;
+
+    msec = SND_PlaySoundAlias(alias, entitynum, origin, 0, SASYS_CGAME);
+    CG_SubtitlePrint(msec, alias);
+    return msec;
+}
+
+int CG_PlaySoundAliasAsMasterByName(int entitynum, const vec_t *origin, const char *aliasname)
+{
+    const snd_alias_t *alias;
+    int msec;
+
+    alias = CL_PickSoundAlias(aliasname);
+    if (!alias)
+        return 0;
+
+    msec = SND_PlaySoundAliasAsMaster(alias, entitynum, origin, 0, SASYS_CGAME);
+    CG_SubtitlePrint(msec, alias);
+    return msec;
+}
+
+static Bool CG_ReplaceDirective(int *searchPos, int *dstLen, char *dstString)
+{
+    char keyBinding[0x100];
+    char directive[0x100];
+    char srcString[0x100];
+    char *pFound;
+    char *pEnd;
+    int directiveLen;
+    int bindingLen;
+    int newStringLen;
+    int beginLen;
+    int endLen;
+
+    memcpy(srcString, dstString, *dstLen);
+    srcString[*dstLen] = '\0';
+
+    pFound = (char *)strstr(srcString + *searchPos, (const char *)"[{");
+    if (!pFound)
+        return 0;
+
+    pEnd = (char *)strstr(pFound, (const char *)"}]");
+    if (!pEnd)
+        return 0;
+
+    directiveLen = (int)(pEnd - pFound) - 2;
+    if (directiveLen == 0)
+        return 0;
+
+    Controls_GetConfig();
+
+    memcpy(directive, pFound + 2, directiveLen);
+    directive[directiveLen] = '\0';
+
+    if (!GetKeyBindingLocalizedString(directive, keyBinding)) {
+
+        I_strncpyz(keyBinding, UI_SafeTranslateString((const char *)"KEY_UNBOUND"), 0x100);
+    }
+
+    bindingLen = (int)strlen(keyBinding);
+
+    newStringLen = *dstLen - directiveLen + bindingLen - 4;
+
+    if (newStringLen + 1 > 0x100)
+        return 0;
+
+    beginLen = (int)(pFound - srcString);
+
+    dstString += beginLen;
+    memcpy(dstString, keyBinding, bindingLen);
+    dstString += bindingLen;
+
+    endLen = newStringLen - beginLen - bindingLen;
+    memcpy(dstString, pEnd + 2, endLen);
+    dstString[endLen] = '\0';
+
+    *searchPos = bindingLen + beginLen;
+
+    *dstLen = newStringLen;
+
+    return 1;
+}
+
+static void CG_LocalizeHudElemString(const char *message, const char *messageType, char *hudElemString)
+{
+    const char *localizedString;
+    int searchPos;
+    int stringLen;
+
+    localizedString = SEH_LocalizeTextMessage(message, messageType, (msgLocErrType_t)0);
+    stringLen = (int)strlen(localizedString);
+
+    if (stringLen + 1 > 0x100) {
+        return;
+    }
+
+    memcpy(hudElemString, localizedString, stringLen);
+    hudElemString[stringLen] = '\0';
+
+    searchPos = 0;
+    while (CG_ReplaceDirective(&searchPos, &stringLen, hudElemString)) {
+    }
+}
+
+void CG_TranslateHudElemMessage(const char *message, const char *messageType, char *hudElemString)
+{
+    CG_LocalizeHudElemString(message, messageType, hudElemString);
+}
+
+void CG_SafeTranslateHudElemString(int index, char *hudElemString)
+{
+    if (index == 0) {
+        return;
+    }
+
+    CG_LocalizeHudElemString(CL_GetConfigString(index + 0x51e), "hudelem string", hudElemString);
+}
+
+static byte *CG_FindSmokeGrenadeEntityState(int minTime, int gametime)
+{
+    byte *snap = (byte *)cg->nextSnap;
+    int entityCount = ((snapshot_t *)snap)->numEntities;
+    int bestTime = 0;
+    int bestIndex = 0;
+    qboolean found = 0;
+    int i;
+
+    for (i = 0; i < entityCount; i++) {
+        byte *es = (byte *)(((char *)snap + offsetof(snapshot_t, entities[0].number)) + i * 0xf0);
+        int eventTime;
+
+        if ((*(byte *)(es + 0xa) & 1) == 0)
+            continue;
+
+        if (minTime > ((entityState_t *)es)->time2)
+            continue;
+
+        eventTime = ((entityState_t *)es)->time;
+        if (minTime > eventTime)
+            continue;
+
+        if (gametime < eventTime)
+            continue;
+
+        if (!found || eventTime < bestTime) {
+            bestIndex = i;
+            bestTime = eventTime;
+            found = 1;
+        }
+    }
+
+    if (!found)
+        return NULL;
+
+    return (byte *)(((char *)snap + offsetof(snapshot_t, entities[0].number)) + bestIndex * 0xf0);
+}
+
+void CG_PlaySmokeGrenadesAtTime(int gametime)
+{
+    byte *smokeGrenadeES;
+    int smokeTime;
+    vec3_t up;
+
+    if (!cgs->smokeGrenadeFx)
+        return;
+
+    Com_Printf("Playing smoke grenades at time %i\n", gametime);
+
+    smokeGrenadeES = CG_FindSmokeGrenadeEntityState(gametime - (int)(FX_GetEffectLength((EffectTemplate *)cgs->smokeGrenadeFx) + 1.0f), gametime);
+    if (smokeGrenadeES) {
+        FX_Rewind(*(int *)(smokeGrenadeES + 0x54));
+        FX_WarpTime(gametime + 120000);
+        Com_Printf("Warping FX time to %i to kill off existing effects\n", gametime + 120000);
+
+        do {
+            smokeTime = *(int *)(smokeGrenadeES + 0x54);
+
+            Com_Printf("Warping FX time to %i\n", smokeTime);
+            FX_WarpTime(smokeTime);
+
+            Com_Printf("Playing smoke grenade at time %i\n", smokeTime);
+            up[0] = 0.0f;
+            up[1] = 0.0f;
+            up[2] = 1.0f;
+            FX_PlayEffect((EffectTemplate *)cgs->smokeGrenadeFx, (const vec_t *)(smokeGrenadeES + 0x18), up);
+
+            smokeGrenadeES = CG_FindSmokeGrenadeEntityState(smokeTime + 1, gametime);
+        } while (smokeGrenadeES);
+    } else {
+        FX_Rewind(gametime);
+        FX_WarpTime(gametime + 120000);
+    }
+
+    Com_Printf("Done with smoke grenades, now warping FX time to current time %i\n", gametime);
+    FX_WarpTime(gametime);
+}
+
+static void CG_LoadHudMenu(void)
+{
+    MenuList *menuList;
+    menuDef_t *menu;
+
+    menuList = UI_LoadMenus("ui_mp/hud.txt", 7);
+    UI_AddMenuList(&cgDC, menuList);
+
+    if (CL_GetLocalClientActiveCount() == 1) {
+        menu = Menus_FindByName(&cgDC, "Compass");
+    } else {
+        menu = Menus_FindByName(&cgDC, "Compass_mp");
+    }
+
+    if (menu != NULL) {
+        cgs_t *m = (cgs_t *)cgs;
+        m->compassWidth = menu->window.rect[0].w;
+        m->compassHeight = menu->window.rect[0].h;
+        m->compassY = menu->window.rect[0].y;
+    }
+}
+
+void CG_InitVote(void)
+{
+    cgs_t *m = (cgs_t *)cgs;
+    m->voteTime = atoi(CL_GetConfigString(0xf));
+    m->voteYes = atoi(CL_GetConfigString(0x11));
+    m->voteNo = atoi(CL_GetConfigString(0x12));
+    I_strncpyz(m->voteString, SEH_LocalizeTextMessage(CL_GetConfigString(0x10), "vote string", (msgLocErrType_t)0), sizeof(m->voteString));
+}
+
+static struct XModel *CG_GetXModel(const char *modelName)
+{
+    return CL_RegisterModel(modelName);
+}
+
+static void CG_CreateDObj(DObjModel_s *dobjModels, unsigned short numModels, struct XAnimTree_s *tree, int handle, clientInfo_t *ci)
+{
+    int weaponNum;
+    weaponInfo_t *weapInfo;
+
+    weaponNum = ci->iDObjWeapon;
+    if (weaponNum) {
+        weapInfo = &cg_weaponsArray[weaponNum];
+        if (weapInfo->worldSurfModel) {
+            dobjModels[numModels].model = weapInfo->worldSurfModel;
+            dobjModels[numModels].boneName = ci->leftHandGun ? cg_weaponleftbone->current.string : cg_weaponrightbone->current.string;
+            dobjModels[numModels].ignoreCollision = 0;
+            ++numModels;
+        }
+    }
+
+    Com_ClientDObjCreate(dobjModels, numModels, tree, handle);
+}
+
 static void CG_InitXAnimTrees(void)
 {
     byte *cgBase = (byte *)cg;
@@ -1212,4 +1143,73 @@ void CG_Init(int serverMessageNum, int serverCommandSequence, int clientNum)
 #    undef cgsBase
 }
 
-#endif
+void CG_FreeWeapons(void)
+{
+    weaponInfo_t *weapons = (weaponInfo_t *)cg_weaponsArray;
+    int i;
+
+    for (i = 1; i <= BG_GetNumWeapons(); ++i) {
+        Com_SafeClientDObjFree(CG_WeaponDObjHandle(i));
+        if (weapons[i].tree) {
+            XAnimFreeTree(weapons[i].tree, 0);
+            weapons[i].tree = NULL;
+        }
+    }
+
+    memset((void *)cg_itemsArray, 0, CG_MAX_ITEMS * sizeof(itemInfo_t));
+    memset((void *)cg_weaponsArray, 0, CG_MAX_WEAPONS * sizeof(weaponInfo_t));
+}
+
+void CG_Shutdown(void)
+{
+    byte *cgBase;
+    byte *cgsBase;
+    int i;
+
+    CL_TrackStatistics(0);
+    SND_FadeAllSounds(1.0f, 0);
+    g_ambientStarted = 0;
+    g_mapLoaded = 0;
+    Mantle_ShutdownAnims();
+    CG_FreeWeapons();
+    CG_FreeClientDObjInfo();
+    CG_FreeEntityDObjInfo();
+    CL_FreeWeaponInfoMemory();
+    FX_FreeSystem();
+
+    cgBase = (byte *)cg;
+    for (i = 0; i < 64; ++i, cgBase += 0x4b8) {
+        struct XAnimTree_s *tree = ((cg_t *)cgBase)->bgs.clientinfo[0].pXAnimTree;
+        if (tree) {
+            XAnimFreeTree(tree, 0);
+            ((cg_t *)cgBase)->bgs.clientinfo[0].pXAnimTree = NULL;
+        }
+    }
+
+    cgsBase = (byte *)cgs;
+    for (i = 0; i < 8; ++i, cgsBase += 0x4b8) {
+        struct XAnimTree_s *tree = ((cgs_t *)cgsBase)->corpseinfo[0].pXAnimTree;
+        if (tree) {
+            XAnimFreeTree(tree, 0);
+            ((cgs_t *)cgsBase)->corpseinfo[0].pXAnimTree = NULL;
+        }
+    }
+
+    if (cgs->localServer == 0) {
+        Scr_ShutdownGameStrings();
+    }
+
+    memset((void *)cg, 0, sizeof(cg_t));
+}
+
+static void *Hunk_AllocXAnimPrecache(int size)
+{
+    return Hunk_AllocAlignInternal(size, 4);
+}
+
+void *Hunk_AllocXAnimClient(int size)
+{
+    return Hunk_AllocInternal(size);
+}
+
+

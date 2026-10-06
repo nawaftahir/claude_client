@@ -1,6 +1,45 @@
 #include "../qcommon/qcommon.h"
 #include "g_shared.h"
 
+void Player_UseEntity( gentity_t *playerEnt, gentity_t *useEnt );
+bool Player_ActivateCmd( gentity_t *ent );
+void Player_ActivateHoldCmd( gentity_t *ent );
+void Player_UpdateActivate( gentity_t *ent );
+static signed int compare_use( const void *num1, const void *num2 );
+int Player_GetUseList( gentity_t *ent, useList_t *useList );
+int Player_GetItemCursorHint( gclient_t *client, gentity_t *traceEnt );
+void Player_SetTurretDropHint( gentity_t *ent );
+void Player_UpdateCursorHints( gentity_t *ent );
+void Player_UpdateLookAtEntity( gentity_t *ent );
+
+extern const vec3_t useRadius;
+static const vec3_t useRadius = { 192.0f, 192.0f, 96.0f };
+
+/*
+===============
+Player_UpdateLookAtEntityTrace
+===============
+*/
+gentity_t* Player_UpdateLookAtEntityTrace( trace_t *trace, const vec3_t start, const vec3_t end,
+        int passentitynum, int contentmask, unsigned char *priorityMap, vec3_t vForward )
+{
+	vec3_t hitPos;
+	float visibility;
+	G_LocationalTrace(trace, start, end, passentitynum, contentmask, priorityMap);
+	if ( trace->entityNum >= ENTITYNUM_WORLD )
+	{
+		return NULL;
+	}
+	// reject targets hidden by smoke
+	VectorMA(start, trace->fraction * 15000.0f, vForward, hitPos);
+	visibility = SV_FX_GetVisibility(start, hitPos);
+	if ( visibility < 0.2f )
+	{
+		return NULL;
+	}
+	return &g_entities[trace->entityNum];
+}
+
 /*
 ===============
 Player_UseEntity
@@ -171,9 +210,6 @@ static signed int compare_use( const void *num1, const void *num2 )
 
 	return a->score - b->score;
 }
-
-extern const vec3_t useRadius;
-static const vec3_t useRadius = { 192.0f, 192.0f, 96.0f };
 
 /*
 ===============
@@ -502,37 +538,6 @@ void Player_UpdateCursorHints( gentity_t *ent )
 
 /*
 ===============
-Player_UpdateLookAtEntityTrace
-===============
-*/
-gentity_t* Player_UpdateLookAtEntityTrace( trace_t *trace, const vec3_t start, const vec3_t end,
-        int passentitynum, int contentmask, unsigned char *priorityMap, vec3_t vForward )
-{
-	vec3_t hitPos;
-	float visibility;
-
-	G_LocationalTrace(trace, start, end, passentitynum, contentmask, priorityMap);
-
-	if ( trace->entityNum >= ENTITYNUM_WORLD )
-	{
-		return NULL;
-	}
-
-	// reject targets hidden by smoke
-	VectorMA(start, trace->fraction * 15000.0f, vForward, hitPos);
-
-	visibility = SV_FX_GetVisibility(start, hitPos);
-
-	if ( visibility < 0.2f )
-	{
-		return NULL;
-	}
-
-	return &g_entities[trace->entityNum];
-}
-
-/*
-===============
 Player_UpdateLookAtEntity
 ===============
 */
@@ -613,3 +618,4 @@ void Player_UpdateLookAtEntity( gentity_t *ent )
 		}
 	}
 }
+

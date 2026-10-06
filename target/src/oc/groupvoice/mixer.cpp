@@ -355,3 +355,4 @@ int mixerSetMicrophoneMute( bool mute )
 	mixerClose( hMixer );
 	return 0;
 }
+

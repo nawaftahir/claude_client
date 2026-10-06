@@ -171,3 +171,4 @@ void UI_LoadArenas(void)
             break;
     }
 }
+

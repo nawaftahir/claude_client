@@ -4,6 +4,45 @@
 
 void ClientCommand( int clientNum );
 
+void DeathmatchScoreboardMessage( gentity_t *ent );
+void Cmd_Score_f( gentity_t *ent );
+qboolean CheatsOk( gentity_t *ent );
+char *ConcatArgs( int start );
+void SanitizeString( char *in, char *out );
+void G_setfog( const char *fogstring );
+void Cmd_Fog_f();
+void Cmd_Give_f( gentity_t *ent );
+void Cmd_God_f( gentity_t *ent );
+void Cmd_DemiGod_f( gentity_t *ent );
+void Cmd_Notarget_f( gentity_t *ent );
+void Cmd_Noclip_f( gentity_t *ent );
+void Cmd_UFO_f( gentity_t *ent );
+void Cmd_Kill_f( gentity_t *ent );
+qboolean Cmd_FollowCycle_f( gentity_t *ent, int dir );
+qboolean G_IsPlaying( gentity_t *ent );
+static void G_SayTo( gentity_t *ent, gentity_t *other, int mode, int color, const char *name, const char *message );
+void G_Say( gentity_t *ent, gentity_t *target, int mode, const char *chatText );
+static void Cmd_Say_f( gentity_t *ent, int mode, qboolean arg0 );
+void Cmd_GameCommand_f( gentity_t *ent );
+void Cmd_Where_f( gentity_t *ent );
+void Cmd_CallVote_f( gentity_t *ent );
+void Cmd_Vote_f( gentity_t *ent );
+void Cmd_SetViewpos_f( gentity_t *ent );
+void Cmd_EntityCount_f( gentity_t *ent );
+void Cmd_PrintEntities_f( void );
+void ClientCommand( int clientNum );
+
+static const char *gc_orders[] =
+{
+	"GAME_GC_HOLDYOURPOSITION",
+	"GAME_GC_HOLDTHISPOSITION",
+	"GAME_GC_COMEHERE",
+	"GAME_GC_COVERME",
+	"GAME_GC_GUARDLOCATION",
+	"GAME_GC_SEARCHDESTROY",
+	"GAME_GC_REPORT"
+};
+
 /*
 ==================
 DeathmatchScoreboardMessage
@@ -162,7 +201,6 @@ void SanitizeString( char *in, char *out )
 
 	*out = 0;
 }
-
 
 int ClientNumberFromString( gentity_t *to, char *s )
 {
@@ -420,7 +458,6 @@ void Cmd_Give_f( gentity_t *ent )
 		level.initializing = qfalse;
 	}
 }
-
 
 void Cmd_Take_f( gentity_t *ent )
 {
@@ -705,7 +742,6 @@ void Cmd_Kill_f( gentity_t *ent )
 
 	player_die(ent, ent, ent, 100000, MOD_SUICIDE, WP_NONE, NULL, HITLOC_NONE, 0);
 }
-
 
 void StopFollowing( gentity_t *ent )
 {
@@ -1007,7 +1043,6 @@ static void Cmd_Say_f( gentity_t *ent, int mode, qboolean arg0 )
 	G_Say( ent, NULL, mode, p );
 }
 
-
 void Cmd_Tell_f( gentity_s *ent )
 {
 	int targetNum;
@@ -1049,17 +1084,6 @@ void Cmd_Tell_f( gentity_s *ent )
 	G_Say(ent, target, SAY_TELL, p);
 	G_Say(ent, ent, SAY_TELL, p);
 }
-
-static const char *gc_orders[] =
-{
-	"GAME_GC_HOLDYOURPOSITION",
-	"GAME_GC_HOLDTHISPOSITION",
-	"GAME_GC_COMEHERE",
-	"GAME_GC_COVERME",
-	"GAME_GC_GUARDLOCATION",
-	"GAME_GC_SEARCHDESTROY",
-	"GAME_GC_REPORT"
-};
 
 /*
 ==================
@@ -1474,7 +1498,6 @@ void Cmd_EntityCount_f( gentity_t *ent )
 	Com_Printf("entity count = %i\n", level.num_entities);
 }
 
-
 void Cmd_MenuResponse_f( gentity_t *pEnt )
 {
 	int iMenuIndex;
@@ -1684,3 +1707,4 @@ void ClientCommand( int clientNum )
 
 	SV_GameSendServerCommand(clientNum, SV_CMD_CAN_IGNORE, va("%c \"GAME_UNKNOWNCLIENTCOMMAND\x15%s\"", 101, cmd));
 }
+

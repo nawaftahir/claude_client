@@ -1,6 +1,198 @@
 #include "../qcommon/qcommon.h"
 #include "script_public.h"
 
+static inline unsigned int Scr_GetLocalVarAtIndex( int index );
+static inline unsigned int Scr_GetLocalVar( const char *pos );
+static inline short Scr_ReadShort( const char **pos );
+static inline int Scr_ReadInt( const char **pos );
+static inline const float* Scr_ReadVector( const char **pos );
+static inline const int* Scr_ReadIntArray( const char **pos, int count );
+static inline unsigned short Scr_ReadUnsignedShort( const char **pos );
+static inline unsigned int Scr_ReadUnsigned( const char **pos );
+static inline float Scr_ReadFloat( const char **pos );
+static inline const char* Scr_ReadCodePos( const char **pos );
+void Scr_ClearErrorMessage();
+void Scr_VM_Init();
+void VM_Shutdown();
+void Scr_Init();
+void Scr_Settings( int developer, int developer_script, int abort_on_error );
+void Scr_Shutdown();
+void Scr_Abort();
+void Scr_SetLoading( int bLoading );
+void Scr_ErrorInternal();
+unsigned int Scr_GetNumScriptThreads();
+void Scr_ClearOutParams();
+unsigned int GetDummyObject( void );
+unsigned int GetDummyFieldValue( void );
+unsigned int VM_ExecuteInternal( function_stack_t fs );
+char* Scr_GetReturnPos( unsigned int *localId );
+const char* Scr_GetNextCodepos( VariableValue *top, const char *pos, int opcode, int mode, unsigned int *localId );
+void VM_CancelNotifyInternal( unsigned int notifyListOwnerId, unsigned int startLocalId, unsigned int notifyListId, unsigned int notifyNameListId, unsigned int stringValue );
+void VM_CancelNotify( unsigned int notifyListOwnerId, unsigned int startLocalId );
+VariableStackBuffer* VM_ArchiveStack( int size, const char *pos, VariableValue *top, unsigned int localVarCount, unsigned int *localId );
+int Scr_AddLocalVars( unsigned int localId );
+void VM_UnarchiveStack( unsigned int startLocalId, function_stack_t *fs, VariableStackBuffer *stackValue );
+void VM_TerminateStack( unsigned int endLocalId, unsigned int startLocalId, VariableStackBuffer *stackValue );
+void Scr_TerminateRunningThread( unsigned int localId );
+void Scr_TerminateWaitThread( unsigned int localId, unsigned int startLocalId );
+void Scr_CancelWaittill( unsigned int startLocalId );
+void Scr_TerminateWaittillThread( unsigned int localId, unsigned int startLocalId );
+unsigned int Scr_GetWaittillThreadStackId( unsigned int localId, unsigned int startLocalId );
+bool Scr_IsEndonThread( unsigned int localId );
+void Scr_TerminateThread( unsigned int localId );
+void VM_Notify( unsigned int notifyListOwnerId, unsigned int stringValue, VariableValue *top );
+void Scr_NotifyNum( int entnum, int classnum, unsigned int stringValue, unsigned int paramcount );
+void Scr_CancelNotifyList( unsigned int notifyListOwnerId );
+void VM_TerminateTime( unsigned int timeId );
+void VM_Resume( unsigned int timeId );
+void IncInParam();
+unsigned int VM_Execute( unsigned int localId, const char *pos, unsigned int paramcount );
+unsigned short Scr_ExecThread( int handle, unsigned int paramcount );
+unsigned short Scr_ExecEntThreadNum( int entnum, int classnum, int handle, unsigned int paramcount );
+void Scr_AddExecThread( int handle, unsigned int paramcount );
+void Scr_AddExecEntThreadNum( int entnum, int classnum, int handle, unsigned int paramcount );
+void Scr_FreeThread( unsigned short handle );
+void Scr_ExecCode( const char *pos, unsigned int localId );
+void VM_SetTime();
+int Scr_FindAllThreadsInternal( unsigned int selfId, unsigned int threadId, int count, bool a4, unsigned int *threads );
+void Scr_InitSystem( int sys );
+void Scr_ShutdownSystem( unsigned char sys, int bComplete );
+int Scr_IsSystemActive( bool unused );
+int Scr_GetInt( unsigned int index );
+scr_anim_s Scr_GetAnim( unsigned int index, XAnimTree_s *tree );
+float Scr_GetFloat( unsigned int index );
+unsigned int Scr_GetConstString( unsigned int index );
+unsigned int Scr_GetConstLowercaseString( unsigned int index );
+const char* Scr_GetString( unsigned int index );
+unsigned int Scr_GetConstStringIncludeNull( unsigned int index );
+const char* Scr_GetStringIncludeNull( unsigned int index );
+const char* Scr_GetDebugString( unsigned int index );
+unsigned int Scr_GetConstIString( unsigned int index );
+const char* Scr_GetIString( unsigned int index );
+void Scr_GetVector( unsigned int index, vec3_t vectorValue );
+unsigned int Scr_GetFunc( unsigned int index );
+scr_entref_t Scr_GetEntityRef( unsigned int index );
+unsigned int Scr_GetObject( unsigned int index );
+int Scr_GetType( unsigned int index );
+const char* Scr_GetTypeName( unsigned int index );
+int Scr_GetPointerType( unsigned int index );
+unsigned int Scr_GetNumParam();
+void Scr_AddBool( int value );
+void Scr_AddInt( int value );
+void Scr_AddFloat( float value );
+void Scr_AddAnim( scr_anim_s value );
+void Scr_AddUndefined();
+void Scr_AddObject( unsigned int id );
+void Scr_AddEntityNum( int entnum, int classnum );
+void Scr_AddStruct();
+void Scr_AddString( const char *value );
+void Scr_AddIString( const char *value );
+void Scr_AddConstString( unsigned int value );
+void Scr_AddVector( const vec3_t value );
+void Scr_MakeArray();
+void Scr_AddArray();
+void Scr_AddArrayStringIndexed( unsigned int stringValue );
+void Scr_Error( const char *error );
+void Scr_ErrorWithDialogMessage( const char *error, const char *dialog_error );
+void Scr_TerminalError( const char *error );
+void Scr_ParamError( unsigned int index, const char *error );
+void Scr_ObjectError( const char *error );
+bool SetEntityFieldValue( unsigned int classnum, int entnum, int offset, VariableValue *value );
+VariableValue GetEntityFieldValue( unsigned int classnum, int entnum, int offset );
+void Scr_SetStructField( unsigned int structId, unsigned int index );
+void Scr_SetDynamicEntityField( int entnum, int classnum, unsigned int index );
+void Scr_IncTime();
+void Scr_DecTime();
+void Scr_RunCurrentThreads();
+void Scr_ResetTimeout();
+void Scr_StackClear( void );
+void Scr_TraverseScript( char const *pos );
+
+char g_EndPos;
+static jmp_buf g_script_error[MAX_VM_STACK_DEPTH + 1];
+static int g_script_error_level;
+scrVmGlob_t scrVmGlob __attribute__((aligned(128)));
+scrVmPub_t scrVmPub __attribute__((aligned(128)));
+/*
+==============
+VM_Resume
+==============
+*/
+unsigned int VM_ExecuteInternal( function_stack_t fs );
+VariableStackBuffer* VM_ArchiveStack( int size, const char *pos, VariableValue *top, unsigned int localVarCount, unsigned int *localId );
+void VM_Notify( unsigned int notifyListOwnerId, unsigned int stringValue, VariableValue *top );
+unsigned int VM_Execute( unsigned int localId, const char *pos, unsigned int paramcount );
+void Scr_Error( const char *error );
+void Scr_TerminalError( const char *error );
+void Scr_RunCurrentThreads();
+void Scr_ResetTimeout();
+
+/*
+==============
+Scr_GetAnimTree
+==============
+*/
+scr_animtree_t Scr_GetAnimTree( unsigned int index ) // untested
+{
+	VariableValue *value;
+	if ( index < scrVmPub.outparamcount )
+	{
+		value = scrVmPub.top - index;
+		if ( value->type == VAR_INTEGER )
+		{
+			if ( value->u.intValue <= scrAnimPub.xanim_num[SCR_XANIM_SERVER] )
+			{
+				if ( scrAnimPub.xanim_lookup[SCR_XANIM_SERVER][value->u.intValue].anims )
+					return scrAnimPub.xanim_lookup[SCR_XANIM_SERVER][value->u.intValue];
+			}
+			scrVarPub.error_message = "bad anim tree";
+		}
+		else
+		{
+			scrVarPub.error_message = va("type %s is not an animtree", var_typename[value->type]);
+		}
+		RemoveRefToValue(value);
+		value->type = VAR_UNDEFINED;
+		scrVarPub.error_index = index + 1;
+		Scr_ErrorInternal();
+	}
+	Scr_Error(va("parameter %d does not exist", index + 1));
+	return scrAnimPub.xanim_lookup[SCR_XANIM_SERVER][0];
+}
+
+/*
+==============
+Scr_IsSystemActive
+==============
+*/
+int Scr_IsSystemActive( bool unused )
+{
+	return scrVarPub.timeArrayId != 0;
+}
+
+/*
+==============
+Scr_ErrorWithDialogMessage
+==============
+*/
+void Scr_ErrorWithDialogMessage( const char *error, const char *dialog_error )
+{
+	scrVarPub.error_message = error;
+	scrVmGlob.dialog_error_message = dialog_error;
+
+	Scr_ErrorInternal();
+}
+
+/*
+==============
+Scr_ResetTimeout
+==============
+*/
+void Scr_ResetTimeout()
+{
+	scrVmGlob.starttime = Sys_MilliSeconds();
+}
+
 /*
 ==============
 Scr_GetLocalVarAtIndex
@@ -115,28 +307,6 @@ static inline const char* Scr_ReadCodePos( const char **pos )
 {
 	return (const char *)Scr_ReadInt( pos );
 }
-
-char g_EndPos;
-static jmp_buf g_script_error[MAX_VM_STACK_DEPTH + 1];
-static int g_script_error_level;
-
-scrVmGlob_t scrVmGlob __attribute__((aligned(128)));
-scrVmPub_t scrVmPub __attribute__((aligned(128)));
-
-/*
-==============
-VM_Resume
-==============
-*/
-unsigned int VM_ExecuteInternal( function_stack_t fs );
-
-VariableStackBuffer* VM_ArchiveStack( int size, const char *pos, VariableValue *top, unsigned int localVarCount, unsigned int *localId );
-void VM_Notify( unsigned int notifyListOwnerId, unsigned int stringValue, VariableValue *top );
-unsigned int VM_Execute( unsigned int localId, const char *pos, unsigned int paramcount );
-void Scr_Error( const char *error );
-void Scr_TerminalError( const char *error );
-void Scr_RunCurrentThreads();
-void Scr_ResetTimeout();
 
 /*
 ==============
@@ -3602,16 +3772,6 @@ void Scr_ShutdownSystem( unsigned char sys, int bComplete )
 
 /*
 ==============
-Scr_IsSystemActive
-==============
-*/
-int Scr_IsSystemActive( bool unused )
-{
-	return scrVarPub.timeArrayId != 0;
-}
-
-/*
-==============
 Scr_GetInt
 ==============
 */
@@ -3686,46 +3846,6 @@ error:
 	anim.tree = 0;
 
 	return anim;
-}
-
-/*
-==============
-Scr_GetAnimTree
-==============
-*/
-scr_animtree_t Scr_GetAnimTree( unsigned int index ) // untested
-{
-	VariableValue *value;
-
-	if ( index < scrVmPub.outparamcount )
-	{
-		value = scrVmPub.top - index;
-
-		if ( value->type == VAR_INTEGER )
-		{
-			if ( value->u.intValue <= scrAnimPub.xanim_num[SCR_XANIM_SERVER] )
-			{
-				if ( scrAnimPub.xanim_lookup[SCR_XANIM_SERVER][value->u.intValue].anims )
-					return scrAnimPub.xanim_lookup[SCR_XANIM_SERVER][value->u.intValue];
-			}
-
-			scrVarPub.error_message = "bad anim tree";
-		}
-		else
-		{
-			scrVarPub.error_message = va("type %s is not an animtree", var_typename[value->type]);
-		}
-
-		RemoveRefToValue(value);
-		value->type = VAR_UNDEFINED;
-
-		scrVarPub.error_index = index + 1;
-		Scr_ErrorInternal();
-	}
-
-	Scr_Error(va("parameter %d does not exist", index + 1));
-
-	return scrAnimPub.xanim_lookup[SCR_XANIM_SERVER][0];
 }
 
 /*
@@ -4339,19 +4459,6 @@ void Scr_Error( const char *error )
 
 /*
 ==============
-Scr_ErrorWithDialogMessage
-==============
-*/
-void Scr_ErrorWithDialogMessage( const char *error, const char *dialog_error )
-{
-	scrVarPub.error_message = error;
-	scrVmGlob.dialog_error_message = dialog_error;
-
-	Scr_ErrorInternal();
-}
-
-/*
-==============
 Scr_TerminalError
 ==============
 */
@@ -4534,16 +4641,6 @@ void Scr_RunCurrentThreads()
 	assert(scrVmPub.top == scrVmPub.stack);
 
 	VM_SetTime();
-}
-
-/*
-==============
-Scr_ResetTimeout
-==============
-*/
-void Scr_ResetTimeout()
-{
-	scrVmGlob.starttime = Sys_MilliSeconds();
 }
 
 /*
@@ -4741,4 +4838,5 @@ loop:
 		return;
 	}
 }
+
 

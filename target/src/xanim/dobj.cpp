@@ -3,6 +3,8 @@
 
 static unsigned int g_empty;
 
+const char *DObjGetBoneName(const DObj_s *obj, int boneIndex);
+
 void DObjInit()
 {
 	int duplicatePartBits[5];
@@ -1614,3 +1616,4 @@ void DObjSetModel(DObj_s *obj, XModel *model)
 	obj->numBones = (byte)model->parts->numBones;
 	obj->models[0] = model;
 }
+

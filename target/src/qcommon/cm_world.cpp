@@ -6,6 +6,31 @@
 
 static cm_world_t cm_world;
 
+static unsigned short CM_AllocWorldSector( vec2_t mins, vec2_t maxs );
+void CM_ClearWorld();
+void CM_LinkWorld();
+void CM_UnlinkEntity( svEntity_t *ent );
+static void CM_AddEntityToNode( svEntity_t *ent, unsigned short childNodeIndex );
+static void CM_AddStaticModelToNode( cStaticModel_t *staticModel, unsigned short childNodeIndex );
+static void CM_SortNode( unsigned short nodeIndex, vec2_t mins, vec2_t maxs );
+void CM_LinkEntity( svEntity_t *ent, vec3_t absmin, vec3_t absmax, clipHandle_t clipHandle );
+void CM_LinkStaticModel( cStaticModel_t *staticModel );
+void CM_LinkAllStaticModels();
+static void CM_AreaEntities_r( unsigned short nodeIndexIn, areaParms_t *ap );
+int CM_AreaEntities( const vec3_t mins, const vec3_t maxs, int *entityList, int maxcount, int contentmask );
+static void CM_PointTraceStaticModels_r( locTraceWork_t *tw, unsigned short nodeIndex, const vec4_t p1_, const vec4_t p2, trace_t *trace );
+void CM_PointTraceStaticModels( trace_t *results, const vec3_t start, const vec3_t end, int contentmask );
+static qboolean CM_PointTraceStaticModelsComplete_r( staticmodeltrace_t *clip, unsigned short nodeIndex, const vec3_t p1_, const vec3_t p2 );
+qboolean CM_PointTraceStaticModelsComplete( const vec3_t start, const vec3_t end, int contentmask );
+static void CM_ClipMoveToEntities_r( moveclip_t *clip, unsigned short nodeIndex, const vec4_t p1, const vec4_t p2, trace_t *trace );
+void CM_ClipMoveToEntities( moveclip_t *clip, trace_t *trace );
+static int CM_ClipSightTraceToEntities_r( sightclip_t *clip, unsigned short nodeIndex, const vec3_t p1, const vec3_t p2 );
+int CM_ClipSightTraceToEntities( sightclip_t *clip );
+static void CM_PointTraceToEntities_r( pointtrace_t *clip, unsigned short nodeIndex, const vec4_t p1, const vec4_t p2, trace_t *trace );
+void CM_PointTraceToEntities( pointtrace_t *clip, trace_t *trace );
+static int CM_PointSightTraceToEntities_r( sightpointtrace_t *clip, unsigned short nodeIndex, const vec3_t p1, const vec3_t p2 );
+int CM_PointSightTraceToEntities( sightpointtrace_t *clip );
+
 /*
 ================
 CM_AllocWorldSector
@@ -1336,3 +1361,4 @@ int CM_PointSightTraceToEntities( sightpointtrace_t *clip )
 	hitNum = CM_PointSightTraceToEntities_r(clip, 1, clip->start, clip->end);
 	return hitNum;
 }
+

@@ -27,6 +27,28 @@ void ClientThink( int clientNum );
 qboolean G_ClientCanSpectateTeam( gclient_t *client, int team );
 void G_PlayerEvent( int clientNum, int event );
 
+void G_SetClientSound( gentity_t *ent );
+void ClientImpacts( gentity_t *ent, pmove_t *pm );
+void G_TouchTriggers( gentity_t *ent );
+void SpectatorThink( gentity_t *ent, usercmd_t *ucmd );
+qboolean ClientInactivityTimer( gclient_t *client );
+void ClientIntermissionThink( gentity_t *ent, usercmd_t *ucmd );
+void ClientEvents( gentity_t *ent, int oldEventSequence );
+void G_SetLastServerTime( int clientNum, int lastServerTime );
+void G_SetClientContents( gentity_t *pEnt );
+void G_PlayerStateToEntityStateExtrapolate( playerState_t *ps, entityState_t *s, int time, qboolean snap );
+void G_AddPlayerMantleBlockage( vec3_t endPos, int duration, pmove_t *pm );
+void ClientThink( int clientNum );
+void G_RunClient( gentity_t *ent );
+void ClientIntermission( gentity_t *ent );
+void SpectatorClientEndFrame( gentity_t *ent );
+qboolean G_ClientCanSpectateTeam( gclient_t *client, int team );
+qboolean GetFollowPlayerState( int clientNum, playerState_t *ps );
+void G_PlayerController( gentity_t *self, int *partBits );
+qboolean G_UpdateClientInfo( gentity_t *ent );
+void ClientEndFrame( gentity_t *ent );
+void G_PlayerEvent( int clientNum, int event );
+
 void P_DamageFeedback( gentity_t *player )
 {
 	gclient_t *client;
@@ -1683,3 +1705,4 @@ void G_PlayerEvent( int clientNum, int event )
 		break;
 	}
 }
+

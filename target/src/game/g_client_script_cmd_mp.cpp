@@ -69,6 +69,68 @@ static const scr_method_t player_methods[] =
 };
 
 
+void PlayerCmd_giveWeapon( scr_entref_t entref );
+void PlayerCmd_takeWeapon( scr_entref_t entref );
+static qboolean ClientPlaying( gentity_t *pSelf );
+void PlayerCmd_getCurrentWeapon( scr_entref_t entref );
+void PlayerCmd_getCurrentOffhand( scr_entref_t entref );
+void PlayerCmd_hasWeapon( scr_entref_t entref );
+void PlayerCmd_switchToWeapon( scr_entref_t entref );
+void PlayerCmd_switchToOffhand( scr_entref_t entref );
+void PlayerCmd_giveStartAmmo( scr_entref_t entref );
+void PlayerCmd_giveMaxAmmo( scr_entref_t entref );
+void PlayerCmd_getFractionStartAmmo( scr_entref_t entref );
+void PlayerCmd_getFractionMaxAmmo( scr_entref_t entref );
+void PlayerCmd_setOrigin( scr_entref_t entref );
+void PlayerCmd_setAngles( scr_entref_t entref );
+void PlayerCmd_getAngles( scr_entref_t entref );
+void PlayerCmd_useButtonPressed( scr_entref_t entref );
+void PlayerCmd_attackButtonPressed( scr_entref_t entref );
+void PlayerCmd_meleeButtonPressed( scr_entref_t entref );
+void PlayerCmd_playerADS( scr_entref_t entref );
+void PlayerCmd_isOnGround( scr_entref_t entref );
+void PlayerCmd_pingPlayer( scr_entref_t entref );
+void PlayerCmd_SetViewmodel( scr_entref_t entref );
+void PlayerCmd_GetViewmodel( scr_entref_t entref );
+void PlayerCmd_showScoreboard( scr_entref_t entref );
+void PlayerCmd_setSpawnWeapon( scr_entref_t entref );
+void PlayerCmd_dropItem( scr_entref_t entref );
+void PlayerCmd_finishPlayerDamage( scr_entref_t entref );
+void PlayerCmd_Suicide( scr_entref_t entref );
+void PlayerCmd_OpenMenu( scr_entref_t entref );
+void PlayerCmd_OpenMenuNoMouse( scr_entref_t entref );
+void PlayerCmd_CloseMenu( scr_entref_t entref );
+void PlayerCmd_CloseInGameMenu( scr_entref_t entref );
+void PlayerCmd_GetWeaponSlotWeapon( scr_entref_t entref );
+void PlayerCmd_SetWeaponSlotWeapon( scr_entref_t entref );
+void PlayerCmd_GetWeaponSlotAmmo( scr_entref_t entref );
+void PlayerCmd_SetWeaponSlotAmmo( scr_entref_t entref );
+void PlayerCmd_GetWeaponSlotClipAmmo( scr_entref_t entref );
+void PlayerCmd_SetWeaponSlotClipAmmo( scr_entref_t entref );
+void PlayerCmd_SetWeaponClipAmmo( scr_entref_t entref );
+void iclientprintln( scr_entref_t entref );
+void iclientprintlnbold( scr_entref_t entref );
+void PlayerCmd_spawn( scr_entref_t entref );
+void PlayerCmd_setEnterTime( scr_entref_t entref );
+void BodyEnd( gentity_t *ent );
+void PlayerCmd_ClonePlayer( scr_entref_t entref );
+void PlayerCmd_SetClientDvar( scr_entref_t entref );
+void PlayerCmd_IsTalking( scr_entref_t entref );
+void PlayerCmd_FreezeControls( scr_entref_t entref );
+void PlayerCmd_DisableWeapon( scr_entref_t entref );
+void PlayerCmd_EnableWeapon( scr_entref_t entref );
+void PlayerCmd_SetReverb( scr_entref_t entref );
+void PlayerCmd_DeactivateReverb( scr_entref_t entref );
+void PlayerCmd_SetChannelVolumes( scr_entref_t entref );
+void PlayerCmd_DeactivateChannelVolumes( scr_entref_t entref );
+void ScrCmd_IsLookingAt( scr_entref_t entref );
+void ScrCmd_PlayLocalSound( scr_entref_t entref );
+void PlayerCmd_SayAll( scr_entref_t entref );
+void PlayerCmd_SayTeam( scr_entref_t entref );
+void PlayerCmd_AllowSpectateTeam( scr_entref_t entref );
+void PlayerCmd_GetGuid( scr_entref_t entref );
+void (*Player_GetMethod( const char **pName ))( scr_entref_t );
+
 /*
 ===============
 PlayerCmd_giveWeapon
@@ -2909,7 +2971,6 @@ void PlayerCmd_GetGuid( scr_entref_t entref )
 	Scr_AddInt(SV_GetGuid(entref.entnum));
 }
 
-
 /*
 ===============
 Player_GetMethod
@@ -2933,3 +2994,4 @@ void (*Player_GetMethod( const char **pName ))( scr_entref_t )
 
 	return NULL;
 }
+

@@ -3,10 +3,124 @@
 
 static g_sa_t g_sa;
 
-static inline int Com_SoundAliasRandom()
+snd_alias_list_t *Com_FindSoundAlias( const char *name );
+snd_alias_t *Com_PickSoundAliasFromList( snd_alias_list_t *aliasList );
+void *Com_AllocSoundMemory( int size, const char *name, int type );
+
+enum snd_stopsounds_arg_t
 {
-	g_sa.randSeed = g_sa.randSeed * 214013 + 2531011;
-	return (g_sa.randSeed >> 16) & 0x7fff;
+	SND_STOP_ALL = 0
+};
+void SND_StopSounds( snd_stopsounds_arg_t which );
+int SND_GetSoundFileSize( const void *pSoundFile );
+extern const dvar_t *snd_errorOnMissing;
+
+float GraphGetValueFromFraction( int knotCount, const float (*knots)[2], float fraction );
+
+snd_alias_t *Com_PickSoundAlias( const char *aliasName )
+{
+	snd_alias_list_t *aliasList;
+
+	aliasList = Com_FindSoundAlias(aliasName);
+	return Com_PickSoundAliasFromList(aliasList);
+}
+
+float Com_GetVolumeFalloffCurveValue( SndCurve *volumeFalloffCurve, float fraction )
+{
+	return GraphGetValueFromFraction(volumeFalloffCurve->knotCount, volumeFalloffCurve->knots, fraction);
+}
+
+static void Com_LoadedSoundList( snd_alias_system_t system )
+{
+	int totalSize;
+	snd_alias_t *head;
+	int i;
+	int j;
+	int size;
+
+	if ( !g_sa.initialized[system] )
+	{
+		return;
+	}
+	totalSize = 0;
+	head = g_sa.aliasInfo[system].head;
+	for ( i = 0; i < g_sa.aliasInfo[system].count; i++ )
+	{
+		if ( ((head[i].flags & 0x60) >> 5) != SAT_LOADED )
+		{
+			continue;
+		}
+		for ( j = 0; j < i; j++ )
+		{
+			if ( ((head[j].flags & 0x60) >> 5) == SAT_LOADED && head[j].soundFile->soundName == head[i].soundFile->soundName )
+			{
+				goto next;
+			}
+		}
+		if ( head[i].soundFile->fileMem )
+		{
+			size = SND_GetSoundFileSize(head[i].soundFile->fileMem);
+			totalSize += size;
+			Com_Printf("%-64s %7.1f KB\n", head[i].soundFile->soundName, (float)size * 0.0009765625f);
+		}
+		else
+		{
+			Com_Printf("%-64s FAILED TO LOAD\n", head[i].soundFile->soundName);
+		}
+next:
+		;
+	}
+	Com_Printf("\ntotal usage %7.3f MB\n", (float)totalSize * 0.00000095367431640625f);
+}
+
+static void Com_StreamedSoundList( snd_alias_system_t system )
+{
+	snd_alias_t *head;
+	int i;
+	int j;
+
+	if ( !g_sa.initialized[system] )
+	{
+		return;
+	}
+	head = g_sa.aliasInfo[system].head;
+	for ( i = 0; i < g_sa.aliasInfo[system].count; i++ )
+	{
+		if ( ((head[i].flags & 0x60) >> 5) != SAT_STREAMED )
+		{
+			continue;
+		}
+		for ( j = 0; j < i; j++ )
+		{
+			if ( ((head[j].flags & 0x60) >> 5) == SAT_STREAMED && head[j].soundFile->soundName == head[i].soundFile->soundName )
+			{
+				goto next;
+			}
+		}
+		if ( head[i].soundFile->isStreamFound )
+		{
+			Com_Printf("%-64s\n", head[i].soundFile->soundName);
+		}
+		else
+		{
+			Com_Printf("%-64s FILE NOT FOUND\n", head[i].soundFile->soundName);
+		}
+next:
+		;
+	}
+}
+
+static void Com_SoundList_f()
+{
+	Com_Printf("\n________________________________________\ncurrently streamed menu sounds:\n");
+	Com_StreamedSoundList(SASYS_UI);
+	Com_Printf("\n________________________________________\ncurrently streamed in-game sounds:\n");
+	Com_StreamedSoundList(SASYS_CGAME);
+	Com_Printf("________________________________________\ncurrently loaded menu sounds:\n");
+	Com_LoadedSoundList(SASYS_UI);
+	Com_Printf("\n________________________________________\ncurrently loaded in-game sounds:\n");
+	Com_LoadedSoundList(SASYS_CGAME);
+	Com_Printf("\n");
 }
 
 int Com_SoundAliasHash( const char *name )
@@ -144,6 +258,31 @@ void *Com_GetSoundFileMem( const snd_alias_t *alias )
 	return alias->soundFile->fileMem;
 }
 
+void Com_UnloadSoundAliasSounds( snd_alias_system_t system )
+{
+	snd_alias_t *head;
+	int i;
+	int j;
+
+	SND_StopSounds(SND_STOP_ALL);
+	head = g_sa.aliasInfo[system].head;
+	for ( i = 0; i < g_sa.aliasInfo[system].count; i++ )
+	{
+		if ( ((head[i].flags >> 5) & 3) != SAT_LOADED && ((head[i].flags >> 5) & 3) != SAT_PRIMED )
+		{
+			continue;
+		}
+		for ( j = 0; j < i; j++ )
+		{
+			if ( head[j].soundFile->soundName == head[i].soundFile->soundName && ((head[j].flags >> 5) & 3) == ((head[i].flags >> 5) & 3) )
+			{
+				break;
+			}
+		}
+		head[i].soundFile->fileMem = NULL;
+	}
+}
+
 void Com_InitVolumeFalloffCurves()
 {
 	char **fileList;
@@ -169,132 +308,6 @@ void Com_InitVolumeFalloffCurves()
 	}
 	FS_FreeFileList(fileList, 10);
 	g_sa.curvesInitialized = 1;
-}
-
-enum snd_stopsounds_arg_t
-{
-	SND_STOP_ALL = 0
-};
-void SND_StopSounds( snd_stopsounds_arg_t which );
-int SND_GetSoundFileSize( const void *pSoundFile );
-extern const dvar_t *snd_errorOnMissing;
-
-static void Com_LoadedSoundList( snd_alias_system_t system )
-{
-	int totalSize;
-	snd_alias_t *head;
-	int i;
-	int j;
-	int size;
-
-	if ( !g_sa.initialized[system] )
-	{
-		return;
-	}
-	totalSize = 0;
-	head = g_sa.aliasInfo[system].head;
-	for ( i = 0; i < g_sa.aliasInfo[system].count; i++ )
-	{
-		if ( ((head[i].flags & 0x60) >> 5) != SAT_LOADED )
-		{
-			continue;
-		}
-		for ( j = 0; j < i; j++ )
-		{
-			if ( ((head[j].flags & 0x60) >> 5) == SAT_LOADED && head[j].soundFile->soundName == head[i].soundFile->soundName )
-			{
-				goto next;
-			}
-		}
-		if ( head[i].soundFile->fileMem )
-		{
-			size = SND_GetSoundFileSize(head[i].soundFile->fileMem);
-			totalSize += size;
-			Com_Printf("%-64s %7.1f KB\n", head[i].soundFile->soundName, (float)size * 0.0009765625f);
-		}
-		else
-		{
-			Com_Printf("%-64s FAILED TO LOAD\n", head[i].soundFile->soundName);
-		}
-next:
-		;
-	}
-	Com_Printf("\ntotal usage %7.3f MB\n", (float)totalSize * 0.00000095367431640625f);
-}
-
-static void Com_StreamedSoundList( snd_alias_system_t system )
-{
-	snd_alias_t *head;
-	int i;
-	int j;
-
-	if ( !g_sa.initialized[system] )
-	{
-		return;
-	}
-	head = g_sa.aliasInfo[system].head;
-	for ( i = 0; i < g_sa.aliasInfo[system].count; i++ )
-	{
-		if ( ((head[i].flags & 0x60) >> 5) != SAT_STREAMED )
-		{
-			continue;
-		}
-		for ( j = 0; j < i; j++ )
-		{
-			if ( ((head[j].flags & 0x60) >> 5) == SAT_STREAMED && head[j].soundFile->soundName == head[i].soundFile->soundName )
-			{
-				goto next;
-			}
-		}
-		if ( head[i].soundFile->isStreamFound )
-		{
-			Com_Printf("%-64s\n", head[i].soundFile->soundName);
-		}
-		else
-		{
-			Com_Printf("%-64s FILE NOT FOUND\n", head[i].soundFile->soundName);
-		}
-next:
-		;
-	}
-}
-
-static void Com_SoundList_f()
-{
-	Com_Printf("\n________________________________________\ncurrently streamed menu sounds:\n");
-	Com_StreamedSoundList(SASYS_UI);
-	Com_Printf("\n________________________________________\ncurrently streamed in-game sounds:\n");
-	Com_StreamedSoundList(SASYS_CGAME);
-	Com_Printf("________________________________________\ncurrently loaded menu sounds:\n");
-	Com_LoadedSoundList(SASYS_UI);
-	Com_Printf("\n________________________________________\ncurrently loaded in-game sounds:\n");
-	Com_LoadedSoundList(SASYS_CGAME);
-	Com_Printf("\n");
-}
-
-void Com_UnloadSoundAliasSounds( snd_alias_system_t system )
-{
-	snd_alias_t *head;
-	int i;
-	int j;
-
-	SND_StopSounds(SND_STOP_ALL);
-	head = g_sa.aliasInfo[system].head;
-	for ( i = 0; i < g_sa.aliasInfo[system].count; i++ )
-	{
-		if ( ((head[i].flags >> 5) & 3) != SAT_LOADED && ((head[i].flags >> 5) & 3) != SAT_PRIMED )
-		{
-			continue;
-		}
-		for ( j = 0; j < i; j++ )
-		{
-			if ( head[j].soundFile->soundName == head[i].soundFile->soundName && ((head[j].flags >> 5) & 3) == ((head[i].flags >> 5) & 3) )
-			{
-				break;
-			}
-		}
-		head[i].soundFile->fileMem = NULL;
-	}
 }
 
 void Com_LoadSoundAliases( const char *loadspec, const char *loadspecCurGame, snd_alias_system_t system )
@@ -407,6 +420,12 @@ void Com_SetSoundAliasRandomSeed( int seed )
 	g_sa.randSeed = seed;
 }
 
+static inline int Com_SoundAliasRandom()
+{
+	g_sa.randSeed = g_sa.randSeed * 214013 + 2531011;
+	return (g_sa.randSeed >> 16) & 0x7fff;
+}
+
 snd_alias_t *Com_PickSoundAliasFromList( snd_alias_list_t *aliasList )
 {
 	snd_alias_t *head;
@@ -460,21 +479,6 @@ snd_alias_t *Com_PickSoundAliasFromList( snd_alias_list_t *aliasList )
 	return select;
 }
 
-snd_alias_t *Com_PickSoundAlias( const char *aliasName )
-{
-	snd_alias_list_t *aliasList;
-
-	aliasList = Com_FindSoundAlias(aliasName);
-	return Com_PickSoundAliasFromList(aliasList);
-}
-
-float GraphGetValueFromFraction( int knotCount, const float (*knots)[2], float fraction );
-
-float Com_GetVolumeFalloffCurveValue( SndCurve *volumeFalloffCurve, float fraction )
-{
-	return GraphGetValueFromFraction(volumeFalloffCurve->knotCount, volumeFalloffCurve->knots, fraction);
-}
-
 SndCurve *Com_RegisterSoundAliasVolumeFalloffCurve( const char *filename, const char *sourceFile )
 {
 	int curveIndex;
@@ -504,3 +508,4 @@ void *Com_AllocSoundMemory( int size, const char *name, int type )
 {
 	return Hunk_AllocInternal(size);
 }
+

@@ -18,6 +18,8 @@ typedef struct
 static int c_active_windings;
 static int c_peak_windings;
 
+static float dot;
+
 winding_t *AllocWinding( int points )
 {
 	winding_t *w;
@@ -154,8 +156,6 @@ winding_t *CopyWinding( winding_t *w )
 	return c;
 }
 
-static float dot;
-
 void ChopWindingInPlace( winding_t **inout, vec3_t normal, float dist, float epsilon )
 {
 	winding_t *in;
@@ -271,3 +271,4 @@ void ChopWindingInPlace( winding_t **inout, vec3_t normal, float dist, float eps
 	FreeWinding(in);
 	*inout = f;
 }
+

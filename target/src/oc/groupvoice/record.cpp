@@ -157,3 +157,4 @@ int Record_Init(int callInit, const void *handle)
     Record_SetRecordingCallback(Record_AudioCallback);
     return DSOUNDRecord_Init(true);
 }
+

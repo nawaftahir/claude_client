@@ -38,6 +38,24 @@ cachedSnapshot_t* SV_GetCachedSnapshot( int *pArchiveTime );
 qboolean SV_GetArchivedClientInfo( int clientNum, int *pArchiveTime, playerState_t *ps, clientState_t *cs );
 void SV_SendClientSnapshot( client_t *client );
 
+void SV_EmitPacketEntities( int entNum, int from_num_entities, int from_first_entity, int to_num_entities, int to_first_entity, msg_t *msg );
+void SV_EmitPacketClients( int clientNum, int from_num_clients, int from_first_client, int to_num_clients, int to_first_client, msg_t *msg );
+void SV_UpdateServerCommandsToClient( client_t *client, msg_t *msg );
+void SV_UpdateServerCommandsToClient_PreventOverflow( client_t *client, msg_t *msg, int iMsgSize );
+void SV_ShowClientUnAckCommands( client_t *client );
+void SV_AddEntToSnapshot( int e, snapshotEntityNumbers_t *eNums );
+void SV_AddArchivedEntToSnapshot( int e, snapshotEntityNumbers_t *eNums );
+void SV_AddEntitiesVisibleFromPoint( vec3_t origin, int clientNum, snapshotEntityNumbers_t *eNums );
+void SV_AddCachedEntitiesVisibleFromPoint( int from_num_entities, int from_first_entity, vec3_t origin, int clientNum, snapshotEntityNumbers_t *eNums, playerState_t *ps );
+cachedSnapshot_t* SV_GetCachedSnapshotInternal( int archivedFrame );
+cachedSnapshot_t* SV_GetCachedSnapshot( int *pArchiveTime );
+qboolean SV_GetCurrentClientInfo( int clientNum, playerState_t *ps, clientState_t *cs );
+qboolean SV_GetArchivedClientInfo( int clientNum, int *pArchiveTime, playerState_t *ps, clientState_t *cs );
+void SV_SendMessageToClient( msg_t *msg, client_t *client );
+void SV_SendClientSnapshot( client_t *client );
+void SV_ArchiveSnapshot();
+void SV_SendClientMessages( void );
+
 /*
 =============
 SV_EmitPacketEntities
@@ -185,6 +203,7 @@ void SV_EmitPacketClients( int clientNum, int from_num_clients, int from_first_c
 
 	MSG_WriteBit0( msg );
 }
+
 void SV_WriteSnapshotToClient( client_t *client, msg_t *msg )
 {
 	clientSnapshot_t *frame;
@@ -2069,3 +2088,4 @@ void SV_SendClientMessages( void )
 	}
 	// -NERVE - SMF
 }
+

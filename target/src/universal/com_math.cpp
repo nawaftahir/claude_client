@@ -182,6 +182,172 @@ static unsigned int holdrand = 0x89abcdef;
 #define GOLDEN_SIN -0.67549032f
 #define GOLDEN_COS -0.73736888f
 
+float randomf();
+float crandom();
+void GaussianRandom( float *f0, float *f1 );
+void PointInCircleFromUniformDeviates( float radiusDeviate, float yawDeviate, float *point );
+void PointOnSphereFromUniformDeviates( float heightDeviate, float yawDeviate, float *point );
+void PointOnHemisphereFromUniformDeviates( float heightDeviate, float yawDeviate, float *point );
+void SpiralPointsInCircle( int count, float *points, int stride );
+void SpiralPointsOnHemisphere( int count, float *points, int stride );
+void SpiralPointsOnSphere( int count, float *points, int stride );
+float LinearTrack( float tgt, float cur, float rate, float deltaTime );
+float LinearTrackAngle( float tgt, float cur, float rate, float deltaTime );
+float DiffTrack( float tgt, float cur, float rate, float deltaTime );
+float DiffTrackAngle( float tgt, float cur, float rate, float deltaTime );
+float GraphGetValueFromFraction( int knotCount, const float (*knots)[2], float fraction );
+int Q_log2( int val );
+float Q_acos( float c );
+signed char ClampChar( int i );
+int ClampShort( int i );
+byte DirToByte( const vec3_t dir );
+void ByteToDir( const int b, vec3_t dir );
+int VecNCompareCustomEpsilon( const float *v0, const float *v1, float epsilon, int coordCount );
+float Vec3Distance( const vec3_t v1, const vec3_t v2 );
+float Vec3DistanceSq( const vec3_t v1, const vec3_t v2 );
+float DistSqToSegment( const vec3_t p, const vec3_t start, const vec3_t dir, float length );
+float Vec2Distance( const vec2_t v1, const vec2_t v2 );
+float Vec2DistanceSq( const vec2_t v1, const vec2_t v2 );
+void Vec3Cross( const vec3_t v0, const vec3_t v1, vec3_t cross );
+int VecLargestAxis( const vec3_t v );
+void PickProjectionAxes( const vec3_t normal, int *i, int *j );
+vec_t Vec3Normalize( vec3_t v );
+vec_t Vec2Normalize( vec3_t v );
+vec_t Vec4Normalize( vec4_t v );
+vec_t Vec3NormalizeTo( const vec3_t v, vec3_t out );
+vec_t Vec2NormalizeTo( const vec2_t v, vec2_t out );
+int Vec3PackUnitVec( const vec3_t v );
+void Vec3UnpackUnitVec( int packed, vec3_t v );
+float Vec3MaxComponent( const vec3_t v );
+void MatrixTransformVectorRows( const vec3_t in, const vec3_t mat[3], vec3_t out );
+void MatrixTransformVectorCols( const vec3_t in, const vec3_t mat[3], vec3_t out );
+void RotatePointAroundVector( vec3_t dst, const vec3_t dir, const vec3_t point, float degrees );
+void AxisFromForwardYaw( vec3_t axis[3], float yaw );
+void MakeNormalVectors( const vec3_t forward, vec3_t right, vec3_t up );
+float vectoyaw( const vec3_t vec );
+vec_t vectosignedyaw( vec3_t vec );
+float vectopitch( const vec3_t vec );
+float vectosignedpitch( const vec3_t vec );
+void vectoangles( const vec3_t value1, vec3_t angles );
+void vectoanglessigned( const vec3_t value1, vec3_t angles );
+void AngleVectors( const vec3_t angles, vec3_t forward, vec3_t right, vec3_t up );
+void YawVectors( const float yaw, vec3_t forward, vec3_t right );
+void VectorAngleMultiply( float *vec, float angle );
+void PerpendicularVector( const vec3_t src, vec3_t dst );
+void PlaneNormalFromPoints( const vec3_t p0, const vec3_t p1, const vec3_t p2, vec3_t normal );
+void ProjectPointOntoLine( const vec3_t point, const vec3_t start, const vec3_t end, vec3_t out );
+float PointToLineDistSq( const vec3_t point, const vec3_t start, const vec3_t end );
+float PointToBoxDistSq( const vec3_t point, const vec3_t mins, const vec3_t maxs );
+void AxisClear( vec3_t axis[3] );
+void MatrixIdentity44( float out[4][4] );
+void MatrixSet44( float out[4][4], const vec3_t origin, const vec3_t axis[3], float scale );
+void MatrixMultiply( const float in1[3][3], const float in2[3][3], float out[3][3] );
+void MatrixMultiplyInPlace( const float in1[3][3], float inout[3][3] );
+void MatrixMultiply34( const float in1[3][4], const float in2[3][4], float out[3][4] );
+void MatrixMultiply43( const float in1[4][3], const float in2[4][3], float out[4][3] );
+void MatrixMultiply44( const float in1[4][4], const float in2[4][4], float out[4][4] );
+void MatrixTranspose( const float in[3][3], float out[3][3] );
+void MatrixTranspose44( const float in[4][4], float out[4][4] );
+void MatrixInverse( const float in1[3][3], float out[3][3] );
+void MatrixInverseOrthogonal43( const float in[4][3], float out[4][3] );
+void MatrixInverse44( const float *mat, float *dst );
+void MatrixTransformVector( const vec3_t in1, const vec3_t in2[3], vec3_t out );
+void MatrixTransformVector44( const vec4_t in, const float mat[4][4], vec4_t out );
+void MatrixTransposeTransformVector( const vec3_t in1, const vec3_t in2[3], vec3_t out );
+void MatrixTransformVector43( const vec3_t in1, const float in2[4][3], vec3_t out );
+void MatrixTransposeTransformVector43( const vec3_t in1, const float in2[4][3], vec3_t out );
+void MatrixTransformVector43Equals( vec3_t inout, const float in2[4][3] );
+void RotateVec2( vec2_t v, float degrees );
+void QuatMultiply( const float *in1, const float *in2, float *out );
+void QuatInverse( const vec4_t in, vec4_t out );
+void QuatToAxis( const vec4_t quat, vec3_t axis[3] );
+float QuatAxisLengthSq( const vec4_t q );
+float SinSquaredDeg( float angle );
+float QuatDiffAxisLengthSq( const vec4_t a, const vec4_t b );
+float RotationToYaw( const vec2_t rot );
+void QuatFromPitch( float angle, vec4_t quat );
+void QuatFromYaw( float angle, vec4_t quat );
+void QuatFromRoll( float angle, vec4_t quat );
+void QuatFromAxisAngle( float angle, const vec3_t axis, vec4_t quat );
+void MatrixRotationX( vec3_t m[3], float angle );
+void MatrixRotationY( vec3_t m[3], float angle );
+void MatrixRotationZ( vec3_t m[3], float angle );
+void InfinitePerspectiveMatrix( float mtx[4][4], float fovX, float fovY, float zNear );
+void OrthographicMatrix( float mtx[4][4], float width, float height, float depth );
+void MatrixForViewer( float mtx[4][4], const vec3_t origin, const vec3_t axis[3] );
+unsigned int ColorBytesFromRGB( float r, float g, float b );
+unsigned int ColorBytesFromRGBA( float r, float g, float b, float a );
+float Vec3NormalizeByMax( const vec3_t v, vec3_t out );
+float AngleMod( float a );
+float LerpAngle( float from, float to, float frac );
+float AngleSubtract( float a1, float a2 );
+void AnglesSubtract( const vec3_t v1, const vec3_t v2, vec3_t v3 );
+float AngleNormalize360( float angle );
+float AngleNormalize180( float angle );
+float AngleNormalize360Accurate( float angle );
+float AngleNormalize180Accurate( float angle );
+float AngleDelta( float angle1, float angle2 );
+float RadiusFromBounds( const vec3_t mins, const vec3_t maxs );
+float RadiusFromBounds2D( const vec2_t mins, const vec2_t maxs );
+void ExpandBoundsByDelta( vec3_t mins, vec3_t maxs, const vec3_t delta );
+void ExpandBoundsToWidth( vec3_t mins, vec3_t maxs );
+void ShrinkBoundsToHeight( vec3_t mins, vec3_t maxs );
+void ClearBounds( vec3_t mins, vec3_t maxs );
+void ClearBounds2D( vec2_t mins, vec2_t maxs );
+void AddPointToBounds( const vec3_t v, vec3_t mins, vec3_t maxs );
+void AddPointToBounds2D( const vec2_t v, vec2_t mins, vec2_t maxs );
+int PointInBounds( const vec3_t v, const vec3_t mins, const vec3_t maxs );
+int PointInBounds2D( const vec2_t v, const vec2_t mins, const vec2_t maxs );
+int BoundsOverlap( const vec3_t mins1, const vec3_t maxs1, const vec3_t mins2, const vec3_t maxs2 );
+int BoundsOverlap2D( const vec2_t mins1, const vec2_t maxs1, const vec2_t mins2, const vec2_t maxs2 );
+int BoundsOverlapEpsilon( const vec3_t mins1, const vec3_t maxs1, const vec3_t mins2, const vec3_t maxs2, float epsilon );
+int BoundsOverlapEpsilon2D( const vec2_t mins1, const vec2_t maxs1, const vec2_t mins2, const vec2_t maxs2, float epsilon );
+void ExpandBounds( const vec3_t addedmins, const vec3_t addedmaxs, vec3_t mins, vec3_t maxs );
+void ExpandBounds2D( const vec2_t addedmins, const vec2_t addedmaxs, vec2_t mins, vec2_t maxs );
+void TransformBounds( const vec3_t bounds[2], const vec3_t origin, const vec3_t axis[3], vec3_t out[2] );
+void TransformBoundsExpand( const vec3_t bounds[2], const vec3_t origin, const vec3_t axis[3], vec3_t out[2] );
+void AxisIdentity( vec3_t axis[3] );
+void AxisCopy( const vec3_t in[3], vec3_t out[3] );
+void AxisTranspose( const vec3_t in[3], vec3_t out[3] );
+void AxisTransformComponents( const vec3_t axis[3], float x, float y, float z, vec3_t out );
+void AnglesToAxis( const vec3_t angles, vec3_t axis[3] );
+void YawToAxis( float yaw, vec3_t axis[3] );
+void AxisToAngles( vec3_t axis[3], vec3_t angles );
+void AxisToSignedAngles( const vec3_t axis[3], vec3_t angles );
+int IntersectPlanes( const float **plane, vec3_t xyz );
+void SnapPointToIntersectingPlanes( const float **planes, vec3_t xyz, float snapGrid, float snapEpsilon );
+void SnapPointToPlanes( const vec4_t *planes, int planeCount, vec3_t xyz, float snapGrid, float snapEpsilon );
+int PointInPolygon( const vec3_t *verts, int vertCount, const vec3_t normal, const vec3_t point );
+int PlaneFromPoints( vec4_t plane, const vec3_t a, const vec3_t b, const vec3_t c );
+void ProjectPointOnPlane( const vec3_t p, const vec3_t normal, vec3_t dst );
+void SetPlaneSignbits( cplane_t *out );
+int BoxOnPlaneSide( vec3_t emins, vec3_t emaxs, struct cplane_s *p );
+int PointInCylinderArc( const vec3_t point, float radius, const vec3_t center, float thickness, float minYaw, float maxYaw, float halfHeight );
+int BoxDistSqrdExceeds( const vec3_t absmin, const vec3_t absmax, const vec3_t org, float fogOpaqueDistSqrd );
+float Q_round( float x );
+float Vec3ScaleToUnitMax( const vec3_t v, vec3_t out );
+void VectorRotate( const vec3_t vIn, const vec3_t vRotation, vec3_t out );
+void VectorRotateAroundOrigin( const vec3_t point, const vec3_t angles, const vec3_t origin, vec3_t out );
+void SphericalToCartesian( vec3_t out, float radius, float angle );
+float PitchForYawOnNormal( const float fYaw, const vec3_t normal );
+void Rand_Init( int seed );
+float flrand( float min, float max );
+int irand( int min, int max );
+void TransformVectorByAnimMat( const float *in, const DObjAnimMat *mat, float *out );
+void AxisToQuat( const vec3_t mat[3], vec4_t out );
+void SinCosDegrees( float angle, float *pSin, float *pCos );
+float SnapFloatBits( float f, int tolerance, int bits );
+float SnapFloatToGrid( float value, float grid, float epsilon );
+
+extern const float identityMatrix44[4][4];
+static const float identityMatrix44[4][4] =
+{
+	{ 1, 0, 0, 0 },
+	{ 0, 1, 0, 0 },
+	{ 0, 0, 1, 0 },
+	{ 0, 0, 0, 1 }
+};
+
 /*
 ==============
 randomf
@@ -1386,26 +1552,6 @@ void YawVectors( const float yaw, vec3_t forward, vec3_t right )
 
 /*
 ==============
-VectorAngleMultiply
-==============
-*/
-void VectorAngleMultiply( float *vec, float angle )
-{
-	float x;
-	float temp;
-	float radians;
-	float y;
-
-	radians = angle * (float)( M_PI * 2 / 360 );
-	FastSinCos( radians, &y, &x );
-
-	temp = vec[0] * x - vec[1] * y;
-	vec[1] = vec[0] * y + vec[1] * x;
-	vec[0] = temp;
-}
-
-/*
-==============
 PerpendicularVector
 ==============
 */
@@ -1546,15 +1692,6 @@ void AxisClear( vec3_t axis[3] )
 	axis[1][1] = 1.0f;
 	axis[2][2] = 1.0f;
 }
-
-extern const float identityMatrix44[4][4];
-static const float identityMatrix44[4][4] =
-{
-	{ 1, 0, 0, 0 },
-	{ 0, 1, 0, 0 },
-	{ 0, 0, 1, 0 },
-	{ 0, 0, 0, 1 }
-};
 
 /*
 ==============
@@ -1958,6 +2095,26 @@ void MatrixTransformVector43Equals( vec3_t inout, const float in2[4][3] )
 	inout[2] = inout[0] * in2[0][2] + inout[1] * in2[1][2] + inout[2] * in2[2][2] + in2[3][2];
 	inout[0] = temp[0];
 	inout[1] = temp[1];
+}
+
+/*
+==============
+VectorAngleMultiply
+==============
+*/
+void VectorAngleMultiply( float *vec, float angle )
+{
+	float x;
+	float temp;
+	float radians;
+	float y;
+
+	radians = angle * (float)( M_PI * 2 / 360 );
+	FastSinCos( radians, &y, &x );
+
+	temp = vec[0] * x - vec[1] * y;
+	vec[1] = vec[0] * y + vec[1] * x;
+	vec[0] = temp;
 }
 
 /*
@@ -3924,3 +4081,4 @@ float SnapFloatToGrid( float value, float grid, float epsilon )
 
 	return value;
 }
+

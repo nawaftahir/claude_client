@@ -5,6 +5,11 @@
 const char *Win_LocalizeRef( const char *ref );
 void Sys_NormalExit( void );
 
+double Sys_BenchmarkGHz( void );
+int Sys_SystemMemoryMB( void );
+void Sys_DetectVideoCard( char *description );
+bool Sys_SupportsSSE( void );
+
 // rounds up for anything past an exact integer
 int Sys_RoundUp( float x )
 {
@@ -165,3 +170,4 @@ noSSE:
 
 	return result;
 }
+

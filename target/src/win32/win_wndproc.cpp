@@ -216,6 +216,10 @@ static byte extendedVirtualKeyConvert[21][2] =
 	{ 0, 0 },
 };
 
+static void VID_AppActivate( BOOL fActive, BOOL minimize );
+static byte MapKey( int key, unsigned int wParam );
+LONG WINAPI MainWndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam );
+
 /*
 ==================
 VID_AppActivate
@@ -469,3 +473,4 @@ LONG WINAPI MainWndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
 
 	return DefWindowProcA( hWnd, uMsg, wParam, lParam );
 }
+

@@ -1,6 +1,13 @@
 #include "../qcommon/qcommon.h"
 #include "../qcommon/netchan.h"
 
+void SV_WriteClientVoiceData( client_t *client, msg_t *msg );
+bool SV_ClientWantsVoiceData( int clientNum );
+bool SV_ClientHasClientMuted( int listener, int talker );
+void SV_QueueVoicePacket( int talkerNum, int clientNum, VoicePacket_t *voicePacket );
+void SV_UserVoice( client_t *cl, msg_t *msg );
+void SV_PreGameUserVoice( client_t *cl, msg_t *msg );
+
 /*
 ==================
 SV_WriteClientVoiceData
@@ -191,3 +198,4 @@ void SV_PreGameUserVoice( client_t *cl, msg_t *msg )
 		}
 	}
 }
+

@@ -1,6 +1,18 @@
 #include "qcommon.h"
 #include "cm_local.h"
 
+bool CM_CullBox( traceWork_t *tw, const vec3_t origin, const vec3_t halfSize );
+void CM_PositionTestCapsuleInTriangle( traceWork_t *tw, CollisionTriangle_t *tri, trace_t *trace );
+static inline void CM_TracePointThroughTriangle( traceWork_t *tw, CollisionTriangle_t *tri, trace_t *trace );
+static inline void CM_TraceCapsuleThroughTriangle( traceWork_t *tw, CollisionTriangle_t *tri, float offsetZ, trace_t *trace );
+static inline void CM_TraceCapsuleThroughBorder( traceWork_t *tw, CollisionBorder *border, trace_t *trace );
+static void CM_TraceThroughAabbTree_r( traceWork_t *tw, CollisionAabbTree_t *aabbTree, trace_t *trace );
+static void CM_PositionTestInAabbTree_r( traceWork_t *tw, CollisionAabbTree_t *aabbTree, trace_t *trace );
+void CM_TraceThroughAabbTree( traceWork_t *tw, CollisionAabbTree_t *aabbTree, trace_t *trace );
+void CM_SightTraceThroughAabbTree( traceWork_t *tw, CollisionAabbTree_t *aabbTree, trace_t *trace );
+void CM_MeshTestInLeaf( traceWork_t *tw, cLeaf_t *leaf, trace_t *trace );
+bool CM_RayIntersectTriangle( const float *orig, const float *dir, const float *vert0, const float *vert1, const float *vert2, float *t, float *u, float *v );
+
 /*
 ==================
 CM_CullBox
@@ -50,6 +62,64 @@ bool CM_CullBox( traceWork_t *tw, const vec3_t origin, const vec3_t halfSize )
 	}
 
 	return false;
+}
+
+/*
+==================
+CM_TracePointThroughTriangle
+==================
+*/
+static inline void CM_TracePointThroughTriangle( traceWork_t *tw, CollisionTriangle_t *tri, trace_t *trace )
+{
+	float t;
+	float projTriAreaScaledByTraceLenX2;
+	float frac;
+	float hitFrac;
+	vec3_t triNormalScaledByAreaX2;
+	float v;
+	float negativeU;
+
+	projTriAreaScaledByTraceLenX2 = DotProduct(tw->extents.end, tri->plane) - tri->plane[3];
+
+	if ( projTriAreaScaledByTraceLenX2 >= 0.0f )
+	{
+		return;
+	}
+
+	t = DotProduct(tw->extents.start, tri->plane) - tri->plane[3];
+
+	if ( t <= 0.0f )
+	{
+		return;
+	}
+
+	frac = (t - (float)SURFACE_CLIP_EPSILON) / (t - projTriAreaScaledByTraceLenX2);
+	frac = I_fmax(frac, 0.0f);
+
+	if ( frac >= trace->fraction )
+	{
+		return;
+	}
+
+	hitFrac = t / (t - projTriAreaScaledByTraceLenX2);
+	VectorMA(tw->extents.start, hitFrac, tw->delta, triNormalScaledByAreaX2);
+	v = DotProduct(triNormalScaledByAreaX2, tri->svec) - tri->svec[3];
+
+	if ( v < -0.001f || v > 1.001f )
+	{
+		return;
+	}
+
+	negativeU = DotProduct(triNormalScaledByAreaX2, tri->tvec) - tri->tvec[3];
+
+	if ( negativeU < -0.001f || v + negativeU > 1.001f )
+	{
+		return;
+	}
+
+	trace->fraction = frac;
+	assert(trace->fraction >= 0 && trace->fraction <= 1.0f);
+	VectorCopy(tri->plane, trace->normal);
 }
 
 /*
@@ -233,64 +303,6 @@ void CM_PositionTestCapsuleInTriangle( traceWork_t *tw, CollisionTriangle_t *tri
 			}
 		}
 	}
-}
-
-/*
-==================
-CM_TracePointThroughTriangle
-==================
-*/
-static inline void CM_TracePointThroughTriangle( traceWork_t *tw, CollisionTriangle_t *tri, trace_t *trace )
-{
-	float t;
-	float projTriAreaScaledByTraceLenX2;
-	float frac;
-	float hitFrac;
-	vec3_t triNormalScaledByAreaX2;
-	float v;
-	float negativeU;
-
-	projTriAreaScaledByTraceLenX2 = DotProduct(tw->extents.end, tri->plane) - tri->plane[3];
-
-	if ( projTriAreaScaledByTraceLenX2 >= 0.0f )
-	{
-		return;
-	}
-
-	t = DotProduct(tw->extents.start, tri->plane) - tri->plane[3];
-
-	if ( t <= 0.0f )
-	{
-		return;
-	}
-
-	frac = (t - (float)SURFACE_CLIP_EPSILON) / (t - projTriAreaScaledByTraceLenX2);
-	frac = I_fmax(frac, 0.0f);
-
-	if ( frac >= trace->fraction )
-	{
-		return;
-	}
-
-	hitFrac = t / (t - projTriAreaScaledByTraceLenX2);
-	VectorMA(tw->extents.start, hitFrac, tw->delta, triNormalScaledByAreaX2);
-	v = DotProduct(triNormalScaledByAreaX2, tri->svec) - tri->svec[3];
-
-	if ( v < -0.001f || v > 1.001f )
-	{
-		return;
-	}
-
-	negativeU = DotProduct(triNormalScaledByAreaX2, tri->tvec) - tri->tvec[3];
-
-	if ( negativeU < -0.001f || v + negativeU > 1.001f )
-	{
-		return;
-	}
-
-	trace->fraction = frac;
-	assert(trace->fraction >= 0 && trace->fraction <= 1.0f);
-	VectorCopy(tri->plane, trace->normal);
 }
 
 /*
@@ -1061,3 +1073,4 @@ bool CM_RayIntersectTriangle( const float *orig, const float *dir, const float *
 	}
 	return true;
 }
+

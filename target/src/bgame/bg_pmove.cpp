@@ -150,6 +150,141 @@ void PM_playerTrace( pmove_t *pm, trace_t *results, const vec3_t start,
 	pmoveHandlers[pm->handler].trace(results, start, mins, maxs, end, passEntityNum, contentMask & ~CONTENTS_BODY);
 }
 
+void PM_AddEvent( playerState_t *ps, int newEvent );
+void PM_AddTouchEnt( pmove_t *pm, int entityNum );
+void PM_ClipVelocity( const vec3_t in, const vec3_t normal, vec3_t out );
+int PM_GetEffectiveStance( const playerState_t *ps );
+static void PM_Friction( playerState_t *ps, pml_t *pml );
+bool PM_DoPlayerInertia( playerState_t *ps, float accelspeed, const vec3_t wishdir );
+float PM_PlayerInertia( playerState_t *ps, float accelspeed, const vec3_t wishdir );
+void PM_Accelerate( playerState_t *ps, const pml_t *pml, vec3_t wishdir, float wishspeed, float accel );
+static float PM_MoveScale( playerState_t *ps, float fmove, float rmove, float umove );
+static float PM_CmdScale( playerState_t *ps, usercmd_t *cmd );
+static float PM_CmdScale_Walk( pmove_t *pm, usercmd_t *cmd );
+float PM_DamageScale_Walk( int damage_timer );
+static void PM_SetMovementDir( pmove_t *pm, pml_t *pml );
+int PM_GroundSurfaceType( pml_t *pml );
+void PM_FlyMove( pmove_t *pm, pml_t *pml );
+void PM_AirMove( pmove_t *pm, pml_t *pml );
+void PM_WalkMove( pmove_t *pm, pml_t *pml );
+static void PM_DeadMove( playerState_t *ps, pml_t *pml );
+void PM_NoclipMove( pmove_t *pm, pml_t *pml );
+void PM_UFOMove( pmove_t *pm, pml_t *pml );
+int PM_FootstepForSurface( playerState_t *ps, pml_t *pml );
+int PM_MediumLandingForSurface( pml_t *pml );
+int PM_LightLandingForSurface( pml_t *pml );
+int PM_HardLandingForSurface( pml_t *pml );
+int PM_DamageLandingForSurface( pml_t *pml );
+static void PM_CrashLand(playerState_t *ps, pml_t *pml);
+static qboolean PM_CorrectAllSolid( pmove_t *pm, pml_t *pml, trace_t *trace );
+static void PM_GroundTraceMissed(pmove_t *pm, pml_t *pml);
+void PM_GroundTrace( pmove_t *pm, pml_t *pml );
+int PM_GetViewHeightLerpTime( const playerState_t *ps, int iTarget, int bDown );
+float PM_ViewHeightTableLerp( int iFrac, viewLerpWaypoint_s *pTable, float *pfPosOfs );
+float PM_GetViewHeightLerp(const pmove_t *pm, int iFromHeight, int iToHeight);
+void PM_ViewHeightAdjust( pmove_t *pm, pml_t *pml );
+void PM_CheckDuck( pmove_t *pm, pml_t *pml );
+void PM_FootstepEvent( pmove_t *pm, pml_t *pml, int iOldBobCycle, int iNewBobCycle, qboolean bFootStep );
+qboolean PM_ShouldMakeFootsteps( pmove_t *pm );
+int PM_GetFlinchAnim( float yaw );
+void PM_Footsteps( pmove_t *pm, pml_t *pml );
+void PM_FoliageSounds( pmove_t *pm );
+static void PM_DropTimers( playerState_t *ps, pml_t *pml );
+qboolean BG_CheckProneTurned( playerState_t *ps, float newProneYaw, byte handler );
+void PM_UpdateViewAngles( playerState_t *ps, float msec, usercmd_t *cmd, byte handler );
+void PM_UpdatePronePitch( pmove_t *pm, pml_t *pml );
+void PM_SetProneMovementOverride( playerState_t *ps );
+void PM_UpdatePlayerWalkingFlag( pmove_t *pm );
+void PM_SetLadderFlag( playerState_t *ps );
+void PM_ClearLadderFlag( playerState_t *ps );
+void PM_CheckLadderMove( pmove_t *pm, pml_t *pml );
+void PM_LadderMove( pmove_t *pm, pml_t *pml );
+void PmoveSingle( pmove_t *pm );
+void Pmove( pmove_t *pmove );
+float BG_GetSpeed( const playerState_t *ps, int iTime );
+
+/*
+==================
+PM_UpdateLean
+==================
+*/
+void PM_UpdateLean(playerState_t *ps, float msec, usercmd_t *cmd,
+	void (*capsuleTrace)(trace_t *, const float *, const float *, const float *, const float *, int, int))
+{
+	vec3_t start;
+	vec3_t end;
+	vec3_t tmins;
+	vec3_t tmaxs;
+	int leaning;
+	float leanofs;
+	trace_t trace;
+	float fLeanMax;
+	int stance;
+	float fLean;
+	leaning = 0;
+	leanofs = 0;
+	if ((cmd->buttons & (BUTTON_LEANLEFT | BUTTON_LEANRIGHT)) && !(ps->pm_flags & PMF_FROZEN) && ps->pm_type < 6
+		&& (ps->groundEntityNum != ENTITYNUM_NONE || ps->pm_type == PM_NORMAL_LINKED))
+	{
+		if (cmd->buttons & BUTTON_LEANLEFT)
+			leaning--;
+		if (cmd->buttons & BUTTON_LEANRIGHT)
+			leaning++;
+	}
+	if (ps->eFlags & 0x300)
+		leaning = 0;
+	stance = PM_GetEffectiveStance(ps);
+	if (stance == PM_EFF_STANCE_PRONE)
+		fLeanMax = 0.25;
+	else
+		fLeanMax = 0.5;
+	leanofs = ps->leanf;
+	if (!leaning)
+	{
+		if (leanofs > 0)
+		{
+			leanofs = leanofs - fLeanMax * (msec / 280.0f);
+			if (leanofs < 0)
+				leanofs = 0;
+		}
+		else if (leanofs < 0)
+		{
+			leanofs = fLeanMax * (msec / 280.0f) + leanofs;
+			if (leanofs > 0)
+				leanofs = 0;
+		}
+	}
+	else if (leaning > 0)
+	{
+		if (leanofs < fLeanMax)
+			leanofs = fLeanMax * (msec / 350.0f) + leanofs;
+		if (leanofs > fLeanMax)
+			leanofs = fLeanMax;
+	}
+	else
+	{
+		if (leanofs > -fLeanMax)
+			leanofs = leanofs - fLeanMax * (msec / 350.0f);
+		if (leanofs < -fLeanMax)
+			leanofs = -fLeanMax;
+	}
+	ps->leanf = leanofs;
+	if (ps->leanf != 0)
+	{
+	fLean = FloatSign(ps->leanf);
+	VectorCopy(ps->origin, start);
+	start[2] = start[2] + ps->viewHeightCurrent;
+	VectorCopy(start, end);
+	AddLeanToPosition(end, ps->viewangles[1], fLean, 16.0, 20.0);
+	VectorSet(tmins, -8.0, -8.0, -8.0);
+	VectorSet(tmaxs, 8.0, 8.0, 8.0);
+	capsuleTrace(&trace, start, tmins, tmaxs, end, ps->clientNum, MASK_PLAYERSOLID);
+	fLean = UnGetLeanFraction(trace.fraction);
+	if (I_fabs(ps->leanf) > fLean)
+		ps->leanf = fLean * FloatSign(ps->leanf);
+	}
+}
+
 /*
 ===============
 PM_AddEvent
@@ -3026,89 +3161,6 @@ static void PM_DropTimers( playerState_t *ps, pml_t *pml )
 }
 
 /*
-==================
-PM_UpdateLean
-==================
-*/
-void PM_UpdateLean(playerState_t *ps, float msec, usercmd_t *cmd,
-	void (*capsuleTrace)(trace_t *, const float *, const float *, const float *, const float *, int, int))
-{
-	vec3_t start;
-	vec3_t end;
-	vec3_t tmins;
-	vec3_t tmaxs;
-	int leaning;
-	float leanofs;
-	trace_t trace;
-	float fLeanMax;
-	int stance;
-	float fLean;
-
-	leaning = 0;
-	leanofs = 0;
-	if ((cmd->buttons & (BUTTON_LEANLEFT | BUTTON_LEANRIGHT)) && !(ps->pm_flags & PMF_FROZEN) && ps->pm_type < 6
-		&& (ps->groundEntityNum != ENTITYNUM_NONE || ps->pm_type == PM_NORMAL_LINKED))
-	{
-		if (cmd->buttons & BUTTON_LEANLEFT)
-			leaning--;
-		if (cmd->buttons & BUTTON_LEANRIGHT)
-			leaning++;
-	}
-	if (ps->eFlags & 0x300)
-		leaning = 0;
-	stance = PM_GetEffectiveStance(ps);
-	if (stance == PM_EFF_STANCE_PRONE)
-		fLeanMax = 0.25;
-	else
-		fLeanMax = 0.5;
-	leanofs = ps->leanf;
-	if (!leaning)
-	{
-		if (leanofs > 0)
-		{
-			leanofs = leanofs - fLeanMax * (msec / 280.0f);
-			if (leanofs < 0)
-				leanofs = 0;
-		}
-		else if (leanofs < 0)
-		{
-			leanofs = fLeanMax * (msec / 280.0f) + leanofs;
-			if (leanofs > 0)
-				leanofs = 0;
-		}
-	}
-	else if (leaning > 0)
-	{
-		if (leanofs < fLeanMax)
-			leanofs = fLeanMax * (msec / 350.0f) + leanofs;
-		if (leanofs > fLeanMax)
-			leanofs = fLeanMax;
-	}
-	else
-	{
-		if (leanofs > -fLeanMax)
-			leanofs = leanofs - fLeanMax * (msec / 350.0f);
-		if (leanofs < -fLeanMax)
-			leanofs = -fLeanMax;
-	}
-	ps->leanf = leanofs;
-	if (ps->leanf != 0)
-	{
-	fLean = FloatSign(ps->leanf);
-	VectorCopy(ps->origin, start);
-	start[2] = start[2] + ps->viewHeightCurrent;
-	VectorCopy(start, end);
-	AddLeanToPosition(end, ps->viewangles[1], fLean, 16.0, 20.0);
-	VectorSet(tmins, -8.0, -8.0, -8.0);
-	VectorSet(tmaxs, 8.0, 8.0, 8.0);
-	capsuleTrace(&trace, start, tmins, tmaxs, end, ps->clientNum, MASK_PLAYERSOLID);
-	fLean = UnGetLeanFraction(trace.fraction);
-	if (I_fabs(ps->leanf) > fLean)
-		ps->leanf = fLean * FloatSign(ps->leanf);
-	}
-}
-
-/*
 ============
 BG_CheckProneTurned
 ============
@@ -4305,4 +4357,5 @@ float BG_GetSpeed( const playerState_t *ps, int iTime )
 
 	return Vec2Length(ps->velocity);
 }
+
 

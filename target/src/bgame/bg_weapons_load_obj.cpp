@@ -443,6 +443,25 @@ BG_LoadDefaultWeaponDef
 */
 static WeaponDef bg_defaultWeaponDefs;
 
+const char *BG_GetWeaponTypeName( int weapType );
+int BG_GetWeaponSlotForName( const char *name );
+const char *BG_GetWeaponSlotNameForIndex( int iSlot );
+void BG_LoadWeaponStrings();
+void BG_LoadPlayerAnimTypes();
+static int Weapon_GetStringArrayIndex( const char *value, const char **stringArray, int arraySize );
+static qboolean BG_ParseWeaponDefSpecificFieldType( unsigned char *pStruct, const char *pValue, int iFieldType );
+static void BG_SetupTransitionTimes( WeaponDef *weapDef );
+static void BG_CheckWeaponDamageRanges( WeaponDef *weapDef );
+static void BG_CheckProjectileValues( WeaponDef *weapDef );
+static void InitWeaponDef( WeaponDef *weapDef );
+WeaponDef* BG_LoadWeaponDefInternal( const char *folder, const char *name );
+
+/*
+===============
+BG_LoadWeaponDefInternal
+===============
+*/
+
 /*
 ===============
 BG_GetWeaponTypeName
@@ -768,12 +787,6 @@ static void InitWeaponDef( WeaponDef *weapDef )
 	}
 }
 
-/*
-===============
-BG_LoadWeaponDefInternal
-===============
-*/
-
 WeaponDef* BG_LoadWeaponDefInternal( const char *folder, const char *name )
 {
 #define IDENT "WEAPONFILE"
@@ -878,3 +891,4 @@ WeaponDef *BG_LoadDefaultWeaponDef()
 
 	return weapDef;
 }
+

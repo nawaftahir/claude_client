@@ -6,6 +6,54 @@ scrParserPub_t scrParserPub;
 
 unsigned int Scr_GetSourceBuffer( const char *codePos );
 
+void Scr_InitOpcodeLookup();
+void Scr_ShutdownOpcodeLookup();
+void AddOpcodePos( unsigned int sourcePos, int type );
+void RemoveOpcodePos();
+void AddThreadStartOpcodePos( unsigned int sourcePos );
+const char *Scr_GetOpcodePosOfType( unsigned int bufferIndex, unsigned int startSourcePos, unsigned int endSourcePos, int type, unsigned int *sourcePos );
+unsigned int Scr_GetClosestSourcePosOfType( unsigned int bufferIndex, unsigned int sourcePos, int type );
+OpcodeLookup* Scr_GetPrevSourcePosOpcodeLookup( const char *codePos );
+OpcodeLookup* Scr_GetSourcePosOpcodeLookup( const char *codePos );
+unsigned int Scr_GetPrevSourcePos( const char *codePos, unsigned int index );
+unsigned int Scr_GetLineNumInternal( const char *buf, unsigned int sourcePos, const char **startLine, int *col );
+unsigned int Scr_GetLineNum( unsigned int bufferIndex, unsigned int sourcePos );
+int Scr_GetSourcePosOfType( const char *codePos, int type, Scr_SourcePos_t *pos );
+unsigned char Scr_IsDeveloper( void );
+SourceBufferInfo* Scr_GetNewSourceBuffer();
+void Scr_AddSourceBufferInternal( const char *extFilename, const char *codePos, char *sourceBuf, int len, bool doEolFixup, bool archive );
+char* Scr_ReadFile( const char *filename, const char *extFilename, const char *codePos, bool archive );
+char* Scr_AddSourceBuffer( const char *filename, const char *extFilename, const char *codePos, bool archive );
+unsigned int Scr_GetLineInfo( const char *buf, unsigned int sourcePos, int *col, char *line );
+void Scr_PrintSourcePos( print_msg_type_t channel, const char *filename, const char *buf, unsigned int sourcePos );
+int Scr_GetSourcePos( unsigned int bufferIndex, unsigned int sourcePos, char *outBuf, int outBufLen );
+unsigned int Scr_GetSourceBuffer( const char *codePos );
+void Scr_PrintPrevCodePos( print_msg_type_t channel, const char *codePos, unsigned int index );
+void Scr_GetCodePos( const char *codePos, unsigned int index, char *outBuf, int outBufLen );
+void Scr_GetFileAndLine( const char *codePos, char **filename, int *linenum );
+void CompileError( unsigned int sourcePos, const char *format, ... );
+void CompileError2( const char *codePos, const char *msg, ... );
+void RuntimeErrorInternal( print_msg_type_t channel, const char *codePos, unsigned int index, const char *msg );
+void RuntimeError( const char *codePos, unsigned int index, const char *msg, const char *dialogMessage );
+sval_u node1_( sval_u val1 );
+sval_u node_pos( unsigned int sourcePos );
+sval_u node0( int type );
+sval_u node1( int type, sval_u val1 );
+sval_u node2( int type, sval_u val1, sval_u val2 );
+sval_u node2_( sval_u val1, sval_u val2 );
+sval_u node3( int type, sval_u val1, sval_u val2, sval_u val3 );
+sval_u node3_( sval_u val1, sval_u val2, sval_u val3 );
+sval_u node4( int type, sval_u val1, sval_u val2, sval_u val3, sval_u val4 );
+sval_u node4_( sval_u val1, sval_u val2, sval_u val3, sval_u val4 );
+sval_u node5( int type, sval_u val1, sval_u val2, sval_u val3, sval_u val4, sval_u val5 );
+sval_u node6( int type, sval_u val1, sval_u val2, sval_u val3, sval_u val4, sval_u val5, sval_u val6 );
+sval_u node7( int type, sval_u val1, sval_u val2, sval_u val3, sval_u val4, sval_u val5, sval_u val6, sval_u val7 );
+sval_u node8( int type, sval_u val1, sval_u val2, sval_u val3, sval_u val4, sval_u val5, sval_u val6, sval_u val7, sval_u val8 );
+sval_u linked_list_end( sval_u val1 );
+sval_u prepend_node( sval_u val1, sval_u list );
+sval_u append_node( sval_u list, sval_u val1 );
+sval_u concat_list( sval_u list1, sval_u list2 );
+
 /*
 ==============
 Scr_InitOpcodeLookup
@@ -1403,3 +1451,4 @@ sval_u concat_list( sval_u list1, sval_u list2 )
 	list1.node[1].node = list2.node[1].node;
 	return list1;
 }
+

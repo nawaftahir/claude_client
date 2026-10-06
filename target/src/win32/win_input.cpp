@@ -27,6 +27,31 @@ WIN32 MOUSE CONTROL
 ============================================================
 */
 
+void IN_ActivateWin32Mouse( void );
+static void IN_DeactivateWin32Mouse( void );
+void IN_Win32Mouse( int *mx, int *my );
+void IN_ActivateMouse( qboolean force );
+void IN_DeactivateMouse( void );
+void IN_Activate( qboolean active );
+void IN_MouseEvent( int mstate );
+void IN_MouseMove( void );
+static void IN_StartupMouse( void );
+void IN_Startup( void );
+void IN_Shutdown( void );
+void IN_Init( void );
+void IN_Frame( void );
+
+/*
+============================================================
+  MOUSE CONTROL
+============================================================
+*/
+
+/*
+=========================================================================
+=========================================================================
+*/
+
 /*
 ================
 IN_ActivateWin32Mouse
@@ -79,14 +104,6 @@ void IN_Win32Mouse( int *mx, int *my )
 	*mx = current_pos.x - window_center_x;
 	*my = current_pos.y - window_center_y;
 }
-
-/*
-============================================================
-
-  MOUSE CONTROL
-
-============================================================
-*/
 
 /*
 ===========
@@ -150,17 +167,20 @@ void IN_DeactivateMouse( void )
 
 /*
 ===========
-IN_Activate
-
-Called when the main window gains or loses focus.
+IN_StartupMouse
 ===========
 */
-void IN_Activate( qboolean active )
+static void IN_StartupMouse( void )
 {
-	in_appactive = active;
+	s_wmv.mouseInitialized = false;
 
-	if ( !active )
-		IN_DeactivateMouse();
+	if ( !in_mouse->current.boolean )
+	{
+		Com_Printf( "Mouse control not active.\n" );
+		return;
+	}
+
+	s_wmv.mouseInitialized = true;
 }
 
 /*
@@ -213,30 +233,6 @@ void IN_MouseMove( void )
 }
 
 /*
-=========================================================================
-
-=========================================================================
-*/
-
-/*
-===========
-IN_StartupMouse
-===========
-*/
-static void IN_StartupMouse( void )
-{
-	s_wmv.mouseInitialized = false;
-
-	if ( !in_mouse->current.boolean )
-	{
-		Com_Printf( "Mouse control not active.\n" );
-		return;
-	}
-
-	s_wmv.mouseInitialized = true;
-}
-
-/*
 ===========
 IN_Startup
 ===========
@@ -268,6 +264,21 @@ void IN_Init( void )
 	in_mouse = Dvar_RegisterBool( "in_mouse", true, DVAR_ARCHIVE | DVAR_LATCH | DVAR_CHANGEABLE_RESET );
 
 	IN_Startup();
+}
+
+/*
+===========
+IN_Activate
+
+Called when the main window gains or loses focus.
+===========
+*/
+void IN_Activate( qboolean active )
+{
+	in_appactive = active;
+
+	if ( !active )
+		IN_DeactivateMouse();
 }
 
 /*
@@ -303,3 +314,4 @@ void IN_Frame( void )
 	// post events to the system que
 	IN_MouseMove();
 }
+

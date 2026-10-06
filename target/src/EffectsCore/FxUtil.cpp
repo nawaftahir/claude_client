@@ -975,24 +975,16 @@ public:
 	static FxMemMgr<Emitter> s_memMgr;
 };
 
-// Original name unknown.
-inline int FxArchive::GetUsedSize()
-{
-	return memFile->bytesUsed;
-}
-
 struct EffectPrimitive
 {
 	const FxEffectDef *fx;
 	const PrimitiveTemplate *primTemp;
 	FxBoltFramePtr boltFrame;
 };
-
 // An effect primitive whose spawn delay has not yet elapsed.
 struct ScheduledEffect
 {
 	static void operator delete( void *p );
-
 	const FxEffectDef *mFx;
 	int mPrimIndex;
 	int mStartTime;
@@ -1003,19 +995,16 @@ struct ScheduledEffect
 	int mIndexInBatch;
 	ScheduledEffect *mScheduledNext;
 };
-
 struct FxScheduler
 {
 	static void *operator new( unsigned int size )
 	{
 		return Z_MallocInternal( sizeof( FxScheduler ) );
 	}
-
 	static void operator delete( void *p )
 	{
 		Z_FreeInternal( p );
 	}
-
 	FxScheduler();
 	void Clean( bool bRemoveTemplates, const FxEffectDef *fxToPreserve );
 	void PlayEffect( const FxEffectDef *fx, const vec3_t origin, const vec3_t dir );
@@ -1023,42 +1012,35 @@ struct FxScheduler
 	void CreateDecalEffect( const PrimitiveTemplate *primTemp, const vec3_t origin, const vec3_t axis[3] );
 	void CreateEffect( const FxEffectDef *fx, const PrimitiveTemplate *primTemp, const FxBoltInfo *bolt, const vec3_t origin, const vec3_t axis[3], int lateTime, int indexInBatch );
 	void Archive( FxArchive *arch );
-
 	int mSeed;
 	ScheduledEffect *mScheduledHead;
 	int mScheduledCount;
 };
-
 struct EffectCluster
 {
 	vec3_t origin;
 	int refCount;
 };
-
 struct SortedEffect
 {
 	Effect *fx;
 	float distSq;
 };
-
 struct SortedCluster
 {
 	int index;
 	float distSq;
 };
-
 struct EffectVisibility
 {
 	vec3_t origin;
 	float radiusSq;
 	float visibility;
 };
-
 extern FxScheduler *theFxScheduler;
 // Original name unknown.
 extern FxScheduler *theFxSchedulers[1];
 extern volatile int fx_camera_valid;
-
 int Net_LocalClientNum() throw();
 float FxRange_GetVal( const FxRange *range );
 float flrand( float min, float max );
@@ -1076,9 +1058,7 @@ void OrientationPosToLocal( const orientation_t *orient, const float *pos, float
 void OrientationDirToLocal( const orientation_t *orient, const float *dir, float *out );
 void FX_InitTemplates();
 void FX_Print( const char *fmt, ... );
-
 bool g_rendererExists = true;
-
 EffectCluster effectClusterArray[1800];
 EffectCluster *effectClusters = effectClusterArray;
 int effectClusterCount;
@@ -1117,6 +1097,34 @@ SortedEffect visibleEffectsNonBolt[1800];
 int visibleEffectCountNonBolt;
 SortedEffect visibleEffectsBolt[1800];
 int visibleEffectCountBolt;
+
+struct DObj_s;
+struct DObjAnimMat
+{
+	vec4_t quat;
+	vec3_t trans;
+	float transWeight;
+};
+extern const dvar_t *fx_debugBolt;
+extern const vec4_t colorRed;
+extern const vec4_t colorGreen;
+extern const vec4_t colorBlue;
+DObj_s *Com_GetClientDObj( int handle, int localClientNum );
+int DObjNumBones( const DObj_s *obj );
+DObjAnimMat *DObjGetRotTransArray( const DObj_s *obj );
+void CG_DObjCalcBoneGeneric( int handle, int localClientNum, int boneIndex );
+void CG_GetDObjOrientation( int dobjHandle, float (*axis)[3] );
+void ConvertQuatToMat( const DObjAnimMat *mat, float axis[3][3] );
+void AxisCopy( const float in[3][3], float out[3][3] );
+void CL_AddDebugLine( const float *start, const float *end, const float *color, int depthTest, int duration, int fromServer );
+
+extern void StatMon_Warning( int type, int duration, const char *materialName );
+
+// Original name unknown.
+inline int FxArchive::GetUsedSize()
+{
+	return memFile->bytesUsed;
+}
 
 // Original name unknown.
 static inline void FX_SwapBolt( int i, int j )
@@ -1222,28 +1230,6 @@ void FX_Reset()
 	theFxScheduler->Clean(false, 0);
 }
 
-struct DObj_s;
-struct DObjAnimMat
-{
-	vec4_t quat;
-	vec3_t trans;
-	float transWeight;
-};
-
-extern const dvar_t *fx_debugBolt;
-extern const vec4_t colorRed;
-extern const vec4_t colorGreen;
-extern const vec4_t colorBlue;
-
-DObj_s *Com_GetClientDObj( int handle, int localClientNum );
-int DObjNumBones( const DObj_s *obj );
-DObjAnimMat *DObjGetRotTransArray( const DObj_s *obj );
-void CG_DObjCalcBoneGeneric( int handle, int localClientNum, int boneIndex );
-void CG_GetDObjOrientation( int dobjHandle, float (*axis)[3] );
-void ConvertQuatToMat( const DObjAnimMat *mat, float axis[3][3] );
-void AxisCopy( const float in[3][3], float out[3][3] );
-void CL_AddDebugLine( const float *start, const float *end, const float *color, int depthTest, int duration, int fromServer );
-
 bool FX_GetBoneOrientation( const FxBoltInfo *bolt, orientation_t *orient )
 {
 	float dobjAxis[4][3];
@@ -1339,8 +1325,6 @@ static void FX_RemoveNonBolt( int index, bool bDie )
 	FX_SwapNonBolt(index, --privateEffectActiveCountNonBolt);
 	FX_RemoveEffect(fx, bDie);
 }
-
-extern void StatMon_Warning( int type, int duration, const char *materialName );
 
 // Original name unknown.
 static void FX_EffectLimitReached()
@@ -2589,3 +2573,4 @@ void FX_UpdateAndDraw()
 	FX_FreeRemovedBolt();
 	FX_DrawAll();
 }
+

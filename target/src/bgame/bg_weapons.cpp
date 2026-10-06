@@ -31,6 +31,222 @@ void PM_Weapon_Idle( playerState_t *ps );
 void PM_ExitBinocularsQuick( playerState_t *ps );
 WeaponDef *BG_LoadWeaponDef( const char *folder, const char *name );
 
+void BG_ShutdownWeaponDefFiles();
+void BG_FillInWeaponItems( int weapIndex );
+void BG_FillInAmmoItems( int (*regWeap)(int) );
+void BG_SetupAmmoIndexes( int weapIndex );
+void BG_SetupSharedAmmoIndexes( int weapIndex );
+void BG_SetupClipIndexes( int weapIndex );
+void BG_SetupWeaponAlts( int weapIndex, int (*regWeap)(int) );
+void BG_ClearWeaponDef();
+void BG_SetupWeaponIndex( int weapIndex );
+int BG_SetupWeaponDef( WeaponDef *weapDef, int (*regWeap)(int) );
+void BG_FillInAllWeaponItems();
+void PM_StartWeaponAnim( playerState_t *ps, int anim );
+void PM_ContinueWeaponAnim( playerState_t *ps, int anim );
+WeaponDef *BG_GetWeaponDef( int iWeapon );
+void CG_SetWeaponDefToDefaultWeapon( int iWeapon );
+int BG_GetNumWeapons();
+int BG_GetNumAmmoTypes();
+int BG_GetAmmoTypeMax( int iAmmoIndex );
+int BG_GetNumAmmoClips();
+int BG_GetAmmoClipSize( int iClipIndex );
+int BG_GetSharedAmmoCapSize( int iAmmoIndex );
+const char *BG_GetSharedAmmoCapName( int iAmmoIndex );
+const char *BG_GetAmmoTypeName( int iAmmoIndex );
+const char *BG_GetAmmoClipName( int iClipIndex );
+int BG_GetAmmoTypeForName( const char *name );
+int BG_GetAmmoClipForName( const char *name );
+int BG_FindWeaponIndexForName( const char *name );
+int BG_GetWeaponIndexForName( const char *name, int (*regWeap)(int) );
+int CG_GetWeaponIndexForName( const char *name );
+int BG_GetBinocularWeaponIndex();
+int BG_GetViewmodelWeaponIndex( const playerState_t *ps );
+int BG_GetFirstAvailableOffhand( const playerState_t *ps, int offhandSlot );
+int BG_GetFirstEquippedOffhand( const playerState_t *ps, int offhandSlot );
+qboolean BG_IsAimDownSightWeapon( int iWeapon );
+bool BG_ValidateWeaponNumber( int weaponIndex );
+bool BG_DoesWeaponRequireSlot( int weaponIndex );
+bool BG_IsAnyEmptyPrimaryWeaponSlot( const playerState_t *ps );
+bool BG_IsWeaponValid( const playerState_t *ps, int weaponIndex );
+bool BG_DoesWeaponNeedSlot( int weaponIndex );
+int BG_TakePlayerWeapon( playerState_t *pPS, int iWeaponIndex );
+int BG_IsPlayerWeaponInSlot( playerState_t *pPS, int iWeaponIndex, qboolean bAnyMode );
+int BG_GetEmptySlotForWeapon( playerState_t *pPS, int iWeaponIndex );
+int BG_GetStackSlotForWeapon( const playerState_t *pPS, int iWeaponIndex, unsigned int preferedSlot );
+int BG_GetMaxPickupableAmmo( const playerState_t *ps, int weaponIndex );
+int BG_GetTotalAmmoReserve( const playerState_t *ps, int weaponIndex );
+void BG_GetSpreadForWeapon( const playerState_t *ps, int weaponIndex, float *minSpread, float *maxSpread );
+bool PM_IsBinocularADSAllowed( int iWeaponState );
+bool PM_IsAdsAllowed( playerState_t *ps, pml_t *pml );
+int PM_IsBinocularsADS( const playerState_t *ps );
+void PM_UpdateAimDownSightFlag( pmove_t *pm, pml_t *pml );
+void PM_ExitAimDownSight( playerState_t *ps );
+void PM_UpdateAimDownSightLerp( pmove_t *pm, pml_t *pml );
+void PM_StartHoldBreath( playerState_t *ps );
+void PM_EndHoldBreath( playerState_t *ps );
+void PM_HoldBreathFire( playerState_t *ps );
+void PM_UpdateHoldBreath( pmove_t *pm, pml_t *pml );
+qboolean PM_InteruptWeaponWithProneMove( playerState_t *ps );
+int BG_ClipForWeapon( int weapon );
+int BG_AmmoForWeapon( int weapon );
+int BG_WeaponIsClipOnly( int weapon );
+int BG_WeaponAmmo( const playerState_t *ps, int weapon );
+void PM_ReloadClip( playerState_t *ps );
+void PM_WeaponUseAmmo( playerState_t *ps, int weaponIndex, int amount );
+int PM_WeaponAmmoAvailable( playerState_t *ps );
+qboolean PM_WeaponClipEmpty( playerState_t *ps );
+void PM_Weapon_FinishRechamber( playerState_t *ps );
+qboolean PM_Weapon_CheckForRechamber( playerState_t *ps, qboolean delayedAction );
+void PM_SetWeaponReloadAddAmmoDelay( playerState_t *ps );
+void PM_SetReloadingState( playerState_t *ps );
+void PM_BeginWeaponReload( playerState_t *ps );
+void PM_BeginWeaponChange( playerState_t *ps, int newweapon );
+void PM_Weapon_FinishWeaponChange( pmove_t *pm );
+void PM_Weapon_FinishWeaponRaise( playerState_t *ps );
+qboolean PM_Weapon_AllowReload( playerState_t *ps );
+void PM_Weapon_ReloadDelayedAction( playerState_t *ps );
+void PM_Weapon_FinishReloadStart( playerState_t *ps, qboolean delayedAction );
+void PM_Weapon_FinishReload( playerState_t *ps, qboolean delayedAction );
+void PM_Weapon_FinishReloadEnd( playerState_t *ps );
+void PM_Weapon_CheckForReload( pmove_t *pm );
+void PM_SwitchIfEmpty( playerState_t *ps );
+void PM_AdjustAimSpreadScale( pmove_t *pm, pml_t *pml );
+qboolean PM_Weapon_WeaponTimeAdjust( pmove_t *pm, pml_t *pml );
+void PM_Weapon_CheckForChangeWeapon( pmove_t *pm );
+qboolean PM_Weapon_FinishFiring( pmove_t *pm, qboolean delayedAction );
+void PM_Weapon_StartFiring( playerState_t *ps, qboolean delayedAction );
+qboolean PM_Weapon_CheckFiringAmmo( playerState_t *ps );
+void PM_Weapon_SetFPSFireAnim( playerState_t *ps );
+void PM_Weapon_AddFiringAimSpreadScale( playerState_t *ps );
+void PM_Weapon_FireWeapon( playerState_t *ps, qboolean delayedAction );
+void PM_Weapon_FireMelee( playerState_t *ps );
+void PM_Weapon_FinishMelee( playerState_t *ps );
+void PM_Weapon_CheckForMelee( pmove_t *pm, qboolean delayedAction );
+void PM_Weapon_Idle( playerState_t *ps );
+void PM_Weapon_OffHandInit( playerState_t *ps );
+void PM_Weapon_OffHandPrepare( playerState_t *ps );
+void PM_Weapon_OffHandHold( playerState_t *ps );
+void PM_Weapon_OffHand( pmove_t *pm );
+void PM_Weapon_OffHandEnd( playerState_t *ps );
+void PM_SendEmtpyOffhandEvent( playerState_t *ps, int offhandSlot );
+void PM_Weapon_CheckForOffHand( pmove_t *pm );
+bool PM_UpdateGrenadeThrow( playerState_t *ps, pml_t *pml );
+void PM_EnterBinoculars( playerState_t *ps );
+void PM_ExitBinoculars( playerState_t *ps );
+void PM_ExitBinocularsQuick( playerState_t *ps );
+void Binocular_State_Init( playerState_t *ps );
+void Binocular_State_Raise( playerState_t *ps );
+void Binocular_State_Hold( playerState_t *ps );
+void Binocular_State_Exit_ADS( playerState_t *ps );
+void Binocular_State_Drop( playerState_t *ps );
+void Binocular_State_End( pmove_t *pm );
+void PM_Weapon_CheckForBinoculars( pmove_t *pm );
+void PM_Weapon( pmove_t *pm, pml_t *pml );
+void PM_ResetWeaponState( playerState_t *ps );
+void BG_WeaponFireRecoil( playerState_t *ps, vec3_t vGunSpeed, vec3_t kickAVel );
+float BG_GetBobCycle(const playerState_t *ps);
+float BG_GetVerticalBobFactor( const playerState_t *ps, float cycle, float speed, float maxAmp );
+float BG_GetHorizontalBobFactor(const playerState_t *ps, float cycle, float speed, float maxAmp);
+void BG_CalculateWeaponPosition_BasePosition_angles( weaponState_t *ws, vec3_t angles );
+void BG_CalculateWeaponPosition_BaseAngles(weaponState_t *ws, vec3_t angles);
+void BG_CalculateWeaponPosition_IdleAngles(weaponState_t *ws, vec3_t angles);
+void BG_CalculateWeaponPosition_BobOffset(weaponState_t *ws, vec3_t angles);
+void BG_CalculateWeaponPosition_DamageKick(weaponState_t *ws, vec3_t angles);
+void BG_CalculateWeaponPosition_GunRecoil( weaponState_t *ws, vec3_t angles );
+void BG_CalculateWeaponAngles( weaponState_t *ws, vec3_t angles );
+void BG_CalculateView_DamageKick(viewState_t *vs, vec3_t angles);
+void BG_CalculateView_IdleAngles(viewState_t *vs, vec3_t angles);
+void BG_CalculateView_BobAngles(viewState_t *vs, vec3_t angles);
+void BG_CalculateView_Velocity(viewState_t *vs, vec3_t angles);
+void BG_CalculateViewAngles(viewState_t *vs, vec3_t angles);
+void BG_CalculateWeaponPosition_Sway( const playerState_t *ps, vec3_t swayViewAngles, vec3_t swayOffset, vec3_t swayAngles, float ssSwayScale, int frametime );
+WeaponDef *BG_LoadWeaponDef( const char *folder, const char *name );
+
+/*
+===============
+BG_GetFirstEquippedOffhand
+===============
+*/
+
+/*
+===============
+BG_GetFirstAvailableOffhand
+===============
+*/
+
+/*
+===============
+BG_CalculateWeaponPosition_GunRecoil_SingleAngle
+===============
+*/
+qboolean BG_CalculateWeaponPosition_GunRecoil_SingleAngle( float *fOffset, float *speed, float fTimeStep,
+        float fOfsCap, float fGunKickAccel, float fGunKickSpeedMax, float fGunKickSpeedDecay, float fGunKickStaticDecay )
+{
+	qboolean bCanStop;
+	bCanStop = qfalse;
+	if ( I_fabs(*fOffset) < 0.25f && I_fabs(*speed) < 1.0f )
+	{
+		*fOffset = 0;
+		*speed = 0;
+		bCanStop = 1;
+	}
+	else
+	{
+	*fOffset = *fOffset + *speed * fTimeStep;
+	if ( *fOffset > fOfsCap )
+	{
+		*fOffset = fOfsCap;
+		if ( *speed > 0 )
+		{
+			*speed = 0;
+		}
+	}
+	else if ( *fOffset < -fOfsCap )
+	{
+		*fOffset = -fOfsCap;
+		if ( *speed < 0 )
+		{
+			*speed = 0;
+		}
+	}
+	if ( *fOffset > 0 )
+	{
+		*speed = *speed - fGunKickAccel * fTimeStep;
+	}
+	else if ( *fOffset < 0 )
+	{
+		*speed = *speed + fGunKickAccel * fTimeStep;
+	}
+	*speed = *speed - *speed * fGunKickSpeedDecay * fTimeStep;
+	if ( *speed > 0 )
+	{
+		*speed = *speed - fGunKickStaticDecay * fTimeStep;
+		if ( *speed < 0 )
+		{
+			*speed = 0;
+		}
+	}
+	else
+	{
+		*speed = *speed + fGunKickStaticDecay * fTimeStep;
+		if ( *speed > 0 )
+		{
+			*speed = 0;
+		}
+	}
+	if ( *speed > fGunKickSpeedMax )
+	{
+		*speed = fGunKickSpeedMax;
+	}
+	else if ( *speed < -fGunKickSpeedMax )
+	{
+		*speed = -fGunKickSpeedMax;
+	}
+	}
+	return bCanStop;
+}
+
 /*
 ===============
 BG_ShutdownWeaponDefFiles
@@ -695,12 +911,6 @@ int BG_GetBinocularWeaponIndex()
 
 /*
 ===============
-BG_GetFirstEquippedOffhand
-===============
-*/
-
-/*
-===============
 BG_GetViewmodelWeaponIndex
 ===============
 */
@@ -720,12 +930,6 @@ int BG_GetViewmodelWeaponIndex( const playerState_t *ps )
 
 	return ps->weapon;
 }
-
-/*
-===============
-BG_GetFirstAvailableOffhand
-===============
-*/
 
 int BG_GetFirstAvailableOffhand( const playerState_t *ps, int offhandSlot )
 {
@@ -4586,91 +4790,6 @@ void BG_CalculateWeaponPosition_DamageKick(weaponState_t *ws, vec3_t angles)
 
 /*
 ===============
-BG_CalculateWeaponPosition_GunRecoil_SingleAngle
-===============
-*/
-qboolean BG_CalculateWeaponPosition_GunRecoil_SingleAngle( float *fOffset, float *speed, float fTimeStep,
-        float fOfsCap, float fGunKickAccel, float fGunKickSpeedMax, float fGunKickSpeedDecay, float fGunKickStaticDecay )
-{
-	qboolean bCanStop;
-
-	bCanStop = qfalse;
-
-	if ( I_fabs(*fOffset) < 0.25f && I_fabs(*speed) < 1.0f )
-	{
-		*fOffset = 0;
-		*speed = 0;
-		bCanStop = 1;
-	}
-	else
-	{
-
-	*fOffset = *fOffset + *speed * fTimeStep;
-
-	if ( *fOffset > fOfsCap )
-	{
-		*fOffset = fOfsCap;
-
-		if ( *speed > 0 )
-		{
-			*speed = 0;
-		}
-	}
-	else if ( *fOffset < -fOfsCap )
-	{
-		*fOffset = -fOfsCap;
-
-		if ( *speed < 0 )
-		{
-			*speed = 0;
-		}
-	}
-
-	if ( *fOffset > 0 )
-	{
-		*speed = *speed - fGunKickAccel * fTimeStep;
-	}
-	else if ( *fOffset < 0 )
-	{
-		*speed = *speed + fGunKickAccel * fTimeStep;
-	}
-
-	*speed = *speed - *speed * fGunKickSpeedDecay * fTimeStep;
-
-	if ( *speed > 0 )
-	{
-		*speed = *speed - fGunKickStaticDecay * fTimeStep;
-
-		if ( *speed < 0 )
-		{
-			*speed = 0;
-		}
-	}
-	else
-	{
-		*speed = *speed + fGunKickStaticDecay * fTimeStep;
-
-		if ( *speed > 0 )
-		{
-			*speed = 0;
-		}
-	}
-
-	if ( *speed > fGunKickSpeedMax )
-	{
-		*speed = fGunKickSpeedMax;
-	}
-	else if ( *speed < -fGunKickSpeedMax )
-	{
-		*speed = -fGunKickSpeedMax;
-	}
-
-	}
-	return bCanStop;
-}
-
-/*
-===============
 BG_CalculateWeaponPosition_GunRecoil
 ===============
 */
@@ -5077,3 +5196,4 @@ WeaponDef *BG_LoadWeaponDef( const char *folder, const char *name )
 	SetConfigString((char **)&weapDef->szInternalName, name);
 	return weapDef;
 }
+

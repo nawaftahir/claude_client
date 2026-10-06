@@ -306,16 +306,6 @@ FxEffectDef *FX_ParseEffect( GenericParser2 *parser, const char *name )
 	return fx;
 }
 
-void MediaHandles::Shutdown()
-{
-	if ( !mMediaList.elements )
-		return;
-	Z_FreeInternal(mMediaList.elements);
-	mMediaList.elements = NULL;
-	mMediaList.size = 0;
-	mMediaList.maxSize = 0;
-}
-
 void MediaHandles::AddHandle( TMediaElement item )
 {
 	TMediaElement *elements;
@@ -345,4 +335,15 @@ void MediaHandles::AddEffect( FxEffectDef *fx )
 	item.effect = fx;
 	AddHandle(item);
 }
+
+void MediaHandles::Shutdown()
+{
+	if ( !mMediaList.elements )
+		return;
+	Z_FreeInternal(mMediaList.elements);
+	mMediaList.elements = NULL;
+	mMediaList.size = 0;
+	mMediaList.maxSize = 0;
+}
+
 

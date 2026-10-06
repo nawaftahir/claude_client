@@ -104,6 +104,20 @@ static void CG_CalcViewValues(void);
 void CG_InitView(void);
 qboolean CG_DrawActiveFrame(int serverTime, DemoType demoType, CubemapShot cubemapShot, int cubemapSize, qboolean renderScreen);
 
+void CG_FxSetTestPosition(void)
+{
+    float *start = cg->refdef.vieworg;
+    float *dir = cg->refdef.viewaxis[0];
+    float *result = cg->testFxPos;
+
+    result[0] = start[0] + 100.0f * dir[0];
+    result[1] = start[1] + 100.0f * dir[1];
+    result[2] = start[2] + 100.0f * dir[2];
+
+    Com_Printf((const char *)"\n\nFX Testing position set to: (%f, %f, %f)\n\n",
+               (double)result[0], (double)result[1], (double)result[2]);
+}
+
 void CG_FxRestart(void)
 {
     Com_Printf((const char *)"FX Restarting so off-line changes are loaded.\n");
@@ -135,103 +149,6 @@ void CG_FxTest(void)
             cg->testFxRespawnTime = 0;
         }
     }
-}
-
-float CG_GetViewFov(void)
-{
-    int weapIndex;
-    char *weapDef;
-    float fov_x;
-
-    {
-        weapIndex = BG_GetViewmodelWeaponIndex( (const playerState_t *)((void *)&cg->predictedPlayerState));
-        weapDef = (char *)BG_GetWeaponDef(weapIndex);
-
-        if (cg->predictedPlayerState.pm_type == 5) {
-            fov_x = 90.0f;
-        } else {
-            fov_x = cg_fov->current.value;
-
-            if (BG_IsAimDownSightWeapon(weapIndex)) {
-                float adsFov = ((WeaponDef *)weapDef)->fAdsZoomFov;
-                int *peBase = (int *)&((cg_t *)cg)->playerEntity.fLastWeaponPosFrac;
-
-                if (cg->predictedPlayerState.fWeaponPosFrac == 1.0f) {
-                    fov_x = adsFov;
-                } else if (cg->predictedPlayerState.fWeaponPosFrac != 0.0f) {
-                    float normalizedLerp;
-
-                    if (peBase[1] != 0) {
-                        normalizedLerp = cg->predictedPlayerState.fWeaponPosFrac - (1.0f - ((WeaponDef *)weapDef)->fAdsZoomInFrac);
-                        if (normalizedLerp > 0.0f) {
-                            normalizedLerp /= ((WeaponDef *)weapDef)->fAdsZoomInFrac;
-                        }
-                    } else {
-                        normalizedLerp = cg->predictedPlayerState.fWeaponPosFrac - (1.0f - ((WeaponDef *)weapDef)->fAdsZoomOutFrac);
-                        if (normalizedLerp > 0.0f) {
-                            normalizedLerp /= ((WeaponDef *)weapDef)->fAdsZoomOutFrac;
-                        }
-                    }
-
-                    if (normalizedLerp > 0.0f) {
-                        fov_x -= (fov_x - adsFov) * normalizedLerp;
-                    }
-                }
-            }
-        }
-    }
-
-    if (cg->predictedPlayerState.eFlags & 0x300) {
-        fov_x = 55.0f;
-    }
-
-    fov_x *= cg_fovScale->current.value;
-
-    {
-        float fovMin = (cg_fovMin)->current.value;
-        fov_x = (fovMin - fov_x >= 0.0f) ? fovMin : fov_x;
-    }
-
-    return fov_x;
-}
-
-static void CG_CalcFov(void)
-{
-    float fov;
-    float tanVal;
-    float fov_x, fov_y;
-    float wave;
-
-    fov = CG_GetViewFov();
-
-    tanVal = tan((fov * 0.017453292f) * 0.5f) * 0.75f;
-    fov_x = (atan(tanVal * cgs->viewAspect) * 57.295776f) * 2.0f;
-    fov_y = (atan(tanVal) * 57.295776f) * 2.0f;
-
-    if (CG_PointContents((const vec_t *)cg->refdef.vieworg, -1, 0x20)) {
-        // 0.4 Hz underwater warp: 2 * pi * 0.4 / 1000
-        wave = sin(cg->time * 0.0025132743f);
-        fov_x += wave;
-        fov_y -= wave;
-    }
-
-    cg->refdef.fov_x = fov_x;
-    cg->refdef.fov_y = fov_y;
-    cg->zoomSensitivity = fov_x / cg_fov->current.value;
-}
-
-void CG_FxSetTestPosition(void)
-{
-    float *start = cg->refdef.vieworg;
-    float *dir = cg->refdef.viewaxis[0];
-    float *result = cg->testFxPos;
-
-    result[0] = start[0] + 100.0f * dir[0];
-    result[1] = start[1] + 100.0f * dir[1];
-    result[2] = start[2] + 100.0f * dir[2];
-
-    Com_Printf((const char *)"\n\nFX Testing position set to: (%f, %f, %f)\n\n",
-               (double)result[0], (double)result[1], (double)result[2]);
 }
 
 // Name from Q3.
@@ -374,6 +291,55 @@ static void CG_StepOffset(void)
         cg->refdef.vieworg[2] -= (float)(100 - timeDelta) * cg->stepChange * 0.01f;
 }
 
+// Name from CoD4; original CoD2 name unknown.
+static void CG_KickAngles(void)
+{
+    WeaponDef *weapDef;
+    int weapIndex;
+    int t;
+    int i;
+    float ft;
+    float idealCenterSpeed;
+    float kickChange;
+
+    weapIndex = BG_GetViewmodelWeaponIndex(&cg->predictedPlayerState);
+    weapDef = BG_GetWeaponDef(weapIndex);
+    for (t = cg->frametime; t > 0; t -= 5) {
+        ft = (float)(t > 5 ? 5 : t) * 0.001f;
+        for (i = 0; i < 3; i++) {
+            if (cg->kickAVel[i] == 0.0f && cg->kickAngles[i] == 0.0f)
+                continue;
+            if (cg->kickAngles[i] != 0.0f) {
+                idealCenterSpeed = cg->kickAngles[i] > 0.0f ? -1.0f : 1.0f;
+                if (weapIndex) {
+                    if (cg->predictedPlayerState.fWeaponPosFrac > 0.5f)
+                        idealCenterSpeed *= weapDef->fAdsViewKickCenterSpeed;
+                    else
+                        idealCenterSpeed *= weapDef->fHipViewKickCenterSpeed;
+                } else {
+                    idealCenterSpeed *= 2400.0f;
+                }
+                cg->kickAVel[i] += idealCenterSpeed * ft;
+            }
+            kickChange = cg->kickAVel[i] * ft;
+            if (cg->kickAngles[i] * kickChange < 0.0f)
+                kickChange *= 0.06f;
+            if ((cg->kickAngles[i] + kickChange) * cg->kickAngles[i] >= 0.0f) {
+                cg->kickAngles[i] = cg->kickAngles[i] + kickChange;
+                if (cg->kickAngles[i] == 0.0f) {
+                    cg->kickAVel[i] = 0.0f;
+                } else if (fabs(cg->kickAngles[i]) > 10.0f) {
+                    cg->kickAngles[i] = cg->kickAngles[i] > 0.0f ? 10.0f : -10.0f;
+                    cg->kickAVel[i] = 0.0f;
+                }
+            } else {
+                cg->kickAngles[i] = 0.0f;
+                cg->kickAVel[i] = 0.0f;
+            }
+        }
+    }
+}
+
 static void CG_OffsetFirstPersonView(void)
 {
     viewState_t vs;
@@ -439,6 +405,88 @@ static void CG_OffsetFirstPersonView(void)
         cg->refdef.vieworg[2] = floorZ;
 }
 
+float CG_GetViewFov(void)
+{
+    int weapIndex;
+    char *weapDef;
+    float fov_x;
+
+    {
+        weapIndex = BG_GetViewmodelWeaponIndex( (const playerState_t *)((void *)&cg->predictedPlayerState));
+        weapDef = (char *)BG_GetWeaponDef(weapIndex);
+
+        if (cg->predictedPlayerState.pm_type == 5) {
+            fov_x = 90.0f;
+        } else {
+            fov_x = cg_fov->current.value;
+
+            if (BG_IsAimDownSightWeapon(weapIndex)) {
+                float adsFov = ((WeaponDef *)weapDef)->fAdsZoomFov;
+                int *peBase = (int *)&((cg_t *)cg)->playerEntity.fLastWeaponPosFrac;
+
+                if (cg->predictedPlayerState.fWeaponPosFrac == 1.0f) {
+                    fov_x = adsFov;
+                } else if (cg->predictedPlayerState.fWeaponPosFrac != 0.0f) {
+                    float normalizedLerp;
+
+                    if (peBase[1] != 0) {
+                        normalizedLerp = cg->predictedPlayerState.fWeaponPosFrac - (1.0f - ((WeaponDef *)weapDef)->fAdsZoomInFrac);
+                        if (normalizedLerp > 0.0f) {
+                            normalizedLerp /= ((WeaponDef *)weapDef)->fAdsZoomInFrac;
+                        }
+                    } else {
+                        normalizedLerp = cg->predictedPlayerState.fWeaponPosFrac - (1.0f - ((WeaponDef *)weapDef)->fAdsZoomOutFrac);
+                        if (normalizedLerp > 0.0f) {
+                            normalizedLerp /= ((WeaponDef *)weapDef)->fAdsZoomOutFrac;
+                        }
+                    }
+
+                    if (normalizedLerp > 0.0f) {
+                        fov_x -= (fov_x - adsFov) * normalizedLerp;
+                    }
+                }
+            }
+        }
+    }
+
+    if (cg->predictedPlayerState.eFlags & 0x300) {
+        fov_x = 55.0f;
+    }
+
+    fov_x *= cg_fovScale->current.value;
+
+    {
+        float fovMin = (cg_fovMin)->current.value;
+        fov_x = (fovMin - fov_x >= 0.0f) ? fovMin : fov_x;
+    }
+
+    return fov_x;
+}
+
+static void CG_CalcFov(void)
+{
+    float fov;
+    float tanVal;
+    float fov_x, fov_y;
+    float wave;
+
+    fov = CG_GetViewFov();
+
+    tanVal = tan((fov * 0.017453292f) * 0.5f) * 0.75f;
+    fov_x = (atan(tanVal * cgs->viewAspect) * 57.295776f) * 2.0f;
+    fov_y = (atan(tanVal) * 57.295776f) * 2.0f;
+
+    if (CG_PointContents((const vec_t *)cg->refdef.vieworg, -1, 0x20)) {
+        // 0.4 Hz underwater warp: 2 * pi * 0.4 / 1000
+        wave = sin(cg->time * 0.0025132743f);
+        fov_x += wave;
+        fov_y -= wave;
+    }
+
+    cg->refdef.fov_x = fov_x;
+    cg->refdef.fov_y = fov_y;
+    cg->zoomSensitivity = fov_x / cg_fov->current.value;
+}
 
 // Name from CoD4.
 static void CG_CalcCubemapViewValues(void)
@@ -704,6 +752,50 @@ static void CG_CalcViewValues(void)
     CG_PerturbCamera();
     CG_CalcFov();
 }
+
+// Name from CoD4; original CoD2 name unknown.
+static void CG_UpdateTestFX(void)
+{
+    if (cg->testFxRespawnTime >= 1) {
+        if (cg->time > cg->testFxRespawnTime + cg->testFxTime) {
+            FX_PlaySimpleEffect(FX_RegisterEffect(cg->testFxName), cg->testFxPos);
+            cg->testFxTime = cg->time;
+        }
+    }
+}
+
+// Name from CoD4; original CoD2 name unknown.
+static void CG_UpdateEntInfo(void)
+{
+    struct DObj_s *obj;
+    centity_t *cent;
+    int num;
+    int entnum;
+
+    for (num = 0; num < cg->nextSnap->numEntities; num++) {
+        entnum = cg->nextSnap->entities[num].number;
+        obj = Com_GetClientDObj(entnum, 0);
+        if (obj) {
+            CG_DObjUpdateInfo(obj);
+            CG_ProcessClientNoteTracks(entnum);
+        }
+        cent = &cg_entities[entnum];
+        if (cent->nextState.eType < 10)
+            CG_CalcEntityLerpPositions(cent);
+    }
+}
+
+// Name from CoD4; original CoD2 name unknown.
+static void CG_UpdateThirdPerson(void)
+{
+    if (cg_thirdPerson->current.enabled != 0 ||
+        cg->nextSnap->ps.pm_type >= 6) {
+        cg->renderingThirdPerson = 1;
+    } else {
+        cg->renderingThirdPerson = 0;
+    }
+}
+
 void CG_InitView(void)
 {
     ((cg_t *)cg)->refdef.time = cg->time;
@@ -733,28 +825,6 @@ static inline void Vec3LerpFrom(const vec3_t from, const vec3_t to, float frac, 
 }
 
 // Name from CoD4; original CoD2 name unknown.
-static void CG_UpdateThirdPerson(void)
-{
-    if (cg_thirdPerson->current.enabled != 0 ||
-        cg->nextSnap->ps.pm_type >= 6) {
-        cg->renderingThirdPerson = 1;
-    } else {
-        cg->renderingThirdPerson = 0;
-    }
-}
-
-// Name from CoD4; original CoD2 name unknown.
-static void CG_UpdateTestFX(void)
-{
-    if (cg->testFxRespawnTime >= 1) {
-        if (cg->time > cg->testFxRespawnTime + cg->testFxTime) {
-            FX_PlaySimpleEffect(FX_RegisterEffect(cg->testFxName), cg->testFxPos);
-            cg->testFxTime = cg->time;
-        }
-    }
-}
-
-// Name from CoD4; original CoD2 name unknown.
 static void DumpAnims(void)
 {
     int dumpClient = cg_dumpAnims->current.integer;
@@ -767,75 +837,6 @@ static void DumpAnims(void)
     }
 }
 
-// Name from CoD4; original CoD2 name unknown.
-static void CG_KickAngles(void)
-{
-    WeaponDef *weapDef;
-    int weapIndex;
-    int t;
-    int i;
-    float ft;
-    float idealCenterSpeed;
-    float kickChange;
-
-    weapIndex = BG_GetViewmodelWeaponIndex(&cg->predictedPlayerState);
-    weapDef = BG_GetWeaponDef(weapIndex);
-    for (t = cg->frametime; t > 0; t -= 5) {
-        ft = (float)(t > 5 ? 5 : t) * 0.001f;
-        for (i = 0; i < 3; i++) {
-            if (cg->kickAVel[i] == 0.0f && cg->kickAngles[i] == 0.0f)
-                continue;
-            if (cg->kickAngles[i] != 0.0f) {
-                idealCenterSpeed = cg->kickAngles[i] > 0.0f ? -1.0f : 1.0f;
-                if (weapIndex) {
-                    if (cg->predictedPlayerState.fWeaponPosFrac > 0.5f)
-                        idealCenterSpeed *= weapDef->fAdsViewKickCenterSpeed;
-                    else
-                        idealCenterSpeed *= weapDef->fHipViewKickCenterSpeed;
-                } else {
-                    idealCenterSpeed *= 2400.0f;
-                }
-                cg->kickAVel[i] += idealCenterSpeed * ft;
-            }
-            kickChange = cg->kickAVel[i] * ft;
-            if (cg->kickAngles[i] * kickChange < 0.0f)
-                kickChange *= 0.06f;
-            if ((cg->kickAngles[i] + kickChange) * cg->kickAngles[i] >= 0.0f) {
-                cg->kickAngles[i] = cg->kickAngles[i] + kickChange;
-                if (cg->kickAngles[i] == 0.0f) {
-                    cg->kickAVel[i] = 0.0f;
-                } else if (fabs(cg->kickAngles[i]) > 10.0f) {
-                    cg->kickAngles[i] = cg->kickAngles[i] > 0.0f ? 10.0f : -10.0f;
-                    cg->kickAVel[i] = 0.0f;
-                }
-            } else {
-                cg->kickAngles[i] = 0.0f;
-                cg->kickAVel[i] = 0.0f;
-            }
-        }
-    }
-}
-
-// Name from CoD4; original CoD2 name unknown.
-static void CG_UpdateEntInfo(void)
-{
-    struct DObj_s *obj;
-    centity_t *cent;
-    int num;
-    int entnum;
-
-    for (num = 0; num < cg->nextSnap->numEntities; num++) {
-        entnum = cg->nextSnap->entities[num].number;
-        obj = Com_GetClientDObj(entnum, 0);
-        if (obj) {
-            CG_DObjUpdateInfo(obj);
-            CG_ProcessClientNoteTracks(entnum);
-        }
-        cent = &cg_entities[entnum];
-        if (cent->nextState.eType < 10)
-            CG_CalcEntityLerpPositions(cent);
-    }
-}
 
 qboolean CG_DrawActiveFrame(int serverTime, DemoType demoType,
                             CubemapShot cubemapShot, int cubemapSize,

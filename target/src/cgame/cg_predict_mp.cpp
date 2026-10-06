@@ -24,6 +24,11 @@ static centity_t *cg_solidEntities[MAX_SOLID_ENTITIES];
 static int cg_numTriggerEntities;
 static centity_t *cg_triggerEntities[MAX_SOLID_ENTITIES];
 
+static void Trace_CalcBounds( const float *start, const float *mins, const float *maxs, const float *end, float fraction, vec3_t bounds[2] );
+void CG_ClipMoveToEntities( const float *start, const float *mins, const float *maxs, const float *end, int skipNumber, int mask, int capsule, trace_t *tr );
+void CG_Trace( trace_t *results, const float *start, const float *mins, const float *maxs, const float *end, int skipNumber, int mask );
+int CG_PointContents( const float *point, int passEntityNum, int contentMask );
+
 /*
 ==================
 Trace_CalcBounds
@@ -226,3 +231,4 @@ int CG_PointContents( const float *point, int passEntityNum, int contentMask )
 
 	return contents & contentMask;
 }
+

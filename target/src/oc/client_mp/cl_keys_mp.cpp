@@ -161,9 +161,68 @@ void Key_ClearStates(void);
 extern void CL_Gamepad_NoteKbmActive(void);
 #endif
 
-qboolean Key_GetOverstrikeMode(void)
+qboolean Key_GetOverstrikeMode(void);
+void Key_SetOverstrikeMode(qboolean state);
+void Key_Unbind_f(void);
+void Key_Unbindall_f(void);
+void Key_Bind_f(void);
+void Field_CharEvent(field_t *edit, int ch);
+void Key_Bindlist_f(void);
+
+void Field_Draw(field_t *edit, int x, int y, int horzAlign, int vertAlign)
 {
-    return *key_overstrikeMode;
+    vec4_t vColor;
+    char str[0x400];
+    int cursorPos;
+    FontHandle font;
+    int fontStyle;
+    float xScale;
+    float yScale;
+    float xAdj;
+    float yAdj;
+    char cursorChar;
+    float scale;
+
+    vColor[0] = 1.0f;
+    vColor[1] = 1.0f;
+    vColor[2] = 1.0f;
+    vColor[3] = 1.0f;
+
+    I_strncpyz(str, edit->buffer + edit->scroll, 0x100 - edit->scroll);
+
+    cursorPos = edit->cursor - edit->scroll;
+
+    if (edit->fixedSize) {
+        font = cls.consoleFont;
+        fontStyle = 0;
+        xScale = 1.0f;
+        yScale = 1.0f;
+        cursorChar = *key_overstrikeMode ? '_' : '|';
+    } else {
+        scale = edit->charHeight / 48.0f;
+        font = UI_GetFontHandle(0, scale);
+        scale = re.NormalizedTextScale(font, scale);
+        if (vertAlign == 5) {
+            xScale = GetRealWidthFromVirtualWidth(scale);
+            yScale = GetRealHeightFromVirtualHeight(scale);
+        } else {
+            xScale = scale;
+            yScale = scale;
+        }
+        fontStyle = 3;
+        cursorChar = *key_overstrikeMode ? '_' : '|';
+    }
+
+    xAdj = (float)x;
+    yAdj = (float)y + (float)re.TextHeight(font) * yScale;
+
+    if (!edit->drawWidth)
+        edit->drawWidth = 0x100;
+
+    CL_DrawTextWithCursor(str, edit->drawWidth, font,
+                          xAdj, yAdj, horzAlign, vertAlign,
+                          xScale, yScale,
+                          vColor, fontStyle, cursorPos, cursorChar);
 }
 
 void Field_AdjustScroll(field_t *edit)
@@ -233,335 +292,6 @@ void Field_AdjustScroll(field_t *edit)
 	}
 }
 
-void Key_SetOverstrikeMode(qboolean state)
-{
-    *key_overstrikeMode = state;
-}
-
-void FindMatches(const char *s)
-{
-	int i;
-
-	if ( I_strnicmp(s, completionString, strlen(completionString)) )
-		return;
-
-	matchCount++;
-	if ( matchCount == 1 )
-	{
-		I_strncpyz(shortestMatch, s, sizeof(shortestMatch));
-		hasExactMatch = 1;
-		return;
-	}
-
-	for ( i = 0; s[i]; i++ )
-	{
-		if ( tolower(shortestMatch[i]) != tolower(s[i]) )
-			break;
-	}
-
-	if ( s[i] && (!hasExactMatch || shortestMatch[i]) )
-		hasExactMatch = 0;
-	else
-		hasExactMatch = 1;
-
-	shortestMatch[i] = 0;
-}
-
-static void PrintMatches(const char *s)
-{
-    if (I_strnicmp(s, shortestMatch, (int)strlen(shortestMatch)) == 0) {
-        Com_Printf("    %s\n", s);
-    }
-}
-
-static void keyConcatArgs(void)
-{
-    int i;
-    const char *arg;
-
-    for (i = 1; i < Cmd_Argc(); i++) {
-        I_strncat(g_consoleField.buffer, sizeof(g_consoleField.buffer), " ");
-        arg = Cmd_Argv(i);
-        while (*arg) {
-            if (*arg == ' ') {
-                I_strncat(g_consoleField.buffer, sizeof(g_consoleField.buffer), "\"");
-                break;
-            }
-            arg++;
-        }
-        I_strncat(g_consoleField.buffer, sizeof(g_consoleField.buffer), Cmd_Argv(i));
-        if (*arg == ' ') {
-            I_strncat(g_consoleField.buffer, sizeof(g_consoleField.buffer), "\"");
-        }
-    }
-}
-
-int Key_StringToKeynum(const char *str)
-{
-    keyname_t *name;
-
-    if (str == NULL || *str == '\0') {
-        return -1;
-    }
-
-    if (str[1] == '\0') {
-        return (signed char)str[0];
-    }
-
-    if (str[0] == '0' && str[1] == 'x' && strlen(str) == 4) {
-        int n1, n2;
-
-        n1 = str[2];
-        if (I_isdigit(n1)) {
-            n1 -= '0';
-        } else if (n1 >= 'a' && n1 <= 'f') {
-            n1 = n1 - 'a' + 10;
-        } else {
-            n1 = 0;
-        }
-
-        n2 = str[3];
-        if (I_isdigit(n2)) {
-            n2 -= '0';
-        } else if (n2 >= 'a' && n2 <= 'f') {
-            n2 = n2 - 'a' + 10;
-        } else {
-            n2 = 0;
-        }
-
-        return n1 * 16 + n2;
-    }
-
-    for (name = keynames; name->name; ++name) {
-        if (I_stricmp(str, name->name) == 0) {
-            return name->keynum;
-        }
-    }
-
-    return -1;
-}
-
-char *Key_KeynumToString(int keynum, qboolean translate)
-{
-    keyname_t *name;
-    int upperNibble;
-    int lowerNibble;
-
-    if (keynum == -1) {
-        return "<KEY NOT FOUND>";
-    }
-
-    if (keynum < 0 || keynum > 0xff) {
-        return "<OUT OF RANGE>";
-    }
-
-    if (translate && SEH_GetCurrentLanguage() == 1 && keynum >= '0' && keynum <= '9') {
-        return frenchNumberKeysMap[keynum - '0'];
-    }
-
-    if (keynum > 0x20 && keynum < 0x7f && keynum != '"') {
-        tinystr[0] = toupper(keynum);
-        tinystr[1] = '\0';
-        if (keynum != ';' || translate) {
-            return tinystr;
-        }
-    }
-
-    name = translate ? keynames_localized : keynames;
-    while (name->name) {
-        if (keynum == name->keynum) {
-            return name->name;
-        }
-        ++name;
-    }
-
-    upperNibble = keynum >> 4;
-    lowerNibble = keynum & 0xf;
-    tinystr[0] = '0';
-    tinystr[1] = 'x';
-    tinystr[2] = upperNibble > 9 ? (char)(upperNibble + 'a' - 10) : (char)(upperNibble + '0');
-    tinystr[3] = lowerNibble > 9 ? (char)(lowerNibble + 'a' - 10) : (char)(lowerNibble + '0');
-    tinystr[4] = '\0';
-    return tinystr;
-}
-
-void Key_SetBinding(int keynum, const char *binding)
-{
-    if (keynum == -1)
-        return;
-    ReplaceStringInternal((const char **)&keys[keynum].binding, binding);
-    dvar_modifiedFlags |= 1;
-}
-
-char *Key_GetBinding(int keynum)
-{
-    if (keynum == -1)
-        return (char *)"";
-    return keys[keynum].binding;
-}
-
-void CL_InitKeyCommands(void)
-{
-    Cmd_AddCommand("bind", Key_Bind_f);
-    Cmd_AddCommand("unbind", Key_Unbind_f);
-    Cmd_AddCommand("unbindall", Key_Unbindall_f);
-    Cmd_AddCommand("bindlist", Key_Bindlist_f);
-}
-
-void Key_Shutdown(void)
-{
-    int keyIndex;
-
-    CL_SwitchToLocalClient(0);
-
-    for (keyIndex = 0; keyIndex < 256; ++keyIndex) {
-        char *binding = keys[keyIndex].binding;
-        if (binding != NULL) {
-            Z_FreeInternal(binding);
-            keys[keyIndex].binding = NULL;
-        }
-    }
-}
-
-void Field_Draw(field_t *edit, int x, int y, int horzAlign, int vertAlign)
-{
-    vec4_t vColor;
-    char str[0x400];
-    int cursorPos;
-    FontHandle font;
-    int fontStyle;
-    float xScale;
-    float yScale;
-    float xAdj;
-    float yAdj;
-    char cursorChar;
-    float scale;
-
-    vColor[0] = 1.0f;
-    vColor[1] = 1.0f;
-    vColor[2] = 1.0f;
-    vColor[3] = 1.0f;
-
-    I_strncpyz(str, edit->buffer + edit->scroll, 0x100 - edit->scroll);
-
-    cursorPos = edit->cursor - edit->scroll;
-
-    if (edit->fixedSize) {
-        font = cls.consoleFont;
-        fontStyle = 0;
-        xScale = 1.0f;
-        yScale = 1.0f;
-        cursorChar = *key_overstrikeMode ? '_' : '|';
-    } else {
-        scale = edit->charHeight / 48.0f;
-        font = UI_GetFontHandle(0, scale);
-        scale = re.NormalizedTextScale(font, scale);
-        if (vertAlign == 5) {
-            xScale = GetRealWidthFromVirtualWidth(scale);
-            yScale = GetRealHeightFromVirtualHeight(scale);
-        } else {
-            xScale = scale;
-            yScale = scale;
-        }
-        fontStyle = 3;
-        cursorChar = *key_overstrikeMode ? '_' : '|';
-    }
-
-    xAdj = (float)x;
-    yAdj = (float)y + (float)re.TextHeight(font) * yScale;
-
-    if (!edit->drawWidth)
-        edit->drawWidth = 0x100;
-
-    CL_DrawTextWithCursor(str, edit->drawWidth, font,
-                          xAdj, yAdj, horzAlign, vertAlign,
-                          xScale, yScale,
-                          vColor, fontStyle, cursorPos, cursorChar);
-}
-
-void Key_Unbind_f(void)
-{
-    int keynum;
-
-    if (Cmd_Argc() != 2) {
-        Com_Printf("unbind <key> : remove commands from a key\n");
-        return;
-    }
-
-    keynum = Key_StringToKeynum(Cmd_Argv(1));
-    if (keynum == -1) {
-        Com_Printf("\"%s\" isn't a valid key\n", Cmd_Argv(1));
-        return;
-    }
-
-    Key_SetBinding(keynum, "");
-}
-
-void Key_Unbindall_f(void)
-{
-    int keynum;
-
-    for (keynum = 0; keynum < 256; ++keynum) {
-        if (keys[keynum].binding != NULL && keynum != -1) {
-            ReplaceStringInternal((const char **)&keys[keynum].binding, "");
-            dvar_modifiedFlags |= 1;
-        }
-    }
-}
-
-void Key_Bind_f(void)
-{
-    bool hasSpace;
-    int keynum;
-    int argIndex;
-    const char *binding;
-    int argc;
-    char cmd[1024];
-
-    argc = Cmd_Argc();
-    if (Cmd_Argc() < 2) {
-        Com_Printf("bind <key> [command] : attach a command to a key\n");
-        return;
-    }
-
-    keynum = Key_StringToKeynum(Cmd_Argv(1));
-    if (keynum == -1) {
-        Com_Printf("\"%s\" isn't a valid key\n", Cmd_Argv(1));
-        return;
-    }
-
-    keynum = tolower(keynum);
-    if (argc == 2) {
-        binding = keys[keynum].binding;
-        if (binding) {
-            Com_Printf("\"%s\" = \"%s\"\n", Cmd_Argv(1), binding);
-        } else {
-            Com_Printf("\"%s\" is not bound\n", Cmd_Argv(1));
-        }
-        return;
-    }
-
-    cmd[0] = '\0';
-    for (argIndex = 2; argIndex < argc; ++argIndex) {
-        hasSpace = argc > 3 && strchr(Cmd_Argv(argIndex), ' ');
-        if (hasSpace) {
-            I_strncat(cmd, sizeof(cmd), "\"");
-        }
-
-        I_strncat(cmd, sizeof(cmd), Cmd_Argv(argIndex));
-
-        if (hasSpace) {
-            I_strncat(cmd, sizeof(cmd), "\"");
-        }
-
-        if (argIndex != argc - 1) {
-            I_strncat(cmd, sizeof(cmd), " ");
-        }
-    }
-
-    Key_SetBinding(keynum, cmd);
-}
-
 void Field_PasteClipboard(field_t *edit)
 {
     char *cbd;
@@ -578,6 +308,60 @@ void Field_PasteClipboard(field_t *edit)
     }
 
     Z_FreeInternal(cbd);
+}
+
+void Field_KeyDownEvent(field_t *edit, int key)
+{
+	int len;
+
+	len = strlen(edit->buffer);
+	if ( (key == K_INS || key == K_KP_INS) && keys[K_SHIFT].down )
+	{
+		Field_PasteClipboard(edit);
+	}
+	else if ( key == K_DEL )
+	{
+		if ( edit->cursor < len )
+			memmove(&edit->buffer[edit->cursor], &edit->buffer[edit->cursor + 1], len - edit->cursor);
+	}
+	else if ( key == K_RIGHTARROW )
+	{
+		if ( edit->cursor < len )
+			edit->cursor++;
+		if ( keys[K_CTRL].down )
+		{
+			while ( edit->cursor < len && isalnum(edit->buffer[edit->cursor]) )
+				edit->cursor++;
+			while ( edit->cursor < len && !isalnum(edit->buffer[edit->cursor]) )
+				edit->cursor++;
+		}
+	}
+	else if ( key == K_LEFTARROW )
+	{
+		if ( edit->cursor > 0 )
+			edit->cursor--;
+		if ( keys[K_CTRL].down )
+		{
+			while ( edit->cursor > 0 && isalnum(edit->buffer[edit->cursor - 1]) )
+				edit->cursor--;
+		}
+		if ( edit->cursor < edit->scroll )
+			edit->scroll = edit->cursor;
+	}
+	else if ( key == K_HOME || tolower(key) == 'a' && keys[K_CTRL].down )
+	{
+		edit->cursor = 0;
+	}
+	else if ( key == K_END || tolower(key) == 'e' && keys[K_CTRL].down )
+	{
+		edit->cursor = len;
+	}
+	else if ( key == K_INS )
+	{
+		Key_SetOverstrikeMode(!Key_GetOverstrikeMode());
+	}
+	if ( cls.uiStarted )
+		Field_AdjustScroll(edit);
 }
 
 void Field_CharEvent(field_t *edit, int ch)
@@ -646,117 +430,62 @@ void Field_CharEvent(field_t *edit, int ch)
     Field_AdjustScroll(edit);
 }
 
-void CL_CharEvent(int key)
+void FindMatches(const char *s)
 {
-    int keyCatchers;
+	int i;
 
-    if (key == '`' || key == '~')
-        return;
+	if ( I_strnicmp(s, completionString, strlen(completionString)) )
+		return;
 
-    keyCatchers = (clients)->keyCatchers;
+	matchCount++;
+	if ( matchCount == 1 )
+	{
+		I_strncpyz(shortestMatch, s, sizeof(shortestMatch));
+		hasExactMatch = 1;
+		return;
+	}
 
-    if (keyCatchers & 1) {
-        Field_CharEvent(&g_consoleField, key);
-        return;
-    }
-    if (keyCatchers & 8) {
-        UI_KeyEvent(key | 0x400, 1);
-        return;
-    }
-    if (keyCatchers & 0x10) {
-        Field_CharEvent((field_t *)chatField, key);
-        return;
-    }
+	for ( i = 0; s[i]; i++ )
+	{
+		if ( tolower(shortestMatch[i]) != tolower(s[i]) )
+			break;
+	}
 
-    if (!*((int *)&::clc)) {
-        Field_CharEvent(&g_consoleField, key);
-        return;
+	if ( s[i] && (!hasExactMatch || shortestMatch[i]) )
+		hasExactMatch = 0;
+	else
+		hasExactMatch = 1;
+
+	shortestMatch[i] = 0;
+}
+
+static void PrintMatches(const char *s)
+{
+    if (I_strnicmp(s, shortestMatch, (int)strlen(shortestMatch)) == 0) {
+        Com_Printf("    %s\n", s);
     }
 }
 
-void Field_KeyDownEvent(field_t *edit, int key)
+static void keyConcatArgs(void)
 {
-	int len;
+    int i;
+    const char *arg;
 
-	len = strlen(edit->buffer);
-	if ( (key == K_INS || key == K_KP_INS) && keys[K_SHIFT].down )
-	{
-		Field_PasteClipboard(edit);
-	}
-	else if ( key == K_DEL )
-	{
-		if ( edit->cursor < len )
-			memmove(&edit->buffer[edit->cursor], &edit->buffer[edit->cursor + 1], len - edit->cursor);
-	}
-	else if ( key == K_RIGHTARROW )
-	{
-		if ( edit->cursor < len )
-			edit->cursor++;
-		if ( keys[K_CTRL].down )
-		{
-			while ( edit->cursor < len && isalnum(edit->buffer[edit->cursor]) )
-				edit->cursor++;
-			while ( edit->cursor < len && !isalnum(edit->buffer[edit->cursor]) )
-				edit->cursor++;
-		}
-	}
-	else if ( key == K_LEFTARROW )
-	{
-		if ( edit->cursor > 0 )
-			edit->cursor--;
-		if ( keys[K_CTRL].down )
-		{
-			while ( edit->cursor > 0 && isalnum(edit->buffer[edit->cursor - 1]) )
-				edit->cursor--;
-		}
-		if ( edit->cursor < edit->scroll )
-			edit->scroll = edit->cursor;
-	}
-	else if ( key == K_HOME || tolower(key) == 'a' && keys[K_CTRL].down )
-	{
-		edit->cursor = 0;
-	}
-	else if ( key == K_END || tolower(key) == 'e' && keys[K_CTRL].down )
-	{
-		edit->cursor = len;
-	}
-	else if ( key == K_INS )
-	{
-		Key_SetOverstrikeMode(!Key_GetOverstrikeMode());
-	}
-	if ( cls.uiStarted )
-		Field_AdjustScroll(edit);
-}
-
-void Message_Key(int key)
-{
-    if (key == K_ESCAPE) {
-        (clients)->keyCatchers &= ~0x10;
-        Field_Clear(chatField);
-        return;
-    }
-
-    if (key == K_ENTER || key == K_KP_ENTER) {
-        if (chatField->buffer[0]) {
-            if ((&::clc)->state == 8) {
-                char buffer[1024];
-
-                if (*chat_team) {
-                    Com_sprintf(buffer, sizeof(buffer),
-                                "say_team \"\x15%s\"\n", chatField->buffer);
-                } else {
-                    Com_sprintf(buffer, sizeof(buffer),
-                                "say \"\x15%s\"\n", chatField->buffer);
-                }
-                CL_AddReliableCommand(buffer);
+    for (i = 1; i < Cmd_Argc(); i++) {
+        I_strncat(g_consoleField.buffer, sizeof(g_consoleField.buffer), " ");
+        arg = Cmd_Argv(i);
+        while (*arg) {
+            if (*arg == ' ') {
+                I_strncat(g_consoleField.buffer, sizeof(g_consoleField.buffer), "\"");
+                break;
             }
+            arg++;
         }
-        (clients)->keyCatchers &= ~0x10;
-        Field_Clear(chatField);
-        return;
+        I_strncat(g_consoleField.buffer, sizeof(g_consoleField.buffer), Cmd_Argv(i));
+        if (*arg == ' ') {
+            I_strncat(g_consoleField.buffer, sizeof(g_consoleField.buffer), "\"");
+        }
     }
-
-    Field_KeyDownEvent(chatField, key);
 }
 
 static void ConcatRemaining(const char *src, const char *start)
@@ -1027,6 +756,242 @@ void Console_Key(int key)
     Field_KeyDownEvent(&g_consoleField, key);
 }
 
+void Message_Key(int key)
+{
+    if (key == K_ESCAPE) {
+        (clients)->keyCatchers &= ~0x10;
+        Field_Clear(chatField);
+        return;
+    }
+
+    if (key == K_ENTER || key == K_KP_ENTER) {
+        if (chatField->buffer[0]) {
+            if ((&::clc)->state == 8) {
+                char buffer[1024];
+
+                if (*chat_team) {
+                    Com_sprintf(buffer, sizeof(buffer),
+                                "say_team \"\x15%s\"\n", chatField->buffer);
+                } else {
+                    Com_sprintf(buffer, sizeof(buffer),
+                                "say \"\x15%s\"\n", chatField->buffer);
+                }
+                CL_AddReliableCommand(buffer);
+            }
+        }
+        (clients)->keyCatchers &= ~0x10;
+        Field_Clear(chatField);
+        return;
+    }
+
+    Field_KeyDownEvent(chatField, key);
+}
+
+qboolean Key_GetOverstrikeMode(void)
+{
+    return *key_overstrikeMode;
+}
+
+void Key_SetOverstrikeMode(qboolean state)
+{
+    *key_overstrikeMode = state;
+}
+
+int Key_StringToKeynum(const char *str)
+{
+    keyname_t *name;
+
+    if (str == NULL || *str == '\0') {
+        return -1;
+    }
+
+    if (str[1] == '\0') {
+        return (signed char)str[0];
+    }
+
+    if (str[0] == '0' && str[1] == 'x' && strlen(str) == 4) {
+        int n1, n2;
+
+        n1 = str[2];
+        if (I_isdigit(n1)) {
+            n1 -= '0';
+        } else if (n1 >= 'a' && n1 <= 'f') {
+            n1 = n1 - 'a' + 10;
+        } else {
+            n1 = 0;
+        }
+
+        n2 = str[3];
+        if (I_isdigit(n2)) {
+            n2 -= '0';
+        } else if (n2 >= 'a' && n2 <= 'f') {
+            n2 = n2 - 'a' + 10;
+        } else {
+            n2 = 0;
+        }
+
+        return n1 * 16 + n2;
+    }
+
+    for (name = keynames; name->name; ++name) {
+        if (I_stricmp(str, name->name) == 0) {
+            return name->keynum;
+        }
+    }
+
+    return -1;
+}
+
+char *Key_KeynumToString(int keynum, qboolean translate)
+{
+    keyname_t *name;
+    int upperNibble;
+    int lowerNibble;
+
+    if (keynum == -1) {
+        return "<KEY NOT FOUND>";
+    }
+
+    if (keynum < 0 || keynum > 0xff) {
+        return "<OUT OF RANGE>";
+    }
+
+    if (translate && SEH_GetCurrentLanguage() == 1 && keynum >= '0' && keynum <= '9') {
+        return frenchNumberKeysMap[keynum - '0'];
+    }
+
+    if (keynum > 0x20 && keynum < 0x7f && keynum != '"') {
+        tinystr[0] = toupper(keynum);
+        tinystr[1] = '\0';
+        if (keynum != ';' || translate) {
+            return tinystr;
+        }
+    }
+
+    name = translate ? keynames_localized : keynames;
+    while (name->name) {
+        if (keynum == name->keynum) {
+            return name->name;
+        }
+        ++name;
+    }
+
+    upperNibble = keynum >> 4;
+    lowerNibble = keynum & 0xf;
+    tinystr[0] = '0';
+    tinystr[1] = 'x';
+    tinystr[2] = upperNibble > 9 ? (char)(upperNibble + 'a' - 10) : (char)(upperNibble + '0');
+    tinystr[3] = lowerNibble > 9 ? (char)(lowerNibble + 'a' - 10) : (char)(lowerNibble + '0');
+    tinystr[4] = '\0';
+    return tinystr;
+}
+
+void Key_SetBinding(int keynum, const char *binding)
+{
+    if (keynum == -1)
+        return;
+    ReplaceStringInternal((const char **)&keys[keynum].binding, binding);
+    dvar_modifiedFlags |= 1;
+}
+
+char *Key_GetBinding(int keynum)
+{
+    if (keynum == -1)
+        return (char *)"";
+    return keys[keynum].binding;
+}
+
+void CL_InitKeyCommands(void)
+{
+    Cmd_AddCommand("bind", Key_Bind_f);
+    Cmd_AddCommand("unbind", Key_Unbind_f);
+    Cmd_AddCommand("unbindall", Key_Unbindall_f);
+    Cmd_AddCommand("bindlist", Key_Bindlist_f);
+}
+
+void Key_Unbind_f(void)
+{
+    int keynum;
+
+    if (Cmd_Argc() != 2) {
+        Com_Printf("unbind <key> : remove commands from a key\n");
+        return;
+    }
+
+    keynum = Key_StringToKeynum(Cmd_Argv(1));
+    if (keynum == -1) {
+        Com_Printf("\"%s\" isn't a valid key\n", Cmd_Argv(1));
+        return;
+    }
+
+    Key_SetBinding(keynum, "");
+}
+
+void Key_Unbindall_f(void)
+{
+    int keynum;
+
+    for (keynum = 0; keynum < 256; ++keynum) {
+        if (keys[keynum].binding != NULL && keynum != -1) {
+            ReplaceStringInternal((const char **)&keys[keynum].binding, "");
+            dvar_modifiedFlags |= 1;
+        }
+    }
+}
+
+void Key_Bind_f(void)
+{
+    bool hasSpace;
+    int keynum;
+    int argIndex;
+    const char *binding;
+    int argc;
+    char cmd[1024];
+
+    argc = Cmd_Argc();
+    if (Cmd_Argc() < 2) {
+        Com_Printf("bind <key> [command] : attach a command to a key\n");
+        return;
+    }
+
+    keynum = Key_StringToKeynum(Cmd_Argv(1));
+    if (keynum == -1) {
+        Com_Printf("\"%s\" isn't a valid key\n", Cmd_Argv(1));
+        return;
+    }
+
+    keynum = tolower(keynum);
+    if (argc == 2) {
+        binding = keys[keynum].binding;
+        if (binding) {
+            Com_Printf("\"%s\" = \"%s\"\n", Cmd_Argv(1), binding);
+        } else {
+            Com_Printf("\"%s\" is not bound\n", Cmd_Argv(1));
+        }
+        return;
+    }
+
+    cmd[0] = '\0';
+    for (argIndex = 2; argIndex < argc; ++argIndex) {
+        hasSpace = argc > 3 && strchr(Cmd_Argv(argIndex), ' ');
+        if (hasSpace) {
+            I_strncat(cmd, sizeof(cmd), "\"");
+        }
+
+        I_strncat(cmd, sizeof(cmd), Cmd_Argv(argIndex));
+
+        if (hasSpace) {
+            I_strncat(cmd, sizeof(cmd), "\"");
+        }
+
+        if (argIndex != argc - 1) {
+            I_strncat(cmd, sizeof(cmd), " ");
+        }
+    }
+
+    Key_SetBinding(keynum, cmd);
+}
+
 void Key_WriteBindings(fileHandle_t f)
 {
     int keynum;
@@ -1227,6 +1192,34 @@ void CL_KeyEvent(int key, const qboolean down, const unsigned int time)
     }
 }
 
+void CL_CharEvent(int key)
+{
+    int keyCatchers;
+
+    if (key == '`' || key == '~')
+        return;
+
+    keyCatchers = (clients)->keyCatchers;
+
+    if (keyCatchers & 1) {
+        Field_CharEvent(&g_consoleField, key);
+        return;
+    }
+    if (keyCatchers & 8) {
+        UI_KeyEvent(key | 0x400, 1);
+        return;
+    }
+    if (keyCatchers & 0x10) {
+        Field_CharEvent((field_t *)chatField, key);
+        return;
+    }
+
+    if (!*((int *)&::clc)) {
+        Field_CharEvent(&g_consoleField, key);
+        return;
+    }
+}
+
 void Key_ClearStates(void)
 {
     int i;
@@ -1240,6 +1233,22 @@ void Key_ClearStates(void)
         keys[i].repeats = 0;
     }
 }
+
+void Key_Shutdown(void)
+{
+    int keyIndex;
+
+    CL_SwitchToLocalClient(0);
+
+    for (keyIndex = 0; keyIndex < 256; ++keyIndex) {
+        char *binding = keys[keyIndex].binding;
+        if (binding != NULL) {
+            Z_FreeInternal(binding);
+            keys[keyIndex].binding = NULL;
+        }
+    }
+}
+
 
 static keyname_t keynames[99] = {
     { (char *)&str_002a6bf0, 0x9 },

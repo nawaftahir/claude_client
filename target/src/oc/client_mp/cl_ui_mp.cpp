@@ -215,6 +215,141 @@ int LAN_GetServerPing(int source, int n)
     return server->ping;
 }
 
+static serverInfo_t *LAN_GetServerPtr(int source, int n)
+{
+    switch (source) {
+    case 0:
+        if (n >= 0 && n < 128)
+            return &cls.localServers[n];
+        break;
+    case 1:
+        if (n >= 0 && n < cls.numglobalservers)
+            return &cls.globalServers[n];
+        break;
+    case 2:
+        if (n >= 0 && n < 128)
+            return &cls.favoriteServers[n];
+        break;
+    }
+    return NULL;
+}
+
+static void LAN_CleanHostname(const char *hostName, char *cleanHostName)
+{
+    unsigned char c;
+
+    while (1) {
+        c = *hostName;
+        if (!*hostName)
+            break;
+        if (isalpha(c))
+            *cleanHostName++ = c;
+        hostName++;
+    }
+    *cleanHostName = 0;
+}
+
+int LAN_CompareHostname(const char *hostName1, const char *hostName2)
+{
+    char cleanHostName1[32];
+    char cleanHostName2[32];
+    int res;
+
+    LAN_CleanHostname(hostName1, cleanHostName1);
+    LAN_CleanHostname(hostName2, cleanHostName2);
+    res = I_stricmp(cleanHostName1, cleanHostName2);
+    if (res)
+        return res;
+    return I_stricmp(hostName1, hostName2);
+}
+
+int LAN_CompareServers(int source, int sortKey, int sortDir, int s1, int s2)
+{
+    serverInfo_t *server1;
+    serverInfo_t *server2;
+    int diff;
+
+    server1 = LAN_GetServerPtr(source, s1);
+    server2 = LAN_GetServerPtr(source, s2);
+
+    if (!server1 || !server2)
+        return 0;
+
+    diff = 0;
+    switch (sortKey) {
+    case 0:
+        diff = server1->bPassword - server2->bPassword;
+        if (diff)
+            goto apply_sortdir;
+        break;
+    case 1:
+        diff = server1->hardware - server2->hardware;
+        if (!diff)
+            break;
+        if (diff < 0) {
+            if (!server1->hardware)
+                diff = 1;
+        } else {
+            if (!server2->hardware)
+                diff = -1;
+        }
+        goto apply_sortdir;
+    case 8:
+        diff = server1->mod - server2->mod;
+        if (diff)
+            goto apply_sortdir;
+        break;
+    case 6:
+        diff = server1->voice - server2->voice;
+        if (diff)
+            goto apply_sortdir;
+        break;
+    case 7:
+        diff = server1->pure - server2->pure;
+        if (diff)
+            goto apply_sortdir;
+        break;
+    case 2:
+        diff = LAN_CompareHostname(server1->hostName, server2->hostName);
+        if (diff)
+            goto apply_sortdir;
+        break;
+    case 3:
+        diff = I_stricmp(server1->mapName, server2->mapName);
+        if (diff)
+            goto apply_sortdir;
+        break;
+    case 4:
+        diff = server1->clients - server2->clients;
+        if (diff)
+            goto apply_sortdir;
+        break;
+    case 5:
+        diff = I_stricmp(server1->gameType, server2->gameType);
+        if (diff)
+            goto apply_sortdir;
+        break;
+    case 9:
+        goto compare_ping;
+    default:
+        goto apply_sortdir;
+    }
+
+    sortDir = 0;
+compare_ping:
+    diff = server1->ping - server2->ping;
+    if (!diff) {
+        diff = I_stricmp(server1->gameType, server2->gameType);
+        if (!diff)
+            diff = LAN_CompareHostname(server1->hostName, server2->hostName);
+    }
+
+apply_sortdir:
+    if (sortDir)
+        diff = -diff;
+    return diff;
+}
+
 void LAN_MarkServerDirty(int source, int n, qboolean dirty)
 {
     serverInfo_t *servers;
@@ -454,137 +589,3 @@ void UI_LoadSoundAliases(void)
     Com_LoadSoundAliases("menu", "all_mp", (snd_alias_system_t)(0));
 }
 
-static void LAN_CleanHostname(const char *hostName, char *cleanHostName)
-{
-    unsigned char c;
-
-    while (1) {
-        c = *hostName;
-        if (!*hostName)
-            break;
-        if (isalpha(c))
-            *cleanHostName++ = c;
-        hostName++;
-    }
-    *cleanHostName = 0;
-}
-
-int LAN_CompareHostname(const char *hostName1, const char *hostName2)
-{
-    char cleanHostName1[32];
-    char cleanHostName2[32];
-    int res;
-
-    LAN_CleanHostname(hostName1, cleanHostName1);
-    LAN_CleanHostname(hostName2, cleanHostName2);
-    res = I_stricmp(cleanHostName1, cleanHostName2);
-    if (res)
-        return res;
-    return I_stricmp(hostName1, hostName2);
-}
-
-static serverInfo_t *LAN_GetServerPtr(int source, int n)
-{
-    switch (source) {
-    case 0:
-        if (n >= 0 && n < 128)
-            return &cls.localServers[n];
-        break;
-    case 1:
-        if (n >= 0 && n < cls.numglobalservers)
-            return &cls.globalServers[n];
-        break;
-    case 2:
-        if (n >= 0 && n < 128)
-            return &cls.favoriteServers[n];
-        break;
-    }
-    return NULL;
-}
-
-int LAN_CompareServers(int source, int sortKey, int sortDir, int s1, int s2)
-{
-    serverInfo_t *server1;
-    serverInfo_t *server2;
-    int diff;
-
-    server1 = LAN_GetServerPtr(source, s1);
-    server2 = LAN_GetServerPtr(source, s2);
-
-    if (!server1 || !server2)
-        return 0;
-
-    diff = 0;
-    switch (sortKey) {
-    case 0:
-        diff = server1->bPassword - server2->bPassword;
-        if (diff)
-            goto apply_sortdir;
-        break;
-    case 1:
-        diff = server1->hardware - server2->hardware;
-        if (!diff)
-            break;
-        if (diff < 0) {
-            if (!server1->hardware)
-                diff = 1;
-        } else {
-            if (!server2->hardware)
-                diff = -1;
-        }
-        goto apply_sortdir;
-    case 8:
-        diff = server1->mod - server2->mod;
-        if (diff)
-            goto apply_sortdir;
-        break;
-    case 6:
-        diff = server1->voice - server2->voice;
-        if (diff)
-            goto apply_sortdir;
-        break;
-    case 7:
-        diff = server1->pure - server2->pure;
-        if (diff)
-            goto apply_sortdir;
-        break;
-    case 2:
-        diff = LAN_CompareHostname(server1->hostName, server2->hostName);
-        if (diff)
-            goto apply_sortdir;
-        break;
-    case 3:
-        diff = I_stricmp(server1->mapName, server2->mapName);
-        if (diff)
-            goto apply_sortdir;
-        break;
-    case 4:
-        diff = server1->clients - server2->clients;
-        if (diff)
-            goto apply_sortdir;
-        break;
-    case 5:
-        diff = I_stricmp(server1->gameType, server2->gameType);
-        if (diff)
-            goto apply_sortdir;
-        break;
-    case 9:
-        goto compare_ping;
-    default:
-        goto apply_sortdir;
-    }
-
-    sortDir = 0;
-compare_ping:
-    diff = server1->ping - server2->ping;
-    if (!diff) {
-        diff = I_stricmp(server1->gameType, server2->gameType);
-        if (!diff)
-            diff = LAN_CompareHostname(server1->hostName, server2->hostName);
-    }
-
-apply_sortdir:
-    if (sortDir)
-        diff = -diff;
-    return diff;
-}

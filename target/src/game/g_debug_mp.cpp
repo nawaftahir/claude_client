@@ -7,6 +7,8 @@ void G_DebugCircleEx( const float *center, float radius, const float *dir, const
 
 void CL_AddDebugLine( const float *start, const float *end, const float *color, int depthTest, int duration, int fromServer );
 
+void G_DebugCircleEx( const float *center, float radius, const float *dir, const float *color, int depthTest, int duration );
+
 void G_DebugLine( const float *start, const float *end, const float *color, int depthTest, int duration )
 {
 	CL_AddDebugLine(start, end, color, depthTest, duration, 0);
@@ -127,3 +129,4 @@ void G_DebugArc( const float *center, float radius, float angle0, float angle1, 
 		G_DebugLine(verts[i], verts[i + 1], color, depthTest, duration);
 	}
 }
+

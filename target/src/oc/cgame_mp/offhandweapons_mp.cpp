@@ -55,130 +55,12 @@ void CG_DrawOffHandIcon(rectDef_s *rect, float scale, vec_t *color, MaterialHand
 void CG_DrawOffHandHighlight(rectDef_s *rect, float scale, vec_t *color, MaterialHandle material, int weaponType);
 void CG_DrawOffHandAmmo(rectDef_s *rect, struct Font_s *font, float scale, vec_t *color, int textStyle, int weaponType);
 
+void CG_UseOffHand(centity_t *cent, int event, int eventParam);
+
 void CG_OffhandRegisterDvars(void)
 {
     hud_flash_time_offhand = Dvar_RegisterFloat("hud_flash_time_offhand", 2.0f, 0.0f, 30.0f, 0x1001);
     hud_flash_period_offhand = Dvar_RegisterFloat("hud_flash_period_offhand", 0.5f, 0.0f, 30.0f, 0x1001);
-}
-
-void CG_DrawOffHandName(rectDef_s *rect, struct Font_s *font, float scale, vec_t *color, int textStyle, int weaponType)
-{
-    const dvar_t *hud;
-    float drawColor[4];
-    const char *text;
-    int weapon;
-    int time;
-
-    if (cg->predictedPlayerState.pm_type >= 6)
-        return;
-
-    weapon = BG_GetFirstAvailableOffhand( (const playerState_t *)((void *)&cg->predictedPlayerState), weaponType);
-    if (weapon == 0) {
-        weapon = BG_GetFirstEquippedOffhand( (const playerState_t *)((void *)&cg->predictedPlayerState), weaponType);
-        if (weapon == 0)
-            return;
-    }
-
-    hud = hud_fade_offhand;
-
-    time = I_fround(hud->current.value * 1000.0f);
-    drawColor[3] = CG_FadeHudMenu( (const dvar_t *)((void *)hud), cg->offhandFadeTime, time);
-
-    if (drawColor[3] == 0.0f)
-        return;
-
-    *(int *)&drawColor[0] = *(int *)&color[0];
-    *(int *)&drawColor[1] = *(int *)&color[1];
-    *(int *)&drawColor[2] = *(int *)&color[2];
-
-    text = UI_SafeTranslateString(offhandStrings[weaponType]);
-
-    UI_DrawText(text, 0x7fffffff, font,
-                rect->x, rect->y,
-                rect->horzAlign, rect->vertAlign,
-                scale, drawColor, textStyle);
-}
-
-void CG_PrepOffHand(entityState_t *ent, int event, int eventParam)
-{
-    weaponInfo_s *wi;
-
-    wi = &((cg_weaponsArray))[eventParam];
-
-    /* pullbackSound is a snd_alias_list_t*; pass the whole pointer (see the note
-     * in CG_UseOffHand -- the `(int)(intptr_t)` truncation crashes on x64). */
-    if (wi->pullbackSound != NULL) {
-        CG_PlayEntitySoundAlias(ent->number, wi->pullbackSound);
-    }
-}
-
-void CG_UseOffHand(centity_t *cent, int event, int eventParam)
-{
-    weaponInfo_s *wi;
-    int clientNum;
-    float origin[3];
-    struct DObj_s *dobj;
-
-    wi = &((cg_weaponsArray))[eventParam];
-
-    /* flashSound is a snd_alias_list_t* -- test the whole pointer (the decomp's
-     * `(int)(intptr_t)` truncated it to 32 bits, which both mis-detects NULL and,
-     * below, passed a truncated/garbage list pointer to CG_PlaySoundAlias -> crash
-     * in Com_PickSoundAliasFromList reading list->head on x64). */
-    if (wi->flashSound == NULL)
-        return;
-
-    clientNum = cent->nextState.number;
-
-    if (clientNum == cg->snap->ps.clientNum) {
-
-        struct DObj_s *viewModel = (struct DObj_s *)wi->viewModelDObj;
-        if (viewModel != NULL) {
-            if (CG_DObjGetViewModelTagPos(viewModel, scr_const.tag_flash, origin)) {
-                goto play_sound;
-            }
-        }
-    } else {
-
-        dobj = Com_GetClientDObj(clientNum, cent->localClientNum);
-        if (dobj != NULL) {
-            if (CG_DObjGetWorldTagPos(cent, dobj, scr_const.tag_flash, origin)) {
-                goto play_sound;
-            }
-        }
-    }
-
-    BG_EvaluateTrajectory(&cent->nextState.pos, cg->time, origin);
-
-play_sound:
-    CG_PlaySoundAlias(cent->nextState.number, origin, wi->flashSound);
-}
-
-void CG_SetEquippedOffHand(int offHandIndex)
-{
-    cg->equippedOffHand = offHandIndex;
-    CG_MenuShowNotify(4);
-}
-
-void CG_SwitchOffHandCmd(void)
-{
-    int currentWeapon;
-    void *weapDef;
-    int newWeapon;
-
-    currentWeapon = cg->equippedOffHand;
-
-    if (currentWeapon == 0)
-        return;
-
-    weapDef = BG_GetWeaponDef(currentWeapon);
-    newWeapon = BG_GetFirstAvailableOffhand( (const playerState_t *)((void *)&cg->predictedPlayerState), ((WeaponDef *)weapDef)->offhandClass);
-
-    if (newWeapon == 0)
-        return;
-
-    cg->equippedOffHand = newWeapon;
-    CG_MenuShowNotify(4);
 }
 
 // retail 0x4d1cc0
@@ -327,3 +209,124 @@ void CG_DrawOffHandAmmo(rectDef_s *rect, struct Font_s *font, float scale, vec_t
                 rect->horzAlign, rect->vertAlign,
                 scale, drawColor, textStyle);
 }
+
+void CG_DrawOffHandName(rectDef_s *rect, struct Font_s *font, float scale, vec_t *color, int textStyle, int weaponType)
+{
+    const dvar_t *hud;
+    float drawColor[4];
+    const char *text;
+    int weapon;
+    int time;
+
+    if (cg->predictedPlayerState.pm_type >= 6)
+        return;
+
+    weapon = BG_GetFirstAvailableOffhand( (const playerState_t *)((void *)&cg->predictedPlayerState), weaponType);
+    if (weapon == 0) {
+        weapon = BG_GetFirstEquippedOffhand( (const playerState_t *)((void *)&cg->predictedPlayerState), weaponType);
+        if (weapon == 0)
+            return;
+    }
+
+    hud = hud_fade_offhand;
+
+    time = I_fround(hud->current.value * 1000.0f);
+    drawColor[3] = CG_FadeHudMenu( (const dvar_t *)((void *)hud), cg->offhandFadeTime, time);
+
+    if (drawColor[3] == 0.0f)
+        return;
+
+    *(int *)&drawColor[0] = *(int *)&color[0];
+    *(int *)&drawColor[1] = *(int *)&color[1];
+    *(int *)&drawColor[2] = *(int *)&color[2];
+
+    text = UI_SafeTranslateString(offhandStrings[weaponType]);
+
+    UI_DrawText(text, 0x7fffffff, font,
+                rect->x, rect->y,
+                rect->horzAlign, rect->vertAlign,
+                scale, drawColor, textStyle);
+}
+
+void CG_PrepOffHand(entityState_t *ent, int event, int eventParam)
+{
+    weaponInfo_s *wi;
+
+    wi = &((cg_weaponsArray))[eventParam];
+
+    /* pullbackSound is a snd_alias_list_t*; pass the whole pointer (see the note
+     * in CG_UseOffHand -- the `(int)(intptr_t)` truncation crashes on x64). */
+    if (wi->pullbackSound != NULL) {
+        CG_PlayEntitySoundAlias(ent->number, wi->pullbackSound);
+    }
+}
+
+void CG_UseOffHand(centity_t *cent, int event, int eventParam)
+{
+    weaponInfo_s *wi;
+    int clientNum;
+    float origin[3];
+    struct DObj_s *dobj;
+
+    wi = &((cg_weaponsArray))[eventParam];
+
+    /* flashSound is a snd_alias_list_t* -- test the whole pointer (the decomp's
+     * `(int)(intptr_t)` truncated it to 32 bits, which both mis-detects NULL and,
+     * below, passed a truncated/garbage list pointer to CG_PlaySoundAlias -> crash
+     * in Com_PickSoundAliasFromList reading list->head on x64). */
+    if (wi->flashSound == NULL)
+        return;
+
+    clientNum = cent->nextState.number;
+
+    if (clientNum == cg->snap->ps.clientNum) {
+
+        struct DObj_s *viewModel = (struct DObj_s *)wi->viewModelDObj;
+        if (viewModel != NULL) {
+            if (CG_DObjGetViewModelTagPos(viewModel, scr_const.tag_flash, origin)) {
+                goto play_sound;
+            }
+        }
+    } else {
+
+        dobj = Com_GetClientDObj(clientNum, cent->localClientNum);
+        if (dobj != NULL) {
+            if (CG_DObjGetWorldTagPos(cent, dobj, scr_const.tag_flash, origin)) {
+                goto play_sound;
+            }
+        }
+    }
+
+    BG_EvaluateTrajectory(&cent->nextState.pos, cg->time, origin);
+
+play_sound:
+    CG_PlaySoundAlias(cent->nextState.number, origin, wi->flashSound);
+}
+
+void CG_SetEquippedOffHand(int offHandIndex)
+{
+    cg->equippedOffHand = offHandIndex;
+    CG_MenuShowNotify(4);
+}
+
+void CG_SwitchOffHandCmd(void)
+{
+    int currentWeapon;
+    void *weapDef;
+    int newWeapon;
+
+    currentWeapon = cg->equippedOffHand;
+
+    if (currentWeapon == 0)
+        return;
+
+    weapDef = BG_GetWeaponDef(currentWeapon);
+    newWeapon = BG_GetFirstAvailableOffhand( (const playerState_t *)((void *)&cg->predictedPlayerState), ((WeaponDef *)weapDef)->offhandClass);
+
+    if (newWeapon == 0)
+        return;
+
+    cg->equippedOffHand = newWeapon;
+    CG_MenuShowNotify(4);
+}
+

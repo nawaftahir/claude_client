@@ -3,6 +3,26 @@
 
 int CM_BoxLeafnums( const vec3_t mins, const vec3_t maxs, int *list, int listsize, int *lastLeaf );
 
+static int CM_PointLeafnum_r( const vec3_t p, int num );
+void CM_StoreLeafs( leafList_t *ll, int nodenum );
+int CM_BoxLeafnums( const vec3_t mins, const vec3_t maxs, int *list, int listsize, int *lastLeaf );
+static int CM_PointContentsLeafBrushNode_r( const vec3_t p, cLeafBrushNode_s *node );
+int CM_PointContents( const vec3_t p, clipHandle_t model );
+int CM_TransformedPointContents( const vec3_t p, clipHandle_t model, const vec3_t origin, const vec3_t angles );
+byte *CM_ClusterPVS( int cluster );
+
+/*
+======================================================================
+LEAF LISTING
+======================================================================
+*/
+
+/*
+===============================================================================
+PVS
+===============================================================================
+*/
+
 /*
 ==================
 CM_PointLeafnum_r
@@ -44,12 +64,6 @@ int CM_PointLeafnum( const vec3_t p )
 {
 	return CM_PointLeafnum_r( p, 0 );
 }
-
-/*
-======================================================================
-LEAF LISTING
-======================================================================
-*/
 
 /*
 ==================
@@ -272,12 +286,6 @@ int CM_TransformedPointContents( const vec3_t p, clipHandle_t model, const vec3_
 }
 
 /*
-===============================================================================
-PVS
-===============================================================================
-*/
-
-/*
 ==================
 CM_ClusterPVS
 ==================
@@ -291,3 +299,4 @@ byte *CM_ClusterPVS( int cluster )
 
 	return cm.visibility + cluster * cm.clusterBytes;
 }
+

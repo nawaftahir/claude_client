@@ -36,6 +36,64 @@ void G_FreeEntity( gentity_t *ed );
 void G_SetOrigin( gentity_t *ent, const vec3_t origin );
 void G_SetAngle( gentity_t *ent, const vec3_t angle );
 
+int G_FindConfigstringIndex( const char *name, int start, int max, qboolean create, const char *errormsg );
+int G_LocalizedStringIndex( const char *string );
+int G_ShaderIndex( const char *name );
+int G_ModelIndex( const char *name );
+XModel* G_GetModel( int index );
+int G_XModelBad( int index );
+const char* G_ModelName( int index );
+int G_TagIndex( const char *name );
+int G_EffectIndex( const char *name );
+int G_ShellShockIndex( const char *name );
+int G_SoundAliasIndex( const char *name );
+void G_DObjUpdate( gentity_t *ent );
+void G_SetModel( gentity_t *ent, const char *modelName );
+void G_OverrideModel( int modelIndex, const char *defaultModelName );
+qboolean G_EntAttach( gentity_t *ent, const char *modelName, unsigned int tagName, qboolean ignoreCollision );
+qboolean G_EntDetach( gentity_t *ent, const char *modelName, unsigned int tagName );
+void G_EntDetachAll( gentity_t *ent );
+qboolean G_EntLinkTo( gentity_t *ent, gentity_t *parent, unsigned int tagName );
+qboolean G_EntLinkToWithOffset( gentity_t *ent, gentity_t *parent, unsigned int tagName, const vec3_t originOffset, const vec3_t anglesOffset );
+void G_EntUnlink( gentity_t *ent );
+qboolean G_EntIsLinkedTo( gentity_t *ent, gentity_t *parent );
+void G_UpdateTagInfo( gentity_t *parent, qboolean bParentHasDObj );
+void G_UpdateTagInfoOfChildren( gentity_t *parent, qboolean bHasDObj );
+void G_CalcTagParentRelAxis( gentity_t *ent, float parentAxis[4][3] );
+void G_CalcTagAxis( gentity_t *ent, qboolean bAnglesOnly );
+void G_SetFixedLink( gentity_t *ent, int eAngles );
+void G_GeneralLink( gentity_t *ent );
+void G_SafeDObjFree( gentity_t *ent );
+int G_DObjUpdateServerTime( gentity_t *ent, qboolean bNotify );
+void G_DObjCalcPose( gentity_t *ent );
+void G_DObjCalcBone( gentity_t *ent, int boneIndex );
+DObjAnimMat* G_DObjGetLocalTagMatrix( gentity_t *ent, unsigned int tagName );
+qboolean G_DObjGetWorldTagMatrix( gentity_t *ent, unsigned int tagName, float tagMat[4][3] );
+qboolean G_DObjGetWorldTagPos( gentity_t *ent, unsigned int tagName, vec3_t pos );
+gentity_t *G_Find( gentity_t *from, int fieldofs, unsigned short match );
+void G_InitGentity( gentity_t *ent );
+void G_PrintEntities();
+bool G_MaySpawnEntity( gentity_t *e );
+gentity_t* G_Spawn( void );
+gentity_t* G_SpawnPlayerClone();
+void G_FreeEntityRefs( gentity_t *ent );
+int G_GetPlayerCorpseIndex( gentity_t *ent );
+void PlayerCorpse_Free( gentity_t *ent );
+void G_FreeEntity( gentity_t *ed );
+void G_FreeEntityDelay( gentity_t *ed );
+gentity_t *G_TempEntity( const vec3_t origin, int event );
+void G_KillBox( gentity_t *ent );
+void G_AddPredictableEvent( gentity_t *ent, int event, int eventParm );
+void G_AddEvent( gentity_t *ent, int event, int eventParm );
+void G_PlaySoundAliasAtPoint( vec3_t origin, unsigned char alias );
+void G_PlaySoundAlias( gentity_t *ent, unsigned char alias );
+void G_PlaySoundAliasAsMaster( gentity_t *ent, unsigned char alias );
+int G_AnimScriptSound( int client, snd_alias_list_t *aliasList );
+void G_SetOrigin( gentity_t *ent, const vec3_t origin );
+void G_SetAngle( gentity_t *ent, const vec3_t angle );
+qboolean infront( gentity_t *self, gentity_t *other );
+void G_SetConstString( unsigned short *to, const char *from );
+
 /*
 ================
 G_FindConfigstringIndex
@@ -449,7 +507,6 @@ void G_EntDetachAll( gentity_t *ent )
 	G_DObjUpdate(ent);
 }
 
-
 qboolean G_EntLinkToInternal( gentity_t *ent, gentity_t *parent, unsigned int tagName )
 {
 	tagInfo_s *tagInfo;
@@ -657,7 +714,6 @@ void G_UpdateTagInfoOfChildren( gentity_t *parent, qboolean bHasDObj )
 	}
 }
 
-
 void G_CalcTagParentAxis( gentity_t *ent, float parentAxis[4][3] )
 {
 	tagInfo_s *tagInfo;
@@ -706,7 +762,6 @@ void G_CalcTagParentRelAxis( gentity_t *ent, float parentAxis[4][3] )
 	G_CalcTagParentAxis(ent, invParentAxis);
 	MatrixMultiply43(tagInfo->parentInvAxis, invParentAxis, parentAxis);
 }
-
 
 void G_CalcTagAxis( gentity_t *ent, qboolean bAnglesOnly )
 {
@@ -986,7 +1041,6 @@ gentity_t *G_Find( gentity_t *from, int fieldofs, unsigned short match )
 
 	return NULL;
 }
-
 
 gentity_t *G_FindStr( gentity_t *from, int fieldofs, const char *match )
 {
@@ -1690,3 +1744,4 @@ void G_SetConstString( unsigned short *to, const char *from )
 	Scr_SetString(to, 0);
 	*to = SL_GetString(from, 0);
 }
+

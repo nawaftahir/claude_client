@@ -299,3 +299,4 @@ void Sys_StreamSeek( fileHandle_t f, int offset, int origin )
 {
 	FS_SeekInternal( f, offset, origin );
 }
+

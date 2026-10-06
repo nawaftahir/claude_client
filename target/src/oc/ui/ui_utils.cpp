@@ -69,23 +69,44 @@ void Item_SetScreenCoords(itemDef_t *item, float x, float y, int horzAlign, int 
 void Menu_UpdatePosition(menuDef_t *menu);
 qboolean Rect_Parse(const char **p, rectDef_t *r);
 
-static long hashForString(const char *str)
+// Q_IsColorString plus the CoD2 digit check.
+#define I_IsColorString(p) ((p) && *(p) == '^' && *((p) + 1) && *((p) + 1) != '^' && *((p) + 1) >= '0' && *((p) + 1) <= '9')
+
+void Window_SetRectClient(Window *w, const UiRectangle *rectClient)
 {
-    int i;
-    int letter;
-    long hash = 0;
-
-    for (i = 0; str[i] != '\0'; ++i) {
-        letter = tolower(str[i]);
-        hash += (long)letter * (i + 119);
-    }
-
-    return hash & 2047;
+    w->rectClient[0] = *rectClient;
 }
 
-void Window_SetStaticFlags(Window *w, const int flags)
+void Window_SetRectEffects0(Window *w, const UiRectangle *rectEffects0)
 {
-    w->staticFlags = flags;
+    w->rectEffects0[0] = *rectEffects0;
+}
+
+void Window_SetRectEffects1(Window *w, const UiRectangle *rectEffects1)
+{
+    w->rectEffects1[0] = *rectEffects1;
+}
+
+void Window_SetDynamicFlags(Window *w, const int flags)
+{
+    w->dynamicFlags[0] = flags;
+}
+
+void Menu_SetCursorItem(menuDef_t *menu, int cursorItem)
+{
+    menu->cursorItem[0] = cursorItem;
+}
+
+void Window_RemoveDynamicFlags(Window *w, const int newFlags)
+{
+    int flags = w->dynamicFlags[0];
+    int mask = newFlags;
+
+    if (mask & 4)
+        mask |= 2;
+
+    flags &= ~mask;
+    w->dynamicFlags[0] = flags;
 }
 
 qboolean Item_EnableShowViaDvar(const itemDef_t *item, int flag)
@@ -122,106 +143,6 @@ qboolean Item_EnableShowViaDvar(const itemDef_t *item, int flag)
     return 1;
 }
 
-qboolean Item_IsEditFieldDef(itemDef_t *item)
-{
-    switch (item->dataType) {
-    case 0:
-    case 4:
-    case 9:
-    case 10:
-    case 11:
-    case 14:
-    case 16:
-    case 17:
-    case 18:
-        return 1;
-    default:
-        return 0;
-    }
-}
-
-listBoxDef_t *Item_GetListBoxDef(itemDef_t *item)
-{
-    if (item->dataType == 6)
-        return item->typeData.listBox;
-    Com_Printf("^1Menu Error: Expecting type: ITEM_TYPE_LISTBOX\n");
-    return NULL;
-}
-
-multiDef_t *Item_GetMultiDef(itemDef_t *item)
-{
-    return item->typeData.multi;
-}
-
-void *UI_Alloc(int size, int alignment)
-{
-    return Hunk_AllocAlignInternal(size, alignment);
-}
-
-void String_Init(void)
-{
-    memset(g_strHandle, 0, sizeof(g_strHandle));
-}
-
-qboolean Int_Parse(const char **p, int *i)
-{
-    const char *token;
-
-    token = Com_ParseOnLine(p);
-    if (!token || *token == '\0')
-        return 0;
-
-    *i = atoi(token);
-    return 1;
-}
-
-qboolean Float_Parse(const char **p, float *f)
-{
-    const char *token;
-
-    token = Com_ParseOnLine(p);
-    if (!token || *token == '\0')
-        return 0;
-
-    *f = (float)atof(token);
-    return 1;
-}
-
-void Window_SetOffsetTime(Window *w, int offsetTime)
-{
-    w->offsetTime[0] = offsetTime;
-}
-
-void Window_SetRect(Window *w, const UiRectangle *rect)
-{
-    w->rect[0] = *rect;
-}
-
-void Window_SetRectClient(Window *w, const UiRectangle *rectClient)
-{
-    w->rectClient[0] = *rectClient;
-}
-
-void Window_SetRectEffects0(Window *w, const UiRectangle *rectEffects0)
-{
-    w->rectEffects0[0] = *rectEffects0;
-}
-
-void Window_SetRectEffects1(Window *w, const UiRectangle *rectEffects1)
-{
-    w->rectEffects1[0] = *rectEffects1;
-}
-
-void Window_SetDynamicFlags(Window *w, const int flags)
-{
-    w->dynamicFlags[0] = flags;
-}
-
-void Menu_SetCursorItem(menuDef_t *menu, int cursorItem)
-{
-    menu->cursorItem[0] = cursorItem;
-}
-
 void Item_SetTextRect(itemDef_t *item, const rectDef_t *textRect)
 {
     item->textRect[0] = *textRect;
@@ -231,9 +152,6 @@ void Item_SetCursorPos(itemDef_t *item, int cursorPos)
 {
     item->cursorPos[0] = cursorPos;
 }
-
-// Q_IsColorString plus the CoD2 digit check.
-#define I_IsColorString(p) ((p) && *(p) == '^' && *((p) + 1) && *((p) + 1) != '^' && *((p) + 1) >= '0' && *((p) + 1) <= '9')
 
 int Item_GetCursorPosOffset(const itemDef_t *item, const char *text, int delta)
 {
@@ -291,85 +209,6 @@ bool ListBox_HasValidCursorPos(const listBoxDef_t *listBox)
 void Window_AddDynamicFlags(Window *w, const int newFlags)
 {
     w->dynamicFlags[0] |= newFlags;
-}
-
-void Window_RemoveDynamicFlags(Window *w, const int newFlags)
-{
-    int flags = w->dynamicFlags[0];
-    int mask = newFlags;
-
-    if (mask & 4)
-        mask |= 2;
-
-    flags &= ~mask;
-    w->dynamicFlags[0] = flags;
-}
-
-editFieldDef_t *Item_GetEditFieldDef(itemDef_t *item)
-{
-
-    switch (item->dataType) {
-    case 0:
-    case 4:
-    case 9:
-    case 10:
-    case 11:
-    case 14:
-    case 16:
-    case 17:
-    case 18:
-        return item->typeData.editField;
-    }
-
-    Com_Printf("^1Menu Error: Expecting type: ITEM_TYPE_EDITFIELD, ITEM_TYPE_NUMERICFIELD, ITEM_TYPE_DECIMALFIELD, ITEM_TYPE_VALIDFILEFIELD, ITEM_TYPE_UPREDITFIELD, ITEM_TYPE_YESNO, ITEM_TYPE_BIND, ITEM_TYPE_SLIDER, or ITEM_TYPE_TEXT\n");
-    return NULL;
-}
-
-const char *String_Alloc(const char *p)
-{
-    long hash;
-    char *str;
-    stringDef_t *s;
-    stringDef_t *last;
-    stringDef_t *newDef;
-
-    if (p == NULL)
-        return NULL;
-
-    if (*p == '\0')
-        return staticNULL;
-
-    hash = hashForString(p);
-
-    s = g_strHandle[hash];
-    while (s != NULL) {
-        if (strcmp(p, s->str) == 0) {   /* was *(char**)(s+4): x86 stringDef_t.str offset */
-            return s->str;
-        }
-        s = s->next;
-    }
-
-    str = (char *)STRPOOL_ALLOC(strlen(p) + 1, 1);
-    strcpy(str, p);
-
-    s = g_strHandle[hash];
-    last = s;
-    while (s != NULL && s->next) {
-        last = s;
-        s = s->next;
-    }
-
-    newDef = (stringDef_t *)STRPOOL_ALLOC((int)sizeof(stringDef_t), (int)sizeof(void *));
-    newDef->next = 0;
-    newDef->str = str;
-
-    if (last != NULL) {
-        last->next = newDef;
-    } else {
-        g_strHandle[hash] = newDef;
-    }
-
-    return str;
 }
 
 void Item_SetScreenCoords(itemDef_t *item, float x, float y, int horzAlign, int vertAlign)
@@ -443,6 +282,167 @@ void Menu_UpdatePosition(menuDef_t *menu)
     }
 }
 
+qboolean Item_IsEditFieldDef(itemDef_t *item)
+{
+    switch (item->dataType) {
+    case 0:
+    case 4:
+    case 9:
+    case 10:
+    case 11:
+    case 14:
+    case 16:
+    case 17:
+    case 18:
+        return 1;
+    default:
+        return 0;
+    }
+}
+
+listBoxDef_t *Item_GetListBoxDef(itemDef_t *item)
+{
+    if (item->dataType == 6)
+        return item->typeData.listBox;
+    Com_Printf("^1Menu Error: Expecting type: ITEM_TYPE_LISTBOX\n");
+    return NULL;
+}
+
+multiDef_t *Item_GetMultiDef(itemDef_t *item)
+{
+    return item->typeData.multi;
+}
+
+editFieldDef_t *Item_GetEditFieldDef(itemDef_t *item)
+{
+
+    switch (item->dataType) {
+    case 0:
+    case 4:
+    case 9:
+    case 10:
+    case 11:
+    case 14:
+    case 16:
+    case 17:
+    case 18:
+        return item->typeData.editField;
+    }
+
+    Com_Printf("^1Menu Error: Expecting type: ITEM_TYPE_EDITFIELD, ITEM_TYPE_NUMERICFIELD, ITEM_TYPE_DECIMALFIELD, ITEM_TYPE_VALIDFILEFIELD, ITEM_TYPE_UPREDITFIELD, ITEM_TYPE_YESNO, ITEM_TYPE_BIND, ITEM_TYPE_SLIDER, or ITEM_TYPE_TEXT\n");
+    return NULL;
+}
+
+static long hashForString(const char *str)
+{
+    int i;
+    int letter;
+    long hash = 0;
+
+    for (i = 0; str[i] != '\0'; ++i) {
+        letter = tolower(str[i]);
+        hash += (long)letter * (i + 119);
+    }
+
+    return hash & 2047;
+}
+
+void Window_SetStaticFlags(Window *w, const int flags)
+{
+    w->staticFlags = flags;
+}
+
+void *UI_Alloc(int size, int alignment)
+{
+    return Hunk_AllocAlignInternal(size, alignment);
+}
+
+void String_Init(void)
+{
+    memset(g_strHandle, 0, sizeof(g_strHandle));
+}
+
+const char *String_Alloc(const char *p)
+{
+    long hash;
+    char *str;
+    stringDef_t *s;
+    stringDef_t *last;
+    stringDef_t *newDef;
+
+    if (p == NULL)
+        return NULL;
+
+    if (*p == '\0')
+        return staticNULL;
+
+    hash = hashForString(p);
+
+    s = g_strHandle[hash];
+    while (s != NULL) {
+        if (strcmp(p, s->str) == 0) {   /* was *(char**)(s+4): x86 stringDef_t.str offset */
+            return s->str;
+        }
+        s = s->next;
+    }
+
+    str = (char *)STRPOOL_ALLOC(strlen(p) + 1, 1);
+    strcpy(str, p);
+
+    s = g_strHandle[hash];
+    last = s;
+    while (s != NULL && s->next) {
+        last = s;
+        s = s->next;
+    }
+
+    newDef = (stringDef_t *)STRPOOL_ALLOC((int)sizeof(stringDef_t), (int)sizeof(void *));
+    newDef->next = 0;
+    newDef->str = str;
+
+    if (last != NULL) {
+        last->next = newDef;
+    } else {
+        g_strHandle[hash] = newDef;
+    }
+
+    return str;
+}
+
+qboolean Int_Parse(const char **p, int *i)
+{
+    const char *token;
+
+    token = Com_ParseOnLine(p);
+    if (!token || *token == '\0')
+        return 0;
+
+    *i = atoi(token);
+    return 1;
+}
+
+qboolean Float_Parse(const char **p, float *f)
+{
+    const char *token;
+
+    token = Com_ParseOnLine(p);
+    if (!token || *token == '\0')
+        return 0;
+
+    *f = (float)atof(token);
+    return 1;
+}
+
+void Window_SetOffsetTime(Window *w, int offsetTime)
+{
+    w->offsetTime[0] = offsetTime;
+}
+
+void Window_SetRect(Window *w, const UiRectangle *rect)
+{
+    w->rect[0] = *rect;
+}
+
 qboolean Rect_Parse(const char **p, rectDef_t *r)
 {
     const char *token;
@@ -469,3 +469,4 @@ qboolean Rect_Parse(const char **p, rectDef_t *r)
 
     return 1;
 }
+

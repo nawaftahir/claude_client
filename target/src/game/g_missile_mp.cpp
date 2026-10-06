@@ -9,6 +9,22 @@ extern float FX_GetEffectLength( const FxEffectDef *fx );
 void G_RunMissile_CreateWaterSplash( gentity_t *ent, trace_t *trace );
 
 
+qboolean G_BounceMissile( gentity_t *ent, trace_t *trace );
+void G_ExplodeMissile( gentity_t *ent );
+void G_MissileTrace( trace_t *results, const vec3_t start, const vec3_t end, int passEntityNum, int contentmask );
+void G_MissileTrace_IgnoreEntity( trace_t *results, int hitId, gentity_t *ent, const vec3_t origin );
+void G_RunMissile_Destabilize( gentity_t *ent );
+void G_RunMissile_CreateWaterSplash( gentity_t *ent, trace_t *trace );
+void G_RunMissile( gentity_t *ent );
+gentity_t *fire_grenade( gentity_t *self, vec3_t start, vec3_t dir, int grenadeWPID, int iTime );
+gentity_t *fire_rocket( gentity_t *self, vec3_t start, vec3_t dir );
+
+/*
+================
+G_RunMissile_CreateWaterSplash
+================
+*/
+
 void G_MissileLandAngles( gentity_t *ent, trace_t *trace, vec3_t vAngles, qboolean bForceAlign )
 {
 	int hitTime;
@@ -74,7 +90,6 @@ void G_MissileLandAngles( gentity_t *ent, trace_t *trace, vec3_t vAngles, qboole
 		ent->s.apos.trDelta[0] = AngleNormalize360(ent->s.apos.trDelta[0] + (float)((rand() & 0x7F) - 63));
 	}
 }
-
 
 /*
 ================
@@ -157,13 +172,6 @@ qboolean G_BounceMissile( gentity_t *ent, trace_t *trace )
 
 	return qfalse;
 }
-
-
-/*
-================
-G_RunMissile_CreateWaterSplash
-================
-*/
 
 void G_MissileImpact( gentity_t *ent, trace_t *trace, vec3_t dir, vec3_t endpos )
 {
@@ -387,7 +395,6 @@ void G_MissileTrace_IgnoreEntity( trace_t *results, int hitId, gentity_t *ent, c
 	hitEnt->r.contents = prevContents;
 }
 
-
 float G_RunMissile_GetPerturbation( float destabilizationCurvatureMax )
 {
 	float angle;
@@ -395,7 +402,6 @@ float G_RunMissile_GetPerturbation( float destabilizationCurvatureMax )
 	angle = destabilizationCurvatureMax * 0.017453292f;
 	return tan(angle);
 }
-
 
 /*
 ================
@@ -734,4 +740,5 @@ gentity_t *fire_rocket( gentity_t *self, vec3_t start, vec3_t dir )
 
 	return bolt;
 }
+
 

@@ -43,3 +43,4 @@ void StatMon_Reset(void)
 	memset(stats, 0, sizeof(stats));
 	statCount = 0;
 }
+

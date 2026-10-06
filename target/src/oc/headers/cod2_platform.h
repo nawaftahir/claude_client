@@ -24,16 +24,11 @@
 #define COD2_APPLE_GCC_X86_ABI 0
 #endif
 
-#ifdef __EMSCRIPTEN__
-#define __attribute_regparm__(n)
-#define __attribute_sseregparm__
-#else
 #define __attribute_regparm__(n) __attribute__((regparm(n)))
 #if COD2_GCC_X86_ABI
 #define __attribute_sseregparm__ __attribute__((sseregparm))
 #else
 #define __attribute_sseregparm__
-#endif
 #endif
 
 #if COD2_GCC_X86_ABI

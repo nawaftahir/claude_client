@@ -36,20 +36,84 @@ static const char *netSources[3] = { (const char *)&str_002a9e74, (const char *)
 
 static int lastColumn = 0xffffffff;
 
-#ifndef __EMSCRIPTEN__
 #    define UI_REGPARM1 __attribute__((regparm(1)))
-#else
-#    define UI_REGPARM1
-#endif
 
-void diag_drawtext(const char *text, void *font, float x, float y, float scale)
-{
-    (void)text;
-    (void)font;
-    (void)x;
-    (void)y;
-    (void)scale;
-}
+void UI_AssetCache(void);
+void UI_DrawSides(float x, float y, float w, float h, int horzAlign, int vertAlign, float size, const vec_t *color);
+void UI_DrawTopBottom(float x, float y, float w, float h, int horzAlign, int vertAlign, float size, const vec_t *color);
+int UI_TextWidth(const char *text, int maxChars, FontHandle font, float scale);
+int UI_TextHeight(FontHandle font, float scale);
+FontHandle UI_GetFontHandle(int fontEnum, float scale);
+void UI_UpdateTime(int realtime);
+void UI_Shutdown(void);
+char *GetMenuBuffer(const char *filename);
+qboolean Load_ScriptMenu(const char *pszMenu, int imageTrack);
+static void UI_DrawMapPreview(const rectDef_t *rect, const vec_t *color, int net);
+const char *UI_GetMapDisplayName(const char *pszMap);
+const char *UI_GetMapDisplayNameFromPartialLoadNameMatch(const char *pszMap, int *mapLoadNameLen);
+const char *UI_GetGameTypeDisplayName(const char *pszGameType);
+void UI_BuildPlayerList(void);
+void UI_DrawMapLevelshot(void);
+void UI_LoadIngameMenus(void);
+void UI_SetMap(const char *mapname, const char *gametype);
+qboolean UI_OwnerDrawVisible(int flags);
+static int UI_ServersQsortCompare(const void *arg1, const void *arg2);
+static int UI_PlayerProfilesQsortCompare(const void *arg1, const void *arg2);
+static void UI_SelectCurrentMap(void);
+qboolean UI_CheckExecKey(int key);
+static void UI_VerifyLanguage(void);
+const char *UI_SafeTranslateString(const char *reference);
+static void UI_AddServerToFavoritesList(const char *name, const char *address);
+static void __attribute_regparm__(0) UI_BuildServerDisplayList(qboolean force);
+void UI_FeederSelection(float feederID, int index);
+static void UI_GetGameTypesList(void);
+void UI_Pause(qboolean b);
+void UI_OpenMenu_f(void);
+void UI_CloseMenu_f(void);
+void UI_Init(void);
+void UI_KeyEvent(int key, qboolean down);
+void UI_MouseEvent(int dx, int dy);
+uiMenuCommand_t UI_GetActiveMenu(void);
+qboolean UI_SetActiveMenu(int menu);
+qboolean UI_IsFullscreen(void);
+static void __attribute_regparm__(0) UI_BuildServerDisplayList(qboolean force);
+float UI_GetBlurRadius(void);
+qboolean UI_AnyFullScreenMenuVisible(void);
+const char *UI_ReplaceConversions(const char *sourceString, ConversionArguments *arguments);
+const char *UI_ReplaceConversionString(const char *sourceString, const char *replaceString);
+const char *UI_ReplaceConversionInt(const char *sourceString, int replaceInt);
+void UI_CloseAll(void);
+void UI_CloseFocusedMenu(void);
+void UI_OverrideCursorPos(itemDef_t *item);
+Bool UI_DrawRecordLevel(rectDef_t *rect);
+static const char *UI_SelectedMap(int index, int *actual);
+MaterialHandle UI_FeederItemImage(const float feederID, int index);
+void UI_DrawText(const char *text, int maxChars, FontHandle font, float x, float y, int horzAlign, int vertAlign, float scale, const vec_t *color, int style);
+void UI_DrawTextWithCursor(const char *text, int maxChars, FontHandle font, float x, float y, int horzAlign, int vertAlign, float scale, const vec_t *color, int style, int cursorPos, char cursor);
+static void UI_StopServerRefresh(void);
+static void UI_DoServerRefresh(void);
+static void UI_ClearDisplayedServers(void);
+static void UI_StartServerRefresh(qboolean full);
+static void __attribute_regparm__(0) UI_BuildServerDisplayList(qboolean force);
+static void UI_SelectCurrentGameType(void);
+static int UI_MapCountByGameType(void);
+static void UI_SelectFirstActiveMap(void);
+static int UI_ListIndexForMap(int map);
+static void UI_SetMapFeederSelection(int map);
+qboolean UI_OwnerDrawHandleKey(int ownerDraw, int flags, float *special, int key);
+const char *UI_FeederItemText(float feederID, int index, int column, MaterialHandle *handle);
+void UI_DrawRect(float x, float y, float width, float height, int horzAlign, int vertAlign, float size, const vec_t *color);
+int UI_OwnerDrawWidth(int ownerDraw, FontHandle font, float scale);
+void UI_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAlign, float text_x, float text_y, int ownerDraw, int ownerDrawFlags, int align, float special, FontHandle font, float scale, vec_t *color, MaterialHandle material, int textStyle);
+static void UI_UpdateServerCount(void);
+static void BM_NOINLINE UI_BuildFindPlayerList(void);
+static void UI_REGPARM1 UI_BuildServerStatus(int force);
+void UI_Refresh(void);
+void UI_RunMenuScript(const char **args);
+int UI_FeederCount(float feederID);
+static void Text_PaintCenter(FontHandle font, const char *text, float x, float y, float scale, const vec_t *color);
+static void UI_DisplayDownloadInfo(const char *downloadName, float centerPoint, float yStart, FontHandle font, float scale);
+void UI_DrawConnectScreen(void);
 
 extern char *va( const char *format, ... );
 extern dvar_t *loc_warnings;
@@ -69,7 +133,6 @@ extern const dvar_t *ui_browserShowPassword;
 extern const dvar_t *ui_browserShowNoPassword;
 extern const dvar_t *ui_browserShowPure;
 #if COD2_IS_PATCH_13
-
 const dvar_t *ui_browserShowPunkBuster;
 #endif
 extern const dvar_t *ui_browserFriendlyfire;
@@ -78,7 +141,6 @@ extern const dvar_t *ui_serverStatusTimeOut;
 extern struct sharedUiInfo_t sharedUiInfo;
 extern uiInfo_t *uiInfo;
 extern uiInfo_t uiInfoArray[1];
-
 COD2_ASSERT_FIELD(struct sharedUiInfo_t, mapCount, 4944);
 COD2_ASSERT_FIELD(struct sharedUiInfo_t, mapList, 4948);
 COD2_ASSERT_FIELD(struct mapInfo, active, 0xa0);
@@ -109,7 +171,6 @@ COD2_ASSERT_FIELD(uiInfo_t, uiDC, 0);
 COD2_ASSERT_FIELD(displayContextDef_t, bias, 0);
 COD2_ASSERT_FIELD(displayContextDef_t, realTime, 4);
 COD2_ASSERT_FIELD(dvar_t, current, 8);
-
 #if COD2_FEATURE_GAMEPAD
 extern void UI_ConsoleMode_Init(void *info);
 extern int UI_ConsoleMode_SuppressCursor(void);
@@ -148,18 +209,15 @@ extern const char *netSources[3];
 static const serverFilter_t serverFilters[1];
 static char menuBuf2[32768];
 static int ui_serverFilterType;
-
 extern qboolean Menus_OpenByName(displayContextDef_t *dc, const char *name);
 extern void Menus_CloseAll(displayContextDef_t *dc);
 extern qboolean Menus_AnyFullScreenVisible(displayContextDef_t *dc);
 extern void LAN_SaveServersToCache(void);
 extern void Menus_CloseByName(displayContextDef_t *dc, const char *p);
 extern char *Cmd_Args(int startIndex);
-
 static void Text_PaintCenter(FontHandle font, const char *text, float x, float y, float scale, const vec_t *color);
 const char *UI_ReplaceConversionInt(const char *sourceString, int replaceInt);
 extern Bool IsTalking(void);
-
 extern MaterialHandle CL_RegisterMaterialNoMip(const char *name, int imageTrack);   /* was int -> truncated MaterialHandle on x64 */
 extern FontHandle CL_RegisterFont(const char *name, int flags);   /* was int -> truncated FontHandle on x64 */
 extern snd_alias_list_t *Com_FindSoundAlias( const char *name );
@@ -283,10 +341,8 @@ extern char *I_strupr(char *str);
 extern void Com_ChangePlayerProfile(const char *profileName);
 extern bool Com_DeletePlayerProfile(const char *profileName);
 extern bool Com_NewPlayerProfile(const char *name);
-
 extern void Cbuf_ExecuteText(int execWhen, const char *text);
 extern int Com_sprintf(char *dest, size_t size, const char *format, ...);
-
 void UI_AssetCache(void);
 void UI_DrawSides(float x, float y, float w, float h, int horzAlign, int vertAlign, float size, const vec_t *color);
 void UI_DrawTopBottom(float x, float y, float w, float h, int horzAlign, int vertAlign, float size, const vec_t *color);
@@ -356,6 +412,84 @@ static const char *UI_SelectedMap(int index, int *actual);
 static void UI_DisplayDownloadInfo(const char *downloadName, float centerPoint, float yStart, FontHandle font, float scale);
 void UI_DrawConnectScreen(void);
 
+Bool UI_GetOpenOrCloseMenuOnDvarArgs(const char **args, const char *cmd,
+                                     char *dvarName, char *testValue, char *menuName)
+{
+    if (!String_Parse(args, dvarName, 0x400)) {
+        Com_Printf("%s: invalid dvar name.\n", cmd);
+        return 0;
+    }
+    if (!String_Parse(args, testValue, 0x400)) {
+        Com_Printf("%s: invalid test value.\n", cmd);
+        return 0;
+    }
+    if (!String_Parse(args, menuName, 0x400)) {
+        Com_Printf("%s: invalid menu name.\n", cmd);
+        return 0;
+    }
+    return 1;
+}
+
+void diag_drawtext(const char *text, void *font, float x, float y, float scale)
+{
+    (void)text;
+    (void)font;
+    (void)x;
+    (void)y;
+    (void)scale;
+}
+
+void UI_RegisterDvars(void)
+{
+    Dvar_RegisterBool("g_allowvote", 1, 0x1001);
+    Dvar_RegisterBool("cg_brass", 1, 0x1001);
+    Dvar_RegisterBool("cg_marks", 1, 0x1001);
+
+    Dvar_RegisterString("server1", "", 0x1001);
+    Dvar_RegisterString("server2", "", 0x1001);
+    Dvar_RegisterString("server3", "", 0x1001);
+    Dvar_RegisterString("server4", "", 0x1001);
+    Dvar_RegisterString("server5", "", 0x1001);
+    Dvar_RegisterString("server6", "", 0x1001);
+    Dvar_RegisterString("server7", "", 0x1001);
+    Dvar_RegisterString("server8", "", 0x1001);
+    Dvar_RegisterString("server9", "", 0x1001);
+    Dvar_RegisterString("server10", "", 0x1001);
+    Dvar_RegisterString("server11", "", 0x1001);
+    Dvar_RegisterString("server12", "", 0x1001);
+    Dvar_RegisterString("server13", "", 0x1001);
+    Dvar_RegisterString("server14", "", 0x1001);
+    Dvar_RegisterString("server15", "", 0x1001);
+    Dvar_RegisterString("server16", "", 0x1001);
+
+    ui_netSource = (const dvar_t *)(Dvar_RegisterInt("ui_netSource", 0, 0, 2, 0x1001));
+    ui_smallFont = (const dvar_t *)(Dvar_RegisterFloat("ui_smallFont", 0.25f, 0.0f, 1.0f, 0x1001));
+    ui_bigFont = (const dvar_t *)(Dvar_RegisterFloat("ui_bigFont", 0.4f, 0.0f, 1.0f, 0x1001));
+    ui_extraBigFont = (const dvar_t *)(Dvar_RegisterFloat("ui_extraBigFont", 0.55f, 0.0f, 1.0f, 0x1001));
+    ui_currentMap = (const dvar_t *)(Dvar_RegisterInt("ui_currentMap", 0, 0, 0x7fffffff, 0x1001));
+    ui_gametype = (const dvar_t *)(Dvar_RegisterInt("ui_gametype", 3, 0, 0x7fffffff, 0x1001));
+    ui_joinGameType = (const dvar_t *)(Dvar_RegisterInt("ui_joinGametype", 0, 0, 0x7fffffff, 0x1001));
+    ui_netGameTypeName = (const dvar_t *)(Dvar_RegisterString("ui_netGametypeName", "", 0x1001));
+    ui_dedicated = (const dvar_t *)(Dvar_RegisterInt("ui_dedicated", 0, 0, 2, 0x1001));
+    ui_currentNetMap = (const dvar_t *)(Dvar_RegisterInt("ui_currentNetMap", 0, 0, 0x7fffffff, 0x1001));
+    ui_browserShowFull = (const dvar_t *)(Dvar_RegisterBool("ui_browserShowFull", 1, 0x1001));
+    ui_browserShowEmpty = (const dvar_t *)(Dvar_RegisterBool("ui_browserShowEmpty", 1, 0x1001));
+    ui_browserShowPassword = (const dvar_t *)(Dvar_RegisterBool("ui_browserShowPassword", 1, 0x1001));
+    ui_browserShowNoPassword = (const dvar_t *)(Dvar_RegisterBool("ui_browserShowNoPassword", 1, 0x1001));
+    ui_browserShowPure = (const dvar_t *)(Dvar_RegisterBool("ui_browserShowPure", 1, 0x1001));
+    ui_browserShowDedicated = (const dvar_t *)(Dvar_RegisterBool("ui_browserShowDedicated", 0, 0x1001));
+#    if COD2_IS_PATCH_13
+    ui_browserShowPunkBuster = (const dvar_t *)(Dvar_RegisterInt("ui_browserShowPunkBuster", -1, (int)0x80000000, 0x7fffffff, 0x1001));
+#    endif
+    ui_browserMod = (const dvar_t *)(Dvar_RegisterInt("ui_browserMod", -1, -1, 0x7fffffff, 0x1001));
+    ui_browserFriendlyfire = (const dvar_t *)(Dvar_RegisterInt("ui_browserFriendlyfire", -1, (int)0x80000000, 0x7fffffff, 0x1001));
+    ui_browserKillcam = (const dvar_t *)(Dvar_RegisterInt("ui_browserKillcam", -1, (int)0x80000000, 0x7fffffff, 0x1001));
+    ui_serverStatusTimeOut = (const dvar_t *)(Dvar_RegisterInt("ui_serverStatusTimeOut", 7000, 0, 0x7fffffff, 0x1001));
+    ui_playerProfileCount = (const dvar_t *)(Dvar_RegisterInt("ui_playerProfileCount", 0, (int)0x80000000, 0x7fffffff, 0x1040));
+    ui_playerProfileSelected = (const dvar_t *)(Dvar_RegisterString("ui_playerProfileSelected", "", 0x1040));
+    ui_playerProfileNameNew = (const dvar_t *)(Dvar_RegisterString("ui_playerProfileNameNew", "", 0x1000));
+}
+
 void UI_AssetCache(void)
 {
     sharedUiInfo.assets.whiteMaterial = CL_RegisterMaterialNoMip("white", 3);
@@ -389,6 +523,12 @@ void UI_DrawTopBottom(float x, float y, float w, float h, int horzAlign, int ver
     CL_DrawStretchPic(x, y + h - size, w, size, horzAlign, vertAlign, 0, 0, 0, 0, color, sharedUiInfo.assets.whiteMaterial);
 }
 
+void UI_DrawRect(float x, float y, float width, float height, int horzAlign, int vertAlign, float size, const vec_t *color)
+{
+    UI_DrawTopBottom(x, y, width, height, horzAlign, vertAlign, size, color);
+    UI_DrawSides(x, y, width, height, horzAlign, vertAlign, size, color);
+}
+
 int UI_TextWidth(const char *text, int maxChars, FontHandle font, float scale)
 {
     float actualScale = CL_NormalizedTextScale(font, scale);
@@ -399,6 +539,40 @@ int UI_TextHeight(FontHandle font, float scale)
 {
     float actualScale = CL_NormalizedTextScale(font, scale);
     return (int)((float)CL_TextHeight(font) * actualScale);
+}
+
+void UI_DrawText(const char *text, int maxChars, FontHandle font, float x, float y, int horzAlign, int vertAlign, float scale, const vec_t *color, int style)
+{
+    float xScale;
+    float yScale;
+
+    diag_drawtext(text, (void *)font, x, y, scale);
+
+    xScale = CL_NormalizedTextScale(font, scale);
+    yScale = xScale;
+    CalcSplitScreenTextOffset(font, &y);
+    CalcScreenPlacement(&x, &y, &xScale, &yScale, horzAlign, vertAlign);
+
+    x = (float)I_fround(x);
+    y = (float)I_fround(y);
+
+    CL_DrawTextPhysical(text, maxChars, font, x, y, xScale, yScale, color, style);
+}
+
+void UI_DrawTextWithCursor(const char *text, int maxChars, FontHandle font, float x, float y, int horzAlign, int vertAlign, float scale, const vec_t *color, int style, int cursorPos, char cursor)
+{
+    float xScale;
+    float yScale;
+
+    xScale = CL_NormalizedTextScale(font, scale);
+    yScale = xScale;
+    CalcSplitScreenTextOffset(font, &y);
+    CalcScreenPlacement(&x, &y, &xScale, &yScale, horzAlign, vertAlign);
+
+    x = (float)I_fround(x);
+    y = (float)I_fround(y);
+
+    CL_DrawTextPhysicalWithCursor(text, maxChars, font, x, y, xScale, yScale, color, style, cursorPos, cursor);
 }
 
 FontHandle UI_GetFontHandle(int fontEnum, float scale)
@@ -456,6 +630,69 @@ void UI_UpdateTime(int realtime)
     uiInfo->uiDC.FPS = (float)(4000 / sum);
 }
 
+void UI_Refresh(void)
+{
+#if COD2_TRACE
+    static int refreshTraceCount;
+    static int fileTraceCount;
+#endif
+
+    if (Menu_Count(&uiInfo->uiDC) <= 0)
+        return;
+
+#if COD2_TRACE
+    if (fileTraceCount < 40) {
+        FILE *f = fopen("x64_ui_trace.txt", fileTraceCount ? "a" : "w");
+        if (f) {
+            int i;
+            fprintf(f, "ui[%d] active=%d menuCount=%d openCount=%d keyCatchers=0x%x\n",
+                    fileTraceCount, uiInfo->currentMenuType, uiInfo->uiDC.menuCount,
+                    uiInfo->uiDC.openMenuCount, (clients)->keyCatchers);
+            for (i = 0; i < uiInfo->uiDC.openMenuCount && i < 16; i++) {
+                menuDef_t *menu = uiInfo->uiDC.menuStack[i];
+                fprintf(f, "  stack[%d]=%s flags=0x%x full=%d\n",
+                        i,
+                        menu && menu->window.name ? menu->window.name : "<null>",
+                        menu ? menu->window.dynamicFlags[0] : 0,
+                        menu ? menu->fullScreen : 0);
+            }
+            fclose(f);
+        }
+        fileTraceCount++;
+    }
+
+    if (refreshTraceCount < 80 && (uiInfo->currentMenuType || uiInfo->uiDC.openMenuCount > 0)) {
+        int i;
+        if (getenv("MTRACE"))
+            Com_Printf("[menu-trace] UI_Refresh active=%d menuCount=%d openCount=%d",
+                       uiInfo->currentMenuType, uiInfo->uiDC.menuCount, uiInfo->uiDC.openMenuCount);
+        for (i = 0; i < uiInfo->uiDC.openMenuCount && i < 16; ++i) {
+            menuDef_t *menu = uiInfo->uiDC.menuStack[i];
+            Com_Printf(" stack[%d]=%s", i, menu && menu->window.name ? menu->window.name : "<null>");
+        }
+        Com_Printf("\n");
+        ++refreshTraceCount;
+    }
+#endif
+
+    Menu_PaintAll(&uiInfo->uiDC);
+    UI_DoServerRefresh();
+    UI_BuildServerStatus(0);
+    UI_BuildFindPlayerList();
+
+#if COD2_FEATURE_GAMEPAD
+
+    UI_ConsoleMode_DrawGlyphs(uiInfo);
+    if (UI_ConsoleMode_SuppressCursor())
+        return;
+#endif
+
+    UI_DrawHandlePic((float)(uiInfo->uiDC.cursorx - 16),
+                     (float)(uiInfo->uiDC.cursory - 16),
+                     32.0f, 32.0f, 4, 4, 0,
+                     sharedUiInfo.assets.cursor);
+}
+
 void UI_Shutdown(void)
 {
     Menus_CloseAll(&uiInfo->uiDC);
@@ -509,7 +746,60 @@ qboolean Load_ScriptMenu(const char *pszMenu, int imageTrack)
     return 1;
 }
 
-#ifndef __EMSCRIPTEN__
+static void UI_DrawGameType(rectDef_t *rect, FontHandle font, float scale, vec_t *color, int textStyle)
+{
+    const char *text;
+
+    if (sharedUiInfo.gameTypes[ui_gametype->current.integer].gameTypeName[0])
+        text = UI_SafeTranslateString(sharedUiInfo.gameTypes[ui_gametype->current.integer].gameTypeName);
+    else
+        text = UI_SafeTranslateString("EXE_ALL");
+    UI_DrawText(text, 0x7fffffff, font, rect->x, rect->y, rect->horzAlign, rect->vertAlign, scale, color, textStyle);
+}
+
+static void UI_DrawNetGameType(rectDef_t *rect, FontHandle font, float scale, vec_t *color, int textStyle)
+{
+    const char *text;
+
+    if (ui_netGameType->current.integer > sharedUiInfo.numGameTypes) {
+        Dvar_SetInt((dvar_t *)ui_netGameType, 0);
+        Dvar_SetString((dvar_t *)ui_netGameTypeName, sharedUiInfo.gameTypes[0].gameType);
+    }
+    if (sharedUiInfo.gameTypes[ui_netGameType->current.integer].gameTypeName[0])
+        text = UI_SafeTranslateString(sharedUiInfo.gameTypes[ui_netGameType->current.integer].gameTypeName);
+    else
+        text = UI_SafeTranslateString("EXE_ALL");
+    UI_DrawText(text, 0x7fffffff, font, rect->x, rect->y, rect->horzAlign, rect->vertAlign, scale, color, textStyle);
+}
+
+static void UI_DrawJoinGameType(rectDef_t *rect, FontHandle font, float scale, vec_t *color, int textStyle)
+{
+    const char *text;
+
+    if (ui_joinGameType->current.integer > sharedUiInfo.numJoinGameTypes)
+        Dvar_SetInt((dvar_t *)ui_joinGameType, 0);
+    if (sharedUiInfo.joinGameTypes[ui_joinGameType->current.integer].gameTypeName[0])
+        text = UI_SafeTranslateString(sharedUiInfo.joinGameTypes[ui_joinGameType->current.integer].gameTypeName);
+    else
+        text = UI_SafeTranslateString("EXE_ALL");
+    UI_DrawText(text, 0x7fffffff, font, rect->x, rect->y, rect->horzAlign, rect->vertAlign, scale, color, textStyle);
+}
+
+// retail 0x52c5a0; Q3 name (SUPPORTED)
+static void UI_DrawPreviewCinematic(const rectDef_t *rect)
+{
+    if (sharedUiInfo.previewMovie > -2) {
+        sharedUiInfo.previewMovie = CIN_PlayCinematic(sharedUiInfo.movieList[sharedUiInfo.movieIndex], 0, 0, 0, 0, 10);
+        if (sharedUiInfo.previewMovie >= 0) {
+            CIN_RunCinematic(sharedUiInfo.previewMovie);
+            CIN_SetExtents(sharedUiInfo.previewMovie, (int)rect->x, (int)rect->y, (int)rect->w, (int)rect->h);
+            CIN_DrawCinematic(sharedUiInfo.previewMovie);
+        } else {
+            sharedUiInfo.previewMovie = -2;
+        }
+    }
+}
+
 static void UI_DrawMapPreview(const rectDef_t *rect, const vec_t *color, int net)
 {
     int map;
@@ -546,7 +836,53 @@ static void UI_DrawMapPreview(const rectDef_t *rect, const vec_t *color, int net
                      rect->horzAlign, rect->vertAlign,
                      color, material);
 }
-#endif
+
+// retail 0x52c6d0; cinematic half gone, CoD1 shape (SUPPORTED)
+static void UI_DrawMapCinematic(const rectDef_t *rect, const vec_t *color, int net)
+{
+    UI_DrawMapPreview(rect, color, net);
+}
+
+static void UI_DrawNetMapPreview(rectDef_t *rect, float scale, vec_t *color)
+{
+    if (sharedUiInfo.serverStatus.currentServerPreview > 0) {
+        UI_DrawHandlePic(rect->x, rect->y, rect->w, rect->h, rect->horzAlign, rect->vertAlign, color, sharedUiInfo.serverStatus.currentServerPreview);
+    } else {
+        UI_DrawHandlePic(rect->x, rect->y, rect->w, rect->h, rect->horzAlign, rect->vertAlign, color, CL_RegisterMaterialNoMip("menu/art/unknownmap", 3));
+    }
+}
+
+static void UI_DrawNetMapCinematic(rectDef_t *rect, float scale, vec_t *color)
+{
+    if (ui_currentNetMap->current.integer >= sharedUiInfo.mapCount)
+        Dvar_SetInt((dvar_t *)ui_currentNetMap, 0);
+
+    if (sharedUiInfo.serverStatus.currentServerCinematic >= 0) {
+        CIN_RunCinematic(sharedUiInfo.serverStatus.currentServerCinematic);
+        CIN_SetExtents(sharedUiInfo.serverStatus.currentServerCinematic, (int)rect->x, (int)rect->y, (int)rect->w, (int)rect->h);
+        CIN_DrawCinematic(sharedUiInfo.serverStatus.currentServerCinematic);
+    } else {
+        UI_DrawNetMapPreview(rect, scale, color);
+    }
+}
+
+static void UI_DrawNetFilter(rectDef_t *rect, FontHandle font, float scale, vec_t *color, int textStyle)
+{
+    const char *text;
+
+    if (ui_serverFilterType < 0 || ui_serverFilterType > 1)
+        ui_serverFilterType = 0;
+    text = SEH_LocalizeTextMessage(va("EXE_SERVERFILTER\x14%s", serverFilters[ui_serverFilterType].description), "server filter", LOCMSG_SAFE);
+    UI_DrawText(text, 0x7fffffff, font, rect->x, rect->y, rect->horzAlign, rect->vertAlign, scale, color, textStyle);
+}
+
+static void UI_DrawNetSource(rectDef_t *rect, FontHandle font, float scale, vec_t *color, int textStyle)
+{
+    const char *text;
+
+    text = SEH_LocalizeTextMessage(va("EXE_NETSOURCE\x14%s", netSources[ui_netSource->current.integer]), "net source", LOCMSG_SAFE);
+    UI_DrawText(text, 0x7fffffff, font, rect->x, rect->y, rect->horzAlign, rect->vertAlign, scale, color, textStyle);
+}
 
 const char *UI_GetMapDisplayName(const char *pszMap)
 {
@@ -585,7 +921,53 @@ const char *UI_GetGameTypeDisplayName(const char *pszGameType)
     return pszGameType;
 }
 
-#ifndef __EMSCRIPTEN__
+int UI_OwnerDrawWidth(int ownerDraw, FontHandle font, float scale)
+{
+    const char *s = NULL;
+
+    switch (ownerDraw) {
+    case 0x27:
+        s = CG_GameTypeString();
+        break;
+    case 0x32:
+        s = CG_GetKillerText();
+        break;
+    case 0xcd:
+        s = sharedUiInfo.gameTypes[(ui_gametype)->current.integer].gameTypeName;
+        break;
+    case 0xdc:
+        if ((ui_netSource)->current.integer > sharedUiInfo.numJoinGameTypes)
+            Dvar_SetInt((dvar_t *)ui_netSource, 0);
+        s = SEH_LocalizeTextMessage(va("EXE_NETSOURCE\x14%s", netSources[(ui_netSource)->current.integer]), "net source", LOCMSG_SAFE);
+        break;
+    case 0xde: {
+        if (ui_serverFilterType < 0 || ui_serverFilterType > 1)
+            ui_serverFilterType = 0;
+        s = SEH_LocalizeTextMessage(va("EXE_SERVERFILTER\x14%s", serverFilters[ui_serverFilterType].description), "server filter", LOCMSG_SAFE);
+        break;
+    }
+    case 0xfa:
+        if (Display_KeyBindPending())
+            s = UI_SafeTranslateString("EXE_KEYWAIT");
+        else
+            s = UI_SafeTranslateString("EXE_KEYCHANGE");
+        break;
+    case 0xf7:
+        s = Dvar_GetVariantString(va("ui_lastServerRefresh_%i", (ui_netSource)->current.integer));
+        break;
+    default:
+        return 0;
+    }
+
+    if (!s)
+        return 0;
+
+    {
+        float actualScale = CL_NormalizedTextScale(font, scale);
+        return (int)((float)CL_TextWidth(s, 0, font) * actualScale);
+    }
+}
+
 void UI_BuildPlayerList(void)
 {
     char cs[sizeof(uiClientState_t)];
@@ -610,7 +992,41 @@ void UI_BuildPlayerList(void)
         sharedUiInfo.playerCount++;
     }
 }
-#endif
+
+static void UI_DrawServerRefreshDate(rectDef_t *rect, FontHandle font, float scale, vec_t *color, int textStyle)
+{
+    char buff[64];
+    vec4_t lowLight, newColor;
+    const char *string;
+
+    if (sharedUiInfo.serverStatus.refreshActive) {
+        lowLight[0] = 0.8 * color[0];
+        lowLight[1] = 0.8 * color[1];
+        lowLight[2] = 0.8 * color[2];
+        lowLight[3] = 0.8 * color[3];
+        LerpColor(color, lowLight, newColor, (sin((double)(uiInfo->uiDC.realTime / 75)) + 1.0) * 0.5);
+        if (!LAN_WaitServerResponse(ui_netSource->current.integer))
+            string = UI_ReplaceConversionInt(UI_SafeTranslateString("EXE_GETTINGINFOFORSERVERS"), LAN_GetServerCount(ui_netSource->current.integer));
+        else
+            string = UI_SafeTranslateString("EXE_WAITINGFORMASTERSERVERRESPONSE");
+        UI_DrawText(string, 0x7fffffff, font, rect->x, rect->y, rect->horzAlign, rect->vertAlign, scale, newColor, textStyle);
+    } else {
+        I_strncpyz(buff, Dvar_GetVariantString(va("ui_lastServerRefresh_%i", ui_netSource->current.integer)), 64);
+        string = UI_ReplaceConversionString(UI_SafeTranslateString("EXE_REFRESHTIME"), buff);
+        UI_DrawText(string, 0x7fffffff, font, rect->x, rect->y, rect->horzAlign, rect->vertAlign, scale, color, textStyle);
+    }
+}
+
+static void UI_DrawKeyBindStatus(rectDef_t *rect, FontHandle font, float scale, vec_t *color, int textStyle)
+{
+    const char *string;
+
+    if (Display_KeyBindPending())
+        string = "EXE_KEYWAIT";
+    else
+        string = "EXE_KEYCHANGE";
+    UI_DrawText(UI_SafeTranslateString(string), 0x7fffffff, font, rect->x, rect->y, rect->horzAlign, rect->vertAlign, scale, color, textStyle);
+}
 
 void UI_DrawMapLevelshot(void)
 {
@@ -627,7 +1043,6 @@ void UI_DrawMapLevelshot(void)
     Menu_Paint(&uiInfo->uiDC, menu, 1);
 }
 
-#ifndef __EMSCRIPTEN__
 void UI_LoadIngameMenus(void)
 {
     MenuList *menuList;
@@ -640,1190 +1055,13 @@ void UI_LoadIngameMenus(void)
     menuList = UI_LoadMenus("ui_mp/ingame.txt", 3);
     UI_AddMenuList(&uiInfo->uiDC, menuList);
 }
-#endif
 
-#ifndef __EMSCRIPTEN__
 void UI_SetMap(const char *mapname, const char *gametype)
 {
     I_strncpyz(g_mapname, mapname, 0x40);
     I_strncpyz(g_gametype, gametype, 0x40);
     if (g_mapname[0]) {
         UI_MapLoadInfo(va("maps/mp/%s.csv", g_mapname));
-    }
-}
-#endif
-
-qboolean UI_OwnerDrawVisible(int flags)
-{
-    qboolean visible = 1;
-
-    if (flags & 4) {
-        if (ui_netSource->current.integer != 2) {
-            visible = 0;
-        }
-    }
-
-    if (flags & 0x1000) {
-        if (ui_netSource->current.integer == 2) {
-            visible = 0;
-        }
-    }
-
-    return visible;
-}
-
-#ifndef __EMSCRIPTEN__
-static int UI_ServersQsortCompare(const void *arg1, const void *arg2)
-{
-    int s1 = *(const int *)arg1;
-    int s2 = *(const int *)arg2;
-    return LAN_CompareServers(
-        ui_netSource->current.integer,
-        sharedUiInfo.serverStatus.sortKey,
-        sharedUiInfo.serverStatus.sortDir,
-        s1, s2);
-}
-#endif
-
-#ifndef __EMSCRIPTEN__
-static void UI_LoadMods(void)
-{
-    int numdirs;
-    char dirlist[2048];
-    char *dirptr;
-    char *descptr;
-    int i;
-    int dirlen;
-
-    sharedUiInfo.modCount = 0;
-    numdirs = FS_GetFileList("$modlist", "", FS_LIST_ALL, dirlist, sizeof(dirlist));
-    dirptr = dirlist;
-    for (i = 0; i < numdirs; i++) {
-        dirlen = strlen(dirptr) + 1;
-        descptr = dirptr + dirlen;
-        sharedUiInfo.modList[sharedUiInfo.modCount].modName = String_Alloc(dirptr);
-        sharedUiInfo.modList[sharedUiInfo.modCount].modDescr = String_Alloc(descptr);
-        dirptr += dirlen + strlen(descptr) + 1;
-        sharedUiInfo.modCount++;
-        if (sharedUiInfo.modCount >= 64)
-            break;
-    }
-}
-
-static int UI_GetPlayerProfileListIndexFromName(const char *name)
-{
-    int profileIndex;
-
-    for (profileIndex = 0; profileIndex < uiInfo->playerProfileCount; profileIndex++) {
-        if (!I_stricmp(name, uiInfo->playerProfileName[uiInfo->playerProfileStatus.displayProfile[profileIndex]]))
-            return profileIndex;
-    }
-    return -1;
-}
-#endif
-
-#ifndef __EMSCRIPTEN__
-static int UI_PlayerProfilesQsortCompare(const void *arg1, const void *arg2)
-{
-    int idx1 = *(const int *)arg1;
-    int idx2 = *(const int *)arg2;
-    int result;
-
-    if (idx1 == idx2)
-        return 0;
-
-    result = I_stricmp(
-        uiInfo->playerProfileName[idx1],
-        uiInfo->playerProfileName[idx2]);
-
-    if (uiInfo->playerProfileStatus.sortDir == 0)
-        result = -result;
-
-    return result;
-}
-#endif
-
-#ifndef __EMSCRIPTEN__
-static void UI_SelectPlayerProfileIndex(int index)
-{
-    int menuIndex;
-
-    for (menuIndex = uiInfo->uiDC.openMenuCount - 1; menuIndex >= 0; menuIndex--) {
-        if (Window_IsVisible(&uiInfo->uiDC.menuStack[menuIndex]->window))
-            Menu_SetFeederSelection(&uiInfo->uiDC, uiInfo->uiDC.menuStack[menuIndex], 24, index, 0);
-    }
-}
-
-static void UI_SortPlayerProfiles(int selectIndex)
-{
-    int profileIndex;
-
-    if (!uiInfo->playerProfileCount)
-        return;
-    for (profileIndex = 0; profileIndex < uiInfo->playerProfileCount; profileIndex++)
-        uiInfo->playerProfileStatus.displayProfile[profileIndex] = profileIndex;
-    qsort(uiInfo->playerProfileStatus.displayProfile, uiInfo->playerProfileCount, sizeof(int), UI_PlayerProfilesQsortCompare);
-    UI_SelectPlayerProfileIndex(selectIndex);
-}
-
-static void UI_AddPlayerProfiles(void)
-{
-    char **profileList;
-    int profileCount;
-    int profileIndex;
-
-    uiInfo->playerProfileCount = 0;
-    uiInfo->playerProfileStatus.sortDir = 1;
-    profileList = FS_ListFiles("players", "/", FS_LIST_ALL, &profileCount, 3);
-    for (profileIndex = 0; profileIndex < profileCount; profileIndex++)
-        uiInfo->playerProfileName[uiInfo->playerProfileCount++] = String_Alloc(profileList[profileIndex]);
-    FS_FreeFileList(profileList, 3);
-    UI_SortPlayerProfiles(0);
-    Dvar_SetInt((dvar_t *)ui_playerProfileCount, uiInfo->playerProfileCount);
-}
-
-static void UI_SelectActivePlayerProfile(void)
-{
-    int selIndex;
-
-    selIndex = UI_GetPlayerProfileListIndexFromName(com_playerProfile->current.string);
-    if (selIndex >= 0 && selIndex < uiInfo->playerProfileCount)
-        UI_SelectPlayerProfileIndex(selIndex);
-}
-
-static void UI_CreatePlayerProfile(void)
-{
-    char name[32];
-    int profileIndex;
-
-    if (!strlen(ui_playerProfileNameNew->current.string))
-        return;
-    I_strncpyz(name, ui_playerProfileNameNew->current.string, sizeof(name));
-    Dvar_SetString((dvar_t *)ui_playerProfileNameNew, "");
-    if (uiInfo->playerProfileCount == 64) {
-        Menus_OpenByName(&uiInfo->uiDC, "profile_create_too_many_popmenu");
-        return;
-    }
-    for (profileIndex = 0; profileIndex < uiInfo->playerProfileCount; profileIndex++) {
-        if (!I_stricmp(name, uiInfo->playerProfileName[profileIndex])) {
-            Menus_OpenByName(&uiInfo->uiDC, "profile_exists_popmenu");
-            return;
-        }
-    }
-    if (!Com_NewPlayerProfile(name)) {
-        Menus_OpenByName(&uiInfo->uiDC, "profile_create_fail_popmenu");
-        return;
-    }
-    uiInfo->playerProfileName[uiInfo->playerProfileCount++] = String_Alloc(name);
-    UI_SortPlayerProfiles(0);
-    Dvar_SetInt((dvar_t *)ui_playerProfileCount, uiInfo->playerProfileCount);
-    UI_SelectPlayerProfileIndex(UI_GetPlayerProfileListIndexFromName(name));
-}
-
-static void UI_DeletePlayerProfile(void)
-{
-    int curSelected;
-    int nameIndex;
-
-    if (!uiInfo->playerProfileCount)
-        return;
-    if (!Com_DeletePlayerProfile(ui_playerProfileSelected->current.string)) {
-        Menus_OpenByName(&uiInfo->uiDC, "profile_delete_fail_popmenu");
-        return;
-    }
-    curSelected = UI_GetPlayerProfileListIndexFromName(ui_playerProfileSelected->current.string);
-    nameIndex = uiInfo->playerProfileStatus.displayProfile[curSelected];
-    if (--uiInfo->playerProfileCount == 0) {
-        Dvar_SetString((dvar_t *)ui_playerProfileSelected, "");
-    } else {
-        uiInfo->playerProfileName[nameIndex] = uiInfo->playerProfileName[uiInfo->playerProfileCount];
-        if (curSelected == uiInfo->playerProfileCount)
-            curSelected--;
-        UI_SortPlayerProfiles(curSelected);
-    }
-    Dvar_SetInt((dvar_t *)ui_playerProfileCount, uiInfo->playerProfileCount);
-}
-
-static void UI_LoadPlayerProfile(void)
-{
-    if (ui_playerProfileSelected->current.string[0])
-        Com_ChangePlayerProfile(ui_playerProfileSelected->current.string);
-}
-
-static void UI_LoadMovies(void)
-{
-    char movielist[4096];
-    char *moviename;
-    int i;
-    int len;
-
-    sharedUiInfo.movieCount = FS_GetFileList("video", "roq", FS_LIST_PURE_ONLY, movielist, sizeof(movielist));
-    if (!sharedUiInfo.movieCount)
-        return;
-    if (sharedUiInfo.movieCount > 256)
-        sharedUiInfo.movieCount = 256;
-    moviename = movielist;
-    for (i = 0; i < sharedUiInfo.movieCount; i++) {
-        len = strlen(moviename);
-        if (!I_stricmp(moviename + len - 4, ".roq"))
-            moviename[len - 4] = 0;
-        I_strupr(moviename);
-        sharedUiInfo.movieList[i] = String_Alloc(moviename);
-        moviename += len + 1;
-    }
-}
-#endif
-
-#ifndef __EMSCRIPTEN__
-static void UI_SelectCurrentMap(void)
-{
-    byte cstate[sizeof(uiClientState_t)];
-    char szMap[0x40];
-    int i;
-    int visibleIndex;
-
-    GetClientState((uiClientState_t *)cstate);
-    if (*(int *)cstate != 8)
-        return;
-
-    {
-        const char *serverInfo = CL_GetConfigString(0);
-        if (!serverInfo[0])
-            return;
-        I_strncpyz(szMap, Info_ValueForKey(serverInfo, "mapname"), sizeof(szMap));
-    }
-
-    visibleIndex = 0;
-    for (i = 0; i < sharedUiInfo.mapCount; i++) {
-        if (!sharedUiInfo.mapList[i].active)
-            continue;
-
-        if (I_stricmp(szMap, sharedUiInfo.mapList[i].mapName) == 0) {
-            Menu_SetFeederSelection(&uiInfo->uiDC, 0, 4, visibleIndex, "createserver_maps");
-            return;
-        }
-
-        visibleIndex++;
-    }
-}
-#endif
-
-qboolean UI_CheckExecKey(int key)
-{
-    menuDef_t *menu;
-    ItemKeyHandler *khNode;
-
-    menu = Menu_GetFocused(&uiInfo->uiDC);
-
-    if (g_editingField)
-        return 1;
-
-    if (key > 0x100)
-        return 0;
-    if (!menu)
-        return 0;
-
-    khNode = menu->onKey;
-    while (khNode) {
-        if (khNode->key == key)
-            return 1;
-        khNode = (ItemKeyHandler *)khNode->next;
-    }
-    return 0;
-}
-
-#ifndef __EMSCRIPTEN__
-static void UI_Update(const char *name)
-{
-    float rate;
-
-    if (!I_stricmp(name, "ui_SetName")) {
-        Dvar_SetStringByName("name", Dvar_GetVariantString("ui_Name"));
-    } else if (!I_stricmp(name, "ui_GetName")) {
-        Dvar_SetStringByName("ui_Name", Dvar_GetVariantString("name"));
-    } else if (!I_stricmp(name, "ui_setRate")) {
-        rate = (float)Dvar_GetInt("rate");
-        if (rate >= 5000.0f) {
-            Dvar_SetIntByName("cl_maxpackets", 30);
-            Dvar_SetIntByName("cl_packetdup", 1);
-        } else if (rate >= 4000.0f) {
-            Dvar_SetIntByName("cl_maxpackets", 15);
-            Dvar_SetIntByName("cl_packetdup", 2);
-        } else {
-            Dvar_SetIntByName("cl_maxpackets", 15);
-            Dvar_SetIntByName("cl_packetdup", 1);
-        }
-    } else if (!I_stricmp(name, "ui_mousePitch")) {
-        if (!Dvar_GetBool(name))
-            Dvar_SetFloatByName("m_pitch", 0.022f);
-        else
-            Dvar_SetFloatByName("m_pitch", -0.022f);
-    }
-}
-#endif
-
-#ifndef __EMSCRIPTEN__
-static void UI_VerifyLanguage(void)
-{
-    int oldLanguage = Dvar_GetInt("loc_language");
-    int newLanguage = Dvar_GetInt("ui_language");
-    int verified = SEH_VerifyLanguageSelection(newLanguage);
-
-    if (verified != newLanguage)
-        Dvar_SetIntByName("ui_language", verified);
-
-    if (newLanguage != oldLanguage)
-        Dvar_SetBoolByName("ui_languagechanged", 1);
-    else
-        Dvar_SetBoolByName("ui_languagechanged", 0);
-}
-#endif
-
-#ifndef __EMSCRIPTEN__
-const char *UI_SafeTranslateString(const char *reference)
-{
-    const char *translated;
-
-    // 0x15-prefixed strings are already localized
-    if (reference[0] == 0x15) {
-        reference++;
-    } else {
-        translated = SEH_StringEd_GetString(reference);
-        if (translated)
-            return translated;
-    }
-
-    if ((loc_warnings)->current.enabled) {
-        if ((loc_warningsAsErrors)->current.enabled) {
-            Com_Error(ERR_LOCALIZATION, "Could not translate string \"%s\"", reference);
-        } else {
-            Com_Printf("^3WARNING: Could not translate string \"%s\"\n", reference);
-        }
-
-        strcpy(errorString, "^1UNLOCALIZED(^7");
-        I_strncat(errorString, 0x400, reference);
-        I_strncat(errorString, 0x400, "^1)^7");
-        return errorString;
-    }
-
-    strcpy(errorString, reference);
-    return errorString;
-}
-#endif
-
-#ifndef __EMSCRIPTEN__
-static void UI_AddServerToFavoritesList(const char *name, const char *address)
-{
-    int res;
-
-    if (strlen(name) == 0) {
-        Com_Printf("%s\n", UI_SafeTranslateString("EXE_FAVORITENAMEEMPTY"));
-        Dvar_SetStringByName("ui_favorite_message", "@EXE_FAVORITENAMEEMPTY");
-        return;
-    }
-
-    if (strlen(address) == 0) {
-        Com_Printf("%s\n", UI_SafeTranslateString("EXE_FAVORITEADDRESSEMPTY"));
-        Dvar_SetStringByName("ui_favorite_message", "@EXE_FAVORITEADDRESSEMPTY");
-        return;
-    }
-
-    res = LAN_AddServer(2, name, address);
-    if (res == 0) {
-        Com_Printf("%s\n", UI_SafeTranslateString("EXE_FAVORITEINLIST"));
-        Dvar_SetStringByName("ui_favorite_message", "@EXE_FAVORITEINLIST");
-    } else if (res == -1) {
-        Com_Printf("%s\n", UI_SafeTranslateString("EXE_FAVORITELISTFULL"));
-        Dvar_SetStringByName("ui_favorite_message", "@EXE_FAVORITELISTFULL");
-    } else if (res == -2) {
-        Com_Printf("%s\n", UI_SafeTranslateString("EXE_BADSERVERADDRESS"));
-        Dvar_SetStringByName("ui_favorite_message", "@EXE_BADSERVERADDRESS");
-    } else {
-        Com_Printf(va("%s\n", UI_SafeTranslateString("EXE_FAVORITEADDED")), address);
-        Dvar_SetStringByName("ui_favorite_message", "@EXE_FAVORITEADDED");
-    }
-}
-#endif
-
-#ifndef __EMSCRIPTEN__
-Bool UI_GetOpenOrCloseMenuOnDvarArgs(const char **args, const char *cmd,
-                                     char *dvarName, char *testValue, char *menuName)
-{
-    if (!String_Parse(args, dvarName, 0x400)) {
-        Com_Printf("%s: invalid dvar name.\n", cmd);
-        return 0;
-    }
-
-    if (!String_Parse(args, testValue, 0x400)) {
-        Com_Printf("%s: invalid test value.\n", cmd);
-        return 0;
-    }
-
-    if (!String_Parse(args, menuName, 0x400)) {
-        Com_Printf("%s: invalid menu name.\n", cmd);
-        return 0;
-    }
-
-    return 1;
-}
-#endif
-
-#ifndef __EMSCRIPTEN__
-static bool UI_DvarValueTest(const char *cmd, const char *dvarName, const char *testValue, bool wantMatch)
-{
-    if (!Dvar_FindVar(dvarName)) {
-        Com_Printf("%s: cannot find dvar %s\n", cmd, dvarName);
-        return 0;
-    }
-    bool match = I_stricmp(testValue, Dvar_GetVariantString(dvarName)) == 0;
-    return match == wantMatch;
-}
-
-static void UI_CloseMenuOnDvar(const char *cmd, const char *menuName, const char *dvarName, const char *testValue)
-{
-    bool wantMatch;
-
-    wantMatch = I_stricmp(cmd, "closeMenuOnDvar") == 0;
-    if (UI_DvarValueTest(cmd, dvarName, testValue, wantMatch))
-        Menus_CloseByName(&uiInfo->uiDC, menuName);
-}
-
-static void UI_OpenMenuOnDvar(const char *cmd, const char *menuName, const char *dvarName, const char *testValue)
-{
-    bool wantMatch;
-
-    wantMatch = I_stricmp(cmd, "openMenuOnDvar") == 0;
-    if (UI_DvarValueTest(cmd, dvarName, testValue, wantMatch))
-        Menus_OpenByName(&uiInfo->uiDC, menuName);
-}
-#endif
-
-static void UI_AddServerStatusDvarRows(serverStatusInfo_t *info)
-{
-    int i, j, index;
-    const char *tmp1, *tmp2;
-
-    index = 0;
-    for (i = 0; serverStatusDvars[i].name; i++) {
-        for (j = 0; j < info->numLines; j++) {
-            if (!info->lines[j][1] || info->lines[j][1][0])
-                continue;
-            if (!I_stricmp(serverStatusDvars[i].name, info->lines[j][0])) {
-                // swap lines
-                tmp1 = info->lines[index][0];
-                tmp2 = info->lines[index][3];
-                info->lines[index][0] = info->lines[j][0];
-                info->lines[index][3] = info->lines[j][3];
-                info->lines[j][0] = tmp1;
-                info->lines[j][3] = tmp2;
-                if (strlen(serverStatusDvars[i].altName))
-                    info->lines[index][0] = serverStatusDvars[i].altName;
-                if (serverStatusDvars[i].type == 1) {
-                    if (atoi(info->lines[index][3]))
-                        info->lines[index][3] = "@EXE_YES";
-                    else
-                        info->lines[index][3] = "@EXE_NO";
-                }
-                index++;
-            }
-        }
-    }
-}
-
-static int __attribute_regparm__(2) UI_GetServerStatusInfo(const char *serverAddress, serverStatusInfo_t *info)
-{
-    char *p, *score, *ping, *name;
-    int i, len;
-
-    if (!info) {
-        LAN_GetServerStatus((char *)serverAddress, 0, 0);
-        return 0;
-    }
-
-    memset(info, 0, sizeof(*info));
-    if (LAN_GetServerStatus((char *)serverAddress, info->text, sizeof(info->text))) {
-        I_strncpyz(info->address, serverAddress, sizeof(info->address));
-        p = info->text;
-        info->numLines = 0;
-        info->lines[info->numLines][0] = "address";
-        info->lines[info->numLines][1] = "";
-        info->lines[info->numLines][2] = "";
-        info->lines[info->numLines][3] = info->address;
-        info->numLines++;
-
-        while (p && *p) {
-            p = strchr(p, '\\');
-            if (!p)
-                break;
-            *p++ = '\0';
-            if (*p == '\\')
-                break;
-            info->lines[info->numLines][0] = p;
-            info->lines[info->numLines][1] = "";
-            info->lines[info->numLines][2] = "";
-            p = strchr(p, '\\');
-            if (!p)
-                break;
-            *p++ = '\0';
-            info->lines[info->numLines][3] = p;
-            info->numLines++;
-            if (info->numLines >= 128)
-                break;
-        }
-
-        if (info->numLines < 125) {
-            info->lines[info->numLines][0] = "";
-            info->lines[info->numLines][1] = "";
-            info->lines[info->numLines][2] = "";
-            info->lines[info->numLines][3] = "";
-            info->numLines++;
-
-            info->lines[info->numLines][0] = "@EXE_SV_INFO_NUM";
-            info->lines[info->numLines][1] = "@EXE_SV_INFO_SCORE";
-            info->lines[info->numLines][2] = "@EXE_SV_INFO_PING";
-            info->lines[info->numLines][3] = "@EXE_SV_INFO_NAME";
-            info->numLines++;
-
-            i = 0;
-            len = 0;
-            while (p && *p) {
-                if (*p == '\\')
-                    *p++ = '\0';
-                if (!p)
-                    break;
-                score = p;
-                p = strchr(p, ' ');
-                if (!p)
-                    break;
-                *p++ = '\0';
-                ping = p;
-                p = strchr(p, ' ');
-                if (!p)
-                    break;
-                *p++ = '\0';
-                name = p;
-                Com_sprintf(&info->pings[len], sizeof(info->pings) - len, "%d", i);
-                info->lines[info->numLines][0] = &info->pings[len];
-                len += strlen(&info->pings[len]) + 1;
-                info->lines[info->numLines][1] = score;
-                info->lines[info->numLines][2] = ping;
-                info->lines[info->numLines][3] = name;
-                info->numLines++;
-                if (info->numLines >= 128)
-                    break;
-                p = strchr(p, '\\');
-                if (!p)
-                    break;
-                *p++ = '\0';
-                i++;
-            }
-        }
-
-        UI_AddServerStatusDvarRows(info);
-        return 1;
-    }
-    return 0;
-}
-
-#ifndef __EMSCRIPTEN__
-void UI_FeederSelection(float feederID, int index)
-{
-    if (feederID == 4.0f) {
-        int actual, map;
-
-        map = (ui_currentNetMap)->current.integer;
-        if (sharedUiInfo.mapList[map].cinematic >= 0) {
-            CIN_StopCinematic(sharedUiInfo.mapList[map].cinematic);
-            sharedUiInfo.mapList[map].cinematic = -1;
-        }
-        UI_SelectedMap(index, &actual);
-        Dvar_SetInt((dvar_t *)ui_currentMap, actual);
-        Dvar_SetInt((dvar_t *)ui_currentNetMap, actual);
-    } else if (feederID == 2.0f) {
-
-        char *name;
-        char *p;
-
-        if (sharedUiInfo.serverStatus.numDisplayServers > 0)
-            sharedUiInfo.serverStatus.currentServer = index;
-
-        LAN_GetServerInfo((ui_netSource)->current.integer,
-                          sharedUiInfo.serverStatus.displayServers[index],
-                          info, 0x400);
-        name = (char *)va("levelshots/%s", Info_ValueForKey(info, "mapname"));
-
-        for (p = name; *p; p++)
-            *p = tolower((int)(signed char)*p);
-
-        sharedUiInfo.serverStatus.currentServerPreview = CL_RegisterMaterialNoMip(name, 3);
-        if (sharedUiInfo.serverStatus.currentServerCinematic >= 0) {
-            CIN_StopCinematic(sharedUiInfo.serverStatus.currentServerCinematic);
-            sharedUiInfo.serverStatus.currentServerCinematic = -1;
-        }
-
-    } else if (feederID == 7.0f) {
-        uiInfo->playerIndex = index;
-    } else if (feederID == 9.0f) {
-        sharedUiInfo.modIndex = index;
-    } else if (feederID == 20.0f) {
-        uiInfo->playerIndex = index;
-
-    } else if (feederID == 24.0f) {
-
-        if (index >= 0 && index < uiInfo->playerProfileCount) {
-            int sortedIdx = uiInfo->playerProfileStatus.displayProfile[index];
-            const char *profileName = uiInfo->playerProfileName[sortedIdx];
-            Dvar_SetString((dvar_t *)ui_playerProfileSelected, profileName);
-        }
-    }
-}
-#endif
-
-#ifndef __EMSCRIPTEN__
-static void UI_GetGameTypesList(void)
-{
-    char szGameTypeList[0x1000];
-    int iNumGameTypeScripts;
-    int i;
-    char *pszFileName;
-    const char *pBuffParse;
-
-    sharedUiInfo.numGameTypes = 0;
-    sharedUiInfo.numJoinGameTypes = 0;
-
-    sharedUiInfo.joinGameTypes[sharedUiInfo.numJoinGameTypes].gameType = String_Alloc("All");
-    sharedUiInfo.joinGameTypes[sharedUiInfo.numJoinGameTypes].gameTypeName = "";
-    sharedUiInfo.numJoinGameTypes++;
-
-    iNumGameTypeScripts = FS_GetFileList("maps/mp/gametypes", "gsc", FS_LIST_PURE_ONLY, szGameTypeList, 0x1000);
-
-    pszFileName = szGameTypeList;
-    for (i = 0; i < iNumGameTypeScripts; i++) {
-        int iLen = strlen(pszFileName);
-
-        if (pszFileName[0] != '_') {
-            char *pszExt = pszFileName + iLen - 4;
-
-            if (!I_stricmp(pszExt, ".gsc"))
-                *pszExt = '\0';
-
-            if (sharedUiInfo.numGameTypes == 32 || sharedUiInfo.numJoinGameTypes == 32) {
-                Com_Printf("Too many game type scripts found! Only loading the first %i\n", 31);
-                break;
-            }
-
-            sharedUiInfo.gameTypes[sharedUiInfo.numGameTypes].gameType = String_Alloc(pszFileName);
-            sharedUiInfo.joinGameTypes[sharedUiInfo.numJoinGameTypes].gameType = sharedUiInfo.gameTypes[sharedUiInfo.numGameTypes].gameType;
-
-            pBuffParse = GetMenuBuffer(va("maps/mp/gametypes/%s.txt", pszFileName));
-            if (!pBuffParse) {
-                sharedUiInfo.gameTypes[sharedUiInfo.numGameTypes].gameTypeName = sharedUiInfo.gameTypes[sharedUiInfo.numGameTypes].gameType;
-                sharedUiInfo.joinGameTypes[sharedUiInfo.numJoinGameTypes].gameTypeName = sharedUiInfo.gameTypes[sharedUiInfo.numGameTypes].gameTypeName;
-            } else {
-                sharedUiInfo.gameTypes[sharedUiInfo.numGameTypes].gameTypeName = String_Alloc(Com_Parse(&pBuffParse));
-                sharedUiInfo.joinGameTypes[sharedUiInfo.numJoinGameTypes].gameTypeName = sharedUiInfo.gameTypes[sharedUiInfo.numGameTypes].gameTypeName;
-            }
-
-            sharedUiInfo.numGameTypes++;
-            sharedUiInfo.numJoinGameTypes++;
-        }
-        pszFileName += iLen + 1;
-    }
-
-    if (!sharedUiInfo.numGameTypes)
-        Com_Error(ERR_FATAL, "\x15No game type scripts found in maps/mp/gametypes folder");
-}
-#endif
-
-void UI_Pause(qboolean b)
-{
-    if (b) {
-        Dvar_SetIntByName("cl_paused", 1);
-        Key_SetCatcher(8);
-    } else {
-        Key_SetCatcher(Key_GetCatcher() & ~8);
-        Key_ClearStates();
-        Dvar_SetIntByName("cl_paused", 0);
-    }
-}
-
-#ifndef __EMSCRIPTEN__
-void UI_OpenMenu_f(void)
-{
-    Menus_OpenByName(&uiInfo->uiDC, Cmd_Args(1));
-}
-#endif
-
-#ifndef __EMSCRIPTEN__
-void UI_CloseMenu_f(void)
-{
-    Menus_CloseByName(&uiInfo->uiDC, Cmd_Args(1));
-}
-#endif
-
-#ifndef __EMSCRIPTEN__
-void UI_RegisterDvars(void)
-{
-    Dvar_RegisterBool("g_allowvote", 1, 0x1001);
-    Dvar_RegisterBool("cg_brass", 1, 0x1001);
-    Dvar_RegisterBool("cg_marks", 1, 0x1001);
-
-    Dvar_RegisterString("server1", "", 0x1001);
-    Dvar_RegisterString("server2", "", 0x1001);
-    Dvar_RegisterString("server3", "", 0x1001);
-    Dvar_RegisterString("server4", "", 0x1001);
-    Dvar_RegisterString("server5", "", 0x1001);
-    Dvar_RegisterString("server6", "", 0x1001);
-    Dvar_RegisterString("server7", "", 0x1001);
-    Dvar_RegisterString("server8", "", 0x1001);
-    Dvar_RegisterString("server9", "", 0x1001);
-    Dvar_RegisterString("server10", "", 0x1001);
-    Dvar_RegisterString("server11", "", 0x1001);
-    Dvar_RegisterString("server12", "", 0x1001);
-    Dvar_RegisterString("server13", "", 0x1001);
-    Dvar_RegisterString("server14", "", 0x1001);
-    Dvar_RegisterString("server15", "", 0x1001);
-    Dvar_RegisterString("server16", "", 0x1001);
-
-    ui_netSource = (const dvar_t *)(Dvar_RegisterInt("ui_netSource", 0, 0, 2, 0x1001));
-    ui_smallFont = (const dvar_t *)(Dvar_RegisterFloat("ui_smallFont", 0.25f, 0.0f, 1.0f, 0x1001));
-    ui_bigFont = (const dvar_t *)(Dvar_RegisterFloat("ui_bigFont", 0.4f, 0.0f, 1.0f, 0x1001));
-    ui_extraBigFont = (const dvar_t *)(Dvar_RegisterFloat("ui_extraBigFont", 0.55f, 0.0f, 1.0f, 0x1001));
-    ui_currentMap = (const dvar_t *)(Dvar_RegisterInt("ui_currentMap", 0, 0, 0x7fffffff, 0x1001));
-    ui_gametype = (const dvar_t *)(Dvar_RegisterInt("ui_gametype", 3, 0, 0x7fffffff, 0x1001));
-    ui_joinGameType = (const dvar_t *)(Dvar_RegisterInt("ui_joinGametype", 0, 0, 0x7fffffff, 0x1001));
-    ui_netGameTypeName = (const dvar_t *)(Dvar_RegisterString("ui_netGametypeName", "", 0x1001));
-    ui_dedicated = (const dvar_t *)(Dvar_RegisterInt("ui_dedicated", 0, 0, 2, 0x1001));
-    ui_currentNetMap = (const dvar_t *)(Dvar_RegisterInt("ui_currentNetMap", 0, 0, 0x7fffffff, 0x1001));
-    ui_browserShowFull = (const dvar_t *)(Dvar_RegisterBool("ui_browserShowFull", 1, 0x1001));
-    ui_browserShowEmpty = (const dvar_t *)(Dvar_RegisterBool("ui_browserShowEmpty", 1, 0x1001));
-    ui_browserShowPassword = (const dvar_t *)(Dvar_RegisterBool("ui_browserShowPassword", 1, 0x1001));
-    ui_browserShowNoPassword = (const dvar_t *)(Dvar_RegisterBool("ui_browserShowNoPassword", 1, 0x1001));
-    ui_browserShowPure = (const dvar_t *)(Dvar_RegisterBool("ui_browserShowPure", 1, 0x1001));
-    ui_browserShowDedicated = (const dvar_t *)(Dvar_RegisterBool("ui_browserShowDedicated", 0, 0x1001));
-#    if COD2_IS_PATCH_13
-    ui_browserShowPunkBuster = (const dvar_t *)(Dvar_RegisterInt("ui_browserShowPunkBuster", -1, (int)0x80000000, 0x7fffffff, 0x1001));
-#    endif
-    ui_browserMod = (const dvar_t *)(Dvar_RegisterInt("ui_browserMod", -1, -1, 0x7fffffff, 0x1001));
-    ui_browserFriendlyfire = (const dvar_t *)(Dvar_RegisterInt("ui_browserFriendlyfire", -1, (int)0x80000000, 0x7fffffff, 0x1001));
-    ui_browserKillcam = (const dvar_t *)(Dvar_RegisterInt("ui_browserKillcam", -1, (int)0x80000000, 0x7fffffff, 0x1001));
-    ui_serverStatusTimeOut = (const dvar_t *)(Dvar_RegisterInt("ui_serverStatusTimeOut", 7000, 0, 0x7fffffff, 0x1001));
-    ui_playerProfileCount = (const dvar_t *)(Dvar_RegisterInt("ui_playerProfileCount", 0, (int)0x80000000, 0x7fffffff, 0x1040));
-    ui_playerProfileSelected = (const dvar_t *)(Dvar_RegisterString("ui_playerProfileSelected", "", 0x1040));
-    ui_playerProfileNameNew = (const dvar_t *)(Dvar_RegisterString("ui_playerProfileNameNew", "", 0x1000));
-}
-
-void UI_Init(void)
-{
-    int width, height;
-    MenuList *menuList;
-    int netGameTypeIdx;
-    float mPitch;
-
-    *(int *)uiInfo = 0;
-    g_ingameMenusLoaded = 0;
-
-    UI_LoadSoundAliases();
-
-    UI_RegisterDvars();
-
-    legacyHacksData.ui_newScriptMenu[0] = 0;
-    legacyHacksData.ui_newScriptMenuIndex = -1;
-    legacyHacksData.ui_scriptMenu[0] = 0;
-    legacyHacksData.ui_scriptMenuIndex = -1;
-    legacyHacksData.ui_scriptMenuAllowResponse = 1;
-    legacyHacksData.ui_waitingScriptMenu[0] = 0;
-    legacyHacksData.ui_waitingScriptMenuIndex = -1;
-    legacyHacksData.ui_waitingScriptMenuNoMouse = 0;
-
-    String_Init();
-    Menu_Setup(&uiInfo->uiDC);
-
-    CL_GetScreenDimensions(&uiInfo->uiDC.screenWidth, &uiInfo->uiDC.screenHeight, (float *)((int *)&uiInfo->uiDC.screenAspect));
-
-    width = uiInfo->uiDC.screenWidth;
-    height = uiInfo->uiDC.screenHeight;
-
-    if (width * 480 > height * 640) {
-
-        uiInfo->uiDC.bias = ((float)width + (float)height * -1.3333333730697632f) * 0.5f;
-    } else {
-        *(int *)uiInfo = 0;
-    }
-
-    Sys_Milliseconds();
-    UI_GetGameTypesList();
-
-    ui_netGameType = (const dvar_t *)(Dvar_RegisterInt("ui_netGametype", 0, 0, sharedUiInfo.numGameTypes - 1, 0x1001));
-
-    UI_LoadArenas();
-
-    menuList = UI_LoadMenus("ui_mp/menus.txt", 3);
-    UI_AddMenuList(&uiInfo->uiDC, menuList);
-
-    if (g_mapname[0] != '\0') {
-        UI_MapLoadInfo(va("maps/mp/%s.csv", g_mapname));
-    }
-
-    UI_AssetCache();
-    Menus_CloseAll(&uiInfo->uiDC);
-
-    sharedUiInfo.serverHardwareIconList[0] = CL_RegisterMaterialNoMip("server_hardware_unknown", 3);
-    sharedUiInfo.serverHardwareIconList[1] = CL_RegisterMaterialNoMip("server_hardware_linux_dedicated", 3);
-    sharedUiInfo.serverHardwareIconList[2] = CL_RegisterMaterialNoMip("server_hardware_win_dedicated", 3);
-    sharedUiInfo.serverHardwareIconList[3] = CL_RegisterMaterialNoMip("server_hardware_mac_dedicated", 3);
-    sharedUiInfo.serverHardwareIconList[5] = CL_RegisterMaterialNoMip("server_hardware_win_listen", 3);
-    sharedUiInfo.serverHardwareIconList[6] = CL_RegisterMaterialNoMip("server_hardware_mac_listen", 3);
-
-    LAN_LoadCachedServers();
-
-    if (sharedUiInfo.serverStatus.sortKey != 9) {
-        sharedUiInfo.serverStatus.sortKey = 9;
-        qsort(sharedUiInfo.serverStatus.displayServers, sharedUiInfo.serverStatus.numDisplayServers, 4, UI_ServersQsortCompare);
-    }
-
-    mPitch = Dvar_GetFloat("m_pitch");
-    Dvar_SetBoolByName("ui_mousePitch", mPitch < 0.0f ? 1 : 0);
-
-    sharedUiInfo.serverStatus.currentServerCinematic = -1;
-    sharedUiInfo.previewMovie = -1;
-
-    netGameTypeIdx = (ui_netGameType)->current.integer;
-    Dvar_SetString((dvar_t *)ui_netGameTypeName, sharedUiInfo.gameTypes[netGameTypeIdx].gameType);
-
-    Dvar_RegisterBool("ui_multiplayer", 1, 0x1040);
-
-#    if COD2_FEATURE_GAMEPAD
-
-    UI_ConsoleMode_Init(uiInfo);
-    UI_Gamepad_RegisterMenus(uiInfo);
-#    endif
-}
-#endif
-
-void UI_KeyEvent(int key, qboolean down)
-{
-    menuDef_t *menu;
-
-    if (Menu_Count(&uiInfo->uiDC) <= 0)
-        return;
-
-    menu = Menu_GetFocused(&uiInfo->uiDC);
-    if (menu) {
-        if (Dvar_GetBool("cl_bypassMouseInput"))
-            bypassKeyClear = 1;
-
-        if (key == 0x1b && down && !Menus_AnyFullScreenVisible(&uiInfo->uiDC) && menu->onESC == 0) {
-
-            Menus_CloseAll(&uiInfo->uiDC);
-        } else {
-            Menu_HandleKey(&uiInfo->uiDC, menu, key, down);
-        }
-
-        if (Menu_GetFocused(&uiInfo->uiDC))
-            return;
-    }
-
-    if (!(Key_GetCatcher() & 8))
-        return;
-
-    Key_SetCatcher(Key_GetCatcher() & ~8);
-    if (!bypassKeyClear)
-        Key_ClearStates();
-    bypassKeyClear = 0;
-    Dvar_SetIntByName("cl_paused", 0);
-}
-
-#ifndef __EMSCRIPTEN__
-void UI_MouseEvent(int dx, int dy)
-{
-    int *cursorX = &uiInfo->uiDC.cursorx;
-    int *cursorY = &uiInfo->uiDC.cursory;
-
-    *cursorX += dx;
-    if (*cursorX < 0)
-        *cursorX = 0;
-    else if (*cursorX > 640)
-        *cursorX = 640;
-
-    *cursorY += dy;
-    if (*cursorY < 0)
-        *cursorY = 0;
-    else if (*cursorY > 480)
-        *cursorY = 480;
-
-    if (Menu_Count(&uiInfo->uiDC) > 0) {
-        Display_MouseMove(&uiInfo->uiDC, 0, *cursorX, *cursorY);
-    }
-}
-#endif
-
-
-#ifndef __EMSCRIPTEN__
-uiMenuCommand_t UI_GetActiveMenu(void)
-{
-    return uiInfo->currentMenuType;
-}
-#endif
-
-#ifndef __EMSCRIPTEN__
-qboolean UI_SetActiveMenu(int menu)
-{
-    menuDef_t *pFocus;
-    const char *errorMsg;
-    const char *newMenu;
-
-    if (Menu_Count(&uiInfo->uiDC) <= 0)
-        return 0;
-
-    if (menu != UIMENU_SCRIPT_POPUP && menu != UIMENU_SCRIPT_POPUP_NO_MOUSE)
-        uiInfo->currentMenuType = (uiMenuCommand_t)(menu);
-
-    switch (menu) {
-    case UIMENU_NONE:
-        Key_SetCatcher(Key_GetCatcher() & ~8);
-        Dvar_SetIntByName("cl_paused", 0);
-        Menus_CloseAll(&uiInfo->uiDC);
-        return 1;
-
-    case UIMENU_MAIN:
-        Key_SetCatcher(8);
-        Menus_OpenByName(&uiInfo->uiDC, "main");
-        errorMsg = Dvar_GetString("com_errorMessage");
-        if (strlen(errorMsg) && I_stricmp(errorMsg, ";"))
-            Menus_OpenByName(&uiInfo->uiDC, "error_popmenu");
-        SND_FadeAllSounds(1.0f, 1000);
-        return 1;
-
-    case UIMENU_TEAM:
-        Key_SetCatcher(8);
-        Menus_OpenByName(&uiInfo->uiDC, "team");
-        return 1;
-
-    case UIMENU_NEED_CD:
-        Key_SetCatcher(8);
-        Menus_OpenByName(&uiInfo->uiDC, "needcd");
-        return 1;
-
-    case UIMENU_BAD_CD_KEY:
-        Key_SetCatcher(8);
-        Menus_OpenByName(&uiInfo->uiDC, "badcd");
-        return 1;
-
-    case UIMENU_INGAME:
-        Key_SetCatcher(8);
-        Menus_CloseAll(&uiInfo->uiDC);
-        if (!Menus_OpenByName(&uiInfo->uiDC, cg->scriptMainMenu))
-            Menus_OpenByName(&uiInfo->uiDC, "main");
-        return 1;
-
-    case UIMENU_WM_QUICKMESSAGE:
-        uiInfo->uiDC.cursorx = 0x27f;
-        uiInfo->uiDC.cursory = 0x1df;
-        Key_SetCatcher(8);
-        clients->displayHUDWithKeycatchUI = 1;
-        Menus_CloseAll(&uiInfo->uiDC);
-        Menus_OpenByName(&uiInfo->uiDC, "quickmessage");
-        return 1;
-
-    case UIMENU_WM_AUTOUPDATE:
-        Menus_OpenByName(&uiInfo->uiDC, "autoupdate");
-        return 1;
-
-    case UIMENU_SCRIPT_POPUP:
-    case UIMENU_SCRIPT_POPUP_NO_MOUSE:
-        pFocus = Menu_GetFocused(&uiInfo->uiDC);
-        if (pFocus && uiInfo->currentMenuType != UIMENU_SCRIPT_POPUP && uiInfo->currentMenuType != UIMENU_SCRIPT_POPUP_NO_MOUSE)
-            return 0;
-        newMenu = legacyHacks->ui_newScriptMenu;
-        if (pFocus && !I_stricmp(pFocus->window.name, newMenu))
-            return 1;
-        uiInfo->currentMenuType = UIMENU_SCRIPT_POPUP;
-        if (menu == UIMENU_SCRIPT_POPUP_NO_MOUSE) {
-            uiInfo->uiDC.cursorx = 0x27f;
-            uiInfo->uiDC.cursory = 0x1df;
-        }
-        Key_SetCatcher(8);
-        Menus_CloseAll(&uiInfo->uiDC);
-        strcpy(legacyHacks->ui_scriptMenu, newMenu);
-        legacyHacks->ui_scriptMenuIndex = legacyHacks->ui_newScriptMenuIndex;
-        legacyHacks->ui_newScriptMenu[0] = 0;
-        legacyHacks->ui_newScriptMenuIndex = -1;
-        Menus_OpenByName(&uiInfo->uiDC, legacyHacks->ui_scriptMenu);
-        return 1;
-
-    case UIMENU_PLAYER_PROFILE:
-        Key_SetCatcher(8);
-        Menus_OpenByName(&uiInfo->uiDC, "player_profile");
-        SND_FadeAllSounds(1.0f, 1000);
-        return 1;
-    }
-
-    return 0;
-}
-#endif
-
-#ifndef __EMSCRIPTEN__
-qboolean UI_IsFullscreen(void)
-{
-    return Menus_AnyFullScreenVisible(&uiInfo->uiDC);
-}
-#endif
-
-static void __attribute_regparm__(3) UI_ReadableSize(char *buf, int bufsize, int value)
-{
-    if (value > 1024 * 1024 * 1024) {
-        Com_sprintf(buf, bufsize, "%d", value / (1024 * 1024 * 1024));
-        Com_sprintf(buf + strlen(buf), bufsize - strlen(buf), ".%02d %s",
-                    (value % (1024 * 1024 * 1024)) * 100 / (1024 * 1024 * 1024), UI_SafeTranslateString("EXE_GIGABYTE"));
-    } else if (value > 1024 * 1024) {
-        Com_sprintf(buf, bufsize, "%d", value / (1024 * 1024));
-        Com_sprintf(buf + strlen(buf), bufsize - strlen(buf), ".%02d %s",
-                    (value % (1024 * 1024)) * 100 / (1024 * 1024), UI_SafeTranslateString("EXE_MEGABYTE"));
-    } else if (value > 1024) {
-        Com_sprintf(buf, bufsize, "%d %s", value / 1024, UI_SafeTranslateString("EXE_KILOBYTE"));
-    } else {
-        Com_sprintf(buf, bufsize, "%d %s", value, UI_SafeTranslateString("EXE_BYTES"));
-    }
-}
-
-float UI_GetBlurRadius(void)
-{
-    return uiInfo->uiDC.blurRadiusOut;
-}
-
-#ifndef __EMSCRIPTEN__
-qboolean UI_AnyFullScreenMenuVisible(void)
-{
-    return Menus_AnyFullScreenVisible(&uiInfo->uiDC);
-}
-#endif
-
-const char *UI_ReplaceConversions(const char *sourceString, ConversionArguments *arguments)
-{
-    char outputString[0x400];
-    int sourceStringLength;
-    int index;
-    int outputStringCounter;
-    int argIndex;
-    int argLen;
-    int j;
-
-    if (!strstr(sourceString, "&&"))
-        return sourceString;
-
-    sourceStringLength = strlen(sourceString);
-    memset(outputString, 0, 0x400);
-    outputStringCounter = 0;
-
-    for (index = 0; index < sourceStringLength; ) {
-        if (!strncmp(&sourceString[index], "&&", 2) && isdigit(sourceString[index + 2])) {
-            argIndex = sourceString[index + 2] - '1';
-            argLen = strlen(arguments->args[argIndex]);
-            for (j = 0; j < argLen; j++) {
-                outputString[outputStringCounter] = arguments->args[argIndex][j];
-                outputStringCounter++;
-            }
-            index += 3;
-        } else {
-            outputString[outputStringCounter] = sourceString[index];
-            outputStringCounter++;
-            index++;
-        }
-    }
-
-    return va(outputString);
-}
-
-const char *UI_ReplaceConversionString(const char *sourceString, const char *replaceString)
-{
-    int convArgs[10];
-    memset(convArgs, 0, sizeof(convArgs));
-    convArgs[0] = 1;
-    convArgs[1] = (int)replaceString;
-    return UI_ReplaceConversions(sourceString, (ConversionArguments *)convArgs);
-}
-
-const char *UI_ReplaceConversionInt(const char *sourceString, int replaceInt)
-{
-    char tempString[32];
-    int convArgs[10];
-    memset(convArgs, 0, sizeof(convArgs));
-    sprintf(tempString, "%d", replaceInt);
-    convArgs[0] = 1;
-    convArgs[1] = (int)tempString;
-    return UI_ReplaceConversions(sourceString, (ConversionArguments *)convArgs);
-}
-
-#ifndef __EMSCRIPTEN__
-void UI_CloseAll(void)
-{
-    Menus_CloseAll(&uiInfo->uiDC);
-}
-#endif
-
-void UI_CloseFocusedMenu(void)
-{
-    if (Menu_Count(&uiInfo->uiDC) <= 0)
-        return;
-
-    if (!Menu_GetFocused(&uiInfo->uiDC)) {
-        if (Key_GetCatcher() & 8) {
-            Key_SetCatcher(Key_GetCatcher() & ~8);
-        }
-        return;
-    }
-
-    if (!Menus_AnyFullScreenVisible(&uiInfo->uiDC)) {
-        Menus_CloseAll(&uiInfo->uiDC);
-    }
-}
-
-// retail 0x5310a0
-static int UI_GetIndexFromSelection(int actual)
-{
-    int i;
-    int c;
-
-    c = 0;
-    for (i = 0; i < sharedUiInfo.mapCount; i++) {
-        if (sharedUiInfo.mapList[i].active) {
-            if (i == actual)
-                return c;
-            c++;
-        }
-    }
-    return 0;
-}
-
-// retail 0x531560
-void UI_OverrideCursorPos(itemDef_t *item)
-{
-    listBoxDef_s *listPtr;
-    int delta;
-    int max;
-
-    if (item->special == 4.0f) {
-        item->cursorPos[0] = UI_GetIndexFromSelection(ui_currentNetMap->current.integer);
-    } else if (item->special == 2.0f) {
-        listPtr = item->typeData.listBox;
-        if (!listPtr->endPos[0]) {
-            item->cursorPos[0] = -1;
-            return;
-        }
-        if (sharedUiInfo.serverStatus.currentServer >= 0
-            && item->cursorPos[0] >= listPtr->startPos[0] && item->cursorPos[0] <= listPtr->endPos[0]) {
-            delta = sharedUiInfo.serverStatus.currentServer - item->cursorPos[0];
-            listPtr->startPos[0] += delta;
-            listPtr->endPos[0] += delta;
-            listPtr->cursorPos[0] += delta;
-            item->cursorPos[0] = sharedUiInfo.serverStatus.currentServer;
-            max = Item_ListBox_MaxScroll(item);
-            if (listPtr->startPos[0] > max)
-                listPtr->startPos[0] = max;
-            if (listPtr->startPos[0] < 0)
-                listPtr->startPos[0] = 0;
-        }
     }
 }
 
@@ -1851,439 +1089,161 @@ Bool UI_DrawRecordLevel(rectDef_t *rect)
     return 1;
 }
 
-static const char *UI_SelectedMap(int index, int *actual)
+static void UI_DrawLocalTalking(rectDef_t *rect, vec_t *color)
 {
-    int i, c;
+    if ((sv_voice)->current.enabled && (cl_voice)->current.enabled && IsTalking())
+        UI_DrawHandlePic(rect->x, rect->y, rect->w, rect->h, rect->horzAlign, rect->vertAlign, color, CL_RegisterMaterialNoMip("voice_on", 7));
+}
 
-    c = 0;
-    *actual = 0;
-    for (i = 0; i < sharedUiInfo.mapCount; i++) {
-        if (sharedUiInfo.mapList[i].active) {
-            if (c == index) {
-                *actual = i;
-                return sharedUiInfo.mapList[i].mapName;
-            }
-            c++;
+static int UI_GetTalkerClientNum(int num)
+{
+    int client;
+    int talker;
+
+    talker = 0;
+    for (client = 0; client < 64; client++) {
+        if (CL_IsPlayerTalking(client)) {
+            if (talker == num)
+                return client;
+            talker++;
         }
     }
-    return "";
+    return -1;
 }
 
-MaterialHandle UI_FeederItemImage(const float feederID, int index)
+// Original name unknown.
+static int UI_GetPlayerListIndex(int client)
 {
-    int actual;
+    int index;
 
-    if (feederID == 4.0f) {
-        UI_SelectedMap(index, &actual);
-        index = actual;
-        if (index >= 0 && index < sharedUiInfo.mapCount) {
-            if (!sharedUiInfo.mapList[index].levelShot)
-                sharedUiInfo.mapList[index].levelShot = CL_RegisterMaterialNoMip(sharedUiInfo.mapList[index].mapLoadName, 3);
-            return sharedUiInfo.mapList[index].levelShot;
-        }
+    for (index = 0; index < 64; index++) {
+        if (sharedUiInfo.playerClientNums[index] == client)
+            return index;
     }
-    return 0;
+    return -1;
 }
 
-#ifndef __EMSCRIPTEN__
-void UI_DrawText(const char *text, int maxChars, FontHandle font, float x, float y, int horzAlign, int vertAlign, float scale, const vec_t *color, int style)
+static void UI_DrawTalkerNum(int num, rectDef_t *rect, FontHandle font, vec_t *color, float scale, int textStyle)
 {
-    float xScale;
-    float yScale;
+    int client;
+    int index;
+    MaterialHandle material;
+    float actualScale;
+    int textHeight;
 
-    diag_drawtext(text, (void *)font, x, y, scale);
-
-    xScale = CL_NormalizedTextScale(font, scale);
-    yScale = xScale;
-    CalcSplitScreenTextOffset(font, &y);
-    CalcScreenPlacement(&x, &y, &xScale, &yScale, horzAlign, vertAlign);
-
-    x = (float)I_fround(x);
-    y = (float)I_fround(y);
-
-    CL_DrawTextPhysical(text, maxChars, font, x, y, xScale, yScale, color, style);
-}
-#endif
-
-void UI_DrawTextWithCursor(const char *text, int maxChars, FontHandle font, float x, float y, int horzAlign, int vertAlign, float scale, const vec_t *color, int style, int cursorPos, char cursor)
-{
-    float xScale;
-    float yScale;
-
-    xScale = CL_NormalizedTextScale(font, scale);
-    yScale = xScale;
-    CalcSplitScreenTextOffset(font, &y);
-    CalcScreenPlacement(&x, &y, &xScale, &yScale, horzAlign, vertAlign);
-
-    x = (float)I_fround(x);
-    y = (float)I_fround(y);
-
-    CL_DrawTextPhysicalWithCursor(text, maxChars, font, x, y, xScale, yScale, color, style, cursorPos, cursor);
-}
-
-#ifndef __EMSCRIPTEN__
-static void UI_StopServerRefresh(void)
-{
-    int count;
-
-    if (!sharedUiInfo.serverStatus.refreshActive)
-        return;
-    sharedUiInfo.serverStatus.refreshActive = 0;
-    Com_Printf("%d servers listed in browser with %d players.\n",
-               sharedUiInfo.serverStatus.numDisplayServers, sharedUiInfo.serverStatus.numPlayersOnServers);
-    count = LAN_GetServerCount(ui_netSource->current.integer) - sharedUiInfo.serverStatus.numDisplayServers;
-    if (count > 0)
-        Com_Printf("%d servers not listed (filtered out by game browser settings)\n", count);
-}
-
-static void UI_DoServerRefresh(void)
-{
-    int wait;
-
-    wait = 0;
-    if (!sharedUiInfo.serverStatus.refreshActive)
+    client = UI_GetTalkerClientNum(num);
+    if (client < 0)
         return;
 
-    if (ui_netSource->current.integer != 2) {
-        if (ui_netSource->current.integer == 0) {
-            if (!LAN_GetServerCount(ui_netSource->current.integer))
-                wait = 1;
-        } else if (LAN_WaitServerResponse(ui_netSource->current.integer)) {
-            wait = 1;
-        }
-    }
+    UI_BuildPlayerList();
+    index = UI_GetPlayerListIndex(client);
 
-    if (uiInfo->uiDC.realTime < sharedUiInfo.serverStatus.refreshtime) {
-        if (wait)
-            return;
-    }
-
-    UI_UpdateServerCount();
-
-    if (LAN_UpdateDirtyPings(ui_netSource->current.integer)) {
-        sharedUiInfo.serverStatus.refreshtime = uiInfo->uiDC.realTime + 1000;
-    } else if (!wait) {
-        UI_BuildServerDisplayList(2);
-        UI_StopServerRefresh();
-    }
-
-    UI_BuildServerDisplayList(0);
-}
-#endif
-
-#ifndef __EMSCRIPTEN__
-// retail 0x530040; name unknown
-static void UI_ClearDisplayedServers(void)
-{
-    sharedUiInfo.serverStatus.numDisplayServers = 0;
-    sharedUiInfo.serverStatus.numPlayersOnServers = 0;
-    sharedUiInfo.serverStatus.serverCount = LAN_GetServerCount((ui_netSource)->current.integer);
+    material = CL_RegisterMaterialNoMip("voice_on", 7);
+    actualScale = CL_NormalizedTextScale(font, scale);
+    textHeight = (int)(CL_TextHeight(font) * actualScale);
+    UI_DrawHandlePic(rect->x, rect->y, rect->w, rect->h, rect->horzAlign, rect->vertAlign, color, material);
+    UI_DrawText(sharedUiInfo.playerNames[index], 32, font, rect->x + rect->w + 2.0f, (rect->h - (float)textHeight) * 0.5f + (float)textHeight + rect->y, rect->horzAlign, rect->vertAlign, scale, color, textStyle);
 }
 
-static void UI_StartServerRefresh(qboolean full)
+void UI_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAlign, float text_x, float text_y, int ownerDraw, int ownerDrawFlags, int align, float special, FontHandle font, float scale, vec_t *color, MaterialHandle material, int textStyle)
 {
-    qtime_t q;
-    char dvarName[0x18];
-    const char *ptr;
+    rectDef_t rect;
 
-    Com_RealTime(&q);
-    snprintf(dvarName, sizeof(dvarName), "ui_lastServerRefresh_%i", (ui_netSource)->current.integer);
-    Dvar_SetStringByName(dvarName,
-                         va("%s %i, %i   %i:%02i",
-                            UI_SafeTranslateString(MonthAbbrev[q.tm_mon]),
-                            q.tm_mday,
-                            q.tm_year + 1900,
-                            q.tm_hour,
-                            q.tm_min));
+    if (clients->cgameInitialized)
+        CG_OwnerDraw(x, y, w, h, horzAlign, vertAlign, text_x, text_y, ownerDraw, ownerDrawFlags, align, special, font, scale, color, material, textStyle);
 
-    if (!full) {
-        LAN_ResetPings((ui_netSource)->current.integer);
-        sharedUiInfo.serverStatus.refreshActive = 1;
-        sharedUiInfo.serverStatus.refreshtime = uiInfo->uiDC.realTime + 1000;
+    rect.x = x + text_x;
+    rect.y = y + text_y;
+    rect.w = w;
+    rect.h = h;
+    rect.horzAlign = horzAlign;
+    rect.vertAlign = vertAlign;
+
+    switch (ownerDraw) {
+    case 254:
+        UI_DrawPreviewCinematic(&rect);
+        break;
+    case 205:
+        UI_DrawGameType(&rect, font, scale, color, textStyle);
+        break;
+    case 245:
+        UI_DrawNetGameType(&rect, font, scale, color, textStyle);
+        break;
+    case 253:
+        UI_DrawJoinGameType(&rect, font, scale, color, textStyle);
+        break;
+    case 206:
+        UI_DrawMapPreview(&rect, color, 1);
+        break;
+    case 244:
+        UI_DrawMapCinematic(&rect, color, 0);
+        break;
+    case 255:
+        UI_DrawMapCinematic(&rect, color, 1);
+        break;
+    case 221:
+        UI_DrawNetMapPreview(&rect, scale, color);
+        break;
+    case 246:
+        UI_DrawNetMapCinematic(&rect, scale, color);
+        break;
+    case 222:
+        UI_DrawNetFilter(&rect, font, scale, color, textStyle);
+        break;
+    case 220:
+        UI_DrawNetSource(&rect, font, scale, color, textStyle);
+        break;
+    case 247:
+        UI_DrawServerRefreshDate(&rect, font, scale, color, textStyle);
+        break;
+    case 250:
+        UI_DrawKeyBindStatus(&rect, font, scale, color, textStyle);
+        break;
+    case 265:
+        UI_DrawRecordLevel(&rect);
+        break;
+    case 266:
+        UI_DrawLocalTalking(&rect, color);
+        break;
+    case 267:
+    case 268:
+    case 269:
+    case 270:
+        UI_DrawTalkerNum(ownerDraw - 267, &rect, font, color, scale, textStyle);
+        break;
+    default:
         return;
     }
-
-    sharedUiInfo.serverStatus.refreshActive = 1;
-    sharedUiInfo.serverStatus.nextDisplayRefresh = uiInfo->uiDC.realTime + 1000;
-    UI_ClearDisplayedServers();
-    LAN_MarkServerDirty((ui_netSource)->current.integer, -1, 1);
-    LAN_ResetPings((ui_netSource)->current.integer);
-
-    if ((ui_netSource)->current.integer == 0) {
-        Cbuf_ExecuteText(0, "localservers\n");
-        sharedUiInfo.serverStatus.refreshtime = uiInfo->uiDC.realTime + 1000;
-        return;
-    }
-
-    sharedUiInfo.serverStatus.refreshtime = uiInfo->uiDC.realTime + 5000;
-
-    if ((ui_netSource)->current.integer == 1) {
-        ptr = Dvar_GetVariantString("debug_protocol");
-        if (strlen(ptr))
-            Cbuf_ExecuteText(0, va("globalservers %d %s full empty\n", 0, ptr));
-        else
-            Cbuf_ExecuteText(0, va("globalservers %d %d full empty\n", 0, 0x73));
-    }
-}
-#endif
-
-#ifndef __EMSCRIPTEN__
-static void UI_InsertServerAtPosition(int serverIndex, int position)
-{
-    int i;
-
-    if (position < 0 || position > sharedUiInfo.serverStatus.numDisplayServers)
-        return;
-
-    if (position <= sharedUiInfo.serverStatus.currentServer && sharedUiInfo.serverStatus.numDisplayServers)
-        sharedUiInfo.serverStatus.currentServer++;
-
-    sharedUiInfo.serverStatus.numDisplayServers++;
-    for (i = sharedUiInfo.serverStatus.numDisplayServers; i > position; i--)
-        sharedUiInfo.serverStatus.displayServers[i] = sharedUiInfo.serverStatus.displayServers[i - 1];
-    sharedUiInfo.serverStatus.displayServers[position] = serverIndex;
-}
-#endif
-
-#ifndef __EMSCRIPTEN__
-static void UI_RemoveDuplicateFromFavorites(int serverIndex)
-{
-    int i, j;
-
-    for (i = 0; i < sharedUiInfo.serverStatus.numDisplayServers; i++) {
-        if (sharedUiInfo.serverStatus.displayServers[i] == serverIndex) {
-            sharedUiInfo.serverStatus.numDisplayServers--;
-            for (j = i; j < sharedUiInfo.serverStatus.numDisplayServers; j++)
-                sharedUiInfo.serverStatus.displayServers[j] = sharedUiInfo.serverStatus.displayServers[j + 1];
-            return;
-        }
-    }
-}
-#endif
-
-#ifndef __EMSCRIPTEN__
-static void UI_BinaryInsertServer(int serverIndex)
-{
-    int mid, offset, res, len;
-
-    len = sharedUiInfo.serverStatus.numDisplayServers;
-    mid = len;
-    offset = 0;
-    res = 0;
-    while (mid > 0) {
-        mid = len >> 1;
-        res = LAN_CompareServers(ui_netSource->current.integer, sharedUiInfo.serverStatus.sortKey, sharedUiInfo.serverStatus.sortDir,
-                                 serverIndex, sharedUiInfo.serverStatus.displayServers[offset + mid]);
-        if (res == 0) {
-            UI_InsertServerAtPosition(serverIndex, offset + mid);
-            return;
-        } else if (res > 0) {
-            offset += mid;
-            len -= mid;
-        } else {
-            len -= mid;
-        }
-    }
-    if (res > 0)
-        offset++;
-    UI_InsertServerAtPosition(serverIndex, offset);
-}
-#endif
-
-#ifndef __EMSCRIPTEN__
-static void __attribute_regparm__(0) UI_BuildServerDisplayList(qboolean force)
-{
-    char info_buf[0x400];
-    int count, i, clients, ping;
-
-    if (!force) {
-        if (uiInfo->uiDC.realTime <= sharedUiInfo.serverStatus.nextDisplayRefresh)
-            return;
-    } else if (force == 2) {
-        force = 0;
-    }
-
-    clients = 0;
-
-    {
-        const char *motdString = Dvar_GetString("cl_motdString");
-        int motdLen;
-        I_strncpyz(sharedUiInfo.serverStatus.motd, motdString, 0x400);
-        motdLen = strlen(sharedUiInfo.serverStatus.motd);
-
-        if (motdLen == 0) {
-            strcpy(sharedUiInfo.serverStatus.motd, va("%s - %s", UI_SafeTranslateString("EXE_COD_MULTIPLAYER"), "1.0"));
-            motdLen = strlen(sharedUiInfo.serverStatus.motd);
-        }
-
-        if (motdLen != sharedUiInfo.serverStatus.motdLen) {
-            sharedUiInfo.serverStatus.motdLen = motdLen;
-            sharedUiInfo.serverStatus.motdWidth = -1;
-        }
-    }
-
-    if (force) {
-        numclean = 0;
-        UI_ClearDisplayedServers();
-
-        if (sharedUiInfo.serverStatus.currentServer >= 0) {
-            Menu_SetFeederSelection(&uiInfo->uiDC, 0, 2, 0, 0);
-        }
-
-        LAN_MarkServerDirty((ui_netSource)->current.integer, -1, 1);
-    }
-
-    count = LAN_GetServerCount((ui_netSource)->current.integer);
-    if (LAN_WaitServerResponse((ui_netSource)->current.integer) || ((ui_netSource)->current.integer == 0 && count == 0)) {
-        UI_ClearDisplayedServers();
-        sharedUiInfo.serverStatus.nextDisplayRefresh = uiInfo->uiDC.realTime + 500;
-        return;
-    }
-
-    qsort(sharedUiInfo.serverStatus.displayServers, sharedUiInfo.serverStatus.numDisplayServers, 4, UI_ServersQsortCompare);
-
-    for (i = 0; i < count; i++) {
-        if (!LAN_ServerIsDirty((ui_netSource)->current.integer, i))
-            continue;
-
-        ping = LAN_GetServerPing((ui_netSource)->current.integer, i);
-        if (ping > 0 || (ui_netSource)->current.integer == 2) {
-            LAN_GetServerInfo((ui_netSource)->current.integer, i, info_buf, 0x400);
-            clients = atoi(Info_ValueForKey(info_buf, "clients"));
-            sharedUiInfo.serverStatus.numPlayersOnServers += clients;
-            if (!I_strnicmp(Info_ValueForKey(info_buf, "addr"), "000.000.000.000", 15)) {
-                LAN_MarkServerDirty((ui_netSource)->current.integer, i, 0);
-                continue;
-            }
-            if (!(ui_browserShowEmpty)->current.enabled && !clients) {
-                LAN_MarkServerDirty((ui_netSource)->current.integer, i, 0);
-                continue;
-            }
-            if (!(ui_browserShowFull)->current.enabled && clients == atoi(Info_ValueForKey(info_buf, "sv_maxclients"))) {
-                LAN_MarkServerDirty((ui_netSource)->current.integer, i, 0);
-                continue;
-            }
-            if (!(ui_browserShowPassword)->current.enabled && atoi(Info_ValueForKey(info_buf, "pswrd"))) {
-                LAN_MarkServerDirty((ui_netSource)->current.integer, i, 0);
-                continue;
-            }
-            if (!(ui_browserShowNoPassword)->current.enabled && !atoi(Info_ValueForKey(info_buf, "pswrd"))) {
-                LAN_MarkServerDirty((ui_netSource)->current.integer, i, 0);
-                continue;
-            }
-            if ((ui_browserShowPure)->current.enabled && !atoi(Info_ValueForKey(info_buf, "pure"))) {
-                LAN_MarkServerDirty((ui_netSource)->current.integer, i, 0);
-                continue;
-            }
-            if ((ui_browserShowDedicated)->current.enabled) {
-                int hw = atoi(Info_ValueForKey(info_buf, "hw"));
-                if (hw != 1 && hw != 2 && hw != 3) {
-                    LAN_MarkServerDirty((ui_netSource)->current.integer, i, 0);
-                    continue;
-                }
-            }
-            if ((ui_browserMod)->current.integer >= 0 && atoi(Info_ValueForKey(info_buf, "mod")) != (ui_browserMod)->current.integer) {
-                LAN_MarkServerDirty((ui_netSource)->current.integer, i, 0);
-                continue;
-            }
-            if ((ui_browserFriendlyfire)->current.integer >= 0 && atoi(Info_ValueForKey(info_buf, "ff")) != (ui_browserFriendlyfire)->current.integer) {
-                LAN_MarkServerDirty((ui_netSource)->current.integer, i, 0);
-                continue;
-            }
-            if ((ui_browserKillcam)->current.integer >= 0 && atoi(Info_ValueForKey(info_buf, "kc")) != (ui_browserKillcam)->current.integer) {
-                LAN_MarkServerDirty((ui_netSource)->current.integer, i, 0);
-                continue;
-            }
-            if (sharedUiInfo.joinGameTypes[(ui_joinGameType)->current.integer].gameTypeName[0]
-                && I_stricmp(Info_ValueForKey(info_buf, "gametype"), sharedUiInfo.joinGameTypes[(ui_joinGameType)->current.integer].gameType)) {
-                LAN_MarkServerDirty((ui_netSource)->current.integer, i, 0);
-                continue;
-            }
-            if (ui_serverFilterType > 0 && I_stricmp(Info_ValueForKey(info_buf, "game"), serverFilters[ui_serverFilterType].basedir)) {
-                LAN_MarkServerDirty((ui_netSource)->current.integer, i, 0);
-                continue;
-            }
-
-            if ((ui_netSource)->current.integer == 2)
-                UI_RemoveDuplicateFromFavorites(i);
-            UI_BinaryInsertServer(i);
-            if (ping > 0) {
-                LAN_MarkServerDirty((ui_netSource)->current.integer, i, 0);
-                numclean++;
-            }
-        }
-    }
-
-    sharedUiInfo.serverStatus.refreshtime = uiInfo->uiDC.realTime;
-}
-#endif
-
-static void UI_SelectCurrentGameType(void)
-{
-    const char *currType;
-    int i;
-
-    currType = Dvar_GetString("g_gametype");
-    for (i = 0; i < sharedUiInfo.numGameTypes; i++) {
-        if (!I_stricmp(currType, sharedUiInfo.gameTypes[i].gameType)) {
-            Dvar_SetInt((dvar_t *)ui_netGameType, i);
-            Dvar_SetString((dvar_t *)ui_netGameTypeName, sharedUiInfo.gameTypes[i].gameType);
-            return;
-        }
-    }
 }
 
-static int UI_MapCountByGameType(void)
+qboolean UI_OwnerDrawVisible(int flags)
 {
-    int i, c, game;
+    qboolean visible = 1;
 
-    game = ui_netGameType->current.integer;
-    c = 0;
-    for (i = 0; i < sharedUiInfo.mapCount; i++) {
-        sharedUiInfo.mapList[i].active = 0;
-        if (sharedUiInfo.mapList[i].typeBits & (1 << game)) {
-            c++;
-            sharedUiInfo.mapList[i].active = 1;
+    if (flags & 4) {
+        if (ui_netSource->current.integer != 2) {
+            visible = 0;
         }
     }
-    return c;
-}
 
-// retail 0x52fd50; name unknown
-static void UI_SelectFirstActiveMap(void)
-{
-    int i;
-
-    for (i = 0; i < sharedUiInfo.mapCount; i++) {
-        if (sharedUiInfo.mapList[i].active) {
-            Menu_SetFeederSelection(&uiInfo->uiDC, NULL, 4, 0, "createserver_maps");
-            Dvar_SetInt((dvar_t *)ui_currentNetMap, i);
-            return;
+    if (flags & 0x1000) {
+        if (ui_netSource->current.integer == 2) {
+            visible = 0;
         }
     }
+
+    return visible;
 }
 
-// name unknown
-static int UI_ListIndexForMap(int map)
+static int UI_ServersQsortCompare(const void *arg1, const void *arg2)
 {
-    int i;
-    int listIndex;
-
-    listIndex = 0;
-    for (i = 0; i < sharedUiInfo.mapCount; i++) {
-        if (sharedUiInfo.mapList[i].active) {
-            if (i == map)
-                return listIndex;
-            listIndex++;
-        }
-    }
-    return 0;
-}
-
-// retail 0x52fda0; name unknown
-static void UI_SetMapFeederSelection(int map)
-{
-    Menu_SetFeederSelection(&uiInfo->uiDC, NULL, 4, UI_ListIndexForMap(map), "createserver_maps");
+    int s1 = *(const int *)arg1;
+    int s2 = *(const int *)arg2;
+    return LAN_CompareServers(
+        ui_netSource->current.integer,
+        sharedUiInfo.serverStatus.sortKey,
+        sharedUiInfo.serverStatus.sortDir,
+        s1, s2);
 }
 
 static qboolean UI_GameType_HandleKey(int flags, float *special, int key, qboolean resetMap)
@@ -2436,442 +1396,288 @@ qboolean UI_OwnerDrawHandleKey(int ownerDraw, int flags, float *special, int key
     return 0;
 }
 
-const char *UI_FeederItemText(float feederID, int index, int column, MaterialHandle *handle)
+static void UI_LoadMods(void)
 {
-    int actual;
-
-    *handle = 0;
-
-    if (feederID == 4.0f) {
-        return UI_SelectedMap(index, &actual);
-    } else if (feederID == 2.0f) {
-
-        int pingVal;
-
-        UI_UpdateServerCount();
-
-        if (index >= 0 && index < sharedUiInfo.serverStatus.numDisplayServers) {
-            if (lastColumn != column || lastTime > uiInfo->uiDC.realTime + 5000) {
-                LAN_GetServerInfo((ui_netSource)->current.integer,
-                                  sharedUiInfo.serverStatus.displayServers[index],
-                                  info, 0x400);
-                lastColumn = column;
-                lastTime = uiInfo->uiDC.realTime;
-            }
-
-            pingVal = atoi(Info_ValueForKey(info, "ping"));
-
-            switch (column) {
-            case 0:
-                if (atoi(Info_ValueForKey(info, "pswrd")))
-                    return "X";
-                return "";
-            case 1: {
-                int hw = atoi(Info_ValueForKey(info, "hw"));
-                if (hw >= 0 && hw < 8)
-                    *handle = sharedUiInfo.serverHardwareIconList[hw];
-                return "";
-            }
-            case 7:
-                if (atoi(Info_ValueForKey(info, "pure")))
-                    return "X";
-                return "";
-            case 8:
-                if (atoi(Info_ValueForKey(info, "mod")))
-                    return "X";
-                return "";
-            case 6:
-                if (atoi(Info_ValueForKey(info, "voice")))
-                    return "X";
-                return "";
-            case 2:
-                if (pingVal <= 0)
-                    return Info_ValueForKey(info, "addr");
-                I_strncpyz(clientBuff, Info_ValueForKey(info, "hostname"), 0x14);
-                return clientBuff;
-            case 3:
-                return UI_GetMapDisplayName(Info_ValueForKey(info, "mapname"));
-            case 4:
-                Com_sprintf(clientBuff, 0x20, "%s (%s)", Info_ValueForKey(info, "clients"), Info_ValueForKey(info, "sv_maxclients"));
-                return clientBuff;
-            case 5:
-                if (Info_ValueForKey(info, "gametype") && *Info_ValueForKey(info, "gametype"))
-                    return Info_ValueForKey(info, "gametype");
-                return "?";
-            case 9:
-                if (pingVal <= 0)
-                    return "...";
-                return Info_ValueForKey(info, "ping");
-            }
-        }
-    } else if (feederID == 13.0f) {
-        if (index >= 0 && index < sharedUiInfo.serverStatusInfo.numLines) {
-            if (column >= 0 && column < 4) {
-                const char *text = *(const char **)((byte *)&sharedUiInfo + 109864 + (column + index * 4) * 4);
-                if (text[0] == '@')
-                    return UI_SafeTranslateString(text + 1);
-                return text;
-            }
-        }
-    } else if (feederID == 7.0f) {
-        if (index >= 0 && index < sharedUiInfo.playerCount)
-            return sharedUiInfo.playerNames[index];
-    } else if (feederID == 9.0f) {
-        if (index >= 0 && index < sharedUiInfo.modCount) {
-            const char *desc = *(const char **)((byte *)&sharedUiInfo + 25976 + index * 8);
-            if (desc && desc[0] != '\0')
-                return desc;
-            return *(const char **)((byte *)&sharedUiInfo + 25972 + index * 8);
-        }
-    } else if (feederID == 20.0f) {
-        if (index >= 0 && index < sharedUiInfo.playerCount) {
-            if (column == 1)
-                return sharedUiInfo.playerNames[index];
-            if (CL_IsPlayerMuted(sharedUiInfo.playerClientNums[index]))
-                return UI_SafeTranslateString("MP_MUTED");
-        }
-    }
-    if (feederID == 24.0f) {
-        if (index >= 0 && index < uiInfo->playerProfileCount)
-            return uiInfo->playerProfileName[uiInfo->playerProfileStatus.displayProfile[index]];
-    }
-
-    return "";
-}
-
-void UI_DrawRect(float x, float y, float width, float height, int horzAlign, int vertAlign, float size, const vec_t *color)
-{
-    UI_DrawTopBottom(x, y, width, height, horzAlign, vertAlign, size, color);
-    UI_DrawSides(x, y, width, height, horzAlign, vertAlign, size, color);
-}
-
-int UI_OwnerDrawWidth(int ownerDraw, FontHandle font, float scale)
-{
-    const char *s = NULL;
-
-    switch (ownerDraw) {
-    case 0x27:
-        s = CG_GameTypeString();
-        break;
-    case 0x32:
-        s = CG_GetKillerText();
-        break;
-    case 0xcd:
-        s = sharedUiInfo.gameTypes[(ui_gametype)->current.integer].gameTypeName;
-        break;
-    case 0xdc:
-        if ((ui_netSource)->current.integer > sharedUiInfo.numJoinGameTypes)
-            Dvar_SetInt((dvar_t *)ui_netSource, 0);
-        s = SEH_LocalizeTextMessage(va("EXE_NETSOURCE\x14%s", netSources[(ui_netSource)->current.integer]), "net source", LOCMSG_SAFE);
-        break;
-    case 0xde: {
-        if (ui_serverFilterType < 0 || ui_serverFilterType > 1)
-            ui_serverFilterType = 0;
-        s = SEH_LocalizeTextMessage(va("EXE_SERVERFILTER\x14%s", serverFilters[ui_serverFilterType].description), "server filter", LOCMSG_SAFE);
-        break;
-    }
-    case 0xfa:
-        if (Display_KeyBindPending())
-            s = UI_SafeTranslateString("EXE_KEYWAIT");
-        else
-            s = UI_SafeTranslateString("EXE_KEYCHANGE");
-        break;
-    case 0xf7:
-        s = Dvar_GetVariantString(va("ui_lastServerRefresh_%i", (ui_netSource)->current.integer));
-        break;
-    default:
-        return 0;
-    }
-
-    if (!s)
-        return 0;
-
-    {
-        float actualScale = CL_NormalizedTextScale(font, scale);
-        return (int)((float)CL_TextWidth(s, 0, font) * actualScale);
-    }
-}
-
-static void UI_DrawGameType(rectDef_t *rect, FontHandle font, float scale, vec_t *color, int textStyle)
-{
-    const char *text;
-
-    if (sharedUiInfo.gameTypes[ui_gametype->current.integer].gameTypeName[0])
-        text = UI_SafeTranslateString(sharedUiInfo.gameTypes[ui_gametype->current.integer].gameTypeName);
-    else
-        text = UI_SafeTranslateString("EXE_ALL");
-    UI_DrawText(text, 0x7fffffff, font, rect->x, rect->y, rect->horzAlign, rect->vertAlign, scale, color, textStyle);
-}
-
-static void UI_DrawNetGameType(rectDef_t *rect, FontHandle font, float scale, vec_t *color, int textStyle)
-{
-    const char *text;
-
-    if (ui_netGameType->current.integer > sharedUiInfo.numGameTypes) {
-        Dvar_SetInt((dvar_t *)ui_netGameType, 0);
-        Dvar_SetString((dvar_t *)ui_netGameTypeName, sharedUiInfo.gameTypes[0].gameType);
-    }
-    if (sharedUiInfo.gameTypes[ui_netGameType->current.integer].gameTypeName[0])
-        text = UI_SafeTranslateString(sharedUiInfo.gameTypes[ui_netGameType->current.integer].gameTypeName);
-    else
-        text = UI_SafeTranslateString("EXE_ALL");
-    UI_DrawText(text, 0x7fffffff, font, rect->x, rect->y, rect->horzAlign, rect->vertAlign, scale, color, textStyle);
-}
-
-static void UI_DrawJoinGameType(rectDef_t *rect, FontHandle font, float scale, vec_t *color, int textStyle)
-{
-    const char *text;
-
-    if (ui_joinGameType->current.integer > sharedUiInfo.numJoinGameTypes)
-        Dvar_SetInt((dvar_t *)ui_joinGameType, 0);
-    if (sharedUiInfo.joinGameTypes[ui_joinGameType->current.integer].gameTypeName[0])
-        text = UI_SafeTranslateString(sharedUiInfo.joinGameTypes[ui_joinGameType->current.integer].gameTypeName);
-    else
-        text = UI_SafeTranslateString("EXE_ALL");
-    UI_DrawText(text, 0x7fffffff, font, rect->x, rect->y, rect->horzAlign, rect->vertAlign, scale, color, textStyle);
-}
-
-static void UI_DrawNetMapPreview(rectDef_t *rect, float scale, vec_t *color)
-{
-    if (sharedUiInfo.serverStatus.currentServerPreview > 0) {
-        UI_DrawHandlePic(rect->x, rect->y, rect->w, rect->h, rect->horzAlign, rect->vertAlign, color, sharedUiInfo.serverStatus.currentServerPreview);
-    } else {
-        UI_DrawHandlePic(rect->x, rect->y, rect->w, rect->h, rect->horzAlign, rect->vertAlign, color, CL_RegisterMaterialNoMip("menu/art/unknownmap", 3));
-    }
-}
-
-// retail 0x52c6d0; cinematic half gone, CoD1 shape (SUPPORTED)
-static void UI_DrawMapCinematic(const rectDef_t *rect, const vec_t *color, int net)
-{
-    UI_DrawMapPreview(rect, color, net);
-}
-
-// retail 0x52c5a0; Q3 name (SUPPORTED)
-static void UI_DrawPreviewCinematic(const rectDef_t *rect)
-{
-    if (sharedUiInfo.previewMovie > -2) {
-        sharedUiInfo.previewMovie = CIN_PlayCinematic(sharedUiInfo.movieList[sharedUiInfo.movieIndex], 0, 0, 0, 0, 10);
-        if (sharedUiInfo.previewMovie >= 0) {
-            CIN_RunCinematic(sharedUiInfo.previewMovie);
-            CIN_SetExtents(sharedUiInfo.previewMovie, (int)rect->x, (int)rect->y, (int)rect->w, (int)rect->h);
-            CIN_DrawCinematic(sharedUiInfo.previewMovie);
-        } else {
-            sharedUiInfo.previewMovie = -2;
-        }
-    }
-}
-
-static void UI_DrawNetMapCinematic(rectDef_t *rect, float scale, vec_t *color)
-{
-    if (ui_currentNetMap->current.integer >= sharedUiInfo.mapCount)
-        Dvar_SetInt((dvar_t *)ui_currentNetMap, 0);
-
-    if (sharedUiInfo.serverStatus.currentServerCinematic >= 0) {
-        CIN_RunCinematic(sharedUiInfo.serverStatus.currentServerCinematic);
-        CIN_SetExtents(sharedUiInfo.serverStatus.currentServerCinematic, (int)rect->x, (int)rect->y, (int)rect->w, (int)rect->h);
-        CIN_DrawCinematic(sharedUiInfo.serverStatus.currentServerCinematic);
-    } else {
-        UI_DrawNetMapPreview(rect, scale, color);
-    }
-}
-
-static void UI_DrawNetFilter(rectDef_t *rect, FontHandle font, float scale, vec_t *color, int textStyle)
-{
-    const char *text;
-
-    if (ui_serverFilterType < 0 || ui_serverFilterType > 1)
-        ui_serverFilterType = 0;
-    text = SEH_LocalizeTextMessage(va("EXE_SERVERFILTER\x14%s", serverFilters[ui_serverFilterType].description), "server filter", LOCMSG_SAFE);
-    UI_DrawText(text, 0x7fffffff, font, rect->x, rect->y, rect->horzAlign, rect->vertAlign, scale, color, textStyle);
-}
-
-static void UI_DrawNetSource(rectDef_t *rect, FontHandle font, float scale, vec_t *color, int textStyle)
-{
-    const char *text;
-
-    text = SEH_LocalizeTextMessage(va("EXE_NETSOURCE\x14%s", netSources[ui_netSource->current.integer]), "net source", LOCMSG_SAFE);
-    UI_DrawText(text, 0x7fffffff, font, rect->x, rect->y, rect->horzAlign, rect->vertAlign, scale, color, textStyle);
-}
-
-static void UI_DrawServerRefreshDate(rectDef_t *rect, FontHandle font, float scale, vec_t *color, int textStyle)
-{
-    char buff[64];
-    vec4_t lowLight, newColor;
-    const char *string;
-
-    if (sharedUiInfo.serverStatus.refreshActive) {
-        lowLight[0] = 0.8 * color[0];
-        lowLight[1] = 0.8 * color[1];
-        lowLight[2] = 0.8 * color[2];
-        lowLight[3] = 0.8 * color[3];
-        LerpColor(color, lowLight, newColor, (sin((double)(uiInfo->uiDC.realTime / 75)) + 1.0) * 0.5);
-        if (!LAN_WaitServerResponse(ui_netSource->current.integer))
-            string = UI_ReplaceConversionInt(UI_SafeTranslateString("EXE_GETTINGINFOFORSERVERS"), LAN_GetServerCount(ui_netSource->current.integer));
-        else
-            string = UI_SafeTranslateString("EXE_WAITINGFORMASTERSERVERRESPONSE");
-        UI_DrawText(string, 0x7fffffff, font, rect->x, rect->y, rect->horzAlign, rect->vertAlign, scale, newColor, textStyle);
-    } else {
-        I_strncpyz(buff, Dvar_GetVariantString(va("ui_lastServerRefresh_%i", ui_netSource->current.integer)), 64);
-        string = UI_ReplaceConversionString(UI_SafeTranslateString("EXE_REFRESHTIME"), buff);
-        UI_DrawText(string, 0x7fffffff, font, rect->x, rect->y, rect->horzAlign, rect->vertAlign, scale, color, textStyle);
-    }
-}
-
-static void UI_DrawKeyBindStatus(rectDef_t *rect, FontHandle font, float scale, vec_t *color, int textStyle)
-{
-    const char *string;
-
-    if (Display_KeyBindPending())
-        string = "EXE_KEYWAIT";
-    else
-        string = "EXE_KEYCHANGE";
-    UI_DrawText(UI_SafeTranslateString(string), 0x7fffffff, font, rect->x, rect->y, rect->horzAlign, rect->vertAlign, scale, color, textStyle);
-}
-
-static void UI_DrawLocalTalking(rectDef_t *rect, vec_t *color)
-{
-    if ((sv_voice)->current.enabled && (cl_voice)->current.enabled && IsTalking())
-        UI_DrawHandlePic(rect->x, rect->y, rect->w, rect->h, rect->horzAlign, rect->vertAlign, color, CL_RegisterMaterialNoMip("voice_on", 7));
-}
-
-static int UI_GetTalkerClientNum(int num)
-{
-    int client;
-    int talker;
-
-    talker = 0;
-    for (client = 0; client < 64; client++) {
-        if (CL_IsPlayerTalking(client)) {
-            if (talker == num)
-                return client;
-            talker++;
-        }
-    }
-    return -1;
-}
-
-// Original name unknown.
-static int UI_GetPlayerListIndex(int client)
-{
-    int index;
-
-    for (index = 0; index < 64; index++) {
-        if (sharedUiInfo.playerClientNums[index] == client)
-            return index;
-    }
-    return -1;
-}
-
-static void UI_DrawTalkerNum(int num, rectDef_t *rect, FontHandle font, vec_t *color, float scale, int textStyle)
-{
-    int client;
-    int index;
-    MaterialHandle material;
-    float actualScale;
-    int textHeight;
-
-    client = UI_GetTalkerClientNum(num);
-    if (client < 0)
-        return;
-
-    UI_BuildPlayerList();
-    index = UI_GetPlayerListIndex(client);
-
-    material = CL_RegisterMaterialNoMip("voice_on", 7);
-    actualScale = CL_NormalizedTextScale(font, scale);
-    textHeight = (int)(CL_TextHeight(font) * actualScale);
-    UI_DrawHandlePic(rect->x, rect->y, rect->w, rect->h, rect->horzAlign, rect->vertAlign, color, material);
-    UI_DrawText(sharedUiInfo.playerNames[index], 32, font, rect->x + rect->w + 2.0f, (rect->h - (float)textHeight) * 0.5f + (float)textHeight + rect->y, rect->horzAlign, rect->vertAlign, scale, color, textStyle);
-}
-
-void UI_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAlign, float text_x, float text_y, int ownerDraw, int ownerDrawFlags, int align, float special, FontHandle font, float scale, vec_t *color, MaterialHandle material, int textStyle)
-{
-    rectDef_t rect;
-
-    if (clients->cgameInitialized)
-        CG_OwnerDraw(x, y, w, h, horzAlign, vertAlign, text_x, text_y, ownerDraw, ownerDrawFlags, align, special, font, scale, color, material, textStyle);
-
-    rect.x = x + text_x;
-    rect.y = y + text_y;
-    rect.w = w;
-    rect.h = h;
-    rect.horzAlign = horzAlign;
-    rect.vertAlign = vertAlign;
-
-    switch (ownerDraw) {
-    case 254:
-        UI_DrawPreviewCinematic(&rect);
-        break;
-    case 205:
-        UI_DrawGameType(&rect, font, scale, color, textStyle);
-        break;
-    case 245:
-        UI_DrawNetGameType(&rect, font, scale, color, textStyle);
-        break;
-    case 253:
-        UI_DrawJoinGameType(&rect, font, scale, color, textStyle);
-        break;
-    case 206:
-        UI_DrawMapPreview(&rect, color, 1);
-        break;
-    case 244:
-        UI_DrawMapCinematic(&rect, color, 0);
-        break;
-    case 255:
-        UI_DrawMapCinematic(&rect, color, 1);
-        break;
-    case 221:
-        UI_DrawNetMapPreview(&rect, scale, color);
-        break;
-    case 246:
-        UI_DrawNetMapCinematic(&rect, scale, color);
-        break;
-    case 222:
-        UI_DrawNetFilter(&rect, font, scale, color, textStyle);
-        break;
-    case 220:
-        UI_DrawNetSource(&rect, font, scale, color, textStyle);
-        break;
-    case 247:
-        UI_DrawServerRefreshDate(&rect, font, scale, color, textStyle);
-        break;
-    case 250:
-        UI_DrawKeyBindStatus(&rect, font, scale, color, textStyle);
-        break;
-    case 265:
-        UI_DrawRecordLevel(&rect);
-        break;
-    case 266:
-        UI_DrawLocalTalking(&rect, color);
-        break;
-    case 267:
-    case 268:
-    case 269:
-    case 270:
-        UI_DrawTalkerNum(ownerDraw - 267, &rect, font, color, scale, textStyle);
-        break;
-    default:
-        return;
-    }
-}
-
-static const char *UI_StrContains(const char *str, const char *charset)
-{
+    int numdirs;
+    char dirlist[2048];
+    char *dirptr;
+    char *descptr;
     int i;
+    int dirlen;
 
-    while (*str) {
-        for (i = 0; charset[i] && str[i]; i++) {
-            if (toupper((signed char)charset[i]) != toupper((signed char)str[i]))
-                break;
-        }
-        if (!charset[i])
-            return str;
-        str++;
+    sharedUiInfo.modCount = 0;
+    numdirs = FS_GetFileList("$modlist", "", FS_LIST_ALL, dirlist, sizeof(dirlist));
+    dirptr = dirlist;
+    for (i = 0; i < numdirs; i++) {
+        dirlen = strlen(dirptr) + 1;
+        descptr = dirptr + dirlen;
+        sharedUiInfo.modList[sharedUiInfo.modCount].modName = String_Alloc(dirptr);
+        sharedUiInfo.modList[sharedUiInfo.modCount].modDescr = String_Alloc(descptr);
+        dirptr += dirlen + strlen(descptr) + 1;
+        sharedUiInfo.modCount++;
+        if (sharedUiInfo.modCount >= 64)
+            break;
     }
-    return NULL;
 }
 
-#ifndef __EMSCRIPTEN__
+static int UI_GetPlayerProfileListIndexFromName(const char *name)
+{
+    int profileIndex;
+
+    for (profileIndex = 0; profileIndex < uiInfo->playerProfileCount; profileIndex++) {
+        if (!I_stricmp(name, uiInfo->playerProfileName[uiInfo->playerProfileStatus.displayProfile[profileIndex]]))
+            return profileIndex;
+    }
+    return -1;
+}
+
+static int UI_PlayerProfilesQsortCompare(const void *arg1, const void *arg2)
+{
+    int idx1 = *(const int *)arg1;
+    int idx2 = *(const int *)arg2;
+    int result;
+
+    if (idx1 == idx2)
+        return 0;
+
+    result = I_stricmp(
+        uiInfo->playerProfileName[idx1],
+        uiInfo->playerProfileName[idx2]);
+
+    if (uiInfo->playerProfileStatus.sortDir == 0)
+        result = -result;
+
+    return result;
+}
+
+static void UI_SelectPlayerProfileIndex(int index)
+{
+    int menuIndex;
+
+    for (menuIndex = uiInfo->uiDC.openMenuCount - 1; menuIndex >= 0; menuIndex--) {
+        if (Window_IsVisible(&uiInfo->uiDC.menuStack[menuIndex]->window))
+            Menu_SetFeederSelection(&uiInfo->uiDC, uiInfo->uiDC.menuStack[menuIndex], 24, index, 0);
+    }
+}
+
+static void UI_SortPlayerProfiles(int selectIndex)
+{
+    int profileIndex;
+
+    if (!uiInfo->playerProfileCount)
+        return;
+    for (profileIndex = 0; profileIndex < uiInfo->playerProfileCount; profileIndex++)
+        uiInfo->playerProfileStatus.displayProfile[profileIndex] = profileIndex;
+    qsort(uiInfo->playerProfileStatus.displayProfile, uiInfo->playerProfileCount, sizeof(int), UI_PlayerProfilesQsortCompare);
+    UI_SelectPlayerProfileIndex(selectIndex);
+}
+
+static void UI_AddPlayerProfiles(void)
+{
+    char **profileList;
+    int profileCount;
+    int profileIndex;
+
+    uiInfo->playerProfileCount = 0;
+    uiInfo->playerProfileStatus.sortDir = 1;
+    profileList = FS_ListFiles("players", "/", FS_LIST_ALL, &profileCount, 3);
+    for (profileIndex = 0; profileIndex < profileCount; profileIndex++)
+        uiInfo->playerProfileName[uiInfo->playerProfileCount++] = String_Alloc(profileList[profileIndex]);
+    FS_FreeFileList(profileList, 3);
+    UI_SortPlayerProfiles(0);
+    Dvar_SetInt((dvar_t *)ui_playerProfileCount, uiInfo->playerProfileCount);
+}
+
+static void UI_SelectActivePlayerProfile(void)
+{
+    int selIndex;
+
+    selIndex = UI_GetPlayerProfileListIndexFromName(com_playerProfile->current.string);
+    if (selIndex >= 0 && selIndex < uiInfo->playerProfileCount)
+        UI_SelectPlayerProfileIndex(selIndex);
+}
+
+static void UI_CreatePlayerProfile(void)
+{
+    char name[32];
+    int profileIndex;
+
+    if (!strlen(ui_playerProfileNameNew->current.string))
+        return;
+    I_strncpyz(name, ui_playerProfileNameNew->current.string, sizeof(name));
+    Dvar_SetString((dvar_t *)ui_playerProfileNameNew, "");
+    if (uiInfo->playerProfileCount == 64) {
+        Menus_OpenByName(&uiInfo->uiDC, "profile_create_too_many_popmenu");
+        return;
+    }
+    for (profileIndex = 0; profileIndex < uiInfo->playerProfileCount; profileIndex++) {
+        if (!I_stricmp(name, uiInfo->playerProfileName[profileIndex])) {
+            Menus_OpenByName(&uiInfo->uiDC, "profile_exists_popmenu");
+            return;
+        }
+    }
+    if (!Com_NewPlayerProfile(name)) {
+        Menus_OpenByName(&uiInfo->uiDC, "profile_create_fail_popmenu");
+        return;
+    }
+    uiInfo->playerProfileName[uiInfo->playerProfileCount++] = String_Alloc(name);
+    UI_SortPlayerProfiles(0);
+    Dvar_SetInt((dvar_t *)ui_playerProfileCount, uiInfo->playerProfileCount);
+    UI_SelectPlayerProfileIndex(UI_GetPlayerProfileListIndexFromName(name));
+}
+
+static void UI_DeletePlayerProfile(void)
+{
+    int curSelected;
+    int nameIndex;
+
+    if (!uiInfo->playerProfileCount)
+        return;
+    if (!Com_DeletePlayerProfile(ui_playerProfileSelected->current.string)) {
+        Menus_OpenByName(&uiInfo->uiDC, "profile_delete_fail_popmenu");
+        return;
+    }
+    curSelected = UI_GetPlayerProfileListIndexFromName(ui_playerProfileSelected->current.string);
+    nameIndex = uiInfo->playerProfileStatus.displayProfile[curSelected];
+    if (--uiInfo->playerProfileCount == 0) {
+        Dvar_SetString((dvar_t *)ui_playerProfileSelected, "");
+    } else {
+        uiInfo->playerProfileName[nameIndex] = uiInfo->playerProfileName[uiInfo->playerProfileCount];
+        if (curSelected == uiInfo->playerProfileCount)
+            curSelected--;
+        UI_SortPlayerProfiles(curSelected);
+    }
+    Dvar_SetInt((dvar_t *)ui_playerProfileCount, uiInfo->playerProfileCount);
+}
+
+static void UI_LoadPlayerProfile(void)
+{
+    if (ui_playerProfileSelected->current.string[0])
+        Com_ChangePlayerProfile(ui_playerProfileSelected->current.string);
+}
+
+static void UI_LoadMovies(void)
+{
+    char movielist[4096];
+    char *moviename;
+    int i;
+    int len;
+
+    sharedUiInfo.movieCount = FS_GetFileList("video", "roq", FS_LIST_PURE_ONLY, movielist, sizeof(movielist));
+    if (!sharedUiInfo.movieCount)
+        return;
+    if (sharedUiInfo.movieCount > 256)
+        sharedUiInfo.movieCount = 256;
+    moviename = movielist;
+    for (i = 0; i < sharedUiInfo.movieCount; i++) {
+        len = strlen(moviename);
+        if (!I_stricmp(moviename + len - 4, ".roq"))
+            moviename[len - 4] = 0;
+        I_strupr(moviename);
+        sharedUiInfo.movieList[i] = String_Alloc(moviename);
+        moviename += len + 1;
+    }
+}
+
+qboolean UI_CheckExecKey(int key)
+{
+    menuDef_t *menu;
+    ItemKeyHandler *khNode;
+
+    menu = Menu_GetFocused(&uiInfo->uiDC);
+
+    if (g_editingField)
+        return 1;
+
+    if (key > 0x100)
+        return 0;
+    if (!menu)
+        return 0;
+
+    khNode = menu->onKey;
+    while (khNode) {
+        if (khNode->key == key)
+            return 1;
+        khNode = (ItemKeyHandler *)khNode->next;
+    }
+    return 0;
+}
+
+static void UI_Update(const char *name)
+{
+    float rate;
+
+    if (!I_stricmp(name, "ui_SetName")) {
+        Dvar_SetStringByName("name", Dvar_GetVariantString("ui_Name"));
+    } else if (!I_stricmp(name, "ui_GetName")) {
+        Dvar_SetStringByName("ui_Name", Dvar_GetVariantString("name"));
+    } else if (!I_stricmp(name, "ui_setRate")) {
+        rate = (float)Dvar_GetInt("rate");
+        if (rate >= 5000.0f) {
+            Dvar_SetIntByName("cl_maxpackets", 30);
+            Dvar_SetIntByName("cl_packetdup", 1);
+        } else if (rate >= 4000.0f) {
+            Dvar_SetIntByName("cl_maxpackets", 15);
+            Dvar_SetIntByName("cl_packetdup", 2);
+        } else {
+            Dvar_SetIntByName("cl_maxpackets", 15);
+            Dvar_SetIntByName("cl_packetdup", 1);
+        }
+    } else if (!I_stricmp(name, "ui_mousePitch")) {
+        if (!Dvar_GetBool(name))
+            Dvar_SetFloatByName("m_pitch", 0.022f);
+        else
+            Dvar_SetFloatByName("m_pitch", -0.022f);
+    }
+}
+
+static void UI_VerifyLanguage(void)
+{
+    int oldLanguage = Dvar_GetInt("loc_language");
+    int newLanguage = Dvar_GetInt("ui_language");
+    int verified = SEH_VerifyLanguageSelection(newLanguage);
+
+    if (verified != newLanguage)
+        Dvar_SetIntByName("ui_language", verified);
+
+    if (newLanguage != oldLanguage)
+        Dvar_SetBoolByName("ui_languagechanged", 1);
+    else
+        Dvar_SetBoolByName("ui_languagechanged", 0);
+}
+
+static void UI_AddServerToFavoritesList(const char *name, const char *address)
+{
+    int res;
+
+    if (strlen(name) == 0) {
+        Com_Printf("%s\n", UI_SafeTranslateString("EXE_FAVORITENAMEEMPTY"));
+        Dvar_SetStringByName("ui_favorite_message", "@EXE_FAVORITENAMEEMPTY");
+        return;
+    }
+
+    if (strlen(address) == 0) {
+        Com_Printf("%s\n", UI_SafeTranslateString("EXE_FAVORITEADDRESSEMPTY"));
+        Dvar_SetStringByName("ui_favorite_message", "@EXE_FAVORITEADDRESSEMPTY");
+        return;
+    }
+
+    res = LAN_AddServer(2, name, address);
+    if (res == 0) {
+        Com_Printf("%s\n", UI_SafeTranslateString("EXE_FAVORITEINLIST"));
+        Dvar_SetStringByName("ui_favorite_message", "@EXE_FAVORITEINLIST");
+    } else if (res == -1) {
+        Com_Printf("%s\n", UI_SafeTranslateString("EXE_FAVORITELISTFULL"));
+        Dvar_SetStringByName("ui_favorite_message", "@EXE_FAVORITELISTFULL");
+    } else if (res == -2) {
+        Com_Printf("%s\n", UI_SafeTranslateString("EXE_BADSERVERADDRESS"));
+        Dvar_SetStringByName("ui_favorite_message", "@EXE_BADSERVERADDRESS");
+    } else {
+        Com_Printf(va("%s\n", UI_SafeTranslateString("EXE_FAVORITEADDED")), address);
+        Dvar_SetStringByName("ui_favorite_message", "@EXE_FAVORITEADDED");
+    }
+}
+
 static void UI_UpdateServerCount(void)
 {
     int serverCount = LAN_GetServerCount((ui_netSource)->current.integer);
@@ -2883,170 +1689,33 @@ static void UI_UpdateServerCount(void)
         }
     }
 }
-#endif
 
-static void BM_NOINLINE UI_BuildFindPlayerList(void)
+static bool UI_DvarValueTest(const char *cmd, const char *dvarName, const char *testValue, bool wantMatch)
 {
-    serverStatusInfo_t info;
-    char name[0x22];
-    char infoString[0x400];
-    int i, j;
-
-    if (!uiInfo->nextFindPlayerRefresh || uiInfo->nextFindPlayerRefresh > uiInfo->uiDC.realTime)
-        return;
-
-    UI_UpdateServerCount();
-
-    for (i = 0; i < 16; i++) {
-        if (sharedUiInfo.pendingServerStatus.server[i].valid) {
-            if (UI_GetServerStatusInfo(sharedUiInfo.pendingServerStatus.server[i].adrstr, &info)) {
-                numFound++;
-                for (j = 0; j < info.numLines; j++) {
-                    if (!info.lines[j][2] || !info.lines[j][2][0])
-                        continue;
-                    I_strncpyz(name, info.lines[j][3], sizeof(name));
-                    I_CleanStr(name);
-                    if (UI_StrContains(name, uiInfo->findPlayerName)) {
-                        if (uiInfo->numFoundPlayerServers < 15) {
-                            I_strncpyz(uiInfo->foundPlayerServerAddresses[uiInfo->numFoundPlayerServers], sharedUiInfo.pendingServerStatus.server[i].adrstr, 64);
-                            I_strncpyz(uiInfo->foundPlayerServerNames[uiInfo->numFoundPlayerServers], sharedUiInfo.pendingServerStatus.server[i].name, 64);
-                            uiInfo->numFoundPlayerServers++;
-                        } else {
-                            sharedUiInfo.pendingServerStatus.num = sharedUiInfo.serverStatus.numDisplayServers;
-                        }
-                    }
-                }
-                Com_sprintf(uiInfo->foundPlayerServerNames[uiInfo->numFoundPlayerServers], 64, "searching %d/%d...", sharedUiInfo.pendingServerStatus.num, numFound);
-                sharedUiInfo.pendingServerStatus.server[i].valid = 0;
-            }
-        }
-
-        if (!sharedUiInfo.pendingServerStatus.server[i].valid
-            || sharedUiInfo.pendingServerStatus.server[i].startTime < uiInfo->uiDC.realTime - ui_serverStatusTimeOut->current.integer) {
-            if (sharedUiInfo.pendingServerStatus.server[i].valid)
-                numTimeOuts++;
-
-            LAN_GetServerStatus(sharedUiInfo.pendingServerStatus.server[i].adrstr, 0, 0);
-            sharedUiInfo.pendingServerStatus.server[i].valid = 0;
-
-            UI_UpdateServerCount();
-
-            if (sharedUiInfo.pendingServerStatus.num < sharedUiInfo.serverStatus.numDisplayServers) {
-                sharedUiInfo.pendingServerStatus.server[i].startTime = uiInfo->uiDC.realTime;
-                LAN_GetServerAddressString(ui_netSource->current.integer, sharedUiInfo.serverStatus.displayServers[sharedUiInfo.pendingServerStatus.num], sharedUiInfo.pendingServerStatus.server[i].adrstr, 64);
-                LAN_GetServerInfo(ui_netSource->current.integer, sharedUiInfo.serverStatus.displayServers[sharedUiInfo.pendingServerStatus.num], infoString, 0x400);
-                I_strncpyz(sharedUiInfo.pendingServerStatus.server[i].name, Info_ValueForKey(infoString, "hostname"), 64);
-                sharedUiInfo.pendingServerStatus.server[i].valid = 1;
-                sharedUiInfo.pendingServerStatus.num++;
-                Com_sprintf(uiInfo->foundPlayerServerNames[uiInfo->numFoundPlayerServers], 64, "searching %d/%d...", sharedUiInfo.pendingServerStatus.num, numFound);
-            }
-        }
+    if (!Dvar_FindVar(dvarName)) {
+        Com_Printf("%s: cannot find dvar %s\n", cmd, dvarName);
+        return 0;
     }
-
-    for (i = 0; i < 16; i++) {
-        if (sharedUiInfo.pendingServerStatus.server[i].valid)
-            break;
-    }
-
-    if (i < 16) {
-        uiInfo->nextFindPlayerRefresh = uiInfo->uiDC.realTime + 25;
-    } else {
-        if (uiInfo->numFoundPlayerServers == 0)
-            Com_sprintf(uiInfo->foundPlayerServerNames[0], 64, "no servers found");
-        else
-            Com_sprintf(uiInfo->foundPlayerServerNames[uiInfo->numFoundPlayerServers], 64, "%d server%s found with player %s", uiInfo->numFoundPlayerServers - 1, uiInfo->numFoundPlayerServers == 2 ? "" : "s", uiInfo->findPlayerName);
-        uiInfo->nextFindPlayerRefresh = 0;
-    }
+    bool match = I_stricmp(testValue, Dvar_GetVariantString(dvarName)) == 0;
+    return match == wantMatch;
 }
 
-static void UI_REGPARM1 UI_BuildServerStatus(int force)
+static void UI_OpenMenuOnDvar(const char *cmd, const char *menuName, const char *dvarName, const char *testValue)
 {
-    if (uiInfo->nextFindPlayerRefresh)
-        return;
+    bool wantMatch;
 
-    if (!force) {
-        if (!sharedUiInfo.nextServerStatusRefresh || sharedUiInfo.nextServerStatusRefresh > uiInfo->uiDC.realTime)
-            return;
-    } else {
-        Menu_SetFeederSelection(&uiInfo->uiDC, 0, 0xd, 0, 0);
-        sharedUiInfo.serverStatusInfo.numLines = 0;
-        LAN_GetServerStatus(0, 0, 0);
-    }
-
-    UI_UpdateServerCount();
-
-    if (sharedUiInfo.serverStatus.currentServer < 0 || sharedUiInfo.serverStatus.currentServer > sharedUiInfo.serverStatus.numDisplayServers || sharedUiInfo.serverStatus.numDisplayServers == 0)
-        return;
-
-    if (UI_GetServerStatusInfo(sharedUiInfo.serverStatusAddress, &sharedUiInfo.serverStatusInfo)) {
-        sharedUiInfo.nextServerStatusRefresh = 0;
-        UI_GetServerStatusInfo(sharedUiInfo.serverStatusAddress, 0);
-    } else {
-        sharedUiInfo.nextServerStatusRefresh = uiInfo->uiDC.realTime + 500;
-    }
+    wantMatch = I_stricmp(cmd, "openMenuOnDvar") == 0;
+    if (UI_DvarValueTest(cmd, dvarName, testValue, wantMatch))
+        Menus_OpenByName(&uiInfo->uiDC, menuName);
 }
 
-void UI_Refresh(void)
+static void UI_CloseMenuOnDvar(const char *cmd, const char *menuName, const char *dvarName, const char *testValue)
 {
-#if COD2_TRACE
-    static int refreshTraceCount;
-    static int fileTraceCount;
-#endif
+    bool wantMatch;
 
-    if (Menu_Count(&uiInfo->uiDC) <= 0)
-        return;
-
-#if COD2_TRACE
-    if (fileTraceCount < 40) {
-        FILE *f = fopen("x64_ui_trace.txt", fileTraceCount ? "a" : "w");
-        if (f) {
-            int i;
-            fprintf(f, "ui[%d] active=%d menuCount=%d openCount=%d keyCatchers=0x%x\n",
-                    fileTraceCount, uiInfo->currentMenuType, uiInfo->uiDC.menuCount,
-                    uiInfo->uiDC.openMenuCount, (clients)->keyCatchers);
-            for (i = 0; i < uiInfo->uiDC.openMenuCount && i < 16; i++) {
-                menuDef_t *menu = uiInfo->uiDC.menuStack[i];
-                fprintf(f, "  stack[%d]=%s flags=0x%x full=%d\n",
-                        i,
-                        menu && menu->window.name ? menu->window.name : "<null>",
-                        menu ? menu->window.dynamicFlags[0] : 0,
-                        menu ? menu->fullScreen : 0);
-            }
-            fclose(f);
-        }
-        fileTraceCount++;
-    }
-
-    if (refreshTraceCount < 80 && (uiInfo->currentMenuType || uiInfo->uiDC.openMenuCount > 0)) {
-        int i;
-        if (getenv("MTRACE"))
-            Com_Printf("[menu-trace] UI_Refresh active=%d menuCount=%d openCount=%d",
-                       uiInfo->currentMenuType, uiInfo->uiDC.menuCount, uiInfo->uiDC.openMenuCount);
-        for (i = 0; i < uiInfo->uiDC.openMenuCount && i < 16; ++i) {
-            menuDef_t *menu = uiInfo->uiDC.menuStack[i];
-            Com_Printf(" stack[%d]=%s", i, menu && menu->window.name ? menu->window.name : "<null>");
-        }
-        Com_Printf("\n");
-        ++refreshTraceCount;
-    }
-#endif
-
-    Menu_PaintAll(&uiInfo->uiDC);
-    UI_DoServerRefresh();
-    UI_BuildServerStatus(0);
-    UI_BuildFindPlayerList();
-
-#if COD2_FEATURE_GAMEPAD
-
-    UI_ConsoleMode_DrawGlyphs(uiInfo);
-    if (UI_ConsoleMode_SuppressCursor())
-        return;
-#endif
-
-    UI_DrawHandlePic((float)(uiInfo->uiDC.cursorx - 16),
-                     (float)(uiInfo->uiDC.cursory - 16),
-                     32.0f, 32.0f, 4, 4, 0,
-                     sharedUiInfo.assets.cursor);
+    wantMatch = I_stricmp(cmd, "closeMenuOnDvar") == 0;
+    if (UI_DvarValueTest(cmd, dvarName, testValue, wantMatch))
+        Menus_CloseByName(&uiInfo->uiDC, menuName);
 }
 
 void UI_RunMenuScript(const char **args)
@@ -3212,13 +1881,7 @@ void UI_RunMenuScript(const char **args)
             LAN_GetServerAddressString((ui_netSource)->current.integer,
                                        sharedUiInfo.serverStatus.displayServers[selectedServer],
                                        sharedUiInfo.serverStatusAddress, 0x40);
-#ifdef __EMSCRIPTEN__
-            Menu_SetFeederSelection(&uiInfo->uiDC, 0, 0xd, 0, 0);
-            sharedUiInfo.serverStatusInfo.numLines = 0;
-            sharedUiInfo.nextServerStatusRefresh = uiInfo->uiDC.realTime + 500;
-#else
             UI_BuildServerStatus(1);
-#endif
         }
     } else if (I_stricmp(name, "UpdateFilter") == 0) {
         if ((ui_netSource)->current.integer == 0) {
@@ -3361,7 +2024,523 @@ void UI_RunMenuScript(const char **args)
     }
 }
 
-#ifndef __EMSCRIPTEN__
+static void UI_SelectCurrentGameType(void)
+{
+    const char *currType;
+    int i;
+
+    currType = Dvar_GetString("g_gametype");
+    for (i = 0; i < sharedUiInfo.numGameTypes; i++) {
+        if (!I_stricmp(currType, sharedUiInfo.gameTypes[i].gameType)) {
+            Dvar_SetInt((dvar_t *)ui_netGameType, i);
+            Dvar_SetString((dvar_t *)ui_netGameTypeName, sharedUiInfo.gameTypes[i].gameType);
+            return;
+        }
+    }
+}
+
+// retail 0x52fd50; name unknown
+static void UI_SelectFirstActiveMap(void)
+{
+    int i;
+
+    for (i = 0; i < sharedUiInfo.mapCount; i++) {
+        if (sharedUiInfo.mapList[i].active) {
+            Menu_SetFeederSelection(&uiInfo->uiDC, NULL, 4, 0, "createserver_maps");
+            Dvar_SetInt((dvar_t *)ui_currentNetMap, i);
+            return;
+        }
+    }
+}
+
+// retail 0x52fda0; name unknown
+static void UI_SetMapFeederSelection(int map)
+{
+    Menu_SetFeederSelection(&uiInfo->uiDC, NULL, 4, UI_ListIndexForMap(map), "createserver_maps");
+}
+
+static int UI_MapCountByGameType(void)
+{
+    int i, c, game;
+
+    game = ui_netGameType->current.integer;
+    c = 0;
+    for (i = 0; i < sharedUiInfo.mapCount; i++) {
+        sharedUiInfo.mapList[i].active = 0;
+        if (sharedUiInfo.mapList[i].typeBits & (1 << game)) {
+            c++;
+            sharedUiInfo.mapList[i].active = 1;
+        }
+    }
+    return c;
+}
+
+static void UI_SelectCurrentMap(void)
+{
+    byte cstate[sizeof(uiClientState_t)];
+    char szMap[0x40];
+    int i;
+    int visibleIndex;
+
+    GetClientState((uiClientState_t *)cstate);
+    if (*(int *)cstate != 8)
+        return;
+
+    {
+        const char *serverInfo = CL_GetConfigString(0);
+        if (!serverInfo[0])
+            return;
+        I_strncpyz(szMap, Info_ValueForKey(serverInfo, "mapname"), sizeof(szMap));
+    }
+
+    visibleIndex = 0;
+    for (i = 0; i < sharedUiInfo.mapCount; i++) {
+        if (!sharedUiInfo.mapList[i].active)
+            continue;
+
+        if (I_stricmp(szMap, sharedUiInfo.mapList[i].mapName) == 0) {
+            Menu_SetFeederSelection(&uiInfo->uiDC, 0, 4, visibleIndex, "createserver_maps");
+            return;
+        }
+
+        visibleIndex++;
+    }
+}
+
+static void UI_InsertServerAtPosition(int serverIndex, int position)
+{
+    int i;
+
+    if (position < 0 || position > sharedUiInfo.serverStatus.numDisplayServers)
+        return;
+
+    if (position <= sharedUiInfo.serverStatus.currentServer && sharedUiInfo.serverStatus.numDisplayServers)
+        sharedUiInfo.serverStatus.currentServer++;
+
+    sharedUiInfo.serverStatus.numDisplayServers++;
+    for (i = sharedUiInfo.serverStatus.numDisplayServers; i > position; i--)
+        sharedUiInfo.serverStatus.displayServers[i] = sharedUiInfo.serverStatus.displayServers[i - 1];
+    sharedUiInfo.serverStatus.displayServers[position] = serverIndex;
+}
+
+static void UI_RemoveDuplicateFromFavorites(int serverIndex)
+{
+    int i, j;
+
+    for (i = 0; i < sharedUiInfo.serverStatus.numDisplayServers; i++) {
+        if (sharedUiInfo.serverStatus.displayServers[i] == serverIndex) {
+            sharedUiInfo.serverStatus.numDisplayServers--;
+            for (j = i; j < sharedUiInfo.serverStatus.numDisplayServers; j++)
+                sharedUiInfo.serverStatus.displayServers[j] = sharedUiInfo.serverStatus.displayServers[j + 1];
+            return;
+        }
+    }
+}
+
+static void UI_BinaryInsertServer(int serverIndex)
+{
+    int mid, offset, res, len;
+
+    len = sharedUiInfo.serverStatus.numDisplayServers;
+    mid = len;
+    offset = 0;
+    res = 0;
+    while (mid > 0) {
+        mid = len >> 1;
+        res = LAN_CompareServers(ui_netSource->current.integer, sharedUiInfo.serverStatus.sortKey, sharedUiInfo.serverStatus.sortDir,
+                                 serverIndex, sharedUiInfo.serverStatus.displayServers[offset + mid]);
+        if (res == 0) {
+            UI_InsertServerAtPosition(serverIndex, offset + mid);
+            return;
+        } else if (res > 0) {
+            offset += mid;
+            len -= mid;
+        } else {
+            len -= mid;
+        }
+    }
+    if (res > 0)
+        offset++;
+    UI_InsertServerAtPosition(serverIndex, offset);
+}
+
+static void __attribute_regparm__(0) UI_BuildServerDisplayList(qboolean force)
+{
+    char info_buf[0x400];
+    int count, i, clients, ping;
+
+    if (!force) {
+        if (uiInfo->uiDC.realTime <= sharedUiInfo.serverStatus.nextDisplayRefresh)
+            return;
+    } else if (force == 2) {
+        force = 0;
+    }
+
+    clients = 0;
+
+    {
+        const char *motdString = Dvar_GetString("cl_motdString");
+        int motdLen;
+        I_strncpyz(sharedUiInfo.serverStatus.motd, motdString, 0x400);
+        motdLen = strlen(sharedUiInfo.serverStatus.motd);
+
+        if (motdLen == 0) {
+            strcpy(sharedUiInfo.serverStatus.motd, va("%s - %s", UI_SafeTranslateString("EXE_COD_MULTIPLAYER"), "1.0"));
+            motdLen = strlen(sharedUiInfo.serverStatus.motd);
+        }
+
+        if (motdLen != sharedUiInfo.serverStatus.motdLen) {
+            sharedUiInfo.serverStatus.motdLen = motdLen;
+            sharedUiInfo.serverStatus.motdWidth = -1;
+        }
+    }
+
+    if (force) {
+        numclean = 0;
+        UI_ClearDisplayedServers();
+
+        if (sharedUiInfo.serverStatus.currentServer >= 0) {
+            Menu_SetFeederSelection(&uiInfo->uiDC, 0, 2, 0, 0);
+        }
+
+        LAN_MarkServerDirty((ui_netSource)->current.integer, -1, 1);
+    }
+
+    count = LAN_GetServerCount((ui_netSource)->current.integer);
+    if (LAN_WaitServerResponse((ui_netSource)->current.integer) || ((ui_netSource)->current.integer == 0 && count == 0)) {
+        UI_ClearDisplayedServers();
+        sharedUiInfo.serverStatus.nextDisplayRefresh = uiInfo->uiDC.realTime + 500;
+        return;
+    }
+
+    qsort(sharedUiInfo.serverStatus.displayServers, sharedUiInfo.serverStatus.numDisplayServers, 4, UI_ServersQsortCompare);
+
+    for (i = 0; i < count; i++) {
+        if (!LAN_ServerIsDirty((ui_netSource)->current.integer, i))
+            continue;
+
+        ping = LAN_GetServerPing((ui_netSource)->current.integer, i);
+        if (ping > 0 || (ui_netSource)->current.integer == 2) {
+            LAN_GetServerInfo((ui_netSource)->current.integer, i, info_buf, 0x400);
+            clients = atoi(Info_ValueForKey(info_buf, "clients"));
+            sharedUiInfo.serverStatus.numPlayersOnServers += clients;
+            if (!I_strnicmp(Info_ValueForKey(info_buf, "addr"), "000.000.000.000", 15)) {
+                LAN_MarkServerDirty((ui_netSource)->current.integer, i, 0);
+                continue;
+            }
+            if (!(ui_browserShowEmpty)->current.enabled && !clients) {
+                LAN_MarkServerDirty((ui_netSource)->current.integer, i, 0);
+                continue;
+            }
+            if (!(ui_browserShowFull)->current.enabled && clients == atoi(Info_ValueForKey(info_buf, "sv_maxclients"))) {
+                LAN_MarkServerDirty((ui_netSource)->current.integer, i, 0);
+                continue;
+            }
+            if (!(ui_browserShowPassword)->current.enabled && atoi(Info_ValueForKey(info_buf, "pswrd"))) {
+                LAN_MarkServerDirty((ui_netSource)->current.integer, i, 0);
+                continue;
+            }
+            if (!(ui_browserShowNoPassword)->current.enabled && !atoi(Info_ValueForKey(info_buf, "pswrd"))) {
+                LAN_MarkServerDirty((ui_netSource)->current.integer, i, 0);
+                continue;
+            }
+            if ((ui_browserShowPure)->current.enabled && !atoi(Info_ValueForKey(info_buf, "pure"))) {
+                LAN_MarkServerDirty((ui_netSource)->current.integer, i, 0);
+                continue;
+            }
+            if ((ui_browserShowDedicated)->current.enabled) {
+                int hw = atoi(Info_ValueForKey(info_buf, "hw"));
+                if (hw != 1 && hw != 2 && hw != 3) {
+                    LAN_MarkServerDirty((ui_netSource)->current.integer, i, 0);
+                    continue;
+                }
+            }
+            if ((ui_browserMod)->current.integer >= 0 && atoi(Info_ValueForKey(info_buf, "mod")) != (ui_browserMod)->current.integer) {
+                LAN_MarkServerDirty((ui_netSource)->current.integer, i, 0);
+                continue;
+            }
+            if ((ui_browserFriendlyfire)->current.integer >= 0 && atoi(Info_ValueForKey(info_buf, "ff")) != (ui_browserFriendlyfire)->current.integer) {
+                LAN_MarkServerDirty((ui_netSource)->current.integer, i, 0);
+                continue;
+            }
+            if ((ui_browserKillcam)->current.integer >= 0 && atoi(Info_ValueForKey(info_buf, "kc")) != (ui_browserKillcam)->current.integer) {
+                LAN_MarkServerDirty((ui_netSource)->current.integer, i, 0);
+                continue;
+            }
+            if (sharedUiInfo.joinGameTypes[(ui_joinGameType)->current.integer].gameTypeName[0]
+                && I_stricmp(Info_ValueForKey(info_buf, "gametype"), sharedUiInfo.joinGameTypes[(ui_joinGameType)->current.integer].gameType)) {
+                LAN_MarkServerDirty((ui_netSource)->current.integer, i, 0);
+                continue;
+            }
+            if (ui_serverFilterType > 0 && I_stricmp(Info_ValueForKey(info_buf, "game"), serverFilters[ui_serverFilterType].basedir)) {
+                LAN_MarkServerDirty((ui_netSource)->current.integer, i, 0);
+                continue;
+            }
+
+            if ((ui_netSource)->current.integer == 2)
+                UI_RemoveDuplicateFromFavorites(i);
+            UI_BinaryInsertServer(i);
+            if (ping > 0) {
+                LAN_MarkServerDirty((ui_netSource)->current.integer, i, 0);
+                numclean++;
+            }
+        }
+    }
+
+    sharedUiInfo.serverStatus.refreshtime = uiInfo->uiDC.realTime;
+}
+
+// retail 0x530040; name unknown
+static void UI_ClearDisplayedServers(void)
+{
+    sharedUiInfo.serverStatus.numDisplayServers = 0;
+    sharedUiInfo.serverStatus.numPlayersOnServers = 0;
+    sharedUiInfo.serverStatus.serverCount = LAN_GetServerCount((ui_netSource)->current.integer);
+}
+
+static void UI_AddServerStatusDvarRows(serverStatusInfo_t *info)
+{
+    int i, j, index;
+    const char *tmp1, *tmp2;
+
+    index = 0;
+    for (i = 0; serverStatusDvars[i].name; i++) {
+        for (j = 0; j < info->numLines; j++) {
+            if (!info->lines[j][1] || info->lines[j][1][0])
+                continue;
+            if (!I_stricmp(serverStatusDvars[i].name, info->lines[j][0])) {
+                // swap lines
+                tmp1 = info->lines[index][0];
+                tmp2 = info->lines[index][3];
+                info->lines[index][0] = info->lines[j][0];
+                info->lines[index][3] = info->lines[j][3];
+                info->lines[j][0] = tmp1;
+                info->lines[j][3] = tmp2;
+                if (strlen(serverStatusDvars[i].altName))
+                    info->lines[index][0] = serverStatusDvars[i].altName;
+                if (serverStatusDvars[i].type == 1) {
+                    if (atoi(info->lines[index][3]))
+                        info->lines[index][3] = "@EXE_YES";
+                    else
+                        info->lines[index][3] = "@EXE_NO";
+                }
+                index++;
+            }
+        }
+    }
+}
+
+static int __attribute_regparm__(2) UI_GetServerStatusInfo(const char *serverAddress, serverStatusInfo_t *info)
+{
+    char *p, *score, *ping, *name;
+    int i, len;
+
+    if (!info) {
+        LAN_GetServerStatus((char *)serverAddress, 0, 0);
+        return 0;
+    }
+
+    memset(info, 0, sizeof(*info));
+    if (LAN_GetServerStatus((char *)serverAddress, info->text, sizeof(info->text))) {
+        I_strncpyz(info->address, serverAddress, sizeof(info->address));
+        p = info->text;
+        info->numLines = 0;
+        info->lines[info->numLines][0] = "address";
+        info->lines[info->numLines][1] = "";
+        info->lines[info->numLines][2] = "";
+        info->lines[info->numLines][3] = info->address;
+        info->numLines++;
+
+        while (p && *p) {
+            p = strchr(p, '\\');
+            if (!p)
+                break;
+            *p++ = '\0';
+            if (*p == '\\')
+                break;
+            info->lines[info->numLines][0] = p;
+            info->lines[info->numLines][1] = "";
+            info->lines[info->numLines][2] = "";
+            p = strchr(p, '\\');
+            if (!p)
+                break;
+            *p++ = '\0';
+            info->lines[info->numLines][3] = p;
+            info->numLines++;
+            if (info->numLines >= 128)
+                break;
+        }
+
+        if (info->numLines < 125) {
+            info->lines[info->numLines][0] = "";
+            info->lines[info->numLines][1] = "";
+            info->lines[info->numLines][2] = "";
+            info->lines[info->numLines][3] = "";
+            info->numLines++;
+
+            info->lines[info->numLines][0] = "@EXE_SV_INFO_NUM";
+            info->lines[info->numLines][1] = "@EXE_SV_INFO_SCORE";
+            info->lines[info->numLines][2] = "@EXE_SV_INFO_PING";
+            info->lines[info->numLines][3] = "@EXE_SV_INFO_NAME";
+            info->numLines++;
+
+            i = 0;
+            len = 0;
+            while (p && *p) {
+                if (*p == '\\')
+                    *p++ = '\0';
+                if (!p)
+                    break;
+                score = p;
+                p = strchr(p, ' ');
+                if (!p)
+                    break;
+                *p++ = '\0';
+                ping = p;
+                p = strchr(p, ' ');
+                if (!p)
+                    break;
+                *p++ = '\0';
+                name = p;
+                Com_sprintf(&info->pings[len], sizeof(info->pings) - len, "%d", i);
+                info->lines[info->numLines][0] = &info->pings[len];
+                len += strlen(&info->pings[len]) + 1;
+                info->lines[info->numLines][1] = score;
+                info->lines[info->numLines][2] = ping;
+                info->lines[info->numLines][3] = name;
+                info->numLines++;
+                if (info->numLines >= 128)
+                    break;
+                p = strchr(p, '\\');
+                if (!p)
+                    break;
+                *p++ = '\0';
+                i++;
+            }
+        }
+
+        UI_AddServerStatusDvarRows(info);
+        return 1;
+    }
+    return 0;
+}
+
+static const char *UI_StrContains(const char *str, const char *charset)
+{
+    int i;
+
+    while (*str) {
+        for (i = 0; charset[i] && str[i]; i++) {
+            if (toupper((signed char)charset[i]) != toupper((signed char)str[i]))
+                break;
+        }
+        if (!charset[i])
+            return str;
+        str++;
+    }
+    return NULL;
+}
+
+static void BM_NOINLINE UI_BuildFindPlayerList(void)
+{
+    serverStatusInfo_t info;
+    char name[0x22];
+    char infoString[0x400];
+    int i, j;
+
+    if (!uiInfo->nextFindPlayerRefresh || uiInfo->nextFindPlayerRefresh > uiInfo->uiDC.realTime)
+        return;
+
+    UI_UpdateServerCount();
+
+    for (i = 0; i < 16; i++) {
+        if (sharedUiInfo.pendingServerStatus.server[i].valid) {
+            if (UI_GetServerStatusInfo(sharedUiInfo.pendingServerStatus.server[i].adrstr, &info)) {
+                numFound++;
+                for (j = 0; j < info.numLines; j++) {
+                    if (!info.lines[j][2] || !info.lines[j][2][0])
+                        continue;
+                    I_strncpyz(name, info.lines[j][3], sizeof(name));
+                    I_CleanStr(name);
+                    if (UI_StrContains(name, uiInfo->findPlayerName)) {
+                        if (uiInfo->numFoundPlayerServers < 15) {
+                            I_strncpyz(uiInfo->foundPlayerServerAddresses[uiInfo->numFoundPlayerServers], sharedUiInfo.pendingServerStatus.server[i].adrstr, 64);
+                            I_strncpyz(uiInfo->foundPlayerServerNames[uiInfo->numFoundPlayerServers], sharedUiInfo.pendingServerStatus.server[i].name, 64);
+                            uiInfo->numFoundPlayerServers++;
+                        } else {
+                            sharedUiInfo.pendingServerStatus.num = sharedUiInfo.serverStatus.numDisplayServers;
+                        }
+                    }
+                }
+                Com_sprintf(uiInfo->foundPlayerServerNames[uiInfo->numFoundPlayerServers], 64, "searching %d/%d...", sharedUiInfo.pendingServerStatus.num, numFound);
+                sharedUiInfo.pendingServerStatus.server[i].valid = 0;
+            }
+        }
+
+        if (!sharedUiInfo.pendingServerStatus.server[i].valid
+            || sharedUiInfo.pendingServerStatus.server[i].startTime < uiInfo->uiDC.realTime - ui_serverStatusTimeOut->current.integer) {
+            if (sharedUiInfo.pendingServerStatus.server[i].valid)
+                numTimeOuts++;
+
+            LAN_GetServerStatus(sharedUiInfo.pendingServerStatus.server[i].adrstr, 0, 0);
+            sharedUiInfo.pendingServerStatus.server[i].valid = 0;
+
+            UI_UpdateServerCount();
+
+            if (sharedUiInfo.pendingServerStatus.num < sharedUiInfo.serverStatus.numDisplayServers) {
+                sharedUiInfo.pendingServerStatus.server[i].startTime = uiInfo->uiDC.realTime;
+                LAN_GetServerAddressString(ui_netSource->current.integer, sharedUiInfo.serverStatus.displayServers[sharedUiInfo.pendingServerStatus.num], sharedUiInfo.pendingServerStatus.server[i].adrstr, 64);
+                LAN_GetServerInfo(ui_netSource->current.integer, sharedUiInfo.serverStatus.displayServers[sharedUiInfo.pendingServerStatus.num], infoString, 0x400);
+                I_strncpyz(sharedUiInfo.pendingServerStatus.server[i].name, Info_ValueForKey(infoString, "hostname"), 64);
+                sharedUiInfo.pendingServerStatus.server[i].valid = 1;
+                sharedUiInfo.pendingServerStatus.num++;
+                Com_sprintf(uiInfo->foundPlayerServerNames[uiInfo->numFoundPlayerServers], 64, "searching %d/%d...", sharedUiInfo.pendingServerStatus.num, numFound);
+            }
+        }
+    }
+
+    for (i = 0; i < 16; i++) {
+        if (sharedUiInfo.pendingServerStatus.server[i].valid)
+            break;
+    }
+
+    if (i < 16) {
+        uiInfo->nextFindPlayerRefresh = uiInfo->uiDC.realTime + 25;
+    } else {
+        if (uiInfo->numFoundPlayerServers == 0)
+            Com_sprintf(uiInfo->foundPlayerServerNames[0], 64, "no servers found");
+        else
+            Com_sprintf(uiInfo->foundPlayerServerNames[uiInfo->numFoundPlayerServers], 64, "%d server%s found with player %s", uiInfo->numFoundPlayerServers - 1, uiInfo->numFoundPlayerServers == 2 ? "" : "s", uiInfo->findPlayerName);
+        uiInfo->nextFindPlayerRefresh = 0;
+    }
+}
+
+static void UI_REGPARM1 UI_BuildServerStatus(int force)
+{
+    if (uiInfo->nextFindPlayerRefresh)
+        return;
+
+    if (!force) {
+        if (!sharedUiInfo.nextServerStatusRefresh || sharedUiInfo.nextServerStatusRefresh > uiInfo->uiDC.realTime)
+            return;
+    } else {
+        Menu_SetFeederSelection(&uiInfo->uiDC, 0, 0xd, 0, 0);
+        sharedUiInfo.serverStatusInfo.numLines = 0;
+        LAN_GetServerStatus(0, 0, 0);
+    }
+
+    UI_UpdateServerCount();
+
+    if (sharedUiInfo.serverStatus.currentServer < 0 || sharedUiInfo.serverStatus.currentServer > sharedUiInfo.serverStatus.numDisplayServers || sharedUiInfo.serverStatus.numDisplayServers == 0)
+        return;
+
+    if (UI_GetServerStatusInfo(sharedUiInfo.serverStatusAddress, &sharedUiInfo.serverStatusInfo)) {
+        sharedUiInfo.nextServerStatusRefresh = 0;
+        UI_GetServerStatusInfo(sharedUiInfo.serverStatusAddress, 0);
+    } else {
+        sharedUiInfo.nextServerStatusRefresh = uiInfo->uiDC.realTime + 500;
+    }
+}
 
 int UI_FeederCount(float feederID)
 {
@@ -3395,11 +2574,598 @@ int UI_FeederCount(float feederID)
     return 0;
 }
 
-static void Text_PaintCenter(FontHandle font, const char *text, float x, float y, float scale, const vec_t *color)
+static const char *UI_SelectedMap(int index, int *actual)
 {
-    float actualScale = CL_NormalizedTextScale(font, scale);
-    int len = (int)((float)CL_TextWidth(text, 0, font) * actualScale);
-    UI_DrawText(text, 0x7fffffff, font, x - (float)(len / 2), y, 0, 0, scale, color, 6);
+    int i, c;
+
+    c = 0;
+    *actual = 0;
+    for (i = 0; i < sharedUiInfo.mapCount; i++) {
+        if (sharedUiInfo.mapList[i].active) {
+            if (c == index) {
+                *actual = i;
+                return sharedUiInfo.mapList[i].mapName;
+            }
+            c++;
+        }
+    }
+    return "";
+}
+
+// retail 0x5310a0
+static int UI_GetIndexFromSelection(int actual)
+{
+    int i;
+    int c;
+
+    c = 0;
+    for (i = 0; i < sharedUiInfo.mapCount; i++) {
+        if (sharedUiInfo.mapList[i].active) {
+            if (i == actual)
+                return c;
+            c++;
+        }
+    }
+    return 0;
+}
+
+// name unknown
+static int UI_ListIndexForMap(int map)
+{
+    int i;
+    int listIndex;
+
+    listIndex = 0;
+    for (i = 0; i < sharedUiInfo.mapCount; i++) {
+        if (sharedUiInfo.mapList[i].active) {
+            if (i == map)
+                return listIndex;
+            listIndex++;
+        }
+    }
+    return 0;
+}
+
+const char *UI_FeederItemText(float feederID, int index, int column, MaterialHandle *handle)
+{
+    int actual;
+
+    *handle = 0;
+
+    if (feederID == 4.0f) {
+        return UI_SelectedMap(index, &actual);
+    } else if (feederID == 2.0f) {
+
+        int pingVal;
+
+        UI_UpdateServerCount();
+
+        if (index >= 0 && index < sharedUiInfo.serverStatus.numDisplayServers) {
+            if (lastColumn != column || lastTime > uiInfo->uiDC.realTime + 5000) {
+                LAN_GetServerInfo((ui_netSource)->current.integer,
+                                  sharedUiInfo.serverStatus.displayServers[index],
+                                  info, 0x400);
+                lastColumn = column;
+                lastTime = uiInfo->uiDC.realTime;
+            }
+
+            pingVal = atoi(Info_ValueForKey(info, "ping"));
+
+            switch (column) {
+            case 0:
+                if (atoi(Info_ValueForKey(info, "pswrd")))
+                    return "X";
+                return "";
+            case 1: {
+                int hw = atoi(Info_ValueForKey(info, "hw"));
+                if (hw >= 0 && hw < 8)
+                    *handle = sharedUiInfo.serverHardwareIconList[hw];
+                return "";
+            }
+            case 7:
+                if (atoi(Info_ValueForKey(info, "pure")))
+                    return "X";
+                return "";
+            case 8:
+                if (atoi(Info_ValueForKey(info, "mod")))
+                    return "X";
+                return "";
+            case 6:
+                if (atoi(Info_ValueForKey(info, "voice")))
+                    return "X";
+                return "";
+            case 2:
+                if (pingVal <= 0)
+                    return Info_ValueForKey(info, "addr");
+                I_strncpyz(clientBuff, Info_ValueForKey(info, "hostname"), 0x14);
+                return clientBuff;
+            case 3:
+                return UI_GetMapDisplayName(Info_ValueForKey(info, "mapname"));
+            case 4:
+                Com_sprintf(clientBuff, 0x20, "%s (%s)", Info_ValueForKey(info, "clients"), Info_ValueForKey(info, "sv_maxclients"));
+                return clientBuff;
+            case 5:
+                if (Info_ValueForKey(info, "gametype") && *Info_ValueForKey(info, "gametype"))
+                    return Info_ValueForKey(info, "gametype");
+                return "?";
+            case 9:
+                if (pingVal <= 0)
+                    return "...";
+                return Info_ValueForKey(info, "ping");
+            }
+        }
+    } else if (feederID == 13.0f) {
+        if (index >= 0 && index < sharedUiInfo.serverStatusInfo.numLines) {
+            if (column >= 0 && column < 4) {
+                const char *text = *(const char **)((byte *)&sharedUiInfo + 109864 + (column + index * 4) * 4);
+                if (text[0] == '@')
+                    return UI_SafeTranslateString(text + 1);
+                return text;
+            }
+        }
+    } else if (feederID == 7.0f) {
+        if (index >= 0 && index < sharedUiInfo.playerCount)
+            return sharedUiInfo.playerNames[index];
+    } else if (feederID == 9.0f) {
+        if (index >= 0 && index < sharedUiInfo.modCount) {
+            const char *desc = *(const char **)((byte *)&sharedUiInfo + 25976 + index * 8);
+            if (desc && desc[0] != '\0')
+                return desc;
+            return *(const char **)((byte *)&sharedUiInfo + 25972 + index * 8);
+        }
+    } else if (feederID == 20.0f) {
+        if (index >= 0 && index < sharedUiInfo.playerCount) {
+            if (column == 1)
+                return sharedUiInfo.playerNames[index];
+            if (CL_IsPlayerMuted(sharedUiInfo.playerClientNums[index]))
+                return UI_SafeTranslateString("MP_MUTED");
+        }
+    }
+    if (feederID == 24.0f) {
+        if (index >= 0 && index < uiInfo->playerProfileCount)
+            return uiInfo->playerProfileName[uiInfo->playerProfileStatus.displayProfile[index]];
+    }
+
+    return "";
+}
+
+MaterialHandle UI_FeederItemImage(const float feederID, int index)
+{
+    int actual;
+
+    if (feederID == 4.0f) {
+        UI_SelectedMap(index, &actual);
+        index = actual;
+        if (index >= 0 && index < sharedUiInfo.mapCount) {
+            if (!sharedUiInfo.mapList[index].levelShot)
+                sharedUiInfo.mapList[index].levelShot = CL_RegisterMaterialNoMip(sharedUiInfo.mapList[index].mapLoadName, 3);
+            return sharedUiInfo.mapList[index].levelShot;
+        }
+    }
+    return 0;
+}
+
+// retail 0x531560
+void UI_OverrideCursorPos(itemDef_t *item)
+{
+    listBoxDef_s *listPtr;
+    int delta;
+    int max;
+
+    if (item->special == 4.0f) {
+        item->cursorPos[0] = UI_GetIndexFromSelection(ui_currentNetMap->current.integer);
+    } else if (item->special == 2.0f) {
+        listPtr = item->typeData.listBox;
+        if (!listPtr->endPos[0]) {
+            item->cursorPos[0] = -1;
+            return;
+        }
+        if (sharedUiInfo.serverStatus.currentServer >= 0
+            && item->cursorPos[0] >= listPtr->startPos[0] && item->cursorPos[0] <= listPtr->endPos[0]) {
+            delta = sharedUiInfo.serverStatus.currentServer - item->cursorPos[0];
+            listPtr->startPos[0] += delta;
+            listPtr->endPos[0] += delta;
+            listPtr->cursorPos[0] += delta;
+            item->cursorPos[0] = sharedUiInfo.serverStatus.currentServer;
+            max = Item_ListBox_MaxScroll(item);
+            if (listPtr->startPos[0] > max)
+                listPtr->startPos[0] = max;
+            if (listPtr->startPos[0] < 0)
+                listPtr->startPos[0] = 0;
+        }
+    }
+}
+
+void UI_FeederSelection(float feederID, int index)
+{
+    if (feederID == 4.0f) {
+        int actual, map;
+
+        map = (ui_currentNetMap)->current.integer;
+        if (sharedUiInfo.mapList[map].cinematic >= 0) {
+            CIN_StopCinematic(sharedUiInfo.mapList[map].cinematic);
+            sharedUiInfo.mapList[map].cinematic = -1;
+        }
+        UI_SelectedMap(index, &actual);
+        Dvar_SetInt((dvar_t *)ui_currentMap, actual);
+        Dvar_SetInt((dvar_t *)ui_currentNetMap, actual);
+    } else if (feederID == 2.0f) {
+
+        char *name;
+        char *p;
+
+        if (sharedUiInfo.serverStatus.numDisplayServers > 0)
+            sharedUiInfo.serverStatus.currentServer = index;
+
+        LAN_GetServerInfo((ui_netSource)->current.integer,
+                          sharedUiInfo.serverStatus.displayServers[index],
+                          info, 0x400);
+        name = (char *)va("levelshots/%s", Info_ValueForKey(info, "mapname"));
+
+        for (p = name; *p; p++)
+            *p = tolower((int)(signed char)*p);
+
+        sharedUiInfo.serverStatus.currentServerPreview = CL_RegisterMaterialNoMip(name, 3);
+        if (sharedUiInfo.serverStatus.currentServerCinematic >= 0) {
+            CIN_StopCinematic(sharedUiInfo.serverStatus.currentServerCinematic);
+            sharedUiInfo.serverStatus.currentServerCinematic = -1;
+        }
+
+    } else if (feederID == 7.0f) {
+        uiInfo->playerIndex = index;
+    } else if (feederID == 9.0f) {
+        sharedUiInfo.modIndex = index;
+    } else if (feederID == 20.0f) {
+        uiInfo->playerIndex = index;
+
+    } else if (feederID == 24.0f) {
+
+        if (index >= 0 && index < uiInfo->playerProfileCount) {
+            int sortedIdx = uiInfo->playerProfileStatus.displayProfile[index];
+            const char *profileName = uiInfo->playerProfileName[sortedIdx];
+            Dvar_SetString((dvar_t *)ui_playerProfileSelected, profileName);
+        }
+    }
+}
+
+static void UI_GetGameTypesList(void)
+{
+    char szGameTypeList[0x1000];
+    int iNumGameTypeScripts;
+    int i;
+    char *pszFileName;
+    const char *pBuffParse;
+
+    sharedUiInfo.numGameTypes = 0;
+    sharedUiInfo.numJoinGameTypes = 0;
+
+    sharedUiInfo.joinGameTypes[sharedUiInfo.numJoinGameTypes].gameType = String_Alloc("All");
+    sharedUiInfo.joinGameTypes[sharedUiInfo.numJoinGameTypes].gameTypeName = "";
+    sharedUiInfo.numJoinGameTypes++;
+
+    iNumGameTypeScripts = FS_GetFileList("maps/mp/gametypes", "gsc", FS_LIST_PURE_ONLY, szGameTypeList, 0x1000);
+
+    pszFileName = szGameTypeList;
+    for (i = 0; i < iNumGameTypeScripts; i++) {
+        int iLen = strlen(pszFileName);
+
+        if (pszFileName[0] != '_') {
+            char *pszExt = pszFileName + iLen - 4;
+
+            if (!I_stricmp(pszExt, ".gsc"))
+                *pszExt = '\0';
+
+            if (sharedUiInfo.numGameTypes == 32 || sharedUiInfo.numJoinGameTypes == 32) {
+                Com_Printf("Too many game type scripts found! Only loading the first %i\n", 31);
+                break;
+            }
+
+            sharedUiInfo.gameTypes[sharedUiInfo.numGameTypes].gameType = String_Alloc(pszFileName);
+            sharedUiInfo.joinGameTypes[sharedUiInfo.numJoinGameTypes].gameType = sharedUiInfo.gameTypes[sharedUiInfo.numGameTypes].gameType;
+
+            pBuffParse = GetMenuBuffer(va("maps/mp/gametypes/%s.txt", pszFileName));
+            if (!pBuffParse) {
+                sharedUiInfo.gameTypes[sharedUiInfo.numGameTypes].gameTypeName = sharedUiInfo.gameTypes[sharedUiInfo.numGameTypes].gameType;
+                sharedUiInfo.joinGameTypes[sharedUiInfo.numJoinGameTypes].gameTypeName = sharedUiInfo.gameTypes[sharedUiInfo.numGameTypes].gameTypeName;
+            } else {
+                sharedUiInfo.gameTypes[sharedUiInfo.numGameTypes].gameTypeName = String_Alloc(Com_Parse(&pBuffParse));
+                sharedUiInfo.joinGameTypes[sharedUiInfo.numJoinGameTypes].gameTypeName = sharedUiInfo.gameTypes[sharedUiInfo.numGameTypes].gameTypeName;
+            }
+
+            sharedUiInfo.numGameTypes++;
+            sharedUiInfo.numJoinGameTypes++;
+        }
+        pszFileName += iLen + 1;
+    }
+
+    if (!sharedUiInfo.numGameTypes)
+        Com_Error(ERR_FATAL, "\x15No game type scripts found in maps/mp/gametypes folder");
+}
+
+void UI_Pause(qboolean b)
+{
+    if (b) {
+        Dvar_SetIntByName("cl_paused", 1);
+        Key_SetCatcher(8);
+    } else {
+        Key_SetCatcher(Key_GetCatcher() & ~8);
+        Key_ClearStates();
+        Dvar_SetIntByName("cl_paused", 0);
+    }
+}
+
+void UI_OpenMenu_f(void)
+{
+    Menus_OpenByName(&uiInfo->uiDC, Cmd_Args(1));
+}
+
+void UI_CloseMenu_f(void)
+{
+    Menus_CloseByName(&uiInfo->uiDC, Cmd_Args(1));
+}
+
+void UI_Init(void)
+{
+    int width, height;
+    MenuList *menuList;
+    int netGameTypeIdx;
+    float mPitch;
+
+    *(int *)uiInfo = 0;
+    g_ingameMenusLoaded = 0;
+
+    UI_LoadSoundAliases();
+
+    UI_RegisterDvars();
+
+    legacyHacksData.ui_newScriptMenu[0] = 0;
+    legacyHacksData.ui_newScriptMenuIndex = -1;
+    legacyHacksData.ui_scriptMenu[0] = 0;
+    legacyHacksData.ui_scriptMenuIndex = -1;
+    legacyHacksData.ui_scriptMenuAllowResponse = 1;
+    legacyHacksData.ui_waitingScriptMenu[0] = 0;
+    legacyHacksData.ui_waitingScriptMenuIndex = -1;
+    legacyHacksData.ui_waitingScriptMenuNoMouse = 0;
+
+    String_Init();
+    Menu_Setup(&uiInfo->uiDC);
+
+    CL_GetScreenDimensions(&uiInfo->uiDC.screenWidth, &uiInfo->uiDC.screenHeight, (float *)((int *)&uiInfo->uiDC.screenAspect));
+
+    width = uiInfo->uiDC.screenWidth;
+    height = uiInfo->uiDC.screenHeight;
+
+    if (width * 480 > height * 640) {
+
+        uiInfo->uiDC.bias = ((float)width + (float)height * -1.3333333730697632f) * 0.5f;
+    } else {
+        *(int *)uiInfo = 0;
+    }
+
+    Sys_Milliseconds();
+    UI_GetGameTypesList();
+
+    ui_netGameType = (const dvar_t *)(Dvar_RegisterInt("ui_netGametype", 0, 0, sharedUiInfo.numGameTypes - 1, 0x1001));
+
+    UI_LoadArenas();
+
+    menuList = UI_LoadMenus("ui_mp/menus.txt", 3);
+    UI_AddMenuList(&uiInfo->uiDC, menuList);
+
+    if (g_mapname[0] != '\0') {
+        UI_MapLoadInfo(va("maps/mp/%s.csv", g_mapname));
+    }
+
+    UI_AssetCache();
+    Menus_CloseAll(&uiInfo->uiDC);
+
+    sharedUiInfo.serverHardwareIconList[0] = CL_RegisterMaterialNoMip("server_hardware_unknown", 3);
+    sharedUiInfo.serverHardwareIconList[1] = CL_RegisterMaterialNoMip("server_hardware_linux_dedicated", 3);
+    sharedUiInfo.serverHardwareIconList[2] = CL_RegisterMaterialNoMip("server_hardware_win_dedicated", 3);
+    sharedUiInfo.serverHardwareIconList[3] = CL_RegisterMaterialNoMip("server_hardware_mac_dedicated", 3);
+    sharedUiInfo.serverHardwareIconList[5] = CL_RegisterMaterialNoMip("server_hardware_win_listen", 3);
+    sharedUiInfo.serverHardwareIconList[6] = CL_RegisterMaterialNoMip("server_hardware_mac_listen", 3);
+
+    LAN_LoadCachedServers();
+
+    if (sharedUiInfo.serverStatus.sortKey != 9) {
+        sharedUiInfo.serverStatus.sortKey = 9;
+        qsort(sharedUiInfo.serverStatus.displayServers, sharedUiInfo.serverStatus.numDisplayServers, 4, UI_ServersQsortCompare);
+    }
+
+    mPitch = Dvar_GetFloat("m_pitch");
+    Dvar_SetBoolByName("ui_mousePitch", mPitch < 0.0f ? 1 : 0);
+
+    sharedUiInfo.serverStatus.currentServerCinematic = -1;
+    sharedUiInfo.previewMovie = -1;
+
+    netGameTypeIdx = (ui_netGameType)->current.integer;
+    Dvar_SetString((dvar_t *)ui_netGameTypeName, sharedUiInfo.gameTypes[netGameTypeIdx].gameType);
+
+    Dvar_RegisterBool("ui_multiplayer", 1, 0x1040);
+
+#    if COD2_FEATURE_GAMEPAD
+
+    UI_ConsoleMode_Init(uiInfo);
+    UI_Gamepad_RegisterMenus(uiInfo);
+#    endif
+}
+
+void UI_KeyEvent(int key, qboolean down)
+{
+    menuDef_t *menu;
+
+    if (Menu_Count(&uiInfo->uiDC) <= 0)
+        return;
+
+    menu = Menu_GetFocused(&uiInfo->uiDC);
+    if (menu) {
+        if (Dvar_GetBool("cl_bypassMouseInput"))
+            bypassKeyClear = 1;
+
+        if (key == 0x1b && down && !Menus_AnyFullScreenVisible(&uiInfo->uiDC) && menu->onESC == 0) {
+
+            Menus_CloseAll(&uiInfo->uiDC);
+        } else {
+            Menu_HandleKey(&uiInfo->uiDC, menu, key, down);
+        }
+
+        if (Menu_GetFocused(&uiInfo->uiDC))
+            return;
+    }
+
+    if (!(Key_GetCatcher() & 8))
+        return;
+
+    Key_SetCatcher(Key_GetCatcher() & ~8);
+    if (!bypassKeyClear)
+        Key_ClearStates();
+    bypassKeyClear = 0;
+    Dvar_SetIntByName("cl_paused", 0);
+}
+
+void UI_MouseEvent(int dx, int dy)
+{
+    int *cursorX = &uiInfo->uiDC.cursorx;
+    int *cursorY = &uiInfo->uiDC.cursory;
+
+    *cursorX += dx;
+    if (*cursorX < 0)
+        *cursorX = 0;
+    else if (*cursorX > 640)
+        *cursorX = 640;
+
+    *cursorY += dy;
+    if (*cursorY < 0)
+        *cursorY = 0;
+    else if (*cursorY > 480)
+        *cursorY = 480;
+
+    if (Menu_Count(&uiInfo->uiDC) > 0) {
+        Display_MouseMove(&uiInfo->uiDC, 0, *cursorX, *cursorY);
+    }
+}
+
+uiMenuCommand_t UI_GetActiveMenu(void)
+{
+    return uiInfo->currentMenuType;
+}
+
+qboolean UI_SetActiveMenu(int menu)
+{
+    menuDef_t *pFocus;
+    const char *errorMsg;
+    const char *newMenu;
+
+    if (Menu_Count(&uiInfo->uiDC) <= 0)
+        return 0;
+
+    if (menu != UIMENU_SCRIPT_POPUP && menu != UIMENU_SCRIPT_POPUP_NO_MOUSE)
+        uiInfo->currentMenuType = (uiMenuCommand_t)(menu);
+
+    switch (menu) {
+    case UIMENU_NONE:
+        Key_SetCatcher(Key_GetCatcher() & ~8);
+        Dvar_SetIntByName("cl_paused", 0);
+        Menus_CloseAll(&uiInfo->uiDC);
+        return 1;
+
+    case UIMENU_MAIN:
+        Key_SetCatcher(8);
+        Menus_OpenByName(&uiInfo->uiDC, "main");
+        errorMsg = Dvar_GetString("com_errorMessage");
+        if (strlen(errorMsg) && I_stricmp(errorMsg, ";"))
+            Menus_OpenByName(&uiInfo->uiDC, "error_popmenu");
+        SND_FadeAllSounds(1.0f, 1000);
+        return 1;
+
+    case UIMENU_TEAM:
+        Key_SetCatcher(8);
+        Menus_OpenByName(&uiInfo->uiDC, "team");
+        return 1;
+
+    case UIMENU_NEED_CD:
+        Key_SetCatcher(8);
+        Menus_OpenByName(&uiInfo->uiDC, "needcd");
+        return 1;
+
+    case UIMENU_BAD_CD_KEY:
+        Key_SetCatcher(8);
+        Menus_OpenByName(&uiInfo->uiDC, "badcd");
+        return 1;
+
+    case UIMENU_INGAME:
+        Key_SetCatcher(8);
+        Menus_CloseAll(&uiInfo->uiDC);
+        if (!Menus_OpenByName(&uiInfo->uiDC, cg->scriptMainMenu))
+            Menus_OpenByName(&uiInfo->uiDC, "main");
+        return 1;
+
+    case UIMENU_WM_QUICKMESSAGE:
+        uiInfo->uiDC.cursorx = 0x27f;
+        uiInfo->uiDC.cursory = 0x1df;
+        Key_SetCatcher(8);
+        clients->displayHUDWithKeycatchUI = 1;
+        Menus_CloseAll(&uiInfo->uiDC);
+        Menus_OpenByName(&uiInfo->uiDC, "quickmessage");
+        return 1;
+
+    case UIMENU_WM_AUTOUPDATE:
+        Menus_OpenByName(&uiInfo->uiDC, "autoupdate");
+        return 1;
+
+    case UIMENU_SCRIPT_POPUP:
+    case UIMENU_SCRIPT_POPUP_NO_MOUSE:
+        pFocus = Menu_GetFocused(&uiInfo->uiDC);
+        if (pFocus && uiInfo->currentMenuType != UIMENU_SCRIPT_POPUP && uiInfo->currentMenuType != UIMENU_SCRIPT_POPUP_NO_MOUSE)
+            return 0;
+        newMenu = legacyHacks->ui_newScriptMenu;
+        if (pFocus && !I_stricmp(pFocus->window.name, newMenu))
+            return 1;
+        uiInfo->currentMenuType = UIMENU_SCRIPT_POPUP;
+        if (menu == UIMENU_SCRIPT_POPUP_NO_MOUSE) {
+            uiInfo->uiDC.cursorx = 0x27f;
+            uiInfo->uiDC.cursory = 0x1df;
+        }
+        Key_SetCatcher(8);
+        Menus_CloseAll(&uiInfo->uiDC);
+        strcpy(legacyHacks->ui_scriptMenu, newMenu);
+        legacyHacks->ui_scriptMenuIndex = legacyHacks->ui_newScriptMenuIndex;
+        legacyHacks->ui_newScriptMenu[0] = 0;
+        legacyHacks->ui_newScriptMenuIndex = -1;
+        Menus_OpenByName(&uiInfo->uiDC, legacyHacks->ui_scriptMenu);
+        return 1;
+
+    case UIMENU_PLAYER_PROFILE:
+        Key_SetCatcher(8);
+        Menus_OpenByName(&uiInfo->uiDC, "player_profile");
+        SND_FadeAllSounds(1.0f, 1000);
+        return 1;
+    }
+
+    return 0;
+}
+
+qboolean UI_IsFullscreen(void)
+{
+    return Menus_AnyFullScreenVisible(&uiInfo->uiDC);
+}
+
+static void __attribute_regparm__(3) UI_ReadableSize(char *buf, int bufsize, int value)
+{
+    if (value > 1024 * 1024 * 1024) {
+        Com_sprintf(buf, bufsize, "%d", value / (1024 * 1024 * 1024));
+        Com_sprintf(buf + strlen(buf), bufsize - strlen(buf), ".%02d %s",
+                    (value % (1024 * 1024 * 1024)) * 100 / (1024 * 1024 * 1024), UI_SafeTranslateString("EXE_GIGABYTE"));
+    } else if (value > 1024 * 1024) {
+        Com_sprintf(buf, bufsize, "%d", value / (1024 * 1024));
+        Com_sprintf(buf + strlen(buf), bufsize - strlen(buf), ".%02d %s",
+                    (value % (1024 * 1024)) * 100 / (1024 * 1024), UI_SafeTranslateString("EXE_MEGABYTE"));
+    } else if (value > 1024) {
+        Com_sprintf(buf, bufsize, "%d %s", value / 1024, UI_SafeTranslateString("EXE_KILOBYTE"));
+    } else {
+        Com_sprintf(buf, bufsize, "%d %s", value, UI_SafeTranslateString("EXE_BYTES"));
+    }
 }
 
 static void UI_PrintTime(char *buf, int bufsize, int time)
@@ -3413,6 +3179,13 @@ static void UI_PrintTime(char *buf, int bufsize, int time)
     } else {
         Com_sprintf(buf, bufsize, "%d %s", time, UI_SafeTranslateString("EXE_SECONDS"));
     }
+}
+
+static void Text_PaintCenter(FontHandle font, const char *text, float x, float y, float scale, const vec_t *color)
+{
+    float actualScale = CL_NormalizedTextScale(font, scale);
+    int len = (int)((float)CL_TextWidth(text, 0, font) * actualScale);
+    UI_DrawText(text, 0x7fffffff, font, x - (float)(len / 2), y, 0, 0, scale, color, 6);
 }
 
 static void UI_DisplayDownloadInfo(const char *downloadName, float centerPoint, float yStart, FontHandle font, float scale)
@@ -3603,159 +3376,73 @@ void UI_DrawConnectScreen(void)
     if (s && I_stricmp(cstate.servername, "localhost"))
         Text_PaintCenter(font, s, 320.0f, 145.0f, 0.5f, colorWhite);
 }
-#else
-static int UI_PlayerProfilesQsortCompare(const void *arg1, const void *arg2)
+
+float UI_GetBlurRadius(void)
 {
-    int idx1 = *(const int *)arg1;
-    int idx2 = *(const int *)arg2;
-    int result;
-
-    if (idx1 == idx2)
-        return 0;
-
-    result = I_stricmp(
-        uiInfo->playerProfileName[idx1],
-        uiInfo->playerProfileName[idx2]);
-
-    if (uiInfo->playerProfileStatus.sortDir == 0)
-        result = -result;
-
-    return result;
+    return uiInfo->uiDC.blurRadiusOut;
 }
 
-static void UI_SelectCurrentMap(void)
+qboolean UI_AnyFullScreenMenuVisible(void)
 {
-    byte cstate[sizeof(uiClientState_t)];
-    char szMap[0x40];
-    int numMaps;
-    int i;
-    int visibleIndex;
+    return Menus_AnyFullScreenVisible(&uiInfo->uiDC);
+}
 
-    GetClientState((uiClientState_t *)cstate);
-    if (*(int *)cstate != 8)
+static void UI_StopServerRefresh(void)
+{
+    int count;
+
+    if (!sharedUiInfo.serverStatus.refreshActive)
+        return;
+    sharedUiInfo.serverStatus.refreshActive = 0;
+    Com_Printf("%d servers listed in browser with %d players.\n",
+               sharedUiInfo.serverStatus.numDisplayServers, sharedUiInfo.serverStatus.numPlayersOnServers);
+    count = LAN_GetServerCount(ui_netSource->current.integer) - sharedUiInfo.serverStatus.numDisplayServers;
+    if (count > 0)
+        Com_Printf("%d servers not listed (filtered out by game browser settings)\n", count);
+}
+
+static void UI_DoServerRefresh(void)
+{
+    int wait;
+
+    wait = 0;
+    if (!sharedUiInfo.serverStatus.refreshActive)
         return;
 
-    {
-        const char *serverInfo = CL_GetConfigString(0);
-        if (!serverInfo[0])
-            return;
-        I_strncpyz(szMap, Info_ValueForKey(serverInfo, "mapname"), sizeof(szMap));
-    }
-
-    numMaps = sharedUiInfo.mapCount;
-    if (numMaps <= 0)
-        return;
-
-    visibleIndex = 0;
-    for (i = 0; i < numMaps; i++) {
-        byte *entry = (byte *)&sharedUiInfo + i * 0xa4;
-
-        if (!*(int *)(entry + 0x13f4))
-            continue;
-
-        if (I_stricmp(szMap, *(const char **)(entry + 0x1354)) == 0) {
-            Menu_SetFeederSelection(&uiInfo->uiDC, 0, 4, visibleIndex, "createserver_maps");
-            return;
-        }
-
-        visibleIndex++;
-    }
-}
-
-static void UI_VerifyLanguage(void)
-{
-    int oldLanguage = Dvar_GetInt("loc_language");
-    int newLanguage = Dvar_GetInt("ui_language");
-    int verified = SEH_VerifyLanguageSelection(newLanguage);
-
-    if (verified != newLanguage)
-        Dvar_SetIntByName("ui_language", verified);
-
-    Dvar_SetBoolByName("ui_languagechanged", oldLanguage != newLanguage);
-}
-
-static void UI_AddServerToFavoritesList(const char *name, const char *address)
-{
-    const char *message;
-    const char *dvarMessage;
-    int addResult;
-
-    if (!name[0]) {
-        message = UI_SafeTranslateString("EXE_FAVORITENAMEEMPTY");
-        Com_Printf("%s\n", message);
-        Dvar_SetStringByName("ui_favorite_message", "@EXE_FAVORITENAMEEMPTY");
-        return;
-    }
-
-    if (!address[0]) {
-        message = UI_SafeTranslateString("EXE_FAVORITEADDRESSEMPTY");
-        Com_Printf("%s\n", message);
-        Dvar_SetStringByName("ui_favorite_message", "@EXE_FAVORITEADDRESSEMPTY");
-        return;
-    }
-
-    addResult = LAN_AddServer(2, name, address);
-    if (addResult == 0) {
-        message = UI_SafeTranslateString("EXE_FAVORITEINLIST");
-        dvarMessage = "@EXE_FAVORITEINLIST";
-    } else if (addResult == -1) {
-        message = UI_SafeTranslateString("EXE_FAVORITELISTFULL");
-        dvarMessage = "@EXE_FAVORITELISTFULL";
-    } else if (addResult == -2) {
-        message = UI_SafeTranslateString("EXE_BADSERVERADDRESS");
-        dvarMessage = "@EXE_BADSERVERADDRESS";
-    } else {
-        message = UI_SafeTranslateString("EXE_FAVORITEADDED");
-        dvarMessage = "@EXE_FAVORITEADDED";
-    }
-
-    Com_Printf("%s\n", message);
-    Dvar_SetStringByName("ui_favorite_message", dvarMessage);
-}
-
-static Bool UI_GetOpenOrCloseMenuOnDvarArgs(const char **args, const char *cmd,
-                                            char *dvarName, char *testValue, char *menuName)
-{
-    if (!String_Parse(args, dvarName, 0x400)) {
-        Com_Printf("%s: invalid dvar name.\n", cmd);
-        return 0;
-    }
-
-    if (!String_Parse(args, testValue, 0x400)) {
-        Com_Printf("%s: invalid test value.\n", cmd);
-        return 0;
-    }
-
-    if (!String_Parse(args, menuName, 0x400)) {
-        Com_Printf("%s: invalid menu name.\n", cmd);
-        return 0;
-    }
-
-    return 1;
-}
-
-static void UI_UpdateServerCount(void)
-{
-    int serverCount = LAN_GetServerCount((ui_netSource)->current.integer);
-    if (serverCount != sharedUiInfo.serverStatus.serverCount) {
-        sharedUiInfo.serverStatus.serverCount = serverCount;
-        if (sharedUiInfo.serverStatus.numDisplayServers != 0) {
-            sharedUiInfo.serverStatus.currentServer = -1;
-            UI_BuildServerDisplayList(1);
+    if (ui_netSource->current.integer != 2) {
+        if (ui_netSource->current.integer == 0) {
+            if (!LAN_GetServerCount(ui_netSource->current.integer))
+                wait = 1;
+        } else if (LAN_WaitServerResponse(ui_netSource->current.integer)) {
+            wait = 1;
         }
     }
+
+    if (uiInfo->uiDC.realTime < sharedUiInfo.serverStatus.refreshtime) {
+        if (wait)
+            return;
+    }
+
+    UI_UpdateServerCount();
+
+    if (LAN_UpdateDirtyPings(ui_netSource->current.integer)) {
+        sharedUiInfo.serverStatus.refreshtime = uiInfo->uiDC.realTime + 1000;
+    } else if (!wait) {
+        UI_BuildServerDisplayList(2);
+        UI_StopServerRefresh();
+    }
+
+    UI_BuildServerDisplayList(0);
 }
 
 static void UI_StartServerRefresh(qboolean full)
 {
     qtime_t q;
     char dvarName[0x18];
-    int source;
-    int now;
+    const char *ptr;
 
     Com_RealTime(&q);
-    source = (ui_netSource)->current.integer;
-    snprintf(dvarName, sizeof(dvarName), "ui_lastServerRefresh_%i", source);
+    snprintf(dvarName, sizeof(dvarName), "ui_lastServerRefresh_%i", (ui_netSource)->current.integer);
     Dvar_SetStringByName(dvarName,
                          va("%s %i, %i   %i:%02i",
                             UI_SafeTranslateString(MonthAbbrev[q.tm_mon]),
@@ -3764,35 +3451,31 @@ static void UI_StartServerRefresh(qboolean full)
                             q.tm_hour,
                             q.tm_min));
 
-    now = uiInfo->uiDC.realTime;
-
     if (!full) {
-        LAN_ResetPings(source);
+        LAN_ResetPings((ui_netSource)->current.integer);
         sharedUiInfo.serverStatus.refreshActive = 1;
-        sharedUiInfo.serverStatus.refreshtime = now + 1000;
+        sharedUiInfo.serverStatus.refreshtime = uiInfo->uiDC.realTime + 1000;
         return;
     }
 
     sharedUiInfo.serverStatus.refreshActive = 1;
-    sharedUiInfo.serverStatus.nextDisplayRefresh = now + 1000;
-    sharedUiInfo.serverStatus.numDisplayServers = 0;
-    sharedUiInfo.serverStatus.numPlayersOnServers = 0;
-    sharedUiInfo.serverStatus.serverCount = LAN_GetServerCount(source);
-    LAN_MarkServerDirty(source, -1, 1);
-    LAN_ResetPings(source);
+    sharedUiInfo.serverStatus.nextDisplayRefresh = uiInfo->uiDC.realTime + 1000;
+    UI_ClearDisplayedServers();
+    LAN_MarkServerDirty((ui_netSource)->current.integer, -1, 1);
+    LAN_ResetPings((ui_netSource)->current.integer);
 
-    if (source == 0) {
+    if ((ui_netSource)->current.integer == 0) {
         Cbuf_ExecuteText(0, "localservers\n");
-        sharedUiInfo.serverStatus.refreshtime = now + 1000;
+        sharedUiInfo.serverStatus.refreshtime = uiInfo->uiDC.realTime + 1000;
         return;
     }
 
-    sharedUiInfo.serverStatus.refreshtime = now + 5000;
+    sharedUiInfo.serverStatus.refreshtime = uiInfo->uiDC.realTime + 5000;
 
-    if (source == 1) {
-        const char *debugProtocol = Dvar_GetVariantString("debug_protocol");
-        if (debugProtocol[0])
-            Cbuf_ExecuteText(0, va("globalservers %d %s full empty\n", 0, debugProtocol));
+    if ((ui_netSource)->current.integer == 1) {
+        ptr = Dvar_GetVariantString("debug_protocol");
+        if (strlen(ptr))
+            Cbuf_ExecuteText(0, va("globalservers %d %s full empty\n", 0, ptr));
         else
             Cbuf_ExecuteText(0, va("globalservers %d %d full empty\n", 0, 0x73));
     }
@@ -3800,824 +3483,88 @@ static void UI_StartServerRefresh(qboolean full)
 
 const char *UI_SafeTranslateString(const char *reference)
 {
-    const char *ref = reference;
     const char *translated;
 
-    if (ref[0] == 0x15)
-        ref++;
-
-    translated = SEH_StringEd_GetString(ref);
-    if (translated)
-        return translated;
+    // 0x15-prefixed strings are already localized
+    if (reference[0] == 0x15) {
+        reference++;
+    } else {
+        translated = SEH_StringEd_GetString(reference);
+        if (translated)
+            return translated;
+    }
 
     if ((loc_warnings)->current.enabled) {
         if ((loc_warningsAsErrors)->current.enabled) {
-            Com_Error(ERR_LOCALIZATION, "Could not translate string \"%s\"", ref);
+            Com_Error(ERR_LOCALIZATION, "Could not translate string \"%s\"", reference);
         } else {
-            Com_Printf("^3WARNING: Could not translate string \"%s\"\n", ref);
+            Com_Printf("^3WARNING: Could not translate string \"%s\"\n", reference);
         }
 
         strcpy(errorString, "^1UNLOCALIZED(^7");
-        I_strncat(errorString, 0x400, ref);
+        I_strncat(errorString, 0x400, reference);
         I_strncat(errorString, 0x400, "^1)^7");
         return errorString;
     }
 
-    strcpy(errorString, ref);
+    strcpy(errorString, reference);
     return errorString;
 }
 
-void UI_FeederSelection(float feederID, int index)
+const char *UI_ReplaceConversionString(const char *sourceString, const char *replaceString)
 {
-    if (feederID == 4.0f) {
-        int actual;
-
-        if (sharedUiInfo.mapList[(ui_currentNetMap)->current.integer].cinematic >= 0) {
-            CIN_StopCinematic(sharedUiInfo.mapList[(ui_currentNetMap)->current.integer].cinematic);
-            sharedUiInfo.mapList[(ui_currentNetMap)->current.integer].cinematic = -1;
-        }
-        UI_SelectedMap(index, &actual);
-        Dvar_SetInt(ui_currentMap, actual);
-        Dvar_SetInt(ui_currentNetMap, actual);
-
-    } else if (feederID == 2.0f) {
-        char *name;
-        char *p;
-
-        if (sharedUiInfo.serverStatus.numDisplayServers >= 1)
-            sharedUiInfo.serverStatus.currentServer = index;
-
-        LAN_GetServerInfo((ui_netSource)->current.integer,
-                          sharedUiInfo.serverStatus.displayServers[index],
-                          info, 0x400);
-        name = (char *)va("levelshots/%s", Info_ValueForKey(info, "mapname"));
-
-        for (p = name; *p; p++)
-            *p = tolower((int)(signed char)*p);
-
-        sharedUiInfo.serverStatus.currentServerPreview = CL_RegisterMaterialNoMip(name, 3);
-        if (sharedUiInfo.serverStatus.currentServerCinematic >= 0) {
-            CIN_StopCinematic(sharedUiInfo.serverStatus.currentServerCinematic);
-            sharedUiInfo.serverStatus.currentServerCinematic = -1;
-        }
-
-    } else if (feederID == 7.0f || feederID == 20.0f) {
-        uiInfo->playerIndex = index;
-
-    } else if (feederID == 9.0f) {
-        sharedUiInfo.modIndex = index;
-
-    } else if (feederID == 24.0f) {
-        if (index >= 0 && index < uiInfo->playerProfileCount) {
-            int sortedIdx = uiInfo->playerProfileStatus.displayProfile[index];
-            const char *profileName = uiInfo->playerProfileName[sortedIdx];
-            Dvar_SetString((dvar_t *)ui_playerProfileSelected, profileName);
-        }
-    }
+    int convArgs[10];
+    memset(convArgs, 0, sizeof(convArgs));
+    convArgs[0] = 1;
+    convArgs[1] = (int)replaceString;
+    return UI_ReplaceConversions(sourceString, (ConversionArguments *)convArgs);
 }
 
-static void UI_GetGameTypesList(void)
+const char *UI_ReplaceConversionInt(const char *sourceString, int replaceInt)
 {
-    char szGameTypeList[0x1000];
-    int iNumGameTypeScripts;
-    int i;
-    char *pszFileName;
-    const char *pBuffParse;
-
-    sharedUiInfo.numGameTypes = 0;
-    sharedUiInfo.numJoinGameTypes = 0;
-
-    *(const char **)((byte *)&sharedUiInfo + 4688) = String_Alloc("All");
-    {
-        int idx = sharedUiInfo.numJoinGameTypes;
-        sharedUiInfo.joinGameTypes[idx].gameTypeName = "";
-    }
-    sharedUiInfo.numJoinGameTypes += 1;
-
-    iNumGameTypeScripts = FS_GetFileList("maps/mp/gametypes", "gsc", FS_LIST_PURE_ONLY, szGameTypeList, 0x1000);
-
-    if (iNumGameTypeScripts > 0) {
-        pszFileName = szGameTypeList;
-
-        for (i = 0; i < iNumGameTypeScripts; i++) {
-            int iLen = strlen(pszFileName);
-            char *pszEnd;
-            int numTypes;
-
-            if (pszFileName[0] == '_') {
-                pszFileName += iLen + 1;
-                continue;
-            }
-
-            pszEnd = pszFileName + iLen;
-            if (I_stricmp(pszEnd - 4, ".gsc") == 0) {
-                pszFileName[iLen - 4] = '\0';
-            }
-
-            numTypes = sharedUiInfo.numGameTypes;
-            if (numTypes == 32 || sharedUiInfo.numJoinGameTypes == 32) {
-                Com_Printf("Too many game type scripts found! Only loading the first %i\n", 31);
-                break;
-            }
-
-            sharedUiInfo.gameTypes[numTypes].gameType = String_Alloc(pszFileName);
-
-            {
-                int gt = sharedUiInfo.numGameTypes;
-                const char *scriptName = sharedUiInfo.gameTypes[gt].gameType;
-                int nameIdx = sharedUiInfo.numJoinGameTypes;
-                sharedUiInfo.joinGameTypes[nameIdx].gameType = scriptName;
-            }
-
-            pBuffParse = GetMenuBuffer(va("maps/mp/gametypes/%s.txt", pszFileName));
-            if (pBuffParse) {
-                const char *parsed = Com_Parse(&pBuffParse);
-                int gt2 = sharedUiInfo.numGameTypes;
-                sharedUiInfo.gameTypes[gt2].gameTypeName = String_Alloc(parsed);
-                {
-                    const char *displayName = sharedUiInfo.gameTypes[sharedUiInfo.numGameTypes].gameTypeName;
-                    int nameIdx2 = sharedUiInfo.numJoinGameTypes;
-                    sharedUiInfo.joinGameTypes[nameIdx2].gameTypeName = displayName;
-                }
-            } else {
-                int gt3 = sharedUiInfo.numGameTypes;
-                *(const char **)((byte *)&sharedUiInfo + 4432 + gt3 * 8) = *(const char **)((byte *)&sharedUiInfo + 4428 + gt3 * 8);
-                {
-                    const char *displayName2 = sharedUiInfo.gameTypes[sharedUiInfo.numGameTypes].gameTypeName;
-                    int nameIdx3 = sharedUiInfo.numJoinGameTypes;
-                    sharedUiInfo.joinGameTypes[nameIdx3].gameTypeName = displayName2;
-                }
-            }
-
-            sharedUiInfo.numGameTypes += 1;
-            sharedUiInfo.numJoinGameTypes += 1;
-            pszFileName = pszEnd + 1;
-        }
-    }
-
-    if (sharedUiInfo.numGameTypes == 0) {
-        Com_Error(ERR_FATAL, "\x15No game type scripts found in maps/mp/gametypes folder");
-    }
+    char tempString[32];
+    int convArgs[10];
+    memset(convArgs, 0, sizeof(convArgs));
+    sprintf(tempString, "%d", replaceInt);
+    convArgs[0] = 1;
+    convArgs[1] = (int)tempString;
+    return UI_ReplaceConversions(sourceString, (ConversionArguments *)convArgs);
 }
 
-void UI_RegisterDvars(void)
+const char *UI_ReplaceConversions(const char *sourceString, ConversionArguments *arguments)
 {
-    Dvar_RegisterBool("g_allowvote", 1, 0x1001);
-    Dvar_RegisterBool("cg_brass", 1, 0x1001);
-    Dvar_RegisterBool("cg_marks", 1, 0x1001);
-
-    Dvar_RegisterString("server1", "", 0x1001);
-    Dvar_RegisterString("server2", "", 0x1001);
-    Dvar_RegisterString("server3", "", 0x1001);
-    Dvar_RegisterString("server4", "", 0x1001);
-    Dvar_RegisterString("server5", "", 0x1001);
-    Dvar_RegisterString("server6", "", 0x1001);
-    Dvar_RegisterString("server7", "", 0x1001);
-    Dvar_RegisterString("server8", "", 0x1001);
-    Dvar_RegisterString("server9", "", 0x1001);
-    Dvar_RegisterString("server10", "", 0x1001);
-    Dvar_RegisterString("server11", "", 0x1001);
-    Dvar_RegisterString("server12", "", 0x1001);
-    Dvar_RegisterString("server13", "", 0x1001);
-    Dvar_RegisterString("server14", "", 0x1001);
-    Dvar_RegisterString("server15", "", 0x1001);
-    Dvar_RegisterString("server16", "", 0x1001);
-
-    ui_netSource = Dvar_RegisterInt("ui_netSource", 0, 0, 2, 0x1001);
-    ui_smallFont = Dvar_RegisterFloat("ui_smallFont", 0.25f, 0.0f, 1.0f, 0x1001);
-    ui_bigFont = Dvar_RegisterFloat("ui_bigFont", 0.4f, 0.0f, 1.0f, 0x1001);
-    ui_extraBigFont = Dvar_RegisterFloat("ui_extraBigFont", 0.55f, 0.0f, 1.0f, 0x1001);
-    ui_currentMap = Dvar_RegisterInt("ui_currentMap", 0, 0, 0x7fffffff, 0x1001);
-    ui_gametype = Dvar_RegisterInt("ui_gametype", 3, 0, 0x7fffffff, 0x1001);
-    ui_joinGameType = Dvar_RegisterInt("ui_joinGametype", 0, 0, 0x7fffffff, 0x1001);
-    ui_netGameTypeName = Dvar_RegisterString("ui_netGametypeName", "", 0x1001);
-    ui_dedicated = Dvar_RegisterInt("ui_dedicated", 0, 0, 2, 0x1001);
-    ui_currentNetMap = Dvar_RegisterInt("ui_currentNetMap", 0, 0, 0x7fffffff, 0x1001);
-    ui_browserShowFull = Dvar_RegisterBool("ui_browserShowFull", 1, 0x1001);
-    ui_browserShowEmpty = Dvar_RegisterBool("ui_browserShowEmpty", 1, 0x1001);
-    ui_browserShowPassword = Dvar_RegisterBool("ui_browserShowPassword", 1, 0x1001);
-    ui_browserShowNoPassword = Dvar_RegisterBool("ui_browserShowNoPassword", 1, 0x1001);
-    ui_browserShowPure = Dvar_RegisterBool("ui_browserShowPure", 1, 0x1001);
-    ui_browserShowDedicated = Dvar_RegisterBool("ui_browserShowDedicated", 0, 0x1001);
-#    if COD2_IS_PATCH_13
-    ui_browserShowPunkBuster = Dvar_RegisterInt("ui_browserShowPunkBuster", -1, (int)0x80000000, 0x7fffffff, 0x1001);
-#    endif
-    ui_browserMod = Dvar_RegisterInt("ui_browserMod", -1, -1, 0x7fffffff, 0x1001);
-    ui_browserFriendlyfire = Dvar_RegisterInt("ui_browserFriendlyfire", -1, (int)0x80000000, 0x7fffffff, 0x1001);
-    ui_browserKillcam = Dvar_RegisterInt("ui_browserKillcam", -1, (int)0x80000000, 0x7fffffff, 0x1001);
-    ui_serverStatusTimeOut = Dvar_RegisterInt("ui_serverStatusTimeOut", 7000, 0, 0x7fffffff, 0x1001);
-    ui_playerProfileCount = Dvar_RegisterInt("ui_playerProfileCount", 0, (int)0x80000000, 0x7fffffff, 0x1040);
-    ui_playerProfileSelected = Dvar_RegisterString("ui_playerProfileSelected", "", 0x1040);
-    ui_playerProfileNameNew = Dvar_RegisterString("ui_playerProfileNameNew", "", 0x1000);
-}
-
-void UI_Init(void)
-{
-    byte *legacyBase;
-    int width, height;
-    MenuList *menuList;
-    int netGameTypeIdx;
-    float mPitch;
-
-    *(int *)uiInfo = 0;
-    g_ingameMenusLoaded = 0;
-
-    UI_LoadSoundAliases();
-
-    UI_RegisterDvars();
-
-    legacyBase = (byte *)imp_legacyHacksArray;
-    (*(byte *)&((LegacyHacks *)legacyBase)->ui_newScriptMenu[0]) = 0;
-    ((LegacyHacks *)legacyBase)->ui_newScriptMenuIndex = -1;
-    (*(byte *)&((LegacyHacks *)legacyBase)->ui_scriptMenu[0]) = 0;
-    ((LegacyHacks *)legacyBase)->ui_scriptMenuIndex = -1;
-    ((LegacyHacks *)legacyBase)->ui_scriptMenuAllowResponse = 1;
-    (*(byte *)&((LegacyHacks *)legacyBase)->ui_waitingScriptMenu[0]) = 0;
-    ((LegacyHacks *)legacyBase)->ui_waitingScriptMenuIndex = -1;
-    ((LegacyHacks *)legacyBase)->ui_waitingScriptMenuNoMouse = 0;
-
-    String_Init();
-    Menu_Setup(&uiInfo->uiDC);
-
-    CL_GetScreenDimensions(&uiInfo->uiDC.screenWidth, &uiInfo->uiDC.screenHeight, (int *)&uiInfo->uiDC.screenAspect);
-
-    width = uiInfo->uiDC.screenWidth;
-    height = uiInfo->uiDC.screenHeight;
-
-    if (width * 480 > height * 640) {
-        *(float *)uiInfo = ((float)width + (float)height * -1.3333333730697632f) * 0.5f;
-    } else {
-        *(int *)uiInfo = 0;
-    }
-
-    Sys_Milliseconds();
-    UI_GetGameTypesList();
-
-    ui_netGameType = Dvar_RegisterInt("ui_netGametype", 0, 0, sharedUiInfo.numGameTypes - 1, 0x1001);
-
-    UI_LoadArenas();
-
-    menuList = UI_LoadMenus("ui_mp/menus.txt", 3);
-    UI_AddMenuList(&uiInfo->uiDC, menuList);
-
-    if (g_mapname[0] != '\0') {
-        UI_MapLoadInfo(va("maps/mp/%s.csv", g_mapname));
-    }
-
-    UI_AssetCache();
-    Menus_CloseAll(&uiInfo->uiDC);
-
-    sharedUiInfo.serverHardwareIconList[0] = CL_RegisterMaterialNoMip("server_hardware_unknown", 3);
-    sharedUiInfo.serverHardwareIconList[1] = CL_RegisterMaterialNoMip("server_hardware_linux_dedicated", 3);
-    sharedUiInfo.serverHardwareIconList[2] = CL_RegisterMaterialNoMip("server_hardware_win_dedicated", 3);
-    sharedUiInfo.serverHardwareIconList[3] = CL_RegisterMaterialNoMip("server_hardware_mac_dedicated", 3);
-    sharedUiInfo.serverHardwareIconList[5] = CL_RegisterMaterialNoMip("server_hardware_win_listen", 3);
-    sharedUiInfo.serverHardwareIconList[6] = CL_RegisterMaterialNoMip("server_hardware_mac_listen", 3);
-
-    LAN_LoadCachedServers();
-
-    if (sharedUiInfo.serverStatus.sortKey != 9) {
-        sharedUiInfo.serverStatus.sortKey = 9;
-        qsort(sharedUiInfo.serverStatus.displayServers, sharedUiInfo.serverStatus.numDisplayServers, 4, UI_ServersQsortCompare);
-    }
-
-    mPitch = Dvar_GetFloat("m_pitch");
-    Dvar_SetBoolByName("ui_mousePitch", mPitch < 0.0f ? 1 : 0);
-
-    sharedUiInfo.serverStatus.currentServerCinematic = -1;
-    sharedUiInfo.previewMovie = -1;
-
-    netGameTypeIdx = (ui_netGameType)->current.integer;
-    Dvar_SetString((dvar_t *)ui_netGameTypeName, sharedUiInfo.gameTypes[netGameTypeIdx].gameType);
-
-    Dvar_RegisterBool("ui_multiplayer", 1, 0x1040);
-}
-
-
-static void UI_BuildPlayerList(void)
-{
-    char cs[sizeof(uiClientState_t)];
-    char name[0x20];
-    int count;
-    int n;
-
-    GetClientState((uiClientState_t *)cs);
-    count = atoi(Info_ValueForKey(CL_GetConfigString(0), "sv_maxclients"));
-    memset(sharedUiInfo.playerClientNums, -1, 0x100);
-    sharedUiInfo.playerCount = 0;
-
-    for (n = 0; n < count; n++) {
-        int playerCount;
-
-        if (!GetClientname(n, name, 0x20))
-            continue;
-
-        playerCount = sharedUiInfo.playerCount;
-        sharedUiInfo.playerClientNums[playerCount] = n;
-        I_strncpyz(sharedUiInfo.playerNames[playerCount], name, 0x20);
-        I_CleanStr(sharedUiInfo.playerNames[playerCount]);
-        sharedUiInfo.playerCount = playerCount + 1;
-    }
-}
-
-void UI_LoadIngameMenus(void)
-{
-    if (g_ingameMenusLoaded)
-        return;
-
-    g_ingameMenusLoaded = 1;
-
-    Load_ScriptMenu("ingame", 3);
-    Load_ScriptMenu("callvote", 3);
-    Load_ScriptMenu("muteplayer", 3);
-    Load_ScriptMenu("quickcommands", 3);
-    Load_ScriptMenu("quickresponses", 3);
-    Load_ScriptMenu("quickstatements", 3);
-    Load_ScriptMenu("serverinfo_dm", 3);
-    Load_ScriptMenu("serverinfo_tdm", 3);
-    Load_ScriptMenu("serverinfo_ctf", 3);
-    Load_ScriptMenu("serverinfo_hq", 3);
-    Load_ScriptMenu("serverinfo_sd", 3);
-    Load_ScriptMenu("team_americangerman", 3);
-    Load_ScriptMenu("team_britishgerman", 3);
-    Load_ScriptMenu("team_russiangerman", 3);
-    Load_ScriptMenu("weapon_american", 3);
-    Load_ScriptMenu("weapon_british", 3);
-    Load_ScriptMenu("weapon_german", 3);
-    Load_ScriptMenu("weapon_russian", 3);
-}
-
-static int UI_ServersQsortCompare(const void *arg1, const void *arg2)
-{
-    int s1 = *(const int *)arg1;
-    int s2 = *(const int *)arg2;
-
-    return LAN_CompareServers(
-        (ui_netSource)->current.integer,
-        sharedUiInfo.serverStatus.sortKey,
-        sharedUiInfo.serverStatus.sortDir,
-        s1, s2);
-}
-
-static void UI_InsertServerAtPosition(int serverIndex, int position)
-{
-    int numServers = sharedUiInfo.serverStatus.numDisplayServers;
-    int *displayServers = sharedUiInfo.serverStatus.displayServers;
-    int *selectedServer = &sharedUiInfo.serverStatus.currentServer;
+    char outputString[0x400];
+    int sourceStringLength;
+    int index;
+    int outputStringCounter;
+    int argIndex;
+    int argLen;
     int j;
 
-    if (position < 0 || numServers < position)
-        return;
+    if (!strstr(sourceString, "&&"))
+        return sourceString;
 
-    if (*selectedServer >= position && numServers != 0)
-        *selectedServer += 1;
+    sourceStringLength = strlen(sourceString);
+    memset(outputString, 0, 0x400);
+    outputStringCounter = 0;
 
-    numServers++;
-    sharedUiInfo.serverStatus.numDisplayServers = numServers;
-
-    for (j = numServers - 1; j > position; j--)
-        displayServers[j] = displayServers[j - 1];
-
-    displayServers[position] = serverIndex;
-}
-
-static void UI_RemoveDuplicateFromFavorites(int serverIndex)
-{
-    int numServers = sharedUiInfo.serverStatus.numDisplayServers;
-    int *displayServers = sharedUiInfo.serverStatus.displayServers;
-    int i, j;
-
-    if (numServers <= 0)
-        return;
-
-    for (i = 0; i < numServers; i++) {
-        if (displayServers[i] == serverIndex)
-            break;
-    }
-    if (i >= numServers)
-        return;
-
-    numServers--;
-    sharedUiInfo.serverStatus.numDisplayServers = numServers;
-
-    for (j = i; j < numServers; j++)
-        displayServers[j] = displayServers[j + 1];
-}
-
-static void UI_BinaryInsertServer(int serverIndex)
-{
-    int numDisplay = sharedUiInfo.serverStatus.numDisplayServers;
-    int *displayServers = sharedUiInfo.serverStatus.displayServers;
-    int lo = 0;
-    int hi = numDisplay;
-    int position = 0;
-    int lastCmp = 0;
-    int source = (ui_netSource)->current.integer;
-    int sortKey = sharedUiInfo.serverStatus.sortKey;
-    int sortDir = sharedUiInfo.serverStatus.sortDir;
-
-    while (hi > 0) {
-        int mid = hi / 2;
-        int testIdx = lo + mid;
-        int cmp = LAN_CompareServers(source, sortKey, sortDir, serverIndex, displayServers[testIdx]);
-
-        lastCmp = cmp;
-        if (cmp == 0) {
-            UI_InsertServerAtPosition(serverIndex, testIdx);
-            return;
-        }
-        if (cmp > 0) {
-            hi -= mid;
-            position = testIdx + 1;
-            lo = position;
-            hi--;
+    for (index = 0; index < sourceStringLength; ) {
+        if (!strncmp(&sourceString[index], "&&", 2) && isdigit(sourceString[index + 2])) {
+            argIndex = sourceString[index + 2] - '1';
+            argLen = strlen(arguments->args[argIndex]);
+            for (j = 0; j < argLen; j++) {
+                outputString[outputStringCounter] = arguments->args[argIndex][j];
+                outputStringCounter++;
+            }
+            index += 3;
         } else {
-            hi -= mid;
+            outputString[outputStringCounter] = sourceString[index];
+            outputStringCounter++;
+            index++;
         }
     }
 
-    if (lastCmp >= 0)
-        position = lo + 1;
-    else
-        position = lo;
-
-    UI_InsertServerAtPosition(serverIndex, position);
-}
-
-static void UI_BuildServerDisplayList(qboolean force)
-{
-    char info_buf[0x400];
-    int count, i, clients, ping;
-    int netSource;
-
-    if (!force) {
-        if (uiInfo->uiDC.realTime <= sharedUiInfo.serverStatus.nextDisplayRefresh)
-            return;
-    }
-
-    clients = 0;
-
-    {
-        const char *motdString = Dvar_GetString("cl_motdString");
-        int motdLen;
-
-        I_strncpyz(sharedUiInfo.serverStatus.motd, motdString, 0x400);
-        motdLen = strlen(sharedUiInfo.serverStatus.motd);
-        if (motdLen == 0) {
-            const char *translated = UI_SafeTranslateString("EXE_COD_MULTIPLAYER");
-            strcpy(sharedUiInfo.serverStatus.motd, va("%s - %s", translated, "1.0"));
-            motdLen = strlen(sharedUiInfo.serverStatus.motd);
-        }
-        if (motdLen != sharedUiInfo.serverStatus.motdLen) {
-            sharedUiInfo.serverStatus.motdLen = motdLen;
-            sharedUiInfo.serverStatus.motdWidth = -1;
-        }
-    }
-
-    if (force) {
-        numclean = 0;
-        sharedUiInfo.serverStatus.numDisplayServers = 0;
-        sharedUiInfo.serverStatus.numPlayersOnServers = 0;
-        netSource = (ui_netSource)->current.integer;
-        sharedUiInfo.serverStatus.serverCount = LAN_GetServerCount(netSource);
-
-        if (sharedUiInfo.serverStatus.currentServer >= 0)
-            Menu_SetFeederSelection(&uiInfo->uiDC, 0, 2, 0, 0);
-
-        LAN_MarkServerDirty((ui_netSource)->current.integer, -1, 1);
-    }
-
-    netSource = (ui_netSource)->current.integer;
-    count = LAN_GetServerCount(netSource);
-
-    if (LAN_WaitServerResponse(netSource) || (netSource == 0 && count == 0)) {
-        sharedUiInfo.serverStatus.numDisplayServers = 0;
-        sharedUiInfo.serverStatus.numPlayersOnServers = 0;
-        sharedUiInfo.serverStatus.serverCount = LAN_GetServerCount((ui_netSource)->current.integer);
-        sharedUiInfo.serverStatus.nextDisplayRefresh = uiInfo->uiDC.realTime + 500;
-        return;
-    }
-
-    qsort(sharedUiInfo.serverStatus.displayServers, sharedUiInfo.serverStatus.numDisplayServers, 4, UI_ServersQsortCompare);
-
-    for (i = 0; i < count; i++) {
-        if (!LAN_ServerIsDirty((ui_netSource)->current.integer, i))
-            continue;
-
-        ping = LAN_GetServerPing((ui_netSource)->current.integer, i);
-        if (ping <= 0 && (ui_netSource)->current.integer != 2)
-            continue;
-
-        LAN_GetServerInfo((ui_netSource)->current.integer, i, info_buf, 0x400);
-        clients = atoi(Info_ValueForKey(info_buf, "clients"));
-        sharedUiInfo.serverStatus.numPlayersOnServers += clients;
-
-        if (I_strnicmp(Info_ValueForKey(info_buf, "addr"), "000.000.000.000", 15) == 0)
-            goto reject;
-        if (!(ui_browserShowEmpty)->current.enabled && clients == 0)
-            goto reject;
-        if (!(ui_browserShowFull)->current.enabled &&
-            clients == atoi(Info_ValueForKey(info_buf, "sv_maxclients")))
-            goto reject;
-        if (!(ui_browserShowPassword)->current.enabled &&
-            atoi(Info_ValueForKey(info_buf, "pswrd")) != 0)
-            goto reject;
-        if (!(ui_browserShowNoPassword)->current.enabled &&
-            atoi(Info_ValueForKey(info_buf, "pswrd")) == 0)
-            goto reject;
-        if ((ui_browserShowPure)->current.enabled &&
-            atoi(Info_ValueForKey(info_buf, "pure")) == 0)
-            goto reject;
-        if ((ui_browserShowDedicated)->current.enabled &&
-            (unsigned)(atoi(Info_ValueForKey(info_buf, "hw")) - 1) > 2)
-            goto reject;
-        if ((ui_browserMod)->current.integer >= 0 &&
-            atoi(Info_ValueForKey(info_buf, "mod")) != (ui_browserMod)->current.integer)
-            goto reject;
-        if ((ui_browserFriendlyfire)->current.integer >= 0 &&
-            atoi(Info_ValueForKey(info_buf, "ff")) != (ui_browserFriendlyfire)->current.integer)
-            goto reject;
-        if ((ui_browserKillcam)->current.integer >= 0 &&
-            atoi(Info_ValueForKey(info_buf, "kc")) != (ui_browserKillcam)->current.integer)
-            goto reject;
-
-        {
-            int joinGTIdx = (ui_joinGameType)->current.integer;
-            const char *joinGTName = sharedUiInfo.joinGameTypes[joinGTIdx].gameTypeName;
-            if (joinGTName[0] != '\0') {
-                const char *joinGTShort = sharedUiInfo.joinGameTypes[joinGTIdx].gameType;
-                if (I_stricmp(Info_ValueForKey(info_buf, "gametype"), joinGTShort) != 0)
-                    goto reject;
-            }
-        }
-
-        if (ui_serverFilterType > 0) {
-            const char *filterBaseName = *(const char **)((byte *)serverFilters + ui_serverFilterType * 8 + 4);
-            if (I_stricmp(Info_ValueForKey(info_buf, "game"), filterBaseName) != 0)
-                goto reject;
-        }
-
-        if ((ui_netSource)->current.integer == 2)
-            UI_RemoveDuplicateFromFavorites(i);
-
-        UI_BinaryInsertServer(i);
-
-        if (ping > 0) {
-            LAN_MarkServerDirty((ui_netSource)->current.integer, i, 0);
-            numclean++;
-        }
-        continue;
-
-    reject:
-        LAN_MarkServerDirty((ui_netSource)->current.integer, i, 0);
-    }
-
-    sharedUiInfo.serverStatus.refreshtime = uiInfo->uiDC.realTime;
-}
-
-int UI_FeederCount(float feederID)
-{
-    if (feederID == 4.0f) {
-        int gameType = (ui_netGameType)->current.integer;
-        int numMaps = sharedUiInfo.mapCount;
-        int count = 0;
-        int i;
-
-        if (numMaps <= 0)
-            return 0;
-
-        for (i = 0; i < numMaps; i++) {
-            byte *entry = (byte *)&sharedUiInfo + i * 0xa4;
-            *(int *)(entry + 0x13f4) = 0;
-            if (*(int *)(entry + 0x1368) & (1 << gameType)) {
-                count++;
-                *(int *)(entry + 0x13f4) = 1;
-            }
-        }
-        return count;
-    }
-
-    if (feederID == 9.0f)
-        return sharedUiInfo.modCount;
-
-    if (feederID == 2.0f) {
-        int serverCount = LAN_GetServerCount((ui_netSource)->current.integer);
-        if (serverCount != sharedUiInfo.serverStatus.serverCount) {
-            sharedUiInfo.serverStatus.serverCount = serverCount;
-            if (sharedUiInfo.serverStatus.numDisplayServers != 0) {
-                sharedUiInfo.serverStatus.currentServer = -1;
-                UI_BuildServerDisplayList(1);
-            }
-        }
-        return sharedUiInfo.serverStatus.numDisplayServers;
-    }
-
-    if (feederID == 13.0f)
-        return sharedUiInfo.serverStatusInfo.numLines;
-
-    if (feederID == 7.0f || feederID == 20.0f) {
-        int curTime = uiInfo->uiDC.realTime;
-        if (curTime > uiInfo->playerRefresh) {
-            uiInfo->playerRefresh = curTime + 3000;
-            UI_BuildPlayerList();
-        }
-        return sharedUiInfo.playerCount;
-    }
-
-    if (feederID == 24.0f)
-        return uiInfo->playerProfileCount;
-
-    return 0;
-}
-
-static void UI_DrawMapPreview(const rectDef_t *rect, const vec_t *color, int net)
-{
-    int map;
-    int mapCount;
-    MaterialHandle material;
-
-    if (net) {
-        map = (ui_currentNetMap)->current.integer;
-    } else {
-        map = (ui_currentMap)->current.integer;
-    }
-
-    mapCount = sharedUiInfo.mapCount;
-    if (map < 0 || map >= mapCount) {
-
-        if (net) {
-            Dvar_SetInt(ui_currentNetMap, 0);
-        } else {
-            Dvar_SetInt(ui_currentMap, 0);
-        }
-        map = 0;
-    }
-
-    material = sharedUiInfo.mapList[map].levelShot;
-
-    if (!material) {
-        material = CL_RegisterMaterialNoMip("menu/art/unknownmap", 3);
-    }
-
-    UI_DrawHandlePic(rect->x, rect->y, rect->w, rect->h,
-                     rect->horzAlign, rect->vertAlign,
-                     color, material);
-}
-
-void UI_SetMap(const char *mapname, const char *gametype)
-{
-    I_strncpyz(g_mapname, mapname, 0x40);
-    I_strncpyz(g_gametype, gametype, 0x40);
-    if (g_mapname[0]) {
-        UI_MapLoadInfo(va("maps/mp/%s.csv", g_mapname));
-    }
-}
-
-void UI_OpenMenu_f(void)
-{
-    Menus_OpenByName(&uiInfo->uiDC, Cmd_Args(1));
-}
-
-void UI_CloseMenu_f(void)
-{
-    Menus_CloseByName(&uiInfo->uiDC, Cmd_Args(1));
-}
-
-void UI_MouseEvent(int dx, int dy)
-{
-    int *cursorX = &uiInfo->uiDC.cursorx;
-    int *cursorY = &uiInfo->uiDC.cursory;
-
-    *cursorX += dx;
-    if (*cursorX < 0)
-        *cursorX = 0;
-    else if (*cursorX > 640)
-        *cursorX = 640;
-
-    *cursorY += dy;
-    if (*cursorY < 0)
-        *cursorY = 0;
-    else if (*cursorY > 480)
-        *cursorY = 480;
-
-    if (Menu_Count(&uiInfo->uiDC) > 0) {
-        Display_MouseMove(&uiInfo->uiDC, 0, *cursorX, *cursorY);
-    }
-}
-
-
-uiMenuCommand_t UI_GetActiveMenu(void)
-{
-    return uiInfo->currentMenuType;
-}
-
-qboolean UI_SetActiveMenu(int menu)
-{
-    menuDef_t *pFocus;
-    const char *errorMsg;
-    LegacyHacks *hacks;
-
-    if (Menu_Count(&uiInfo->uiDC) <= 0)
-        return 0;
-
-    if (menu != UIMENU_SCRIPT_POPUP && menu != UIMENU_SCRIPT_POPUP_NO_MOUSE)
-        uiInfo->currentMenuType = menu;
-
-    switch (menu) {
-    case UIMENU_NONE:
-        Key_SetCatcher(Key_GetCatcher() & ~8);
-        Dvar_SetIntByName("cl_paused", 0);
-        Menus_CloseAll(&uiInfo->uiDC);
-        return 1;
-
-    case UIMENU_MAIN:
-        Key_SetCatcher(8);
-        Menus_OpenByName(&uiInfo->uiDC, "main");
-        errorMsg = Dvar_GetString("com_errorMessage");
-        if (strlen(errorMsg) && I_stricmp(errorMsg, ";"))
-            Menus_OpenByName(&uiInfo->uiDC, "error_popmenu");
-        SND_FadeAllSounds(1.0f, 1000);
-        return 1;
-
-    case UIMENU_INGAME:
-        Key_SetCatcher(8);
-        Menus_CloseAll(&uiInfo->uiDC);
-        if (!Menus_OpenByName(&uiInfo->uiDC, cg->scriptMainMenu))
-            Menus_OpenByName(&uiInfo->uiDC, "main");
-        return 1;
-
-    case UIMENU_NEED_CD:
-        Key_SetCatcher(8);
-        Menus_OpenByName(&uiInfo->uiDC, "needcd");
-        return 1;
-
-    case UIMENU_BAD_CD_KEY:
-        Key_SetCatcher(8);
-        Menus_OpenByName(&uiInfo->uiDC, "badcd");
-        return 1;
-
-    case UIMENU_TEAM:
-        Key_SetCatcher(8);
-        Menus_OpenByName(&uiInfo->uiDC, "team");
-        return 1;
-
-    case UIMENU_PREGAME:
-    case UIMENU_POSTGAME:
-        return 0;
-
-    case UIMENU_WM_QUICKMESSAGE:
-        uiInfo->uiDC.cursorx = 639;
-        uiInfo->uiDC.cursory = 479;
-        Key_SetCatcher(8);
-        clients->displayHUDWithKeycatchUI = 1;
-        Menus_CloseAll(&uiInfo->uiDC);
-        Menus_OpenByName(&uiInfo->uiDC, "quickmessage");
-        return 1;
-
-    case UIMENU_WM_AUTOUPDATE:
-        Menus_OpenByName(&uiInfo->uiDC, "autoupdate");
-        return 1;
-
-    case UIMENU_SCRIPT_POPUP:
-    case UIMENU_SCRIPT_POPUP_NO_MOUSE:
-        pFocus = Menu_GetFocused(&uiInfo->uiDC);
-        if (pFocus && uiInfo->currentMenuType != UIMENU_SCRIPT_POPUP && uiInfo->currentMenuType != UIMENU_SCRIPT_POPUP_NO_MOUSE)
-            return 0;
-        if (pFocus && !I_stricmp(pFocus->window.name, legacyHacks->ui_newScriptMenu))
-            return 1;
-        uiInfo->currentMenuType = UIMENU_SCRIPT_POPUP;
-        if (menu == UIMENU_SCRIPT_POPUP_NO_MOUSE) {
-            uiInfo->uiDC.cursorx = 639;
-            uiInfo->uiDC.cursory = 479;
-        }
-        Key_SetCatcher(8);
-        Menus_CloseAll(&uiInfo->uiDC);
-        hacks = legacyHacks;
-        strcpy(hacks->ui_scriptMenu, hacks->ui_newScriptMenu);
-        hacks->ui_scriptMenuIndex = hacks->ui_newScriptMenuIndex;
-        hacks->ui_newScriptMenu[0] = 0;
-        hacks->ui_newScriptMenuIndex = -1;
-        Menus_OpenByName(&uiInfo->uiDC, hacks->ui_scriptMenu);
-        return 1;
-
-    case UIMENU_PLAYER_PROFILE:
-        Key_SetCatcher(8);
-        Menus_OpenByName(&uiInfo->uiDC, "player_profile");
-        SND_FadeAllSounds(1.0f, 1000);
-        return 1;
-    }
-
-    return 0;
-}
-
-qboolean UI_IsFullscreen(void)
-{
-    return Menus_AnyFullScreenVisible(&uiInfo->uiDC);
-}
-
-qboolean UI_AnyFullScreenMenuVisible(void)
-{
-    return Menus_AnyFullScreenVisible(&uiInfo->uiDC);
+    return va(outputString);
 }
 
 void UI_CloseAll(void)
@@ -4625,24 +3572,23 @@ void UI_CloseAll(void)
     Menus_CloseAll(&uiInfo->uiDC);
 }
 
-void UI_DrawText(const char *text, int maxChars, FontHandle font, float x, float y, int horzAlign, int vertAlign, float scale, const vec_t *color, int style)
+void UI_CloseFocusedMenu(void)
 {
-    float xScale;
-    float yScale;
+    if (Menu_Count(&uiInfo->uiDC) <= 0)
+        return;
 
-    diag_drawtext(text, (void *)font, x, y, scale);
+    if (!Menu_GetFocused(&uiInfo->uiDC)) {
+        if (Key_GetCatcher() & 8) {
+            Key_SetCatcher(Key_GetCatcher() & ~8);
+        }
+        return;
+    }
 
-    xScale = CL_NormalizedTextScale(font, scale);
-    yScale = xScale;
-    CalcSplitScreenTextOffset(font, &y);
-    CalcScreenPlacement(&x, &y, &xScale, &yScale, horzAlign, vertAlign);
-
-    x = (float)I_fround(x);
-    y = (float)I_fround(y);
-
-    CL_DrawTextPhysical(text, maxChars, font, x, y, xScale, yScale, color, style);
+    if (!Menus_AnyFullScreenVisible(&uiInfo->uiDC)) {
+        Menus_CloseAll(&uiInfo->uiDC);
+    }
 }
-#endif
+
 
 static serverStatusDvar_t serverStatusDvars[23] = {
     { (const char *)&str_002a714c, (const char *)&str_002a9ab8, (sscType_t)0x0 },

@@ -199,3 +199,4 @@ void FxChannel_CreateViaMigration( const FxChannelBackwardCompatible *source, in
 	else
 		FxChannel_CreateSampled( target, dimensions, flags, startVals, endVals, delayFraction, waveParm );
 }
+

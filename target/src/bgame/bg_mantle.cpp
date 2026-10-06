@@ -56,6 +56,26 @@ static const char *s_mantleAnimNames[] =
 
 static XAnim *s_mantleAnims;
 
+void Mantle_RegisterDvars();
+void* MantleXAnimPrecacheAlloc( int size );
+void Mantle_DebugPrint( const char *msg );
+int Mantle_GetUpLength( const MantleState *mstate );
+int Mantle_GetOverLength( const MantleState *mstate );
+int Mantle_GetAnim( MantleState *mstate );
+void Mantle_GetAnimDelta( MantleState *mstate, int time, vec3_t delta );
+int Mantle_FindTransition( float curHeight, float goalHeight );
+void Mantle_CalcEndPos( pmove_t *pm, MantleResults *mresults );
+void Mantle_Start( pmove_t *pm, playerState_t *ps, MantleResults *mresults );
+bool Mantle_CheckLedge( pmove_t *pmove, pml_t *pml, MantleResults *mresults, float units );
+void Mantle_CreateAnims( void *(*xanimAlloc)(int) );
+void Mantle_ShutdownAnims();
+bool Mantle_FindMantleSurface( pmove_t *pm, pml_t *pml, trace_t *trace, vec3_t mantleDir );
+void Mantle_Check( pmove_t *pmove, pml_t *pml );
+void Mantle_Move( pmove_t *pm, playerState_t *ps, pml_t *pml );
+void Mantle_CapView( playerState_t *ps );
+void Mantle_ClearHint( playerState_t *ps );
+bool Mantle_IsWeaponInactive( const playerState_t *ps );
+
 /*
 ==================
 Mantle_RegisterDvars
@@ -790,6 +810,7 @@ bool Mantle_IsWeaponInactive( const playerState_t *ps )
 
 	return animIndex != MANTLE_OVER_LOW;
 }
+
 
 // Unreferenced storage; original declarations unknown (sized from the layout).
 static int unusedStorage;

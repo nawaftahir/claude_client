@@ -66,6 +66,14 @@ int Voice_GetLocalVoiceData(ClientVoicePacket_t *voiceData);
 Bool Voice_StartRecording(void);
 Bool Voice_StopRecording(void);
 
+Bool Voice_StartRecording(void);
+Bool Voice_StopRecording(void);
+
+Bool Voice_IsClientTalking(int clientNum)
+{
+    return (Sys_Milliseconds() - s_clientTalkTime[clientNum]) < 300 ? 1 : 0;
+}
+
 Bool Voice_Init(void)
 {
     int *freq;
@@ -108,6 +116,28 @@ Bool Voice_Init(void)
     }
 
     return 0;
+}
+
+void Voice_Shutdown(void)
+{
+    int i;
+
+    for (i = 0; i < 64; i++) {
+        Sound_DestroySample((dsound_sample_t *)s_clientSamples[i]);
+    }
+
+    Voice_StopRecording();
+
+    Record_Shutdown();
+    Encode_Shutdown();
+    Decode_Shutdown();
+    Sound_Shutdown();
+
+    mixerSetMicrophoneMute(1);
+    mixerSetRecordLevel("Mic", (unsigned short)mic_old_reclevel);
+    mixerSetRecordSource(old_rec_source);
+
+    g_voice_initialized = 0;
 }
 
 float Voice_GetVoiceLevel(void)
@@ -154,6 +184,48 @@ void Voice_Playback(void)
     Sound_Frame();
 }
 
+int Voice_GetLocalVoiceData(ClientVoicePacket_t *voiceData)
+{
+
+    if (!g_voice_initialized)
+        return 0;
+
+    if (!recording)
+        Voice_StartRecording();
+
+    if (voice_current_scaler != winvoice_mic_scaler->current.value) {
+        voice_current_scaler = winvoice_mic_scaler->current.value;
+        if (voice_current_scaler < 0.5)
+            voice_current_scaler = 0.5f;
+        else if (voice_current_scaler > 1.5)
+            voice_current_scaler = 1.5f;
+    }
+
+    Record_Frame();
+    return 0;
+}
+
+Bool Voice_StartRecording(void)
+{
+    if (!recording) {
+        currentRecordingSample = Record_NewSample();
+        Record_Start(currentRecordingSample);
+        recording = 1;
+        count++;
+    }
+    return 1;
+}
+
+Bool Voice_StopRecording(void)
+{
+    if (!recording)
+        return 0;
+    Record_Stop(currentRecordingSample);
+    Record_DestroySample(currentRecordingSample);
+    recording = 0;
+    return 1;
+}
+
 void Voice_IncomingVoiceData(unsigned char talker, unsigned char *data, int packetDataSize)
 {
     short decodedData[4096];
@@ -197,71 +269,3 @@ void Voice_IncomingVoiceData(unsigned char talker, unsigned char *data, int pack
     }
 }
 
-Bool Voice_IsClientTalking(int clientNum)
-{
-    return (Sys_Milliseconds() - s_clientTalkTime[clientNum]) < 300 ? 1 : 0;
-}
-
-void Voice_Shutdown(void)
-{
-    int i;
-
-    for (i = 0; i < 64; i++) {
-        Sound_DestroySample((dsound_sample_t *)s_clientSamples[i]);
-    }
-
-    Voice_StopRecording();
-
-    Record_Shutdown();
-    Encode_Shutdown();
-    Decode_Shutdown();
-    Sound_Shutdown();
-
-    mixerSetMicrophoneMute(1);
-    mixerSetRecordLevel("Mic", (unsigned short)mic_old_reclevel);
-    mixerSetRecordSource(old_rec_source);
-
-    g_voice_initialized = 0;
-}
-
-int Voice_GetLocalVoiceData(ClientVoicePacket_t *voiceData)
-{
-
-    if (!g_voice_initialized)
-        return 0;
-
-    if (!recording)
-        Voice_StartRecording();
-
-    if (voice_current_scaler != winvoice_mic_scaler->current.value) {
-        voice_current_scaler = winvoice_mic_scaler->current.value;
-        if (voice_current_scaler < 0.5)
-            voice_current_scaler = 0.5f;
-        else if (voice_current_scaler > 1.5)
-            voice_current_scaler = 1.5f;
-    }
-
-    Record_Frame();
-    return 0;
-}
-
-Bool Voice_StartRecording(void)
-{
-    if (!recording) {
-        currentRecordingSample = Record_NewSample();
-        Record_Start(currentRecordingSample);
-        recording = 1;
-        count++;
-    }
-    return 1;
-}
-
-Bool Voice_StopRecording(void)
-{
-    if (!recording)
-        return 0;
-    Record_Stop(currentRecordingSample);
-    Record_DestroySample(currentRecordingSample);
-    recording = 0;
-    return 1;
-}

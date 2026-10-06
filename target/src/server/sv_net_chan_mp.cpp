@@ -3,12 +3,14 @@
 
 void CL_DrawString( int x, int y, const char *pszString, int bShadow, int iCharHeight );
 
-// Original name unknown.
-static void SV_Netchan_DrawProfileLine( const char *line, int y )
-{
-	CL_DrawString(32, y, line, 0, 8);
-}
-
+void SV_Netchan_Encode( client_t *client, byte *data, int cursize );
+void SV_Netchan_Decode( client_t *client, byte *data, int remaining );
+bool SV_Netchan_TransmitNextFragment( netchan_t *chan );
+bool SV_Netchan_Transmit( client_t *client, byte *data, int length );
+void SV_Netchan_AddOOBProfilePacket( int iLength );
+void SV_Netchan_SendOOBPacket( int iLength, const void *pData, netadr_t to );
+void SV_Netchan_UpdateProfileStats();
+void SV_Netchan_PrintProfileStats( int bPrintToConsole );
 
 /*
 ==============
@@ -161,6 +163,12 @@ void SV_Netchan_UpdateProfileStats()
 		NetProf_UpdateStatistics(&cl->netchan.pProf->send);
 		NetProf_UpdateStatistics(&cl->netchan.pProf->recieve);
 	}
+}
+
+// Original name unknown.
+static void SV_Netchan_DrawProfileLine( const char *line, int y )
+{
+	CL_DrawString(32, y, line, 0, 8);
 }
 
 /*
@@ -450,3 +458,4 @@ void SV_Netchan_PrintProfileStats( int bPrintToConsole )
 		}
 	}
 }
+

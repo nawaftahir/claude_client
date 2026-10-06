@@ -44,6 +44,133 @@ struct dbrushside_t
 	int materialNum;
 };
 
+static void CMod_LoadMaterials( cmvis_lump_t *l );
+static cLeafBrushNode_s *CMod_AllocLeafBrushNode();
+static void CMod_LoadSubmodels( cmvis_lump_t *l );
+cLeafBrushNode_s* CMod_PartionLeafBrushes_r(uint16_t *leafBrushes, int numLeafBrushes, const vec3_t mins, const vec3_t maxs);
+static void CMod_PartionLeafBrushes(uint16_t *leafBrushes, int numLeafBrushes, cLeaf_s *leaf);
+static int CMod_GetLeafTerrainContents(cLeaf_s *leaf);
+static void CMod_LoadSubmodelBrushNodes( cmvis_lump_t *l );
+static void CMod_LoadNodes( cmvis_lump_t *l );
+static void CMod_LoadBrushes( cmvis_lump_t *lBrushes, cmvis_lump_t *lSides );
+static void CMod_LoadLeafs( cmvis_lump_t *l, bool usePvs );
+static void CMod_LoadLeafBrushNodes( cmvis_lump_t *l );
+static void CMod_LoadPlanes( const char *base, cmvis_lump_t *l );
+static void CMod_LoadLeafBrushes( cmvis_lump_t *l );
+static void CMod_LoadLeafSurfaces( cmvis_lump_t *l );
+static void CMod_LoadCollisionVerts( cmvis_lump_t *l );
+static void CMod_LoadCollisionEdges( cmvis_lump_t *l );
+static void CMod_LoadCollisionTriangles( cmvis_lump_t *l );
+static void CMod_LoadCollisionBorders( cmvis_lump_t *l );
+static void CMod_LoadCollisionPartitions( cmvis_lump_t *l );
+static void CMod_LoadCollisionAabbTrees( cmvis_lump_t *l );
+static void CMod_LoadEntityString( cmvis_lump_t *l );
+static void CMod_LoadVisibility( cmvis_lump_t *l );
+static void CMod_LoadBrushRelated( cmvis_lump_t *lumps, bool usePvs );
+void CM_LoadMapFromBsp(const char *name, bool usePvs);
+static void CM_InitBoxHull( void );
+void CM_Cleanup( void );
+cplane_t *CM_GetPlaneNum( int planeNum );
+int CM_LoadLumpFromFile( int lump, byte **data );
+
+struct DiskBrushModel
+{
+	vec3_t mins;
+	vec3_t maxs;
+	int firstTriangle;
+	int numTriangles;
+	int firstSurface;
+	int numSurfaces;
+	int firstBrush;
+	int numBrushes;
+};
+
+struct dnode_t
+{
+	int planeNum;
+	int children[2];
+	int mins[3];
+	int maxs[3];
+};
+
+/*
+=================
+CMod_LoadBrushes
+=================
+*/
+#define MIN_NUM_SIDES 6
+
+struct DiskLeafCollision
+{
+	int cluster;
+	int area;
+	int firstCollAabbIndex;
+	int collAabbCount;
+	int firstLeafBrush;
+	int numLeafBrushes;
+	int cellNum;
+	int firstLightIndex;
+	int numLights;
+};
+
+struct dplane_t
+{
+	vec3_t normal;
+	float dist;
+};
+
+struct EdgeInfo
+{
+	float discriminant;
+	vec3_t origin;
+	vec3_t axis[3];
+	float discNormalDist;
+};
+
+struct DiskCollBorder
+{
+	float distEq[3];
+	float zBase;
+	float zSlope;
+	float start;
+	float length;
+};
+
+struct DiskCollPartition
+{
+	uint16_t checkStamp;
+	byte triCount;
+	byte borderCount;
+	int firstTriIndex;
+	int firstBorderIndex;
+};
+
+struct DiskCollAabbTree
+{
+	vec3_t origin;
+	vec3_t halfSize;
+	int16_t materialIndex;
+	int16_t childCount;
+	union
+	{
+		int firstChildIndex;
+		int partitionIndex;
+	};
+};
+
+/*
+===================
+CMod_LoadVisibility
+===================
+*/
+
+/*
+=================
+CM_LoadLumpFromFile
+=================
+*/
+#define BSP_HEADER_SIZE 320
+
 /*
 ===================
 CMod_LoadMaterials
@@ -102,18 +229,6 @@ static cLeafBrushNode_s *CMod_AllocLeafBrushNode()
 
 	return node;
 }
-
-struct DiskBrushModel
-{
-	vec3_t mins;
-	vec3_t maxs;
-	int firstTriangle;
-	int numTriangles;
-	int firstSurface;
-	int numSurfaces;
-	int firstBrush;
-	int numBrushes;
-};
 
 /*
 =================
@@ -562,14 +677,6 @@ static void CMod_LoadSubmodelBrushNodes( cmvis_lump_t *l )
 	}
 }
 
-struct dnode_t
-{
-	int planeNum;
-	int children[2];
-	int mins[3];
-	int maxs[3];
-};
-
 /*
 ===================
 CMod_LoadNodes
@@ -620,12 +727,6 @@ static void CMod_LoadNodes( cmvis_lump_t *l )
 	}
 }
 
-/*
-=================
-CMod_LoadBrushes
-=================
-*/
-#define MIN_NUM_SIDES 6
 static void CMod_LoadBrushes( cmvis_lump_t *lBrushes, cmvis_lump_t *lSides )
 {
 	dbrush_t *inBrush;
@@ -751,19 +852,6 @@ static void CMod_LoadBrushes( cmvis_lump_t *lBrushes, cmvis_lump_t *lSides )
 	}
 }
 
-struct DiskLeafCollision
-{
-	int cluster;
-	int area;
-	int firstCollAabbIndex;
-	int collAabbCount;
-	int firstLeafBrush;
-	int numLeafBrushes;
-	int cellNum;
-	int firstLightIndex;
-	int numLights;
-};
-
 /*
 =================
 CMod_LoadLeafs
@@ -874,12 +962,6 @@ static void CMod_LoadLeafBrushNodes( cmvis_lump_t *l )
 		CMod_PartionLeafBrushes(&cm.leafbrushes[indexFirstLeafBrush], numLeafBrushes, out);
 	}
 }
-
-struct dplane_t
-{
-	vec3_t normal;
-	float dist;
-};
 
 /*
 ===================
@@ -1042,14 +1124,6 @@ static void CMod_LoadCollisionVerts( cmvis_lump_t *l )
 	}
 }
 
-struct EdgeInfo
-{
-	float discriminant;
-	vec3_t origin;
-	vec3_t axis[3];
-	float discNormalDist;
-};
-
 /*
 ===================
 CMod_LoadCollisionEdges
@@ -1158,15 +1232,6 @@ static void CMod_LoadCollisionTriangles( cmvis_lump_t *l )
 	}
 }
 
-struct DiskCollBorder
-{
-	float distEq[3];
-	float zBase;
-	float zSlope;
-	float start;
-	float length;
-};
-
 /*
 ===================
 CMod_LoadCollisionBorders
@@ -1206,15 +1271,6 @@ static void CMod_LoadCollisionBorders( cmvis_lump_t *l )
 	}
 }
 
-struct DiskCollPartition
-{
-	uint16_t checkStamp;
-	byte triCount;
-	byte borderCount;
-	int firstTriIndex;
-	int firstBorderIndex;
-};
-
 /*
 ===================
 CMod_LoadCollisionPartitions
@@ -1250,19 +1306,6 @@ static void CMod_LoadCollisionPartitions( cmvis_lump_t *l )
 		out->borders = &cm.borders[LittleLong(in->firstBorderIndex)];
 	}
 }
-
-struct DiskCollAabbTree
-{
-	vec3_t origin;
-	vec3_t halfSize;
-	int16_t materialIndex;
-	int16_t childCount;
-	union
-	{
-		int firstChildIndex;
-		int partitionIndex;
-	};
-};
 
 /*
 =================
@@ -1317,12 +1360,6 @@ static void CMod_LoadEntityString( cmvis_lump_t *l )
 	cm.entityString = (char *)CM_Hunk_Alloc(l->filelen, "CMod_LoadEntityString", 9);
 	Com_Memcpy(cm.entityString, cmod_base + l->fileofs, l->filelen);
 }
-
-/*
-===================
-CMod_LoadVisibility
-===================
-*/
 
 static void CMod_LoadVisibility( cmvis_lump_t *l )
 {
@@ -1491,13 +1528,6 @@ cplane_t *CM_GetPlaneNum( int planeNum )
 	return &cme.planes[planeNum];
 }
 
-/*
-=================
-CM_LoadLumpFromFile
-=================
-*/
-#define BSP_HEADER_SIZE 320
-
 int CM_LoadLumpFromFile( int lump, byte **data )
 {
 	int header[BSP_HEADER_SIZE / 4];
@@ -1541,6 +1571,7 @@ void CM_FreeLumpData( void )
 {
 	Hunk_FreeTempMemory(cm_lumpData);
 }
+
 
 // Unreferenced storage; original declarations unknown (sized from the layout).
 static int unusedStorage[2];

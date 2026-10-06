@@ -168,11 +168,7 @@ COD2_ASSERT_FIELD(centity_t, bMuzzleFlash,   0x1e2);
 
 static void CG_PlayADSAnim(XAnimTree *pAnimTree, int animIndex);
 int CG_WeaponDObjHandle(int weaponNum);
-#ifndef __EMSCRIPTEN__
 void CG_Weapons_SetToDefault(int weaponNum, DObjModel_s *dobjModels);
-#else
-void CG_Weapons_SetToDefault(int weaponNum, weaponInfo_s (*dobjModels)[4]);
-#endif
 void CG_HoldBreathInit(void);
 void CG_SetupWeaponDef(void);
 void CG_SelectWeaponIndex(int weaponIndex);
@@ -200,6 +196,159 @@ void CG_NextWeapon_f(void);
 void CG_WeaponRunXModelAnims(playerState_t *ps, weaponInfo_t *weapInfo);
 void CG_UpdateViewWeaponAnim(playerState_t *ps);
 
+static void CG_PlayADSAnim(XAnimTree *pAnimTree, int animIndex);
+void CG_SelectWeaponIndex(int weaponIndex);
+static qboolean CG_IsLocalClientEntity(cg_t *cg, entityState_t *ent);
+void CG_RegisterWeapon(int weaponNum);
+void CG_RegisterItemVisuals(int itemNum);
+void CG_CycleWeap(qboolean next, qboolean checkAmmo);
+static inline __attribute__((always_inline)) void CG_SetWeaponXAnimWeights(struct XAnimTree_s *tree, weaponInfo_t *weapInfo, int activeAnim);
+
+void CG_HoldBreathInit(void)
+{
+    cg->holdBreathTime = -1;
+    cg->holdBreathInTime = 0;
+    cg->holdBreathDelay = 0;
+    cg->holdBreathFrac = 0.0f;
+}
+
+// com_math.h
+inline float I_fsel(const float x, const float y, const float z)
+{
+    return x >= 0.0f ? y : z;
+}
+
+inline float I_fmax(const float x, const float y)
+{
+    return I_fsel(x - y, x, y);
+}
+
+inline float I_fmin(const float x, const float y)
+{
+    return I_fsel(y - x, x, y);
+}
+
+inline void VectorScale(const vec3_t v, const float s, vec3_t o)
+{
+    o[0] = s * v[0];
+    o[1] = s * v[1];
+    o[2] = s * v[2];
+}
+
+inline void VectorMA(const vec3_t v, const float s, const vec3_t b, vec3_t o)
+{
+    o[0] = v[0] + s * b[0];
+    o[1] = v[1] + s * b[1];
+    o[2] = v[2] + s * b[2];
+}
+
+// Original name unknown.
+static void CG_StartWeaponXAnim(struct XAnimTree_s *tree, int weaponIndex, int activeAnim)
+{
+    int i;
+    weaponInfo_t *weapInfo;
+
+    weapInfo = &cg_weaponsArray[weaponIndex];
+    for (i = 0; i < 20; i++) {
+        if (activeAnim == i + 1)
+            XAnimSetGoalWeight(tree, i + 1, 1.0f, 0.0f, weapInfo->viewModelAnimRates[i + 1], 0, 1, 1);
+        else
+            XAnimSetGoalWeight(tree, i + 1, 0.0f, 0.0f, weapInfo->viewModelAnimRates[i + 1], 0, 0, 0);
+    }
+}
+
+void CG_WeaponRunXModelAnims(playerState_t *ps, weaponInfo_t *weapInfo)
+{
+    WeaponDef *weapDef;
+    struct XAnimTree_s *pAnimTree;
+    int weaponIndex;
+    int i;
+    qboolean adsIn;
+
+    pAnimTree = DObjGetTree(weapInfo->viewModelDObj);
+    weaponIndex = BG_GetViewmodelWeaponIndex(ps);
+    weapDef = (WeaponDef *)BG_GetWeaponDef(weaponIndex);
+
+    adsIn = 0;
+    if (ps->weaponstate == 5 && ps->weaponTime - weapDef->iPositionReloadTransTime > 0) {
+        adsIn = 0;
+    } else if (ps->pm_flags & 0x40) {
+        adsIn = 1;
+        if (ps->pm_flags & 0x10)
+            adsIn = 0;
+    }
+    if (weapDef->bADSPositionInfo)
+        CG_PlayADSAnim(pAnimTree, adsIn ? 0x15 : 0x16);
+
+    if (ps->weapAnim == weapInfo->iPrevAnim)
+        return;
+
+    switch (ps->weapAnim & ~0x200) {
+    case 0:
+        for (i = 1; i < 0x15; i++) {
+            if (!XAnimHasFinished(pAnimTree, i)) {
+                weapInfo->iPrevAnim = -1;
+                return;
+            }
+        }
+        if (!ps->ammoclip[BG_ClipForWeapon(weaponIndex)])
+            CG_StartWeaponXAnim(pAnimTree, weaponIndex, 2);
+        else
+            CG_StartWeaponXAnim(pAnimTree, weaponIndex, 1);
+        break;
+    case 2: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 3); break;
+    case 3: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 5); break;
+    case 4: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 6); break;
+    case 5: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 18); break;
+    case 6: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 19); break;
+    case 7: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 20); break;
+    case 8: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 7); break;
+    case 9: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 13); break;
+    case 10: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 12); break;
+    case 11: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 8); break;
+    case 12: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 9); break;
+    case 13: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 10); break;
+    case 14: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 11); break;
+    case 15: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 15); break;
+    case 16: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 14); break;
+    case 17: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 17); break;
+    case 18: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 16); break;
+    case 19: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 4); break;
+    default:
+        CG_StartWeaponXAnim(pAnimTree, weaponIndex, 1);
+        Com_Printf("CG_WeaponRunXModelAnims: Unknown weapon animation %i\n", ps->weapAnim & ~0x200);
+        break;
+    }
+
+    weapInfo->iPrevAnim = ps->weapAnim;
+}
+
+static void CG_ResetViewWeaponAnimTrees(playerState_t *ps)
+{
+    byte *psBytes = (byte *)ps;
+    struct XAnimTree_s *tree;
+    weaponInfo_t *weapInfo;
+    int weaponNum;
+    int clip;
+    int activeAnim;
+
+    for (weaponNum = 1; weaponNum <= BG_GetNumWeapons(); weaponNum++) {
+        weapInfo = &cg_weaponsArray[weaponNum];
+        if (weapInfo->viewModelDObj) {
+            tree = DObjGetTree(weapInfo->viewModelDObj);
+            XAnimClearTreeGoalWeights(tree, 0, 0);
+            XAnimSetGoalWeight(tree, 0, 1.0f, 0.0f, weapInfo->viewModelAnimRates[0], 0, 1, 0);
+
+            clip = BG_ClipForWeapon(weaponNum);
+            if (*(int *)(((char *)psBytes + offsetof(playerState_t, ammoclip[0])) + clip * 4))
+                activeAnim = 1;
+            else
+                activeAnim = 2;
+            CG_SetWeaponXAnimWeights(tree, weapInfo, activeAnim);
+        }
+    }
+}
+
 static void CG_PlayADSAnim(XAnimTree *pAnimTree, int animIndex)
 {
     if (animIndex == 0x15) {
@@ -221,67 +370,37 @@ int CG_WeaponDObjHandle(int weaponNum)
     return weaponNum + 0x400;
 }
 
-static void CG_SetHoldBreathChannelVolumes(float frac)
+static void CG_PlayViewWeaponNotetrackSounds(void)
 {
-    float volumes[11];
+    XAnimNotify *notifyList;
+    weaponInfo_t *weapInfo;
+    snd_alias_list_t *aliasList;
+    int weaponIndex;
+    int notifyCount;
     int i;
 
-    if (frac == 0.0f) {
-        SND_DeactivateChannelVolumes(1, 0);
+    aliasList = 0;
+    weaponIndex = BG_GetViewmodelWeaponIndex(&cg->predictedPlayerState);
+    if (!weaponIndex)
         return;
+
+    weapInfo = &cg_weaponsArray[weaponIndex];
+    notifyCount = DObjGetClientNotifyList(&notifyList);
+    for (i = 0; i < notifyCount; i++) {
+        if (!stricmp(notifyList[i].name, "noteTrackSoundA"))
+            aliasList = weapInfo->noteTrackSound[0];
+        else if (!stricmp(notifyList[i].name, "noteTrackSoundB"))
+            aliasList = weapInfo->noteTrackSound[1];
+        else if (!stricmp(notifyList[i].name, "noteTrackSoundC"))
+            aliasList = weapInfo->noteTrackSound[2];
+        else if (!stricmp(notifyList[i].name, "noteTrackSoundD"))
+            aliasList = weapInfo->noteTrackSound[3];
+
+        if (aliasList)
+            CG_PlayClientSoundAlias(aliasList);
     }
-
-    for (i = 0; i < 11; i++)
-        volumes[i] = 1.0f + (cgs->holdBreathParams.sound.channelvolume[i] - 1.0f) * frac;
-
-    SND_SetChannelVolumes(1, volumes, 0);
 }
 
-static void CG_UpdateHoldBreathSound(void)
-{
-    int delayMsec;
-
-    if (cg->holdBreathDelay > 0)
-        cg->holdBreathDelay -= cg->frametime;
-
-    if (cg->predictedPlayerState.pm_flags & 0x4000) {
-        cg->holdBreathFrac = DiffTrack(1.0f, cg->holdBreathFrac,
-                                       player_breath_snd_lerp->current.value,
-                                       (float)cg->frametime * 0.001f);
-
-        if (cg->holdBreathTime < 0) {
-            cg->holdBreathTime = 0;
-            if (cg->holdBreathDelay <= 0) {
-                cg->holdBreathInTime = CG_PlayClientSoundAlias(cgs->media.playerBreathInSound);
-                cg->holdBreathDelay = (int)(player_breath_snd_delay->current.value * 1000.0f);
-            } else {
-                cg->holdBreathInTime = 0;
-            }
-        } else if (cg->holdBreathTime > cg->holdBreathInTime) {
-            CG_PlayClientSoundAlias(cgs->media.playerHeartBeatSound);
-        }
-
-        cg->holdBreathTime += cg->frametime;
-    } else {
-        if (cg->holdBreathTime >= 0) {
-            cg->holdBreathTime += cg->frametime;
-            if (cg->holdBreathTime > (int)(player_breath_hold_time->current.value * 1000.0f)) {
-                CG_PlayClientSoundAlias(cgs->media.playerBreathGaspSound);
-            } else if (cg->holdBreathDelay <= 0) {
-                CG_PlayClientSoundAlias(cgs->media.playerBreathOutSound);
-                cg->holdBreathDelay = (int)(player_breath_snd_delay->current.value * 1000.0f);
-            }
-        }
-
-        cg->holdBreathTime = -1;
-        cg->holdBreathInTime = 0;
-        cg->holdBreathFrac = 0.0f;
-    }
-
-    CG_SetHoldBreathChannelVolumes(cg->holdBreathFrac);
-}
-
-#ifndef __EMSCRIPTEN__
 void CG_Weapons_SetToDefault(int weaponNum, DObjModel_s *dobjModels)
 {
     WeaponDef *weapDef;
@@ -302,237 +421,6 @@ void CG_Weapons_SetToDefault(int weaponNum, DObjModel_s *dobjModels)
 
     sprintf(modelFile, "%s%s", "xmodel/", weapDef->szGunXModel);
     dobjModels[1].model = CL_RegisterModel(modelFile);
-}
-
-void CG_HoldBreathInit(void)
-{
-    cg->holdBreathTime = -1;
-    cg->holdBreathInTime = 0;
-    cg->holdBreathDelay = 0;
-    cg->holdBreathFrac = 0.0f;
-}
-
-// Name from CoD4; original CoD2 name unknown.
-static void ParseWeaponDefFiles(const char **ppszFiles, int iNumFiles)
-{
-    const char *name;
-    int i;
-
-    for (i = 0; i < iNumFiles; i++) {
-        name = ppszFiles[i];
-        if (BG_GetWeaponIndexForName(name, 0) != i + 1)
-            Com_Error(ERR_DROP, "Weapon index mismatch for '%s'", name);
-    }
-}
-
-void CG_SetupWeaponDef(void)
-{
-    char szString[0x2000];
-    char *pszFiles[0x7f];
-    char *scan;
-    int iNumFiles;
-
-    memset(pszFiles, 0, sizeof(pszFiles));
-    iNumFiles = 0;
-    strcpy(szString, CL_GetConfigString(7));
-    scan = szString;
-    pszFiles[iNumFiles++] = szString;
-
-    while (*scan) {
-        if (*scan == ' ') {
-            *scan++ = '\0';
-            if (*scan && *scan != ' ')
-                pszFiles[iNumFiles++] = scan;
-        } else {
-            scan++;
-        }
-    }
-
-    ParseWeaponDefFiles((const char **)pszFiles, iNumFiles);
-}
-
-void CG_SelectWeaponIndex(int weaponIndex)
-{
-    int oldWeaponIndex;
-    qboolean keepAds;
-
-    cg->weaponSelectTime = cg->time;
-
-    oldWeaponIndex = cg->weaponSelect;
-    if (oldWeaponIndex == weaponIndex)
-        return;
-
-    keepAds = weaponIndex && weaponIndex == ((WeaponDef *)BG_GetWeaponDef(oldWeaponIndex))->iAltWeaponIndex;
-    cg->weaponSelect = weaponIndex;
-    CG_MenuShowNotify(1);
-
-    if (!keepAds)
-        CL_SetADS(0);
-}
-
-static qboolean __attribute_regparm__(3) CG_CalcMuzzlePoint(int entityNum, vec_t *muzzle, unsigned int flashTag)
-{
-    snapshot_t *snap;
-    centity_t *cent;
-    void *dobj;
-    int entFlags;
-
-    snap = cg->nextSnap;
-
-    if ((snap->ps.pm_flags & 0xc00000) && entityNum == snap->ps.clientNum) {
-        muzzle[0] = cg->refdef.vieworg[0];
-        muzzle[1] = cg->refdef.vieworg[1];
-        muzzle[2] = cg->refdef.vieworg[2];
-        return 1;
-    }
-
-    cent = &cg_entities[entityNum];
-    dobj = Com_GetClientDObj(cent->nextState.number, cent->localClientNum);
-    if (!dobj)
-        return 0;
-
-    if (CG_DObjGetWorldTagPos(cent, (struct DObj_s *)dobj, flashTag, muzzle))
-        return 1;
-
-    muzzle[0] = cent->nextState.pos.trBase[0];
-    muzzle[1] = cent->nextState.pos.trBase[1];
-    muzzle[2] = cent->nextState.pos.trBase[2];
-
-    if (entityNum >= 64)
-        return 1;
-
-    Com_DPrintf("No %s in CG_CalcMuzzlePoint on entity %d.\n", SL_ConvertToString(flashTag), entityNum);
-
-    entFlags = cent->nextState.eFlags;
-    if (entFlags & 8)
-        muzzle[2] += 11.0f;
-    else if (entFlags & 4)
-        muzzle[2] += 40.0f;
-    else
-        muzzle[2] += 60.0f;
-
-    return 1;
-}
-
-void CG_EjectWeaponBrass(entityState_t *ent, int event)
-{
-    byte *entBytes;
-    weaponInfo_t *weapInfo;
-    snapshot_t *snap;
-    int weaponNum;
-    int bolt[2];
-    void *effect;
-    unsigned int tagBrass;
-
-    if (!cg_brass->current.enabled)
-        return;
-
-    entBytes = (byte *)ent;
-    if (*(int *)(entBytes + 4) > 9)
-        return;
-
-    weaponNum = *(int *)(entBytes + 0xc8);
-    if (!weaponNum)
-        return;
-
-    if (weaponNum > BG_GetNumWeapons())
-        Com_Error(ERR_DROP, "\x15"
-                     "CG_EjectWeaponBrass: ent->weapon > BG_GetNumWeapons()");
-
-    weapInfo = &cg_weaponsArray[weaponNum];
-    effect = weapInfo->lastShotEjectEffect;
-    if (event != 0xa0 || !effect) {
-        effect = weapInfo->shellEjectEffect;
-        if (!effect)
-            return;
-    }
-
-    snap = cg->nextSnap;
-    if ((snap->ps.pm_flags & 0xc00000) && ent->number == snap->ps.clientNum)
-        bolt[0] = weaponNum + 0x400;
-    else
-        bolt[0] = ent->number;
-
-    tagBrass = scr_const.tag_brass;
-    bolt[1] = FX_GetBoneIndex(bolt[0], tagBrass);
-    if (bolt[1] < 0)
-        return;
-
-    FX_PlayEntityEffect( (EffectTemplate *)(effect), ejectBrassCasingOrigin, 0, (const FxBoltInfo *)(bolt));
-}
-
-static qboolean CG_IsLocalClientEntity(cg_t *cg, entityState_t *ent)
-{
-    snapshot_t *snap = cg->nextSnap;
-
-    return (snap->ps.pm_flags & 0xc00000) && ent->number == snap->ps.clientNum;
-}
-
-void CG_FireWeapon(centity_t *cent, int event, int barrel)
-{
-    entityState_t *ent;
-    weaponInfo_t *weapInfo;
-    WeaponDef *weapDef;
-    snd_alias_list_t *fireSound;
-    vec3_t origin;
-    int duration;
-    qboolean localTurret;
-    struct DObj_s *viewModel;
-    struct DObj_s *obj;
-    int hasTag;
-
-    ent = &cent->nextState;
-    if (!ent->weapon)
-        return;
-
-    if (ent->weapon > BG_GetNumWeapons()) {
-        Com_Error(ERR_DROP, "\x15"
-                     "CG_FireWeapon: ent->weapon > BG_GetNumWeapons()");
-        return;
-    }
-
-    weapInfo = &cg_weaponsArray[ent->weapon];
-    BG_GetWeaponDef(ent->weapon);
-    cent->bMuzzleFlash = 1;
-
-    if (CG_IsLocalClientEntity(cg, ent))
-        BG_WeaponFireRecoil(&cg->predictedPlayerState, cg->vGunSpeed, cg->kickAVel);
-
-    localTurret = 0;
-    if (ent->eType == 9 && !cg->renderingThirdPerson && (cg->nextSnap->ps.eFlags & 0x300) && cg->nextSnap->ps.viewlocked_entNum == ent->number)
-        localTurret = 1;
-    if (ent->eType == 9)
-        WeaponFlash(ent->number, ent->weapon, localTurret, cent->lerpOrigin, *s_barrelTags[barrel]);
-
-    fireSound = weapInfo->flashSound;
-    if (weapInfo->flashSoundPlayer && CG_IsLocalClientEntity(cg, ent))
-        fireSound = weapInfo->flashSoundPlayer;
-
-    if (event == 0xa0) {
-        if (weapInfo->lastShotSoundPlayer && CG_IsLocalClientEntity(cg, ent))
-            fireSound = weapInfo->lastShotSoundPlayer;
-        else if (weapInfo->lastShotSound)
-            fireSound = weapInfo->lastShotSound;
-    }
-
-    if (fireSound) {
-        if (CG_IsLocalClientEntity(cg, ent)) {
-            viewModel = weapInfo->viewModelDObj;
-            hasTag = viewModel && CG_DObjGetViewModelTagPos(viewModel, scr_const.tag_flash, origin);
-        } else {
-            obj = (DObj_s *)(Com_GetClientDObj(ent->number, cent->localClientNum));
-            hasTag = obj && CG_DObjGetWorldTagPos(cent, obj, scr_const.tag_flash, origin);
-        }
-        if (!hasTag)
-            BG_EvaluateTrajectory(&ent->pos, cg->time, origin);
-        duration = CG_PlaySoundAlias(ent->number, origin, fireSound);
-        if (cent->nextState.eType == 1)
-            CG_CompassAddWeaponPingInfo(cent, origin, duration);
-    }
-
-    weapDef = (WeaponDef *)BG_GetWeaponDef(ent->weapon);
-    if (!weapDef->bBoltAction)
-        CG_EjectWeaponBrass(ent, event);
 }
 
 void CG_RegisterWeapon(int weaponNum)
@@ -817,6 +705,189 @@ void CG_RegisterWeapon(int weaponNum)
     }
 }
 
+// Name from CoD4; original CoD2 name unknown.
+static void ChangeViewmodelDobj(int weaponIdx, const char *handModel)
+{
+    weaponInfo_t *weapInfo;
+    WeaponDef *weapDef;
+    struct XAnimTree_s *pAnimTree;
+    DObjModel_s dobjModels[2];
+    int dobjHandle;
+    char modelFile[64];
+
+    if (!weaponIdx)
+        return;
+
+    weapDef = (WeaponDef *)BG_GetWeaponDef(weaponIdx);
+    weapInfo = &cg_weaponsArray[weaponIdx];
+    if (!weapInfo->viewModelDObj)
+        return;
+
+    if (!weapDef->szGunXModel[0])
+        return;
+
+    pAnimTree = DObjGetTree(weapInfo->viewModelDObj);
+    dobjHandle = weaponIdx + 0x400;
+    Com_SafeClientDObjFree(dobjHandle);
+
+    dobjModels[0].boneName = 0;
+    dobjModels[0].ignoreCollision = 0;
+    dobjModels[1].boneName = "tag_weapon";
+    dobjModels[1].ignoreCollision = 0;
+    dobjModels[0].model = CL_RegisterModel(handModel);
+
+    sprintf(modelFile, "%s%s", "xmodel/", weapDef->szGunXModel);
+    dobjModels[1].model = CL_RegisterModel(modelFile);
+
+    if (XModelBad(dobjModels[0].model) || XModelBad(dobjModels[1].model))
+        CG_Weapons_SetToDefault(weaponIdx, dobjModels);
+
+    Com_ClientDObjCreate(dobjModels, 2, pAnimTree, dobjHandle);
+    weapInfo->viewModelDObj = (DObj_s *)(Com_GetClientDObj(dobjHandle, 0));
+    I_strncpyz(weapInfo->handModel, handModel, 0x40);
+    DObjUpdateClientInfo(weapInfo->viewModelDObj, 0.05f);
+}
+
+void CG_UpdateHandViewmodels(const char *handModel)
+{
+    int weaponIdx;
+
+    for (weaponIdx = 1; weaponIdx <= BG_GetNumWeapons(); weaponIdx++) {
+        if (strcmp(cg_weaponsArray[weaponIdx].handModel, handModel))
+            ChangeViewmodelDobj(weaponIdx, handModel);
+    }
+}
+
+void CG_SpawnTracer(vec_t *pstart, vec_t *pend)
+{
+    vec3_t start;
+    vec3_t dir;
+    float dist;
+    float speed;
+    int time;
+    int tracerDelay;
+    localEntity_t *le;
+
+    start[0] = pstart[0];
+    start[1] = pstart[1];
+    start[2] = pstart[2];
+
+    dir[0] = pend[0] - start[0];
+    dir[1] = pend[1] - start[1];
+    dir[2] = pend[2] - start[2];
+
+    dist = Vec3Normalize(dir);
+    le = CG_AllocLocalEntity();
+    le->leType = LE_MOVING_TRACER;
+    le->tracerClipDist = dist;
+
+    time = cg->time;
+    tracerDelay = cg->frametime;
+    if (tracerDelay)
+        time -= (rand() % tracerDelay) / 2;
+
+    speed = cg_tracerSpeed->current.value;
+    le->endTime = time + (int)((dist * 1000.0f) / speed);
+    le->pos.trType = TR_LINEAR;
+    le->pos.trTime = time;
+
+    le->pos.trBase[0] = start[0];
+    le->pos.trBase[1] = start[1];
+    le->pos.trBase[2] = start[2];
+
+    le->pos.trDelta[0] = speed * dir[0];
+    le->pos.trDelta[1] = speed * dir[1];
+    le->pos.trDelta[2] = speed * dir[2];
+}
+
+void CG_WhizbySound(vec_t *vStart, vec_t *vEnd)
+{
+    vec3_t vDelta;
+    vec3_t vDir;
+    vec3_t vProjPos;
+    vec3_t vieworg;
+    float segmentLen;
+    float projLen;
+    float distanceToView;
+
+    vDelta[0] = vEnd[0] - vStart[0];
+    vDelta[1] = vEnd[1] - vStart[1];
+    vDelta[2] = vEnd[2] - vStart[2];
+    Vec3NormalizeTo(vDelta, vDir);
+
+    segmentLen = vDir[0] * vDelta[0] + vDir[1] * vDelta[1] + vDir[2] * vDelta[2];
+
+    vieworg[0] = cg->refdef.vieworg[0];
+    vieworg[1] = cg->refdef.vieworg[1];
+    vieworg[2] = cg->refdef.vieworg[2];
+
+    projLen = (vieworg[0] - vStart[0]) * vDir[0] + (vieworg[1] - vStart[1]) * vDir[1] + (vieworg[2] - vStart[2]) * vDir[2];
+
+    if (projLen < 64.0f || projLen + 64.0f > segmentLen)
+        return;
+
+    vProjPos[0] = vStart[0] + projLen * vDir[0];
+    vProjPos[1] = vStart[1] + projLen * vDir[1];
+    vProjPos[2] = vStart[2] + projLen * vDir[2];
+
+    vDelta[0] = vProjPos[0] - vieworg[0];
+    vDelta[1] = vProjPos[1] - vieworg[1];
+    vDelta[2] = vProjPos[2] - vieworg[2];
+    distanceToView = sqrtf(vDelta[0] * vDelta[0] + vDelta[1] * vDelta[1] + vDelta[2] * vDelta[2]);
+    if (distanceToView > 140.0f)
+        return;
+
+    vProjPos[0] += -16.0f * vDir[0];
+    vProjPos[1] += -16.0f * vDir[1];
+    vProjPos[2] += -16.0f * vDir[2];
+
+    CG_PlaySoundAlias(0x3fe, vProjPos, cgs->media.bulletWhizby);
+}
+
+void CG_BulletHitClientEvent(int sourceEntityNum, vec_t *position, int surfType, int event)
+{
+    snapshot_t *snap;
+    snd_alias_list_t *alias;
+    unsigned int flashTag;
+    vec3_t muzzle;
+    float tracerChance;
+
+    if (event == 0xb9)
+        alias = cgs->media.bulletHitSmallSound[surfType];
+    else if (event == 0xb7)
+        alias = cgs->media.bulletHitLargeSound[surfType];
+    else
+        alias = cgs->media.shotgunHitSound[surfType];
+
+    CG_PlaySoundAlias(0x3fe, position, alias);
+
+    flashTag = *s_barrelTags[0];
+    tracerChance = cg_tracerChance->current.value;
+    if (tracerChance <= 0.0f)
+        return;
+
+    if (!CG_CalcMuzzlePoint(sourceEntityNum, muzzle, flashTag))
+        return;
+
+    snap = cg->nextSnap;
+    if (!((snap->ps.pm_flags & 0xc00000) && snap->ps.clientNum == sourceEntityNum)) {
+        int randInt = rand();
+        float randValue;
+
+        if (randInt < 0) {
+            unsigned int adjusted = ((unsigned int)randInt >> 1) | (randInt & 1);
+            randValue = (float)adjusted * 2.0f;
+        } else {
+            randValue = (float)randInt;
+        }
+
+        if (2147483648.0f * tracerChance > randValue)
+            CG_SpawnTracer(muzzle, position);
+    }
+
+    CG_WhizbySound(muzzle, position);
+}
+
 void CG_RegisterItemVisuals(int itemNum)
 {
     itemInfo_t *itemInfo;
@@ -869,41 +940,11 @@ void CG_RegisterItems(void)
     }
 }
 
-// com_math.h
-inline float I_fsel(const float x, const float y, const float z)
-{
-    return x >= 0.0f ? y : z;
-}
-
-inline float I_fmax(const float x, const float y)
-{
-    return I_fsel(x - y, x, y);
-}
-
-inline float I_fmin(const float x, const float y)
-{
-    return I_fsel(y - x, x, y);
-}
-
 inline void VectorCopy(const vec3_t a, vec3_t b)
 {
     b[0] = a[0];
     b[1] = a[1];
     b[2] = a[2];
-}
-
-inline void VectorScale(const vec3_t v, const float s, vec3_t o)
-{
-    o[0] = s * v[0];
-    o[1] = s * v[1];
-    o[2] = s * v[2];
-}
-
-inline void VectorMA(const vec3_t v, const float s, const vec3_t b, vec3_t o)
-{
-    o[0] = v[0] + s * b[0];
-    o[1] = v[1] + s * b[1];
-    o[2] = v[2] + s * b[2];
 }
 
 void CalculateWeaponPosition_Sway(void)
@@ -1155,189 +1196,6 @@ void CalculateWeaponPostion_PositionToADS(void)
 }
 
 // Name from CoD4; original CoD2 name unknown.
-static void ChangeViewmodelDobj(int weaponIdx, const char *handModel)
-{
-    weaponInfo_t *weapInfo;
-    WeaponDef *weapDef;
-    struct XAnimTree_s *pAnimTree;
-    DObjModel_s dobjModels[2];
-    int dobjHandle;
-    char modelFile[64];
-
-    if (!weaponIdx)
-        return;
-
-    weapDef = (WeaponDef *)BG_GetWeaponDef(weaponIdx);
-    weapInfo = &cg_weaponsArray[weaponIdx];
-    if (!weapInfo->viewModelDObj)
-        return;
-
-    if (!weapDef->szGunXModel[0])
-        return;
-
-    pAnimTree = DObjGetTree(weapInfo->viewModelDObj);
-    dobjHandle = weaponIdx + 0x400;
-    Com_SafeClientDObjFree(dobjHandle);
-
-    dobjModels[0].boneName = 0;
-    dobjModels[0].ignoreCollision = 0;
-    dobjModels[1].boneName = "tag_weapon";
-    dobjModels[1].ignoreCollision = 0;
-    dobjModels[0].model = CL_RegisterModel(handModel);
-
-    sprintf(modelFile, "%s%s", "xmodel/", weapDef->szGunXModel);
-    dobjModels[1].model = CL_RegisterModel(modelFile);
-
-    if (XModelBad(dobjModels[0].model) || XModelBad(dobjModels[1].model))
-        CG_Weapons_SetToDefault(weaponIdx, dobjModels);
-
-    Com_ClientDObjCreate(dobjModels, 2, pAnimTree, dobjHandle);
-    weapInfo->viewModelDObj = (DObj_s *)(Com_GetClientDObj(dobjHandle, 0));
-    I_strncpyz(weapInfo->handModel, handModel, 0x40);
-    DObjUpdateClientInfo(weapInfo->viewModelDObj, 0.05f);
-}
-
-void CG_UpdateHandViewmodels(const char *handModel)
-{
-    int weaponIdx;
-
-    for (weaponIdx = 1; weaponIdx <= BG_GetNumWeapons(); weaponIdx++) {
-        if (strcmp(cg_weaponsArray[weaponIdx].handModel, handModel))
-            ChangeViewmodelDobj(weaponIdx, handModel);
-    }
-}
-
-void CG_SpawnTracer(vec_t *pstart, vec_t *pend)
-{
-    vec3_t start;
-    vec3_t dir;
-    float dist;
-    float speed;
-    int time;
-    int tracerDelay;
-    localEntity_t *le;
-
-    start[0] = pstart[0];
-    start[1] = pstart[1];
-    start[2] = pstart[2];
-
-    dir[0] = pend[0] - start[0];
-    dir[1] = pend[1] - start[1];
-    dir[2] = pend[2] - start[2];
-
-    dist = Vec3Normalize(dir);
-    le = CG_AllocLocalEntity();
-    le->leType = LE_MOVING_TRACER;
-    le->tracerClipDist = dist;
-
-    time = cg->time;
-    tracerDelay = cg->frametime;
-    if (tracerDelay)
-        time -= (rand() % tracerDelay) / 2;
-
-    speed = cg_tracerSpeed->current.value;
-    le->endTime = time + (int)((dist * 1000.0f) / speed);
-    le->pos.trType = TR_LINEAR;
-    le->pos.trTime = time;
-
-    le->pos.trBase[0] = start[0];
-    le->pos.trBase[1] = start[1];
-    le->pos.trBase[2] = start[2];
-
-    le->pos.trDelta[0] = speed * dir[0];
-    le->pos.trDelta[1] = speed * dir[1];
-    le->pos.trDelta[2] = speed * dir[2];
-}
-
-void CG_WhizbySound(vec_t *vStart, vec_t *vEnd)
-{
-    vec3_t vDelta;
-    vec3_t vDir;
-    vec3_t vProjPos;
-    vec3_t vieworg;
-    float segmentLen;
-    float projLen;
-    float distanceToView;
-
-    vDelta[0] = vEnd[0] - vStart[0];
-    vDelta[1] = vEnd[1] - vStart[1];
-    vDelta[2] = vEnd[2] - vStart[2];
-    Vec3NormalizeTo(vDelta, vDir);
-
-    segmentLen = vDir[0] * vDelta[0] + vDir[1] * vDelta[1] + vDir[2] * vDelta[2];
-
-    vieworg[0] = cg->refdef.vieworg[0];
-    vieworg[1] = cg->refdef.vieworg[1];
-    vieworg[2] = cg->refdef.vieworg[2];
-
-    projLen = (vieworg[0] - vStart[0]) * vDir[0] + (vieworg[1] - vStart[1]) * vDir[1] + (vieworg[2] - vStart[2]) * vDir[2];
-
-    if (projLen < 64.0f || projLen + 64.0f > segmentLen)
-        return;
-
-    vProjPos[0] = vStart[0] + projLen * vDir[0];
-    vProjPos[1] = vStart[1] + projLen * vDir[1];
-    vProjPos[2] = vStart[2] + projLen * vDir[2];
-
-    vDelta[0] = vProjPos[0] - vieworg[0];
-    vDelta[1] = vProjPos[1] - vieworg[1];
-    vDelta[2] = vProjPos[2] - vieworg[2];
-    distanceToView = sqrtf(vDelta[0] * vDelta[0] + vDelta[1] * vDelta[1] + vDelta[2] * vDelta[2]);
-    if (distanceToView > 140.0f)
-        return;
-
-    vProjPos[0] += -16.0f * vDir[0];
-    vProjPos[1] += -16.0f * vDir[1];
-    vProjPos[2] += -16.0f * vDir[2];
-
-    CG_PlaySoundAlias(0x3fe, vProjPos, cgs->media.bulletWhizby);
-}
-
-void CG_BulletHitClientEvent(int sourceEntityNum, vec_t *position, int surfType, int event)
-{
-    snapshot_t *snap;
-    snd_alias_list_t *alias;
-    unsigned int flashTag;
-    vec3_t muzzle;
-    float tracerChance;
-
-    if (event == 0xb9)
-        alias = cgs->media.bulletHitSmallSound[surfType];
-    else if (event == 0xb7)
-        alias = cgs->media.bulletHitLargeSound[surfType];
-    else
-        alias = cgs->media.shotgunHitSound[surfType];
-
-    CG_PlaySoundAlias(0x3fe, position, alias);
-
-    flashTag = *s_barrelTags[0];
-    tracerChance = cg_tracerChance->current.value;
-    if (tracerChance <= 0.0f)
-        return;
-
-    if (!CG_CalcMuzzlePoint(sourceEntityNum, muzzle, flashTag))
-        return;
-
-    snap = cg->nextSnap;
-    if (!((snap->ps.pm_flags & 0xc00000) && snap->ps.clientNum == sourceEntityNum)) {
-        int randInt = rand();
-        float randValue;
-
-        if (randInt < 0) {
-            unsigned int adjusted = ((unsigned int)randInt >> 1) | (randInt & 1);
-            randValue = (float)adjusted * 2.0f;
-        } else {
-            randValue = (float)randInt;
-        }
-
-        if (2147483648.0f * tracerChance > randValue)
-            CG_SpawnTracer(muzzle, position);
-    }
-
-    CG_WhizbySound(muzzle, position);
-}
-
-// Name from CoD4; original CoD2 name unknown.
 static void WeaponFlash(int dobjHandle, int weaponNum, int bViewFlash, const vec_t *origin, unsigned int flashTag)
 {
     void *fx;
@@ -1357,6 +1215,66 @@ static void WeaponFlash(int dobjHandle, int weaponNum, int bViewFlash, const vec
         return;
 
     FX_PlayEntityEffect( (EffectTemplate *)(fx), origin, 0, (const FxBoltInfo *)(bolt));
+}
+
+static void CG_SetHoldBreathChannelVolumes(float frac)
+{
+    float volumes[11];
+    int i;
+
+    if (frac == 0.0f) {
+        SND_DeactivateChannelVolumes(1, 0);
+        return;
+    }
+
+    for (i = 0; i < 11; i++)
+        volumes[i] = 1.0f + (cgs->holdBreathParams.sound.channelvolume[i] - 1.0f) * frac;
+
+    SND_SetChannelVolumes(1, volumes, 0);
+}
+
+static void CG_UpdateHoldBreathSound(void)
+{
+    int delayMsec;
+
+    if (cg->holdBreathDelay > 0)
+        cg->holdBreathDelay -= cg->frametime;
+
+    if (cg->predictedPlayerState.pm_flags & 0x4000) {
+        cg->holdBreathFrac = DiffTrack(1.0f, cg->holdBreathFrac,
+                                       player_breath_snd_lerp->current.value,
+                                       (float)cg->frametime * 0.001f);
+
+        if (cg->holdBreathTime < 0) {
+            cg->holdBreathTime = 0;
+            if (cg->holdBreathDelay <= 0) {
+                cg->holdBreathInTime = CG_PlayClientSoundAlias(cgs->media.playerBreathInSound);
+                cg->holdBreathDelay = (int)(player_breath_snd_delay->current.value * 1000.0f);
+            } else {
+                cg->holdBreathInTime = 0;
+            }
+        } else if (cg->holdBreathTime > cg->holdBreathInTime) {
+            CG_PlayClientSoundAlias(cgs->media.playerHeartBeatSound);
+        }
+
+        cg->holdBreathTime += cg->frametime;
+    } else {
+        if (cg->holdBreathTime >= 0) {
+            cg->holdBreathTime += cg->frametime;
+            if (cg->holdBreathTime > (int)(player_breath_hold_time->current.value * 1000.0f)) {
+                CG_PlayClientSoundAlias(cgs->media.playerBreathGaspSound);
+            } else if (cg->holdBreathDelay <= 0) {
+                CG_PlayClientSoundAlias(cgs->media.playerBreathOutSound);
+                cg->holdBreathDelay = (int)(player_breath_snd_delay->current.value * 1000.0f);
+            }
+        }
+
+        cg->holdBreathTime = -1;
+        cg->holdBreathInTime = 0;
+        cg->holdBreathFrac = 0.0f;
+    }
+
+    CG_SetHoldBreathChannelVolumes(cg->holdBreathFrac);
 }
 
 void CG_AddPlayerWeapon(GfxEntity *parent, playerState_t *ps, centity_t *cent, qboolean bDrawGun)
@@ -1476,6 +1394,43 @@ void CG_AddPlayerWeapon(GfxEntity *parent, playerState_t *ps, centity_t *cent, q
         WeaponFlash(CG_WeaponDObjHandle(weaponNum), weaponNum, 1, cg->viewModelOrigin, scr_const.tag_flash);
     else
         WeaponFlash(ent->number, weaponNum, 0, cent->lerpOrigin, scr_const.tag_flash);
+}
+
+void CG_UpdateViewWeaponAnim(playerState_t *ps)
+{
+    byte *psBytes;
+    weaponInfo_t *weapInfo;
+    int weaponIndex;
+    int partBits[4];
+
+    psBytes = (byte *)ps;
+
+    if (*(int *)(psBytes + 4) >= 6) {
+        CG_ResetViewWeaponAnimTrees(ps);
+        return;
+    }
+
+    weaponIndex = BG_GetViewmodelWeaponIndex(ps);
+    if (weaponIndex <= 0)
+        return;
+
+    CG_RegisterWeapon(weaponIndex);
+    weapInfo = &((weaponInfo_t *)cg_weaponsArray)[weaponIndex];
+    CG_WeaponRunXModelAnims(ps, weapInfo);
+
+    DObjUpdateClientInfo(weapInfo->viewModelDObj, (float)cg->frametime * 0.0010000000474974513f);
+
+    partBits[0] = -1;
+    partBits[1] = -1;
+    partBits[2] = -1;
+    partBits[3] = -1;
+
+    if (!CL_DObjCreateSkelForBones(weapInfo->viewModelDObj, partBits, 0)) {
+        DObjCalcAnim(weapInfo->viewModelDObj, partBits);
+        DObjCalcSkel((DObj *)weapInfo->viewModelDObj, partBits);
+    }
+
+    CG_PlayViewWeaponNotetrackSounds();
 }
 
 void CG_AddViewWeapon(playerState_t *ps)
@@ -1648,109 +1603,6 @@ void CG_BulletHitEvent(int sourceEntityNum, vec_t *position, vec_t *normal, vec_
     }
 
     CG_WhizbySound(muzzle, position);
-}
-
-// retail 0x4d1340; Kisak name (SUPPORTED)
-static float CalcTracerFinalScale(float tracerScaleDistRange, float dist, float tracerScale)
-{
-    float scale;
-
-    if (tracerScaleDistRange > 0.0f) {
-        scale = dist / tracerScaleDistRange * tracerScale;
-        if (scale < 1.0f)
-            return 1.0f;
-        if (scale > tracerScale)
-            return tracerScale;
-        return scale;
-    }
-    return tracerScale;
-}
-
-// retail 0x4d1390; Kisak name (SUPPORTED)
-static void ScaleTracer(const float *start, const float *finish, float *startWidth, float *finishWidth)
-{
-    float startDist;
-    float finishDist;
-    float tracerScale;
-    float tracerScaleMinDist;
-    float tracerScaleDistRange;
-
-    tracerScale = cg_tracerScale->current.value;
-    tracerScaleMinDist = cg_tracerScaleMinDist->current.value;
-    tracerScaleDistRange = cg_tracerScaleDistRange->current.value;
-    if (tracerScale != 1.0f) {
-        startDist = Vec3Distance(start, cg->refdef.vieworg);
-        finishDist = Vec3Distance(finish, cg->refdef.vieworg);
-        if (tracerScaleMinDist != 0.0f) {
-            startDist = startDist - tracerScaleMinDist;
-            finishDist = finishDist - tracerScaleMinDist;
-        }
-        if (startDist > 0.0f)
-            *startWidth = CalcTracerFinalScale(tracerScaleDistRange, startDist, tracerScale) * *startWidth;
-        if (finishDist > 0.0f)
-            *finishWidth = CalcTracerFinalScale(tracerScaleDistRange, finishDist, tracerScale) * *finishWidth;
-    }
-}
-
-// Q3 CG_Tracer shape
-void CG_DrawTracer(vec_t *start, vec_t *finish)
-{
-    vec3_t forward;
-    vec3_t right;
-    vec3_t line;
-    float scale;
-    float startWidth;
-    float finishWidth;
-    GfxWorldVertex verts[4];
-
-    forward[0] = finish[0] - start[0];
-    forward[1] = finish[1] - start[1];
-    forward[2] = finish[2] - start[2];
-
-    line[0] = forward[0] * cg->refdef.viewaxis[1][0] + forward[1] * cg->refdef.viewaxis[1][1] + forward[2] * cg->refdef.viewaxis[1][2];
-    line[1] = forward[0] * cg->refdef.viewaxis[2][0] + forward[1] * cg->refdef.viewaxis[2][1] + forward[2] * cg->refdef.viewaxis[2][2];
-
-    VectorScale(cg->refdef.viewaxis[1], line[1], right);
-    scale = -line[0];
-    right[0] = cg->refdef.viewaxis[2][0] * scale + right[0];
-    right[1] = cg->refdef.viewaxis[2][1] * scale + right[1];
-    right[2] = cg->refdef.viewaxis[2][2] * scale + right[2];
-    Vec3Normalize(right);
-
-    startWidth = cg_tracerWidth->current.value;
-    finishWidth = cg_tracerWidth->current.value;
-    ScaleTracer(start, finish, &startWidth, &finishWidth);
-
-    VectorMA(finish, finishWidth, right, verts[0].xyz);
-    verts[0].color.packed = 0xffffffff;
-    verts[0].texCoord[0] = 1.0f;
-    verts[0].texCoord[1] = 1.0f;
-    verts[0].lmapCoord[0] = 1.0f;
-    verts[0].lmapCoord[1] = 1.0f;
-
-    VectorMA(finish, -finishWidth, right, verts[1].xyz);
-    verts[1].color.packed = 0xffffffff;
-    verts[1].texCoord[0] = 1.0f;
-    verts[1].texCoord[1] = 0.0f;
-    verts[1].lmapCoord[0] = 1.0f;
-    verts[1].lmapCoord[1] = 0.0f;
-
-    VectorMA(start, -startWidth, right, verts[2].xyz);
-    verts[2].color.packed = 0xffffffff;
-    verts[2].texCoord[0] = 0.0f;
-    verts[2].texCoord[1] = 0.0f;
-    verts[2].lmapCoord[0] = 0.0f;
-    verts[2].lmapCoord[1] = 0.0f;
-
-    VectorMA(start, startWidth, right, verts[3].xyz);
-    verts[3].color.packed = 0xffffffff;
-    verts[3].texCoord[0] = 0.0f;
-    verts[3].texCoord[1] = 1.0f;
-    verts[3].lmapCoord[0] = 0.0f;
-    verts[3].lmapCoord[1] = 1.0f;
-
-    CL_DefaultVertexFrames(4, verts);
-    CL_AddPolyToScene(cgs->media.tracerMaterial, 0x1f, 4, verts);
 }
 
 static qboolean CG_WeaponSelectable(int weapon)
@@ -2088,210 +1940,330 @@ static inline __attribute__((always_inline)) void CG_SetWeaponXAnimWeights(struc
     }
 }
 
-// Original name unknown.
-static void CG_StartWeaponXAnim(struct XAnimTree_s *tree, int weaponIndex, int activeAnim)
+void CG_EjectWeaponBrass(entityState_t *ent, int event)
 {
-    int i;
+    byte *entBytes;
     weaponInfo_t *weapInfo;
-
-    weapInfo = &cg_weaponsArray[weaponIndex];
-    for (i = 0; i < 20; i++) {
-        if (activeAnim == i + 1)
-            XAnimSetGoalWeight(tree, i + 1, 1.0f, 0.0f, weapInfo->viewModelAnimRates[i + 1], 0, 1, 1);
-        else
-            XAnimSetGoalWeight(tree, i + 1, 0.0f, 0.0f, weapInfo->viewModelAnimRates[i + 1], 0, 0, 0);
-    }
-}
-
-void CG_WeaponRunXModelAnims(playerState_t *ps, weaponInfo_t *weapInfo)
-{
-    WeaponDef *weapDef;
-    struct XAnimTree_s *pAnimTree;
-    int weaponIndex;
-    int i;
-    qboolean adsIn;
-
-    pAnimTree = DObjGetTree(weapInfo->viewModelDObj);
-    weaponIndex = BG_GetViewmodelWeaponIndex(ps);
-    weapDef = (WeaponDef *)BG_GetWeaponDef(weaponIndex);
-
-    adsIn = 0;
-    if (ps->weaponstate == 5 && ps->weaponTime - weapDef->iPositionReloadTransTime > 0) {
-        adsIn = 0;
-    } else if (ps->pm_flags & 0x40) {
-        adsIn = 1;
-        if (ps->pm_flags & 0x10)
-            adsIn = 0;
-    }
-    if (weapDef->bADSPositionInfo)
-        CG_PlayADSAnim(pAnimTree, adsIn ? 0x15 : 0x16);
-
-    if (ps->weapAnim == weapInfo->iPrevAnim)
-        return;
-
-    switch (ps->weapAnim & ~0x200) {
-    case 0:
-        for (i = 1; i < 0x15; i++) {
-            if (!XAnimHasFinished(pAnimTree, i)) {
-                weapInfo->iPrevAnim = -1;
-                return;
-            }
-        }
-        if (!ps->ammoclip[BG_ClipForWeapon(weaponIndex)])
-            CG_StartWeaponXAnim(pAnimTree, weaponIndex, 2);
-        else
-            CG_StartWeaponXAnim(pAnimTree, weaponIndex, 1);
-        break;
-    case 2: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 3); break;
-    case 3: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 5); break;
-    case 4: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 6); break;
-    case 5: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 18); break;
-    case 6: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 19); break;
-    case 7: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 20); break;
-    case 8: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 7); break;
-    case 9: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 13); break;
-    case 10: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 12); break;
-    case 11: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 8); break;
-    case 12: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 9); break;
-    case 13: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 10); break;
-    case 14: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 11); break;
-    case 15: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 15); break;
-    case 16: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 14); break;
-    case 17: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 17); break;
-    case 18: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 16); break;
-    case 19: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 4); break;
-    default:
-        CG_StartWeaponXAnim(pAnimTree, weaponIndex, 1);
-        Com_Printf("CG_WeaponRunXModelAnims: Unknown weapon animation %i\n", ps->weapAnim & ~0x200);
-        break;
-    }
-
-    weapInfo->iPrevAnim = ps->weapAnim;
-}
-
-static void CG_ResetViewWeaponAnimTrees(playerState_t *ps)
-{
-    byte *psBytes = (byte *)ps;
-    struct XAnimTree_s *tree;
-    weaponInfo_t *weapInfo;
+    snapshot_t *snap;
     int weaponNum;
-    int clip;
-    int activeAnim;
+    int bolt[2];
+    void *effect;
+    unsigned int tagBrass;
 
-    for (weaponNum = 1; weaponNum <= BG_GetNumWeapons(); weaponNum++) {
-        weapInfo = &cg_weaponsArray[weaponNum];
-        if (weapInfo->viewModelDObj) {
-            tree = DObjGetTree(weapInfo->viewModelDObj);
-            XAnimClearTreeGoalWeights(tree, 0, 0);
-            XAnimSetGoalWeight(tree, 0, 1.0f, 0.0f, weapInfo->viewModelAnimRates[0], 0, 1, 0);
+    if (!cg_brass->current.enabled)
+        return;
 
-            clip = BG_ClipForWeapon(weaponNum);
-            if (*(int *)(((char *)psBytes + offsetof(playerState_t, ammoclip[0])) + clip * 4))
-                activeAnim = 1;
-            else
-                activeAnim = 2;
-            CG_SetWeaponXAnimWeights(tree, weapInfo, activeAnim);
+    entBytes = (byte *)ent;
+    if (*(int *)(entBytes + 4) > 9)
+        return;
+
+    weaponNum = *(int *)(entBytes + 0xc8);
+    if (!weaponNum)
+        return;
+
+    if (weaponNum > BG_GetNumWeapons())
+        Com_Error(ERR_DROP, "\x15"
+                     "CG_EjectWeaponBrass: ent->weapon > BG_GetNumWeapons()");
+
+    weapInfo = &cg_weaponsArray[weaponNum];
+    effect = weapInfo->lastShotEjectEffect;
+    if (event != 0xa0 || !effect) {
+        effect = weapInfo->shellEjectEffect;
+        if (!effect)
+            return;
+    }
+
+    snap = cg->nextSnap;
+    if ((snap->ps.pm_flags & 0xc00000) && ent->number == snap->ps.clientNum)
+        bolt[0] = weaponNum + 0x400;
+    else
+        bolt[0] = ent->number;
+
+    tagBrass = scr_const.tag_brass;
+    bolt[1] = FX_GetBoneIndex(bolt[0], tagBrass);
+    if (bolt[1] < 0)
+        return;
+
+    FX_PlayEntityEffect( (EffectTemplate *)(effect), ejectBrassCasingOrigin, 0, (const FxBoltInfo *)(bolt));
+}
+
+static qboolean CG_IsLocalClientEntity(cg_t *cg, entityState_t *ent)
+{
+    snapshot_t *snap = cg->nextSnap;
+
+    return (snap->ps.pm_flags & 0xc00000) && ent->number == snap->ps.clientNum;
+}
+
+void CG_FireWeapon(centity_t *cent, int event, int barrel)
+{
+    entityState_t *ent;
+    weaponInfo_t *weapInfo;
+    WeaponDef *weapDef;
+    snd_alias_list_t *fireSound;
+    vec3_t origin;
+    int duration;
+    qboolean localTurret;
+    struct DObj_s *viewModel;
+    struct DObj_s *obj;
+    int hasTag;
+
+    ent = &cent->nextState;
+    if (!ent->weapon)
+        return;
+
+    if (ent->weapon > BG_GetNumWeapons()) {
+        Com_Error(ERR_DROP, "\x15"
+                     "CG_FireWeapon: ent->weapon > BG_GetNumWeapons()");
+        return;
+    }
+
+    weapInfo = &cg_weaponsArray[ent->weapon];
+    BG_GetWeaponDef(ent->weapon);
+    cent->bMuzzleFlash = 1;
+
+    if (CG_IsLocalClientEntity(cg, ent))
+        BG_WeaponFireRecoil(&cg->predictedPlayerState, cg->vGunSpeed, cg->kickAVel);
+
+    localTurret = 0;
+    if (ent->eType == 9 && !cg->renderingThirdPerson && (cg->nextSnap->ps.eFlags & 0x300) && cg->nextSnap->ps.viewlocked_entNum == ent->number)
+        localTurret = 1;
+    if (ent->eType == 9)
+        WeaponFlash(ent->number, ent->weapon, localTurret, cent->lerpOrigin, *s_barrelTags[barrel]);
+
+    fireSound = weapInfo->flashSound;
+    if (weapInfo->flashSoundPlayer && CG_IsLocalClientEntity(cg, ent))
+        fireSound = weapInfo->flashSoundPlayer;
+
+    if (event == 0xa0) {
+        if (weapInfo->lastShotSoundPlayer && CG_IsLocalClientEntity(cg, ent))
+            fireSound = weapInfo->lastShotSoundPlayer;
+        else if (weapInfo->lastShotSound)
+            fireSound = weapInfo->lastShotSound;
+    }
+
+    if (fireSound) {
+        if (CG_IsLocalClientEntity(cg, ent)) {
+            viewModel = weapInfo->viewModelDObj;
+            hasTag = viewModel && CG_DObjGetViewModelTagPos(viewModel, scr_const.tag_flash, origin);
+        } else {
+            obj = (DObj_s *)(Com_GetClientDObj(ent->number, cent->localClientNum));
+            hasTag = obj && CG_DObjGetWorldTagPos(cent, obj, scr_const.tag_flash, origin);
         }
+        if (!hasTag)
+            BG_EvaluateTrajectory(&ent->pos, cg->time, origin);
+        duration = CG_PlaySoundAlias(ent->number, origin, fireSound);
+        if (cent->nextState.eType == 1)
+            CG_CompassAddWeaponPingInfo(cent, origin, duration);
+    }
+
+    weapDef = (WeaponDef *)BG_GetWeaponDef(ent->weapon);
+    if (!weapDef->bBoltAction)
+        CG_EjectWeaponBrass(ent, event);
+}
+
+// retail 0x4d1340; Kisak name (SUPPORTED)
+static float CalcTracerFinalScale(float tracerScaleDistRange, float dist, float tracerScale)
+{
+    float scale;
+
+    if (tracerScaleDistRange > 0.0f) {
+        scale = dist / tracerScaleDistRange * tracerScale;
+        if (scale < 1.0f)
+            return 1.0f;
+        if (scale > tracerScale)
+            return tracerScale;
+        return scale;
+    }
+    return tracerScale;
+}
+
+// retail 0x4d1390; Kisak name (SUPPORTED)
+static void ScaleTracer(const float *start, const float *finish, float *startWidth, float *finishWidth)
+{
+    float startDist;
+    float finishDist;
+    float tracerScale;
+    float tracerScaleMinDist;
+    float tracerScaleDistRange;
+
+    tracerScale = cg_tracerScale->current.value;
+    tracerScaleMinDist = cg_tracerScaleMinDist->current.value;
+    tracerScaleDistRange = cg_tracerScaleDistRange->current.value;
+    if (tracerScale != 1.0f) {
+        startDist = Vec3Distance(start, cg->refdef.vieworg);
+        finishDist = Vec3Distance(finish, cg->refdef.vieworg);
+        if (tracerScaleMinDist != 0.0f) {
+            startDist = startDist - tracerScaleMinDist;
+            finishDist = finishDist - tracerScaleMinDist;
+        }
+        if (startDist > 0.0f)
+            *startWidth = CalcTracerFinalScale(tracerScaleDistRange, startDist, tracerScale) * *startWidth;
+        if (finishDist > 0.0f)
+            *finishWidth = CalcTracerFinalScale(tracerScaleDistRange, finishDist, tracerScale) * *finishWidth;
     }
 }
 
-static void CG_PlayViewWeaponNotetrackSounds(void)
+// Q3 CG_Tracer shape
+void CG_DrawTracer(vec_t *start, vec_t *finish)
 {
-    XAnimNotify *notifyList;
-    weaponInfo_t *weapInfo;
-    snd_alias_list_t *aliasList;
-    int weaponIndex;
-    int notifyCount;
+    vec3_t forward;
+    vec3_t right;
+    vec3_t line;
+    float scale;
+    float startWidth;
+    float finishWidth;
+    GfxWorldVertex verts[4];
+
+    forward[0] = finish[0] - start[0];
+    forward[1] = finish[1] - start[1];
+    forward[2] = finish[2] - start[2];
+
+    line[0] = forward[0] * cg->refdef.viewaxis[1][0] + forward[1] * cg->refdef.viewaxis[1][1] + forward[2] * cg->refdef.viewaxis[1][2];
+    line[1] = forward[0] * cg->refdef.viewaxis[2][0] + forward[1] * cg->refdef.viewaxis[2][1] + forward[2] * cg->refdef.viewaxis[2][2];
+
+    VectorScale(cg->refdef.viewaxis[1], line[1], right);
+    scale = -line[0];
+    right[0] = cg->refdef.viewaxis[2][0] * scale + right[0];
+    right[1] = cg->refdef.viewaxis[2][1] * scale + right[1];
+    right[2] = cg->refdef.viewaxis[2][2] * scale + right[2];
+    Vec3Normalize(right);
+
+    startWidth = cg_tracerWidth->current.value;
+    finishWidth = cg_tracerWidth->current.value;
+    ScaleTracer(start, finish, &startWidth, &finishWidth);
+
+    VectorMA(finish, finishWidth, right, verts[0].xyz);
+    verts[0].color.packed = 0xffffffff;
+    verts[0].texCoord[0] = 1.0f;
+    verts[0].texCoord[1] = 1.0f;
+    verts[0].lmapCoord[0] = 1.0f;
+    verts[0].lmapCoord[1] = 1.0f;
+
+    VectorMA(finish, -finishWidth, right, verts[1].xyz);
+    verts[1].color.packed = 0xffffffff;
+    verts[1].texCoord[0] = 1.0f;
+    verts[1].texCoord[1] = 0.0f;
+    verts[1].lmapCoord[0] = 1.0f;
+    verts[1].lmapCoord[1] = 0.0f;
+
+    VectorMA(start, -startWidth, right, verts[2].xyz);
+    verts[2].color.packed = 0xffffffff;
+    verts[2].texCoord[0] = 0.0f;
+    verts[2].texCoord[1] = 0.0f;
+    verts[2].lmapCoord[0] = 0.0f;
+    verts[2].lmapCoord[1] = 0.0f;
+
+    VectorMA(start, startWidth, right, verts[3].xyz);
+    verts[3].color.packed = 0xffffffff;
+    verts[3].texCoord[0] = 0.0f;
+    verts[3].texCoord[1] = 1.0f;
+    verts[3].lmapCoord[0] = 0.0f;
+    verts[3].lmapCoord[1] = 1.0f;
+
+    CL_DefaultVertexFrames(4, verts);
+    CL_AddPolyToScene(cgs->media.tracerMaterial, 0x1f, 4, verts);
+}
+
+// Name from CoD4; original CoD2 name unknown.
+static void ParseWeaponDefFiles(const char **ppszFiles, int iNumFiles)
+{
+    const char *name;
     int i;
 
-    aliasList = 0;
-    weaponIndex = BG_GetViewmodelWeaponIndex(&cg->predictedPlayerState);
-    if (!weaponIndex)
-        return;
-
-    weapInfo = &cg_weaponsArray[weaponIndex];
-    notifyCount = DObjGetClientNotifyList(&notifyList);
-    for (i = 0; i < notifyCount; i++) {
-        if (!stricmp(notifyList[i].name, "noteTrackSoundA"))
-            aliasList = weapInfo->noteTrackSound[0];
-        else if (!stricmp(notifyList[i].name, "noteTrackSoundB"))
-            aliasList = weapInfo->noteTrackSound[1];
-        else if (!stricmp(notifyList[i].name, "noteTrackSoundC"))
-            aliasList = weapInfo->noteTrackSound[2];
-        else if (!stricmp(notifyList[i].name, "noteTrackSoundD"))
-            aliasList = weapInfo->noteTrackSound[3];
-
-        if (aliasList)
-            CG_PlayClientSoundAlias(aliasList);
+    for (i = 0; i < iNumFiles; i++) {
+        name = ppszFiles[i];
+        if (BG_GetWeaponIndexForName(name, 0) != i + 1)
+            Com_Error(ERR_DROP, "Weapon index mismatch for '%s'", name);
     }
 }
 
-void CG_UpdateViewWeaponAnim(playerState_t *ps)
+void CG_SetupWeaponDef(void)
 {
-    byte *psBytes;
-    weaponInfo_t *weapInfo;
-    int weaponIndex;
-    int partBits[4];
+    char szString[0x2000];
+    char *pszFiles[0x7f];
+    char *scan;
+    int iNumFiles;
 
-    psBytes = (byte *)ps;
+    memset(pszFiles, 0, sizeof(pszFiles));
+    iNumFiles = 0;
+    strcpy(szString, CL_GetConfigString(7));
+    scan = szString;
+    pszFiles[iNumFiles++] = szString;
 
-    if (*(int *)(psBytes + 4) >= 6) {
-        CG_ResetViewWeaponAnimTrees(ps);
-        return;
-    }
-
-    weaponIndex = BG_GetViewmodelWeaponIndex(ps);
-    if (weaponIndex <= 0)
-        return;
-
-    CG_RegisterWeapon(weaponIndex);
-    weapInfo = &((weaponInfo_t *)cg_weaponsArray)[weaponIndex];
-    CG_WeaponRunXModelAnims(ps, weapInfo);
-
-    DObjUpdateClientInfo(weapInfo->viewModelDObj, (float)cg->frametime * 0.0010000000474974513f);
-
-    partBits[0] = -1;
-    partBits[1] = -1;
-    partBits[2] = -1;
-    partBits[3] = -1;
-
-    if (!CL_DObjCreateSkelForBones(weapInfo->viewModelDObj, partBits, 0)) {
-        DObjCalcAnim(weapInfo->viewModelDObj, partBits);
-        DObjCalcSkel((DObj *)weapInfo->viewModelDObj, partBits);
-    }
-
-    CG_PlayViewWeaponNotetrackSounds();
-}
-
-#else
-void CG_Weapons_SetToDefault(int weaponNum, weaponInfo_s (*dobjModels)[4])
-{
-    byte *weapDef;
-    char modelFile[80];
-    const char *handModel;
-    const char *viewModel;
-
-    CG_SetWeaponDefToDefaultWeapon(weaponNum);
-    weapDef = (byte *)BG_GetWeaponDef(weaponNum);
-    Com_Printf("WARNING: gun and/or hand model file for weapon [%s] could not be found, switching to default weapon.\n",
-               *(const char **)(weapDef + 4));
-
-    handModel = ((WeaponDef *)weapDef)->szGunXModel;
-    if (!handModel || handModel[0] == '\0') {
-        Com_Error(ERR_DROP, "could not find default weapon model");
-    } else {
-        viewModel = ((WeaponDef *)weapDef)->szHandXModel;
-        if (!viewModel || viewModel[0] == '\0') {
-            Com_Error(ERR_DROP, "could not find default weapon model");
+    while (*scan) {
+        if (*scan == ' ') {
+            *scan++ = '\0';
+            if (*scan && *scan != ' ')
+                pszFiles[iNumFiles++] = scan;
+        } else {
+            scan++;
         }
     }
 
-    viewModel = ((WeaponDef *)weapDef)->szHandXModel;
-    sprintf(modelFile, "%s%s", "xmodel/", viewModel);
-    *(void **)dobjModels = CL_RegisterModel(modelFile);
-
-    handModel = ((WeaponDef *)weapDef)->szGunXModel;
-    sprintf(modelFile, "%s%s", "xmodel/", handModel);
-    *(void **)((byte *)dobjModels + 0xc) = CL_RegisterModel(modelFile);
+    ParseWeaponDefFiles((const char **)pszFiles, iNumFiles);
 }
-#endif
+
+void CG_SelectWeaponIndex(int weaponIndex)
+{
+    int oldWeaponIndex;
+    qboolean keepAds;
+
+    cg->weaponSelectTime = cg->time;
+
+    oldWeaponIndex = cg->weaponSelect;
+    if (oldWeaponIndex == weaponIndex)
+        return;
+
+    keepAds = weaponIndex && weaponIndex == ((WeaponDef *)BG_GetWeaponDef(oldWeaponIndex))->iAltWeaponIndex;
+    cg->weaponSelect = weaponIndex;
+    CG_MenuShowNotify(1);
+
+    if (!keepAds)
+        CL_SetADS(0);
+}
+
+static qboolean __attribute_regparm__(3) CG_CalcMuzzlePoint(int entityNum, vec_t *muzzle, unsigned int flashTag)
+{
+    snapshot_t *snap;
+    centity_t *cent;
+    void *dobj;
+    int entFlags;
+
+    snap = cg->nextSnap;
+
+    if ((snap->ps.pm_flags & 0xc00000) && entityNum == snap->ps.clientNum) {
+        muzzle[0] = cg->refdef.vieworg[0];
+        muzzle[1] = cg->refdef.vieworg[1];
+        muzzle[2] = cg->refdef.vieworg[2];
+        return 1;
+    }
+
+    cent = &cg_entities[entityNum];
+    dobj = Com_GetClientDObj(cent->nextState.number, cent->localClientNum);
+    if (!dobj)
+        return 0;
+
+    if (CG_DObjGetWorldTagPos(cent, (struct DObj_s *)dobj, flashTag, muzzle))
+        return 1;
+
+    muzzle[0] = cent->nextState.pos.trBase[0];
+    muzzle[1] = cent->nextState.pos.trBase[1];
+    muzzle[2] = cent->nextState.pos.trBase[2];
+
+    if (entityNum >= 64)
+        return 1;
+
+    Com_DPrintf("No %s in CG_CalcMuzzlePoint on entity %d.\n", SL_ConvertToString(flashTag), entityNum);
+
+    entFlags = cent->nextState.eFlags;
+    if (entFlags & 8)
+        muzzle[2] += 11.0f;
+    else if (entFlags & 4)
+        muzzle[2] += 40.0f;
+    else
+        muzzle[2] += 60.0f;
+
+    return 1;
+}
+
+

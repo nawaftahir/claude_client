@@ -18,6 +18,16 @@ static char fs_mapBaseName[MAX_QPATH];
 
 static char** Sys_ConcatenateFileLists( char **list0, char **list1, char **list2 );
 
+static char** Sys_ConcatenateFileLists( char **list0, char **list1, char **list2 );
+int FS_GetModList( char *listbuf, int bufsize );
+void FS_SetRestrictions( void );
+
+enum snd_stopsounds_arg_t
+{
+	SND_STOP_STREAMED = 8
+};
+void SND_StopSounds( snd_stopsounds_arg_t which );
+
 qboolean FS_SV_FileExists( const char *file )
 {
 	FILE *f;
@@ -180,7 +190,6 @@ void FS_SV_Rename( const char *from, const char *to )
 	}
 }
 
-
 char *FS_ShiftStr( const char *string, int shift )
 {
 	int i, l;
@@ -191,28 +200,6 @@ char *FS_ShiftStr( const char *string, int shift )
 	fs_shiftStrBuf[i] = '\0';
 
 	return fs_shiftStrBuf;
-}
-
-
-
-int FS_Read2( void *buffer, int len, fileHandle_t f )
-{
-	FS_CheckFileSystemStarted();
-
-	if ( !f )
-		return 0;
-
-	if ( fsh[f].streamed )
-	{
-		int r;
-
-		fsh[f].streamed = qfalse;
-		r = Sys_StreamedRead(buffer, len, 1, f);
-		fsh[f].streamed = qtrue;
-		return r;
-	}
-
-	return FS_Read(buffer, len, f);
 }
 
 // Original name unknown.
@@ -260,6 +247,26 @@ qboolean FS_FileMatchesDisk( const char *qpath, const char *ospath )
 
 	FS_FreeFile( fsData );
 	return !different;
+}
+
+int FS_Read2( void *buffer, int len, fileHandle_t f )
+{
+	FS_CheckFileSystemStarted();
+
+	if ( !f )
+		return 0;
+
+	if ( fsh[f].streamed )
+	{
+		int r;
+
+		fsh[f].streamed = qfalse;
+		r = Sys_StreamedRead(buffer, len, 1, f);
+		fsh[f].streamed = qtrue;
+		return r;
+	}
+
+	return FS_Read(buffer, len, f);
 }
 
 /*
@@ -908,12 +915,6 @@ const char *FS_ReferencedIwdPureChecksums()
 	return fs_referencedIwdPureChecksums;
 }
 
-enum snd_stopsounds_arg_t
-{
-	SND_STOP_STREAMED = 8
-};
-void SND_StopSounds( snd_stopsounds_arg_t which );
-
 void FS_PureServerSetLoadedIwds(const char *paksums, const char *paknames)
 {
 	int j, k;
@@ -992,7 +993,6 @@ reload:
 		fs_fakeChkSum = 0;
 	}
 }
-
 
 void FS_PureServerSetReferencedIwds( const char *iwdSums, const char *iwdNames )
 {
@@ -1073,6 +1073,7 @@ char *FS_GetMapBaseName(const char *mapname)
 
 	return fs_mapBaseName;
 }
+
 
 // Unreferenced storage; original declarations unknown (sized from the layout).
 static int unusedStorage;

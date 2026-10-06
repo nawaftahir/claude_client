@@ -114,6 +114,16 @@ extern void XAnimSetTime(XAnimTree *tree, unsigned int animIndex, float time);
         ((int *)(v))[2] = 0; \
     } while (0)
 
+static void CG_ResetEntity(char *centPtr);
+void CG_SetNextSnap(snapshot_t *snap);
+void CG_SetInitialSnapshot(snapshot_t *snap_param);
+void CG_ProcessSnapshots(void);
+
+static void CG_ResetEntity(char *cent);
+void CG_SetNextSnap(snapshot_t *snap);
+void CG_SetInitialSnapshot(snapshot_t *snap);
+void CG_ProcessSnapshots(void);
+
 static inline void VectorClear(vec3_t v)
 {
     v[0] = 0;
@@ -127,11 +137,6 @@ static inline void VectorCopy(const vec3_t a, vec3_t b)
     b[1] = a[1];
     b[2] = a[2];
 }
-
-static void CG_ResetEntity(char *cent);
-void CG_SetNextSnap(snapshot_t *snap);
-void CG_SetInitialSnapshot(snapshot_t *snap);
-void CG_ProcessSnapshots(void);
 
 static char *CG_EntityPtr(int entNum)
 {
@@ -231,37 +236,45 @@ static void CG_ClearClientInfos_Inline(char *dest, char *src, char *tagBase, int
     }
 }
 
-static void CG_TransitionSnapshot(void)
+void CG_SetInitialSnapshot(snapshot_t *snap_param)
 {
-    centity_t *cent;
-    int i;
+    char *snap = (char *)snap_param;
+    float clientViewOrigin[3];
+    float clientViewAxis[9];
 
-    for (i = 0; i < cg->snap->numClients; i++) {
-        clientState_t *cs = &cg->snap->clients[i];
-        clientInfo_t *ci = &cg->bgs.clientinfo[cs->clientIndex];
+    CG_SetNextSnap(NULL);
 
-        if (ci->nextValid) {
-            ci->nextValid = 0;
-        } else {
-            XAnimTree_s *tree = ci->pXAnimTree;
+    cg->snap = (snapshot_t *)snap;
+    cg->nextSnap = (snapshot_t *)snap;
 
-            memset(ci, 0, sizeof(*ci));
-            ci->pXAnimTree = tree;
-            CG_SafeDObjFree(cs->clientIndex);
-        }
+    {
+        int serverTime = ((snapshot_t *)snap)->serverTime;
+        cg->time = serverTime;
+        cg->bgs.time = serverTime;
+        cg->oldTime = serverTime;
     }
 
-    cg->snap = cg->nextSnap;
+    clientViewOrigin[0] = ((snapshot_t *)snap)->ps.origin[0];
+    clientViewOrigin[1] = ((snapshot_t *)snap)->ps.origin[1];
+    clientViewOrigin[2] = ((snapshot_t *)snap)->ps.origin[2];
+    clientViewOrigin[2] += ((snapshot_t *)snap)->ps.viewHeightCurrent;
 
-    if (cg->snap->ps.pm_flags & 0xc00000) {
-        cent = &cg_entities[cg->snap->ps.clientNum];
-        memcpy(&cent->currentState, &cent->nextState, sizeof(cent->currentState));
+    AnglesToAxis(((snapshot_t *)snap)->ps.viewangles, (vec3_t *)clientViewAxis);
+
+    {
+        int clientNum = ((snapshot_t *)snap)->ps.clientNum;
+        SND_SetListener(clientNum, clientViewOrigin, (vec3_t (*))(clientViewAxis));
     }
 
-    for (i = 0; i < cg->snap->numEntities; i++) {
-        cent = &cg_entities[cg->snap->entities[i].number];
-        memcpy(&cent->currentState, &cent->nextState, sizeof(cent->currentState));
-    }
+    SND_FadeAllSounds(1.0f, 0);
+
+    CG_Respawn();
+
+    CG_PlaySmokeGrenadesAtTime(cg->time);
+
+    CG_InitView();
+
+    cg->nextSnap = NULL;
 }
 
 // Original name unknown.
@@ -293,6 +306,39 @@ static void CG_UpdateKillCam(void)
                     XAnimSetTime(pXAnimTree, anim, 1.0f);
             }
         }
+    }
+}
+
+static void CG_TransitionSnapshot(void)
+{
+    centity_t *cent;
+    int i;
+
+    for (i = 0; i < cg->snap->numClients; i++) {
+        clientState_t *cs = &cg->snap->clients[i];
+        clientInfo_t *ci = &cg->bgs.clientinfo[cs->clientIndex];
+
+        if (ci->nextValid) {
+            ci->nextValid = 0;
+        } else {
+            XAnimTree_s *tree = ci->pXAnimTree;
+
+            memset(ci, 0, sizeof(*ci));
+            ci->pXAnimTree = tree;
+            CG_SafeDObjFree(cs->clientIndex);
+        }
+    }
+
+    cg->snap = cg->nextSnap;
+
+    if (cg->snap->ps.pm_flags & 0xc00000) {
+        cent = &cg_entities[cg->snap->ps.clientNum];
+        memcpy(&cent->currentState, &cent->nextState, sizeof(cent->currentState));
+    }
+
+    for (i = 0; i < cg->snap->numEntities; i++) {
+        cent = &cg_entities[cg->snap->entities[i].number];
+        memcpy(&cent->currentState, &cent->nextState, sizeof(cent->currentState));
     }
 }
 
@@ -424,47 +470,6 @@ void CG_SetNextSnap(snapshot_t *snap)
         CG_TransitionPlayerState(&cg->nextSnap->ps, &cg->snap->ps);
 }
 
-void CG_SetInitialSnapshot(snapshot_t *snap_param)
-{
-    char *snap = (char *)snap_param;
-    float clientViewOrigin[3];
-    float clientViewAxis[9];
-
-    CG_SetNextSnap(NULL);
-
-    cg->snap = (snapshot_t *)snap;
-    cg->nextSnap = (snapshot_t *)snap;
-
-    {
-        int serverTime = ((snapshot_t *)snap)->serverTime;
-        cg->time = serverTime;
-        cg->bgs.time = serverTime;
-        cg->oldTime = serverTime;
-    }
-
-    clientViewOrigin[0] = ((snapshot_t *)snap)->ps.origin[0];
-    clientViewOrigin[1] = ((snapshot_t *)snap)->ps.origin[1];
-    clientViewOrigin[2] = ((snapshot_t *)snap)->ps.origin[2];
-    clientViewOrigin[2] += ((snapshot_t *)snap)->ps.viewHeightCurrent;
-
-    AnglesToAxis(((snapshot_t *)snap)->ps.viewangles, (vec3_t *)clientViewAxis);
-
-    {
-        int clientNum = ((snapshot_t *)snap)->ps.clientNum;
-        SND_SetListener(clientNum, clientViewOrigin, (vec3_t (*))(clientViewAxis));
-    }
-
-    SND_FadeAllSounds(1.0f, 0);
-
-    CG_Respawn();
-
-    CG_PlaySmokeGrenadesAtTime(cg->time);
-
-    CG_InitView();
-
-    cg->nextSnap = NULL;
-}
-
 static snapshot_t *CG_ReadNextSnapshot(void)
 {
     snapshot_t *dest;
@@ -553,3 +558,4 @@ void CG_ProcessSnapshots(void)
         cg->bgs.time = cg->time = cg->snap->serverTime;
     }
 }
+

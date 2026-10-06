@@ -187,3 +187,4 @@ void LAN_SaveServersToCache(void)
     FS_Write(cls.favoriteServers, sizeof(cls.favoriteServers), fileOut);
     FS_FCloseFile(fileOut);
 }
+

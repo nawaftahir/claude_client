@@ -50,6 +50,48 @@ int FS_FOpenFileRead(const char *filename, fileHandle_t *file, qboolean uniqueFI
 char** FS_ListFiles(const char* path, const char* extension, FsListBehavior behavior, int* numfiles, int allocType);
 char **FS_ListFilteredFilesOfDirType( const char *path, const char *extension, const char *filter, FsListBehavior behavior, int *numfiles, int dirTypes, int flags );
 
+bool FS_LanguageHasAssets( int language );
+void FS_BuildOSPath(const char *base, const char *game, const char *qpath, char* ospath);
+void FS_Remove( const char *osPath );
+qboolean FS_FileExists( const char *file );
+void FS_Rename( const char *from, const char *to );
+qboolean FS_FileCompare( const char *filename1, const char *filename2 );
+char *FS_ShiftedStrStr( const char *string, const char *substring, int shift );
+int FS_FOpenFileRead(const char *filename, fileHandle_t *file, qboolean uniqueFILE);
+const char *FS_ShortOSFilePath( const char *qpath );
+bool FS_SetWritable( const char *filename, int writable );
+int FS_SeekInternal( int f, int offset, int origin );
+int FS_GetOSPath( const char *qpath, char *ospath );
+fileHandle_t FS_OpenFileOverwrite( const char *qpath );
+char **FS_ListFilteredFiles(searchpath_t *searchPath, const char *path, const char *extension, const char *filter, FsListBehavior behavior, int *numfiles, int allocType);
+char **FS_ListFilesOfDirType( const char *path, const char *extension, FsListBehavior behavior, int *numfiles, int dirTypes, int flags );
+bool FS_IsBaseGameDirOfType( const char *dir, int dirTypes );
+char **FS_ListFilteredFilesOfDirType( const char *path, const char *extension, const char *filter, FsListBehavior behavior, int *numfiles, int dirTypes, int flags );
+int FS_ConditionalRestart( int checksumFeed );
+int FS_FTell( int f );
+const char *GetBspExtension();
+
+enum snd_stopsounds_arg_t
+{
+	SND_STOP_STREAMED = 8
+};
+void SND_StopSounds( snd_stopsounds_arg_t which );
+void SEH_Init_StringEd();
+void SEH_Shutdown_StringEd();
+void SEH_UpdateLanguageInfo();
+
+void Com_ReadCDKey( void );
+
+/*
+==============
+FS_Remove
+==============
+*/
+void FS_Remove( const char *osPath )
+{
+	remove(osPath);
+}
+
 qboolean FS_Initialized()
 {
 	return fs_searchpaths != NULL;
@@ -349,18 +391,6 @@ void FS_CopyFile(char *fromOSPath, char *toOSPath)
 	free(buf);
 }
 
-
-/*
-==============
-FS_Remove
-==============
-*/
-void FS_Remove( const char *osPath )
-{
-	remove(osPath);
-}
-
-
 /*
 ==============
 FS_FileExists
@@ -382,7 +412,6 @@ qboolean FS_FileExists( const char *file )
 
 	return qfalse;
 }
-
 
 /*
 ==============
@@ -597,7 +626,6 @@ int FS_FilenameCompare(const char *s1, const char *s2)
 	return 0;       // strings are equal
 }
 
-
 /*
 ==============
 FS_FileCompare
@@ -683,7 +711,6 @@ qboolean FS_FileCompare( const char *filename1, const char *filename2 )
 
 	return qtrue;
 }
-
 
 /*
 ==============
@@ -1117,7 +1144,6 @@ int FS_TouchFile( const char *filename )
 	return 1;
 }
 
-
 /*
 ==============
 FS_ShortOSFilePath
@@ -1166,7 +1192,6 @@ static int FS_Delete(const char *filename)
 	return 0;
 }
 
-
 /*
 ==============
 FS_SetWritable
@@ -1191,7 +1216,6 @@ bool FS_SetWritable( const char *filename, int writable )
 
 	return true;
 }
-
 
 int FS_Read(void *buffer, int len, fileHandle_t h)
 {
@@ -1318,7 +1342,6 @@ void FS_Printf( fileHandle_t h, const char *fmt, ... )
 
 	FS_Write( msg, I_strlen( msg ), h );
 }
-
 
 /*
 ==============
@@ -1516,7 +1539,6 @@ int FS_WriteFile(const char* filename, const void* buffer, int size)
 	return 0;
 }
 
-
 /*
 ==============
 FS_GetOSPath
@@ -1549,7 +1571,6 @@ int FS_GetOSPath( const char *qpath, char *ospath )
 
 	return -1;
 }
-
 
 /*
 ==============
@@ -1938,7 +1959,6 @@ char** FS_ListFiles(const char* path, const char* extension, FsListBehavior beha
 	return FS_ListFilteredFiles(fs_searchpaths, path, extension, 0, behavior, numfiles, allocType);
 }
 
-
 /*
 ==============
 FS_ListFilesOfDirType
@@ -1948,7 +1968,6 @@ char **FS_ListFilesOfDirType( const char *path, const char *extension, FsListBeh
 {
 	return FS_ListFilteredFilesOfDirType(path, extension, NULL, behavior, numfiles, dirTypes, flags);
 }
-
 
 /*
 ==============
@@ -1973,7 +1992,6 @@ bool FS_IsBaseGameDirOfType( const char *dir, int dirTypes )
 		return true;
 	return false;
 }
-
 
 /*
 ==============
@@ -2542,15 +2560,6 @@ void FS_ShutdownServerReferencedIwds()
 	fs_numServerReferencedIwds = 0;
 }
 
-enum snd_stopsounds_arg_t
-{
-	SND_STOP_STREAMED = 8
-};
-void SND_StopSounds( snd_stopsounds_arg_t which );
-void SEH_Init_StringEd();
-void SEH_Shutdown_StringEd();
-void SEH_UpdateLanguageInfo();
-
 // closemfp is unused
 void FS_Shutdown( int closemfp )
 {
@@ -2604,8 +2613,6 @@ static bool FS_RegisterDvars()
 
 	return false;
 }
-
-void Com_ReadCDKey( void );
 
 void FS_Startup(const char *gameName)
 {
@@ -2764,7 +2771,6 @@ void FS_Restart(int checksumFeed)
 	I_strncpyz(lastValidGame, fs_gameDirVar->current.string, sizeof(lastValidGame));
 }
 
-
 /*
 ==============
 FS_ConditionalRestart
@@ -2842,7 +2848,6 @@ int FS_FOpenFileByMode( const char *qpath, fileHandle_t *f, fsMode_t mode )
 	return r;
 }
 
-
 /*
 ==============
 FS_FTell
@@ -2865,7 +2870,6 @@ void FS_Flush(fileHandle_t f)
 	fflush(FS_FileForHandle(f));
 }
 
-
 /*
 ==============
 GetBspExtension
@@ -2880,3 +2884,4 @@ const char *GetBspExtension()
 
 	return va("d3dbsp");
 }
+

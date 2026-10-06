@@ -1,6 +1,10 @@
 #include "qcommon.h"
 #include "cm_local.h"
 
+static void CM_InitStaticModel( cStaticModel_t *staticModel, const vec3_t origin, const vec3_t angles, const vec3_t scale );
+static bool CM_CreateStaticModel( cStaticModel_t *staticModel, const char *name, const vec3_t origin, const vec3_t angles, const vec3_t scale );
+void CM_LoadStaticModels();
+
 /*
 ==================
 CM_InitStaticModel
@@ -199,3 +203,4 @@ void CM_LoadStaticModels()
 		}
 	}
 }
+

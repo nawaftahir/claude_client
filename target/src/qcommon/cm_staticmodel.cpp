@@ -1,6 +1,11 @@
 #include "qcommon.h"
 #include "cm_local.h"
 
+void* CM_Hunk_AllocXModel(int size);
+void* CM_Hunk_AllocXModelColl(int size);
+XModel* CM_XModelPrecache(const char *name);
+void CM_TraceStaticModel( cStaticModel_s *sm, trace_t *results, const vec3_t start, const vec3_t end, int contentmask );
+
 /*
 ==================
 CM_Hunk_AllocXModel

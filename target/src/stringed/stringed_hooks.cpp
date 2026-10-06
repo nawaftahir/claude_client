@@ -39,6 +39,13 @@ unsigned char SEH_IsJapaneseChar( unsigned int c ) throw();
 unsigned char SEH_IsChineseChar( unsigned int c ) throw();
 int SEH_IsKoreanLeadTrail( unsigned char lead, unsigned char trail );
 
+int SEH_StringEd_SetLanguageStrings( int iLanguage );
+int SEH_IsChineseLeadTrail( unsigned char lead, unsigned char trail );
+int Language_IsAsian();
+const char *SEH_GetLanguageName( const int iLanguage );
+int SEH_IsKoreanLeadTrail( unsigned char lead, unsigned char trail );
+unsigned char SEH_IsKoreanChar( unsigned int c ) throw();
+
 void Language_UpdateCurrentAsian()
 {
 	switch ( loc_language->current.integer )
@@ -396,6 +403,16 @@ unsigned char SEH_IsJapaneseLeadTrail( unsigned char lead, unsigned char trail )
 	return 0;
 }
 
+unsigned char SEH_IsJapaneseChar( unsigned int c ) throw()
+{
+	return SEH_IsJapaneseLeadTrail(c >> 8, c);
+}
+
+unsigned char SEH_IsChineseChar( unsigned int c ) throw()
+{
+	return SEH_IsChineseLeadTrail(c >> 8, c);
+}
+
 unsigned char SEH_IsJapanesePunctuation( unsigned int c )
 {
 	if ( c >= 0x8140 && c < 0x8152 )
@@ -584,12 +601,3 @@ unsigned char SEH_IsKoreanChar( unsigned int c ) throw()
 	return SEH_IsKoreanLeadTrail(c >> 8, c);
 }
 
-unsigned char SEH_IsJapaneseChar( unsigned int c ) throw()
-{
-	return SEH_IsJapaneseLeadTrail(c >> 8, c);
-}
-
-unsigned char SEH_IsChineseChar( unsigned int c ) throw()
-{
-	return SEH_IsChineseLeadTrail(c >> 8, c);
-}

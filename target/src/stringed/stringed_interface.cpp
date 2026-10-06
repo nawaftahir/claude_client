@@ -1,6 +1,13 @@
 #include "stringed_alloc.h"
 #include "../qcommon/qcommon.h"
 
+static int giFilesFound;
+
+void SE_FreeFileDataAfterLoad( unsigned char *psLoadedFile )
+{
+	FS_FreeFile(psLoadedFile);
+}
+
 unsigned char *SE_LoadFileData( const char *psFileName )
 {
 	unsigned char *pbReturn;
@@ -9,13 +16,6 @@ unsigned char *SE_LoadFileData( const char *psFileName )
 	iTotalBytesLoaded = FS_ReadFile(psFileName, (void **)&pbReturn);
 	return iTotalBytesLoaded <= 0 ? NULL : pbReturn;
 }
-
-void SE_FreeFileDataAfterLoad( unsigned char *psLoadedFile )
-{
-	FS_FreeFile(psLoadedFile);
-}
-
-static int giFilesFound;
 
 static void SE_R_ListFiles( const char *psExtension, const char *psDir, se_string &strResults )
 {
@@ -56,3 +56,4 @@ int SE_BuildFileList( const char *psStartDir, se_string &strResults )
 	SE_R_ListFiles("str", psStartDir, strResults);
 	return giFilesFound;
 }
+

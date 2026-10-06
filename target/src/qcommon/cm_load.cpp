@@ -22,6 +22,17 @@ clipMap_t cm;
 static int cm_unused;	// unreferenced; original name unknown
 clipMapExtra_t cme;
 
+void CM_InitThreadData( int threadContext );
+void CM_InitAllThreadData();
+void CM_LoadMapData( const char *name );
+void CM_LoadMap( const char *name, int *checksum );
+void CM_Shutdown();
+void CM_SaveLump( int lumpType, const void *data, int len, int *checksum );
+int CM_NumInlineModels( void );
+char *CM_EntityString();
+int CM_LeafCluster( int leafnum );
+void CM_ModelBounds( clipHandle_t model, vec3_t mins, vec3_t maxs );
+
 /*
 ===================
 CM_InitThreadData
@@ -300,3 +311,4 @@ void CM_Hunk_ClearTempMemoryHigh()
 {
 	Hunk_ClearTempMemoryHighInternal();
 }
+

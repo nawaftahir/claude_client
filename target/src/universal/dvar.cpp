@@ -19,6 +19,8 @@ static bool isLoadingAutoExec;
 
 static const char digitStrings[10][2] = { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" };
 
+void Dvar_AddFlags(dvar_t *dvar, int flags);
+
 void Dvar_SetInAutoExec(bool inAutoExec)
 {
 	isLoadingAutoExec = inAutoExec;
@@ -1936,3 +1938,4 @@ nextLine:
 
 	return qfalse;
 }
+

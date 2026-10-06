@@ -3,15 +3,11 @@
 
 static int currentPos;
 
-/*
-==============
-TempMemoryReset
-==============
-*/
-void TempMemoryReset()
-{
-	currentPos = 0;
-}
+void TempMemoryReset();
+char *TempMalloc( int len );
+char *TempMallocAlign( int len );
+char *TempMallocAlignStrict( int len );
+void TempMemorySetPos( char *pos );
 
 /*
 ==============
@@ -51,6 +47,16 @@ char *TempMallocAlignStrict( int len )
 
 /*
 ==============
+TempMemoryReset
+==============
+*/
+void TempMemoryReset()
+{
+	currentPos = 0;
+}
+
+/*
+==============
 TempMemorySetPos
 ==============
 */
@@ -62,3 +68,4 @@ void TempMemorySetPos( char *pos )
 	currentPos -= end - pos;
 	Hunk_ReallocateTempMemoryInternal( currentPos );
 }
+

@@ -74,6 +74,32 @@ void Dvar_ClearServerInfoNoUpdateFlags();
 bool SV_Loaded();
 void SV_Shutdown( const char *finalmsg );
 
+void SV_GetConfigstring( int index, char *buffer, int bufferSize );
+const char *SV_GetConfigValueForKey( int start, int max, const char *key );
+void SV_SetConfigValueForKey( int start, int max, const char *key, const char *value );
+void SV_SetUserinfo( int index, const char *val );
+void SV_GetUserinfo( int index, char *buffer, int bufferSize );
+void SV_CreateBaseline( void );
+void SV_BoundMaxClients( int minimum );
+void SV_Startup( void );
+void SV_ChangeMaxClients( void );
+void SV_SetExpectedHunkUsage( char *mapname );
+void SV_ClearServer( void );
+void SV_EnableArchivedSnapshot( qboolean bEnable );
+void SV_InitArchivedSnapshot();
+void SV_FreeArchivedSnapshot();
+void Dvar_ResetScriptInfo();
+void SV_SaveSystemInfo();
+bool SV_Loaded();
+void SV_FinalMessage( const char *message );
+void SV_DropAllClients();
+void SV_Shutdown( const char *finalmsg );
+
+void CL_InitLoad( const char *mapname, const char *gametype );
+void CL_MapLoading( const char *mapname );
+void CL_StartHunkUsers( void );
+void UI_LoadIngameMenus( void );
+
 void SV_SetConfigstring( int index, const char *val )
 {
 	int len, i;
@@ -633,7 +659,6 @@ void SV_FreeArchivedSnapshot()
 	}
 }
 
-
 /*
 ===============
 Dvar_ResetScriptInfo
@@ -664,11 +689,6 @@ void SV_SaveSystemInfo()
 	SV_SetConfig(142, 96, 256);
 	dvar_modifiedFlags &= ~DVAR_CODINFO;
 }
-
-void CL_InitLoad( const char *mapname, const char *gametype );
-void CL_MapLoading( const char *mapname );
-void CL_StartHunkUsers( void );
-void UI_LoadIngameMenus( void );
 
 void SV_SpawnServer( char *server )
 {
@@ -1094,3 +1114,4 @@ void SV_Shutdown( const char *finalmsg )
 
 	bgs = NULL;
 }
+

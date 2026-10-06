@@ -37,6 +37,44 @@ const char *Cmd_Argv( int arg );
 void Cmd_TokenizeString( const char *text_in );
 void Cmd_ExecuteString( const char *text );
 
+void Cmd_Wait_f( void );
+void Cbuf_Init( void );
+void Cbuf_AddText( const char *text );
+void Cbuf_InsertText( const char *text );
+void Cbuf_ExecuteText( int exec_when, const char *text );
+void Cbuf_ExecuteInternal( void );
+void Cbuf_Execute( void );
+void Cmd_Exec_f( void );
+void Cmd_Vstr_f( void );
+void Cmd_Echo_f( void );
+int Cmd_Argc( void );
+const char *Cmd_Argv( int arg );
+void Cmd_ArgvBuffer( int arg, char *buffer, int bufferLength );
+char *Cmd_Args( int start );
+void Cmd_ArgsBuffer( char *buffer, int bufferLength );
+void Cmd_TokenizeString( const char *text_in );
+cmd_function_t* Cmd_FindCommand( const char *cmdName );
+void Cmd_AddCommand( const char *cmd_name, xcommand_t function );
+void Cmd_SetAutoComplete( const char *cmdName, const char *dir, const char *ext );
+void Cmd_Shutdown();
+void Cmd_ForEach( void(*callback)(const char *s) );
+const char **Cmd_GetAutoCompleteFileList( const char *cmdName, int *fileCount, int allocTrackType );
+void Cmd_ExecuteString( const char *text );
+void Cmd_List_f( void );
+void Cmd_Init( void );
+
+// the server command context: same token table, separate entry points
+
+/*
+============
+Cmd_Argc
+============
+*/
+int Cmd_Argc( void )
+{
+	return cmd_argc;
+}
+
 // unreferenced; original name unknown
 void Cmd_EmptyStub( void )
 {
@@ -164,7 +202,6 @@ void Cbuf_ExecuteText( int exec_when, const char *text )
 	}
 }
 
-
 /*
 ============
 Cbuf_ExecuteInternal
@@ -234,7 +271,6 @@ void Cbuf_ExecuteInternal( void )
 		Cmd_ExecuteString( line );
 	}
 }
-
 
 void Cbuf_Execute( void )
 {
@@ -318,7 +354,6 @@ void Cmd_Vstr_f( void )
 	Cbuf_InsertText( va( "%s\n", dvar->current.string ) );
 }
 
-
 /*
 ===============
 Cmd_Echo_f
@@ -335,19 +370,6 @@ void Cmd_Echo_f( void )
 
 	Com_Printf( "\n" );
 }
-
-/*
-============
-Cmd_Argc
-============
-*/
-int Cmd_Argc( void )
-{
-	return cmd_argc;
-}
-
-
-// the server command context: same token table, separate entry points
 
 int SV_Cmd_Argc( void )
 {
@@ -368,7 +390,6 @@ const char *Cmd_Argv( int arg )
 
 	return cmd_argv[arg];
 }
-
 
 const char *SV_Cmd_Argv( int arg )
 {
@@ -391,7 +412,6 @@ void Cmd_ArgvBuffer( int arg, char *buffer, int bufferLength )
 {
 	Q_strncpyz( buffer, Cmd_Argv( arg ), bufferLength );
 }
-
 
 void SV_Cmd_ArgvBuffer( int arg, char *buffer, int bufferLength )
 {
@@ -421,7 +441,6 @@ char *Cmd_Args( int start )
 
 	return cmd_args;
 }
-
 
 /*
 ============
@@ -588,7 +607,6 @@ void Cmd_TokenizeStringWithLimit( const char *text_in, int max_tokens )
 	cmd_argc = Cmd_TokenizeStringInternal(text_in, max_tokens, cmd_argv, cmd_tokenized);
 }
 
-
 void SV_Cmd_TokenizeStringWithLimit( const char *text_in, int max_tokens )
 {
 	cmd_argc = Cmd_TokenizeStringInternal(text_in, max_tokens, cmd_argv, cmd_tokenized);
@@ -598,7 +616,6 @@ void Cmd_TokenizeString( const char *text_in )
 {
 	Cmd_TokenizeStringWithLimit(text_in, 0);
 }
-
 
 void SV_Cmd_TokenizeString( const char *text_in )
 {
@@ -653,7 +670,6 @@ void Cmd_AddCommand( const char *cmd_name, xcommand_t function )
 	cmd->next = cmd_functions;
 	cmd_functions = cmd;
 }
-
 
 void Cmd_RemoveCommand(const char *cmd_name)
 {
@@ -724,7 +740,6 @@ void Cmd_ForEach( void(*callback)(const char *s) )
 		callback( cmd->name );
 	}
 }
-
 
 /*
 ============
@@ -809,7 +824,6 @@ void Cmd_ExecuteString( const char *text )
 	CL_ForwardCommandToServer( text );
 }
 
-
 void SV_Cmd_ExecuteString( const char *text )
 {
 	Cmd_ExecuteString( text );
@@ -861,3 +875,4 @@ void Cmd_Init( void )
 	Cmd_AddCommand("vstr", Cmd_Vstr_f);
 	Cmd_AddCommand("wait", Cmd_Wait_f);
 }
+

@@ -212,75 +212,16 @@ static float CG_DrawWeapReticle(void);
 void CG_DrawCrosshair(void);
 unsigned int CG_Draw2D(void);
 
-static qboolean CG_UpdateCameraShakeStrength(cameraShake_t *shake)
-{
-    float elapsed;
-    float distanceScale;
-    float rumbleScale;
-
-    int elapsedMs = cg->time - shake->time;
-    if (elapsedMs < 0) {
-        return 0;
-    }
-    elapsed = (float)elapsedMs;
-    if (elapsed >= shake->length) {
-        return 0;
-    }
-
-    distanceScale = 1.0f - Vec3Distance(shake->src, cg->refdef.vieworg) / shake->radius;
-    rumbleScale = (1.0f - elapsed / shake->length) * shake->scale;
-    if (rumbleScale <= 0.0f) {
-        return 0;
-    }
-
-    shake->size = distanceScale >= 0.0f ? distanceScale * rumbleScale : distanceScale / rumbleScale;
-    shake->rumbleScale = rumbleScale;
-    return 1;
-}
-
-void CG_StartShakeCamera(float scale, int duration, const vec_t *src, float radius)
-{
-    cameraShake_t temp;
-    cameraShake_t *shake;
-    int bestIndex;
-    float bestSize;
-    int i;
-
-    temp.scale = scale;
-    temp.length = (float)duration;
-    temp.time = cg->time;
-    temp.src[0] = src[0];
-    temp.src[1] = src[1];
-    temp.src[2] = src[2];
-    temp.radius = radius;
-    CG_UpdateCameraShakeStrength(&temp);
-
-    for (i = 0; i < 4; ++i) {
-        shake = &cg->cameraShake[i];
-        if (shake->time > cg->time)
-            goto store;
-        if ((float)shake->time + shake->length <= (float)cg->time)
-            goto store;
-    }
-
-    bestIndex = i;
-    bestSize = temp.size;
-    for (i = 0; i < 4; ++i) {
-        if (cg->cameraShake[i].size < bestSize) {
-            bestIndex = i;
-            bestSize = cg->cameraShake[i].size;
-        }
-    }
-    if (bestIndex == 4)
-        return;
-    i = bestIndex;
-
-store:
-    shake = &cg->cameraShake[i];
-    *shake = temp;
-}
+bool CG_GetWeapReticleZoom(float *pfZoom);
+void CG_DrawTurretCrossHair(void);
+static inline int CG_RoundFPS(float value);
+static inline void FastSinCos(const float value, float *pSin, float *pCos);
 
 extern int Com_sprintf(char *dest, size_t size, const char *format, ...);
+
+extern const vec3_t vec3_origin;
+
+extern int I_stricmp(const char *s1, const char *s2);
 
 // Original name unknown.
 int CG_DrawFieldWidth(int width, int value, int charWidth)
@@ -359,6 +300,13 @@ void CG_DrawScriptUsage(void)
     CG_DrawStringExt(480.0f, 112.0f, va("string usage: %d", Scr_GetStringUsage()), colorWhite, 1, 1, 16.0f, 1);
 }
 
+static float CG_DrawSnapshot(float y)
+{
+    return y + (float)CG_DrawBigDevStringColor(620.0f, y,
+        va("time:%i snap:%i cmd:%i", cg->nextSnap->serverTime, cg->latestSnapshotNum, cgs->serverCommandSequence),
+        colorWhite, 6);
+}
+
 void CG_CalculateFPS(void)
 {
     int now;
@@ -373,870 +321,6 @@ void CG_CalculateFPS(void)
     fps_previousTimes[index % 32] = delta;
     fps_index = index + 1;
 }
-
-void CG_AddLagometerFrameInfo(void)
-{
-    lagometer.frameSamples[lagometer.frameCount & 0x7f] = cg->time - cg->latestSnapshotTime;
-    lagometer.frameCount++;
-}
-
-void CG_AddLagometerSnapshotInfo(snapshot_t *snap)
-{
-    if (!snap) {
-        lagometer.snapshotSamples[lagometer.snapshotCount & 0x7f] = -1;
-        lagometer.snapshotCount++;
-        return;
-    }
-    lagometer.snapshotSamples[lagometer.snapshotCount & 0x7f] = snap->ping;
-    lagometer.snapshotFlags[lagometer.snapshotCount & 0x7f] = snap->snapFlags;
-    lagometer.snapshotCount++;
-}
-
-void CG_DrawDisconnect(void)
-{
-    usercmd_t cmd;
-    snapshot_t *snap;
-    const char *text;
-    FontHandle font;
-    int textWidth;
-    float x;
-    vec4_t color = { 1.0f, 1.0f, 1.0f, 1.0f };
-
-    CL_GetUserCmd(CL_GetCurrentCmdNumber() - 127, &cmd);
-    snap = cg->nextSnap;
-#if COD2_TRACE
-    if (getenv("COD2_CNXDIAG")) {
-        static int c;
-        if ((c++ & 0x3f) == 0)
-            Com_Printf("[cnxdiag] cmd.serverTime=%d snap->ps.commandTime=%d cg->time=%d cmdNum=%d\n",
-                       cmd.serverTime, snap->ps.commandTime, cg->time, CL_GetCurrentCmdNumber());
-    }
-#endif
-    if (cmd.serverTime <= snap->ps.commandTime || cmd.serverTime > cg->time) {
-        return;
-    }
-
-    text = UI_SafeTranslateString("CGAME_CONNECTIONINTERUPTED");
-    font = UI_GetFontHandle(0, 0.5f);
-    textWidth = UI_TextWidth(text, 0, font, 0.5f);
-    textWidth = (int)(float)textWidth;
-    x = (float)((640 - textWidth) / 2);
-    UI_DrawText(text, 0x7fffffff, font, x, 100.0f, 0, 0, 0.5f, color, 3);
-    if (!(cg->time & 0x200)) {
-        UI_DrawHandlePic(296.0f, 416.0f, 48.0f, 48.0f, 0, 0, 0, CL_RegisterMaterial("net_disconnect", 7));
-    }
-}
-
-void CG_PriorityCenterPrint(const char *str, float charWidth, int priority)
-{
-    char hudElemString[256];
-    const char *s;
-    qboolean needNewline = 0;
-    int count;
-    unsigned int letter;
-
-    if (cgArray[0].centerPrintTime && priority < cgArray[0].centerPrintPriority) {
-        return;
-    }
-
-    CG_TranslateHudElemMessage(str, "Center Print", hudElemString);
-    I_strncpyz(cgArray[0].centerPrint, hudElemString, 0x100);
-    cgArray[0].centerPrintPriority = priority;
-
-    s = cgArray[0].centerPrint;
-    count = 0;
-    while (*s) {
-        letter = SEH_ReadCharFromString(&s, 0);
-        if (letter == '\n') {
-            needNewline = 0;
-            count = 0;
-            continue;
-        }
-
-        ++count;
-        if (count >= 0x4b) {
-            needNewline = 1;
-        }
-
-        if (needNewline && letter == ' ') {
-            ((char *)s)[-1] = '\n';
-            needNewline = 0;
-            count = 0;
-        }
-    }
-
-    cgArray[0].centerPrintTime = cgArray[0].time + 0x7d0;
-    cgArray[0].centerPrintCharWidth = (int)charWidth;
-    cgArray[0].centerPrintLines = 1;
-
-    s = cgArray[0].centerPrint;
-    while (*s) {
-        letter = SEH_ReadCharFromString(&s, 0);
-        if (letter == '\n') {
-            ++cgArray[0].centerPrintLines;
-            continue;
-        }
-
-        if (letter == '\\' && *s == 'n') {
-            ++cgArray[0].centerPrintLines;
-            ++s;
-        }
-    }
-}
-
-/* qboolean (int), not Bool: callers (cg_weapons.c, cg_predict_mp.c) declare it
- * `extern qboolean` and read full eax; a 1-byte Bool return leaves eax's upper
- * bytes dirty under MSVC -> garbage non-zero -> !CG_GetWeapReticleZoom() == 0 ->
- * drawGun never set -> the viewmodel was hidden even when spawned. */
-bool CG_GetWeapReticleZoom(float *pfZoom)
-{
-    WeaponDef *weaponDef;
-    float zoom;
-
-    weaponDef = (WeaponDef *)BG_GetWeaponDef(BG_GetViewmodelWeaponIndex(&cg->predictedPlayerState));
-    zoom = cg->predictedPlayerState.fWeaponPosFrac;
-    *pfZoom = 0.0f;
-
-    if (!weaponDef->szOverlayMaterial[0] && !weaponDef->overlayReticle)
-    {
-        return 0;
-    }
-
-    if (zoom == 0.0f) {
-        return 0;
-    }
-
-    if (cg->playerEntity.bPositionToADS) {
-        *pfZoom = zoom - (1.0f - weaponDef->fAdsZoomInFrac);
-        if (*pfZoom > 0.0f) {
-            *pfZoom /= weaponDef->fAdsZoomInFrac;
-        }
-    } else {
-        *pfZoom = zoom - (1.0f - weaponDef->fAdsZoomOutFrac);
-        if (*pfZoom > 0.0f) {
-            *pfZoom /= weaponDef->fAdsZoomOutFrac;
-        }
-    }
-
-    if (*pfZoom <= 0.01f) {
-        return 0;
-    }
-
-    if (*pfZoom > 1.0f) {
-        *pfZoom = 1.0f;
-    }
-
-    return 1;
-}
-
-void CG_DrawFrameOverlay(float innerLeft, float innerRight, float innerTop, float innerBottom, const vec_t *color, MaterialHandle material)
-{
-    float screenWidth;
-    float screenHeight;
-
-    screenWidth = (float)cls.vidConfig.width ;
-    screenHeight = (float)cls.vidConfig.height ;
-
-    if (innerLeft > 0.0f) {
-        CL_DrawStretchPicPhysical(0.0f, 0.0f, innerLeft, screenHeight, 0.0f, 0.0f, 0.0f, 1.0f, color, material);
-    }
-
-    if (innerRight < screenWidth) {
-        CL_DrawStretchPicPhysical(innerRight, 0.0f, screenWidth - innerRight, screenHeight, 0.0f, 0.0f, 0.0f, 1.0f, color, material);
-    }
-
-    if (innerTop > 0.0f) {
-        CL_DrawStretchPicPhysical(innerLeft, 0.0f, innerRight - innerLeft, innerTop, 0.0f, 0.0f, 1.0f, 0.0f, color, material);
-    }
-
-    if (innerBottom < screenHeight) {
-        CL_DrawStretchPicPhysical(innerLeft, innerBottom, innerRight - innerLeft, screenHeight - innerBottom, 0.0f, 0.0f, 1.0f, 0.0f, color, material);
-    }
-}
-
-extern const vec3_t vec3_origin;
-
-static void CG_ScanForCrosshairEntity(void)
-{
-    trace_t trace;
-    vec3_t start;
-    vec3_t end;
-
-    start[0] = cg->refdef.vieworg[0];
-    start[1] = cg->refdef.vieworg[1];
-    start[2] = cg->refdef.vieworg[2];
-    end[0] = cg->refdef.vieworg[0] + cg->refdef.viewaxis[0][0] * 8192.0f;
-    end[1] = cg->refdef.vieworg[1] + cg->refdef.viewaxis[0][1] * 8192.0f;
-    end[2] = cg->refdef.vieworg[2] + cg->refdef.viewaxis[0][2] * 8192.0f;
-    CG_Trace(&trace, start, vec3_origin, vec3_origin, end, cg->snap->ps.clientNum, 0x2000001);
-    if (trace.entityNum < 64) {
-        cg->crosshairClientNum = trace.entityNum;
-        cg->crosshairClientTime = cg->time;
-    }
-}
-
-void CG_DrawCrosshairNames(void)
-{
-    float *color;
-    char *name;
-    vec4_t textColor;
-    float x;
-    float y;
-    int clientNum;
-
-    if (!cg_drawCrosshairNames->current.enabled)
-        return;
-    if (cg->renderingThirdPerson)
-        return;
-
-    CG_ScanForCrosshairEntity();
-    color = CG_FadeColor(cg->crosshairClientTime, 150, 100);
-    if (!color)
-        return;
-    if (cg->crosshairClientNum > 64)
-        return;
-
-    clientNum = cg->snap->ps.clientNum;
-    if (!cg->bgs.clientinfo[clientNum].infoValid)
-        return;
-    if (!cg->bgs.clientinfo[clientNum].team)
-        return;
-    if (!cg->bgs.clientinfo[cg->crosshairClientNum].infoValid)
-        return;
-    if (cg->bgs.clientinfo[clientNum].team != 3
-        && cg->bgs.clientinfo[cg->crosshairClientNum].team != cg->bgs.clientinfo[clientNum].team)
-        return;
-
-    name = (char *)va("%s", cg->bgs.clientinfo[cg->crosshairClientNum].name);
-    if (!name)
-        return;
-    if (!name[0])
-        return;
-    I_CleanStr(name);
-
-    x = (float)cg_drawCrosshairNamesPosX->current.integer;
-    y = (float)(cg_drawCrosshairNamesPosY->current.integer + 16);
-    if (cg->crosshairClientNum == cg->identifyClientNum) {
-        textColor[1] = (float)cg->identifyClientHealth * 0.01f;
-        if (textColor[1] > 1.0f)
-            textColor[1] = 1.0f;
-        else if (textColor[1] < 0.0f)
-            textColor[1] = 0.0f;
-        textColor[2] = 0.0f;
-        if (textColor[1] > 0.5) {
-            textColor[0] = (1.0f - textColor[1]) + (1.0f - textColor[1]);
-            textColor[1] = 1.0f;
-        } else {
-            textColor[1] = textColor[1] + textColor[1];
-            textColor[0] = 1.0f;
-        }
-    } else {
-        textColor[0] = 1.0f;
-        textColor[2] = 1.0f;
-        textColor[1] = 1.0f;
-    }
-    textColor[3] = color[3] * 0.6f;
-    UI_DrawText(name, 0x7fffffff, UI_GetFontHandle(0, 1.0f / 3.0f), x, y, 0, 0, 1.0f / 3.0f, textColor, 3);
-}
-
-int CG_CheckPlayerMovement(usercmd_t oldCmd, usercmd_t newCmd)
-{
-    if (memcmp(oldCmd.angles, newCmd.angles, sizeof(oldCmd.angles)))
-        return 1;
-    return newCmd.forwardmove || newCmd.rightmove;
-}
-
-int CG_CheckPlayerStanceChange(int newButtons, int changedButtons)
-{
-    if (changedButtons & 0x2300)
-    {
-        CG_MenuShowNotify(3);
-        return 1;
-    }
-    if (newButtons & 0x2300)
-        CG_MenuShowNotify(3);
-    return 0;
-}
-
-int CG_CheckPlayerTryReload(int buttons)
-{
-    return (buttons & 0x30)
-        && !(cg->predictedPlayerState.pm_flags & 4)
-        && !(cg->snap->ps.cursorHint & 2)
-        && !(cg->predictedPlayerState.eFlags & 0x300);
-}
-
-int CG_CheckPlayerFireNonTurret(int buttons)
-{
-    return (buttons & 1) && !(cg->predictedPlayerState.eFlags & 0x300);
-}
-
-int CG_CheckPlayerWeaponUsage(int buttons)
-{
-    if (!CG_CheckPlayerFireNonTurret(buttons) && !CG_CheckPlayerTryReload(buttons))
-        return 0;
-    CG_MenuShowNotify(1);
-    return 1;
-}
-
-int CG_CheckPlayerOffHandUsage(int buttons)
-{
-    if (buttons & 0x30000)
-    {
-        CG_MenuShowNotify(4);
-        return 1;
-    }
-    return 0;
-}
-
-int CG_CheckPlayerMiscInput(int buttons)
-{
-    return buttons & 0xffffd4ff;
-}
-
-void CG_CheckForPlayerInput(void)
-{
-    usercmd_t oldCmd;
-    usercmd_t newCmd;
-    int newCmdIndex;
-    int changedButtons;
-    int newInput;
-
-    newCmdIndex = CL_GetCurrentCmdNumber();
-    if (newCmdIndex > 1)
-    {
-        CL_GetUserCmd(newCmdIndex - 1, &oldCmd);
-        CL_GetUserCmd(newCmdIndex, &newCmd);
-        changedButtons = oldCmd.buttons ^ newCmd.buttons;
-        newInput = CG_CheckPlayerMovement(oldCmd, newCmd);
-        if (CG_CheckPlayerWeaponUsage(newCmd.buttons))
-            newInput = 1;
-        if (CG_CheckPlayerOffHandUsage(newCmd.buttons))
-            newInput = 1;
-        if (CG_CheckPlayerStanceChange(newCmd.buttons, changedButtons))
-            newInput = 1;
-        if (newInput || CG_CheckPlayerMiscInput(changedButtons))
-            CG_MenuShowNotify(2);
-    }
-}
-
-void CG_CheckHudHealthDisplay(void)
-{
-    menuDef_t *menu;
-
-    if (CG_CalcPlayerHealth() < hud_health_startpulse_injured->current.value)
-    {
-        CG_MenuShowNotify(0);
-    }
-    else
-    {
-        if (hud_fade_healthbar->current.value != 0.0f
-            && cg->healthFadeTime
-            && (float)(cg->time - cg->healthFadeTime) > hud_fade_healthbar->current.value * 1000.0f)
-        {
-            menu = Menus_FindByName(&cgDC, "Health");
-            if (menu)
-                Window_RemoveDynamicFlags((Window *)menu, 4);
-            cg->healthFadeTime = 0;
-        }
-    }
-}
-
-void CG_CheckHudAmmoDisplay(void)
-{
-    menuDef_t *menu;
-
-    if (CG_CheckPlayerForLowAmmo() || CG_CheckPlayerForLowClip())
-        CG_MenuShowNotify(1);
-    if (hud_fade_ammodisplay->current.value != 0.0f
-        && cg->ammoFadeTime
-        && (float)(cg->time - cg->ammoFadeTime) > hud_fade_ammodisplay->current.value * 1000.0f)
-    {
-        menu = Menus_FindByName(&cgDC, "weaponinfo");
-        if (menu)
-            Window_RemoveDynamicFlags((Window *)menu, 4);
-        cg->ammoFadeTime = 0;
-    }
-}
-
-void CG_CheckHudCompassDisplay(void)
-{
-    menuDef_t *menu;
-
-    if (hud_fade_compass->current.value != 0.0f
-        && cg->compassFadeTime
-        && (float)(cg->time - cg->compassFadeTime) > hud_fade_compass->current.value * 1000.0f)
-    {
-        menu = Menus_FindByName(&cgDC, "Compass");
-        if (menu)
-            Window_RemoveDynamicFlags((Window *)menu, 4);
-        cg->compassFadeTime = 0;
-    }
-}
-
-void CG_CheckHudStanceDisplay(void)
-{
-    menuDef_t *menu;
-
-    if ((cg->nextSnap->ps.eFlags & 8) && (cg->nextSnap->ps.eFlags & 0x100)
-        || (cg->nextSnap->ps.eFlags & 4) && (cg->nextSnap->ps.eFlags & 0x200))
-    {
-        CG_MenuShowNotify(3);
-    }
-    if (hud_fade_stance->current.value != 0.0f
-        && cg->stanceFadeTime
-        && (float)(cg->time - cg->stanceFadeTime) > hud_fade_stance->current.value * 1000.0f)
-    {
-        menu = Menus_FindByName(&cgDC, "stance");
-        if (menu)
-            Window_RemoveDynamicFlags((Window *)menu, 4);
-        cg->stanceFadeTime = 0;
-    }
-}
-
-void CG_CheckHudOffHandDisplay(void)
-{
-    menuDef_t *menu;
-
-    if (hud_fade_offhand->current.value != 0.0f
-        && cg->offhandFadeTime
-        && (float)(cg->time - cg->offhandFadeTime) > hud_fade_offhand->current.value * 1000.0f)
-    {
-        menu = Menus_FindByName(&cgDC, "offhandinfo");
-        if (menu)
-            Window_RemoveDynamicFlags((Window *)menu, 4);
-        cg->offhandFadeTime = 0;
-    }
-}
-
-void CG_CheckHudObjectiveDisplay(void)
-{
-    menuDef_t *menu;
-
-    if (CG_ScoreboardDisplayed())
-    {
-        if (cg->time - cg->scoreFadeTime > 100)
-        {
-            menu = Menus_FindByName(&cgDC, "objectiveinfo");
-            if (menu)
-                Window_RemoveDynamicFlags((Window *)menu, 4);
-        }
-    }
-}
-
-void CG_CheckTimedMenus(void)
-{
-    if (cg->voiceTime && cg->time - cg->voiceTime > 2500)
-    {
-        Menus_CloseByName(&cgDC, "voiceMenu");
-        cg->voiceTime = 0;
-    }
-    CG_CheckForPlayerInput();
-    CG_CheckHudHealthDisplay();
-    CG_CheckHudAmmoDisplay();
-    CG_CheckHudCompassDisplay();
-    CG_CheckHudStanceDisplay();
-    CG_CheckHudOffHandDisplay();
-    CG_CheckHudObjectiveDisplay();
-}
-
-static void CG_DrawSoundOverlay(void)
-{
-    snd_overlay_info_t info[64];
-    const char *provider;
-    const char *line;
-    int cpu;
-    int count;
-    int bits;
-    int khz;
-    int channels;
-    int i;
-    float y;
-
-    count = SND_GetSoundOverlay(
-        (snd_overlay_type_t)cg_drawSoundOverlay->current.integer,
-        info,
-        (int)(sizeof(info) / sizeof(info[0])),
-        &cpu);
-    if (count <= 0)
-        return;
-
-    provider = Dvar_GetString("mss_3d_provider");
-    bits = Dvar_GetInt("snd_bits");
-    khz = Dvar_GetInt("snd_khz");
-    channels = Dvar_GetBool("snd_stereo") ? 2 : 1;
-
-    CG_DrawStringExt(
-        2.0f,
-        82.0f,
-        va("CPU: ^3%%%i ^73D provider: ^3%s ^7bits: ^3%i ^7kHz: ^3%i ^7chan: ^3%i", cpu, provider, bits, khz, channels),
-        colorWhite,
-        0,
-        1,
-        10.0f,
-        0);
-
-    y = 92.0f;
-    for (i = 0; i < count; ++i) {
-        if (!info[i].pszSampleName) {
-            line = va("%2i", i);
-        } else {
-            line = va(
-                "%2i %-50s vol^3%04.2f ^7rvol^3%04.2f ^7dist^3%5i ^7pit^3%04.2f",
-                i,
-                info[i].pszSampleName,
-                info[i].fBaseVolume,
-                info[i].fCurVolume,
-                info[i].dist,
-                info[i].fPitch);
-        }
-
-        CG_DrawStringExt(2.0f, y, line, colorWhite, 0, 1, 10.0f, 0);
-        y += 10.0f;
-    }
-}
-
-void CG_DrawMaterial(void)
-{
-    char szName[64];
-    char szSurfaceFlags[0x1000];
-    char szContents[0x1000];
-    float y;
-
-    if (!CL_PickMaterial((const vec_t *)cg->refdef.vieworg, (const vec_t *)cg->refdef.viewaxis, szName, szSurfaceFlags, szContents, 0x1000)) {
-        return;
-    }
-
-    y = 240.0f;
-    y += (float)CG_DrawSmallDevStringColor(8.0f, y, szName, colorWhite, 5);
-    y += (float)CG_DrawSmallDevStringColor(8.0f, y, szSurfaceFlags, colorWhite, 5);
-    CG_DrawSmallDevStringColor(8.0f, y, szContents, colorWhite, 5);
-}
-
-void CG_ShakeCamera(void)
-{
-    cameraShake_t *shake;
-    float sx;
-    float bestSize;
-    float bestRumble;
-    float angle;
-    int i;
-
-    sx = (float)cg->time / 600.0f;
-    bestRumble = 0.0f;
-    bestSize = 0.0f;
-
-    for (i = 0; i < 4; ++i) {
-        shake = &cg->cameraShake[i];
-        if (!CG_UpdateCameraShakeStrength(shake)) {
-            continue;
-        }
-
-        if (shake->size > bestSize) {
-            bestSize = shake->size;
-            bestRumble = shake->rumbleScale;
-        }
-    }
-
-    if (cg->rumbleScale > bestSize) {
-        bestSize = cg->rumbleScale;
-        bestRumble = cg->rumbleScale;
-    }
-
-    if (bestSize <= 0.0f) {
-        cg->cameraShakePhase = crandom() * 3.14159265358979323846f;
-        return;
-    }
-
-    if (bestSize > 1.0f) {
-        bestSize = 1.0f;
-    }
-    angle = (float)sin(sx * 25.132741228718345f + cg->cameraShakePhase) * bestSize * bestRumble * 18.0f;
-    cg->refdefViewAngles[0] += angle;
-    angle = (float)sin(sx * 47.12388980384689f + cg->cameraShakePhase) * bestSize * bestRumble * 16.0f;
-    cg->refdefViewAngles[1] += angle;
-    angle = (float)sin(sx * 37.69911184307752f + cg->cameraShakePhase) * bestSize * bestRumble * 10.0f;
-    cg->refdefViewAngles[2] += angle;
-}
-
-qboolean CG_DrawFollow(void)
-{
-    const char *clientName;
-    const char *followingString;
-    FontHandle font;
-    float scale;
-    float x;
-    int textWidth;
-
-    if (!(cg->snap->ps.pm_flags & 0x400000)) {
-        return 0;
-    }
-
-    if (cg->inKillCam) {
-        return 0;
-    }
-
-    if (cg->bgs.clientinfo[cg->snap->ps.clientNum].infoValid)
-        clientName = cg->bgs.clientinfo[cg->snap->ps.clientNum].name;
-    else
-        clientName = "?";
-
-    followingString = SEH_LocalizeTextMessage("CGAME_FOLLOWING\x15", "spectator follow string", (msgLocErrType_t)0);
-    scale = CL_IsRenderingSplitScreen() ? 0.5f : (1.0f / 3.0f);
-    font = UI_GetFontHandle(0, 1.0f / 3.0f);
-
-    textWidth = UI_TextWidth(followingString, 0, font, scale);
-    x = (float)(-textWidth) * 0.5f;
-    UI_DrawText(followingString, 0x7fffffff, font, x, 40.0f, 7, 1, scale, colorWhite, 3);
-
-    textWidth = UI_TextWidth(clientName, 0, font, scale);
-    x = (float)(-textWidth) * 0.5f;
-    UI_DrawText(clientName, 0x7fffffff, font, x, 65.0f, 7, 1, scale, colorWhite, 3);
-
-    return 1;
-}
-
-void CG_DrawTurretCrossHair(void)
-{
-    const dvar_t *drawTurretCrosshair;
-    vec4_t color = { 1.0f, 1.0f, 1.0f, 0.75f };
-
-    drawTurretCrosshair = cg_drawTurretCrosshair;
-    if (drawTurretCrosshair && !drawTurretCrosshair->current.enabled)
-        return;
-
-    if (!cgs)
-        return;
-
-    UI_DrawHandlePic(316.0f, 236.0f, 8.0f, 8.0f, 0, 0, color, cgs->media.whiteMaterial);
-}
-
-static const char *CG_GetBoundSpectatorCommand(const char *command, const char *altCommand)
-{
-    char binding[256];
-
-    if (GetKeyBindingLocalizedString(command, binding))
-        return command;
-    if (GetKeyBindingLocalizedString(altCommand, binding))
-        return altCommand;
-    return command;
-}
-
-static void CG_DrawSpectatorMessage(void)
-{
-    const char *commands[5];
-    const char *messages[5];
-    char binding[256];
-    const char *str;
-    FontHandle font;
-    float lineHeight;
-    float y;
-    int lineNum;
-    int i;
-
-    if (!cg_descriptiveText->current.enabled || (Key_GetCatcher() & 8)
-        || !(cg->nextSnap->ps.pm_flags & 0x3000000))
-        return;
-
-    Controls_GetConfig();
-    font = UI_GetFontHandle(0, 0.20833333f);
-    lineNum = 0;
-    lineHeight = (float)UI_TextHeight(font, 0.20833333f);
-    y = 436.0f - (lineHeight + lineHeight);
-
-    if (cg->nextSnap->ps.pm_flags & 0x1000000) {
-        commands[lineNum] = "+attack";
-        messages[lineNum++] = "PLATFORM_FOLLOWNEXTPLAYER";
-        commands[lineNum] = CG_GetBoundSpectatorCommand("toggleads", "+speed");
-        messages[lineNum++] = "PLATFORM_FOLLOWPREVIOUSPLAYER";
-    }
-    if (cg->nextSnap->ps.pm_flags & 0x2000000) {
-        commands[lineNum] = CG_GetBoundSpectatorCommand("+melee", "+melee_breath");
-        messages[lineNum++] = "PLATFORM_FOLLOWSTOP";
-    }
-
-    for (i = 0; i < lineNum; i++) {
-        if (!GetKeyBindingLocalizedString(commands[i], binding))
-            I_strncpyz(binding, UI_SafeTranslateString("KEY_UNBOUND"), 256);
-        str = UI_ReplaceConversionString(UI_SafeTranslateString(messages[i]), binding);
-        UI_DrawText(str, 0x7fffffff, font, 240.0f, y, 0, 0, 0.20833333f, colorWhite, 3);
-        y = y + lineHeight;
-    }
-}
-
-void CG_DrawPlayerSprites(void)
-{
-    int entityIndex;
-    centity_t *cent;
-
-    for (entityIndex = 0; entityIndex < cg->nextSnap->numEntities; ++entityIndex) {
-        cent = &cg_entities[cg->nextSnap->entities[entityIndex].number];
-        if (cent->nextState.eType == 1) {
-            CG_PlayerSprites(cent);
-        }
-    }
-}
-
-void CG_DrawActive(void)
-{
-    float sensitivity;
-    float angles[3];
-    vec_t *ka;
-    vec_t *oa;
-
-    cg->refdef.time = cg->time;
-    cg->refdef.viewIndex = 0;
-
-    sensitivity = cg->zoomSensitivity;
-    if (cg->shellshock.sensitivity != 0.0f)
-        sensitivity = cg->shellshock.sensitivity * cg->zoomSensitivity;
-
-    ka = cg->kickAngles;
-    oa = cg->offsetAngles;
-    angles[0] = ka[0] + oa[0];
-    angles[1] = ka[1] + oa[1];
-    angles[2] = ka[2] + oa[2];
-
-    CL_SetUserCmdAimValues(angles);
-
-    CL_SetUserCmdValue(cg->weaponSelect, cg->equippedOffHand, sensitivity);
-
-    CL_RenderScene(&cg->refdef);
-
-    if (!CL_IsRenderingSplitScreen()) {
-        /* Pass parms/startTime/duration with their real types. The decomp emitted
-         * `*(float*)&field` reinterpretations here; on x86 they harmlessly launder
-         * the same 4 bytes, but on x64 (Win64 ABI) a float arg is passed in an xmm
-         * register while the pointer/int params are read from rcx/rdx/r8 -- so all
-         * three args arrived as garbage (and the parms pointer was truncated to 32
-         * bits), making the code see a bogus active shellshock and set
-         * hasSavedScreen=1 every frame, which suppressed the viewmodel. */
-        CG_DrawShellShockSavedScreenBlend(
-            cg->shellshock.parms,
-            cg->shellshock.startTime,
-            cg->shellshock.duration);
-    }
-
-    CG_TileClear();
-}
-
-void CG_DrawChatMessages(void)
-{
-    FontHandle font;
-    const char *msg;
-    vec4_t color;
-    float alphaPercent;
-    float y;
-    float w;
-    int chatHeight;
-    int hudChatX;
-    int hudChatY;
-    int i;
-
-    chatHeight = cg_chatHeight->current.integer;
-    if (!chatHeight)
-        return;
-
-    hudChatX = (int)cg_hudChatPosition->current.vector[0];
-    hudChatY = (int)cg_hudChatPosition->current.vector[1];
-    if (cgs->teamLastChatPos == cgs->teamChatPos)
-        return;
-
-    if (cg->time - cgs->teamChatMsgTimes[cgs->teamLastChatPos % chatHeight] > cg_chatTime->current.integer)
-        cgs->teamLastChatPos++;
-
-    font = UI_GetFontHandle(0, 1.0f / 3.0f);
-    for (i = cgs->teamChatPos - 1; i >= cgs->teamLastChatPos; i--) {
-        alphaPercent = (float)cg_chatTime->current.integer - (float)(cg->time - cgs->teamChatMsgTimes[i % chatHeight]);
-        if (alphaPercent > 200.0f) {
-            alphaPercent = 1.0f;
-        } else {
-            alphaPercent *= 0.005f;
-            if (alphaPercent <= 0.0f)
-                continue;
-        }
-
-        msg = cgs->teamChatMsgs[i % chatHeight];
-        if (msg && msg[0] == '^' && msg[1] && msg[1] != '^' && msg[1] >= '0' && msg[1] <= '9') {
-            CL_LookupColor((unsigned char)msg[1], color);
-        } else {
-            color[0] = 1.0f;
-            color[1] = 1.0f;
-            color[2] = 1.0f;
-        }
-        color[0] *= 0.25f;
-        color[1] *= 0.25f;
-        color[2] *= 0.25f;
-        color[3] = alphaPercent * 0.6f;
-        y = (float)(hudChatY + (i - cgs->teamChatPos) * 10);
-        w = (float)(UI_TextWidth(msg, 0, font, 1.0f / 3.0f) + 24);
-        UI_DrawHandlePic(0.0f, y, w, 10.0f, 1, 1, color,
-                         cgs->media.whiteMaterial);
-
-        color[0] = 1.0f;
-        color[1] = 1.0f;
-        color[2] = 1.0f;
-        color[3] = alphaPercent;
-        UI_DrawText(msg, 0x7fffffff, font, (float)hudChatX, (float)(hudChatY + 9 + (i - cgs->teamChatPos) * 10),
-                    1, 1, 1.0f / 3.0f, color, 3);
-    }
-}
-
-static void __attribute_regparm__(2) CG_CalcCrosshairPosition(float *x, float *y)
-{
-    vec3_t gunAng;
-    vec3_t gunDir;
-    float forward;
-    float horiz;
-    float vert;
-
-    gunAng[2] = cg->refdefViewAngles[2];
-    gunAng[1] = cg->gunYaw;
-    gunAng[0] = cg->gunPitch;
-    AngleVectors(gunAng, gunDir, NULL, NULL);
-
-    {
-        const vec_t *axis = cg->refdef.viewaxis[0];
-        forward = gunDir[0] * axis[0] + gunDir[1] * axis[1] + gunDir[2] * axis[2];
-    }
-    if (forward <= 0.0f || cg->refdef.fov_x <= 0.0f || cg->refdef.fov_y <= 0.0f) {
-        *x = 0.0f;
-        *y = 0.0f;
-        return;
-    }
-
-    {
-        const vec_t *axis = cg->refdef.viewaxis[1];
-        horiz = gunDir[0] * axis[0] + gunDir[1] * axis[1] + gunDir[2] * axis[2];
-    }
-    *x = horiz / (forward * (float)tan((double)(cg->refdef.fov_x * 0.0087266462f))) * -320.0f;
-
-    {
-        const vec_t *axis = cg->refdef.viewaxis[2];
-        vert = gunDir[0] * axis[0] + gunDir[1] * axis[1] + gunDir[2] * axis[2];
-    }
-    *y = vert / (forward * (float)tan((double)(cg->refdef.fov_y * 0.0087266462f))) * -240.0f;
-}
-
-#ifndef __EMSCRIPTEN__
-static inline int CG_RoundFPS(float value)
-{
-#if defined(_MSC_VER) && defined(_M_IX86)
-    int result;
-    /* Break exact half-way ties upward before x87's round-to-nearest. */
-    const double roundEpsilon = 1.0 / 1073741824.0;
-
-    __asm fld value
-    __asm fadd roundEpsilon
-    __asm fistp result
-
-    return result;
-#else
-    return I_fround(value);
-#endif
-}
-
-extern int I_stricmp(const char *s1, const char *s2);
 
 static float CG_DrawFPS(float y)
 {
@@ -1343,6 +427,449 @@ static float CG_DrawFPS(float y)
     }
 
     return y;
+}
+
+static void CG_DrawUpperRight(void)
+{
+    float y;
+
+    CL_TrackStatistics(0);
+    y = 0.0f;
+    if (cg_drawSnapshot->current.enabled)
+        y = CG_DrawSnapshot(y);
+    if (cg_drawFPS->current.integer)
+        y = CG_DrawFPS(y);
+}
+
+void CG_DrawChatMessages(void)
+{
+    FontHandle font;
+    const char *msg;
+    vec4_t color;
+    float alphaPercent;
+    float y;
+    float w;
+    int chatHeight;
+    int hudChatX;
+    int hudChatY;
+    int i;
+
+    chatHeight = cg_chatHeight->current.integer;
+    if (!chatHeight)
+        return;
+
+    hudChatX = (int)cg_hudChatPosition->current.vector[0];
+    hudChatY = (int)cg_hudChatPosition->current.vector[1];
+    if (cgs->teamLastChatPos == cgs->teamChatPos)
+        return;
+
+    if (cg->time - cgs->teamChatMsgTimes[cgs->teamLastChatPos % chatHeight] > cg_chatTime->current.integer)
+        cgs->teamLastChatPos++;
+
+    font = UI_GetFontHandle(0, 1.0f / 3.0f);
+    for (i = cgs->teamChatPos - 1; i >= cgs->teamLastChatPos; i--) {
+        alphaPercent = (float)cg_chatTime->current.integer - (float)(cg->time - cgs->teamChatMsgTimes[i % chatHeight]);
+        if (alphaPercent > 200.0f) {
+            alphaPercent = 1.0f;
+        } else {
+            alphaPercent *= 0.005f;
+            if (alphaPercent <= 0.0f)
+                continue;
+        }
+
+        msg = cgs->teamChatMsgs[i % chatHeight];
+        if (msg && msg[0] == '^' && msg[1] && msg[1] != '^' && msg[1] >= '0' && msg[1] <= '9') {
+            CL_LookupColor((unsigned char)msg[1], color);
+        } else {
+            color[0] = 1.0f;
+            color[1] = 1.0f;
+            color[2] = 1.0f;
+        }
+        color[0] *= 0.25f;
+        color[1] *= 0.25f;
+        color[2] *= 0.25f;
+        color[3] = alphaPercent * 0.6f;
+        y = (float)(hudChatY + (i - cgs->teamChatPos) * 10);
+        w = (float)(UI_TextWidth(msg, 0, font, 1.0f / 3.0f) + 24);
+        UI_DrawHandlePic(0.0f, y, w, 10.0f, 1, 1, color,
+                         cgs->media.whiteMaterial);
+
+        color[0] = 1.0f;
+        color[1] = 1.0f;
+        color[2] = 1.0f;
+        color[3] = alphaPercent;
+        UI_DrawText(msg, 0x7fffffff, font, (float)hudChatX, (float)(hudChatY + 9 + (i - cgs->teamChatPos) * 10),
+                    1, 1, 1.0f / 3.0f, color, 3);
+    }
+}
+
+static void __attribute_regparm__(2) CG_CalcCrosshairPosition(float *x, float *y)
+{
+    vec3_t gunAng;
+    vec3_t gunDir;
+    float forward;
+    float horiz;
+    float vert;
+
+    gunAng[2] = cg->refdefViewAngles[2];
+    gunAng[1] = cg->gunYaw;
+    gunAng[0] = cg->gunPitch;
+    AngleVectors(gunAng, gunDir, NULL, NULL);
+
+    {
+        const vec_t *axis = cg->refdef.viewaxis[0];
+        forward = gunDir[0] * axis[0] + gunDir[1] * axis[1] + gunDir[2] * axis[2];
+    }
+    if (forward <= 0.0f || cg->refdef.fov_x <= 0.0f || cg->refdef.fov_y <= 0.0f) {
+        *x = 0.0f;
+        *y = 0.0f;
+        return;
+    }
+
+    {
+        const vec_t *axis = cg->refdef.viewaxis[1];
+        horiz = gunDir[0] * axis[0] + gunDir[1] * axis[1] + gunDir[2] * axis[2];
+    }
+    *x = horiz / (forward * (float)tan((double)(cg->refdef.fov_x * 0.0087266462f))) * -320.0f;
+
+    {
+        const vec_t *axis = cg->refdef.viewaxis[2];
+        vert = gunDir[0] * axis[0] + gunDir[1] * axis[1] + gunDir[2] * axis[2];
+    }
+    *y = vert / (forward * (float)tan((double)(cg->refdef.fov_y * 0.0087266462f))) * -240.0f;
+}
+
+static inline int CG_RoundFPS(float value)
+{
+#if defined(_MSC_VER) && defined(_M_IX86)
+    int result;
+    /* Break exact half-way ties upward before x87's round-to-nearest. */
+    const double roundEpsilon = 1.0 / 1073741824.0;
+
+    __asm fld value
+    __asm fadd roundEpsilon
+    __asm fistp result
+
+    return result;
+#else
+    return I_fround(value);
+#endif
+}
+
+void CG_AddLagometerFrameInfo(void)
+{
+    lagometer.frameSamples[lagometer.frameCount & 0x7f] = cg->time - cg->latestSnapshotTime;
+    lagometer.frameCount++;
+}
+
+void CG_AddLagometerSnapshotInfo(snapshot_t *snap)
+{
+    if (!snap) {
+        lagometer.snapshotSamples[lagometer.snapshotCount & 0x7f] = -1;
+        lagometer.snapshotCount++;
+        return;
+    }
+    lagometer.snapshotSamples[lagometer.snapshotCount & 0x7f] = snap->ping;
+    lagometer.snapshotFlags[lagometer.snapshotCount & 0x7f] = snap->snapFlags;
+    lagometer.snapshotCount++;
+}
+
+void CG_DrawDisconnect(void)
+{
+    usercmd_t cmd;
+    snapshot_t *snap;
+    const char *text;
+    FontHandle font;
+    int textWidth;
+    float x;
+    vec4_t color = { 1.0f, 1.0f, 1.0f, 1.0f };
+
+    CL_GetUserCmd(CL_GetCurrentCmdNumber() - 127, &cmd);
+    snap = cg->nextSnap;
+#if COD2_TRACE
+    if (getenv("COD2_CNXDIAG")) {
+        static int c;
+        if ((c++ & 0x3f) == 0)
+            Com_Printf("[cnxdiag] cmd.serverTime=%d snap->ps.commandTime=%d cg->time=%d cmdNum=%d\n",
+                       cmd.serverTime, snap->ps.commandTime, cg->time, CL_GetCurrentCmdNumber());
+    }
+#endif
+    if (cmd.serverTime <= snap->ps.commandTime || cmd.serverTime > cg->time) {
+        return;
+    }
+
+    text = UI_SafeTranslateString("CGAME_CONNECTIONINTERUPTED");
+    font = UI_GetFontHandle(0, 0.5f);
+    textWidth = UI_TextWidth(text, 0, font, 0.5f);
+    textWidth = (int)(float)textWidth;
+    x = (float)((640 - textWidth) / 2);
+    UI_DrawText(text, 0x7fffffff, font, x, 100.0f, 0, 0, 0.5f, color, 3);
+    if (!(cg->time & 0x200)) {
+        UI_DrawHandlePic(296.0f, 416.0f, 48.0f, 48.0f, 0, 0, 0, CL_RegisterMaterial("net_disconnect", 7));
+    }
+}
+
+static void CG_DrawLagometer(void)
+{
+    int a;
+    int i;
+    float v;
+    float ax;
+    float ay;
+    float aw;
+    float ah;
+    float mid;
+    float range;
+    float vscale;
+    const float *color;
+
+    if (cg_drawLagometer->current.enabled && !cgs->localServer)
+    {
+        UI_DrawHandlePic(-55.0f, -140.0f, 48.0f, 48.0f, 3, 3, 0, cgs->media.lagometerMaterial);
+
+        ax = -55.0f;
+        ay = -140.0f;
+        aw = 48.0f;
+        ah = 48.0f;
+
+        range = ah / 3.0f;
+        mid = ay + range;
+
+        // draw the frame interpolate / extrapolate graph
+        for (a = 0; a < aw; a++)
+        {
+            i = (lagometer.frameCount - a - 1) & 127;
+            v = (float)lagometer.frameSamples[i];
+            vscale = range / 300.0f;
+            v *= vscale;
+            if (v > 0.0f)
+            {
+                if (v > range)
+                    v = range;
+                CL_DrawStretchPic(ax + aw - a, mid - v, 1.0f, v, 3, 3, 0.0f, 0.0f, 0.0f, 0.0f, colorYellow, cgs->media.whiteMaterial);
+            }
+            else if (v < 0.0f)
+            {
+                v = -v;
+                if (v > range)
+                    v = range;
+                CL_DrawStretchPic(ax + aw - a, mid, 1.0f, v, 3, 3, 0.0f, 0.0f, 0.0f, 0.0f, colorBlue, cgs->media.whiteMaterial);
+            }
+        }
+
+        // draw the snapshot latency / drop graph
+        range = ah / 2.0f;
+
+        for (a = 0; a < aw; a++)
+        {
+            i = (lagometer.snapshotCount - a - 1) & 127;
+            v = (float)lagometer.snapshotSamples[i];
+            if (v > 0.0f)
+            {
+                if (lagometer.snapshotFlags[i] & 1)
+                    color = colorYellow;
+                else
+                    color = colorGreen;
+                vscale = range / 900.0f;
+                v = v * vscale;
+                if (v > range)
+                    v = range;
+                CL_DrawStretchPic(ax + aw - a, ay + ah - v, 1.0f, v, 3, 3, 0.0f, 0.0f, 0.0f, 0.0f, color, cgs->media.whiteMaterial);
+            }
+            else if (v < 0.0f)
+            {
+                CL_DrawStretchPic(ax + aw - a, ay + ah - range, 1.0f, range, 3, 3, 0.0f, 0.0f, 0.0f, 0.0f, colorRed, cgs->media.whiteMaterial);
+            }
+        }
+
+        if (cg_nopredict->current.enabled || cg_synchronousClients->current.enabled)
+            CG_DrawBigDevString(ax, ay, "snc", 1.0f, 9);
+    }
+
+    CG_DrawDisconnect();
+}
+
+void CG_PriorityCenterPrint(const char *str, float charWidth, int priority)
+{
+    char hudElemString[256];
+    const char *s;
+    qboolean needNewline = 0;
+    int count;
+    unsigned int letter;
+
+    if (cgArray[0].centerPrintTime && priority < cgArray[0].centerPrintPriority) {
+        return;
+    }
+
+    CG_TranslateHudElemMessage(str, "Center Print", hudElemString);
+    I_strncpyz(cgArray[0].centerPrint, hudElemString, 0x100);
+    cgArray[0].centerPrintPriority = priority;
+
+    s = cgArray[0].centerPrint;
+    count = 0;
+    while (*s) {
+        letter = SEH_ReadCharFromString(&s, 0);
+        if (letter == '\n') {
+            needNewline = 0;
+            count = 0;
+            continue;
+        }
+
+        ++count;
+        if (count >= 0x4b) {
+            needNewline = 1;
+        }
+
+        if (needNewline && letter == ' ') {
+            ((char *)s)[-1] = '\n';
+            needNewline = 0;
+            count = 0;
+        }
+    }
+
+    cgArray[0].centerPrintTime = cgArray[0].time + 0x7d0;
+    cgArray[0].centerPrintCharWidth = (int)charWidth;
+    cgArray[0].centerPrintLines = 1;
+
+    s = cgArray[0].centerPrint;
+    while (*s) {
+        letter = SEH_ReadCharFromString(&s, 0);
+        if (letter == '\n') {
+            ++cgArray[0].centerPrintLines;
+            continue;
+        }
+
+        if (letter == '\\' && *s == 'n') {
+            ++cgArray[0].centerPrintLines;
+            ++s;
+        }
+    }
+}
+
+static void CG_DrawCenterString(void)
+{
+    char *start;
+    int l;
+    int h;
+    float x;
+    float lineHeight;
+    float y;
+    float scale;
+    float *color;
+    FontHandle font;
+    char linebuffer[1024];
+
+    if (!cg->centerPrintTime)
+        return;
+
+    color = CG_FadeColor(cg->centerPrintTime, (int)(cg_centertime->current.value * 1000.0f), 100);
+    if (!color)
+    {
+        cg->centerPrintTime = 0;
+        cg->centerPrintPriority = 0;
+        return;
+    }
+
+    start = cg->centerPrint;
+
+    scale = cg->centerPrintCharWidth / 32.0f;
+    h = UI_TextHeight(UI_GetFontHandle(0, scale), scale);
+
+    lineHeight = h * 1.2f;
+    y = cg_centerPrintY->current.value - cg->centerPrintLines * lineHeight;
+
+    while (1)
+    {
+        for (l = 0; l < 75; l++)
+        {
+            if (!start[l] || start[l] == '\n')
+                break;
+            linebuffer[l] = start[l];
+        }
+        linebuffer[l] = 0;
+
+        font = UI_GetFontHandle(0, scale);
+        x = UI_TextWidth(linebuffer, 0, font, scale) * -0.5;
+        UI_DrawText(linebuffer, 0x7fffffff, font, x, y, 7, 3, scale, color, 3);
+
+        y += lineHeight;
+
+        while (*start && *start != '\n')
+            start++;
+        if (!*start)
+            break;
+        start++;
+    }
+}
+
+/* qboolean (int), not Bool: callers (cg_weapons.c, cg_predict_mp.c) declare it
+ * `extern qboolean` and read full eax; a 1-byte Bool return leaves eax's upper
+ * bytes dirty under MSVC -> garbage non-zero -> !CG_GetWeapReticleZoom() == 0 ->
+ * drawGun never set -> the viewmodel was hidden even when spawned. */
+bool CG_GetWeapReticleZoom(float *pfZoom)
+{
+    WeaponDef *weaponDef;
+    float zoom;
+
+    weaponDef = (WeaponDef *)BG_GetWeaponDef(BG_GetViewmodelWeaponIndex(&cg->predictedPlayerState));
+    zoom = cg->predictedPlayerState.fWeaponPosFrac;
+    *pfZoom = 0.0f;
+
+    if (!weaponDef->szOverlayMaterial[0] && !weaponDef->overlayReticle)
+    {
+        return 0;
+    }
+
+    if (zoom == 0.0f) {
+        return 0;
+    }
+
+    if (cg->playerEntity.bPositionToADS) {
+        *pfZoom = zoom - (1.0f - weaponDef->fAdsZoomInFrac);
+        if (*pfZoom > 0.0f) {
+            *pfZoom /= weaponDef->fAdsZoomInFrac;
+        }
+    } else {
+        *pfZoom = zoom - (1.0f - weaponDef->fAdsZoomOutFrac);
+        if (*pfZoom > 0.0f) {
+            *pfZoom /= weaponDef->fAdsZoomOutFrac;
+        }
+    }
+
+    if (*pfZoom <= 0.01f) {
+        return 0;
+    }
+
+    if (*pfZoom > 1.0f) {
+        *pfZoom = 1.0f;
+    }
+
+    return 1;
+}
+
+void CG_DrawFrameOverlay(float innerLeft, float innerRight, float innerTop, float innerBottom, const vec_t *color, MaterialHandle material)
+{
+    float screenWidth;
+    float screenHeight;
+
+    screenWidth = (float)cls.vidConfig.width ;
+    screenHeight = (float)cls.vidConfig.height ;
+
+    if (innerLeft > 0.0f) {
+        CL_DrawStretchPicPhysical(0.0f, 0.0f, innerLeft, screenHeight, 0.0f, 0.0f, 0.0f, 1.0f, color, material);
+    }
+
+    if (innerRight < screenWidth) {
+        CL_DrawStretchPicPhysical(innerRight, 0.0f, screenWidth - innerRight, screenHeight, 0.0f, 0.0f, 0.0f, 1.0f, color, material);
+    }
+
+    if (innerTop > 0.0f) {
+        CL_DrawStretchPicPhysical(innerLeft, 0.0f, innerRight - innerLeft, innerTop, 0.0f, 0.0f, 1.0f, 0.0f, color, material);
+    }
+
+    if (innerBottom < screenHeight) {
+        CL_DrawStretchPicPhysical(innerLeft, innerBottom, innerRight - innerLeft, screenHeight - innerBottom, 0.0f, 0.0f, 1.0f, 0.0f, color, material);
+    }
 }
 
 static void CG_DrawAdsOverlay(int weapIndex, const WeaponDef *weapDef, const float *color, const float *crosshairPos)
@@ -1624,64 +1151,87 @@ void CG_DrawCrosshair(void)
     }
 }
 
-static void CG_ScreenFade(void)
+static void CG_ScanForCrosshairEntity(void)
 {
-    int msec;
-    int i;
-    float t;
-    float invt;
-    vec4_t color;
+    trace_t trace;
+    vec3_t start;
+    vec3_t end;
 
-    if (cg->fadeRate == 0.0f)
+    start[0] = cg->refdef.vieworg[0];
+    start[1] = cg->refdef.vieworg[1];
+    start[2] = cg->refdef.vieworg[2];
+    end[0] = cg->refdef.vieworg[0] + cg->refdef.viewaxis[0][0] * 8192.0f;
+    end[1] = cg->refdef.vieworg[1] + cg->refdef.viewaxis[0][1] * 8192.0f;
+    end[2] = cg->refdef.vieworg[2] + cg->refdef.viewaxis[0][2] * 8192.0f;
+    CG_Trace(&trace, start, vec3_origin, vec3_origin, end, cg->snap->ps.clientNum, 0x2000001);
+    if (trace.entityNum < 64) {
+        cg->crosshairClientNum = trace.entityNum;
+        cg->crosshairClientTime = cg->time;
+    }
+}
+
+void CG_DrawCrosshairNames(void)
+{
+    float *color;
+    char *name;
+    vec4_t textColor;
+    float x;
+    float y;
+    int clientNum;
+
+    if (!cg_drawCrosshairNames->current.enabled)
+        return;
+    if (cg->renderingThirdPerson)
         return;
 
-    msec = cg->fadeTime - cg->time;
-    if (msec <= 0)
-    {
-        cg->fadeColor1[0] = cg->fadeColor2[0];
-        cg->fadeColor1[3] = cg->fadeColor2[3];
-        cg->fadeColor1[1] = cg->fadeColor2[1];
-        cg->fadeColor1[2] = cg->fadeColor2[2];
+    CG_ScanForCrosshairEntity();
+    color = CG_FadeColor(cg->crosshairClientTime, 150, 100);
+    if (!color)
+        return;
+    if (cg->crosshairClientNum > 64)
+        return;
 
-        if (cg->fadeColor2[3] == 0.0f)
-        {
-            cg->fadeRate = 0.0f;
-            return;
+    clientNum = cg->snap->ps.clientNum;
+    if (!cg->bgs.clientinfo[clientNum].infoValid)
+        return;
+    if (!cg->bgs.clientinfo[clientNum].team)
+        return;
+    if (!cg->bgs.clientinfo[cg->crosshairClientNum].infoValid)
+        return;
+    if (cg->bgs.clientinfo[clientNum].team != 3
+        && cg->bgs.clientinfo[cg->crosshairClientNum].team != cg->bgs.clientinfo[clientNum].team)
+        return;
+
+    name = (char *)va("%s", cg->bgs.clientinfo[cg->crosshairClientNum].name);
+    if (!name)
+        return;
+    if (!name[0])
+        return;
+    I_CleanStr(name);
+
+    x = (float)cg_drawCrosshairNamesPosX->current.integer;
+    y = (float)(cg_drawCrosshairNamesPosY->current.integer + 16);
+    if (cg->crosshairClientNum == cg->identifyClientNum) {
+        textColor[1] = (float)cg->identifyClientHealth * 0.01f;
+        if (textColor[1] > 1.0f)
+            textColor[1] = 1.0f;
+        else if (textColor[1] < 0.0f)
+            textColor[1] = 0.0f;
+        textColor[2] = 0.0f;
+        if (textColor[1] > 0.5) {
+            textColor[0] = (1.0f - textColor[1]) + (1.0f - textColor[1]);
+            textColor[1] = 1.0f;
+        } else {
+            textColor[1] = textColor[1] + textColor[1];
+            textColor[0] = 1.0f;
         }
-
-        UI_FillRectPhysical(0.0f, 0.0f, (float)cls.vidConfig.width, (float)cls.vidConfig.height, cg->fadeColor1);
+    } else {
+        textColor[0] = 1.0f;
+        textColor[2] = 1.0f;
+        textColor[1] = 1.0f;
     }
-    else
-    {
-        t = (float)msec * cg->fadeRate;
-        invt = 1.0f - t;
-
-        for (i = 0; i < 4; i++)
-            color[i] = cg->fadeColor2[i] * invt + cg->fadeColor1[i] * t;
-
-        if (color[3] != 0.0f)
-            UI_FillRectPhysical(0.0f, 0.0f, (float)cls.vidConfig.width, (float)cls.vidConfig.height, color);
-    }
-}
-
-static void CG_DrawSpectator(void)
-{
-    const char *s;
-    FontHandle font;
-    float x;
-
-    s = UI_SafeTranslateString("CGAME_SPECTATOR");
-    font = UI_GetFontHandle(4, 0.5f);
-    x = (float)-UI_TextWidth(s, 0, font, 0.5f) * 0.5f;
-    UI_DrawText(s, 0x7fffffff, font, x, -27.0f, 7, 3, 0.5f, colorWhite, 3);
-}
-
-static void CG_DrawIntermission(void)
-{
-    CL_CloseAllMenus();
-    cg->showScores = 1;
-    cg->scoreFadeTime = cg->time;
-    CG_DrawScoreboard();
+    textColor[3] = color[3] * 0.6f;
+    UI_DrawText(name, 0x7fffffff, UI_GetFontHandle(0, 1.0f / 3.0f), x, y, 0, 0, 1.0f / 3.0f, textColor, 3);
 }
 
 static void CG_DrawFlashDamage(void)
@@ -1772,55 +1322,6 @@ static void CG_DrawDamageDirectionIndicators(void)
     }
 }
 
-// Original name unknown.
-static bool CG_ShouldDrawGrenadeIndicator(const entityState_t *es)
-{
-    vec3_t offset;
-    float maxRange;
-
-    if (es->eType != 4)
-        return false;
-    if (es->pos.trDelta[0] * es->pos.trDelta[0] + es->pos.trDelta[1] * es->pos.trDelta[1] + es->pos.trDelta[2] * es->pos.trDelta[2] > 1.0f)
-        return false;
-    if (BG_GetWeaponDef(es->weapon)->projExplosion)
-        return false;
-
-    offset[0] = es->pos.trBase[0] - cg->predictedPlayerState.origin[0];
-    offset[1] = es->pos.trBase[1] - cg->predictedPlayerState.origin[1];
-    offset[2] = es->pos.trBase[2] - cg->predictedPlayerState.origin[2];
-    if (offset[2] < 0.0f)
-    {
-        if (offset[2] < -cg_hudGrenadeIconMaxHeight->current.value)
-            return false;
-    }
-    else if (offset[2] > cg->predictedPlayerState.viewHeightCurrent + cg_hudGrenadeIconMaxHeight->current.value)
-    {
-        return false;
-    }
-
-    maxRange = cg_hudGrenadeIconMaxRange->current.value;
-    if (offset[2] * offset[2] + (offset[0] * offset[0] + offset[1] * offset[1]) > maxRange * maxRange)
-        return false;
-    return true;
-}
-
-static inline void FastSinCos(const float value, float *pSin, float *pCos)
-{
-    __asm
-    {
-        push eax
-        push ecx
-        fld value
-        fsincos
-        mov ecx, pCos
-        mov eax, pSin
-        fstp dword ptr [ecx]
-        fstp dword ptr [eax]
-        pop ecx
-        pop eax
-    }
-}
-
 static void CG_DrawGrenadePointer(float centerX, float centerY, const float *grenadeOffset, const float *color)
 {
     float width;
@@ -1878,6 +1379,55 @@ static void CG_DrawGrenadeIcon(float centerX, float centerY, const float *grenad
     verts[2][1] = verts[3][1] = centerY + height * 0.5f - cosYaw * radius;
 
     CL_DrawQuadPic(verts, color, cgs->media.grenadeIcon);
+}
+
+// Original name unknown.
+static bool CG_ShouldDrawGrenadeIndicator(const entityState_t *es)
+{
+    vec3_t offset;
+    float maxRange;
+
+    if (es->eType != 4)
+        return false;
+    if (es->pos.trDelta[0] * es->pos.trDelta[0] + es->pos.trDelta[1] * es->pos.trDelta[1] + es->pos.trDelta[2] * es->pos.trDelta[2] > 1.0f)
+        return false;
+    if (BG_GetWeaponDef(es->weapon)->projExplosion)
+        return false;
+
+    offset[0] = es->pos.trBase[0] - cg->predictedPlayerState.origin[0];
+    offset[1] = es->pos.trBase[1] - cg->predictedPlayerState.origin[1];
+    offset[2] = es->pos.trBase[2] - cg->predictedPlayerState.origin[2];
+    if (offset[2] < 0.0f)
+    {
+        if (offset[2] < -cg_hudGrenadeIconMaxHeight->current.value)
+            return false;
+    }
+    else if (offset[2] > cg->predictedPlayerState.viewHeightCurrent + cg_hudGrenadeIconMaxHeight->current.value)
+    {
+        return false;
+    }
+
+    maxRange = cg_hudGrenadeIconMaxRange->current.value;
+    if (offset[2] * offset[2] + (offset[0] * offset[0] + offset[1] * offset[1]) > maxRange * maxRange)
+        return false;
+    return true;
+}
+
+static inline void FastSinCos(const float value, float *pSin, float *pCos)
+{
+    __asm
+    {
+        push eax
+        push ecx
+        fld value
+        fsincos
+        mov ecx, pCos
+        mov eax, pSin
+        fstp dword ptr [ecx]
+        fstp dword ptr [eax]
+        pop ecx
+        pop eax
+    }
 }
 
 static void CG_DrawGrenadeIndicators(void)
@@ -1939,241 +1489,300 @@ static void CG_DrawGrenadeIndicators(void)
     }
 }
 
-static void CG_DrawVote(void)
+int CG_CheckPlayerMovement(usercmd_t oldCmd, usercmd_t newCmd)
 {
-    char szVoteYes[256];
-    char szVoteNo[256];
-    char binding[256];
-    FontHandle font;
-    int sec;
-    const char *s;
-
-    if (!cgs->voteTime)
-        return;
-
-    font = UI_GetFontHandle(0, 0.5f);
-
-    if (GetKeyBindingLocalizedString("vote yes", binding))
-        I_strncpyz(szVoteYes, binding, 256);
-    else
-        I_strncpyz(szVoteYes, "vote yes", 256);
-
-    if (GetKeyBindingLocalizedString("vote no", binding))
-        I_strncpyz(szVoteNo, binding, 256);
-    else
-        I_strncpyz(szVoteNo, "vote no", 256);
-
-    sec = (cgs->voteTime - cg->time) / 1000;
-    if (sec < 0)
-        sec = 0;
-
-    if (cg->nextSnap->ps.eFlags & 0x100000)
-    {
-        s = va("%s(%i):%s", UI_SafeTranslateString("CGAME_VOTE"), sec, cgs->voteString);
-        UI_DrawText(s, 0x7fffffff, font, 8.0f, 200.0f, 0, 0, 0.5f, colorYellow, 3);
-        s = va("%s:%i, %s:%i", UI_SafeTranslateString("CGAME_YES"), cgs->voteYes,
-               UI_SafeTranslateString("CGAME_NO"), cgs->voteNo);
-    }
-    else
-    {
-        s = va("%s(%i):%s", UI_SafeTranslateString("CGAME_VOTE"), sec, cgs->voteString);
-        UI_DrawText(s, 0x7fffffff, font, 8.0f, 200.0f, 0, 0, 0.5f, colorYellow, 3);
-        s = va("%s(%s):%i, %s(%s):%i", UI_SafeTranslateString("CGAME_YES"), szVoteYes, cgs->voteYes,
-               UI_SafeTranslateString("CGAME_NO"), szVoteNo, cgs->voteNo);
-    }
-    UI_DrawText(s, 0x7fffffff, font, 8.0f, 210.0f, 0, 0, 0.5f, colorYellow, 3);
+    if (memcmp(oldCmd.angles, newCmd.angles, sizeof(oldCmd.angles)))
+        return 1;
+    return newCmd.forwardmove || newCmd.rightmove;
 }
 
-static void CG_DrawLagometer(void)
+int CG_CheckPlayerStanceChange(int newButtons, int changedButtons)
 {
-    int a;
+    if (changedButtons & 0x2300)
+    {
+        CG_MenuShowNotify(3);
+        return 1;
+    }
+    if (newButtons & 0x2300)
+        CG_MenuShowNotify(3);
+    return 0;
+}
+
+int CG_CheckPlayerTryReload(int buttons)
+{
+    return (buttons & 0x30)
+        && !(cg->predictedPlayerState.pm_flags & 4)
+        && !(cg->snap->ps.cursorHint & 2)
+        && !(cg->predictedPlayerState.eFlags & 0x300);
+}
+
+int CG_CheckPlayerFireNonTurret(int buttons)
+{
+    return (buttons & 1) && !(cg->predictedPlayerState.eFlags & 0x300);
+}
+
+int CG_CheckPlayerWeaponUsage(int buttons)
+{
+    if (!CG_CheckPlayerFireNonTurret(buttons) && !CG_CheckPlayerTryReload(buttons))
+        return 0;
+    CG_MenuShowNotify(1);
+    return 1;
+}
+
+int CG_CheckPlayerOffHandUsage(int buttons)
+{
+    if (buttons & 0x30000)
+    {
+        CG_MenuShowNotify(4);
+        return 1;
+    }
+    return 0;
+}
+
+int CG_CheckPlayerMiscInput(int buttons)
+{
+    return buttons & 0xffffd4ff;
+}
+
+void CG_CheckForPlayerInput(void)
+{
+    usercmd_t oldCmd;
+    usercmd_t newCmd;
+    int newCmdIndex;
+    int changedButtons;
+    int newInput;
+
+    newCmdIndex = CL_GetCurrentCmdNumber();
+    if (newCmdIndex > 1)
+    {
+        CL_GetUserCmd(newCmdIndex - 1, &oldCmd);
+        CL_GetUserCmd(newCmdIndex, &newCmd);
+        changedButtons = oldCmd.buttons ^ newCmd.buttons;
+        newInput = CG_CheckPlayerMovement(oldCmd, newCmd);
+        if (CG_CheckPlayerWeaponUsage(newCmd.buttons))
+            newInput = 1;
+        if (CG_CheckPlayerOffHandUsage(newCmd.buttons))
+            newInput = 1;
+        if (CG_CheckPlayerStanceChange(newCmd.buttons, changedButtons))
+            newInput = 1;
+        if (newInput || CG_CheckPlayerMiscInput(changedButtons))
+            CG_MenuShowNotify(2);
+    }
+}
+
+void CG_CheckHudHealthDisplay(void)
+{
+    menuDef_t *menu;
+
+    if (CG_CalcPlayerHealth() < hud_health_startpulse_injured->current.value)
+    {
+        CG_MenuShowNotify(0);
+    }
+    else
+    {
+        if (hud_fade_healthbar->current.value != 0.0f
+            && cg->healthFadeTime
+            && (float)(cg->time - cg->healthFadeTime) > hud_fade_healthbar->current.value * 1000.0f)
+        {
+            menu = Menus_FindByName(&cgDC, "Health");
+            if (menu)
+                Window_RemoveDynamicFlags((Window *)menu, 4);
+            cg->healthFadeTime = 0;
+        }
+    }
+}
+
+void CG_CheckHudAmmoDisplay(void)
+{
+    menuDef_t *menu;
+
+    if (CG_CheckPlayerForLowAmmo() || CG_CheckPlayerForLowClip())
+        CG_MenuShowNotify(1);
+    if (hud_fade_ammodisplay->current.value != 0.0f
+        && cg->ammoFadeTime
+        && (float)(cg->time - cg->ammoFadeTime) > hud_fade_ammodisplay->current.value * 1000.0f)
+    {
+        menu = Menus_FindByName(&cgDC, "weaponinfo");
+        if (menu)
+            Window_RemoveDynamicFlags((Window *)menu, 4);
+        cg->ammoFadeTime = 0;
+    }
+}
+
+void CG_CheckHudCompassDisplay(void)
+{
+    menuDef_t *menu;
+
+    if (hud_fade_compass->current.value != 0.0f
+        && cg->compassFadeTime
+        && (float)(cg->time - cg->compassFadeTime) > hud_fade_compass->current.value * 1000.0f)
+    {
+        menu = Menus_FindByName(&cgDC, "Compass");
+        if (menu)
+            Window_RemoveDynamicFlags((Window *)menu, 4);
+        cg->compassFadeTime = 0;
+    }
+}
+
+void CG_CheckHudStanceDisplay(void)
+{
+    menuDef_t *menu;
+
+    if ((cg->nextSnap->ps.eFlags & 8) && (cg->nextSnap->ps.eFlags & 0x100)
+        || (cg->nextSnap->ps.eFlags & 4) && (cg->nextSnap->ps.eFlags & 0x200))
+    {
+        CG_MenuShowNotify(3);
+    }
+    if (hud_fade_stance->current.value != 0.0f
+        && cg->stanceFadeTime
+        && (float)(cg->time - cg->stanceFadeTime) > hud_fade_stance->current.value * 1000.0f)
+    {
+        menu = Menus_FindByName(&cgDC, "stance");
+        if (menu)
+            Window_RemoveDynamicFlags((Window *)menu, 4);
+        cg->stanceFadeTime = 0;
+    }
+}
+
+void CG_CheckHudOffHandDisplay(void)
+{
+    menuDef_t *menu;
+
+    if (hud_fade_offhand->current.value != 0.0f
+        && cg->offhandFadeTime
+        && (float)(cg->time - cg->offhandFadeTime) > hud_fade_offhand->current.value * 1000.0f)
+    {
+        menu = Menus_FindByName(&cgDC, "offhandinfo");
+        if (menu)
+            Window_RemoveDynamicFlags((Window *)menu, 4);
+        cg->offhandFadeTime = 0;
+    }
+}
+
+void CG_CheckHudObjectiveDisplay(void)
+{
+    menuDef_t *menu;
+
+    if (CG_ScoreboardDisplayed())
+    {
+        if (cg->time - cg->scoreFadeTime > 100)
+        {
+            menu = Menus_FindByName(&cgDC, "objectiveinfo");
+            if (menu)
+                Window_RemoveDynamicFlags((Window *)menu, 4);
+        }
+    }
+}
+
+void CG_CheckTimedMenus(void)
+{
+    if (cg->voiceTime && cg->time - cg->voiceTime > 2500)
+    {
+        Menus_CloseByName(&cgDC, "voiceMenu");
+        cg->voiceTime = 0;
+    }
+    CG_CheckForPlayerInput();
+    CG_CheckHudHealthDisplay();
+    CG_CheckHudAmmoDisplay();
+    CG_CheckHudCompassDisplay();
+    CG_CheckHudStanceDisplay();
+    CG_CheckHudOffHandDisplay();
+    CG_CheckHudObjectiveDisplay();
+}
+
+static void CG_ScreenFade(void)
+{
+    int msec;
     int i;
-    float v;
-    float ax;
-    float ay;
-    float aw;
-    float ah;
-    float mid;
-    float range;
-    float vscale;
-    const float *color;
+    float t;
+    float invt;
+    vec4_t color;
 
-    if (cg_drawLagometer->current.enabled && !cgs->localServer)
+    if (cg->fadeRate == 0.0f)
+        return;
+
+    msec = cg->fadeTime - cg->time;
+    if (msec <= 0)
     {
-        UI_DrawHandlePic(-55.0f, -140.0f, 48.0f, 48.0f, 3, 3, 0, cgs->media.lagometerMaterial);
+        cg->fadeColor1[0] = cg->fadeColor2[0];
+        cg->fadeColor1[3] = cg->fadeColor2[3];
+        cg->fadeColor1[1] = cg->fadeColor2[1];
+        cg->fadeColor1[2] = cg->fadeColor2[2];
 
-        ax = -55.0f;
-        ay = -140.0f;
-        aw = 48.0f;
-        ah = 48.0f;
-
-        range = ah / 3.0f;
-        mid = ay + range;
-
-        // draw the frame interpolate / extrapolate graph
-        for (a = 0; a < aw; a++)
+        if (cg->fadeColor2[3] == 0.0f)
         {
-            i = (lagometer.frameCount - a - 1) & 127;
-            v = (float)lagometer.frameSamples[i];
-            vscale = range / 300.0f;
-            v *= vscale;
-            if (v > 0.0f)
-            {
-                if (v > range)
-                    v = range;
-                CL_DrawStretchPic(ax + aw - a, mid - v, 1.0f, v, 3, 3, 0.0f, 0.0f, 0.0f, 0.0f, colorYellow, cgs->media.whiteMaterial);
-            }
-            else if (v < 0.0f)
-            {
-                v = -v;
-                if (v > range)
-                    v = range;
-                CL_DrawStretchPic(ax + aw - a, mid, 1.0f, v, 3, 3, 0.0f, 0.0f, 0.0f, 0.0f, colorBlue, cgs->media.whiteMaterial);
-            }
+            cg->fadeRate = 0.0f;
+            return;
         }
 
-        // draw the snapshot latency / drop graph
-        range = ah / 2.0f;
-
-        for (a = 0; a < aw; a++)
-        {
-            i = (lagometer.snapshotCount - a - 1) & 127;
-            v = (float)lagometer.snapshotSamples[i];
-            if (v > 0.0f)
-            {
-                if (lagometer.snapshotFlags[i] & 1)
-                    color = colorYellow;
-                else
-                    color = colorGreen;
-                vscale = range / 900.0f;
-                v = v * vscale;
-                if (v > range)
-                    v = range;
-                CL_DrawStretchPic(ax + aw - a, ay + ah - v, 1.0f, v, 3, 3, 0.0f, 0.0f, 0.0f, 0.0f, color, cgs->media.whiteMaterial);
-            }
-            else if (v < 0.0f)
-            {
-                CL_DrawStretchPic(ax + aw - a, ay + ah - range, 1.0f, range, 3, 3, 0.0f, 0.0f, 0.0f, 0.0f, colorRed, cgs->media.whiteMaterial);
-            }
-        }
-
-        if (cg_nopredict->current.enabled || cg_synchronousClients->current.enabled)
-            CG_DrawBigDevString(ax, ay, "snc", 1.0f, 9);
+        UI_FillRectPhysical(0.0f, 0.0f, (float)cls.vidConfig.width, (float)cls.vidConfig.height, cg->fadeColor1);
     }
+    else
+    {
+        t = (float)msec * cg->fadeRate;
+        invt = 1.0f - t;
 
-    CG_DrawDisconnect();
+        for (i = 0; i < 4; i++)
+            color[i] = cg->fadeColor2[i] * invt + cg->fadeColor1[i] * t;
+
+        if (color[3] != 0.0f)
+            UI_FillRectPhysical(0.0f, 0.0f, (float)cls.vidConfig.width, (float)cls.vidConfig.height, color);
+    }
 }
 
-static void CG_DrawPerformanceWarnings(void)
+static void CG_DrawSoundOverlay(void)
 {
-    int now;
-    const void *statsArray;
-    int statsCount;
+    snd_overlay_info_t info[64];
+    const char *provider;
+    const char *line;
+    int cpu;
+    int count;
+    int bits;
+    int khz;
+    int channels;
     int i;
-    float x;
     float y;
 
-    now = Sys_Milliseconds();
-    StatMon_GetStatsArray((const statmonitor_t **)&statsArray, &statsCount);
-
-    x = 2.0f;
-    y = 200.0f;
-    for (i = 0; i < statsCount; i++)
-    {
-        const int *entry = (const int *)((const char *)statsArray + i * 8);
-        if (entry[0] >= now)
-            UI_DrawHandlePic(x, y, 32.0f, 32.0f, 1, 0, 0, (MaterialHandle)entry[1]);
-        x += 34.0f;
-        if (x + 32.0f > 68.0f)
-        {
-            x = 2.0f;
-            y += 34.0f;
-        }
-    }
-}
-
-static void CG_DrawDebugOverlays(void)
-{
-    if (cg_drawSoundOverlay->current.integer)
-        CG_DrawSoundOverlay();
-    else if (cg_drawScriptUsage->current.enabled)
-        CG_DrawScriptUsage();
-    else if (cg_drawMaterial->current.enabled)
-        CG_DrawMaterial();
-}
-
-static float CG_DrawSnapshot(float y)
-{
-    return y + (float)CG_DrawBigDevStringColor(620.0f, y,
-        va("time:%i snap:%i cmd:%i", cg->nextSnap->serverTime, cg->latestSnapshotNum, cgs->serverCommandSequence),
-        colorWhite, 6);
-}
-
-static void CG_DrawUpperRight(void)
-{
-    float y;
-
-    CL_TrackStatistics(0);
-    y = 0.0f;
-    if (cg_drawSnapshot->current.enabled)
-        y = CG_DrawSnapshot(y);
-    if (cg_drawFPS->current.integer)
-        y = CG_DrawFPS(y);
-}
-
-static void CG_DrawCenterString(void)
-{
-    char *start;
-    int l;
-    int h;
-    float x;
-    float lineHeight;
-    float y;
-    float scale;
-    float *color;
-    FontHandle font;
-    char linebuffer[1024];
-
-    if (!cg->centerPrintTime)
+    count = SND_GetSoundOverlay(
+        (snd_overlay_type_t)cg_drawSoundOverlay->current.integer,
+        info,
+        (int)(sizeof(info) / sizeof(info[0])),
+        &cpu);
+    if (count <= 0)
         return;
 
-    color = CG_FadeColor(cg->centerPrintTime, (int)(cg_centertime->current.value * 1000.0f), 100);
-    if (!color)
-    {
-        cg->centerPrintTime = 0;
-        cg->centerPrintPriority = 0;
-        return;
-    }
+    provider = Dvar_GetString("mss_3d_provider");
+    bits = Dvar_GetInt("snd_bits");
+    khz = Dvar_GetInt("snd_khz");
+    channels = Dvar_GetBool("snd_stereo") ? 2 : 1;
 
-    start = cg->centerPrint;
+    CG_DrawStringExt(
+        2.0f,
+        82.0f,
+        va("CPU: ^3%%%i ^73D provider: ^3%s ^7bits: ^3%i ^7kHz: ^3%i ^7chan: ^3%i", cpu, provider, bits, khz, channels),
+        colorWhite,
+        0,
+        1,
+        10.0f,
+        0);
 
-    scale = cg->centerPrintCharWidth / 32.0f;
-    h = UI_TextHeight(UI_GetFontHandle(0, scale), scale);
-
-    lineHeight = h * 1.2f;
-    y = cg_centerPrintY->current.value - cg->centerPrintLines * lineHeight;
-
-    while (1)
-    {
-        for (l = 0; l < 75; l++)
-        {
-            if (!start[l] || start[l] == '\n')
-                break;
-            linebuffer[l] = start[l];
+    y = 92.0f;
+    for (i = 0; i < count; ++i) {
+        if (!info[i].pszSampleName) {
+            line = va("%2i", i);
+        } else {
+            line = va(
+                "%2i %-50s vol^3%04.2f ^7rvol^3%04.2f ^7dist^3%5i ^7pit^3%04.2f",
+                i,
+                info[i].pszSampleName,
+                info[i].fBaseVolume,
+                info[i].fCurVolume,
+                info[i].dist,
+                info[i].fPitch);
         }
-        linebuffer[l] = 0;
 
-        font = UI_GetFontHandle(0, scale);
-        x = UI_TextWidth(linebuffer, 0, font, scale) * -0.5;
-        UI_DrawText(linebuffer, 0x7fffffff, font, x, y, 7, 3, scale, color, 3);
-
-        y += lineHeight;
-
-        while (*start && *start != '\n')
-            start++;
-        if (!*start)
-            break;
-        start++;
+        CG_DrawStringExt(2.0f, y, line, colorWhite, 0, 1, 10.0f, 0);
+        y += 10.0f;
     }
 }
 
@@ -2241,6 +1850,358 @@ static void CG_DrawSubtitles(void)
 static void CG_DrawSay(void)
 {
     Con_DrawSay((int)cg_hudSayPosition->current.vector[1] + 24);
+}
+
+static void CG_DrawPerformanceWarnings(void)
+{
+    int now;
+    const void *statsArray;
+    int statsCount;
+    int i;
+    float x;
+    float y;
+
+    now = Sys_Milliseconds();
+    StatMon_GetStatsArray((const statmonitor_t **)&statsArray, &statsCount);
+
+    x = 2.0f;
+    y = 200.0f;
+    for (i = 0; i < statsCount; i++)
+    {
+        const int *entry = (const int *)((const char *)statsArray + i * 8);
+        if (entry[0] >= now)
+            UI_DrawHandlePic(x, y, 32.0f, 32.0f, 1, 0, 0, (MaterialHandle)entry[1]);
+        x += 34.0f;
+        if (x + 32.0f > 68.0f)
+        {
+            x = 2.0f;
+            y += 34.0f;
+        }
+    }
+}
+
+void CG_DrawMaterial(void)
+{
+    char szName[64];
+    char szSurfaceFlags[0x1000];
+    char szContents[0x1000];
+    float y;
+
+    if (!CL_PickMaterial((const vec_t *)cg->refdef.vieworg, (const vec_t *)cg->refdef.viewaxis, szName, szSurfaceFlags, szContents, 0x1000)) {
+        return;
+    }
+
+    y = 240.0f;
+    y += (float)CG_DrawSmallDevStringColor(8.0f, y, szName, colorWhite, 5);
+    y += (float)CG_DrawSmallDevStringColor(8.0f, y, szSurfaceFlags, colorWhite, 5);
+    CG_DrawSmallDevStringColor(8.0f, y, szContents, colorWhite, 5);
+}
+
+static void CG_DrawDebugOverlays(void)
+{
+    if (cg_drawSoundOverlay->current.integer)
+        CG_DrawSoundOverlay();
+    else if (cg_drawScriptUsage->current.enabled)
+        CG_DrawScriptUsage();
+    else if (cg_drawMaterial->current.enabled)
+        CG_DrawMaterial();
+}
+
+static qboolean CG_UpdateCameraShakeStrength(cameraShake_t *shake)
+{
+    float elapsed;
+    float distanceScale;
+    float rumbleScale;
+
+    int elapsedMs = cg->time - shake->time;
+    if (elapsedMs < 0) {
+        return 0;
+    }
+    elapsed = (float)elapsedMs;
+    if (elapsed >= shake->length) {
+        return 0;
+    }
+
+    distanceScale = 1.0f - Vec3Distance(shake->src, cg->refdef.vieworg) / shake->radius;
+    rumbleScale = (1.0f - elapsed / shake->length) * shake->scale;
+    if (rumbleScale <= 0.0f) {
+        return 0;
+    }
+
+    shake->size = distanceScale >= 0.0f ? distanceScale * rumbleScale : distanceScale / rumbleScale;
+    shake->rumbleScale = rumbleScale;
+    return 1;
+}
+
+void CG_StartShakeCamera(float scale, int duration, const vec_t *src, float radius)
+{
+    cameraShake_t temp;
+    cameraShake_t *shake;
+    int bestIndex;
+    float bestSize;
+    int i;
+
+    temp.scale = scale;
+    temp.length = (float)duration;
+    temp.time = cg->time;
+    temp.src[0] = src[0];
+    temp.src[1] = src[1];
+    temp.src[2] = src[2];
+    temp.radius = radius;
+    CG_UpdateCameraShakeStrength(&temp);
+
+    for (i = 0; i < 4; ++i) {
+        shake = &cg->cameraShake[i];
+        if (shake->time > cg->time)
+            goto store;
+        if ((float)shake->time + shake->length <= (float)cg->time)
+            goto store;
+    }
+
+    bestIndex = i;
+    bestSize = temp.size;
+    for (i = 0; i < 4; ++i) {
+        if (cg->cameraShake[i].size < bestSize) {
+            bestIndex = i;
+            bestSize = cg->cameraShake[i].size;
+        }
+    }
+    if (bestIndex == 4)
+        return;
+    i = bestIndex;
+
+store:
+    shake = &cg->cameraShake[i];
+    *shake = temp;
+}
+
+void CG_ShakeCamera(void)
+{
+    cameraShake_t *shake;
+    float sx;
+    float bestSize;
+    float bestRumble;
+    float angle;
+    int i;
+
+    sx = (float)cg->time / 600.0f;
+    bestRumble = 0.0f;
+    bestSize = 0.0f;
+
+    for (i = 0; i < 4; ++i) {
+        shake = &cg->cameraShake[i];
+        if (!CG_UpdateCameraShakeStrength(shake)) {
+            continue;
+        }
+
+        if (shake->size > bestSize) {
+            bestSize = shake->size;
+            bestRumble = shake->rumbleScale;
+        }
+    }
+
+    if (cg->rumbleScale > bestSize) {
+        bestSize = cg->rumbleScale;
+        bestRumble = cg->rumbleScale;
+    }
+
+    if (bestSize <= 0.0f) {
+        cg->cameraShakePhase = crandom() * 3.14159265358979323846f;
+        return;
+    }
+
+    if (bestSize > 1.0f) {
+        bestSize = 1.0f;
+    }
+    angle = (float)sin(sx * 25.132741228718345f + cg->cameraShakePhase) * bestSize * bestRumble * 18.0f;
+    cg->refdefViewAngles[0] += angle;
+    angle = (float)sin(sx * 47.12388980384689f + cg->cameraShakePhase) * bestSize * bestRumble * 16.0f;
+    cg->refdefViewAngles[1] += angle;
+    angle = (float)sin(sx * 37.69911184307752f + cg->cameraShakePhase) * bestSize * bestRumble * 10.0f;
+    cg->refdefViewAngles[2] += angle;
+}
+
+static void CG_DrawSpectator(void)
+{
+    const char *s;
+    FontHandle font;
+    float x;
+
+    s = UI_SafeTranslateString("CGAME_SPECTATOR");
+    font = UI_GetFontHandle(4, 0.5f);
+    x = (float)-UI_TextWidth(s, 0, font, 0.5f) * 0.5f;
+    UI_DrawText(s, 0x7fffffff, font, x, -27.0f, 7, 3, 0.5f, colorWhite, 3);
+}
+
+static void CG_DrawVote(void)
+{
+    char szVoteYes[256];
+    char szVoteNo[256];
+    char binding[256];
+    FontHandle font;
+    int sec;
+    const char *s;
+
+    if (!cgs->voteTime)
+        return;
+
+    font = UI_GetFontHandle(0, 0.5f);
+
+    if (GetKeyBindingLocalizedString("vote yes", binding))
+        I_strncpyz(szVoteYes, binding, 256);
+    else
+        I_strncpyz(szVoteYes, "vote yes", 256);
+
+    if (GetKeyBindingLocalizedString("vote no", binding))
+        I_strncpyz(szVoteNo, binding, 256);
+    else
+        I_strncpyz(szVoteNo, "vote no", 256);
+
+    sec = (cgs->voteTime - cg->time) / 1000;
+    if (sec < 0)
+        sec = 0;
+
+    if (cg->nextSnap->ps.eFlags & 0x100000)
+    {
+        s = va("%s(%i):%s", UI_SafeTranslateString("CGAME_VOTE"), sec, cgs->voteString);
+        UI_DrawText(s, 0x7fffffff, font, 8.0f, 200.0f, 0, 0, 0.5f, colorYellow, 3);
+        s = va("%s:%i, %s:%i", UI_SafeTranslateString("CGAME_YES"), cgs->voteYes,
+               UI_SafeTranslateString("CGAME_NO"), cgs->voteNo);
+    }
+    else
+    {
+        s = va("%s(%i):%s", UI_SafeTranslateString("CGAME_VOTE"), sec, cgs->voteString);
+        UI_DrawText(s, 0x7fffffff, font, 8.0f, 200.0f, 0, 0, 0.5f, colorYellow, 3);
+        s = va("%s(%s):%i, %s(%s):%i", UI_SafeTranslateString("CGAME_YES"), szVoteYes, cgs->voteYes,
+               UI_SafeTranslateString("CGAME_NO"), szVoteNo, cgs->voteNo);
+    }
+    UI_DrawText(s, 0x7fffffff, font, 8.0f, 210.0f, 0, 0, 0.5f, colorYellow, 3);
+}
+
+static void CG_DrawIntermission(void)
+{
+    CL_CloseAllMenus();
+    cg->showScores = 1;
+    cg->scoreFadeTime = cg->time;
+    CG_DrawScoreboard();
+}
+
+static const char *CG_GetBoundSpectatorCommand(const char *command, const char *altCommand)
+{
+    char binding[256];
+
+    if (GetKeyBindingLocalizedString(command, binding))
+        return command;
+    if (GetKeyBindingLocalizedString(altCommand, binding))
+        return altCommand;
+    return command;
+}
+
+static void CG_DrawSpectatorMessage(void)
+{
+    const char *commands[5];
+    const char *messages[5];
+    char binding[256];
+    const char *str;
+    FontHandle font;
+    float lineHeight;
+    float y;
+    int lineNum;
+    int i;
+
+    if (!cg_descriptiveText->current.enabled || (Key_GetCatcher() & 8)
+        || !(cg->nextSnap->ps.pm_flags & 0x3000000))
+        return;
+
+    Controls_GetConfig();
+    font = UI_GetFontHandle(0, 0.20833333f);
+    lineNum = 0;
+    lineHeight = (float)UI_TextHeight(font, 0.20833333f);
+    y = 436.0f - (lineHeight + lineHeight);
+
+    if (cg->nextSnap->ps.pm_flags & 0x1000000) {
+        commands[lineNum] = "+attack";
+        messages[lineNum++] = "PLATFORM_FOLLOWNEXTPLAYER";
+        commands[lineNum] = CG_GetBoundSpectatorCommand("toggleads", "+speed");
+        messages[lineNum++] = "PLATFORM_FOLLOWPREVIOUSPLAYER";
+    }
+    if (cg->nextSnap->ps.pm_flags & 0x2000000) {
+        commands[lineNum] = CG_GetBoundSpectatorCommand("+melee", "+melee_breath");
+        messages[lineNum++] = "PLATFORM_FOLLOWSTOP";
+    }
+
+    for (i = 0; i < lineNum; i++) {
+        if (!GetKeyBindingLocalizedString(commands[i], binding))
+            I_strncpyz(binding, UI_SafeTranslateString("KEY_UNBOUND"), 256);
+        str = UI_ReplaceConversionString(UI_SafeTranslateString(messages[i]), binding);
+        UI_DrawText(str, 0x7fffffff, font, 240.0f, y, 0, 0, 0.20833333f, colorWhite, 3);
+        y = y + lineHeight;
+    }
+}
+
+qboolean CG_DrawFollow(void)
+{
+    const char *clientName;
+    const char *followingString;
+    FontHandle font;
+    float scale;
+    float x;
+    int textWidth;
+
+    if (!(cg->snap->ps.pm_flags & 0x400000)) {
+        return 0;
+    }
+
+    if (cg->inKillCam) {
+        return 0;
+    }
+
+    if (cg->bgs.clientinfo[cg->snap->ps.clientNum].infoValid)
+        clientName = cg->bgs.clientinfo[cg->snap->ps.clientNum].name;
+    else
+        clientName = "?";
+
+    followingString = SEH_LocalizeTextMessage("CGAME_FOLLOWING\x15", "spectator follow string", (msgLocErrType_t)0);
+    scale = CL_IsRenderingSplitScreen() ? 0.5f : (1.0f / 3.0f);
+    font = UI_GetFontHandle(0, 1.0f / 3.0f);
+
+    textWidth = UI_TextWidth(followingString, 0, font, scale);
+    x = (float)(-textWidth) * 0.5f;
+    UI_DrawText(followingString, 0x7fffffff, font, x, 40.0f, 7, 1, scale, colorWhite, 3);
+
+    textWidth = UI_TextWidth(clientName, 0, font, scale);
+    x = (float)(-textWidth) * 0.5f;
+    UI_DrawText(clientName, 0x7fffffff, font, x, 65.0f, 7, 1, scale, colorWhite, 3);
+
+    return 1;
+}
+
+void CG_DrawTurretCrossHair(void)
+{
+    const dvar_t *drawTurretCrosshair;
+    vec4_t color = { 1.0f, 1.0f, 1.0f, 0.75f };
+
+    drawTurretCrosshair = cg_drawTurretCrosshair;
+    if (drawTurretCrosshair && !drawTurretCrosshair->current.enabled)
+        return;
+
+    if (!cgs)
+        return;
+
+    UI_DrawHandlePic(316.0f, 236.0f, 8.0f, 8.0f, 0, 0, color, cgs->media.whiteMaterial);
+}
+
+void CG_DrawPlayerSprites(void)
+{
+    int entityIndex;
+    centity_t *cent;
+
+    for (entityIndex = 0; entityIndex < cg->nextSnap->numEntities; ++entityIndex) {
+        cent = &cg_entities[cg->nextSnap->entities[entityIndex].number];
+        if (cent->nextState.eType == 1) {
+            CG_PlayerSprites(cent);
+        }
+    }
 }
 
 unsigned int CG_Draw2D(void)
@@ -2328,9 +2289,47 @@ unsigned int CG_Draw2D(void)
     return 0;
 }
 
-#else
-static float CG_DrawFPS(float y)
+void CG_DrawActive(void)
 {
-    return 0.0f;
+    float sensitivity;
+    float angles[3];
+    vec_t *ka;
+    vec_t *oa;
+
+    cg->refdef.time = cg->time;
+    cg->refdef.viewIndex = 0;
+
+    sensitivity = cg->zoomSensitivity;
+    if (cg->shellshock.sensitivity != 0.0f)
+        sensitivity = cg->shellshock.sensitivity * cg->zoomSensitivity;
+
+    ka = cg->kickAngles;
+    oa = cg->offsetAngles;
+    angles[0] = ka[0] + oa[0];
+    angles[1] = ka[1] + oa[1];
+    angles[2] = ka[2] + oa[2];
+
+    CL_SetUserCmdAimValues(angles);
+
+    CL_SetUserCmdValue(cg->weaponSelect, cg->equippedOffHand, sensitivity);
+
+    CL_RenderScene(&cg->refdef);
+
+    if (!CL_IsRenderingSplitScreen()) {
+        /* Pass parms/startTime/duration with their real types. The decomp emitted
+         * `*(float*)&field` reinterpretations here; on x86 they harmlessly launder
+         * the same 4 bytes, but on x64 (Win64 ABI) a float arg is passed in an xmm
+         * register while the pointer/int params are read from rcx/rdx/r8 -- so all
+         * three args arrived as garbage (and the parms pointer was truncated to 32
+         * bits), making the code see a bogus active shellshock and set
+         * hasSavedScreen=1 every frame, which suppressed the viewmodel. */
+        CG_DrawShellShockSavedScreenBlend(
+            cg->shellshock.parms,
+            cg->shellshock.startTime,
+            cg->shellshock.duration);
+    }
+
+    CG_TileClear();
 }
-#endif
+
+

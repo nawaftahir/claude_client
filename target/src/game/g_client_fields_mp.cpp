@@ -4,6 +4,28 @@
 
 extern const game_client_field_t g_client_fields[];
 
+void ClientScr_ReadOnly( gclient_t *pSelf, const game_client_field_t *pField );
+void ClientScr_SetSessionTeam( gclient_t *pSelf, const game_client_field_t *pField );
+void ClientScr_GetSessionTeam( gclient_t *pSelf, const game_client_field_t *pField );
+void ClientScr_SetSessionState( gclient_t *pSelf, const game_client_field_t *pField );
+void ClientScr_GetSessionState( gclient_t *pSelf, const game_client_field_t *pField );
+void ClientScr_SetMaxHealth( gclient_t *pSelf, const game_client_field_t *pField );
+void ClientScr_SetScore( gclient_t *pSelf, const game_client_field_t *pField );
+void ClientScr_SetSpectatorClient( gclient_t *pSelf, const game_client_field_t *pField );
+void ClientScr_SetStatusIcon( gclient_t *pSelf, const game_client_field_t *pField );
+void ClientScr_GetStatusIcon( gclient_t *pSelf, const game_client_field_t *pField );
+void ClientScr_SetHeadIcon( gclient_t *pSelf, const game_client_field_t *pField );
+void ClientScr_GetHeadIcon( gclient_t *pSelf, const game_client_field_t *pField );
+void ClientScr_SetHeadIconTeam( gclient_t *pSelf, const game_client_field_t *pField );
+void ClientScr_GetHeadIconTeam( gclient_t *pSelf, const game_client_field_t *pField );
+void ClientScr_SetArchiveTime( gclient_t *pSelf, const game_client_field_t *pField );
+void ClientScr_GetArchiveTime( gclient_t *pSelf, const game_client_field_t *pField );
+void ClientScr_SetPSOffsetTime( gclient_t *pSelf, const game_client_field_t *pField );
+void ClientScr_GetPSOffsetTime( gclient_t *pSelf, const game_client_field_t *pField );
+void GScr_AddFieldsForClient();
+void Scr_SetClientField( gclient_t *client, int offset );
+void Scr_GetClientField( gclient_t *client, int offset );
+
 /*
 ===============
 ClientScr_ReadOnly
@@ -470,6 +492,7 @@ void Scr_GetClientField( gclient_t *client, int offset )
 		Scr_GetGenericField((byte *)client, f->type, f->ofs);
 	}
 }
+
 
 static const game_client_field_t g_client_fields[] =
 {

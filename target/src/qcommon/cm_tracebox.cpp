@@ -1,6 +1,9 @@
 #include "qcommon.h"
 #include "cm_local.h"
 
+void CM_CalcTraceEntents( TraceExtents *extents );
+qboolean CM_TraceBox( TraceExtents *extents, const vec3_t mins, const vec3_t maxs, float fraction );
+
 /*
 ===================
 CM_CalcTraceEntents
@@ -78,3 +81,4 @@ qboolean CM_TraceBox( TraceExtents *extents, const vec3_t mins, const vec3_t max
 
 	return qfalse;
 }
+

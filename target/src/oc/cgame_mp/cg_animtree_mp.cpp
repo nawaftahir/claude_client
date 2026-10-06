@@ -71,3 +71,4 @@ void CG_FreeEntityDObjInfo(void)
         }
     }
 }
+

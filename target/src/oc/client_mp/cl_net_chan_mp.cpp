@@ -330,3 +330,4 @@ void CL_Netchan_PrintProfileStats(qboolean bPrintToConsole)
         CL_Netchan_DrawProfileLine(szLine, iYPos);
     }
 }
+

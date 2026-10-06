@@ -3,6 +3,8 @@
 
 scr_const_t scr_const;
 
+void GScr_LoadConsts();
+
 /*
 ===============
 GScr_LoadConsts
@@ -101,3 +103,4 @@ void GScr_LoadConsts()
 	scr_const.head = GScr_AllocString("head");
 	scr_const.pelvis = GScr_AllocString("pelvis");
 }
+

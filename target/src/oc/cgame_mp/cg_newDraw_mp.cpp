@@ -170,6 +170,50 @@ COD2_ASSERT_FIELD(WeaponDef,     overlayReticle, 0x278);
 COD2_ASSERT_FIELD(WeaponDef,     bWideListIcon,  0x344);
 COD2_ASSERT_FIELD(playerState_t, fWeaponPosFrac, 0xdc);
 
+inline float I_fclamp(const float val, const float min, const float max);
+
+static void __attribute_regparm__(3)
+    CG_DrawScore(int team, const rectDef_t *rect, struct Font_s *font, float scale, vec_t *color, MaterialHandle material, int textStyle)
+{
+    char scoreText[16];
+    int textWidth;
+    (void)material;
+    if (cgs->teamScores[team] == -9999) {
+        Com_sprintf(scoreText, sizeof(scoreText), "-");
+    } else {
+        Com_sprintf(scoreText, sizeof(scoreText), "%i", cgs->teamScores[team]);
+    }
+    textWidth = UI_TextWidth(scoreText, 0, font, scale);
+    UI_DrawText(
+        scoreText,
+        0x7fffffff,
+        font,
+        rect->x + rect->w - (float)textWidth,
+        rect->y + rect->h,
+        rect->horzAlign,
+        rect->vertAlign,
+        scale,
+        color,
+        textStyle);
+}
+
+inline float I_fclamp(const float val, const float min, const float max);
+
+inline float I_fsel(const float x, const float y, const float z)
+{
+    return x >= 0.0f ? y : z;
+}
+
+inline float I_fclamp(const float val, const float min, const float max)
+{
+    return I_fsel(min - val, min, I_fsel(val - max, max, val));
+}
+
+static qboolean CG_PlayerOwnsWeapon(const int *weapons, int weaponIndex)
+{
+    return (weapons[weaponIndex >> 5] & (1 << (weaponIndex & 31))) != 0;
+}
+
 void CG_AntiBurnInHUD_RegisterDvars(void)
 {
     hud_fadeout_speed = Dvar_RegisterFloat("hud_fadeout_speed", 0.1f, 0.0f, 1.0f, 0x1001);
@@ -211,483 +255,6 @@ Bool CG_AreHudMenusHidden(void)
     return 1;
 }
 
-float CG_CalcPlayerHealth(void)
-{
-    playerState_t *ps;
-    float healthRatio;
-
-    ps = &cgArray[0].nextSnap->ps;
-    if (ps->stats[0] == 0 || ps->stats[2] == 0 || ps->pm_type == 6) {
-        return 0.0f;
-    }
-
-    healthRatio = (float)ps->stats[0] / (float)ps->stats[2];
-    if (healthRatio < 0.0f) {
-        return 0.0f;
-    }
-    if (healthRatio > 1.0f) {
-        return 1.0f;
-    }
-    return healthRatio;
-}
-
-void CG_ResetLowHealthOverlay(void)
-{
-    cg->healthOverlayHurt = 0;
-    cg->healthOverlayToAlpha = hud_healthOverlay_phaseEnd_toAlpha->current.value;
-    cg->healthOverlayPulseDuration = 0;
-    cg->healthOverlayPulsePhase = 0;
-    cg->healthOverlayPulseIndex = 0;
-    cg->healthOverlayOldHealth = 1.0f;
-}
-
-qboolean CG_ServerMaterialName(int index, char *materialName, int maxLen)
-{
-    const char *configString;
-
-    if (index <= 0 || index >= 128) {
-        return 0;
-    }
-
-    configString = CL_GetConfigString(index + 0x61e);
-    if (configString[0] == '\0') {
-        return 0;
-    }
-
-    if (strlen(configString) >= (unsigned int)maxLen) {
-        return 0;
-    }
-
-    strcpy(materialName, configString);
-    return 1;
-}
-
-void CG_ApplySplitScreenCompassScale(float *x, float *y, float *w, float *h)
-{
-
-}
-
-const char *CG_GetUseString(void)
-{
-    const char *hintString;
-    char binding[0x100];
-
-    hintString = CL_GetConfigString(cgArray[0].cursorHintString + 0x4fe);
-    if (!hintString || !*hintString) {
-        return 0;
-    }
-
-    if (!GetKeyBindingLocalizedString("+activate", binding)) {
-        I_strncpyz(binding, UI_SafeTranslateString("KEY_USE"), sizeof(binding));
-    }
-
-    return UI_ReplaceConversionString(SEH_LocalizeTextMessage(hintString, "Hint String", (msgLocErrType_t)0), binding);
-}
-
-static void CG_UpdateCursorHints(void)
-{
-    if (!cg->renderingThirdPerson)
-    {
-        if (cg->nextSnap->ps.cursorHint)
-        {
-            cg->cursorHintTime = cg->time;
-            cg->cursorHintFade = cg_hintFadeTime->current.integer;
-            cg->cursorHintIcon = cg->nextSnap->ps.cursorHint;
-            cg->cursorHintString = cg->nextSnap->ps.cursorHintString;
-        }
-    }
-}
-
-static const char *CG_GetWeaponUseString(void)
-{
-    WeaponDef *weapDef;
-    int weaponIndex;
-    const char *displayString;
-    char binding[0x100];
-
-    weapDef = (WeaponDef *)BG_GetWeaponDef(cg->cursorHintIcon - 4);
-    weaponIndex = cg->cursorHintIcon - 4;
-    GetKeyBindingLocalizedString("+activate", binding);
-
-    if (BG_DoesWeaponNeedSlot(weaponIndex) && !BG_GetEmptySlotForWeapon(&cg->predictedPlayerState, weaponIndex))
-    {
-        if (((WeaponDef *)BG_GetWeaponDef(cg->predictedPlayerState.weapon))->weapSlot == weapDef->weapSlot)
-        {
-            if (cg->predictedPlayerState.weapon == weaponIndex)
-                return NULL;
-        }
-        else if ((signed char)cg->predictedPlayerState.weaponslots[weapDef->weapSlot] == weaponIndex)
-        {
-            return NULL;
-        }
-        displayString = UI_SafeTranslateString("PLATFORM_SWAPWEAPONS");
-    }
-    else
-    {
-        displayString = UI_SafeTranslateString("PLATFORM_PICKUPNEWWEAPON");
-    }
-
-    return UI_ReplaceConversionString(displayString, binding);
-}
-
-static void CG_DrawCursorhint(const rectDef_t *rect, struct Font_s *font, float fontscale, int textStyle)
-{
-    MaterialHandle hintIcon;
-    float *fadeColor;
-    float scale;
-    float halfscale;
-    float widthScale;
-    float widthOfs;
-    const char *text;
-    float textWidth;
-    float textHeight;
-    float x;
-    float y;
-    char binding[0x100];
-
-    if (!cg_cursorHints->current.integer)
-        return;
-
-    CG_UpdateCursorHints();
-
-    hintIcon = cgs->media.hintMaterials[cg->cursorHintIcon];
-    if (!hintIcon)
-        return;
-
-    fadeColor = CG_FadeColor(cg->cursorHintTime, cg->cursorHintFade, 100);
-    if (!fadeColor)
-    {
-        cg->cursorHintIcon = 0;
-        return;
-    }
-
-    Controls_GetConfig();
-
-    widthScale = 1.0f;
-    widthOfs = 0.0f;
-
-    if (cg_cursorHints->current.integer == 3)
-        fadeColor[3] *= (sinf((float)cg->time / 150.0f) + 1.0f) * 0.5f;
-
-    if (cg_cursorHints->current.integer >= 3)
-    {
-        halfscale = 0.0f;
-        scale = 0.0f;
-    }
-    else
-    {
-        if (cg_cursorHints->current.integer == 2)
-            scale = (float)(cg->cursorHintTime % 1000) / 100.0f;
-        else
-            scale = 10.0f * ((sinf((float)cg->time / 150.0f) + 1.0f) * 0.5f);
-        halfscale = scale * 0.5f;
-    }
-
-    if (cg->cursorHintIcon >= 5 && cg->cursorHintIcon <= 132)
-    {
-        if (((WeaponDef *)BG_GetWeaponDef(cg->cursorHintIcon - 4))->bWideListIcon)
-        {
-            widthScale = 2.0f;
-            widthOfs = rect->w * -0.5f;
-        }
-
-        if (((WeaponDef *)BG_GetWeaponDef(cg->cursorHintIcon - 4))->weapClass == 7)
-        {
-            if (cg->cursorHintString < 0)
-                goto draw_icon;
-            text = CG_GetUseString();
-        }
-        else
-        {
-            text = CG_GetWeaponUseString();
-        }
-    }
-    else if (cg->cursorHintString >= 0)
-    {
-        text = CG_GetUseString();
-    }
-    else if (cg->cursorHintIcon == 3)
-    {
-        GetKeyBindingLocalizedString("+activate", binding);
-        text = UI_ReplaceConversionString(UI_SafeTranslateString("PLATFORM_PICKUPHEALTH"), binding);
-    }
-    else
-    {
-        goto draw_icon;
-    }
-
-    if (text && *text)
-    {
-        textWidth = (float)UI_TextWidth(text, 0, font, fontscale);
-        textHeight = (float)UI_TextHeight(font, fontscale);
-        x = (widthScale * rect->w + textWidth + scale) * -0.5f;
-        y = rect->y - rect->h * 0.5f;
-        UI_DrawText(text, 0x7fffffff, font, x, textHeight * 0.5f + rect->y,
-                    rect->horzAlign, rect->vertAlign, fontscale, fadeColor, textStyle);
-        UI_DrawHandlePic(x + textWidth, y, widthScale * rect->w + scale, rect->h + scale, rect->horzAlign,
-                         rect->vertAlign, fadeColor, hintIcon);
-        return;
-    }
-
-draw_icon:
-    UI_DrawHandlePic(rect->x - (halfscale + rect->w + widthOfs) * 0.5f, rect->y - halfscale, widthScale * rect->w + scale,
-                     rect->h + scale, rect->horzAlign, rect->vertAlign, fadeColor, hintIcon);
-}
-
-
-void CG_DrawMantleHint(const rectDef_t *rect, struct Font_s *font, float fontscale, int textStyle)
-{
-    char binding[0x100];
-    const char *text;
-    float length;
-    float x;
-
-    if (!cg_drawMantleHint->current.enabled) {
-        return;
-    }
-
-    if (!(*(byte *)&cg->predictedPlayerState.mantleState.flags & 8)) {
-        return;
-    }
-
-    Controls_GetConfig();
-    if (!GetKeyBindingLocalizedString("+gostand", binding)) {
-        GetKeyBindingLocalizedString("+moveup", binding);
-    }
-
-    text = UI_ReplaceConversionString(UI_SafeTranslateString("PLATFORM_MANTLE"), binding);
-    length = (float)UI_TextWidth(text, 0, font, fontscale);
-    x = (length + rect->w) * -0.5f + rect->x;
-
-    UI_DrawText(
-        text,
-        0x7fffffff,
-        font,
-        x,
-        rect->y + (float)UI_TextHeight(font, fontscale) * 0.5f,
-        rect->horzAlign,
-        rect->vertAlign,
-        fontscale,
-        color,
-        textStyle);
-
-    UI_DrawHandlePic(
-        x + length,
-        rect->h * -0.5f + rect->y,
-        rect->w,
-        rect->h,
-        rect->horzAlign,
-        rect->vertAlign,
-        color,
-        cgs->media.mantleHint);
-}
-
-const char *CG_GetTranslatedLocationString(int iLocation)
-{
-    const char *p;
-    const char *localized;
-
-    p = CL_GetConfigString(iLocation + 0x2e);
-    if (!p || !*p) {
-        p = "CGAME_UNKNOWN";
-    }
-
-    localized = SEH_StringEd_GetString(p);
-    if (localized) {
-        return localized;
-    }
-
-    if (loc_warnings->current.enabled) {
-        if (loc_warningsAsErrors->current.enabled) {
-            Com_Error(ERR_LOCALIZATION, "Could not translate map location string \"%s\"", p);
-        } else {
-            Com_Printf("^3WARNING: Could not translate map location string \"%s\"\n", p);
-        }
-
-        strcpy(szErrorString, "^1UNLOCALIZED(^7");
-        I_strncat(szErrorString, sizeof(szErrorString), p);
-        I_strncat(szErrorString, sizeof(szErrorString), "^1)^7");
-        return szErrorString;
-    }
-
-    I_strncpyz(szErrorString, p, sizeof(szErrorString));
-    return szErrorString;
-}
-
-static void __attribute_regparm__(3)
-    CG_DrawScore(int team, const rectDef_t *rect, struct Font_s *font, float scale, vec_t *color, MaterialHandle material, int textStyle)
-{
-    char scoreText[16];
-    int textWidth;
-
-    (void)material;
-
-    if (cgs->teamScores[team] == -9999) {
-        Com_sprintf(scoreText, sizeof(scoreText), "-");
-    } else {
-        Com_sprintf(scoreText, sizeof(scoreText), "%i", cgs->teamScores[team]);
-    }
-
-    textWidth = UI_TextWidth(scoreText, 0, font, scale);
-    UI_DrawText(
-        scoreText,
-        0x7fffffff,
-        font,
-        rect->x + rect->w - (float)textWidth,
-        rect->y + rect->h,
-        rect->horzAlign,
-        rect->vertAlign,
-        scale,
-        color,
-        textStyle);
-}
-
-const char *CG_GetKillerText(void)
-{
-    const char *s = "";
-
-    if (cg->killerName[0])
-        s = va("Fragged by %s", cg->killerName);
-    return s;
-}
-
-const char *CG_GameTypeString(void)
-{
-    return cgs->gametype;
-}
-
-int CG_KeyInterceptEvent(int key, qboolean down)
-{
-    if (!down || !CG_ScoreboardDisplayed()) {
-        return 0;
-    }
-
-    if (key == 0xce || key == 0xa4 || key == 0xb8) {
-        CG_ScrollScoreboardUp();
-        return 1;
-    }
-
-    if (key == 0xcd || key == 0xa3 || key == 0xbe) {
-        CG_ScrollScoreboardDown();
-        return 1;
-    }
-
-    return 0;
-}
-
-inline float I_fclamp(const float val, const float min, const float max);
-
-void CG_PulseLowHealthOverlay(float healthRatio)
-{
-    float pulseMags[4] = { 1.0f, 0.8f, 0.6f, 0.3f };
-
-    if (healthRatio < cg->healthOverlayOldHealth && healthRatio < hud_healthOverlay_pulseStart->current.value) {
-        cg->healthOverlayLastHitTime = cg->time;
-        cg->healthOverlayPulseIndex = 0;
-    }
-    cg->healthOverlayOldHealth = healthRatio;
-    if (cg->healthOverlayPulseDuration + cg->healthOverlayPulseTime <= cg->time
-        && (healthRatio < hud_healthOverlay_pulseStart->current.value || cg->healthOverlayHurt)) {
-        if (!cg->healthOverlayHurt)
-            cg->healthOverlayHurt = 1;
-        cg->healthOverlayPulseTime = cg->time;
-        cg->healthOverlayFromAlpha = cg->healthOverlayToAlpha;
-        if ((unsigned int)cg->healthOverlayPulseIndex < 4) {
-            switch (cg->healthOverlayPulsePhase) {
-            case 0:
-                cg->healthOverlayToAlpha = I_fclamp(pulseMags[cg->healthOverlayPulseIndex], 0.0f, 1.0f);
-                cg->healthOverlayPulseDuration = hud_healthOverlay_phaseOne_pulseDuration->current.integer;
-                cg->healthOverlayPulsePhase = 1;
-                break;
-            case 1:
-                cg->healthOverlayToAlpha = I_fclamp(pulseMags[cg->healthOverlayPulseIndex] * hud_healthOverlay_phaseTwo_toAlphaMultiplier->current.value, 0.0f, 1.0f);
-                cg->healthOverlayPulseDuration = hud_healthOverlay_phaseTwo_pulseDuration->current.integer;
-                cg->healthOverlayPulsePhase = 2;
-                break;
-            case 2:
-                cg->healthOverlayToAlpha = I_fclamp(pulseMags[cg->healthOverlayPulseIndex] * hud_healthOverlay_phaseThree_toAlphaMultiplier->current.value, 0.0f, 1.0f);
-                cg->healthOverlayPulseDuration = hud_healthOverlay_phaseThree_pulseDuration->current.integer;
-                cg->healthOverlayPulsePhase = 0;
-                if (cg->time >= hud_healthOverlay_regenPauseTime->current.integer + cg->healthOverlayLastHitTime
-                    - 3 * (hud_healthOverlay_phaseThree_pulseDuration->current.integer
-                        + hud_healthOverlay_phaseTwo_pulseDuration->current.integer
-                        + hud_healthOverlay_phaseOne_pulseDuration->current.integer))
-                    ++cg->healthOverlayPulseIndex;
-                break;
-            }
-        } else {
-            cg->healthOverlayHurt = 0;
-            cg->healthOverlayToAlpha = hud_healthOverlay_phaseEnd_toAlpha->current.value;
-            cg->healthOverlayPulseDuration = hud_healthOverlay_phaseEnd_pulseDuration->current.integer;
-            cg->healthOverlayPulsePhase = 0;
-        }
-    }
-}
-
-void CG_ArchiveState(MemoryFile *memFile)
-{
-
-    ((MemoryFileArchiveProc)memFile->archiveProc)(memFile, 4, (byte *)&cg->healthFadeTime);
-    ((MemoryFileArchiveProc)memFile->archiveProc)(memFile, 4, (byte *)&cg->ammoFadeTime);
-    ((MemoryFileArchiveProc)memFile->archiveProc)(memFile, 4, (byte *)&cg->stanceFadeTime);
-    ((MemoryFileArchiveProc)memFile->archiveProc)(memFile, 4, (byte *)&cg->compassFadeTime);
-    ((MemoryFileArchiveProc)memFile->archiveProc)(memFile, 4, (byte *)&cg->offhandFadeTime);
-    ((MemoryFileArchiveProc)memFile->archiveProc)(memFile, 4, (byte *)&cg->drawHud);
-    ((MemoryFileArchiveProc)memFile->archiveProc)(memFile, 0x400, cg->objectiveText);
-    ((MemoryFileArchiveProc)memFile->archiveProc)(memFile, 0x100, cg->scriptMainMenu);
-}
-
-void CG_DrawHoldBreathHint(const rectDef_t *rect, struct Font_s *font, float fontscale, int textStyle)
-{
-    playerState_t *ps;
-    WeaponDef *weaponDef;
-    char binding[256];
-    const char *text;
-    int textWidth;
-    int textOffset;
-
-    if (!cg_drawBreathHint->current.enabled) {
-        return;
-    }
-
-    ps = &cg->predictedPlayerState;
-    if (ps->pm_flags & 0x4000) {
-        return;
-    }
-
-    weaponDef = (WeaponDef *)BG_GetWeaponDef(BG_GetViewmodelWeaponIndex(ps));
-    if (!weaponDef->overlayReticle || weaponDef->weapClass == 9) {
-        return;
-    }
-
-    if (ps->fWeaponPosFrac != 1.0f) {
-        return;
-    }
-
-    Controls_GetConfig();
-    if (!GetKeyBindingLocalizedString("+holdbreath", binding)) {
-        if (!GetKeyBindingLocalizedString("+melee_breath", binding)) {
-            GetKeyBindingLocalizedString("+breath_binoculars", binding);
-        }
-    }
-
-    text = UI_ReplaceConversionString(UI_SafeTranslateString("PLATFORM_HOLD_BREATH"), binding);
-    textWidth = UI_TextWidth(text, 0, font, fontscale);
-    textOffset = I_fround(textWidth * 0.5f);
-
-    UI_DrawText(
-        text,
-        0x7fffffff,
-        font,
-        rect->x - (float)textOffset,
-        rect->y,
-        rect->horzAlign,
-        rect->vertAlign,
-        fontscale,
-        color,
-        textStyle);
-}
-
 float CG_FadeHudMenu(const dvar_t *fadeDvar, int displayStartTime, int duration)
 {
     float *fadeColor;
@@ -706,6 +273,19 @@ float CG_FadeHudMenu(const dvar_t *fadeDvar, int displayStartTime, int duration)
     }
 
     return fadeColor[3];
+}
+
+static int CG_GetDrawWeaponIndex(void)
+{
+    playerState_t *ps;
+    int weaponIndex;
+
+    ps = &cg->predictedPlayerState;
+    weaponIndex = cg->weaponSelect;
+    if (weaponIndex >= 0 && weaponIndex < BG_GetNumWeapons() && CG_PlayerOwnsWeapon(ps->weapons, weaponIndex)) {
+        return weaponIndex;
+    }
+    return ps->weapon;
 }
 
 Bool CG_CheckPlayerForLowAmmo(void)
@@ -786,262 +366,6 @@ Bool CG_CheckPlayerForLowClip(void)
         return 0;
     }
     return 1;
-}
-
-void CG_DrawPlayerCompassBack(const rectDef_t *rect, MaterialHandle material, vec_t *color)
-{
-    int duration;
-    int displayStartTime;
-    float alpha;
-
-    duration = I_fround(1000.0f * hud_fade_compass->current.value);
-    displayStartTime = cg->compassFadeTime;
-    alpha = CG_FadeHudMenu(hud_fade_compass, displayStartTime, duration);
-    color[3] = alpha;
-    if (alpha == 0.0f) {
-        return;
-    }
-
-    CL_DrawStretchPic(
-        rect->x,
-        rect->y - rect->h * (cg_hudCompassSize->current.value - 1.0f),
-        rect->w * cg_hudCompassSize->current.value,
-        rect->h * cg_hudCompassSize->current.value,
-        rect->horzAlign,
-        rect->vertAlign,
-        0.0f,
-        0.0f,
-        1.0f,
-        1.0f,
-        color,
-        material);
-}
-
-static qboolean CG_PlayerOwnsWeapon(const int *weapons, int weaponIndex)
-{
-    return (weapons[weaponIndex >> 5] & (1 << (weaponIndex & 31))) != 0;
-}
-
-static int CG_GetDrawWeaponIndex(void)
-{
-    playerState_t *ps;
-    int weaponIndex;
-
-    ps = &cg->predictedPlayerState;
-    weaponIndex = cg->weaponSelect;
-    if (weaponIndex >= 0 && weaponIndex < BG_GetNumWeapons() && CG_PlayerOwnsWeapon(ps->weapons, weaponIndex)) {
-        return weaponIndex;
-    }
-    return ps->weapon;
-}
-
-static void CG_DrawHudPic(const rectDef_t *rect, MaterialHandle material, const vec_t *color)
-{
-    CL_DrawStretchPic(rect->x, rect->y, rect->w, rect->h, rect->horzAlign, rect->vertAlign, 0.0f, 0.0f, 1.0f, 1.0f, color, material);
-}
-
-static void CG_DrawStanceIcon(const rectDef_t *rect, vec_t *drawColor, float x, float y, float fadeAlpha)
-{
-    MaterialHandle icon;
-    float width;
-    float height;
-    float flashAlpha;
-
-    width = rect->w;
-    height = rect->h;
-
-    if (cg->lastStance & 1) {
-        icon = cgs->media.stanceMaterials[2];
-    } else if (cg->lastStance & 2) {
-        icon = cgs->media.stanceMaterials[1];
-    } else {
-        icon = cgs->media.stanceMaterials[0];
-    }
-
-    UI_DrawHandlePic(
-        x, y, width, height,
-        rect->horzAlign, rect->vertAlign,
-        drawColor, icon);
-
-    if (cg->lastStanceChangeTime + 1000 > cg->time) {
-        Dvar_GetUnpackedColor(cg_hudStanceFlash, drawColor);
-
-        flashAlpha = (float)(cg->lastStanceChangeTime - cg->time + 1000) / 1000.0f;
-        drawColor[3] = flashAlpha * 0.8f;
-        if (fadeAlpha < drawColor[3]) {
-            drawColor[3] = fadeAlpha;
-        }
-
-        UI_DrawHandlePic(
-            x, y, width, height,
-            rect->horzAlign, rect->vertAlign,
-            drawColor, cgs->media.stanceMaterials[3]);
-    }
-}
-
-static void CG_DrawPlayerStance(const rectDef_t *rect, vec_t *color, struct Font_s *font, float scale, int textStyle)
-{
-    float x;
-    float y;
-    float fadeAlpha;
-    vec4_t drawColor;
-    const char *proneStr;
-    int duration;
-
-    duration = I_fround(1000.0f * hud_fade_stance->current.value);
-    fadeAlpha = CG_FadeHudMenu(hud_fade_stance, cg->stanceFadeTime, duration);
-
-    if (fadeAlpha == 0.0f) {
-        return;
-    }
-
-    if (!cg_hudStanceHintPrints->current.enabled) {
-        cg->lastStanceChangeTime = 0;
-    } else if (cg->lastStance != (cg->predictedPlayerState.pm_flags & 3)) {
-        cg->lastStanceChangeTime = cg->time;
-    }
-
-    cg->lastStance = cg->predictedPlayerState.pm_flags & 3;
-
-    x = rect->x + (cg_hudCompassSize->current.value - 1.0f) * cgs->compassWidth * 0.7f;
-    y = rect->y;
-
-    drawColor[0] = color[0];
-    drawColor[1] = color[1];
-    drawColor[2] = color[2];
-
-    if ((cg->predictedPlayerState.pm_flags & 0x10000) && cg->proneBlockedEndTime < cg->time) {
-        cg->proneBlockedEndTime = cg->time + 1500;
-    }
-
-    if (cg->proneBlockedEndTime > cg->time) {
-        int width;
-        float halfWidth;
-        float pulseDegrees;
-
-        proneStr = UI_SafeTranslateString("CGAME_PRONE_BLOCKED");
-        width = UI_TextWidth(proneStr, 0, font, scale);
-        halfWidth = (float)width * 0.5f;
-        pulseDegrees = (float)(cg->proneBlockedEndTime - cg->time) / 1500.0f * 540.0f;
-        drawColor[3] = (float)fabs(sin(pulseDegrees * 0.017453292f));
-
-        UI_DrawText(
-            proneStr,
-            0x7fffffff,
-            font,
-            -halfWidth,
-            cg_hudProneY->current.value,
-            7,
-            3,
-            scale,
-            drawColor,
-            textStyle);
-    }
-
-    if (cg_hudStanceHintPrints->current.enabled && cg->lastStanceChangeTime + 3000 > cg->time) {
-        int i;
-        int commandIndex;
-        int numHintLines;
-        float height;
-        float hintY;
-        const char *string;
-        const char *binding;
-        const char *hintLineCmds[3];
-        char keyBinding[256];
-        const char *standCmds[3][6] = {
-            { NULL },
-            { "gocrouch", "togglecrouch", "lowerstance", "+movedown", NULL, NULL },
-            { "goprone", "+prone", NULL }
-        };
-        const char *duckCmds[3][6] = {
-            { "+gostand", "raisestance", "+moveup", NULL },
-            { NULL },
-            { "goprone", "lowerstance", "toggleprone", "+prone", NULL, NULL }
-        };
-        const char *proneCmds[3][6] = {
-            { "+gostand", "toggleprone", NULL },
-            { "gocrouch", "togglecrouch", "raisestance", "+movedown", "+moveup", NULL },
-            { NULL }
-        };
-        const char *hintTypeStrings[3] = {
-            "PLATFORM_STANCEHINT_STAND",
-            "PLATFORM_STANCEHINT_CROUCH",
-            "PLATFORM_STANCEHINT_PRONE"
-        };
-
-        Controls_GetConfig();
-
-        if (cg->lastStanceChangeTime + 2000 > cg->time) {
-            drawColor[3] = 1.0f;
-        } else {
-            drawColor[3] = (float)(cg->lastStanceChangeTime - cg->time + 3000) / 1000.0f;
-        }
-
-        height = (float)UI_TextHeight(font, scale);
-        numHintLines = 0;
-
-        for (i = 0; i < 3; ++i) {
-            hintLineCmds[i] = NULL;
-
-            for (commandIndex = 0; commandIndex < 6; ++commandIndex) {
-                if (cg->lastStance & 1) {
-                    binding = proneCmds[i][commandIndex];
-                } else if (cg->lastStance & 2) {
-                    binding = duckCmds[i][commandIndex];
-                } else {
-                    binding = standCmds[i][commandIndex];
-                }
-
-                if (!binding) {
-                    break;
-                }
-
-                if (GetCommandHasBinding(binding)) {
-                    hintLineCmds[i] = binding;
-                    ++numHintLines;
-                    break;
-                }
-            }
-        }
-
-        hintY = rect->y + rect->h * 0.5f - 1.5f;
-
-        if (numHintLines == 1) {
-            hintY += height * 0.5f;
-        } else if (numHintLines == 3) {
-            hintY -= height * 0.5f + 1.5f;
-        }
-
-        if (fadeAlpha < drawColor[3]) {
-            drawColor[3] = fadeAlpha;
-        }
-
-        for (i = 0; i < 3; ++i) {
-            if (!hintLineCmds[i]) {
-                continue;
-            }
-
-            GetKeyBindingLocalizedString(hintLineCmds[i], keyBinding);
-            string = UI_ReplaceConversionString(UI_SafeTranslateString(hintTypeStrings[i]), keyBinding);
-
-            UI_DrawText(
-                string,
-                0x7fffffff,
-                font,
-                x + rect->w,
-                hintY,
-                rect->horzAlign,
-                rect->vertAlign,
-                scale,
-                drawColor,
-                textStyle);
-
-            hintY += height + 1.5f;
-        }
-    }
-
-    drawColor[3] = fadeAlpha;
-    CG_DrawStanceIcon(rect, drawColor, x, y, fadeAlpha);
 }
 
 static void CG_DrawPlayerAmmoBackdrop(const rectDef_t *rect, MaterialHandle material, vec_t *color)
@@ -1266,14 +590,229 @@ static void CG_DrawPlayerWeaponModeIcon(const rectDef_t *rect, vec_t *color)
         }
     }
 }
-inline float I_fsel(const float x, const float y, const float z)
+
+static void CG_DrawStanceIcon(const rectDef_t *rect, vec_t *drawColor, float x, float y, float fadeAlpha)
 {
-    return x >= 0.0f ? y : z;
+    MaterialHandle icon;
+    float width;
+    float height;
+    float flashAlpha;
+
+    width = rect->w;
+    height = rect->h;
+
+    if (cg->lastStance & 1) {
+        icon = cgs->media.stanceMaterials[2];
+    } else if (cg->lastStance & 2) {
+        icon = cgs->media.stanceMaterials[1];
+    } else {
+        icon = cgs->media.stanceMaterials[0];
+    }
+
+    UI_DrawHandlePic(
+        x, y, width, height,
+        rect->horzAlign, rect->vertAlign,
+        drawColor, icon);
+
+    if (cg->lastStanceChangeTime + 1000 > cg->time) {
+        Dvar_GetUnpackedColor(cg_hudStanceFlash, drawColor);
+
+        flashAlpha = (float)(cg->lastStanceChangeTime - cg->time + 1000) / 1000.0f;
+        drawColor[3] = flashAlpha * 0.8f;
+        if (fadeAlpha < drawColor[3]) {
+            drawColor[3] = fadeAlpha;
+        }
+
+        UI_DrawHandlePic(
+            x, y, width, height,
+            rect->horzAlign, rect->vertAlign,
+            drawColor, cgs->media.stanceMaterials[3]);
+    }
 }
 
-inline float I_fclamp(const float val, const float min, const float max)
+static void CG_DrawPlayerStance(const rectDef_t *rect, vec_t *color, struct Font_s *font, float scale, int textStyle)
 {
-    return I_fsel(min - val, min, I_fsel(val - max, max, val));
+    float x;
+    float y;
+    float fadeAlpha;
+    vec4_t drawColor;
+    const char *proneStr;
+    int duration;
+
+    duration = I_fround(1000.0f * hud_fade_stance->current.value);
+    fadeAlpha = CG_FadeHudMenu(hud_fade_stance, cg->stanceFadeTime, duration);
+
+    if (fadeAlpha == 0.0f) {
+        return;
+    }
+
+    if (!cg_hudStanceHintPrints->current.enabled) {
+        cg->lastStanceChangeTime = 0;
+    } else if (cg->lastStance != (cg->predictedPlayerState.pm_flags & 3)) {
+        cg->lastStanceChangeTime = cg->time;
+    }
+
+    cg->lastStance = cg->predictedPlayerState.pm_flags & 3;
+
+    x = rect->x + (cg_hudCompassSize->current.value - 1.0f) * cgs->compassWidth * 0.7f;
+    y = rect->y;
+
+    drawColor[0] = color[0];
+    drawColor[1] = color[1];
+    drawColor[2] = color[2];
+
+    if ((cg->predictedPlayerState.pm_flags & 0x10000) && cg->proneBlockedEndTime < cg->time) {
+        cg->proneBlockedEndTime = cg->time + 1500;
+    }
+
+    if (cg->proneBlockedEndTime > cg->time) {
+        int width;
+        float halfWidth;
+        float pulseDegrees;
+
+        proneStr = UI_SafeTranslateString("CGAME_PRONE_BLOCKED");
+        width = UI_TextWidth(proneStr, 0, font, scale);
+        halfWidth = (float)width * 0.5f;
+        pulseDegrees = (float)(cg->proneBlockedEndTime - cg->time) / 1500.0f * 540.0f;
+        drawColor[3] = (float)fabs(sin(pulseDegrees * 0.017453292f));
+
+        UI_DrawText(
+            proneStr,
+            0x7fffffff,
+            font,
+            -halfWidth,
+            cg_hudProneY->current.value,
+            7,
+            3,
+            scale,
+            drawColor,
+            textStyle);
+    }
+
+    if (cg_hudStanceHintPrints->current.enabled && cg->lastStanceChangeTime + 3000 > cg->time) {
+        int i;
+        int commandIndex;
+        int numHintLines;
+        float height;
+        float hintY;
+        const char *string;
+        const char *binding;
+        const char *hintLineCmds[3];
+        char keyBinding[256];
+        const char *standCmds[3][6] = {
+            { NULL },
+            { "gocrouch", "togglecrouch", "lowerstance", "+movedown", NULL, NULL },
+            { "goprone", "+prone", NULL }
+        };
+        const char *duckCmds[3][6] = {
+            { "+gostand", "raisestance", "+moveup", NULL },
+            { NULL },
+            { "goprone", "lowerstance", "toggleprone", "+prone", NULL, NULL }
+        };
+        const char *proneCmds[3][6] = {
+            { "+gostand", "toggleprone", NULL },
+            { "gocrouch", "togglecrouch", "raisestance", "+movedown", "+moveup", NULL },
+            { NULL }
+        };
+        const char *hintTypeStrings[3] = {
+            "PLATFORM_STANCEHINT_STAND",
+            "PLATFORM_STANCEHINT_CROUCH",
+            "PLATFORM_STANCEHINT_PRONE"
+        };
+
+        Controls_GetConfig();
+
+        if (cg->lastStanceChangeTime + 2000 > cg->time) {
+            drawColor[3] = 1.0f;
+        } else {
+            drawColor[3] = (float)(cg->lastStanceChangeTime - cg->time + 3000) / 1000.0f;
+        }
+
+        height = (float)UI_TextHeight(font, scale);
+        numHintLines = 0;
+
+        for (i = 0; i < 3; ++i) {
+            hintLineCmds[i] = NULL;
+
+            for (commandIndex = 0; commandIndex < 6; ++commandIndex) {
+                if (cg->lastStance & 1) {
+                    binding = proneCmds[i][commandIndex];
+                } else if (cg->lastStance & 2) {
+                    binding = duckCmds[i][commandIndex];
+                } else {
+                    binding = standCmds[i][commandIndex];
+                }
+
+                if (!binding) {
+                    break;
+                }
+
+                if (GetCommandHasBinding(binding)) {
+                    hintLineCmds[i] = binding;
+                    ++numHintLines;
+                    break;
+                }
+            }
+        }
+
+        hintY = rect->y + rect->h * 0.5f - 1.5f;
+
+        if (numHintLines == 1) {
+            hintY += height * 0.5f;
+        } else if (numHintLines == 3) {
+            hintY -= height * 0.5f + 1.5f;
+        }
+
+        if (fadeAlpha < drawColor[3]) {
+            drawColor[3] = fadeAlpha;
+        }
+
+        for (i = 0; i < 3; ++i) {
+            if (!hintLineCmds[i]) {
+                continue;
+            }
+
+            GetKeyBindingLocalizedString(hintLineCmds[i], keyBinding);
+            string = UI_ReplaceConversionString(UI_SafeTranslateString(hintTypeStrings[i]), keyBinding);
+
+            UI_DrawText(
+                string,
+                0x7fffffff,
+                font,
+                x + rect->w,
+                hintY,
+                rect->horzAlign,
+                rect->vertAlign,
+                scale,
+                drawColor,
+                textStyle);
+
+            hintY += height + 1.5f;
+        }
+    }
+
+    drawColor[3] = fadeAlpha;
+    CG_DrawStanceIcon(rect, drawColor, x, y, fadeAlpha);
+}
+
+float CG_CalcPlayerHealth(void)
+{
+    playerState_t *ps;
+    float healthRatio;
+
+    ps = &cgArray[0].nextSnap->ps;
+    if (ps->stats[0] == 0 || ps->stats[2] == 0 || ps->pm_type == 6) {
+        return 0.0f;
+    }
+
+    healthRatio = (float)ps->stats[0] / (float)ps->stats[2];
+    if (healthRatio < 0.0f) {
+        return 0.0f;
+    }
+    if (healthRatio > 1.0f) {
+        return 1.0f;
+    }
+    return healthRatio;
 }
 
 void CG_DrawPlayerBarHealth(const rectDef_t *rect, MaterialHandle material, vec_t *color)
@@ -1424,6 +963,63 @@ float CG_FadeLowHealthOverlay(void)
         + cg->healthOverlayFromAlpha;
 }
 
+void CG_PulseLowHealthOverlay(float healthRatio)
+{
+    float pulseMags[4] = { 1.0f, 0.8f, 0.6f, 0.3f };
+
+    if (healthRatio < cg->healthOverlayOldHealth && healthRatio < hud_healthOverlay_pulseStart->current.value) {
+        cg->healthOverlayLastHitTime = cg->time;
+        cg->healthOverlayPulseIndex = 0;
+    }
+    cg->healthOverlayOldHealth = healthRatio;
+    if (cg->healthOverlayPulseDuration + cg->healthOverlayPulseTime <= cg->time
+        && (healthRatio < hud_healthOverlay_pulseStart->current.value || cg->healthOverlayHurt)) {
+        if (!cg->healthOverlayHurt)
+            cg->healthOverlayHurt = 1;
+        cg->healthOverlayPulseTime = cg->time;
+        cg->healthOverlayFromAlpha = cg->healthOverlayToAlpha;
+        if ((unsigned int)cg->healthOverlayPulseIndex < 4) {
+            switch (cg->healthOverlayPulsePhase) {
+            case 0:
+                cg->healthOverlayToAlpha = I_fclamp(pulseMags[cg->healthOverlayPulseIndex], 0.0f, 1.0f);
+                cg->healthOverlayPulseDuration = hud_healthOverlay_phaseOne_pulseDuration->current.integer;
+                cg->healthOverlayPulsePhase = 1;
+                break;
+            case 1:
+                cg->healthOverlayToAlpha = I_fclamp(pulseMags[cg->healthOverlayPulseIndex] * hud_healthOverlay_phaseTwo_toAlphaMultiplier->current.value, 0.0f, 1.0f);
+                cg->healthOverlayPulseDuration = hud_healthOverlay_phaseTwo_pulseDuration->current.integer;
+                cg->healthOverlayPulsePhase = 2;
+                break;
+            case 2:
+                cg->healthOverlayToAlpha = I_fclamp(pulseMags[cg->healthOverlayPulseIndex] * hud_healthOverlay_phaseThree_toAlphaMultiplier->current.value, 0.0f, 1.0f);
+                cg->healthOverlayPulseDuration = hud_healthOverlay_phaseThree_pulseDuration->current.integer;
+                cg->healthOverlayPulsePhase = 0;
+                if (cg->time >= hud_healthOverlay_regenPauseTime->current.integer + cg->healthOverlayLastHitTime
+                    - 3 * (hud_healthOverlay_phaseThree_pulseDuration->current.integer
+                        + hud_healthOverlay_phaseTwo_pulseDuration->current.integer
+                        + hud_healthOverlay_phaseOne_pulseDuration->current.integer))
+                    ++cg->healthOverlayPulseIndex;
+                break;
+            }
+        } else {
+            cg->healthOverlayHurt = 0;
+            cg->healthOverlayToAlpha = hud_healthOverlay_phaseEnd_toAlpha->current.value;
+            cg->healthOverlayPulseDuration = hud_healthOverlay_phaseEnd_pulseDuration->current.integer;
+            cg->healthOverlayPulsePhase = 0;
+        }
+    }
+}
+
+void CG_ResetLowHealthOverlay(void)
+{
+    cg->healthOverlayHurt = 0;
+    cg->healthOverlayToAlpha = hud_healthOverlay_phaseEnd_toAlpha->current.value;
+    cg->healthOverlayPulseDuration = 0;
+    cg->healthOverlayPulsePhase = 0;
+    cg->healthOverlayPulseIndex = 0;
+    cg->healthOverlayOldHealth = 1.0f;
+}
+
 void CG_DrawPlayerLowHealthOverlay(const rectDef_t *rect, MaterialHandle material, vec_t *color)
 {
     float healthRatio;
@@ -1466,6 +1062,358 @@ void CG_DrawPlayerCompass(const rectDef_t *rect, MaterialHandle material, vec_t 
     CG_DrawRotatedPic(x, y, w, h, rect->horzAlign, rect->vertAlign, cg->compassYaw, color, material);
 }
 
+qboolean CG_ServerMaterialName(int index, char *materialName, int maxLen)
+{
+    const char *configString;
+
+    if (index <= 0 || index >= 128) {
+        return 0;
+    }
+
+    configString = CL_GetConfigString(index + 0x61e);
+    if (configString[0] == '\0') {
+        return 0;
+    }
+
+    if (strlen(configString) >= (unsigned int)maxLen) {
+        return 0;
+    }
+
+    strcpy(materialName, configString);
+    return 1;
+}
+
+void CG_ApplySplitScreenCompassScale(float *x, float *y, float *w, float *h)
+{
+
+}
+
+void CG_DrawPlayerCompassBack(const rectDef_t *rect, MaterialHandle material, vec_t *color)
+{
+    int duration;
+    int displayStartTime;
+    float alpha;
+
+    duration = I_fround(1000.0f * hud_fade_compass->current.value);
+    displayStartTime = cg->compassFadeTime;
+    alpha = CG_FadeHudMenu(hud_fade_compass, displayStartTime, duration);
+    color[3] = alpha;
+    if (alpha == 0.0f) {
+        return;
+    }
+
+    CL_DrawStretchPic(
+        rect->x,
+        rect->y - rect->h * (cg_hudCompassSize->current.value - 1.0f),
+        rect->w * cg_hudCompassSize->current.value,
+        rect->h * cg_hudCompassSize->current.value,
+        rect->horzAlign,
+        rect->vertAlign,
+        0.0f,
+        0.0f,
+        1.0f,
+        1.0f,
+        color,
+        material);
+}
+
+static void CG_UpdateCursorHints(void)
+{
+    if (!cg->renderingThirdPerson)
+    {
+        if (cg->nextSnap->ps.cursorHint)
+        {
+            cg->cursorHintTime = cg->time;
+            cg->cursorHintFade = cg_hintFadeTime->current.integer;
+            cg->cursorHintIcon = cg->nextSnap->ps.cursorHint;
+            cg->cursorHintString = cg->nextSnap->ps.cursorHintString;
+        }
+    }
+}
+
+static const char *CG_GetWeaponUseString(void)
+{
+    WeaponDef *weapDef;
+    int weaponIndex;
+    const char *displayString;
+    char binding[0x100];
+
+    weapDef = (WeaponDef *)BG_GetWeaponDef(cg->cursorHintIcon - 4);
+    weaponIndex = cg->cursorHintIcon - 4;
+    GetKeyBindingLocalizedString("+activate", binding);
+
+    if (BG_DoesWeaponNeedSlot(weaponIndex) && !BG_GetEmptySlotForWeapon(&cg->predictedPlayerState, weaponIndex))
+    {
+        if (((WeaponDef *)BG_GetWeaponDef(cg->predictedPlayerState.weapon))->weapSlot == weapDef->weapSlot)
+        {
+            if (cg->predictedPlayerState.weapon == weaponIndex)
+                return NULL;
+        }
+        else if ((signed char)cg->predictedPlayerState.weaponslots[weapDef->weapSlot] == weaponIndex)
+        {
+            return NULL;
+        }
+        displayString = UI_SafeTranslateString("PLATFORM_SWAPWEAPONS");
+    }
+    else
+    {
+        displayString = UI_SafeTranslateString("PLATFORM_PICKUPNEWWEAPON");
+    }
+
+    return UI_ReplaceConversionString(displayString, binding);
+}
+
+const char *CG_GetUseString(void)
+{
+    const char *hintString;
+    char binding[0x100];
+
+    hintString = CL_GetConfigString(cgArray[0].cursorHintString + 0x4fe);
+    if (!hintString || !*hintString) {
+        return 0;
+    }
+
+    if (!GetKeyBindingLocalizedString("+activate", binding)) {
+        I_strncpyz(binding, UI_SafeTranslateString("KEY_USE"), sizeof(binding));
+    }
+
+    return UI_ReplaceConversionString(SEH_LocalizeTextMessage(hintString, "Hint String", (msgLocErrType_t)0), binding);
+}
+
+static void CG_DrawCursorhint(const rectDef_t *rect, struct Font_s *font, float fontscale, int textStyle)
+{
+    MaterialHandle hintIcon;
+    float *fadeColor;
+    float scale;
+    float halfscale;
+    float widthScale;
+    float widthOfs;
+    const char *text;
+    float textWidth;
+    float textHeight;
+    float x;
+    float y;
+    char binding[0x100];
+
+    if (!cg_cursorHints->current.integer)
+        return;
+
+    CG_UpdateCursorHints();
+
+    hintIcon = cgs->media.hintMaterials[cg->cursorHintIcon];
+    if (!hintIcon)
+        return;
+
+    fadeColor = CG_FadeColor(cg->cursorHintTime, cg->cursorHintFade, 100);
+    if (!fadeColor)
+    {
+        cg->cursorHintIcon = 0;
+        return;
+    }
+
+    Controls_GetConfig();
+
+    widthScale = 1.0f;
+    widthOfs = 0.0f;
+
+    if (cg_cursorHints->current.integer == 3)
+        fadeColor[3] *= (sinf((float)cg->time / 150.0f) + 1.0f) * 0.5f;
+
+    if (cg_cursorHints->current.integer >= 3)
+    {
+        halfscale = 0.0f;
+        scale = 0.0f;
+    }
+    else
+    {
+        if (cg_cursorHints->current.integer == 2)
+            scale = (float)(cg->cursorHintTime % 1000) / 100.0f;
+        else
+            scale = 10.0f * ((sinf((float)cg->time / 150.0f) + 1.0f) * 0.5f);
+        halfscale = scale * 0.5f;
+    }
+
+    if (cg->cursorHintIcon >= 5 && cg->cursorHintIcon <= 132)
+    {
+        if (((WeaponDef *)BG_GetWeaponDef(cg->cursorHintIcon - 4))->bWideListIcon)
+        {
+            widthScale = 2.0f;
+            widthOfs = rect->w * -0.5f;
+        }
+
+        if (((WeaponDef *)BG_GetWeaponDef(cg->cursorHintIcon - 4))->weapClass == 7)
+        {
+            if (cg->cursorHintString < 0)
+                goto draw_icon;
+            text = CG_GetUseString();
+        }
+        else
+        {
+            text = CG_GetWeaponUseString();
+        }
+    }
+    else if (cg->cursorHintString >= 0)
+    {
+        text = CG_GetUseString();
+    }
+    else if (cg->cursorHintIcon == 3)
+    {
+        GetKeyBindingLocalizedString("+activate", binding);
+        text = UI_ReplaceConversionString(UI_SafeTranslateString("PLATFORM_PICKUPHEALTH"), binding);
+    }
+    else
+    {
+        goto draw_icon;
+    }
+
+    if (text && *text)
+    {
+        textWidth = (float)UI_TextWidth(text, 0, font, fontscale);
+        textHeight = (float)UI_TextHeight(font, fontscale);
+        x = (widthScale * rect->w + textWidth + scale) * -0.5f;
+        y = rect->y - rect->h * 0.5f;
+        UI_DrawText(text, 0x7fffffff, font, x, textHeight * 0.5f + rect->y,
+                    rect->horzAlign, rect->vertAlign, fontscale, fadeColor, textStyle);
+        UI_DrawHandlePic(x + textWidth, y, widthScale * rect->w + scale, rect->h + scale, rect->horzAlign,
+                         rect->vertAlign, fadeColor, hintIcon);
+        return;
+    }
+
+draw_icon:
+    UI_DrawHandlePic(rect->x - (halfscale + rect->w + widthOfs) * 0.5f, rect->y - halfscale, widthScale * rect->w + scale,
+                     rect->h + scale, rect->horzAlign, rect->vertAlign, fadeColor, hintIcon);
+}
+
+void CG_DrawHoldBreathHint(const rectDef_t *rect, struct Font_s *font, float fontscale, int textStyle)
+{
+    playerState_t *ps;
+    WeaponDef *weaponDef;
+    char binding[256];
+    const char *text;
+    int textWidth;
+    int textOffset;
+
+    if (!cg_drawBreathHint->current.enabled) {
+        return;
+    }
+
+    ps = &cg->predictedPlayerState;
+    if (ps->pm_flags & 0x4000) {
+        return;
+    }
+
+    weaponDef = (WeaponDef *)BG_GetWeaponDef(BG_GetViewmodelWeaponIndex(ps));
+    if (!weaponDef->overlayReticle || weaponDef->weapClass == 9) {
+        return;
+    }
+
+    if (ps->fWeaponPosFrac != 1.0f) {
+        return;
+    }
+
+    Controls_GetConfig();
+    if (!GetKeyBindingLocalizedString("+holdbreath", binding)) {
+        if (!GetKeyBindingLocalizedString("+melee_breath", binding)) {
+            GetKeyBindingLocalizedString("+breath_binoculars", binding);
+        }
+    }
+
+    text = UI_ReplaceConversionString(UI_SafeTranslateString("PLATFORM_HOLD_BREATH"), binding);
+    textWidth = UI_TextWidth(text, 0, font, fontscale);
+    textOffset = I_fround(textWidth * 0.5f);
+
+    UI_DrawText(
+        text,
+        0x7fffffff,
+        font,
+        rect->x - (float)textOffset,
+        rect->y,
+        rect->horzAlign,
+        rect->vertAlign,
+        fontscale,
+        color,
+        textStyle);
+}
+
+void CG_DrawMantleHint(const rectDef_t *rect, struct Font_s *font, float fontscale, int textStyle)
+{
+    char binding[0x100];
+    const char *text;
+    float length;
+    float x;
+
+    if (!cg_drawMantleHint->current.enabled) {
+        return;
+    }
+
+    if (!(*(byte *)&cg->predictedPlayerState.mantleState.flags & 8)) {
+        return;
+    }
+
+    Controls_GetConfig();
+    if (!GetKeyBindingLocalizedString("+gostand", binding)) {
+        GetKeyBindingLocalizedString("+moveup", binding);
+    }
+
+    text = UI_ReplaceConversionString(UI_SafeTranslateString("PLATFORM_MANTLE"), binding);
+    length = (float)UI_TextWidth(text, 0, font, fontscale);
+    x = (length + rect->w) * -0.5f + rect->x;
+
+    UI_DrawText(
+        text,
+        0x7fffffff,
+        font,
+        x,
+        rect->y + (float)UI_TextHeight(font, fontscale) * 0.5f,
+        rect->horzAlign,
+        rect->vertAlign,
+        fontscale,
+        color,
+        textStyle);
+
+    UI_DrawHandlePic(
+        x + length,
+        rect->h * -0.5f + rect->y,
+        rect->w,
+        rect->h,
+        rect->horzAlign,
+        rect->vertAlign,
+        color,
+        cgs->media.mantleHint);
+}
+
+const char *CG_GetTranslatedLocationString(int iLocation)
+{
+    const char *p;
+    const char *localized;
+
+    p = CL_GetConfigString(iLocation + 0x2e);
+    if (!p || !*p) {
+        p = "CGAME_UNKNOWN";
+    }
+
+    localized = SEH_StringEd_GetString(p);
+    if (localized) {
+        return localized;
+    }
+
+    if (loc_warnings->current.enabled) {
+        if (loc_warningsAsErrors->current.enabled) {
+            Com_Error(ERR_LOCALIZATION, "Could not translate map location string \"%s\"", p);
+        } else {
+            Com_Printf("^3WARNING: Could not translate map location string \"%s\"\n", p);
+        }
+
+        strcpy(szErrorString, "^1UNLOCALIZED(^7");
+        I_strncat(szErrorString, sizeof(szErrorString), p);
+        I_strncat(szErrorString, sizeof(szErrorString), "^1)^7");
+        return szErrorString;
+    }
+
+    I_strncpyz(szErrorString, p, sizeof(szErrorString));
+    return szErrorString;
+}
+
 static void CG_DrawPlayerLocation(const rectDef_t *rect, struct Font_s *font, float scale, vec_t *color, int textStyle)
 {
     clientInfo_t *ci;
@@ -1483,6 +1431,20 @@ static void CG_DrawTeamColor(const rectDef_t *rect, vec_t *color)
 {
     if (cg->bgs.clientinfo[cg->nextSnap->ps.clientNum].infoValid)
         CG_DrawTeamBackground(rect->x, rect->y, rect->w, rect->h, color[3], cg->bgs.clientinfo[cg->nextSnap->ps.clientNum].team);
+}
+
+const char *CG_GetKillerText(void)
+{
+    const char *s = "";
+
+    if (cg->killerName[0])
+        s = va("Fragged by %s", cg->killerName);
+    return s;
+}
+
+const char *CG_GameTypeString(void)
+{
+    return cgs->gametype;
 }
 
 static void CG_DrawKiller(const rectDef_t *rect, struct Font_s *font, float scale, vec_t *color, int textStyle)
@@ -1509,6 +1471,11 @@ static void CG_DrawGameType(const rectDef_t *rect, struct Font_s *font, float sc
 {
     UI_DrawText(CG_GameTypeString(), 0x7fffffff, font, rect->x, rect->y + rect->h,
                 rect->horzAlign, rect->vertAlign, scale, color, textStyle);
+}
+
+static void CG_DrawHudPic(const rectDef_t *rect, MaterialHandle material, const vec_t *color)
+{
+    CL_DrawStretchPic(rect->x, rect->y, rect->w, rect->h, rect->horzAlign, rect->vertAlign, 0.0f, 0.0f, 1.0f, 1.0f, color, material);
 }
 
 void CG_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAlign, float text_x, float text_y, int ownerDraw, int ownerDrawFlags, int align, float special, struct Font_s *font, float scale, vec_t *color, MaterialHandle material, int textStyle)
@@ -1628,6 +1595,39 @@ void CG_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAli
         break;
     }
 }
+
+int CG_KeyInterceptEvent(int key, qboolean down)
+{
+    if (!down || !CG_ScoreboardDisplayed()) {
+        return 0;
+    }
+
+    if (key == 0xce || key == 0xa4 || key == 0xb8) {
+        CG_ScrollScoreboardUp();
+        return 1;
+    }
+
+    if (key == 0xcd || key == 0xa3 || key == 0xbe) {
+        CG_ScrollScoreboardDown();
+        return 1;
+    }
+
+    return 0;
+}
+
+void CG_ArchiveState(MemoryFile *memFile)
+{
+
+    ((MemoryFileArchiveProc)memFile->archiveProc)(memFile, 4, (byte *)&cg->healthFadeTime);
+    ((MemoryFileArchiveProc)memFile->archiveProc)(memFile, 4, (byte *)&cg->ammoFadeTime);
+    ((MemoryFileArchiveProc)memFile->archiveProc)(memFile, 4, (byte *)&cg->stanceFadeTime);
+    ((MemoryFileArchiveProc)memFile->archiveProc)(memFile, 4, (byte *)&cg->compassFadeTime);
+    ((MemoryFileArchiveProc)memFile->archiveProc)(memFile, 4, (byte *)&cg->offhandFadeTime);
+    ((MemoryFileArchiveProc)memFile->archiveProc)(memFile, 4, (byte *)&cg->drawHud);
+    ((MemoryFileArchiveProc)memFile->archiveProc)(memFile, 0x400, cg->objectiveText);
+    ((MemoryFileArchiveProc)memFile->archiveProc)(memFile, 0x100, cg->scriptMainMenu);
+}
+
 
 const unsigned char __ZZ17CG_DrawMantleHintPK9rectDef_sP6Font_sfiE5color[16] = { 0x00, 0x00, 0x80, 0x3f, 0x00, 0x00, 0x80, 0x3f, 0x00, 0x00, 0x80, 0x3f, 0x00, 0x00, 0x80, 0x3f };
 

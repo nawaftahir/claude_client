@@ -14,14 +14,37 @@ void XAnimCalcParts_unsigned_char_(const XAnimParts_s *parts, const unsigned cha
 bool XAnimIsLeafOrSync(const XAnim_s *anims, unsigned int animIndex);
 void XAnimClearParentGoalWeights(XAnimTree_s *tree, unsigned int animIndex, float goalTime);
 
+void XAnimFreeList(XAnim_s *anims);
+void XAnim_GetTimeIndexCompressed_unsigned_char(XAnimTime *animTime, const unsigned char *indices, int tableSize, int *keyFrameIndex, float *keyFrameLerpFrac);
+void XAnim_CalcRotDeltaDuring_unsigned_char_(XAnimDeltaPart *animDelta, const float time, int numFrames, float *rotDelta);
+void XAnim_CalcPosDeltaDuring_unsigned_char_(XAnimDeltaPart *animDelta, const float time, int numFrames, float *posDelta);
+void XAnim_GetTimeIndexCompressed_unsigned_short_(XAnimTime *animTime, const unsigned short *indices, int tableSize, int *keyFrameIndex, float *keyFrameLerpFrac);
+void XAnim_CalcRotDeltaDuring_unsigned_short_(XAnimDeltaPart *animDelta, const float time, int numFrames, float *rotDelta);
+void XAnim_CalcPosDeltaDuring_unsigned_short_(XAnimDeltaPart *animDelta, const float time, int numFrames, float *posDelta);
+void XAnimProcessServerNotify(const XAnimTree_s *tree, XAnimInfo *info, const XAnimEntry *entry, float dtime);
+const char* XAnimGetAnimDebugName(const XAnim_s *anims, unsigned int animIndex);
+XAnimInfo* XAnimGetInfo(XAnimTree_s *tree, unsigned int infoIndex);
+void XAnimClearTree(XAnimTree_s *tree);
+int XAnimSetGoalWeightInternal(XAnimTree_s *tree, unsigned int animIndex, float goalWeight, float goalTime, float rate, bool useGoalWeight, unsigned int notifyName, unsigned int notifyType);
+bool XAnimIsLeafOrSync( const XAnim_s *anims, unsigned int animIndex );
+void XAnimSetNotifyIndex( const XAnimTree_s *tree, XAnimInfo *info, const XAnimEntry *entry );
+void XAnimRestart(XAnimTree_s *tree, unsigned int infoIndex);
+void XAnimClearParentGoalWeights( XAnimTree_s *tree, unsigned int animIndex, float blendTime );
+int XAnimSetGoalWeight(XAnimTree_s *tree, unsigned int animIndex, float goalWeight, float goalTime, float rate, unsigned int notifyName, unsigned int notifyType, int bRestart);
+void XAnimSetCompleteGoalWeight(XAnimTree_s *tree, unsigned int animIndex, float goalWeight, float goalTime, float rate, unsigned int notifyName, unsigned int notifyType, int bRestart);
+void XAnimCalcParts_unsigned_char_( const XAnimParts_s *parts, const unsigned char *animToModel, float time, float weightScale, DObjAnimMat *rotTransArray, int *ignorePartBits );
+void XAnimCalcParts_unsigned_short_( const XAnimParts_s *parts, const unsigned char *animToModel, float time, float weightScale, DObjAnimMat *rotTransArray, int *ignorePartBits );
+
+static byte xanimUnusedFlag;
+
+int XAnimGetNumChildren(const XAnim_s *anim, unsigned int animIndex)
+{
+	return anim->entries[animIndex].numAnims;
+}
+
 static inline float ShortLerpAsVec(short from, short to, float frac)
 {
 	return (float)from + (float)(to - from) * frac;
-}
-
-static inline float FloatLerp(float from, float to, float frac)
-{
-	return (to - from) * frac + from;
 }
 
 static inline void Short2LerpAsVec2(const short *from, const short *to, float frac, float *out)
@@ -66,6 +89,11 @@ static inline void Short4ScaleAsVec4(short *from, float scale, float *to)
 	to[3] = scale * from[3];
 }
 
+static inline float FloatLerp(float from, float to, float frac)
+{
+	return (to - from) * frac + from;
+}
+
 static inline void Vec3MadVec3Lerp(const float *from, float scale, const float *to1, const float *to2, float frac, float *out)
 {
 	out[0] = from[0] + FloatLerp(to1[0], to2[0], frac) * scale;
@@ -78,9 +106,6 @@ static inline void Short2CopyAsVec2(const short *from, float *to)
 	to[0] = (float)from[0];
 	to[1] = (float)from[1];
 }
-
-
-
 
 void XAnimInit()
 {
@@ -290,7 +315,6 @@ XAnim_s* XAnimCreateAnims(const char *debugName, int size, void *(*Alloc)(int))
 	return newAnim;
 }
 
-
 void XAnimFreeAnims( XAnim_s *anims, void (*Free)(void *, int) )
 {
 	int size;
@@ -328,9 +352,6 @@ void XAnimFreeList(XAnim_s *anims)
 	}
 }
 
-
-static byte xanimUnusedFlag;
-
 // unreferenced
 void XAnimSetUnusedFlag()
 {
@@ -362,7 +383,6 @@ XAnimTree_s* XAnimCreateTree(XAnim_s *anims, void *(*Alloc)(int))
 
 	return tree;
 }
-
 
 void XAnimFreeTree( XAnimTree_s *tree, void (*Free)(void *, int) )
 {
@@ -453,7 +473,6 @@ void XAnim_SetTime(float time, int frameCount, XAnimTime *animTime)
 	animTime->frameIndex = (int)animTime->frameFrac;
 }
 
-
 void XAnim_CalcSimpleRotEnd(const XAnimPartQuat *quat, float scale, float *rotDelta)
 {
 	const short *frame;
@@ -461,7 +480,6 @@ void XAnim_CalcSimpleRotEnd(const XAnimPartQuat *quat, float scale, float *rotDe
 	frame = !quat->size ? quat->u.frame0 : quat->u.frames.u.frames2[quat->size];
 	Vec2MadShort2(rotDelta, scale, frame, rotDelta);
 }
-
 
 void XAnim_CalcRotEnd( const XAnimPartQuat *quat, float scale, float *rotDelta )
 {
@@ -471,7 +489,6 @@ void XAnim_CalcRotEnd( const XAnimPartQuat *quat, float scale, float *rotDelta )
 		Vec4MadShort4(rotDelta, scale, quat->u.frames.u.frames[quat->size], rotDelta);
 }
 
-
 void XAnim_CalcPosEnd( const XAnimPartTrans *trans, float scale, float *posDelta )
 {
 	if ( !trans->size )
@@ -479,7 +496,6 @@ void XAnim_CalcPosEnd( const XAnimPartTrans *trans, float scale, float *posDelta
 	else
 		VectorMA(posDelta, scale, trans->u.frames.frames[trans->size], posDelta);
 }
-
 
 void XAnimCalcNonLoopEnd( const XAnimParts_s *parts, const unsigned char *animToModel, float weightScale, DObjAnimMat *rotTransArray, int *ignorePartBits )
 {
@@ -524,7 +540,6 @@ void XAnimCalcNonLoopEnd( const XAnimParts_s *parts, const unsigned char *animTo
 	}
 }
 
-
 void XAnimClearData(const DObj_s *obj, DObjAnimMat *rotTransArray, XAnimCalcAnimInfo *info)
 {
 	int i;
@@ -543,7 +558,6 @@ void XAnimClearData(const DObj_s *obj, DObjAnimMat *rotTransArray, XAnimCalcAnim
 	}
 }
 
-
 void XAnim_CalcRotDeltaEntireInternal(XAnimDeltaPartQuat *quat, float *rotDelta)
 {
 	const short *rotDeltaLastFrame;
@@ -552,7 +566,6 @@ void XAnim_CalcRotDeltaEntireInternal(XAnimDeltaPartQuat *quat, float *rotDelta)
 
 	Short2CopyAsVec2(rotDeltaLastFrame, rotDelta);
 }
-
 
 void XAnim_CalcRotDeltaEntire(const XAnimDeltaPart *animDelta, float *rotDelta)
 {
@@ -567,7 +580,6 @@ void XAnim_CalcRotDeltaEntire(const XAnimDeltaPart *animDelta, float *rotDelta)
 	}
 }
 
-
 void XAnim_CalcPosDeltaEntireInternal(const XAnimDeltaPartTrans *trans, float *posDelta)
 {
 	if ( !trans->size )
@@ -576,7 +588,6 @@ void XAnim_CalcPosDeltaEntireInternal(const XAnimDeltaPartTrans *trans, float *p
 		VectorCopy(trans->u.frames.frames[trans->size], posDelta);
 }
 
-
 void XAnim_CalcPosDeltaEntire(const XAnimDeltaPart *animDelta, float *posDelta)
 {
 	if ( animDelta->trans )
@@ -584,341 +595,6 @@ void XAnim_CalcPosDeltaEntire(const XAnimDeltaPart *animDelta, float *posDelta)
 	else
 		VectorClear(posDelta);
 }
-
-
-void XAnim_GetTimeIndex_unsigned_char_(const XAnimTime *animTime, const unsigned char *indices, int tableSize, int *keyFrameIndex, float *keyFrameLerpFrac)
-{
-	int low;
-	int index;
-	int frameIndex;
-	int high;
-
-	index = (int)(animTime->time * (float)tableSize);
-	frameIndex = animTime->frameIndex;
-
-	if ( frameIndex < indices[index] )
-	{
-		low = 0;
-		high = index;
-
-		while ( 1 )
-		{
-			index = (low + high) / 2;
-
-			if ( frameIndex < indices[index] )
-			{
-				high = index;
-				continue;
-			}
-
-			if ( frameIndex < indices[index + 1] )
-				break;
-
-			low = index + 1;
-
-			if ( frameIndex >= indices[--high] )
-			{
-				index = high;
-				break;
-			}
-		}
-	}
-	else if ( frameIndex >= indices[index + 1] )
-	{
-		low = index + 1;
-		high = tableSize;
-
-		while ( 1 )
-		{
-			index = (low + high) / 2;
-
-			if ( frameIndex < indices[index] )
-			{
-				high = index;
-				low++;
-
-				if ( frameIndex < indices[low] )
-				{
-					index = low - 1;
-					break;
-				}
-			}
-			else if ( frameIndex >= indices[index + 1] )
-			{
-				low = index + 1;
-			}
-			else
-			{
-				break;
-			}
-		}
-	}
-
-	*keyFrameLerpFrac = (animTime->frameFrac - (float)indices[index])
-	                    / (float)(indices[index + 1] - indices[index]);
-	*keyFrameIndex = index;
-}
-
-
-void XAnim_GetTimeIndexCompressed_unsigned_char(XAnimTime *animTime, const unsigned char *indices, int tableSize, int *keyFrameIndex, float *keyFrameLerpFrac)
-{
-	if ( tableSize < animTime->frameCount )
-	{
-		XAnim_GetTimeIndex_unsigned_char_(animTime, indices, tableSize, keyFrameIndex, keyFrameLerpFrac);
-	}
-	else
-	{
-		*keyFrameLerpFrac = animTime->frameFrac - (float)animTime->frameIndex;
-		*keyFrameIndex = animTime->frameIndex;
-	}
-}
-
-
-void XAnim_CalcRotDeltaDuringInternal_unsigned_char_(XAnimDeltaPartQuat *quat, const float time, int numFrames, float *rotDelta)
-{
-	XAnimTime animTime;
-	int keyFrameIndex;
-	float keyFrameLerpFrac;
-
-	if ( !quat->size )
-	{
-		Short2CopyAsVec2(quat->u.frame0, rotDelta);
-	}
-	else
-	{
-		XAnim_SetTime(time, numFrames, &animTime);
-		XAnim_GetTimeIndexCompressed_unsigned_char(
-		    &animTime,
-		    quat->u.frames.indices._1,
-		    quat->size,
-		    &keyFrameIndex,
-		    &keyFrameLerpFrac);
-		Short2LerpAsVec2(
-		    quat->u.frames.frames[keyFrameIndex],
-		    quat->u.frames.frames[keyFrameIndex + 1],
-		    keyFrameLerpFrac,
-		    rotDelta);
-	}
-}
-
-
-void XAnim_CalcRotDeltaDuring_unsigned_char_(XAnimDeltaPart *animDelta, const float time, int numFrames, float *rotDelta)
-{
-	if ( animDelta->quat )
-	{
-		XAnim_CalcRotDeltaDuringInternal_unsigned_char_(animDelta->quat, time, numFrames, rotDelta);
-	}
-	else
-	{
-		rotDelta[0] = 0.0;
-		rotDelta[1] = 32767.0;
-	}
-}
-
-
-void XAnim_CalcPosDeltaDuringInternal_unsigned_char_(XAnimDeltaPartTrans *trans, const float time, int numFrames, float *posDelta)
-{
-	XAnimTime animTime;
-	int keyFrameIndex;
-	float keyFrameLerpFrac;
-
-	if ( !trans->size )
-	{
-		VectorCopy(trans->u.frame0, posDelta);
-	}
-	else
-	{
-		XAnim_SetTime(time, numFrames, &animTime);
-		XAnim_GetTimeIndexCompressed_unsigned_char(
-		    &animTime,
-		    trans->u.frames.indices._1,
-		    trans->size,
-		    &keyFrameIndex,
-		    &keyFrameLerpFrac);
-		Vec3LerpFrom(
-		    trans->u.frames.frames[keyFrameIndex],
-		    trans->u.frames.frames[keyFrameIndex + 1],
-		    keyFrameLerpFrac,
-		    posDelta);
-	}
-}
-
-
-void XAnim_CalcPosDeltaDuring_unsigned_char_(XAnimDeltaPart *animDelta, const float time, int numFrames, float *posDelta)
-{
-	if ( animDelta->trans )
-		XAnim_CalcPosDeltaDuringInternal_unsigned_char_(animDelta->trans, time, numFrames, posDelta);
-	else
-		VectorClear(posDelta);
-}
-
-
-void XAnim_GetTimeIndex_unsigned_short_(const XAnimTime *animTime, const unsigned short *indices, int tableSize, int *keyFrameIndex, float *keyFrameLerpFrac)
-{
-	int low;
-	int index;
-	int frameIndex;
-	int high;
-
-	index = (int)(animTime->time * (float)tableSize);
-	frameIndex = animTime->frameIndex;
-
-	if ( frameIndex < indices[index] )
-	{
-		low = 0;
-		high = index;
-
-		while ( 1 )
-		{
-			index = (low + high) / 2;
-
-			if ( frameIndex < indices[index] )
-			{
-				high = index;
-				continue;
-			}
-
-			if ( frameIndex < indices[index + 1] )
-				break;
-
-			low = index + 1;
-
-			if ( frameIndex >= indices[--high] )
-			{
-				index = high;
-				break;
-			}
-		}
-	}
-	else if ( frameIndex >= indices[index + 1] )
-	{
-		low = index + 1;
-		high = tableSize;
-
-		while ( 1 )
-		{
-			index = (low + high) / 2;
-
-			if ( frameIndex < indices[index] )
-			{
-				high = index;
-				low++;
-
-				if ( frameIndex < indices[low] )
-				{
-					index = low - 1;
-					break;
-				}
-			}
-			else if ( frameIndex >= indices[index + 1] )
-			{
-				low = index + 1;
-			}
-			else
-			{
-				break;
-			}
-		}
-	}
-
-	*keyFrameLerpFrac = (animTime->frameFrac - (float)indices[index])
-	                    / (float)(indices[index + 1] - indices[index]);
-	*keyFrameIndex = index;
-}
-
-
-void XAnim_GetTimeIndexCompressed_unsigned_short_(XAnimTime *animTime, const unsigned short *indices, int tableSize, int *keyFrameIndex, float *keyFrameLerpFrac)
-{
-	if ( tableSize < animTime->frameCount )
-	{
-		XAnim_GetTimeIndex_unsigned_short_(animTime, indices, tableSize, keyFrameIndex, keyFrameLerpFrac);
-	}
-	else
-	{
-		*keyFrameLerpFrac = animTime->frameFrac - (float)animTime->frameIndex;
-		*keyFrameIndex = animTime->frameIndex;
-	}
-}
-
-
-void XAnim_CalcRotDeltaDuringInternal_unsigned_short_(XAnimDeltaPartQuat *quat, const float time, int numFrames, float *rotDelta)
-{
-	XAnimTime animTime;
-	int keyFrameIndex;
-	float keyFrameLerpFrac;
-
-	if ( !quat->size )
-	{
-		Short2CopyAsVec2(quat->u.frame0, rotDelta);
-	}
-	else
-	{
-		XAnim_SetTime(time, numFrames, &animTime);
-		XAnim_GetTimeIndexCompressed_unsigned_short_(
-		    &animTime,
-		    quat->u.frames.indices._2,
-		    quat->size,
-		    &keyFrameIndex,
-		    &keyFrameLerpFrac);
-		Short2LerpAsVec2(
-		    quat->u.frames.frames[keyFrameIndex],
-		    quat->u.frames.frames[keyFrameIndex + 1],
-		    keyFrameLerpFrac,
-		    rotDelta);
-	}
-}
-
-
-void XAnim_CalcRotDeltaDuring_unsigned_short_(XAnimDeltaPart *animDelta, const float time, int numFrames, float *rotDelta)
-{
-	if ( animDelta->quat )
-	{
-		XAnim_CalcRotDeltaDuringInternal_unsigned_short_(animDelta->quat, time, numFrames, rotDelta);
-	}
-	else
-	{
-		rotDelta[0] = 0.0;
-		rotDelta[1] = 32767.0;
-	}
-}
-
-
-void XAnim_CalcPosDeltaDuringInternal_unsigned_short_(XAnimDeltaPartTrans *trans, const float time, int numFrames, float *posDelta)
-{
-	XAnimTime animTime;
-	int keyFrameIndex;
-	float keyFrameLerpFrac;
-
-	if ( !trans->size )
-	{
-		VectorCopy(trans->u.frame0, posDelta);
-	}
-	else
-	{
-		XAnim_SetTime(time, numFrames, &animTime);
-		XAnim_GetTimeIndexCompressed_unsigned_short_(
-		    &animTime,
-		    trans->u.frames.indices._2,
-		    trans->size,
-		    &keyFrameIndex,
-		    &keyFrameLerpFrac);
-		Vec3LerpFrom(
-		    trans->u.frames.frames[keyFrameIndex],
-		    trans->u.frames.frames[keyFrameIndex + 1],
-		    keyFrameLerpFrac,
-		    posDelta);
-	}
-}
-
-
-void XAnim_CalcPosDeltaDuring_unsigned_short_(XAnimDeltaPart *animDelta, const float time, int numFrames, float *posDelta)
-{
-	if ( animDelta->trans )
-		XAnim_CalcPosDeltaDuringInternal_unsigned_short_(animDelta->trans, time, numFrames, posDelta);
-	else
-		VectorClear(posDelta);
-}
-
 
 void XAnim_CalcDeltaForTime(const XAnimParts_s *anim, const float time, float *rotDelta, float *posDelta)
 {
@@ -947,7 +623,6 @@ void XAnim_CalcDeltaForTime(const XAnimParts_s *anim, const float time, float *r
 	}
 }
 
-
 void TransformToQuatRefFrame( const float *rot, float *trans )
 {
 	float zz;
@@ -968,7 +643,6 @@ void TransformToQuatRefFrame( const float *rot, float *trans )
 	trans[1] = trans[1] - (zw * trans[0] + zz * trans[1]);
 	trans[0] = temp;
 }
-
 
 void XAnimCalcRelDeltaParts(const XAnimParts_s *parts, float weightScale, float time1, float time2, XAnimSimpleRotPos *rotPos, int quatIndex)
 {
@@ -1009,7 +683,6 @@ void XAnimCalcRelDeltaParts(const XAnimParts_s *parts, float weightScale, float 
 	rotPos->posWeight = rotPos->posWeight + weightScale;
 	VectorMA(rotPos->pos, weightScale, pos, rotPos->pos);
 }
-
 
 void XAnimCalcAbsDeltaParts(const XAnimParts_s *parts, const float weightScale, float time, XAnimSimpleRotPos *rotPos)
 {
@@ -1106,7 +779,6 @@ float XAnimGetAverageRateFrequency(const XAnimTree_s *tree, unsigned int infoInd
 	return 0.0f;
 }
 
-
 unsigned short XAnimGetNextNotifyIndex( const XAnimEntry *entry, float dtime )
 {
 	XAnimParts *parts;
@@ -1193,7 +865,6 @@ float XAnimGetNotifyFracServer(const XAnimTree_s *tree, XAnimInfo *info, const X
 
 	return XAnimGetNotifyFracLeaf(state, nextState, parts->notify[info->notifyIndex].time, dtime);
 }
-
 
 void XAnimAddClientNotify( const XAnimEntry *entry, unsigned int notetrackName, float frac, unsigned int notifyType )
 {
@@ -1508,7 +1179,6 @@ void XAnimResetInfo(XAnimInfo *info)
 	info->notifyChild = 0;
 	info->notifyType = 0;
 }
-
 
 void XAnimCloneAnimTreeOldState( const XAnimTree_s *from, XAnimTree_s *to )
 {
@@ -1982,7 +1652,6 @@ void XAnimProcessServerNotify(const XAnimTree_s *tree, XAnimInfo *info, const XA
 	}
 }
 
-
 void XAnimCalc(const DObj_s *obj, unsigned int entry, float weightScale, DObjAnimMat *rotTransArray, bool bClear, bool bNormQuat, XAnimCalcAnimInfo *animInfo, int bufferIndex)
 {
 	float secondWeight;
@@ -2307,7 +1976,6 @@ void XAnimDisplay(const XAnimTree_s *tree, unsigned int infoIndex, int depth)
 	}
 }
 
-
 void XAnimCalcDeltaTree(const XAnimTree_s *tree, unsigned int animIndex, float weightScale, bool bClear, bool bNormQuat, XAnimSimpleRotPos *rotPos)
 {
 	float secondWeight;
@@ -2488,7 +2156,6 @@ float XAnimGetWeight(const XAnimTree_s *tree, unsigned int animIndex)
 	return childIndex ? g_xAnimInfo[childIndex].state.weight : 0.0f;
 }
 
-
 bool XAnimHasFinished( const XAnimTree_s *tree, unsigned int animIndex )
 {
 	unsigned short index;
@@ -2501,11 +2168,6 @@ bool XAnimHasFinished( const XAnimTree_s *tree, unsigned int animIndex )
 
 	state = &g_xAnimInfo[index].state;
 	return state->time < state->oldTime || state->time == 1.0f || state->cycleCount > state->oldCycleCount;
-}
-
-int XAnimGetNumChildren(const XAnim_s *anim, unsigned int animIndex)
-{
-	return anim->entries[animIndex].numAnims;
 }
 
 unsigned int XAnimGetChildAt(const XAnim_s *anim, unsigned int animIndex, unsigned int childIndex)
@@ -2560,7 +2222,6 @@ unsigned int XAnimGetAnimTreeSize(const XAnim_s *anims)
 	return anims->size;
 }
 
-
 void DObjUpdateServerOldTime( DObj_s *obj, DObj_s *serverObj, float dtime )
 {
 	bool hasWeight;
@@ -2592,7 +2253,6 @@ void DObjInitServerTime(DObj_s *obj, float dtime)
 
 	XAnimUpdateOldTime(obj->tree, 0, &syncState, dtime, 1, &hasWeight, &hasTime);
 }
-
 
 void DObjUpdateClientInfo( DObj_s *obj, float dtime )
 {
@@ -2641,7 +2301,6 @@ int DObjUpdateServerInfo(DObj_s *obj, float dtime, int bNotify)
 	XAnimUpdateInfoInternal(obj->tree, 0, dtime, 1);
 	return 0;
 }
-
 
 int DObjGetClientNotifyList( XAnimClientNotify **notifyList )
 {
@@ -2751,7 +2410,6 @@ void DObjDisplayAnim(DObj_s *obj)
 	Com_Printf("\n");
 }
 
-
 void XAnimCalcDelta(XAnimTree_s *tree, unsigned int animIndex, float *rot, float *trans, bool bUseGoalWeight)
 {
 	XAnimSimpleRotPos rotPos;
@@ -2774,7 +2432,6 @@ void XAnimCalcDelta(XAnimTree_s *tree, unsigned int animIndex, float *rot, float
 	VectorCopy(rotPos.pos, trans);
 }
 
-
 void XAnimCalcAbsDelta(XAnimTree_s *tree, unsigned int animIndex, float *rot, float *trans)
 {
 	XAnimSimpleRotPos rotPos;
@@ -2796,7 +2453,6 @@ void XAnimCalcAbsDelta(XAnimTree_s *tree, unsigned int animIndex, float *rot, fl
 
 	VectorCopy(rotPos.pos, trans);
 }
-
 
 void XAnimGetRelDelta(const XAnim_s *anims, unsigned int animIndex, float *rot, float *trans, float time1, float time2)
 {
@@ -2834,7 +2490,6 @@ void XAnimGetRelDelta(const XAnim_s *anims, unsigned int animIndex, float *rot, 
 		VectorClear(trans);
 	}
 }
-
 
 void XAnimGetAbsDelta(const XAnim_s *anims, unsigned int animIndex, float *rot, float *trans, float time)
 {
@@ -2948,7 +2603,6 @@ void XAnimClearTreeGoalWeights(XAnimTree_s *tree, unsigned int animIndex, float 
 		XAnimClearTreeGoalWeights(tree, i + entry->u.animParent.children, blendTime);
 }
 
-
 void XAnimClearTreeGoalWeightsStrict( XAnimTree_s *tree, unsigned int animIndex, float blendTime )
 {
 	int numAnims;
@@ -3012,7 +2666,6 @@ void XAnimClearGoalWeightKnobInternal(XAnimTree_s *tree, unsigned int infoIndex,
 	}
 }
 
-
 void XAnimSetCompleteGoalWeightKnob( XAnimTree_s *tree, unsigned int animIndex, float goalWeight, float goalTime, float rate, unsigned int notifyName, int bRestart )
 {
 	if ( goalWeight < 0.001f )
@@ -3053,7 +2706,6 @@ int XAnimSetCompleteGoalWeightKnobAll(XAnimTree_s *tree, unsigned int animIndex,
 			XAnimRestart(tree, animIndex);
 	}
 }
-
 
 void XAnimSetGoalWeightKnob( XAnimTree_s *tree, unsigned int animIndex, float goalWeight, float goalTime, float rate, unsigned int notifyName, int bRestart )
 {
@@ -3380,7 +3032,6 @@ void XAnimSetupSyncNodes(XAnim_s *anims)
 	XAnimSetupSyncNodes_r(anims, 0);
 }
 
-
 bool XAnimIsLeafOrSync( const XAnim_s *anims, unsigned int animIndex )
 {
 	const XAnimEntry *entry;
@@ -3418,7 +3069,6 @@ void XAnimSetTime(XAnimTree_s *tree, unsigned int animIndex, float time)
 		info->notifyIndex = -1;
 	}
 }
-
 
 void XAnimSetNotifyIndex( const XAnimTree_s *tree, XAnimInfo *info, const XAnimEntry *entry )
 {
@@ -3483,7 +3133,6 @@ void XAnimRestart(XAnimTree_s *tree, unsigned int infoIndex)
 		XAnimNeedClearState(&g_xAnimInfo[tree->infoArray[infoIndex]]);
 	}
 }
-
 
 void XAnimClearParentGoalWeights( XAnimTree_s *tree, unsigned int animIndex, float blendTime )
 {
@@ -3635,7 +3284,6 @@ void XAnimCloneAnimTree(const XAnimTree_s *from, XAnimTree_s *to)
 	}
 }
 
-
 void XAnimCopyInfoNoNotify( const XAnimInfo *from, XAnimInfo *to )
 {
 	*to = *from;
@@ -3643,7 +3291,6 @@ void XAnimCopyInfoNoNotify( const XAnimInfo *from, XAnimInfo *to )
 	to->notifyIndex = -1;
 	to->notifyName = 0;
 }
-
 
 void XAnimCopyAnimTreeNoNotify( const XAnimTree_s *from, XAnimTree_s *to )
 {
@@ -3666,12 +3313,10 @@ void XAnimCopyAnimTreeNoNotify( const XAnimTree_s *from, XAnimTree_s *to )
 	}
 }
 
-
 XAnimInfo *XAnimGetInfoByIndex( unsigned int index )
 {
 	return &g_xAnimInfo[index];
 }
-
 
 void XAnim_CalcSimpleRotDuring_unsigned_char_(XAnimTime *animTime, const XAnimPartQuat *quat, float scale, float *rotDelta)
 {
@@ -3700,7 +3345,6 @@ void XAnim_CalcSimpleRotDuring_unsigned_char_(XAnimTime *animTime, const XAnimPa
 	}
 }
 
-
 void XAnim_CalcRotDuring_unsigned_char_(XAnimTime *animTime, const XAnimPartQuat *quat, float scale, float *rotDelta)
 {
 	int keyFrameIndex;
@@ -3728,7 +3372,6 @@ void XAnim_CalcRotDuring_unsigned_char_(XAnimTime *animTime, const XAnimPartQuat
 	}
 }
 
-
 void XAnim_CalcPosDuring_unsigned_char_(XAnimTime *animTime, const XAnimPartTrans *trans, float scale, float *posDelta)
 {
 	int keyFrameIndex;
@@ -3755,7 +3398,6 @@ void XAnim_CalcPosDuring_unsigned_char_(XAnimTime *animTime, const XAnimPartTran
 		    posDelta);
 	}
 }
-
 
 void XAnimCalcParts_unsigned_char_( const XAnimParts_s *parts, const unsigned char *animToModel, float time, float weightScale, DObjAnimMat *rotTransArray, int *ignorePartBits )
 {
@@ -3804,7 +3446,6 @@ void XAnimCalcParts_unsigned_char_( const XAnimParts_s *parts, const unsigned ch
 	}
 }
 
-
 void XAnim_CalcSimpleRotDuring_unsigned_short_(XAnimTime *animTime, const XAnimPartQuat *quat, float scale, float *rotDelta)
 {
 	int keyFrameIndex;
@@ -3831,7 +3472,6 @@ void XAnim_CalcSimpleRotDuring_unsigned_short_(XAnimTime *animTime, const XAnimP
 		    rotDelta);
 	}
 }
-
 
 void XAnim_CalcRotDuring_unsigned_short_(XAnimTime *animTime, const XAnimPartQuat *quat, float scale, float *rotDelta)
 {
@@ -3860,7 +3500,6 @@ void XAnim_CalcRotDuring_unsigned_short_(XAnimTime *animTime, const XAnimPartQua
 	}
 }
 
-
 void XAnim_CalcPosDuring_unsigned_short_(XAnimTime *animTime, const XAnimPartTrans *trans, float scale, float *posDelta)
 {
 	int keyFrameIndex;
@@ -3887,7 +3526,6 @@ void XAnim_CalcPosDuring_unsigned_short_(XAnimTime *animTime, const XAnimPartTra
 		    posDelta);
 	}
 }
-
 
 void XAnimCalcParts_unsigned_short_( const XAnimParts_s *parts, const unsigned char *animToModel, float time, float weightScale, DObjAnimMat *rotTransArray, int *ignorePartBits )
 {
@@ -3935,3 +3573,326 @@ void XAnimCalcParts_unsigned_short_( const XAnimParts_s *parts, const unsigned c
 		totalRotTrans->transWeight = totalRotTrans->transWeight + weightScale;
 	}
 }
+
+void XAnim_GetTimeIndex_unsigned_char_(const XAnimTime *animTime, const unsigned char *indices, int tableSize, int *keyFrameIndex, float *keyFrameLerpFrac)
+{
+	int low;
+	int index;
+	int frameIndex;
+	int high;
+
+	index = (int)(animTime->time * (float)tableSize);
+	frameIndex = animTime->frameIndex;
+
+	if ( frameIndex < indices[index] )
+	{
+		low = 0;
+		high = index;
+
+		while ( 1 )
+		{
+			index = (low + high) / 2;
+
+			if ( frameIndex < indices[index] )
+			{
+				high = index;
+				continue;
+			}
+
+			if ( frameIndex < indices[index + 1] )
+				break;
+
+			low = index + 1;
+
+			if ( frameIndex >= indices[--high] )
+			{
+				index = high;
+				break;
+			}
+		}
+	}
+	else if ( frameIndex >= indices[index + 1] )
+	{
+		low = index + 1;
+		high = tableSize;
+
+		while ( 1 )
+		{
+			index = (low + high) / 2;
+
+			if ( frameIndex < indices[index] )
+			{
+				high = index;
+				low++;
+
+				if ( frameIndex < indices[low] )
+				{
+					index = low - 1;
+					break;
+				}
+			}
+			else if ( frameIndex >= indices[index + 1] )
+			{
+				low = index + 1;
+			}
+			else
+			{
+				break;
+			}
+		}
+	}
+
+	*keyFrameLerpFrac = (animTime->frameFrac - (float)indices[index])
+	                    / (float)(indices[index + 1] - indices[index]);
+	*keyFrameIndex = index;
+}
+
+void XAnim_GetTimeIndexCompressed_unsigned_char(XAnimTime *animTime, const unsigned char *indices, int tableSize, int *keyFrameIndex, float *keyFrameLerpFrac)
+{
+	if ( tableSize < animTime->frameCount )
+	{
+		XAnim_GetTimeIndex_unsigned_char_(animTime, indices, tableSize, keyFrameIndex, keyFrameLerpFrac);
+	}
+	else
+	{
+		*keyFrameLerpFrac = animTime->frameFrac - (float)animTime->frameIndex;
+		*keyFrameIndex = animTime->frameIndex;
+	}
+}
+
+void XAnim_CalcRotDeltaDuringInternal_unsigned_char_(XAnimDeltaPartQuat *quat, const float time, int numFrames, float *rotDelta)
+{
+	XAnimTime animTime;
+	int keyFrameIndex;
+	float keyFrameLerpFrac;
+
+	if ( !quat->size )
+	{
+		Short2CopyAsVec2(quat->u.frame0, rotDelta);
+	}
+	else
+	{
+		XAnim_SetTime(time, numFrames, &animTime);
+		XAnim_GetTimeIndexCompressed_unsigned_char(
+		    &animTime,
+		    quat->u.frames.indices._1,
+		    quat->size,
+		    &keyFrameIndex,
+		    &keyFrameLerpFrac);
+		Short2LerpAsVec2(
+		    quat->u.frames.frames[keyFrameIndex],
+		    quat->u.frames.frames[keyFrameIndex + 1],
+		    keyFrameLerpFrac,
+		    rotDelta);
+	}
+}
+
+void XAnim_CalcRotDeltaDuring_unsigned_char_(XAnimDeltaPart *animDelta, const float time, int numFrames, float *rotDelta)
+{
+	if ( animDelta->quat )
+	{
+		XAnim_CalcRotDeltaDuringInternal_unsigned_char_(animDelta->quat, time, numFrames, rotDelta);
+	}
+	else
+	{
+		rotDelta[0] = 0.0;
+		rotDelta[1] = 32767.0;
+	}
+}
+
+void XAnim_CalcPosDeltaDuringInternal_unsigned_char_(XAnimDeltaPartTrans *trans, const float time, int numFrames, float *posDelta)
+{
+	XAnimTime animTime;
+	int keyFrameIndex;
+	float keyFrameLerpFrac;
+
+	if ( !trans->size )
+	{
+		VectorCopy(trans->u.frame0, posDelta);
+	}
+	else
+	{
+		XAnim_SetTime(time, numFrames, &animTime);
+		XAnim_GetTimeIndexCompressed_unsigned_char(
+		    &animTime,
+		    trans->u.frames.indices._1,
+		    trans->size,
+		    &keyFrameIndex,
+		    &keyFrameLerpFrac);
+		Vec3LerpFrom(
+		    trans->u.frames.frames[keyFrameIndex],
+		    trans->u.frames.frames[keyFrameIndex + 1],
+		    keyFrameLerpFrac,
+		    posDelta);
+	}
+}
+
+void XAnim_CalcPosDeltaDuring_unsigned_char_(XAnimDeltaPart *animDelta, const float time, int numFrames, float *posDelta)
+{
+	if ( animDelta->trans )
+		XAnim_CalcPosDeltaDuringInternal_unsigned_char_(animDelta->trans, time, numFrames, posDelta);
+	else
+		VectorClear(posDelta);
+}
+
+void XAnim_GetTimeIndex_unsigned_short_(const XAnimTime *animTime, const unsigned short *indices, int tableSize, int *keyFrameIndex, float *keyFrameLerpFrac)
+{
+	int low;
+	int index;
+	int frameIndex;
+	int high;
+
+	index = (int)(animTime->time * (float)tableSize);
+	frameIndex = animTime->frameIndex;
+
+	if ( frameIndex < indices[index] )
+	{
+		low = 0;
+		high = index;
+
+		while ( 1 )
+		{
+			index = (low + high) / 2;
+
+			if ( frameIndex < indices[index] )
+			{
+				high = index;
+				continue;
+			}
+
+			if ( frameIndex < indices[index + 1] )
+				break;
+
+			low = index + 1;
+
+			if ( frameIndex >= indices[--high] )
+			{
+				index = high;
+				break;
+			}
+		}
+	}
+	else if ( frameIndex >= indices[index + 1] )
+	{
+		low = index + 1;
+		high = tableSize;
+
+		while ( 1 )
+		{
+			index = (low + high) / 2;
+
+			if ( frameIndex < indices[index] )
+			{
+				high = index;
+				low++;
+
+				if ( frameIndex < indices[low] )
+				{
+					index = low - 1;
+					break;
+				}
+			}
+			else if ( frameIndex >= indices[index + 1] )
+			{
+				low = index + 1;
+			}
+			else
+			{
+				break;
+			}
+		}
+	}
+
+	*keyFrameLerpFrac = (animTime->frameFrac - (float)indices[index])
+	                    / (float)(indices[index + 1] - indices[index]);
+	*keyFrameIndex = index;
+}
+
+void XAnim_GetTimeIndexCompressed_unsigned_short_(XAnimTime *animTime, const unsigned short *indices, int tableSize, int *keyFrameIndex, float *keyFrameLerpFrac)
+{
+	if ( tableSize < animTime->frameCount )
+	{
+		XAnim_GetTimeIndex_unsigned_short_(animTime, indices, tableSize, keyFrameIndex, keyFrameLerpFrac);
+	}
+	else
+	{
+		*keyFrameLerpFrac = animTime->frameFrac - (float)animTime->frameIndex;
+		*keyFrameIndex = animTime->frameIndex;
+	}
+}
+
+void XAnim_CalcRotDeltaDuringInternal_unsigned_short_(XAnimDeltaPartQuat *quat, const float time, int numFrames, float *rotDelta)
+{
+	XAnimTime animTime;
+	int keyFrameIndex;
+	float keyFrameLerpFrac;
+
+	if ( !quat->size )
+	{
+		Short2CopyAsVec2(quat->u.frame0, rotDelta);
+	}
+	else
+	{
+		XAnim_SetTime(time, numFrames, &animTime);
+		XAnim_GetTimeIndexCompressed_unsigned_short_(
+		    &animTime,
+		    quat->u.frames.indices._2,
+		    quat->size,
+		    &keyFrameIndex,
+		    &keyFrameLerpFrac);
+		Short2LerpAsVec2(
+		    quat->u.frames.frames[keyFrameIndex],
+		    quat->u.frames.frames[keyFrameIndex + 1],
+		    keyFrameLerpFrac,
+		    rotDelta);
+	}
+}
+
+void XAnim_CalcRotDeltaDuring_unsigned_short_(XAnimDeltaPart *animDelta, const float time, int numFrames, float *rotDelta)
+{
+	if ( animDelta->quat )
+	{
+		XAnim_CalcRotDeltaDuringInternal_unsigned_short_(animDelta->quat, time, numFrames, rotDelta);
+	}
+	else
+	{
+		rotDelta[0] = 0.0;
+		rotDelta[1] = 32767.0;
+	}
+}
+
+void XAnim_CalcPosDeltaDuringInternal_unsigned_short_(XAnimDeltaPartTrans *trans, const float time, int numFrames, float *posDelta)
+{
+	XAnimTime animTime;
+	int keyFrameIndex;
+	float keyFrameLerpFrac;
+
+	if ( !trans->size )
+	{
+		VectorCopy(trans->u.frame0, posDelta);
+	}
+	else
+	{
+		XAnim_SetTime(time, numFrames, &animTime);
+		XAnim_GetTimeIndexCompressed_unsigned_short_(
+		    &animTime,
+		    trans->u.frames.indices._2,
+		    trans->size,
+		    &keyFrameIndex,
+		    &keyFrameLerpFrac);
+		Vec3LerpFrom(
+		    trans->u.frames.frames[keyFrameIndex],
+		    trans->u.frames.frames[keyFrameIndex + 1],
+		    keyFrameLerpFrac,
+		    posDelta);
+	}
+}
+
+void XAnim_CalcPosDeltaDuring_unsigned_short_(XAnimDeltaPart *animDelta, const float time, int numFrames, float *posDelta)
+{
+	if ( animDelta->trans )
+		XAnim_CalcPosDeltaDuringInternal_unsigned_short_(animDelta->trans, time, numFrames, posDelta);
+	else
+		VectorClear(posDelta);
+}
+

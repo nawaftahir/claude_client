@@ -52,6 +52,44 @@ typedef struct
 
 static loopback_t loopbacks[2];
 
+const char* NET_AdrToString( netadr_t a );
+void NetProf_PrepProfiling( netProfileInfo_t **pProf );
+void NetProf_AddPacket( netProfileStream_t *pProfStream, int iSize, int bFragment );
+void NetProf_NewSendPacket( netchan_t *pChan, int iSize, int bFragment );
+void NetProf_NewRecievePacket( netchan_t *pChan, int iSize, int bFragment );
+void NetProf_UpdateStatistics( netProfileStream_t *pStream );
+static void Net_DumpProfile_f( void );
+void Net_DisplayProfile( void );
+void Netchan_Init(int port);
+void Netchan_Setup( netsrc_t sock, netchan_t *chan, netadr_t adr, int qport );
+bool Netchan_TransmitNextFragment( netchan_t *chan );
+bool Netchan_Transmit( netchan_t *chan, int length, const byte *data );
+qboolean Netchan_Process( netchan_t *chan, msg_t *msg );
+int NET_CompareBaseAdrSigned( netadr_t *a, netadr_t *b );
+qboolean NET_CompareBaseAdr( netadr_t a, netadr_t b );
+int NET_CompareAdrSigned( netadr_t *a, netadr_t *b );
+qboolean NET_CompareAdr( netadr_t a, netadr_t b );
+qboolean NET_IsLocalAddress( netadr_t adr );
+qboolean NET_GetPacket( netadr_t *net_from, msg_t *net_message );
+qboolean NET_GetLoopPacket_Real( int sock, netadr_t *net_from, msg_t *net_message );
+qboolean NET_GetLoopPacket( int sock, netadr_t *net_from, msg_t *net_message );
+void NET_SendLoopPacket( int sock, int length, const void *data, netadr_t to );
+bool NET_SendPacket( netsrc_t sock, int length, const void *data, netadr_t to );
+unsigned char NET_OutOfBandPrint( netsrc_t sock, netadr_t adr, const char *data );
+unsigned char NET_OutOfBandData( netsrc_t sock, netadr_t adr, byte *format, int len );
+void NET_OutOfBandVoiceData( netsrc_t sock, netadr_t adr, byte *format, int len );
+qboolean NET_StringToAdr( const char *s, netadr_t *a );
+
+/*
+===============
+NET_CompareAdr
+================
+*/
+qboolean NET_CompareAdr( netadr_t a, netadr_t b )
+{
+	return NET_CompareAdrSigned(&a, &b) == 0;
+}
+
 // Local client index for the "[client %i]" traces; always 0 on a dedicated
 // server. Original name unknown: the copy is emitted at the end of this TU.
 inline int Net_LocalClientNum()
@@ -802,16 +840,6 @@ int NET_CompareAdrSigned( netadr_t *a, netadr_t *b )
 }
 
 /*
-===============
-NET_CompareAdr
-================
-*/
-qboolean NET_CompareAdr( netadr_t a, netadr_t b )
-{
-	return NET_CompareAdrSigned(&a, &b) == 0;
-}
-
-/*
 ==============
 NET_IsLocalAddress
 ==============
@@ -1107,3 +1135,4 @@ qboolean NET_StringToAdr( const char *s, netadr_t *a )
 
 	return qtrue;
 }
+

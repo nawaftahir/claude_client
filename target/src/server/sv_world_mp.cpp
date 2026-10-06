@@ -3,6 +3,21 @@
 static vec3_t actorLocationalMins = { -64.0, -64.0, -32.0 };
 static vec3_t actorLocationalMaxs = { 64.0, 64.0, 72.0 };
 
+clipHandle_t SV_ClipHandleForEntity( const gentity_t *ent );
+void SV_UnlinkEntity( gentity_t *gEnt );
+void SnapAngles( vec3_t angles );
+void SV_LinkEntity( gentity_t *gEnt );
+void SV_ClipMoveToEntity( moveclip_t *clip, svEntity_t *entity, trace_t *trace );
+void SV_PointTraceToEntity( pointtrace_t *clip, svEntity_t *check, trace_t *trace );
+int SV_ClipSightToEntity( sightclip_t *clip, svEntity_t *check );
+int SV_PointSightTraceToEntity( sightpointtrace_t *clip, svEntity_t *check );
+void SV_Trace( trace_t *results, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, int passEntityNum, int contentmask, int locational, unsigned char *priorityMap, int staticmodels );
+int SV_TracePassed( const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, int passEntityNum0, int passEntityNum1, int contentmask, int locational, int staticmodels );
+void SV_SightTrace( int *hitNum, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, int passEntityNum0, int passEntityNum1, int contentmask );
+int SV_SightTraceToEntity( const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, int entityNum, int contentmask );
+void SV_LocationalTraceToEntity( trace_t *results, const vec3_t start, const vec3_t end, int entIndex, int contentMask, unsigned char *priorityMap );
+int SV_PointContents( const vec3_t p, int passEntityNum, int contentmask );
+
 /*
 ================
 SV_ClipHandleForEntity
@@ -1028,3 +1043,4 @@ int SV_PointContents( const vec3_t p, int passEntityNum, int contentmask )
 
 	return contents & contentmask;
 }
+

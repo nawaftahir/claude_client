@@ -13,6 +13,8 @@ extern void ROQ_UploadCinematicFromHandle(int handle);
 extern void ROQ_CloseAllVideos(void);
 void SND_StopSounds(snd_stopsounds_arg_t which);
 
+extern int CL_handle;
+
 e_status CIN_StopCinematic(int handle)
 {
     return ROQ_StopCinematicFromHandle(handle);
@@ -48,8 +50,6 @@ void SCR_DrawCinematic(void)
     ROQ_DrawCinematic();
 }
 
-extern int CL_handle;
-
 void SCR_RunCinematic(void)
 {
     if (CL_handle >= 0 && CL_handle < 16)
@@ -74,3 +74,4 @@ void CIN_CloseAllVideos(void)
 {
     ROQ_CloseAllVideos();
 }
+

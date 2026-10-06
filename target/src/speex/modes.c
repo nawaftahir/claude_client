@@ -720,3 +720,4 @@ const SpeexMode * speex_lib_get_mode (int mode)
 
   return speex_mode_list[mode];
 }
+

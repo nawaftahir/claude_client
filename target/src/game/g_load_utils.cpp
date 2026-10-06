@@ -1,6 +1,11 @@
 #include "../qcommon/qcommon.h"
 #include "g_shared.h"
 
+char *G_AddSpawnVarToken( const char *string, SpawnVar *spawnVar );
+qboolean G_ParseSpawnVars( SpawnVar *spawnVar );
+qboolean G_SpawnStringInternal( const SpawnVar *spawnVar, const char *key, const char *defaultString, const char **out );
+unsigned int G_NewString( const char *string );
+
 /*
 ====================
 G_AddSpawnVarToken
@@ -182,3 +187,4 @@ const char *vtos( const vec3_t v )
 
 	return s;
 }
+

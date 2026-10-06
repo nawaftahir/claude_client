@@ -3,6 +3,25 @@
 
 void Scr_BeginLoadAnimTrees( int user );
 
+int Scr_IsInOpcodeMemory( const char *pos );
+int Scr_IsInScriptMemory( const char *pos );
+bool Scr_IsIdentifier( const char *token );
+int Scr_GetFunctionHandle( const char *filename, const char *name );
+void Scr_InitEvaluate();
+void Scr_EndLoadEvaluate();
+unsigned int SL_TransferToCanonicalString( unsigned int stringValue );
+unsigned int SL_GetCanonicalString( const char *str );
+void Scr_BeginLoadScripts();
+void Scr_BeginLoadScriptsRemote( void );
+void Scr_BeginLoadAnimTrees( int user );
+int Scr_ScanFile( char *buf, int max_size );
+unsigned int Scr_LoadScript( const char *filename );
+void Scr_PostCompileScripts();
+void Scr_EndLoadScripts();
+void Scr_PrecacheAnimTrees( void *(*Alloc)(int), int user );
+void Scr_EndLoadAnimTrees();
+void Scr_FreeScripts( unsigned char sys );
+
 /*
 ============
 Scr_IsInOpcodeMemory
@@ -462,3 +481,4 @@ void Scr_FreeScripts( unsigned char sys )
 	scrVarPub.endScriptBuffer = NULL;
 	scrVarPub.checksum = 0;
 }
+

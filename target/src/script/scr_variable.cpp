@@ -77,6 +77,174 @@ float Scr_GetObjectUsage( unsigned int parentId );
 float Scr_GetThreadUsage( VariableStackBuffer *stackBuf, float *endonUsage );
 void Scr_AddFields( const char *path, const char *extension );
 
+bool IsObjectValue( VariableValueInternal *entryValue );
+bool IsObjectId( unsigned int id );
+int ThreadInfoCompare( const void *info1, const void *info2 );
+void Scr_DumpScriptVariablesDefault();
+void InitVariables();
+void Var_Init();
+void Scr_ShutdownVariables();
+unsigned int Scr_GetNumScriptVars();
+unsigned int GetVariableKeyObject( unsigned int id );
+unsigned int FindVariableIndexInternal( unsigned int name, unsigned int index );
+unsigned int FindVariableIndexHash( unsigned int parentId, unsigned int name );
+unsigned int GetNewVariableIndexInternal3( unsigned int parentId, unsigned int name, unsigned int index );
+unsigned int GetNewVariableIndexInternal2( unsigned int parentId, unsigned int name, unsigned int index );
+unsigned int GetNewVariableIndexReverseInternal2( unsigned int parentId, unsigned int name, unsigned int index );
+unsigned int GetNewVariableIndexInternal( unsigned int parentId, unsigned int name );
+unsigned int GetNewVariableIndexReverseInternal( unsigned int parentId, unsigned int name );
+unsigned int GetVariableIndexInternal( unsigned int parentId, unsigned int name );
+void MakeVariableExternal( VariableValueInternal *entry, VariableValueInternal *parentValue );
+void ClearObjectInternal( unsigned int parentId );
+void ClearObject( unsigned int parentId );
+void Scr_SetThreadNotifyName( unsigned int startLocalId, unsigned int notifyName );
+void Scr_ClearThread( unsigned int parentId );
+void Scr_StopThread( unsigned int threadId );
+void Scr_RemoveThreadNotifyName( unsigned int startLocalId );
+void Scr_RemoveThreadEmptyNotifyName( unsigned int startLocalId );
+unsigned short Scr_GetThreadNotifyName( unsigned int startLocalId );
+void Scr_SetThreadWaitTime( unsigned int startLocalId, unsigned int waitTime );
+void Scr_ClearWaitTime( unsigned int startLocalId );
+unsigned int Scr_GetThreadWaitTime( unsigned int startLocalId );
+unsigned int GetParentLocalId( unsigned int threadId );
+unsigned int GetSafeParentLocalId( unsigned int threadId );
+unsigned int GetStartLocalId( unsigned int threadId );
+void Scr_KillThread( unsigned int parentId );
+void Scr_KillEndonThread( unsigned int threadId );
+unsigned short AllocVariable();
+void FreeVariable( unsigned int id );
+unsigned int AllocValue();
+unsigned int AllocObject();
+unsigned int AllocEntity( int classnum, unsigned short entnum );
+unsigned int Scr_AllocArray();
+unsigned int AllocThread( unsigned int self );
+unsigned int AllocChildThread( unsigned int self, unsigned int parentLocalId );
+unsigned int Scr_GetSelf( unsigned int threadId );
+void FreeValue( unsigned int id );
+void AddRefToObject( unsigned int id );
+void RemoveRefToObject( unsigned int id );
+void RemoveRefToEmptyObject( unsigned int id );
+int Scr_GetRefCountToObject( unsigned int id );
+float *Scr_AllocVectorInternal();
+float *Scr_AllocVector( const float *v );
+void AddRefToVector( const float *vectorValue );
+void RemoveRefToVector( const vec3_t vectorValue );
+void AddRefToValue( int type, VariableUnion u );
+void RemoveRefToValue( int type, VariableUnion u );
+bool IsValidArrayIndex( unsigned int index );
+unsigned int GetInternalVariableIndex( unsigned int index );
+unsigned int FindArrayVariableIndex( unsigned int parentId, unsigned int index );
+unsigned int FindArrayVariable( unsigned int parentId, unsigned int index );
+unsigned int FindVariable( unsigned int parentId, unsigned int index );
+unsigned int FindObjectVariable( unsigned int parentId, unsigned int id );
+unsigned int GetArrayVariableIndex( unsigned int parentId, unsigned int index );
+unsigned int GetNewArrayVariableIndex( unsigned int parentId, unsigned int index );
+VariableValue Scr_FindVariableField( unsigned int parentId, unsigned int name );
+unsigned int Scr_FindAllVariableField( unsigned int parentId, unsigned int *names );
+VariableValue Scr_GetArrayIndexValue( unsigned int name );
+void ClearVariableField( unsigned int parentId, unsigned int name, VariableValue *value );
+unsigned int GetArrayVariable( unsigned int parentId, unsigned int name );
+unsigned int GetNewArrayVariable( unsigned int parentId, unsigned int name );
+unsigned int GetVariable( unsigned int parentId, unsigned int name );
+unsigned int GetNewVariable( unsigned int parentId, unsigned int name );
+unsigned int GetObjectVariable( unsigned int parentId, unsigned int id );
+unsigned int GetNewObjectVariable( unsigned int parentId, unsigned int id );
+unsigned int GetNewObjectVariableReverse( unsigned int parentId, unsigned int id );
+void RemoveVariable( unsigned int parentId, unsigned int name );
+void RemoveNextVariable( unsigned int parentId );
+void RemoveObjectVariable( unsigned int parentId, unsigned int id );
+void SafeRemoveArrayVariable( unsigned int parentId, unsigned int index );
+void RemoveArrayVariable( unsigned int parentId, unsigned int index );
+void SafeRemoveVariable( unsigned int parentId, unsigned int name );
+void CopyArray( unsigned int parentId, unsigned int newParentId );
+void SetVariableValue( unsigned int id, VariableValue *value );
+void SetNewVariableValue( unsigned int id, VariableValue *value );
+VariableUnion *GetVariableValueAddress( unsigned int id );
+void SetVariableEntityFieldValue( unsigned int entId, unsigned int fieldName, VariableValue *value );
+void ClearVariableValue( unsigned int id );
+void SetVariableFieldValue( unsigned int id, VariableValue *value );
+VariableValue Scr_EvalVariable( unsigned int id );
+unsigned int Scr_EvalVariableObject( unsigned int id );
+VariableValue Scr_EvalVariableEntityField( unsigned int entId, unsigned int name );
+VariableValue Scr_EvalVariableFieldInternal( unsigned int id );
+void Scr_EvalSizeValue( VariableValue *value );
+unsigned int GetArraySize( unsigned int id );
+unsigned int FindNextSibling( unsigned int id );
+unsigned int FindPrevSibling( unsigned int id );
+unsigned int GetVariableName( unsigned int id );
+unsigned int GetObjectA( unsigned int id );
+unsigned int GetArray( unsigned int id );
+unsigned int FindObject( unsigned int id );
+bool IsFieldObject( unsigned int id );
+int Scr_IsThreadAlive( unsigned int thread );
+void Scr_EvalBoolNot( VariableValue *value );
+void Scr_EvalBoolComplement( VariableValue *value );
+void Scr_CastBool( VariableValue *value );
+bool Scr_CastString( VariableValue *value );
+void Scr_CastDebugString( VariableValue *value );
+char Scr_GetEntClassId( unsigned int id );
+int Scr_GetEntNum( unsigned int id );
+void Scr_ClearVector( VariableValue *value );
+void Scr_CastVector( VariableValue *value );
+unsigned int Scr_EvalFieldObject( unsigned int tempVariable, VariableValue *value );
+void Scr_UnmatchingTypesError( VariableValue *value1, VariableValue *value2 );
+void Scr_CastWeakerPair( VariableValue *value1, VariableValue *value2 );
+void Scr_CastWeakerStringPair( VariableValue *value1, VariableValue *value2 );
+void Scr_EvalOr( VariableValue *value1, VariableValue *value2 );
+void Scr_EvalExOr( VariableValue *value1, VariableValue *value2 );
+void Scr_EvalAnd( VariableValue *value1, VariableValue *value2 );
+void Scr_EvalEquality( VariableValue *value1, VariableValue *value2 );
+void Scr_EvalInequality( VariableValue *value1, VariableValue *value2 );
+void Scr_EvalLess(VariableValue *value1, VariableValue *value2);
+void Scr_EvalGreaterEqual( VariableValue *value1, VariableValue *value2 );
+void Scr_EvalGreater( VariableValue *value1, VariableValue *value2 );
+void Scr_EvalLessEqual( VariableValue *value1, VariableValue *value2 );
+void Scr_EvalShiftLeft( VariableValue *value1, VariableValue *value2 );
+void Scr_EvalShiftRight( VariableValue *value1, VariableValue *value2 );
+void Scr_EvalPlus( VariableValue *value1, VariableValue *value2 );
+void Scr_EvalMinus( VariableValue *value1, VariableValue *value2 );
+void Scr_EvalMultiply( VariableValue *value1, VariableValue *value2 );
+void Scr_EvalDivide( VariableValue *value1, VariableValue *value2 );
+void Scr_EvalMod( VariableValue *value1, VariableValue *value2 );
+void Scr_EvalBinaryOperator( int op, VariableValue *value1, VariableValue *value2 );
+bool IsObjectFree( unsigned int id );
+int GetObjectType( unsigned int id );
+void Scr_FreeEntityNum( int entnum, int classnum );
+void Scr_FreeEntityList();
+void Scr_FreeObjects();
+void Scr_SetClassMap( int classnum );
+void Scr_RemoveClassMap( int classnum );
+void Scr_AddClassField( int classnum, const char *name, unsigned int offset );
+int Scr_GetOffset( unsigned int classnum, const char *name );
+unsigned int FindEntityId( int entnum, int classnum );
+unsigned int Scr_GetEntityId( int entnum, int classnum );
+unsigned int Scr_EvalArrayIndex( unsigned int parentId, VariableValue *index );
+unsigned int Scr_FindArrayIndex( unsigned int parentId, VariableValue *index );
+void Scr_EvalArray( VariableValue *value, VariableValue *index );
+unsigned int Scr_EvalArrayRef( unsigned int parentId );
+void ClearArray( unsigned int parentId, VariableValue *value );
+void SetEmptyArray( unsigned int parentId );
+scr_entref_t Scr_GetEntityIdRef( unsigned int entId );
+void CopyEntity( unsigned int parentId, unsigned int newParentId );
+void Scr_CopyEntityNum( int fromEntnum, int toEntnum, int classnum );
+float Scr_GetEntryUsage( VariableValueInternal *entryValue );
+float Scr_GetEntryUsage( VariableValueInternal *entryValue );
+float Scr_GetEndonUsage( unsigned int parentId );
+float Scr_GetObjectUsage( unsigned int parentId );
+float Scr_GetThreadUsage( VariableStackBuffer *stackBuf, float *endonUsage );
+unsigned int Scr_FindField( const char *name, int *type );
+void Scr_AddFieldsForFile( const char *filename );
+void Scr_AddFields( const char *path, const char *extension );
+void Scr_FreeValue( unsigned int id );
+int Scr_MakeValuePrimitive( unsigned int parentId );
+void Scr_AllocGameVariable();
+void Scr_FreeGameVariable( int bComplete );
+void Scr_GetChecksum( int *checksum );
+int Scr_GetClassnumForCharId( char charId );
+unsigned int Scr_InitStringSet();
+bool Scr_AddStringSet( unsigned int setId, const char *string );
+void Scr_ShutdownStringSet( unsigned int setId );
+
 /*
 ==============
 IsObjectValue
@@ -86,7 +254,6 @@ bool IsObjectValue( VariableValueInternal *entryValue )
 {
 	return IsObject( entryValue );
 }
-
 
 /*
 ==============
@@ -288,7 +455,6 @@ void Scr_DumpScriptVariablesDefault()
 {
 }
 
-
 /*
 ==============
 InitVariables
@@ -324,7 +490,6 @@ void InitVariables()
 	value->hash.u.prev = prev;
 }
 
-
 /*
 ==============
 Var_Init
@@ -343,7 +508,6 @@ void Var_Init()
 	}
 }
 
-
 /*
 ==============
 Scr_ShutdownVariables
@@ -358,7 +522,6 @@ void Scr_ShutdownVariables()
 	}
 }
 
-
 /*
 ==============
 Scr_GetNumScriptVars
@@ -368,7 +531,6 @@ unsigned int Scr_GetNumScriptVars()
 {
 	return 0;
 }
-
 
 /*
 ==============
@@ -420,7 +582,6 @@ unsigned int FindVariableIndexInternal( unsigned int name, unsigned int index )
 
 	return 0;
 }
-
 
 /*
 ==============
@@ -627,7 +788,6 @@ unsigned int GetNewVariableIndexInternal3( unsigned int parentId, unsigned int n
 	return index;
 }
 
-
 /*
 ==============
 GetNewVariableIndexInternal2
@@ -685,7 +845,6 @@ unsigned int GetNewVariableIndexReverseInternal2( unsigned int parentId, unsigne
 	return index;
 }
 
-
 /*
 ==============
 GetNewVariableIndexInternal
@@ -699,7 +858,6 @@ unsigned int GetNewVariableIndexInternal( unsigned int parentId, unsigned int na
 	return GetNewVariableIndexInternal2( parentId, name, hash );
 }
 
-
 /*
 ==============
 GetNewVariableIndexReverseInternal
@@ -712,7 +870,6 @@ unsigned int GetNewVariableIndexReverseInternal( unsigned int parentId, unsigned
 	hash = ( name + parentId ) % ( VARIABLELIST_CHILD_SIZE - 1 ) + 1;
 	return GetNewVariableIndexReverseInternal2( parentId, name, hash );
 }
-
 
 /*
 ==============
@@ -956,7 +1113,6 @@ void Scr_RemoveThreadNotifyName( unsigned int startLocalId )
 	entryValue->w.type |= VAR_THREAD;
 }
 
-
 /*
 ==============
 Scr_RemoveThreadEmptyNotifyName
@@ -970,7 +1126,6 @@ void Scr_RemoveThreadEmptyNotifyName( unsigned int startLocalId )
 	entryValue->w.status &= ~VAR_MASK;
 	entryValue->w.status |= VAR_THREAD;
 }
-
 
 /*
 ==============
@@ -1017,7 +1172,6 @@ void Scr_ClearWaitTime( unsigned int startLocalId )
 	entryValue->w.type |= VAR_THREAD;
 }
 
-
 /*
 ==============
 Scr_GetThreadWaitTime
@@ -1028,7 +1182,6 @@ unsigned int Scr_GetThreadWaitTime( unsigned int startLocalId )
 	return scrVarGlob.variableList[startLocalId].w.waitTime >> VAR_NAME_BITS;
 }
 
-
 /*
 ==============
 GetParentLocalId
@@ -1038,7 +1191,6 @@ unsigned int GetParentLocalId( unsigned int threadId )
 {
 	return scrVarGlob.variableList[threadId].w.parentLocalId >> VAR_NAME_BITS;
 }
-
 
 /*
 ==============
@@ -1227,7 +1379,6 @@ void FreeVariable( unsigned int id )
 	scrVarGlob.variableList[0].u.next = index;
 }
 
-
 /*
 ==============
 AllocValue
@@ -1247,7 +1398,6 @@ unsigned int AllocValue()
 	return id;
 }
 
-
 /*
 ==============
 AllocObject
@@ -1265,7 +1415,6 @@ unsigned int AllocObject()
 	entryValue->u.o.refCount = 0;
 	return id;
 }
-
 
 /*
 ==============
@@ -1287,7 +1436,6 @@ unsigned int AllocEntity( int classnum, unsigned short entnum )
 	return id;
 }
 
-
 /*
 ==============
 Scr_AllocArray
@@ -1306,7 +1454,6 @@ unsigned int Scr_AllocArray()
 	entryValue->u.o.u.size = 0;
 	return id;
 }
-
 
 /*
 ==============
@@ -1354,7 +1501,6 @@ unsigned int AllocChildThread( unsigned int self, unsigned int parentLocalId )
 	return id;
 }
 
-
 /*
 ==============
 Scr_GetSelf
@@ -1382,7 +1528,6 @@ void FreeValue( unsigned int id )
 	RemoveRefToValue(entryValue->w.type & VAR_MASK, entryValue->u.u);
 	FreeVariable(id);
 }
-
 
 /*
 ==============
@@ -1439,7 +1584,6 @@ void RemoveRefToObject( unsigned int id )
 	}
 }
 
-
 /*
 ==============
 RemoveRefToEmptyObject
@@ -1475,7 +1619,6 @@ int Scr_GetRefCountToObject( unsigned int id )
 	return entryValue->u.o.refCount;
 }
 
-
 /*
 ==============
 Scr_AllocVectorInternal
@@ -1489,7 +1632,6 @@ float *Scr_AllocVectorInternal()
 	( (RefVector *)( vec - 1 ) )->head = 0;
 	return vec;
 }
-
 
 /*
 ==============
@@ -1506,7 +1648,6 @@ float *Scr_AllocVector( const float *v )
 	result[2] = v[2];
 	return result;
 }
-
 
 /*
 ==============
@@ -1594,7 +1735,6 @@ void RemoveRefToValue( int type, VariableUnion u )
 		break;
 	}
 }
-
 
 /*
 ==============
@@ -1753,7 +1893,6 @@ VariableValue Scr_FindVariableField( unsigned int parentId, unsigned int name )
 
 	return Scr_EvalVariableEntityField(parentId, name);
 }
-
 
 /*
 ==============
@@ -2058,7 +2197,6 @@ void RemoveArrayVariable( unsigned int parentId, unsigned int index )
 	RemoveVariable( parentId, ( index + MAX_ARRAYINDEX ) & VAR_NAME_LOW_MASK );
 }
 
-
 /*
 ==============
 SafeRemoveVariable
@@ -2268,7 +2406,6 @@ void ClearVariableValue( unsigned int id )
 	assert((entryValue->w.type & VAR_MASK) == VAR_UNDEFINED);
 }
 
-
 /*
 ==============
 SetVariableFieldValue
@@ -2449,7 +2586,6 @@ unsigned int GetArraySize( unsigned int id )
 	return entryValue->u.o.u.size;
 }
 
-
 /*
 ==============
 FindNextSibling
@@ -2464,7 +2600,6 @@ unsigned int FindNextSibling( unsigned int id )
 	return !IsObject( ( &scrVarGlob.variableList[childId] ) ) ? childId : 0;
 }
 
-
 /*
 ==============
 FindPrevSibling
@@ -2478,7 +2613,6 @@ unsigned int FindPrevSibling( unsigned int id )
 
 	return !IsObject( ( &scrVarGlob.variableList[childId] ) ) ? childId : 0;
 }
-
 
 /*
 ==============
@@ -3031,7 +3165,6 @@ void Scr_CastWeakerStringPair( VariableValue *value1, VariableValue *value2 )
 	Scr_UnmatchingTypesError(value1, value2);
 }
 
-
 /*
 ==============
 Scr_EvalOr
@@ -3049,7 +3182,6 @@ void Scr_EvalOr( VariableValue *value1, VariableValue *value2 )
 	}
 }
 
-
 /*
 ==============
 Scr_EvalExOr
@@ -3066,7 +3198,6 @@ void Scr_EvalExOr( VariableValue *value1, VariableValue *value2 )
 		Scr_UnmatchingTypesError(value1, value2);
 	}
 }
-
 
 /*
 ==============
@@ -3172,19 +3303,6 @@ unmatched:
 
 /*
 ==============
-Scr_EvalInequality
-==============
-*/
-void Scr_EvalInequality( VariableValue *value1, VariableValue *value2 )
-{
-	Scr_EvalEquality(value1, value2);
-	assert((value1->type == VAR_INTEGER) || (value1->type == VAR_UNDEFINED));
-
-	value1->u.intValue = value1->u.intValue == 0;
-}
-
-/*
-==============
 Scr_EvalLess
 ==============
 */
@@ -3218,6 +3336,19 @@ Scr_EvalGreaterEqual
 void Scr_EvalGreaterEqual( VariableValue *value1, VariableValue *value2 )
 {
 	Scr_EvalLess(value1, value2);
+	assert((value1->type == VAR_INTEGER) || (value1->type == VAR_UNDEFINED));
+
+	value1->u.intValue = value1->u.intValue == 0;
+}
+
+/*
+==============
+Scr_EvalInequality
+==============
+*/
+void Scr_EvalInequality( VariableValue *value1, VariableValue *value2 )
+{
+	Scr_EvalEquality(value1, value2);
 	assert((value1->type == VAR_INTEGER) || (value1->type == VAR_UNDEFINED));
 
 	value1->u.intValue = value1->u.intValue == 0;
@@ -3770,7 +3901,6 @@ void Scr_AddClassField( int classnum, const char *name, unsigned int offset )
 	entryValue->u.u.intValue = (unsigned short)offset;
 }
 
-
 /*
 ==============
 Scr_GetOffset
@@ -3821,7 +3951,6 @@ unsigned int FindEntityId( int entnum, int classnum )
 
 	return entryValue->u.u.pointerValue;
 }
-
 
 /*
 ==============
@@ -4360,7 +4489,6 @@ void Scr_CopyEntityNum( int fromEntnum, int toEntnum, int classnum )
 	}
 }
 
-
 /*
 ==============
 Scr_GetEntryUsage
@@ -4383,7 +4511,6 @@ float Scr_GetEntryUsage( unsigned int type, VariableUnion u )
 
 	return 0;
 }
-
 
 /*
 ==============
@@ -4420,7 +4547,6 @@ float Scr_GetEndonUsage( unsigned int parentId )
 		return 0;
 	}
 }
-
 
 /*
 ==============
@@ -4778,7 +4904,6 @@ void Scr_FreeGameVariable( int bComplete )
 	Scr_MakeValuePrimitive(entryValue->u.u.pointerValue);
 }
 
-
 /*
 ==============
 Scr_GetChecksum
@@ -4809,7 +4934,6 @@ int Scr_GetClassnumForCharId( char charId )
 	return -1;
 }
 
-
 /*
 ==============
 Scr_InitStringSet
@@ -4819,7 +4943,6 @@ unsigned int Scr_InitStringSet()
 {
 	return Scr_AllocArray();
 }
-
 
 /*
 ==============
@@ -4853,7 +4976,6 @@ bool Scr_AddStringSet( unsigned int setId, const char *string )
 	return result;
 }
 
-
 /*
 ==============
 Scr_ShutdownStringSet
@@ -4863,6 +4985,7 @@ void Scr_ShutdownStringSet( unsigned int setId )
 {
 	RemoveRefToObject( setId );
 }
+
 
 // Unreferenced storage; original declarations unknown (sized from the layout).
 static char unusedStorage[262304];

@@ -25,6 +25,14 @@ extern void Com_Error(errorParm_t code, const char *fmt, ...);
 #define CG_MARKS_DVAR cg_marks
 #define FX_HELPER_PTR (((FxHelper *)theFxHelper))
 
+void CG_InitMarkPolys(void);
+void CG_AddMarks(void);
+void CG_ImpactMark(MaterialHandle markMaterial, const vec_t *origin, const vec_t *dir, float orientation, const vec_t *color, float radius);
+
+void CG_InitMarkPolys(void);
+void CG_AddMarks(void);
+void CG_ImpactMark(MaterialHandle markMaterial, const vec_t *origin, const vec_t *dir, float orientation, const vec_t *color, float radius);
+
 // universal/com_math.h inlines
 inline int I_sel(const int x, const int y, const int z)
 {
@@ -33,14 +41,14 @@ inline int I_sel(const int x, const int y, const int z)
     return z;
 }
 
-inline int I_max(const int x, const int y)
-{
-    return I_sel(x - y, x, y);
-}
-
 inline int I_min(const int x, const int y)
 {
     return I_sel(y - x, x, y);
+}
+
+inline int I_max(const int x, const int y)
+{
+    return I_sel(x - y, x, y);
 }
 
 // Name from CoD4 com_pack; body at retail 0x4c7df0.
@@ -51,10 +59,6 @@ static void Byte4PackVertexColor(const float *from, unsigned char *to)
     to[0] = (unsigned char)I_max(0, I_min(255, I_fround(from[2] * 255.0f)));
     to[3] = (unsigned char)I_max(0, I_min(255, I_fround(from[3] * 255.0f)));
 }
-
-void CG_InitMarkPolys(void);
-void CG_AddMarks(void);
-void CG_ImpactMark(MaterialHandle markMaterial, const vec_t *origin, const vec_t *dir, float orientation, const vec_t *color, float radius);
 
 void CG_InitMarkPolys(void)
 {
@@ -191,3 +195,4 @@ void CG_ImpactMark(MaterialHandle markMaterial, const vec_t *origin, const vec_t
         }
     }
 }
+

@@ -55,6 +55,506 @@ void (*Scr_GetMethod( const char **pName, int *type ))( scr_entref_t );
 qboolean Scr_IsValidGameType( const char *pszGameType );
 void Scr_PlayerConnect( gentity_t *self );
 
+unsigned int GScr_AllocString( const char *s );
+void Scr_LoadLevel();
+int GScr_LoadScriptAndLabel( const char *filename, const char *name, qboolean bEnforceExists );
+void GScr_LoadGameTypeScript();
+void GScr_LoadLevelScript();
+void GScr_PostLoadScripts();
+void GScr_LoadScripts();
+void GScr_FreeScripts();
+gentity_t* GetEntity( scr_entref_t entref );
+gentity_t* GetPlayerEntity( scr_entref_t entref );
+void ScrCmd_GetClanId( scr_entref_t entref );
+void ScrCmd_GetClanName( scr_entref_t entref );
+void ScrCmd_GetClanMotto( scr_entref_t entref );
+void ScrCmd_GetClanDescription( scr_entref_t entref );
+void ScrCmd_GetClanURL( scr_entref_t entref );
+void print();
+void println();
+void Scr_LocalizationError( int iParm, const char *pszErrorMessage );
+void Scr_ValidateLocalizedStringRef( int parmIndex, const char *token, int tokenLen );
+void Scr_ConstructMessageString( int firstParmIndex, int lastParmIndex, const char *errorContext, char *string, int stringLimit );
+void Scr_MakeGameMessage( int iClientNum, const char *pszCmd );
+void iprintln();
+void iprintlnbold();
+void GScr_print3d();
+void GScr_line();
+void assertCmd();
+void assertexCmd();
+void assertmsgCmd();
+void GScr_IsDefined();
+void GScr_IsString();
+void GScr_IsAlive();
+void GScr_GetDvar();
+void GScr_GetDvarInt();
+void GScr_GetDvarFloat();
+void GScr_SetDvar();
+void GScr_GetTime();
+void Scr_GetEntByNum();
+void Scr_GetWeaponModel();
+void GScr_GetAmmoCount( scr_entref_t entref );
+void GScr_GetAnimLength();
+void GScr_AnimHasNotetrack();
+void GScr_GetBrushModelCenter();
+void GScr_Spawn();
+void GScr_SpawnTurret();
+void GScr_PrecacheTurret();
+void ScrCmd_attach( scr_entref_t entref );
+void ScrCmd_detach( scr_entref_t entref );
+void ScrCmd_detachAll( scr_entref_t entref );
+void ScrCmd_GetAttachSize( scr_entref_t entref );
+void ScrCmd_GetAttachModelName( scr_entref_t entref );
+void ScrCmd_GetAttachTagName( scr_entref_t entref );
+void ScrCmd_GetAttachIgnoreCollision( scr_entref_t entref );
+void ScrCmd_LinkTo( scr_entref_t entref );
+void ScrCmd_Unlink( scr_entref_t entref );
+void ScrCmd_EnableLinkTo( scr_entref_t entref );
+void ScrCmd_GetOrigin( scr_entref_t entref );
+void ScrCmd_GetEye( scr_entref_t entref );
+void ScrCmd_UseBy( scr_entref_t entref );
+void ScrCmd_IsTouching( scr_entref_t entref );
+void ScrCmd_SoundExists();
+void ScrCmd_PlaySound( scr_entref_t entref );
+void ScrCmd_PlaySoundAsMaster(scr_entref_t entref);
+void ScrCmd_PlayLoopSound( scr_entref_t entref );
+void ScrCmd_StopLoopSound( scr_entref_t entref );
+void ScrCmd_PlayRumble( scr_entref_t entref );
+void ScrCmd_PlayLoopRumble( scr_entref_t entref );
+void ScrCmd_StopRumble( scr_entref_t entref );
+void ScrCmd_Delete( scr_entref_t entref );
+void ScrCmd_SetModel( scr_entref_t entref );
+void ScrCmd_GetNormalHealth( scr_entref_t entref );
+void ScrCmd_SetNormalHealth( scr_entref_t entref );
+void ScrCmd_Show( scr_entref_t entref );
+void ScrCmd_Hide( scr_entref_t entref );
+void ScrCmd_ShowToPlayer( scr_entref_t entref );
+void ScrCmd_SetContents( scr_entref_t entref );
+void Scr_SetStableMissile( scr_entref_t entref );
+void GScr_SetCursorHint( scr_entref_t entref );
+int G_GetHintStringIndex( int *piIndex, const char *pszString );
+void GScr_SetHintString( scr_entref_t entref );
+void GScr_GetEntityNumber( scr_entref_t entref );
+void GScr_EnableGrenadeTouchDamage( scr_entref_t entref );
+void GScr_DisableGrenadeTouchDamage( scr_entref_t entref );
+void GScr_EnableGrenadeBounce( scr_entref_t entref );
+void GScr_DisableGrenadeBounce( scr_entref_t entref );
+void GScr_EnableAimAssist( scr_entref_t entref );
+void GScr_DisableAimAssist( scr_entref_t entref );
+void G_InitObjectives();
+qboolean ObjectiveStateIndexFromString( int *piStateIndex, unsigned int stateString );
+void ClearObjective_OnEntity( objective_t *obj );
+void ClearObjective( objective_t *obj );
+void Scr_Objective_Add();
+void Scr_Objective_Delete();
+void Scr_Objective_State();
+void Scr_Objective_Icon();
+void Scr_Objective_Position();
+void Scr_Objective_OnEntity();
+void Scr_Objective_Current();
+void GScr_Objective_Team();
+void GScr_LogPrint();
+void GScr_WorldEntNumber();
+void GScr_Obituary();
+void GScr_positionWouldTelefrag();
+void GScr_getStartTime();
+void GScr_PrecacheMenu();
+int GScr_GetScriptMenuIndex( const char *pszMenu );
+void GScr_PrecacheStatusIcon();
+int GScr_GetStatusIconIndex( const char *pszIcon );
+void GScr_PrecacheHeadIcon();
+int GScr_GetHeadIconIndex( const char *pszIcon );
+void Scr_BulletTrace();
+void Scr_BulletTracePassed();
+void Scr_SightTracePassed();
+void Scr_PhysicsTrace();
+void Scr_RandomInt();
+void Scr_RandomFloat();
+void Scr_RandomIntRange();
+void Scr_RandomFloatRange();
+void GScr_sin();
+void GScr_cos();
+void GScr_tan();
+void GScr_asin();
+void GScr_acos();
+void GScr_atan();
+void GScr_CastInt();
+void Scr_Distance();
+void Scr_DistanceSquared();
+void Scr_Length();
+void Scr_LengthSquared();
+void Scr_Closer();
+void Scr_VectorDot();
+void Scr_VectorNormalize();
+void Scr_VectorToAngles();
+void Scr_AnglesToUp();
+void Scr_AnglesToRight();
+void Scr_AnglesToForward();
+void Scr_IsSubStr();
+void Scr_GetSubStr();
+void Scr_ToLower();
+void Scr_StrTok();
+void Scr_MusicPlay();
+void Scr_MusicStop();
+void Scr_SoundFade();
+void Scr_PrecacheModel();
+void Scr_PrecacheShellShock();
+void Scr_PrecacheItem();
+void Scr_PrecacheShader();
+void Scr_PrecacheString();
+void Scr_PrecacheRumble();
+void Scr_AmbientPlay();
+void Scr_AmbientStop();
+void Scr_GrenadeExplosionEffect();
+void GScr_RadiusDamage();
+void GScr_SetPlayerIgnoreRadiusDamage();
+void GScr_GetMoveDelta();
+void GScr_GetAngleDelta();
+void GScr_GetNorthYaw();
+void Scr_LoadFX();
+void Scr_PlayFX();
+void Scr_PlayFXOnTag();
+void Scr_PlayLoopedFX();
+void Scr_SetFog( const char *cmd, float start, float density, float heightDensity, float r, float g, float b, float fTime );
+void Scr_SetLinearFog();
+void Scr_SetExponentialFog();
+void GScr_IsPlayer();
+void GScr_IsPlayerNumber();
+void GScr_SetWinningPlayer();
+void GScr_SetWinningTeam();
+void GScr_Announcement();
+void GScr_ClientAnnouncement();
+void GScr_GetTeamScore();
+void GScr_SetTeamScore();
+void GScr_SetClientNameMode();
+void GScr_UpdateClientNames();
+void GScr_GetTeamPlayersAlive();
+void GScr_GetNumParts();
+void GScr_GetPartName();
+void GScr_Earthquake();
+void GScr_ShellShock( scr_entref_t entref );
+void GScr_StopShellShock( scr_entref_t entref );
+void GScr_ViewKick( scr_entref_t entref );
+void GScr_LocalToWorldCoords( scr_entref_t entref );
+void GScr_SetRightArc( scr_entref_t entref );
+void GScr_SetLeftArc( scr_entref_t entref );
+void GScr_SetTopArc( scr_entref_t entref );
+void GScr_SetBottomArc( scr_entref_t entref );
+void GScr_PlaceSpawnPoint( scr_entref_t entref );
+void GScr_UpdateScores( scr_entref_t entref );
+void GScr_MapRestart();
+void GScr_LoadMap();
+void GScr_ExitLevel();
+void GScr_AddTestClient();
+void GScr_MakeDvarServerInfo();
+void GScr_AllClientsPrint();
+void GScr_MapExists();
+void GScr_IsValidGameType();
+void GScr_SetVoteString();
+void GScr_SetVoteTime();
+void GScr_SetVoteYesCount();
+void GScr_SetVoteNoCount();
+void GScr_KickPlayer();
+void GScr_BanPlayer();
+void GScr_ClientPrint();
+void GScr_OpenFile();
+void GScr_CloseFile();
+void GScr_FPrintln();
+void GScr_FReadLn();
+void GScr_FGetArg();
+void GScr_SetArchive();
+void Scr_PlayRumbleOnPos();
+void Scr_PlayLoopRumbleOnPos();
+void Scr_StopAllRumbles();
+void Scr_IsSplitscreen();
+void GScr_MatchEnd();
+void GScr_SetPlayerTeamRank();
+void GScr_SendXboxLiveRanks();
+void GScr_SetTeamForTrigger( scr_entref_t entref );
+void GScr_ClientClaimTrigger( scr_entref_t entref );
+void GScr_ClientReleaseTrigger( scr_entref_t entref );
+void GScr_ReleaseClaimedTrigger( scr_entref_t entref );
+void (*Scr_GetMethod( const char **pName, int *type ))( scr_entref_t );
+void (*Scr_GetMethod( const char **pName, int *type ))( scr_entref_t );
+void (*Scr_GetMethod( const char **pName, int *type ))( scr_entref_t );
+void Scr_SetOrigin( gentity_t *ent, int offset );
+void Scr_SetAngles( gentity_t *ent, int offset );
+void Scr_SetHealth( gentity_t *ent, int offset );
+void GScr_AddVector( const vec3_t vVec );
+void GScr_AddEntity( gentity_t *pEnt );
+char* Scr_GetGameTypeNameForScript( const char *pszGameTypeScript );
+qboolean Scr_IsValidGameType( const char *pszGameType );
+void Scr_LoadGameType();
+void Scr_PlayerConnect( gentity_t *self );
+void Scr_PlayerDisconnect( gentity_t *self );
+void Scr_VoteCalled( gentity_t *self, const char *command, const char *param1, const char *param2 );
+void Scr_PlayerVote( gentity_t *self, const char *option );
+int GScr_Stub();
+
+void CL_AddDebugLine( const float *start, const float *end, const float *color, int depthTest, int duration, int fromServer );
+
+scr_function_t functions[] =
+{
+	{ "print", print, qtrue, },
+	{ "println", println, qtrue, },
+	{ "iprintln", iprintln, qfalse, },
+	{ "iprintlnbold", iprintlnbold, qfalse, },
+	{ "print3d", GScr_print3d, qtrue, },
+	{ "line", GScr_line, qtrue, },
+	{ "getent", Scr_GetEnt, qfalse, },
+	{ "getentarray", Scr_GetEntArray, qfalse, },
+	{ "spawn", GScr_Spawn, qfalse, },
+	{ "spawnturret", GScr_SpawnTurret, qfalse, },
+	{ "precacheturret", GScr_PrecacheTurret, qfalse, },
+	{ "spawnstruct", Scr_AddStruct, qfalse, },
+	{ "assert", assertCmd, qtrue, },
+	{ "assertex", assertexCmd, qtrue, },
+	{ "assertmsg", assertmsgCmd, qtrue, },
+	{ "isdefined", GScr_IsDefined, qfalse, },
+	{ "isstring", GScr_IsString, qfalse, },
+	{ "isalive", GScr_IsAlive, qfalse, },
+	{ "getcvar", GScr_GetDvar, qfalse, },
+	{ "getcvarint", GScr_GetDvarInt, qfalse, },
+	{ "getcvarfloat", GScr_GetDvarFloat, qfalse, },
+	{ "setcvar", GScr_SetDvar, qfalse, },
+	{ "gettime", GScr_GetTime, qfalse, },
+	{ "getentbynum", Scr_GetEntByNum, qtrue, },
+	{ "getweaponmodel", Scr_GetWeaponModel, qfalse, },
+	{ "getanimlength", GScr_GetAnimLength, qfalse, },
+	{ "animhasnotetrack", GScr_AnimHasNotetrack, qfalse, },
+	{ "getbrushmodelcenter", GScr_GetBrushModelCenter, qfalse, },
+	{ "objective_add", Scr_Objective_Add, qfalse, },
+	{ "objective_delete", Scr_Objective_Delete, qfalse, },
+	{ "objective_state", Scr_Objective_State, qfalse, },
+	{ "objective_icon", Scr_Objective_Icon, qfalse, },
+	{ "objective_position", Scr_Objective_Position, qfalse, },
+	{ "objective_onentity", Scr_Objective_OnEntity, qfalse, },
+	{ "objective_current", Scr_Objective_Current, qfalse, },
+	{ "bullettrace", Scr_BulletTrace, qfalse, },
+	{ "bullettracepassed", Scr_BulletTracePassed, qfalse, },
+	{ "sighttracepassed", Scr_SightTracePassed, qfalse, },
+	{ "physicstrace", Scr_PhysicsTrace, qfalse, },
+	{ "getmovedelta", GScr_GetMoveDelta, qfalse, },
+	{ "getangledelta", GScr_GetAngleDelta, qfalse, },
+	{ "getnorthyaw", GScr_GetNorthYaw, qfalse, },
+	{ "randomint", Scr_RandomInt, qfalse, },
+	{ "randomfloat", Scr_RandomFloat, qfalse, },
+	{ "randomintrange", Scr_RandomIntRange, qfalse, },
+	{ "randomfloatrange", Scr_RandomFloatRange, qfalse, },
+	{ "sin", GScr_sin, qfalse, },
+	{ "cos", GScr_cos, qfalse, },
+	{ "tan", GScr_tan, qfalse, },
+	{ "asin", GScr_asin, qfalse, },
+	{ "acos", GScr_acos, qfalse, },
+	{ "atan", GScr_atan, qfalse, },
+	{ "int", GScr_CastInt, qfalse, },
+	{ "distance", Scr_Distance, qfalse, },
+	{ "distancesquared", Scr_DistanceSquared, qfalse, },
+	{ "length", Scr_Length, qfalse, },
+	{ "lengthsquared", Scr_LengthSquared, qfalse, },
+	{ "closer", Scr_Closer, qfalse, },
+	{ "vectordot", Scr_VectorDot, qfalse, },
+	{ "vectornormalize", Scr_VectorNormalize, qfalse, },
+	{ "vectortoangles", Scr_VectorToAngles, qfalse, },
+	{ "anglestoup", Scr_AnglesToUp, qfalse, },
+	{ "anglestoright", Scr_AnglesToRight, qfalse, },
+	{ "anglestoforward", Scr_AnglesToForward, qfalse, },
+	{ "issubstr", Scr_IsSubStr, qfalse, },
+	{ "getsubstr", Scr_GetSubStr, qfalse, },
+	{ "tolower", Scr_ToLower, qfalse, },
+	{ "strtok", Scr_StrTok, qfalse, },
+	{ "musicplay", Scr_MusicPlay, qfalse, },
+	{ "musicstop", Scr_MusicStop, qfalse, },
+	{ "soundfade", Scr_SoundFade, qfalse, },
+	{ "ambientplay", Scr_AmbientPlay, qfalse, },
+	{ "ambientstop", Scr_AmbientStop, qfalse, },
+	{ "precachemodel", Scr_PrecacheModel, qfalse, },
+	{ "precacheshellshock", Scr_PrecacheShellShock, qfalse, },
+	{ "precacheitem", Scr_PrecacheItem, qfalse, },
+	{ "precacheshader", Scr_PrecacheShader, qfalse, },
+	{ "precachestring", Scr_PrecacheString, qfalse, },
+	{ "precacherumble", Scr_PrecacheRumble, qfalse, },
+	{ "loadfx", Scr_LoadFX, qfalse, },
+	{ "playfx", Scr_PlayFX, qfalse, },
+	{ "playfxontag", Scr_PlayFXOnTag, qfalse, },
+	{ "playloopedfx", Scr_PlayLoopedFX, qfalse, },
+	{ "setcullfog", Scr_SetLinearFog, qfalse, },
+	{ "setexpfog", Scr_SetExponentialFog, qfalse, },
+	{ "grenadeexplosioneffect", Scr_GrenadeExplosionEffect, qfalse, },
+	{ "radiusdamage", GScr_RadiusDamage, qfalse, },
+	{ "setplayerignoreradiusdamage", GScr_SetPlayerIgnoreRadiusDamage, qfalse, },
+	{ "getnumparts", GScr_GetNumParts, qfalse, },
+	{ "getpartname", GScr_GetPartName, qfalse, },
+	{ "earthquake", GScr_Earthquake, qfalse, },
+	{ "newhudelem", GScr_NewHudElem, qfalse, },
+	{ "newclienthudelem", GScr_NewClientHudElem, qfalse, },
+	{ "newteamhudelem", GScr_NewTeamHudElem, qfalse, },
+	{ "resettimeout", Scr_ResetTimeout, qfalse, },
+	{ "isplayer", GScr_IsPlayer, qfalse, },
+	{ "isplayernumber", GScr_IsPlayerNumber, qfalse, },
+	{ "setwinningplayer", GScr_SetWinningPlayer, qfalse, },
+	{ "setwinningteam", GScr_SetWinningTeam, qfalse, },
+	{ "announcement", GScr_Announcement, qfalse, },
+	{ "clientannouncement", GScr_ClientAnnouncement, qfalse, },
+	{ "getteamscore", GScr_GetTeamScore, qfalse, },
+	{ "setteamscore", GScr_SetTeamScore, qfalse, },
+	{ "setclientnamemode", GScr_SetClientNameMode, qfalse, },
+	{ "updateclientnames", GScr_UpdateClientNames, qfalse, },
+	{ "getteamplayersalive", GScr_GetTeamPlayersAlive, qfalse, },
+	{ "objective_team", GScr_Objective_Team, qfalse, },
+	{ "logprint", GScr_LogPrint, qfalse, },
+	{ "worldentnumber", GScr_WorldEntNumber, qfalse, },
+	{ "obituary", GScr_Obituary, qfalse, },
+	{ "positionwouldtelefrag", GScr_positionWouldTelefrag, qfalse, },
+	{ "getstarttime", GScr_getStartTime, qfalse, },
+	{ "precachemenu", GScr_PrecacheMenu, qfalse, },
+	{ "precachestatusicon", GScr_PrecacheStatusIcon, qfalse, },
+	{ "precacheheadicon", GScr_PrecacheHeadIcon, qfalse, },
+	{ "map_restart", GScr_MapRestart, qfalse, },
+	{ "exitlevel", GScr_ExitLevel, qfalse, },
+	{ "addtestclient", GScr_AddTestClient, qfalse, },
+	{ "makecvarserverinfo", GScr_MakeDvarServerInfo, qfalse, },
+	{ "setarchive", GScr_SetArchive, qfalse, },
+	{ "allclientsprint", GScr_AllClientsPrint, qfalse, },
+	{ "clientprint", GScr_ClientPrint, qfalse, },
+	{ "mapexists", GScr_MapExists, qfalse, },
+	{ "isvalidgametype", GScr_IsValidGameType, qfalse, },
+	{ "matchend", GScr_MatchEnd, qfalse, },
+	{ "setplayerteamrank", GScr_SetPlayerTeamRank, qfalse, },
+	{ "sendranks", GScr_SendXboxLiveRanks, qfalse, },
+	{ "setvotestring", GScr_SetVoteString, qfalse, },
+	{ "setvotetime", GScr_SetVoteTime, qfalse, },
+	{ "setvoteyescount", GScr_SetVoteYesCount, qfalse, },
+	{ "setvotenocount", GScr_SetVoteNoCount, qfalse, },
+	{ "openfile", GScr_OpenFile, qfalse, },
+	{ "closefile", GScr_CloseFile, qfalse, },
+	{ "fprintln", GScr_FPrintln, qfalse, },
+	{ "freadln", GScr_FReadLn, qfalse, },
+	{ "fgetarg", GScr_FGetArg, qfalse, },
+	{ "kick", GScr_KickPlayer, qfalse, },
+	{ "ban", GScr_BanPlayer, qfalse, },
+	{ "map", GScr_LoadMap, qfalse, },
+	{ "playrumbleonpos", Scr_PlayRumbleOnPos, qfalse, },
+	{ "playlooprumbleonpos", Scr_PlayLoopRumbleOnPos, qfalse, },
+	{ "stopallrumbles", Scr_StopAllRumbles, qfalse, },
+	{ "soundexists", ScrCmd_SoundExists, qfalse, },
+	{ "issplitscreen", Scr_IsSplitscreen, qfalse, },
+};
+static scr_method_t methods[] =
+{
+	{ "attach", ScrCmd_attach, qfalse, },
+	{ "detach", ScrCmd_detach, qfalse, },
+	{ "detachall", ScrCmd_detachAll, qfalse, },
+	{ "getattachsize", ScrCmd_GetAttachSize, qfalse, },
+	{ "getattachmodelname", ScrCmd_GetAttachModelName, qfalse, },
+	{ "getattachtagname", ScrCmd_GetAttachTagName, qfalse, },
+	{ "getattachignorecollision", ScrCmd_GetAttachIgnoreCollision, qfalse, },
+	{ "getammocount", GScr_GetAmmoCount, qfalse, },
+	{ "getclanid", ScrCmd_GetClanId, qfalse, },
+	{ "getclanname", ScrCmd_GetClanName, qfalse, },
+	{ "getclandescription", ScrCmd_GetClanDescription, qfalse, },
+	{ "getclanmotto", ScrCmd_GetClanMotto, qfalse, },
+	{ "getclanurl", ScrCmd_GetClanURL, qfalse, },
+	{ "linkto", ScrCmd_LinkTo, qfalse, },
+	{ "unlink", ScrCmd_Unlink, qfalse, },
+	{ "enablelinkto", ScrCmd_EnableLinkTo, qfalse, },
+	{ "getorigin", ScrCmd_GetOrigin, qfalse, },
+	{ "geteye", ScrCmd_GetEye, qfalse, },
+	{ "useby", ScrCmd_UseBy, qfalse, },
+	{ "setstablemissile", Scr_SetStableMissile, qfalse, },
+	{ "istouching", ScrCmd_IsTouching, qfalse, },
+	{ "playsound", ScrCmd_PlaySound, qfalse, },
+	{ "playsoundasmaster", ScrCmd_PlaySoundAsMaster, qfalse, },
+	{ "playloopsound", ScrCmd_PlayLoopSound, qfalse, },
+	{ "stoploopsound", ScrCmd_StopLoopSound, qfalse, },
+	{ "playrumble", ScrCmd_PlayRumble, qfalse, },
+	{ "playlooprumble", ScrCmd_PlayLoopRumble, qfalse, },
+	{ "stoprumble", ScrCmd_StopRumble, qfalse, },
+	{ "delete", ScrCmd_Delete, qfalse, },
+	{ "setmodel", ScrCmd_SetModel, qfalse, },
+	{ "getnormalhealth", ScrCmd_GetNormalHealth, qfalse, },
+	{ "setnormalhealth", ScrCmd_SetNormalHealth, qfalse, },
+	{ "show", ScrCmd_Show, qfalse, },
+	{ "hide", ScrCmd_Hide, qfalse, },
+	{ "showtoplayer", ScrCmd_ShowToPlayer, qfalse, },
+	{ "setcontents", ScrCmd_SetContents, qfalse, },
+	{ "setcursorhint", GScr_SetCursorHint, qfalse, },
+	{ "sethintstring", GScr_SetHintString, qfalse, },
+	{ "shellshock", GScr_ShellShock, qfalse, },
+	{ "stopshellshock", GScr_StopShellShock, qfalse, },
+	{ "viewkick", GScr_ViewKick, qfalse, },
+	{ "localtoworldcoords", GScr_LocalToWorldCoords, qfalse, },
+	{ "setrightarc", GScr_SetRightArc, qfalse, },
+	{ "setleftarc", GScr_SetLeftArc, qfalse, },
+	{ "settoparc", GScr_SetTopArc, qfalse, },
+	{ "setbottomarc", GScr_SetBottomArc, qfalse, },
+	{ "getentitynumber", GScr_GetEntityNumber, qfalse, },
+	{ "enablegrenadetouchdamage", GScr_EnableGrenadeTouchDamage, qfalse, },
+	{ "disablegrenadetouchdamage", GScr_DisableGrenadeTouchDamage, qfalse, },
+	{ "enablegrenadebounce", GScr_EnableGrenadeBounce, qfalse, },
+	{ "disablegrenadebounce", GScr_DisableGrenadeBounce, qfalse, },
+	{ "enableaimassist", GScr_EnableAimAssist, qfalse, },
+	{ "disableaimassist", GScr_DisableAimAssist, qfalse, },
+	{ "placespawnpoint", GScr_PlaceSpawnPoint, qfalse, },
+	{ "updatescores", GScr_UpdateScores, qfalse, },
+	{ "setteamfortrigger", GScr_SetTeamForTrigger, qfalse, },
+	{ "clientclaimtrigger", GScr_ClientClaimTrigger, qfalse, },
+	{ "clientreleasetrigger", GScr_ClientReleaseTrigger, qfalse, },
+	{ "releaseclaimedtrigger", GScr_ReleaseClaimedTrigger, qfalse, },
+};
+
+/*
+===============
+Scr_PlayerDamage
+===============
+*/
+void Scr_PlayerDamage( gentity_t *self, gentity_t *inflictor, gentity_t *attacker,
+                       int damage, int dflags, int meansOfDeath, int iWeapon,
+                       const vec3_t vPoint, const vec3_t vDir, int hitLoc, int timeOffset )
+{
+	unsigned short threadId;
+	Scr_AddInt(timeOffset);
+	Scr_AddConstString(G_GetHitLocationString(hitLoc));
+	GScr_AddVector(vDir);
+	GScr_AddVector(vPoint);
+	Scr_AddString(BG_GetWeaponDef(iWeapon)->szInternalName);
+	if ( meansOfDeath < 0 || (unsigned int)meansOfDeath >= MOD_NUM )
+		Scr_AddString("badMOD");
+	else
+		Scr_AddString(modNames[meansOfDeath]);
+	Scr_AddInt(dflags);
+	Scr_AddInt(damage);
+	GScr_AddEntity(attacker);
+	GScr_AddEntity(inflictor);
+	threadId = Scr_ExecEntThread( self, g_scr_data.gametype.playerdamage, 10 );
+	Scr_FreeThread( threadId );
+}
+/*
+===============
+Scr_PlayerKilled
+===============
+*/
+void Scr_PlayerKilled( gentity_t *self, gentity_t *inflictor, gentity_t *attacker,
+                       int damage, int meansOfDeath, int iWeapon,
+                       const vec3_t vDir, int hitLoc, int psTimeOffset, int deathAnimDuration )
+{
+	unsigned short threadId;
+	Scr_AddInt(deathAnimDuration);
+	Scr_AddInt(psTimeOffset);
+	Scr_AddConstString(G_GetHitLocationString(hitLoc));
+	GScr_AddVector(vDir);
+	Scr_AddString(BG_GetWeaponDef(iWeapon)->szInternalName);
+	if ( meansOfDeath < 0 || (unsigned int)meansOfDeath >= MOD_NUM )
+		Scr_AddString("badMOD");
+	else
+		Scr_AddString(modNames[meansOfDeath]);
+	Scr_AddInt(damage);
+	GScr_AddEntity(attacker);
+	GScr_AddEntity(inflictor);
+	threadId = Scr_ExecEntThread( self, g_scr_data.gametype.playerkilled, 9 );
+	Scr_FreeThread( threadId );
+}
+
 /*
 ===============
 GScr_AllocString
@@ -517,8 +1017,6 @@ void iprintlnbold()
 {
 	Scr_MakeGameMessage(-1, va("%c", 103));
 }
-
-void CL_AddDebugLine( const float *start, const float *end, const float *color, int depthTest, int duration, int fromServer );
 
 void GScr_print3d()
 {
@@ -5581,217 +6079,6 @@ void GScr_ReleaseClaimedTrigger( scr_entref_t entref )
 	triggerEnt->trigger.singleUserEntIndex = ENTITYNUM_NONE;
 }
 
-scr_function_t functions[] =
-{
-	{ "print", print, qtrue, },
-	{ "println", println, qtrue, },
-	{ "iprintln", iprintln, qfalse, },
-	{ "iprintlnbold", iprintlnbold, qfalse, },
-	{ "print3d", GScr_print3d, qtrue, },
-	{ "line", GScr_line, qtrue, },
-	{ "getent", Scr_GetEnt, qfalse, },
-	{ "getentarray", Scr_GetEntArray, qfalse, },
-	{ "spawn", GScr_Spawn, qfalse, },
-	{ "spawnturret", GScr_SpawnTurret, qfalse, },
-	{ "precacheturret", GScr_PrecacheTurret, qfalse, },
-	{ "spawnstruct", Scr_AddStruct, qfalse, },
-	{ "assert", assertCmd, qtrue, },
-	{ "assertex", assertexCmd, qtrue, },
-	{ "assertmsg", assertmsgCmd, qtrue, },
-	{ "isdefined", GScr_IsDefined, qfalse, },
-	{ "isstring", GScr_IsString, qfalse, },
-	{ "isalive", GScr_IsAlive, qfalse, },
-	{ "getcvar", GScr_GetDvar, qfalse, },
-	{ "getcvarint", GScr_GetDvarInt, qfalse, },
-	{ "getcvarfloat", GScr_GetDvarFloat, qfalse, },
-	{ "setcvar", GScr_SetDvar, qfalse, },
-	{ "gettime", GScr_GetTime, qfalse, },
-	{ "getentbynum", Scr_GetEntByNum, qtrue, },
-	{ "getweaponmodel", Scr_GetWeaponModel, qfalse, },
-	{ "getanimlength", GScr_GetAnimLength, qfalse, },
-	{ "animhasnotetrack", GScr_AnimHasNotetrack, qfalse, },
-	{ "getbrushmodelcenter", GScr_GetBrushModelCenter, qfalse, },
-	{ "objective_add", Scr_Objective_Add, qfalse, },
-	{ "objective_delete", Scr_Objective_Delete, qfalse, },
-	{ "objective_state", Scr_Objective_State, qfalse, },
-	{ "objective_icon", Scr_Objective_Icon, qfalse, },
-	{ "objective_position", Scr_Objective_Position, qfalse, },
-	{ "objective_onentity", Scr_Objective_OnEntity, qfalse, },
-	{ "objective_current", Scr_Objective_Current, qfalse, },
-	{ "bullettrace", Scr_BulletTrace, qfalse, },
-	{ "bullettracepassed", Scr_BulletTracePassed, qfalse, },
-	{ "sighttracepassed", Scr_SightTracePassed, qfalse, },
-	{ "physicstrace", Scr_PhysicsTrace, qfalse, },
-	{ "getmovedelta", GScr_GetMoveDelta, qfalse, },
-	{ "getangledelta", GScr_GetAngleDelta, qfalse, },
-	{ "getnorthyaw", GScr_GetNorthYaw, qfalse, },
-	{ "randomint", Scr_RandomInt, qfalse, },
-	{ "randomfloat", Scr_RandomFloat, qfalse, },
-	{ "randomintrange", Scr_RandomIntRange, qfalse, },
-	{ "randomfloatrange", Scr_RandomFloatRange, qfalse, },
-	{ "sin", GScr_sin, qfalse, },
-	{ "cos", GScr_cos, qfalse, },
-	{ "tan", GScr_tan, qfalse, },
-	{ "asin", GScr_asin, qfalse, },
-	{ "acos", GScr_acos, qfalse, },
-	{ "atan", GScr_atan, qfalse, },
-	{ "int", GScr_CastInt, qfalse, },
-	{ "distance", Scr_Distance, qfalse, },
-	{ "distancesquared", Scr_DistanceSquared, qfalse, },
-	{ "length", Scr_Length, qfalse, },
-	{ "lengthsquared", Scr_LengthSquared, qfalse, },
-	{ "closer", Scr_Closer, qfalse, },
-	{ "vectordot", Scr_VectorDot, qfalse, },
-	{ "vectornormalize", Scr_VectorNormalize, qfalse, },
-	{ "vectortoangles", Scr_VectorToAngles, qfalse, },
-	{ "anglestoup", Scr_AnglesToUp, qfalse, },
-	{ "anglestoright", Scr_AnglesToRight, qfalse, },
-	{ "anglestoforward", Scr_AnglesToForward, qfalse, },
-	{ "issubstr", Scr_IsSubStr, qfalse, },
-	{ "getsubstr", Scr_GetSubStr, qfalse, },
-	{ "tolower", Scr_ToLower, qfalse, },
-	{ "strtok", Scr_StrTok, qfalse, },
-	{ "musicplay", Scr_MusicPlay, qfalse, },
-	{ "musicstop", Scr_MusicStop, qfalse, },
-	{ "soundfade", Scr_SoundFade, qfalse, },
-	{ "ambientplay", Scr_AmbientPlay, qfalse, },
-	{ "ambientstop", Scr_AmbientStop, qfalse, },
-	{ "precachemodel", Scr_PrecacheModel, qfalse, },
-	{ "precacheshellshock", Scr_PrecacheShellShock, qfalse, },
-	{ "precacheitem", Scr_PrecacheItem, qfalse, },
-	{ "precacheshader", Scr_PrecacheShader, qfalse, },
-	{ "precachestring", Scr_PrecacheString, qfalse, },
-	{ "precacherumble", Scr_PrecacheRumble, qfalse, },
-	{ "loadfx", Scr_LoadFX, qfalse, },
-	{ "playfx", Scr_PlayFX, qfalse, },
-	{ "playfxontag", Scr_PlayFXOnTag, qfalse, },
-	{ "playloopedfx", Scr_PlayLoopedFX, qfalse, },
-	{ "setcullfog", Scr_SetLinearFog, qfalse, },
-	{ "setexpfog", Scr_SetExponentialFog, qfalse, },
-	{ "grenadeexplosioneffect", Scr_GrenadeExplosionEffect, qfalse, },
-	{ "radiusdamage", GScr_RadiusDamage, qfalse, },
-	{ "setplayerignoreradiusdamage", GScr_SetPlayerIgnoreRadiusDamage, qfalse, },
-	{ "getnumparts", GScr_GetNumParts, qfalse, },
-	{ "getpartname", GScr_GetPartName, qfalse, },
-	{ "earthquake", GScr_Earthquake, qfalse, },
-	{ "newhudelem", GScr_NewHudElem, qfalse, },
-	{ "newclienthudelem", GScr_NewClientHudElem, qfalse, },
-	{ "newteamhudelem", GScr_NewTeamHudElem, qfalse, },
-	{ "resettimeout", Scr_ResetTimeout, qfalse, },
-	{ "isplayer", GScr_IsPlayer, qfalse, },
-	{ "isplayernumber", GScr_IsPlayerNumber, qfalse, },
-	{ "setwinningplayer", GScr_SetWinningPlayer, qfalse, },
-	{ "setwinningteam", GScr_SetWinningTeam, qfalse, },
-	{ "announcement", GScr_Announcement, qfalse, },
-	{ "clientannouncement", GScr_ClientAnnouncement, qfalse, },
-	{ "getteamscore", GScr_GetTeamScore, qfalse, },
-	{ "setteamscore", GScr_SetTeamScore, qfalse, },
-	{ "setclientnamemode", GScr_SetClientNameMode, qfalse, },
-	{ "updateclientnames", GScr_UpdateClientNames, qfalse, },
-	{ "getteamplayersalive", GScr_GetTeamPlayersAlive, qfalse, },
-	{ "objective_team", GScr_Objective_Team, qfalse, },
-	{ "logprint", GScr_LogPrint, qfalse, },
-	{ "worldentnumber", GScr_WorldEntNumber, qfalse, },
-	{ "obituary", GScr_Obituary, qfalse, },
-	{ "positionwouldtelefrag", GScr_positionWouldTelefrag, qfalse, },
-	{ "getstarttime", GScr_getStartTime, qfalse, },
-	{ "precachemenu", GScr_PrecacheMenu, qfalse, },
-	{ "precachestatusicon", GScr_PrecacheStatusIcon, qfalse, },
-	{ "precacheheadicon", GScr_PrecacheHeadIcon, qfalse, },
-	{ "map_restart", GScr_MapRestart, qfalse, },
-	{ "exitlevel", GScr_ExitLevel, qfalse, },
-	{ "addtestclient", GScr_AddTestClient, qfalse, },
-	{ "makecvarserverinfo", GScr_MakeDvarServerInfo, qfalse, },
-	{ "setarchive", GScr_SetArchive, qfalse, },
-	{ "allclientsprint", GScr_AllClientsPrint, qfalse, },
-	{ "clientprint", GScr_ClientPrint, qfalse, },
-	{ "mapexists", GScr_MapExists, qfalse, },
-	{ "isvalidgametype", GScr_IsValidGameType, qfalse, },
-	{ "matchend", GScr_MatchEnd, qfalse, },
-	{ "setplayerteamrank", GScr_SetPlayerTeamRank, qfalse, },
-	{ "sendranks", GScr_SendXboxLiveRanks, qfalse, },
-	{ "setvotestring", GScr_SetVoteString, qfalse, },
-	{ "setvotetime", GScr_SetVoteTime, qfalse, },
-	{ "setvoteyescount", GScr_SetVoteYesCount, qfalse, },
-	{ "setvotenocount", GScr_SetVoteNoCount, qfalse, },
-	{ "openfile", GScr_OpenFile, qfalse, },
-	{ "closefile", GScr_CloseFile, qfalse, },
-	{ "fprintln", GScr_FPrintln, qfalse, },
-	{ "freadln", GScr_FReadLn, qfalse, },
-	{ "fgetarg", GScr_FGetArg, qfalse, },
-	{ "kick", GScr_KickPlayer, qfalse, },
-	{ "ban", GScr_BanPlayer, qfalse, },
-	{ "map", GScr_LoadMap, qfalse, },
-	{ "playrumbleonpos", Scr_PlayRumbleOnPos, qfalse, },
-	{ "playlooprumbleonpos", Scr_PlayLoopRumbleOnPos, qfalse, },
-	{ "stopallrumbles", Scr_StopAllRumbles, qfalse, },
-	{ "soundexists", ScrCmd_SoundExists, qfalse, },
-	{ "issplitscreen", Scr_IsSplitscreen, qfalse, },
-};
-
-static scr_method_t methods[] =
-{
-	{ "attach", ScrCmd_attach, qfalse, },
-	{ "detach", ScrCmd_detach, qfalse, },
-	{ "detachall", ScrCmd_detachAll, qfalse, },
-	{ "getattachsize", ScrCmd_GetAttachSize, qfalse, },
-	{ "getattachmodelname", ScrCmd_GetAttachModelName, qfalse, },
-	{ "getattachtagname", ScrCmd_GetAttachTagName, qfalse, },
-	{ "getattachignorecollision", ScrCmd_GetAttachIgnoreCollision, qfalse, },
-	{ "getammocount", GScr_GetAmmoCount, qfalse, },
-	{ "getclanid", ScrCmd_GetClanId, qfalse, },
-	{ "getclanname", ScrCmd_GetClanName, qfalse, },
-	{ "getclandescription", ScrCmd_GetClanDescription, qfalse, },
-	{ "getclanmotto", ScrCmd_GetClanMotto, qfalse, },
-	{ "getclanurl", ScrCmd_GetClanURL, qfalse, },
-	{ "linkto", ScrCmd_LinkTo, qfalse, },
-	{ "unlink", ScrCmd_Unlink, qfalse, },
-	{ "enablelinkto", ScrCmd_EnableLinkTo, qfalse, },
-	{ "getorigin", ScrCmd_GetOrigin, qfalse, },
-	{ "geteye", ScrCmd_GetEye, qfalse, },
-	{ "useby", ScrCmd_UseBy, qfalse, },
-	{ "setstablemissile", Scr_SetStableMissile, qfalse, },
-	{ "istouching", ScrCmd_IsTouching, qfalse, },
-	{ "playsound", ScrCmd_PlaySound, qfalse, },
-	{ "playsoundasmaster", ScrCmd_PlaySoundAsMaster, qfalse, },
-	{ "playloopsound", ScrCmd_PlayLoopSound, qfalse, },
-	{ "stoploopsound", ScrCmd_StopLoopSound, qfalse, },
-	{ "playrumble", ScrCmd_PlayRumble, qfalse, },
-	{ "playlooprumble", ScrCmd_PlayLoopRumble, qfalse, },
-	{ "stoprumble", ScrCmd_StopRumble, qfalse, },
-	{ "delete", ScrCmd_Delete, qfalse, },
-	{ "setmodel", ScrCmd_SetModel, qfalse, },
-	{ "getnormalhealth", ScrCmd_GetNormalHealth, qfalse, },
-	{ "setnormalhealth", ScrCmd_SetNormalHealth, qfalse, },
-	{ "show", ScrCmd_Show, qfalse, },
-	{ "hide", ScrCmd_Hide, qfalse, },
-	{ "showtoplayer", ScrCmd_ShowToPlayer, qfalse, },
-	{ "setcontents", ScrCmd_SetContents, qfalse, },
-	{ "setcursorhint", GScr_SetCursorHint, qfalse, },
-	{ "sethintstring", GScr_SetHintString, qfalse, },
-	{ "shellshock", GScr_ShellShock, qfalse, },
-	{ "stopshellshock", GScr_StopShellShock, qfalse, },
-	{ "viewkick", GScr_ViewKick, qfalse, },
-	{ "localtoworldcoords", GScr_LocalToWorldCoords, qfalse, },
-	{ "setrightarc", GScr_SetRightArc, qfalse, },
-	{ "setleftarc", GScr_SetLeftArc, qfalse, },
-	{ "settoparc", GScr_SetTopArc, qfalse, },
-	{ "setbottomarc", GScr_SetBottomArc, qfalse, },
-	{ "getentitynumber", GScr_GetEntityNumber, qfalse, },
-	{ "enablegrenadetouchdamage", GScr_EnableGrenadeTouchDamage, qfalse, },
-	{ "disablegrenadetouchdamage", GScr_DisableGrenadeTouchDamage, qfalse, },
-	{ "enablegrenadebounce", GScr_EnableGrenadeBounce, qfalse, },
-	{ "disablegrenadebounce", GScr_DisableGrenadeBounce, qfalse, },
-	{ "enableaimassist", GScr_EnableAimAssist, qfalse, },
-	{ "disableaimassist", GScr_DisableAimAssist, qfalse, },
-	{ "placespawnpoint", GScr_PlaceSpawnPoint, qfalse, },
-	{ "updatescores", GScr_UpdateScores, qfalse, },
-	{ "setteamfortrigger", GScr_SetTeamForTrigger, qfalse, },
-	{ "clientclaimtrigger", GScr_ClientClaimTrigger, qfalse, },
-	{ "clientreleasetrigger", GScr_ClientReleaseTrigger, qfalse, },
-	{ "releaseclaimedtrigger", GScr_ReleaseClaimedTrigger, qfalse, },
-};
-
 /*
 ===============
 Scr_GetFunction
@@ -6150,72 +6437,6 @@ void Scr_PlayerDisconnect( gentity_t *self )
 
 /*
 ===============
-Scr_PlayerDamage
-===============
-*/
-void Scr_PlayerDamage( gentity_t *self, gentity_t *inflictor, gentity_t *attacker,
-                       int damage, int dflags, int meansOfDeath, int iWeapon,
-                       const vec3_t vPoint, const vec3_t vDir, int hitLoc, int timeOffset )
-{
-	unsigned short threadId;
-
-	Scr_AddInt(timeOffset);
-	Scr_AddConstString(G_GetHitLocationString(hitLoc));
-
-	GScr_AddVector(vDir);
-	GScr_AddVector(vPoint);
-
-	Scr_AddString(BG_GetWeaponDef(iWeapon)->szInternalName);
-
-	if ( meansOfDeath < 0 || (unsigned int)meansOfDeath >= MOD_NUM )
-		Scr_AddString("badMOD");
-	else
-		Scr_AddString(modNames[meansOfDeath]);
-
-	Scr_AddInt(dflags);
-	Scr_AddInt(damage);
-
-	GScr_AddEntity(attacker);
-	GScr_AddEntity(inflictor);
-
-	threadId = Scr_ExecEntThread( self, g_scr_data.gametype.playerdamage, 10 );
-	Scr_FreeThread( threadId );
-}
-
-/*
-===============
-Scr_PlayerKilled
-===============
-*/
-void Scr_PlayerKilled( gentity_t *self, gentity_t *inflictor, gentity_t *attacker,
-                       int damage, int meansOfDeath, int iWeapon,
-                       const vec3_t vDir, int hitLoc, int psTimeOffset, int deathAnimDuration )
-{
-	unsigned short threadId;
-
-	Scr_AddInt(deathAnimDuration);
-	Scr_AddInt(psTimeOffset);
-
-	Scr_AddConstString(G_GetHitLocationString(hitLoc));
-	GScr_AddVector(vDir);
-	Scr_AddString(BG_GetWeaponDef(iWeapon)->szInternalName);
-
-	if ( meansOfDeath < 0 || (unsigned int)meansOfDeath >= MOD_NUM )
-		Scr_AddString("badMOD");
-	else
-		Scr_AddString(modNames[meansOfDeath]);
-
-	Scr_AddInt(damage);
-
-	GScr_AddEntity(attacker);
-	GScr_AddEntity(inflictor);
-
-	threadId = Scr_ExecEntThread( self, g_scr_data.gametype.playerkilled, 9 );
-	Scr_FreeThread( threadId );
-}
-
-/*
-===============
 Scr_VoteCalled
 ===============
 */
@@ -6249,3 +6470,4 @@ int GScr_Stub()
 {
 	return 0;
 }
+

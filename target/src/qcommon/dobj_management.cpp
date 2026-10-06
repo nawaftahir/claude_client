@@ -17,6 +17,41 @@ static qboolean g_bDObjInited;
 void Com_ShutdownDObj(void);
 
 
+DObj* Com_GetServerDObj( int handle );
+void Com_ServerDObjCreate( DObjModel_s *dobjModels, unsigned short numModels, XAnimTree_s *tree, int handle );
+void Com_SafeClientDObjFree( int handle );
+void Com_SafeServerDObjFree( int handle );
+void Com_ShutdownDObj(void);
+void Com_AbortDObj();
+
+/*
+==================
+Com_SafeClientDObjFree
+==================
+*/
+void Com_SafeClientDObjFree( int handle )
+{
+	int index;
+
+	assert(((unsigned)handle < ((((1<<10) + 512)) + 1)));
+	assert(((unsigned)handle < (sizeof( clientObjMap ) / (sizeof( clientObjMap[0] ) * (sizeof( clientObjMap ) != 4 || sizeof( clientObjMap[0] ) <= 4)))));
+
+	index = clientObjMap[handle];
+
+	if ( !index )
+	{
+		return;
+	}
+
+	clientObjMap[handle] = 0;
+	assert((unsigned)index < ARRAY_COUNT( objAlloced ));
+
+	objAlloced[index] = false;
+	objFreeCount++;
+
+	DObjFree(&objBuf[index]);
+}
+
 DObj* Com_GetClientDObj( int handle, int localClientNum )
 {
 	handle += 1152 * localClientNum;
@@ -39,7 +74,6 @@ DObj* Com_GetServerDObj( int handle )
 
 	return serverObjMap[handle] ? &objBuf[serverObjMap[handle]] : NULL;
 }
-
 
 int Com_GetFreeDObjIndex()
 {
@@ -70,7 +104,6 @@ int Com_GetFreeDObjIndex()
 	return 0;
 }
 
-
 void Com_ClientDObjCreate( DObjModel_s *dobjModels, unsigned short numModels, XAnimTree_s *tree, int handle )
 {
 	int index;
@@ -82,7 +115,6 @@ void Com_ClientDObjCreate( DObjModel_s *dobjModels, unsigned short numModels, XA
 	if ( !objFreeCount )
 		Com_Error(ERR_DROP, "\x15No free DObjs");
 }
-
 
 void Com_ClientDObjClearAllSkel()
 {
@@ -129,34 +161,6 @@ void Com_ServerDObjCreate( DObjModel_s *dobjModels, unsigned short numModels, XA
 
 /*
 ==================
-Com_SafeClientDObjFree
-==================
-*/
-void Com_SafeClientDObjFree( int handle )
-{
-	int index;
-
-	assert(((unsigned)handle < ((((1<<10) + 512)) + 1)));
-	assert(((unsigned)handle < (sizeof( clientObjMap ) / (sizeof( clientObjMap[0] ) * (sizeof( clientObjMap ) != 4 || sizeof( clientObjMap[0] ) <= 4)))));
-
-	index = clientObjMap[handle];
-
-	if ( !index )
-	{
-		return;
-	}
-
-	clientObjMap[handle] = 0;
-	assert((unsigned)index < ARRAY_COUNT( objAlloced ));
-
-	objAlloced[index] = false;
-	objFreeCount++;
-
-	DObjFree(&objBuf[index]);
-}
-
-/*
-==================
 Com_SafeServerDObjFree
 ==================
 */
@@ -198,7 +202,6 @@ void Com_InitDObj()
 	g_bDObjInited = qtrue;
 }
 
-
 void Com_ShutdownDObj(void)
 {
 	if (!g_bDObjInited)
@@ -216,3 +219,4 @@ void Com_AbortDObj()
 {
 	g_bDObjInited = qfalse;
 }
+

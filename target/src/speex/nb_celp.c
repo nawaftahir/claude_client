@@ -98,6 +98,8 @@ const float exc_gain_quant_scal1[2]={0.70469, 1.05127};
 
 #define sqr(x) ((x)*(x))
 
+#define median3(a, b, c)	((a) < (b) ? ((b) < (c) ? (b) : ((a) < (c) ? (c) : (a))) : ((c) < (b) ? (b) : ((c) < (a) ? (c) : (a))))
+
 void *nb_encoder_init(const SpeexMode *m)
 {
    EncState *st;
@@ -967,7 +969,6 @@ int nb_encode(void *state, void *vin, SpeexBits *bits)
    return 1;
 }
 
-
 void *nb_decoder_init(const SpeexMode *m)
 {
    DecState *st;
@@ -1069,8 +1070,6 @@ void nb_decoder_destroy(void *state)
 
    speex_free(state);
 }
-
-#define median3(a, b, c)	((a) < (b) ? ((b) < (c) ? (b) : ((a) < (c) ? (c) : (a))) : ((c) < (b) ? (b) : ((c) < (a) ? (c) : (a))))
 
 static void nb_decode_lost(DecState *st, spx_word16_t *out, char *stack)
 {
@@ -1990,3 +1989,4 @@ int nb_decoder_ctl(void *state, int request, void *ptr)
    }
    return 0;
 }
+

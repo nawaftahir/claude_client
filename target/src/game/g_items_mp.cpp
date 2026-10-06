@@ -18,22 +18,28 @@ static int itemRegistered[256];
 
 void Touch_Item( gentity_t *ent, gentity_t *other, qboolean touched );
 
-/*
-==================
-G_ItemClipMask
-==================
-*/
-inline int G_ItemClipMask( gentity_t *ent )
-{
-	int mask;
+inline int G_ItemClipMask( gentity_t *ent );
+void Fill_Clip( playerState_t *ps, int weapon );
+void Touch_Item_Auto( gentity_t *ent, gentity_t *other, qboolean bTouched );
+void Touch_Item( gentity_t *ent, gentity_t *other, qboolean touched );
+void DroppedItemClearOwner( gentity_t *pSelf );
+void G_GetItemClassname( const gitem_t *item, unsigned short *out );
+gentity_t* LaunchItem( const gitem_t *item, vec3_t origin, vec3_t angles, int ownerNum );
+gentity_t *Drop_Weapon( gentity_t *ent, int iWeaponIndex, unsigned int tag );
+void FinishSpawningItem( gentity_t *ent );
+void ClearRegisteredItems();
+void SaveRegisteredWeapons();
+void SaveRegisteredItems();
+void RegisterItem( int iItemIndex, qboolean bUpdateCS );
+int G_RegisterWeapon( int weapIndex );
+int IsItemRegistered( int iItemIndex );
+void G_SpawnItem( gentity_t *ent, const gitem_t *item );
+void G_BounceCorpse( gentity_t *ent, corpseInfo_t *corpseInfo, trace_t *trace, vec3_t endpos );
+void G_GetAnimDeltaForCorpse( gentity_t *ent, corpseInfo_t *ci, vec3_t originChange );
+void G_RunCorpseMove( gentity_t *ent );
+void G_RunCorpseAnimate( gentity_t *ent );
+void G_RunCorpse( gentity_t *ent );
 
-	if ( ent->clipmask )
-		mask = ent->clipmask;
-	else
-		mask = CONTENTS_SOLID | CONTENTS_GLASS | CONTENTS_MISSILECLIP | CONTENTS_ITEMCLIP;
-
-	return mask;
-}
 gentity_t *Drop_Weapon( gentity_t *ent, int iWeaponIndex, unsigned int tag );
 void RegisterItem( int iItemIndex, qboolean bUpdateCS );
 
@@ -74,7 +80,6 @@ void Fill_Clip( playerState_t *ps, int weapon )
 		ps->ammoclip[iClipIndex] += ammomove;
 	}
 }
-
 
 int Add_Ammo( gentity_t *ent, int weaponIndex, int count, qboolean fillClip )
 {
@@ -153,7 +158,6 @@ int Add_Ammo( gentity_t *ent, int weaponIndex, int count, qboolean fillClip )
 	return ent->client->ps.ammo[ammoweap] - oldAmmo + (ent->client->ps.ammoclip[clipweap] - oldClip);
 }
 
-
 qboolean Pickup_Ammo( gentity_t *ent, gentity_t *other )
 {
 	int quantity;
@@ -204,7 +208,6 @@ qboolean Pickup_Ammo( gentity_t *ent, gentity_t *other )
 
 	return qtrue;
 }
-
 
 qboolean Pickup_Weapon( gentity_t *ent, gentity_t *other, int *pickupEvent, qboolean touched )
 {
@@ -471,7 +474,6 @@ qboolean Pickup_Weapon( gentity_t *ent, gentity_t *other, int *pickupEvent, qboo
 	return qtrue;
 }
 
-
 qboolean Pickup_Health( gentity_t *ent, gentity_t *other )
 {
 	int max;
@@ -682,7 +684,6 @@ void Touch_Item( gentity_t *ent, gentity_t *other, qboolean touched )
 	G_FreeEntity(ent);
 }
 
-
 int GetFreeCueSpot()
 {
 	int i;
@@ -756,7 +757,6 @@ void DroppedItemClearOwner( gentity_t *pSelf )
 	pSelf->s.clientNum = ENTITYNUM_WORLD;
 }
 
-
 /*
 ==================
 G_GetItemClassname
@@ -780,6 +780,23 @@ void G_GetItemClassname( const gitem_t *item, unsigned short *out )
 	{
 		G_SetConstString(out, item->classname);
 	}
+}
+
+/*
+==================
+G_ItemClipMask
+==================
+*/
+inline int G_ItemClipMask( gentity_t *ent )
+{
+	int mask;
+
+	if ( ent->clipmask )
+		mask = ent->clipmask;
+	else
+		mask = CONTENTS_SOLID | CONTENTS_GLASS | CONTENTS_MISSILECLIP | CONTENTS_ITEMCLIP;
+
+	return mask;
 }
 
 /*
@@ -846,7 +863,6 @@ gentity_t* LaunchItem( const gitem_t *item, vec3_t origin, vec3_t angles, int ow
 
 	return dropped;
 }
-
 
 gentity_t* Drop_Item( gentity_t *ent, const gitem_t *item, float angle, qboolean novelocity )
 {
@@ -1431,7 +1447,6 @@ void G_BounceCorpse( gentity_t *ent, corpseInfo_t *corpseInfo, trace_t *trace, v
 	}
 }
 
-
 void G_OrientItemToGround( gentity_t *ent, trace_t *trace )
 {
 	vec3_t vAxis[3];
@@ -1644,7 +1659,6 @@ void G_RunCorpse( gentity_t *ent )
 	G_RunThink(ent);
 }
 
-
 void G_RunItem( gentity_t *ent )
 {
 	vec3_t origin;
@@ -1754,3 +1768,4 @@ void G_RunItem( gentity_t *ent )
 
 	SV_LinkEntity(ent);
 }
+

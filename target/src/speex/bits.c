@@ -42,6 +42,9 @@
 /** Maximum size of the bit-stream (for fixed-size allocation) */
 #define MAX_BYTES_PER_FRAME (2000/BYTES_PER_CHAR)
 
+unsigned int speex_bits_unpack_unsigned(SpeexBits *bits, int nbBits);
+void speex_bits_insert_terminator(SpeexBits *bits);
+
 void speex_bits_init(SpeexBits *bits)
 {
    bits->chars = (char*)speex_alloc(MAX_BYTES_PER_FRAME);
@@ -358,3 +361,4 @@ void speex_bits_insert_terminator(SpeexBits *bits)
    while (bits->bitPtr<BITS_PER_CHAR-1)
       speex_bits_pack(bits, 1, 1);
 }
+

@@ -10,6 +10,8 @@ bool Dvar_AnyLatchedValues();
 void Com_CheckSetRecommended();
 qboolean Sys_RemoveDirTree(const char *dir);
 
+int Com_BuildPlayerProfilePath(char *path, int pathSize, const char *format, ...);
+
 static bool Com_PlayerProfileExists(const char *profileName)
 {
 	char **fileList;
@@ -185,3 +187,4 @@ bool Com_DeletePlayerProfile(const char *profileName)
 
 	return true;
 }
+

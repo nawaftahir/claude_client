@@ -30,6 +30,69 @@ void SV_CloseDownload( client_t *cl );
 void SV_WriteDownloadToClient( client_t *cl, msg_t *msg );
 void SV_UserinfoChanged( client_t *cl );
 
+void SV_GetChallenge( netadr_t from );
+void SV_AuthorizeRequest( netadr_t from, int challenge );
+qboolean SV_IsTempBannedGuid( int guid );
+qboolean SV_IsBannedGuid( int guid );
+unsigned int SV_FindFreeTempBanSlot();
+void SV_BanGuidBriefly( int guid );
+void SV_BanClient( client_t *cl );
+void SV_UnbanClient( const char *name );
+void SV_AuthorizeIpPacket( netadr_t from );
+void SV_FreeClient( client_t *cl );
+void SV_FreeClients();
+void SV_DirectConnect( netadr_t from );
+void SV_FreeClientScriptPers();
+void SV_DropClient( client_t *drop, const char *reason );
+void SV_DelayDropClient( client_t *drop, const char *reason );
+void SV_ClientEnterWorld( client_t *client, usercmd_t *cmd );
+void SV_CloseDownload( client_t *cl );
+static void SV_StopDownload_f( client_t *cl );
+static void SV_DoneDownload_f( client_t *cl );
+static void SV_RetransmitDownload_f( client_t *cl );
+static void SV_NextDownload_f( client_t *cl );
+static void SV_BeginDownload_f( client_t *cl );
+void SV_WriteDownloadToClient( client_t *cl, msg_t *msg );
+static void SV_Disconnect_f( client_t *cl );
+static void SV_VerifyIwds_f( client_t *cl );
+static void SV_ResetPureClient_f( client_t *cl );
+void SV_UserinfoChanged( client_t *cl );
+static void SV_UpdateUserinfo_f( client_t *cl );
+static void SV_MutePlayer_f( client_t *cl );
+static void SV_UnmutePlayer_f( client_t *cl );
+float SV_FX_GetVisibility( const vec3_t start, const vec3_t end );
+static qboolean SV_ClientCommand( client_t *cl, msg_t *msg );
+void SV_ClientThink( client_t *cl, usercmd_t *cmd );
+void SV_UserMove( client_t *cl, msg_t *msg, qboolean delta );
+void SV_ExecuteClientMessage( client_t *cl, msg_t *msg );
+
+static void SV_UpdateUserinfo_f( client_t *cl );
+static void SV_Disconnect_f( client_t *cl );
+static void SV_VerifyIwds_f( client_t *cl );
+static void SV_ResetPureClient_f( client_t *cl );
+static void SV_BeginDownload_f( client_t *cl );
+static void SV_NextDownload_f( client_t *cl );
+static void SV_StopDownload_f( client_t *cl );
+static void SV_DoneDownload_f( client_t *cl );
+static void SV_RetransmitDownload_f( client_t *cl );
+static void SV_MutePlayer_f( client_t *cl );
+static void SV_UnmutePlayer_f( client_t *cl );
+static ucmd_t ucmds[] =
+{
+	{"userinfo",     SV_UpdateUserinfo_f,     },
+	{"disconnect",   SV_Disconnect_f,         },
+	{"cp",           SV_VerifyIwds_f,         },
+	{"vdr",          SV_ResetPureClient_f,    },
+	{"download",     SV_BeginDownload_f,      },
+	{"nextdl",       SV_NextDownload_f,       },
+	{"stopdl",       SV_StopDownload_f,       },
+	{"donedl",       SV_DoneDownload_f,       },
+	{"retransdl",    SV_RetransmitDownload_f, },
+	{"muteplayer",   SV_MutePlayer_f,         },
+	{"unmuteplayer", SV_UnmutePlayer_f,       },
+	{NULL, NULL}
+};
+
 /*
 =================
 SV_GetChallenge
@@ -1683,34 +1746,6 @@ float SV_FX_GetVisibility( const vec3_t start, const vec3_t end )
 	return FX_GetVisibility( start, end );
 }
 
-static void SV_UpdateUserinfo_f( client_t *cl );
-static void SV_Disconnect_f( client_t *cl );
-static void SV_VerifyIwds_f( client_t *cl );
-static void SV_ResetPureClient_f( client_t *cl );
-static void SV_BeginDownload_f( client_t *cl );
-static void SV_NextDownload_f( client_t *cl );
-static void SV_StopDownload_f( client_t *cl );
-static void SV_DoneDownload_f( client_t *cl );
-static void SV_RetransmitDownload_f( client_t *cl );
-static void SV_MutePlayer_f( client_t *cl );
-static void SV_UnmutePlayer_f( client_t *cl );
-
-static ucmd_t ucmds[] =
-{
-	{"userinfo",     SV_UpdateUserinfo_f,     },
-	{"disconnect",   SV_Disconnect_f,         },
-	{"cp",           SV_VerifyIwds_f,         },
-	{"vdr",          SV_ResetPureClient_f,    },
-	{"download",     SV_BeginDownload_f,      },
-	{"nextdl",       SV_NextDownload_f,       },
-	{"stopdl",       SV_StopDownload_f,       },
-	{"donedl",       SV_DoneDownload_f,       },
-	{"retransdl",    SV_RetransmitDownload_f, },
-	{"muteplayer",   SV_MutePlayer_f,         },
-	{"unmuteplayer", SV_UnmutePlayer_f,       },
-	{NULL, NULL}
-};
-
 void SV_ExecuteClientCommand( client_t *cl, const char *s, qboolean clientOK )
 {
 	ucmd_t *u;
@@ -2135,6 +2170,7 @@ nextclient:
 
 	return SV_GentityNum(num);
 }
+
 
 // Original name unknown; unreferenced.
 static int unusedTable[72] =

@@ -7,6 +7,11 @@
 
 static HWND g_splashWnd;
 
+void Sys_CreateSplashWindow( void );
+void Sys_DestroySplashWindow( void );
+void Sys_ShowSplashWindow( void );
+void Sys_HideSplashWindow( void );
+
 /*
 ==================
 Sys_CreateSplashWindow
@@ -104,3 +109,4 @@ void Sys_HideSplashWindow( void )
 	if ( g_splashWnd )
 		ShowWindow( g_splashWnd, SW_HIDE );
 }
+

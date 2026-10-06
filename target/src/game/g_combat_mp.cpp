@@ -42,6 +42,167 @@ explosions and melee attacks.
 */
 #define MASK_CAN_DAMAGE ( CONTENTS_SOLID | CONTENTS_GLASS | CONTENTS_MISSILECLIP | CONTENTS_SKY | CONTENTS_CLIPSHOT | CONTENTS_UNKNOWN )
 
+void G_HitLocStrcpy( unsigned char *member, const char *keyValue );
+void G_ParseHitLocDmgTable();
+void LookAtKiller( gentity_t *self, gentity_t *inflictor, gentity_t *attacker );
+int G_IndexForMeansOfDeath( const char *name );
+float G_GetWeaponHitLocationMultiplier( int hitLoc, int weapon );
+void G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker, const vec3_t dir, const vec3_t point, int damage, int dflags, int mod, int hitLoc, int timeOffset );
+qboolean G_RadiusDamage( const vec3_t origin, gentity_t *inflictor, gentity_t *attacker, float fInnerDamage, float fOuterDamage, float radius, gentity_t *ignore, int mod );
+unsigned short G_GetHitLocationString( int hitLoc );
+int G_GetHitLocationIndexFromString( unsigned short sString );
+
+const char *modNames[] =
+{
+	"MOD_UNKNOWN",
+	"MOD_PISTOL_BULLET",
+	"MOD_RIFLE_BULLET",
+	"MOD_GRENADE",
+	"MOD_GRENADE_SPLASH",
+	"MOD_PROJECTILE",
+	"MOD_PROJECTILE_SPLASH",
+	"MOD_MELEE",
+	"MOD_HEAD_SHOT",
+	"MOD_CRUSH",
+	"MOD_TELEFRAG",
+	"MOD_FALLING",
+	"MOD_SUICIDE",
+	"MOD_TRIGGER_HURT",
+	"MOD_EXPLOSIVE",
+};
+
+/*
+==================
+player_die
+==================
+*/
+void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker,
+                 int damage, int meansOfDeath, int iWeapon, const vec3_t vDir,
+                 int hitLoc, int psTimeOffset )
+{
+	int i;
+	int deathAnimDuration;
+	vec3_t launchvel;
+	vec3_t launchspot;
+	if ( !Com_GetServerDObj(self->client->ps.clientNum) )
+	{
+		return;
+	}
+	// only a living player can die
+	if ( self->client->ps.pm_type != PM_NORMAL )
+	{
+		if ( self->client->ps.pm_type == PM_NORMAL_LINKED )
+		{
+			goto alive;
+		}
+		return;
+	}
+alive:
+	if ( !(self->client->ps.pm_flags & PMF_FOLLOW) )
+	{
+		bgs = &level_bgs;
+		if ( attacker->s.eType == ET_TURRET && attacker->r.ownerNum != ENTITYNUM_NONE )
+		{
+			attacker = &g_entities[attacker->r.ownerNum];
+		}
+		Scr_AddEntity(attacker);
+		Scr_Notify(self, scr_const.death, 1);
+		if ( iWeapon && attacker->client && (attacker->client->ps.eFlags & EF_TURRET_ACTIVE) )
+		{
+			gentity_t *turret = &g_entities[attacker->s.otherEntityNum];
+			if ( turret->s.eType == ET_TURRET )
+			{
+				iWeapon = turret->s.weapon;
+			}
+		}
+		// drop a grenade the player was still holding
+		if ( self->client->ps.grenadeTimeLeft )
+		{
+			launchvel[0] = crandom();
+			launchvel[1] = crandom();
+			launchvel[2] = randomf();
+			VectorScale(launchvel, 160, launchvel);
+			VectorCopy(self->r.currentOrigin, launchspot);
+			launchspot[2] += 40;
+			fire_grenade(self, launchspot, launchvel, self->client->ps.offHandIndex, self->client->ps.grenadeTimeLeft);
+		}
+		self->client->ps.pm_type = self->client->ps.pm_type == PM_NORMAL_LINKED ? PM_DEAD_LINKED : PM_DEAD;
+		deathAnimDuration = BG_AnimScriptEvent(&self->client->ps, ANIM_ET_DEATH, qfalse, qtrue);
+		Scr_PlayerKilled(self, inflictor, attacker, damage, meansOfDeath, iWeapon, vDir, hitLoc, psTimeOffset, deathAnimDuration);
+		// send updated scores to any clients that are following this one
+		for ( i = 0; i < level.maxclients; i++ )
+		{
+			gclient_t *client = &level.clients[i];
+			if ( client->sess.connected != CON_CONNECTED )
+			{
+				continue;
+			}
+			if ( client->sess.sessionState != SESS_STATE_SPECTATOR )
+			{
+				continue;
+			}
+			if ( client->spectatorClient == self->s.number )
+			{
+				Cmd_Score_f(&g_entities[i]);
+			}
+		}
+		self->takedamage = qtrue;
+		self->r.contents = CONTENTS_CORPSE;
+		self->r.currentAngles[ROLL] = 0;
+		LookAtKiller(self, inflictor, attacker);
+		VectorCopy(self->r.currentAngles, self->client->ps.viewangles);
+		self->s.loopSound = 0;
+		SV_UnlinkEntity(self);
+		self->r.maxs[2] = 30;
+		SV_LinkEntity(self);
+		self->health = 0;
+		self->handler = ENT_HANDLER_CLIENT_DEAD;
+	}
+}
+
+/*
+==================
+G_DamageClient
+==================
+*/
+void G_DamageClient( gentity_t *self, gentity_t *inflictor, gentity_t *attacker,
+                     const vec3_t vDir, const vec3_t vPoint, int damage, int dflags,
+                     int meansOfDeath, int hitLoc, int timeOffset )
+{
+	int weapon;
+	if ( !self->takedamage )
+	{
+		return;
+	}
+	if ( self->client->noclip || self->client->ufo )
+	{
+		return;
+	}
+	if ( self->client->sess.connected != CON_CONNECTED )
+	{
+		return;
+	}
+	if ( inflictor )
+	{
+		weapon = inflictor->s.weapon;
+	}
+	else if ( attacker )
+	{
+		weapon = attacker->s.weapon;
+	}
+	else
+	{
+		weapon = WP_NONE;
+	}
+	assert((hitLoc >= HITLOC_NONE) && (hitLoc < HITLOC_NUM));
+	damage *= G_GetWeaponHitLocationMultiplier(hitLoc, weapon);
+	if ( damage <= 0 )
+	{
+		return;
+	}
+	Scr_PlayerDamage(self, inflictor, attacker, damage, dflags, meansOfDeath, weapon, vPoint, vDir, hitLoc, timeOffset);
+}
+
 /*
 ============
 G_HitLocStrcpy
@@ -121,7 +282,6 @@ void G_ParseHitLocDmgTable()
 	}
 }
 
-
 // unreferenced; original name unknown
 void G_NullStub()
 {
@@ -154,25 +314,6 @@ void LookAtKiller( gentity_t *self, gentity_t *inflictor, gentity_t *attacker )
 	self->client->ps.stats[STAT_DEAD_YAW] = vectoyaw ( dir );
 }
 
-const char *modNames[] =
-{
-	"MOD_UNKNOWN",
-	"MOD_PISTOL_BULLET",
-	"MOD_RIFLE_BULLET",
-	"MOD_GRENADE",
-	"MOD_GRENADE_SPLASH",
-	"MOD_PROJECTILE",
-	"MOD_PROJECTILE_SPLASH",
-	"MOD_MELEE",
-	"MOD_HEAD_SHOT",
-	"MOD_CRUSH",
-	"MOD_TELEFRAG",
-	"MOD_FALLING",
-	"MOD_SUICIDE",
-	"MOD_TRIGGER_HURT",
-	"MOD_EXPLOSIVE",
-};
-
 /*
 ==================
 G_IndexForMeansOfDeath
@@ -191,113 +332,6 @@ int G_IndexForMeansOfDeath( const char *name )
 	Com_Printf("Unknown means of death string '%s'\n", name);
 	return MOD_UNKNOWN;
 }
-
-/*
-==================
-player_die
-==================
-*/
-void player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker,
-                 int damage, int meansOfDeath, int iWeapon, const vec3_t vDir,
-                 int hitLoc, int psTimeOffset )
-{
-	int i;
-	int deathAnimDuration;
-	vec3_t launchvel;
-	vec3_t launchspot;
-
-	if ( !Com_GetServerDObj(self->client->ps.clientNum) )
-	{
-		return;
-	}
-
-	// only a living player can die
-	if ( self->client->ps.pm_type != PM_NORMAL )
-	{
-		if ( self->client->ps.pm_type == PM_NORMAL_LINKED )
-		{
-			goto alive;
-		}
-		return;
-	}
-
-alive:
-	if ( !(self->client->ps.pm_flags & PMF_FOLLOW) )
-	{
-		bgs = &level_bgs;
-
-		if ( attacker->s.eType == ET_TURRET && attacker->r.ownerNum != ENTITYNUM_NONE )
-		{
-			attacker = &g_entities[attacker->r.ownerNum];
-		}
-
-		Scr_AddEntity(attacker);
-		Scr_Notify(self, scr_const.death, 1);
-
-		if ( iWeapon && attacker->client && (attacker->client->ps.eFlags & EF_TURRET_ACTIVE) )
-		{
-			gentity_t *turret = &g_entities[attacker->s.otherEntityNum];
-
-			if ( turret->s.eType == ET_TURRET )
-			{
-				iWeapon = turret->s.weapon;
-			}
-		}
-
-		// drop a grenade the player was still holding
-		if ( self->client->ps.grenadeTimeLeft )
-		{
-			launchvel[0] = crandom();
-			launchvel[1] = crandom();
-			launchvel[2] = randomf();
-			VectorScale(launchvel, 160, launchvel);
-			VectorCopy(self->r.currentOrigin, launchspot);
-			launchspot[2] += 40;
-			fire_grenade(self, launchspot, launchvel, self->client->ps.offHandIndex, self->client->ps.grenadeTimeLeft);
-		}
-
-		self->client->ps.pm_type = self->client->ps.pm_type == PM_NORMAL_LINKED ? PM_DEAD_LINKED : PM_DEAD;
-
-		deathAnimDuration = BG_AnimScriptEvent(&self->client->ps, ANIM_ET_DEATH, qfalse, qtrue);
-		Scr_PlayerKilled(self, inflictor, attacker, damage, meansOfDeath, iWeapon, vDir, hitLoc, psTimeOffset, deathAnimDuration);
-
-		// send updated scores to any clients that are following this one
-		for ( i = 0; i < level.maxclients; i++ )
-		{
-			gclient_t *client = &level.clients[i];
-
-			if ( client->sess.connected != CON_CONNECTED )
-			{
-				continue;
-			}
-			if ( client->sess.sessionState != SESS_STATE_SPECTATOR )
-			{
-				continue;
-			}
-			if ( client->spectatorClient == self->s.number )
-			{
-				Cmd_Score_f(&g_entities[i]);
-			}
-		}
-
-		self->takedamage = qtrue;
-		self->r.contents = CONTENTS_CORPSE;
-		self->r.currentAngles[ROLL] = 0;
-
-		LookAtKiller(self, inflictor, attacker);
-		VectorCopy(self->r.currentAngles, self->client->ps.viewangles);
-
-		self->s.loopSound = 0;
-
-		SV_UnlinkEntity(self);
-		self->r.maxs[2] = 30;
-		SV_LinkEntity(self);
-
-		self->health = 0;
-		self->handler = ENT_HANDLER_CLIENT_DEAD;
-	}
-}
-
 
 /*
 ===============
@@ -323,56 +357,6 @@ float G_GetWeaponHitLocationMultiplier( int hitLoc, int weapon )
 	}
 
 	return weapDef->locationDamageMultipliers[hitLoc];
-}
-
-/*
-==================
-G_DamageClient
-==================
-*/
-void G_DamageClient( gentity_t *self, gentity_t *inflictor, gentity_t *attacker,
-                     const vec3_t vDir, const vec3_t vPoint, int damage, int dflags,
-                     int meansOfDeath, int hitLoc, int timeOffset )
-{
-	int weapon;
-
-	if ( !self->takedamage )
-	{
-		return;
-	}
-
-	if ( self->client->noclip || self->client->ufo )
-	{
-		return;
-	}
-
-	if ( self->client->sess.connected != CON_CONNECTED )
-	{
-		return;
-	}
-
-	if ( inflictor )
-	{
-		weapon = inflictor->s.weapon;
-	}
-	else if ( attacker )
-	{
-		weapon = attacker->s.weapon;
-	}
-	else
-	{
-		weapon = WP_NONE;
-	}
-
-	assert((hitLoc >= HITLOC_NONE) && (hitLoc < HITLOC_NUM));
-	damage *= G_GetWeaponHitLocationMultiplier(hitLoc, weapon);
-
-	if ( damage <= 0 )
-	{
-		return;
-	}
-
-	Scr_PlayerDamage(self, inflictor, attacker, damage, dflags, meansOfDeath, weapon, vPoint, vDir, hitLoc, timeOffset);
 }
 
 /*
@@ -730,7 +714,6 @@ qboolean G_RadiusDamage( const vec3_t origin, gentity_t *inflictor, gentity_t *a
 	return hitClient;
 }
 
-
 /*
 ===============
 G_GetHitLocationString
@@ -759,3 +742,4 @@ int G_GetHitLocationIndexFromString( unsigned short sString )
 
 	return 0;
 }
+

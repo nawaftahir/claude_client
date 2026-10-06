@@ -52,3 +52,4 @@ const FxCurve *FxCurve_Reference( const FxCurve *curve )
 {
 	return curve;
 }
+

@@ -99,3 +99,4 @@ const char *Win_LocalizeRef(const char *ref)
     Com_EndParseSession();
     return va("%s", ref);
 }
+

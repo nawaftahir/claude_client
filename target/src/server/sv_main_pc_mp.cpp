@@ -5,6 +5,14 @@
 
 static netadr_t masterAdr;
 
+netadr_t *SV_MasterAddress();
+void SV_MasterHeartbeat( const char *hbname );
+void SV_MasterGameCompleteStatus();
+void SV_MasterShutdown( void );
+void SV_FlushRedirect( char *outputbuf );
+void SVC_RemoteCommand( netadr_t from, msg_t *msg );
+void SV_MatchEnd( void );
+
 /*
 =================
 SV_MasterAddress
@@ -245,6 +253,7 @@ SV_MatchEnd
 void SV_MatchEnd( void )
 {
 }
+
 
 // Unreferenced storage; original declarations unknown (sized from the layout).
 static int unusedStorage;

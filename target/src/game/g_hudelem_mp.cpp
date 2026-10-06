@@ -76,6 +76,62 @@ static const scr_method_t g_he_methods[] =
 
 void (*HudElem_GetMethod( const char **pName ))( scr_entref_t );
 
+void HudElem_ClearTypeSettings( game_hudelem_t *hud );
+void HudElem_SetDefaults( game_hudelem_t *hud );
+game_hudelem_t *HudElem_Alloc( int clientNum, int teamNum );
+void HudElem_Free( game_hudelem_t *hud );
+void HudElem_ClientDisconnect( gentity_t *ent );
+void HudElem_DestroyAll();
+static void HudElem_SetEnumString( game_hudelem_t *hud, const game_hudelem_field_t *f, const char **names, int nameCount );
+void HudElem_AddString( game_hudelem_t *hud, const game_hudelem_field_t *f, const char **names, int nameCount );
+void HudElem_SetLocalizedString( game_hudelem_t *hud, int offset );
+void HudElem_SetBoolean( game_hudelem_t *hud, int offset );
+void HudElem_SetColor(game_hudelem_t *hud, int offset);
+void HudElem_GetColor( game_hudelem_t *hud, int offset );
+void HudElem_SetAlpha( game_hudelem_t *hud, int offset );
+void HudElem_GetAlpha( game_hudelem_t *hud, int offset );
+void HudElem_SetFontScale( game_hudelem_t *hud, int offset );
+void HudElem_SetFont( game_hudelem_t *hud, int offset );
+void HudElem_GetFont( game_hudelem_t *hud, int offset );
+void HudElem_SetAlignX( game_hudelem_t *hud, int offset );
+void HudElem_GetAlignX( game_hudelem_t *hud, int offset );
+void HudElem_SetAlignY( game_hudelem_t *hud, int offset );
+void HudElem_GetAlignY( game_hudelem_t *hud, int offset );
+void HudElem_SetHorzAlign( game_hudelem_t *hud, int offset );
+void HudElem_GetHorzAlign( game_hudelem_t *hud, int offset );
+void HudElem_SetVertAlign( game_hudelem_t *hud, int offset );
+void HudElem_GetVertAlign( game_hudelem_t *hud, int offset );
+void Scr_GetHudElemField( int entnum, int offset );
+void Scr_SetHudElemField( int entnum, int offset );
+void Scr_FreeHudElemConstStrings( game_hudelem_t *hud );
+void GScr_NewHudElem();
+void GScr_NewClientHudElem();
+void GScr_NewTeamHudElem();
+void GScr_AddFieldsForHudElems();
+game_hudelem_t* HECmd_GetHudElem( scr_entref_t entref );
+void HECmd_SetText( scr_entref_t entref );
+void HECmd_SetPlayerNameString( scr_entref_t entref );
+void HECmd_SetGameTypeString( scr_entref_t entref );
+void HECmd_SetMapNameString( scr_entref_t entref );
+void HECmd_SetShader( scr_entref_t entref );
+static void HECmd_SetTimer_Internal( scr_entref_t entref, int type, const char *cmdName );
+static void HECmd_SetClock_Internal( scr_entref_t entref, int type, const char *cmdName );
+void HECmd_SetTimer( scr_entref_t entref );
+void HECmd_SetTimerUp( scr_entref_t entref );
+void HECmd_SetTenthsTimer( scr_entref_t entref );
+void HECmd_SetTenthsTimerUp( scr_entref_t entref );
+void HECmd_SetClock( scr_entref_t entref );
+void HECmd_SetClockUp( scr_entref_t entref );
+void HECmd_SetValue( scr_entref_t entref );
+void HECmd_SetWaypoint( scr_entref_t entref );
+void HECmd_FadeOverTime( scr_entref_t entref );
+void HECmd_ScaleOverTime( scr_entref_t entref );
+void HECmd_MoveOverTime( scr_entref_t entref );
+void HECmd_Reset( scr_entref_t entref );
+void HECmd_Destroy( scr_entref_t entref );
+void (*HudElem_GetMethod( const char **pName ))( scr_entref_t );
+void HudElem_UpdateClient( gclient_t *client, int clientNum, int which );
+
 /*
 ============
 HudElem_ClearTypeSettings
@@ -1141,7 +1197,6 @@ void HECmd_Destroy( scr_entref_t entref )
 	HudElem_Free(hud);
 }
 
-
 /*
 ============
 HudElem_GetMethod
@@ -1248,3 +1303,4 @@ void HudElem_UpdateClient( gclient_t *client, int clientNum, int which )
 	}
 
 }
+

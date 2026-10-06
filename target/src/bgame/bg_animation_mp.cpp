@@ -239,6 +239,244 @@ void BG_AnimParseAnimScript( animScriptData_t *scriptData, loadAnim_t *pLoadAnim
 void BG_UpdateConditionValue( int client, int condition, int value, qboolean checkConversion );
 void BG_LoadAnim();
 
+long BG_StringHashValue( const char *fname );
+void BG_AnimParseError( const char *msg, ... );
+int BG_AnimationIndexForString( const char *string );
+animation_t *BG_AnimationForString( const char *string );
+int BG_IndexForString( const char *token, animStringItem_t *strings, qboolean allowFail );
+char *BG_CopyStringIntoBuffer( const char *string, char *buffer, int bufSize, int *offset );
+void BG_InitWeaponString( int index, const char *name );
+void BG_InitWeaponStrings();
+loadAnim_t* BG_LoadAnimForAnimIndex( unsigned int index );
+void BG_SetupAnimNoteTypes( animScriptData_t *scriptData );
+void BG_FinalizePlayerAnims();
+void BG_ParseConditionBits( const char **text_pp, animStringItem_t *stringTable, int condIndex, int result[2] );
+qboolean BG_ParseConditions( const char **text_pp, animScriptItem_t *scriptItem );
+void BG_ParseCommands( const char **input, animScriptItem_t *scriptItem, animScriptData_t *scriptData );
+void BG_AnimParseAnimScript( animScriptData_t *scriptData, loadAnim_t *pLoadAnims, int *piNumAnims );
+qboolean BG_EvaluateConditions( clientInfo_t *ci, animScriptItem_t *scriptItem );
+animScriptItem_t *BG_FirstValidItem( int client, animScript_t *script );
+int BG_PlayAnim( playerState_t *ps, int animNum, int bodyPart, int forceDuration, qboolean setTimer, qboolean isContinue, qboolean force );
+int BG_PlayAnimName( playerState_t *ps, char *animName, animBodyPart_t bodyPart, qboolean setTimer, qboolean isContinue, qboolean force );
+int BG_ExecuteCommand( playerState_t *ps, animScriptCommand_t *scriptCommand, qboolean setTimer, qboolean isContinue, qboolean force );
+int BG_AnimScriptAnimation( playerState_t *ps, int state, int movetype, qboolean isContinue );
+int BG_AnimScriptStateChange( playerState_t *ps, aistateEnum_t newState, aistateEnum_t oldState );
+int BG_AnimScriptEvent( playerState_t *ps, scriptAnimEventTypes_t event, qboolean isContinue, qboolean force );
+char *BG_GetAnimString( int client, unsigned int anim );
+void BG_UpdateConditionValue( int client, int condition, int value, qboolean checkConversion );
+int BG_GetConditionValue( clientInfo_t *ci, int condition, qboolean checkConversion );
+int BG_GetAnimScriptEvent( playerState_t *ps, scriptAnimEventTypes_t event );
+animation_t *BG_GetAnimationForIndex( int client, unsigned int index );
+void BG_AnimUpdatePlayerStateConditions( pmove_t *pmove );
+qboolean BG_IsProneAnim( const clientInfo_t *ci, int animNum );
+qboolean BG_IsMantleAnim( const clientInfo_t *ci, int animNum );
+void BG_SetNewAnimation( clientInfo_t *ci, lerpFrame_t *lf, int newAnimation, qboolean bNew );
+void BG_RunLerpFrameRate( clientInfo_t *ci, lerpFrame_t *lf, int newAnimation, const entityState_t *es );
+void BG_PlayerAnimation_VerifyAnim( XAnimTree *pAnimTree, lerpFrame_t *lf );
+void BG_SwingAngles( float destination,  float swingTolerance, float clampTolerance, float speed, float *angle, qboolean *swinging );
+static void BG_Player_DoControllersInternal( DObj *obj, const entityState_t *es, int *partBits, clientInfo_t *ci, controller_info_t *info );
+void BG_Player_DoControllers( DObj *obj, const entityState_t *es, int *partBits, clientInfo_t *ci, int frametime );
+void BG_PlayerAnimation( const DObj *pDObj, entityState_t *es, clientInfo_t *ci );
+void BG_UpdatePlayerDObj( DObj *pDObj, entityState_t *es, clientInfo_t *ci, qboolean attachIgnoreCollision );
+void BG_FindAnims();
+scr_animtree_t BG_FindAnimTree( const char *filename, qboolean bEnforceExists );
+void BG_FindAnimTrees();
+void BG_LoadAnim();
+
+/*
+=================
+BG_IsCrouchingAnim
+=================
+*/
+qboolean BG_IsCrouchingAnim( const clientInfo_t *ci, int animNum ) // not sure about this
+{
+	animation_t *anim;
+	qboolean result;
+	animNum &= ~ANIM_TOGGLEBIT;
+	anim = BG_GetAnimationForIndex(ci->clientNum, animNum);
+	if ( anim->movetype & ((1LL<<ANIM_MT_IDLECR)|(1LL<<ANIM_MT_WALKCR)|(1LL<<ANIM_MT_WALKCRBK)
+	                          |(1LL<<ANIM_MT_STUMBLE_CROUCH_FORWARD)|(1LL<<ANIM_MT_STUMBLE_CROUCH_BACKWARD)) )
+		result = qtrue;
+	else
+		result = qfalse;
+	return result;
+}
+
+/*
+===============
+BG_PlayerAngles
+Handles seperate torso motion
+  legs pivot based on direction of movement
+  head always looks exactly at cent->lerpAngles
+  if motion < 20 degrees, show in head only
+  if < 45 degrees, also show in torso
+===============
+*/
+void BG_PlayerAngles( const entityState_s *es, clientInfo_t *ci ) // not sure about this
+{
+	float destination;
+	float clampTolerance;
+	float fraction;
+	float moveDir;
+	vec3_t vLegsAngles;
+	vec3_t vTorsoAngles;
+	vec3_t vHeadAngles;
+	fraction = GetLeanFraction(ci->lerpLean);
+	moveDir = ci->lerpMoveDir;
+	VectorCopy(ci->playerAngles, vHeadAngles);
+	vHeadAngles[YAW] = AngleMod(vHeadAngles[YAW]);
+	VectorClear(vLegsAngles);
+	VectorClear(vTorsoAngles);
+	// --------- yaw -------------
+	// allow yaw to drift a bit, unless these conditions don't allow them
+	if ( es->eFlags & EF_TURRET_ACTIVE )
+	{
+		// if not standing still, always point all in the same direction
+		ci->torso.yawing = qtrue;
+		ci->torso.pitching = qtrue;
+		ci->legs.yawing = qtrue;
+	}
+	else if ( (BG_GetConditionValue(ci, ANIM_COND_MOVETYPE, qfalse) & ((1<<ANIM_MT_CLIMBUP)|(1<<ANIM_MT_CLIMBDOWN)) ) )
+	{
+		ci->torso.yawing = qtrue;
+		ci->torso.pitching = qtrue;
+		ci->legs.yawing = qtrue;
+	}
+	else if ( es->eFlags & EF_MANTLE )
+	{
+		ci->torso.yawing = qtrue;
+		ci->torso.pitching = qtrue;
+		ci->legs.yawing = qtrue;
+	}
+	else if ( !(BG_GetConditionValue(ci, ANIM_COND_MOVETYPE, qfalse) & ((1<<ANIM_MT_IDLE)|(1<<ANIM_MT_IDLECR)) ) )
+	{
+		ci->torso.yawing = qtrue;
+		ci->torso.pitching = qtrue;
+		ci->legs.yawing = qtrue;
+	}
+	else if ( BG_GetConditionValue(ci, ANIM_COND_FIRING, qtrue) )
+	{
+		// if firing, make sure torso and head are always aligned
+		ci->torso.yawing = qtrue;
+		ci->torso.pitching = qtrue;
+	}
+	// adjust legs for movement dir
+	vLegsAngles[YAW] = vHeadAngles[YAW] + moveDir;
+	if ( es->eFlags & EF_DEAD )
+	{
+		vLegsAngles[YAW] = vHeadAngles[YAW];
+		vTorsoAngles[YAW] = vHeadAngles[YAW];
+		clampTolerance = 90;
+	}
+	else if ( (BG_GetConditionValue(ci, ANIM_COND_MOVETYPE, qfalse) & ((1<<ANIM_MT_CLIMBUP)|(1<<ANIM_MT_CLIMBDOWN)) ) )
+	{
+		vTorsoAngles[YAW] = vLegsAngles[YAW];
+		clampTolerance = 0;
+	}
+	else if ( es->eFlags & EF_MANTLE )
+	{
+		vLegsAngles[YAW] = vTorsoAngles[YAW] = vHeadAngles[YAW];
+		vTorsoAngles[PITCH] = 90;
+		clampTolerance = 90;
+	}
+	else if ( es->eFlags & EF_PRONE )
+	{
+		vTorsoAngles[YAW] = vHeadAngles[YAW];
+		clampTolerance = 90;
+	}
+	else if ( !(es->eFlags & EF_FIRING) )
+	{
+		if ( es->eFlags & EF_AIMDOWNSIGHT )
+		{
+			vTorsoAngles[YAW] = vHeadAngles[YAW];
+		}
+		else
+		{
+			vTorsoAngles[YAW] = vHeadAngles[YAW] + moveDir * 0.30000001f;
+		}
+		clampTolerance = 90;
+	}
+	else
+	{
+		vTorsoAngles[YAW] = vHeadAngles[YAW];
+		clampTolerance = 45;
+	}
+	// torso
+	BG_SwingAngles(vTorsoAngles[YAW], 0, clampTolerance, bg_swingSpeed->current.decimal, &ci->torso.yawAngle, &ci->torso.yawing);
+	// if the legs are yawing (facing heading direction), allow them to rotate a bit, so we don't keep calling
+	// the legs_turn animation while an AI is firing, and therefore his angles will be randomizing according to their accuracy
+	clampTolerance = 150;
+	if ( es->eFlags & EF_DEAD )
+	{
+		BG_SwingAngles(vLegsAngles[YAW], 0, clampTolerance, bg_swingSpeed->current.decimal, &ci->legs.yawAngle, &ci->legs.yawing);
+	}
+	else if ( es->eFlags & EF_PRONE )
+	{
+		ci->legs.yawing = qfalse;
+		ci->legs.yawAngle = vHeadAngles[YAW] + moveDir;
+	}
+	else if ( bgs->animScriptData.animations[es->legsAnim & ~ANIM_TOGGLEBIT].flags & 0x30 )
+	{
+		ci->legs.yawing = qfalse; // set it if they really need to swing
+		vLegsAngles[YAW] = vHeadAngles[YAW];
+		BG_SwingAngles(vLegsAngles[YAW], 0, clampTolerance, bg_swingSpeed->current.decimal, &ci->legs.yawAngle, &ci->legs.yawing);
+	}
+	else if ( ci->legs.yawing )
+	{
+		BG_SwingAngles(vLegsAngles[YAW], 0, clampTolerance, bg_swingSpeed->current.decimal, &ci->legs.yawAngle, &ci->legs.yawing);
+	}
+	else
+	{
+		BG_SwingAngles(vLegsAngles[YAW], 40, clampTolerance, bg_swingSpeed->current.decimal, &ci->legs.yawAngle, &ci->legs.yawing);
+	}
+	if ( es->eFlags & EF_TURRET_ACTIVE )
+	{
+		ci->torso.yawAngle = vHeadAngles[YAW];
+		ci->legs.yawAngle = vHeadAngles[YAW];
+	}
+	else if ( (BG_GetConditionValue(ci, ANIM_COND_MOVETYPE, qfalse) & ((1<<ANIM_MT_CLIMBUP)|(1<<ANIM_MT_CLIMBDOWN)) ) )
+	{
+		ci->torso.yawAngle = vHeadAngles[YAW] + moveDir;
+		ci->legs.yawAngle = vHeadAngles[YAW] + moveDir;
+	}
+	if ( es->eFlags & EF_DEAD )
+	{
+		destination = 0;
+	}
+	else if ( es->eFlags & EF_TURRET_ACTIVE )
+	{
+		destination = 0;
+	}
+	else if ( (BG_GetConditionValue(ci, ANIM_COND_MOVETYPE, qfalse) & ((1<<ANIM_MT_CLIMBUP)|(1<<ANIM_MT_CLIMBDOWN)) ) )
+	{
+		destination = 0;
+	}
+	else if ( es->eFlags == EF_MANTLE )
+	{
+		destination = 0;
+	}
+	else if ( vHeadAngles[PITCH] > 180 )
+	{
+		destination = (vHeadAngles[0] + -360.0f) * 0.60000002f;
+	}
+	else
+	{
+		destination = vHeadAngles[0] * 0.60000002f;
+	}
+	BG_SwingAngles(destination, 0, 45, 0.15000001f, &ci->torso.pitchAngle, &ci->torso.pitching);
+}
+
+/*
+===============
+BG_InitWeaponString
+===============
+*/
+void BG_InitWeaponString( int index, const char *name )
+{
+	weaponStrings[index].string = name;
+	weaponStrings[index].hash = BG_StringHashValue(name);
+}
+
 /*
 ===============
 BG_StringHashValue
@@ -267,7 +505,6 @@ long BG_StringHashValue( const char *fname )
 
 	return hash;
 }
-
 
 /*
 =================
@@ -433,17 +670,6 @@ char *BG_CopyStringIntoBuffer( const char *string, char *buffer, int bufSize, in
 	*offset += strlen( string ) + 1;
 
 	return pch;
-}
-
-/*
-===============
-BG_InitWeaponString
-===============
-*/
-void BG_InitWeaponString( int index, const char *name )
-{
-	weaponStrings[index].string = name;
-	weaponStrings[index].hash = BG_StringHashValue(name);
 }
 
 /*
@@ -1991,28 +2217,6 @@ void BG_AnimUpdatePlayerStateConditions( pmove_t *pmove )
 
 /*
 =================
-BG_IsCrouchingAnim
-=================
-*/
-qboolean BG_IsCrouchingAnim( const clientInfo_t *ci, int animNum ) // not sure about this
-{
-	animation_t *anim;
-	qboolean result;
-
-	animNum &= ~ANIM_TOGGLEBIT;
-	anim = BG_GetAnimationForIndex(ci->clientNum, animNum);
-
-	if ( anim->movetype & ((1LL<<ANIM_MT_IDLECR)|(1LL<<ANIM_MT_WALKCR)|(1LL<<ANIM_MT_WALKCRBK)
-	                          |(1LL<<ANIM_MT_STUMBLE_CROUCH_FORWARD)|(1LL<<ANIM_MT_STUMBLE_CROUCH_BACKWARD)) )
-		result = qtrue;
-	else
-		result = qfalse;
-
-	return result;
-}
-
-/*
-=================
 BG_IsProneAnim
 =================
 */
@@ -2474,187 +2678,6 @@ void BG_SwingAngles( float destination,  float swingTolerance, float clampTolera
 			*angle = AngleMod(destination + clampTolerance);
 		}
 	}
-}
-
-/*
-===============
-BG_PlayerAngles
-
-Handles seperate torso motion
-
-  legs pivot based on direction of movement
-
-  head always looks exactly at cent->lerpAngles
-
-  if motion < 20 degrees, show in head only
-  if < 45 degrees, also show in torso
-===============
-*/
-void BG_PlayerAngles( const entityState_s *es, clientInfo_t *ci ) // not sure about this
-{
-	float destination;
-	float clampTolerance;
-	float fraction;
-	float moveDir;
-	vec3_t vLegsAngles;
-	vec3_t vTorsoAngles;
-	vec3_t vHeadAngles;
-
-	fraction = GetLeanFraction(ci->lerpLean);
-	moveDir = ci->lerpMoveDir;
-
-	VectorCopy(ci->playerAngles, vHeadAngles);
-	vHeadAngles[YAW] = AngleMod(vHeadAngles[YAW]);
-	VectorClear(vLegsAngles);
-	VectorClear(vTorsoAngles);
-
-	// --------- yaw -------------
-
-	// allow yaw to drift a bit, unless these conditions don't allow them
-	if ( es->eFlags & EF_TURRET_ACTIVE )
-	{
-		// if not standing still, always point all in the same direction
-		ci->torso.yawing = qtrue;
-		ci->torso.pitching = qtrue;
-		ci->legs.yawing = qtrue;
-	}
-	else if ( (BG_GetConditionValue(ci, ANIM_COND_MOVETYPE, qfalse) & ((1<<ANIM_MT_CLIMBUP)|(1<<ANIM_MT_CLIMBDOWN)) ) )
-	{
-		ci->torso.yawing = qtrue;
-		ci->torso.pitching = qtrue;
-		ci->legs.yawing = qtrue;
-	}
-	else if ( es->eFlags & EF_MANTLE )
-	{
-		ci->torso.yawing = qtrue;
-		ci->torso.pitching = qtrue;
-		ci->legs.yawing = qtrue;
-	}
-	else if ( !(BG_GetConditionValue(ci, ANIM_COND_MOVETYPE, qfalse) & ((1<<ANIM_MT_IDLE)|(1<<ANIM_MT_IDLECR)) ) )
-	{
-		ci->torso.yawing = qtrue;
-		ci->torso.pitching = qtrue;
-		ci->legs.yawing = qtrue;
-	}
-	else if ( BG_GetConditionValue(ci, ANIM_COND_FIRING, qtrue) )
-	{
-		// if firing, make sure torso and head are always aligned
-		ci->torso.yawing = qtrue;
-		ci->torso.pitching = qtrue;
-	}
-
-	// adjust legs for movement dir
-	vLegsAngles[YAW] = vHeadAngles[YAW] + moveDir;
-
-	if ( es->eFlags & EF_DEAD )
-	{
-		vLegsAngles[YAW] = vHeadAngles[YAW];
-		vTorsoAngles[YAW] = vHeadAngles[YAW];
-		clampTolerance = 90;
-	}
-	else if ( (BG_GetConditionValue(ci, ANIM_COND_MOVETYPE, qfalse) & ((1<<ANIM_MT_CLIMBUP)|(1<<ANIM_MT_CLIMBDOWN)) ) )
-	{
-		vTorsoAngles[YAW] = vLegsAngles[YAW];
-		clampTolerance = 0;
-	}
-	else if ( es->eFlags & EF_MANTLE )
-	{
-		vLegsAngles[YAW] = vTorsoAngles[YAW] = vHeadAngles[YAW];
-		vTorsoAngles[PITCH] = 90;
-		clampTolerance = 90;
-	}
-	else if ( es->eFlags & EF_PRONE )
-	{
-		vTorsoAngles[YAW] = vHeadAngles[YAW];
-		clampTolerance = 90;
-	}
-	else if ( !(es->eFlags & EF_FIRING) )
-	{
-		if ( es->eFlags & EF_AIMDOWNSIGHT )
-		{
-			vTorsoAngles[YAW] = vHeadAngles[YAW];
-		}
-		else
-		{
-			vTorsoAngles[YAW] = vHeadAngles[YAW] + moveDir * 0.30000001f;
-		}
-		clampTolerance = 90;
-	}
-	else
-	{
-		vTorsoAngles[YAW] = vHeadAngles[YAW];
-		clampTolerance = 45;
-	}
-
-	// torso
-	BG_SwingAngles(vTorsoAngles[YAW], 0, clampTolerance, bg_swingSpeed->current.decimal, &ci->torso.yawAngle, &ci->torso.yawing);
-
-	// if the legs are yawing (facing heading direction), allow them to rotate a bit, so we don't keep calling
-	// the legs_turn animation while an AI is firing, and therefore his angles will be randomizing according to their accuracy
-
-	clampTolerance = 150;
-
-	if ( es->eFlags & EF_DEAD )
-	{
-		BG_SwingAngles(vLegsAngles[YAW], 0, clampTolerance, bg_swingSpeed->current.decimal, &ci->legs.yawAngle, &ci->legs.yawing);
-	}
-	else if ( es->eFlags & EF_PRONE )
-	{
-		ci->legs.yawing = qfalse;
-		ci->legs.yawAngle = vHeadAngles[YAW] + moveDir;
-	}
-	else if ( bgs->animScriptData.animations[es->legsAnim & ~ANIM_TOGGLEBIT].flags & 0x30 )
-	{
-		ci->legs.yawing = qfalse; // set it if they really need to swing
-		vLegsAngles[YAW] = vHeadAngles[YAW];
-		BG_SwingAngles(vLegsAngles[YAW], 0, clampTolerance, bg_swingSpeed->current.decimal, &ci->legs.yawAngle, &ci->legs.yawing);
-	}
-	else if ( ci->legs.yawing )
-	{
-		BG_SwingAngles(vLegsAngles[YAW], 0, clampTolerance, bg_swingSpeed->current.decimal, &ci->legs.yawAngle, &ci->legs.yawing);
-	}
-	else
-	{
-		BG_SwingAngles(vLegsAngles[YAW], 40, clampTolerance, bg_swingSpeed->current.decimal, &ci->legs.yawAngle, &ci->legs.yawing);
-	}
-
-	if ( es->eFlags & EF_TURRET_ACTIVE )
-	{
-		ci->torso.yawAngle = vHeadAngles[YAW];
-		ci->legs.yawAngle = vHeadAngles[YAW];
-	}
-	else if ( (BG_GetConditionValue(ci, ANIM_COND_MOVETYPE, qfalse) & ((1<<ANIM_MT_CLIMBUP)|(1<<ANIM_MT_CLIMBDOWN)) ) )
-	{
-		ci->torso.yawAngle = vHeadAngles[YAW] + moveDir;
-		ci->legs.yawAngle = vHeadAngles[YAW] + moveDir;
-	}
-
-	if ( es->eFlags & EF_DEAD )
-	{
-		destination = 0;
-	}
-	else if ( es->eFlags & EF_TURRET_ACTIVE )
-	{
-		destination = 0;
-	}
-	else if ( (BG_GetConditionValue(ci, ANIM_COND_MOVETYPE, qfalse) & ((1<<ANIM_MT_CLIMBUP)|(1<<ANIM_MT_CLIMBDOWN)) ) )
-	{
-		destination = 0;
-	}
-	else if ( es->eFlags == EF_MANTLE )
-	{
-		destination = 0;
-	}
-	else if ( vHeadAngles[PITCH] > 180 )
-	{
-		destination = (vHeadAngles[0] + -360.0f) * 0.60000002f;
-	}
-	else
-	{
-		destination = vHeadAngles[0] * 0.60000002f;
-	}
-
-	BG_SwingAngles(destination, 0, 45, 0.15000001f, &ci->torso.pitchAngle, &ci->torso.pitching);
 }
 
 void BG_AnimPlayerConditions( entityState_t *es, clientInfo_t *ci )
@@ -3163,3 +3186,4 @@ void BG_LoadAnim()
 	Scr_EndLoadAnimTrees();
 	BG_FinalizePlayerAnims();
 }
+

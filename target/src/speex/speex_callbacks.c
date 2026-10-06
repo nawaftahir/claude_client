@@ -119,7 +119,6 @@ int speex_std_vbr_quality_request_handler(SpeexBits *bits, void *state, void *da
    return 0;
 }
 
-
 int speex_std_char_handler(SpeexBits *bits, void *state, void *data)
 {
    unsigned char ch;
@@ -129,8 +128,6 @@ int speex_std_char_handler(SpeexBits *bits, void *state, void *data)
    return 0;
 }
 
-
-
 /* Default handler for user callbacks: skip it */
 int speex_default_user_handler(SpeexBits *bits, void *state, void *data)
 {
@@ -138,3 +135,4 @@ int speex_default_user_handler(SpeexBits *bits, void *state, void *data)
    speex_bits_advance(bits, 5+8*req_size);
    return 0;
 }
+

@@ -1,6 +1,22 @@
 #include "../qcommon/qcommon.h"
 #include "../script/script_public.h"
 
+int XModelTraceLine(const XModel *model, trace_t *results, DObjAnimMat *pose, const float *localStart, const float *localEnd, int contentmask);
+
+// Backing storage for the placeholder model used when a load fails.
+struct XModelDefaults
+{
+	unsigned short boneNames[1];
+	XBoneHierarchy hierarchy;
+	XModelParts modelPart;
+	XModelSurfs surface;
+	XBoneInfo boneInfo;
+	byte partClassification;
+	unsigned short surfName;
+};
+static XModelDefaults xmodelDefaults;
+static int xmodelUnusedValue;
+
 // grouping pins retail fadd order (XModelTraceLine 0x48d430)
 inline void AxisTransformVector(const vec3_t in, const vec3_t mat[3], vec3_t out)
 {
@@ -16,20 +32,15 @@ inline void AxisTransposeTransformVector(const vec3_t in, const vec3_t mat[3], v
 	out[2] = in[0] * mat[2][0] + in[1] * mat[2][1] + in[2] * mat[2][2];
 }
 
-// Backing storage for the placeholder model used when a load fails.
-struct XModelDefaults
+XModelSurfs *SetDefaultSurface()
 {
-	unsigned short boneNames[1];
-	XBoneHierarchy hierarchy;
-	XModelParts modelPart;
-	XModelSurfs surface;
-	XBoneInfo boneInfo;
-	byte partClassification;
-	unsigned short surfName;
-};
+	XModelSurfs *surface;
 
-static XModelDefaults xmodelDefaults;
-static int xmodelUnusedValue;
+	surface = &xmodelDefaults.surface;
+	surface->surf = NULL;
+
+	return surface;
+}
 
 qboolean XModelBad(XModel *model)
 {
@@ -104,16 +115,6 @@ XModelParts *SetDefaultModelPart()
 	names[0] = 0;
 
 	return parts;
-}
-
-XModelSurfs *SetDefaultSurface()
-{
-	XModelSurfs *surface;
-
-	surface = &xmodelDefaults.surface;
-	surface->surf = NULL;
-
-	return surface;
 }
 
 void SetDefaultModel(XModel *model)
@@ -446,3 +447,4 @@ int XModelReturnZero()
 void XModelIgnoreChar(char c)
 {
 }
+

@@ -28,6 +28,32 @@ static const char *g_TypeName[IMPACT_TYPECOUNT] =
 	"rocket_explode"
 };
 
+static int CG_RegisterImpactEffectsForType( char **szEffectFile, const char *pszTypeName, FxEffectDef **fx )
+{
+	int iBadCount;
+	int i;
+
+	iBadCount = 0;
+	for ( i = 0; i < SURF_TYPECOUNT; i++ )
+	{
+		if ( !szEffectFile[i] )
+		{
+			Com_Printf("no entry for effect type '%s' on surface type '%s'\n", pszTypeName, Com_SurfaceTypeToName(i));
+			iBadCount++;
+			fx[i] = NULL;
+		}
+		else if ( !szEffectFile[i][0] )
+		{
+			fx[i] = NULL;
+		}
+		else
+		{
+			fx[i] = FX_RegisterEffect(szEffectFile[i]);
+		}
+	}
+	return iBadCount;
+}
+
 static const char *CG_ParseImpactEffects( const char *filename, const char *buf, int iTypeCount, const char **pszTypeName, char **szEffectFile )
 {
 	const char *token;
@@ -127,32 +153,6 @@ static void CG_RegisterImpactEffectsForDir( const char *dir, char **szEffectFile
 	}
 }
 
-static int CG_RegisterImpactEffectsForType( char **szEffectFile, const char *pszTypeName, FxEffectDef **fx )
-{
-	int iBadCount;
-	int i;
-
-	iBadCount = 0;
-	for ( i = 0; i < SURF_TYPECOUNT; i++ )
-	{
-		if ( !szEffectFile[i] )
-		{
-			Com_Printf("no entry for effect type '%s' on surface type '%s'\n", pszTypeName, Com_SurfaceTypeToName(i));
-			iBadCount++;
-			fx[i] = NULL;
-		}
-		else if ( !szEffectFile[i][0] )
-		{
-			fx[i] = NULL;
-		}
-		else
-		{
-			fx[i] = FX_RegisterEffect(szEffectFile[i]);
-		}
-	}
-	return iBadCount;
-}
-
 FxImpactTable *CG_RegisterImpactEffects( const char *mapname )
 {
 	char *listbuf;
@@ -184,3 +184,4 @@ FxImpactTable *CG_RegisterImpactEffects( const char *mapname )
 	Hunk_ClearTempMemoryInternal();
 	return fx;
 }
+

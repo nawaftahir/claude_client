@@ -11,6 +11,20 @@ static dvar_t *jump_spreadAdd;
 
 float Jump_GetSlowdownFriction( playerState_t *ps );
 
+void Jump_RegisterDvars();
+void Jump_ClearState( playerState_t *ps );
+bool Jump_GetStepHeight( playerState_t *ps, const vec3_t origin, float *stepSize );
+bool Jump_IsPlayerAboveMax( playerState_t *ps );
+void Jump_ActivateSlowdown( playerState_t *ps );
+void Jump_ApplySlowdown( playerState_t *ps );
+float Jump_GetSlowdownFriction( playerState_t *ps );
+float Jump_ReduceFriction( playerState_t *ps );
+void Jump_ClampVelocity( playerState_t *ps, const vec3_t origin );
+float Jump_GetLandFactor( playerState_t *ps );
+void Jump_Start( pmove_t *pm, pml_t *pml, float height );
+void Jump_PushOffLadder( playerState_t *ps, pml_t *pml );
+void Jump_AddSurfaceEvent( playerState_t *ps, pml_t *pml );
+
 /*
 ==================
 Jump_RegisterDvars
@@ -403,3 +417,4 @@ bool Jump_Check( pmove_t *pm, pml_t *pml )
 
 	return true;
 }
+

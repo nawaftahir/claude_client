@@ -11,6 +11,11 @@ output: origin, velocity, impacts, stairup boolean
 
 #define MAX_CLIP_PLANES 8
 
+qboolean PM_VerifyPronePosition( pmove_t *pm, const vec3_t vFallbackOrg, const vec3_t vFallbackVel );
+static float PM_PermuteRestrictiveClipPlanes(const vec3_t velocity, int planeCount, const vec3_t *planes, int *permutation);
+qboolean PM_SlideMove(pmove_t *pm, pml_t *pml, qboolean gravity);
+void PM_StepSlideMove( pmove_t *pm, pml_t *pml, qboolean gravity );
+
 /*
 ==================
 PM_VerifyPronePosition
@@ -502,3 +507,4 @@ void PM_StepSlideMove( pmove_t *pm, pml_t *pml, qboolean gravity )
 		}
 	}
 }
+

@@ -119,3 +119,4 @@ void CG_DrawInformation(qboolean serverLoading)
     text = UI_SafeTranslateString("CGAME_WAITINGFORSERVERLOAD");
     UI_DrawText(va("%s%s", text, dots), 0x7fffffff, font, (640.0f - UI_TextWidth(text, 0, (struct Font_s *)font, 0.5f)) * 0.5f, 439.0f, 0, 0, 0.5f, colorWhite, 3);
 }
+

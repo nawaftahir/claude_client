@@ -90,11 +90,22 @@ extern LegacyHacks *legacyHacks;
 
 #define CGUI_PTR ((char *)legacyHacks)
 
-static qboolean CG_DvarCurrentBool(void *importPtr)
-{
-    const dvar_t *dvar = importPtr ? *(const dvar_t **)importPtr : NULL;
-    return dvar && dvar->current.enabled;
-}
+void CG_ParseServerinfo(void);
+void CG_ParseCodinfo(void);
+static void __attribute_regparm__(2) CG_SetClientDvarFromServer(const char *dvarname, const char *value);
+static void CG_OpenScriptMenu(void);
+void CG_CheckOpenWaitingScriptMenu(void);
+void CG_CloseScriptMenu(void);
+void CG_MenuShowNotify(int menuToShow);
+static void __attribute_regparm__(2) CG_SetClientDvarFromServer(const char *dvarname, const char *value);
+void CG_ParseFog(void);
+static void CG_DeactivateChannelVolCmd(void);
+static void CG_SetChannelVolCmd(void);
+static void CG_DeactivateReverbCmd(void);
+void CG_SetConfigValues(void);
+void CG_MapRestart(qboolean savepersist);
+void CG_ServerCommand(void);
+void CG_ExecuteNewServerCommands(int latestSequence);
 
 void CG_ParseServerinfo(void);
 void CG_ParseCodinfo(void);
@@ -112,6 +123,98 @@ void CG_SetConfigValues(void);
 void CG_MapRestart(qboolean savepersist);
 void CG_ServerCommand(void);
 void CG_ExecuteNewServerCommands(int latestSequence);
+
+#define I_IsColorString(p) ((p) && *(p) == '^' && *((p) + 1) && *((p) + 1) != '^' && *((p) + 1) >= '0' && *((p) + 1) <= '9')
+
+static qboolean CG_DvarCurrentBool(void *importPtr)
+{
+    const dvar_t *dvar = importPtr ? *(const dvar_t **)importPtr : NULL;
+    return dvar && dvar->current.enabled;
+}
+
+static void CG_ParseScores(void)
+{
+    int i;
+    int icon;
+    int team;
+
+    cg->numScores = atoi(CG_Argv(1));
+    if (cg->numScores > 64) {
+        cg->numScores = 64;
+    }
+
+    memset(cg->teamScores, 0, sizeof(cg->teamScores));
+    cg->teamScores[1] = atoi(CG_Argv(2));
+    cg->teamScores[2] = atoi(CG_Argv(3));
+
+    memset(cg->scores, 0, sizeof(cg->scores));
+    memset(cg->teamPings, 0, sizeof(cg->teamPings));
+    memset(cg->teamPlayers, 0, sizeof(cg->teamPlayers));
+
+    for (i = 0; i < cg->numScores; i++) {
+        cg->scores[i].client = atoi(CG_Argv(i * 5 + 4));
+        cg->scores[i].score = atoi(CG_Argv(i * 5 + 5));
+        cg->scores[i].ping = atoi(CG_Argv(i * 5 + 6));
+        cg->scores[i].deaths = atoi(CG_Argv(i * 5 + 7));
+        icon = atoi(CG_Argv(i * 5 + 8));
+        if (icon > 0 && icon <= 8) {
+            cg->scores[i].hStatusIcon = CL_RegisterMaterialNoMip(CL_GetConfigString(icon + 0x16), 7);
+        }
+
+        if (cg->scores[i].client < 0 || cg->scores[i].client >= 64) {
+            cg->scores[i].client = 0;
+        }
+
+        cg->bgs.clientinfo[cg->scores[i].client].score = cg->scores[i].score;
+        if (cg->bgs.clientinfo[cg->scores[i].client].infoValid) {
+            team = cg->bgs.clientinfo[cg->scores[i].client].team;
+        } else {
+            team = 0;
+        }
+        cg->scores[i].team = team;
+
+        cg->teamPlayers[cg->scores[i].team]++;
+        cg->teamPings[cg->scores[i].team] += cg->scores[i].ping;
+    }
+
+    for (i = 0; i < 4; i++) {
+        if (cg->teamPlayers[i] >= 1 && cg->teamPings[i] >= 1) {
+            cg->teamPings[i] /= cg->teamPlayers[i];
+        } else {
+            cg->teamPings[i] = 0;
+        }
+    }
+}
+
+static void CG_SetVoteStringFromConfigString(const char *configString)
+{
+    char converted[256];
+    int inPos;
+    int outPos;
+
+    inPos = 0;
+    outPos = 0;
+
+    while (configString && configString[inPos] && outPos < (int)sizeof(converted) - 1) {
+        int mapLoadNameLen;
+        const char *displayName;
+
+        mapLoadNameLen = 0;
+        displayName = UI_GetMapDisplayNameFromPartialLoadNameMatch(configString + inPos, &mapLoadNameLen);
+        if (displayName && *displayName) {
+            while (*displayName && outPos < (int)sizeof(converted) - 1) {
+                converted[outPos++] = *displayName++;
+            }
+            inPos += mapLoadNameLen;
+            continue;
+        }
+
+        converted[outPos++] = configString[inPos++];
+    }
+
+    converted[outPos] = '\0';
+    I_strncpyz(cgs->voteString, SEH_LocalizeTextMessage(converted, "vote string", (msgLocErrType_t)0), sizeof(cgs->voteString));
+}
 
 void CG_ParseServerinfo(void)
 {
@@ -146,9 +249,6 @@ void CG_ParseCodinfo(void)
     }
 }
 
-#define I_IsColorString(p) ((p) && *(p) == '^' && *((p) + 1) && *((p) + 1) != '^' && *((p) + 1) >= '0' && *((p) + 1) <= '9')
-
-#ifndef __EMSCRIPTEN__
 static void __attribute_regparm__(1) CG_AddToTeamChat(const char *str)
 {
     int len;
@@ -208,6 +308,205 @@ static void __attribute_regparm__(1) CG_AddToTeamChat(const char *str)
 
     if (cgs->teamChatPos - cgs->teamLastChatPos > chatHeight)
         cgs->teamLastChatPos = cgs->teamChatPos - chatHeight;
+}
+
+void CG_ParseFog(void)
+{
+    const char *info;
+    const char *token;
+    float halfDist, val3;
+    float start;
+    int r, g, b;
+    int transitionTime;
+
+    info = CL_GetConfigString(12);
+
+    token = Com_Parse(&info);
+    start = (float)atof(token);
+
+    token = Com_Parse(&info);
+    if (token == NULL || *token == '\0') {
+
+        CL_SwitchFog(0, cg->time, (int)start);
+        return;
+    }
+
+    halfDist = (float)atof(token);
+
+    val3 = (float)atof(Com_Parse(&info));
+    r = I_fround((float)atof(Com_Parse(&info)) * 255.0f);
+    g = I_fround((float)atof(Com_Parse(&info)) * 255.0f);
+    b = I_fround((float)atof(Com_Parse(&info)) * 255.0f);
+
+    token = Com_Parse(&info);
+    transitionTime = atoi(token);
+
+    CL_SetFog(1, start, halfDist, r, g, b, val3);
+
+    CL_SwitchFog(1, cg->time, transitionTime);
+}
+
+// retail 0x4ca7c0, index in eax
+static void CG_RegisterConfigMaterial(int index)
+{
+    const char *str;
+
+    str = CL_GetConfigString(index);
+    if (*str) {
+        CL_RegisterMaterialNoMip(str, 7);
+    }
+}
+
+void CG_SetConfigValues(void)
+{
+    int i;
+    const char *str;
+
+    cgs->teamScores[0] = atoi(CL_GetConfigString(5));
+    cgs->teamScores[1] = atoi(CL_GetConfigString(6));
+    cgs->levelStartTime = atoi(CL_GetConfigString(13));
+
+    CL_SwitchFog(0, cg->time, 0);
+
+    for (i = 0x4de; i < 0x4fe; i++) {
+        str = CL_GetConfigString(i);
+        if (*str == '\0') {
+            continue;
+        }
+        if (!Load_ScriptMenu(str, 7)) {
+            Com_Error(ERR_DROP, (const char *)"\x15"
+                                              "Could not load script menu file '%s'\n",
+                      str);
+        }
+    }
+
+    for (i = 0x17; i < 0x1f; i++) {
+        CL_RegisterMaterialNoMip(CL_GetConfigString(i), 7);
+    }
+
+    for (i = 0x1f; i < 0x2e; i++) {
+        CL_RegisterMaterial(CL_GetConfigString(i), 7);
+    }
+
+    for (i = 0x61f; i < 0x69e; i++) {
+        str = CL_GetConfigString(i);
+        if (*str == '\0') {
+            continue;
+        }
+        CL_RegisterMaterialNoMip(str, 7);
+    }
+}
+
+static void CG_ConfigStringModified(void)
+{
+    const char *str;
+    int num;
+
+    num = atoi(CG_Argv(1));
+    str = CL_GetConfigString(num);
+
+    if (num == 7) {
+        CG_SetupWeaponDef();
+    } else if (num == 8) {
+        CG_RegisterItems();
+    } else if (num == 3) {
+        CG_StartAmbient();
+    } else if (num == 0) {
+        CG_ParseServerinfo();
+    } else if (num >= 0x8e && num < 0x14e) {
+        CG_ParseCodinfo();
+    } else if (num == 5) {
+        cgs->teamScores[0] = atoi(str);
+    } else if (num == 6) {
+        cgs->teamScores[1] = atoi(str);
+    } else if (num == 13) {
+        cgs->levelStartTime = atoi(str);
+    } else if (num == 15) {
+        cgs->voteTime = atoi(str);
+    } else if (num == 17) {
+        cgs->voteYes = atoi(str);
+    } else if (num == 18) {
+        cgs->voteNo = atoi(str);
+    } else if (num == 16) {
+        CG_SetVoteStringFromConfigString(str);
+    } else if (num == 12) {
+        CG_ParseFog();
+    } else if (num >= 0x14e && num < 0x24e) {
+        cgs->gameModels[num - 0x14e] = CL_RegisterModel(str);
+    } else if (num >= 0x34e && num < 0x38e) {
+        cgs->fxs[num - 0x34e] = FX_RegisterEffect(str);
+    } else if (num >= 0x48e && num < 0x49e) {
+        if (*str && CG_LoadShellShockDvars(str)) {
+            CG_SetShellShockParmsFromDvars(&cgs->shellshockParms[num - 0x48e]);
+        }
+    } else if (num >= 0x17 && num < 0x1f) {
+        CL_RegisterMaterialNoMip(str, 7);
+    } else if (num >= 0x1f && num < 0x2e) {
+        CL_RegisterMaterial(str, 7);
+    } else if (num >= 0x61e && num < 0x69e) {
+        CG_RegisterConfigMaterial(num);
+    } else if (num == 11) {
+        CG_NorthDirectionChanged();
+    }
+}
+
+void CG_MapRestart(qboolean savepersist)
+{
+    char *cgui;
+
+    if (cg_showmiss->current.integer) {
+        Com_Printf((const char *)"CG_MapRestart\n");
+    }
+
+    cg->centerPrintTime = 0;
+    cg->cursorHintFade = 0;
+    cg->lastHealthLerpDelay = 1;
+
+    CG_InitLocalEntities();
+    CG_InitMarkPolys();
+    FX_FreeActive();
+
+    cgs->voteTime = 0;
+
+    cg->mapRestart = 1;
+
+    SND_StopSounds((snd_stopsounds_arg_t)0);
+    CG_StartAmbient();
+
+    cg->latchVictorySound = 0;
+    cg->v_dmg_time = 0;
+
+    memset(cg->viewDamage, 0, sizeof(cg->viewDamage));
+
+    cg->fWeapSelectFrac[0] = 0.0f;
+    cg->fWeapSelectFrac[1] = 0.0f;
+    cg->fWeapSelectFrac[2] = 0.0f;
+    cg->iWeapSelectLastDrawTime = 0;
+
+    Dvar_SetBool((dvar_t *)cg_thirdPerson, false);
+
+    cgui = CGUI_PTR;
+    *(int *)(cgui + 8) = 0;
+
+    CL_SetADS(0);
+
+    if (!savepersist) {
+        cgui = CGUI_PTR;
+        ((LegacyHacks *)cgui)->ui_scriptMenuAllowResponse  = 0;
+
+        CG_CloseScriptMenu();
+        CG_CloseScriptMenu();
+
+        cgui = CGUI_PTR;
+        ((LegacyHacks *)cgui)->ui_scriptMenuAllowResponse  = 1;
+
+        CL_CloseAllMenus();
+    }
+
+    CG_ScoresUp_f();
+    *(unsigned char *)cg->objectiveText = 0;
+
+    CL_SyncTimes();
 }
 
 static void CG_OpenScriptMenu(void)
@@ -409,197 +708,6 @@ static void __attribute_regparm__(2) CG_SetClientDvarFromServer(const char *dvar
     }
 }
 
-void CG_ParseFog(void)
-{
-    const char *info;
-    const char *token;
-    float halfDist, val3;
-    float start;
-    int r, g, b;
-    int transitionTime;
-
-    info = CL_GetConfigString(12);
-
-    token = Com_Parse(&info);
-    start = (float)atof(token);
-
-    token = Com_Parse(&info);
-    if (token == NULL || *token == '\0') {
-
-        CL_SwitchFog(0, cg->time, (int)start);
-        return;
-    }
-
-    halfDist = (float)atof(token);
-
-    val3 = (float)atof(Com_Parse(&info));
-    r = I_fround((float)atof(Com_Parse(&info)) * 255.0f);
-    g = I_fround((float)atof(Com_Parse(&info)) * 255.0f);
-    b = I_fround((float)atof(Com_Parse(&info)) * 255.0f);
-
-    token = Com_Parse(&info);
-    transitionTime = atoi(token);
-
-    CL_SetFog(1, start, halfDist, r, g, b, val3);
-
-    CL_SwitchFog(1, cg->time, transitionTime);
-}
-
-static void CG_DeactivateChannelVolCmd(void)
-{
-    int prio;
-    int fadeTime;
-    float fval;
-
-    if (Cmd_Argc() != 3) {
-        Com_Printf((const char *)"ERROR: CG_DeactivateChannelVolCmd called with %i args (should be 3)\n", Cmd_Argc());
-        return;
-    }
-
-    prio = atoi(CG_Argv(1));
-    fval = (float)I_fround((float)atof(CG_Argv(2)) * 1000.0f);
-    fadeTime = (int)((0.0f - fval >= 0.0f) ? 0.0f : fval);
-
-    SND_DeactivateChannelVolumes(prio, fadeTime);
-}
-
-static void CG_SetChannelVolCmd(void)
-{
-    int prio;
-    int shockIndex;
-    int fadeTime;
-    float fval;
-
-    if (Cmd_Argc() != 4) {
-        Com_Printf((const char *)"ERROR: CG_SetChannelVolCmd called with %i args (should be 4)\n", Cmd_Argc());
-        return;
-    }
-
-    prio = atoi(CG_Argv(1));
-    shockIndex = atoi(CG_Argv(2));
-    fval = (float)I_fround((float)atof(CG_Argv(3)) * 1000.0f);
-    fadeTime = (int)((0.0f - fval >= 0.0f) ? 0.0f : fval);
-
-    SND_SetChannelVolumes(prio, cgs->shellshockParms[shockIndex].sound.channelvolume, fadeTime);
-}
-
-static void CG_DeactivateReverbCmd(void)
-{
-    int prio;
-    int fadeTime;
-    float fval;
-
-    if (Cmd_Argc() != 3) {
-        Com_Printf((const char *)"ERROR: CG_DeactivateReverbCmd called with %i args (should be 3)\n", Cmd_Argc());
-        return;
-    }
-
-    prio = atoi(CG_Argv(1));
-    fval = (float)I_fround((float)atof(CG_Argv(2)) * 1000.0f);
-    fadeTime = (int)((0.0f - fval >= 0.0f) ? 0.0f : fval);
-
-    SND_DeactivateEnvironmentEffects(prio, fadeTime);
-}
-
-void CG_SetConfigValues(void)
-{
-    int i;
-    const char *str;
-
-    cgs->teamScores[0] = atoi(CL_GetConfigString(5));
-    cgs->teamScores[1] = atoi(CL_GetConfigString(6));
-    cgs->levelStartTime = atoi(CL_GetConfigString(13));
-
-    CL_SwitchFog(0, cg->time, 0);
-
-    for (i = 0x4de; i < 0x4fe; i++) {
-        str = CL_GetConfigString(i);
-        if (*str == '\0') {
-            continue;
-        }
-        if (!Load_ScriptMenu(str, 7)) {
-            Com_Error(ERR_DROP, (const char *)"\x15"
-                                              "Could not load script menu file '%s'\n",
-                      str);
-        }
-    }
-
-    for (i = 0x17; i < 0x1f; i++) {
-        CL_RegisterMaterialNoMip(CL_GetConfigString(i), 7);
-    }
-
-    for (i = 0x1f; i < 0x2e; i++) {
-        CL_RegisterMaterial(CL_GetConfigString(i), 7);
-    }
-
-    for (i = 0x61f; i < 0x69e; i++) {
-        str = CL_GetConfigString(i);
-        if (*str == '\0') {
-            continue;
-        }
-        CL_RegisterMaterialNoMip(str, 7);
-    }
-}
-
-void CG_MapRestart(qboolean savepersist)
-{
-    char *cgui;
-
-    if (cg_showmiss->current.integer) {
-        Com_Printf((const char *)"CG_MapRestart\n");
-    }
-
-    cg->centerPrintTime = 0;
-    cg->cursorHintFade = 0;
-    cg->lastHealthLerpDelay = 1;
-
-    CG_InitLocalEntities();
-    CG_InitMarkPolys();
-    FX_FreeActive();
-
-    cgs->voteTime = 0;
-
-    cg->mapRestart = 1;
-
-    SND_StopSounds((snd_stopsounds_arg_t)0);
-    CG_StartAmbient();
-
-    cg->latchVictorySound = 0;
-    cg->v_dmg_time = 0;
-
-    memset(cg->viewDamage, 0, sizeof(cg->viewDamage));
-
-    cg->fWeapSelectFrac[0] = 0.0f;
-    cg->fWeapSelectFrac[1] = 0.0f;
-    cg->fWeapSelectFrac[2] = 0.0f;
-    cg->iWeapSelectLastDrawTime = 0;
-
-    Dvar_SetBool((dvar_t *)cg_thirdPerson, false);
-
-    cgui = CGUI_PTR;
-    *(int *)(cgui + 8) = 0;
-
-    CL_SetADS(0);
-
-    if (!savepersist) {
-        cgui = CGUI_PTR;
-        ((LegacyHacks *)cgui)->ui_scriptMenuAllowResponse  = 0;
-
-        CG_CloseScriptMenu();
-        CG_CloseScriptMenu();
-
-        cgui = CGUI_PTR;
-        ((LegacyHacks *)cgui)->ui_scriptMenuAllowResponse  = 1;
-
-        CL_CloseAllMenus();
-    }
-
-    CG_ScoresUp_f();
-    *(unsigned char *)cg->objectiveText = 0;
-
-    CL_SyncTimes();
-}
-
 static void CG_RemoveChatEscapeChar(char *text)
 {
     int i;
@@ -613,154 +721,6 @@ static void CG_RemoveChatEscapeChar(char *text)
         text[l++] = text[i];
     }
     text[l] = 0;
-}
-
-static void CG_ParseScores(void)
-{
-    int i;
-    int icon;
-    int team;
-
-    cg->numScores = atoi(CG_Argv(1));
-    if (cg->numScores > 64) {
-        cg->numScores = 64;
-    }
-
-    memset(cg->teamScores, 0, sizeof(cg->teamScores));
-    cg->teamScores[1] = atoi(CG_Argv(2));
-    cg->teamScores[2] = atoi(CG_Argv(3));
-
-    memset(cg->scores, 0, sizeof(cg->scores));
-    memset(cg->teamPings, 0, sizeof(cg->teamPings));
-    memset(cg->teamPlayers, 0, sizeof(cg->teamPlayers));
-
-    for (i = 0; i < cg->numScores; i++) {
-        cg->scores[i].client = atoi(CG_Argv(i * 5 + 4));
-        cg->scores[i].score = atoi(CG_Argv(i * 5 + 5));
-        cg->scores[i].ping = atoi(CG_Argv(i * 5 + 6));
-        cg->scores[i].deaths = atoi(CG_Argv(i * 5 + 7));
-        icon = atoi(CG_Argv(i * 5 + 8));
-        if (icon > 0 && icon <= 8) {
-            cg->scores[i].hStatusIcon = CL_RegisterMaterialNoMip(CL_GetConfigString(icon + 0x16), 7);
-        }
-
-        if (cg->scores[i].client < 0 || cg->scores[i].client >= 64) {
-            cg->scores[i].client = 0;
-        }
-
-        cg->bgs.clientinfo[cg->scores[i].client].score = cg->scores[i].score;
-        if (cg->bgs.clientinfo[cg->scores[i].client].infoValid) {
-            team = cg->bgs.clientinfo[cg->scores[i].client].team;
-        } else {
-            team = 0;
-        }
-        cg->scores[i].team = team;
-
-        cg->teamPlayers[cg->scores[i].team]++;
-        cg->teamPings[cg->scores[i].team] += cg->scores[i].ping;
-    }
-
-    for (i = 0; i < 4; i++) {
-        if (cg->teamPlayers[i] >= 1 && cg->teamPings[i] >= 1) {
-            cg->teamPings[i] /= cg->teamPlayers[i];
-        } else {
-            cg->teamPings[i] = 0;
-        }
-    }
-}
-
-static void CG_SetVoteStringFromConfigString(const char *configString)
-{
-    char converted[256];
-    int inPos;
-    int outPos;
-
-    inPos = 0;
-    outPos = 0;
-
-    while (configString && configString[inPos] && outPos < (int)sizeof(converted) - 1) {
-        int mapLoadNameLen;
-        const char *displayName;
-
-        mapLoadNameLen = 0;
-        displayName = UI_GetMapDisplayNameFromPartialLoadNameMatch(configString + inPos, &mapLoadNameLen);
-        if (displayName && *displayName) {
-            while (*displayName && outPos < (int)sizeof(converted) - 1) {
-                converted[outPos++] = *displayName++;
-            }
-            inPos += mapLoadNameLen;
-            continue;
-        }
-
-        converted[outPos++] = configString[inPos++];
-    }
-
-    converted[outPos] = '\0';
-    I_strncpyz(cgs->voteString, SEH_LocalizeTextMessage(converted, "vote string", (msgLocErrType_t)0), sizeof(cgs->voteString));
-}
-
-// retail 0x4ca7c0, index in eax
-static void CG_RegisterConfigMaterial(int index)
-{
-    const char *str;
-
-    str = CL_GetConfigString(index);
-    if (*str) {
-        CL_RegisterMaterialNoMip(str, 7);
-    }
-}
-
-static void CG_ConfigStringModified(void)
-{
-    const char *str;
-    int num;
-
-    num = atoi(CG_Argv(1));
-    str = CL_GetConfigString(num);
-
-    if (num == 7) {
-        CG_SetupWeaponDef();
-    } else if (num == 8) {
-        CG_RegisterItems();
-    } else if (num == 3) {
-        CG_StartAmbient();
-    } else if (num == 0) {
-        CG_ParseServerinfo();
-    } else if (num >= 0x8e && num < 0x14e) {
-        CG_ParseCodinfo();
-    } else if (num == 5) {
-        cgs->teamScores[0] = atoi(str);
-    } else if (num == 6) {
-        cgs->teamScores[1] = atoi(str);
-    } else if (num == 13) {
-        cgs->levelStartTime = atoi(str);
-    } else if (num == 15) {
-        cgs->voteTime = atoi(str);
-    } else if (num == 17) {
-        cgs->voteYes = atoi(str);
-    } else if (num == 18) {
-        cgs->voteNo = atoi(str);
-    } else if (num == 16) {
-        CG_SetVoteStringFromConfigString(str);
-    } else if (num == 12) {
-        CG_ParseFog();
-    } else if (num >= 0x14e && num < 0x24e) {
-        cgs->gameModels[num - 0x14e] = CL_RegisterModel(str);
-    } else if (num >= 0x34e && num < 0x38e) {
-        cgs->fxs[num - 0x34e] = FX_RegisterEffect(str);
-    } else if (num >= 0x48e && num < 0x49e) {
-        if (*str && CG_LoadShellShockDvars(str)) {
-            CG_SetShellShockParmsFromDvars(&cgs->shellshockParms[num - 0x48e]);
-        }
-    } else if (num >= 0x17 && num < 0x1f) {
-        CL_RegisterMaterialNoMip(str, 7);
-    } else if (num >= 0x1f && num < 0x2e) {
-        CL_RegisterMaterial(str, 7);
-    } else if (num >= 0x61e && num < 0x69e) {
-        CG_RegisterConfigMaterial(num);
-    } else if (num == 11) {
-        CG_NorthDirectionChanged();
-    }
 }
 
 static void CG_ReverbCmd(void)
@@ -787,6 +747,62 @@ static void CG_ReverbCmd(void)
     fadeTime = (int)((0.0f - fval >= 0.0f) ? 0.0f : fval);
 
     SND_SetEnvironmentEffects(prio, roomstring, dryLevel, wetLevel, fadeTime);
+}
+
+static void CG_DeactivateReverbCmd(void)
+{
+    int prio;
+    int fadeTime;
+    float fval;
+
+    if (Cmd_Argc() != 3) {
+        Com_Printf((const char *)"ERROR: CG_DeactivateReverbCmd called with %i args (should be 3)\n", Cmd_Argc());
+        return;
+    }
+
+    prio = atoi(CG_Argv(1));
+    fval = (float)I_fround((float)atof(CG_Argv(2)) * 1000.0f);
+    fadeTime = (int)((0.0f - fval >= 0.0f) ? 0.0f : fval);
+
+    SND_DeactivateEnvironmentEffects(prio, fadeTime);
+}
+
+static void CG_SetChannelVolCmd(void)
+{
+    int prio;
+    int shockIndex;
+    int fadeTime;
+    float fval;
+
+    if (Cmd_Argc() != 4) {
+        Com_Printf((const char *)"ERROR: CG_SetChannelVolCmd called with %i args (should be 4)\n", Cmd_Argc());
+        return;
+    }
+
+    prio = atoi(CG_Argv(1));
+    shockIndex = atoi(CG_Argv(2));
+    fval = (float)I_fround((float)atof(CG_Argv(3)) * 1000.0f);
+    fadeTime = (int)((0.0f - fval >= 0.0f) ? 0.0f : fval);
+
+    SND_SetChannelVolumes(prio, cgs->shellshockParms[shockIndex].sound.channelvolume, fadeTime);
+}
+
+static void CG_DeactivateChannelVolCmd(void)
+{
+    int prio;
+    int fadeTime;
+    float fval;
+
+    if (Cmd_Argc() != 3) {
+        Com_Printf((const char *)"ERROR: CG_DeactivateChannelVolCmd called with %i args (should be 3)\n", Cmd_Argc());
+        return;
+    }
+
+    prio = atoi(CG_Argv(1));
+    fval = (float)I_fround((float)atof(CG_Argv(2)) * 1000.0f);
+    fadeTime = (int)((0.0f - fval >= 0.0f) ? 0.0f : fval);
+
+    SND_DeactivateChannelVolumes(prio, fadeTime);
 }
 
 static void CG_LocalSoundCmd(void)
@@ -942,142 +958,4 @@ void CG_ExecuteNewServerCommands(int latestSequence)
         }
     }
 }
-#else
-static void CG_AddToTeamChat_impl(const char *str)
-{
-    int chatHeight;
-    int chatCount;
-    int row;
-    char *dst;
-    int len;
-    int lastcolor;
-    char *ls;
-    const char *p;
 
-    chatHeight = cg_chatHeight->current.integer;
-    if (chatHeight == 0)
-        goto zero_out;
-
-    if (cg_chatTime->current.integer <= 0)
-        goto zero_out;
-
-    chatCount = cgs->teamChatPos;
-    row = chatCount % chatHeight;
-
-    dst = (char *)((byte *)cgs + 0xb170 + row * 0x10f);
-
-    dst[0xc] = '\0';
-
-    len = 0;
-    lastcolor = 0x37;
-    ls = NULL;
-    p = str;
-    dst = (char *)((byte *)cgs + 0xb170 + row * 0x10f + 0xc);
-
-    while (*p != '\0') {
-        char ch;
-        const char *savedp;
-
-        if (len > 0x59) {
-
-            if (ls != NULL) {
-
-                int backDist = (int)(dst - ls);
-                p = p - backDist + 1;
-                dst = ls;
-            }
-
-            *dst = '\0';
-
-            chatCount = cgs->teamChatPos;
-            {
-                int r = chatCount % chatHeight;
-                cgs->teamChatMsgTimes[r] = cg->time;
-            }
-
-            chatCount += 1;
-            cgs->teamChatPos = chatCount;
-
-            row = chatCount % chatHeight;
-            dst = (char *)((byte *)cgs + 0xb170 + row * 0x10f + 0xc);
-
-            *dst++ = '^';
-            *dst++ = (char)(lastcolor & 0xff);
-
-            if (p == NULL) {
-
-                ls = NULL;
-                len = 1;
-
-                ch = '\0';
-                goto check_space;
-            }
-            len = 0;
-            ls = NULL;
-
-            if (*p == '^')
-                goto handle_caret;
-
-            goto copy_char;
-        }
-
-        savedp = p;
-
-        if (*p == '^') {
-        handle_caret:
-            p++;
-            ch = *(savedp + 1);
-            if (ch == '\0' || ch == '^' || ch <= '/' || ch > '9') {
-
-                len++;
-                ch = *savedp;
-                goto check_space;
-            }
-
-            *dst++ = '^';
-            lastcolor = (signed char)ch;
-            *dst++ = ch;
-            p = savedp + 2;
-            continue;
-        }
-
-    copy_char:
-
-        savedp = p;
-        p++;
-        len++;
-
-    check_space:
-
-        ch = *savedp;
-        if (ch == ' ')
-            ls = dst;
-
-        *dst++ = ch;
-        continue;
-    }
-
-    *dst = '\0';
-
-    chatCount = cgs->teamChatPos;
-    {
-        int r = chatCount % chatHeight;
-        cgs->teamChatMsgTimes[r] = cg->time;
-    }
-
-    chatCount += 1;
-    cgs->teamChatPos = chatCount;
-
-    if (chatHeight < chatCount - cgs->teamLastChatPos) {
-
-        cgs->teamLastChatPos = chatCount - chatHeight;
-    }
-    return;
-
-zero_out:
-
-    cgs->teamLastChatPos = 0;
-    cgs->teamChatPos = 0;
-}
-
-#endif

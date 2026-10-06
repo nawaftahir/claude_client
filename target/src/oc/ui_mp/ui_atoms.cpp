@@ -86,3 +86,4 @@ void UI_FillRect(float x, float y, float width, float height, int horzAlign, int
         CL_DrawStretchPic(x, y, width, height, horzAlign, vertAlign, 0.0f, 0.0f, 0.0f, 0.0f, color, whiteMaterial);
     }
 }
+

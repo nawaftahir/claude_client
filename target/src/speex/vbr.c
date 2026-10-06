@@ -72,6 +72,22 @@ const float vbr_uhb_thresh[2][11]={
    { 3.9,  2.5,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0, -1.0}  /*  2 kbps */
 };
 
+/*
+  This function should analyse the signal and decide how critical the
+  coding error will be perceptually. The following factors should be
+  taken into account:
+  -Attacks (positive energy derivative) should be coded with more bits
+  -Stationary voiced segments should receive more bits
+  -Segments with (very) low absolute energy should receive less bits (maybe
+  only shaped noise?)
+  -DTX for near-zero energy?
+  -Stationary fricative segments should have less bits
+  -Temporal masking: when energy slope is decreasing, decrease the bit-rate
+  -Decrease bit-rate for males (low pitch)?
+  -(wideband only) less bits in the high-band when signal is very 
+  non-stationary (harder to notice high-frequency noise)???
+*/
+
 void vbr_init(VBRState *vbr)
 {
    int i;
@@ -93,32 +109,6 @@ void vbr_init(VBRState *vbr)
    for (i=0;i<VBR_MEMORY_SIZE;i++)
       vbr->last_log_energy[i] = log((double)MIN_ENERGY);
 }
-
-
-/*
-  This function should analyse the signal and decide how critical the
-  coding error will be perceptually. The following factors should be
-  taken into account:
-
-  -Attacks (positive energy derivative) should be coded with more bits
-
-  -Stationary voiced segments should receive more bits
-
-  -Segments with (very) low absolute energy should receive less bits (maybe
-  only shaped noise?)
-
-  -DTX for near-zero energy?
-
-  -Stationary fricative segments should have less bits
-
-  -Temporal masking: when energy slope is decreasing, decrease the bit-rate
-
-  -Decrease bit-rate for males (low pitch)?
-
-  -(wideband only) less bits in the high-band when signal is very 
-  non-stationary (harder to notice high-frequency noise)???
-
-*/
 
 float vbr_analysis(VBRState *vbr, spx_word16_t *sig, int len, int pitch, float pitch_coef)
 {
@@ -270,3 +260,4 @@ float vbr_analysis(VBRState *vbr, spx_word16_t *sig, int len, int pitch, float p
 void vbr_destroy(VBRState *vbr)
 {
 }
+

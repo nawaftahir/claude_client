@@ -116,6 +116,61 @@ void *Hunk_AllocXAnimServer( int size );
 void G_LogPrintf( const char *fmt, ... );
 void G_SightTrace( int *hitNum, const vec3_t start, const vec3_t end, int passEntityNum, int contentmask );
 
+void G_RegisterDvars();
+int G_GetSavePersist();
+void G_SetSavePersist( int savepersist );
+float G_GetFogOpaqueDistSqrd();
+int G_GetClientScore( int clientNum );
+int G_GetClientArchiveTime( int clientNum );
+void G_SetClientArchiveTime( int clientNum, int iTime );
+clientState_t* G_GetClientState( int clientNum );
+void G_FreeEntities( void );
+void G_CreateDObj( DObjModel_s *dobjModels, unsigned short numModels, XAnimTree *tree, int handle );
+void G_LoadAnimTreeInstances( void );
+void G_FreeAnimTreeInstances( void );
+void *Hunk_AllocXAnimServer( int size );
+void G_InitGame( int levelTime, int randomSeed, int restart, int savepersist );
+static void SendScoreboardMessageToAllIntermissionClients( void );
+static signed int SortRanks( const void *a, const void *b );
+void CalculateRanks();
+void ExitLevel( void );
+void G_LogPrintf( const char *fmt, ... );
+void G_UpdateHudElemsToClients( void );
+void G_RunThink( gentity_t *ent );
+void DebugDumpAnims();
+void G_XAnimUpdateEnt( gentity_t *ent );
+void G_RunFrameForEntity( gentity_t *ent );
+void G_RunFrame( int levelTime );
+void G_TraceCapsule( trace_t *results, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, int passEntityNum, int contentmask );
+int G_TraceCapsuleComplete( const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, int passEntityNum, int contentmask );
+void G_LocationalTrace( trace_t *results, const vec3_t start, const vec3_t end, int passentitynum, int contentmask, unsigned char *priorityMap );
+void G_SightTrace( int *hitNum, const vec3_t start, const vec3_t end, int passEntityNum, int contentmask );
+void G_AddDebugString( const vec3_t xyz, const vec4_t color, float scale, const char *pszText );
+
+/*
+========================================================================
+MAP CHANGING
+========================================================================
+*/
+
+/*
+========================================================================
+PLAYER COUNTING / SCORE SORTING
+========================================================================
+*/
+
+extern void CL_AddDebugString( const float *xyz, const float *color, float scale, const char *text, int fromServer );
+
+/*
+=============
+G_AddDebugString
+=============
+*/
+void G_AddDebugString( const vec3_t xyz, const vec4_t color, float scale, const char *pszText )
+{
+	CL_AddDebugString( xyz, color, scale, pszText, qtrue );
+}
+
 /*
 =================
 G_RegisterDvars
@@ -610,14 +665,6 @@ void G_ShutdownGame( qboolean freeScripts )
 }
 
 /*
-========================================================================
-
-MAP CHANGING
-
-========================================================================
-*/
-
-/*
 ========================
 SendScoreboardMessageToAllIntermissionClients
 
@@ -652,14 +699,6 @@ static void SendScoreboardMessageToAllIntermissionClients( void )
 		level.bUpdateScoresForIntermission = qfalse;
 	}
 }
-
-/*
-========================================================================
-
-PLAYER COUNTING / SCORE SORTING
-
-========================================================================
-*/
 
 /*
 =============
@@ -900,7 +939,6 @@ void CheckVote()
 	level.voteTime = 0;
 	SV_SetConfigstring( CS_VOTE_TIME, "" );
 }
-
 
 void G_UpdateObjectiveToClients()
 {
@@ -1347,14 +1385,3 @@ void G_SightTrace( int *hitNum, const vec3_t start, const vec3_t end, int passEn
 	SV_SightTrace( hitNum, start, vec3_origin, vec3_origin, end, passEntityNum, ENTITYNUM_NONE, contentmask );
 }
 
-extern void CL_AddDebugString( const float *xyz, const float *color, float scale, const char *text, int fromServer );
-
-/*
-=============
-G_AddDebugString
-=============
-*/
-void G_AddDebugString( const vec3_t xyz, const vec4_t color, float scale, const char *pszText )
-{
-	CL_AddDebugString( xyz, color, scale, pszText, qtrue );
-}

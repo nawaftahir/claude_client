@@ -54,6 +54,30 @@ void CG_InitLocalEntities(void)
     }
 }
 
+localEntity_t *CG_AllocLocalEntity(void)
+{
+    localEntity_t *le;
+
+    if (!cg_freeLocalEntities) {
+
+        le = cg_activeLocalEntities->prev;
+        CG_FreeLocalEntity(le);
+    }
+
+    le = cg_freeLocalEntities;
+
+    cg_freeLocalEntities = le->next;
+
+    memset(le, 0, sizeof(localEntity_t));
+
+    le->next = cg_activeLocalEntities->next;
+    le->prev = cg_activeLocalEntities;
+    cg_activeLocalEntities->next->prev = le;
+    cg_activeLocalEntities->next = le;
+
+    return le;
+}
+
 void CG_AddMovingTracer(localEntity_t *le)
 {
     vec3_t start;
@@ -96,30 +120,6 @@ static void GLOBAL__I_cg_eachClientActiveLocalEntities(void)
     __static_initialization_and_destruction_0(1, 0xffff);
 }
 
-localEntity_t *CG_AllocLocalEntity(void)
-{
-    localEntity_t *le;
-
-    if (!cg_freeLocalEntities) {
-
-        le = cg_activeLocalEntities->prev;
-        CG_FreeLocalEntity(le);
-    }
-
-    le = cg_freeLocalEntities;
-
-    cg_freeLocalEntities = le->next;
-
-    memset(le, 0, sizeof(localEntity_t));
-
-    le->next = cg_activeLocalEntities->next;
-    le->prev = cg_activeLocalEntities;
-    cg_activeLocalEntities->next->prev = le;
-    cg_activeLocalEntities->next = le;
-
-    return le;
-}
-
 void CG_AddLocalEntities(void)
 {
     localEntity_t *le;
@@ -143,3 +143,4 @@ void CG_AddLocalEntities(void)
         le = next;
     }
 }
+

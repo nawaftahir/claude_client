@@ -65,6 +65,55 @@ void CG_TransitionPlayerState(playerState_t *ps, playerState_t *ops);
 
 #define VectorClear(v) ((v)[0] = (v)[1] = (v)[2] = 0.0f)
 
+void CG_DamageFeedback(int yawByte, int pitchByte, int damage)
+{
+    float kick;
+    float yaw;
+    float pitch;
+    vec3_t angles;
+    vec3_t dir;
+    int slot;
+    int i;
+
+    cg->attackerTime = cg->time;
+
+    kick = damage * 0.2f;
+    if (kick < 5.0f)
+        kick = 5.0f;
+    else if (kick > 90.0f)
+        kick = 90.0f;
+
+    if (yawByte == 255 && pitchByte == 255) {
+        cg->v_dmg_roll = 0.0f;
+        cg->v_dmg_pitch = -kick;
+    } else {
+        pitch = pitchByte / 255.0f * 360.0f;
+        yaw = yawByte / 255.0f * 360.0f;
+        angles[0] = pitch;
+        angles[1] = yaw;
+        angles[2] = 0.0f;
+        AngleVectors(angles, dir, NULL, NULL);
+
+        cg->v_dmg_roll = -((dir[0] * cg->refdef.viewaxis[2][0] + dir[1] * cg->refdef.viewaxis[2][1] + dir[2] * cg->refdef.viewaxis[2][2]) * kick);
+        cg->v_dmg_pitch = (dir[0] * cg->refdef.viewaxis[1][0] + dir[1] * cg->refdef.viewaxis[1][1] + dir[2] * cg->refdef.viewaxis[1][2]) * kick;
+
+        slot = 0;
+        for (i = 1; i < 8; i++) {
+            if (cg->viewDamage[i].time < cg->viewDamage[slot].time)
+                slot = i;
+        }
+
+        cg->viewDamage[slot].time = cg->snap->serverTime;
+        cg->viewDamage[slot].duration = cg_hudDamageIconTime->current.integer;
+        cg->viewDamage[slot].yaw = AngleNormalize360(yaw + (randomf() - 0.5f) * 20.0f);
+    }
+
+    cg->v_dmg_time = cg->time + 500;
+    cg->damageTime = cg->snap->serverTime;
+
+    CG_MenuShowNotify(0);
+}
+
 void CG_Respawn(void)
 {
     char *snap;
@@ -125,55 +174,6 @@ void CG_Respawn(void)
     CG_ResetLowHealthOverlay();
 }
 
-void CG_DamageFeedback(int yawByte, int pitchByte, int damage)
-{
-    float kick;
-    float yaw;
-    float pitch;
-    vec3_t angles;
-    vec3_t dir;
-    int slot;
-    int i;
-
-    cg->attackerTime = cg->time;
-
-    kick = damage * 0.2f;
-    if (kick < 5.0f)
-        kick = 5.0f;
-    else if (kick > 90.0f)
-        kick = 90.0f;
-
-    if (yawByte == 255 && pitchByte == 255) {
-        cg->v_dmg_roll = 0.0f;
-        cg->v_dmg_pitch = -kick;
-    } else {
-        pitch = pitchByte / 255.0f * 360.0f;
-        yaw = yawByte / 255.0f * 360.0f;
-        angles[0] = pitch;
-        angles[1] = yaw;
-        angles[2] = 0.0f;
-        AngleVectors(angles, dir, NULL, NULL);
-
-        cg->v_dmg_roll = -((dir[0] * cg->refdef.viewaxis[2][0] + dir[1] * cg->refdef.viewaxis[2][1] + dir[2] * cg->refdef.viewaxis[2][2]) * kick);
-        cg->v_dmg_pitch = (dir[0] * cg->refdef.viewaxis[1][0] + dir[1] * cg->refdef.viewaxis[1][1] + dir[2] * cg->refdef.viewaxis[1][2]) * kick;
-
-        slot = 0;
-        for (i = 1; i < 8; i++) {
-            if (cg->viewDamage[i].time < cg->viewDamage[slot].time)
-                slot = i;
-        }
-
-        cg->viewDamage[slot].time = cg->snap->serverTime;
-        cg->viewDamage[slot].duration = cg_hudDamageIconTime->current.integer;
-        cg->viewDamage[slot].yaw = AngleNormalize360(yaw + (randomf() - 0.5f) * 20.0f);
-    }
-
-    cg->v_dmg_time = cg->time + 500;
-    cg->damageTime = cg->snap->serverTime;
-
-    CG_MenuShowNotify(0);
-}
-
 static void CG_CheckPlayerstateEvents(playerState_t *ps, playerState_t *ops)
 {
     char *cent;
@@ -198,3 +198,4 @@ void CG_TransitionPlayerState(playerState_t *ps, playerState_t *ops)
 
     CG_CheckPlayerstateEvents(ps, ops);
 }
+

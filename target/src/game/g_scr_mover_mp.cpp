@@ -82,6 +82,177 @@ qboolean ScriptMover_UpdateMove( trajectory_t *pTr, vec3_t vCurrPos, float fSpee
 	return qfalse;
 }
 
+void Reached_ScriptMover( gentity_t *pEnt );
+void ScriptMover_Move( gentity_s *pEnt, const vec3_t vPos, float fTotalTime, float fAccelTime, float fDecelTime );
+void ScriptMover_Rotate( gentity_t *pEnt, const vec3_t vRot, float fTotalTime, float fAccelTime, float fDecelTime );
+void ScriptMover_RotateSpeed( gentity_t *pEnt, const float *vRotSpeed, float fTotalTime, float fAccelTime, float fDecelTime );
+void InitScriptMover( gentity_t *pSelf );
+void SP_script_brushmodel( gentity_t *pSelf );
+void SP_script_model( gentity_t *pSelf );
+void SP_script_origin( gentity_t *pSelf );
+void ScriptEntCmdGetCommandTimes( float *pfTotalTime, float *pfAccelTime, float *pfDecelTime );
+void ScriptEntCmd_MoveTo( scr_entref_t entref );
+void ScriptEntCmd_GravityMove( scr_entref_t entref );
+void ScriptEntCmd_MoveX( scr_entref_t entref );
+void ScriptEntCmd_MoveY( scr_entref_t entref );
+void ScriptEntCmd_MoveZ( scr_entref_t entref );
+void ScriptEntCmd_RotateTo( scr_entref_t entref );
+void ScriptEntCmd_RotatePitch( scr_entref_t entref );
+void ScriptEntCmd_RotateYaw( scr_entref_t entref );
+void ScriptEntCmd_RotateRoll( scr_entref_t entref );
+void ScriptEntCmd_RotateVelocity( scr_entref_t entref );
+void ScriptEntCmd_Solid( scr_entref_t entref );
+void ScriptEntCmd_NotSolid( scr_entref_t entref );
+void (*ScriptEnt_GetMethod( const char **pName ))( scr_entref_t );
+
+/*
+===============
+ScriptMover_SetupMove
+===============
+*/
+void ScriptMover_SetupMove( trajectory_t *pTr, const vec3_t vPos, float fTotalTime, float fAccelTime, float fDecelTime,
+                            vec3_t vCurrPos, float *pfSpeed, float *pfMidTime, float *pfDecelTime,
+                            vec3_t vPos1, vec3_t vPos2, vec3_t vPos3 )
+{
+	float fDist;
+	float fScale;
+	vec3_t vMove;
+	vec3_t vMaxSpeed;
+	VectorSubtract(vPos, vCurrPos, vMove);
+	if ( pTr->trType != TR_STATIONARY )
+	{
+		BG_EvaluateTrajectory(pTr, level.time, vCurrPos);
+	}
+	if ( fAccelTime == 0 && fDecelTime == 0 )
+	{
+		pTr->trTime = level.time;
+		pTr->trDuration = fTotalTime * 1000;
+		*pfMidTime = fTotalTime;
+		*pfDecelTime = 0;
+		VectorCopy(vPos, vPos3);
+		VectorCopy(vCurrPos, pTr->trBase);
+		fScale = 1000.0f / pTr->trDuration;
+		VectorScale(vMove, fScale, pTr->trDelta);
+		assert(!IS_NAN((pTr->trDelta)[0]) && !IS_NAN((pTr->trDelta)[1]) && !IS_NAN((pTr->trDelta)[2]));
+		pTr->trType = TR_LINEAR_STOP;
+		BG_EvaluateTrajectory(pTr, level.time, vCurrPos);
+		return;
+	}
+	*pfMidTime = fTotalTime - fAccelTime - fDecelTime;
+	*pfDecelTime = fDecelTime;
+	fDist = VectorLength(vMove);
+	*pfSpeed = fDist * 2.0f / (fTotalTime + fTotalTime - fAccelTime - fDecelTime);
+	Vec3NormalizeTo(vMove, vMaxSpeed);
+	VectorScale(vMaxSpeed, *pfSpeed, vMaxSpeed);
+	if ( fAccelTime != 0 )
+	{
+		pTr->trTime = level.time;
+		pTr->trDuration = fAccelTime * 1000;
+		VectorCopy(vCurrPos, pTr->trBase);
+		VectorCopy(vMaxSpeed, pTr->trDelta);
+		assert(!IS_NAN((pTr->trDelta)[0]) && !IS_NAN((pTr->trDelta)[1]) && !IS_NAN((pTr->trDelta)[2]));
+		pTr->trType = TR_ACCELERATE;
+		BG_EvaluateTrajectory(pTr, level.time + pTr->trDuration, vPos1);
+	}
+	else
+	{
+		VectorCopy(vCurrPos, vPos1);
+		if ( *pfMidTime != 0 )
+		{
+			pTr->trTime = level.time;
+			pTr->trDuration = *pfMidTime * 1000;
+			VectorCopy(vCurrPos, pTr->trBase);
+			VectorScale(vMaxSpeed, *pfMidTime, vMove);
+			fScale = 1000.0f / pTr->trDuration;
+			VectorScale(vMove, fScale, pTr->trDelta);
+			assert(!IS_NAN((pTr->trDelta)[0]) && !IS_NAN((pTr->trDelta)[1]) && !IS_NAN((pTr->trDelta)[2]));
+			pTr->trType = TR_LINEAR_STOP;
+		}
+		else
+		{
+			pTr->trTime = level.time;
+			pTr->trDuration = *pfDecelTime * 1000;
+			VectorCopy(vCurrPos, pTr->trBase);
+			VectorCopy(vMaxSpeed, pTr->trDelta);
+			assert(!IS_NAN((pTr->trDelta)[0]) && !IS_NAN((pTr->trDelta)[1]) && !IS_NAN((pTr->trDelta)[2]));
+			pTr->trType = TR_DECCELERATE;
+		}
+	}
+	VectorMA(vPos1, *pfMidTime, vMaxSpeed, vPos2);
+	VectorCopy(vPos, vPos3);
+	BG_EvaluateTrajectory(pTr, level.time, vCurrPos);
+}
+void ScriptMover_SetupMoveSpeed( trajectory_t *pTr, const float *vSpeed, float fTotalTime, float fAccelTime, float fDecelTime,
+                                 vec3_t vCurrPos, float *pfSpeed, float *pfMidTime, float *pfDecelTime,
+                                 vec3_t vPos1, vec3_t vPos2, vec3_t vPos3 )
+{
+	trajectory_t tr;
+	if ( pTr->trType != TR_STATIONARY )
+	{
+		BG_EvaluateTrajectory(pTr, level.time, vCurrPos);
+	}
+	if ( fAccelTime == 0 && fDecelTime == 0 )
+	{
+		pTr->trTime = level.time;
+		pTr->trDuration = fTotalTime * 1000;
+		*pfMidTime = fTotalTime;
+		*pfDecelTime = 0;
+		VectorCopy(vCurrPos, pTr->trBase);
+		VectorCopy(vSpeed, pTr->trDelta);
+		pTr->trType = TR_LINEAR_STOP;
+		BG_EvaluateTrajectory(pTr, level.time, vCurrPos);
+		BG_EvaluateTrajectory(pTr, level.time + pTr->trDuration, vPos3);
+		return;
+	}
+	*pfMidTime = fTotalTime - fAccelTime - fDecelTime;
+	*pfDecelTime = fDecelTime;
+	*pfSpeed = VectorLength(vSpeed);
+	if ( fAccelTime != 0 )
+	{
+		pTr->trTime = level.time;
+		pTr->trDuration = fAccelTime * 1000;
+		VectorCopy(vCurrPos, pTr->trBase);
+		VectorCopy(vSpeed, pTr->trDelta);
+		pTr->trType = TR_ACCELERATE;
+		BG_EvaluateTrajectory(pTr, level.time + pTr->trDuration, vPos1);
+	}
+	else
+	{
+		VectorCopy(vCurrPos, vPos1);
+		if ( *pfMidTime != 0 )
+		{
+			pTr->trTime = level.time;
+			pTr->trDuration = *pfMidTime * 1000;
+			VectorCopy(vCurrPos, pTr->trBase);
+			VectorCopy(vSpeed, pTr->trDelta);
+			pTr->trType = TR_LINEAR_STOP;
+		}
+		else
+		{
+			pTr->trTime = level.time;
+			pTr->trDuration = *pfDecelTime * 1000;
+			VectorCopy(vCurrPos, pTr->trBase);
+			VectorCopy(vSpeed, pTr->trDelta);
+			pTr->trType = TR_DECCELERATE;
+		}
+	}
+	VectorMA(vPos1, *pfMidTime, vSpeed, vPos2);
+	if ( *pfDecelTime != 0 )
+	{
+		tr.trType = TR_DECCELERATE;
+		tr.trTime = level.time;
+		tr.trDuration = *pfDecelTime * 1000;
+		VectorCopy(vPos2, tr.trBase);
+		VectorCopy(vSpeed, tr.trDelta);
+		BG_EvaluateTrajectory(&tr, level.time + tr.trDuration, vPos3);
+	}
+	else
+	{
+		VectorCopy(vPos2, vPos3);
+	}
+	BG_EvaluateTrajectory(pTr, level.time, vCurrPos);
+}
+
 /*
 ===============
 Reached_ScriptMover
@@ -140,200 +311,6 @@ void Reached_ScriptMover( gentity_t *pEnt )
 
 /*
 ===============
-ScriptMover_SetupMove
-===============
-*/
-void ScriptMover_SetupMove( trajectory_t *pTr, const vec3_t vPos, float fTotalTime, float fAccelTime, float fDecelTime,
-                            vec3_t vCurrPos, float *pfSpeed, float *pfMidTime, float *pfDecelTime,
-                            vec3_t vPos1, vec3_t vPos2, vec3_t vPos3 )
-{
-	float fDist;
-	float fScale;
-	vec3_t vMove;
-	vec3_t vMaxSpeed;
-
-	VectorSubtract(vPos, vCurrPos, vMove);
-
-	if ( pTr->trType != TR_STATIONARY )
-	{
-		BG_EvaluateTrajectory(pTr, level.time, vCurrPos);
-	}
-
-	if ( fAccelTime == 0 && fDecelTime == 0 )
-	{
-		pTr->trTime = level.time;
-		pTr->trDuration = fTotalTime * 1000;
-
-		*pfMidTime = fTotalTime;
-		*pfDecelTime = 0;
-
-		VectorCopy(vPos, vPos3);
-		VectorCopy(vCurrPos, pTr->trBase);
-
-		fScale = 1000.0f / pTr->trDuration;
-		VectorScale(vMove, fScale, pTr->trDelta);
-		assert(!IS_NAN((pTr->trDelta)[0]) && !IS_NAN((pTr->trDelta)[1]) && !IS_NAN((pTr->trDelta)[2]));
-		pTr->trType = TR_LINEAR_STOP;
-
-		BG_EvaluateTrajectory(pTr, level.time, vCurrPos);
-		return;
-	}
-
-	*pfMidTime = fTotalTime - fAccelTime - fDecelTime;
-	*pfDecelTime = fDecelTime;
-
-	fDist = VectorLength(vMove);
-	*pfSpeed = fDist * 2.0f / (fTotalTime + fTotalTime - fAccelTime - fDecelTime);
-
-	Vec3NormalizeTo(vMove, vMaxSpeed);
-	VectorScale(vMaxSpeed, *pfSpeed, vMaxSpeed);
-
-	if ( fAccelTime != 0 )
-	{
-		pTr->trTime = level.time;
-		pTr->trDuration = fAccelTime * 1000;
-
-		VectorCopy(vCurrPos, pTr->trBase);
-		VectorCopy(vMaxSpeed, pTr->trDelta);
-
-		assert(!IS_NAN((pTr->trDelta)[0]) && !IS_NAN((pTr->trDelta)[1]) && !IS_NAN((pTr->trDelta)[2]));
-		pTr->trType = TR_ACCELERATE;
-
-		BG_EvaluateTrajectory(pTr, level.time + pTr->trDuration, vPos1);
-	}
-	else
-	{
-		VectorCopy(vCurrPos, vPos1);
-
-		if ( *pfMidTime != 0 )
-		{
-			pTr->trTime = level.time;
-			pTr->trDuration = *pfMidTime * 1000;
-
-			VectorCopy(vCurrPos, pTr->trBase);
-			VectorScale(vMaxSpeed, *pfMidTime, vMove);
-
-			fScale = 1000.0f / pTr->trDuration;
-			VectorScale(vMove, fScale, pTr->trDelta);
-			assert(!IS_NAN((pTr->trDelta)[0]) && !IS_NAN((pTr->trDelta)[1]) && !IS_NAN((pTr->trDelta)[2]));
-			pTr->trType = TR_LINEAR_STOP;
-		}
-		else
-		{
-			pTr->trTime = level.time;
-			pTr->trDuration = *pfDecelTime * 1000;
-
-			VectorCopy(vCurrPos, pTr->trBase);
-			VectorCopy(vMaxSpeed, pTr->trDelta);
-
-			assert(!IS_NAN((pTr->trDelta)[0]) && !IS_NAN((pTr->trDelta)[1]) && !IS_NAN((pTr->trDelta)[2]));
-			pTr->trType = TR_DECCELERATE;
-		}
-	}
-
-	VectorMA(vPos1, *pfMidTime, vMaxSpeed, vPos2);
-	VectorCopy(vPos, vPos3);
-
-	BG_EvaluateTrajectory(pTr, level.time, vCurrPos);
-}
-
-
-void ScriptMover_SetupMoveSpeed( trajectory_t *pTr, const float *vSpeed, float fTotalTime, float fAccelTime, float fDecelTime,
-                                 vec3_t vCurrPos, float *pfSpeed, float *pfMidTime, float *pfDecelTime,
-                                 vec3_t vPos1, vec3_t vPos2, vec3_t vPos3 )
-{
-	trajectory_t tr;
-
-	if ( pTr->trType != TR_STATIONARY )
-	{
-		BG_EvaluateTrajectory(pTr, level.time, vCurrPos);
-	}
-
-	if ( fAccelTime == 0 && fDecelTime == 0 )
-	{
-		pTr->trTime = level.time;
-		pTr->trDuration = fTotalTime * 1000;
-
-		*pfMidTime = fTotalTime;
-		*pfDecelTime = 0;
-
-		VectorCopy(vCurrPos, pTr->trBase);
-		VectorCopy(vSpeed, pTr->trDelta);
-
-		pTr->trType = TR_LINEAR_STOP;
-
-		BG_EvaluateTrajectory(pTr, level.time, vCurrPos);
-		BG_EvaluateTrajectory(pTr, level.time + pTr->trDuration, vPos3);
-
-		return;
-	}
-
-	*pfMidTime = fTotalTime - fAccelTime - fDecelTime;
-	*pfDecelTime = fDecelTime;
-	*pfSpeed = VectorLength(vSpeed);
-
-	if ( fAccelTime != 0 )
-	{
-		pTr->trTime = level.time;
-		pTr->trDuration = fAccelTime * 1000;
-
-		VectorCopy(vCurrPos, pTr->trBase);
-		VectorCopy(vSpeed, pTr->trDelta);
-
-		pTr->trType = TR_ACCELERATE;
-
-		BG_EvaluateTrajectory(pTr, level.time + pTr->trDuration, vPos1);
-	}
-	else
-	{
-		VectorCopy(vCurrPos, vPos1);
-
-		if ( *pfMidTime != 0 )
-		{
-			pTr->trTime = level.time;
-			pTr->trDuration = *pfMidTime * 1000;
-
-			VectorCopy(vCurrPos, pTr->trBase);
-			VectorCopy(vSpeed, pTr->trDelta);
-
-			pTr->trType = TR_LINEAR_STOP;
-		}
-		else
-		{
-			pTr->trTime = level.time;
-			pTr->trDuration = *pfDecelTime * 1000;
-
-			VectorCopy(vCurrPos, pTr->trBase);
-			VectorCopy(vSpeed, pTr->trDelta);
-
-			pTr->trType = TR_DECCELERATE;
-		}
-	}
-
-	VectorMA(vPos1, *pfMidTime, vSpeed, vPos2);
-
-	if ( *pfDecelTime != 0 )
-	{
-		tr.trType = TR_DECCELERATE;
-		tr.trTime = level.time;
-
-		tr.trDuration = *pfDecelTime * 1000;
-
-		VectorCopy(vPos2, tr.trBase);
-		VectorCopy(vSpeed, tr.trDelta);
-
-		BG_EvaluateTrajectory(&tr, level.time + tr.trDuration, vPos3);
-	}
-	else
-	{
-		VectorCopy(vPos2, vPos3);
-	}
-
-	BG_EvaluateTrajectory(pTr, level.time, vCurrPos);
-}
-
-/*
-===============
 ScriptMover_Move
 ===============
 */
@@ -355,7 +332,6 @@ void ScriptMover_Move( gentity_s *pEnt, const vec3_t vPos, float fTotalTime, flo
 
 	SV_LinkEntity(pEnt);
 }
-
 
 void ScriptMover_GravityMove( gentity_t *mover, const vec3_t velocity, float totalTime )
 {
@@ -645,7 +621,6 @@ void ScriptEntCmd_GravityMove( scr_entref_t entref )
 	ScriptMover_GravityMove(pSelf, velocity, fTime);
 }
 
-
 void ScriptEnt_MoveAxis( scr_entref_t entref, int iAxis )
 {
 	float fMove;
@@ -748,7 +723,6 @@ void ScriptEntCmd_RotateTo( scr_entref_t entref )
 
 	ScriptMover_Rotate(pSelf, vRot, fTotalTime, fAccelTime, fDecelTime);
 }
-
 
 void ScriptEnt_RotateAxis( scr_entref_t entref, int iAxis )
 {
@@ -955,3 +929,4 @@ void (*ScriptEnt_GetMethod( const char **pName ))( scr_entref_t )
 
 	return NULL;
 }
+

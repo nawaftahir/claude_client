@@ -619,6 +619,13 @@ static const netField_t playerStateFields[] =
 static huffman_t msgHuff;
 static qboolean msgInit;
 
+void MSG_initHuffman();
+
+extern const dvar_t *cl_shownet;
+
+extern const dvar_t *cl_shownet;
+#define LOG( x ) if ( cl_shownet && cl_shownet->current.integer == 4 ) { Com_Printf( "%s ", x ); }
+
 void MSG_Init( msg_t *buf, byte *data, int length )
 {
 	if ( !msgInit )
@@ -1604,8 +1611,6 @@ delta:
 	}
 }
 
-extern const dvar_t *cl_shownet;
-
 void MSG_WriteDeltaStruct( msg_t *msg, byte *from, byte *to, qboolean force, int numFields, int indexBits, const netField_t *stateFields, qboolean bChangeBit )
 {
 	int i;
@@ -2283,10 +2288,6 @@ void MSG_WriteDeltaPlayerstate( msg_t *msg, playerState_t *from, playerState_t *
 	}
 }
 
-extern const dvar_t *cl_shownet;
-
-#define LOG( x ) if ( cl_shownet && cl_shownet->current.integer == 4 ) { Com_Printf( "%s ", x ); }
-
 void MSG_ReadDeltaPlayerstate( msg_t *msg, playerState_t *from, playerState_t *to )
 {
 	int j;
@@ -2512,3 +2513,4 @@ void MSG_initHuffman()
 	msgInit = qtrue;
 	MSG_initHuffmanInternal();
 }
+

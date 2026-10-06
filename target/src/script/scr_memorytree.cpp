@@ -4,6 +4,34 @@
 scrMemTreeGlob_t scrMemTreeGlob;
 scrMemTreePub_t scrMemTreePub;
 
+int MT_GetSubTreeSize( int nodeNum );
+void MT_DumpTree();
+int Scr_GetStringUsage();
+void MT_InitBits();
+int MT_GetScore( int num );
+void MT_AddMemoryNode( int newNode, int size );
+bool MT_RemoveMemoryNode( int oldNode, int size );
+void MT_RemoveHeadMemoryNode( int size );
+void MT_Init();
+void MT_Error( const char *funcName, int numBytes );
+int MT_GetSize( int numBytes );
+unsigned short MT_AllocIndex( int numBytes, int type );
+void MT_FreeIndex( unsigned int nodeNum, int numBytes );
+void* MT_Alloc( int numBytes, int type );
+void MT_Free( void *p, int numBytes );
+byte *MT_InitForceAlloc();
+void MT_ForceAllocIndex( byte *allocBits, unsigned int nodeNum, int numBytes );
+void MT_FinishForceAlloc( byte *allocBits );
+int MT_Realloc( int oldNumBytes, int newNumbytes );
+
+/*
+============
+MT_Alloc
+============
+*/
+// 1.0 MT_Alloc passes the allocation type through; the sanitized header still
+// declares the later 1-arg form, so alias the 2-arg call onto the same symbol.
+
 /*
 ==============
 MT_GetSubTreeSize
@@ -573,14 +601,6 @@ void MT_SafeFreeIndex( unsigned int nodeNum )
 	}
 }
 
-/*
-============
-MT_Alloc
-============
-*/
-// 1.0 MT_Alloc passes the allocation type through; the sanitized header still
-// declares the later 1-arg form, so alias the 2-arg call onto the same symbol.
-
 void* MT_Alloc( int numBytes, int type )
 {
 	return scrMemTreeGlob.nodes + MT_AllocIndex( numBytes, type );
@@ -664,3 +684,4 @@ int MT_Realloc( int oldNumBytes, int newNumbytes )
 {
 	return MT_GetSize(oldNumBytes) >= MT_GetSize(newNumbytes);
 }
+

@@ -82,6 +82,7 @@ int CalcBorderLines(sbpicinfo_t *backdropBorderLines)
 
     return 6;
 }
+
 // retail 0x4d2ca0, name unknown
 void CG_DrawScoreboard_Backdrop(float alpha)
 {
@@ -414,6 +415,7 @@ void CG_DrawScoreboard_GetTeamColor(int team, vec_t *color)
 
     color[3] = savedAlpha;
 }
+
 float CG_DrawScoreboard_ListBanner(const float *color, float y, float listWidth, float h, int team, int *drawLine)
 {
     float bannerColor[4];
@@ -830,3 +832,4 @@ void CG_RegisterScoreboardGraphics(void)
     CL_RegisterMaterialNoMip((const char *)"voice_on", 7);
     CL_RegisterMaterialNoMip((const char *)"voice_off", 7);
 }
+

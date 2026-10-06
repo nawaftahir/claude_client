@@ -4,6 +4,105 @@
 static scrAnimGlob_t scrAnimGlob;
 scrAnimPub_t scrAnimPub;
 
+void SetAnimCheck( int bAnimCheck );
+void AnimTreeCompileError( const char *msg );
+int GetAnimTreeParseProperties();
+void Scr_EmitAnimationInternal( char *pos, unsigned int animName, unsigned int names, unsigned int sourcePos );
+void Scr_EmitAnimation( char *pos, unsigned int animName, unsigned int sourcePos );
+bool AnimTreeParseInternal( unsigned int parentNode, unsigned int names, bool bIncludeParent, bool bLoop, bool bComplete );
+void Scr_AnimTreeParse( const char *pos, unsigned int parentNode, unsigned int names );
+void *Hunk_AllocXAnimTreePrecache( int size );
+int Scr_GetAnimTreeSize( unsigned int parentNode );
+void ConnectScriptToAnim( unsigned int names, int index, unsigned int filename, unsigned int name, int treeIndex );
+int Scr_GetAnimsIndex( const XAnim *anims );
+XAnim *Scr_GetAnims( int index );
+void Scr_CheckAnimsDefined( unsigned int names, unsigned int filename );
+void Scr_PrecacheAnimationTree( unsigned int parentNode );
+unsigned int Scr_UsingTreeInternal( const char *filename, unsigned int *index, int user );
+void Scr_UsingTree( const char *filename, unsigned int sourcePos );
+bool Scr_LoadAnimTreeInternal( const char *filename, unsigned int parentNode, unsigned int names );
+void Scr_LoadAnimTreeAtIndex( int index, void *(*Alloc)(int), int user );
+scr_animtree_t Scr_FindAnimTree( const char *filename );
+void Scr_FindAnim( const char *filename, const char *animName, scr_anim_s *anim, int user );
+
+static const char *propertyNames[] =
+{
+	"loopsync",
+	"nonloopsync",
+	"complete"
+};
+
+/*
+============
+Scr_CreateAnimationTree
+============
+*/
+int Scr_CreateAnimationTree( unsigned int parentNode, unsigned int names, XAnim *anims,
+                             unsigned int childIndex, const char *parentName, unsigned int parentIndex,
+                             unsigned int filename, int treeIndex )
+{
+	register const char *childName;
+	unsigned int nodeRef;
+	unsigned int name;
+	unsigned int size;
+	unsigned int index;
+	unsigned short flags;
+	unsigned short nodeFlags;
+	size = 0;
+	for ( nodeRef = FindNextSibling(parentNode); nodeRef; nodeRef = FindNextSibling(nodeRef) )
+	{
+		name = GetVariableName(nodeRef);
+		if ( name >= SL_MAX_STRING_INDEX )
+		{
+			continue;
+		}
+		size++;
+	}
+	index = FindArrayVariable(parentNode, 0);
+	if ( index )
+	{
+		nodeFlags = GetVariableValueAddress(index)->intValue;
+	}
+	else
+	{
+		nodeFlags = 0;
+	}
+	flags = nodeFlags;
+	scrVarPub.checksum *= 31;
+	scrVarPub.checksum += parentIndex;
+	scrVarPub.checksum *= 31;
+	scrVarPub.checksum += childIndex;
+	scrVarPub.checksum *= 31;
+	scrVarPub.checksum += size;
+	scrVarPub.checksum *= 31;
+	scrVarPub.checksum += flags;
+	XAnimBlend(anims, parentIndex, parentName, childIndex, size, flags);
+	parentIndex = childIndex;
+	childIndex = size + childIndex;
+	for ( nodeRef = FindNextSibling(parentNode); nodeRef; nodeRef = FindNextSibling(nodeRef) )
+	{
+		name = GetVariableName(nodeRef);
+		if ( name >= SL_MAX_STRING_INDEX )
+		{
+			continue;
+		}
+		ConnectScriptToAnim(names, parentIndex, filename, (unsigned short)name, treeIndex);
+		if ( GetObjectType(nodeRef) == VAR_POINTER )
+		{
+			childName = SL_ConvertToString(name);
+			childIndex = Scr_CreateAnimationTree(FindObject(nodeRef), names, anims, childIndex, childName, parentIndex, filename, treeIndex);
+		}
+		else
+		{
+			scrVarPub.checksum *= 31;
+			scrVarPub.checksum += parentIndex;
+			XAnimCreate(anims, parentIndex, SL_ConvertToString(name));
+		}
+		parentIndex++;
+	}
+	return childIndex;
+}
+
 /*
 ============
 SetAnimCheck
@@ -26,13 +125,6 @@ void AnimTreeCompileError( const char *msg )
 	Com_EndParseSession();
 	CompileError(pos - scrAnimGlob.start, "%s", msg);
 }
-
-static const char *propertyNames[] =
-{
-	"loopsync",
-	"nonloopsync",
-	"complete"
-};
 
 /*
 ============
@@ -440,97 +532,6 @@ XAnim *Scr_GetAnims( int index )
 
 /*
 ============
-Scr_CreateAnimationTree
-============
-*/
-int Scr_CreateAnimationTree( unsigned int parentNode, unsigned int names, XAnim *anims,
-                             unsigned int childIndex, const char *parentName, unsigned int parentIndex,
-                             unsigned int filename, int treeIndex )
-{
-	register const char *childName;
-	unsigned int nodeRef;
-	unsigned int name;
-	unsigned int size;
-	unsigned int index;
-	unsigned short flags;
-	unsigned short nodeFlags;
-
-	size = 0;
-
-	for ( nodeRef = FindNextSibling(parentNode); nodeRef; nodeRef = FindNextSibling(nodeRef) )
-	{
-		name = GetVariableName(nodeRef);
-
-		if ( name >= SL_MAX_STRING_INDEX )
-		{
-			continue;
-		}
-
-		size++;
-	}
-
-	index = FindArrayVariable(parentNode, 0);
-
-	if ( index )
-	{
-		nodeFlags = GetVariableValueAddress(index)->intValue;
-	}
-	else
-	{
-		nodeFlags = 0;
-	}
-
-	flags = nodeFlags;
-
-	scrVarPub.checksum *= 31;
-	scrVarPub.checksum += parentIndex;
-
-	scrVarPub.checksum *= 31;
-	scrVarPub.checksum += childIndex;
-
-	scrVarPub.checksum *= 31;
-	scrVarPub.checksum += size;
-
-	scrVarPub.checksum *= 31;
-	scrVarPub.checksum += flags;
-
-	XAnimBlend(anims, parentIndex, parentName, childIndex, size, flags);
-
-	parentIndex = childIndex;
-	childIndex = size + childIndex;
-
-	for ( nodeRef = FindNextSibling(parentNode); nodeRef; nodeRef = FindNextSibling(nodeRef) )
-	{
-		name = GetVariableName(nodeRef);
-
-		if ( name >= SL_MAX_STRING_INDEX )
-		{
-			continue;
-		}
-
-		ConnectScriptToAnim(names, parentIndex, filename, (unsigned short)name, treeIndex);
-
-		if ( GetObjectType(nodeRef) == VAR_POINTER )
-		{
-			childName = SL_ConvertToString(name);
-			childIndex = Scr_CreateAnimationTree(FindObject(nodeRef), names, anims, childIndex, childName, parentIndex, filename, treeIndex);
-		}
-		else
-		{
-			scrVarPub.checksum *= 31;
-			scrVarPub.checksum += parentIndex;
-
-			XAnimCreate(anims, parentIndex, SL_ConvertToString(name));
-		}
-
-		parentIndex++;
-	}
-
-	return childIndex;
-}
-
-/*
-============
 Scr_CheckAnimsDefined
 ============
 */
@@ -804,3 +805,4 @@ void Scr_FindAnim( const char *filename, const char *animName, scr_anim_s *anim,
 	Scr_EmitAnimationInternal((char *)anim, name, Scr_UsingTreeInternal(filename, &index, user), 0);
 	SL_RemoveRefToString(name);
 }
+

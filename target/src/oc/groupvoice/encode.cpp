@@ -123,3 +123,4 @@ int Encode_GetFrameSize(void)
 {
     return g_frame_size;
 }
+

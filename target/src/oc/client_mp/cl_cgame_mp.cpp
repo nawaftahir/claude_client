@@ -1,9 +1,7 @@
 #include "common_types.h"
 #include "imports.h"
 
-#ifndef __EMSCRIPTEN__
 #    include <mmintrin.h>
-#endif
 #include <string.h>
 extern const dvar_t *cl_freezeDemo;
 extern dvar_t *cl_paused;
@@ -118,33 +116,78 @@ extern clientActive_t clients[1];
 #define CL_LOCAL ((clientActive_t *)((void *)clients))
 #define CLUI_STATE (&::clc)
 
-static const dvar_t *CL_DvarFromImport(void *importPtr)
-{
-    return importPtr ? *(const dvar_t **)importPtr : NULL;
-}
-
-static qboolean CL_DvarCurrentBool(void *importPtr)
-{
-    const dvar_t *dvar = CL_DvarFromImport(importPtr);
-    return dvar && dvar->current.enabled;
-}
-
-static int CL_DvarCurrentInt(void *importPtr)
-{
-    const dvar_t *dvar = CL_DvarFromImport(importPtr);
-    return dvar ? dvar->current.integer : 0;
-}
-
-static const char *CL_DvarCurrentString(void *importPtr)
-{
-    const dvar_t *dvar = CL_DvarFromImport(importPtr);
-    return dvar ? dvar->current.string : NULL;
-}
-
-static float CL_ComTimescaleValue(void)
-{
-    return ((float)com_timescaleValue);
-}
+void CL_FirstSnapshot(void);
+void CL_GetScreenDimensions(int *width, int *height, float *aspect);
+qboolean CL_GetUserCmd(int cmdNumber, usercmd_t *ucmd);
+int CL_GetCurrentCmdNumber(void);
+void CL_GetCurrentSnapshotNumber(int *snapshotNumber, int *serverTime);
+qboolean CL_GetSnapshot(int snapshotNumber, snapshot_t *snapshot);
+void CL_SetUserCmdValue(int userCmdValue, int holdableValue, float sensitivityScale);
+void CL_SetUserCmdInShellshock(qboolean shocked);
+void CL_AddCgameCommand(const char *cmdName);
+void CL_ConfigstringModified(void);
+qboolean CL_GetServerCommand(int serverCommandNumber);
+void CL_SetExpectedHunkUsage(const char *mapname);
+void CL_CM_LoadMap(const char *mapname);
+void CL_ShutdownCGame(void);
+qboolean CL_DObjCreateSkelForBone(struct DObj_s *obj, int boneIndex, int localClientNum);
+qboolean CL_DObjCreateSkelForBones(const struct DObj_s *obj, int *partBits, int localClientNum);
+void CL_SubtitlePrint(const char *pszText, int iDuration, int iLineWidth);
+const char *CL_GetConfigString(int index);
+snd_alias_t *CL_PickSoundAlias(const char *aliasname);
+struct XModel *CL_RegisterModel(const char *name);
+struct GfxBrushModel *CL_RegisterInlineModel(int modelIndex);
+void CL_FinishLoadingModels(void);
+MaterialHandle CL_RegisterMaterial(const char *name, int imageTrack);
+MaterialHandle CL_RegisterMaterialNoMip(const char *name, int imageTrack);
+MaterialHandle CL_Material_Duplicate(MaterialHandle mtlCopy, const char *name);
+void CL_DuplicateFont(FontHandle fontCopy, const char *name);
+void CL_ClearScene(void);
+void CL_DefaultVertexFrames(int vertCount, GfxWorldVertex *verts);
+void CL_AddPolyToScene(MaterialHandle mtlHandle, unsigned short lmapIndex, unsigned short vertCount, const GfxWorldVertex *verts);
+void CL_AddLightToScene(const vec_t *org, float radius, float r, float g, float b);
+void CL_SetFog(int fogvar, float start, float end, int r, int g, int b, float density);
+void CL_SwitchFog(int fogvar, int startTime, int transitionTime);
+void CL_RenderScene(const refdef_t *fd);
+int CL_BeginDelayedDrawing(void);
+void CL_EndDelayedDrawing(int marker);
+void CL_IssueDelayedDrawing(int marker);
+void CL_SetViewport(int x, int y, int width, int height);
+void CL_SaveScreen(void);
+void CL_BlendSavedScreen(int fadeMsec);
+void CL_DrawStretchPicPhysical(float x, float y, float w, float h, float s1, float t1, float s2, float t2, const vec_t *color, MaterialHandle material);
+void CL_DrawQuadPic(vec2_t *verts, const vec_t *color, MaterialHandle material);
+void CL_DrawSprite(MaterialHandle material, const byte *rgbaColor, const vec_t *pos, float radius, float minScreenRadius, int renderFxFlags);
+void CL_ModelBounds(struct GfxBrushModel *model, vec_t *mins, vec_t *maxs);
+int CL_MarkFragments(const vec3_t *points, const vec_t *origin, const vec3_t *axis, float radius, int maxPoints, GfxWorldVertex *verts, int maxFragments, GfxMarkFragment *fragmentBuffer, MaterialHandle markMaterial);
+void CL_TrackStatistics(trStatistics_t *pStats);
+qboolean CL_PickMaterial(const vec_t *org, const vec_t *dir, char *pszName, char *pszSurfaceFlags, char *pszContents, int iMaxChars);
+void CL_LoadSoundAliases(const char *loadspec);
+qboolean CL_Popup(const char *menu);
+void CL_ClosePopup(const char *menu);
+void CL_CloseInGameMenu(void);
+void CL_CloseAllMenus(void);
+void CL_SetWeaponInfoMemory(void);
+void CL_FreeWeaponInfoMemory(void);
+void CL_FX_AdjustCamera(refdef_t *refdef);
+void CL_CapTurnRate(float maxPitchSpeed, float maxYawSpeed);
+void LoadWorld(const char *mapname);
+void CL_UpdateLevelHunkUsage(void);
+void CL_StartLoading(const char *mapname, const char *gametype);
+void CL_InitCGame(void);
+qboolean CL_GameCommand(void);
+void CL_AdjustTimeDelta(void);
+void CL_SetADS(int ads);
+void CL_DrawString(int x, int y, const char *pszString, qboolean bShadow, int iCharHeight);
+void CL_ArchiveClientState(MemoryFile *memFile);
+void CL_SetLodOrigin(const refdef_t *fd);
+void CL_LookupColor(unsigned char c, vec_t *color);
+void CL_SetUserCmdAimValues(vec_t *kickAngles);
+void CL_UpdateColor(void);
+void CL_SetFullScreenViewport(void);
+void CL_DrawStretchPic(float x, float y, float w, float h, int horzAlign, int vertAlign, float s1, float t1, float s2, float t2, const vec_t *color, MaterialHandle material);
+void CL_SyncTimes(void);
+void CL_SetCGameTime(void);
 
 void CL_GetScreenDimensions(int *width, int *height, float *aspect);
 qboolean CL_GetUserCmd(int cmdNumber, usercmd_t *ucmd);
@@ -218,30 +261,41 @@ void CL_DrawStretchPic(float x, float y, float w, float h, int horzAlign, int ve
 void CL_SyncTimes(void);
 void CL_SetCGameTime(void);
 
-void CL_FirstSnapshot(void)
+extern void *s_cmdList;
+
+int g_cginit_loading = 0;
+
+static const dvar_t *CL_DvarFromImport(void *importPtr)
 {
-    clientActive_t *cl = CL_LOCAL;
-    clientConnection_t *clui = CLUI_STATE;
+    return importPtr ? *(const dvar_t **)importPtr : NULL;
+}
 
-    if (cl->snap.snapFlags & 2)
-        return;
+const char *CL_GetConfigString(int index)
+{
+    return clients[0].gameState.stringData + clients[0].gameState.stringOffsets[index];
+}
 
-    clui->state = (connstate_t)(8);
-    int serverTime = cl->snap.serverTime;
-    clientStatic_t *cls = CLS;
-    cl->serverTimeDelta = serverTime - cls->realtime;
-    cl->oldServerTime = serverTime;
-    clui->timeDemoBaseTime = serverTime;
+static qboolean CL_DvarCurrentBool(void *importPtr)
+{
+    const dvar_t *dvar = CL_DvarFromImport(importPtr);
+    return dvar && dvar->current.enabled;
+}
 
-    {
-        const char *autorecStr = (cl_activeAction)->current.string;
-        if (*autorecStr) {
-            Cbuf_AddText(autorecStr);
-            Cbuf_AddText("\n");
-            Dvar_SetString((dvar_t *)cl_activeAction, "");
-        }
-    }
+static int CL_DvarCurrentInt(void *importPtr)
+{
+    const dvar_t *dvar = CL_DvarFromImport(importPtr);
+    return dvar ? dvar->current.integer : 0;
+}
 
+static const char *CL_DvarCurrentString(void *importPtr)
+{
+    const dvar_t *dvar = CL_DvarFromImport(importPtr);
+    return dvar ? dvar->current.string : NULL;
+}
+
+static float CL_ComTimescaleValue(void)
+{
+    return ((float)com_timescaleValue);
 }
 
 void CL_GetScreenDimensions(int *width, int *height, float *aspect)
@@ -362,6 +416,15 @@ void CL_SetUserCmdInShellshock(qboolean shocked)
 {
     clientActive_t *cl = CL_LOCAL;
     cl->cgameInShellshock = shocked;
+}
+
+void CL_SetUserCmdAimValues(vec_t *kickAngles)
+{
+    clientActive_t *cl = CL_LOCAL;
+    vec_t *dst = cl->cgameKickAngles;
+    dst[0] = kickAngles[0];
+    dst[1] = kickAngles[1];
+    dst[2] = kickAngles[2];
 }
 
 void CL_AddCgameCommand(const char *cmdName)
@@ -644,11 +707,6 @@ void CL_SubtitlePrint(const char *pszText, int iDuration, int iLineWidth)
     CL_ConsolePrint((print_msg_type_t)3, va("^1UNLOCALIZED(^7%s^1)^7", pszText), iDuration, iLineWidth);
 }
 
-const char *CL_GetConfigString(int index)
-{
-    return clients[0].gameState.stringData + clients[0].gameState.stringOffsets[index];
-}
-
 snd_alias_t *CL_PickSoundAlias(const char *aliasname)
 {
     return Com_PickSoundAlias(aliasname);
@@ -729,7 +787,6 @@ void CL_SwitchFog(int fogvar, int startTime, int transitionTime)
     RE->SwitchFog(fogvar, startTime, transitionTime);
 }
 
-extern void *s_cmdList;
 void CL_RenderScene(const refdef_t *fd)
 {
     RE->RenderScene(fd);
@@ -765,6 +822,14 @@ void CL_BlendSavedScreen(int fadeMsec)
     RE->BlendSavedScreen(fadeMsec);
 }
 
+void CL_SetFullScreenViewport(void)
+{
+    clientStatic_t *cls = CLS;
+
+    RE->SetViewport(0, 0, cls->vidConfig.width, cls->vidConfig.height);
+    SetScreenScaling(1.0f, 1.0f, 0, 0, cls->vidConfig.width, cls->vidConfig.height);
+}
+
 void CL_DrawStretchPicPhysical(float x, float y, float w, float h, float s1, float t1, float s2, float t2, const vec_t *color, MaterialHandle material)
 {
 #if defined(COD2_X64) && !defined(COD2_GFX_DLL)
@@ -781,6 +846,23 @@ void CL_DrawQuadPic(vec2_t *verts, const vec_t *color, MaterialHandle material)
 #else
     RE->DrawQuadPic(verts, color, material);
 #endif
+}
+
+void CL_DrawStretchPic(float x, float y, float w, float h, int horzAlign, int vertAlign, float s1, float t1, float s2, float t2, const vec_t *color, MaterialHandle material)
+{
+    CalcScreenPlacement(&x, &y, &w, &h, horzAlign, vertAlign);
+#if defined(COD2_X64) && !defined(COD2_GFX_DLL)
+    R_AddCmdDrawStretchPic(x, y, w, h, s1, t1, s2, t2, color, material);
+#else
+    RE->DrawStretchPic(x, y, w, h, s1, t1, s2, t2, color, material);
+#endif
+}
+
+void CL_SyncTimes(void)
+{
+    clientConnection_t *clui = CLUI_STATE;
+    if (clui->state == 8)
+        CL_FirstSnapshot();
 }
 
 void CL_DrawSprite(MaterialHandle material, const byte *rgbaColor, const vec_t *pos, float radius, float minScreenRadius, int renderFxFlags)
@@ -987,8 +1069,6 @@ write_new:
     }
 }
 
-int g_cginit_loading = 0;
-
 void CL_StartLoading(const char *mapname, const char *gametype)
 {
     char *ptr = (char *)::legacyHacks;
@@ -1155,117 +1235,30 @@ void CL_DrawString(int x, int y, const char *pszString, qboolean bShadow, int iC
     CG_DrawStringExt((float)x, fy, pszString, 0, 0, bShadow, (float)iCharHeight, 1);
 }
 
-void CL_ArchiveClientState(MemoryFile *memFile)
-{
-    CG_ArchiveState(memFile);
-    RE->ArchiveFogState(memFile);
-}
-
-void CL_SetLodOrigin(const refdef_t *fd)
-{
-    RE->SetLodOrigin(fd);
-}
-
-void R_UpdateXModelBoundsDelayed(GfxEntity *ent)
-{
-    RE->UpdateXModelBoundsDelayed(ent);
-}
-
-void R_UpdateEffectsBolt(void)
-{
-    RE->UpdateEffectsBolt();
-}
-
-void R_UpdateEffectsNonBolt(void)
-{
-    RE->UpdateEffectsNonBolt();
-}
-
-void CL_LookupColor(unsigned char c, vec_t *color)
-{
-    unsigned int index;
-    const float *src;
-
-    index = ColorIndex(c);
-    if (index < 8) {
-        src = g_color_table[index];
-        color[0] = src[0];
-        color[1] = src[1];
-        color[2] = src[2];
-        color[3] = src[3];
-        return;
-    }
-
-    switch (c) {
-    case '8':
-        color[0] = CL_LOCAL->color_allies[0];
-        color[1] = CL_LOCAL->color_allies[1];
-        color[2] = CL_LOCAL->color_allies[2];
-        color[3] = CL_LOCAL->color_allies[3];
-        break;
-    case '9':
-        color[0] = CL_LOCAL->color_axis[0];
-        color[1] = CL_LOCAL->color_axis[1];
-        color[2] = CL_LOCAL->color_axis[2];
-        color[3] = CL_LOCAL->color_axis[3];
-        break;
-    default:
-        color[0] = 1.0f;
-        color[1] = 1.0f;
-        color[2] = 1.0f;
-        color[3] = 1.0f;
-        break;
-    }
-}
-
-void CL_SetUserCmdAimValues(vec_t *kickAngles)
+void CL_FirstSnapshot(void)
 {
     clientActive_t *cl = CL_LOCAL;
-    vec_t *dst = cl->cgameKickAngles;
-    dst[0] = kickAngles[0];
-    dst[1] = kickAngles[1];
-    dst[2] = kickAngles[2];
-}
-
-void CL_UpdateColor(void)
-{
-    clientActive_t *cl = CL_LOCAL;
-    float *alliesColor = (float *)cl->color_allies;
-    float *axisColor;
-
-    Dvar_GetUnpackedColorByName("g_TeamColor_Allies", alliesColor);
-    alliesColor[3] = 1.0f;
-
-    axisColor = (float *)cl->color_axis;
-    Dvar_GetUnpackedColorByName("g_TeamColor_Axis", axisColor);
-    axisColor[3] = 1.0f;
-
-    RE->UpdateColor(alliesColor, axisColor);
-}
-
-void CL_SetFullScreenViewport(void)
-{
-    clientStatic_t *cls = CLS;
-
-    RE->SetViewport(0, 0, cls->vidConfig.width, cls->vidConfig.height);
-    SetScreenScaling(1.0f, 1.0f, 0, 0, cls->vidConfig.width, cls->vidConfig.height);
-}
-
-void CL_DrawStretchPic(float x, float y, float w, float h, int horzAlign, int vertAlign, float s1, float t1, float s2, float t2, const vec_t *color, MaterialHandle material)
-{
-    CalcScreenPlacement(&x, &y, &w, &h, horzAlign, vertAlign);
-#if defined(COD2_X64) && !defined(COD2_GFX_DLL)
-    R_AddCmdDrawStretchPic(x, y, w, h, s1, t1, s2, t2, color, material);
-#else
-    RE->DrawStretchPic(x, y, w, h, s1, t1, s2, t2, color, material);
-#endif
-}
-
-void CL_SyncTimes(void)
-{
     clientConnection_t *clui = CLUI_STATE;
-    if (clui->state == 8)
-        CL_FirstSnapshot();
+
+    if (cl->snap.snapFlags & 2)
+        return;
+
+    clui->state = (connstate_t)(8);
+    int serverTime = cl->snap.serverTime;
+    clientStatic_t *cls = CLS;
+    cl->serverTimeDelta = serverTime - cls->realtime;
+    cl->oldServerTime = serverTime;
+    clui->timeDemoBaseTime = serverTime;
+
+    {
+        const char *autorecStr = (cl_activeAction)->current.string;
+        if (*autorecStr) {
+            Cbuf_AddText(autorecStr);
+            Cbuf_AddText("\n");
+            Dvar_SetString((dvar_t *)cl_activeAction, "");
+        }
+    }
+
 }
 
 // retail 0x402e70
@@ -1376,5 +1369,85 @@ void CL_SetCGameTime(void)
             return;
     }
 }
+
+void CL_ArchiveClientState(MemoryFile *memFile)
+{
+    CG_ArchiveState(memFile);
+    RE->ArchiveFogState(memFile);
+}
+
+void CL_SetLodOrigin(const refdef_t *fd)
+{
+    RE->SetLodOrigin(fd);
+}
+
+void R_UpdateXModelBoundsDelayed(GfxEntity *ent)
+{
+    RE->UpdateXModelBoundsDelayed(ent);
+}
+
+void R_UpdateEffectsBolt(void)
+{
+    RE->UpdateEffectsBolt();
+}
+
+void R_UpdateEffectsNonBolt(void)
+{
+    RE->UpdateEffectsNonBolt();
+}
+
+void CL_LookupColor(unsigned char c, vec_t *color)
+{
+    unsigned int index;
+    const float *src;
+
+    index = ColorIndex(c);
+    if (index < 8) {
+        src = g_color_table[index];
+        color[0] = src[0];
+        color[1] = src[1];
+        color[2] = src[2];
+        color[3] = src[3];
+        return;
+    }
+
+    switch (c) {
+    case '8':
+        color[0] = CL_LOCAL->color_allies[0];
+        color[1] = CL_LOCAL->color_allies[1];
+        color[2] = CL_LOCAL->color_allies[2];
+        color[3] = CL_LOCAL->color_allies[3];
+        break;
+    case '9':
+        color[0] = CL_LOCAL->color_axis[0];
+        color[1] = CL_LOCAL->color_axis[1];
+        color[2] = CL_LOCAL->color_axis[2];
+        color[3] = CL_LOCAL->color_axis[3];
+        break;
+    default:
+        color[0] = 1.0f;
+        color[1] = 1.0f;
+        color[2] = 1.0f;
+        color[3] = 1.0f;
+        break;
+    }
+}
+
+void CL_UpdateColor(void)
+{
+    clientActive_t *cl = CL_LOCAL;
+    float *alliesColor = (float *)cl->color_allies;
+    float *axisColor;
+
+    Dvar_GetUnpackedColorByName("g_TeamColor_Allies", alliesColor);
+    alliesColor[3] = 1.0f;
+
+    axisColor = (float *)cl->color_axis;
+    Dvar_GetUnpackedColorByName("g_TeamColor_Axis", axisColor);
+    axisColor[3] = 1.0f;
+
+    RE->UpdateColor(alliesColor, axisColor);
+}
+
 
 static const vec4_t g_color_table[36] = { { 0.0f, 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f }, { 1.0f, 1.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f }, { 0.0f, 1.0f, 1.0f, 1.0f }, { 1.0f, 0.0f, 1.0f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f }, { 2.164135E-39f, 2.163334E-39f, 2.163334E-39f, 2.163334E-39f }, { 2.163334E-39f, 2.163334E-39f, 2.163334E-39f, 2.163334E-39f }, { 2.163334E-39f, 2.163334E-39f, 2.163334E-39f, 2.163334E-39f }, { 2.163334E-39f, 2.163334E-39f, 2.163334E-39f, 2.163334E-39f }, { 2.163334E-39f, 2.163334E-39f, 2.163334E-39f, 2.163334E-39f }, { 2.163334E-39f, 2.163334E-39f, 2.163334E-39f, 2.163334E-39f }, { 2.163334E-39f, 2.163334E-39f, 2.163334E-39f, 2.163334E-39f }, { 2.163334E-39f, 2.163334E-39f, 2.163334E-39f, 2.163334E-39f }, { 2.163334E-39f, 2.163334E-39f, 2.164221E-39f, 2.163334E-39f }, { 2.163334E-39f, 2.163334E-39f, 2.163334E-39f, 2.163334E-39f }, { 2.163334E-39f, 2.163334E-39f, 2.163334E-39f, 2.163334E-39f }, { 2.164135E-39f, 2.163334E-39f, 2.163334E-39f, 2.163334E-39f }, { 2.163334E-39f, 2.163334E-39f, 2.163334E-39f, 2.163334E-39f }, { 2.163334E-39f, 2.163671E-39f, 2.163711E-39f, 2.163842E-39f }, { 2.163983E-39f, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 2.20311E-39f, 2.203044E-39f, 2.202998E-39f, 2.202981E-39f }, { 2.202952E-39f, 2.202906E-39f, 2.203169E-39f, 2.20314E-39f }, { 2.202618E-39f, 2.202645E-39f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 0.0f /* raw 0x7FFFFFFF (non-finite) */, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 0.0f /* raw 0x7FFFFFFF (non-finite) */, 0.0f, 0.0f, 0.0f }, { 2.224965E-39f, 2.225545E-39f, 2.225545E-39f, 2.225642E-39f }, { 2.225642E-39f, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f, 0.0f } };

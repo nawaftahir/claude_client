@@ -430,6 +430,7 @@ void Huff_Compress( msg_t *mbuf, int offset )
 	Com_Memcpy( mbuf->data + offset, seq, ( bloc >> 3 ) );
 }
 
+
 void Huff_Init( huffman_t *huff ) {
 
 	Com_Memset( &huff->compressor, 0, sizeof( huff_t ) );

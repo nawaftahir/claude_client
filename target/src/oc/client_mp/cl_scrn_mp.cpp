@@ -117,103 +117,6 @@ void SCR_DrawConsoleString(int x, int y, const short int *string, int maxChars, 
     re.DrawConsoleText(string, maxChars, cls.consoleFont, (float)x, fy, 1.0f, 1.0f, setColor, 0);
 }
 
-void SCR_Init(void)
-{
-    scr_initialized = 1;
-}
-
-float CL_GetMenuBlurRadius(void)
-{
-    if ((clients->keyCatchers & 8) && cls.uiStarted && clc.state != 1)
-        return UI_GetBlurRadius();
-
-    return 0.0f;
-}
-
-static void CL_CubemapShotUsage(void)
-{
-    Com_Printf("Syntax: cubemapShot size basefilename [water r0 g0 b0 r90 g90 b90 | fresnel n0 n1]\n");
-    Com_Printf("size must be a power of 2 >= 4 and <= 1024\n");
-    Com_Printf("screenshots will be written to 'env/basefilename_*.tga'\n");
-    Com_Printf("basefilename must not exceed %i chars\n", 40);
-    Com_Printf("If 'water' is specified, a diffuse water color cubemap is generated using local lighting.\n");
-    Com_Printf("The water has the given colors at the given angles, and blends between them in the middle.\n");
-    Com_Printf("If 'fresnel' is specified, the alpha channel of the cubemap contains the reflection factor.\n");
-    Com_Printf("n0 and n1 are the index of refraction of the 'air' and 'water' surfaces, respectively.\n");
-    Com_Printf("The index of refraction must always be 1 or greater.\n");
-    Com_Printf("This is always calculated, and defaults to air-water interface (n0 = 1, n1 = 1.333).\n");
-}
-
-void CL_CubemapShot_f(void)
-{
-    char szBaseName[64];
-    float rgb[3];
-    float n0, n1;
-    int size;
-    int side;
-    byte isLightingShot;
-
-    if (!clients[0].cgameInitialized) {
-        Com_Printf("must be in a map to use this command\n");
-        return;
-    }
-    if (Cmd_Argc() < 3 || strlen(Cmd_Argv(2)) > 40) {
-        CL_CubemapShotUsage();
-        return;
-    }
-    strcpy(szBaseName, Cmd_Argv(2));
-    size = atoi(Cmd_Argv(1));
-    if (size < 4 || size > 1024 || (size & (size - 1))) {
-        CL_CubemapShotUsage();
-        return;
-    }
-
-    isLightingShot = 0;
-    rgb[0] = 0.0f;
-    rgb[1] = 0.0f;
-    rgb[2] = 0.0f;
-    n0 = 1.0f;
-    n1 = 1.333f;
-    if (Cmd_Argc() == 7) {
-        if (stricmp(Cmd_Argv(3), "lighting")) {
-            CL_CubemapShotUsage();
-            return;
-        }
-        rgb[0] = (float)atof(Cmd_Argv(4));
-        rgb[1] = (float)atof(Cmd_Argv(5));
-        rgb[2] = (float)atof(Cmd_Argv(6));
-        isLightingShot = 1;
-    } else if (Cmd_Argc() == 6) {
-        if (stricmp(Cmd_Argv(3), "fresnel")) {
-            CL_CubemapShotUsage();
-            return;
-        }
-        n0 = (float)atof(Cmd_Argv(4));
-        n1 = (float)atof(Cmd_Argv(5));
-        if (n0 < 1.0f || n1 < 1.0f) {
-            CL_CubemapShotUsage();
-            return;
-        }
-    } else if (Cmd_Argc() != 3) {
-        CL_CubemapShotUsage();
-        return;
-    }
-
-    CL_ResetSkeletonCache(0);
-    for (side = 1; side < 7; side++) {
-        RE_FUNC(re_ptr_195eca8, 0xec, re_int2_func)(size, 1);
-        RE_FUNC(re_ptr_195eca8, 0xa8, re_void_func)();
-        CL_ClearScene();
-        CG_DrawActiveFrame(clients[0].serverTime, (DemoType)(clc.demoplaying != 0), (CubemapShot)side, size, 0);
-        RE_FUNC(re_ptr_195eca8, 0xac, re_void_func)();
-        RE_FUNC(re_ptr_195eca8, 0xf0, re_int_func)(side);
-    }
-    if (isLightingShot)
-        RE_FUNC(re_ptr_195eca8, 0xf8, re_floatp_func)(rgb);
-    for (side = 1; side < 7; side++)
-        RE_FUNC(re_ptr_195eca8, 0xf4, re_write_cubemap_func)(va("env/%s%s.tga", szBaseName, szShotName[side - 1]), side, n0, n1);
-}
-
 // retail 0x413170
 void SCR_DrawDemoRecording(void)
 {
@@ -237,6 +140,11 @@ void SCR_DrawDemoRecording(void)
     h = w;
     CalcScreenPlacement(&x, &y, &w, &h, 1, 1);
     re.DrawText(string, 0x7fffffff, cls.consoleFont, x, y, w, h, color, 0);
+}
+
+void SCR_Init(void)
+{
+    scr_initialized = 1;
 }
 
 // retail 0x4132b0
@@ -330,6 +238,14 @@ void SCR_DrawScreenField(void)
     re.EndView(0);
 }
 
+float CL_GetMenuBlurRadius(void)
+{
+    if ((clients->keyCatchers & 8) && cls.uiStarted && clc.state != 1)
+        return UI_GetBlurRadius();
+
+    return 0.0f;
+}
+
 static void SCR_UpdateFrame(void)
 {
     re.BeginFrame();
@@ -371,3 +287,88 @@ void SCR_UpdateScreen(void)
         updateScreenCalled = 0;
     }
 }
+
+static void CL_CubemapShotUsage(void)
+{
+    Com_Printf("Syntax: cubemapShot size basefilename [water r0 g0 b0 r90 g90 b90 | fresnel n0 n1]\n");
+    Com_Printf("size must be a power of 2 >= 4 and <= 1024\n");
+    Com_Printf("screenshots will be written to 'env/basefilename_*.tga'\n");
+    Com_Printf("basefilename must not exceed %i chars\n", 40);
+    Com_Printf("If 'water' is specified, a diffuse water color cubemap is generated using local lighting.\n");
+    Com_Printf("The water has the given colors at the given angles, and blends between them in the middle.\n");
+    Com_Printf("If 'fresnel' is specified, the alpha channel of the cubemap contains the reflection factor.\n");
+    Com_Printf("n0 and n1 are the index of refraction of the 'air' and 'water' surfaces, respectively.\n");
+    Com_Printf("The index of refraction must always be 1 or greater.\n");
+    Com_Printf("This is always calculated, and defaults to air-water interface (n0 = 1, n1 = 1.333).\n");
+}
+
+void CL_CubemapShot_f(void)
+{
+    char szBaseName[64];
+    float rgb[3];
+    float n0, n1;
+    int size;
+    int side;
+    byte isLightingShot;
+
+    if (!clients[0].cgameInitialized) {
+        Com_Printf("must be in a map to use this command\n");
+        return;
+    }
+    if (Cmd_Argc() < 3 || strlen(Cmd_Argv(2)) > 40) {
+        CL_CubemapShotUsage();
+        return;
+    }
+    strcpy(szBaseName, Cmd_Argv(2));
+    size = atoi(Cmd_Argv(1));
+    if (size < 4 || size > 1024 || (size & (size - 1))) {
+        CL_CubemapShotUsage();
+        return;
+    }
+
+    isLightingShot = 0;
+    rgb[0] = 0.0f;
+    rgb[1] = 0.0f;
+    rgb[2] = 0.0f;
+    n0 = 1.0f;
+    n1 = 1.333f;
+    if (Cmd_Argc() == 7) {
+        if (stricmp(Cmd_Argv(3), "lighting")) {
+            CL_CubemapShotUsage();
+            return;
+        }
+        rgb[0] = (float)atof(Cmd_Argv(4));
+        rgb[1] = (float)atof(Cmd_Argv(5));
+        rgb[2] = (float)atof(Cmd_Argv(6));
+        isLightingShot = 1;
+    } else if (Cmd_Argc() == 6) {
+        if (stricmp(Cmd_Argv(3), "fresnel")) {
+            CL_CubemapShotUsage();
+            return;
+        }
+        n0 = (float)atof(Cmd_Argv(4));
+        n1 = (float)atof(Cmd_Argv(5));
+        if (n0 < 1.0f || n1 < 1.0f) {
+            CL_CubemapShotUsage();
+            return;
+        }
+    } else if (Cmd_Argc() != 3) {
+        CL_CubemapShotUsage();
+        return;
+    }
+
+    CL_ResetSkeletonCache(0);
+    for (side = 1; side < 7; side++) {
+        RE_FUNC(re_ptr_195eca8, 0xec, re_int2_func)(size, 1);
+        RE_FUNC(re_ptr_195eca8, 0xa8, re_void_func)();
+        CL_ClearScene();
+        CG_DrawActiveFrame(clients[0].serverTime, (DemoType)(clc.demoplaying != 0), (CubemapShot)side, size, 0);
+        RE_FUNC(re_ptr_195eca8, 0xac, re_void_func)();
+        RE_FUNC(re_ptr_195eca8, 0xf0, re_int_func)(side);
+    }
+    if (isLightingShot)
+        RE_FUNC(re_ptr_195eca8, 0xf8, re_floatp_func)(rgb);
+    for (side = 1; side < 7; side++)
+        RE_FUNC(re_ptr_195eca8, 0xf4, re_write_cubemap_func)(va("env/%s%s.tga", szBaseName, szShotName[side - 1]), side, n0, n1);
+}
+

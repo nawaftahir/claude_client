@@ -338,3 +338,4 @@ void CG_InitConsoleCommands(void)
     }
 #endif
 }
+

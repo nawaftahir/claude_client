@@ -9,6 +9,66 @@ void SL_RemoveRefToStringOfLen( unsigned int stringValue, unsigned int len );
 void SL_Clear();
 int I_strlen( const char *s );
 
+RefString *GetRefString( const char *str );
+RefString *GetRefString( const char *str );
+const char *SL_ConvertToString( unsigned int stringValue );
+int SL_GetRefStringLen( RefString *refString );
+int SL_GetStringLen( unsigned int stringValue );
+int SL_ConvertFromRefString( RefString *refString );
+unsigned int SL_ConvertFromString( const char *str );
+unsigned int GetHashCode( const char *str, unsigned int len );
+void SL_Init();
+void SL_Restart();
+void SL_Shutdown();
+unsigned int SL_FindStringOfLen( const char *str, unsigned int len );
+unsigned int SL_FindString( const char *str );
+unsigned int SL_FindLowercaseString( const char *str );
+void SL_AddUserInternal( RefString *refStr, unsigned int user );
+void SL_AddUser( unsigned int stringValue, unsigned int user );
+unsigned int SL_GetStringOfLen( const char *str, unsigned int user, unsigned int len, int type );
+unsigned int SL_GetString_( const char *str, unsigned int user, int type );
+unsigned int SL_GetString( const char *str, unsigned int user );
+unsigned int SL_GetLowercaseStringOfLen( const char *str, unsigned int user, unsigned int len, int type );
+unsigned int SL_GetLowercaseString_( const char *str, unsigned int user, int type );
+unsigned int SL_GetLowercaseString( const char *str, unsigned int user );
+unsigned int SL_ConvertToLowercase( unsigned int stringValue, unsigned int user, int type );
+void SL_TransferRefToUser( unsigned int stringValue, unsigned int user );
+void SL_AddRefToString( unsigned int stringValue );
+void SL_FreeString( unsigned int stringValue, RefString *refStr, unsigned int len );
+void SL_RemoveRefToString( unsigned int stringValue );
+void SL_RemoveAllRefToString( unsigned int stringValue );
+void SL_RemoveRefToStringOfLen( unsigned int stringValue, unsigned int len );
+void Scr_SetString( unsigned short *to, unsigned int from );
+void Scr_SetStringFromCharString( unsigned short *to, const char *from );
+unsigned int Scr_AllocString( const char *s, int user );
+unsigned int SL_GetStringForFloat( float f );
+unsigned int SL_GetStringForInt( int i );
+unsigned int SL_GetStringForVector( const vec3_t v );
+void SL_ShutdownSystem( unsigned int user );
+void Scr_ShutdownGameStrings();
+void SL_TransferSystem( unsigned int from, unsigned int to );
+void SL_Clear();
+void SL_CreateCanonicalFilename( char *newFilename, const char *filename, int count );
+unsigned int Scr_CreateCanonicalFilename( const char *filename );
+int I_strlen( const char *s );
+
+/*
+==============
+SL_Restart
+==============
+*/
+void SL_Restart()
+{
+	if ( scrStringGlob.inited )
+	{
+		SL_Clear();
+	}
+	else
+	{
+		SL_Init();
+	}
+}
+
 /*
 ==============
 GetRefString
@@ -167,23 +227,6 @@ void SL_Init()
 
 	scrStringGlob.hashTable[0].prev = prev;
 	scrStringGlob.inited = true;
-}
-
-/*
-==============
-SL_Restart
-==============
-*/
-void SL_Restart()
-{
-	if ( scrStringGlob.inited )
-	{
-		SL_Clear();
-	}
-	else
-	{
-		SL_Init();
-	}
 }
 
 /*
@@ -1008,6 +1051,7 @@ int I_strlen( const char *s )
 {
 	return strlen(s);
 }
+
 
 // Unreferenced storage; original declarations unknown (sized from the layout).
 static int unusedStorage;

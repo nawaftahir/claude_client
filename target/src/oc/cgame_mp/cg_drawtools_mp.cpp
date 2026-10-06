@@ -10,6 +10,50 @@ extern float sinf(float x);
 extern float cosf(float x);
 extern double atof(const char *s);
 
+void CG_DrawStringExt(float x, float y, const char *string, const vec_t *setColor, qboolean forceColor, qboolean shadow, float charHeight, qboolean adjust);
+int CG_DrawDevString(float x, float y, const char *s, const vec_t *color, int align, FontHandle font, int style);
+int CG_DrawBigDevString(float x, float y, const char *s, float alpha, int align);
+int CG_DrawBigDevStringColor(float x, float y, const char *s, const vec_t *color, int align);
+int CG_DrawSmallDevStringColor(float x, float y, const char *s, const vec_t *color, int align);
+void CG_TileClear(void);
+float *CG_FadeColor(int startMsec, int totalMsec, int fadeMsec);
+void CG_NorthDirectionChanged(void);
+void CG_UpdateCompassOrientation(void);
+void CG_UpdateCompPointerOrientation(void);
+void CG_DrawRotatedPicPhysical(float x, float y, float width, float height, float angle, const vec_t *color, MaterialHandle material);
+void CG_DrawRotatedPic(float x, float y, float width, float height, int horzAlign, int vertAlign, float angle, const vec_t *color, MaterialHandle material);
+void CG_DrawRotatedQuadPic(float x, float y, vec2_t *verts, float angle, const vec_t *color, MaterialHandle material);
+
+static vec4_t color;
+extern const dvar_t *cg_hudCompassSpringyPointers;
+extern const vec4_t colorWhite;
+extern FontHandle UI_GetFontHandle(int type, float scale);
+extern void UI_DrawText(const char *text, int maxChars, FontHandle font, float x, float y, int horzAlign, int vertAlign, float scale, const vec_t *color, int style);
+extern int CL_TextWidth(const char *text, int maxChars, FontHandle font);
+extern int CL_TextHeight(FontHandle font);
+extern void CL_DrawText(const char *text, int maxChars, FontHandle font, float x, float y, int horzAlign, int vertAlign, float xScale, float yScale, const vec_t *color, int style);
+extern const char *CL_GetConfigString(int index);
+extern float AngleNormalize360( float angle );
+extern float AngleNormalize180( float angle );
+extern float AngleSubtract( float a1, float a2 );
+extern void CL_SetFullScreenViewport(void);
+extern void CL_SetViewport(int x, int y, int width, int height);
+extern void CalcScreenPlacement(float *x, float *y, float *w, float *h, int horzAlign, int vertAlign);
+extern void CL_DrawQuadPic(vec2_t *verts, const vec_t *color, MaterialHandle material);
+void CG_DrawStringExt(float x, float y, const char *string, const vec_t *setColor, qboolean forceColor, qboolean shadow, float charHeight, qboolean adjust);
+int CG_DrawDevString(float x, float y, const char *s, const vec_t *color, int align, FontHandle font, int style);
+int CG_DrawBigDevStringColor(float x, float y, const char *s, const vec_t *color, int align);
+int CG_DrawSmallDevStringColor(float x, float y, const char *s, const vec_t *color, int align);
+float *CG_FadeColor(int startMsec, int totalMsec, int fadeMsec);
+void CG_NorthDirectionChanged(void);
+void CG_UpdateCompassOrientation(void);
+void CG_UpdateCompPointerOrientation(void);
+void CG_TileClear(void);
+int CG_DrawBigDevString(float x, float y, const char *s, float alpha, int align);
+void CG_DrawRotatedPicPhysical(float x, float y, float width, float height, float angle, const vec_t *color, MaterialHandle material);
+void CG_DrawRotatedPic(float x, float y, float width, float height, int horzAlign, int vertAlign, float angle, const vec_t *color, MaterialHandle material);
+void CG_DrawRotatedQuadPic(float x, float y, vec2_t *verts, float angle, const vec_t *color, MaterialHandle material);
+
 static inline void FastSinCos(const float value, float *pSin, float *pCos)
 {
     __asm
@@ -27,39 +71,6 @@ static inline void FastSinCos(const float value, float *pSin, float *pCos)
     }
 }
 
-static vec4_t color;
-
-extern const dvar_t *cg_hudCompassSpringyPointers;
-extern const vec4_t colorWhite;
-
-extern FontHandle UI_GetFontHandle(int type, float scale);
-extern void UI_DrawText(const char *text, int maxChars, FontHandle font, float x, float y, int horzAlign, int vertAlign, float scale, const vec_t *color, int style);
-extern int CL_TextWidth(const char *text, int maxChars, FontHandle font);
-extern int CL_TextHeight(FontHandle font);
-extern void CL_DrawText(const char *text, int maxChars, FontHandle font, float x, float y, int horzAlign, int vertAlign, float xScale, float yScale, const vec_t *color, int style);
-extern const char *CL_GetConfigString(int index);
-extern float AngleNormalize360( float angle );
-extern float AngleNormalize180( float angle );
-extern float AngleSubtract( float a1, float a2 );
-extern void CL_SetFullScreenViewport(void);
-extern void CL_SetViewport(int x, int y, int width, int height);
-extern void CalcScreenPlacement(float *x, float *y, float *w, float *h, int horzAlign, int vertAlign);
-extern void CL_DrawQuadPic(vec2_t *verts, const vec_t *color, MaterialHandle material);
-
-void CG_DrawStringExt(float x, float y, const char *string, const vec_t *setColor, qboolean forceColor, qboolean shadow, float charHeight, qboolean adjust);
-int CG_DrawDevString(float x, float y, const char *s, const vec_t *color, int align, FontHandle font, int style);
-int CG_DrawBigDevStringColor(float x, float y, const char *s, const vec_t *color, int align);
-int CG_DrawSmallDevStringColor(float x, float y, const char *s, const vec_t *color, int align);
-float *CG_FadeColor(int startMsec, int totalMsec, int fadeMsec);
-void CG_NorthDirectionChanged(void);
-void CG_UpdateCompassOrientation(void);
-void CG_UpdateCompPointerOrientation(void);
-void CG_TileClear(void);
-int CG_DrawBigDevString(float x, float y, const char *s, float alpha, int align);
-void CG_DrawRotatedPicPhysical(float x, float y, float width, float height, float angle, const vec_t *color, MaterialHandle material);
-void CG_DrawRotatedPic(float x, float y, float width, float height, int horzAlign, int vertAlign, float angle, const vec_t *color, MaterialHandle material);
-void CG_DrawRotatedQuadPic(float x, float y, vec2_t *verts, float angle, const vec_t *color, MaterialHandle material);
-
 void CG_DrawStringExt(float x, float y, const char *string, const vec_t *setColor, qboolean forceColor, qboolean shadow, float charHeight, qboolean adjust)
 {
     float baselineY = y + charHeight * 0.8f;
@@ -73,6 +84,62 @@ void CG_DrawStringExt(float x, float y, const char *string, const vec_t *setColo
     int style = (shadow >= 1) ? 3 : 0;
 
     UI_DrawText(string, 0x7fffffff, font, x, baselineY, 1, 1, fontScale, setColor, style);
+}
+
+static __forceinline int CG_FloatIsNegative(const float x)
+{
+    return *(const int *)&x < 0;
+}
+
+void CG_DrawRotatedPicPhysical(float x, float y, float width, float height, float angle, const vec_t *color, MaterialHandle material)
+{
+    static const float sign[4][2] = { { -1.0f, -1.0f }, { 1.0f, -1.0f }, { 1.0f, 1.0f }, { -1.0f, 1.0f } };
+    float c;
+    float s;
+    float halfW;
+    float halfH;
+    float center[2];
+    float scale[2][2];
+    vec2_t verts[4];
+    int i;
+
+    FastSinCos(angle * 0.017453292f, &s, &c);
+    halfW = width * 0.5f;
+    halfH = height * 0.5f;
+    center[0] = x + halfW;
+    center[1] = halfH + y;
+    scale[0][0] = c * halfW;
+    scale[0][1] = s * halfW;
+    scale[1][0] = s * halfH;
+    scale[1][1] = c * halfH;
+    for (i = 0; i < 4; i++) {
+        verts[i][0] = center[0] + scale[0][0] * sign[i][0] - scale[0][1] * sign[i][1];
+        verts[i][1] = scale[1][0] * sign[i][0] + scale[1][1] * sign[i][1] + center[1];
+    }
+
+    CL_DrawQuadPic(verts, color, material);
+}
+
+void CG_DrawRotatedPic(float x, float y, float width, float height, int horzAlign, int vertAlign, float angle, const vec_t *color, MaterialHandle material)
+{
+    CalcScreenPlacement(&x, &y, &width, &height, horzAlign, vertAlign);
+    CG_DrawRotatedPicPhysical(x, y, width, height, angle, color, material);
+}
+
+void CG_DrawRotatedQuadPic(float x, float y, vec2_t *verts, float angle, const vec_t *color, MaterialHandle material)
+{
+    float c;
+    float s;
+    vec2_t xy[4];
+    int i;
+
+    FastSinCos(angle * 0.017453292f, &s, &c);
+    for (i = 0; i < 4; i++) {
+        xy[i][0] = c * verts[i][0] + x - s * verts[i][1];
+        xy[i][1] = s * verts[i][0] + c * verts[i][1] + y;
+    }
+
+    CL_DrawQuadPic(xy, color, material);
 }
 
 int CG_DrawDevString(float x, float y, const char *s, const vec_t *color, int align, FontHandle font, int style)
@@ -257,11 +324,6 @@ void CG_UpdateCompassOrientation(void)
     cg->compassYaw = AngleNormalize360(fDiff + fTargetYaw);
 }
 
-static __forceinline int CG_FloatIsNegative(const float x)
-{
-    return *(const int *)&x < 0;
-}
-
 void CG_UpdateCompPointerOrientation(void)
 {
     if (cg_hudCompassSpringyPointers->current.enabled == 0) {
@@ -348,55 +410,3 @@ void CG_UpdateCompPointerOrientation(void)
     cg->compPointerYaw = AngleNormalize360(fDiff + cg->refdefViewAngles[1]);
 }
 
-
-
-void CG_DrawRotatedPicPhysical(float x, float y, float width, float height, float angle, const vec_t *color, MaterialHandle material)
-{
-    static const float sign[4][2] = { { -1.0f, -1.0f }, { 1.0f, -1.0f }, { 1.0f, 1.0f }, { -1.0f, 1.0f } };
-    float c;
-    float s;
-    float halfW;
-    float halfH;
-    float center[2];
-    float scale[2][2];
-    vec2_t verts[4];
-    int i;
-
-    FastSinCos(angle * 0.017453292f, &s, &c);
-    halfW = width * 0.5f;
-    halfH = height * 0.5f;
-    center[0] = x + halfW;
-    center[1] = halfH + y;
-    scale[0][0] = c * halfW;
-    scale[0][1] = s * halfW;
-    scale[1][0] = s * halfH;
-    scale[1][1] = c * halfH;
-    for (i = 0; i < 4; i++) {
-        verts[i][0] = center[0] + scale[0][0] * sign[i][0] - scale[0][1] * sign[i][1];
-        verts[i][1] = scale[1][0] * sign[i][0] + scale[1][1] * sign[i][1] + center[1];
-    }
-
-    CL_DrawQuadPic(verts, color, material);
-}
-
-void CG_DrawRotatedPic(float x, float y, float width, float height, int horzAlign, int vertAlign, float angle, const vec_t *color, MaterialHandle material)
-{
-    CalcScreenPlacement(&x, &y, &width, &height, horzAlign, vertAlign);
-    CG_DrawRotatedPicPhysical(x, y, width, height, angle, color, material);
-}
-
-void CG_DrawRotatedQuadPic(float x, float y, vec2_t *verts, float angle, const vec_t *color, MaterialHandle material)
-{
-    float c;
-    float s;
-    vec2_t xy[4];
-    int i;
-
-    FastSinCos(angle * 0.017453292f, &s, &c);
-    for (i = 0; i < 4; i++) {
-        xy[i][0] = c * verts[i][0] + x - s * verts[i][1];
-        xy[i][1] = s * verts[i][0] + c * verts[i][1] + y;
-    }
-
-    CL_DrawQuadPic(xy, color, material);
-}

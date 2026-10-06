@@ -2,6 +2,40 @@
 
 static void SV_MapRestart_f( void );
 
+static client_t *SV_GetPlayerByName( void );
+static client_t *SV_GetPlayerByNum( void );
+const char *SV_GetMapBaseName( const char *mapname );
+static void SV_Map_f( void );
+static void SV_MapRestart( qboolean fast_restart );
+static void SV_MapRestart_f( void );
+static void SV_FastRestart_f( void );
+const char *UI_GetMapRotationToken();
+static void SV_MapRotate_f( void );
+static int SV_KickClient( client_t *cl, char *playerName, int maxPlayerNameLen );
+static int SV_KickUser_f( char *playerName, int maxPlayerNameLen );
+static int SV_KickClient_f( char *playerName, int maxPlayerNameLen );
+static void SV_TempBan_f( void );
+static void SV_Ban_f( void );
+static void SV_BanNum_f( void );
+static void SV_Unban_f( void );
+static void SV_Drop_f( void );
+static void SV_DropNum_f( void );
+static void SV_TempBanNum_f( void );
+static void SV_Status_f( void );
+static void SV_ConSay_f( void );
+static void SV_ConTell_f( void );
+void SV_Heartbeat_f( void );
+static void SV_Serverinfo_f( void );
+static void SV_Systeminfo_f( void );
+static void SV_DumpUser_f( void );
+static void SV_GameCompleteStatus_f( void );
+static void SV_ScriptUsage_f( void );
+static void SV_StringUsage_f( void );
+void SV_AddOperatorCommands( void );
+void SV_RemoveOperatorCommands( void );
+void SV_AddDedicatedCommands( void );
+static void SV_RemoveDedicatedCommands( void );
+
 /*
 ==================
 SV_GetPlayerByName
@@ -974,3 +1008,4 @@ static void SV_RemoveDedicatedCommands( void )
 	Cmd_RemoveCommand("say");
 	Cmd_RemoveCommand("tell");
 }
+

@@ -104,42 +104,29 @@ void CL_Connect_f(void);
 int CL_ServerStatus(char *serverAddress, char *serverStatusString, int maxLen);
 void CL_ServerStatus_f(void);
 
+void CL_SetServerInfo(serverInfo_t *server, const char *info, int ping);
+void CL_ServerStatusResponse(netadr_t from, msg_t *msg);
+
+short BigShort(short l);
+
+void CL_ServerStatusResponse(netadr_t from, msg_t *msg);
+// names from CoD1 (SUPPORTED)
+qboolean autoupdateChecked;
+
+short BigShort(short l);
+
+void CL_RconInit(void)
+{
+    rconGlob.password[0] = '\0';
+    rconGlob.address.type = NA_BAD;
+}
+
 static int CL_CompareAdrSigned(const void *a, const void *b)
 {
     serverInfo_t *serverA = (serverInfo_t *)a;
     serverInfo_t *serverB = (serverInfo_t *)b;
 
     return NET_CompareAdrSigned(&serverA->adr, &serverB->adr);
-}
-
-void CL_SetServerInfo(serverInfo_t *server, const char *info, int ping)
-{
-    if (server == NULL) {
-        return;
-    }
-
-    if (info != NULL) {
-        server->clients = (byte)atoi(Info_ValueForKey(info, "clients"));
-        I_strncpyz(server->hostName, Info_ValueForKey(info, "hostname"), 0x20);
-        I_strncpyz(server->mapName, Info_ValueForKey(info, "mapname"), 0x20);
-        server->maxClients = (byte)atoi(Info_ValueForKey(info, "sv_maxclients"));
-        I_strncpyz(server->game, Info_ValueForKey(info, "game"), 0x18);
-        I_strncpyz(server->gameType, Info_ValueForKey(info, "gametype"), 0x10);
-        server->netType = (byte)atoi(Info_ValueForKey(info, "nettype"));
-        server->minPing = (short)atoi(Info_ValueForKey(info, "minping"));
-        server->maxPing = (short)atoi(Info_ValueForKey(info, "maxping"));
-        server->allowAnonymous = (byte)atoi(Info_ValueForKey(info, "sv_allowAnonymous"));
-        server->consoleDisabled = (char)atoi(Info_ValueForKey(info, "con_disabled"));
-        server->bPassword = (byte)atoi(Info_ValueForKey(info, "pswrd"));
-        server->pure = (byte)atoi(Info_ValueForKey(info, "pure"));
-        server->friendlyfire = (char)atoi(Info_ValueForKey(info, "ff"));
-        server->killcam = (char)atoi(Info_ValueForKey(info, "kc"));
-        server->hardware = (byte)atoi(Info_ValueForKey(info, "hw"));
-        server->mod = (byte)atoi(Info_ValueForKey(info, "mod"));
-        server->voice = (byte)atoi(Info_ValueForKey(info, "voice"));
-    }
-
-    server->ping = (short)ping;
 }
 
 void CL_SetServerInfoByAddress(netadr_t from, const char *info, int ping)
@@ -186,6 +173,36 @@ void CL_SetServerInfoByAddress(netadr_t from, const char *info, int ping)
         if (NET_CompareAdr(from, cls.favoriteServers[i].adr))
             CL_SetServerInfo(&cls.favoriteServers[i], info, ping);
     }
+}
+
+void CL_SetServerInfo(serverInfo_t *server, const char *info, int ping)
+{
+    if (server == NULL) {
+        return;
+    }
+
+    if (info != NULL) {
+        server->clients = (byte)atoi(Info_ValueForKey(info, "clients"));
+        I_strncpyz(server->hostName, Info_ValueForKey(info, "hostname"), 0x20);
+        I_strncpyz(server->mapName, Info_ValueForKey(info, "mapname"), 0x20);
+        server->maxClients = (byte)atoi(Info_ValueForKey(info, "sv_maxclients"));
+        I_strncpyz(server->game, Info_ValueForKey(info, "game"), 0x18);
+        I_strncpyz(server->gameType, Info_ValueForKey(info, "gametype"), 0x10);
+        server->netType = (byte)atoi(Info_ValueForKey(info, "nettype"));
+        server->minPing = (short)atoi(Info_ValueForKey(info, "minping"));
+        server->maxPing = (short)atoi(Info_ValueForKey(info, "maxping"));
+        server->allowAnonymous = (byte)atoi(Info_ValueForKey(info, "sv_allowAnonymous"));
+        server->consoleDisabled = (char)atoi(Info_ValueForKey(info, "con_disabled"));
+        server->bPassword = (byte)atoi(Info_ValueForKey(info, "pswrd"));
+        server->pure = (byte)atoi(Info_ValueForKey(info, "pure"));
+        server->friendlyfire = (char)atoi(Info_ValueForKey(info, "ff"));
+        server->killcam = (char)atoi(Info_ValueForKey(info, "kc"));
+        server->hardware = (byte)atoi(Info_ValueForKey(info, "hw"));
+        server->mod = (byte)atoi(Info_ValueForKey(info, "mod"));
+        server->voice = (byte)atoi(Info_ValueForKey(info, "voice"));
+    }
+
+    server->ping = (short)ping;
 }
 
 void CL_ServerInfoPacket(netadr_t from, msg_t *msg, int time)
@@ -320,374 +337,6 @@ void CL_SortGlobalServers(void)
     qsort(cls->globalServers, count, sizeof(serverInfo_t), CL_CompareAdrSigned);
 }
 
-void CL_RconInit(void)
-{
-    rconGlob.password[0] = '\0';
-    rconGlob.address.type = NA_BAD;
-}
-
-// helper names are ours; retail keeps them as separate functions
-static void CL_RconLogin(void)
-{
-    const char *password;
-    int len;
-
-    if (Cmd_Argc() != 3) {
-        Com_Printf("USAGE: rcon login <password>\n");
-        return;
-    }
-
-    password = Cmd_Argv(2);
-    len = strlen(password);
-    if (len >= sizeof(rconGlob.password)) {
-        Com_Printf("rcon password must be %i characters or less\n", sizeof(rconGlob.password));
-        return;
-    }
-
-    memcpy(rconGlob.password, password, len + 1);
-}
-
-static void CL_RconLogout(void)
-{
-    if (!rconGlob.password[0]) {
-        Com_Printf("Not logged in\n");
-        return;
-    }
-
-    rconGlob.password[0] = 0;
-}
-
-short BigShort(short l);
-
-static void CL_RconHost(void)
-{
-    if (Cmd_Argc() != 3) {
-        Com_Printf("USAGE: rcon host <address>\n");
-        return;
-    }
-
-    if (!NET_StringToAdr(Cmd_Argv(2), &rconGlob.address)) {
-        Com_Printf("bad host address\n");
-        return;
-    }
-
-    if (!rconGlob.address.port) {
-        rconGlob.address.port = BigShort(28960);
-    }
-}
-
-void CL_Rcon_f(void)
-{
-    char message[1024];
-    int len;
-    int i;
-    const char *cmd;
-    netadr_t to;
-
-    if (Cmd_Argc() < 2) {
-        Com_Printf("USAGE: rcon <command> <options...>\n");
-        return;
-    }
-
-    cmd = Cmd_Argv(1);
-
-    if (!I_stricmp(cmd, "login")) {
-        CL_RconLogin();
-        return;
-    }
-
-    if (!I_stricmp(cmd, "logout")) {
-        CL_RconLogout();
-        return;
-    }
-
-    if (!I_stricmp(cmd, "host")) {
-        CL_RconHost();
-        return;
-    }
-
-    if (!rconGlob.password[0]) {
-        Com_Printf("You need to log in with 'rcon login <password>' before using rcon.\n");
-        return;
-    }
-
-    message[0] = -1;
-    message[1] = -1;
-    message[2] = -1;
-    message[3] = -1;
-    message[4] = 0;
-
-    len = Com_AddToString("rcon ", message, 4, sizeof(message), 0);
-    len = Com_AddToString(rconGlob.password, message, len, sizeof(message), 0);
-
-    for (i = 1; i < Cmd_Argc(); i++) {
-        len = Com_AddToString(" ", message, len, sizeof(message), 0);
-        len = Com_AddToString(Cmd_Argv(i), message, len, sizeof(message), 1);
-    }
-
-    if (len == sizeof(message)) {
-        Com_Printf("rcon commands are limited to %i characters\n", sizeof(message) - 1);
-        return;
-    }
-
-    message[len] = 0;
-
-    if (clc.state >= 5) {
-        to = clc.netchan.remoteAddress;
-    } else if (rconGlob.address.type != NA_BAD) {
-        to = rconGlob.address;
-    } else {
-        Com_Printf("Can't determine rcon target.  You can fix this by either:\n");
-        Com_Printf("1) Joining the server as a player.\n");
-        Com_Printf("2) Setting the host server with 'rcon host <address>'.\n");
-        return;
-    }
-
-    CL_Netchan_SendOOBPacket(strlen(message) + 1, message, to);
-}
-
-void CL_ServerStatusResponse(netadr_t from, msg_t *msg);
-
-// names from CoD1 (SUPPORTED)
-qboolean autoupdateChecked;
-
-void CL_CheckAutoUpdate(void)
-{
-    int validServerNum = 0;
-    int i, rnd;
-    netadr_t temp;
-    char *servername[5];
-
-    if (autoupdateChecked)
-        return;
-
-    for (i = 0; i < 5; i++) {
-        if (NET_StringToAdr(cls.autoupdateServerNames[i], &temp)) {
-            servername[validServerNum] = cls.autoupdateServerNames[i];
-            validServerNum++;
-        }
-    }
-
-    if (!validServerNum) {
-        Com_DPrintf("Couldn't resolve an AutoUpdate Server address.\n");
-    } else {
-        rnd = rand() % validServerNum;
-
-        Com_DPrintf("Resolving AutoUpdate Server... ");
-        if (!NET_StringToAdr(servername[rnd], &cls.autoupdateServer)) {
-            Com_DPrintf("\nCouldn't resolve first address, trying others... ");
-
-            for (i = 1; i < validServerNum; i++) {
-                if (NET_StringToAdr(servername[(i + rnd) % validServerNum], &cls.autoupdateServer)) {
-                    Com_DPrintf("\nAlternate server address resolved... ");
-                    break;
-                }
-            }
-
-            if (i == validServerNum) {
-                Com_DPrintf("\nFailed to resolve any Auto-update servers.\n");
-                autoupdateChecked = 1;
-                return;
-            }
-        }
-
-        cls.autoupdateServer.port = BigShort(28960);
-        Com_DPrintf("%i.%i.%i.%i:%i\n", cls.autoupdateServer.ip[0], cls.autoupdateServer.ip[1],
-                    cls.autoupdateServer.ip[2], cls.autoupdateServer.ip[3],
-                    BigShort(cls.autoupdateServer.port));
-
-        NET_OutOfBandPrint(NS_CLIENT1, cls.autoupdateServer,
-                           va("getUpdateInfo2 \"%s\" \"%s\" \"%s\"\n", "CoD2 MP", "1.0", "win-x86"));
-    }
-
-    autoupdateChecked = 1;
-}
-
-void CL_GetAutoUpdate(void)
-{
-    if (!autoupdateChecked)
-        return;
-
-    if (!strlen(cl_updatefiles->current.string))
-        return;
-
-    Sys_OpenURL(cl_updatefiles->current.string, 1);
-}
-
-void CL_ServerStatusResponse(netadr_t from, msg_t *msg)
-{
-    int i;
-    serverStatusRequest_t *serverStatus = NULL;
-    const char *line;
-    char info[1024];
-    int infoField;
-
-    for (i = 0; i < 16; i++) {
-        if (NET_CompareAdr(from, cl_serverStatusList[i].address)) {
-            serverStatus = &cl_serverStatusList[i];
-            goto found_status;
-        }
-    }
-    return;
-
-found_status:
-    if (!serverStatus)
-        return;
-
-    line = MSG_ReadStringLine(msg);
-    Com_sprintf(serverStatus->string, 0x2000, (const char *)"%s", line);
-
-    if (serverStatus->print) {
-        Com_Printf((const char *)"Server settings:\n");
-
-        while (*line) {
-            for (infoField = 0; infoField < 2 && *line; infoField++) {
-                int j;
-                if (*line == '\\')
-                    line++;
-                j = 0;
-                while (*line) {
-                    info[j++] = *line;
-                    if (j >= 0x3ff)
-                        break;
-                    line++;
-                    if (*line == '\\')
-                        break;
-                }
-                info[j] = '\0';
-
-                if (infoField)
-                    Com_Printf((const char *)"%s\n", info);
-                else
-                    Com_Printf((const char *)"%-24s", info);
-            }
-        }
-    }
-
-    {
-        int statusLen = strlen(serverStatus->string);
-        Com_sprintf(serverStatus->string + statusLen, 0x2000 - statusLen, (const char *)"\\");
-    }
-
-    if (serverStatus->print) {
-        Com_Printf((const char *)"\nPlayers:\n");
-        Com_Printf((const char *)"num: score: ping: name:\n");
-    }
-
-    {
-        int playerIdx = 0;
-        line = MSG_ReadStringLine(msg);
-        while (*line) {
-            {
-                int statusLen = strlen(serverStatus->string);
-                Com_sprintf(serverStatus->string + statusLen, 0x2000 - statusLen, (const char *)"\\%s", line);
-            }
-
-            if (serverStatus->print) {
-                int ping = 0, score = 0;
-                const char *name;
-                sscanf(line, (const char *)"%d %d", &score, &ping);
-                name = strchr(line, ' ');
-                if (name) {
-                    name = strchr(name + 1, ' ');
-                    if (name)
-                        name++;
-                    else
-                        name = (const char *)"unknown";
-                } else {
-                    name = (const char *)"unknown";
-                }
-                Com_Printf((const char *)"%-2d   %-3d    %-3d   %s\n", playerIdx, score, ping, name);
-            }
-
-            line = MSG_ReadStringLine(msg);
-            playerIdx++;
-        }
-    }
-
-    {
-        int statusLen = strlen(serverStatus->string);
-        Com_sprintf(serverStatus->string + statusLen, 0x2000 - statusLen, (const char *)"\\");
-    }
-
-    serverStatus->time = Sys_Milliseconds();
-    serverStatus->address = from;
-    serverStatus->pending = 0;
-
-    if (serverStatus->print) {
-        serverStatus->retrieved = 1;
-    }
-}
-
-void CL_ResetPlayerMuting(int clientIndex)
-{
-    s_playerMute[clientIndex] = 0;
-}
-
-void CL_MutePlayer(int clientIndex)
-{
-    s_playerMute[clientIndex] = !s_playerMute[clientIndex];
-    if (s_playerMute[clientIndex]) {
-        Cbuf_ExecuteText(2, va("muteplayer %i", clientIndex));
-    } else {
-        Cbuf_ExecuteText(2, va("unmuteplayer %i", clientIndex));
-    }
-}
-
-Bool CL_IsPlayerMuted(int clientIndex)
-{
-    return s_playerMute[clientIndex];
-}
-
-void CL_ClearMutedList(void)
-{
-    memset(s_playerMute, 0, sizeof(s_playerMute));
-}
-
-short BigShort(short l);
-
-void CL_GlobalServers_f(void)
-{
-    netadr_t to;
-    int i;
-    int count;
-    char *buffptr;
-    char command[1024];
-
-    if (Cmd_Argc() < 3) {
-        Com_Printf("usage: globalservers <master# 0-1> <protocol> [keywords]\n");
-        return;
-    }
-
-    // age the existing entries
-    for (i = 0; i < cls.numglobalservers; i++) {
-        if (!++cls.globalServers[i].requestCount)
-            cls.globalServers[i].requestCount = 255;
-    }
-
-    Com_Printf("Requesting servers from the master...\n");
-
-    NET_StringToAdr("cod2master.activision.com", &to);
-    cls.waitglobalserverresponse = 1;
-    cls.pingUpdateSource = 1;
-    to.type = NA_IP;
-    to.port = BigShort(20710);
-
-    sprintf(command, "getservers %s", Cmd_Argv(2));
-
-    // tack on keywords
-    buffptr = command + strlen(command);
-    count = Cmd_Argc();
-    for (i = 3; i < count; i++)
-        buffptr += sprintf(buffptr, " %s", Cmd_Argv(i));
-
-    // if we are a demo, automatically add a "demo" keyword
-    if (Dvar_GetBool("fs_restrict"))
-        buffptr += sprintf(buffptr, " demo");
-
-    NET_OutOfBandPrint(NS_SERVER, to, command);
-}
-
 static void CL_InitServerInfo(serverInfo_t *server, netadr_t adr)
 {
     server->adr = adr;
@@ -808,6 +457,166 @@ void CL_ServersResponsePacket(netadr_t from, msg_t *msg)
     CL_SortGlobalServers();
 
     Com_Printf("%d servers parsed (total %d)\n", numservers, count);
+}
+
+void CL_GlobalServers_f(void)
+{
+    netadr_t to;
+    int i;
+    int count;
+    char *buffptr;
+    char command[1024];
+
+    if (Cmd_Argc() < 3) {
+        Com_Printf("usage: globalservers <master# 0-1> <protocol> [keywords]\n");
+        return;
+    }
+
+    // age the existing entries
+    for (i = 0; i < cls.numglobalservers; i++) {
+        if (!++cls.globalServers[i].requestCount)
+            cls.globalServers[i].requestCount = 255;
+    }
+
+    Com_Printf("Requesting servers from the master...\n");
+
+    NET_StringToAdr("cod2master.activision.com", &to);
+    cls.waitglobalserverresponse = 1;
+    cls.pingUpdateSource = 1;
+    to.type = NA_IP;
+    to.port = BigShort(20710);
+
+    sprintf(command, "getservers %s", Cmd_Argv(2));
+
+    // tack on keywords
+    buffptr = command + strlen(command);
+    count = Cmd_Argc();
+    for (i = 3; i < count; i++)
+        buffptr += sprintf(buffptr, " %s", Cmd_Argv(i));
+
+    // if we are a demo, automatically add a "demo" keyword
+    if (Dvar_GetBool("fs_restrict"))
+        buffptr += sprintf(buffptr, " demo");
+
+    NET_OutOfBandPrint(NS_SERVER, to, command);
+}
+
+// helper names are ours; retail keeps them as separate functions
+static void CL_RconLogin(void)
+{
+    const char *password;
+    int len;
+
+    if (Cmd_Argc() != 3) {
+        Com_Printf("USAGE: rcon login <password>\n");
+        return;
+    }
+
+    password = Cmd_Argv(2);
+    len = strlen(password);
+    if (len >= sizeof(rconGlob.password)) {
+        Com_Printf("rcon password must be %i characters or less\n", sizeof(rconGlob.password));
+        return;
+    }
+
+    memcpy(rconGlob.password, password, len + 1);
+}
+
+static void CL_RconLogout(void)
+{
+    if (!rconGlob.password[0]) {
+        Com_Printf("Not logged in\n");
+        return;
+    }
+
+    rconGlob.password[0] = 0;
+}
+
+static void CL_RconHost(void)
+{
+    if (Cmd_Argc() != 3) {
+        Com_Printf("USAGE: rcon host <address>\n");
+        return;
+    }
+
+    if (!NET_StringToAdr(Cmd_Argv(2), &rconGlob.address)) {
+        Com_Printf("bad host address\n");
+        return;
+    }
+
+    if (!rconGlob.address.port) {
+        rconGlob.address.port = BigShort(28960);
+    }
+}
+
+void CL_Rcon_f(void)
+{
+    char message[1024];
+    int len;
+    int i;
+    const char *cmd;
+    netadr_t to;
+
+    if (Cmd_Argc() < 2) {
+        Com_Printf("USAGE: rcon <command> <options...>\n");
+        return;
+    }
+
+    cmd = Cmd_Argv(1);
+
+    if (!I_stricmp(cmd, "login")) {
+        CL_RconLogin();
+        return;
+    }
+
+    if (!I_stricmp(cmd, "logout")) {
+        CL_RconLogout();
+        return;
+    }
+
+    if (!I_stricmp(cmd, "host")) {
+        CL_RconHost();
+        return;
+    }
+
+    if (!rconGlob.password[0]) {
+        Com_Printf("You need to log in with 'rcon login <password>' before using rcon.\n");
+        return;
+    }
+
+    message[0] = -1;
+    message[1] = -1;
+    message[2] = -1;
+    message[3] = -1;
+    message[4] = 0;
+
+    len = Com_AddToString("rcon ", message, 4, sizeof(message), 0);
+    len = Com_AddToString(rconGlob.password, message, len, sizeof(message), 0);
+
+    for (i = 1; i < Cmd_Argc(); i++) {
+        len = Com_AddToString(" ", message, len, sizeof(message), 0);
+        len = Com_AddToString(Cmd_Argv(i), message, len, sizeof(message), 1);
+    }
+
+    if (len == sizeof(message)) {
+        Com_Printf("rcon commands are limited to %i characters\n", sizeof(message) - 1);
+        return;
+    }
+
+    message[len] = 0;
+
+    if (clc.state >= 5) {
+        to = clc.netchan.remoteAddress;
+    } else if (rconGlob.address.type != NA_BAD) {
+        to = rconGlob.address;
+    } else {
+        Com_Printf("Can't determine rcon target.  You can fix this by either:\n");
+        Com_Printf("1) Joining the server as a player.\n");
+        Com_Printf("2) Setting the host server with 'rcon host <address>'.\n");
+        return;
+    }
+
+    CL_Netchan_SendOOBPacket(strlen(message) + 1, message, to);
 }
 
 ping_t *CL_GetFreePing(void)
@@ -1175,3 +984,197 @@ not_connected:
     Com_Printf((const char *)"Not connected to a server.\n");
     Com_Printf((const char *)"Usage: serverstatus [server]\n");
 }
+
+void CL_ServerStatusResponse(netadr_t from, msg_t *msg)
+{
+    int i;
+    serverStatusRequest_t *serverStatus = NULL;
+    const char *line;
+    char info[1024];
+    int infoField;
+
+    for (i = 0; i < 16; i++) {
+        if (NET_CompareAdr(from, cl_serverStatusList[i].address)) {
+            serverStatus = &cl_serverStatusList[i];
+            goto found_status;
+        }
+    }
+    return;
+
+found_status:
+    if (!serverStatus)
+        return;
+
+    line = MSG_ReadStringLine(msg);
+    Com_sprintf(serverStatus->string, 0x2000, (const char *)"%s", line);
+
+    if (serverStatus->print) {
+        Com_Printf((const char *)"Server settings:\n");
+
+        while (*line) {
+            for (infoField = 0; infoField < 2 && *line; infoField++) {
+                int j;
+                if (*line == '\\')
+                    line++;
+                j = 0;
+                while (*line) {
+                    info[j++] = *line;
+                    if (j >= 0x3ff)
+                        break;
+                    line++;
+                    if (*line == '\\')
+                        break;
+                }
+                info[j] = '\0';
+
+                if (infoField)
+                    Com_Printf((const char *)"%s\n", info);
+                else
+                    Com_Printf((const char *)"%-24s", info);
+            }
+        }
+    }
+
+    {
+        int statusLen = strlen(serverStatus->string);
+        Com_sprintf(serverStatus->string + statusLen, 0x2000 - statusLen, (const char *)"\\");
+    }
+
+    if (serverStatus->print) {
+        Com_Printf((const char *)"\nPlayers:\n");
+        Com_Printf((const char *)"num: score: ping: name:\n");
+    }
+
+    {
+        int playerIdx = 0;
+        line = MSG_ReadStringLine(msg);
+        while (*line) {
+            {
+                int statusLen = strlen(serverStatus->string);
+                Com_sprintf(serverStatus->string + statusLen, 0x2000 - statusLen, (const char *)"\\%s", line);
+            }
+
+            if (serverStatus->print) {
+                int ping = 0, score = 0;
+                const char *name;
+                sscanf(line, (const char *)"%d %d", &score, &ping);
+                name = strchr(line, ' ');
+                if (name) {
+                    name = strchr(name + 1, ' ');
+                    if (name)
+                        name++;
+                    else
+                        name = (const char *)"unknown";
+                } else {
+                    name = (const char *)"unknown";
+                }
+                Com_Printf((const char *)"%-2d   %-3d    %-3d   %s\n", playerIdx, score, ping, name);
+            }
+
+            line = MSG_ReadStringLine(msg);
+            playerIdx++;
+        }
+    }
+
+    {
+        int statusLen = strlen(serverStatus->string);
+        Com_sprintf(serverStatus->string + statusLen, 0x2000 - statusLen, (const char *)"\\");
+    }
+
+    serverStatus->time = Sys_Milliseconds();
+    serverStatus->address = from;
+    serverStatus->pending = 0;
+
+    if (serverStatus->print) {
+        serverStatus->retrieved = 1;
+    }
+}
+
+void CL_CheckAutoUpdate(void)
+{
+    int validServerNum = 0;
+    int i, rnd;
+    netadr_t temp;
+    char *servername[5];
+
+    if (autoupdateChecked)
+        return;
+
+    for (i = 0; i < 5; i++) {
+        if (NET_StringToAdr(cls.autoupdateServerNames[i], &temp)) {
+            servername[validServerNum] = cls.autoupdateServerNames[i];
+            validServerNum++;
+        }
+    }
+
+    if (!validServerNum) {
+        Com_DPrintf("Couldn't resolve an AutoUpdate Server address.\n");
+    } else {
+        rnd = rand() % validServerNum;
+
+        Com_DPrintf("Resolving AutoUpdate Server... ");
+        if (!NET_StringToAdr(servername[rnd], &cls.autoupdateServer)) {
+            Com_DPrintf("\nCouldn't resolve first address, trying others... ");
+
+            for (i = 1; i < validServerNum; i++) {
+                if (NET_StringToAdr(servername[(i + rnd) % validServerNum], &cls.autoupdateServer)) {
+                    Com_DPrintf("\nAlternate server address resolved... ");
+                    break;
+                }
+            }
+
+            if (i == validServerNum) {
+                Com_DPrintf("\nFailed to resolve any Auto-update servers.\n");
+                autoupdateChecked = 1;
+                return;
+            }
+        }
+
+        cls.autoupdateServer.port = BigShort(28960);
+        Com_DPrintf("%i.%i.%i.%i:%i\n", cls.autoupdateServer.ip[0], cls.autoupdateServer.ip[1],
+                    cls.autoupdateServer.ip[2], cls.autoupdateServer.ip[3],
+                    BigShort(cls.autoupdateServer.port));
+
+        NET_OutOfBandPrint(NS_CLIENT1, cls.autoupdateServer,
+                           va("getUpdateInfo2 \"%s\" \"%s\" \"%s\"\n", "CoD2 MP", "1.0", "win-x86"));
+    }
+
+    autoupdateChecked = 1;
+}
+
+void CL_GetAutoUpdate(void)
+{
+    if (!autoupdateChecked)
+        return;
+
+    if (!strlen(cl_updatefiles->current.string))
+        return;
+
+    Sys_OpenURL(cl_updatefiles->current.string, 1);
+}
+
+void CL_ResetPlayerMuting(int clientIndex)
+{
+    s_playerMute[clientIndex] = 0;
+}
+
+void CL_MutePlayer(int clientIndex)
+{
+    s_playerMute[clientIndex] = !s_playerMute[clientIndex];
+    if (s_playerMute[clientIndex]) {
+        Cbuf_ExecuteText(2, va("muteplayer %i", clientIndex));
+    } else {
+        Cbuf_ExecuteText(2, va("unmuteplayer %i", clientIndex));
+    }
+}
+
+Bool CL_IsPlayerMuted(int clientIndex)
+{
+    return s_playerMute[clientIndex];
+}
+
+void CL_ClearMutedList(void)
+{
+    memset(s_playerMute, 0, sizeof(s_playerMute));
+}
+

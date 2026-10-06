@@ -60,54 +60,7 @@ void CG_Corpse(centity_t *cent);
 
 #define CI_STRIDE 1208
 
-void CG_UpdatePlayerDObj(centity_t *cent)
-{
-    entityState_t *es;
-    int clientNum;
-    byte *ci;
-    struct DObj_s *obj;
-
-    if (!cent->nextValid)
-        return;
-
-    es = &cent->nextState;
-    clientNum = es->clientNum;
-
-    obj = Com_GetClientDObj(clientNum, cent->localClientNum);
-    ci = (byte *)(((char *)cg + offsetof(cg_t, bgs.clientinfo[0].infoValid)) + clientNum * CI_STRIDE);
-    BG_UpdatePlayerDObj(obj, es, (clientInfo_t *)ci, 0);
-}
-
-void CG_ResetPlayerEntity(centity_t *cent)
-{
-    clientInfo_t *ci;
-    XAnimTree_s *pAnimTree;
-
-    ci = &cg->bgs.clientinfo[cent->nextState.clientNum];
-
-    if (!(cent->nextState.eFlags & 0x20000)) {
-        pAnimTree = ci->pXAnimTree;
-        XAnimClearTreeGoalWeights(pAnimTree, (*(unsigned short *)&cg->bgs.generic_human.root.index), 0);
-        XAnimSetCompleteGoalWeight(pAnimTree, (*(unsigned short *)&cg->bgs.animScriptData.torsoAnim), 0.0f, 0.0f, 1.0f, 0, 0, 0);
-        XAnimSetCompleteGoalWeight(pAnimTree, (*(unsigned short *)&cg->bgs.animScriptData.legsAnim), 1.0f, 0.0f, 1.0f, 0, 0, 0);
-        XAnimSetCompleteGoalWeight(pAnimTree, (*(unsigned short *)&cg->bgs.animScriptData.turningAnim), 0.0f, 0.0f, 1.0f, 0, 0, 0);
-
-        memset(&ci->legs, 0, sizeof(ci->legs));
-        ci->legs.yawAngle = ci->playerAngles[1];
-        ci->legs.yawing = 0;
-        ci->legs.pitchAngle = 0;
-        ci->legs.pitching = 0;
-
-        memset(&ci->torso, 0, sizeof(ci->torso));
-        ci->torso.yawAngle = ci->playerAngles[1];
-        ci->torso.yawing = 0;
-        ci->torso.pitchAngle = ci->playerAngles[0];
-        ci->torso.pitching = 0;
-    }
-
-    if (cg_debugPosition->current.enabled)
-        Com_Printf("%i ResetPlayerEntity yaw=%i\n", cent->nextState.number, ci->torso.yawAngle);
-}
+void CG_Player(centity_t *cent);
 
 static void CG_PlayerFloatSprite(centity_t *cent, MaterialHandle material, float additionalRadiusSize, int height, Bool fixedScreenSize)
 {
@@ -697,3 +650,53 @@ void CG_Corpse(centity_t *cent)
 
     CG_AddCEntityToScene((const GfxEntity *)body, obj, cent);
 }
+
+void CG_UpdatePlayerDObj(centity_t *cent)
+{
+    entityState_t *es;
+    int clientNum;
+    byte *ci;
+    struct DObj_s *obj;
+
+    if (!cent->nextValid)
+        return;
+
+    es = &cent->nextState;
+    clientNum = es->clientNum;
+
+    obj = Com_GetClientDObj(clientNum, cent->localClientNum);
+    ci = (byte *)(((char *)cg + offsetof(cg_t, bgs.clientinfo[0].infoValid)) + clientNum * CI_STRIDE);
+    BG_UpdatePlayerDObj(obj, es, (clientInfo_t *)ci, 0);
+}
+
+void CG_ResetPlayerEntity(centity_t *cent)
+{
+    clientInfo_t *ci;
+    XAnimTree_s *pAnimTree;
+
+    ci = &cg->bgs.clientinfo[cent->nextState.clientNum];
+
+    if (!(cent->nextState.eFlags & 0x20000)) {
+        pAnimTree = ci->pXAnimTree;
+        XAnimClearTreeGoalWeights(pAnimTree, (*(unsigned short *)&cg->bgs.generic_human.root.index), 0);
+        XAnimSetCompleteGoalWeight(pAnimTree, (*(unsigned short *)&cg->bgs.animScriptData.torsoAnim), 0.0f, 0.0f, 1.0f, 0, 0, 0);
+        XAnimSetCompleteGoalWeight(pAnimTree, (*(unsigned short *)&cg->bgs.animScriptData.legsAnim), 1.0f, 0.0f, 1.0f, 0, 0, 0);
+        XAnimSetCompleteGoalWeight(pAnimTree, (*(unsigned short *)&cg->bgs.animScriptData.turningAnim), 0.0f, 0.0f, 1.0f, 0, 0, 0);
+
+        memset(&ci->legs, 0, sizeof(ci->legs));
+        ci->legs.yawAngle = ci->playerAngles[1];
+        ci->legs.yawing = 0;
+        ci->legs.pitchAngle = 0;
+        ci->legs.pitching = 0;
+
+        memset(&ci->torso, 0, sizeof(ci->torso));
+        ci->torso.yawAngle = ci->playerAngles[1];
+        ci->torso.yawing = 0;
+        ci->torso.pitchAngle = ci->playerAngles[0];
+        ci->torso.pitching = 0;
+    }
+
+    if (cg_debugPosition->current.enabled)
+        Com_Printf("%i ResetPlayerEntity yaw=%i\n", cent->nextState.number, ci->torso.yawAngle);
+}
+

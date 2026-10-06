@@ -8,6 +8,10 @@ static const char *accuracyDirName[] =
 	NULL
 };
 
+static bool G_ParseAIWeaponAccurayGraphFile( const char *buffer, const char *fileName, float (*knots)[2], int *knotCount );
+static bool G_ParseWeaponAccurayGraphInternal( WeaponDef *weaponDef, const char *dirName, const char *graphName, float (*knots)[2], int *knotCount );
+bool G_ParseWeaponAccurayGraphs( WeaponDef *weaponDef );
+
 /*
 ====================
 G_ParseAIWeaponAccurayGraphFile
@@ -166,3 +170,4 @@ bool G_ParseWeaponAccurayGraphs( WeaponDef *weaponDef )
 
 	return true;
 }
+

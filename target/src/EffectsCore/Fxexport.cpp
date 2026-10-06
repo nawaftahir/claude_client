@@ -72,16 +72,6 @@ int FX_GetBoneIndex( int entNum, unsigned int bone )
 	return DObjGetBoneIndex(obj, bone);
 }
 
-void FX_PlaySimpleEffect( const FxEffectDef *fx, const float *origin )
-{
-	theFxScheduler->PlayEffect(fx, origin);
-}
-
-void FX_PlayEffect( const FxEffectDef *fx, const float *origin, const float *dir )
-{
-	theFxScheduler->PlayEffect(fx, origin, dir);
-}
-
 // Original name unknown.
 void FX_PlayOrientedEffect( const FxEffectDef *fx, const float *origin, const float *forward, const float *up )
 {
@@ -122,6 +112,16 @@ void FX_AdjustTime( int time )
 	privateEffectActiveCountNonBolt = effectActiveCountNonBolt;
 }
 
+void FX_PlaySimpleEffect( const FxEffectDef *fx, const float *origin )
+{
+	theFxScheduler->PlayEffect(fx, origin);
+}
+
+void FX_PlayEffect( const FxEffectDef *fx, const float *origin, const float *dir )
+{
+	theFxScheduler->PlayEffect(fx, origin, dir);
+}
+
 void FX_WarpTime( int time )
 {
 	theFxHelper->WarpTime(time);
@@ -131,3 +131,4 @@ float FX_GetEffectLength( const FxEffectDef *fx )
 {
 	return theFxScheduler->GetEffectLength(fx);
 }
+

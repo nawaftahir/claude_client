@@ -13,6 +13,11 @@ void Sys_InitMainThread(void)
     Com_InitThreadData(0);
 }
 
+void *Sys_GetValue(int valueIndex)
+{
+    return g_threadValues[valueIndex];
+}
+
 Bool Sys_IsMainThread(void)
 {
     return GetCurrentThreadId() == threadId[0] ? 1 : 0;
@@ -23,13 +28,9 @@ void Sys_SetValue(int valueIndex, void *data)
     g_threadValues[valueIndex] = data;
 }
 
-void *Sys_GetValue(int valueIndex)
-{
-    return g_threadValues[valueIndex];
-}
-
 // Original name unknown.
 Bool Sys_ReturnFalse(void)
 {
     return 0;
 }
+

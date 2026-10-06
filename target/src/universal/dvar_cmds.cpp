@@ -647,3 +647,4 @@ void Dvar_AddCommands()
 	Cmd_AddCommand("dvar_float", Dvar_RegisterFloat_f);
 	Cmd_AddCommand("setu", Dvar_SetU_f);
 }
+

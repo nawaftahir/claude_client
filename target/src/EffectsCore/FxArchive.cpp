@@ -13,6 +13,87 @@ struct MemoryFile
 void MemFile_WriteData( MemoryFile *memFile, int bytes, const void *data );
 void MemFile_ReadData( MemoryFile *memFile, int bytes, void *data );
 
+struct FxEffectDef
+{
+	const char *name;
+};
+struct FxCurve;
+struct XModel;
+struct Material;
+struct FxCurveIterator
+{
+	const FxCurve *master;
+	int currentKeyIndex;
+};
+struct FxChannelInstance
+{
+	FxCurveIterator curveIterator;
+	float scale;
+};
+// Only the member called here.
+struct FxHelper
+{
+	const char *GetMaterialName( Material *material );
+};
+extern FxHelper *theFxHelper;
+FxEffectDef *FX_RegisterEffect( const char *name );
+Material *FX_RegisterMaterial( const char *name );
+XModel *FX_ModelRegister( const char *name );
+const char *XModelGetName( const XModel *model );
+int Com_sprintf( char *dest, size_t size, const char *fmt, ... );
+// Run-length coded stream: a control byte gives a literal count and a
+// following run of zero bytes.
+class FxArchive
+{
+public:
+	FxArchive();
+	void BeginReading( MemoryFile *memFile );
+	void BeginWriting( MemoryFile *memFile );
+	void ArchiveData( void *p, int byteCount );
+	void ArchiveEffect( const FxEffectDef **fx );
+	void ArchiveMaterial( Material **material );
+	void ArchiveModel( XModel **model );
+	void ArchiveChannelInstance( FxChannelInstance *channelInstance );
+private:
+	FxEffectDef *ReadEffect();
+	Material *ReadMaterial();
+	XModel *ReadModel();
+	void ReadChannelInstance( FxChannelInstance *channelInstance );
+	void ReadData( void *p, int byteCount );
+	void WriteEffect( const FxEffectDef *fx );
+	void WriteMaterial( Material *material );
+	void WriteModel( XModel *model );
+	void WriteChannelInstance( const FxChannelInstance *channelInstance );
+	void WriteData( const void *p, int byteCount );
+	unsigned char ReadByte()
+	{
+		unsigned char value;
+		ReadData( &value, 1 );
+		return value;
+	}
+	float ReadFloat()
+	{
+		float value;
+		ReadData( &value, 4 );
+		return value;
+	}
+	void WriteByte( unsigned char value )
+	{
+		WriteData( &value, 1 );
+	}
+	void WriteFloat( float value )
+	{
+		WriteData( &value, 4 );
+	}
+	MemoryFile *memFile;
+	bool isReading;
+	bool isWriting;
+	int byteCount;
+	int literalCount;
+	int zeroCount;
+	int controlPos;
+};
+
 inline void MemFile_WriteByte( MemoryFile *memFile, unsigned char value )
 {
 	MemFile_WriteData( memFile, 1, &value );
@@ -25,103 +106,6 @@ inline unsigned char MemFile_ReadByte( MemoryFile *memFile )
 	MemFile_ReadData( memFile, 1, &value );
 	return value;
 }
-
-struct FxEffectDef
-{
-	const char *name;
-};
-
-struct FxCurve;
-struct XModel;
-struct Material;
-
-struct FxCurveIterator
-{
-	const FxCurve *master;
-	int currentKeyIndex;
-};
-
-struct FxChannelInstance
-{
-	FxCurveIterator curveIterator;
-	float scale;
-};
-
-// Only the member called here.
-struct FxHelper
-{
-	const char *GetMaterialName( Material *material );
-};
-
-extern FxHelper *theFxHelper;
-
-FxEffectDef *FX_RegisterEffect( const char *name );
-Material *FX_RegisterMaterial( const char *name );
-XModel *FX_ModelRegister( const char *name );
-const char *XModelGetName( const XModel *model );
-int Com_sprintf( char *dest, size_t size, const char *fmt, ... );
-
-// Run-length coded stream: a control byte gives a literal count and a
-// following run of zero bytes.
-class FxArchive
-{
-public:
-	FxArchive();
-	void BeginReading( MemoryFile *memFile );
-	void BeginWriting( MemoryFile *memFile );
-
-	void ArchiveData( void *p, int byteCount );
-	void ArchiveEffect( const FxEffectDef **fx );
-	void ArchiveMaterial( Material **material );
-	void ArchiveModel( XModel **model );
-	void ArchiveChannelInstance( FxChannelInstance *channelInstance );
-
-private:
-	FxEffectDef *ReadEffect();
-	Material *ReadMaterial();
-	XModel *ReadModel();
-	void ReadChannelInstance( FxChannelInstance *channelInstance );
-	void ReadData( void *p, int byteCount );
-	void WriteEffect( const FxEffectDef *fx );
-	void WriteMaterial( Material *material );
-	void WriteModel( XModel *model );
-	void WriteChannelInstance( const FxChannelInstance *channelInstance );
-	void WriteData( const void *p, int byteCount );
-
-	unsigned char ReadByte()
-	{
-		unsigned char value;
-
-		ReadData( &value, 1 );
-		return value;
-	}
-
-	float ReadFloat()
-	{
-		float value;
-
-		ReadData( &value, 4 );
-		return value;
-	}
-
-	void WriteByte( unsigned char value )
-	{
-		WriteData( &value, 1 );
-	}
-
-	void WriteFloat( float value )
-	{
-		WriteData( &value, 4 );
-	}
-
-	MemoryFile *memFile;
-	bool isReading;
-	bool isWriting;
-	int byteCount;
-	int literalCount;
-	int zeroCount;
-	int controlPos;
-};
 
 FxArchive::FxArchive()
 {
@@ -182,6 +166,22 @@ Material *FxArchive::ReadMaterial()
 	ReadData( materialName, len );
 	materialName[len] = 0;
 	return FX_RegisterMaterial( materialName );
+}
+
+void FxArchive::ArchiveMaterial( Material **material )
+{
+	if ( isReading )
+		*material = ReadMaterial();
+	else
+		WriteMaterial( *material );
+}
+
+void FxArchive::ArchiveModel( XModel **model )
+{
+	if ( isReading )
+		*model = ReadModel();
+	else
+		WriteModel( *model );
 }
 
 XModel *FxArchive::ReadModel()
@@ -416,22 +416,6 @@ void FxArchive::ArchiveEffect( const FxEffectDef **fx )
 		WriteEffect( *fx );
 }
 
-void FxArchive::ArchiveMaterial( Material **material )
-{
-	if ( isReading )
-		*material = ReadMaterial();
-	else
-		WriteMaterial( *material );
-}
-
-void FxArchive::ArchiveModel( XModel **model )
-{
-	if ( isReading )
-		*model = ReadModel();
-	else
-		WriteModel( *model );
-}
-
 void FxArchive::ArchiveChannelInstance( FxChannelInstance *channelInstance )
 {
 	if ( isReading )
@@ -439,3 +423,4 @@ void FxArchive::ArchiveChannelInstance( FxChannelInstance *channelInstance )
 	else
 		WriteChannelInstance( channelInstance );
 }
+

@@ -26,6 +26,227 @@ void Scr_CalcLocalVarsDeveloperStatementList( sval_u val, scr_block_s *block, sv
 void EmitDeveloperStatementList( sval_u val, sval_u sourcePos, scr_block_s *block, sval_u *devStatBlock );
 void AddRefToValue( VariableValue *value );
 
+void Scr_CompileRemoveRefToString( unsigned int stringValue );
+void EmitCanonicalString( unsigned int stringValue );
+void EmitCanonicalStringConst( unsigned int stringValue );
+void CompileTransferRefToString( unsigned int stringValue, unsigned int user );
+void EmitOpcode( unsigned int op, int offset, int callType );
+void EmitEnd();
+void EmitReturn( void );
+void EmitShort( short value );
+void EmitUnsignedShort( unsigned short value );
+void EmitByte( byte value );
+void EmitFloat( float value );
+void EmitString( unsigned int value );
+void EmitCodepos( const char *pos );
+void EvalUndefined( sval_u sourcePos, VariableCompileValue *constValue );
+void EmitGetUndefined( sval_u sourcePos );
+void EvalInteger( int value, sval_u sourcePos, VariableCompileValue *constValue );
+void EmitGetInteger( int value, sval_u sourcePos );
+void EvalFloat( float value, sval_u sourcePos, VariableCompileValue *constValue );
+void EmitGetFloat( float value, sval_u sourcePos );
+void EmitAnimTree( sval_u sourcePos );
+void EmitSetVariableField( sval_u sourcePos );
+int Scr_FindLocalVar( scr_block_s *block, int startIndex, unsigned int name );
+int Scr_FindLocalVarIndex( unsigned int name, sval_u sourcePos, bool create, scr_block_s *block );
+void EmitCreateLocalVars( scr_block_s *block, sval_u sourcePos );
+void EmitRemoveLocalVars( scr_block_s *block, scr_block_s *outerBlock );
+void EmitNOP2( bool lastStatement, unsigned int endSourcePos, scr_block_s *block );
+void Scr_CheckMaxSwitchCases( int count );
+void Scr_CheckLocalVarsCount( int localVarsCount );
+void Scr_RegisterLocalVar( unsigned int name, sval_u sourcePos, scr_block_s *block );
+void Scr_CopyBlock( scr_block_s *from, scr_block_s **to );
+void Scr_InitFromChildBlocks( scr_block_s **childBlocks, int childCount, scr_block_s *block );
+void Scr_AppendChildBlocks( scr_block_s **childBlocks, int childCount, scr_block_s *block );
+void Scr_MergeChildBlocks( scr_block_s **childBlocks, int childCount, scr_block_s *block );
+void Scr_TransferBlock( scr_block_s *from, scr_block_s *to );
+void EmitSafeSetVariableField( sval_u expr, sval_u sourcePos, scr_block_s *block );
+void EmitSafeSetWaittillVariableField( sval_u expr, sval_u sourcePos, scr_block_s *block );
+void EvalString( unsigned int value, sval_u sourcePos, VariableCompileValue *constValue );
+void EmitGetString( unsigned int value, sval_u sourcePos );
+void EvalIString( unsigned int value, sval_u sourcePos, VariableCompileValue *constValue );
+void EmitGetIString( unsigned int value, sval_u sourcePos );
+void EmitGetVector( const vec3_t value, sval_u sourcePos );
+void EmitValue( VariableCompileValue *constValue );
+void Scr_PushValue( VariableCompileValue *constValue );
+void Scr_PopValue();
+void EmitCastBool( sval_u sourcePos );
+void EmitBoolNot( sval_u sourcePos );
+void EmitBoolComplement( sval_u sourcePos );
+void EmitSize( sval_u expr, sval_u sourcePos, scr_block_s *block );
+void EmitSelf( sval_u sourcePos );
+void EmitLevel( sval_u sourcePos );
+void EmitGame( sval_u sourcePos );
+void EmitAnim( sval_u sourcePos );
+void EmitSelfObject( sval_u sourcePos );
+void EmitLevelObject( sval_u sourcePos );
+void EmitAnimObject( sval_u sourcePos );
+void EmitLocalVariable( sval_u expr, sval_u sourcePos, scr_block_s *block );
+void EmitLocalVariableRef( sval_u expr, sval_u sourcePos, scr_block_s *block );
+void EmitGameRef( sval_u sourcePos );
+void EmitEvalArray( sval_u sourcePos, sval_u indexSourcePos );
+void EmitEvalArrayRef( sval_u sourcePos, sval_u indexSourcePos );
+void EmitClearArray( sval_u sourcePos, sval_u indexSourcePos );
+void EmitEmptyArray( sval_u sourcePos );
+void EmitAnimation( sval_u anim, sval_u sourcePos );
+void EmitFieldVariable( sval_u expr, sval_u field, sval_u sourcePos, scr_block_s *block );
+void EmitFieldVariableRef( sval_u expr, sval_u field, sval_u sourcePos, scr_block_s *block );
+void EmitClearFieldVariable( sval_u expr, sval_u field, sval_u sourcePos, sval_u rhsSourcePos, scr_block_s *block );
+void EmitObject( sval_u expr, sval_u sourcePos );
+void EmitDecTop();
+void EmitCastFieldObject( sval_u sourcePos );
+void EmitArrayVariable( sval_u expr, sval_u index, sval_u sourcePos, sval_u indexSourcePos, scr_block_s *block );
+void EmitArrayVariableRef( sval_u expr, sval_u index, sval_u sourcePos, sval_u indexSourcePos, scr_block_s *block );
+void Scr_CalcLocalVarsArrayVariableRef( sval_u expr, scr_block_s *block );
+void EmitClearArrayVariable( sval_u expr, sval_u index, sval_u sourcePos, sval_u indexSourcePos, scr_block_s *block );
+void EmitVariableExpression( sval_u expr, scr_block_s *block );
+int GetExpressionCount( sval_u exprlist );
+int EmitExpressionList( sval_u exprlist, scr_block_s *block );
+sval_u* GetSingleParameter( sval_u exprlist );
+void AddExpressionListOpcodePos( sval_u exprlist );
+unsigned int AddFilePrecache( unsigned int filename, unsigned int sourcePos, bool include );
+void EmitFunction(sval_u func, sval_u sourcePos);
+void EmitGetFunction( sval_u func, sval_u sourcePos );
+int AddFunction( intptr_t func, const char *pName );
+void EmitPostScriptFunction( sval_u func, int param_count, bool bMethod, sval_u nameSourcePos );
+void EmitPostScriptFunctionPointer( sval_u expr, int param_count, bool bMethod, sval_u nameSourcePos, sval_u sourcePos, scr_block_s *block );
+void EmitPostScriptThread( sval_u func, int param_count, bool bMethod, sval_u sourcePos );
+void EmitPostScriptThreadPointer( sval_u expr, int param_count, bool bMethod, sval_u sourcePos, scr_block_s *block );
+void EmitPostScriptFunctionCall( sval_u func_name, int param_count, bool bMethod, sval_u nameSourcePos, scr_block_s *block );
+void EmitPostScriptThreadCall( sval_u func_name, int param_count, bool bMethod, sval_u sourcePos, sval_u nameSourcePos, scr_block_s *block );
+void EmitPreFunctionCall( sval_u func_name );
+void EmitPostFunctionCall( sval_u func_name, int param_count, bool bMethod, scr_block_s *block );
+unsigned int Scr_GetBuiltin( sval_u func_name );
+void Scr_BeginDevScript( int *type, char **savedPos );
+void Scr_EndDevScript( int type, char **savedPos );
+int Scr_GetCacheType( int type );
+int Scr_GetUncacheType( int type );
+void EmitCallBuiltinOpcode( int param_count, sval_u sourcePos );
+void EmitCallBuiltinMethodOpcode( int param_count, sval_u sourcePos );
+void EmitCall( sval_u func_name, sval_u params, bool bStatement, scr_block_s *block );
+void EmitMethod( sval_u expr, sval_u func_name, sval_u params, sval_u methodSourcePos, bool bStatement, scr_block_s *block );
+void LinkThread( unsigned int threadCountId, VariableValue *pos, bool allowFarCall );
+void LinkFile( unsigned int fileId );
+unsigned int SpecifyThreadPosition( unsigned int posId, unsigned int name, unsigned int sourcePos, int type );
+void SetThreadPosition( unsigned int posId, unsigned int sourcePos );
+void EmitCallExpression( sval_u expr, bool bStatement, scr_block_s *block );
+void EmitCallExpressionFieldObject( sval_u expr, scr_block_s *block );
+void Scr_CreateVector( VariableCompileValue *constValue, VariableValue *value );
+bool EvalPrimitiveExpressionList( sval_u exprlist, sval_u sourcePos, VariableCompileValue *constValue );
+bool EmitOrEvalPrimitiveExpressionList( sval_u exprlist, sval_u sourcePos, VariableCompileValue *constValue, scr_block_s *block );
+void EmitExpressionListFieldObject( sval_u exprlist, sval_u sourcePos, scr_block_s *block );
+bool EvalPrimitiveExpression( sval_u expr, VariableCompileValue *constValue );
+bool EmitOrEvalPrimitiveExpression( sval_u expr, VariableCompileValue *constValue, scr_block_s *block );
+void EmitPrimitiveExpression( sval_u expr, scr_block_s *block );
+void EmitBoolOrExpression( sval_u expr1, sval_u expr2, sval_u expr1sourcePos, sval_u expr2sourcePos, scr_block_s *block );
+void EmitBoolAndExpression( sval_u expr1, sval_u expr2, sval_u expr1sourcePos, sval_u expr2sourcePos, scr_block_s *block );
+bool EvalBinaryOperatorExpression( sval_u expr1, sval_u expr2, sval_u opcode, sval_u sourcePos, VariableCompileValue *constValue );
+bool EmitOrEvalBinaryOperatorExpression( sval_u expr1, sval_u expr2, sval_u opcode, sval_u sourcePos, VariableCompileValue *constValue, scr_block_s *block );
+void EmitBinaryEqualsOperatorExpression( sval_u lhs, sval_u rhs, sval_u opcode, sval_u sourcePos, scr_block_s *block );
+void Scr_CalcLocalVarsBinaryEqualsOperatorExpression( sval_u expr, scr_block_s *block );
+bool EvalExpression( sval_u expr, VariableCompileValue *constValue );
+bool EmitOrEvalExpression( sval_u expr, VariableCompileValue *constValue, scr_block_s *block );
+void EmitExpression( sval_u expr, scr_block_s *block );
+void EmitVariableExpressionRef( sval_u expr, scr_block_s *block );
+void Scr_CalcLocalVarsVariableExpressionRef( sval_u expr, scr_block_s *block );
+void EmitArrayPrimitiveExpressionRef( sval_u expr, sval_u sourcePos, scr_block_s *block );
+void Scr_CalcLocalVarsArrayPrimitiveExpressionRef( sval_u expr, scr_block_s *block );
+void EmitPrimitiveExpressionFieldObject( sval_u expr, sval_u sourcePos, scr_block_s *block );
+void EmitExpressionFieldObject( sval_u expr, sval_u sourcePos, scr_block_s *block );
+void ConnectBreakStatements();
+void ConnectContinueStatements();
+bool IsUndefinedPrimitiveExpression( sval_u expr );
+bool IsUndefinedExpression( sval_u expr );
+bool EmitClearVariableExpression( sval_u expr, sval_u rhsSourcePos, scr_block_s *block );
+void EmitAssignmentStatement( sval_u lhs, sval_u rhs, sval_u sourcePos, sval_u rhsSourcePos, scr_block_s *block );
+void Scr_CalcLocalVarsAssignmentStatement( sval_u lhs, sval_u rhs, scr_block_s *block );
+void EmitCallExpressionStatement( sval_u expr, scr_block_s *block );
+void EmitReturnStatement( sval_u expr, sval_u sourcePos, scr_block_s *block );
+void EmitEndStatement( sval_u sourcePos, scr_block_s *block );
+void EmitWaitStatement( sval_u expr, sval_u sourcePos, sval_u waitSourcePos, scr_block_s *block );
+void EmitWaittillFrameEnd( sval_u sourcePos );
+void EmitIfStatement( sval_u expr, sval_u stmt, sval_u sourcePos, bool lastStatement, unsigned int endSourcePos, scr_block_s *block, sval_u *ifStatBlock );
+void Scr_CalcLocalVarsIfStatement( sval_u stmt, scr_block_s *block, sval_u *ifStatBlock );
+void EmitIfElseStatement( sval_u expr, sval_u stmt1, sval_u stmt2, sval_u sourcePos, sval_u elseSourcePos, bool lastStatement, unsigned int endSourcePos, scr_block_s *block, sval_u *ifStatBlock, sval_u *elseStatBlock );
+void Scr_CalcLocalVarsIfElseStatement( sval_u stmt1, sval_u stmt2, scr_block_s *block, sval_u *ifStatBlock, sval_u *elseStatBlock );
+void Scr_AddBreakBlock( scr_block_s *block );
+void Scr_AddContinueBlock( scr_block_s *block );
+void EmitWhileStatement( sval_u expr, sval_u stmt, sval_u sourcePos, sval_u whileSourcePos, scr_block_s *block, sval_u *whileStatBlock );
+void Scr_CalcLocalVarsWhileStatement( sval_u expr, sval_u stmt, scr_block_s *block, sval_u *whileStatBlock );
+void EmitForStatement( sval_u stmt1, sval_u expr, sval_u stmt2, sval_u stmt, sval_u sourcePos, sval_u forSourcePos, scr_block_s *block, sval_u *forStatBlock, sval_u *forStatPostBlock );
+void Scr_CalcLocalVarsForStatement( sval_u stmt1, sval_u expr, sval_u stmt2, sval_u stmt, scr_block_s *block, sval_u *forStatBlock, sval_u *forStatPostBlock );
+void EmitIncStatement( sval_u expr, sval_u sourcePos, scr_block_s *block );
+void Scr_CalcLocalVarsIncStatement( sval_u expr, scr_block_s *block );
+void EmitDecStatement( sval_u expr, sval_u sourcePos, scr_block_s *block );
+void EmitFormalParameterListInternal( sval_u *node, scr_block_s *block );
+void Scr_CalcLocalVarsFormalParameterListInternal( sval_u *node, scr_block_s *block );
+void EmitFormalWaittillParameterListRefInternal( sval_u *node, scr_block_s *block );
+void EmitWaittillStatement( sval_u obj, sval_u exprlist, sval_u sourcePos, sval_u waitSourcePos, scr_block_s *block );
+void Scr_CalcLocalVarsWaittillStatement( sval_u exprlist, scr_block_s *block );
+void EmitWaittillmatchStatement( sval_u obj, sval_u exprlist, sval_u sourcePos, sval_u waitSourcePos, scr_block_s *block );
+void EmitNotifyStatement( sval_u obj, sval_u exprlist, sval_u sourcePos, sval_u notifySourcePos, scr_block_s *block );
+void EmitEndOnStatement( sval_u obj, sval_u expr, sval_u sourcePos, sval_u exprSourcePos, scr_block_s *block );
+int CompareCaseInfo( const void *elem1, const void *elem2 );
+bool Scr_IsLastStatement( sval_u *node );
+void EmitCaseStatement( sval_u expr, sval_u sourcePos );
+void EmitDefaultStatement( sval_u sourcePos );
+void EmitSwitchStatementList( sval_u val, bool lastStatement, unsigned int endSourcePos, scr_block_s *block );
+void Scr_CalcLocalVarsSwitchStatement( sval_u stmtlist, scr_block_s *block );
+void EmitSwitchStatement( sval_u expr, sval_u stmtlist, sval_u sourcePos, bool lastStatement, unsigned int endSourcePos, scr_block_s *block );
+void EmitCaseStatementInfo( unsigned int name, sval_u sourcePos );
+void EmitBreakStatement( sval_u sourcePos, scr_block_s *block );
+void EmitContinueStatement( sval_u sourcePos, scr_block_s *block );
+void EmitBreakpointStatement( sval_u sourcePos );
+void EmitProfStatement( sval_u profileName, sval_u sourcePos, unsigned char op );
+void EmitProfBeginStatement( sval_u profileName, sval_u sourcePos );
+void EmitProfEndStatement( sval_u profileName, sval_u sourcePos );
+void EmitStatement( sval_u val, bool lastStatement, unsigned int endSourcePos, scr_block_s *block );
+void Scr_CalcLocalVarsStatement( sval_u val, scr_block_s *block );
+void EmitStatementList( sval_u val, bool lastStatement, unsigned int endSourcePos, scr_block_s *block );
+void Scr_CalcLocalVarsStatementList( sval_u val, scr_block_s *block );
+void Scr_CalcLocalVarsDeveloperStatementList( sval_u val, scr_block_s *block, sval_u *devStatBlock );
+void EmitDeveloperStatementList( sval_u val, sval_u sourcePos, scr_block_s *block, sval_u *devStatBlock );
+void EmitFormalParameterList( sval_u exprlist, sval_u sourcePos, scr_block_s *block );
+void Scr_CalcLocalVarsFormalParameterList( sval_u exprlist, scr_block_s *block );
+void SpecifyThread( sval_u val );
+void EmitThreadInternal( unsigned int threadId, sval_u val, sval_u sourcePos, sval_u endSourcePos, scr_block_s *block );
+void Scr_CalcLocalVarsThread( sval_u exprlist, sval_u stmtlist, sval_u *stmttblock );
+void InitThread( int type );
+void EmitNormalThread( sval_u val, sval_u *stmttblock );
+void EmitDeveloperThread( sval_u val, sval_u *stmttblock );
+void EmitThread( sval_u val );
+void EmitThreadList( sval_u val );
+void EmitInclude( sval_u val );
+void EmitIncludeList( sval_u val );
+void ScriptCompile( sval_u val, unsigned int fileId, unsigned int scriptId );
+void Scr_CompileStatement( sval_u parseData );
+void Scr_CompileShutdown();
+void AddRefToValue( VariableValue *value );
+
+/*
+============
+EmitSwitchStatementList
+============
+*/
+
+/*
+============
+EmitStatement
+============
+*/
+
+/*
+============
+Scr_CalcLocalVarsStatement
+============
+*/
+
+/*
+============
+EmitStatementList
+============
+*/
+
 /*
 ============
 Scr_CompileRemoveRefToString
@@ -3356,6 +3577,21 @@ void EmitExpressionFieldObject( sval_u expr, sval_u sourcePos, scr_block_s *bloc
 
 /*
 ============
+ConnectContinueStatements
+============
+*/
+void ConnectContinueStatements()
+{
+	const char *codePos = (char *)TempMalloc(0);
+
+	for ( ContinueStatementInfo *statement = scrCompileGlob.currentContinueStatement; statement; statement = statement->next )
+	{
+		*(intptr_t *)statement->codePos = codePos - statement->nextCodePos;
+	}
+}
+
+/*
+============
 ConnectBreakStatements
 ============
 */
@@ -3365,21 +3601,6 @@ void ConnectBreakStatements()
 	const char *codePos = (char *)TempMalloc(0);
 
 	for ( BreakStatementInfo *statement = scrCompileGlob.currentBreakStatement; statement; statement = statement->next )
-	{
-		*(intptr_t *)statement->codePos = codePos - statement->nextCodePos;
-	}
-}
-
-/*
-============
-ConnectContinueStatements
-============
-*/
-void ConnectContinueStatements()
-{
-	const char *codePos = (char *)TempMalloc(0);
-
-	for ( ContinueStatementInfo *statement = scrCompileGlob.currentContinueStatement; statement; statement = statement->next )
 	{
 		*(intptr_t *)statement->codePos = codePos - statement->nextCodePos;
 	}
@@ -4670,12 +4891,6 @@ void EmitDefaultStatement( sval_u sourcePos )
 	EmitCaseStatementInfo( 0, sourcePos );
 }
 
-/*
-============
-EmitSwitchStatementList
-============
-*/
-
 void EmitSwitchStatementList( sval_u val, bool lastStatement, unsigned int endSourcePos, scr_block_s *block )
 {
 	sval_u *node, *nextNode;
@@ -5114,12 +5329,6 @@ void EmitProfEndStatement( sval_u profileName, sval_u sourcePos )
 	EmitProfStatement(profileName, sourcePos, OP_prof_end);
 }
 
-/*
-============
-EmitStatement
-============
-*/
-
 void EmitStatement( sval_u val, bool lastStatement, unsigned int endSourcePos, scr_block_s *block )
 {
 	switch ( val.node[0].type )
@@ -5237,12 +5446,6 @@ void EmitStatement( sval_u val, bool lastStatement, unsigned int endSourcePos, s
 	}
 }
 
-/*
-============
-Scr_CalcLocalVarsStatement
-============
-*/
-
 void Scr_CalcLocalVarsStatement( sval_u val, scr_block_s *block )
 {
 	switch ( val.node[0].type )
@@ -5311,12 +5514,6 @@ void Scr_CalcLocalVarsStatement( sval_u val, scr_block_s *block )
 		break;
 	}
 }
-
-/*
-============
-EmitStatementList
-============
-*/
 
 void EmitStatementList( sval_u val, bool lastStatement, unsigned int endSourcePos, scr_block_s *block )
 {
@@ -5872,4 +6069,5 @@ void AddRefToValue( VariableValue *value )
 {
 	AddRefToValue(value->type, value->u);
 }
+
 

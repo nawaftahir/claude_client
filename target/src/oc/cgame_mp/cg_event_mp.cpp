@@ -137,6 +137,12 @@ static const float f_2_8 = 2.799999952316284f;
 #define IMPACT_GRENADE_EXPLODE 9
 #define IMPACT_ROCKET_EXPLODE 10
 
+void CG_EntityEvent(centity_t *cent, int event);
+void CG_CheckEvents(centity_t *cent);
+
+void CG_EntityEvent(centity_t *cent, int event);
+void CG_CheckEvents(centity_t *cent);
+
 static inline void VectorCopy(const vec3_t a, vec3_t b)
 {
     b[0] = a[0];
@@ -148,9 +154,6 @@ static char **CG_EventNames(void)
 {
     return (char **)((void *)&eventnames);
 }
-
-void CG_EntityEvent(centity_t *cent, int event);
-void CG_CheckEvents(centity_t *cent);
 
 static void PlayProneSound(int entNum, int isFirstPerson, int soundOffset)
 {
@@ -1200,3 +1203,4 @@ void CG_CheckEvents(centity_t *cent)
 
     cent->previousEventSequence = eventSequence;
 }
+

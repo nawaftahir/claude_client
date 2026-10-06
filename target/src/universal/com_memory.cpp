@@ -17,6 +17,10 @@ static byte *s_hunkData;
 static byte *s_origHunkData;
 static int s_hunkTotal;
 
+void Hunk_Clear( void );
+void *Hunk_AllocAlignInternal( int size, int aligment );
+void *Hunk_AllocLowAlignInternal( int size, int aligment );
+
 void Z_FreeInternal( void *ptr )
 {
 	free( ptr );
@@ -684,3 +688,4 @@ void LargeLocalReset( void )
 {
 	g_largeLocalPos = 0;
 }
+

@@ -5,6 +5,10 @@ static bool shouldQuitOnError = false;
 static HWND g_hwndGame[4];
 static unsigned int g_hiddenCount;
 
+void FixWindowsDesktop();
+void RefreshQuitOnErrorCondition();
+bool QuitOnError();
+
 static BOOL CALLBACK HideWindowCallback( HWND hwnd, LPARAM lParam )
 {
 	char caption[1024];
@@ -79,3 +83,4 @@ bool QuitOnError()
 	RefreshQuitOnErrorCondition();
 	return shouldQuitOnError;
 }
+

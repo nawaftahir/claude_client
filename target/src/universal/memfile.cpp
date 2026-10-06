@@ -13,6 +13,9 @@ struct MemoryFile
 void MemFile_WriteData( MemoryFile *memFile, int bytes, const void *data );
 void MemFile_ReadData( MemoryFile *memFile, int bytes, void *data );
 
+void MemFile_WriteData( MemoryFile *memFile, int bytes, const void *data );
+void MemFile_ReadData( MemoryFile *memFile, int bytes, void *data );
+
 static void MemFile_WriteDataForArchive( MemoryFile *memFile, int bytes, void *data )
 {
 	MemFile_WriteData( memFile, bytes, data );
@@ -176,3 +179,4 @@ const char *MemFile_ReadCString( MemoryFile *memFile )
 	string = (const char *)&memFile->buffer[start];
 	return string;
 }
+

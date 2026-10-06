@@ -10,6 +10,7 @@ ANCHOR ?= ../../cod2engineold/binaries/windows/1.0/CoD2MP_s.exe
 ifndef IN_IMAGE
 
 $(OUT) all:
+	@mkdir -p build && python3 ../rsrc.py $(ANCHOR) build/cod2mp.ico
 	docker run --rm -v $(CURDIR):/w -w /w $(IMAGE) sh -c 'make -j$$(nproc) -k IN_IMAGE=1 $(OUT); s=$$?; chown -R $(shell id -u):$(shell id -g) build; exit $$s'
 
 measure: all
@@ -31,6 +32,7 @@ tuflags = $(shell awk '$$1=="$(1)"{$$1="";print}' src/tus.txt)
 
 CL     := wine /opt/msvc710/Vc7/bin/cl.exe
 LINK   := wine /opt/msvc710/Vc7/bin/link.exe
+RC     := wine /opt/msvc710/Vc7/bin/rc.exe
 CFLAGS := /nologo /c /O2 /GL /MT /DNDEBUG /DWIN32 /FI.\\compat\\msvc71.h /I.\\compat\\include \
 	/I.\\universal /I. /I.\\qcommon /I.\\game /I.\\server /I.\\bgame /I.\\script /I.\\xanim \
 	/I.\\stringed /I.\\speex /I.\\speex\\speex
@@ -39,7 +41,7 @@ OCFLAGS := /nologo /c /O2 /GL /MT /TP /DNDEBUG /FIstdint.h /FImsvc_c89.h \
 	/FImsvc_gcc_compat.h /FIwin32_compat.h /FIprocess.h /FIfloat.h /I.\\oc\\shims \
 	/I.\\oc\\shims\\msvc /I.\\oc\\shims\\posix /I.\\oc /I.\\oc\\headers /DWIN32 /D_WIN32 /DW32_CLIENT /DCOD2_PATCH_10 \
 	/D_GNU_SOURCE=1 /DWIN32_LEAN_AND_MEAN /DNOMINMAX /Disfinite=_finite /Dvsnprintf=_vsnprintf /Dsnprintf=_snprintf
-LFLAGS := /nologo /LTCG /FORCE /OPT:NOREF /OPT:NOICF /FIXED:NO /SUBSYSTEM:WINDOWS /MAP:build\\CoD2MP_s.map
+LFLAGS := /nologo /LTCG /FORCE /OPT:NOREF /OPT:NOICF /FIXED /SUBSYSTEM:WINDOWS /MAP:build\\CoD2MP_s.map
 
 win = $(subst /,\\,$(1))
 # header dependencies from /showIncludes (system headers skipped)
@@ -77,8 +79,12 @@ build/lib/mss32.lib: src/lib/mss32.def build/lib/mss_auto.obj
 	@wine /opt/msvc710/Vc7/bin/lib.exe /nologo /machine:x86 /def:$(call win,$<) /out:build\\lib\\mss32_imp.lib > $@.log 2>&1 || (cat $@.log; false)
 	@wine /opt/msvc710/Vc7/bin/lib.exe /nologo /out:$(call win,$@) build\\lib\\mss32_imp.lib build\\lib\\mss_auto.obj >> $@.log 2>&1 || (cat $@.log; false)
 
-$(OUT): $(OBJS) $(IMPLIBS) src/tus.txt
+# icon comes from the local retail exe (host step above); .rsrc is byte-identical to retail
+build/cod2mp.res: src/cod2mp.rc build/cod2mp.ico
+	@cd src && $(RC) /l 0x409 /fo..\\build\\cod2mp.res cod2mp.rc > ../$@.log 2>&1 || (cat ../$@.log; false)
+
+$(OUT): $(OBJS) $(IMPLIBS) build/cod2mp.res src/tus.txt
 	@printf '%s\n' $(call win,$(OBJS)) > build/objs.rsp
-	$(LINK) $(LFLAGS) /OUT:$(call win,$@) @build\\objs.rsp $(LIBS) > build/link.log 2>&1; tail -1 build/link.log
+	$(LINK) $(LFLAGS) /OUT:$(call win,$@) @build\\objs.rsp build\\cod2mp.res $(LIBS) > build/link.log 2>&1; tail -1 build/link.log
 
 endif

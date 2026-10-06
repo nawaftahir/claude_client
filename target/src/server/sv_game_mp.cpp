@@ -20,6 +20,81 @@ int sv_serverId_value;
 // declares it for the client.
 extern void Com_UnloadSoundAliases( snd_alias_system_t system );
 
+void SV_GameSendServerCommand( int clientNum, int svscmd_type, const char *text );
+void SV_GameDropClient( int clientNum, const char *reason );
+void SV_SetBrushModel( gentity_t *ent );
+qboolean SV_inSnapshot( const vec3_t origin, int iEntityNum );
+qboolean SV_EntityContact( const vec3_t mins, const vec3_t maxs, const gentity_t *gEnt );
+void SV_GetServerinfo( char *buffer, int bufferSize );
+void* SV_Hunk_AllocInternal( int size );
+void* SV_Hunk_AllocAlignInternal( int size, int aligment );
+void* SV_Hunk_AllocateTempMemoryInternal( int size );
+void SV_Hunk_FreeTempMemoryInternal( void *buf );
+void SV_LocateGameData( gentity_t *gEnts, int numGEntities, int sizeofGEntity_t, playerState_t *clients, int sizeofGameClient );
+void SV_GetUsercmd( int clientNum, usercmd_t *cmd );
+void *SV_AllocXModelPrecache( int size );
+void *SV_AllocXModelPrecacheColl( int size );
+XModel* SV_XModelGet( const char *name );
+void SV_DObjDumpInfo( gentity_t *ent );
+void SV_ResetSkeletonCache();
+char* SV_AllocSkelMemory( unsigned int size );
+int SV_DObjCreateSkelForBone( gentity_t *ent, int boneIndex );
+int SV_DObjCreateSkelForBones( gentity_t *ent, int *partBits );
+int SV_DObjUpdateServerTime( gentity_t *ent, float dtime, int bNotify );
+void SV_DObjInitServerTime( gentity_t *ent, float dtime );
+void SV_DObjGetHierarchyBits( gentity_t *ent, int boneIndex, int *partBits );
+void SV_DObjCalcAnim( gentity_t *ent, int *partBits );
+void SV_DObjCalcSkel( gentity_t *ent, int *partBits );
+int SV_DObjNumBones( gentity_t *ent );
+int SV_DObjGetBoneIndex( const gentity_t *ent, unsigned int boneName );
+DObjAnimMat* SV_DObjGetMatrixArray( gentity_t *ent );
+void SV_DObjDisplayAnim( gentity_t *ent );
+DObjAnimMat* SV_DObjGetRotTransArray( gentity_t *ent );
+int SV_DObjSetRotTransIndex( const gentity_t *ent, int *partBits, int boneIndex );
+int SV_DObjSetControlRotTransIndex( const gentity_t *ent, int *partBits, int boneIndex );
+XAnimTree_s* SV_DObjGetTree( gentity_t *ent );
+void SV_XModelDebugBoxes( gentity_s *ent );
+qboolean SV_MapExists( const char *name );
+void SV_ResetEntityParsePoint();
+qboolean SV_DObjExists( gentity_t *ent );
+void SV_SetWeaponInfoMemory();
+void SV_FreeWeaponInfoMemory();
+qboolean SV_GetEntityToken( char *buffer, int bufferSize );
+int SV_GetGuid( int clientNum );
+int SV_GetClientPing( int clientNum );
+qboolean SV_IsLocalClient( int clientNum );
+void SV_ShutdownGameProgs();
+void SV_SetGametype();
+void SV_InitGameVM( qboolean restart, qboolean registerDvars );
+void SV_RestartGameProgs( qboolean savepersist );
+void SV_InitGameProgs( qboolean savepersist );
+qboolean SV_GameCommand( void );
+
+/*
+===============
+SV_XModelDebugBoxes
+===============
+*/
+extern void DObjGetBoneInfo( const DObj *obj, XBoneInfo **boneInfo );
+extern int DObjGetNumModels( const DObj_s *obj );
+extern bool DObjIgnoreCollision( const DObj_s *obj, int modelIndex );
+extern void CL_AddDebugLine( const vec_t *start, const vec_t *end, const vec_t *color, qboolean depthTest, int duration, qboolean fromServer );
+int boxVerts[24][3] =
+{
+	{ 0, 0, 0 }, { 1, 0, 0 },
+	{ 0, 0, 0 }, { 0, 1, 0 },
+	{ 1, 1, 0 }, { 1, 0, 0 },
+	{ 1, 1, 0 }, { 0, 1, 0 },
+	{ 0, 0, 1 }, { 1, 0, 1 },
+	{ 0, 0, 1 }, { 0, 1, 1 },
+	{ 1, 1, 1 }, { 1, 0, 1 },
+	{ 1, 1, 1 }, { 0, 1, 1 },
+	{ 0, 0, 0 }, { 0, 0, 1 },
+	{ 1, 0, 0 }, { 1, 0, 1 },
+	{ 0, 1, 0 }, { 0, 1, 1 },
+	{ 1, 1, 0 }, { 1, 1, 1 },
+};
+
 // these functions must be used instead of pointer arithmetic, because
 // the game allocates gentities with private information after the server shared part
 int SV_NumForGentity( gentity_t *ent )
@@ -727,32 +802,6 @@ XAnimTree_s* SV_DObjGetTree( gentity_t *ent )
 	return obj ? DObjGetTree(obj) : NULL;
 }
 
-/*
-===============
-SV_XModelDebugBoxes
-===============
-*/
-extern void DObjGetBoneInfo( const DObj *obj, XBoneInfo **boneInfo );
-extern int DObjGetNumModels( const DObj_s *obj );
-extern bool DObjIgnoreCollision( const DObj_s *obj, int modelIndex );
-extern void CL_AddDebugLine( const vec_t *start, const vec_t *end, const vec_t *color, qboolean depthTest, int duration, qboolean fromServer );
-
-int boxVerts[24][3] =
-{
-	{ 0, 0, 0 }, { 1, 0, 0 },
-	{ 0, 0, 0 }, { 0, 1, 0 },
-	{ 1, 1, 0 }, { 1, 0, 0 },
-	{ 1, 1, 0 }, { 0, 1, 0 },
-	{ 0, 0, 1 }, { 1, 0, 1 },
-	{ 0, 0, 1 }, { 0, 1, 1 },
-	{ 1, 1, 1 }, { 1, 0, 1 },
-	{ 1, 1, 1 }, { 0, 1, 1 },
-	{ 0, 0, 0 }, { 0, 0, 1 },
-	{ 1, 0, 0 }, { 1, 0, 1 },
-	{ 0, 1, 0 }, { 0, 1, 1 },
-	{ 1, 1, 0 }, { 1, 1, 1 },
-};
-
 void SV_XModelDebugBoxes( gentity_s *ent )
 {
 	DObj_s *obj;
@@ -1067,3 +1116,4 @@ qboolean SV_GameCommand( void )
 
 	return ConsoleCommand();
 }
+
