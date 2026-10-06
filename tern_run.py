@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
-# usage (in target/): tern_run.py DIR  (reads DIR/tern.json; do not edit src while it runs)
+# usage (in target/): tern_run.py DIR [tern|untern|tern2]  (reads DIR/<mode>.json; do not edit src while it runs)
 # apply each ternary candidate, build+measure, keep if net bytes improve
 import json, re, subprocess, sys
 SP = sys.argv[1]
-cands = json.load(open(SP + '/tern.json'))
+MODE = sys.argv[2] if len(sys.argv) > 2 else 'tern'
+UN = MODE == 'untern'
+cands = json.load(open(SP + '/' + MODE + '.json'))
 def measure():
     subprocess.run('make -s > build/b.txt 2>&1', shell=True)
     if 'error' in open('build/b.txt', errors='replace').read().lower().replace('0 error', ''):
@@ -18,7 +20,10 @@ for c in cands:
     t = c['text']
     if t not in s: print('skip-nf', c['name'], flush=True); continue
     head = t[:t.index('{')]
-    new = head + '{\n\treturn %s ? %s : %s;\n}' % (c['cond'], c['a'], c['b'])
+    if UN:
+        new = head + '{\n\tif (%s)\n\t\treturn %s;\n\treturn %s;\n}' % (c['cond'], c['a'], c['b'])
+    else:
+        new = head + '{\n%s\treturn %s ? %s : %s;\n}' % (c.get('pre', ''), c['cond'], c['a'], c['b'])
     open(c['file'], 'w').write(s.replace(t, new, 1))
     v = measure()
     d = None if v is None else v - base
