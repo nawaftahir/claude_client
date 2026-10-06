@@ -648,7 +648,7 @@ void Hunk_ShowTempMemoryHigh( int memory )
 	hunk_high.permanent = memory;
 }
 
-static int LargeLocalBegin( int size )
+int LargeLocalBegin( int size )
 {
 	int startPos;
 
@@ -659,12 +659,12 @@ static int LargeLocalBegin( int size )
 	return startPos;
 }
 
-static void LargeLocalEnd( int startPos )
+void LargeLocalEnd( int startPos )
 {
 	g_largeLocalPos = startPos;
 }
 
-static void *LargeLocalGetBuf( int startPos )
+void *LargeLocalGetBuf( int startPos )
 {
 	return &g_largeLocalBuf[startPos];
 }
