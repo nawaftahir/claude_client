@@ -166,118 +166,67 @@ static void CG_CalcVrect(int size)
 
 static void CG_OffsetThirdPersonView(void)
 {
-    byte *origin;
-    byte *viewAngles;
-    float focusAngles[3];
-    float forward[3], right[3], up[3];
-    float focusPoint[3];
-    float view[3];
-    float trace_fraction;
-    byte trace[64];
+    vec3_t forward, right, up;
+    vec3_t view;
+    vec3_t focusAngles;
+    trace_t trace;
+    vec3_t focusPoint;
+    float focusDist;
     float scale;
-    float dist2d;
-    float dz;
-    double angle;
+    float distSq;
 
+    cg->refdef.vieworg[2] += cg->predictedPlayerState.viewHeightCurrent;
+    focusAngles[0] = cg->refdefViewAngles[0];
+    focusAngles[1] = cg->refdefViewAngles[1];
+    focusAngles[2] = cg->refdefViewAngles[2];
+    // if dead, look at killer
+    if (cg->predictedPlayerState.pm_type >= 6)
     {
-        origin = (byte *)cg->refdef.vieworg;
-        viewAngles = (byte *)cg->refdefViewAngles;
-
-        cg->refdef.vieworg[2] += cg->predictedPlayerState.viewHeightCurrent;
-
-        focusAngles[0] = cg->refdefViewAngles[0];
-        focusAngles[1] = cg->refdefViewAngles[1];
-        focusAngles[2] = cg->refdefViewAngles[2];
-
-        if (cg->predictedPlayerState.pm_type > 5) {
-
-            focusAngles[1] = (float)cg->predictedPlayerState.stats[1];
-            cg->refdefViewAngles[1] = (float)cg->predictedPlayerState.stats[1];
-        }
+        focusAngles[1] = (float)cg->predictedPlayerState.stats[1];
+        cg->refdefViewAngles[1] = (float)cg->predictedPlayerState.stats[1];
     }
-
-    if (focusAngles[0] < 45.0f) {
-
-    } else {
+    if (cg->refdefViewAngles[0] > 45.0f)
         focusAngles[0] = 45.0f;
-    }
-
-    AngleVectors(focusAngles, forward, (vec_t *)0, (vec_t *)0);
-
-    focusPoint[0] = forward[0] * 512.0f + *(float *)(origin + 0);
-    focusPoint[1] = forward[1] * 512.0f + *(float *)(origin + 4);
-    focusPoint[2] = forward[2] * 512.0f + *(float *)(origin + 8);
-
-    view[0] = *(float *)(origin + 0);
-    view[1] = *(float *)(origin + 4);
-    view[2] = *(float *)(origin + 8) + 8.0f;
-
-    *(float *)(viewAngles + 0) *= 0.5;
-
-    *(float *)(viewAngles + 4) -= (cg_thirdPersonAngle)->current.value;
-
-    AngleVectors((float *)viewAngles, forward, right, up);
-
-    scale = (cg_thirdPersonRange)->current.value;
-
+    AngleVectors(focusAngles, forward, NULL, NULL);
+    focusPoint[0] = cg->refdef.vieworg[0] + 512.0f * forward[0];
+    focusPoint[1] = cg->refdef.vieworg[1] + 512.0f * forward[1];
+    focusPoint[2] = cg->refdef.vieworg[2] + 512.0f * forward[2];
+    view[0] = cg->refdef.vieworg[0];
+    view[1] = cg->refdef.vieworg[1];
+    view[2] = cg->refdef.vieworg[2] + 8.0f;
+    cg->refdefViewAngles[0] *= 0.5;
+    cg->refdefViewAngles[1] -= cg_thirdPersonAngle->current.value;
+    AngleVectors(cg->refdefViewAngles, forward, right, up);
+    scale = -cg_thirdPersonRange->current.value;
+    view[0] = view[0] + forward[0] * scale;
+    view[1] = view[1] + forward[1] * scale;
+    view[2] = view[2] + forward[2] * scale;
+    // keep the camera out of solids
+    CG_Trace(&trace, cg->refdef.vieworg, mins, maxs, view, cg->predictedPlayerState.clientNum, 0x811);
+    if (trace.fraction != 1.0)
     {
-        union {
-            float f;
-            unsigned int u;
-        } conv;
-        conv.f = scale;
-        conv.u ^= 0x80000000u;
-        scale = conv.f;
+        view[0] = (view[0] - cg->refdef.vieworg[0]) * trace.fraction + cg->refdef.vieworg[0];
+        view[1] = (view[1] - cg->refdef.vieworg[1]) * trace.fraction + cg->refdef.vieworg[1];
+        view[2] = (view[2] - cg->refdef.vieworg[2]) * trace.fraction + cg->refdef.vieworg[2];
+        view[2] += (1.0f - trace.fraction) * 32.0f;
+        // a tunnel ceiling may be close enough to poke through
+        CG_Trace(&trace, cg->refdef.vieworg, mins, maxs, view, cg->predictedPlayerState.clientNum, 0x811);
+        view[0] = (view[0] - cg->refdef.vieworg[0]) * trace.fraction + cg->refdef.vieworg[0];
+        view[1] = (view[1] - cg->refdef.vieworg[1]) * trace.fraction + cg->refdef.vieworg[1];
+        view[2] = (view[2] - cg->refdef.vieworg[2]) * trace.fraction + cg->refdef.vieworg[2];
     }
-
-    view[0] += scale * forward[0];
-    view[1] += scale * forward[1];
-    view[2] += scale * forward[2];
-
-    CG_Trace((trace_t *)trace, (const vec_t *)origin, (const vec_t *)&mins, (const vec_t *)&maxs,
-                    (const vec_t *)view, ((cg_t *)cg)->predictedPlayerState.clientNum, 0x811);
-
-    trace_fraction = *(float *)trace;
-
-    if (trace_fraction != 1.0f) {
-
-        view[0] = *(float *)(origin + 0) + trace_fraction * (view[0] - *(float *)(origin + 0));
-        view[1] = *(float *)(origin + 4) + trace_fraction * (view[1] - *(float *)(origin + 4));
-        {
-            float newZ = *(float *)(origin + 8) + trace_fraction * (view[2] - *(float *)(origin + 8));
-
-            view[2] = newZ + (1.0f - trace_fraction) * 32.0f;
-        }
-
-        CG_Trace((trace_t *)trace, (const vec_t *)origin, (const vec_t *)&mins, (const vec_t *)&maxs,
-                        (const vec_t *)view, ((cg_t *)cg)->predictedPlayerState.clientNum, 0x811);
-        trace_fraction = *(float *)trace;
-
-        view[0] = *(float *)(origin + 0) + trace_fraction * (view[0] - *(float *)(origin + 0));
-        view[1] = *(float *)(origin + 4) + trace_fraction * (view[1] - *(float *)(origin + 4));
-        view[2] = *(float *)(origin + 8) + trace_fraction * (view[2] - *(float *)(origin + 8));
-    }
-
-    origin = (byte *)cg->refdef.vieworg;
-    *(float *)(origin + 0) = view[0];
-    *(float *)(origin + 4) = view[1];
-    *(float *)(origin + 8) = view[2];
-
-    {
-        float dx = focusPoint[0] - *(float *)(origin + 0);
-        float dy = focusPoint[1] - *(float *)(origin + 4);
-        dz = focusPoint[2] - *(float *)(origin + 8);
-
-        dist2d = dx * dx + dy * dy;
-        dist2d = __builtin_sqrtf(dist2d);
-
-        if (dist2d < 1.0f) {
-            dist2d = 1.0;
-        }
-
-        angle = atan2((double)dz, (double)dist2d);
-        ((cg_t *)cg)->refdefViewAngles[0] = (float)(angle * -57.295776f);
-    }
+    cg->refdef.vieworg[0] = view[0];
+    cg->refdef.vieworg[1] = view[1];
+    cg->refdef.vieworg[2] = view[2];
+    // pitch to look at the focus point
+    focusPoint[0] = focusPoint[0] - cg->refdef.vieworg[0];
+    focusPoint[1] = focusPoint[1] - cg->refdef.vieworg[1];
+    focusPoint[2] = focusPoint[2] - cg->refdef.vieworg[2];
+    distSq = focusPoint[1] * focusPoint[1] + focusPoint[0] * focusPoint[0];
+    focusDist = (float)sqrt(distSq);
+    if (focusDist < 1.0f)
+        focusDist = 1.0f;
+    cg->refdefViewAngles[0] = (float)atan2(focusPoint[2], focusDist) * -57.295776f;
 }
 
 static void CG_StepOffset(void)
