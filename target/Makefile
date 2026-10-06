@@ -5,6 +5,7 @@
 
 IMAGE  := cod2-msvc71-build
 OUT    := build/CoD2MP_s.exe
+REL    := build/release/CoD2MP_s.exe
 ANCHOR ?= ../../cod2engineold/binaries/windows/1.0/CoD2MP_s.exe
 
 ifndef IN_IMAGE
@@ -19,10 +20,16 @@ measure: all
 	@prev=$$(ls ../runs | tail -1); python3 ../delta.py ../runs/$$prev build/cmp.json 10
 	@cp build/cmp.json ../runs/r$$(printf %03d $$(($$(ls ../runs | wc -l) + 1))).json
 
+# whole-file image: same objects, /FIXED (no .reloc, as retail); dev builds keep .reloc for cmp.py
+release:
+	@mkdir -p build && python3 ../rsrc.py $(ANCHOR) build/cod2mp.ico
+	docker run --rm -v $(CURDIR):/w -w /w $(IMAGE) sh -c 'make -j$$(nproc) -k IN_IMAGE=1 $(REL); s=$$?; chown -R $(shell id -u):$(shell id -g) build; exit $$s'
+	@sha256sum $(REL) $(ANCHOR)
+
 clean:
 	rm -rf build
 
-.PHONY: $(OUT) all measure clean
+.PHONY: $(OUT) all measure release clean
 
 else
 
@@ -41,7 +48,7 @@ OCFLAGS := /nologo /c /O2 /GL /MT /TP /DNDEBUG /FIstdint.h /FImsvc_c89.h \
 	/FImsvc_gcc_compat.h /FIwin32_compat.h /FIprocess.h /FIfloat.h /I.\\oc\\shims \
 	/I.\\oc\\shims\\msvc /I.\\oc\\shims\\posix /I.\\oc /I.\\oc\\headers /DWIN32 /D_WIN32 /DW32_CLIENT /DCOD2_PATCH_10 \
 	/D_GNU_SOURCE=1 /DWIN32_LEAN_AND_MEAN /DNOMINMAX /Disfinite=_finite /Dvsnprintf=_vsnprintf /Dsnprintf=_snprintf
-LFLAGS := /nologo /LTCG /FORCE /OPT:NOREF /OPT:NOICF /FIXED /SUBSYSTEM:WINDOWS /MAP:build\\CoD2MP_s.map
+LFLAGS := /nologo /LTCG /FORCE /OPT:NOREF /OPT:NOICF /FIXED:NO /SUBSYSTEM:WINDOWS /MAP:build\\CoD2MP_s.map
 
 win = $(subst /,\\,$(1))
 # header dependencies from /showIncludes (system headers skipped)
@@ -86,5 +93,10 @@ build/cod2mp.res: src/cod2mp.rc build/cod2mp.ico
 $(OUT): $(OBJS) $(IMPLIBS) build/cod2mp.res src/tus.txt
 	@printf '%s\n' $(call win,$(OBJS)) > build/objs.rsp
 	$(LINK) $(LFLAGS) /OUT:$(call win,$@) @build\\objs.rsp build\\cod2mp.res $(LIBS) > build/link.log 2>&1; tail -1 build/link.log
+
+$(REL): $(OBJS) $(IMPLIBS) build/cod2mp.res src/tus.txt
+	@mkdir -p $(dir $@)
+	@printf '%s\n' $(call win,$(OBJS)) > build/objs.rsp
+	$(LINK) $(subst /FIXED:NO,/FIXED,$(subst build\\CoD2MP_s.map,build\\release\\CoD2MP_s.map,$(LFLAGS))) /OUT:$(call win,$@) @build\\objs.rsp build\\cod2mp.res $(LIBS) > build/release/link.log 2>&1; tail -1 build/release/link.log
 
 endif
