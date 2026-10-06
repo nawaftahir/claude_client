@@ -745,3 +745,5 @@
 4bb2b0	CG_TellTarget_f	similar
 4bafd0	CG_TargetCommand_f	similar
 4c7450	CG_PlayLoopedFx	similar
+4ba8c0	CG_FreeAnimTreeInstances	callsite
+4bae50	CG_FreeWeapons	callsite

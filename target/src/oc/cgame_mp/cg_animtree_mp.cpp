@@ -43,32 +43,14 @@ void CG_SafeDObjFree(int iEntNum)
 void CG_FreeClientDObjInfo(void)
 {
     int i;
-    for (i = 0; i < 0x40; i++) {
-        Com_SafeClientDObjFree(i);
-
-        cg->iEntityLastType[i] = 0;
-        cg->pEntityLastXModel[i] = 0;
-
-        if (cg_entities[i].tree) {
-            XAnimFreeTree(cg_entities[i].tree, MT_Free);
-            cg_entities[i].tree = 0;
-        }
-    }
+    for (i = 0; i < 64; i++)
+        CG_SafeDObjFree(i);
 }
 
 void CG_FreeEntityDObjInfo(void)
 {
     int i;
-    for (i = 0x40; i < 0x400; i++) {
-        Com_SafeClientDObjFree(i);
-
-        cg->iEntityLastType[i] = 0;
-        cg->pEntityLastXModel[i] = 0;
-
-        if (cg_entities[i].tree) {
-            XAnimFreeTree(cg_entities[i].tree, MT_Free);
-            cg_entities[i].tree = 0;
-        }
-    }
+    for (i = 64; i < 1024; i++)
+        CG_SafeDObjFree(i);
 }
 

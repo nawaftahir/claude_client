@@ -1160,11 +1160,27 @@ void CG_FreeWeapons(void)
     memset((void *)cg_weaponsArray, 0, CG_MAX_WEAPONS * sizeof(weaponInfo_t));
 }
 
+// retail 0x4ba8c0
+static void CG_FreeAnimTreeInstances(void)
+{
+    int i;
+
+    for (i = 0; i < 64; ++i) {
+        if (cg->bgs.clientinfo[i].pXAnimTree) {
+            XAnimFreeTree(cg->bgs.clientinfo[i].pXAnimTree, 0);
+            cg->bgs.clientinfo[i].pXAnimTree = NULL;
+        }
+    }
+    for (i = 0; i < 8; ++i) {
+        if (cgs->corpseinfo[i].pXAnimTree) {
+            XAnimFreeTree(cgs->corpseinfo[i].pXAnimTree, 0);
+            cgs->corpseinfo[i].pXAnimTree = NULL;
+        }
+    }
+}
+
 void CG_Shutdown(void)
 {
-    byte *cgBase;
-    byte *cgsBase;
-    int i;
 
     CL_TrackStatistics(0);
     SND_FadeAllSounds(1.0f, 0);
@@ -1177,23 +1193,7 @@ void CG_Shutdown(void)
     CL_FreeWeaponInfoMemory();
     FX_FreeSystem();
 
-    cgBase = (byte *)cg;
-    for (i = 0; i < 64; ++i, cgBase += 0x4b8) {
-        struct XAnimTree_s *tree = ((cg_t *)cgBase)->bgs.clientinfo[0].pXAnimTree;
-        if (tree) {
-            XAnimFreeTree(tree, 0);
-            ((cg_t *)cgBase)->bgs.clientinfo[0].pXAnimTree = NULL;
-        }
-    }
-
-    cgsBase = (byte *)cgs;
-    for (i = 0; i < 8; ++i, cgsBase += 0x4b8) {
-        struct XAnimTree_s *tree = ((cgs_t *)cgsBase)->corpseinfo[0].pXAnimTree;
-        if (tree) {
-            XAnimFreeTree(tree, 0);
-            ((cgs_t *)cgsBase)->corpseinfo[0].pXAnimTree = NULL;
-        }
-    }
+    CG_FreeAnimTreeInstances();
 
     if (cgs->localServer == 0) {
         Scr_ShutdownGameStrings();
