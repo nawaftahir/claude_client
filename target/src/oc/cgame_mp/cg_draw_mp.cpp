@@ -1509,7 +1509,7 @@ static void CG_CalcReticleSpread(const WeaponDef *weapDef, int weapIndex, const 
 
     BG_GetSpreadForWeapon(&cg->predictedPlayerState, weapIndex, &minSpread, &maxSpread);
     f = ((maxSpread - minSpread) * (cg->predictedPlayerState.aimSpreadScale * (1.0f / 255.0f)) + minSpread) * transScale;
-    scale = tan(f * 0.017453292f) / tan(cg->refdef.fov_y * 0.017453292f * 0.5f) * 240.0f;
+    scale = tan(f * 0.017453292f) / tan(0.5f * (cg->refdef.fov_y * 0.017453292f)) * 240.0f;
     if (scale < (float)weapDef->iReticleMinOfs)
         scale = (float)weapDef->iReticleMinOfs;
     spread[0] = scale - weapDef->fHipReticleSidePos * drawSize[0];
