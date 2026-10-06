@@ -1020,6 +1020,20 @@ menuDef_t *Menu_GetFocused(displayContextDef_t *dc)
     return NULL;
 }
 
+// retail 0x53c030, q3 shape; no callers in 1.0
+void Menu_ScrollFeeder(displayContextDef_t *dc, menuDef_t *menu, int feeder, qboolean down)
+{
+    if (menu) {
+        int i;
+        for (i = 0; i < menu->itemCount; i++) {
+            if (menu->items[i]->special == feeder) {
+                Item_ListBox_HandleKey(dc, menu->items[i], down ? 155 : 154, 1, 1);
+                return;
+            }
+        }
+    }
+}
+
 // retail 0x535e10
 int Item_ListBox_MaxScroll(itemDef_t *item)
 {
@@ -3104,83 +3118,71 @@ qboolean Item_ListBox_HandleKey(displayContextDef_t *dc, itemDef_t *item, int ke
     return 0;
 }
 
-static void Scroll_ListBox_ThumbFunc(displayContextDef_t *dc, void *p)
+// q3 ui_shared.c shape
+static void Scroll_ListBox_AutoFunc(displayContextDef_t *dc, void *p)
 {
-    byte *d = (byte *)dc;
-    byte *scroll = (byte *)p;
-    itemDef_t *scrollItem = *(itemDef_t **)(scroll + 0x18);
-    byte *it = (byte *)scrollItem;
-    byte *listPtr = (byte *)Item_GetListBoxDef(scrollItem);
+    scrollInfo_s *si = (scrollInfo_s *)p;
 
-    if (!listPtr)
-        return;
-
-    if (Window_IsHorizontal((Window *)it)) {
-
-        float cursorX = (float)((displayContextDef_t *)d)->cursorx;
-        if (cursorX == (((scrollInfo_s*)(scroll))->xStart))
-            goto check_auto;
-
-        float startX = (((rectDef_t*)(it))->x) + 16.0f + 1.0f;
-        float scrollArea = (((rectDef_t*)(it))->w) - 32.0f - 2.0f;
-        int maxScroll = Item_ListBox_MaxScroll(scrollItem);
-        float thumbPos = (cursorX - startX - 8.0f) * (float)maxScroll / (scrollArea - 16.0f);
-        int newStart = (int)thumbPos;
-        if (newStart < 0)
-            newStart = 0;
-        else if (newStart > maxScroll)
-            newStart = maxScroll;
-        ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), newStart);
-        (((scrollInfo_s*)(scroll))->xStart) = cursorX;
-    } else {
-
-        float cursorY = (float)(((displayContextDef_s*)(d))->cursory);
-        if (cursorY == (((scrollInfo_s*)(scroll))->yStart))
-            goto check_auto;
-
-        float startY = (((rectDef_t*)(it))->y) + 16.0f + 1.0f;
-        float scrollArea = (((rectDef_t*)(it))->h) - 32.0f - 2.0f;
-        int maxScroll = Item_ListBox_MaxScroll(scrollItem);
-        float thumbPos = (cursorY - startY - 8.0f) * (float)maxScroll / (scrollArea - 16.0f);
-        int newStart = (int)thumbPos;
-        if (newStart < 0)
-            newStart = 0;
-        else if (newStart > maxScroll)
-            newStart = maxScroll;
-        ListBox_SetStartPos((listBoxDef_t *)((itemDef_t *)listPtr), newStart);
-        (((scrollInfo_s*)(scroll))->yStart) = cursorY;
+    if (dc->realTime > si->nextScrollTime) {
+        // hold to keep scrolling
+        Item_ListBox_HandleKey(dc, si->item, si->scrollKey, 1, 0);
+        si->nextScrollTime = dc->realTime + si->adjustValue;
     }
 
-check_auto:;
-
-    int curTime = (((displayContextDef_s*)(d))->realTime);
-    while (curTime > (((scrollInfo_s*)(scroll))->nextScrollTime)) {
-        Item_ListBox_HandleKey(dc, (((scrollInfo_s*)(scroll))->item), (((scrollInfo_s*)(scroll))->scrollKey), 1, 0);
-        (((scrollInfo_s*)(scroll))->nextScrollTime) = curTime + (((scrollInfo_s*)(scroll))->adjustValue);
-    }
-
-    if (curTime > (((scrollInfo_s*)(scroll))->nextAdjustTime)) {
-        (((scrollInfo_s*)(scroll))->nextAdjustTime) = curTime + 150;
-        if ((((scrollInfo_s*)(scroll))->adjustValue) > 20)
-            (((scrollInfo_s*)(scroll))->adjustValue) -= 40;
+    if (dc->realTime > si->nextAdjustTime) {
+        si->nextAdjustTime = dc->realTime + 150;
+        if (si->adjustValue > 20)
+            si->adjustValue -= 40;
     }
 }
 
-static void Scroll_ListBox_AutoFunc(displayContextDef_t *dc, void *p)
+static void Scroll_ListBox_ThumbFunc(displayContextDef_t *dc, void *p)
 {
-    byte *d = (byte *)dc;
-    byte *scroll = (byte *)p;
-    int curTime = (((displayContextDef_s*)(d))->realTime);
+    scrollInfo_s *si = (scrollInfo_s *)p;
+    rectDef_t r;
+    int pos, max;
+    listBoxDef_t *listPtr;
 
-    while (curTime > (((scrollInfo_s*)(scroll))->nextScrollTime)) {
-        Item_ListBox_HandleKey(dc, (((scrollInfo_s*)(scroll))->item), (((scrollInfo_s*)(scroll))->scrollKey), 1, 0);
-        (((scrollInfo_s*)(scroll))->nextScrollTime) = curTime + (((scrollInfo_s*)(scroll))->adjustValue);
+    listPtr = Item_GetListBoxDef(si->item);
+    if (!listPtr)
+        return;
+
+    if (Window_IsHorizontal(&si->item->window)) {
+        if (dc->cursorx == si->xStart)
+            return;
+        r.x = si->item->window.rect[0].x + 16.0f + 1.0f;
+        r.w = si->item->window.rect[0].w - 32.0f - 2.0f;
+        max = Item_ListBox_MaxScroll(si->item);
+        pos = (int)((dc->cursorx - r.x - 8.0f) * max / (r.w - 16.0f));
+        if (pos < 0)
+            pos = 0;
+        else if (pos > max)
+            pos = max;
+        listPtr->startPos[0] = pos;
+        si->xStart = (float)dc->cursorx;
+    } else if (dc->cursory != si->yStart) {
+        r.y = si->item->window.rect[0].y + 16.0f + 1.0f;
+        r.h = si->item->window.rect[0].h - 32.0f - 2.0f;
+        max = Item_ListBox_MaxScroll(si->item);
+        pos = (int)((dc->cursory - r.y - 8.0f) * max / (r.h - 16.0f));
+        if (pos < 0)
+            pos = 0;
+        else if (pos > max)
+            pos = max;
+        listPtr->startPos[0] = pos;
+        si->yStart = (float)dc->cursory;
     }
 
-    if (curTime > (((scrollInfo_s*)(scroll))->nextAdjustTime)) {
-        (((scrollInfo_s*)(scroll))->nextAdjustTime) = curTime + 150;
-        if ((((scrollInfo_s*)(scroll))->adjustValue) > 20)
-            (((scrollInfo_s*)(scroll))->adjustValue) -= 40;
+    if (dc->realTime > si->nextScrollTime) {
+        // hold to keep scrolling
+        Item_ListBox_HandleKey(dc, si->item, si->scrollKey, 1, 0);
+        si->nextScrollTime = dc->realTime + si->adjustValue;
+    }
+
+    if (dc->realTime > si->nextAdjustTime) {
+        si->nextAdjustTime = dc->realTime + 150;
+        if (si->adjustValue > 20)
+            si->adjustValue -= 40;
     }
 }
 
