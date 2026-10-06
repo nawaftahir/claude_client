@@ -845,48 +845,41 @@ void CG_SafeTranslateHudElemString(int index, char *hudElemString)
     CG_LocalizeHudElemString(CL_GetConfigString(index + 0x51e), "hudelem string", hudElemString);
 }
 
-static byte *CG_FindSmokeGrenadeEntityState(int minTime, int gametime)
+// oldest smoke grenade that went off in [minTime, gametime] and is still live
+static entityState_t *CG_FindSmokeGrenadeEntityState(int minTime, int gametime)
 {
-    byte *snap = (byte *)cg->nextSnap;
-    int entityCount = ((snapshot_t *)snap)->numEntities;
-    int bestTime = 0;
-    int bestIndex = 0;
-    qboolean found = 0;
+    entityState_t *es;
     int i;
+    int bestTime;
+    int bestIndex;
+    bool found;
 
-    for (i = 0; i < entityCount; i++) {
-        byte *es = (byte *)(((char *)snap + offsetof(snapshot_t, entities[0].number)) + i * 0xf0);
-        int eventTime;
-
-        if ((*(byte *)(es + 0xa) & 1) == 0)
+    found = false;
+    bestIndex = 0;
+    bestTime = 0;
+    for (i = 0; i < cg->nextSnap->numEntities; i++) {
+        es = &cg->nextSnap->entities[i];
+        if (!(es->eFlags & 0x10000))
             continue;
-
-        if (minTime > ((entityState_t *)es)->time2)
+        if (es->time2 < minTime)
             continue;
-
-        eventTime = ((entityState_t *)es)->time;
-        if (minTime > eventTime)
+        if (es->time < minTime || es->time > gametime)
             continue;
-
-        if (gametime < eventTime)
-            continue;
-
-        if (!found || eventTime < bestTime) {
+        if (!bestTime || bestTime > es->time) {
+            found = true;
             bestIndex = i;
-            bestTime = eventTime;
-            found = 1;
+            bestTime = es->time;
         }
     }
 
     if (!found)
         return NULL;
-
-    return (byte *)(((char *)snap + offsetof(snapshot_t, entities[0].number)) + bestIndex * 0xf0);
+    return &cg->nextSnap->entities[bestIndex];
 }
 
 void CG_PlaySmokeGrenadesAtTime(int gametime)
 {
-    byte *smokeGrenadeES;
+    entityState_t *smokeGrenadeES;
     int smokeTime;
     vec3_t up;
 
@@ -895,14 +888,14 @@ void CG_PlaySmokeGrenadesAtTime(int gametime)
 
     Com_Printf("Playing smoke grenades at time %i\n", gametime);
 
-    smokeGrenadeES = CG_FindSmokeGrenadeEntityState(gametime - (int)(FX_GetEffectLength((EffectTemplate *)cgs->smokeGrenadeFx) + 1.0f), gametime);
+    smokeGrenadeES = CG_FindSmokeGrenadeEntityState(gametime - (int)(FX_GetEffectLength(cgs->smokeGrenadeFx) + 1.0f), gametime);
     if (smokeGrenadeES) {
-        FX_Rewind(*(int *)(smokeGrenadeES + 0x54));
+        FX_Rewind(smokeGrenadeES->time);
         FX_WarpTime(gametime + 120000);
         Com_Printf("Warping FX time to %i to kill off existing effects\n", gametime + 120000);
 
         do {
-            smokeTime = *(int *)(smokeGrenadeES + 0x54);
+            smokeTime = smokeGrenadeES->time;
 
             Com_Printf("Warping FX time to %i\n", smokeTime);
             FX_WarpTime(smokeTime);
@@ -911,7 +904,7 @@ void CG_PlaySmokeGrenadesAtTime(int gametime)
             up[0] = 0.0f;
             up[1] = 0.0f;
             up[2] = 1.0f;
-            FX_PlayEffect((EffectTemplate *)cgs->smokeGrenadeFx, (const vec_t *)(smokeGrenadeES + 0x18), up);
+            FX_PlayEffect(cgs->smokeGrenadeFx, smokeGrenadeES->pos.trBase, up);
 
             smokeGrenadeES = CG_FindSmokeGrenadeEntityState(smokeTime + 1, gametime);
         } while (smokeGrenadeES);
