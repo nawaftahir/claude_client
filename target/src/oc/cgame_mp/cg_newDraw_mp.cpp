@@ -379,7 +379,7 @@ static void CG_DrawCursorhint(const rectDef_t *rect, struct Font_s *font, float 
         if (cg_cursorHints->current.integer == 2)
             scale = (float)(cg->cursorHintTime % 1000) / 100.0f;
         else
-            scale = (sinf((float)cg->time / 150.0f) + 1.0f) * 0.5f * 10.0f;
+            scale = 10.0f * ((sinf((float)cg->time / 150.0f) + 1.0f) * 0.5f);
         halfscale = scale * 0.5f;
     }
 
