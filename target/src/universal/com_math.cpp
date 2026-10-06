@@ -232,7 +232,6 @@ void vectoangles( const vec3_t value1, vec3_t angles );
 void vectoanglessigned( const vec3_t value1, vec3_t angles );
 void AngleVectors( const vec3_t angles, vec3_t forward, vec3_t right, vec3_t up );
 void YawVectors( const float yaw, vec3_t forward, vec3_t right );
-void VectorAngleMultiply( float *vec, float angle );
 void PerpendicularVector( const vec3_t src, vec3_t dst );
 void PlaneNormalFromPoints( const vec3_t p0, const vec3_t p1, const vec3_t p2, vec3_t normal );
 void ProjectPointOntoLine( const vec3_t point, const vec3_t start, const vec3_t end, vec3_t out );
@@ -2095,26 +2094,6 @@ void MatrixTransformVector43Equals( vec3_t inout, const float in2[4][3] )
 	inout[2] = inout[0] * in2[0][2] + inout[1] * in2[1][2] + inout[2] * in2[2][2] + in2[3][2];
 	inout[0] = temp[0];
 	inout[1] = temp[1];
-}
-
-/*
-==============
-VectorAngleMultiply
-==============
-*/
-void VectorAngleMultiply( float *vec, float angle )
-{
-	float x;
-	float temp;
-	float radians;
-	float y;
-
-	radians = angle * (float)( M_PI * 2 / 360 );
-	FastSinCos( radians, &y, &x );
-
-	temp = vec[0] * x - vec[1] * y;
-	vec[1] = vec[0] * y + vec[1] * x;
-	vec[0] = temp;
 }
 
 /*

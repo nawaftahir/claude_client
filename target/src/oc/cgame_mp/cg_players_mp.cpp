@@ -42,8 +42,11 @@ extern float RotationToYaw(const vec2_t rot);
 extern void YawToAxis(float yaw, vec3_t axis[3]);
 extern void MatrixMultiply43(const float in1[4][3], const float in2[4][3], float out[4][3]);
 extern void AxisToAngles( vec3_t axis[3], vec3_t angles );
-extern void VectorAngleMultiply(float *trans, float yaw);
+extern void RotateVec2(vec2_t v, float degrees);
 extern void CG_Trace(trace_t *result, const vec_t *start, const vec_t *mins, const vec_t *maxs, const vec_t *end, int skipNumber, int mask);
+extern const vec3_t vec3_origin;
+extern void ConvertQuatToMat(const DObjAnimMat *mat, float axis[3][3]);
+extern void Vec3Lerp(const vec3_t start, const vec3_t end, float fraction, vec3_t endpos);
 extern DObjAnimMat *CG_DObjGetLocalTagMatrix(const centity_t *cent, struct DObj_s *obj, unsigned int tagName);
 extern const char *CL_GetConfigString(int index);
 extern MaterialHandle CL_RegisterMaterial(const char *name, int flags);
@@ -186,321 +189,184 @@ void CG_PlayerSprites(centity_t *cent)
     CG_PlayerFloatSprite(cent, material, ((((const dvar_t *)cg_voiceIconSize))->current.value), height, 0);
 }
 
+// ease an anim toward a goal weight over one frame
+#define CG_TURRET_GOAL_WEIGHT(anim, weight) do { \
+    goalWeight = (weight); \
+    rate = (float)fabs(XAnimGetWeight(pAnimTree, (anim)) - goalWeight) * (1000.0f / (float)cg->frametime); \
+    XAnimSetGoalWeight(pAnimTree, (anim), goalWeight, rate > 0.0f ? 1.0f / rate : 0.0f, 1.0f, 0, 0, 0); \
+} while (0)
+
+// retail 0x4d5970
 static void CG_PlayerTurretPositionAndBlend(centity_t *cent)
 {
-    entityState_t *es;
-    int turretEntNum;
+    clientInfo_t *ci;
+    lerpFrame_t *pLerpAnim;
+    centity_t *pTurretCEnt;
+    struct DObj_s *turretObj;
+    DObjAnimMat *tagMat;
+    WeaponDef *weapDef;
+    XAnimTree_s *pAnimTree;
+    XAnim_s *pXAnims;
+    unsigned int baseAnim;
+    unsigned int heightAnim;
+    unsigned int leafAnim1;
+    unsigned int leafAnim2;
+    int numVertChildren;
+    int numHorChildren;
+    int i;
+    int iBlend;
+    int iPrevBlend;
+    float localYaw;
+    float tagHeight;
+    float fDelta;
+    float fBlend;
+    float fPrevBlend;
+    float fPrevTransZ;
+    float fHeightRatio;
+    float goalWeight;
+    float rate;
+    float rot[2];
+    float trans[3];
+    float vDelta[3];
+    float tagAxis[3][3];
+    float turretAxis[4][3];
+    float axis[4][3];
+    float out[4][3];
+    float start[3];
+    float end[3];
+    float endpos[3];
+    trace_t trace;
 
-    es = &cent->nextState;
-    turretEntNum = es->otherEntityNum;
-
-    if (turretEntNum <= 0x3f) {
-
+    if (cent->nextState.otherEntityNum < 64)
         return;
-    }
-    if (turretEntNum == 0x3ff) {
+    if (cent->nextState.otherEntityNum == 1023)
         return;
-    }
-
+    ci = &cg->bgs.clientinfo[cent->nextState.clientNum];
+    if (!ci->infoValid)
+        return;
+    pLerpAnim = &ci->legs;
+    if (!pLerpAnim->animationNumber)
+        return;
+    if (!pLerpAnim->animation)
+        return;
+    if (!(pLerpAnim->animation->flags & 4))
+        return;
+    pTurretCEnt = &cg_entities[cent->nextState.otherEntityNum];
+    if (!pTurretCEnt->nextValid)
+        return;
+    turretObj = Com_GetClientDObj(pTurretCEnt->nextState.number, pTurretCEnt->localClientNum);
+    if (!turretObj)
+        return;
+    tagMat = CG_DObjGetLocalTagMatrix(pTurretCEnt, turretObj, scr_const.tag_weapon);
+    if (!tagMat)
     {
-        int iClientNum = es->clientNum;
-        byte *ciBase = (byte *)(((char *)cg + offsetof(cg_t, bgs.anim_user)) + iClientNum * CI_STRIDE);
-        byte *turretCi = ciBase + 0x14;
-        byte *pLerpAnim;
-        int animValue;
-        byte *animPtr;
-        centity_t *pTurretCEnt;
-        struct DObj_s *turretObj;
-        DObjAnimMat *tagMat;
-        void *weapDef;
-        XAnimTree_s *pAnimTree;
-        const struct XAnim_s *pXAnims;
-        unsigned short baseAnim;
-        unsigned short heightAnim;
-        unsigned short leafAnim1;
-        unsigned short leafAnim2;
-        int numVertChildren, numHorChildren;
-        int i, iPrevBlend, iHorChild;
-        float localYaw, fDelta, fPrevTransZ, fPrevBlend;
-        float prevHeight, fHeightRatio, tagHeight, frac;
-        float rot[4], trans[3];
-        float tagAxis[9];
-        float turretAxis4x3[12];
-        float localAxis4x3[12];
-        float finalAxis4x3[12];
-        int frameDuration;
-        int broke;
+        Com_Printf("WARNING: aborting player positioning on turret since 'tag_weapon' does not exist\n");
+        return;
+    }
+    if (!cg->frametime)
+        return;
 
-        if (!*(int *)turretCi)
-            return;
-
-        pLerpAnim = ciBase + 0x394;
-
-        animValue = ((lerpFrame_t *)pLerpAnim)->animationNumber;
-        if (!animValue)
-            return;
-
-        animPtr = (byte *)((lerpFrame_t *)pLerpAnim)->animation;
-        if (!animPtr)
-            return;
-
-        if (!(animPtr[0x50] & 4))
-            return;
-
-        pTurretCEnt = &cg_entities[turretEntNum];
-
-        if (!pTurretCEnt->nextValid)
-            return;
-
-        turretObj = Com_GetClientDObj(pTurretCEnt->nextState.number, pTurretCEnt->localClientNum);
-        if (!turretObj)
-            return;
-
-        tagMat = CG_DObjGetLocalTagMatrix(pTurretCEnt, turretObj,
-                                          (unsigned int)scr_const.tag_weapon);
-        if (!tagMat) {
-
-            Com_Printf("CG_Player: turret tag not found\n");
-            return;
-        }
-
-        frameDuration = cg->frametime;
-        if (!frameDuration)
-            return;
-
-        weapDef = BG_GetWeaponDef(pTurretCEnt->nextState.weapon);
-
-        pAnimTree = ((clientInfo_t *)turretCi)->pXAnimTree;
-        pXAnims = (const struct XAnim_s *)(*(void **)&cg->bgs.animScriptData.animTree.anims);
-        baseAnim = (unsigned short)(animValue & ~0x200);
-        if (!pAnimTree)
-            return;
-
+    pAnimTree = ci->pXAnimTree;
+    weapDef = BG_GetWeaponDef(pTurretCEnt->nextState.weapon);
+    pXAnims = cg->bgs.animScriptData.animTree.anims;
+    baseAnim = pLerpAnim->animationNumber & ~0x200;
+    ConvertQuatToMat(tagMat, tagAxis);
+    localYaw = vectosignedyaw(tagAxis[0]);
+    AnglesToAxis(pTurretCEnt->lerpAngles, turretAxis);
+    turretAxis[3][0] = pTurretCEnt->lerpOrigin[0];
+    turretAxis[3][1] = pTurretCEnt->lerpOrigin[1];
+    turretAxis[3][2] = pTurretCEnt->lerpOrigin[2];
+    vDelta[0] = cent->lerpOrigin[0] - turretAxis[3][0];
+    vDelta[1] = cent->lerpOrigin[1] - turretAxis[3][1];
+    vDelta[2] = cent->lerpOrigin[2] - turretAxis[3][2];
+    tagHeight = vDelta[0] * turretAxis[2][0] + vDelta[1] * turretAxis[2][1] + vDelta[2] * turretAxis[2][2];
+    fDelta = tagHeight - tagMat->trans[2];
+    XAnimClearTreeGoalWeightsStrict(pAnimTree, baseAnim, 0.0f);
+    numVertChildren = XAnimGetNumChildren(pXAnims, baseAnim);
+    fPrevTransZ = 0.0f;
+    fPrevBlend = 0.0f;
+    iPrevBlend = 0;
+    leafAnim2 = 0;
+    if (!numVertChildren)
+        Com_Error(ERR_DROP, "\x15Player anim '%s' has no children", XAnimGetAnimDebugName(pXAnims, baseAnim));
+    i = 0;
+    do
+    {
+        heightAnim = XAnimGetChildAt(pXAnims, baseAnim, i);
+        XAnimSetGoalWeight(pAnimTree, heightAnim, 1.0f, 1.0f, 1.0f, 0, 0, 0);
+        numHorChildren = XAnimGetNumChildren(pXAnims, heightAnim);
+        if (!numHorChildren)
+            Com_Error(ERR_DROP, "\x15Player anim '%s' has no children", XAnimGetAnimDebugName(pXAnims, heightAnim));
+        fBlend = (float)numHorChildren * 0.5f - localYaw / weapDef->fAnimHorRotateInc;
+        if (fBlend < 0.0f)
+            fBlend = 0.0f;
+        else if (fBlend >= (float)(numHorChildren - 1))
+            fBlend = (float)(numHorChildren - 1);
+        iBlend = (int)fBlend;
+        leafAnim1 = XAnimGetChildAt(pXAnims, heightAnim, iBlend);
+        fBlend = fBlend - (float)iBlend;
+        XAnimSetGoalWeight(pAnimTree, leafAnim1, 1.0f - fBlend, 1.0f, 1.0f, 0, 0, 0);
+        if (fBlend != 0.0f)
         {
-            float s = tagMat->transWeight;
-            float sx = s * tagMat->quat[0];
-            float sy = s * tagMat->quat[1];
-            float sz = s * tagMat->quat[2];
-            float xx = sx * tagMat->quat[0];
-            float xy = sx * tagMat->quat[1];
-            float xz = sx * tagMat->quat[2];
-            float xw = sx * tagMat->quat[3];
-            float yy = sy * tagMat->quat[1];
-            float yz = sy * tagMat->quat[2];
-            float yw = sy * tagMat->quat[3];
-            float zz = sz * tagMat->quat[2];
-            float zw = sz * tagMat->quat[3];
-
-            tagAxis[0] = 1.0f - (yy + zz);
-            tagAxis[1] = xy + zw;
-            tagAxis[2] = xz - yw;
-            tagAxis[3] = xy - zw;
-            tagAxis[4] = 1.0f - (xx + zz);
-            tagAxis[5] = xw + yz;
-            tagAxis[6] = xz + yw;
-            tagAxis[7] = yz - xw;
-            tagAxis[8] = 1.0f - (xx + yy);
+            leafAnim2 = XAnimGetChildAt(pXAnims, heightAnim, iBlend + 1);
+            XAnimSetGoalWeight(pAnimTree, leafAnim2, fBlend, 1.0f, 1.0f, 0, 0, 0);
         }
+        XAnimCalcAbsDelta(pAnimTree, heightAnim, rot, trans);
+        if (trans[2] >= fDelta)
+            break;
+        fPrevTransZ = trans[2];
+        iPrevBlend = iBlend;
+        fPrevBlend = fBlend;
+        ++i;
+    }
+    while (i < numVertChildren);
 
-        localYaw = vectosignedyaw(tagAxis);
-
-        AnglesToAxis(pTurretCEnt->lerpAngles, (vec3_t *)turretAxis4x3);
-        turretAxis4x3[9] = pTurretCEnt->lerpOrigin[0];
-        turretAxis4x3[10] = pTurretCEnt->lerpOrigin[1];
-        turretAxis4x3[11] = pTurretCEnt->lerpOrigin[2];
-
-        tagHeight = (cent->lerpOrigin[0] - turretAxis4x3[9]) * turretAxis4x3[6] + (cent->lerpOrigin[1] - turretAxis4x3[10]) * turretAxis4x3[7] + (cent->lerpOrigin[2] - turretAxis4x3[11]) * turretAxis4x3[8];
-
-        fDelta = tagHeight - tagMat->trans[2];
-
-        XAnimClearTreeGoalWeightsStrict(pAnimTree, baseAnim, 0.0f);
-
-        numVertChildren = XAnimGetNumChildren(pXAnims, baseAnim);
-        if (!numVertChildren)
-            Com_Error(ERR_DROP, "Player anim '%s' has no children",
-                      XAnimGetAnimDebugName(pXAnims, baseAnim));
-
-        fPrevBlend = 0.0f;
-        prevHeight = 0.0f;
-        iPrevBlend = 0;
-        leafAnim2 = 0;
-        leafAnim1 = 0;
-        broke = 0;
-        frac = 0.0f;
-
-        for (i = 0; i < numVertChildren; i++) {
-            float rawBlend;
-
-            heightAnim = XAnimGetChildAt(pXAnims, baseAnim, i);
-
-            XAnimSetGoalWeight(pAnimTree, heightAnim, 1.0f, 1.0f, 1.0f, 0, 0, 0);
-
-            numHorChildren = XAnimGetNumChildren(pXAnims, heightAnim);
-            if (!numHorChildren)
-                Com_Error(ERR_DROP, "Player anim '%s' has no children",
-                          XAnimGetAnimDebugName(pXAnims, heightAnim));
-
-            rawBlend = (float)numHorChildren * 0.5f - localYaw / ((WeaponDef *)weapDef)->fAnimHorRotateInc;
-
-            if (rawBlend < 0.0f) {
-                iHorChild = 0;
-                rawBlend = 0.0f;
-            } else if (rawBlend >= (float)(numHorChildren - 1)) {
-                iHorChild = numHorChildren - 1;
-                rawBlend = (float)iHorChild;
-            } else {
-                iHorChild = (int)rawBlend;
-            }
-
-            frac = rawBlend - (float)iHorChild;
-
-            leafAnim1 = XAnimGetChildAt(pXAnims, heightAnim, iHorChild);
-            XAnimSetGoalWeight(pAnimTree, leafAnim1, 1.0f - frac,
-                               1.0f, 1.0f, 0, 0, 0);
-
-            if (frac != 0.0f) {
-                leafAnim2 = XAnimGetChildAt(pXAnims, heightAnim, iHorChild + 1);
-                XAnimSetGoalWeight(pAnimTree, leafAnim2, frac,
-                                   1.0f, 1.0f, 0, 0, 0);
-            }
-
-            XAnimCalcAbsDelta(pAnimTree, heightAnim, rot, trans);
-
-            if (trans[2] >= fDelta) {
-                fPrevTransZ = prevHeight;
-                broke = 1;
-                break;
-            }
-
-            prevHeight = trans[2];
-            fPrevBlend = frac;
-            iPrevBlend = iHorChild;
-        }
-
-        if (!broke) {
-
-            fPrevBlend = frac;
-            iPrevBlend = iHorChild;
-            fPrevTransZ = prevHeight;
-        }
-
-        XAnimClearTreeGoalWeightsStrict(pAnimTree, baseAnim, 0.0f);
-
+    XAnimClearTreeGoalWeightsStrict(pAnimTree, baseAnim, 0.0f);
+    CG_TURRET_GOAL_WEIGHT(leafAnim1, 1.0f - fBlend);
+    if (fBlend != 0.0f)
+        CG_TURRET_GOAL_WEIGHT(leafAnim2, fBlend);
+    if (i && i != numVertChildren)
+    {
+        fHeightRatio = (fDelta - fPrevTransZ) / (trans[2] - fPrevTransZ);
+        CG_TURRET_GOAL_WEIGHT(heightAnim, fHeightRatio);
+        heightAnim = XAnimGetChildAt(pXAnims, baseAnim, i - 1);
+        CG_TURRET_GOAL_WEIGHT(heightAnim, 1.0f - fHeightRatio);
+        leafAnim1 = XAnimGetChildAt(pXAnims, heightAnim, iPrevBlend);
+        CG_TURRET_GOAL_WEIGHT(leafAnim1, 1.0f - fPrevBlend);
+        if (fPrevBlend != 0.0f)
         {
-            float cw = XAnimGetWeight(pAnimTree, leafAnim1);
-            float tw = 1.0f - frac;
-            float spd = fabsf(cw - tw) * 1000.0f / (float)frameDuration;
-            float gt = 0.0f;
-            if (spd > 0.0f)
-                gt = 1.0f / spd;
-            XAnimSetGoalWeight(pAnimTree, leafAnim1, tw, gt, 1.0f, 0, 0, 0);
+            leafAnim2 = XAnimGetChildAt(pXAnims, heightAnim, iPrevBlend + 1);
+            CG_TURRET_GOAL_WEIGHT(leafAnim2, fPrevBlend);
         }
+    }
+    else
+    {
+        CG_TURRET_GOAL_WEIGHT(heightAnim, 1.0f);
+    }
 
-        if (frac != 0.0f) {
-            float cw = XAnimGetWeight(pAnimTree, leafAnim2);
-            float spd = fabsf(cw - frac) * 1000.0f / (float)frameDuration;
-            float gt = 0.0f;
-            if (spd > 0.0f)
-                gt = 1.0f / spd;
-            XAnimSetGoalWeight(pAnimTree, leafAnim2, frac, gt, 1.0f, 0, 0, 0);
-        }
+    XAnimCalcAbsDelta(pAnimTree, baseAnim, rot, trans);
+    RotateVec2(trans, localYaw);
+    axis[3][0] = trans[0] + tagMat->trans[0];
+    axis[3][1] = trans[1] + tagMat->trans[1];
+    axis[3][2] = tagHeight;
+    YawToAxis(RotationToYaw(rot) + localYaw, axis);
+    MatrixMultiply43(axis, turretAxis, out);
+    AxisToAngles(out, cent->lerpAngles);
+    cent->lerpOrigin[0] = out[3][0];
+    cent->lerpOrigin[1] = out[3][1];
+    cent->lerpOrigin[2] = out[3][2];
 
-        if (i == 0 || i == numVertChildren) {
-
-            float cw = XAnimGetWeight(pAnimTree, heightAnim);
-            float spd = fabsf(cw - 1.0f) * 1000.0f / (float)frameDuration;
-            float gt = 0.0f;
-            if (spd > 0.0f)
-                gt = 1.0f / spd;
-            XAnimSetGoalWeight(pAnimTree, heightAnim, 1.0f, gt, 1.0f, 0, 0, 0);
-        } else {
-
-            unsigned short prevHeightAnim;
-
-            fHeightRatio = (fDelta - fPrevTransZ) / (trans[2] - fPrevTransZ);
-
-            {
-                float cw = XAnimGetWeight(pAnimTree, heightAnim);
-                float spd = fabsf(cw - fHeightRatio) * 1000.0f / (float)frameDuration;
-                float gt = 0.0f;
-                if (spd > 0.0f)
-                    gt = 1.0f / spd;
-                XAnimSetGoalWeight(pAnimTree, heightAnim, fHeightRatio, gt, 1.0f, 0, 0, 0);
-            }
-
-            prevHeightAnim = XAnimGetChildAt(pXAnims, baseAnim, i - 1);
-
-            {
-                float gw = 1.0f - fHeightRatio;
-                float cw = XAnimGetWeight(pAnimTree, prevHeightAnim);
-                float spd = fabsf(cw - gw) * 1000.0f / (float)frameDuration;
-                float gt = 0.0f;
-                if (spd > 0.0f)
-                    gt = 1.0f / spd;
-                XAnimSetGoalWeight(pAnimTree, prevHeightAnim, gw, gt, 1.0f, 0, 0, 0);
-            }
-
-            {
-                unsigned short prevLeaf = XAnimGetChildAt(pXAnims, prevHeightAnim, iPrevBlend);
-                float gw = 1.0f - fPrevBlend;
-                float cw = XAnimGetWeight(pAnimTree, prevLeaf);
-                float spd = fabsf(cw - gw) * 1000.0f / (float)frameDuration;
-                float gt = 0.0f;
-                if (spd > 0.0f)
-                    gt = 1.0f / spd;
-                XAnimSetGoalWeight(pAnimTree, prevLeaf, gw, gt, 1.0f, 0, 0, 0);
-
-                if (fPrevBlend != 0.0f) {
-                    unsigned short prevLeaf2 = XAnimGetChildAt(pXAnims, prevHeightAnim, iPrevBlend + 1);
-                    cw = XAnimGetWeight(pAnimTree, prevLeaf2);
-                    spd = fabsf(cw - fPrevBlend) * 1000.0f / (float)frameDuration;
-                    gt = 0.0f;
-                    if (spd > 0.0f)
-                        gt = 1.0f / spd;
-                    XAnimSetGoalWeight(pAnimTree, prevLeaf2, fPrevBlend, gt, 1.0f, 0, 0, 0);
-                }
-            }
-        }
-
-        XAnimCalcAbsDelta(pAnimTree, baseAnim, rot, trans);
-
-        VectorAngleMultiply(trans, localYaw);
-
-        {
-            float rotYaw = RotationToYaw(rot);
-            YawToAxis(localYaw + rotYaw, (vec3_t *)localAxis4x3);
-        }
-        localAxis4x3[9] = trans[0] + tagMat->trans[0];
-        localAxis4x3[10] = trans[1] + tagMat->trans[1];
-        localAxis4x3[11] = tagHeight;
-
-        MatrixMultiply43((const vec3_t *)localAxis4x3, (const vec3_t *)turretAxis4x3, (vec3_t *)finalAxis4x3);
-
-        AxisToAngles((vec3_t *)finalAxis4x3, cent->lerpAngles);
-        cent->lerpOrigin[0] = finalAxis4x3[9];
-        cent->lerpOrigin[1] = finalAxis4x3[10];
-        cent->lerpOrigin[2] = finalAxis4x3[11];
-
-        {
-            float start[3], end[3];
-            byte trace[0x44];
-            float *traceBounds = (float *)cg_pmove_mins;
-
-            start[0] = cent->lerpOrigin[0];
-            start[1] = cent->lerpOrigin[1];
-            start[2] = pTurretCEnt->lerpOrigin[2];
-
-            end[0] = cent->lerpOrigin[0];
-            end[1] = cent->lerpOrigin[1];
-            end[2] = cent->lerpOrigin[2];
-
-            CG_Trace((trace_t *)trace, start, traceBounds, traceBounds,
-                            end, cent->nextState.number, 0x2810011);
-
-            if (*(float *)trace < 1.0f) {
-                cent->lerpOrigin[2] = start[2] + (end[2] - start[2]) * (*(float *)trace);
-            }
-        }
+    start[0] = cent->lerpOrigin[0];
+    start[1] = cent->lerpOrigin[1];
+    start[2] = pTurretCEnt->lerpOrigin[2];
+    end[0] = cent->lerpOrigin[0];
+    end[1] = cent->lerpOrigin[1];
+    end[2] = cent->lerpOrigin[2];
+    CG_Trace(&trace, start, vec3_origin, vec3_origin, end, cent->nextState.number, 0x2810011);
+    if (trace.fraction < 1.0f)
+    {
+        Vec3Lerp(start, end, trace.fraction, endpos);
+        cent->lerpOrigin[2] = endpos[2];
     }
 }
 
