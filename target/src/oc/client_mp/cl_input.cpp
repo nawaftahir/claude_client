@@ -261,7 +261,7 @@ void IN_MLookDown(void)
 void IN_CenterView(void)
 {
     clientActive_t *cl = clients;
-    cl->viewangles[0] = (float)cl->snap.ps.delta_angles[0] * -0.0054931640625f;
+    cl->viewangles[0] = -((float)cl->snap.ps.delta_angles[0] * 0.0054931640625f);
 }
 
 void IN_KeyDown(kbutton_t *b)
@@ -981,7 +981,7 @@ void IN_MLookUp(void)
     kb[13].active = 0;
     if ((cl_freelook)->current.enabled == 0) {
         clientActive_t *cl = clients;
-        cl->viewangles[0] = (float)cl->snap.ps.delta_angles[0] * -0.0054931640625f;
+        cl->viewangles[0] = -((float)cl->snap.ps.delta_angles[0] * 0.0054931640625f);
     }
 }
 

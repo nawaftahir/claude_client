@@ -2350,7 +2350,7 @@ Bool CL_ConnectionlessPacket(netadr_t from, msg_t *msg, int time)
             return 0;
         }
 
-        if (autoupdateChecked && NET_CompareAdr(cls.autoupdateServer, clc.serverAddress)) {
+        if (autoupdateChecked && NET_CompareBaseAdr(cls.autoupdateServer, clc.serverAddress)) {
             if (cl_updateavailable->current.enabled)
                 autoupdateStarted = 1;
         }
