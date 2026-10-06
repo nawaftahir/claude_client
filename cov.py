@@ -32,3 +32,7 @@ print('fns %d matched %d unique %d | unique bytes %d = %.2f%% of 1,408,683' % (
     len(r), sum(1 for x in r if x['hits']), len(u), len(allb), len(allb) / 14086.83))
 for k in sorted(cov):
     print('  %-12s %7d B  %.2f%%' % (k, len(cov[k]), len(cov[k]) / 14086.83))
+pb = set()
+for x in u:
+    if x.get('paired'): pb.update(range(int(x['hits'][0], 16), int(x['hits'][0], 16) + x['size']))
+print('  of which name-paired (anchor too short to search): %d fns %d B' % (sum(1 for x in u if x.get('paired')), len(pb)))
