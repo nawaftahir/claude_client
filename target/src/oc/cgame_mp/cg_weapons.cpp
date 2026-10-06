@@ -202,7 +202,7 @@ static qboolean CG_IsLocalClientEntity(cg_t *cg, entityState_t *ent);
 void CG_RegisterWeapon(int weaponNum);
 void CG_RegisterItemVisuals(int itemNum);
 void CG_CycleWeap(qboolean next, qboolean checkAmmo);
-static inline __attribute__((always_inline)) void CG_SetWeaponXAnimWeights(struct XAnimTree_s *tree, weaponInfo_t *weapInfo, int activeAnim);
+static void StartWeaponAnim(int weaponNum, struct XAnimTree_s *tree, int activeAnim);
 
 void CG_HoldBreathInit(void)
 {
@@ -325,12 +325,9 @@ void CG_WeaponRunXModelAnims(playerState_t *ps, weaponInfo_t *weapInfo)
 
 static void CG_ResetViewWeaponAnimTrees(playerState_t *ps)
 {
-    byte *psBytes = (byte *)ps;
     struct XAnimTree_s *tree;
     weaponInfo_t *weapInfo;
     int weaponNum;
-    int clip;
-    int activeAnim;
 
     for (weaponNum = 1; weaponNum <= BG_GetNumWeapons(); weaponNum++) {
         weapInfo = &cg_weaponsArray[weaponNum];
@@ -339,12 +336,10 @@ static void CG_ResetViewWeaponAnimTrees(playerState_t *ps)
             XAnimClearTreeGoalWeights(tree, 0, 0);
             XAnimSetGoalWeight(tree, 0, 1.0f, 0.0f, weapInfo->viewModelAnimRates[0], 0, 1, 0);
 
-            clip = BG_ClipForWeapon(weaponNum);
-            if (*(int *)(((char *)psBytes + offsetof(playerState_t, ammoclip[0])) + clip * 4))
-                activeAnim = 1;
+            if (!ps->ammoclip[BG_ClipForWeapon(weaponNum)])
+                StartWeaponAnim(weaponNum, tree, 2);
             else
-                activeAnim = 2;
-            CG_SetWeaponXAnimWeights(tree, weapInfo, activeAnim);
+                StartWeaponAnim(weaponNum, tree, 1);
         }
     }
 }
@@ -1881,17 +1876,17 @@ void CG_CycleWeap(qboolean next, qboolean checkAmmo)
         CG_SelectWeaponIndex(0);
 }
 
-static inline __attribute__((always_inline)) void CG_SetWeaponXAnimWeights(struct XAnimTree_s *tree, weaponInfo_t *weapInfo, int activeAnim)
+// kisak name; retail 0x4cd480
+static void StartWeaponAnim(int weaponNum, struct XAnimTree_s *tree, int activeAnim)
 {
+    weaponInfo_t *weapInfo = &cg_weaponsArray[weaponNum];
     int i;
 
     for (i = 1; i < 0x15; i++) {
-        float rate = weapInfo->viewModelAnimRates[i];
-
-        if (i == activeAnim)
-            XAnimSetGoalWeight(tree, i, 1.0f, 0.0f, rate, 0, 1, 1);
+        if (activeAnim == i)
+            XAnimSetGoalWeight(tree, i, 1.0f, 0.0f, weapInfo->viewModelAnimRates[i], 0, 1, 1);
         else
-            XAnimSetGoalWeight(tree, i, 0.0f, 0.0f, rate, 0, 0, 0);
+            XAnimSetGoalWeight(tree, i, 0.0f, 0.0f, weapInfo->viewModelAnimRates[i], 0, 0, 0);
     }
 }
 
