@@ -11,7 +11,7 @@ extern float floorf(float x);
 
 extern MarkPoly cg_markPolys[1024];
 extern MarkPoly *cg_freeMarkPolys;
-extern MarkVertAssemblyBuffer markVerts;
+extern GfxWorldVertex markVerts[1024];
 
 extern vec_t Vec3NormalizeTo( const vec3_t v, vec3_t out );
 extern void PerpendicularVector( const vec3_t src, vec3_t dst );
@@ -110,122 +110,84 @@ void CG_AddMarks(void)
     } while (markPoly != &cg->activeMarkPolys);
 }
 
-void CG_ImpactMark(MaterialHandle markMaterial, const vec_t *origin, const vec_t *dir, float orientation, const vec_t *color, float radius)
+// retail 0x4c7fe0; Q3 shape, CG_FreeMarkPoly inlined (SUPPORTED)
+static MarkPoly *CG_AllocMark(void)
 {
-    vec3_t axisRight;
-    vec3_t axisCross;
-    vec3_t axisDir;
-    vec3_t originalPoints[4];
-    GfxMarkFragment markFragments[384];
-    int fragmentCount;
-    int fragmentIndex;
-    GfxColor nativeColor;
-    int j;
-    MarkPoly *sentinel;
-    MarkPoly *markPoly;
-    MarkPoly *oldest;
-    MarkPoly *current;
-    float a, b;
+    MarkPoly *le;
+    MarkPoly *mark;
 
-    if (!CG_MARKS_DVAR->current.enabled)
-        return;
-
-    if (((cg_t *)cg)->nomarks != 0)
-        return;
-
-    Vec3NormalizeTo(dir, axisDir);
-    PerpendicularVector(axisDir, axisCross);
-    RotatePointAroundVector(axisRight, axisDir, axisCross, orientation);
-    Vec3Cross(axisDir, axisRight, axisCross);
-
-    for (j = 0; j < 3; j++) {
-        a = radius * axisCross[j];
-        b = radius * axisRight[j];
-        originalPoints[0][j] = origin[j] - a - b;
-        originalPoints[1][j] = origin[j] + a - b;
-        originalPoints[2][j] = origin[j] + a + b;
-        originalPoints[3][j] = origin[j] - a + b;
+    if (!cg_freeMarkPolys) {
+        // free the least recently drawn mark
+        mark = cg->activeMarkPolys.prevMark;
+        le = mark;
+        while (mark != &cg->activeMarkPolys) {
+            if (mark->lastFrameDrawn < le->lastFrameDrawn)
+                le = mark;
+            mark = mark->prevMark;
+        }
+        if (!le->prevMark)
+            Com_Error(ERR_DROP, "CG_FreeLocalEntity: not active");
+        le->prevMark->nextMark = le->nextMark;
+        le->nextMark->prevMark = le->prevMark;
+        le->nextMark = cg_freeMarkPolys;
+        cg_freeMarkPolys = le;
     }
 
-    fragmentCount = CL_MarkFragments(
-        originalPoints,
-        origin,
-        (const vec3_t *)axisDir,
-        radius,
-        1024,
-        (GfxWorldVertex *)&markVerts,
-        384,
-        markFragments,
-        markMaterial);
+    le = cg_freeMarkPolys;
+    cg_freeMarkPolys = cg_freeMarkPolys->nextMark;
 
-    Byte4PackVertexColor(color, nativeColor.array);
+    le->nextMark = cg->activeMarkPolys.nextMark;
+    le->prevMark = &cg->activeMarkPolys;
+    cg->activeMarkPolys.nextMark->prevMark = le;
+    cg->activeMarkPolys.nextMark = le;
+    return le;
+}
 
-    if (fragmentCount <= 0)
-        return;
+void CG_ImpactMark(MaterialHandle markMaterial, const vec_t *origin, const vec_t *dir, float orientation, const vec_t *color, float radius)
+{
+    vec3_t axis[3];
+    vec3_t originalPoints[4];
+    GfxColor nativeColor;
+    int i, j;
+    int numFragments;
+    GfxMarkFragment markFragments[384];
+    GfxMarkFragment *mf;
+    MarkPoly *mark;
+    GfxWorldVertex *verts;
 
-    for (fragmentIndex = 0; fragmentIndex < fragmentCount; fragmentIndex++) {
-        GfxMarkFragment *frag = &markFragments[fragmentIndex];
-        GfxWorldVertex *verts = (GfxWorldVertex *)((char *)&markVerts + frag->firstPoint * (int)sizeof(GfxWorldVertex));
-        int vertCount = (int)frag->pointCount;
+    if (cg_marks->current.enabled && !cg->nomarks) {
+        // create the texture axis
+        Vec3NormalizeTo(dir, axis[0]);
+        PerpendicularVector(axis[0], axis[1]);
+        RotatePointAroundVector(axis[2], axis[0], axis[1], orientation);
+        Vec3Cross(axis[0], axis[2], axis[1]);
 
-        for (j = 0; j < vertCount; j++) {
-            verts[j].color.packed = *(unsigned int *)nativeColor.array;
+        // create the full polygon
+        for (i = 0; i < 3; i++) {
+            originalPoints[0][i] = origin[i] - radius * axis[1][i] - radius * axis[2][i];
+            originalPoints[1][i] = origin[i] + radius * axis[1][i] - radius * axis[2][i];
+            originalPoints[2][i] = origin[i] + radius * axis[1][i] + radius * axis[2][i];
+            originalPoints[3][i] = origin[i] - radius * axis[1][i] + radius * axis[2][i];
         }
 
-        if (cg_freeMarkPolys == NULL) {
+        numFragments = CL_MarkFragments(originalPoints, origin, axis, radius, 1024, markVerts, 384, markFragments, markMaterial);
+        Byte4PackVertexColor(color, nativeColor.array);
 
-            sentinel = &cg->activeMarkPolys;
-            oldest = sentinel->prevMark;
+        for (i = 0, mf = markFragments; i < numFragments; i++, mf++) {
+            verts = &markVerts[mf->firstPoint];
+            for (j = 0; j < mf->pointCount; j++)
+                verts[j].color.packed = nativeColor.packed;
 
-            if (oldest != sentinel) {
-                current = oldest;
-                while (1) {
-                    if (current->lastFrameDrawn < oldest->lastFrameDrawn) {
-                        oldest = current;
-                    }
-                    current = current->prevMark;
-                    if (current == sentinel)
-                        break;
-                }
-            }
-
-            if (oldest->prevMark == NULL) {
-                Com_Error(ERR_DROP, "CG_FreeLocalEntity: not active");
-
-            }
-
-            {
-                MarkPoly *prev = oldest->prevMark;
-                MarkPoly *next = oldest->nextMark;
-                prev->nextMark = next;
-                next->prevMark = prev;
-            }
-
-            oldest->nextMark = cg_freeMarkPolys;
-            cg_freeMarkPolys = oldest;
+            mark = CG_AllocMark();
+            mark->origin[0] = origin[0];
+            mark->origin[1] = origin[1];
+            mark->origin[2] = origin[2];
+            mark->radius = radius;
+            mark->mtlHandle = mf->markMaterial;
+            mark->lmapIndex = mf->lmapIndex;
+            mark->vertCount = mf->pointCount;
+            mark->lastFrameDrawn = cg->clientFrame;
+            memcpy(mark->verts, &markVerts[mf->firstPoint], mf->pointCount * sizeof(GfxWorldVertex));
         }
-
-        markPoly = cg_freeMarkPolys;
-        cg_freeMarkPolys = markPoly->nextMark;
-
-        sentinel = &cg->activeMarkPolys;
-        {
-            MarkPoly *oldFirst = sentinel->nextMark;
-            markPoly->nextMark = oldFirst;
-            markPoly->prevMark = sentinel;
-            oldFirst->prevMark = markPoly;
-            sentinel->nextMark = markPoly;
-        }
-
-        markPoly->origin[0] = origin[0];
-        markPoly->origin[1] = origin[1];
-        markPoly->origin[2] = origin[2];
-        markPoly->radius = radius;
-        markPoly->mtlHandle = frag->markMaterial;
-        markPoly->lmapIndex = frag->lmapIndex;
-        markPoly->vertCount = frag->pointCount;
-        markPoly->lastFrameDrawn = *(int *)cg;
-
-        memcpy(markPoly->verts, verts, (size_t)frag->pointCount * sizeof(GfxWorldVertex));
     }
 }

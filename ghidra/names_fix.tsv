@@ -397,3 +397,5 @@
 4d1480	CG_DrawTracer	fix	# caller CG_AddMovingTracer 10-06
 4d1390	ScaleTracer	fix	# Kisak
 4d1340	CalcTracerFinalScale	fix	# Kisak
+4c8070	CG_ImpactMark	fix
+4c7fe0	CG_AllocMark	fix

@@ -401,7 +401,7 @@ const dvar_t *m_forward;
 const dvar_t *m_pitch;
 const dvar_t *m_side;
 const dvar_t *m_yaw;
-MarkVertAssemblyBuffer markVerts;
+GfxWorldVertex markVerts[1024];
 int mic_current_reclevel;
 int mic_old_reclevel;
 vec3_t mins;
