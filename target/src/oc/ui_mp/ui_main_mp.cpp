@@ -2640,6 +2640,27 @@ static void UI_DrawNetMapPreview(rectDef_t *rect, float scale, vec_t *color)
     }
 }
 
+// retail 0x52c6d0; cinematic half gone, CoD1 shape (SUPPORTED)
+static void UI_DrawMapCinematic(const rectDef_t *rect, const vec_t *color, int net)
+{
+    UI_DrawMapPreview(rect, color, net);
+}
+
+// retail 0x52c5a0; Q3 name (SUPPORTED)
+static void UI_DrawPreviewCinematic(const rectDef_t *rect)
+{
+    if (sharedUiInfo.previewMovie > -2) {
+        sharedUiInfo.previewMovie = CIN_PlayCinematic(sharedUiInfo.movieList[sharedUiInfo.movieIndex], 0, 0, 0, 0, 10);
+        if (sharedUiInfo.previewMovie >= 0) {
+            CIN_RunCinematic(sharedUiInfo.previewMovie);
+            CIN_SetExtents(sharedUiInfo.previewMovie, (int)rect->x, (int)rect->y, (int)rect->w, (int)rect->h);
+            CIN_DrawCinematic(sharedUiInfo.previewMovie);
+        } else {
+            sharedUiInfo.previewMovie = -2;
+        }
+    }
+}
+
 static void UI_DrawNetMapCinematic(rectDef_t *rect, float scale, vec_t *color)
 {
     if (ui_currentNetMap->current.integer >= sharedUiInfo.mapCount)
@@ -2779,21 +2800,8 @@ void UI_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAli
 
     switch (ownerDraw) {
     case 254:
-    {
-        int cinHandle = sharedUiInfo.previewMovie;
-        if (cinHandle <= -2)
-            return;
-        cinHandle = CIN_PlayCinematic(sharedUiInfo.movieList[sharedUiInfo.movieIndex], 0, 0, 0, 0, 10);
-        sharedUiInfo.previewMovie = cinHandle;
-        if (cinHandle < 0) {
-            sharedUiInfo.previewMovie = -2;
-            return;
-        }
-        CIN_RunCinematic(cinHandle);
-        CIN_SetExtents(cinHandle, (int)rect.x, (int)rect.y, (int)rect.w, (int)rect.h);
-        CIN_DrawCinematic(cinHandle);
-        return;
-    }
+        UI_DrawPreviewCinematic(&rect);
+        break;
     case 205:
         UI_DrawGameType(&rect, font, scale, color, textStyle);
         break;
@@ -2807,10 +2815,10 @@ void UI_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAli
         UI_DrawMapPreview(&rect, color, 1);
         break;
     case 244:
-        UI_DrawMapPreview(&rect, color, 0);
+        UI_DrawMapCinematic(&rect, color, 0);
         break;
     case 255:
-        UI_DrawMapPreview(&rect, color, 1);
+        UI_DrawMapCinematic(&rect, color, 1);
         break;
     case 221:
         UI_DrawNetMapPreview(&rect, scale, color);

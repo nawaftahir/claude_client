@@ -46,7 +46,6 @@
 0	CG_ResetEntity	drop
 0	CL_ParseSnapshot	drop
 0	Record_QueueAudioDataForEncoding	drop
-0	UI_OwnerDraw	drop
 0	UI_Refresh	drop
 0	Menu_SetPrevCursorItem	drop
 0	Item_YesNo_Paint	drop
@@ -392,3 +391,6 @@
 4c2fd0	CG_CalcReticleImageOffset	fix
 4c3050	CG_DrawReticleSides	fix
 4c32a0	CG_DrawCrosshair	fix
+52d320	UI_OwnerDraw	fix	# jump table + callees 10-06
+52c5a0	UI_DrawPreviewCinematic	fix	# Q3 split
+52c6d0	UI_DrawMapCinematic	fix	# jmp thunk
