@@ -121,12 +121,7 @@ I_sel
 */
 TU_STATIC int I_sel(const int x, const int y, const int z)
 {
-	if ( x >= 0 )
-	{
-		return y;
-	}
-
-	return z;
+	return x >= 0 ? y : z;
 }
 
 /*

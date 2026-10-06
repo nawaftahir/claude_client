@@ -807,12 +807,7 @@ G_GetWeaponIndexForName
 */
 int G_GetWeaponIndexForName( const char *name )
 {
-	if ( level.initializing )
-	{
-		return BG_GetWeaponIndexForName(name, G_RegisterWeapon);
-	}
-
-	return BG_FindWeaponIndexForName(name);
+	return level.initializing ? BG_GetWeaponIndexForName(name, G_RegisterWeapon) : BG_FindWeaponIndexForName(name);
 }
 
 /*
