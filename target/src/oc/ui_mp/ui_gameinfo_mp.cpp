@@ -2,11 +2,13 @@
 #include "imports.h"
 #include <string.h>
 
+extern const char *String_Alloc(const char *str);
 extern char *Com_Parse( const char *( *data_p ) );
 extern char *Com_ParseOnLine( const char *( *data_p ) );
 extern void I_strncpyz(char *dest, const char *src, int destsize);
 extern void Info_SetValueForKey(char *s, const char *key, const char *value);
 extern void Com_Printf(const char *msg, ...);
+extern void Com_EndParseSession(void);
 extern char *va( const char *format, ... );
 extern void *UI_Alloc(int size, int align);
 extern int FS_GetFileList(const char *path, const char *extension, FsListBehavior behavior, char *listBuf, int bufSize);
@@ -14,10 +16,8 @@ extern int FS_FOpenFileByMode(const char *filename, int *f, fsMode_t mode);
 extern int FS_Read(void *buffer, int len, int f);
 extern void FS_FCloseFile(fileHandle_t f);
 extern const char *Info_ValueForKey( const char *s, const char *key );
-extern const char *String_Alloc(const char *str);
 extern MaterialHandle CL_RegisterMaterialNoMip(const char *name, int imageTrack);
 extern void Com_BeginParseSession(const char *name);
-extern void Com_EndParseSession(void);
 extern int I_stricmp(const char *s1, const char *s2);
 
 extern sharedUiInfo_t sharedUiInfo;

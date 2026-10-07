@@ -8,3 +8,10 @@ c2 order (PINNED, decompiled): 1070c919 -> DFS 1070ce78 over node list 1087f4c8 
 link order, reverse fn order; edges = callee first-declaration order in the TU); edge to an on-stack node
 gets flag 1 (cut, "is a recursive arc"); 1070cfdf then emits fns by repeated leaf-peel passes over the
 sym list 10881d68 ignoring cut edges. Cuts alone decide callee-before-caller.
+
+## Checkpoint 10-07 (79.65%)
+- Link order = retail obj order (target/src/tus.txt); String_Alloc declared first in ui_gameinfo_mp.cpp (+0.12%).
+- cave6 hook at 0x1078d026 logs per-site inline decisions (I/V lines); heuristic notes in client-recon skill.
+- Tools: inlcensus.py (ours-vs-retail call/inline edges), search3.py (greedy decl moves), cutpath.py (DFS stack at a cut), xcallers.py, inl.py.
+- Open: FreeValue/RRV cycle (~16 KB). Retail cut = ClearObject->COI; ours cuts FreeValue->RRV. Needs a multi-TU decl search (see deepseek/LESSONS.md 10-07).
+- Open: VM_Notify/CalcScreenPlacement inline-budget class.

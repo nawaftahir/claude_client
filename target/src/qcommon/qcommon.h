@@ -85,6 +85,7 @@ int Com_AddToString(const char *add, char *msg, int len, int maxlen, int mayAddQ
 int Com_ModifyMsec( int msec );
 void CL_SwitchToLocalClient( int localClientNum );
 void Com_ErrorCleanup( void );
+void Com_SetErrorMessage( const char *errorMessage );
 void Com_SetCinematic();
 void LargeLocalReset();
 void Com_ClearTempMemory();
