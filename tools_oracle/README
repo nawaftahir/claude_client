@@ -1,4 +1,10 @@
-c2.dll LTCG oracle (rebuilt 10-07). Patch: copy c2.dll out of cod2-msvc71-build, assemble cave.s
-(as --32; ld -m elf_i386 -Ttext=0x10865d50 --oformat binary), write it at file off 0x165d50,
-jmp+nop at 0x724f6 (-> cave1, F = compile start) and 0x7079a (-> cave2, X = callee ref).
-Output equals the normal link except the PE timestamp. diag2.sh -> build/ord.txt; cuts.py ord.txt [name].
+c2.dll LTCG oracle (10-07). patch.py writes cave.s (built at 0x10865d50) into a copy of c2.dll from
+cod2-msvc71-build (c2y.dll) and hooks: F = compile start, X = callee referenced, D/E = call-graph DFS
+enter/leave, C = recursive arc (cut edge). diag2.sh (vc dir holding c2y.dll + run.sh) -> build/ord.txt.
+Link output == normal link except PE timestamp.
+dfs.py ord.txt roots|cuts|path NAME|kids NAME ; cuts.py ord.txt [name] (F/X based).
+Dec.java: Ghidra headless decompile of fns containing given addrs.
+c2 order (PINNED, decompiled): 1070c919 -> DFS 1070ce78 over node list 1087f4c8 (roots = reverse obj
+link order, reverse fn order; edges = callee first-declaration order in the TU); edge to an on-stack node
+gets flag 1 (cut, "is a recursive arc"); 1070cfdf then emits fns by repeated leaf-peel passes over the
+sym list 10881d68 ignoring cut edges. Cuts alone decide callee-before-caller.

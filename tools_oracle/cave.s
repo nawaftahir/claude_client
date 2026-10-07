@@ -29,6 +29,48 @@ cave2:
   test ch,0x20
   push 0x107707a0
   ret
+cave3:
+  pushad
+  pushfd
+  mov edx,[ecx+4]
+  push offset strD
+  call logsym
+  add esp,4
+  popfd
+  popad
+  push esi
+  xor eax,eax
+  push edi
+  mov edi,ecx
+  push 0x1070ce7e
+  ret
+cave4:
+  pushad
+  pushfd
+  mov edx,[esi+4]
+  mov edx,[edx+4]
+  push offset strC
+  call logsym
+  add esp,4
+  popfd
+  popad
+  or eax,1
+  mov [esi+0xc],ax
+  push 0x1070cea2
+  ret
+cave5:
+  pushad
+  pushfd
+  mov edx,[edi+4]
+  push offset strE
+  call logsym
+  add esp,4
+  popfd
+  popad
+  xor eax,eax
+  mov ax,[edi+0x50]
+  push 0x1070cee3
+  ret
 # logsym(prefix) with edx = sym
 logsym:
   push ebp
@@ -74,3 +116,6 @@ logsym:
 strF: .ascii "F \0"
 strX: .ascii "X \0"
 strNL: .ascii "\n\0"
+strD: .ascii "D \0"
+strC: .ascii "C \0"
+strE: .ascii "E \0"
