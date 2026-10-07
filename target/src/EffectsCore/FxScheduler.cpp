@@ -776,7 +776,9 @@ void FxScheduler::PlayEffect( const FxEffectDef *fx, const vec3_t origin, const 
 		return;
 	if ( bolt )
 	{
-		if ( bolt->dobjHandle < 0 || !FX_GetBoneOrientation( bolt, &or_ ) )
+		if ( bolt->dobjHandle < 0 )
+			return;
+		if ( !FX_GetBoneOrientation( bolt, &or_ ) )
 			return;
 	}
 	else

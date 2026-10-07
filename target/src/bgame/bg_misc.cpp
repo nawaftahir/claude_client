@@ -364,7 +364,7 @@ static qboolean BG_CheckProneValid( int passEntityNum, const vec3_t vPos, float 
 		{
 			return qfalse;
 		}
-		if ( fFirstTraceDist * 0.7f + 48.0f > fWaistDistance )
+		if ( fWaistDistance < fFirstTraceDist * 0.7f + 48.0f )
 		{
 			bFirstTraceHit = qfalse;
 			vForward[2] = vForward[2] + 22.0f;
@@ -375,7 +375,7 @@ static qboolean BG_CheckProneValid( int passEntityNum, const vec3_t vPos, float 
 			{
 				bFirstTraceHit = qtrue;
 				fWaistDistance = trace.fraction * dist + 6.0f;
-				if ( fFirstTraceDist * 0.7f + 48.0f > fWaistDistance )
+				if ( fWaistDistance < fFirstTraceDist * 0.7f + 48.0f )
 				{
 					return qfalse;
 				}

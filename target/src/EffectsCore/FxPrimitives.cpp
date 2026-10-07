@@ -19,7 +19,6 @@ struct trace_t
 	unsigned short partGroup;
 	unsigned char allsolid;
 	unsigned char startsolid;
-	int pad[2];
 };
 
 struct XModel;
@@ -1387,11 +1386,8 @@ bool Particle::UpdateOrigin( const orientation_t *or_ )
 	trace_t trace;
 	vec3_t end;
 	vec3_t velocity;
-	vec3_t mins;
-	vec3_t maxs;
 	vec3_t start;
 	vec3_t endWorld;
-	vec3_t hit;
 	float frameTime;
 	float normTime;
 	float life;
@@ -1421,6 +1417,9 @@ bool Particle::UpdateOrigin( const orientation_t *or_ )
 		}
 		if ( mFlags & 0x40 )
 		{
+			vec3_t mins;
+			vec3_t maxs;
+
 			VectorCopy( mMins, mins );
 			VectorCopy( mMaxs, maxs );
 			theFxHelper->Trace( &trace, start, mins, maxs, endWorld, -1, 1 );
@@ -1431,6 +1430,8 @@ bool Particle::UpdateOrigin( const orientation_t *or_ )
 		{
 			if ( mFlags & 0x800 )
 			{
+				vec3_t hit;
+
 				Vec3Lerp( start, endWorld, trace.fraction, hit );
 				theFxScheduler->PlayEffect( mImpactFx, hit, trace.normal );
 			}
@@ -2265,10 +2266,10 @@ bool Emitter::Update()
 void Emitter::UpdateEmitFx( const vec3_t bindVelocity, const orientation_t *or_ )
 {
 	vec3_t axis[3];
-	vec4_t emitPos;
-	vec4_t basePos;
-	vec4_t nextVelocity;
-	vec4_t velocity;
+	vec3_t emitPos;
+	vec3_t basePos;
+	vec3_t nextVelocity;
+	vec3_t velocity;
 	float dt;
 	float emitDistSq;
 	int i;

@@ -979,6 +979,9 @@ unsigned int VM_Execute(unsigned int localId, const char *pos, unsigned int para
 void Scr_IncTime();
 void Scr_DecTime();
 
+void Scr_FreeEntityList();
+void ClearObjectInternal(unsigned int parentId);
+void FreeValue(unsigned int id);
 void VM_TerminateTime(unsigned int timeId);
 void Scr_TerminateThread(unsigned int localId);
 void RuntimeErrorInternal(print_msg_type_t channel, const char *codePos, unsigned int index, const char *errorMessage);

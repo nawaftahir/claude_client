@@ -1,3 +1,5 @@
+// first declaration fixes the LTCG walk order
+void CG_BulletHitEvent(int sourceEntityNum, float *position, float *normal, float *reflected, int surfType, int event);
 #include "common_types.h"
 #include "imports.h"
 #include "headers/PC/cgame_mp/cg_local.h"

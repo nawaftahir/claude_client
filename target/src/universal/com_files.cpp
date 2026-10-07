@@ -2345,9 +2345,12 @@ static void FS_AddSearchPath(searchpath_t* search)
 	*pSearch = search;
 }
 
+static qboolean bLanguagesListed;
+
 void FS_AddIwdFilesForGameDirectory(const char *path, const char *dir)
 {
 	int i;
+	int j;
 	int langindex;
 	int numfiles;
 	qboolean islocalized;
@@ -2394,10 +2397,21 @@ void FS_AddIwdFilesForGameDirectory(const char *path, const char *dir)
 				continue;
 			}
 
-			if ( I_stricmp(language, "english") )
-				continue;
+			if ( !SEH_GetLanguageIndexForName(language, &langindex) )
+			{
+				Com_Printf("WARNING: Localized assets iwd file %s/%s/%s has invalid name (bad language name specified). Proper naming convention is: localized_[language]_iwd#.iwd\n", path, dir, sorted[i]);
 
-			langindex = 0;
+				if ( !bLanguagesListed )
+				{
+					Com_Printf("Supported languages are:\n");
+
+					for ( j = 0; j < MAX_LANGUAGES; j++ )
+						Com_Printf("    %s\n", SEH_GetLanguageName(j));
+
+					bLanguagesListed = qtrue;
+				}
+				continue;
+			}
 		}
 		else
 		{

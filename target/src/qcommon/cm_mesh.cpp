@@ -324,11 +324,9 @@ static inline void CM_TraceCapsuleThroughTriangle( traceWork_t *tw, CollisionTri
 	int vertToCheck;
 	float offsetLenSq;
 	vec3_t hitDelta;
-	float pad1;
-	vec2_t deltaOffset;
-	float pad2;
+	vec3_t deltaOffset;
 	float d;
-	vec2_t offset;
+	vec3_t offset;
 	float discriminant;
 	float a;
 	float b;

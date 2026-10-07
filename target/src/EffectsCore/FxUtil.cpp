@@ -21,7 +21,6 @@ struct trace_t
 	unsigned short partGroup;
 	unsigned char allsolid;
 	unsigned char startsolid;
-	int pad[2];
 };
 
 struct XModel;

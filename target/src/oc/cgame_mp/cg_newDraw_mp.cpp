@@ -673,7 +673,7 @@ static void CG_DrawPlayerStance(const rectDef_t *rect, vec_t *color, struct Font
         proneStr = UI_SafeTranslateString("CGAME_PRONE_BLOCKED");
         width = UI_TextWidth(proneStr, 0, font, scale);
         halfWidth = (float)width * 0.5f;
-        pulseDegrees = (float)(cg->proneBlockedEndTime - cg->time) / 1500.0f * 540.0f;
+        pulseDegrees = 540.0f * ((float)(cg->proneBlockedEndTime - cg->time) / 1500.0f);
         drawColor[3] = (float)fabs(sin(pulseDegrees * 0.017453292f));
 
         UI_DrawText(
@@ -734,7 +734,21 @@ static void CG_DrawPlayerStance(const rectDef_t *rect, vec_t *color, struct Font
         for (i = 0; i < 3; ++i) {
             hintLineCmds[i] = NULL;
 
-            for (commandIndex = 0; commandIndex < 6; ++commandIndex) {
+            commandIndex = 0;
+            if (cg->lastStance & 1) {
+                binding = proneCmds[i][commandIndex];
+            } else if (cg->lastStance & 2) {
+                binding = duckCmds[i][commandIndex];
+            } else {
+                binding = standCmds[i][commandIndex];
+            }
+            while (commandIndex < 6 && binding) {
+                if (GetCommandHasBinding(binding)) {
+                    hintLineCmds[i] = binding;
+                    ++numHintLines;
+                    break;
+                }
+                ++commandIndex;
                 if (cg->lastStance & 1) {
                     binding = proneCmds[i][commandIndex];
                 } else if (cg->lastStance & 2) {
@@ -742,25 +756,18 @@ static void CG_DrawPlayerStance(const rectDef_t *rect, vec_t *color, struct Font
                 } else {
                     binding = standCmds[i][commandIndex];
                 }
-
-                if (!binding) {
-                    break;
-                }
-
-                if (GetCommandHasBinding(binding)) {
-                    hintLineCmds[i] = binding;
-                    ++numHintLines;
-                    break;
-                }
             }
         }
 
         hintY = rect->y + rect->h * 0.5f - 1.5f;
 
-        if (numHintLines == 1) {
+        switch (numHintLines) {
+        case 1:
             hintY += height * 0.5f;
-        } else if (numHintLines == 3) {
+            break;
+        case 3:
             hintY -= height * 0.5f + 1.5f;
+            break;
         }
 
         if (fadeAlpha < drawColor[3]) {
@@ -1536,6 +1543,10 @@ void CG_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAli
     case CG_PLAYER_WEAPON_NAME_BACK:
         CG_DrawPlayerWeaponNameBack(&rect, font, scale, color, material);
         break;
+    // retail jump table has 76 and 77 as their own empty case
+    case 76:
+    case 77:
+        return;
     case CG_PLAYER_WEAPON_MODE_ICON:
         CG_DrawPlayerWeaponModeIcon(&rect, color);
         break;

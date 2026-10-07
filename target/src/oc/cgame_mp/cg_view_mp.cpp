@@ -1,3 +1,5 @@
+// first declaration fixes the LTCG walk order
+void CG_ProcessSnapshots();
 #include "cod2_feature_config.h"
 #include "common_types.h"
 #include "imports.h"

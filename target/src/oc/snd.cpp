@@ -667,40 +667,38 @@ Bool SND_IsAliasChannel3D(int channel)
 
 void SND_SetChannelInfo(int index, int entnum, const snd_alias_t *pAlias0, const snd_alias_t *pAlias1, float lerp, const vec_t *origin, float volume, float pitch, int srcChannelCount, int baserate, int total_msec, int start_msec, int startDelay, Bool master, snd_alias_system_t system)
 {
-    snd_channel_info_t *chaninfo;
     vec3_t org;
     vec3_t axis[3];
     vec3_t delta;
 
-    chaninfo = &g_snd.chaninfo[index];
     if (entnum >= 0 && entnum < 1024 && SND_IsAliasChannel3D((pAlias0->flags & 0x780) >> 7)) {
         CG_GetEntityOrientation(entnum, org, axis);
         delta[0] = origin[0] - org[0];
         delta[1] = origin[1] - org[1];
         delta[2] = origin[2] - org[2];
-        chaninfo->offset[0] = delta[0] * axis[0][0] + delta[1] * axis[0][1] + delta[2] * axis[0][2];
-        chaninfo->offset[1] = delta[0] * axis[1][0] + delta[1] * axis[1][1] + delta[2] * axis[1][2];
-        chaninfo->offset[2] = delta[0] * axis[2][0] + delta[1] * axis[2][1] + delta[2] * axis[2][2];
+        g_snd.chaninfo[index].offset[0] = delta[0] * axis[0][0] + delta[1] * axis[0][1] + delta[2] * axis[0][2];
+        g_snd.chaninfo[index].offset[1] = delta[0] * axis[1][0] + delta[1] * axis[1][1] + delta[2] * axis[1][2];
+        g_snd.chaninfo[index].offset[2] = delta[0] * axis[2][0] + delta[1] * axis[2][1] + delta[2] * axis[2][2];
     } else {
-        chaninfo->offset[0] = 0.0f;
-        chaninfo->offset[1] = 0.0f;
-        chaninfo->offset[2] = 0.0f;
+        g_snd.chaninfo[index].offset[0] = 0.0f;
+        g_snd.chaninfo[index].offset[1] = 0.0f;
+        g_snd.chaninfo[index].offset[2] = 0.0f;
     }
-    chaninfo->entnum = entnum;
-    chaninfo->entchannel = (pAlias0->flags & 0x780) >> 7;
-    chaninfo->basevolume = volume;
-    chaninfo->pitch = pitch;
-    chaninfo->srcChannelCount = srcChannelCount;
-    chaninfo->baserate = baserate;
-    chaninfo->pAlias1 = pAlias1;
-    chaninfo->lerp = lerp;
-    chaninfo->startDelay = startDelay;
-    chaninfo->pAlias0 = pAlias0;
-    chaninfo->looptime = g_snd.looptime;
-    chaninfo->endtime = g_snd.time - start_msec + total_msec;
-    chaninfo->paused = g_snd.paused && g_snd.pauseSettings[(pAlias0->flags & 0x780) >> 7];
-    chaninfo->master = master;
-    chaninfo->system = system;
+    g_snd.chaninfo[index].entnum = entnum;
+    g_snd.chaninfo[index].entchannel = (pAlias0->flags & 0x780) >> 7;
+    g_snd.chaninfo[index].basevolume = volume;
+    g_snd.chaninfo[index].pitch = pitch;
+    g_snd.chaninfo[index].srcChannelCount = srcChannelCount;
+    g_snd.chaninfo[index].baserate = baserate;
+    g_snd.chaninfo[index].pAlias1 = pAlias1;
+    g_snd.chaninfo[index].lerp = lerp;
+    g_snd.chaninfo[index].startDelay = startDelay;
+    g_snd.chaninfo[index].pAlias0 = pAlias0;
+    g_snd.chaninfo[index].looptime = g_snd.looptime;
+    g_snd.chaninfo[index].endtime = g_snd.time - start_msec + total_msec;
+    g_snd.chaninfo[index].paused = g_snd.paused && g_snd.pauseSettings[(pAlias0->flags & 0x780) >> 7];
+    g_snd.chaninfo[index].master = master;
+    g_snd.chaninfo[index].system = system;
 }
 
 // Original name unknown (KisakCOD: SND_FindReplaceableChannel).
