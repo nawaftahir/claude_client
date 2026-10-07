@@ -1036,34 +1036,35 @@ void CalculateWeaponPosition_BasePosition_movement(float *origin)
         targetPos[1] = targetPos[1] + cg_gun_ofs_r->current.value;
         targetPos[2] = targetPos[2] + cg_gun_ofs_u->current.value;
     }
-
+    for (i = 0; i <= 2; i++)
     for (i = 0; i < 3; i++)
     {
-        if (cg->playerEntity.vLastMoveOrg[i] == targetPos[i])
-            continue;
-
-        if (cg->predictedPlayerState.viewHeightCurrent == 11.0f)
-            moveRate = cg_gun_move_rate->current.value + weapDef->fPosProneMoveRate;
-        else
-            moveRate = cg_gun_move_rate->current.value + weapDef->fPosMoveRate;
-
-        delta = (targetPos[i] - cg->playerEntity.vLastMoveOrg[i]) * moveRate * (float)cg->frametime * 0.001f;
-
-        if (cg->playerEntity.vLastMoveOrg[i] < targetPos[i])
+        if (targetPos[i] != cg->playerEntity.vLastMoveOrg[i])
         {
-            if (delta < (float)cg->frametime * 0.0001f)
-                delta = (float)cg->frametime * 0.0001f;
-            cg->playerEntity.vLastMoveOrg[i] = cg->playerEntity.vLastMoveOrg[i] + delta;
-            if (cg->playerEntity.vLastMoveOrg[i] > targetPos[i])
-                cg->playerEntity.vLastMoveOrg[i] = targetPos[i];
-        }
-        else
-        {
-            if (delta > (float)cg->frametime * -0.0001f)
-                delta = (float)cg->frametime * -0.0001f;
-            cg->playerEntity.vLastMoveOrg[i] = cg->playerEntity.vLastMoveOrg[i] + delta;
+
+            if (cg->predictedPlayerState.viewHeightCurrent == 11.0f)
+                moveRate = cg_gun_move_rate->current.value + weapDef->fPosProneMoveRate;
+            else
+                moveRate = cg_gun_move_rate->current.value + weapDef->fPosMoveRate;
+
+            delta = (targetPos[i] - cg->playerEntity.vLastMoveOrg[i]) * moveRate * (float)cg->frametime * 0.001f;
+
             if (cg->playerEntity.vLastMoveOrg[i] < targetPos[i])
-                cg->playerEntity.vLastMoveOrg[i] = targetPos[i];
+            {
+                if (delta < (float)cg->frametime * 0.0001f)
+                    delta = (float)cg->frametime * 0.0001f;
+                cg->playerEntity.vLastMoveOrg[i] = cg->playerEntity.vLastMoveOrg[i] + delta;
+                if (cg->playerEntity.vLastMoveOrg[i] > targetPos[i])
+                    cg->playerEntity.vLastMoveOrg[i] = targetPos[i];
+            }
+            else
+            {
+                if (delta > (float)cg->frametime * -0.0001f)
+                    delta = (float)cg->frametime * -0.0001f;
+                cg->playerEntity.vLastMoveOrg[i] = cg->playerEntity.vLastMoveOrg[i] + delta;
+                if (cg->playerEntity.vLastMoveOrg[i] < targetPos[i])
+                    cg->playerEntity.vLastMoveOrg[i] = targetPos[i];
+            }
         }
     }
 

@@ -1478,16 +1478,13 @@ void CL_ShowIP_f(void)
 extern int Com_sprintf(char *dest, size_t size, const char *format, ...);
 const char *CL_GetServerIPAddress(void)
 {
-    clientConnection_t *connection = &::clc;
-    netadr_t *serverAddress = &connection->serverAddress;
-
-    if (connection->state < CA_CONNECTED) {
+    if (clc.state < CA_CONNECTED) {
         memset(szServerIPAddress, 0, 128);
     } else {
         Com_sprintf(szServerIPAddress, 128, "%i.%i.%i.%i:%i",
-                    serverAddress->ip[0], serverAddress->ip[1],
-                    serverAddress->ip[2], serverAddress->ip[3],
-                    BigShort(serverAddress->port));
+                    clc.serverAddress.ip[0], clc.serverAddress.ip[1],
+                    clc.serverAddress.ip[2], clc.serverAddress.ip[3],
+                    BigShort(clc.serverAddress.port));
     }
 
     return szServerIPAddress;

@@ -1926,9 +1926,9 @@ void FX_CalcOriginAndAxis( EffectPrimitive *prim, vec3_t out, const vec3_t origi
 	VectorAdd(pos, origin, pos);
 	if ( primTemp->mSpawnFlags & 1 )
 	{
-		yaw = flrand(0.0f, 360.0f) * (M_PI / 180.0);
+		yaw = flrand(0.0f, 360.0f) * 0.017453292f;
 		FastSinCos(yaw, &sinYaw, &cosYaw);
-		pitch = flrand(0.0f, 180.0f) * (M_PI / 180.0);
+		pitch = flrand(0.0f, 180.0f) * 0.017453292f;
 		FastSinCos(pitch, &sinPitch, &cosPitch);
 		radius = FxRange_GetVal(&primTemp->mRadius);
 		height = FxRange_GetVal(&primTemp->mHeight);

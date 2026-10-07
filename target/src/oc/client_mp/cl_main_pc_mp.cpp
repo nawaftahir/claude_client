@@ -393,6 +393,7 @@ void CL_ServersResponsePacket(netadr_t from, msg_t *msg)
     byte *buffptr;
     byte *buffend;
     netadr_t adr;
+    serverInfo_t *server;
 
     Com_PumpMessageLoop();
     Com_Printf("CL_ServersResponsePacket\n");
@@ -418,7 +419,7 @@ void CL_ServersResponsePacket(netadr_t from, msg_t *msg)
 
         addresses[numservers].port = (*buffptr++) << 8;
         addresses[numservers].port += *buffptr++;
-        addresses[numservers].port = ntohs(addresses[numservers].port);
+        addresses[numservers].port = BigShort(addresses[numservers].port);
 
         if (*buffptr != '\\')
             break;
@@ -448,8 +449,9 @@ void CL_ServersResponsePacket(netadr_t from, msg_t *msg)
         adr.port = addresses[i].port;
 
         if (!CL_RefreshKnownGlobalServer(adr)) {
-            CL_InitServerInfo(&cls.globalServers[count], adr);
+            server = &cls.globalServers[count];
             count++;
+            CL_InitServerInfo(server, adr);
         }
     }
 

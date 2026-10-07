@@ -14,14 +14,11 @@
 0	Message_Close	drop
 0	CL_ExecuteKeyBinding	drop
 0	CL_HandleEscapeKey	drop
-0	CL_ReferencedIWDList_f	drop
 0	BoxOnPlaneSide	drop
 0	Com_ParseVolumeFalloffCurve	drop
 0	SV_Map_f	drop
-0	SV_GameClientNum	drop
 0	Sys_Error	drop
 0	Scr_GetNextCodepos	drop
-0	Scr_ParamError	drop
 0	DObjGetCreateParms	drop
 0	CL_ServersResponsePacket	drop
 0	CL_ServerStatus_f	drop
@@ -143,7 +140,7 @@
 44cff0	SND_UpdateChannels	fix	# callalign
 4b3b40	SND_SetRoomtype	fix	# callalign
 433970	Com_Frame	fix	# callalign
-496490	PlayEffect	fix	# callalign
+496660	PlayEffect	fix	# callalign; 496490 was wrong
 48d910	XModelConsumeQuat	fix	# callalign
 52bef0	UI_DrawText	fix	# callalign
 4789b0	Scr_FreeEntityList	fix	# callalign
@@ -399,3 +396,29 @@
 4d1340	CalcTracerFinalScale	fix	# Kisak
 4c8070	CG_ImpactMark	fix
 4c7fe0	CG_AllocMark	fix
+448470	Swap_InitLittleEndian	fix	# retail stores ShortSwap first
+4484c0	Swap_InitBigEndian	fix	# twin after LE
+45f8e0	Sys_InitMainThread	fix	# shortpair: masked scan, relocs agree
+4011b0	getBuildNumber	fix	# shortpair
+4cfad0	CG_HoldBreathInit	fix	# shortpair
+5074a0	Scr_StartupGameType	fix	# shortpair
+507480	Scr_LoadGameType	fix	# shortpair
+480a30	Scr_ParamError	fix	# shortpair
+4742f0	SL_Restart	fix	# shortpair
+50b340	GScr_SetDynamicEntityField	fix	# shortpair, calls Scr_GetEntityId
+432940	Com_RunAutoExec	fix	# shortpair
+40ce60	CL_ReferencedIWDList_f	fix	# shortpair, calls FS_ReferencedIwdNames
+4f0ee0	BG_InitWeaponString	fix	# shortpair
+404fd0	ConDrawInput_TextWidth	fix	# shortpair
+45f920	Sys_IsMainThread	fix	# shortpair
+4b1000	CL_RconInit	fix	# shortpair
+454100	SV_GameClientNum	fix	# shortpair
+48d000	SetDefaultSurface	fix	# shortpair
+490120	FX_PlaySimpleEffect	fix	# shortpair; 496420 is FxScheduler::PlayEffect(fx,org)
+44c2e0	SND_StopMusic	fix	# shortpair; 44c220 is SND_StopBackground
+470d70	Scr_CalcLocalVarsFormalParameterList	fix	# shortpair, tail-jumps Internal
+477010	RemoveObjectVariable	fix	# shortpair, tail-jumps RemoveVariable
+4428e0	MSG_WriteKey	fix	# shortpair, calls MSG_WriteBits
+42b350	Hunk_AllocLowInternal	fix	# shortpair, tail-jumps AllocLowAlign
+41fa60	Cmd_TokenizeStringWithLimit	fix	# shortpair twin of 41fa80
+41fa80	SV_Cmd_TokenizeStringWithLimit	fix	# shortpair twin

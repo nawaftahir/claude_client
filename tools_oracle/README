@@ -1,0 +1,4 @@
+c2.dll LTCG oracle (rebuilt 10-07). Patch: copy c2.dll out of cod2-msvc71-build, assemble cave.s
+(as --32; ld -m elf_i386 -Ttext=0x10865d50 --oformat binary), write it at file off 0x165d50,
+jmp+nop at 0x724f6 (-> cave1, F = compile start) and 0x7079a (-> cave2, X = callee ref).
+Output equals the normal link except the PE timestamp. diag2.sh -> build/ord.txt; cuts.py ord.txt [name].

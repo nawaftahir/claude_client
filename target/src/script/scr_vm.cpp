@@ -188,9 +188,16 @@ void Scr_ErrorWithDialogMessage( const char *error, const char *dialog_error )
 Scr_ResetTimeout
 ==============
 */
+// retail times scripts in rdtsc/4 ticks; the result is left in edx:eax
+#pragma warning(disable: 4035)
+static __forceinline unsigned __int64 Sys_Rdtsc()
+{
+	__asm rdtsc
+}
+
 void Scr_ResetTimeout()
 {
-	scrVmGlob.starttime = Sys_MilliSeconds();
+	scrVmGlob.starttime = (int)(Sys_Rdtsc() >> 2);
 }
 
 /*
@@ -1344,7 +1351,7 @@ negative_wait:
 			goto loop;
 
 		case OP_jumpback:
-			if ( (unsigned int)(Sys_Milliseconds() - scrVmGlob.starttime) < 5000 )
+			if ( (int)(Sys_Rdtsc() >> 2) - scrVmGlob.starttime >= -0x1000000 )
 			{
 				jumpOffset = Scr_ReadUnsignedShort(&fs.pos);
 				fs.pos -= jumpOffset;

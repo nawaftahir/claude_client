@@ -459,7 +459,7 @@ void PM_StepSlideMove( pmove_t *pm, pml_t *pml, qboolean gravity )
 			{
 				if (I_fabs(ps->origin[2] - down_o[2]) > 0.5f)
 				{
-					iDelta = Q_rint(ps->origin[2] - down_o[2]);
+					iDelta = I_fround(ps->origin[2] - down_o[2]);
 
 					if (iDelta)
 					{

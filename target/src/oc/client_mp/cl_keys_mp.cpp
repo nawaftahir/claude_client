@@ -1085,7 +1085,7 @@ void CL_KeyEvent(int key, const qboolean down, const unsigned int time)
             && sv_disableClientConsole->current.enabled)
             return;
         if (keys[0xa0].down) {
-            if (!(clients->keyCatchers & 1))
+            if (!Con_IsActive())
                 Con_ToggleConsole_f();
             Con_ToggleConsoleOutput();
         } else {
