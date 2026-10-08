@@ -27,7 +27,7 @@ struct FxChannelBackwardCompatible
 const FxCurve *FxCurve_AllocAndCreateWithKeys( const float *keyArray, int dimensionCount, int keyCount );
 const FxCurve *FxCurve_Reference( const FxCurve *curve );
 void FxRange_SetRange( FxRange *range, float min, float max );
-float FxRange_GetValPct( const FxRange *range, float pct );
+float __stdcall FxRange_GetValPct( const FxRange *range, float pct );
 float flrand( float min, float max );
 
 void FxChannel_CreateDefault( FxChannel *createe, int dimensions, float value1, float value2 )

@@ -34,7 +34,7 @@ extern int Sys_Milliseconds(void);
 extern int Decode_Sample(char *inData, int inSize, short *outData, int maxOutSize);
 
 extern byte *voice_freq_ptr;
-extern byte *voice_maxframe_ptr;
+extern int g_frame_size;
 
 extern const dvar_t *winvoice_mic_mute;
 extern const dvar_t *winvoice_mic_reclevel;
@@ -164,17 +164,14 @@ float Voice_GetVoiceLevel(void)
 
 void Voice_Playback(void)
 {
-    int level;
     int i;
 
     if (!g_voice_initialized)
         return;
 
-    level = (unsigned short)(int)winvoice_mic_reclevel->current.value;
-    if (level != mic_current_reclevel) {
-        mic_current_reclevel = level;
-        level = (unsigned short)(int)winvoice_mic_reclevel->current.value;
-        mixerSetRecordLevel("Mic", level);
+    if (mic_current_reclevel != (unsigned short)(int)winvoice_mic_reclevel->current.value) {
+        mic_current_reclevel = (unsigned short)(int)winvoice_mic_reclevel->current.value;
+        mixerSetRecordLevel("Mic", (unsigned short)(int)winvoice_mic_reclevel->current.value);
     }
 
     for (i = 0; i < 64; i++) {
@@ -229,10 +226,7 @@ Bool Voice_StopRecording(void)
 void Voice_IncomingVoiceData(unsigned char talker, unsigned char *data, int packetDataSize)
 {
     short decodedData[4096];
-    int talkerIdx;
     int processedBytes;
-    int maxFrameSize;
-    int remaining;
     int bytesToProcess;
     int decodedLen;
     FILE *fptr;
@@ -240,28 +234,22 @@ void Voice_IncomingVoiceData(unsigned char talker, unsigned char *data, int pack
     if (!playing)
         playing = 1;
 
-    talkerIdx = (unsigned char)talker;
-    s_clientTalkTime[talkerIdx] = Sys_Milliseconds();
-
     decodedLen = 0;
-    if (packetDataSize > 0) {
-        processedBytes = 0;
-        maxFrameSize = *(int *)voice_maxframe_ptr;
+    processedBytes = 0;
+    s_clientTalkTime[talker] = Sys_Milliseconds();
 
-        while (processedBytes < packetDataSize) {
-            remaining = packetDataSize - processedBytes;
-            bytesToProcess = remaining < maxFrameSize ? remaining : maxFrameSize;
-
-            decodedLen = Decode_Sample((char *)(data + processedBytes), bytesToProcess, decodedData, maxFrameSize);
-            if (decodedLen > 0) {
-                Sound_UpdateSample((dsound_sample_t *)s_clientSamples[talkerIdx], (char *)decodedData, decodedLen);
-            }
-            processedBytes += bytesToProcess;
-        }
+    while (processedBytes < packetDataSize) {
+        float remaining = (float)(packetDataSize - processedBytes);
+        float frameSize = (float)g_frame_size;
+        bytesToProcess = (int)(remaining - frameSize >= 0.0f ? frameSize : remaining);
+        decodedLen = Decode_Sample((char *)(data + processedBytes), bytesToProcess, decodedData, g_frame_size);
+        if (decodedLen > 0)
+            Sound_UpdateSample((dsound_sample_t *)s_clientSamples[talker], (char *)decodedData, decodedLen);
+        processedBytes += bytesToProcess;
     }
 
     if (winvoice_save_voice->current.enabled) {
-        fptr = fopen("voice.wav", "a");
+        fptr = fopen("voice.wav", "ab");
         if (fptr != NULL) {
             fwrite(decodedData, decodedLen, 1, fptr);
             fclose(fptr);

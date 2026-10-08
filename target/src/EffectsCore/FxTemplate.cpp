@@ -344,7 +344,7 @@ void FX_Print( const char *fmt, ... );
 Material *FX_RegisterMaterial( const char *name );
 XModel *FX_ModelRegister( const char *name );
 void FxRange_SetRange( FxRange *range, float min, float max );
-float FxRange_GetValPct( const FxRange *range, float pct );
+float __stdcall FxRange_GetValPct( const FxRange *range, float pct );
 
 extern bool g_rendererExists;
 
@@ -352,7 +352,7 @@ void FX_Print( const char *fmt, ... );
 Material *FX_RegisterMaterial( const char *name );
 XModel *FX_ModelRegister( const char *name );
 void FxRange_SetRange( FxRange *range, float min, float max );
-float FxRange_GetValPct( const FxRange *range, float pct );
+float __stdcall FxRange_GetValPct( const FxRange *range, float pct );
 
 extern const FxFlagEntry fxAttributeFlags[24];
 static const FxFlagEntry fxAttributeFlags[24] =
@@ -2061,7 +2061,7 @@ float FxRange_GetVal( const FxRange *range )
 	return flrand(range->min, range->max);
 }
 
-float FxRange_GetValPct( const FxRange *range, float pct )
+float __stdcall FxRange_GetValPct( const FxRange *range, float pct )
 {
 	return range->min + ( range->max - range->min ) * pct;
 }

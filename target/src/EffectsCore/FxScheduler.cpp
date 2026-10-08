@@ -924,9 +924,20 @@ float FxScheduler::GetDecalSize( const PrimitiveTemplate *primTemp )
 	}
 }
 
-// Impact marks are drawn by the client only.
+void CG_ImpactMark( Material *markMaterial, const float *origin, const float *dir, float orientation, const float *color, float radius );
+
+// retail 0x496e20
 void FxScheduler::CreateDecalEffect( const PrimitiveTemplate *primTemp, const vec3_t origin, const vec3_t axis[3] )
 {
+	float rotation;
+	vec4_t color;
+	float size;
+
+	rotation = FxRange_GetVal( &primTemp->mRotation );
+	GetDecalColor( primTemp, color );
+	color[3] = GetDecalAlpha( primTemp );
+	size = GetDecalSize( primTemp );
+	CG_ImpactMark( primTemp->mMediaHandles.GetHandle().material, origin, axis[0], rotation, color, size );
 }
 
 bool FX_GetBoltingFrame( const PrimitiveTemplate *primTemp, const FxBoltInfo *bolt, FxBoltFramePtr *boltFrame )

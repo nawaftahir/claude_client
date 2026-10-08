@@ -1,7 +1,7 @@
 #include "../qcommon/qcommon.h"
 #include "../stringed/stringed_public.h"
 
-bool FS_LanguageHasAssets( int iLanguage );
+int FS_LanguageHasAssets( int iLanguage );
 const char *SE_GetString( const char *psPackageAndStringReference );
 const char *SE_LoadLanguage( bool forceEnglish );
 void SE_Init();

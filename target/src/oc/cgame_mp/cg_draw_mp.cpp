@@ -210,7 +210,7 @@ static void CG_DrawSpectatorMessage(void);
 void CG_StartShakeCamera(float scale, int duration, const vec_t *src, float radius);
 static float CG_DrawWeapReticle(void);
 void CG_DrawCrosshair(void);
-unsigned int CG_Draw2D(void);
+void CG_Draw2D(void);
 
 bool CG_GetWeapReticleZoom(float *pfZoom);
 void CG_DrawTurretCrossHair(void);
@@ -409,12 +409,12 @@ static float CG_DrawFPS(float y)
         y += (float)CG_DrawSmallDevStringColor(
             620.0f, y, va("%d", rendererStats.c_imageUsage.total / (1024 * 1024)), colorWhiteFaded, 6);
 
-        if (rendererStats.c_imageUsage.minspec > 48 * 1024 * 1024) {
-            s = va("min pc tex (%g)      ", 48.0);
-            color = colorRedFaded;
-        } else {
+        if (rendererStats.c_imageUsage.minspec <= 48 * 1024 * 1024) {
             s = va("min pc tex      ");
             color = colorWhiteFaded;
+        } else {
+            s = va("min pc tex (%g)      ", 48.0);
+            color = colorRedFaded;
         }
 
         CG_DrawSmallDevStringColor(620.0f, y, s, color, 6);
@@ -995,19 +995,20 @@ static void CG_TransitionToAds(const WeaponDef *weapDef, float posLerp, float *t
 
     if (cg->playerEntity.bPositionToADS) {
         f = posLerp - (1.0f - weapDef->fAdsCrosshairInFrac);
-        if (f <= 0.0f)
+        if (!(f > 0.0f))
             return;
         f = f / weapDef->fAdsCrosshairInFrac;
     } else {
         f = posLerp - (1.0f - weapDef->fAdsCrosshairOutFrac);
-        if (f <= 0.0f)
+        if (!(f > 0.0f))
             return;
         f = f / weapDef->fAdsCrosshairOutFrac;
     }
 
     if (f > 0.0f) {
         *transScale = 1.0f - f * 0.5f;
-        *transShift = 480.0f / cg->refdef.fov_y * weapDef->fAdsAimPitch * f;
+        float pitchScale = 480.0f / cg->refdef.fov_y;
+        *transShift = pitchScale * weapDef->fAdsAimPitch * f;
     }
 }
 
@@ -1111,11 +1112,11 @@ void CG_DrawCrosshair(void)
     float transScale;
     float transShift;
 
-    posLerp = ps->fWeaponPosFrac;
     if (cg->renderingThirdPerson)
         return;
 
     drawHud = !CG_AreHudMenusHidden();
+    posLerp = ps->fWeaponPosFrac;
     transScale = 1.0f;
     transShift = 0.0f;
     if (ps->eFlags & 0x300) {
@@ -1134,7 +1135,9 @@ void CG_DrawCrosshair(void)
         return;
 
     CG_CalcCrosshairColor(reticleAlpha, color);
-    if (color[3] >= 0.01f && (posLerp != 1.0f || !cg_drawGun->current.enabled) && AllowedToDrawCrosshair()) {
+    if (color[3] < 0.01f)
+        return;
+    if ((posLerp != 1.0f || !cg_drawGun->current.enabled) && AllowedToDrawCrosshair()) {
         CG_CalcCrosshairPosition(&centerX, &centerY);
         if (posLerp != 0.0f) {
             CG_TransitionToAds(weapDef, posLerp, &transScale, &transShift);
@@ -2204,17 +2207,17 @@ void CG_DrawPlayerSprites(void)
     }
 }
 
-unsigned int CG_Draw2D(void)
+void CG_Draw2D(void)
 {
     bool drawHudMenus;
     bool drawHudElems;
     qboolean drewScoreboard;
 
     if (cg->cubemapShot)
-        return 0;
+        return;
 
     if (!cg_draw2D->current.enabled)
-        return 0;
+        return;
 
     CG_ScreenFade();
 
@@ -2224,7 +2227,7 @@ unsigned int CG_Draw2D(void)
     if (cg->nextSnap->ps.pm_type == 5)
     {
         CG_DrawIntermission();
-        return 0;
+        return;
     }
 
     if (cg->nextSnap->ps.pm_type == 4)
@@ -2261,7 +2264,7 @@ unsigned int CG_Draw2D(void)
 
     drewScoreboard = CG_DrawScoreboard();
     if (!drawHudMenus)
-        return 0;
+        return;
 
     CG_DrawFlashDamage();
     CG_DrawDamageDirectionIndicators();
@@ -2286,7 +2289,7 @@ unsigned int CG_Draw2D(void)
         CG_DrawSubtitles();
         CG_DrawSay();
     }
-    return 0;
+    return;
 }
 
 void CG_DrawActive(void)

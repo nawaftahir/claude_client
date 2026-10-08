@@ -198,7 +198,7 @@ void CG_UpdateViewWeaponAnim(playerState_t *ps);
 
 static void CG_PlayADSAnim(XAnimTree *pAnimTree, int animIndex);
 void CG_SelectWeaponIndex(int weaponIndex);
-static qboolean CG_IsLocalClientEntity(cg_t *cg, entityState_t *ent);
+static __forceinline qboolean CG_IsLocalClientEntity(cg_t *cg, entityState_t *ent);
 void CG_RegisterWeapon(int weaponNum);
 void CG_RegisterItemVisuals(int itemNum);
 void CG_CycleWeap(qboolean next, qboolean checkAmmo);
@@ -756,33 +756,37 @@ void CG_UpdateHandViewmodels(const char *handModel)
 void CG_SpawnTracer(vec_t *pstart, vec_t *pend)
 {
     vec3_t start;
+    vec3_t end;
     vec3_t dir;
     float dist;
     float speed;
     int time;
-    int tracerDelay;
+    int jitter;
     localEntity_t *le;
 
     start[0] = pstart[0];
     start[1] = pstart[1];
     start[2] = pstart[2];
 
-    dir[0] = pend[0] - start[0];
-    dir[1] = pend[1] - start[1];
-    dir[2] = pend[2] - start[2];
+    end[0] = pend[0];
+    end[1] = pend[1];
+    end[2] = pend[2];
+
+    dir[0] = end[0] - start[0];
+    dir[1] = end[1] - start[1];
+    dir[2] = end[2] - start[2];
 
     dist = Vec3Normalize(dir);
     le = CG_AllocLocalEntity();
     le->leType = LE_MOVING_TRACER;
     le->tracerClipDist = dist;
 
-    time = cg->time;
-    tracerDelay = cg->frametime;
-    if (tracerDelay)
-        time -= (rand() % tracerDelay) / 2;
+    jitter = 0;
+    if (cg->frametime)
+        jitter = (rand() % cg->frametime) / 2;
+    time = cg->time - jitter;
 
-    speed = cg_tracerSpeed->current.value;
-    le->endTime = time + (int)((dist * 1000.0f) / speed);
+    le->endTime = time - (int)(dist / cg_tracerSpeed->current.value * -1000.0f);
     le->pos.trType = TR_LINEAR;
     le->pos.trTime = time;
 
@@ -790,6 +794,7 @@ void CG_SpawnTracer(vec_t *pstart, vec_t *pend)
     le->pos.trBase[1] = start[1];
     le->pos.trBase[2] = start[2];
 
+    speed = cg_tracerSpeed->current.value;
     le->pos.trDelta[0] = speed * dir[0];
     le->pos.trDelta[1] = speed * dir[1];
     le->pos.trDelta[2] = speed * dir[2];
@@ -800,8 +805,9 @@ void CG_WhizbySound(vec_t *vStart, vec_t *vEnd)
     vec3_t vDelta;
     vec3_t vDir;
     vec3_t vProjPos;
-    vec3_t vieworg;
-    float segmentLen;
+    float toEar0;
+    float toEar1;
+    float toEar2;
     float projLen;
     float distanceToView;
 
@@ -810,31 +816,29 @@ void CG_WhizbySound(vec_t *vStart, vec_t *vEnd)
     vDelta[2] = vEnd[2] - vStart[2];
     Vec3NormalizeTo(vDelta, vDir);
 
-    segmentLen = vDir[0] * vDelta[0] + vDir[1] * vDelta[1] + vDir[2] * vDelta[2];
-
-    vieworg[0] = cg->refdef.vieworg[0];
-    vieworg[1] = cg->refdef.vieworg[1];
-    vieworg[2] = cg->refdef.vieworg[2];
-
-    projLen = (vieworg[0] - vStart[0]) * vDir[0] + (vieworg[1] - vStart[1]) * vDir[1] + (vieworg[2] - vStart[2]) * vDir[2];
-
-    if (projLen < 64.0f || projLen + 64.0f > segmentLen)
+    toEar0 = cg->refdef.vieworg[0] - vStart[0];
+    toEar1 = cg->refdef.vieworg[1] - vStart[1];
+    toEar2 = cg->refdef.vieworg[2] - vStart[2];
+    projLen = toEar0 * vDir[0] + (toEar1 * vDir[1] + toEar2 * vDir[2]);
+    if (projLen < 64.0f)
+        return;
+    if (projLen - -64.0f > vDelta[0] * vDir[0] + (vDir[2] * vDelta[2] + vDir[1] * vDelta[1]))
         return;
 
-    vProjPos[0] = vStart[0] + projLen * vDir[0];
-    vProjPos[1] = vStart[1] + projLen * vDir[1];
-    vProjPos[2] = vStart[2] + projLen * vDir[2];
+    vProjPos[0] = projLen * vDir[0] + vStart[0];
+    vProjPos[1] = projLen * vDir[1] + vStart[1];
+    vProjPos[2] = projLen * vDir[2] + vStart[2];
 
-    vDelta[0] = vProjPos[0] - vieworg[0];
-    vDelta[1] = vProjPos[1] - vieworg[1];
-    vDelta[2] = vProjPos[2] - vieworg[2];
-    distanceToView = sqrtf(vDelta[0] * vDelta[0] + vDelta[1] * vDelta[1] + vDelta[2] * vDelta[2]);
+    vDelta[0] = vProjPos[0] - cg->refdef.vieworg[0];
+    vDelta[1] = vProjPos[1] - cg->refdef.vieworg[1];
+    vDelta[2] = vProjPos[2] - cg->refdef.vieworg[2];
+    distanceToView = sqrtf(vDelta[2] * vDelta[2] + (vDelta[1] * vDelta[1] + vDelta[0] * vDelta[0]));
     if (distanceToView > 140.0f)
         return;
 
-    vProjPos[0] += -16.0f * vDir[0];
-    vProjPos[1] += -16.0f * vDir[1];
-    vProjPos[2] += -16.0f * vDir[2];
+    vProjPos[0] = vProjPos[0] - vDir[0] * 16.0f;
+    vProjPos[1] = vProjPos[1] - vDir[1] * 16.0f;
+    vProjPos[2] = vProjPos[2] - vDir[2] * 16.0f;
 
     CG_PlaySoundAlias(0x3fe, vProjPos, cgs->media.bulletWhizby);
 }
@@ -1262,7 +1266,6 @@ static void CG_UpdateHoldBreathSound(void)
 void CG_AddPlayerWeapon(GfxEntity *parent, playerState_t *ps, centity_t *cent, qboolean bDrawGun)
 {
     entityState_t *ent;
-    playerState_t *playerState;
     weaponInfo_t *weapInfo;
     int weaponNum;
     qboolean bViewModel;
@@ -1272,13 +1275,11 @@ void CG_AddPlayerWeapon(GfxEntity *parent, playerState_t *ps, centity_t *cent, q
     isLocalClientEntity = CG_IsLocalClientEntity(cg, ent);
 
     if (ps) {
-        playerState = ps;
-        weaponNum = BG_GetViewmodelWeaponIndex(playerState);
         bViewModel = 1;
+        weaponNum = BG_GetViewmodelWeaponIndex(ps);
     } else {
-        playerState = 0;
-        weaponNum = ent->weapon;
         bViewModel = 0;
+        weaponNum = ent->weapon;
     }
 
     if (weaponNum <= 0)
@@ -1303,11 +1304,11 @@ void CG_AddPlayerWeapon(GfxEntity *parent, playerState_t *ps, centity_t *cent, q
             gun.materialRGBA[2] = 0xff;
             gun.materialRGBA[3] = 0xff;
 
-            gun.lighting.origin[0] = playerState->origin[0];
-            gun.lighting.origin[1] = playerState->origin[1];
-            gun.lighting.origin[2] = playerState->origin[2] + playerState->viewHeightCurrent;
-            AddLeanToPosition(gun.lighting.origin, playerState->viewangles[1],
-                              playerState->leanf, 16.0f, 20.0f);
+            gun.lighting.origin[0] = ps->origin[0];
+            gun.lighting.origin[1] = ps->origin[1];
+            gun.lighting.origin[2] = ps->origin[2] + ps->viewHeightCurrent;
+            AddLeanToPosition(gun.lighting.origin, ps->viewangles[1],
+                              ps->leanf, 16.0f, 20.0f);
 
             gun.origin[0] = parent->origin[0];
             gun.origin[1] = parent->origin[1];
@@ -1373,9 +1374,9 @@ void CG_AddPlayerWeapon(GfxEntity *parent, playerState_t *ps, centity_t *cent, q
         return;
 
     if (bViewModel)
-        WeaponFlash(CG_WeaponDObjHandle(weaponNum), weaponNum, 1, cg->viewModelOrigin, scr_const.tag_flash);
+        WeaponFlash(CG_WeaponDObjHandle(weaponNum), weaponNum, 1, cg->viewModelOrigin, *s_barrelTags[0]);
     else
-        WeaponFlash(ent->number, weaponNum, 0, cent->lerpOrigin, scr_const.tag_flash);
+        WeaponFlash(ent->number, weaponNum, 0, cent->lerpOrigin, *s_barrelTags[0]);
 }
 
 void CG_UpdateViewWeaponAnim(playerState_t *ps)
@@ -1938,7 +1939,7 @@ void CG_EjectWeaponBrass(entityState_t *ent, int event)
     FX_PlayEntityEffect( (EffectTemplate *)(effect), ejectBrassCasingOrigin, 0, (const FxBoltInfo *)(bolt));
 }
 
-static qboolean CG_IsLocalClientEntity(cg_t *cg, entityState_t *ent)
+static __forceinline qboolean CG_IsLocalClientEntity(cg_t *cg, entityState_t *ent)
 {
     snapshot_t *snap = cg->nextSnap;
 
@@ -1969,7 +1970,6 @@ void CG_FireWeapon(centity_t *cent, int event, int barrel)
     }
 
     weapInfo = &cg_weaponsArray[ent->weapon];
-    BG_GetWeaponDef(ent->weapon);
     cent->bMuzzleFlash = 1;
 
     if (CG_IsLocalClientEntity(cg, ent))

@@ -100,29 +100,21 @@ void CG_CompassAddWeaponPingInfo(centity_t *cent, const vec_t *origin, int msec)
     if (entTeam == 3)
         return;
 
-    int cgTime = cg->time;
-    compassactor_t *actor = &cg->compassActors[entClientNum];
-    actor->beginFadeTime = cgTime + msec;
+    cg->compassActors[entClientNum].beginFadeTime = cg->time + msec;
 
     int localTeam = localClientInfo->team;
-    byte enemyFlag;
-    if (localTeam == 0) {
-
+    int enemyFlag;
+    if (localTeam == 0 || entTeam != localTeam)
         enemyFlag = 1;
-    } else if (localTeam == entTeam) {
-
+    else
         enemyFlag = 0;
-    } else {
+    cg->compassActors[entClientNum].enemy = enemyFlag;
 
-        enemyFlag = 1;
-    }
-    actor->enemy = enemyFlag;
-
-    if (actor->enemy == 0)
+    if (cg->compassActors[entClientNum].enemy == 0)
         return;
 
-    actor->vLastPos[0] = origin[0];
-    actor->vLastPos[1] = origin[1];
+    cg->compassActors[entClientNum].vLastPos[0] = origin[0];
+    cg->compassActors[entClientNum].vLastPos[1] = origin[1];
 }
 
 // retail 0x4d4a80, name unknown

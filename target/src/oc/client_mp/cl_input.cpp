@@ -670,9 +670,9 @@ void IN_LowerStance(void)
         return;
     statePtr = &((LegacyHacks *)::legacyHacks)->cl_stance;
     val = *statePtr;
-    if (val <= 0)
+    if (val < 1)
         *statePtr = 1;
-    else if (val == 1)
+    else if (val < 2)
         *statePtr = 2;
 }
 
@@ -683,7 +683,7 @@ void IN_RaiseStance(void)
     int *stance = &legacyHacks->cl_stance;
     if (*stance > 1)
         *stance = 1;
-    else if (*stance == 1)
+    else if (*stance > 0)
         *stance = 0;
 }
 

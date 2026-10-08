@@ -156,7 +156,7 @@ void EmitExpressionFieldObject( sval_u expr, sval_u sourcePos, scr_block_s *bloc
 void ConnectBreakStatements();
 void ConnectContinueStatements();
 bool IsUndefinedPrimitiveExpression( sval_u expr );
-bool IsUndefinedExpression( sval_u expr );
+int IsUndefinedExpression( sval_u expr );
 bool EmitClearVariableExpression( sval_u expr, sval_u rhsSourcePos, scr_block_s *block );
 void EmitAssignmentStatement( sval_u lhs, sval_u rhs, sval_u sourcePos, sval_u rhsSourcePos, scr_block_s *block );
 void Scr_CalcLocalVarsAssignmentStatement( sval_u lhs, sval_u rhs, scr_block_s *block );
@@ -2669,7 +2669,7 @@ void EmitMethod( sval_u expr, sval_u func_name, sval_u params, sval_u methodSour
 		param_count = EmitExpressionList(params, block);
 		EmitPrimitiveExpression(expr, block);
 
-		if ( param_count > 255 )
+		if ( param_count >= 256 )
 		{
 			CompileError(sourcePos.sourcePosValue, "parameter count exceeds 256");
 			return;
@@ -2847,10 +2847,10 @@ SetThreadPosition
 */
 void SetThreadPosition( unsigned int posId, unsigned int sourcePos )
 {
-	register VariableUnion *value;
+	char *codePos;
 
-	value = GetVariableValueAddress( FindVariable( posId, 1 ) );
-	value->codePosValue = (char *)TempMalloc(0);
+	codePos = (char *)TempMalloc(0);
+	GetVariableValueAddress( FindVariable( posId, 1 ) )->codePosValue = codePos;
 }
 
 /*
@@ -3621,10 +3621,11 @@ bool IsUndefinedPrimitiveExpression( sval_u expr )
 IsUndefinedExpression
 ============
 */
-bool IsUndefinedExpression( sval_u expr )
+int IsUndefinedExpression( sval_u expr )
 {
-	return expr.node[0].type == ENUM_primitive_expression
-	       && IsUndefinedPrimitiveExpression( expr.node[1] );
+	if ( expr.node[0].type == ENUM_primitive_expression )
+		return IsUndefinedPrimitiveExpression( expr.node[1] );
+	return 0;
 }
 
 /*
@@ -5619,8 +5620,6 @@ SpecifyThread
 */
 void SpecifyThread( sval_u val )
 {
-	unsigned int posId;
-
 	switch ( val.node[0].type )
 	{
 	case ENUM_begin_developer_thread:
@@ -5650,9 +5649,8 @@ void SpecifyThread( sval_u val )
 			return;
 		}
 
-		posId = GetObjectA( GetVariable( scrCompileGlob.fileId, val.node[1].idValue ) );
-
-		SpecifyThreadPosition(posId, val.node[1].sourcePosValue, val.node[4].sourcePosValue,
+		SpecifyThreadPosition(GetObjectA( GetVariable( scrCompileGlob.fileId, val.node[1].idValue ) ),
+			val.node[1].sourcePosValue, val.node[4].sourcePosValue,
 			!scrCompileGlob.in_developer_thread ? VAR_CODEPOS : VAR_DEVELOPER_CODEPOS);
 		break;
 	}

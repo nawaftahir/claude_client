@@ -33,6 +33,16 @@ extern const unsigned short int *__ctype_b;
 #define isprint( c )    ( __ctype_b[(int)( c )] & (unsigned short int)_ISprint )
 #endif
 
+enum print_msg_type_t
+{
+	PMSG_CONSOLE = 0x0,
+	PMSG_GAME = 0x1,
+	PMSG_BOLDGAME = 0x2,
+	PMSG_SUBTITLE = 0x3,
+	PMSG_LOGFILE = 0x4,
+};
+void Com_PrintMessage( print_msg_type_t channel, const char *msg );
+
 #include "../universal/universal_public.h"
 
 
@@ -141,14 +151,6 @@ void NET_Restart( void );
 void NET_Config( qboolean enableNetworking );
 void NET_Sleep(int msec);
 
-enum print_msg_type_t
-{
-	PMSG_CONSOLE = 0x0,
-	PMSG_GAME = 0x1,
-	PMSG_BOLDGAME = 0x2,
-	PMSG_SUBTITLE = 0x3,
-	PMSG_LOGFILE = 0x4,
-};
 
 // Edit fields and command line history/completion
 #define	MAX_EDIT_LINE	256

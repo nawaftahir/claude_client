@@ -124,11 +124,8 @@ void CG_ScoresUp_f(void)
 
 void CG_ScoresDown_f(void)
 {
-    int currentTime = cg->time;
-    int lastScoreTime = cg->scoresRequestTime;
-
-    if (lastScoreTime + 2000 < currentTime) {
-        cg->scoresRequestTime = currentTime;
+    if (cg->scoresRequestTime + 2000 < cg->time) {
+        cg->scoresRequestTime = cg->time;
         CL_AddReliableCommand("score");
 
         if (!CG_ScoreboardDisplayed()) {

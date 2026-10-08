@@ -25,15 +25,12 @@ void CG_AddLocalEntities(void);
 
 static void CG_FreeLocalEntity(localEntity_t *le)
 {
-    localEntity_t *prev_ent = le->prev;
-    localEntity_t *next_ent = le->next;
-
-    if (!prev_ent) {
+    if (!le->prev) {
         Com_Error(ERR_DROP, "CG_FreeLocalEntity: not active");
     }
 
-    next_ent->prev = prev_ent;
-    prev_ent->next = next_ent;
+    le->prev->next = le->next;
+    le->next->prev = le->prev;
 
     le->next = cg_freeLocalEntities;
     cg_freeLocalEntities = le;
@@ -83,23 +80,15 @@ void CG_AddMovingTracer(localEntity_t *le)
     vec3_t start;
     vec3_t end;
     vec3_t dir;
-    int time;
-    float dot;
     float dist;
 
-    time = cg->time;
-    BG_EvaluateTrajectory(&le->pos, time, start);
+    BG_EvaluateTrajectory(&le->pos, cg->time, start);
 
     Vec3NormalizeTo(le->pos.trDelta, dir);
 
-    dot = (start[0] - le->pos.trBase[0]) * dir[0] + (start[1] - le->pos.trBase[1]) * dir[1] + (start[2] - le->pos.trBase[2]) * dir[2];
-
-    dist = le->tracerClipDist - dot;
-    {
-        float tracerLen = (cg_tracerLength)->current.value;
-        if (dist > tracerLen) {
-            dist = tracerLen;
-        }
+    dist = le->tracerClipDist - ((start[0] - le->pos.trBase[0]) * dir[0] + (start[1] - le->pos.trBase[1]) * dir[1] + (start[2] - le->pos.trBase[2]) * dir[2]);
+    if (!(dist < cg_tracerLength->current.value)) {
+        dist = cg_tracerLength->current.value;
     }
 
     end[0] = start[0] + dist * dir[0];

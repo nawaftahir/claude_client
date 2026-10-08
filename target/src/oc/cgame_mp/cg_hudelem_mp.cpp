@@ -28,13 +28,7 @@ extern float AngleNormalize360( float angle );
 
 Bool CG_AreHudElemsHidden(void)
 {
-    if (!cg->drawHud)
-        return 1;
-    if (!(CL_GetKeyCatchers() & 8))
-        return 0;
-    if (!CL_GetDisplayHUDWithKeycatchUI())
-        return 1;
-    return 0;
+    return !cg->drawHud || ((CL_GetKeyCatchers() & 8) && !CL_GetDisplayHUDWithKeycatchUI()) ? 1 : 0;
 }
 
 float HudElemStringWidth(const char *string, const cg_hudelem_t *cghe)

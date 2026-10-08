@@ -485,22 +485,15 @@ void CG_Corpse(centity_t *cent)
     ((GfxEntity *)body)->materialRGBA[3] = 0xFF;
 
     BG_PlayerAnimation(obj, es, (clientInfo_t *)ci);
-    /* advance the body's anim time/weights each frame (see note in CG_Player) */
-    DObjUpdateClientInfo(obj, (float)cg->frametime * 0.001f);
 
     AnglesToAxis(cent->lerpAngles, ((GfxEntity *)body)->axis);
 
-    {
-        float *lerpOrigin = cent->lerpOrigin;
-        ((GfxEntity *)body)->origin[0] = lerpOrigin[0];
-        ((GfxEntity *)body)->origin[1] = lerpOrigin[1];
-        ((GfxEntity *)body)->origin[2] = lerpOrigin[2];
-
-        ((GfxEntity *)body)->lighting.baseCoords[0] = lerpOrigin[0];
-        ((GfxEntity *)body)->lighting.baseCoords[1] = lerpOrigin[1];
-
-        ((GfxEntity *)body)->lighting.baseCoords[2] = lerpOrigin[2] + es->fTorsoHeight;
-    }
+    ((GfxEntity *)body)->origin[0] = cent->lerpOrigin[0];
+    ((GfxEntity *)body)->origin[1] = cent->lerpOrigin[1];
+    ((GfxEntity *)body)->origin[2] = cent->lerpOrigin[2];
+    ((GfxEntity *)body)->lighting.baseCoords[0] = ((GfxEntity *)body)->origin[0];
+    ((GfxEntity *)body)->lighting.baseCoords[1] = ((GfxEntity *)body)->origin[1];
+    ((GfxEntity *)body)->lighting.baseCoords[2] = ((GfxEntity *)body)->origin[2] + es->fTorsoHeight;
 
     if (es->eFlags & 8) {
         ((GfxEntity *)body)->lighting.baseCoords[2] += 12.0f;

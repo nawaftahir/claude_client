@@ -189,30 +189,27 @@ static void CG_ParseScores(void)
 static void CG_SetVoteStringFromConfigString(const char *configString)
 {
     char converted[256];
+    int mapLoadNameLen;
+    const char *displayName;
     int inPos;
     int outPos;
 
-    inPos = 0;
     outPos = 0;
-
-    while (configString && configString[inPos] && outPos < (int)sizeof(converted) - 1) {
-        int mapLoadNameLen;
-        const char *displayName;
-
-        mapLoadNameLen = 0;
+    inPos = 0;
+    do {
         displayName = UI_GetMapDisplayNameFromPartialLoadNameMatch(configString + inPos, &mapLoadNameLen);
-        if (displayName && *displayName) {
-            while (*displayName && outPos < (int)sizeof(converted) - 1) {
-                converted[outPos++] = *displayName++;
+        if (displayName) {
+            // retail bounds on inPos, not outPos
+            if (inPos < 256) {
+                for (; *displayName; displayName++)
+                    converted[outPos++] = *displayName;
             }
             inPos += mapLoadNameLen;
-            continue;
         }
+        converted[outPos++] = configString[inPos];
+    } while (configString[inPos] && ++inPos < 256);
 
-        converted[outPos++] = configString[inPos++];
-    }
-
-    converted[outPos] = '\0';
+    converted[255] = 0;
     I_strncpyz(cgs->voteString, SEH_LocalizeTextMessage(converted, "vote string", (msgLocErrType_t)0), sizeof(cgs->voteString));
 }
 

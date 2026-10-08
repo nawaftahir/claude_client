@@ -911,8 +911,10 @@ static void G_SayTo( gentity_t *ent, gentity_t *other, int mode, int color, cons
 		return;
 	}
 
+	char cmd = 104 + (mode == SAY_TEAM);
+
 	SV_GameSendServerCommand(other - g_entities, SV_CMD_CAN_IGNORE,
-		va("%c \"\x15%s%c%c%s\"", mode == SAY_TEAM ? 105 : 104, name, 94, color, message));
+		va("%c \"\x15%s%c%c%s\"", cmd, name, 94, color, message));
 }
 
 /*

@@ -595,7 +595,7 @@ static Bool Script_ExecIfStringsEqual(const char *dvarValue, const char *testVal
 
 static Bool Script_ExecIfIntsEqual(const char *dvarValue, const char *testValue)
 {
-    return atoi(dvarValue) == atoi(testValue);
+    return atoi(dvarValue) == atoi(testValue) ? 1 : 0;
 }
 
 static Bool Script_ExecIfFloatsEqual(const char *dvarValue, const char *testValue)
@@ -1309,6 +1309,7 @@ void Item_Text_AutoWrapped_Paint(itemDef_t *item, const char *textPtr, vec_t *co
     float targetWidth;
     int iTargetLineWidth;
     rectDef_t newRect;
+    rectDef_t *textRect;
 
     newLinePtr = NULL;
     font = UI_GetFontHandle(item->fontEnum, item->textscale);
@@ -1347,9 +1348,10 @@ void Item_Text_AutoWrapped_Paint(itemDef_t *item, const char *textPtr, vec_t *co
                     newRect.x = item->textalignx;
                 newRect.y = y;
                 ToWindowCoords(&newRect.x, &newRect.y, &item->window);
-                item->textRect[0] = newRect;
+                textRect = &item->textRect[0];
+                *textRect = newRect;
                 buff[newLine] = '\0';
-                UI_DrawText(buff, 0x7fffffff, font, item->textRect[0].x, item->textRect[0].y, item->window.rect[0].horzAlign, item->window.rect[0].vertAlign, item->textscale, color, item->textStyle);
+                UI_DrawText(buff, 0x7fffffff, font, textRect->x, textRect->y, item->window.rect[0].horzAlign, item->window.rect[0].vertAlign, item->textscale, color, item->textStyle);
             }
             if (*p == '\0')
                 break;
@@ -1463,10 +1465,7 @@ void Item_ListBox_Paint(displayContextDef_t *dc, itemDef_t *item)
 
         x = (((rectDef_t*)(it))->x) + 1.0f;
         y = (((rectDef_t*)(it))->y) + 1.0f;
-        startPos = *(int *)listPtr;
-        i = startPos;
-
-        while (i < count) {
+        for (i = *(int *)listPtr; i < count; i++) {
 
             MaterialHandle img = UI_FeederItemImage(((itemDef_t *)it)->special, i);
             if (img) {
@@ -1489,12 +1488,11 @@ void Item_ListBox_Paint(displayContextDef_t *dc, itemDef_t *item)
             size -= (((listBoxDef_s*)(listPtr))->elementWidth);
             if (size < (((listBoxDef_s*)(listPtr))->elementWidth)) {
                 (((listBoxDef_s*)(listPtr))->drawPadding) = (int)size;
-                return;
+                break;
             }
 
             x += (((listBoxDef_s*)(listPtr))->elementWidth);
             ListBox_SetEndPos( (listBoxDef_t *)((itemDef_t *)((void *)listPtr)), (((listBoxDef_s*)(listPtr))->endPos[0]) + 1);
-            i++;
         }
         return;
     }
@@ -1575,32 +1573,29 @@ void Item_ListBox_Paint(displayContextDef_t *dc, itemDef_t *item)
     for (i = *(int *)listPtr; i < count; i++) {
         if ((((listBoxDef_s*)(listPtr))->numColumns) > 0) {
 
-            byte *col;
-            for (j = 0, col = listPtr; j < (((listBoxDef_s*)(listPtr))->numColumns); j++) {
+            for (j = 0; j < (((listBoxDef_s*)(listPtr))->numColumns); j++) {
 
                 text = UI_FeederItemText(((itemDef_t *)it)->special, i, j, &optionalImage);
 
                 if (optionalImage) {
 
-                    float imgSize = (float)((((listBoxDef_s*)(col))->columnInfo[0].width));
+                    float imgSize = (float)((((listBoxDef_s*)(listPtr))->columnInfo[j].width));
                     UI_DrawHandlePic(
-                        (float)((((listBoxDef_s*)(col))->columnInfo[0].pos)) + x + 2.0f,
+                        (float)((((listBoxDef_s*)(listPtr))->columnInfo[j].pos)) + x + 2.0f,
                         y + 3.0f,
                         imgSize, imgSize,
                         ((rectDef_t *)it)->horzAlign, ((rectDef_t *)it)->vertAlign, 0, optionalImage);
                 } else if (text) {
 
-                    float textScale = ((itemDef_t *)it)->textscale;
-                    UI_DrawText(text, (((listBoxDef_s*)(col))->columnInfo[0].maxChars),
-                                UI_GetFontHandle(((itemDef_t *)it)->fontEnum, textScale),
-                                (float)((((listBoxDef_s*)(col))->columnInfo[0].pos)) + (((itemDef_s*)(it))->textalignx) + x + 4.0f,
+                    UI_DrawText(text, (((listBoxDef_s*)(listPtr))->columnInfo[j].maxChars),
+                                UI_GetFontHandle(((itemDef_t *)it)->fontEnum, ((itemDef_t *)it)->textscale),
+                                (float)((((listBoxDef_s*)(listPtr))->columnInfo[j].pos)) + (((itemDef_s*)(it))->textalignx) + x + 4.0f,
                                 (((itemDef_s*)(it))->textaligny) + (((listBoxDef_s*)(listPtr))->elementHeight) + y,
                                 ((rectDef_t *)it)->horzAlign, ((rectDef_t *)it)->vertAlign,
-                                textScale,
+                                ((itemDef_t *)it)->textscale,
                                 ((itemDef_t *)it)->window.foreColor,
                                 (((itemDef_s*)(it))->textStyle));
                 }
-                col += 0xc;
             }
         } else {
 
@@ -1616,11 +1611,10 @@ void Item_ListBox_Paint(displayContextDef_t *dc, itemDef_t *item)
                     ((rectDef_t *)it)->horzAlign, ((rectDef_t *)it)->vertAlign, 0, optionalImage);
             } else if (text) {
 
-                float textScale2 = ((itemDef_t *)it)->textscale;
-                UI_DrawText(text, 0x7fffffff, UI_GetFontHandle(((itemDef_t *)it)->fontEnum, textScale2),
+                UI_DrawText(text, 0x7fffffff, UI_GetFontHandle(((itemDef_t *)it)->fontEnum, ((itemDef_t *)it)->textscale),
                             x + 4.0f, y + (((listBoxDef_s*)(listPtr))->elementHeight),
                             ((rectDef_t *)it)->horzAlign, ((rectDef_t *)it)->vertAlign,
-                            textScale2,
+                            ((itemDef_t *)it)->textscale,
                             ((itemDef_t *)it)->window.foreColor,
                             (((itemDef_s*)(it))->textStyle));
             }
@@ -2755,34 +2749,30 @@ qboolean Item_SetFocus(displayContextDef_t *dc, itemDef_t *item, float x, float 
 void Script_SetFocusByDvar(displayContextDef_t *dc, itemDef_t *item, const char **args)
 {
     char dvarName[0x400];
-    byte *parent;
+    menuDef_t *parent;
+    itemDef_t *focusItem;
     int i;
 
     if (!String_Parse(args, dvarName, 0x400))
         return;
 
-    parent = (byte *)item->parent;
-    if (!parent)
-        return;
+    parent = (menuDef_t *)item->parent;
+    for (i = 0; i < parent->itemCount; i++) {
+        focusItem = parent->items[i];
 
-    int itemCount = (((menuDef_t*)(parent))->itemCount);
-    for (i = 0; i < itemCount; i++) {
-        byte *focusItem = *(byte **)((char *)&((menuDef_t *)parent)->items[i]);
-
-        if (!((*(byte *)&((itemDef_t *)focusItem)->dvarFlags) & 0x10))
+        if (!(focusItem->dvarFlags & 0x10))
             continue;
 
-        const char *dvarTest = ((itemDef_t *)focusItem)->dvarTest;
-        if (!dvarTest)
+        if (!focusItem->dvarTest)
             Com_Error(ERR_DROP, "\x15Script_SetFocusByDvar: Item's dvarTest field is empty.");
 
-        if (I_stricmp(dvarTest, dvarName) != 0)
+        if (stricmp(focusItem->dvarTest, dvarName))
             continue;
 
-        if (!Item_EnableShowViaDvar((itemDef_t *)focusItem, 0x10))
+        if (!Item_EnableShowViaDvar(focusItem, 0x10))
             continue;
 
-        if (Item_SetFocus(dc, (itemDef_t *)focusItem, (((rectDef_t*)(focusItem))->x), (((rectDef_t*)(focusItem))->y)))
+        if (Item_SetFocus(dc, focusItem, focusItem->window.rect[0].x, focusItem->window.rect[0].y))
             return;
     }
 }

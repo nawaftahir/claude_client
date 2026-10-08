@@ -33,7 +33,7 @@ extern void CG_ProcessSnapshots(void);
 extern void CG_DrawPlayerSprites(void);
 extern void CG_DrawActive(void);
 extern void CG_Draw3dHudElems(void);
-extern unsigned int CG_Draw2D(void);
+extern void CG_Draw2D(void);
 extern void CG_AddPacketEntities(void);
 extern void CG_AddLocalEntities(void);
 extern void CG_AddLagometerFrameInfo(void);

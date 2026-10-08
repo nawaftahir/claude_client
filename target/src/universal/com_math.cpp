@@ -199,7 +199,7 @@ float GraphGetValueFromFraction( int knotCount, const float (*knots)[2], float f
 int Q_log2( int val );
 float Q_acos( float c );
 signed char ClampChar( int i );
-int ClampShort( int i );
+signed short ClampShort( int i );
 byte DirToByte( const vec3_t dir );
 void ByteToDir( const int b, vec3_t dir );
 int VecNCompareCustomEpsilon( const float *v0, const float *v1, float epsilon, int coordCount );
@@ -742,18 +742,13 @@ signed char ClampChar( int i )
 ClampShort
 ==============
 */
-int ClampShort( int i )
+signed short ClampShort( int i )
 {
-	int result;
-
 	if ( i < -32768 )
-		result = -32768;
-	else if ( i > 32767 )
-		result = 32767;
-	else
-		result = (short)i;
-
-	return result;
+		return -32768;
+	if ( i > 32767 )
+		return 32767;
+	return i;
 }
 
 /*
@@ -3254,6 +3249,7 @@ void AxisToSignedAngles( const vec3_t axis[3], vec3_t angles )
 	float fCos;
 	float temp;
 	float pitch;
+	float offset;
 
 	vectoanglessigned(axis[0], angles);
 	VectorCopy(axis[1], right);
@@ -3274,7 +3270,8 @@ void AxisToSignedAngles( const vec3_t axis[3], vec3_t angles )
 
 	if ( right[1] < 0 )
 	{
-		angles[ROLL] = pitch < 0 ? pitch + 180.0f : pitch + -180.0f;
+		offset = pitch < 0 ? 180.0f : -180.0f;
+		angles[ROLL] = offset + pitch;
 	}
 	else
 	{

@@ -54,12 +54,12 @@ static void CL_Netchan_Encode(byte *data, int size)
     index = 0;
     key = (byte)clients[0].serverId ^ (byte)clc.challenge ^ (byte)clc.serverMessageSequence;
 
-    for (i = 0; i < size; i++) {
+    for (i = 0; i < size; i++, data++) {
         if (!string[index])
             index = 0;
         key ^= string[index] << (i & 1);
         index++;
-        *data++ ^= key;
+        *data ^= key;
     }
 }
 

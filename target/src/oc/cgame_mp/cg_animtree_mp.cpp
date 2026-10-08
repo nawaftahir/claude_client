@@ -20,11 +20,9 @@ void CG_SetDObjInfo(int iEntNum, int iEntType, struct XModel *pXModel)
 
 qboolean CG_CheckDObjInfoMatches(int iEntNum, int iEntType, struct XModel *pXModel)
 {
-    if (cg->iEntityLastType[iEntNum] != iEntType)
-        return 0;
-    if (cg->pEntityLastXModel[iEntNum] != pXModel)
-        return 0;
-    return 1;
+    if (cg->iEntityLastType[iEntNum] == iEntType && cg->pEntityLastXModel[iEntNum] == pXModel)
+        return 1;
+    return 0;
 }
 
 void CG_SafeDObjFree(int iEntNum)

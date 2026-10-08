@@ -2142,58 +2142,43 @@ int CM_SightTraceThroughTree( traceWork_t *tw, int num, const vec3_t p1_, const 
 
 	VectorCopy(p1_, p1);
 
-	while ( 1 )
+	while ( num >= 0 )
 	{
-		while ( 1 )
+		node = &cm.nodes[num];
+		plane = node->plane;
+
+		if ( plane->type < 3 )
 		{
-			while ( 1 )
+			t1 = p1[plane->type] - plane->dist;
+			t2 = p2[plane->type] - plane->dist;
+
+			offset = tw->size[plane->type] + (float)SURFACE_CLIP_EPSILON;
+		}
+		else
+		{
+			t1 = DotProduct(plane->normal, p1) - plane->dist;
+			t2 = DotProduct(plane->normal, p2) - plane->dist;
+
+			if ( tw->isPoint )
 			{
-				if ( num < 0 )
-				{
-					return CM_SightTraceThroughLeaf(tw, &cm.leafs[-1 - num], trace);
-				}
-
-				node = &cm.nodes[num];
-				plane = node->plane;
-
-				if ( plane->type < 3 )
-				{
-					t1 = p1[plane->type] - plane->dist;
-					t2 = p2[plane->type] - plane->dist;
-
-					offset = tw->size[plane->type] + (float)SURFACE_CLIP_EPSILON;
-				}
-				else
-				{
-					t1 = DotProduct(plane->normal, p1) - plane->dist;
-					t2 = DotProduct(plane->normal, p2) - plane->dist;
-
-					if ( tw->isPoint )
-					{
-						offset = (float)SURFACE_CLIP_EPSILON;
-					}
-					else
-					{
-						offset = 2048;
-					}
-				}
-
-				if ( I_fmin(t1, t2) >= offset )
-				{
-					num = node->children[0];
-					continue;
-				}
-
-				break;
+				offset = (float)SURFACE_CLIP_EPSILON;
 			}
-
-			if ( I_fmax(t1, t2) <= -offset )
+			else
 			{
-				num = node->children[1];
-				continue;
+				offset = 2048;
 			}
+		}
 
-			break;
+		if ( I_fmin(t1, t2) >= offset )
+		{
+			num = node->children[0];
+			continue;
+		}
+
+		if ( I_fmax(t1, t2) <= -offset )
+		{
+			num = node->children[1];
+			continue;
 		}
 
 		diff = t2 - t1;
@@ -2236,7 +2221,7 @@ int CM_SightTraceThroughTree( traceWork_t *tw, int num, const vec3_t p1_, const 
 		num = node->children[side ^ 1];
 	}
 
-	return hitNum;
+	return CM_SightTraceThroughLeaf(tw, &cm.leafs[-1 - num], trace);
 }
 
 /*

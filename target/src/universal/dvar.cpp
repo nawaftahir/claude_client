@@ -673,6 +673,8 @@ static bool Dvar_ValuesEqual(unsigned char type, DvarValue val0, DvarValue val1)
 	}
 }
 
+static void Dvar_SetVariant(dvar_t *dvar, DvarValue value, DvarSetSource source);
+
 static void Dvar_SetLatchedValue(dvar_t *dvar, DvarValue value)
 {
 	switch ( dvar->type )

@@ -923,6 +923,8 @@ void CG_AdjustPositionForMover(const vec_t *in, int moverNum, int fromTime, int 
     vec3_t oldAngles;
     vec3_t origin;
     vec3_t angles;
+    vec3_t deltaOrigin;
+    vec3_t deltaAngles;
 
     if (outDeltaAngles) {
         outDeltaAngles[0] = 0.0f;
@@ -930,34 +932,38 @@ void CG_AdjustPositionForMover(const vec_t *in, int moverNum, int fromTime, int 
         outDeltaAngles[2] = 0.0f;
     }
 
-    if ((unsigned int)(moverNum - 1) > 0x3fc) {
+    if (moverNum > 0 && moverNum < 1022) {
+        cent = &(((centity_t *)cg_entities))[moverNum];
+        if (cent->nextState.eType != 6) {
+            out[0] = in[0];
+            out[1] = in[1];
+            out[2] = in[2];
+            return;
+        }
+        BG_EvaluateTrajectory(&cent->currentState.pos, fromTime, oldOrigin);
+        BG_EvaluateTrajectory(&cent->currentState.apos, fromTime, oldAngles);
+        BG_EvaluateTrajectory(&cent->currentState.pos, toTime, origin);
+        BG_EvaluateTrajectory(&cent->currentState.apos, toTime, angles);
+
+        deltaOrigin[0] = origin[0] - oldOrigin[0];
+        deltaOrigin[1] = origin[1] - oldOrigin[1];
+        deltaOrigin[2] = origin[2] - oldOrigin[2];
+        deltaAngles[0] = angles[0] - oldAngles[0];
+        deltaAngles[1] = angles[1] - oldAngles[1];
+        deltaAngles[2] = angles[2] - oldAngles[2];
+        out[0] = in[0] + deltaOrigin[0];
+        out[1] = in[1] + deltaOrigin[1];
+        out[2] = in[2] + deltaOrigin[2];
+
+        if (outDeltaAngles) {
+            outDeltaAngles[0] = deltaAngles[0];
+            outDeltaAngles[1] = deltaAngles[1];
+            outDeltaAngles[2] = deltaAngles[2];
+        }
+    } else {
         out[0] = in[0];
         out[1] = in[1];
         out[2] = in[2];
-        return;
-    }
-
-    cent = &(((centity_t *)cg_entities))[moverNum];
-    if (cent->currentState.eType != 6) {
-        out[0] = in[0];
-        out[1] = in[1];
-        out[2] = in[2];
-        return;
-    }
-
-    BG_EvaluateTrajectory(&cent->currentState.pos, fromTime, oldOrigin);
-    BG_EvaluateTrajectory(&cent->currentState.apos, fromTime, oldAngles);
-    BG_EvaluateTrajectory(&cent->currentState.pos, toTime, origin);
-    BG_EvaluateTrajectory(&cent->currentState.apos, toTime, angles);
-
-    out[0] = in[0] + origin[0] - oldOrigin[0];
-    out[1] = in[1] + origin[1] - oldOrigin[1];
-    out[2] = in[2] + origin[2] - oldOrigin[2];
-
-    if (outDeltaAngles) {
-        outDeltaAngles[0] = angles[0] - oldAngles[0];
-        outDeltaAngles[1] = angles[1] - oldAngles[1];
-        outDeltaAngles[2] = angles[2] - oldAngles[2];
     }
 }
 
@@ -968,13 +974,6 @@ void CG_ProcessEntity(centity_t *cent)
     CG_EntityEffects(cent);
 
     eType = cent->nextState.eType;
-    if ((unsigned int)eType > 9) {
-        Com_Error(ERR_DROP, (const char *)"\x15"
-                                   "Bad entity type: %i\n",
-                  eType);
-        return;
-    }
-
     switch (eType) {
     case 0:
         CG_General(cent);
@@ -1005,6 +1004,11 @@ void CG_ProcessEntity(centity_t *cent)
     case 9:
         CG_Turret(cent);
         break;
+    default:
+        Com_Error(ERR_DROP, (const char *)"\x15"
+                                   "Bad entity type: %i\n",
+                  eType);
+        return;
     }
 }
 

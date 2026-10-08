@@ -700,137 +700,57 @@ void CL_Ping_f(void)
 void CL_Connect_f(void)
 {
     const char *server;
-    clientConnection_t *clc;
-    byte *cls_servername;
+    LegacyHacks *legacy;
 
     if (Cmd_Argc() != 2) {
-        Com_Printf((const char *)"usage: connect [server]\n");
+        Com_Printf("usage: connect [server]\n");
         return;
     }
 
     SND_StopSounds((snd_stopsounds_arg_t)0);
-
-    clc = &::clc;
-    clc->serverMessage[0] = 0;
-
+    clc.serverMessage[0] = 0;
     server = Cmd_Argv(1);
 
-    {
-        dvar_t *sv_running = (dvar_t *)(com_sv_running);
-        if (sv_running->current.enabled != 0) {
-
-            if (memcmp(server, (const char *)"localhost", 10) == 0)
-            {
-
-                LegacyHacks *legacyHacks = (LegacyHacks *)::legacyHacks;
-                legacyHacks->sv_killserver = 1;
-            }
-        }
-    }
-
-    {
-        LegacyHacks *legacyHacks = (LegacyHacks *)::legacyHacks;
-        legacyHacks->cl_serverloadmap[0] = '\0';
-        legacyHacks = (LegacyHacks *)::legacyHacks;
-        legacyHacks->cl_serverloadgametype[0] = '\0';
-    }
+    legacy = (LegacyHacks *)::legacyHacks;
+    if (((dvar_t *)com_sv_running)->current.enabled && !strcmp(server, "localhost"))
+        legacy->sv_killserver = 1;
+    legacy->cl_serverloadmap[0] = 0;
+    legacy->cl_serverloadgametype[0] = 0;
 
     SV_Frame(0);
     CL_Disconnect();
     Con_Close();
 
-    cls_servername = (byte *)cls.servername;
-    I_strncpyz((char *)cls_servername, server, sizeof(((clientStatic_t *)0)->servername));
+    I_strncpyz(cls.servername, server, sizeof(cls.servername));
 
-    clc = &::clc;
-    {
-        clientConnection_t *clcConn = &::clc;
-        if (!NET_StringToAdr((const char *)cls_servername, &clcConn->serverAddress)) {
-            Com_Printf((const char *)"Bad server address\n");
-            clcConn->state = (connstate_t)(0);
-            return;
-        }
+    if (!NET_StringToAdr(cls.servername, &clc.serverAddress)) {
+        Com_Printf("Bad server address\n");
+        clc.state = (connstate_t)0;
+        return;
+    }
+    if (clc.serverAddress.port == 0)
+        clc.serverAddress.port = BigShort(28960);
+    Com_Printf("%s resolved to %i.%i.%i.%i:%i\n", cls.servername, clc.serverAddress.ip[0], clc.serverAddress.ip[1],
+               clc.serverAddress.ip[2], clc.serverAddress.ip[3], BigShort(clc.serverAddress.port));
 
-        if (clcConn->serverAddress.port == 0) {
-            clcConn->serverAddress.port = 0x2071;
-        }
-
-        {
-            unsigned short netPort = clcConn->serverAddress.port;
-
-            short displayPort = (short)((netPort >> 8) | (netPort << 8));
-            Com_Printf((const char *)"%s resolved to %i.%i.%i.%i:%i\n",
-                       cls_servername,
-                       (int)clcConn->serverAddress.ip[0],
-                       (int)clcConn->serverAddress.ip[1],
-                       (int)clcConn->serverAddress.ip[2],
-                       (int)clcConn->serverAddress.ip[3],
-                       (int)displayPort);
-        }
+    if (!NET_IsLocalAddress(clc.serverAddress) && !CL_CDKeyValidate(cl_cdkey, cl_cdkeychecksum)) {
+        Com_Error(ERR_DROP, "EXE_ERR_INVALID_CD_KEY");
+        return;
     }
 
-    if (!NET_IsLocalAddress(clc->serverAddress)) {
+    if (NET_IsLocalAddress(clc.serverAddress))
+        clc.state = (connstate_t)4;
+    else
+        clc.state = (connstate_t)3;
 
-        unsigned int crc = 0;
-        byte *cdkey = (byte *)cl_cdkey;
-        byte *cdkeyEnd = cdkey + 16;
-        char chs[8];
-
-        while (cdkey != cdkeyEnd) {
-            int ch = (signed char)*cdkey;
-            int j;
-            crc ^= (unsigned int)ch;
-            for (j = 8; j != 0; j--) {
-                if (crc & 1) {
-                    crc >>= 1;
-                    crc ^= 0xa001;
-                } else {
-                    crc >>= 1;
-                }
-            }
-            cdkey++;
-        }
-
-        sprintf(chs, (const char *)"%04x", crc);
-
-        if (I_strnicmp(chs, cl_cdkeychecksum, 4) != 0) {
-            Com_Error(ERR_DROP, (const char *)"EXE_ERR_INVALID_CD_KEY");
-            return;
-        }
-    }
-
-    {
-        clientConnection_t *clcConn;
-        clc = &::clc;
-        clcConn = &::clc;
-
-        if (NET_IsLocalAddress(clcConn->serverAddress)) {
-            clcConn->state = (connstate_t)(4);
-        } else {
-            clcConn = &::clc;
-            clcConn->state = (connstate_t)(3);
-            clc = clcConn;
-        }
-    }
-
-    {
-        clientActive_t *clActive = clients;
-        clActive->keyCatchers = 0;
-        clActive->displayHUDWithKeycatchUI = 0;
-    }
-
-    {
-        clientConnection_t *clcConn = &::clc;
-        clcConn->connectTime = (int)0xfffe7961;
-        clcConn->connectPacketCount = 0;
-
-        clcConn->qport = ::qport;
-    }
+    clients->keyCatchers = 0;
+    clients->displayHUDWithKeycatchUI = 0;
+    clc.connectTime = -99999;
+    clc.connectPacketCount = 0;
+    clc.qport = ::qport;
 
     UI_CloseAll();
     SCR_UpdateScreen();
-
-    return;
 }
 
 serverStatusRequest_t *CL_GetServerStatus(netadr_t from)

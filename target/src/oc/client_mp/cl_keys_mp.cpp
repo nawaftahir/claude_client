@@ -1194,7 +1194,7 @@ void CL_KeyEvent(int key, const qboolean down, const unsigned int time)
 
 void CL_CharEvent(int key)
 {
-    int keyCatchers;
+    unsigned char keyCatchers;
 
     if (key == '`' || key == '~')
         return;

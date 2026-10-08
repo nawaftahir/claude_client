@@ -974,18 +974,14 @@ static void CG_CreateDObj(DObjModel_s *dobjModels, unsigned short numModels, str
 
 static void CG_InitXAnimTrees(void)
 {
-    byte *cgBase = (byte *)cg;
-    byte *cgsBase = (byte *)cgs;
-    void *anims = (*(void **)&((cg_t *)cgBase)->bgs.generic_human.tree.anims);
-    byte *clientTree = (byte *)(((char *)cgBase + offsetof(cg_t, bgs.clientinfo[0].pXAnimTree)));
-    byte *cgsTree = (byte *)(((char *)cgsBase + offsetof(cgs_t, corpseinfo[0].pXAnimTree)));
+    XAnim *anims;
     int i;
 
-    for (i = 0; i < 64; i++, clientTree += 0x4b8)
-        *(void **)clientTree = XAnimCreateTree((XAnim *)anims, (Alloc_t)Hunk_AllocXAnimClient);
-
-    for (i = 0; i < 8; i++, cgsTree += 0x4b8)
-        *(void **)cgsTree = XAnimCreateTree((XAnim *)anims, (Alloc_t)Hunk_AllocXAnimClient);
+    anims = (XAnim *)cg->bgs.generic_human.tree.anims;
+    for (i = 0; i < 64; i++)
+        cg->bgs.clientinfo[i].pXAnimTree = XAnimCreateTree(anims, (Alloc_t)Hunk_AllocXAnimClient);
+    for (i = 0; i < 8; i++)
+        cgs->corpseinfo[i].pXAnimTree = XAnimCreateTree(anims, (Alloc_t)Hunk_AllocXAnimClient);
 }
 
 // retail 0x4ba930 (Kisak name)

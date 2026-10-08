@@ -790,7 +790,7 @@ static __attribute_regparm__(3) int SND_StartAliasStream(const snd_alias_t *pAli
         break;
     default:
         if (!SND_AnyActiveListeners())
-            Com_Error(ERR_DROP, "attempted to play spatialized alias '%s' while there is no active listener\n", pAlias0->pszAliasName);
+            Com_Error(ERR_DROP, "attempted to play spatialized alias '%s' while there is no active listener. Most likely this means you tried to play a spatialized sound while not in a level.\n", pAlias0->pszAliasName);
         break;
     }
 
@@ -1174,14 +1174,13 @@ int SND_PlayLocalSoundAlias(snd_alias_list_t *aliasList, snd_alias_system_t syst
 {
     const snd_alias_t *pAlias;
 
-    if (!aliasList)
-        return 0;
+    if (aliasList) {
+        pAlias = Com_PickSoundAliasFromList(aliasList);
+        if (pAlias)
+            return SND_PlaySoundAlias_Internal(pAlias, pAlias, 0.0f, g_snd.listeners[0].entnum, g_snd.listeners[0].orient.origin, NULL, 0, 0, system);
+    }
 
-    pAlias = Com_PickSoundAliasFromList(aliasList);
-    if (!pAlias)
-        return 0;
-
-    return SND_PlaySoundAlias_Internal(pAlias, pAlias, 0.0f, g_snd.listeners[0].entnum, g_snd.listeners[0].orient.origin, NULL, 0, 0, system);
+    return 0;
 }
 
 static void SND_PauseSounds(void)

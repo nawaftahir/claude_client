@@ -116,10 +116,10 @@ extern vec_t Vec3Normalize( vec3_t v );
 extern float Vec3Distance(const vec3_t v1, const vec3_t v2);
 extern float Vec3DistanceSq(const vec3_t v1, const vec3_t v2);
 
-static long unsigned int MSS_FileOpenCallback(const char *pszFilename, long unsigned int *phFileHandle);
-static void MSS_FileCloseCallback(long unsigned int hFileHandle);
-static long int MSS_FileSeekCallback(long unsigned int hFileHandle, long int offset, long unsigned int type);
-static long unsigned int MSS_FileReadCallback(long unsigned int hFileHandle, void *pBuffer, long unsigned int bytes);
+static long unsigned int __stdcall MSS_FileOpenCallback(const char *pszFilename, long unsigned int *phFileHandle);
+static void __stdcall MSS_FileCloseCallback(long unsigned int hFileHandle);
+static long int __stdcall MSS_FileSeekCallback(long unsigned int hFileHandle, long int offset, long unsigned int type);
+static long unsigned int __stdcall MSS_FileReadCallback(long unsigned int hFileHandle, void *pBuffer, long unsigned int bytes);
 void SND_ShutdownDriver(void);
 int SND_GetDriverCPUPercentage(void);
 void SND_Stop2DChannel(int index);
@@ -187,10 +187,10 @@ extern int stricmp(const char *a, const char *b);
 extern const dvar_t *mss_3d_provider;
 extern const dvar_t *mss_q3fs;
 static struct MssLocal milesGlob;
-static long unsigned int MSS_FileOpenCallback(const char *pszFilename, long unsigned int *phFileHandle);
-static void MSS_FileCloseCallback(long unsigned int hFileHandle);
-static long int MSS_FileSeekCallback(long unsigned int hFileHandle, long int offset, long unsigned int type);
-static long unsigned int MSS_FileReadCallback(long unsigned int hFileHandle, void *pBuffer, long unsigned int bytes);
+static long unsigned int __stdcall MSS_FileOpenCallback(const char *pszFilename, long unsigned int *phFileHandle);
+static void __stdcall MSS_FileCloseCallback(long unsigned int hFileHandle);
+static long int __stdcall MSS_FileSeekCallback(long unsigned int hFileHandle, long int offset, long unsigned int type);
+static long unsigned int __stdcall MSS_FileReadCallback(long unsigned int hFileHandle, void *pBuffer, long unsigned int bytes);
 void SND_ShutdownDriver(void);
 int SND_GetDriverCPUPercentage(void);
 void SND_Stop2DChannel(int index);
@@ -279,18 +279,18 @@ static inline float I_sqrt(const float value)
     return sqrt(value);
 }
 
-static long unsigned int MSS_FileOpenCallback(const char *pszFilename, long unsigned int *phFileHandle)
+static long unsigned int __stdcall MSS_FileOpenCallback(const char *pszFilename, long unsigned int *phFileHandle)
 {
 
-    return ((unsigned int)FS_FOpenFileReadStream(pszFilename, (int *)phFileHandle, 1) >> 31) ^ 1;
+    return FS_FOpenFileReadStream(pszFilename, (int *)phFileHandle, 1) >= 0;
 }
 
-static void MSS_FileCloseCallback(long unsigned int hFileHandle)
+static void __stdcall MSS_FileCloseCallback(long unsigned int hFileHandle)
 {
     FS_FCloseFile((int)hFileHandle);
 }
 
-static long int MSS_FileSeekCallback(long unsigned int hFileHandle, long int offset, long unsigned int type)
+static long int __stdcall MSS_FileSeekCallback(long unsigned int hFileHandle, long int offset, long unsigned int type)
 {
     switch (type) {
     case 0:
@@ -307,7 +307,7 @@ static long int MSS_FileSeekCallback(long unsigned int hFileHandle, long int off
     }
 }
 
-static long unsigned int MSS_FileReadCallback(long unsigned int hFileHandle, void *pBuffer, long unsigned int bytes)
+static long unsigned int __stdcall MSS_FileReadCallback(long unsigned int hFileHandle, void *pBuffer, long unsigned int bytes)
 {
     return FS_Read(pBuffer, (int)bytes, (int)hFileHandle);
 }
@@ -611,21 +611,18 @@ void SND_Pause2DChannel(int index)
 
 void SND_Unpause2DChannel(int index, int timeshift)
 {
-    snd_local_t *sndGlob = &g_snd;
-    if (sndGlob->chaninfo[index].startDelay == 0) {
+    if (g_snd.chaninfo[index].startDelay == 0) {
         AIL_resume_sample(milesGlob.handle_2D[index - 45]);
     }
-    sndGlob->chaninfo[index].endtime += timeshift;
-    sndGlob->chaninfo[index].paused = 0;
+    g_snd.chaninfo[index].endtime += timeshift;
+    g_snd.chaninfo[index].paused = 0;
 }
 
 Bool SND_Is2DChannelFree(int index)
 {
-    if (g_snd.chaninfo[index].paused)
-        return 0;
-    if (g_snd.chaninfo[index].startDelay)
-        return 0;
-    return AIL_sample_status(milesGlob.handle_2D[index - 45]) == 2;
+    if (!g_snd.chaninfo[index].paused && !g_snd.chaninfo[index].startDelay)
+        return AIL_sample_status(milesGlob.handle_2D[index - 45]) == 2 ? 1 : 0;
+    return 0;
 }
 
 void SND_Stop3DChannel(int index)
@@ -647,21 +644,18 @@ void SND_Pause3DChannel(int index)
 
 void SND_Unpause3DChannel(int index, int timeshift)
 {
-    snd_local_t *sndGlob = &g_snd;
-    if (sndGlob->chaninfo[index].startDelay == 0) {
+    if (g_snd.chaninfo[index].startDelay == 0) {
         AIL_resume_3D_sample(milesGlob.handle_3D[index]);
     }
-    sndGlob->chaninfo[index].endtime += timeshift;
-    sndGlob->chaninfo[index].paused = 0;
+    g_snd.chaninfo[index].endtime += timeshift;
+    g_snd.chaninfo[index].paused = 0;
 }
 
 Bool SND_Is3DChannelFree(int index)
 {
-    if (g_snd.chaninfo[index].paused)
-        return 0;
-    if (g_snd.chaninfo[index].startDelay)
-        return 0;
-    return AIL_3D_sample_status(milesGlob.handle_3D[index]) == 2;
+    if (!g_snd.chaninfo[index].paused && !g_snd.chaninfo[index].startDelay)
+        return AIL_3D_sample_status(milesGlob.handle_3D[index]) == 2 ? 1 : 0;
+    return 0;
 }
 
 void SND_StopStreamChannel(int index)
@@ -678,18 +672,17 @@ void SND_PauseStreamChannel(int index)
     snd_channel_info_t *chaninfo;
     AIL_pause_stream(milesGlob.handle_stream[index - 0x20], 1);
     sndGlob = &g_snd;
-    chaninfo = &sndGlob->chaninfo[index];
+    chaninfo = &g_snd.chaninfo[index];
     chaninfo->paused = 1;
 }
 
 void SND_UnpauseStreamChannel(int index, int timeshift)
 {
-    snd_local_t *sndGlob = &g_snd;
-    if (sndGlob->chaninfo[index].startDelay == 0) {
+    if (g_snd.chaninfo[index].startDelay == 0) {
         AIL_pause_stream(milesGlob.handle_stream[index - 0x20], 0);
     }
-    sndGlob->chaninfo[index].endtime += timeshift;
-    sndGlob->chaninfo[index].paused = 0;
+    g_snd.chaninfo[index].endtime += timeshift;
+    g_snd.chaninfo[index].paused = 0;
 }
 
 Bool SND_IsStreamChannelFree(int index)

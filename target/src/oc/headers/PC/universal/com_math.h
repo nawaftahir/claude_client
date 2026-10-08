@@ -187,7 +187,10 @@ struct refexport_t {
     const char * (*ParseSunLight)(void *params, const char *text);
     MaterialHandle (*Material_Duplicate)(MaterialHandle mtlCopy, const char *name);
     void (*DuplicateFont)(FontHandle fontCopy, const char *name);
-    void *unknown86_102[17];
+    void *unknown86_95[10];
+    struct XSurface_s * (*XModelReadSurface)(struct XModel *model, int *partBits, const unsigned char **pos, void *(*Alloc)(int));
+    struct trXSkin_t * (*LoadXSkins)(struct XModel *model);
+    void *unknown98_102[5];
     void (*SyncRenderThread)(void);
     void (*AbortRenderCommands)(void);
     void (*SyncGpu)(void);

@@ -43,7 +43,7 @@ void CG_DrawActive(void);
 unsigned int CG_DrawChatMessages(void);
 float CG_DrawWeapReticle(void);
 void CG_DrawCrosshair(void);
-unsigned int CG_Draw2D(void);
+void CG_Draw2D(void);
 
 void CG_DrawStringExt(float x, float y, const char *string, const vec_t *setColor, qboolean forceColor, qboolean shadow, float charHeight, qboolean adjust);
 int CG_DrawDevString(float x, float y, const char *s, const vec_t *color, int align_in, FontHandle font, int style);

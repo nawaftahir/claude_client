@@ -19,7 +19,7 @@ unsigned int Scr_GetPrevSourcePos( const char *codePos, unsigned int index );
 unsigned int Scr_GetLineNumInternal( const char *buf, unsigned int sourcePos, const char **startLine, int *col );
 unsigned int Scr_GetLineNum( unsigned int bufferIndex, unsigned int sourcePos );
 int Scr_GetSourcePosOfType( const char *codePos, int type, Scr_SourcePos_t *pos );
-unsigned char Scr_IsDeveloper( void );
+int Scr_IsDeveloper( void );
 SourceBufferInfo* Scr_GetNewSourceBuffer();
 void Scr_AddSourceBufferInternal( const char *extFilename, const char *codePos, char *sourceBuf, int len, bool doEolFixup, bool archive );
 char* Scr_ReadFile( const char *filename, const char *extFilename, const char *codePos, bool archive );
@@ -612,7 +612,7 @@ int Scr_GetSourcePosOfType( const char *codePos, int type, Scr_SourcePos_t *pos 
 Scr_IsDeveloper
 ==============
 */
-unsigned char Scr_IsDeveloper( void )
+int Scr_IsDeveloper( void )
 {
 	return scrVarPub.developer;
 }

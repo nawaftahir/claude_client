@@ -213,51 +213,35 @@ void Window_AddDynamicFlags(Window *w, const int newFlags)
 
 void Item_SetScreenCoords(itemDef_t *item, float x, float y, int horzAlign, int vertAlign)
 {
-    byte *ib = (byte *)item;
-    int newRect[6];
+    rectDef_t newRect;
 
     if (item == NULL)
         return;
 
     if (item->window.border != 0) {
-        float offset = item->window.borderSize;
-        x += offset;
-        y += offset;
+        x += item->window.borderSize;
+        y += item->window.borderSize;
     }
 
-    *(float *)&newRect[0] = item->window.rectClient[0].x + x;
-    *(float *)&newRect[1] = item->window.rectClient[0].y + y;
-    *(float *)&newRect[2] = item->window.rectClient[0].w;
-    *(float *)&newRect[3] = item->window.rectClient[0].h;
+    newRect = item->window.rect[0];
+    newRect.x = item->window.rectClient[0].x + x;
+    newRect.y = item->window.rectClient[0].y + y;
+    newRect.w = item->window.rectClient[0].w;
+    newRect.h = item->window.rectClient[0].h;
 
     if (item->window.rectClient[0].horzAlign != 0 || item->window.rectClient[0].vertAlign != 0) {
-        newRect[4] = item->window.rectClient[0].horzAlign;
-        newRect[5] = item->window.rectClient[0].vertAlign;
+        newRect.horzAlign = item->window.rectClient[0].horzAlign;
+        newRect.vertAlign = item->window.rectClient[0].vertAlign;
     } else {
-        newRect[4] = horzAlign;
-        newRect[5] = vertAlign;
+        newRect.horzAlign = horzAlign;
+        newRect.vertAlign = vertAlign;
     }
+    item->window.rect[0] = newRect;
 
-    item->window.rect[0].x = *(float *)&newRect[0];
-    item->window.rect[0].y = *(float *)&newRect[1];
-    item->window.rect[0].w = *(float *)&newRect[2];
-    item->window.rect[0].h = *(float *)&newRect[3];
-    item->window.rect[0].horzAlign = newRect[4];
-    item->window.rect[0].vertAlign = newRect[5];
-
-    *(float *)&newRect[0] = item->textRect[0].x;
-    *(float *)&newRect[1] = item->textRect[0].y;
-    newRect[4] = item->textRect[0].horzAlign;
-    newRect[5] = item->textRect[0].vertAlign;
-    newRect[2] = 0;
-    newRect[3] = 0;
-
-    item->textRect[0].x = *(float *)&newRect[0];
-    item->textRect[0].y = *(float *)&newRect[1];
-    item->textRect[0].w = *(float *)&newRect[2];
-    item->textRect[0].h = *(float *)&newRect[3];
-    item->textRect[0].horzAlign = newRect[4];
-    item->textRect[0].vertAlign = newRect[5];
+    newRect = item->textRect[0];
+    newRect.w = 0;
+    newRect.h = 0;
+    item->textRect[0] = newRect;
 }
 
 void Menu_UpdatePosition(menuDef_t *menu)

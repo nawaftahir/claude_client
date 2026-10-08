@@ -316,13 +316,12 @@ inline void FxChannelInstance_GetValue3d( FxChannelInstance *inst, vec3_t out, f
 
 inline float FxChannelInstance_Blend1d( FxChannelInstance *inst, FxChannelInstance *randInst, float blend, float t )
 {
-	float to;
-	float from;
+	float value[2];
 
-	from = FxCurveIterator_Interpolate1d( &inst->curveIterator, t );
-	to = FxCurveIterator_Interpolate1d( &randInst->curveIterator, t );
-	from = from + ( to - from ) * blend;
-	return from * inst->scale;
+	value[0] = FxCurveIterator_Interpolate1d( &inst->curveIterator, t );
+	value[1] = FxCurveIterator_Interpolate1d( &randInst->curveIterator, t );
+	value[0] = value[0] + ( value[1] - value[0] ) * blend;
+	return value[0] * inst->scale;
 }
 
 inline void FxChannelInstance_Blend3d( FxChannelInstance *inst, FxChannelInstance *randInst, float blend, vec3_t out, float t )
@@ -344,13 +343,12 @@ inline float FxChannelInstance_Integrate( FxChannelInstance *inst, float normDur
 
 inline float FxChannelInstance_IntegrateBlend( FxChannelInstance *inst, FxChannelInstance *randInst, float blend, float normDuration )
 {
-	float to;
-	float from;
+	float value[2];
 
-	from = FxCurve_Integrate( inst->curveIterator.master, normDuration );
-	to = FxCurve_Integrate( randInst->curveIterator.master, normDuration );
-	from = from + ( to - from ) * blend;
-	return from * inst->scale;
+	value[0] = FxCurve_Integrate( inst->curveIterator.master, normDuration );
+	value[1] = FxCurve_Integrate( randInst->curveIterator.master, normDuration );
+	value[0] = value[0] + ( value[1] - value[0] ) * blend;
+	return value[0] * inst->scale;
 }
 
 float crandom();

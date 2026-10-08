@@ -245,14 +245,7 @@ void CG_AntiBurnInHUD_RegisterDvars(void)
 
 Bool CG_AreHudMenusHidden(void)
 {
-    if ((CL_GetKeyCatchers() & 8) && !CL_GetDisplayHUDWithKeycatchUI()) {
-        return 1;
-    }
-
-    if (cg->drawHud) {
-        return 0;
-    }
-    return 1;
+    return ((CL_GetKeyCatchers() & 8) && !CL_GetDisplayHUDWithKeycatchUI()) || !cg->drawHud ? 1 : 0;
 }
 
 float CG_FadeHudMenu(const dvar_t *fadeDvar, int displayStartTime, int duration)
@@ -350,22 +343,21 @@ Bool CG_CheckPlayerForLowClip(void)
     if (currentClip < 0) {
         return 0;
     }
-    if (currentClip >= 1000) {
+    if (currentClip > 999) {
         currentClip = 999;
     }
 
     clipSize = BG_GetAmmoClipSize(clipIndex);
-    if (clipSize <= 0) {
-        return 0;
-    }
     if (clipSize > 999) {
         clipSize = 999;
-    }
-
-    if (0.330000013f * (float)clipSize < (float)currentClip) {
+    } else if (clipSize <= 0) {
         return 0;
     }
-    return 1;
+
+    if ((float)currentClip <= 0.330000013f * (float)clipSize) {
+        return 1;
+    }
+    return 0;
 }
 
 static void CG_DrawPlayerAmmoBackdrop(const rectDef_t *rect, MaterialHandle material, vec_t *color)
@@ -1347,6 +1339,7 @@ void CG_DrawMantleHint(const rectDef_t *rect, struct Font_s *font, float fontsca
     char binding[0x100];
     const char *text;
     float length;
+    float height;
     float x;
 
     if (!cg_drawMantleHint->current.enabled) {
@@ -1364,6 +1357,7 @@ void CG_DrawMantleHint(const rectDef_t *rect, struct Font_s *font, float fontsca
 
     text = UI_ReplaceConversionString(UI_SafeTranslateString("PLATFORM_MANTLE"), binding);
     length = (float)UI_TextWidth(text, 0, font, fontscale);
+    height = (float)UI_TextHeight(font, fontscale);
     x = (length + rect->w) * -0.5f + rect->x;
 
     UI_DrawText(
@@ -1371,7 +1365,7 @@ void CG_DrawMantleHint(const rectDef_t *rect, struct Font_s *font, float fontsca
         0x7fffffff,
         font,
         x,
-        rect->y + (float)UI_TextHeight(font, fontscale) * 0.5f,
+        height * 0.5f + rect->y,
         rect->horzAlign,
         rect->vertAlign,
         fontscale,
@@ -1380,7 +1374,7 @@ void CG_DrawMantleHint(const rectDef_t *rect, struct Font_s *font, float fontsca
 
     UI_DrawHandlePic(
         x + length,
-        rect->h * -0.5f + rect->y,
+        rect->y - rect->h * 0.5f,
         rect->w,
         rect->h,
         rect->horzAlign,

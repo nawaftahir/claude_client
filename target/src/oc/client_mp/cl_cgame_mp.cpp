@@ -688,23 +688,19 @@ void CL_SubtitlePrint(const char *pszText, int iDuration, int iLineWidth)
 {
     const char *translated = SEH_StringEd_GetString(pszText);
 
-    if (translated) {
-        CL_ConsolePrint((print_msg_type_t)3, translated, iDuration, iLineWidth);
-        return;
+    if (!translated) {
+        if (loc_warnings->current.enabled) {
+            if (loc_warningsAsErrors->current.enabled)
+                Com_Error(ERR_LOCALIZATION, "Could not translate subtitle text: \"%s\"", pszText);
+            else
+                Com_Printf("^3WARNING: Could not translate subtitle text: \"%s\"\n", pszText);
+            translated = va("^1UNLOCALIZED(^7%s^1)^7", pszText);
+        } else {
+            translated = pszText;
+        }
     }
 
-    if (!CL_DvarCurrentBool((void *)&loc_warnings)) {
-        CL_ConsolePrint((print_msg_type_t)3, pszText, iDuration, iLineWidth);
-        return;
-    }
-
-    if (CL_DvarCurrentBool((void *)&loc_warningsAsErrors)) {
-        Com_Error(ERR_LOCALIZATION, "Could not translate subtitle text: \"%s\"", pszText);
-    } else {
-        Com_Printf("^3WARNING: Could not translate subtitle text: \"%s\"\n", pszText);
-    }
-
-    CL_ConsolePrint((print_msg_type_t)3, va("^1UNLOCALIZED(^7%s^1)^7", pszText), iDuration, iLineWidth);
+    CL_ConsolePrint((print_msg_type_t)3, translated, iDuration, iLineWidth);
 }
 
 snd_alias_t *CL_PickSoundAlias(const char *aliasname)
@@ -934,11 +930,11 @@ void CL_CloseInGameMenu(void)
 
 void CL_CloseAllMenus(void)
 {
-    if (UI_IsFullscreen())
-        return;
-    UI_KeyEvent(0x1b, 1);
-    UI_KeyEvent(0x1b, 1);
-    UI_KeyEvent(0x1b, 1);
+    if (!UI_IsFullscreen()) {
+        UI_KeyEvent(0x1b, 1);
+        UI_KeyEvent(0x1b, 1);
+        UI_KeyEvent(0x1b, 1);
+    }
 }
 
 void CL_SetWeaponInfoMemory(void)

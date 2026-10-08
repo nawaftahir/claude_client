@@ -1311,7 +1311,7 @@ void Scr_GetEntByNum()
 
 	v1 = Scr_GetInt(0);
 
-	if ( v1 > MAX_GENTITIES - 1 )
+	if ( v1 >= MAX_GENTITIES )
 	{
 		return;
 	}
@@ -4598,7 +4598,7 @@ void GScr_IsPlayerNumber()
 
 	v1 = Scr_GetInt(0);
 
-	if ( v1 < 0 || v1 > 63 )
+	if ( v1 < 0 || v1 >= 64 )
 	{
 		Scr_AddInt(0);
 	}
@@ -6139,27 +6139,22 @@ Scr_GetMethod
 void (*Scr_GetMethod( const char **pName, int *type ))( scr_entref_t )
 {
 	void (*meth)(scr_entref_t);
-	void (*other_meth)(scr_entref_t);
 
 	*type = BUILTIN_ANY;
 
 	meth = Player_GetMethod(pName);
-	other_meth = ScriptEnt_GetMethod(pName);
+	if ( meth )
+		return meth;
 
-	if ( !meth )
-		meth = other_meth;
+	meth = ScriptEnt_GetMethod(pName);
+	if ( meth )
+		return meth;
 
-	other_meth = BuiltIn_GetMethod(pName, type);
+	meth = HudElem_GetMethod(pName);
+	if ( meth )
+		return meth;
 
-	if ( !meth )
-		meth = other_meth;
-
-	other_meth = HudElem_GetMethod(pName);
-
-	if ( !meth )
-		meth = other_meth;
-
-	return meth;
+	return BuiltIn_GetMethod(pName, type);
 }
 
 /*

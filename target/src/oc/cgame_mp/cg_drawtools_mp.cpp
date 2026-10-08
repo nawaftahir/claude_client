@@ -81,7 +81,7 @@ void CG_DrawStringExt(float x, float y, const char *string, const vec_t *setColo
     }
 
     FontHandle font = UI_GetFontHandle(5, fontScale);
-    int style = (shadow >= 1) ? 3 : 0;
+    int style = shadow ? 3 : 0;
 
     UI_DrawText(string, 0x7fffffff, font, x, baselineY, 1, 1, fontScale, setColor, style);
 }

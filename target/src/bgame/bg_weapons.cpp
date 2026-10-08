@@ -5085,14 +5085,13 @@ void BG_CalculateViewAngles(viewState_t *vs, vec3_t angles)
 BG_CalculateWeaponPosition_Sway
 ===============
 */
+// retail Sway is /Op (store-reload on int->float)
+#pragma optimize("p", on)
 void BG_CalculateWeaponPosition_Sway( const playerState_t *ps, vec3_t swayViewAngles, vec3_t swayOffset, vec3_t swayAngles, float ssSwayScale, int frametime )
 {
 	WeaponDef *weapDef;
 	vec3_t deltaAngles;
-	float unused1;
-	float deltaOffset_4;
-	float deltaOffset_8;
-	float unused2;
+	vec3_t deltaOffset;
 	float swayMaxAngle;
 	float swayLerpSpeed;
 	float swayPitchScale;
@@ -5101,6 +5100,7 @@ void BG_CalculateWeaponPosition_Sway( const playerState_t *ps, vec3_t swayViewAn
 	float swayVertScale;
 	float fWeaponPosFrac;
 	float dt;
+	float scale;
 	int weapon;
 
 	assert(ps);
@@ -5140,30 +5140,37 @@ void BG_CalculateWeaponPosition_Sway( const playerState_t *ps, vec3_t swayViewAn
 		swayVertScale = weapDef->swayVertScale;
 	}
 
+	swayPitchScale *= ssSwayScale;
+	swayYawScale *= ssSwayScale;
+	swayHorizScale *= ssSwayScale;
+	swayVertScale *= ssSwayScale;
+
 	deltaAngles[0] = AngleSubtract(ps->viewangles[0], swayViewAngles[0]);
 	deltaAngles[1] = AngleSubtract(ps->viewangles[1], swayViewAngles[1]);
 
 	assert(dt);
-	deltaAngles[0] = (1.0f / (dt * 60.0f)) * deltaAngles[0];
-	deltaAngles[1] = (1.0f / (dt * 60.0f)) * deltaAngles[1];
+	scale = 1.0f / (dt * 60.0f);
+	deltaAngles[0] *= scale;
+	deltaAngles[1] *= scale;
 
 	deltaAngles[0] = I_fclamp(deltaAngles[0], -swayMaxAngle, swayMaxAngle);
 	deltaAngles[1] = I_fclamp(deltaAngles[1], -swayMaxAngle, swayMaxAngle);
 
-	deltaOffset_8 = deltaAngles[1] * swayHorizScale * ssSwayScale;
-	deltaOffset_4 = deltaAngles[0] * swayVertScale * ssSwayScale;
+	deltaOffset[1] = deltaAngles[1] * swayHorizScale;
+	deltaOffset[2] = deltaAngles[0] * swayVertScale;
 
-	swayOffset[1] = DiffTrack(deltaOffset_8, swayOffset[1], swayLerpSpeed, dt);
-	swayOffset[2] = DiffTrack(deltaOffset_4, swayOffset[2], swayLerpSpeed, dt);
+	swayOffset[1] = DiffTrack(deltaOffset[1], swayOffset[1], swayLerpSpeed, dt);
+	swayOffset[2] = DiffTrack(deltaOffset[2], swayOffset[2], swayLerpSpeed, dt);
 
-	deltaAngles[0] = deltaAngles[0] * swayPitchScale * ssSwayScale;
-	deltaAngles[1] = deltaAngles[1] * swayYawScale * ssSwayScale;
+	deltaAngles[0] = deltaAngles[0] * swayPitchScale;
+	deltaAngles[1] = deltaAngles[1] * swayYawScale;
 
 	swayAngles[0] = DiffTrackAngle(deltaAngles[0], swayAngles[0], swayLerpSpeed, dt);
 	swayAngles[1] = DiffTrackAngle(deltaAngles[1], swayAngles[1], swayLerpSpeed, dt);
 
 	VectorCopy(ps->viewangles, swayViewAngles);
 }
+#pragma optimize("p", off)
 
 /*
 ===============

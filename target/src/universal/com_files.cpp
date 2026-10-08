@@ -50,7 +50,7 @@ int FS_FOpenFileRead(const char *filename, fileHandle_t *file, qboolean uniqueFI
 char** FS_ListFiles(const char* path, const char* extension, FsListBehavior behavior, int* numfiles, int allocType);
 char **FS_ListFilteredFilesOfDirType( const char *path, const char *extension, const char *filter, FsListBehavior behavior, int *numfiles, int dirTypes, int flags );
 
-bool FS_LanguageHasAssets( int language );
+int FS_LanguageHasAssets( int language );
 void FS_BuildOSPath(const char *base, const char *game, const char *qpath, char* ospath);
 void FS_Remove( const char *osPath );
 qboolean FS_FileExists( const char *file );
@@ -140,7 +140,7 @@ qboolean FS_UseSearchPath(const searchpath_t *pSearch)
 FS_LanguageHasAssets
 ==============
 */
-bool FS_LanguageHasAssets( int language )
+int FS_LanguageHasAssets( int language )
 {
 	searchpath_t *search;
 

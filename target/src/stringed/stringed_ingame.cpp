@@ -460,7 +460,7 @@ static LPCSTR SE_GetFoundFile( se_string &strResult )
 {
 	static char sTemp[64];
 
-	if (!strResult.c_str()[0])
+	if (strlen(strResult.c_str()) == 0)
 		return NULL;
 
 	strncpy(sTemp,strResult.c_str(),sizeof(sTemp)-1);

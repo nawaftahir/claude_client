@@ -165,6 +165,8 @@ oc/groupvoice/mixer.cpp
 oc/groupvoice/decode.cpp
 oc/groupvoice/encode.cpp
 oc/groupvoice/play.cpp
+groupvoice/play_dsound.cpp
+groupvoice/record_dsound.cpp
 oc/cgame_mp/cg_registergraphics_new.cpp
 oc/cgame_mp/cg_rumble_mp.cpp
 oc/cgame_mp/cg_main_mp.cpp
