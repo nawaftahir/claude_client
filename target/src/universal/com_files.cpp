@@ -1454,7 +1454,7 @@ int FS_SeekInternal( int f, int offset, int origin )
 	return FS_FileSeek(file, offset, _origin);
 }
 
-int FS_ReadFile(const char* qpath, void** buffer)
+__forceinline int FS_ReadFileInl(const char* qpath, void** buffer)
 {
 	fileHandle_t h;
 	char* buf;
@@ -1500,16 +1500,26 @@ int FS_ReadFile(const char* qpath, void** buffer)
 	return len;
 }
 
+int FS_ReadFile(const char* qpath, void** buffer)
+{
+	return FS_ReadFileInl(qpath, buffer);
+}
+
 void FS_ResetFiles()
 {
 	fs_loadStack = 0;
 }
 
-void FS_FreeFile(void* buffer)
+__forceinline void FS_FreeFileInl(void* buffer)
 {
 	FS_CheckFileSystemStarted();
 	--fs_loadStack;
 	Hunk_FreeTempMemory(buffer);
+}
+
+__declspec(noinline) void FS_FreeFile(void* buffer)
+{
+	FS_FreeFileInl(buffer);
 }
 
 int FS_WriteFile(const char* filename, const void* buffer, int size)
@@ -1690,7 +1700,7 @@ static iwd_t *FS_LoadZipFile( char *zipfile, const char *basename )
 		{
 			fs_headerLongs[fs_numHeaderLongs++] = LittleLong( file_info.crc );
 		}
-		Q_strlwr( filename_inzip );
+		I_strlwrInl( filename_inzip );
 		hash = FS_HashFileName( filename_inzip, iwd->hashSize );
 		buildBuffer[i].name = namePtr;
 		strcpy( buildBuffer[i].name, filename_inzip );
@@ -2108,7 +2118,7 @@ int FS_GetFileList(const char *path, const char *extension, FsListBehavior behav
 	return fileCount;
 }
 
-void FS_ConvertPath(char *s)
+__forceinline void FS_ConvertPathInl(char *s)
 {
 	while (*s)
 	{
@@ -2118,6 +2128,11 @@ void FS_ConvertPath(char *s)
 		}
 		s++;
 	}
+}
+
+__declspec(noinline) void FS_ConvertPath(char *s)
+{
+	FS_ConvertPathInl(s);
 }
 
 static int FS_PathCmp(const char* s1, const char* s2)

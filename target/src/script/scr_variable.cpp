@@ -3,7 +3,7 @@
 
 unsigned int FindVariableIndexHash( unsigned int parentId, unsigned int name );
 
-static scrVarGlob_t scrVarGlob;
+scrVarGlob_t scrVarGlob;
 scrVarPub_t scrVarPub;
 
 static struct scr_classStruct_t scrClassMap[] =
@@ -161,7 +161,7 @@ void SetVariableValue( unsigned int id, VariableValue *value );
 void SetNewVariableValue( unsigned int id, VariableValue *value );
 VariableUnion *GetVariableValueAddress( unsigned int id );
 void SetVariableEntityFieldValue( unsigned int entId, unsigned int fieldName, VariableValue *value );
-void ClearVariableValue( unsigned int id );
+__declspec(noinline) void ClearVariableValue( unsigned int id );
 void SetVariableFieldValue( unsigned int id, VariableValue *value );
 VariableValue Scr_EvalVariable( unsigned int id );
 unsigned int Scr_EvalVariableObject( unsigned int id );
@@ -1233,6 +1233,11 @@ unsigned int GetStartLocalId( unsigned int threadId )
 Scr_KillThread
 ==============
 */
+__declspec(noinline) void RemoveVariableNI( unsigned int parentId, unsigned int name )
+{
+	RemoveVariable(parentId, name);
+}
+
 void Scr_KillThread( unsigned int parentId )
 {
 	VariableValueInternal *parentValue;
@@ -1271,7 +1276,7 @@ void Scr_KillThread( unsigned int parentId )
 		}
 
 		assert(!GetArraySize(selfNameId));
-		RemoveObjectVariable(scrVarPub.pauseArrayId, parentId);
+		RemoveVariableNI(scrVarPub.pauseArrayId, parentId + SL_MAX_STRING_INDEX);
 	}
 
 	parentValue->w.type &= ~VAR_MASK;
@@ -2388,7 +2393,7 @@ void SetVariableEntityFieldValue( unsigned int entId, unsigned int fieldName, Va
 ClearVariableValue
 ==============
 */
-void ClearVariableValue( unsigned int id )
+__declspec(noinline) void ClearVariableValue( unsigned int id )
 {
 	VariableValueInternal *entryValue;
 

@@ -556,7 +556,7 @@ static void FS_NewDir_f( void )
 
 	for ( i = 0; i < ndirs; i++ )
 	{
-		FS_ConvertPath(dirnames[i]);
+		FS_ConvertPathInl(dirnames[i]);
 		Com_Printf( "%s\n", dirnames[i] );
 	}
 
@@ -598,7 +598,7 @@ qboolean FS_iwIwd(char *iwd, const char *base)
 		if ( !FS_FilenameCompare(szFile, va("%s/localized_", base)) )
 		{
 			strcpy(szFile, pszLoc + 10);
-			I_strlwr(szFile);
+			I_strlwrInl(szFile);
 
 			for ( i = 0; i < NUM_IW_IWDS; ++i )
 			{

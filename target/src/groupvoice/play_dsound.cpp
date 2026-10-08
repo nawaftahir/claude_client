@@ -137,7 +137,10 @@ void DSound_AdjustSamplePlayback( dsound_sample_t *sample, int bytesLeft )
 	switch ( sample->playMode )
 	{
 	case 0:
-		sample->DSB->SetFrequency((DWORD)(sample->frequency * (maxScalingUpMultiplier + 1.0f)));
+		{
+		float freq = (float)sample->frequency;
+		sample->DSB->SetFrequency((DWORD)(freq * (maxScalingUpMultiplier + 1.0f)));
+		}
 		break;
 	case 1:
 		sample->DSB->SetFrequency((DWORD)(sample->frequency - sample->frequency * maxScalingDownMultiplier));

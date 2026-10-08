@@ -1381,8 +1381,8 @@ void CM_TraceCapsuleThroughCapsule( traceWork_t *tw, trace_t *trace )
 	}
 	// top origin and bottom origin of each sphere at start and end of trace
 	VectorCopy( tw->extents.start, starttop );
-	starttop[2] = starttop[2] + tw->offsetZ;
 	VectorCopy( tw->extents.start, startbottom );
+	starttop[2] = starttop[2] + tw->offsetZ;
 	startbottom[2] = startbottom[2] - tw->offsetZ;
 	VectorCopy( tw->extents.end, endtop );
 	endtop[2] = endtop[2] + tw->offsetZ;

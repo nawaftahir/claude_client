@@ -178,13 +178,11 @@ void UI_Component::DrawPicRotate(float x, float y, float width, float height, fl
 void UI_Component::DrawText(float x, float y, float width, int fontEnum, const float *color, const char *text)
 {
     int maxChars;
-    float drawX;
-    float drawY;
 
     maxChars = (int)(width / UI_Component_g.charWidth);
-    drawX = floor(x);
-    drawY = floor(UI_Component_g.charHeight + y);
-    re.DrawText(text, maxChars, cls.consoleFont, drawX, drawY, 1.0f, 1.0f, color, 0);
+    x = floor(x);
+    y = floor(UI_Component_g.charHeight + y);
+    re.DrawText(text, maxChars, cls.consoleFont, x, y, 1.0f, 1.0f, color, 0);
 }
 
 void UI_Component::DrawCursor()

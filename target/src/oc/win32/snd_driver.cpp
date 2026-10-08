@@ -503,22 +503,7 @@ Bool SND_InitDriver(void)
 
 void SND_SetStreamChannelFromSaveInfo(int index, snd_save_stream_t *info)
 {
-    float pan = info->pan;
-    float vol = info->volume * g_snd.volume;
-    snd_local_t *sndGlob = (&g_snd);
-    if (sndGlob->chaninfo[index].srcChannelCount == 2) {
-        const snd_alias_t *pA = sndGlob->chaninfo[index].pAlias0;
-        int ch = (pA->flags & 0x780) >> 7;
-        if (!SND_IsAliasChannel3D(ch)) {
-            AIL_set_stream_volume_levels(milesGlob.handle_stream[index - 0x20], vol, vol);
-            return;
-        }
-    }
-    {
-        float leftVol = (1.0f - pan) * vol;
-        float rightVol = pan * vol;
-        AIL_set_stream_volume_levels(milesGlob.handle_stream[index - 0x20], leftVol, rightVol);
-    }
+    SND_SetStreamChannelVolume(index, info->volume * g_snd.volume, info->pan);
 }
 
 void SND_ShutdownDriver(void)
@@ -840,7 +825,8 @@ int SND_StartAlias3DSample(const snd_alias_t *pAlias0, const snd_alias_t *pAlias
     AIL_set_3D_sample_distances(handle, pAlias0->fDistMax, pAlias0->fDistMin);
 
     playbackRate = AIL_3D_sample_playback_rate(handle);
-    AIL_set_3D_sample_playback_rate(handle, I_fround((float)playbackRate * pitch * g_snd.timescale));
+    playbackRate = I_fround((float)playbackRate * pitch * g_snd.timescale);
+    AIL_set_3D_sample_playback_rate(handle, playbackRate);
     SND_Set3DPosition(index, org);
 
     AIL_set_3D_sample_loop_count(handle, ~pAlias0->flags & 1);

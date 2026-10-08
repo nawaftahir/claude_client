@@ -39,7 +39,30 @@ void Scr_CancelWaittill( unsigned int startLocalId );
 void Scr_TerminateWaittillThread( unsigned int localId, unsigned int startLocalId );
 unsigned int Scr_GetWaittillThreadStackId( unsigned int localId, unsigned int startLocalId );
 bool Scr_IsEndonThread( unsigned int localId );
-void Scr_TerminateThread( unsigned int localId );
+// retail calls RemoveVariable at the VM_Notify sites and TerminateThread out of line
+void RemoveVariableNI( unsigned int parentId, unsigned int name );
+extern scrVarGlob_t scrVarGlob;
+unsigned int GetNewVariableIndexInternal2( unsigned int parentId, unsigned int name, unsigned int index );
+
+// retail inlines GetVariable at the timeArrayId site but calls Internal2
+static __declspec(noinline) unsigned int GetNewVariableIndexInternal2NI( unsigned int parentId, unsigned int name, unsigned int index )
+{
+	return GetNewVariableIndexInternal2( parentId, name, index );
+}
+
+static __forceinline unsigned int GetVariableI2NI( unsigned int parentId, unsigned int name )
+{
+	unsigned int hash = ( name + parentId ) % ( VARIABLELIST_CHILD_SIZE - 1 ) + 1;
+	unsigned int newIndex = FindVariableIndexInternal( name, hash );
+
+	if ( !newIndex )
+	{
+		newIndex = GetNewVariableIndexInternal2NI( parentId, name, hash );
+	}
+
+	return scrVarGlob.variableList[ newIndex ].hash.id;
+}
+__declspec(noinline) void Scr_TerminateThread( unsigned int localId );
 void VM_Notify( unsigned int notifyListOwnerId, unsigned int stringValue, VariableValue *top );
 void Scr_NotifyNum( int entnum, int classnum, unsigned int stringValue, unsigned int paramcount );
 void Scr_CancelNotifyList( unsigned int notifyListOwnerId );
@@ -2821,7 +2844,7 @@ bool Scr_IsEndonThread( unsigned int localId )
 Scr_TerminateThread
 ==============
 */
-void Scr_TerminateThread( unsigned int localId )
+__declspec(noinline) void Scr_TerminateThread( unsigned int localId )
 {
 	unsigned int startLocalId = GetStartLocalId(localId);
 
@@ -2920,11 +2943,11 @@ next:
 			VM_CancelNotifyInternal(notifyListOwnerId, startLocalId, notifyListId, notifyNameListId, stringValue);
 			Scr_KillEndonThread(startLocalId);
 
-			RemoveObjectVariable(selfNameId, startLocalId);
+			RemoveVariableNI(selfNameId, startLocalId + SL_MAX_STRING_INDEX);
 
 			if ( !GetArraySize(selfNameId) )
 			{
-				RemoveObjectVariable(scrVarPub.pauseArrayId, selfId);
+				RemoveVariableNI(scrVarPub.pauseArrayId, selfId + SL_MAX_STRING_INDEX);
 			}
 
 			Scr_TerminateThread(selfId);
@@ -3009,17 +3032,17 @@ next:
 		tempValue5.type = VAR_STACK;
 		tempValue5.u.stackValue = stackValue;
 
-		stackId = GetNewObjectVariable(GetArray(GetVariable(scrVarPub.timeArrayId, scrVarPub.time)), startLocalId);
+		stackId = GetNewObjectVariable(GetArray(GetVariableI2NI(scrVarPub.timeArrayId, scrVarPub.time)), startLocalId);
 		SetNewVariableValue(stackId, &tempValue5);
 
 		tempValue = GetVariableValueAddress(stackId);
 
 		VM_CancelNotifyInternal(notifyListOwnerId, startLocalId, notifyListId, notifyNameListId, stringValue);
-		RemoveObjectVariable(selfNameId, startLocalId);
+		RemoveVariableNI(selfNameId, startLocalId + SL_MAX_STRING_INDEX);
 
 		if ( !GetArraySize(selfNameId) )
 		{
-			RemoveObjectVariable(scrVarPub.pauseArrayId, selfId);
+			RemoveVariableNI(scrVarPub.pauseArrayId, selfId + SL_MAX_STRING_INDEX);
 		}
 
 		Scr_SetThreadWaitTime(startLocalId, scrVarPub.time);

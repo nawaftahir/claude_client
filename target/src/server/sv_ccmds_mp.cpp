@@ -171,12 +171,18 @@ static void SV_Map_f( void )
 	if ( !map[0] )
 		return;
 
+	if ( !Com_HasPlayerProfile() )
+	{
+		Com_Printf("Can't load a map without a player profile selected.\n");
+		return;
+	}
+
 	basename = SV_GetMapBaseName(map);
 	I_strncpyz(mapname, basename, sizeof(mapname));
 	I_strlwr(mapname);
 
 	expanded = va("maps/mp/%s.%s", mapname, GetBspExtension());
-	if ( FS_ReadFile(expanded, NULL) == -1 )
+	if ( FS_ReadFileInl(expanded, NULL) == -1 )
 	{
 		Com_Printf("Can't find map %s\n", expanded);
 		return;
@@ -223,7 +229,7 @@ static void SV_MapRestart( qboolean fast_restart )
 	{
 		G_SetSavePersist(qfalse);
 		I_strncpyz(mapname, Dvar_GetString("mapname"), sizeof(mapname));
-		FS_ConvertPath(mapname);
+		FS_ConvertPathInl(mapname);
 		SV_SpawnServer(mapname);
 		return;
 	}

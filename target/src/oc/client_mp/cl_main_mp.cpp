@@ -93,6 +93,8 @@ extern qboolean CL_ShutdownUI(void);
 extern void Dvar_SetInt(dvar_t *dvar, int value);
 extern void Dvar_SetBool(dvar_t *dvar, bool value);
 extern void Dvar_SetString(dvar_t *dvar, const char *value);
+extern int Dvar_StringToEnum(const DvarLimits *domain, const char *string);
+extern void Dvar_SetVariant(dvar_t *dvar, DvarValue value, DvarSetSource source);
 extern void UI_SetMap(const char *mapname, const char *gametype);
 extern void SCR_UpdateScreenInternal(void);
 extern void SetScreenScaling(float safeAreaH, float safeAreaV, float vpX, float vpY, float vpW, float vpH);
@@ -137,6 +139,7 @@ extern void CL_WritePacket(void);
 extern void CL_UpdateColor(void);
 extern void CL_InitCGame(void);
 extern void UI_CloseAll(void);
+extern void UI_CloseAllInl(void);
 extern void UI_DrawConnectScreen(void);
 extern void Cbuf_Execute(void);
 extern void Cbuf_ExecuteText(int, const char *);
@@ -658,12 +661,10 @@ Bool CL_IsPlayerTalking(int clientIndex)
 
 void CL_SetupForNewServerMap(const char *pszMapName, const char *pszGametype)
 {
-    LegacyHacks *hacks = (LegacyHacks *)::legacyHacks;
-
     Com_Printf("Server changing map %s, gametype %s\n", pszMapName, pszGametype);
-    I_strncpyz(hacks->cl_serverloadmap, pszMapName, 0x40);
-    I_strncpyz(hacks->cl_serverloadgametype, pszGametype, 0x40);
-    hacks->cl_serverloadwaiting = 0;
+    I_strncpyz(((LegacyHacks *)::legacyHacks)->cl_serverloadmap, pszMapName, 0x40);
+    I_strncpyz(((LegacyHacks *)::legacyHacks)->cl_serverloadgametype, pszGametype, 0x40);
+    ((LegacyHacks *)::legacyHacks)->cl_serverloadwaiting = 0;
 
     if (!(com_sv_running)->current.enabled) {
         Dvar_SetInt((dvar_t *)com_expectedHunkUsage, 0);
@@ -1569,11 +1570,12 @@ void CL_DrawTextPhysical(const char *text, int maxChars, FontHandle font, float 
 }
 
 extern void CalcSplitScreenTextOffset(FontHandle font, float *y);
+extern void CalcScreenPlacementInl(float *x, float *y, float *w, float *h, int horzAlign, int vertAlign);
 extern void CalcScreenPlacement(float *x, float *y, float *xScale, float *yScale, int horzAlign, int vertAlign);
 void CL_DrawText(const char *text, int maxChars, FontHandle font, float x, float y, int horzAlign, int vertAlign, float xScale, float yScale, const vec_t *color, int style)
 {
     CalcSplitScreenTextOffset(font, &y);
-    CalcScreenPlacement(&x, &y, &xScale, &yScale, horzAlign, vertAlign);
+    CalcScreenPlacementInl(&x, &y, &xScale, &yScale, horzAlign, vertAlign);
     re.DrawText(text, maxChars, font, x, y, xScale, yScale, color, style);
 }
 
@@ -1833,8 +1835,8 @@ void CL_AddDebugLine(const vec_t *start, const vec_t *end, const vec_t *color, q
         cls.debug.lines = (trDebugLine_t *)(Z_MallocInternal(0x2c000));
         cls.debug.lineFromServer = (byte *)(Z_MallocInternal(cls.debug.maxLines));
         cls.debug.lineDuration = (int *)(Z_MallocInternal(cls.debug.maxLines * sizeof(*cls.debug.lineDuration)));
-        cls.debug.numLines = 0;
         lineIndex = 0;
+        cls.debug.numLines = lineIndex;
     }
 
     line = &cls.debug.lines[lineIndex];
@@ -1850,32 +1852,29 @@ void CL_AddDebugLine(const vec_t *start, const vec_t *end, const vec_t *color, q
     line->color[3] = color[3];
     line->depthTest = depthTest;
 
-    cls.debug.lineFromServer[lineIndex] = (byte)fromServer;
-    cls.debug.lineDuration[lineIndex] = duration;
+    cls.debug.lineFromServer[cls.debug.numLines] = (byte)fromServer;
+    cls.debug.lineDuration[cls.debug.numLines] = duration;
     cls.debug.numLines++;
 }
 
 void CL_AddDebugString(const vec_t *xyz, const vec_t *color, float scale, const char *text, qboolean fromServer)
 {
-    int stringIndex;
     trDebugString_t *string;
 
     if (!cls.rendererStarted)
         return;
 
     cls.debug.maxStrings = 0x100;
-    stringIndex = cls.debug.numStrings;
-
-    if (stringIndex + 1 > cls.debug.maxStrings)
+    if (cls.debug.numStrings + 1 > cls.debug.maxStrings)
         return;
 
     if (!cls.debug.strings) {
         cls.debug.strings = (trDebugString_t *)(Z_MallocInternal(0x8000));
         cls.debug.stringFromServer = (byte *)(Z_MallocInternal(cls.debug.maxStrings));
-        cls.debug.numStrings = stringIndex = 0;
+        cls.debug.numStrings = 0;
     }
 
-    string = &cls.debug.strings[stringIndex];
+    string = &cls.debug.strings[cls.debug.numStrings];
     string->xyz[0] = xyz[0];
     string->xyz[1] = xyz[1];
     string->xyz[2] = xyz[2];
@@ -2840,41 +2839,53 @@ void CL_Disconnect_f(void)
     }
 }
 
-void CL_MapLoading(const char *mapname)
+static __forceinline void Dvar_SetStringInl(dvar_t *dvar, const char *string)
 {
-    LegacyHacks *legacy = (LegacyHacks *)::legacyHacks;
-    clientConnection_t *conn = &::clc;
-    clientActive_t *active = clients;
+    DvarValue newValue;
+    char stringCopy[1024];
 
-    if (!legacy->cl_running)
-        return;
-
-    g_waitingForServer = 0;
-    Con_Close();
-    active->keyCatchers = 0;
-    active->displayHUDWithKeycatchUI = 0;
-
-    if (conn->state >= CA_CONNECTED && I_stricmp(cls.servername, (const char *)"localhost") == 0) {
-        memset(cls.updateInfoString, 0, sizeof(cls.updateInfoString));
-        conn->state = CA_CONNECTED;
-        memset(conn->serverMessage, 0, sizeof(conn->serverMessage));
-        memset(&active->gameState, 0, sizeof(active->gameState));
-        conn->lastPacketSentTime = -9999;
+    if (dvar->type == DVAR_TYPE_STRING) {
+        I_strncpyz(stringCopy, string, sizeof(stringCopy));
+        newValue.string = stringCopy;
     } else {
-        Dvar_SetString((dvar_t *)nextmap, (const char *)"");
-        I_strncpyz(cls.servername, (const char *)"localhost", sizeof(cls.servername));
-        CL_Disconnect();
-        UI_CloseAll();
-
-        conn->state = CA_CHALLENGING;
-        ((clientConnection_t *)conn)->connectTime = -3000;
-        conn->qport = ::qport;
-        NET_StringToAdr(cls.servername, &conn->serverAddress);
-        CL_CheckForResend();
+        newValue.integer = Dvar_StringToEnum(&dvar->domain, string);
     }
 
-    I_strncpyz(legacy->cl_serverloadmap, mapname, 0x40);
-    legacy->cl_serverloadwaiting = 0;
+    Dvar_SetVariant(dvar, newValue, DVAR_SOURCE_INTERNAL);
+}
+
+void CL_MapLoading(const char *mapname)
+{
+    if (!((LegacyHacks *)::legacyHacks)->cl_running)
+        return;
+    g_waitingForServer = 0;
+    Con_Close();
+    clients->keyCatchers = 0;
+    clients->displayHUDWithKeycatchUI = 0;
+
+    if (::clc.state >= CA_CONNECTED && I_stricmp(cls.servername, (const char *)"localhost") == 0) {
+        memset(cls.updateInfoString, 0, sizeof(cls.updateInfoString));
+        ::clc.state = CA_CONNECTED;
+        memset(::clc.serverMessage, 0, sizeof(::clc.serverMessage));
+        memset(&clients->gameState, 0, sizeof(clients->gameState));
+        ::clc.lastPacketSentTime = -9999;
+        I_strncpyz(((LegacyHacks *)::legacyHacks)->cl_serverloadmap, mapname, 0x40);
+        ((LegacyHacks *)::legacyHacks)->cl_serverloadwaiting = 0;
+    } else {
+        Dvar_SetStringInl((dvar_t *)nextmap, (const char *)"");
+        I_strncpyz(cls.servername, (const char *)"localhost", sizeof(cls.servername));
+        CL_Disconnect();
+        UI_CloseAllInl();
+
+        ::clc.state = CA_CHALLENGING;
+        ::clc.connectTime = -3000;
+        ::clc.qport = ::qport;
+        NET_StringToAdr(cls.servername, &::clc.serverAddress);
+        CL_CheckForResend();
+        I_strncpyz(((LegacyHacks *)::legacyHacks)->cl_serverloadmap, mapname, 0x40);
+        ((LegacyHacks *)::legacyHacks)->cl_serverloadwaiting = 0;
+    }
+
     SND_FadeAllSounds(0.0f, 0.0f);
 }
 

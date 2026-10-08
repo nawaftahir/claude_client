@@ -335,95 +335,94 @@ static float CG_DrawFPS(float y)
     const float *color;
     int i;
 
-    if (fps_index < 32)
-        return y;
+    if (fps_index >= 32) {
+        total = 0;
 
-    total = 0;
+        for (i = 0; i < 32; ++i) {
+            total += fps_previousTimes[i];
 
-    for (i = 0; i < 32; ++i) {
-        total += fps_previousTimes[i];
+            if (minTime > fps_previousTimes[i])
+                minTime = fps_previousTimes[i];
 
-        if (minTime > fps_previousTimes[i])
-            minTime = fps_previousTimes[i];
-
-        if (maxTime < fps_previousTimes[i])
-            maxTime = fps_previousTimes[i];
-    }
-
-    average = (float)total * (1.0f / 32.0f);
-
-    variance = 0.0f;
-
-    for (i = 0; i < 32; ++i)
-        variance += fabsf((float)fps_previousTimes[i] - average);
-
-    variance *= 1.0f / 32.0f;
-
-    if (!total)
-        total = 1;
-
-    if (minTime <= 0)
-        minTime = 1;
-
-    fpsMin = CG_RoundFPS(1000.0f / (float)maxTime);
-    fpsMax = CG_RoundFPS(1000.0f / (float)minTime);
-
-    if (cg_drawFPS->current.integer > 2)
-        s = va("%1.2fmspf(%i-%i)", (float)total * (1.0f / 32.0f), minTime, maxTime);
-    else {
-        int fpsAvg = CG_RoundFPS(32000.0f / (float)total);
-        int fpsVar = CG_RoundFPS(variance);
-
-        s = va("%ifps(%i-%i,%i)", fpsAvg, fpsMin, fpsMax, fpsVar);
-    }
-
-    y += (float)CG_DrawBigDevStringColor(620.0f, y, s, colorWhiteFaded, 6);
-
-    if (cg_drawFPS->current.integer > 1) {
-        if (!stricmp(Dvar_GetString("gfx_driver"), "ogl"))
-            return y + (float)CG_DrawSmallDevStringColor(620.0f, y, "use d3d for stats", colorWhiteFaded, 6);
-
-        CL_TrackStatistics(&rendererStats);
-        y += (float)CG_DrawSmallDevStringColor(620.0f, y, "scene", colorGreenFaded, 6);
-
-        CG_DrawSmallDevStringColor(620.0f, y, va("view tris          "), colorWhiteFaded, 6);
-        y += (float)CG_DrawSmallDevStringColor(620.0f, y, va("%i", rendererStats.c_viewIndexes / 3), colorWhiteFaded, 6);
-
-        if (rendererStats.c_shadowIndexes) {
-            CG_DrawSmallDevStringColor(620.0f, y, va("shadow tris          "), colorWhiteFaded, 6);
-            y += (float)CG_DrawSmallDevStringColor(620.0f, y, va("%i", rendererStats.c_shadowIndexes / 3), colorWhiteFaded, 6);
+            if (maxTime < fps_previousTimes[i])
+                maxTime = fps_previousTimes[i];
         }
 
-        CG_DrawSmallDevStringColor(620.0f, y, va("raw geo tris          "), colorWhiteFaded, 6);
-        y += (float)CG_DrawSmallDevStringColor(620.0f, y, va("%i", rendererStats.c_indexes / 3), colorWhiteFaded, 6);
+        average = (float)total * (1.0f / 32.0f);
 
-        CG_DrawSmallDevStringColor(620.0f, y, va("raw fx tris          "), colorWhiteFaded, 6);
-        y += (float)CG_DrawSmallDevStringColor(620.0f, y, va("%i", rendererStats.c_fxIndexes / 3), colorWhiteFaded, 6);
+        variance = 0.0f;
 
-        CG_DrawSmallDevStringColor(620.0f, y, va("prim          "), colorWhiteFaded, 6);
-        y += (float)CG_DrawSmallDevStringColor(620.0f, y, va("%i", rendererStats.c_batches), colorWhiteFaded, 6);
+        for (i = 0; i < 32; ++i)
+            variance += fabsf((float)fps_previousTimes[i] - average);
 
-        y += (float)CG_DrawSmallDevStringColor(620.0f, y, "level", colorGreenFaded, 6);
+        variance *= 1.0f / 32.0f;
 
-        CG_DrawSmallDevStringColor(620.0f, y, va("tex      "), colorWhiteFaded, 6);
-        y += (float)CG_DrawSmallDevStringColor(
-            620.0f, y, va("%d", rendererStats.c_imageUsage.total / (1024 * 1024)), colorWhiteFaded, 6);
+        if (!total)
+            total = 1;
 
-        if (rendererStats.c_imageUsage.minspec <= 48 * 1024 * 1024) {
-            s = va("min pc tex      ");
-            color = colorWhiteFaded;
-        } else {
-            s = va("min pc tex (%g)      ", 48.0);
-            color = colorRedFaded;
+        if (minTime <= 0)
+            minTime = 1;
+
+        fpsMin = CG_RoundFPS(1000.0f / (float)maxTime);
+        fpsMax = CG_RoundFPS(1000.0f / (float)minTime);
+
+        if (cg_drawFPS->current.integer > 2)
+            s = va("%1.2fmspf(%i-%i)", (float)total * (1.0f / 32.0f), minTime, maxTime);
+        else {
+            int fpsAvg = CG_RoundFPS(32000.0f / (float)total);
+            int fpsVar = CG_RoundFPS(variance);
+
+            s = va("%ifps(%i-%i,%i)", fpsAvg, fpsMin, fpsMax, fpsVar);
         }
 
-        CG_DrawSmallDevStringColor(620.0f, y, s, color, 6);
-        y += (float)CG_DrawSmallDevStringColor(
-            620.0f, y, va("%d", rendererStats.c_imageUsage.minspec / (1024 * 1024)), color, 6);
+        y += (float)CG_DrawBigDevStringColor(620.0f, y, s, colorWhiteFaded, 6);
 
-        CG_DrawSmallDevStringColor(620.0f, y, va("lightmap      "), colorWhiteFaded, 6);
-        y += (float)CG_DrawSmallDevStringColor(
-            620.0f, y, va("%d", rendererStats.c_imageUsage.lightmap / (1024 * 1024)), colorWhiteFaded, 6);
+        if (cg_drawFPS->current.integer > 1) {
+            if (!stricmp(Dvar_GetString("gfx_driver"), "ogl"))
+                return y + (float)CG_DrawSmallDevStringColor(620.0f, y, "use d3d for stats", colorWhiteFaded, 6);
+
+            CL_TrackStatistics(&rendererStats);
+            y += (float)CG_DrawSmallDevStringColor(620.0f, y, "scene", colorGreenFaded, 6);
+
+            CG_DrawSmallDevStringColor(620.0f, y, va("view tris          "), colorWhiteFaded, 6);
+            y += (float)CG_DrawSmallDevStringColor(620.0f, y, va("%i", rendererStats.c_viewIndexes / 3), colorWhiteFaded, 6);
+
+            if (rendererStats.c_shadowIndexes) {
+                CG_DrawSmallDevStringColor(620.0f, y, va("shadow tris          "), colorWhiteFaded, 6);
+                y += (float)CG_DrawSmallDevStringColor(620.0f, y, va("%i", rendererStats.c_shadowIndexes / 3), colorWhiteFaded, 6);
+            }
+
+            CG_DrawSmallDevStringColor(620.0f, y, va("raw geo tris          "), colorWhiteFaded, 6);
+            y += (float)CG_DrawSmallDevStringColor(620.0f, y, va("%i", rendererStats.c_indexes / 3), colorWhiteFaded, 6);
+
+            CG_DrawSmallDevStringColor(620.0f, y, va("raw fx tris          "), colorWhiteFaded, 6);
+            y += (float)CG_DrawSmallDevStringColor(620.0f, y, va("%i", rendererStats.c_fxIndexes / 3), colorWhiteFaded, 6);
+
+            CG_DrawSmallDevStringColor(620.0f, y, va("prim          "), colorWhiteFaded, 6);
+            y += (float)CG_DrawSmallDevStringColor(620.0f, y, va("%i", rendererStats.c_batches), colorWhiteFaded, 6);
+
+            y += (float)CG_DrawSmallDevStringColor(620.0f, y, "level", colorGreenFaded, 6);
+
+            CG_DrawSmallDevStringColor(620.0f, y, va("tex      "), colorWhiteFaded, 6);
+            y += (float)CG_DrawSmallDevStringColor(
+                620.0f, y, va("%d", rendererStats.c_imageUsage.total / (1024 * 1024)), colorWhiteFaded, 6);
+
+            if (rendererStats.c_imageUsage.minspec <= 48 * 1024 * 1024) {
+                s = va("min pc tex      ");
+                color = colorWhiteFaded;
+            } else {
+                s = va("min pc tex (%g)      ", 48.0);
+                color = colorRedFaded;
+            }
+
+            CG_DrawSmallDevStringColor(620.0f, y, s, color, 6);
+            y += (float)CG_DrawSmallDevStringColor(
+                620.0f, y, va("%d", rendererStats.c_imageUsage.minspec / (1024 * 1024)), color, 6);
+
+            CG_DrawSmallDevStringColor(620.0f, y, va("lightmap      "), colorWhiteFaded, 6);
+            y += (float)CG_DrawSmallDevStringColor(
+                620.0f, y, va("%d", rendererStats.c_imageUsage.lightmap / (1024 * 1024)), colorWhiteFaded, 6);
+        }
     }
 
     return y;
@@ -609,6 +608,14 @@ void CG_DrawDisconnect(void)
     }
 }
 
+extern void CalcScreenPlacementInl(float *x, float *y, float *w, float *h, int horzAlign, int vertAlign);
+// retail inlines CL_DrawStretchPic here (placement folded) and calls the Physical
+static __forceinline void CL_DrawStretchPicInl(float x, float y, float w, float h, int horzAlign, int vertAlign, float s1, float t1, float s2, float t2, const vec_t *color, MaterialHandle material)
+{
+    CalcScreenPlacementInl(&x, &y, &w, &h, horzAlign, vertAlign);
+    CL_DrawStretchPicPhysical(x, y, w, h, s1, t1, s2, t2, color, material);
+}
+
 static void CG_DrawLagometer(void)
 {
     int a;
@@ -646,14 +653,14 @@ static void CG_DrawLagometer(void)
             {
                 if (v > range)
                     v = range;
-                CL_DrawStretchPic(ax + aw - a, mid - v, 1.0f, v, 3, 3, 0.0f, 0.0f, 0.0f, 0.0f, colorYellow, cgs->media.whiteMaterial);
+                CL_DrawStretchPicInl(ax + aw - a, mid - v, 1.0f, v, 3, 3, 0.0f, 0.0f, 0.0f, 0.0f, colorYellow, cgs->media.whiteMaterial);
             }
             else if (v < 0.0f)
             {
                 v = -v;
                 if (v > range)
                     v = range;
-                CL_DrawStretchPic(ax + aw - a, mid, 1.0f, v, 3, 3, 0.0f, 0.0f, 0.0f, 0.0f, colorBlue, cgs->media.whiteMaterial);
+                CL_DrawStretchPicInl(ax + aw - a, mid, 1.0f, v, 3, 3, 0.0f, 0.0f, 0.0f, 0.0f, colorBlue, cgs->media.whiteMaterial);
             }
         }
 
@@ -674,11 +681,11 @@ static void CG_DrawLagometer(void)
                 v = v * vscale;
                 if (v > range)
                     v = range;
-                CL_DrawStretchPic(ax + aw - a, ay + ah - v, 1.0f, v, 3, 3, 0.0f, 0.0f, 0.0f, 0.0f, color, cgs->media.whiteMaterial);
+                CL_DrawStretchPicInl(ax + aw - a, ay + ah - v, 1.0f, v, 3, 3, 0.0f, 0.0f, 0.0f, 0.0f, color, cgs->media.whiteMaterial);
             }
             else if (v < 0.0f)
             {
-                CL_DrawStretchPic(ax + aw - a, ay + ah - range, 1.0f, range, 3, 3, 0.0f, 0.0f, 0.0f, 0.0f, colorRed, cgs->media.whiteMaterial);
+                CL_DrawStretchPicInl(ax + aw - a, ay + ah - range, 1.0f, range, 3, 3, 0.0f, 0.0f, 0.0f, 0.0f, colorRed, cgs->media.whiteMaterial);
             }
         }
 
@@ -884,7 +891,7 @@ static void CG_DrawAdsOverlay(int weapIndex, const WeaponDef *weapDef, const flo
 
     drawSize[0] = weapDef->overlayWidth;
     drawSize[1] = weapDef->overlayHeight;
-    if (drawSize[0] <= 320.0f && drawSize[1] <= 240.0f) {
+    if (!(drawSize[0] > 320.0f) && !(drawSize[1] > 240.0f)) {
         drawPos[0] = crosshairPos[0] - drawSize[0];
         drawPos[1] = crosshairPos[1] - drawSize[1];
         CL_DrawStretchPic(drawPos[0], drawPos[1], drawSize[0], drawSize[1], 2, 2,
@@ -980,7 +987,7 @@ static void CG_DrawAdsAimIndicator(int weapIndex, const WeaponDef *weapDef, cons
     MaterialHandle material;
     float w;
 
-    if (!cg_drawGun->current.enabled && transScale < 1.0f) {
+    if (!cg_drawGun->current.enabled && !(transScale >= 1.0f)) {
         material = cg_weaponsArray[weapIndex].hReticleCenter;
         if (material) {
             w = (1.5f - transScale) * (float)weapDef->iReticleCenterSize;
@@ -1028,7 +1035,7 @@ static void CG_DrawReticleCenter(int weapIndex, const WeaponDef *weapDef, const 
     }
 }
 
-static void CG_CalcReticleSpread(const WeaponDef *weapDef, int weapIndex, const float *drawSize, float transScale, float *spread)
+static __declspec(noinline) void CG_CalcReticleSpread(const WeaponDef *weapDef, int weapIndex, const float *drawSize, float transScale, float *spread)
 {
     float minSpread;
     float maxSpread;
@@ -1044,7 +1051,7 @@ static void CG_CalcReticleSpread(const WeaponDef *weapDef, int weapIndex, const 
     spread[1] = scale - weapDef->fHipReticleSidePos * drawSize[1];
 }
 
-static void CG_CalcReticleColor(const float *baseColor, float alpha, float *reticleColor)
+static __declspec(noinline) void CG_CalcReticleColor(const float *baseColor, float alpha, float *reticleColor)
 {
     reticleColor[0] = baseColor[0];
     reticleColor[1] = baseColor[1];
@@ -1054,7 +1061,7 @@ static void CG_CalcReticleColor(const float *baseColor, float alpha, float *reti
         reticleColor[3] = cg_crosshairAlphaMin->current.value;
 }
 
-static void CG_CalcReticleImageOffset(const float *drawSize, float *imageTexelOffset)
+static __declspec(noinline) void CG_CalcReticleImageOffset(const float *drawSize, float *imageTexelOffset)
 {
     imageTexelOffset[0] = GetVirtualWidthFromRealWidth(
         (float)cgs->viewWidth * (GetRealWidthFromVirtualWidth(drawSize[0]) / (float)cgs->viewWidth * 0.125f));
@@ -2181,17 +2188,37 @@ qboolean CG_DrawFollow(void)
 
 void CG_DrawTurretCrossHair(void)
 {
-    const dvar_t *drawTurretCrosshair;
-    vec4_t color = { 1.0f, 1.0f, 1.0f, 0.75f };
+    int weapIndex;
+    MaterialHandle material;
+    WeaponDef *weapDef;
+    vec4_t color;
+    float size;
+    float x;
+    float y;
+    float w;
+    float h;
 
-    drawTurretCrosshair = cg_drawTurretCrosshair;
-    if (drawTurretCrosshair && !drawTurretCrosshair->current.enabled)
+    if (!cg_drawTurretCrosshair->current.enabled || cg_paused->current.integer)
         return;
 
-    if (!cgs)
+    weapIndex = cg_entities[cg->predictedPlayerState.viewlocked_entNum].nextState.weapon;
+    if (!weapIndex)
+        return;
+    material = cg_weaponsArray[weapIndex].hReticleCenter;
+    if (!material)
+        return;
+    if (cg_crosshairAlpha->current.value < 0.01f)
         return;
 
-    UI_DrawHandlePic(316.0f, 236.0f, 8.0f, 8.0f, 0, 0, color, cgs->media.whiteMaterial);
+    CG_CalcCrosshairColor(1.0f, color);
+    weapDef = (WeaponDef *)BG_GetWeaponDef(weapIndex);
+    size = (float)weapDef->iReticleCenterSize;
+    x = size * -0.5f;
+    y = x;
+    w = size;
+    h = size;
+    CalcScreenPlacement(&x, &y, &w, &h, 2, 2);
+    CL_DrawStretchPicPhysical(x, y, w, h, 0.0f, 0.0f, 1.0f, 1.0f, color, material);
 }
 
 void CG_DrawPlayerSprites(void)

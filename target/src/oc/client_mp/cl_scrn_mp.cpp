@@ -86,6 +86,7 @@ extern void Sys_LoadingKeepAlive(void);
 extern void Net_DisplayProfile(void);
 extern int FS_FTell(int fh);
 extern void CalcScreenPlacement(float *x, float *y, float *w, float *h, int horzAlign, int vertAlign);
+extern void CalcScreenPlacementInl(float *x, float *y, float *w, float *h, int horzAlign, int vertAlign);
 
 void SCR_DrawSmallStringExt(int x, int y, const char *string, const vec_t *setColor);
 void SCR_DrawConsoleString(int x, int y, const short int *string, int maxChars, const vec_t *setColor);
@@ -138,7 +139,7 @@ void SCR_DrawDemoRecording(void)
     y = 479.0f;
     w = scale;
     h = w;
-    CalcScreenPlacement(&x, &y, &w, &h, 1, 1);
+    CalcScreenPlacementInl(&x, &y, &w, &h, 1, 1);
     re.DrawText(string, 0x7fffffff, cls.consoleFont, x, y, w, h, color, 0);
 }
 

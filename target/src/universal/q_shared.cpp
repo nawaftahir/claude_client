@@ -583,7 +583,7 @@ int I_stricmpwild( const char *wild, const char *s )
 	return 0;
 }
 
-char *I_strlwr( char *s )
+__forceinline char *I_strlwrInl( char *s )
 {
 	char *iter;
 
@@ -596,6 +596,11 @@ char *I_strlwr( char *s )
 	}
 
 	return s;
+}
+
+__declspec(noinline) char *I_strlwr( char *s )
+{
+	return I_strlwrInl( s );
 }
 
 char *I_strupr( char *s )

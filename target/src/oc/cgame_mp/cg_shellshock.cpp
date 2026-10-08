@@ -253,8 +253,8 @@ qboolean CG_DrawShellShockSavedScreenBlend(const shellshock_parms_t *parms, int 
         return 0;
     }
 
-    fadeIn = parms->screenBlend.effectTime;
     fadeDuration = parms->screenBlend.fadeTime;
+    fadeIn = parms->screenBlend.effectTime;
 
     blend = fadeIn;
     if (timeLeft < fadeDuration) {

@@ -3567,9 +3567,14 @@ const char *UI_ReplaceConversions(const char *sourceString, ConversionArguments 
     return va(outputString);
 }
 
-void UI_CloseAll(void)
+__forceinline void UI_CloseAllInl(void)
 {
     Menus_CloseAll(&uiInfo->uiDC);
+}
+
+void UI_CloseAll(void)
+{
+    UI_CloseAllInl();
 }
 
 void UI_CloseFocusedMenu(void)

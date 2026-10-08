@@ -308,7 +308,7 @@ static float *Dvar_StringToVec4(const char *string)
 }
 
 // accepts a name, an index, or an unambiguous name prefix
-static int Dvar_StringToEnum(const DvarLimits *domain, const char *string)
+int Dvar_StringToEnum(const DvarLimits *domain, const char *string)
 {
 	int stringIndex;
 	const char *digit;
@@ -673,7 +673,7 @@ static bool Dvar_ValuesEqual(unsigned char type, DvarValue val0, DvarValue val1)
 	}
 }
 
-static void Dvar_SetVariant(dvar_t *dvar, DvarValue value, DvarSetSource source);
+void Dvar_SetVariant(dvar_t *dvar, DvarValue value, DvarSetSource source);
 
 static void Dvar_SetLatchedValue(dvar_t *dvar, DvarValue value)
 {
@@ -708,7 +708,7 @@ bool Dvar_IsAtDefaultValue(const dvar_t *dvar)
 	return Dvar_ValuesEqual(dvar->type, dvar->current, dvar->reset);
 }
 
-static void Dvar_SetVariant(dvar_t *dvar, DvarValue value, DvarSetSource source)
+void Dvar_SetVariant(dvar_t *dvar, DvarValue value, DvarSetSource source)
 {
 	Com_PrintMessage(PMSG_LOGFILE, va("      dvar set %s %s\n", dvar->name, Dvar_ValueToString(dvar, value)));
 
@@ -1776,7 +1776,7 @@ void Dvar_ClearServerInfoNoUpdateFlags()
 		dvar->flags &= ~DVAR_SERVERINFO_NOUPDATE;
 }
 
-bool Dvar_AnyLatchedValues()
+__declspec(noinline) bool Dvar_AnyLatchedValues()
 {
 	dvar_t *dvar;
 

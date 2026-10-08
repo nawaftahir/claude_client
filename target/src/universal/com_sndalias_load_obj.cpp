@@ -566,7 +566,7 @@ void Com_LoadVolumeModGroups( VolumeModGroup *groups )
 	data = buffer;
 	for ( i = 0; ; i++ )
 	{
-		token = Com_Parse(&data);
+		token = Com_ParseInl(&data);
 		if ( !*token || *token == '}' )
 		{
 			break;
@@ -578,7 +578,7 @@ void Com_LoadVolumeModGroups( VolumeModGroup *groups )
 			return;
 		}
 		strcpy(groups[i].name, token);
-		token = Com_Parse(&data);
+		token = Com_ParseInl(&data);
 		if ( !*token || *token == '}' )
 		{
 			Com_EndParseSession();
@@ -630,14 +630,14 @@ void Com_LoadSoundAliasFile( const char *loadspec, const char *loadspecCurGame, 
 	columnCount = 0;
 	while ( 1 )
 	{
-		token = Com_Parse(&data);
+		token = Com_ParseInl(&data);
 		if ( !data )
 		{
 			break;
 		}
 		if ( !*token || *token == '#' )
 		{
-			Com_SkipRestOfLine(&data);
+			Com_SkipRestOfLineInl(&data);
 			continue;
 		}
 		if ( !columnCount )
@@ -669,7 +669,7 @@ void Com_LoadSoundAliasFile( const char *loadspec, const char *loadspecCurGame, 
 				}
 				if ( data && *data != '\n' )
 				{
-					token = Com_ParseOnLine(&data);
+					token = Com_ParseOnLineInl(&data);
 					continue;
 				}
 				break;
@@ -677,7 +677,7 @@ void Com_LoadSoundAliasFile( const char *loadspec, const char *loadspecCurGame, 
 			if ( !hasName || !hasFile )
 			{
 				Com_Printf("^1ERROR: Sound alias file %s: missing 'name' and/or 'file' columns\n", sourceFile);
-				Com_EndParseSession();
+				Com_EndParseSessionInl();
 				return;
 			}
 		}
@@ -696,12 +696,12 @@ void Com_LoadSoundAliasFile( const char *loadspec, const char *loadspecCurGame, 
 				{
 					break;
 				}
-				token = Com_ParseOnLine(&data);
+				token = Com_ParseOnLineInl(&data);
 			}
 			if ( !fieldSet[SA_NAME] || !fieldSet[SA_FILE] )
 			{
 				Com_Printf("^1ERROR: Sound alias file %s: alias entry missing name and/or file\n", sourceFile);
-				Com_EndParseSession();
+				Com_EndParseSessionInl();
 				return;
 			}
 			if ( alias.keep && !alias.error && Com_ValidateSoundAlias(&alias) )
@@ -709,9 +709,9 @@ void Com_LoadSoundAliasFile( const char *loadspec, const char *loadspecCurGame, 
 				Com_AddBuildSoundAlias(&alias);
 			}
 		}
-		Com_SkipRestOfLine(&data);
+		Com_SkipRestOfLineInl(&data);
 	}
-	Com_EndParseSession();
+	Com_EndParseSessionInl();
 }
 
 int AliasNameCompare( snd_alias_build_t *alias0, snd_alias_build_t *alias1 )
@@ -1090,7 +1090,7 @@ bool Com_ParseVolumeFalloffCurve( const char *buffer, const char *filename, SndC
 	int knotIndex;
 
 	Com_BeginParseSession(filename);
-	token = Com_Parse(&buffer);
+	token = Com_ParseInl(&buffer);
 	curve->knotCount = atoi(token);
 	if ( curve->knotCount < 2 )
 	{
@@ -1106,7 +1106,7 @@ bool Com_ParseVolumeFalloffCurve( const char *buffer, const char *filename, SndC
 	}
 	for ( knotIndex = 0; ; knotIndex++ )
 	{
-		token = Com_Parse(&buffer);
+		token = Com_ParseInl(&buffer);
 		if ( !*token || *token == '}' )
 		{
 			break;
@@ -1124,7 +1124,7 @@ bool Com_ParseVolumeFalloffCurve( const char *buffer, const char *filename, SndC
 			Com_Printf("^1ERROR: sndcurve parse failure on file \"%s\": knot x-coord '%f' is not in the range 0-1.\n", filename, curve->knots[knotIndex][0]);
 			return false;
 		}
-		token = Com_Parse(&buffer);
+		token = Com_ParseInl(&buffer);
 		if ( !*token || *token == '}' )
 		{
 			break;
@@ -1270,16 +1270,16 @@ qboolean Com_SubtitleReferenceExists( const char *reference )
 		return qfalse;
 	}
 	Com_BeginParseSession("soundaliases/subtitle.st");
-	for ( data = buffer; ; Com_SkipRestOfLine(&data) )
+	for ( data = buffer; ; Com_SkipRestOfLineInl(&data) )
 	{
-		token = Com_Parse(&data);
+		token = Com_ParseInl(&data);
 		if ( !data )
 		{
 			break;
 		}
 		if ( !strcmp(token, "REFERENCE") )
 		{
-			token = Com_ParseOnLine(&data);
+			token = Com_ParseOnLineInl(&data);
 			if ( !I_stricmp(reference + 9, token) )
 			{
 				found = qtrue;
@@ -1287,7 +1287,7 @@ qboolean Com_SubtitleReferenceExists( const char *reference )
 			}
 		}
 	}
-	Com_EndParseSession();
+	Com_EndParseSessionInl();
 	FS_FreeFile(buffer);
 	return found;
 }

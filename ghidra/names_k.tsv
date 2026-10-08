@@ -325,3 +325,6 @@
 4c2b40	CG_DrawTurretCrossHair	claude-s2
 536640	Item_MouseLeave	claude-s2
 4d1480	CG_DrawTracer	claude-s2
+538150	Menu_SetNextCursorItem	s2
+4b1590	CL_GetServerStatus	s2
+4afbf0	ROQ_DrawLetterBox	s2

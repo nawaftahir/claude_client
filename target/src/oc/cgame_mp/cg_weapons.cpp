@@ -243,7 +243,7 @@ inline void VectorMA(const vec3_t v, const float s, const vec3_t b, vec3_t o)
 }
 
 // Original name unknown.
-static void CG_StartWeaponXAnim(struct XAnimTree_s *tree, int weaponIndex, int activeAnim)
+static __declspec(noinline) void CG_StartWeaponXAnim(struct XAnimTree_s *tree, int weaponIndex, int activeAnim)
 {
     int i;
     weaponInfo_t *weapInfo;
@@ -266,10 +266,10 @@ void CG_WeaponRunXModelAnims(playerState_t *ps, weaponInfo_t *weapInfo)
     qboolean adsIn;
 
     pAnimTree = DObjGetTree(weapInfo->viewModelDObj);
+    adsIn = 0;
     weaponIndex = BG_GetViewmodelWeaponIndex(ps);
     weapDef = (WeaponDef *)BG_GetWeaponDef(weaponIndex);
 
-    adsIn = 0;
     if (ps->weaponstate == 5 && ps->weaponTime - weapDef->iPositionReloadTransTime > 0) {
         adsIn = 0;
     } else if (ps->pm_flags & 0x40) {
@@ -277,8 +277,12 @@ void CG_WeaponRunXModelAnims(playerState_t *ps, weaponInfo_t *weapInfo)
         if (ps->pm_flags & 0x10)
             adsIn = 0;
     }
-    if (weapDef->bADSPositionInfo)
-        CG_PlayADSAnim(pAnimTree, adsIn ? 0x15 : 0x16);
+    if (weapDef->bADSPositionInfo) {
+        int adsAnim = 0x15;
+        if (!adsIn)
+            adsAnim = 0x16;
+        CG_PlayADSAnim(pAnimTree, adsAnim);
+    }
 
     if (ps->weapAnim == weapInfo->iPrevAnim)
         return;
@@ -1906,37 +1910,48 @@ void CG_EjectWeaponBrass(entityState_t *ent, int event)
         return;
 
     entBytes = (byte *)ent;
-    if (*(int *)(entBytes + 4) > 9)
+    if (*(int *)(entBytes + 4) >= 10)
         return;
 
     weaponNum = *(int *)(entBytes + 0xc8);
     if (!weaponNum)
         return;
 
-    if (weaponNum > BG_GetNumWeapons())
+    if (weaponNum > BG_GetNumWeapons()) {
         Com_Error(ERR_DROP, "\x15"
                      "CG_EjectWeaponBrass: ent->weapon > BG_GetNumWeapons()");
+        return;
+    }
 
     weapInfo = &cg_weaponsArray[weaponNum];
     effect = weapInfo->lastShotEjectEffect;
-    if (event != 0xa0 || !effect) {
+    if (effect && event == 0xa0) {
+        snap = cg->nextSnap;
+        if ((snap->ps.pm_flags & 0xc00000) && ent->number == snap->ps.clientNum)
+            bolt[0] = weaponNum + 0x400;
+        else
+            bolt[0] = ent->number;
+
+        tagBrass = scr_const.tag_brass;
+        bolt[1] = FX_GetBoneIndex(bolt[0], tagBrass);
+        if (bolt[1] >= 0)
+            FX_PlayEntityEffect( (EffectTemplate *)(effect), ejectBrassCasingOrigin, 0, (const FxBoltInfo *)(bolt));
+    } else {
         effect = weapInfo->shellEjectEffect;
         if (!effect)
             return;
+
+        snap = cg->nextSnap;
+        if ((snap->ps.pm_flags & 0xc00000) && ent->number == snap->ps.clientNum)
+            bolt[0] = weaponNum + 0x400;
+        else
+            bolt[0] = ent->number;
+
+        tagBrass = scr_const.tag_brass;
+        bolt[1] = FX_GetBoneIndex(bolt[0], tagBrass);
+        if (bolt[1] >= 0)
+            FX_PlayEntityEffect( (EffectTemplate *)(effect), ejectBrassCasingOrigin, 0, (const FxBoltInfo *)(bolt));
     }
-
-    snap = cg->nextSnap;
-    if ((snap->ps.pm_flags & 0xc00000) && ent->number == snap->ps.clientNum)
-        bolt[0] = weaponNum + 0x400;
-    else
-        bolt[0] = ent->number;
-
-    tagBrass = scr_const.tag_brass;
-    bolt[1] = FX_GetBoneIndex(bolt[0], tagBrass);
-    if (bolt[1] < 0)
-        return;
-
-    FX_PlayEntityEffect( (EffectTemplate *)(effect), ejectBrassCasingOrigin, 0, (const FxBoltInfo *)(bolt));
 }
 
 static __forceinline qboolean CG_IsLocalClientEntity(cg_t *cg, entityState_t *ent)

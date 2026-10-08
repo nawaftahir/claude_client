@@ -32,6 +32,7 @@ int PC_ReadLineHandle(int handle, pc_token_t *pc_token);
 const char *String_Alloc(const char *str);
 void I_strncpyz(char *dest, const char *src, int destsize);
 char *I_strlwr(char *str);
+char *I_strlwrInl(char *str);
 void I_strncat(char *dest, int destsize, const char *src);
 MaterialHandle CL_RegisterMaterialNoMip(const char *name, int imageTrack);
 snd_alias_list_t *Com_FindSoundAlias( const char *name );
@@ -104,6 +105,7 @@ void Com_EndParseSession(void);
 char *Com_Parse( const char *( *data_p ) );
 int I_stricmp(const char *s1, const char *s2);
 bool I_isupper( int c );
+bool I_islower( int c );
 void Com_Printf(const char *fmt, ...);
 void Com_Error(errorParm_t code, const char *fmt, ...);
 void Menu_SetCursorItem(menuDef_t *menu, int cursorItem);
@@ -193,7 +195,7 @@ static void UI_ParseMenuMaterial(const char *key, const char *value)
 
     material = (MaterialHandle)CL_RegisterMaterialNoMip(value, 3);
     Com_sprintf(name, 64, (const char *)"$%s", key);
-    I_strlwr(name);
+    I_strlwrInl(name);
     CL_Material_Duplicate(material, name);
 }
 
@@ -688,7 +690,7 @@ qboolean MenuParse_background(const char (*item)[4], int handle)
     if (!PC_String_Parse(handle, &temp))
         return 0;
     I_strncpyz(name, temp, 64);
-    I_strlwr(name);
+    I_strlwrInl(name);
     (*(void **)&((itemDef_t *)item)->window.background) = CL_RegisterMaterialNoMip(name, ((menuDef_t *)item)->imageTrack);
     return 1;
 }
@@ -1274,7 +1276,7 @@ qboolean ItemParse_background(const char (*item)[4], int handle)
     if (!PC_String_Parse(handle, &temp))
         return 0;
     I_strncpyz(name, temp, 64);
-    I_strlwr(name);
+    I_strlwrInl(name);
     (*(void **)&((itemDef_t *)item)->window.background) = CL_RegisterMaterialNoMip(name, ((itemDef_t *)item)->imageTrack);
     return 1;
 }
@@ -1929,6 +1931,31 @@ static qboolean Load_Menu(const char **p, int imageTrack)
     }
 }
 
+// retail inlines the I_stricmp body at both compares in UI_LoadMenus
+static __forceinline int I_stricmpInl(const char *s0, const char *s1)
+{
+    int c0;
+    int c1;
+    int n = 0x7FFFFFFF;
+
+    do {
+        c0 = *s0++;
+        c1 = *s1++;
+        if (!n--)
+            return 0;
+        if (c0 != c1) {
+            if (I_islower(c0))
+                c0 -= 'a' - 'A';
+            if (I_islower(c1))
+                c1 -= 'a' - 'A';
+            if (c0 != c1)
+                return c0 < c1 ? -1 : 1;
+        }
+    } while (c0);
+
+    return 0;
+}
+
 MenuList *UI_LoadMenus(const char *menuFile, int imageTrack)
 {
     const char *p;
@@ -1964,9 +1991,9 @@ MenuList *UI_LoadMenus(const char *menuFile, int imageTrack)
         token = Com_Parse(&p);
         if (!token || !token[0] || token[0] == '}')
             break;
-        if (!I_stricmp(token, "}"))
+        if (!I_stricmpInl(token, "}"))
             break;
-        if (!I_stricmp(token, "loadmenu")) {
+        if (!I_stricmpInl(token, "loadmenu")) {
             if (Load_Menu(&p, imageTrack))
                 continue;
             break;

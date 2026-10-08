@@ -1126,10 +1126,13 @@ static __attribute_regparm__(3) int SND_PlaySoundAlias_Internal(const snd_alias_
     SND_ChoosePitchAndVolume(pAlias0, pAlias1, lerp, &volume, &pitch);
 
     playType = (pAlias0->flags & 0x60) >> 5;
-    if (playType == 1)
+    switch (playType) {
+    case 1:
         return SND_StartAliasSample(pAlias0, pAlias1, lerp, entnum, org, volume, pitch, timeshift, treatAsMaster, pChannel, system);
-    if (playType >= 2 && playType <= 3)
+    case 2:
+    case 3:
         return SND_StartAliasStream(pAlias0, pAlias1, lerp, entnum, org, volume, pitch, timeshift, 0.0f, treatAsMaster, pChannel, system);
+    }
 
     return 0;
 }
@@ -1357,26 +1360,25 @@ void SND_SetChannelVolumes(int priority, const float *channelvolume, int fademse
     int j;
     int k;
     snd_channelvolgroup *channelVolGroup;
-    float fadetime;
+    float curVolume;
 
     channelVolGroup = &g_snd.channelVolGroups[priority];
     channelVolGroup->active = 1;
 
-    if (fademsec <= 0)
-        fadetime = 1.0f;
-    else
-        fadetime = (float)fademsec;
+    if (fademsec < 1)
+        fademsec = 1;
 
     for (j = 0; j < 11; j++) {
         channelVolGroup->channelvol[j].goalvolume = channelvolume[j];
-        channelVolGroup->channelvol[j].volume = g_snd.channelvol->channelvol[j].volume;
-        channelVolGroup->channelvol[j].goalrate = (channelvolume[j] - g_snd.channelvol->channelvol[j].volume) / fadetime;
+        curVolume = g_snd.channelvol->channelvol[j].volume;
+        channelVolGroup->channelvol[j].volume = curVolume;
+        channelVolGroup->channelvol[j].goalrate = (channelvolume[j] - curVolume) / (float)fademsec;
     }
 
     if (channelVolGroup == g_snd.channelvol)
         return;
 
-    for (k = priority + 1; k <= 3; k++) {
+    for (k = priority + 1; k < 4; k++) {
         if (g_snd.channelVolGroups[k].active)
             return;
     }

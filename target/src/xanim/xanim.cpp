@@ -3045,7 +3045,8 @@ bool XAnimIsPrimitive(XAnim_s *anim, unsigned int animIndex)
 	return anim->entries[animIndex].numAnims == 0;
 }
 
-void XAnimSetTime(XAnimTree_s *tree, unsigned int animIndex, float time)
+// Retail inlines XAnimSetTime in CG_UpdateKillCam, calls it from BG_SetNewAnimation
+__forceinline void XAnimSetTimeInl(XAnimTree_s *tree, unsigned int animIndex, float time)
 {
 	uint16_t childIndex;
 	XAnimInfo *info;
@@ -3068,6 +3069,11 @@ void XAnimSetTime(XAnimTree_s *tree, unsigned int animIndex, float time)
 		state->oldCycleCount = 0;
 		info->notifyIndex = -1;
 	}
+}
+
+void XAnimSetTime(XAnimTree_s *tree, unsigned int animIndex, float time)
+{
+	XAnimSetTimeInl(tree, animIndex, time);
 }
 
 void XAnimSetNotifyIndex( const XAnimTree_s *tree, XAnimInfo *info, const XAnimEntry *entry )

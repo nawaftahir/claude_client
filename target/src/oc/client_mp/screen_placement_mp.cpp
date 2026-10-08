@@ -15,6 +15,7 @@ void CalcScreenY(float *y, int vertAlign);
 void CalcSplitScreenTextOffset(FontHandle font, float *y);
 void SetScreenScaling(float safeAreaRatioHorizontal, float safeAreaRatioVertical, float viewportX, float viewportY, float viewportWidth, float viewportHeight);
 void CalcScreenPlacement(float *x, float *y, float *w, float *h, int horzAlign, int vertAlign);
+void CalcScreenPlacementInl(float *x, float *y, float *w, float *h, int horzAlign, int vertAlign);
 
 // retail 0x449aa0; name from KisakCOD (SUPPORTED)
 static void ScrPlace_CalcSafeAreaOffsets(float safeAreaRatioHorz, float safeAreaRatioVert,
@@ -162,7 +163,7 @@ void CalcSplitScreenTextOffset(FontHandle font, float *y)
 
 }
 
-void CalcScreenPlacement(float *x, float *y, float *w, float *h, int horzAlign, int vertAlign)
+__forceinline void CalcScreenPlacementInl(float *x, float *y, float *w, float *h, int horzAlign, int vertAlign)
 {
     switch (horzAlign) {
     case 1:
@@ -239,3 +240,7 @@ void CalcScreenPlacement(float *x, float *y, float *w, float *h, int horzAlign, 
     }
 }
 
+__declspec(noinline) void CalcScreenPlacement(float *x, float *y, float *w, float *h, int horzAlign, int vertAlign)
+{
+    CalcScreenPlacementInl(x, y, w, h, horzAlign, vertAlign);
+}

@@ -58,7 +58,7 @@ void Com_BeginParseSession( const char *filename )
 	I_strncpyz( pi->parseFile, filename, sizeof( pi->parseFile ) );
 }
 
-void Com_EndParseSession( void )
+__forceinline void Com_EndParseSessionInl( void )
 {
 	ParseThreadInfo *parse;
 
@@ -70,6 +70,11 @@ void Com_EndParseSession( void )
 	}
 
 	parse->parseInfoNum--;
+}
+
+void Com_EndParseSession( void )
+{
+	Com_EndParseSessionInl();
 }
 
 void Com_ResetParseSessions()
@@ -473,7 +478,7 @@ If "allowLineBreaks" is qtrue then an empty
 string will be returned if the next token is
 a newline.
 */
-static char *Com_ParseExt( const char **data_p, qboolean allowLineBreaks )
+char *Com_ParseExt( const char **data_p, qboolean allowLineBreaks )
 {
 	char c = 0;
 	int len;
@@ -771,7 +776,7 @@ char *Com_Parse( const char **data_p )
 	return Com_ParseExt( data_p, qtrue );
 }
 
-char *Com_ParseOnLine( const char **data_p )
+__forceinline char *Com_ParseOnLineInl( const char **data_p )
 {
 	ParseThreadInfo *parse;
 	parseInfo_t *pi;
@@ -793,6 +798,11 @@ char *Com_ParseOnLine( const char **data_p )
 	}
 
 	return Com_ParseExt( data_p, qfalse );
+}
+
+char *Com_ParseOnLine( const char **data_p )
+{
+	return Com_ParseOnLineInl( data_p );
 }
 
 qboolean Com_MatchToken( const char **buf_p, const char *match, qboolean warning )
@@ -860,7 +870,7 @@ qboolean Com_SkipBracedSection( const char **program, int maxNesting )
 	return nestingExceeded;
 }
 
-void Com_SkipRestOfLine( const char **data )
+__forceinline void Com_SkipRestOfLineInl( const char **data )
 {
 	const char *p;
 	int c;
@@ -888,6 +898,11 @@ void Com_SkipRestOfLine( const char **data )
 	}
 
 	*data = p;
+}
+
+void Com_SkipRestOfLine( const char **data )
+{
+	Com_SkipRestOfLineInl( data );
 }
 
 int Com_GetArgCountOnLine( const char **data_p )

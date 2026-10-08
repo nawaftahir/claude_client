@@ -2242,11 +2242,9 @@ void ScriptParse( sval_u *parseData, unsigned char user )
 {
 	yy_buffer_state buffer_state;
 
-	memset(&buffer_state, 0, sizeof(buffer_state));
-
+	g_parse_user = user;
 	g_out_pos = -1;
 	g_sourcePos = 0;
-	g_parse_user = user;
 	g_dummyVal.node = 0;
 
 	yy_init = 1;
@@ -2255,7 +2253,10 @@ void ScriptParse( sval_u *parseData, unsigned char user )
 	buffer_state.yy_ch_buf = ch_buf;
 	buffer_state.yy_is_our_buffer = 0;
 
-	yy_init_buffer(&buffer_state, 0);
+	yy_flush_buffer(&buffer_state);
+	buffer_state.yy_input_file = 0;
+	buffer_state.yy_fill_buffer = 1;
+	buffer_state.yy_is_interactive = 0;
 
 	yy_current_buffer = &buffer_state;
 	yy_start = 0;

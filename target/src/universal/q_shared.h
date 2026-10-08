@@ -354,6 +354,31 @@ void Com_UngetToken();
 int Com_GetCurrentParseLine( void );
 char *Com_Parse( const char *( *data_p ) );
 char *Com_ParseOnLine( const char *( *data_p ) );
+char *Com_ParseExt( const char **data_p, qboolean allowLineBreaks );
+ParseThreadInfo *Com_GetParseThreadInfo();
+
+// Retail inlines Com_Parse at some sites and calls it at others
+static __forceinline char *Com_ParseInl( const char **data_p )
+{
+	ParseThreadInfo *parse;
+	parseInfo_t *pi;
+
+	parse = Com_GetParseThreadInfo();
+	pi = &parse->parseInfo[parse->parseInfoNum];
+
+	if ( pi->ungetToken )
+	{
+		pi->ungetToken = false;
+		*data_p = pi->backup_text;
+		pi->lines = pi->backup_lines;
+	}
+
+	return Com_ParseExt( data_p, qtrue );
+}
+// forceinline body lives in q_parse.cpp
+char *Com_ParseOnLineInl( const char **data_p );
+void Com_SkipRestOfLineInl( const char **data );
+void Com_EndParseSessionInl( void );
 void Com_ParseReturnToMark( const char *( *text ), com_parse_mark_t *mark );
 int Com_Compress( char *data_p );
 void Com_ParseSetMark( const char *( *text ), com_parse_mark_t *mark );
@@ -427,6 +452,7 @@ static inline int I_strnicmpInline( const char *a, const char *b, int count )
 int I_strncmp( const char *s1, const char *s2, int n );
 int I_stricmp( const char *s1, const char *s2 );
 char *I_strlwr( char *s1 );
+char *I_strlwrInl( char *s1 );
 char *I_strupr( char *s1 );
 void I_strncat( char *dest, int size, const char *src );
 

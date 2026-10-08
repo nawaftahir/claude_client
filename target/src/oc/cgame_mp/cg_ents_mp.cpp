@@ -753,22 +753,22 @@ void CG_CalcEntityLerpPositions(centity_t *cent)
     BG_EvaluateTrajectory(&cent->currentState.pos, cg->time, cent->lerpOrigin);
     BG_EvaluateTrajectory(&cent->currentState.apos, cg->time, cent->lerpAngles);
 
-    ci = NULL;
     if (cent->nextState.eType == 1)
         ci = &cg->bgs.clientinfo[cent->nextState.clientNum];
     else if (cent->nextState.eType == 2)
         ci = CG_CorpseInfoForEntityNum(cent->nextState.number);
+    else
+        goto noClientInfo;
 
-    if (ci) {
-        ci->lerpMoveDir = cent->nextState.angles2[1];
-        ci->playerAngles[0] = cent->lerpAngles[0];
-        ci->playerAngles[1] = cent->lerpAngles[1];
-        ci->playerAngles[2] = cent->lerpAngles[2];
-        cent->lerpAngles[2] = 0.0f;
-        cent->lerpAngles[0] = 0.0f;
-        ci->lerpLean = cent->nextState.leanf;
-    }
+    ci->lerpMoveDir = cent->nextState.angles2[1];
+    ci->playerAngles[0] = cent->lerpAngles[0];
+    ci->playerAngles[1] = cent->lerpAngles[1];
+    ci->playerAngles[2] = cent->lerpAngles[2];
+    cent->lerpAngles[2] = 0.0f;
+    cent->lerpAngles[0] = 0.0f;
+    ci->lerpLean = cent->nextState.leanf;
 
+noClientInfo:
     if (cent != &cg->predictedPlayerEntity)
         CG_AdjustPositionForMover(cent->lerpOrigin, cent->currentState.groundEntityNum, cg->snap->serverTime, cg->time, cent->lerpOrigin, NULL);
 }
@@ -954,6 +954,9 @@ void CG_ProcessEntity(centity_t *cent)
 
     eType = cent->nextState.eType;
     switch (eType) {
+    case 9:
+        CG_Turret(cent);
+        break;
     case 0:
         CG_General(cent);
         break;
@@ -979,9 +982,6 @@ void CG_ProcessEntity(centity_t *cent)
         break;
     case 8:
         CG_PlayLoopedFx(cent);
-        break;
-    case 9:
-        CG_Turret(cent);
         break;
     default:
         Com_Error(ERR_DROP, (const char *)"\x15"

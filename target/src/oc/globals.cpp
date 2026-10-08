@@ -454,7 +454,7 @@ const dvar_t *ui_smallFont;
 Bool updateScreenCalled;
 float voice_current_scaler;
 float voice_current_voicelevel;
-byte *voice_freq_ptr;
+int voice_freq;
 byte *voice_maxframe_ptr;
 static byte *voice_scale_ptr;
 short unsigned int vq2[16384];

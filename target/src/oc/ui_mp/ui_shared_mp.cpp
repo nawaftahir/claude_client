@@ -2706,11 +2706,7 @@ qboolean Item_SetFocus(displayContextDef_t *dc, itemDef_t *item, float x, float 
 
     playSound = 0;
     sfx = sharedUiInfo.assets.itemFocusSound;
-    if (!item)
-        return 0;
-    if (item->window.staticFlags & 0x100000)
-        return 0;
-    if (!Window_IsVisible(&item->window))
+    if (!item || (item->window.staticFlags & 0x100000) || !Window_IsVisible(&item->window))
         return 0;
     if (Window_HasFocus(&item->window))
         return 1;
@@ -3699,17 +3695,18 @@ qboolean Menu_HandleMouseMove(displayContextDef_t *dc, menuDef_t *menu, float x,
                         }
                     }
                 }
-            } else if (overItem->window.dynamicFlags[0] & 1) {
+            } else if (menu->items[i]->window.dynamicFlags[0] & 1) {
                 Item_MouseLeave(dc, overItem);
                 Item_SetMouseOver(menu->items[i], 0);
             }
         }
     }
-    if (focusSet)
-        return 1;
-    if (focusItem && !Rect_ContainsPoint(&focusItem->window.rect[0], x, y))
-        Menu_ClearFocus(dc, menu);
-    return 0;
+    if (!focusSet) {
+        if (focusItem && !Rect_ContainsPoint(&focusItem->window.rect[0], x, y))
+            Menu_ClearFocus(dc, menu);
+        return 0;
+    }
+    return 1;
 }
 
 // retail 0x5373a0

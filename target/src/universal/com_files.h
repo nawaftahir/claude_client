@@ -201,6 +201,8 @@ int FS_GetFileList(const char *path, const char *extension, FsListBehavior behav
 char** FS_ListFiles(const char* path, const char* extension, FsListBehavior behavior, int* numfiles, int allocType);
 void FS_FreeFileList( char **list, int allocType );
 void FS_ConvertPath(char *s);
+void FS_ConvertPathInl(char *s);
+int FS_ReadFileInl(const char* qpath, void** buffer);
 int FS_WriteFile(const char* filename, const void* buffer, int size);
 qboolean FS_iwIwd(char *iwd, const char *base);
 const char *FS_LoadedIwdNames();

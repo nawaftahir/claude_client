@@ -33,7 +33,8 @@ extern int mixerSetMicrophoneMute(bool mute);
 extern int Sys_Milliseconds(void);
 extern int Decode_Sample(char *inData, int inSize, short *outData, int maxOutSize);
 
-extern byte *voice_freq_ptr;
+extern int voice_freq;
+extern "C" __declspec(dllimport) HWND__ *__stdcall GetDesktopWindow(void);
 extern int g_frame_size;
 
 extern const dvar_t *winvoice_mic_mute;
@@ -76,36 +77,31 @@ Bool Voice_IsClientTalking(int clientNum)
 
 Bool Voice_Init(void)
 {
-    int *freq;
     int i;
     int level;
+    HWND__ *hwnd;
 
     winvoice_mic_mute = Dvar_RegisterBool("winvoice_mic_mute", 1, 0x1001);
     winvoice_mic_reclevel = Dvar_RegisterFloat("winvoice_mic_reclevel", 65535.0f, 0.0f, 65535.0f, 0x1001);
     winvoice_save_voice = Dvar_RegisterBool("winvoice_save_voice", 0, 0x1001);
     winvoice_mic_scaler = Dvar_RegisterFloat("winvoice_mic_scaler", 1.0f, 0.25f, 2.0f, 0x1001);
 
-    freq = *(int **)&voice_freq_ptr;
-    *freq = 0;
-
-    if (!Record_Init(0, 0))
-        return 0;
-
-    Sound_Init(0);
-    Encode_Init(*freq);
-    Decode_Init(*freq);
-
     mixerGetRecordSource(old_rec_source);
     mixerSetRecordSource("Mic");
     mic_old_reclevel = mixerGetRecordLevel("Mic");
 
-    level = (unsigned short)(int)winvoice_mic_reclevel->current.value;
-    mic_current_reclevel = level;
-
-    level = (unsigned short)(int)winvoice_mic_reclevel->current.value;
+    level = (int)winvoice_mic_reclevel->current.value;
+    mic_current_reclevel = (unsigned short)level;
     mixerSetRecordLevel("Mic", level);
 
-    mixerSetMicrophoneMute(winvoice_mic_mute->current.enabled);
+    mixerSetMicrophoneMute(*(bool *)&winvoice_mic_mute->current.enabled);
+
+    voice_freq = 0;
+    hwnd = GetDesktopWindow();
+    Record_Init(0, 0);
+    Sound_Init(hwnd);
+    Encode_Init(voice_freq);
+    Decode_Init(voice_freq);
 
     g_voice_initialized = 1;
 

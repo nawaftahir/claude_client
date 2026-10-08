@@ -711,9 +711,9 @@ void CL_Connect_f(void)
     clc.serverMessage[0] = 0;
     server = Cmd_Argv(1);
 
-    legacy = (LegacyHacks *)::legacyHacks;
     if (((dvar_t *)com_sv_running)->current.enabled && !strcmp(server, "localhost"))
-        legacy->sv_killserver = 1;
+        ((LegacyHacks *)::legacyHacks)->sv_killserver = 1;
+    legacy = (LegacyHacks *)::legacyHacks;
     legacy->cl_serverloadmap[0] = 0;
     legacy->cl_serverloadgametype[0] = 0;
 
@@ -733,12 +733,14 @@ void CL_Connect_f(void)
     Com_Printf("%s resolved to %i.%i.%i.%i:%i\n", cls.servername, clc.serverAddress.ip[0], clc.serverAddress.ip[1],
                clc.serverAddress.ip[2], clc.serverAddress.ip[3], BigShort(clc.serverAddress.port));
 
-    if (!NET_IsLocalAddress(clc.serverAddress) && !CL_CDKeyValidate(cl_cdkey, cl_cdkeychecksum)) {
+    netadr_t adr = clc.serverAddress;
+    if (!NET_IsLocalAddress(adr) && !CL_CDKeyValidate(cl_cdkey, cl_cdkeychecksum)) {
         Com_Error(ERR_DROP, "EXE_ERR_INVALID_CD_KEY");
         return;
     }
 
-    if (NET_IsLocalAddress(clc.serverAddress))
+    adr = clc.serverAddress;
+    if (NET_IsLocalAddress(adr))
         clc.state = (connstate_t)4;
     else
         clc.state = (connstate_t)3;
@@ -753,7 +755,7 @@ void CL_Connect_f(void)
     SCR_UpdateScreen();
 }
 
-serverStatusRequest_t *CL_GetServerStatus(netadr_t from)
+__declspec(noinline) serverStatusRequest_t *CL_GetServerStatus(netadr_t from)
 {
     int i;
     int oldest;
@@ -835,23 +837,19 @@ void CL_ServerStatus_f(void)
 {
     netadr_t to;
     const char *serverAddr;
-    serverStatusRequest_t *statusEntry;
-    int i;
+    serverStatusRequest_t *serverStatus;
 
     Com_Memset(&to, 0, sizeof(netadr_t));
 
-    if (Cmd_Argc() == 2) {
-
-        serverAddr = Cmd_Argv(1);
-    } else {
-
-        clientConnection_t *clcConn = &::clc;
-        if (clcConn->state != 8)
-            goto not_connected;
-        if (clcConn->demoplaying != 0)
-            goto not_connected;
-
+    if (Cmd_Argc() != 2) {
+        if (clc.state != 8 || clc.demoplaying != 0) {
+            Com_Printf((const char *)"Not connected to a server.\n");
+            Com_Printf((const char *)"Usage: serverstatus [server]\n");
+            return;
+        }
         serverAddr = cls.servername;
+    } else {
+        serverAddr = Cmd_Argv(1);
     }
 
     if (!NET_StringToAdr(serverAddr, &to))
@@ -859,52 +857,10 @@ void CL_ServerStatus_f(void)
 
     NET_OutOfBandPrint(NS_CLIENT1, to, (const char *)"getstatus");
 
-    {
-        for (i = 0; i < 16; i++) {
-            if (NET_CompareAdr(to, cl_serverStatusList[i].address)) {
-                statusEntry = &cl_serverStatusList[i];
-                goto store_entry;
-            }
-        }
-    }
-
-    {
-        int idx;
-        for (idx = 0; idx < 16; idx++) {
-            if (cl_serverStatusList[idx].retrieved != 0) {
-                statusEntry = &cl_serverStatusList[idx];
-                goto store_entry;
-            }
-        }
-    }
-
-    {
-        int bestIdx = 0;
-        int oldestTime = cl_serverStatusList[0].startTime;
-        int j;
-
-        for (j = 1; j <= 15; j++) {
-            int entryTime = cl_serverStatusList[j].startTime;
-            if (oldestTime > entryTime) {
-                bestIdx = j;
-                oldestTime = cl_serverStatusList[bestIdx].startTime;
-            }
-        }
-
-        statusEntry = &cl_serverStatusList[bestIdx];
-    }
-
-store_entry:
-
-    statusEntry->address = to;
-    statusEntry->print = 1;
-    statusEntry->pending = 1;
-
-    return;
-
-not_connected:
-    Com_Printf((const char *)"Not connected to a server.\n");
-    Com_Printf((const char *)"Usage: serverstatus [server]\n");
+    serverStatus = CL_GetServerStatus(to);
+    serverStatus->address = to;
+    serverStatus->print = 1;
+    serverStatus->pending = 1;
 }
 
 void CL_ServerStatusResponse(netadr_t from, msg_t *msg)

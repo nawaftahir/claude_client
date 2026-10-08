@@ -85,7 +85,7 @@ static const char *CG_ParseImpactEffects( const char *filename, const char *buf,
 		iSurfaceType = Com_SurfaceTypeFromName(token);
 		if ( iSurfaceType < 0 )
 			return va("unknown surface type '%s' in second column of file '%s'", token, filename);
-		token = Com_ParseOnLine(&buf);
+		token = Com_ParseOnLineInl(&buf);
 		len = strlen(token);
 		if ( len >= 64 )
 			return va("effect filename '%s' in third column of file '%s' is longer than %i characters", token, filename, 63);

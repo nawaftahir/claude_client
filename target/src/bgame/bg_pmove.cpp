@@ -3177,6 +3177,11 @@ are being updated isntead of a full move
 ================
 */
 // rain - take a tracemask as well - we can't use anything out of pm
+__declspec(noinline) float AngleDeltaNI( float angle1, float angle2 )
+{
+	return AngleDelta(angle1, angle2);
+}
+
 void PM_UpdateViewAngles( playerState_t *ps, float msec, usercmd_t *cmd, byte handler )
 {
 	int pmFlags;
@@ -3437,7 +3442,7 @@ void PM_UpdateViewAngles( playerState_t *ps, float msec, usercmd_t *cmd, byte ha
 
 			if ( I_fabs(deltaYaw1) <= 1 )
 			{
-				deltaYaw2 = AngleDelta(newViewYaw, ps->viewangles[YAW]);
+				deltaYaw2 = AngleDeltaNI(newViewYaw, ps->viewangles[YAW]);
 
 				if ( deltaYaw1 * deltaYaw2 > 0 )
 				{

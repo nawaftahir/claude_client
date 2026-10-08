@@ -45,6 +45,7 @@ extern XAnim *XAnimGetAnims(const XAnimTree *tree);
 extern bool XAnimIsLooped(const XAnim_s *anim, unsigned int animIndex);
 extern int XAnimGetNumChildren(const struct XAnim_s *anims, unsigned int animIndex);
 extern void XAnimSetTime(XAnimTree *tree, unsigned int animIndex, float time);
+extern void XAnimSetTimeInl(XAnimTree *tree, unsigned int animIndex, float time);
 
 #define CENT_STRIDE 0x224
 
@@ -303,7 +304,7 @@ static void CG_UpdateKillCam(void)
                 anim = cgs->corpseinfo[corpseIndex].legs.animationNumber & 0xFFFFFDFF;
                 anims = XAnimGetAnims(pXAnimTree);
                 if (anim && !XAnimIsLooped(anims, anim) && !XAnimGetNumChildren(anims, anim))
-                    XAnimSetTime(pXAnimTree, anim, 1.0f);
+                    XAnimSetTimeInl(pXAnimTree, anim, 1.0f);
             }
         }
     }

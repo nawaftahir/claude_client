@@ -171,7 +171,7 @@ void CG_ImpactMark(MaterialHandle markMaterial, const vec_t *origin, const vec_t
             originalPoints[0][i] = origin[i] - radius * axis[1][i] - radius * axis[2][i];
             originalPoints[1][i] = origin[i] + radius * axis[1][i] - radius * axis[2][i];
             originalPoints[2][i] = origin[i] + radius * axis[1][i] + radius * axis[2][i];
-            originalPoints[3][i] = origin[i] - radius * axis[1][i] + radius * axis[2][i];
+            originalPoints[3][i] = radius * axis[2][i] + (origin[i] - radius * axis[1][i]);
         }
 
         numFragments = CL_MarkFragments(originalPoints, origin, axis, radius, 1024, markVerts, 384, markFragments, markMaterial);
