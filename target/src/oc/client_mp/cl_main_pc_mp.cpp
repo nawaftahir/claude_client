@@ -337,7 +337,7 @@ void CL_SortGlobalServers(void)
     qsort(cls->globalServers, count, sizeof(serverInfo_t), CL_CompareAdrSigned);
 }
 
-static void CL_InitServerInfo(serverInfo_t *server, netadr_t adr)
+static __declspec(noinline) void CL_InitServerInfo(serverInfo_t *server, netadr_t adr)
 {
     server->adr = adr;
     server->clients = 0;

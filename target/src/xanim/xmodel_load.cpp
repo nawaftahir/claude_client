@@ -579,7 +579,7 @@ bool XModelLoadSurfaces(XModel *model, void *(*Alloc)(int))
 	int i;
 	XModelLodInfo *lodInfo;
 
-	for ( i = 0; i <= 3; ++i )
+	for ( i = 0; i < 4; ++i )
 	{
 		lodInfo = &model->lodInfo[i];
 

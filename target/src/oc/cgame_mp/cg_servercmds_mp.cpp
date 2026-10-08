@@ -812,12 +812,12 @@ static void CG_LocalSoundCmd(void)
     }
 
     soundIndex = atoi(CG_Argv(1));
-    if ((unsigned int)(soundIndex - 1) > 0xff) {
-        Com_Printf("ERROR: CG_LocalSound called with index %i (should be in range[1,%i])\n", soundIndex, 0x100);
+    if (soundIndex > 0 && soundIndex <= 0x100) {
+        CG_PlayClientSoundAliasByName(CL_GetConfigString(soundIndex + 0x24e));
         return;
     }
 
-    CG_PlayClientSoundAliasByName(CL_GetConfigString(soundIndex + 0x24e));
+    Com_Printf("ERROR: CG_LocalSound called with index %i (should be in range[1,%i])\n", soundIndex, 0x100);
 }
 
 void CG_ServerCommand(void)

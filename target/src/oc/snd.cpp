@@ -562,7 +562,7 @@ void SND_ErrorCleanup(void)
     }
 }
 
-static Bool SND_AnyActiveListeners(void)
+static __declspec(noinline) Bool SND_AnyActiveListeners(void)
 {
     int i;
 

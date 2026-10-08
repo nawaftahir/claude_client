@@ -154,8 +154,10 @@ void FxHelper::WarpTime( int intime )
 		frameTime = intime - mTime;
 		if ( frameTime < 0 )
 		{
-			frameTime = 1;
 			mTime = intime;
+			time = intime;
+			mSeed = time;
+			return;
 		}
 		else
 		{

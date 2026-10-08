@@ -128,7 +128,7 @@ void EmitMethod( sval_u expr, sval_u func_name, sval_u params, sval_u methodSour
 void LinkThread( unsigned int threadCountId, VariableValue *pos, bool allowFarCall );
 void LinkFile( unsigned int fileId );
 unsigned int SpecifyThreadPosition( unsigned int posId, unsigned int name, unsigned int sourcePos, int type );
-void SetThreadPosition( unsigned int posId, unsigned int sourcePos );
+void SetThreadPosition( unsigned int posId, sval_u sourcePos );
 void EmitCallExpression( sval_u expr, bool bStatement, scr_block_s *block );
 void EmitCallExpressionFieldObject( sval_u expr, scr_block_s *block );
 void Scr_CreateVector( VariableCompileValue *constValue, VariableValue *value );
@@ -153,7 +153,7 @@ void EmitArrayPrimitiveExpressionRef( sval_u expr, sval_u sourcePos, scr_block_s
 void Scr_CalcLocalVarsArrayPrimitiveExpressionRef( sval_u expr, scr_block_s *block );
 void EmitPrimitiveExpressionFieldObject( sval_u expr, sval_u sourcePos, scr_block_s *block );
 void EmitExpressionFieldObject( sval_u expr, sval_u sourcePos, scr_block_s *block );
-void ConnectBreakStatements();
+__declspec(noinline) void ConnectBreakStatements();
 void ConnectContinueStatements();
 bool IsUndefinedPrimitiveExpression( sval_u expr );
 int IsUndefinedExpression( sval_u expr );
@@ -2845,7 +2845,7 @@ unsigned int SpecifyThreadPosition( unsigned int posId, unsigned int name, unsig
 SetThreadPosition
 ============
 */
-void SetThreadPosition( unsigned int posId, unsigned int sourcePos )
+void SetThreadPosition( unsigned int posId, sval_u sourcePos )
 {
 	char *codePos;
 
@@ -3595,7 +3595,7 @@ void ConnectContinueStatements()
 ConnectBreakStatements
 ============
 */
-void ConnectBreakStatements()
+__declspec(noinline) void ConnectBreakStatements()
 {
 	assert(!scrCompilePub.value_count);
 	const char *codePos = (char *)TempMalloc(0);
@@ -5753,7 +5753,7 @@ void EmitNormalThread( sval_u val, sval_u *stmttblock )
 
 	threadId = FindObject(FindVariable(scrCompileGlob.fileId, val.node[1].sourcePosValue));
 
-	SetThreadPosition(threadId, val.node[4].sourcePosValue);
+	SetThreadPosition(threadId, val.node[4]);
 	EmitThreadInternal(threadId, val, val.node[4], val.node[5], stmttblock->block);
 }
 
@@ -5790,7 +5790,7 @@ void EmitDeveloperThread( sval_u val, sval_u *stmttblock )
 
 		threadId = FindObject(FindVariable(scrCompileGlob.fileId, val.node[1].sourcePosValue));
 
-		SetThreadPosition(threadId, val.node[4].sourcePosValue);
+		SetThreadPosition(threadId, val.node[4]);
 		EmitThreadInternal(threadId, val, val.node[4], val.node[5], stmttblock->block);
 	}
 

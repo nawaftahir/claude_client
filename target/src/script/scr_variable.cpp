@@ -2747,6 +2747,7 @@ void Scr_EvalBoolNot( VariableValue *value )
 Scr_EvalBoolComplement
 ==============
 */
+#pragma inline_depth(0)
 void Scr_EvalBoolComplement( VariableValue *value )
 {
 	int type;
@@ -2760,8 +2761,14 @@ void Scr_EvalBoolComplement( VariableValue *value )
 	type = value->type;
 	RemoveRefToValue(value->type, value->u);
 	value->type = VAR_UNDEFINED;
-	Scr_Error(va("~ cannot be applied to \"%s\"", var_typename[type]));
+	{
+		const char *error = va("~ cannot be applied to \"%s\"", var_typename[type]);
+		if ( scrVarPub.error_message == NULL )
+			scrVarPub.error_message = error;
+		Scr_ErrorInternal();
+	}
 }
+#pragma inline_depth()
 
 /*
 ==============

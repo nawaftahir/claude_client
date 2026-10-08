@@ -437,12 +437,9 @@ unsigned int SEH_JapaneseCharToIndex( unsigned int c )
 
 int SEH_IsChineseLeadTrail( unsigned char lead, unsigned char trail )
 {
-	int result;
-
-	result = 0;
 	if ( lead >= 0xa1 && lead <= 0xf7 && trail > 0xa0 && trail < 0xff )
-		result = 1;
-	return result;
+		return 1;
+	return 0;
 }
 
 bool SEH_IsChinesePunctuation( unsigned int c )
@@ -588,12 +585,9 @@ qboolean SEH_GetLanguageIndexForName( const char *language, int *langindex )
 
 int SEH_IsKoreanLeadTrail( unsigned char lead, unsigned char trail )
 {
-	int result;
-
-	result = 0;
 	if ( lead >= 0xb0 && lead <= 0xc8 && trail > 0xa0 && trail < 0xff )
-		result = 1;
-	return result;
+		return 1;
+	return 0;
 }
 
 unsigned char SEH_IsKoreanChar( unsigned int c ) throw()

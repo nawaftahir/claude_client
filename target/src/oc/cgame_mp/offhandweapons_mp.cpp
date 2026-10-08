@@ -63,8 +63,7 @@ void CG_OffhandRegisterDvars(void)
     hud_flash_period_offhand = Dvar_RegisterFloat("hud_flash_period_offhand", 0.5f, 0.0f, 30.0f, 0x1001);
 }
 
-// retail 0x4d1cc0
-static int GetBestOffhand(int offhandClass)
+static __forceinline int GetBestOffhandBody(int offhandClass)
 {
     int newOffhand;
 
@@ -72,6 +71,12 @@ static int GetBestOffhand(int offhandClass)
     if (!newOffhand)
         return BG_GetFirstEquippedOffhand(&cg->predictedPlayerState, offhandClass);
     return newOffhand;
+}
+
+// retail 0x4d1cc0, called from one site only
+static __declspec(noinline) int GetBestOffhand(int offhandClass)
+{
+    return GetBestOffhandBody(offhandClass);
 }
 
 // retail 0x4d1ce0
@@ -88,7 +93,7 @@ void CG_DrawOffHandIcon(rectDef_s *rect, float scale, vec_t *color, MaterialHand
 
     if (!IsOffHandDisplayVisible())
         return;
-    if (!GetBestOffhand(weaponType))
+    if (!GetBestOffhandBody(weaponType))
         return;
 
     drawColor[3] = CG_FadeHudMenu(hud_fade_offhand, cg->offhandFadeTime, I_fround(hud_fade_offhand->current.value * 1000.0f));
@@ -151,7 +156,7 @@ void CG_DrawOffHandHighlight(rectDef_s *rect, float scale, vec_t *color, Materia
 
     if (!IsOffHandDisplayVisible())
         return;
-    if (!GetBestOffhand(weaponType))
+    if (!GetBestOffhandBody(weaponType))
         return;
     if (!cg->equippedOffHand)
         return;
@@ -185,7 +190,7 @@ void CG_DrawOffHandAmmo(rectDef_s *rect, struct Font_s *font, float scale, vec_t
 
     if (!IsOffHandDisplayVisible())
         return;
-    if (!GetBestOffhand(weaponType))
+    if (!GetBestOffhandBody(weaponType))
         return;
 
     drawColor[3] = CG_FadeHudMenu(hud_fade_offhand, cg->offhandFadeTime, I_fround(hud_fade_offhand->current.value * 1000.0f));
@@ -326,7 +331,6 @@ void CG_SwitchOffHandCmd(void)
     if (newWeapon == 0)
         return;
 
-    cg->equippedOffHand = newWeapon;
-    CG_MenuShowNotify(4);
+    CG_SetEquippedOffHand(newWeapon);
 }
 

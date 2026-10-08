@@ -1031,7 +1031,7 @@ void Key_Bindlist_f(void)
 }
 
 // retail 0x40acf0
-void CL_KeyEvent(int key, const qboolean down, const unsigned int time)
+static __forceinline void CL_KeyEventBody(int key, const qboolean down, const unsigned int time)
 {
     char *kb;
     char cmd[1024];
@@ -1192,6 +1192,11 @@ void CL_KeyEvent(int key, const qboolean down, const unsigned int time)
     }
 }
 
+void CL_KeyEvent(int key, const qboolean down, const unsigned int time)
+{
+    CL_KeyEventBody(key, down, time);
+}
+
 void CL_CharEvent(int key)
 {
     unsigned char keyCatchers;
@@ -1227,7 +1232,7 @@ void Key_ClearStates(void)
 
     for (i = 0; i < 256; i++) {
         if (keys[i].down) {
-            CL_KeyEvent(i, 0, 0);
+            CL_KeyEventBody(i, 0, 0);
         }
         keys[i].down = 0;
         keys[i].repeats = 0;

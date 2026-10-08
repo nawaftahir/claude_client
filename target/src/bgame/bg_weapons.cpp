@@ -923,12 +923,7 @@ int BG_GetViewmodelWeaponIndex( const playerState_t *ps )
 		return BG_GetBinocularWeaponIndex();
 	}
 
-	if ( ps->pm_flags & PMF_FRAG )
-	{
-		return ps->offHandIndex;
-	}
-
-	return ps->weapon;
+	return ( ps->pm_flags & PMF_FRAG ) ? ps->offHandIndex : ps->weapon;
 }
 
 int BG_GetFirstAvailableOffhand( const playerState_t *ps, int offhandSlot )
@@ -1608,17 +1603,14 @@ PM_IsBinocularsADS
 */
 int PM_IsBinocularsADS( const playerState_t *ps )
 {
-	int result;
-
 	assert(ps);
 
-	result = 0;
 	if ( ps->weaponstate == WEAPON_BINOCULARS_HOLD || ps->weaponstate == WEAPON_BINOCULARS_EXIT_ADS )
 	{
-		result = 1;
+		return 1;
 	}
 
-	return result;
+	return 0;
 }
 
 /*

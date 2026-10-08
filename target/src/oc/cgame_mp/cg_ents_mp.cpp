@@ -358,6 +358,28 @@ void CG_Missile(centity_t *cent)
     CG_AddCEntityToScene(&ent, obj, cent);
 }
 
+static void CG_LockLightingOrigin(centity_t *cent, GfxEntity *ent)
+{
+    if (cent->nextState.eFlags & 0x400) {
+        if (cent->lightingOrigin[0] == 0.0f &&
+            cent->lightingOrigin[1] == 0.0f &&
+            cent->lightingOrigin[2] == 0.0f) {
+            cent->lightingOrigin[0] = cent->lerpOrigin[0];
+            cent->lightingOrigin[1] = cent->lerpOrigin[1];
+            cent->lightingOrigin[2] = cent->lerpOrigin[2];
+        }
+
+        ent->lighting.origin[0] = cent->lightingOrigin[0];
+        ent->lighting.origin[1] = cent->lightingOrigin[1];
+        ent->renderFxFlags |= 0x80;
+        ent->lighting.origin[2] = cent->lightingOrigin[2];
+    } else {
+        cent->lightingOrigin[0] = 0.0f;
+        cent->lightingOrigin[1] = 0.0f;
+        cent->lightingOrigin[2] = 0.0f;
+    }
+}
+
 void CG_ScriptMover(centity_t *cent)
 {
     entityState_t *s1 = &cent->nextState;
@@ -373,41 +395,20 @@ void CG_ScriptMover(centity_t *cent)
     AnglesToAxis(cent->lerpAngles, ent.axis);
     ent.renderFxFlags = 0x40;
 
-    if (s1->solid == 0xffffff) {
-        GfxModel model;
-
-        ent.reType = (refEntityType_t)(3);
-        model.bmodel = cgs->inlineDrawModel[s1->index.brushmodel];
-        R_AddRefEntityToScene(&ent, model, 0);
-        return;
-    }
-
-    {
+    if (s1->solid != 0xffffff) {
         struct DObj_s *obj = CG_PreProcess_GetDObj(s1->number, s1->eType, cgs->gameModels[s1->index.xmodel]);
         if (!obj)
             return;
 
         ent.reType = (refEntityType_t)(0);
-        if (s1->eFlags & 0x400) {
-            if (cent->lightingOrigin[0] == 0.0f &&
-                cent->lightingOrigin[1] == 0.0f &&
-                cent->lightingOrigin[2] == 0.0f) {
-                cent->lightingOrigin[0] = cent->lerpOrigin[0];
-                cent->lightingOrigin[1] = cent->lerpOrigin[1];
-                cent->lightingOrigin[2] = cent->lerpOrigin[2];
-            }
-
-            ent.lighting.origin[0] = cent->lightingOrigin[0];
-            ent.lighting.origin[1] = cent->lightingOrigin[1];
-            ent.lighting.origin[2] = cent->lightingOrigin[2];
-            ent.renderFxFlags |= 0x80;
-        } else {
-            cent->lightingOrigin[0] = 0.0f;
-            cent->lightingOrigin[1] = 0.0f;
-            cent->lightingOrigin[2] = 0.0f;
-        }
-
+        CG_LockLightingOrigin(cent, &ent);
         CG_AddCEntityToScene(&ent, obj, cent);
+    } else {
+        GfxModel model;
+
+        ent.reType = (refEntityType_t)(3);
+        model.bmodel = cgs->inlineDrawModel[s1->index.brushmodel];
+        R_AddRefEntityToScene(&ent, model, 0);
     }
 }
 
@@ -595,54 +596,35 @@ void CG_General(centity_t *cent)
     AnglesToAxis(cent->lerpAngles, ent.axis);
     ent.reType = (refEntityType_t)(0);
 
-    if (s1->eFlags & 0x400) {
-        if (cent->lightingOrigin[0] == 0.0f &&
-            cent->lightingOrigin[1] == 0.0f &&
-            cent->lightingOrigin[2] == 0.0f) {
-            cent->lightingOrigin[0] = cent->lerpOrigin[0];
-            cent->lightingOrigin[1] = cent->lerpOrigin[1];
-            cent->lightingOrigin[2] = cent->lerpOrigin[2];
-        }
-
-        ent.lighting.origin[0] = cent->lightingOrigin[0];
-        ent.lighting.origin[1] = cent->lightingOrigin[1];
-        ent.lighting.origin[2] = cent->lightingOrigin[2];
-        ent.renderFxFlags |= 0x80;
-    } else {
-        cent->lightingOrigin[0] = 0.0f;
-        cent->lightingOrigin[1] = 0.0f;
-        cent->lightingOrigin[2] = 0.0f;
-    }
-
+    CG_LockLightingOrigin(cent, &ent);
     CG_AddCEntityToScene(&ent, obj, cent);
 }
 
 void CG_Item(centity_t *cent)
 {
     entityState_t *s1 = &cent->nextState;
-    int itemNum = s1->index.item;
     itemInfo_t *itemInfo;
     gitem_t *item;
     struct DObj_s *obj;
     GfxEntity ent;
 
-    if (itemNum >= bg_numItems)
+    if (s1->index.item >= bg_numItems)
         Com_Error(ERR_DROP, (const char *)"\x15"
                                    "Bad item index %i on entity",
-                  itemNum);
+                  s1->index.item);
 
     if (s1->eFlags & 0x20)
         return;
 
-    item = &((gitem_t *)((void *)&bg_itemlist))[itemNum];
-    itemInfo = &(cg_itemsArray)[itemNum];
+    item = &((gitem_t *)((void *)&bg_itemlist))[s1->index.item];
+    itemInfo = &(cg_itemsArray)[s1->index.item];
     if (!itemInfo->registered) {
-        CG_RegisterItemVisuals(itemNum);
+        CG_RegisterItemVisuals(s1->index.item);
         return;
     }
 
     if (!itemInfo->models[0])
-        Com_Error(ERR_DROP, (const char *)"\x15No XModel loaded for item index %i (%s)", itemNum, item->pickup_name);
+        Com_Error(ERR_DROP, (const char *)"\x15No XModel loaded for item index %i (%s)", s1->index.item, item->pickup_name);
 
     obj = CG_PreProcess_GetDObj(s1->number, s1->eType, itemInfo->models[0]);
     if (!obj)
@@ -651,8 +633,8 @@ void CG_Item(centity_t *cent)
     memset(&ent, 0, sizeof(ent));
     AnglesToAxis(cent->lerpAngles, ent.axis);
     ent.origin[0] = cent->lerpOrigin[0];
-    ent.origin[1] = cent->lerpOrigin[1];
     ent.origin[2] = cent->lerpOrigin[2];
+    ent.origin[1] = cent->lerpOrigin[1];
     ent.reType = (refEntityType_t)(0);
     CG_AddCEntityToScene(&ent, obj, cent);
 }
@@ -889,10 +871,7 @@ DObjAnimMat *CG_DObjGetLocalTagMatrix(const centity_t *cent, struct DObj_s *obj,
 
     CG_DObjCalcBone(cent, obj, boneIndex);
     mat = DObjGetRotTransArray(obj);
-    if (mat)
-        return &mat[boneIndex];
-    else
-        return 0;
+    return mat ? &mat[boneIndex] : 0;
 }
 
 void CG_DObjCalcBoneGeneric(int handle, int localClientNum, int boneIndex)

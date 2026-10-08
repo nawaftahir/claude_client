@@ -578,10 +578,9 @@ void CL_InitUI(void)
 
 qboolean UI_checkKeyExec(int key)
 {
-    int started = cls.uiStarted;
-    if (!started)
-        return 0;
-    return UI_CheckExecKey(key);
+    if (cls.uiStarted)
+        return UI_CheckExecKey(key);
+    return 0;
 }
 
 void UI_LoadSoundAliases(void)

@@ -2724,6 +2724,8 @@ void FS_InitFilesystem()
 	Com_StartupVariable("loc_language");
 	SEH_InitLanguage();
 	FS_Startup(BASEGAME);
+	SEH_Init_StringEd();
+	SEH_UpdateLanguageInfo();
 	FS_SetRestrictions();
 
 	// if we can't find default.cfg, assume that the paths are

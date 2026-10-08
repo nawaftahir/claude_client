@@ -1813,29 +1813,13 @@ PM_GetViewHeightLerpTime
 */
 int PM_GetViewHeightLerpTime( const playerState_t *ps, int iTarget, int bDown )
 {
-	int lerpTime;
-
 	if ( iTarget == PRONE_VIEWHEIGHT )
-	{
-		lerpTime = 400;
-	}
-	else if ( iTarget == CROUCH_VIEWHEIGHT )
-	{
-		if ( bDown )
-		{
-			lerpTime = 200;
-		}
-		else
-		{
-			lerpTime = 400;
-		}
-	}
-	else
-	{
-		lerpTime = 200;
-	}
+		return 400;
 
-	return lerpTime;
+	if ( iTarget == CROUCH_VIEWHEIGHT )
+		return bDown ? 200 : 400;
+
+	return 200;
 }
 
 /*

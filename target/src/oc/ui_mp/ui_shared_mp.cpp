@@ -199,6 +199,7 @@ int Menu_ItemsMatchingGroup(menuDef_t *menu, const char *name);
 itemDef_t *Menu_GetMatchingItemByNumber(menuDef_t *menu, int index, const char *name);
 void Script_SetColor(displayContextDef_t *dc, itemDef_t *item, const char **args);
 void Script_SetBackground(displayContextDef_t *dc, itemDef_t *item, const char **args);
+itemDef_t *Menu_FindItemByName(menuDef_t *menu, const char *p);
 void Menu_ShowItemByName(menuDef_t *menu, const char *p, qboolean bShow);
 void Menu_FadeItemByName(menuDef_t *menu, const char *p, qboolean fadeOut);
 menuDef_t *Menus_FindByName(displayContextDef_t *dc, const char *p);
@@ -221,6 +222,7 @@ void Script_ExecNowOnDvarIntValue(displayContextDef_t *dc, itemDef_t *item, cons
 void Script_ExecNowOnDvarFloatValue(displayContextDef_t *dc, itemDef_t *item, const char **args);
 void Script_Play(displayContextDef_t *dc, itemDef_t *item, const char **args);
 void Script_ScriptMenuResponse(displayContextDef_t *dc, itemDef_t *item, const char **args);
+qboolean Display_MouseMove(displayContextDef_t *dc, void *p, int x, int y);
 void Item_RunScript(displayContextDef_t *dc, itemDef_t *item, const char *s);
 void Controls_GetConfig(void);
 void Controls_SetConfig(qboolean restart);
@@ -232,6 +234,7 @@ int GetKeyBindingLocalizedString(const char *command, char *keys);
 qboolean Display_KeyBindPending(void);
 int Menu_Count(displayContextDef_t *dc);
 void UI_AddMenuList(displayContextDef_t *dc, MenuList *menuList);
+qboolean Item_SetFocus(displayContextDef_t *dc, itemDef_t *item, float x, float y);
 void Item_MouseLeave(displayContextDef_t *dc, itemDef_t *item);
 float Item_Slider_ThumbPosition(itemDef_t *item);
 bool Window_IsVisible(Window *w);
@@ -279,7 +282,6 @@ void Item_OwnerDraw_Paint(displayContextDef_t *dc, itemDef_t *item);
 static void Item_List_Paint(displayContextDef_t *dc, itemDef_t *item, const char *text);
 qboolean Item_Slider_HandleKey(displayContextDef_t *dc, itemDef_t *item, int key, qboolean down);
 qboolean Item_YesNo_HandleKey(displayContextDef_t *dc, itemDef_t *item, int key);
-qboolean Item_SetFocus(displayContextDef_t *dc, itemDef_t *item, float x, float y);
 itemDef_t *Menu_ClearFocus(displayContextDef_t *dc, menuDef_t *menu);
 void Script_SetFocusByDvar(displayContextDef_t *dc, itemDef_t *item, const char **args);
 void Script_SetFocus(displayContextDef_t *dc, itemDef_t *item, const char **args);
@@ -290,13 +292,12 @@ int Item_ListBox_OverLB(itemDef_t *item, float x, float y);
 static qboolean Rect_ContainsPoint(const rectDef_t *rect, float x, float y);
 void Item_ListBox_MouseEnter(itemDef_t *item, float x, float y);
 void Item_MouseEnter(displayContextDef_t *dc, itemDef_t *item, float x, float y);
-qboolean Item_ListBox_HandleKey(displayContextDef_t *dc, itemDef_t *item, int key, qboolean down, qboolean force);
+static __declspec(noinline) qboolean Item_ListBox_HandleKey(displayContextDef_t *dc, itemDef_t *item, int key, qboolean down, qboolean force);
 static void Scroll_ListBox_ThumbFunc(displayContextDef_t *dc, void *p);
 static void Scroll_ListBox_AutoFunc(displayContextDef_t *dc, void *p);
 qboolean Item_Bind_HandleKey(displayContextDef_t *dc, itemDef_t *item, int key, qboolean down);
 qboolean Item_HandleKey(displayContextDef_t *dc, itemDef_t *item, int key, qboolean down);
 qboolean Menu_HandleMouseMove(displayContextDef_t *dc, menuDef_t *menu, float x, float y);
-qboolean Display_MouseMove(displayContextDef_t *dc, void *p, int x, int y);
 void Menus_Open(displayContextDef_t *dc, menuDef_t *menu);
 qboolean Menus_OpenByName(displayContextDef_t *dc, const char *p);
 void Script_Open(displayContextDef_t *dc, itemDef_t *item, const char **args);
@@ -449,6 +450,20 @@ void Script_SetBackground(displayContextDef_t *dc, itemDef_t *item, const char *
         byte *it = (byte *)item;
         (*(MaterialHandle *)&((itemDef_t *)it)->window.background) = CL_RegisterMaterialNoMip(name, item->imageTrack);
     }
+}
+
+itemDef_t *Menu_FindItemByName(menuDef_t *menu, const char *p)
+{
+    int i;
+
+    if (!menu || !p)
+        return NULL;
+
+    for (i = 0; i < menu->itemCount; i++) {
+        if (menu->items[i]->window.name && !I_stricmp(p, menu->items[i]->window.name))
+            return menu->items[i];
+    }
+    return NULL;
 }
 
 void Menu_ShowItemByName(menuDef_t *menu, const char *p, qboolean bShow)
@@ -2809,25 +2824,12 @@ static void Item_TextField_BeginEdit(itemDef_t *item)
 void Script_SetFocus(displayContextDef_t *dc, itemDef_t *item, const char **args)
 {
     char name[0x400];
-    byte *menu;
-    byte *focusItem = NULL;
-    int i;
+    byte *focusItem;
 
     if (!String_Parse(args, name, 0x400))
         return;
 
-    menu = (byte *)item->parent;
-
-    if (menu && (((menuDef_t*)(menu))->itemCount) > 0) {
-        for (i = 0; i < (((menuDef_t*)(menu))->itemCount); i++) {
-            byte *it = *(byte **)((char *)&((menuDef_t *)menu)->items[i]);
-            const char *itemName = ((itemDef_t *)it)->window.name;
-            if (itemName && I_stricmp(name, itemName) == 0) {
-                focusItem = it;
-                break;
-            }
-        }
-    }
+    focusItem = (byte *)Menu_FindItemByName(item->parent, name);
 
     if (!focusItem) {
         Com_Printf("setFocus: could not find widget named '%s'\n", name);
@@ -2906,7 +2908,7 @@ int Item_ListBox_OverLB(itemDef_t *item, float x, float y)
 }
 
 // retail 0x536760
-qboolean Item_ListBox_HandleKey(displayContextDef_t *dc, itemDef_t *item, int key, qboolean down, qboolean force)
+static __declspec(noinline) qboolean Item_ListBox_HandleKey(displayContextDef_t *dc, itemDef_t *item, int key, qboolean down, qboolean force)
 {
     listBoxDef_s *listPtr;
     int count;
