@@ -237,6 +237,18 @@ void CL_RegisterHudMsgIconMaterial(const char *name)
     registeredIconMaterialCount++;
 }
 
+// retail 0x4036a0, unreferenced; name unknown
+void CL_InitHudMsgIconMaterials_4036a0(void)
+{
+    registeredIconMaterialCount = 0;
+    CL_RegisterHudMsgIconMaterial("killiconcrush");
+    CL_RegisterHudMsgIconMaterial("killicondied");
+    CL_RegisterHudMsgIconMaterial("killiconfalling");
+    CL_RegisterHudMsgIconMaterial("killiconheadshot");
+    CL_RegisterHudMsgIconMaterial("killiconmelee");
+    CL_RegisterHudMsgIconMaterial("killiconsuicide");
+}
+
 const char *CL_GetHudMsgIconMaterialName(int index)
 {
     return hudMsgIconMaterials[(unsigned char)index];
@@ -254,9 +266,9 @@ static unsigned char CL_FindHudMsgIconMaterialIndex(const char *iconShader)
     return 0;
 }
 
-static void CL_AddConsoleChar(unsigned short ch)
+static void CL_AddConsoleChar(int ch, unsigned char colorIdx)
 {
-    con.textBuffer[(con.currentLine % con.totallines) * con.linewidth + con.lineOffset] = ch;
+    con.textBuffer[(con.currentLine % con.totallines) * con.linewidth + con.lineOffset] = (colorIdx << 8) | ch;
     con.lineOffset++;
 }
 
@@ -854,11 +866,11 @@ void CL_DeathMessagePrint(const char *attackerName, const vec_t *attackerColor, 
 
     CL_AddConsoleInfoColor(13, iconColor);
     if (horzFlipIcon)
-        CL_AddConsoleChar(0x1300 | (unsigned short)(int)(iconWidth * 32.0f));
+        CL_AddConsoleChar((int)(iconWidth * 32.0f), 0x13);
     else
-        CL_AddConsoleChar(0x1000 | (unsigned short)(int)(iconWidth * 32.0f));
-    CL_AddConsoleChar(0x1100 | (unsigned short)(int)(iconHeight * 32.0f));
-    CL_AddConsoleChar(0x1200 | CL_FindHudMsgIconMaterialIndex(iconShader));
+        CL_AddConsoleChar((int)(iconWidth * 32.0f), 0x10);
+    CL_AddConsoleChar((int)(iconHeight * 32.0f), 0x11);
+    CL_AddConsoleChar(CL_FindHudMsgIconMaterialIndex(iconShader), 0x12);
     CL_AddDeathMessageText(" ", 7);
 
     CL_AddConsoleInfoColor(10, victimColor);
@@ -1299,9 +1311,9 @@ static void Con_DrawMessageWindowOldToNew(MessageWindow *msgwnd, int x, int y, i
         if (elapsed < msgwnd->fadein) {
             drawAlpha = (float)elapsed * alpha / msgwnd->fadein;
         } else {
-            remaining = line->endTime - clients[0].serverTime;
-            if (remaining < msgwnd->fadeout)
-                drawAlpha = (float)remaining * alpha / msgwnd->fadeout;
+            ;
+            if ((line->endTime - clients[0].serverTime) < msgwnd->fadeout)
+                drawAlpha = (float)(line->endTime - clients[0].serverTime) * alpha / msgwnd->fadeout;
             else
                 drawAlpha = alpha;
         }

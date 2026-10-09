@@ -80,11 +80,17 @@ void *Z_MallocGarbageInternal( int size )
 	return buf;
 }
 
+// retail 0x42aa50 (inlined in Z_VirtualAllocInternal); CoD4 name (SUPPORTED)
+void *Z_TryVirtualAllocInternal( int size )
+{
+	return VirtualAlloc( NULL, size, MEM_COMMIT, PAGE_READWRITE );
+}
+
 void *Z_VirtualAllocInternal( unsigned int size )
 {
 	void *buf;
 
-	buf = VirtualAlloc( NULL, size, MEM_COMMIT, PAGE_READWRITE );
+	buf = Z_TryVirtualAllocInternal( size );
 	if ( !buf )
 		Sys_OutOfMemErrorInternal( ".\\universal\\com_memory.cpp", 524 );
 

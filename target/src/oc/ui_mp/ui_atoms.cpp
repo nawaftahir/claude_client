@@ -13,6 +13,16 @@ void UI_DrawLoadBar(float x, float y, float w, float h, int horzAlign, int vertA
 void UI_FillRectPhysical(float x, float y, float width, float height, const vec_t *color);
 void UI_FillRect(float x, float y, float width, float height, int horzAlign, int vertAlign, const vec_t *color);
 
+// retail 0x5403a0, unreferenced; name unknown (clamp val to [min, max])
+float UI_ClampFloat_5403a0(float min, float max, float val)
+{
+    if (val < min)
+        return min;
+    if (val > max)
+        return max;
+    return val;
+}
+
 void UI_DrawHandlePic(float x, float y, float w, float h, int horzAlign, int vertAlign, const vec_t *color, MaterialHandle hMaterial)
 {
     float s0, t0, s1, t1;

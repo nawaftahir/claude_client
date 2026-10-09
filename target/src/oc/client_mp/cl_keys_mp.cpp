@@ -234,7 +234,7 @@ void Field_AdjustScroll(field_t *edit)
 	float len;
 	int strLen;
 
-	fontScale = edit->charHeight * 0.020833334f;
+	fontScale = edit->charHeight; fontScale = fontScale * 0.020833334f;
 	lineWidth = (float)edit->widthInPixels;
 	if ( edit->fixedSize )
 	{
@@ -899,6 +899,20 @@ char *Key_GetBinding(int keynum)
     if (keynum == -1)
         return (char *)"";
     return keys[keynum].binding;
+}
+
+// retail 0x40a6e0, unreferenced; Q3 Key_GetKey (SUPPORTED)
+int Key_GetKey(const char *binding)
+{
+    int i;
+
+    if (binding) {
+        for (i = 0; i < 256; i++) {
+            if (keys[i].binding && I_stricmp(binding, keys[i].binding) == 0)
+                return i;
+        }
+    }
+    return -1;
 }
 
 void CL_InitKeyCommands(void)

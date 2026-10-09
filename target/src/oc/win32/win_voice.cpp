@@ -78,7 +78,7 @@ Bool Voice_IsClientTalking(int clientNum)
 Bool Voice_Init(void)
 {
     int i;
-    int level;
+    unsigned short level;
     HWND__ *hwnd;
 
     winvoice_mic_mute = Dvar_RegisterBool("winvoice_mic_mute", 1, 0x1001);
@@ -200,12 +200,12 @@ int Voice_GetLocalVoiceData(ClientVoicePacket_t *voiceData)
 
 Bool Voice_StartRecording(void)
 {
-    if (!recording) {
-        currentRecordingSample = Record_NewSample();
-        Record_Start(currentRecordingSample);
-        recording = 1;
-        count++;
-    }
+    if (recording)
+        return 1;
+    currentRecordingSample = Record_NewSample();
+    Record_Start(currentRecordingSample);
+    recording = 1;
+    count++;
     return 1;
 }
 

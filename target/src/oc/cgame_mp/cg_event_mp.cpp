@@ -140,6 +140,7 @@ static const float f_2_8 = 2.799999952316284f;
 #define IMPACT_ROCKET_EXPLODE 10
 
 void CG_EntityEvent(centity_t *cent, int event);
+void CG_PlayEquipmentSound_4da2e0(int entNum, bool isFirstPerson, bool running);
 void CG_CheckEvents(centity_t *cent);
 
 void CG_EntityEvent(centity_t *cent, int event);
@@ -350,6 +351,22 @@ void CG_ItemPickup(int itemNum)
     }
 }
 
+// retail 0x4da2e0 (also inlined into CG_EntityEvent); name unknown
+void CG_PlayEquipmentSound_4da2e0(int entNum, bool isFirstPerson, bool running)
+{
+    if (isFirstPerson) {
+        if (running)
+            CG_PlayEntitySoundAlias(entNum, cgs->media.runningEquipmentSoundPlayer);
+        else
+            CG_PlayEntitySoundAlias(entNum, cgs->media.walkingEquipmentSoundPlayer);
+    } else {
+        if (running)
+            CG_PlayEntitySoundAlias(entNum, cgs->media.runningEquipmentSound);
+        else
+            CG_PlayEntitySoundAlias(entNum, cgs->media.walkingEquipmentSound);
+    }
+}
+
 void CG_PlayFx(centity_t *cent, const float *angles)
 {
     const EffectTemplate *fx;
@@ -461,13 +478,7 @@ void CG_EntityEvent(centity_t *cent, int event)
 
         entNum = es->number;
 
-        if (isFirstPerson) {
-
-            CG_PlayEntitySoundAlias(entNum, cgs->media.runningEquipmentSoundPlayer);
-        } else {
-
-            CG_PlayEntitySoundAlias(entNum, cgs->media.runningEquipmentSound);
-        }
+        CG_PlayEquipmentSound_4da2e0(entNum, isFirstPerson, true);
         return;
     }
 
@@ -489,13 +500,7 @@ void CG_EntityEvent(centity_t *cent, int event)
 
         entNum = es->number;
 
-        if (isFirstPerson) {
-
-            CG_PlayEntitySoundAlias(entNum, cgs->media.walkingEquipmentSoundPlayer);
-        } else {
-
-            CG_PlayEntitySoundAlias(entNum, cgs->media.walkingEquipmentSound);
-        }
+        CG_PlayEquipmentSound_4da2e0(entNum, isFirstPerson, false);
         return;
     }
 
@@ -517,13 +522,7 @@ void CG_EntityEvent(centity_t *cent, int event)
 
         entNum = es->number;
 
-        if (isFirstPerson) {
-
-            CG_PlayEntitySoundAlias(entNum, cgs->media.walkingEquipmentSoundPlayer);
-        } else {
-
-            CG_PlayEntitySoundAlias(entNum, cgs->media.walkingEquipmentSound);
-        }
+        CG_PlayEquipmentSound_4da2e0(entNum, isFirstPerson, false);
         return;
     }
 
@@ -543,13 +542,7 @@ void CG_EntityEvent(centity_t *cent, int event)
 
         entNum = es->number;
 
-        if (isFirstPerson) {
-
-            CG_PlayEntitySoundAlias(entNum, cgs->media.runningEquipmentSoundPlayer);
-        } else {
-
-            CG_PlayEntitySoundAlias(entNum, cgs->media.runningEquipmentSound);
-        }
+        CG_PlayEquipmentSound_4da2e0(entNum, isFirstPerson, true);
         return;
     }
 
@@ -684,7 +677,7 @@ void CG_EntityEvent(centity_t *cent, int event)
             int deltaTime = cg->time - cg->stepTime;
             float oldStep;
             if (deltaTime < 100) {
-                oldStep = (float)(100 - deltaTime) * cg->stepChange / 100.0f;
+                oldStep = (float)(100 - deltaTime) * cg->stepChange; oldStep = oldStep / 100.0f;
                 oldStep *= 0.9f;
             } else {
                 oldStep = 0.0f;

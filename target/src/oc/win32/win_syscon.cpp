@@ -57,6 +57,7 @@ void Sys_ShowConsole(int visLevel, qboolean quitOnClose);
 char *Sys_ConsoleInput(void);
 void Conbuf_AppendText(const char *pMsg);
 void Sys_SetErrorText(const char *buf);
+const char *Win_LocalizeRef(const char *ref);
 
 extern Boolean gConsoleRunning;
 
@@ -367,6 +368,7 @@ void Sys_SetErrorText(const char *buf)
 
     DestroyWindow(s_wcd.hwndInputLine);
     s_wcd.hwndInputLine = NULL;
+    MessageBoxA(NULL, buf, Win_LocalizeRef("WIN_ERROR"), MB_ICONERROR);
 }
 
 #endif

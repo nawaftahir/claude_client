@@ -363,6 +363,15 @@ float CL_KeyState(kbutton_t *key)
     return (float)msec / (float)frame_msec;
 }
 
+// retail 0x406db0, unreferenced; name unknown
+void IN_SetStanceFromKeys_406db0(void)
+{
+    if (!kb[25].active && !kb[11].active)
+        legacyHacks->cl_stanceTemp = 0;
+    else
+        legacyHacks->cl_stanceTemp = 1;
+}
+
 void IN_UpDown(void)
 {
     int *stance;
@@ -649,6 +658,18 @@ void IN_Stance_Up(void)
         legacyHacks->cl_stance = 0;
     }
     ptr->stanceHeld = 0;
+}
+
+// retail 0x407630, unreferenced; name unknown
+void IN_Kb26_Down_407630(void)
+{
+    IN_KeyDown(&kb[26]);
+}
+
+// retail 0x407650, unreferenced; name unknown
+void IN_Kb26_Up_407650(void)
+{
+    IN_KeyUp(&kb[26]);
 }
 
 void IN_ToggleADS(void)

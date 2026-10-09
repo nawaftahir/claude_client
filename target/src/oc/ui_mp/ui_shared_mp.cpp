@@ -141,7 +141,7 @@ void Item_UpdatePosition(itemDef_t *item)
 }
 extern void Item_SetTextRect(itemDef_t *item, const rectDef_t *textRect);
 extern void Item_SetupKeywordHash(void);
-extern bool ListBox_HasValidCursorPos(const listBoxDef_t *listBox);
+extern Bool ListBox_HasValidCursorPos(const listBoxDef_t *listBox);
 extern void ListBox_SetCursorPos(listBoxDef_t *listBox, int cursorPos);
 extern void ListBox_SetEndPos(listBoxDef_t *listBox, int endPos);
 extern void ListBox_SetStartPos(listBoxDef_t *listBox, int startPos);
@@ -908,6 +908,15 @@ static int Display_VisibleMenuCount(displayContextDef_t *dc)
     return count;
 }
 
+// retail 0x53cdd0, unreferenced; Kisak UI_AddMenu (SUPPORTED)
+void UI_AddMenu(displayContextDef_t *dc, menuDef_t *menu)
+{
+    if (dc->menuCount >= 128)
+        Com_Error(ERR_DROP, "UI_AddMenu: Maximum number of menus %d exceeded.", 128);
+    dc->Menus[dc->menuCount] = menu;
+    dc->menuCount++;
+}
+
 void UI_AddMenuList(displayContextDef_t *dc, MenuList *menuList)
 {
     int i;
@@ -1023,6 +1032,20 @@ qboolean Menus_AnyFullScreenVisible(displayContextDef_t *dc)
             return 1;
     }
     return 0;
+}
+
+// retail 0x53bf60, unreferenced; Q3 Menu_GetFocusedItem (SUPPORTED)
+itemDef_t *Menu_GetFocusedItem(menuDef_t *menu)
+{
+    int i;
+
+    if (menu) {
+        for (i = 0; i < menu->itemCount; i++) {
+            if (Window_HasFocus(&menu->items[i]->window))
+                return menu->items[i];
+        }
+    }
+    return NULL;
 }
 
 menuDef_t *Menu_GetFocused(displayContextDef_t *dc)
@@ -1258,6 +1281,12 @@ void ToWindowCoords(float *x, float *y, Window *window)
 }
 
 // retail 0x538d60
+// retail 0x538d40, unreferenced; name unknown
+FontHandle Item_GetFont_538d40(itemDef_t *item)
+{
+    return UI_GetFontHandle(item->fontEnum, item->textscale);
+}
+
 void Item_SetTextExtents(itemDef_t *item, int *width, int *height, const char *text)
 {
     const char *textPtr;
@@ -1857,6 +1886,15 @@ void Menu_SetFeederSelection(displayContextDef_t *dc, menuDef_t *menu, int feede
         } else if (index < listPtr->startPos[0]) {
             ListBox_SetStartPos(listPtr, index);
         }
+    }
+}
+
+// retail 0x535660, unreferenced; name unknown
+void Script_ExecHandler_535660(int execWhen, const char **args)
+{
+    char val[0x400];
+    if (String_Parse(args, val, 0x400)) {
+        Cbuf_ExecuteText(execWhen, va("%s\n", val));
     }
 }
 
@@ -3592,6 +3630,18 @@ static qboolean Rect_ContainsPoint(const rectDef_t *rect, float x, float y)
     return x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
 }
 
+// retail 0x5366a0, unreferenced; Q3 Menu_HitTest (SUPPORTED)
+itemDef_t *Menu_HitTest(menuDef_t *menu, float x, float y)
+{
+    int i;
+
+    for (i = 0; i < menu->itemCount; i++) {
+        if (Rect_ContainsPoint(&menu->items[i]->window.rect[0], x, y))
+            return menu->items[i];
+    }
+    return NULL;
+}
+
 static rectDef_t *Item_CorrectedTextRect(itemDef_t *item)
 {
     static rectDef_t rect;
@@ -4032,6 +4082,21 @@ static int Item_Enum_GetIndex(itemDef_t *item)
     return 0;
 }
 
+// retail 0x537140, unreferenced; Kisak Item_DvarEnum_Setting (SUPPORTED)
+const char *Item_DvarEnum_Setting(itemDef_t *item)
+{
+    struct dvar_s *enumDvar;
+
+    if (!*(const char **)&item->typeData.listBox)
+        return "<dvarEnumList not set>";
+    enumDvar = Dvar_FindVar(*(const char **)&item->typeData.listBox);
+    if (enumDvar->type != 6)
+        return "<not an enum dvar>";
+    if (!enumDvar->domain.enumeration.stringCount)
+        return "";
+    return enumDvar->domain.enumeration.strings[Item_Enum_GetIndex(item)];
+}
+
 // retail 0x53a040
 static void Item_Multi_Paint(displayContextDef_t *dc, itemDef_t *item)
 {
@@ -4080,11 +4145,11 @@ void Item_Paint(displayContextDef_t *dc, itemDef_t *item)
             r = &item->window.rectClient[0];
             w = r->w * 0.5f;
             h = r->h * 0.5f;
-            rx = r->x + w - item->window.rectEffects0[0].x;
+            rx = r->x + w; rx = rx - item->window.rectEffects0[0].x;
             ry = r->y + h - item->window.rectEffects0[0].y;
             FastSinCos(0.05235988f, &s, &c);
             newRect = *r;
-            newRect.x = rx * c - ry * s + item->window.rectEffects0[0].x - w;
+            newRect.x = rx * c - ry * s + item->window.rectEffects0[0].x; newRect.x = newRect.x - w;
             newRect.y = rx * s + ry * c + item->window.rectEffects0[0].y - h;
             Window_SetRectClient(&item->window, &newRect);
             Item_UpdatePosition((itemDef_t *)item);

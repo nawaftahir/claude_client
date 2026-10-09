@@ -1425,7 +1425,7 @@ static void Com_Init_Try_Block_Function( char *commandLine )
 	Cbuf_Execute();
 	com_recommendedSet = Dvar_RegisterBool("com_recommendedSet", false, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
 	Com_CheckSetRecommended();
-	_controlfp( _PC_53, _MCW_PC );
+	_controlfp( _PC_24, _MCW_PC );
 	_controlfp( _MCW_EM, _MCW_EM );
 	Com_StartupVariable(0);
 	SEH_UpdateLanguageInfo();
@@ -1847,6 +1847,13 @@ done:
 
 // empty in the dedicated build
 // retail 0x433820
+// retail 0x433800, unreferenced (inlined at its callers); name unknown
+void Com_StartHunkUsersNoMap_433800( void )
+{
+	UI_SetMap("", "");
+	CL_StartHunkUsers();
+}
+
 void Com_StartHunkUsers( void )
 {
 	if ( !__sigsetjmp(*(jmp_buf*)Sys_GetValue(THREAD_VALUE_COM_ERROR), 0) )
@@ -2403,6 +2410,19 @@ static bool Com_ParseGpuConfig( const char **text, const SysInfo *info )
 Com_SetRecommended
 ==================
 */
+// retail 0x431a50, unreferenced; name unknown
+int Com_ConfigureChecksum_431a50( const char *buffer, int size )
+{
+	int checksum;
+	int i;
+
+	checksum = 0;
+	for ( i = 0; i < size; i++ )
+		checksum = checksum * 0x7a69 + buffer[i];
+
+	return ( checksum & 0xfffffff ) + 1;
+}
+
 void Com_SetRecommended( qboolean restart )
 {
 	SysInfo info;

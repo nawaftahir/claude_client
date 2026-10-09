@@ -56,7 +56,7 @@ void DSOUNDRecord_UpdateSample( dsound_sample_t *pRecSample )
 		return;
 	}
 	audioSample.stereo = g_sound_channels > 1;
-	iChannels = audioSample.stereo + 1;
+	iChannels = audioSample.stereo ? 2 : 1;
 	dwTotalLen = dwLockLen1 + dwLockLen2;
 	audioSample.bytesPerSample = 2;
 	audioSample.frequency = g_sound_recordFrequency;

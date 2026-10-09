@@ -1227,8 +1227,8 @@ void RotatePointAroundVector( vec3_t dst, const vec3_t dir, const vec3_t point, 
 	memset(zrot, 0, sizeof(zrot));
 	zrot[0][0] = zrot[1][1] = zrot[2][2] = 1.0f;
 
-	rad = degrees * 0.017453292519943295f;
-	FastSinCos(rad, &zrot[0][1], &zrot[0][0]);
+	;
+	FastSinCos((degrees * 0.017453292519943295f), &zrot[0][1], &zrot[0][0]);
 	zrot[1][0] = -zrot[0][1];
 	zrot[1][1] = zrot[0][0];
 
@@ -2226,7 +2226,8 @@ float SinSquaredDeg( float angle )
 	double s;
 	float r;
 
-	s = sin(angle * 0.017453292519943295);
+	angle = (float)sin((double)(angle * 0.017453292f));
+	s = angle;
 	r = s * s;
 	return r;
 }
@@ -2393,8 +2394,8 @@ void InfinitePerspectiveMatrix( float mtx[4][4], float fovX, float fovY, float z
 
 	memset(mtx, 0, 64);
 	k = 0.99950027f;
-	mtx[0][0] = tan((90.0 - fovX * 0.5) * 0.017453292519943295) * k;
-	mtx[1][1] = tan((90.0 - fovY * 0.5) * 0.017453292519943295) * k;
+	mtx[0][0] = (float)tan((double)((90.0f - fovX * 0.5f) * 0.017453292f)) * k;
+	mtx[1][1] = (float)tan((double)((90.0f - fovY * 0.5f) * 0.017453292f)) * k;
 	mtx[2][2] = k;
 	mtx[2][3] = 1.0f;
 	mtx[3][2] = -zNear * k;
@@ -3254,7 +3255,7 @@ void AxisToSignedAngles( const vec3_t axis[3], vec3_t angles )
 	vectoanglessigned(axis[0], angles);
 	VectorCopy(axis[1], right);
 
-	a = -angles[YAW] * 0.017453292519943295f;
+	a = -(angles[YAW] * 0.017453292519943295f);
 	FastSinCos(a, &fSin, &fCos);
 
 	temp = fCos * right[0] - fSin * right[1];

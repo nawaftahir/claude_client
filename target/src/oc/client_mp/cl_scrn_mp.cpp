@@ -79,6 +79,8 @@ extern Bool CL_AnyLocalClientChallenging(void);
 extern void CL_DrawLogo(void);
 extern void CL_LookupColor(unsigned char c, float *outColor);
 extern void Con_DrawConsole(void);
+extern void Con_CheckResize(void);
+extern void Con_DrawSolidConsole(void);
 extern void SND_StopSounds(snd_stopsounds_arg_t flags);
 extern void SCR_DrawCinematic(void);
 extern Bool Sys_IsMainThread(void);
@@ -97,6 +99,27 @@ void CL_CubemapShot_f(void);
 static void SCR_UpdateFrame(void);
 void SCR_UpdateScreenInternal(void);
 void SCR_UpdateScreen(void);
+
+// retail 0x412ff0, unreferenced; Q3 SCR_DrawPic (SUPPORTED)
+void SCR_DrawPic(float x, float y, float width, float height, int horzAlign, int vertAlign, MaterialHandle material)
+{
+    CalcScreenPlacement(&x, &y, &width, &height, horzAlign, vertAlign);
+    re.DrawStretchPic(x, y, width, height, 0.0f, 0.0f, 1.0f, 1.0f, NULL, material);
+}
+
+// retail 0x413040, unreferenced; Q3 SCR_DrawSmallChar (SUPPORTED)
+void SCR_DrawSmallChar(int x, int y, int ch, const vec_t *setColor)
+{
+    char string[2];
+    int fontHeight;
+    float fy;
+
+    string[0] = ch;
+    string[1] = 0;
+    fontHeight = re.TextHeight(cls.consoleFont);
+    fy = (float)y + (float)fontHeight;
+    re.DrawText(string, 1, cls.consoleFont, (float)x, fy, 1.0f, 1.0f, setColor, 0);
+}
 
 void SCR_DrawSmallStringExt(int x, int y, const char *string, const vec_t *setColor)
 {
@@ -155,6 +178,14 @@ qboolean CL_CGameRendering(qboolean renderScreen)
 
     demoType = (DemoType)(clc.demoplaying != 0);
     return CG_DrawActiveFrame(clients[0].serverTime, demoType, CUBEMAPSHOT_NONE, 0, renderScreen);
+}
+
+// retail 0x4132e0, unreferenced; same body as Con_DrawConsole, name unknown
+void SCR_DrawConsole_4132e0(void)
+{
+    Con_CheckResize();
+    if (clients[0].keyCatchers & 1)
+        Con_DrawSolidConsole();
 }
 
 // retail 0x413310

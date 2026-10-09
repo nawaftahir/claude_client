@@ -106,12 +106,26 @@ void CG_AddMarks(void)
 
             markPoly->lastFrameDrawn = cg->clientFrame;
 
-            CL_AddPolyToScene(markPoly->mtlHandle, (int)markPoly->lmapIndex,
-                              (int)markPoly->vertCount, markPoly->verts);
+            CL_AddPolyToScene(markPoly->mtlHandle, markPoly->lmapIndex,
+                              markPoly->vertCount, markPoly->verts);
         }
 
         markPoly = markPoly->nextMark;
     } while (markPoly != &cg->activeMarkPolys);
+}
+
+// retail 0x4c7fb0, unreferenced (CG_AllocMark has its own copy); name unknown
+MarkPoly *CG_LeastRecentlyDrawnMark_4c7fb0(void)
+{
+    MarkPoly *mark;
+    MarkPoly *le;
+
+    le = cg->activeMarkPolys.prevMark;
+    for (mark = le; mark != &cg->activeMarkPolys; mark = mark->prevMark) {
+        if (mark->lastFrameDrawn < le->lastFrameDrawn)
+            le = mark;
+    }
+    return le;
 }
 
 // retail 0x4c7fe0; Q3 shape, CG_FreeMarkPoly inlined (SUPPORTED)

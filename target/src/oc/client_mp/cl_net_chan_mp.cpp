@@ -181,6 +181,20 @@ static void CL_Netchan_DrawProfileLine(const char *line, int y)
     CL_DrawString(0x20, y, line, 0, 0xa);
 }
 
+// retail 0x411650; Kisak name
+void CL_Netchan_UpdateProfileStats(void)
+{
+    if (clc.netchan.pProf) {
+        NetProf_UpdateStatistics(&clc.netchan.pProf->send);
+        NetProf_UpdateStatistics(&clc.netchan.pProf->recieve);
+    }
+
+    if (clc.pOOBProf) {
+        NetProf_UpdateStatistics(&clc.pOOBProf->send);
+        NetProf_UpdateStatistics(&clc.pOOBProf->recieve);
+    }
+}
+
 void CL_Netchan_PrintProfileStats(qboolean bPrintToConsole)
 {
     char szLine[1024];

@@ -640,3 +640,11 @@ void CG_UpdateShellShock(const shellshock_parms_t *parms, int start, int duratio
     CL_SetUserCmdInShellshock(time < duration ? 1 : 0);
 }
 
+// retail 0x4cd070, unreferenced; CoD4 CG_StartShellShock (SUPPORTED)
+void CG_StartShellShock(const shellshock_parms_t *parms, int start, int duration)
+{
+    cg->shellshock.parms = parms;
+    cg->shellshock.startTime = start;
+    cg->shellshock.duration = duration;
+}
+

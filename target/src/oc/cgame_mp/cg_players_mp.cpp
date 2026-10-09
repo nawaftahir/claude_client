@@ -197,6 +197,14 @@ void CG_PlayerSprites(centity_t *cent)
 } while (0)
 
 // retail 0x4d5970
+// inlined com_math VectorCopy: retail loads through the pointer params
+static __forceinline void Vec3CopyInl(const vec_t *a, vec_t *out)
+{
+    out[0] = a[0];
+    out[1] = a[1];
+    out[2] = a[2];
+}
+
 static void CG_PlayerTurretPositionAndBlend(centity_t *cent)
 {
     clientInfo_t *ci;
@@ -352,9 +360,9 @@ static void CG_PlayerTurretPositionAndBlend(centity_t *cent)
     YawToAxis(RotationToYaw(rot) + localYaw, axis);
     MatrixMultiply43(axis, turretAxis, out);
     AxisToAngles(out, cent->lerpAngles);
-    cent->lerpOrigin[0] = out[3][0];
-    cent->lerpOrigin[1] = out[3][1];
-    cent->lerpOrigin[2] = out[3][2];
+    Vec3CopyInl(out[3], cent->lerpOrigin);
+
+
 
     start[0] = cent->lerpOrigin[0];
     start[1] = cent->lerpOrigin[1];

@@ -34,7 +34,7 @@ static void SV_StringUsage_f( void );
 void SV_AddOperatorCommands( void );
 void SV_RemoveOperatorCommands( void );
 void SV_AddDedicatedCommands( void );
-static void SV_RemoveDedicatedCommands( void );
+void SV_RemoveDedicatedCommands( void );
 
 /*
 ==================
@@ -1009,7 +1009,7 @@ void SV_AddDedicatedCommands( void )
 SV_RemoveDedicatedCommands
 ==================
 */
-static void SV_RemoveDedicatedCommands( void )
+void SV_RemoveDedicatedCommands( void )
 {
 	Cmd_RemoveCommand("say");
 	Cmd_RemoveCommand("tell");

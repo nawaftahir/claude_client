@@ -54,13 +54,14 @@ void Window_SetRectEffects0(Window *w, const UiRectangle *rectEffects0);
 void Window_SetRectEffects1(Window *w, const UiRectangle *rectEffects1);
 void Window_SetDynamicFlags(Window *w, const int flags);
 void Menu_SetCursorItem(menuDef_t *menu, int cursorItem);
+bool Window_IsVisible(Window *w);
 void Item_SetTextRect(itemDef_t *item, const rectDef_t *textRect);
 void Item_SetCursorPos(itemDef_t *item, int cursorPos);
 int Item_GetCursorPosOffset(const itemDef_t *item, const char *text, int delta);
 void ListBox_SetCursorPos(listBoxDef_t *listBox, int cursorPos);
 void ListBox_SetStartPos(listBoxDef_t *listBox, int startPos);
 void ListBox_SetEndPos(listBoxDef_t *listBox, int endPos);
-bool ListBox_HasValidCursorPos(const listBoxDef_t *listBox);
+Bool ListBox_HasValidCursorPos(const listBoxDef_t *listBox);
 void Window_AddDynamicFlags(Window *w, const int newFlags);
 void Window_RemoveDynamicFlags(Window *w, const int newFlags);
 editFieldDef_t *Item_GetEditFieldDef(itemDef_t *item);
@@ -107,6 +108,75 @@ void Window_RemoveDynamicFlags(Window *w, const int newFlags)
 
     flags &= ~mask;
     w->dynamicFlags[0] = flags;
+}
+
+int Item_CanFocus_5409b0(const itemDef_t *item);
+
+extern uiInfo_t *uiInfo;
+
+// retail 0x540670, unreferenced; name unknown: cursor inside rect
+qboolean UI_CursorInRect_540670(int x, int y, int w, int h)
+{
+    if (uiInfo->uiDC.cursorx < x || uiInfo->uiDC.cursory < y
+        || uiInfo->uiDC.cursorx > x + w || uiInfo->uiDC.cursory > y + h)
+        return 0;
+    return 1;
+}
+
+// retail 0x5407e0, unreferenced, name unknown: item to the left of the cursor item
+bool Menu_HasItemLeft_5407e0(menuDef_t *menu)
+{
+    const itemDef_t *cur;
+    float y;
+    int i;
+
+    if (menu->cursorItem[0] < 0 || menu->cursorItem[0] >= menu->itemCount)
+        return 0;
+    cur = menu->items[menu->cursorItem[0]];
+    y = cur->window.rect[0].h * 0.5f + cur->window.rect[0].y;
+    for (i = menu->cursorItem[0] - 1; i >= 0; i--) {
+        if (!Item_CanFocus_5409b0(menu->items[i]))
+            continue;
+        if (y > menu->items[i]->window.rect[0].y
+            && menu->items[i]->window.rect[0].h + menu->items[i]->window.rect[0].y > y
+            && menu->items[i]->window.rect[0].x < cur->window.rect[0].x)
+            return 1;
+    }
+    return 0;
+}
+
+// retail 0x5408c0, unreferenced, name unknown: item to the right of the cursor item
+bool Menu_HasItemRight_5408c0(menuDef_t *menu)
+{
+    const itemDef_t *cur;
+    float y;
+    int i;
+
+    if (menu->cursorItem[0] < 0 || menu->cursorItem[0] >= menu->itemCount)
+        return 0;
+    cur = menu->items[menu->cursorItem[0]];
+    y = cur->window.rect[0].h * 0.5f + cur->window.rect[0].y;
+    for (i = menu->cursorItem[0] + 1; i < menu->itemCount; i++) {
+        if (!Item_CanFocus_5409b0(menu->items[i]))
+            continue;
+        if (y > menu->items[i]->window.rect[0].y
+            && menu->items[i]->window.rect[0].h + menu->items[i]->window.rect[0].y > y
+            && menu->items[i]->window.rect[0].x > cur->window.rect[0].x)
+            return 1;
+    }
+    return 0;
+}
+
+// retail 0x5409b0, unreferenced, name unknown (Item_SetFocus checks)
+int Item_CanFocus_5409b0(const itemDef_t *item)
+{
+    if (!item || (item->window.staticFlags & 0x100000) || !Window_IsVisible((Window *)&item->window))
+        return 0;
+    if ((item->dvarFlags & 3) && !Item_EnableShowViaDvar(item, 1))
+        return 0;
+    if ((item->dvarFlags & 0xc) && !Item_EnableShowViaDvar(item, 4))
+        return 0;
+    return 1;
 }
 
 qboolean Item_EnableShowViaDvar(const itemDef_t *item, int flag)
@@ -199,7 +269,7 @@ void ListBox_SetEndPos(listBoxDef_t *listBox, int endPos)
 }
 
 // retail 0x540c30
-bool ListBox_HasValidCursorPos(const listBoxDef_t *listBox)
+Bool ListBox_HasValidCursorPos(const listBoxDef_t *listBox)
 {
     if (listBox->cursorPos[0] >= listBox->endPos[0])
         return false;

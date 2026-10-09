@@ -119,6 +119,15 @@ int Encode_Sample(short *buffer_in, char *buffer_out, int maxLength)
     return speex_bits_write(&encodeBits, buffer_out, maxLength);
 }
 
+// name unknown
+bool Encode_SetBandwidth_4b67f0(int bandwidthEnum)
+{
+    if (bandwidthEnum == g_current_bandwidth_setting)
+        return 1;
+    Encode_Shutdown();
+    return Encode_Init(bandwidthEnum);
+}
+
 int Encode_GetFrameSize(void)
 {
     return g_frame_size;

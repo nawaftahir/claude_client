@@ -5,6 +5,7 @@
 #include <math.h>
 #include <string.h>
 #include <stdio.h>
+extern int I_stricmp(const char *s0, const char *s1);
 extern weaponInfo_t cg_weaponsArray[];
 
 extern const dvar_t *cg_drawHealth;
@@ -1035,6 +1036,15 @@ void CG_DrawPlayerLowHealthOverlay(const rectDef_t *rect, MaterialHandle materia
     CL_DrawStretchPic(rect->x, rect->y, rect->w, rect->h, rect->horzAlign, rect->vertAlign, 0.0f, 0.0f, 1.0f, 1.0f, color, material);
 }
 
+// retail 0x4bf0c0, unreferenced; name unknown
+void CG_CompassCalcDimensions_4bf0c0(const rectDef_t *rect, float *x, float *y, float *w, float *h)
+{
+    *x = rect->x;
+    *y = rect->y - (cg_hudCompassSize->current.value - 1.0f) * rect->h;
+    *w = rect->w * cg_hudCompassSize->current.value;
+    *h = rect->h * cg_hudCompassSize->current.value;
+}
+
 void CG_DrawPlayerCompass(const rectDef_t *rect, MaterialHandle material, vec_t *color)
 {
     int duration;
@@ -1413,6 +1423,75 @@ const char *CG_GetTranslatedLocationString(int iLocation)
 
     I_strncpyz(szErrorString, p, sizeof(szErrorString));
     return szErrorString;
+}
+
+// retail 0x4c08a0, unreferenced; Q3 CG_ClientNumFromName (SUPPORTED)
+int CG_ClientNumFromName(const char *p)
+{
+    int i;
+
+    for (i = 0; i < cgs->maxclients; i++) {
+        if (cg->bgs.clientinfo[i].infoValid && !I_stricmp(cg->bgs.clientinfo[i].name, p))
+            return i;
+    }
+    return -1;
+}
+
+// retail 0x4bd0c0, unreferenced; Q3 CG_TeamColor (constants PINNED)
+float *CG_TeamColor(int team)
+{
+    static vec4_t red = { 1.0f, 0.2f, 0.2f, 1.0f };
+    static vec4_t blue = { 0.2f, 0.2f, 1.0f, 1.0f };
+    static vec4_t other = { 1.0f, 1.0f, 1.0f, 1.0f };
+    static vec4_t spectator = { 0.7f, 0.7f, 0.7f, 1.0f };
+
+    switch (team) {
+    case 1:
+        return red;
+    case 2:
+        return blue;
+    case 3:
+        return spectator;
+    default:
+        return other;
+    }
+}
+
+extern displayContextDef_t cgDC;
+extern qboolean Menus_OpenByName(displayContextDef_t *dc, const char *p);
+
+// retail 0x4c0900, unreferenced; Q3 CG_ShowResponseHead (SUPPORTED)
+void CG_ShowResponseHead(void)
+{
+    Menus_OpenByName(&cgDC, "voiceMenu");
+    cg->voiceTime = cg->time;
+}
+
+// retail 0x4c0940, unreferenced; Q3 CG_GetTeamColor (SUPPORTED)
+void CG_GetTeamColor(vec4_t *color)
+{
+    if (cg->bgs.clientinfo[cg->nextSnap->ps.clientNum].infoValid)
+    {
+        if (cg->bgs.clientinfo[cg->nextSnap->ps.clientNum].team == 1)
+        {
+            (*color)[0] = 1.0f;
+            (*color)[1] = 0.0f;
+            (*color)[2] = 0.0f;
+            (*color)[3] = 0.25f;
+            return;
+        }
+        if (cg->bgs.clientinfo[cg->nextSnap->ps.clientNum].team == 2)
+        {
+            (*color)[0] = (*color)[1] = 0.0f;
+            (*color)[2] = 1.0f;
+            (*color)[3] = 0.25f;
+            return;
+        }
+    }
+    (*color)[0] = 0.0f;
+    (*color)[1] = 0.17f;
+    (*color)[2] = 0.0f;
+    (*color)[3] = 0.25f;
 }
 
 static void CG_DrawPlayerLocation(const rectDef_t *rect, struct Font_s *font, float scale, vec_t *color, int textStyle)

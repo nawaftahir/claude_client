@@ -2037,7 +2037,8 @@ XModel *FX_ModelRegister( const char *name )
 }
 
 // Never called; original name unknown.
-bool FX_PrimTypeIsEmitter( PrimType type )
+// retail returns int (mov eax,1)
+int FX_PrimTypeIsEmitter( PrimType type )
 {
 	switch ( type )
 	{

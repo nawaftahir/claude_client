@@ -161,10 +161,10 @@ void SND_Update3DChannelReverb(int index);
 void SND_Set3DPosition(int index, const vec_t *org);
 static void MSS_SpatializeStream(float *volume, float *pan);
 static void MSS_SpatializeStreamImpl(int i, float *volume, float *pan);
-void SND_SetStreamChannelVolume(int index, float volume, float pan);
+void SND_SetStreamChannelVolumePan(int index, float volume, float pan);
 void SND_UpdateStreamChannel(int i, int frametime);
 void SND_Update2DChannel(int i, int frametime);
-void SND_Set2DChannelVolume(int index, float volume, float pan);
+void SND_Set2DChannelVolumePan(int index, float volume, float pan);
 static MssSound *SND_LoadFromBuffer(void *buffer, const char *realname, const void *unused);
 void SND_LoadSoundFile(SoundFile *soundFile);
 int SND_StartAlias2DSample(const snd_alias_t *pAlias0, const snd_alias_t *pAlias1, float lerp, int entnum, float volume, float pitch, int timeshift, float fraction, int startDelay, Bool master, int *pChannel, snd_alias_system_t system);
@@ -232,9 +232,9 @@ void SND_Update3DChannelReverb(int index);
 void SND_Set3DPosition(int index, const vec_t *org);
 static void MSS_SpatializeStream(float *volume, float *pan);
 static void MSS_SpatializeStreamImpl(int i, float *volume, float *pan);
-void SND_SetStreamChannelVolume(int index, float volume, float pan);
+void SND_SetStreamChannelVolumePan(int index, float volume, float pan);
 void SND_UpdateStreamChannel(int i, int frametime);
-void SND_Set2DChannelVolume(int index, float volume, float pan);
+void SND_Set2DChannelVolumePan(int index, float volume, float pan);
 void SND_Update2DChannel(int i, int frametime);
 void SND_LoadSoundFile(SoundFile *soundFile);
 int SND_StartAlias2DSample(const snd_alias_t *pAlias0, const snd_alias_t *pAlias1, float lerp, int entnum, float volume, float pitch, int timeshift, float fraction, int startDelay, Bool master, int *pChannel, snd_alias_system_t system);
@@ -292,24 +292,41 @@ static void __stdcall MSS_FileCloseCallback(long unsigned int hFileHandle)
 
 static long int __stdcall MSS_FileSeekCallback(long unsigned int hFileHandle, long int offset, long unsigned int type)
 {
+    int origin;
+
     switch (type) {
-    case 0:
-        FS_SeekInternal((int)hFileHandle, offset, 2);
-        return FS_FTell((int)hFileHandle);
-    case 1:
-        FS_SeekInternal((int)hFileHandle, offset, 0);
-        return FS_FTell((int)hFileHandle);
     case 2:
-        FS_SeekInternal((int)hFileHandle, offset, 1);
-        return FS_FTell((int)hFileHandle);
+        origin = 1;
+        break;
+    case 1:
+        origin = 0;
+        break;
+    case 0:
+        origin = 2;
+        break;
     default:
         return 0;
     }
+    FS_SeekInternal((int)hFileHandle, offset, origin);
+    return FS_FTell((int)hFileHandle);
 }
 
 static long unsigned int __stdcall MSS_FileReadCallback(long unsigned int hFileHandle, void *pBuffer, long unsigned int bytes)
 {
     return FS_Read(pBuffer, (int)bytes, (int)hFileHandle);
+}
+
+// retail 0x4b2670, unreferenced; name unknown
+HDIGDRIVER MSS_OpenDigitalDriver_4b2670(int hertz, int bits, int channels)
+{
+    AIL_set_preference(1, 53);
+    return (HDIGDRIVER)AIL_open_digital_driver(hertz, bits, channels, 0);
+}
+
+// retail 0x4b26a0, unreferenced; KisakCOD MSS_GetDryLevel (SUPPORTED)
+float MSS_GetDryLevel(void)
+{
+    return 1.0f;
 }
 
 static float MSS_GetWetLevel(const snd_alias_t *pAlias)
@@ -503,7 +520,7 @@ Bool SND_InitDriver(void)
 
 void SND_SetStreamChannelFromSaveInfo(int index, snd_save_stream_t *info)
 {
-    SND_SetStreamChannelVolume(index, info->volume * g_snd.volume, info->pan);
+    SND_SetStreamChannelVolumePan(index, info->volume * g_snd.volume, info->pan);
 }
 
 void SND_ShutdownDriver(void)
@@ -980,8 +997,20 @@ float SND_Get2DChannelVolume(int index)
     return left + right;
 }
 
+// retail 0x4b3bc0; CoD4 name, pan read back from Miles
+void SND_Set2DChannelVolume(int index, float volume)
+{
+    float pan;
+
+    AIL_sample_volume_pan(milesGlob.handle_2D[index - 45], NULL, &pan);
+    if (g_snd.chaninfo[index].srcChannelCount == 2)
+        AIL_set_sample_volume_levels(milesGlob.handle_2D[index - 45], volume, volume);
+    else
+        AIL_set_sample_volume_levels(milesGlob.handle_2D[index - 45], (1.0f - pan) * volume, pan * volume);
+}
+
 // Original name unknown.
-void SND_Set2DChannelVolume(int index, float volume, float pan)
+void SND_Set2DChannelVolumePan(int index, float volume, float pan)
 {
     if (g_snd.chaninfo[index].srcChannelCount == 2) {
         AIL_set_sample_volume_levels(milesGlob.handle_2D[index - 45], volume, volume);
@@ -993,6 +1022,12 @@ void SND_Set2DChannelVolume(int index, float volume, float pan)
 float SND_Get3DChannelVolume(int index)
 {
     return pow(AIL_3D_sample_volume(milesGlob.handle_3D[index]), 1.0f / 0.6f);
+}
+
+// retail 0x4b3cb0; CoD4 name
+void SND_Set3DChannelVolume(int index, float volume)
+{
+    AIL_set_3D_sample_volume(milesGlob.handle_3D[index], pow(volume, 0.6f));
 }
 
 float SND_GetStreamChannelVolume(int index)
@@ -1074,8 +1109,20 @@ int SND_GetStreamChannelLength(int index)
     return (int)length;
 }
 
+// retail 0x4b3d60; CoD4 name, pan read back from Miles
+void SND_SetStreamChannelVolume(int index, float volume)
+{
+    float pan;
+
+    AIL_stream_volume_pan(milesGlob.handle_stream[index - 32], NULL, &pan);
+    if (g_snd.chaninfo[index].srcChannelCount == 2 && !SND_IsAliasChannel3D((g_snd.chaninfo[index].pAlias0->flags & 0x780) >> 7))
+        AIL_set_stream_volume_levels(milesGlob.handle_stream[index - 32], volume, volume);
+    else
+        AIL_set_stream_volume_levels(milesGlob.handle_stream[index - 32], (1.0f - pan) * volume, pan * volume);
+}
+
 // Original name unknown.
-void SND_SetStreamChannelVolume(int index, float volume, float pan)
+void SND_SetStreamChannelVolumePan(int index, float volume, float pan)
 {
     if (g_snd.chaninfo[index].srcChannelCount == 2 && !SND_IsAliasChannel3D((g_snd.chaninfo[index].pAlias0->flags & 0x780) >> 7)) {
         AIL_set_stream_volume_levels(milesGlob.handle_stream[index - 32], volume, volume);
@@ -1133,7 +1180,7 @@ void SND_Get2DChannelSaveInfo(int index, snd_save_2D_sample_t *info)
 
 void SND_Set2DChannelFromSaveInfo(int index, snd_save_2D_sample_t *info)
 {
-    SND_Set2DChannelVolume(index, info->volume * g_snd.volume, info->pan);
+    SND_Set2DChannelVolumePan(index, info->volume * g_snd.volume, info->pan);
 }
 
 void SND_Get3DChannelSaveInfo(int index, snd_save_3D_sample_t *info)
@@ -1418,7 +1465,7 @@ void SND_Update2DChannel(int i, int frametime)
     }
 
     volume *= ((float *)g_snd.channelvol)[((pAlias0->flags & 0x780) >> 7) * 3];
-    SND_Set2DChannelVolume(i, volume * g_snd.volume, 0.5f);
+    SND_Set2DChannelVolumePan(i, volume * g_snd.volume, 0.5f);
 
     startDelay = g_snd.chaninfo[i].startDelay;
     if (startDelay != 0) {
@@ -1502,7 +1549,7 @@ void SND_UpdateStreamChannel(int i, int frametime)
     }
 
     volume *= ((float *)g_snd.channelvol)[((pAlias0->flags & 0x780) >> 7) * 3];
-    SND_SetStreamChannelVolume(i, volume * g_snd.volume, pan);
+    SND_SetStreamChannelVolumePan(i, volume * g_snd.volume, pan);
 
     startDelay = g_snd.chaninfo[i].startDelay;
     if (startDelay != 0) {

@@ -101,6 +101,14 @@ void CG_FxTest(void);
 float CG_GetViewFov(void);
 static void CG_CalcFov(void);
 void CG_FxSetTestPosition(void);
+// inlined com_math VectorMA: retail evaluates through the pointer params
+static __forceinline void Vec3MadInl(const vec_t *start, float scale, const vec_t *dir, vec_t *out)
+{
+    out[0] = start[0] + scale * dir[0];
+    out[1] = start[1] + scale * dir[1];
+    out[2] = start[2] + scale * dir[2];
+}
+
 static void CG_OffsetThirdPersonView(void);
 static void CG_CalcViewValues(void);
 void CG_InitView(void);
@@ -190,9 +198,9 @@ static void CG_OffsetThirdPersonView(void)
     if (cg->refdefViewAngles[0] > 45.0f)
         focusAngles[0] = 45.0f;
     AngleVectors(focusAngles, forward, NULL, NULL);
-    focusPoint[0] = cg->refdef.vieworg[0] + 512.0f * forward[0];
-    focusPoint[1] = cg->refdef.vieworg[1] + 512.0f * forward[1];
-    focusPoint[2] = cg->refdef.vieworg[2] + 512.0f * forward[2];
+    Vec3MadInl(cg->refdef.vieworg, 512.0f, forward, focusPoint);
+
+
     view[0] = cg->refdef.vieworg[0];
     view[1] = cg->refdef.vieworg[1];
     view[2] = cg->refdef.vieworg[2] + 8.0f;

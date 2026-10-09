@@ -13487,7 +13487,7 @@ struct refexport_t {
     void (*UpdateEffectsBolt)(void);
     void (*UpdateEffectsNonBolt)(void);
     void (*DefaultVertexFrames)(int vertCount, GfxWorldVertex *verts);
-    void (*AddPolyToScene)(MaterialHandle materialHandle, int lmapIndex, int vertCount, const GfxWorldVertex *verts);
+    void (*AddPolyToScene)(MaterialHandle materialHandle, unsigned short lmapIndex, unsigned short vertCount, const GfxWorldVertex *verts);
     void (*AddLightToScene)(const vec_t *org, float radius, float r, float g, float b);
     void (*InterpretSunLightParseParams)();
     void (*ResetSunLightParseParams)(void);

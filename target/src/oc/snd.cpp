@@ -857,6 +857,20 @@ static __attribute_regparm__(2) void SND_RestoreChanInfo(snd_channel_info_t *cha
     MemFile_ReadVec3(memFile, chaninfo->offset);
 }
 
+// retail 0x44c030, unreferenced; name unknown
+void SND_UpdatePause_44c030(void)
+{
+    Bool paused;
+
+    paused = (*(int *)((char *)cl_paused + 8) != 0);
+    if (paused != g_snd.paused) {
+        if (paused)
+            SND_PauseSounds();
+        else
+            SND_UnpauseSounds();
+    }
+}
+
 static __attribute_regparm__(3) void SND_StartBackground(int track, const snd_alias_t *pAlias, int fadetime, snd_alias_system_t system)
 {
     int channel;
@@ -1880,6 +1894,79 @@ void SND_Init(void)
     Com_Printf("------- Sound Initialized -------\n");
 
     Voice_Init();
+}
+
+// retail 0x44ab00, unreferenced (inlined in SND_FindReplaceableChannel); name unknown
+int SND_CompareChannels_44ab00(int i, int best, int entnum)
+{
+    int diff;
+
+    if (g_snd.chaninfo[i].entnum != g_snd.chaninfo[best].entnum) {
+        if (g_snd.chaninfo[i].entnum == entnum)
+            return -1;
+        if (g_snd.chaninfo[best].entnum == entnum)
+            return 1;
+    }
+    diff = g_snd.chaninfo[i].entchannel - g_snd.chaninfo[best].entchannel;
+    if (!diff)
+        diff = g_snd.chaninfo[i].endtime - g_snd.chaninfo[best].endtime;
+    return diff;
+}
+
+// retail 0x44bc50, unreferenced; KisakCOD SND_SetPauseSettings (SUPPORTED)
+void SND_SetPauseSettings(const Bool *pauseSettings)
+{
+    int i;
+
+    for (i = 0; i < 11; i++)
+        g_snd.pauseSettings[i] = pauseSettings[i];
+}
+
+// retail 0x44bc80, unreferenced; KisakCOD SND_ResetPauseSettingsToDefaults (SUPPORTED)
+void SND_ResetPauseSettingsToDefaults(void)
+{
+    int i;
+
+    for (i = 0; i < 11; i++)
+        g_snd.pauseSettings[i] = g_snd.defaultPauseSettings[i];
+}
+
+// retail 0x44ab50, unreferenced; name unknown
+Bool SND_ChannelEntchannelAtMost_44ab50(int index, int entchannel)
+{
+    return g_snd.chaninfo[index].entchannel <= entchannel;
+}
+
+// retail 0x44cd50, unreferenced; name unknown (busy and not delayed)
+int SND_Is2DChannelPlaying_44cd50(int index)
+{
+    return !SND_Is2DChannelFree(index) && !g_snd.chaninfo[index].startDelay;
+}
+
+// retail 0x44cda0, unreferenced; name unknown
+int SND_Is3DChannelPlaying_44cda0(int index)
+{
+    return !SND_Is3DChannelFree(index) && !g_snd.chaninfo[index].startDelay;
+}
+
+// retail 0x44cdf0, unreferenced; name unknown
+int SND_IsStreamChannelPlaying_44cdf0(int index)
+{
+    return !SND_IsStreamChannelFree(index) && !g_snd.chaninfo[index].startDelay;
+}
+
+extern "C" void *Z_MallocInternal( int size );
+extern "C" void Com_Memcpy( void *dest, const void *src, int count );
+
+// retail 0x44f360, unreferenced; CoD4 SND_RestoreEventually (SUPPORTED)
+void SND_RestoreEventually(int size, const void *data)
+{
+    SND_StopSounds(SND_KEEP_MUSIC_AND_AMBIENT);
+    if (g_snd.restore.buffer)
+        Z_FreeInternal((void *)g_snd.restore.buffer);
+    g_snd.restore.size = size;
+    g_snd.restore.buffer = (byte *)Z_MallocInternal(size);
+    Com_Memcpy((void *)g_snd.restore.buffer, data, size);
 }
 
 void SND_Shutdown(void)

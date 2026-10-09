@@ -686,6 +686,23 @@ int CG_PlayEntitySoundAlias(int entitynum, snd_alias_list_t *aliasList)
     return msec;
 }
 
+// retail 0x4ba080, unreferenced; name unknown (by-name CG_PlayEntitySoundAlias)
+int CG_PlayEntitySoundAliasByName(int entitynum, const char *aliasname)
+{
+    const vec_t *origin;
+    const snd_alias_t *alias;
+    int msec;
+
+    origin = (const vec_t *)((const byte *)cg_entities + entitynum * 548 + 0x108);
+    alias = Com_PickSoundAliasFromList(Com_FindSoundAlias(aliasname));
+    if (!alias)
+        return 0;
+
+    msec = SND_PlaySoundAlias(alias, entitynum, origin, 0, SASYS_CGAME);
+    CG_SubtitlePrint(msec, alias);
+    return msec;
+}
+
 static void CG_SubtitlePrint(int msec, const snd_alias_t *pAlias)
 {
     int minMsec;

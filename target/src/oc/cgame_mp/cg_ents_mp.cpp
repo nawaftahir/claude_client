@@ -700,6 +700,14 @@ void CG_SoundBlend(centity_t *cent)
     SND_PlayBlendedSoundAliases(alias0, alias1, lerp, nextState->number, cent->lerpOrigin, 0, (snd_alias_system_t)(1));
 }
 
+// retail 0x4c78e0, unreferenced; name unknown
+struct XAnim_s *CG_GetEntityAnims_4c78e0(int eType, int entnum)
+{
+    if (eType != 9)
+        return 0;
+    return CG_GetMG42Anims(&(((centity_t *)cg_entities))[entnum]);
+}
+
 static long unsigned int *CG_AllocAnimTree(int size)
 {
     return (long unsigned int *)MT_Alloc(size, 5);
@@ -736,6 +744,14 @@ static void CG_InterpolateEntityPosition(centity_t *cent)
     }
 }
 
+// com_math VectorCopy (not included here); the pointer param shapes the loads
+static __forceinline void EntVectorCopy(const vec_t *a, vec_t *b)
+{
+    b[0] = a[0];
+    b[1] = a[1];
+    b[2] = a[2];
+}
+
 void CG_CalcEntityLerpPositions(centity_t *cent)
 {
     clientInfo_t *ci;
@@ -753,22 +769,22 @@ void CG_CalcEntityLerpPositions(centity_t *cent)
     BG_EvaluateTrajectory(&cent->currentState.pos, cg->time, cent->lerpOrigin);
     BG_EvaluateTrajectory(&cent->currentState.apos, cg->time, cent->lerpAngles);
 
-    if (cent->nextState.eType == 1)
+    if (cent->nextState.eType == 1) {
         ci = &cg->bgs.clientinfo[cent->nextState.clientNum];
-    else if (cent->nextState.eType == 2)
+        ci->lerpMoveDir = cent->nextState.angles2[1];
+        EntVectorCopy(cent->lerpAngles, ci->playerAngles);
+        cent->lerpAngles[2] = 0.0f;
+        cent->lerpAngles[0] = 0.0f;
+        ci->lerpLean = cent->nextState.leanf;
+    } else if (cent->nextState.eType == 2) {
         ci = CG_CorpseInfoForEntityNum(cent->nextState.number);
-    else
-        goto noClientInfo;
+        ci->lerpMoveDir = cent->nextState.angles2[1];
+        EntVectorCopy(cent->lerpAngles, ci->playerAngles);
+        cent->lerpAngles[0] = 0.0f;
+        cent->lerpAngles[2] = 0.0f;
+        ci->lerpLean = cent->nextState.leanf;
+    }
 
-    ci->lerpMoveDir = cent->nextState.angles2[1];
-    ci->playerAngles[0] = cent->lerpAngles[0];
-    ci->playerAngles[1] = cent->lerpAngles[1];
-    ci->playerAngles[2] = cent->lerpAngles[2];
-    cent->lerpAngles[2] = 0.0f;
-    cent->lerpAngles[0] = 0.0f;
-    ci->lerpLean = cent->nextState.leanf;
-
-noClientInfo:
     if (cent != &cg->predictedPlayerEntity)
         CG_AdjustPositionForMover(cent->lerpOrigin, cent->currentState.groundEntityNum, cg->snap->serverTime, cg->time, cent->lerpOrigin, NULL);
 }
@@ -872,6 +888,31 @@ DObjAnimMat *CG_DObjGetLocalTagMatrix(const centity_t *cent, struct DObj_s *obj,
     CG_DObjCalcBone(cent, obj, boneIndex);
     mat = DObjGetRotTransArray(obj);
     return mat ? &mat[boneIndex] : 0;
+}
+
+// retail 0x4c6ae0, unreferenced (G_DObjGetWorldTagMatrix twin)
+qboolean CG_DObjGetWorldTagMatrix(const centity_t *cent, struct DObj_s *obj, unsigned int tagName, float tagMat[4][3])
+{
+    DObjAnimMat *mat;
+    float ent_axis[4][3];
+    float axis[3][3];
+
+    mat = CG_DObjGetLocalTagMatrix(cent, obj, tagName);
+
+    if (!mat)
+        return 0;
+
+    AnglesToAxis(cent->lerpAngles, ent_axis);
+    ent_axis[3][0] = cent->lerpOrigin[0];
+    ent_axis[3][1] = cent->lerpOrigin[1];
+    ent_axis[3][2] = cent->lerpOrigin[2];
+
+    ConvertQuatToMat(mat, axis);
+
+    MatrixMultiply(axis, ent_axis, tagMat);
+    MatrixTransformVector43(mat->trans, ent_axis, tagMat[3]);
+
+    return 1;
 }
 
 void CG_DObjCalcBoneGeneric(int handle, int localClientNum, int boneIndex)

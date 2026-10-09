@@ -1429,18 +1429,23 @@ void CL_LookupColor(unsigned char c, vec_t *color)
     }
 }
 
+// retail 0x4032c0; name unknown
+void CL_GetTeamColor_4032c0(const char *dvarName, float *color)
+{
+    Dvar_GetUnpackedColorByName(dvarName, color);
+    color[3] = 1.0f;
+}
+
 void CL_UpdateColor(void)
 {
     clientActive_t *cl = CL_LOCAL;
     float *alliesColor = (float *)cl->color_allies;
     float *axisColor;
 
-    Dvar_GetUnpackedColorByName("g_TeamColor_Allies", alliesColor);
-    alliesColor[3] = 1.0f;
+    CL_GetTeamColor_4032c0("g_TeamColor_Allies", alliesColor);
 
     axisColor = (float *)cl->color_axis;
-    Dvar_GetUnpackedColorByName("g_TeamColor_Axis", axisColor);
-    axisColor[3] = 1.0f;
+    CL_GetTeamColor_4032c0("g_TeamColor_Axis", axisColor);
 
     RE->UpdateColor(alliesColor, axisColor);
 }

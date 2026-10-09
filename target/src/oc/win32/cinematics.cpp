@@ -59,6 +59,7 @@ int ROQ_PlayCinematic(const char *arg, int x, int y, int w, int h, int systemBit
 void ROQ_DrawCinematicFromHandle(int handle);
 void ROQ_DrawCinematic(void);
 static void RoQReset(void);
+void initRoQ(void);
 void ROQ_CloseAllVideos(void);
 e_status ROQ_RunCinematicFromHandle(int handle);
 void ROQ_RunCinematic(void);
@@ -162,6 +163,23 @@ static void RllSetupTable(void)
         cin.sqrTable[z] = (short)(z * z);
         cin.sqrTable[z + 128] = (short)(-cin.sqrTable[z]);
     }
+}
+
+// retail 0x4acf70, unreferenced; Q3 RllDecodeMonoToMono (SUPPORTED)
+long RllDecodeMonoToMono(unsigned char *from, short *to, unsigned int size, char signedOutput, unsigned short flag)
+{
+    unsigned int z;
+    int prev;
+
+    if (signedOutput)
+        prev = flag - 0x8000;
+    else
+        prev = flag;
+
+    for (z = 0; z < size; z++) {
+        prev = to[z] = (short)(prev + cin.sqrTable[from[z]]);
+    }
+    return size;
 }
 
 static long RllDecodeMonoToStereo(unsigned char *from, short *to, unsigned int size, char signedOutput, unsigned short flag)
@@ -911,6 +929,18 @@ static void RoQPrepMcomp(long int xoff, long int yoff)
     }
 }
 
+// retail 0x4aec00 (also inlined); Q3 initRoQ (SUPPORTED)
+void initRoQ(void)
+{
+    if (currentHandle < 0)
+        return;
+    cinTable[currentHandle].VQNormal = blitVQQuad32fs;
+    cinTable[currentHandle].VQBuffer = blitVQQuad32fs;
+    cinTable[currentHandle].samplesPerPixel = 4;
+    ROQ_GenYUVTables();
+    RllSetupTable();
+}
+
 static void RoQReset(void)
 {
     if (currentHandle < 0) return;
@@ -1267,13 +1297,7 @@ int ROQ_PlayCinematic(const char *arg, int x, int y, int w, int h, int systemBit
         cinTable[currentHandle].playonwalls = cl_inGameVideo->current.enabled != 0;
     }
 
-    if (currentHandle >= 0) {
-        cinTable[currentHandle].VQNormal = blitVQQuad32fs;
-        cinTable[currentHandle].VQBuffer = blitVQQuad32fs;
-        cinTable[currentHandle].samplesPerPixel = 4;
-        ROQ_GenYUVTables();
-        RllSetupTable();
-    }
+    initRoQ();
 
     FS_Read(cin.file, 16, cinTable[currentHandle].iFile);
 
@@ -1331,6 +1355,17 @@ static void ROQ_GetDrawRect(float aspect, int *x, int *y, int *w, int *h)
 }
 
 // Original name unknown.
+// retail 0x4afbc0, unreferenced; name unknown
+void ROQ_DrawRect_4afbc0(const float *pos, const float *size, const float *color)
+{
+    refexport_t *re;
+
+    re = (refexport_t *)(void *)((void *)&::re);
+    ((void (*)(float, float, float, float, float, float, float, float, const vec_t *, int))re->DrawStretchPic)(
+        pos[0], pos[1], size[0], size[1],
+        0.0f, 0.0f, 0.0f, 0.0f, color, (int)cls.whiteMaterial);
+}
+
 static void ROQ_DrawLetterBox(int x, int y, int w, int h, const float *color)
 {
     float barSize;

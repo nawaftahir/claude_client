@@ -690,7 +690,7 @@ qboolean FS_CompareIwds( char *neededIwds, int len, qboolean dlstring )
 	return qfalse;
 }
 
-static void FS_RemoveCommands()
+void FS_RemoveCommands()
 {
 	Cmd_RemoveCommand("path");
 	Cmd_RemoveCommand("dir");

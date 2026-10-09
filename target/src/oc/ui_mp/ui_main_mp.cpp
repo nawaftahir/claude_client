@@ -412,6 +412,34 @@ static const char *UI_SelectedMap(int index, int *actual);
 static void UI_DisplayDownloadInfo(const char *downloadName, float centerPoint, float yStart, FontHandle font, float scale);
 void UI_DrawConnectScreen(void);
 
+extern char *Com_ParseOnLine(const char **data_p);
+
+// retail 0x52e710, unreferenced; name unknown (String_Parse with String_Alloc)
+int String_ParseAlloc_52e710(const char **p, const char **out)
+{
+    const char *token;
+    const char *translated;
+
+    token = Com_ParseOnLine(p);
+    if (!token || !token[0])
+        return 0;
+    if (token[0] == '@') {
+        translated = SEH_StringEd_GetString(token + 1);
+        if (translated) {
+            *out = String_Alloc(translated);
+            return 1;
+        }
+        if (Dvar_GetBool("loc_warnings")) {
+            if (Dvar_GetBool("loc_warningsAsErrors"))
+                Com_Error(ERR_LOCALIZATION, "Could not translate menu string reference %s", token);
+            else
+                Com_Printf("^3WARNING: Could not translate menu string reference %s\n", token);
+        }
+    }
+    *out = String_Alloc(token);
+    return 1;
+}
+
 Bool UI_GetOpenOrCloseMenuOnDvarArgs(const char **args, const char *cmd,
                                      char *dvarName, char *testValue, char *menuName)
 {
@@ -1237,13 +1265,20 @@ qboolean UI_OwnerDrawVisible(int flags)
 
 static int UI_ServersQsortCompare(const void *arg1, const void *arg2)
 {
-    int s1 = *(const int *)arg1;
-    int s2 = *(const int *)arg2;
     return LAN_CompareServers(
         ui_netSource->current.integer,
         sharedUiInfo.serverStatus.sortKey,
         sharedUiInfo.serverStatus.sortDir,
-        s1, s2);
+        *(const int *)arg1, *(const int *)arg2);
+}
+
+// retail 0x52da60, unreferenced; Q3 UI_ServersSort (SUPPORTED)
+void UI_ServersSort(int column, qboolean force)
+{
+    if (!force && sharedUiInfo.serverStatus.sortKey == column)
+        return;
+    sharedUiInfo.serverStatus.sortKey = column;
+    qsort(sharedUiInfo.serverStatus.displayServers, sharedUiInfo.serverStatus.numDisplayServers, 4, UI_ServersQsortCompare);
 }
 
 static qboolean UI_GameType_HandleKey(int flags, float *special, int key, qboolean resetMap)
@@ -1577,6 +1612,46 @@ static void UI_LoadMovies(void)
         sharedUiInfo.movieList[i] = String_Alloc(moviename);
         moviename += len + 1;
     }
+}
+
+extern itemDef_t *Menu_FindItemByName(menuDef_t *menu, const char *p);
+
+// retail 0x52e120, unreferenced; name unknown
+void UI_SetItemBackground_52e120(const char *itemName, const char *materialName)
+{
+    itemDef_t *item;
+
+    item = Menu_FindItemByName(Menu_GetFocused(&uiInfo->uiDC), itemName);
+    if (item)
+        item->window.background = CL_RegisterMaterialNoMip(materialName, 3);
+}
+
+extern void Window_AddDynamicFlags(Window *w, const int newFlags);
+extern void Window_RemoveDynamicFlags(Window *w, const int newFlags);
+
+// retail 0x52e160, unreferenced; name unknown
+void UI_ShowItemByName_52e160(const char *itemName, qboolean show)
+{
+    itemDef_t *item;
+
+    item = Menu_FindItemByName(Menu_GetFocused(&uiInfo->uiDC), itemName);
+    if (item) {
+        if (show)
+            Window_AddDynamicFlags(&item->window, 4);
+        else
+            Window_RemoveDynamicFlags(&item->window, 4);
+    }
+}
+
+// retail 0x532250, unreferenced; Kisak UI_GetTopActiveMenuName (SUPPORTED)
+const char *UI_GetTopActiveMenuName(void)
+{
+    int topMenuStackIndex;
+
+    topMenuStackIndex = uiInfo->uiDC.openMenuCount - 1;
+    if (topMenuStackIndex < 0 || topMenuStackIndex >= uiInfo->uiDC.menuCount)
+        return NULL;
+    return uiInfo->uiDC.menuStack[topMenuStackIndex]->window.name;
 }
 
 qboolean UI_CheckExecKey(int key)
@@ -2040,6 +2115,12 @@ static void UI_SelectCurrentGameType(void)
 }
 
 // retail 0x52fd50; name unknown
+// retail 0x52fd30, unreferenced; name unknown
+bool UI_IsMapActive_52fd30(int map)
+{
+    return sharedUiInfo.mapList[map].active != 0;
+}
+
 static void UI_SelectFirstActiveMap(void)
 {
     int i;
@@ -3433,6 +3514,14 @@ static void UI_DoServerRefresh(void)
     }
 
     UI_BuildServerDisplayList(0);
+}
+
+// retail 0x5310d0, unreferenced; name unknown
+void UI_RefreshServerPings_5310d0(void)
+{
+    LAN_ResetPings((ui_netSource)->current.integer);
+    sharedUiInfo.serverStatus.refreshActive = 1;
+    sharedUiInfo.serverStatus.refreshtime = uiInfo->uiDC.realTime + 1000;
 }
 
 static void UI_StartServerRefresh(qboolean full)

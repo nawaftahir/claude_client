@@ -412,6 +412,25 @@ Bool CL_AllLocalClientsDisconnected(void)
     return 1;
 }
 
+// retail 0x40b460, unreferenced; name unknown
+void CL_SetFPUControl_40b460(void)
+{
+    _controlfp(_PC_24, _MCW_PC);
+    _controlfp(_MCW_EM, _MCW_EM);
+}
+
+// retail 0x40b580, unreferenced; Kisak name
+Bool CL_AnyLocalClientsRunning(void)
+{
+    int i;
+
+    for (i = 0; i < 1; i++) {
+        if (*(byte *)&clients[i] && (&::clc)[i].state == CA_ACTIVE)
+            return 1;
+    }
+    return 0;
+}
+
 Bool CL_AnyLocalClientChallenging(void)
 {
     int i;
@@ -573,6 +592,11 @@ void CL_Reconnect_f(void)
     }
 
     Cbuf_AddText(va("connect %s\n", server));
+}
+
+void CL_ResetPureClientAtServer(void)
+{
+    CL_AddReliableCommand(va("vdr"));
 }
 
 void CL_OpenedIWDList_f(void)
@@ -1167,10 +1191,13 @@ void CL_StopLogo(void)
 
 void CL_ToggleMenu_f(void)
 {
-    if (::clc.demoplaying != 0 || legacyHacks->cl_serverloadwaiting != 0) {
-        UI_SetActiveMenu(1);
+    if (!::clc.demoplaying) {
+        if (legacyHacks->cl_serverloadwaiting)
+            UI_SetActiveMenu(1);
+        else
+            UI_SetActiveMenu(2);
     } else {
-        UI_SetActiveMenu(2);
+        UI_SetActiveMenu(1);
     }
 }
 
@@ -1731,6 +1758,14 @@ void CL_NextDemo(void)
     Cbuf_AddText(v);
     Cbuf_AddText("\n");
     Cbuf_Execute();
+}
+
+// retail 0x40ea20, unreferenced; name unknown
+void CL_ClearRendererAssets_40ea20(void)
+{
+    cls.whiteMaterial = 0;
+    cls.consoleMaterial = 0;
+    cls.consoleFont = 0;
 }
 
 void CL_ShutdownHunkUsers(void)
@@ -2325,7 +2360,7 @@ Bool CL_ConnectionlessPacket(netadr_t from, msg_t *msg, int time)
     }
 
     if (I_stricmp(cmd, (const char *)"connectResponse") == 0) {
-        if (clc.state > CA_CHALLENGING) {
+        if (clc.state >= CA_CONNECTED) {
             Com_Printf((const char *)"Dup connect received.  Ignored.\n");
             return 0;
         }
@@ -2336,17 +2371,12 @@ Bool CL_ConnectionlessPacket(netadr_t from, msg_t *msg, int time)
         }
 
         if (!NET_CompareBaseAdr(from, clc.serverAddress)) {
-            const char *expected;
-            const char *actual;
-
             Com_Printf((const char *)"connectResponse from a different address.  Ignored.\n");
-            expected = NET_AdrToString(clc.serverAddress);
-            actual = NET_AdrToString(from);
-            Com_Printf((const char *)"%s should have been %s\n", actual, expected);
+            Com_Printf((const char *)"%s should have been %s\n", NET_AdrToString(from), NET_AdrToString(clc.serverAddress));
             return 0;
         }
 
-        if (autoupdateChecked && NET_CompareBaseAdr(cls.autoupdateServer, clc.serverAddress)) {
+        if (autoupdateChecked && NET_CompareAdr(cls.autoupdateServer, clc.serverAddress)) {
             if (cl_updateavailable->current.enabled)
                 autoupdateStarted = 1;
         }

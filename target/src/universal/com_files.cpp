@@ -59,7 +59,7 @@ qboolean FS_FileCompare( const char *filename1, const char *filename2 );
 char *FS_ShiftedStrStr( const char *string, const char *substring, int shift );
 int FS_FOpenFileRead(const char *filename, fileHandle_t *file, qboolean uniqueFILE);
 const char *FS_ShortOSFilePath( const char *qpath );
-bool FS_SetWritable( const char *filename, int writable );
+qboolean FS_SetWritable( const char *filename, int writable );
 int FS_SeekInternal( int f, int offset, int origin );
 int FS_GetOSPath( const char *qpath, char *ospath );
 fileHandle_t FS_OpenFileOverwrite( const char *qpath );
@@ -128,6 +128,22 @@ int FS_LoadStack()
 qboolean FS_UseSearchPath(const searchpath_t *pSearch)
 {
 	if ( pSearch->localized && fs_ignoreLocalized->current.boolean )
+	{
+		return qfalse;
+	}
+
+	return qtrue;
+}
+
+// retail 0x420150, unreferenced; name unknown (Kisak FS_UseSearchPath body)
+qboolean FS_UseSearchPathLanguage_420150(const searchpath_t *pSearch)
+{
+	if ( pSearch->localized && fs_ignoreLocalized->current.boolean )
+	{
+		return qfalse;
+	}
+
+	if ( pSearch->localized && pSearch->language != SEH_GetCurrentLanguage() )
 	{
 		return qfalse;
 	}
@@ -1197,24 +1213,20 @@ static int FS_Delete(const char *filename)
 FS_SetWritable
 ==============
 */
-bool FS_SetWritable( const char *filename, int writable )
+// retail 0x421570: win32 attribute form, nonzero arg sets READONLY
+qboolean FS_SetWritable( const char *filename, int writable )
 {
 	char ospath[MAX_OSPATH];
-	int unused[4];
-	struct stat buf;
+	DWORD attrib;
+	DWORD newAttrib;
 
-	FS_CheckFileSystemStarted();
 	FS_BuildOSPath(fs_homepath->current.string, fs_gamedir, filename, ospath);
-
-	if ( stat(ospath, &buf) == -1 )
-		return false;
-
-	buf.st_mode = writable ? buf.st_mode & ~S_IRUSR : buf.st_mode | S_IRUSR;
-
-	if ( chmod(ospath, buf.st_mode) == -1 )
-		return false;
-
-	return true;
+	attrib = GetFileAttributesA(ospath);
+	newAttrib = !writable ? attrib & ~FILE_ATTRIBUTE_READONLY : attrib | FILE_ATTRIBUTE_READONLY;
+	if ( newAttrib == attrib )
+		return 0;
+	SetFileAttributesA(ospath, newAttrib);
+	return 1;
 }
 
 int FS_Read(void *buffer, int len, fileHandle_t h)

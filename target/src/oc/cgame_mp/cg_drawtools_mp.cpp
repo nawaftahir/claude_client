@@ -39,6 +39,7 @@ extern float AngleSubtract( float a1, float a2 );
 extern void CL_SetFullScreenViewport(void);
 extern void CL_SetViewport(int x, int y, int width, int height);
 extern void CalcScreenPlacement(float *x, float *y, float *w, float *h, int horzAlign, int vertAlign);
+extern void UI_FillRect(float x, float y, float width, float height, int horzAlign, int vertAlign, const vec_t *color);
 extern void CL_DrawQuadPic(vec2_t *verts, const vec_t *color, MaterialHandle material);
 void CG_DrawStringExt(float x, float y, const char *string, const vec_t *setColor, qboolean forceColor, qboolean shadow, float charHeight, qboolean adjust);
 int CG_DrawDevString(float x, float y, const char *s, const vec_t *color, int align, FontHandle font, int style);
@@ -91,6 +92,89 @@ static __forceinline int CG_FloatIsNegative(const float x)
     return *(const int *)&x < 0;
 }
 
+// RtCW bar flags
+#define BAR_LEFT 0x0001
+#define BAR_CENTER 0x0002
+#define BAR_VERT 0x0004
+#define BAR_BG 0x0010
+#define BAR_BGSPACING_X0Y5 0x0020
+#define BAR_BGSPACING_X0Y0 0x0040
+#define BAR_LERP_COLOR 0x0100
+#define BAR_BORDERSIZE 1
+
+// retail 0x4bbd10, unreferenced (RtCW shape, no hud alpha)
+void CG_FilledBar(float x, float y, float w, float h, const float *startColor, const float *endColor, const float *bgColor, float frac, int flags)
+{
+    vec4_t scolor;
+    vec4_t backgroundcolor = {1, 1, 1, 0.25f}, colorAtPos;
+    int indent = BAR_BORDERSIZE;
+
+    scolor[0] = startColor[0];
+    scolor[1] = startColor[1];
+    scolor[2] = startColor[2];
+    scolor[3] = startColor[3];
+
+    if ((flags & BAR_BG) && bgColor) {
+        backgroundcolor[0] = bgColor[0];
+        backgroundcolor[1] = bgColor[1];
+        backgroundcolor[2] = bgColor[2];
+        backgroundcolor[3] = bgColor[3];
+    }
+
+    if (flags & BAR_LERP_COLOR) {
+        colorAtPos[0] = (endColor[0] - scolor[0]) * frac + scolor[0];
+        colorAtPos[1] = (endColor[1] - scolor[1]) * frac + scolor[1];
+        colorAtPos[2] = (endColor[2] - scolor[2]) * frac + scolor[2];
+        colorAtPos[3] = (endColor[3] - scolor[3]) * frac + scolor[3];
+    }
+
+    if (flags & BAR_BG) {
+        UI_FillRect(x, y, w, h, 0, 0, backgroundcolor);
+
+        if (flags & BAR_BGSPACING_X0Y0) {
+        } else if (flags & BAR_BGSPACING_X0Y5) {
+            indent *= 3;
+            y += indent;
+            h -= (2 * indent);
+        } else {
+            x += indent;
+            y += indent;
+            w -= (2 * indent);
+            h -= (2 * indent);
+        }
+    }
+
+    if (flags & BAR_VERT) {
+        if (flags & BAR_LEFT)
+            y += (h * (1 - frac));
+        else if (flags & BAR_CENTER)
+            y += (h * (1 - frac) / 2);
+
+        if (flags & BAR_LERP_COLOR)
+            UI_FillRect(x, y, w, h * frac, 0, 0, colorAtPos);
+        else
+            UI_FillRect(x, y, w, h * frac, 0, 0, scolor);
+    } else {
+        if (flags & BAR_LEFT)
+            x += (w * (1 - frac));
+        else if (flags & BAR_CENTER)
+            x += (w * (1 - frac) / 2);
+
+        if (flags & BAR_LERP_COLOR)
+            UI_FillRect(x, y, w * frac, h, 0, 0, colorAtPos);
+        else
+            UI_FillRect(x, y, w * frac, h, 0, 0, scolor);
+    }
+}
+
+// retail 0x4bbf80, unreferenced
+void CG_HorizontalPercentBar(float x, float y, float width, float height, float percent)
+{
+    vec4_t bgcolor = {0.5f, 0.5f, 0.5f, 0.3f},
+           color = {1.0f, 1.0f, 1.0f, 0.3f};
+    CG_FilledBar(x, y, width, height, color, NULL, bgcolor, percent, BAR_BG);
+}
+
 void CG_DrawRotatedPicPhysical(float x, float y, float width, float height, float angle, const vec_t *color, MaterialHandle material)
 {
     static const float sign[4][2] = { { -1.0f, -1.0f }, { 1.0f, -1.0f }, { 1.0f, 1.0f }, { -1.0f, 1.0f } };
@@ -114,7 +198,7 @@ void CG_DrawRotatedPicPhysical(float x, float y, float width, float height, floa
     scale[1][1] = c * halfH;
     for (i = 0; i < 4; i++) {
         verts[i][0] = center[0] + scale[0][0] * sign[i][0] - scale[0][1] * sign[i][1];
-        verts[i][1] = scale[1][0] * sign[i][0] + scale[1][1] * sign[i][1] + center[1];
+        verts[i][1] = scale[1][0] * sign[i][0] + scale[1][1] * sign[i][1]; verts[i][1] = verts[i][1] + center[1];
     }
 
     CL_DrawQuadPic(verts, color, material);
@@ -241,6 +325,49 @@ float *CG_FadeColor(int startMsec, int totalMsec, int fadeMsec)
     color[1] = 1.0f;
     color[0] = 1.0f;
     return color;
+}
+
+// retail 0x4bbcd0, unreferenced; Kisak name
+void Vec4Lerp(const float *from, const float *to, float frac, float *result)
+{
+    result[0] = (to[0] - from[0]) * frac + from[0];
+    result[1] = (to[1] - from[1]) * frac + from[1];
+    result[2] = (to[2] - from[2]) * frac + from[2];
+    result[3] = (to[3] - from[3]) * frac + from[3];
+}
+
+// retail 0x4bc5c0, unreferenced; Q3 shape without armor (SUPPORTED)
+__forceinline void CG_GetColorForHealth(int health, vec4_t hcolor)
+{
+    if (health <= 0) {
+        hcolor[0] = 0.0f;
+        hcolor[1] = 0.0f;
+        hcolor[2] = 0.0f;
+        hcolor[3] = 1.0f;
+        return;
+    }
+
+    hcolor[0] = 1.0f;
+    hcolor[3] = 1.0f;
+    if (health >= 100)
+        hcolor[2] = 1.0f;
+    else if (health < 66)
+        hcolor[2] = 0.0f;
+    else
+        hcolor[2] = (float)(health - 66) / 33.0f;
+
+    if (health > 60)
+        hcolor[1] = 1.0f;
+    else if (health < 30)
+        hcolor[1] = 0.0f;
+    else
+        hcolor[1] = (float)(health - 30) / 30.0f;
+}
+
+// retail 0x4bc640, unreferenced
+void CG_ColorForHealth(vec4_t hcolor)
+{
+    CG_GetColorForHealth(cg->nextSnap->ps.stats[0], hcolor);
 }
 
 void CG_NorthDirectionChanged(void)

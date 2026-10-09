@@ -757,28 +757,54 @@ void CG_UpdateHandViewmodels(const char *handModel)
     }
 }
 
+// inlined com_math vector helpers: retail evaluates through their pointer params
+static __forceinline void Vec3CopyInl(const vec_t *a, vec_t *out)
+{
+    out[0] = a[0];
+    out[1] = a[1];
+    out[2] = a[2];
+}
+
+static __forceinline void Vec3SubInl(const vec_t *a, const vec_t *b, vec_t *out)
+{
+    out[0] = a[0] - b[0];
+    out[1] = a[1] - b[1];
+    out[2] = a[2] - b[2];
+}
+
+static __forceinline void Vec3ScaleInl(const vec_t *v, float scale, vec_t *out)
+{
+    out[0] = v[0] * scale;
+    out[1] = v[1] * scale;
+    out[2] = v[2] * scale;
+}
+
+static __forceinline float Vec3DotInl(const vec_t *a, const vec_t *b)
+{
+    return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+}
+
+static __forceinline float Vec3LengthInl(const vec_t *v)
+{
+    return sqrtf(v[2] * v[2] + (v[1] * v[1] + v[0] * v[0]));
+}
+
 void CG_SpawnTracer(vec_t *pstart, vec_t *pend)
 {
     vec3_t start;
     vec3_t end;
     vec3_t dir;
     float dist;
-    float speed;
     int time;
     int jitter;
     localEntity_t *le;
 
-    start[0] = pstart[0];
-    start[1] = pstart[1];
-    start[2] = pstart[2];
-
+    Vec3CopyInl(pstart, start);
     end[0] = pend[0];
     end[1] = pend[1];
     end[2] = pend[2];
 
-    dir[0] = end[0] - start[0];
-    dir[1] = end[1] - start[1];
-    dir[2] = end[2] - start[2];
+    Vec3SubInl(end, start, dir);
 
     dist = Vec3Normalize(dir);
     le = CG_AllocLocalEntity();
@@ -794,57 +820,38 @@ void CG_SpawnTracer(vec_t *pstart, vec_t *pend)
     le->pos.trType = TR_LINEAR;
     le->pos.trTime = time;
 
-    le->pos.trBase[0] = start[0];
-    le->pos.trBase[1] = start[1];
-    le->pos.trBase[2] = start[2];
-
-    speed = cg_tracerSpeed->current.value;
-    le->pos.trDelta[0] = speed * dir[0];
-    le->pos.trDelta[1] = speed * dir[1];
-    le->pos.trDelta[2] = speed * dir[2];
+    Vec3CopyInl(start, le->pos.trBase);
+    Vec3ScaleInl(dir, cg_tracerSpeed->current.value, le->pos.trDelta);
 }
 
 void CG_WhizbySound(vec_t *vStart, vec_t *vEnd)
 {
-    vec3_t vDelta;
-    vec3_t vDir;
-    vec3_t vProjPos;
-    float toEar0;
-    float toEar1;
-    float toEar2;
-    float projLen;
-    float distanceToView;
+    vec3_t viewDelta;
+    vec3_t delta;
+    vec3_t dir;
+    vec3_t projPos;
+    float dist;
+    float viewDist;
 
-    vDelta[0] = vEnd[0] - vStart[0];
-    vDelta[1] = vEnd[1] - vStart[1];
-    vDelta[2] = vEnd[2] - vStart[2];
-    Vec3NormalizeTo(vDelta, vDir);
-
-    toEar0 = cg->refdef.vieworg[0] - vStart[0];
-    toEar1 = cg->refdef.vieworg[1] - vStart[1];
-    toEar2 = cg->refdef.vieworg[2] - vStart[2];
-    projLen = toEar0 * vDir[0] + (toEar1 * vDir[1] + toEar2 * vDir[2]);
-    if (projLen < 64.0f)
+    Vec3SubInl(vEnd, vStart, delta);
+    Vec3NormalizeTo(delta, dir);
+    dist = Vec3DotInl(dir, delta);
+    Vec3SubInl(cg->refdef.vieworg, vStart, viewDelta);
+    viewDist = Vec3DotInl(viewDelta, dir);
+    if (viewDist < 64.0f)
         return;
-    if (projLen - -64.0f > vDelta[0] * vDir[0] + (vDir[2] * vDelta[2] + vDir[1] * vDelta[1]))
+    if (viewDist - -64.0f > dist)
         return;
-
-    vProjPos[0] = projLen * vDir[0] + vStart[0];
-    vProjPos[1] = projLen * vDir[1] + vStart[1];
-    vProjPos[2] = projLen * vDir[2] + vStart[2];
-
-    vDelta[0] = vProjPos[0] - cg->refdef.vieworg[0];
-    vDelta[1] = vProjPos[1] - cg->refdef.vieworg[1];
-    vDelta[2] = vProjPos[2] - cg->refdef.vieworg[2];
-    distanceToView = sqrtf(vDelta[2] * vDelta[2] + (vDelta[1] * vDelta[1] + vDelta[0] * vDelta[0]));
-    if (distanceToView > 140.0f)
+    projPos[0] = viewDist * dir[0] + vStart[0];
+    projPos[1] = viewDist * dir[1] + vStart[1];
+    projPos[2] = viewDist * dir[2] + vStart[2];
+    Vec3SubInl(projPos, cg->refdef.vieworg, delta);
+    if (Vec3LengthInl(delta) > 140.0f)
         return;
-
-    vProjPos[0] = vProjPos[0] - vDir[0] * 16.0f;
-    vProjPos[1] = vProjPos[1] - vDir[1] * 16.0f;
-    vProjPos[2] = vProjPos[2] - vDir[2] * 16.0f;
-
-    CG_PlaySoundAlias(0x3fe, vProjPos, cgs->media.bulletWhizby);
+    projPos[0] = projPos[0] - dir[0] * 16.0f;
+    projPos[1] = projPos[1] - dir[1] * 16.0f;
+    projPos[2] = projPos[2] - dir[2] * 16.0f;
+    CG_PlaySoundAlias(0x3fe, projPos, cgs->media.bulletWhizby);
 }
 
 // retail 0x4d1850, name unknown: tracer + whizby for a bullet hit
@@ -1292,7 +1299,7 @@ void CG_AddPlayerWeapon(GfxEntity *parent, playerState_t *ps, centity_t *cent, q
     if (ent->eFlags & 0x300)
         return;
 
-    weapInfo = &cg_weaponsArray[weaponNum];
+    ;
 
     if (bViewModel) {
         if (bDrawGun) {
@@ -1319,7 +1326,7 @@ void CG_AddPlayerWeapon(GfxEntity *parent, playerState_t *ps, centity_t *cent, q
             gun.origin[2] = parent->origin[2];
             AxisCopy(parent->axis, gun.axis);
 
-            model.obj = weapInfo->viewModelDObj;
+            model.obj = (&cg_weaponsArray[weaponNum])->viewModelDObj;
             skinEnt = R_AddRefEntityToScene(&gun, model, 0);
 #if COD2_TRACE
             {
@@ -1327,10 +1334,10 @@ void CG_AddPlayerWeapon(GfxEntity *parent, playerState_t *ps, centity_t *cent, q
                 if (apwTrace < 8) {
                     if (getenv("DBGSPAM"))
                         fprintf(stderr, "[viewmodel] AddPlayerWeapon: dObj=%p skinEnt=%p gunOrg=(%.0f,%.0f,%.0f) lightOrg=(%.0f,%.0f,%.0f) registered=%d\n",
-                                (void *)weapInfo->viewModelDObj, (void *)skinEnt,
+                                (void *)(&cg_weaponsArray[weaponNum])->viewModelDObj, (void *)skinEnt,
                                 gun.origin[0], gun.origin[1], gun.origin[2],
                                 gun.lighting.origin[0], gun.lighting.origin[1], gun.lighting.origin[2],
-                                weapInfo->registered);
+                                (&cg_weaponsArray[weaponNum])->registered);
                     ++apwTrace;
                 }
             }
@@ -1348,9 +1355,9 @@ void CG_AddPlayerWeapon(GfxEntity *parent, playerState_t *ps, centity_t *cent, q
         {
             int boneIndex;
 
-            boneIndex = DObjGetBoneIndex(weapInfo->viewModelDObj, scr_const.tag_brass);
+            boneIndex = DObjGetBoneIndex((&cg_weaponsArray[weaponNum])->viewModelDObj, scr_const.tag_brass);
             if (boneIndex > -1) {
-                DObjAnimMat *rotTransArray = DObjGetRotTransArray(weapInfo->viewModelDObj);
+                DObjAnimMat *rotTransArray = DObjGetRotTransArray((&cg_weaponsArray[weaponNum])->viewModelDObj);
                 if (rotTransArray) {
                     vec3_t entAxis[4];
 

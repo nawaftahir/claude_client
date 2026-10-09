@@ -3069,7 +3069,7 @@ next:
 			while ( currentValue->type != VAR_PRECODEPOS );
 			assert(newSize >= 0 && newSize < (1 << 16));
 
-			len = STACKBUF_BUFFER_SIZE * size;
+			len = STACKBUF_BUFFER_SIZE; len = len * size;
 			bufLen = STACKBUF_BUFFER_SIZE * newSize + sizeof(*stackValue) - 1;
 
 			if ( !MT_Realloc(stackValue->bufLen, bufLen) )

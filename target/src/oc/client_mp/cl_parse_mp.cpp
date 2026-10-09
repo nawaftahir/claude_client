@@ -53,6 +53,7 @@ extern const dvar_t *cl_shownet;
 extern const dvar_t *cl_shownuments;
 
 void CL_SystemInfoChanged(void);
+
 void CL_ParseGamestate(msg_t *msg);
 void CL_ParseDownload(msg_t *msg);
 void CL_ParseSnapshot(msg_t *msg);
@@ -80,6 +81,13 @@ extern void CL_NextDownload(void);
 extern void Com_Error(errorParm_t level, const char *fmt, ...);
 extern void Com_Printf(const char *fmt, ...);
 extern void Com_DPrintf(const char *fmt, ...);
+
+// retail 0x411b50, unreferenced; Q3 name
+void SHOWNET(msg_t *msg, const char *s)
+{
+    if (cl_shownet->current.integer >= 2)
+        Com_Printf("%3i:%s\n", msg->readcount - 1, s);
+}
 extern int MSG_ReadLong(msg_t *msg);
 extern int MSG_ReadByte(msg_t *msg);
 extern int MSG_ReadShort(msg_t *msg);

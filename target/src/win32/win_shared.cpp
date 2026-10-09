@@ -188,3 +188,20 @@ int Sys_GetProcessorId( void )
 }
 
 #pragma optimize( "", on )
+
+extern "C" __declspec(dllimport) int __stdcall GetUserNameA(char *lpBuffer, unsigned long *pcbBuffer);
+
+// retail 0x465210
+const char *Sys_GetCurrentUser( void )
+{
+	static char s_userName[1024];
+	unsigned long size = sizeof( s_userName );
+
+	if ( !GetUserNameA( s_userName, &size ) )
+		strcpy( s_userName, "player" );
+
+	if ( !s_userName[0] )
+		strcpy( s_userName, "player" );
+
+	return s_userName;
+}

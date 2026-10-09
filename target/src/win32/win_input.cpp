@@ -165,6 +165,17 @@ void IN_DeactivateMouse( void )
 	IN_DeactivateWin32Mouse();
 }
 
+void IN_SetForegroundWindow( void )
+{
+	SetForegroundWindow( g_wv.hWnd );
+	SetFocus( g_wv.hWnd );
+}
+
+qboolean IN_IsForegroundWindow( void )
+{
+	return GetForegroundWindow() == g_wv.hWnd;
+}
+
 /*
 ===========
 IN_StartupMouse

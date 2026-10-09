@@ -41,14 +41,10 @@ Scr_IsInScriptMemory
 */
 int Scr_IsInScriptMemory( const char *pos )
 {
-	int inside;
-
-	inside = 0;
-
 	if ( pos >= scrVarPub.programBuffer && pos < scrVarPub.endScriptBuffer )
-		inside = 1;
+		return 1;
 
-	return inside;
+	return 0;
 }
 
 /*

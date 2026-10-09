@@ -1229,7 +1229,7 @@ start:
 		model = obj->models[modelIter];
 		parts = model->parts;
 		hierarchy = parts->hierarchy;
-		name = hierarchy->names;
+		;
 		numBones = parts->numBones;
 		ignoreCollision = obj->ignoreCollision & (1 << modelIter);
 		localBoneIndex = 0;
@@ -1385,7 +1385,7 @@ start:
 							goto out;
 
 						trace->fraction = 0.0f;
-						trace->partName = name[localBoneIndex];
+						trace->partName = hierarchy->names[localBoneIndex];
 						trace->partGroup = classification;
 
 						if ( delta[0] != 0.0f || delta[1] != 0.0f )
@@ -1412,7 +1412,7 @@ start:
 						}
 
 						trace->fraction = enterFrac;
-						trace->partName = name[localBoneIndex];
+						trace->partName = hierarchy->names[localBoneIndex];
 						trace->partGroup = classification;
 						traceHitT = hitT;
 						hitBoneMatrix = boneMatrix;

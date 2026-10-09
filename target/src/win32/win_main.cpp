@@ -138,6 +138,12 @@ GetRefAPI_t Sys_LoadRenderer( void )
 	return getRefAPI;
 }
 
+// name unknown
+void Sys_UnableToLoadDllError_4628d0( void )
+{
+	Com_Error( ERR_FATAL, "%s\n", Win_LocalizeRef( "WIN_UNABLE_LOAD_DLL_BODY" ) );
+}
+
 /*
 ==================
 Sys_UnloadRenderer
@@ -665,7 +671,6 @@ void Sys_Error( const char *error, ... )
 	Conbuf_AppendText( "\n" );
 
 	Sys_SetErrorText( string );
-	MessageBoxA( NULL, string, Win_LocalizeRef( "WIN_ERROR" ), MB_ICONERROR );
 	Sys_ShowConsole( 1, qtrue );
 
 	// wait for the user to quit
@@ -686,6 +691,64 @@ Sys_Print
 void Sys_Print( const char *msg )
 {
 	Conbuf_AppendText( msg );
+}
+
+/*
+================
+Sys_ScanForCD
+
+Search all the disks for the CD (retail 0x462c10, unreferenced)
+================
+*/
+qboolean Sys_ScanForCD( void )
+{
+	static char cddir[MAX_OSPATH];
+	char drive[4];
+	FILE *f;
+	char test[MAX_OSPATH];
+
+	drive[0] = 'c';
+	drive[1] = ':';
+	drive[2] = '\\';
+	drive[3] = 0;
+
+	for ( drive[0] = 'c' ; drive[0] <= 'z' ; drive[0]++ )
+	{
+		if ( GetDriveType( drive ) != DRIVE_CDROM )
+			continue;
+
+		sprintf( cddir, "%s%s", drive, "" );
+		sprintf( test, "%s\\%s", cddir, "setup\\setup.exe" );
+		f = fopen( test, "r" );
+		if ( f )
+		{
+			fclose( f );
+			return qtrue;
+		}
+
+		sprintf( cddir, "%s%s", drive, "bin\\x86\\glibc-2.1" );
+		sprintf( test, "%s\\%s", cddir, "setup\\setup" );
+		f = fopen( test, "r" );
+		if ( f )
+		{
+			fclose( f );
+			return qtrue;
+		}
+	}
+
+	return qfalse;
+}
+
+/*
+================
+Sys_CheckCD
+
+Return true if the proper CD is in the drive (retail 0x462d10)
+================
+*/
+qboolean Sys_CheckCD( void )
+{
+	return qtrue;
 }
 
 /*
@@ -720,6 +783,35 @@ char *Sys_GetClipboardData( void )
 	}
 
 	return data;
+}
+
+/*
+==================
+Sys_SetClipboardData (retail 0x462da0, unreferenced)
+==================
+*/
+qboolean Sys_SetClipboardData( const char *text )
+{
+	HGLOBAL hglbCopy;
+	char *lptstrCopy;
+
+	if ( !OpenClipboard( NULL ) )
+		return qfalse;
+
+	EmptyClipboard();
+	hglbCopy = GlobalAlloc( GMEM_MOVEABLE, strlen( text ) + 1 );
+	if ( !hglbCopy )
+	{
+		CloseClipboard();
+		return qfalse;
+	}
+
+	lptstrCopy = (char *)GlobalLock( hglbCopy );
+	strcpy( lptstrCopy, text );
+	GlobalUnlock( hglbCopy );
+	SetClipboardData( CF_TEXT, hglbCopy );
+	CloseClipboard();
+	return qtrue;
 }
 
 /*

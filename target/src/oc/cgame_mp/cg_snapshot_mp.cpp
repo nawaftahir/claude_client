@@ -282,6 +282,7 @@ void CG_SetInitialSnapshot(snapshot_t *snap_param)
 static void CG_UpdateKillCam(void)
 {
     centity_t *cent;
+    clientInfo_t *ci;
     int corpseIndex;
     XAnimTree *pXAnimTree;
     unsigned int anim;
@@ -300,8 +301,9 @@ static void CG_UpdateKillCam(void)
             cent = &cg_entities[cg->nextSnap->entities[i].number];
             if (cent->nextState.eType == 2) {
                 corpseIndex = cent->nextState.number - 64;
-                pXAnimTree = cgs->corpseinfo[corpseIndex].pXAnimTree;
-                anim = cgs->corpseinfo[corpseIndex].legs.animationNumber & 0xFFFFFDFF;
+                ci = &cgs->corpseinfo[corpseIndex];
+                pXAnimTree = ci->pXAnimTree;
+                anim = ci->legs.animationNumber & 0xFFFFFDFF;
                 anims = XAnimGetAnims(pXAnimTree);
                 if (anim && !XAnimIsLooped(anims, anim) && !XAnimGetNumChildren(anims, anim))
                     XAnimSetTimeInl(pXAnimTree, anim, 1.0f);

@@ -354,6 +354,20 @@ static void CG_RegisterConfigMaterial(int index)
     }
 }
 
+// retail 0x4ca770, unreferenced; Kisak CG_PrecacheScriptMenu (SUPPORTED)
+void CG_PrecacheScriptMenu(int iConfigNum)
+{
+    const char *configString;
+
+    configString = CL_GetConfigString(iConfigNum);
+    if (!*configString)
+        return;
+    if (!Load_ScriptMenu(configString, 7))
+        Com_Error(ERR_DROP, (const char *)"\x15"
+                                          "Could not load script menu file '%s'\n",
+                  configString);
+}
+
 void CG_SetConfigValues(void)
 {
     int i;
@@ -689,6 +703,18 @@ void CG_MenuShowNotify(int menuToShow)
     if (menu != NULL) {
         Window_AddDynamicFlags((Window *)menu, 4);
     }
+}
+
+// retail 0x4cb820, unreferenced; name unknown
+void CG_SetObjectiveText_4cb820(const char *text)
+{
+    I_strncpyz(cg->objectiveText, text, sizeof(cg->objectiveText));
+}
+
+// retail 0x4cb850, unreferenced; name unknown
+void CG_SetScriptMainMenu_4cb850(const char *text)
+{
+    I_strncpyz(cg->scriptMainMenu, text, sizeof(cg->scriptMainMenu));
 }
 
 static void __attribute_regparm__(2) CG_SetClientDvarFromServer(const char *dvarname, const char *value)

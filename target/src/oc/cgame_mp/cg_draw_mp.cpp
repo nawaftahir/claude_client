@@ -465,7 +465,7 @@ void CG_DrawChatMessages(void)
     if (cg->time - cgs->teamChatMsgTimes[cgs->teamLastChatPos % chatHeight] > cg_chatTime->current.integer)
         cgs->teamLastChatPos++;
 
-    font = UI_GetFontHandle(0, 1.0f / 3.0f);
+    font = UI_GetFontHandle(0, 0.20833333f);
     for (i = cgs->teamChatPos - 1; i >= cgs->teamLastChatPos; i--) {
         alphaPercent = (float)cg_chatTime->current.integer - (float)(cg->time - cgs->teamChatMsgTimes[i % chatHeight]);
         if (alphaPercent > 200.0f) {
@@ -489,7 +489,7 @@ void CG_DrawChatMessages(void)
         color[2] *= 0.25f;
         color[3] = alphaPercent * 0.6f;
         y = (float)(hudChatY + (i - cgs->teamChatPos) * 10);
-        w = (float)(UI_TextWidth(msg, 0, font, 1.0f / 3.0f) + 24);
+        w = (float)(UI_TextWidth(msg, 0, font, 0.20833333f) + 24);
         UI_DrawHandlePic(0.0f, y, w, 10.0f, 1, 1, color,
                          cgs->media.whiteMaterial);
 
@@ -498,8 +498,14 @@ void CG_DrawChatMessages(void)
         color[2] = 1.0f;
         color[3] = alphaPercent;
         UI_DrawText(msg, 0x7fffffff, font, (float)hudChatX, (float)(hudChatY + 9 + (i - cgs->teamChatPos) * 10),
-                    1, 1, 1.0f / 3.0f, color, 3);
+                    1, 1, 0.20833333f, color, 3);
     }
+}
+
+// inlined com_math Vec3Dot
+static __forceinline float Vec3DotCH(const vec_t *a, const vec_t *b)
+{
+    return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 }
 
 static void __attribute_regparm__(2) CG_CalcCrosshairPosition(float *x, float *y)
@@ -507,35 +513,21 @@ static void __attribute_regparm__(2) CG_CalcCrosshairPosition(float *x, float *y
     vec3_t gunAng;
     vec3_t gunDir;
     float forward;
-    float horiz;
-    float vert;
 
+    gunAng[0] = cg->gunPitch;
     gunAng[2] = cg->refdefViewAngles[2];
     gunAng[1] = cg->gunYaw;
-    gunAng[0] = cg->gunPitch;
     AngleVectors(gunAng, gunDir, NULL, NULL);
 
-    {
-        const vec_t *axis = cg->refdef.viewaxis[0];
-        forward = gunDir[0] * axis[0] + gunDir[1] * axis[1] + gunDir[2] * axis[2];
-    }
+    forward = Vec3DotCH(cg->refdef.viewaxis[0], gunDir);
     if (forward <= 0.0f || cg->refdef.fov_x <= 0.0f || cg->refdef.fov_y <= 0.0f) {
         *x = 0.0f;
         *y = 0.0f;
         return;
     }
 
-    {
-        const vec_t *axis = cg->refdef.viewaxis[1];
-        horiz = gunDir[0] * axis[0] + gunDir[1] * axis[1] + gunDir[2] * axis[2];
-    }
-    *x = horiz / (forward * (float)tan((double)(cg->refdef.fov_x * 0.0087266462f))) * -320.0f;
-
-    {
-        const vec_t *axis = cg->refdef.viewaxis[2];
-        vert = gunDir[0] * axis[0] + gunDir[1] * axis[1] + gunDir[2] * axis[2];
-    }
-    *y = vert / (forward * (float)tan((double)(cg->refdef.fov_y * 0.0087266462f))) * -240.0f;
+    *x = Vec3DotCH(cg->refdef.viewaxis[1], gunDir) / (tan(cg->refdef.fov_x * 0.0087266462f) * forward) * -320.0f;
+    *y = Vec3DotCH(cg->refdef.viewaxis[2], gunDir) / (tan(cg->refdef.fov_y * 0.0087266462f) * forward) * -240.0f;
 }
 
 static inline int CG_RoundFPS(float value)
@@ -782,8 +774,8 @@ static void CG_DrawCenterString(void)
     scale = cg->centerPrintCharWidth / 32.0f;
     h = UI_TextHeight(UI_GetFontHandle(0, scale), scale);
 
-    lineHeight = h * 1.2f;
-    y = cg_centerPrintY->current.value - cg->centerPrintLines * lineHeight;
+    ;
+    y = cg_centerPrintY->current.value - cg->centerPrintLines * (h * 1.2f);
 
     while (1)
     {
@@ -796,10 +788,10 @@ static void CG_DrawCenterString(void)
         linebuffer[l] = 0;
 
         font = UI_GetFontHandle(0, scale);
-        x = UI_TextWidth(linebuffer, 0, font, scale) * -0.5;
+        x = UI_TextWidth(linebuffer, 0, font, scale); x = x * (-0.5);
         UI_DrawText(linebuffer, 0x7fffffff, font, x, y, 7, 3, scale, color, 3);
 
-        y += lineHeight;
+        y += (h * 1.2f);
 
         while (*start && *start != '\n')
             start++;
@@ -1189,7 +1181,7 @@ static void CG_ScanForCrosshairEntity(void)
     end[0] = cg->refdef.vieworg[0] + cg->refdef.viewaxis[0][0] * 8192.0f;
     end[1] = cg->refdef.vieworg[1] + cg->refdef.viewaxis[0][1] * 8192.0f;
     end[2] = cg->refdef.vieworg[2] + cg->refdef.viewaxis[0][2] * 8192.0f;
-    CG_Trace(&trace, start, vec3_origin, vec3_origin, end, cg->snap->ps.clientNum, 0x2000001);
+    CG_Trace(&trace, start, vec3_origin, vec3_origin, end, cg->nextSnap->ps.clientNum, 0x2000001);
     if (trace.entityNum < 64) {
         cg->crosshairClientNum = trace.entityNum;
         cg->crosshairClientTime = cg->time;
@@ -1217,7 +1209,7 @@ void CG_DrawCrosshairNames(void)
     if (cg->crosshairClientNum > 64)
         return;
 
-    clientNum = cg->snap->ps.clientNum;
+    clientNum = cg->nextSnap->ps.clientNum;
     if (!cg->bgs.clientinfo[clientNum].infoValid)
         return;
     if (!cg->bgs.clientinfo[clientNum].team)
@@ -1318,15 +1310,15 @@ static void CG_DrawDamageDirectionIndicators(void)
 
     halfWidth = cg_hudDamageIconWidth->current.value * 0.5f;
     height = cg_hudDamageIconHeight->current.value;
-    radius = cg_hudDamageIconOffset->current.value;
+    ;
     xy[0][0] = halfWidth;
-    xy[0][1] = height + radius;
+    xy[0][1] = height + cg_hudDamageIconOffset->current.value;
     xy[1][0] = -halfWidth;
     xy[1][1] = xy[0][1];
     xy[2][0] = xy[1][0];
-    xy[2][1] = radius;
+    xy[2][1] = cg_hudDamageIconOffset->current.value;
     xy[3][0] = halfWidth;
-    xy[3][1] = radius;
+    xy[3][1] = cg_hudDamageIconOffset->current.value;
     color[0] = 1.0f;
     color[1] = 1.0f;
     color[2] = 1.0f;
@@ -2071,7 +2063,7 @@ static void CG_DrawVote(void)
     if (!cgs->voteTime)
         return;
 
-    font = UI_GetFontHandle(0, 0.5f);
+    font = UI_GetFontHandle(0, 0.20833333f);
 
     if (GetKeyBindingLocalizedString("vote yes", binding))
         I_strncpyz(szVoteYes, binding, 256);
@@ -2090,18 +2082,18 @@ static void CG_DrawVote(void)
     if (cg->nextSnap->ps.eFlags & 0x100000)
     {
         s = va("%s(%i):%s", UI_SafeTranslateString("CGAME_VOTE"), sec, cgs->voteString);
-        UI_DrawText(s, 0x7fffffff, font, 8.0f, 200.0f, 0, 0, 0.5f, colorYellow, 3);
+        UI_DrawText(s, 0x7fffffff, font, 8.0f, 200.0f, 0, 0, 0.20833333f, colorYellow, 3);
         s = va("%s:%i, %s:%i", UI_SafeTranslateString("CGAME_YES"), cgs->voteYes,
                UI_SafeTranslateString("CGAME_NO"), cgs->voteNo);
     }
     else
     {
         s = va("%s(%i):%s", UI_SafeTranslateString("CGAME_VOTE"), sec, cgs->voteString);
-        UI_DrawText(s, 0x7fffffff, font, 8.0f, 200.0f, 0, 0, 0.5f, colorYellow, 3);
+        UI_DrawText(s, 0x7fffffff, font, 8.0f, 200.0f, 0, 0, 0.20833333f, colorYellow, 3);
         s = va("%s(%s):%i, %s(%s):%i", UI_SafeTranslateString("CGAME_YES"), szVoteYes, cgs->voteYes,
                UI_SafeTranslateString("CGAME_NO"), szVoteNo, cgs->voteNo);
     }
-    UI_DrawText(s, 0x7fffffff, font, 8.0f, 210.0f, 0, 0, 0.5f, colorYellow, 3);
+    UI_DrawText(s, 0x7fffffff, font, 8.0f, 210.0f, 0, 0, 0.20833333f, colorYellow, 3);
 }
 
 static void CG_DrawIntermission(void)
@@ -2333,6 +2325,12 @@ void CG_Draw2D(void)
         CG_DrawSay();
     }
     return;
+}
+
+// retail 0x4c5bd0, unreferenced; name unknown
+void CG_DrawShellShockBlend_4c5bd0(void)
+{
+    CG_DrawShellShockSavedScreenBlend(cg->shellshock.parms, cg->shellshock.startTime, cg->shellshock.duration);
 }
 
 void CG_DrawActive(void)
