@@ -54,6 +54,39 @@ def auto(line):
     vs.discard(line)
     return sorted(vs)
 
+PRIM = r'[A-Za-z_][\w.]*(?:->\w+|\[[^\[\]]*\]|\.\w+)*|\d+(?:\.\d*)?f?'
+COMM = re.compile(r'(' + PRIM + r')\s*([-+*&|^])\s*(' + PRIM + r')')
+
+def comm(line):
+    """Swap operands of one commutative a+b / a*b / a&b where the swap keeps grouping."""
+    vs = set()
+    for st in re.finditer(r'(?<![\w.\]>])(?=[A-Za-z_\d])', line):
+        m = COMM.match(line, st.start())
+        if not m or m.group(2) == '-': continue
+        a, op, b = m.groups()
+        pre, post = line[:m.start()].rstrip(), line[m.end():].lstrip()
+        before, after = pre[-1:], post[:1]
+        if pre.endswith('return'): before = '='
+        if op == '+' and (before not in '=(,?:' or after not in ');,+-?:'): continue
+        if op in '*&|^' and (before not in '=(,+-?:' or after not in ');,+-*/?:'): continue
+        if op == '*' and before in '+-' and pre[-2:-1] in '+-*/=': continue
+        vs.add(line[:m.start()] + '%s %s %s' % (b, op, a) + line[m.end():])
+    vs.discard(line)
+    return sorted(vs)
+
+TYPES = [('unsigned int', 'int'), ('unsigned short', 'short'), ('unsigned char', 'char')]
+DECL = re.compile(r'^(\s*)(unsigned int|unsigned short|unsigned char|unsigned|int|short|char)(\s+\w+\s*(?:=[^;]*)?(?:,\s*\w+\s*(?:=[^;]*)?)*;\s*)$')
+
+def types(line):
+    """Flip signedness of one local declaration (keep only on a full match)."""
+    m = DECL.match(line)
+    if not m: return []
+    t = 'unsigned int' if m.group(2) == 'unsigned' else m.group(2)
+    for u, sgn in TYPES:
+        if t in (u, sgn):
+            return [m.group(1) + (sgn if t == u else u) + m.group(3)]
+    return []
+
 def main():
     name, addr, path, ln = sys.argv[1], sys.argv[2], os.path.join(T, sys.argv[3]), int(sys.argv[4])
     src = open(path).read().split('\n')

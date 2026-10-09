@@ -408,11 +408,11 @@ static float CG_DrawFPS(float y)
                 620.0f, y, va("%d", rendererStats.c_imageUsage.total / (1024 * 1024)), colorWhiteFaded, 6);
 
             if (rendererStats.c_imageUsage.minspec <= 48 * 1024 * 1024) {
-                s = va("min pc tex      ");
                 color = colorWhiteFaded;
+                s = va("min pc tex      ");
             } else {
-                s = va("min pc tex (%g)      ", 48.0);
                 color = colorRedFaded;
+                s = va("min pc tex (%g)      ", 48.0);
             }
 
             CG_DrawSmallDevStringColor(620.0f, y, s, color, 6);
@@ -1063,13 +1063,24 @@ static __declspec(noinline) void CG_CalcReticleColor(const float *baseColor, flo
 
 static __declspec(noinline) void CG_CalcReticleImageOffset(const float *drawSize, float *imageTexelOffset)
 {
-    imageTexelOffset[0] = GetVirtualWidthFromRealWidth(
-        (float)cgs->viewWidth * (GetRealWidthFromVirtualWidth(drawSize[0]) / (float)cgs->viewWidth * 0.125f));
-    imageTexelOffset[1] = GetVirtualHeightFromRealHeight(
-        (float)cgs->viewHeight * (GetRealHeightFromVirtualHeight(drawSize[1]) / (float)cgs->viewHeight * 0.125f));
+    vec2_t realSize;
+    vec2_t screenSize;
+
+    realSize[0] = GetRealWidthFromVirtualWidth(drawSize[0]);
+    realSize[1] = GetRealHeightFromVirtualHeight(drawSize[1]);
+    screenSize[0] = (float)cgs->viewWidth;
+    realSize[0] = realSize[0] / screenSize[0];
+    screenSize[1] = (float)cgs->viewHeight;
+    realSize[1] = realSize[1] / screenSize[1];
+    realSize[0] = realSize[0] * 0.125f;
+    realSize[1] = realSize[1] * 0.125f;
+    realSize[0] = realSize[0] * screenSize[0];
+    realSize[1] = realSize[1] * screenSize[1];
+    imageTexelOffset[0] = GetVirtualWidthFromRealWidth(realSize[0]);
+    imageTexelOffset[1] = GetVirtualHeightFromRealHeight(realSize[1]);
 }
 
-static void CG_DrawReticleSides(int weapIndex, const WeaponDef *weapDef, const float *baseColor, float centerX, float centerY, float transScale)
+static void CG_DrawReticleSides(const WeaponDef *weapDef, int weapIndex, const float *baseColor, float centerX, float centerY, float transScale)
 {
     MaterialHandle material;
     vec4_t reticleColor;
@@ -1077,16 +1088,21 @@ static void CG_DrawReticleSides(int weapIndex, const WeaponDef *weapDef, const f
     vec2_t drawPos;
     vec2_t spread;
     vec2_t imageTexelOffset;
+    vec2_t imageSize;
+    float reticleAlpha;
 
     material = cg_weaponsArray[weapIndex].hReticleSide;
     if (!material)
         return;
 
-    CG_CalcReticleColor(baseColor, CG_DrawWeapReticle(), reticleColor);
+    reticleAlpha = CG_DrawWeapReticle();
+    CG_CalcReticleColor(baseColor, reticleAlpha, reticleColor);
     drawSize[0] = (float)weapDef->iReticleSideSize * transScale;
     drawSize[1] = drawSize[0];
+    imageSize[0] = drawSize[0];
+    imageSize[1] = drawSize[0];
     CG_CalcReticleSpread(weapDef, weapIndex, drawSize, transScale, spread);
-    CG_CalcReticleImageOffset(drawSize, imageTexelOffset);
+    CG_CalcReticleImageOffset(imageSize, imageTexelOffset);
 
     drawPos[0] = centerX - drawSize[0] * 0.5f;
     drawPos[1] = centerY - drawSize[1] - spread[1] - imageTexelOffset[1];
@@ -1156,7 +1172,7 @@ void CG_DrawCrosshair(void)
                 centerY = transShift;
             }
             CG_DrawReticleCenter(weapIndex, weapDef, color, centerX, centerY, transScale);
-            CG_DrawReticleSides(weapIndex, weapDef, color, centerX, centerY, transScale);
+            CG_DrawReticleSides(weapDef, weapIndex, color, centerX, centerY, transScale);
         }
     }
 }
@@ -2213,10 +2229,10 @@ void CG_DrawTurretCrossHair(void)
     CG_CalcCrosshairColor(1.0f, color);
     weapDef = (WeaponDef *)BG_GetWeaponDef(weapIndex);
     size = (float)weapDef->iReticleCenterSize;
-    x = size * -0.5f;
-    y = x;
     w = size;
     h = size;
+    x = size * -0.5f;
+    y = x;
     CalcScreenPlacement(&x, &y, &w, &h, 2, 2);
     CL_DrawStretchPicPhysical(x, y, w, h, 0.0f, 0.0f, 1.0f, 1.0f, color, material);
 }

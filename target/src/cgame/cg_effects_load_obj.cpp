@@ -143,7 +143,7 @@ static void CG_RegisterImpactEffectsForDir( const char *dir, char **szEffectFile
 		Com_BeginParseSession(filename);
 		Com_SetCSV(qtrue);
 		pszErrorMsg = CG_ParseImpactEffects(filename, buf, IMPACT_TYPECOUNT, g_TypeName, szEffectFile);
-		Com_EndParseSession();
+		Com_EndParseSessionInl();
 		Hunk_ClearTempMemoryHighInternal();
 		if ( pszErrorMsg )
 		{

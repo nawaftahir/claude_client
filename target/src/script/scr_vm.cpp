@@ -595,7 +595,7 @@ unsigned int VM_ExecuteInternal( function_stack_t fs )
 	unsigned int parentLocalId;
 	unsigned int id;
 	int type;
-	unsigned int gCaseCount;
+	int gCaseCount;
 	unsigned int caseValue;
 	unsigned char removeCount;
 	int jumpOffset;

@@ -1692,7 +1692,7 @@ void BG_AnimParseAnimScript( animScriptData_t *scriptData, loadAnim_t *pLoadAnim
 	}
 
 	globalFilename = NULL;
-	Com_EndParseSession();
+	Com_EndParseSessionInl();
 }
 
 /*

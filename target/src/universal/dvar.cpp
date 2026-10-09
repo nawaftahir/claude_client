@@ -1926,7 +1926,7 @@ nextLine:
 		Com_SkipRestOfLine(&buffer);
 	}
 
-	Com_EndParseSession();
+	Com_EndParseSessionInl();
 
 	if ( numRead == numDvars )
 		return qtrue;

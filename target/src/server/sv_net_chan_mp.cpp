@@ -179,9 +179,9 @@ SV_Netchan_PrintProfileStats
 void SV_Netchan_PrintProfileStats( int bPrintToConsole )
 {
 	int i;
-	int iTotalBPSSent = 0;
 	int iTotalBPSRecieved = 0;
 	int iTotalPacketsSent = 0;
+	int iTotalBPSSent = 0;
 	int iTotalFragmentsSent = 0;
 	int iTotalPacketsRecieved = 0;
 	int iTotalFragmentsRecieved = 0;

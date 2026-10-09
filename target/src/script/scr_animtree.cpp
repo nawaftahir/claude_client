@@ -122,7 +122,7 @@ void AnimTreeCompileError( const char *msg )
 {
 	const char *pos = Com_GetLastTokenPos();
 
-	Com_EndParseSession();
+	Com_EndParseSessionInl();
 	CompileError(pos - scrAnimGlob.start, "%s", msg);
 }
 
@@ -409,7 +409,7 @@ void Scr_AnimTreeParse( const char *pos, unsigned int parentNode, unsigned int n
 		AnimTreeCompileError("bad token");
 	}
 
-	Com_EndParseSession();
+	Com_EndParseSessionInl();
 }
 
 /*

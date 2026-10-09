@@ -2856,8 +2856,8 @@ int Item_ListBox_OverLB(itemDef_t *item, float x, float y)
     r.vertAlign = item->window.rect[0].vertAlign;
     if (Window_IsHorizontal((Window *)item)) {
         // left arrow
-        r.x = item->window.rect[0].x;
         r.y = item->window.rect[0].h + item->window.rect[0].y - 16.0f;
+        r.x = item->window.rect[0].x;
         r.h = r.w = 16.0f;
         if (Rect_ContainsPoint(&r, x, y))
             return 0x100;

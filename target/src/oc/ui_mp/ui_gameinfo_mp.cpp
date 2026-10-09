@@ -9,6 +9,7 @@ extern void I_strncpyz(char *dest, const char *src, int destsize);
 extern void Info_SetValueForKey(char *s, const char *key, const char *value);
 extern void Com_Printf(const char *msg, ...);
 extern void Com_EndParseSession(void);
+extern void Com_EndParseSessionInl(void);
 extern char *va( const char *format, ... );
 extern void *UI_Alloc(int size, int align);
 extern int FS_GetFileList(const char *path, const char *extension, FsListBehavior behavior, char *listBuf, int bufSize);
@@ -161,7 +162,7 @@ void UI_LoadArenas(void)
                         sharedUiInfo.mapList[sharedUiInfo.mapCount].typeBits |= 1 << j;
                 }
             }
-            Com_EndParseSession();
+            Com_EndParseSessionInl();
         } else {
             sharedUiInfo.mapList[sharedUiInfo.mapCount].typeBits = -1;
         }

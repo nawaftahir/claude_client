@@ -51,12 +51,12 @@ static bool G_ParseAIWeaponAccurayGraphFile( const char *buffer, const char *fil
 		if ( knotCountIndex >= 16 )
 		{
 			Com_Printf("^3WARNING: \"%s\" has too many graph knots\n", fileName);
-			Com_EndParseSession();
+			Com_EndParseSessionInl();
 			return false;
 		}
 	}
 
-	Com_EndParseSession();
+	Com_EndParseSessionInl();
 
 	if ( knotCountIndex != *knotCount )
 	{

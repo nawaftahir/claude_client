@@ -571,7 +571,7 @@ void BG_LoadPlayerAnimTypes()
 		g_playerAnimTypeNamesCount++;
 	}
 
-	Com_EndParseSession();
+	Com_EndParseSessionInl();
 }
 
 /*

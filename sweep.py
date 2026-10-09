@@ -6,6 +6,8 @@ import difflib, glob, json, os, re, subprocess, sys
 import vary
 D = os.path.dirname(os.path.abspath(__file__))
 T = D + '/target'
+GEN = getattr(vary, os.environ.get('SWEEP_GEN', 'auto'))
+ONLY0 = bool(os.environ.get('SWEEP_ONLY0'))
 LOG = open(T + '/build/sweep.log', 'a')
 
 def log(*a):
@@ -85,7 +87,7 @@ def main():
         if not loc or loc in seen: continue
         seen.add(loc)
         p, a, b = loc
-        todo = [(n, v) for n in range(a, b + 1) for v in vary.auto(getline(p, n))]
+        todo = [(n, v) for n in range(a, b + 1) for v in GEN(getline(p, n))]
         if todo: fns.append({'m': r[3], 'a': r[2], 'p': p, 'todo': todo, 'kept': []})
     log('sweep: %d functions, %d variants' % (len(fns), sum(len(f['todo']) for f in fns)))
     ok, _ = build()
@@ -113,7 +115,7 @@ def main():
         won = 0
         for f, s in zip(live, sc):
             n, o, v = f.pop('cur')
-            if s < f['best']:
+            if s < f['best'] and (not ONLY0 or s == 0):
                 f['best'] = s; f['kept'].append((n, v.strip())); won += 1
                 f['todo'] = [t for t in f['todo'] if t[0] != n]
                 log('  + %s %s:%d %d -> %s' % (f['m'], os.path.relpath(f['p'], T), n, s, v.strip()))

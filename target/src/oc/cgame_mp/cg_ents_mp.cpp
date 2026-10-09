@@ -633,8 +633,8 @@ void CG_Item(centity_t *cent)
     memset(&ent, 0, sizeof(ent));
     AnglesToAxis(cent->lerpAngles, ent.axis);
     ent.origin[0] = cent->lerpOrigin[0];
-    ent.origin[2] = cent->lerpOrigin[2];
     ent.origin[1] = cent->lerpOrigin[1];
+    ent.origin[2] = cent->lerpOrigin[2];
     ent.reType = (refEntityType_t)(0);
     CG_AddCEntityToScene(&ent, obj, cent);
 }

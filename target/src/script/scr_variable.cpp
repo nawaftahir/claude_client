@@ -4768,7 +4768,7 @@ void Scr_AddFieldsForFile( const char *filename )
 		*targetPos = 0;
 	}
 
-	Com_EndParseSession();
+	Com_EndParseSessionInl();
 	Hunk_ClearTempMemoryHighInternal();
 }
 

@@ -1094,13 +1094,13 @@ bool Com_ParseVolumeFalloffCurve( const char *buffer, const char *filename, SndC
 	curve->knotCount = atoi(token);
 	if ( curve->knotCount < 2 )
 	{
-		Com_EndParseSession();
+		Com_EndParseSessionInl();
 		Com_Printf("^1ERROR: sndcurve parse failure on file \"%s\": knot count (%d) is less than 2\n", filename, curve->knotCount);
 		return false;
 	}
 	if ( curve->knotCount > MAX_SNDCURVE_KNOTS )
 	{
-		Com_EndParseSession();
+		Com_EndParseSessionInl();
 		Com_Printf("^1ERROR: sndcurve parse failure on file \"%s\": knot count (%d) is greater than maxKnots (%d)\n", filename, curve->knotCount, MAX_SNDCURVE_KNOTS);
 		return false;
 	}
@@ -1137,7 +1137,7 @@ bool Com_ParseVolumeFalloffCurve( const char *buffer, const char *filename, SndC
 			return false;
 		}
 	}
-	Com_EndParseSession();
+	Com_EndParseSessionInl();
 	if ( knotIndex != curve->knotCount )
 	{
 		Com_Printf("^1ERROR: sndcurve parse failure on file \"%s\": knot count (%d) does not match knots parsed (%d).\n", filename, curve->knotCount, knotIndex);
@@ -1329,14 +1329,14 @@ const char *Com_GetSubtitleStringEdReference( const char *text )
 			token = Com_ParseOnLine(&data);
 			if ( !I_stricmp(text, token) )
 			{
-				Com_EndParseSession();
+				Com_EndParseSessionInl();
 				FS_FreeFile(buffer);
 				return com_subtitleReference;
 			}
 		}
 		Com_SkipRestOfLine(&data);
 	}
-	Com_EndParseSession();
+	Com_EndParseSessionInl();
 	FS_FreeFile(buffer);
 	return NULL;
 }
@@ -1437,7 +1437,7 @@ skipLine:
 	{
 		Com_WriteStringEdReferenceToFile(name, subtitle, f);
 	}
-	Com_EndParseSession();
+	Com_EndParseSessionInl();
 	FS_FreeFile(buffer);
 	token = "\r\nENDMARKER\r\n\r\n\r\n";
 	FS_Write(token, strlen(token), f);
@@ -1693,7 +1693,7 @@ void Com_ProcessSoundAliasFileLocalization( const char *sourceFile, const char *
 			Com_SkipRestOfLine(&data);
 		}
 	}
-	Com_EndParseSession();
+	Com_EndParseSessionInl();
 	FS_FCloseFile(f);
 	FS_BuildOSPath(fs_basepath->current.string, fs_gamedir, "soundaliases/temp.csv", tempOSPath);
 	FS_BuildOSPath(fs_basepath->current.string, fs_gamedir, path, aliasOSPath);

@@ -72,7 +72,8 @@ __forceinline void Com_EndParseSessionInl( void )
 	parse->parseInfoNum--;
 }
 
-void Com_EndParseSession( void )
+// retail calls it from 7 sites only, inlines elsewhere
+__declspec(noinline) void Com_EndParseSession( void )
 {
 	Com_EndParseSessionInl();
 }

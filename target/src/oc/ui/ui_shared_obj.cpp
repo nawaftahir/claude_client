@@ -102,6 +102,7 @@ void FS_FCloseFile(fileHandle_t h);
 int Com_Compress(char *data_p);
 void Com_BeginParseSession(const char *filename);
 void Com_EndParseSession(void);
+void Com_EndParseSessionInl(void);
 char *Com_Parse( const char *( *data_p ) );
 int I_stricmp(const char *s1, const char *s2);
 bool I_isupper( int c );
@@ -227,7 +228,7 @@ void UI_MapLoadInfo(const char *filename)
 
         tokenLen = strlen(token) + 1;
         if (tokenLen >= 256) {
-            Com_EndParseSession();
+            Com_EndParseSessionInl();
             Com_Error( (errorParm_t)(1), (const char *)"key '%s' is %i > %i characters long", key, tokenLen - 1, 255);
         }
 
@@ -235,7 +236,7 @@ void UI_MapLoadInfo(const char *filename)
 
         value = Com_ParseOnLine(&parse);
         if (!value[0]) {
-            Com_EndParseSession();
+            Com_EndParseSessionInl();
             Com_Error( (errorParm_t)(1), (const char *)"key '%s' missing value in '%s'\n", key, filename);
             break;
         }
@@ -243,7 +244,7 @@ void UI_MapLoadInfo(const char *filename)
         UI_ParseMenuMaterial(key, value);
     }
 
-    Com_EndParseSession();
+    Com_EndParseSessionInl();
     FS_FreeFile(loadfile);
 }
 
@@ -2000,7 +2001,7 @@ MenuList *UI_LoadMenus(const char *menuFile, int imageTrack)
         }
     }
 
-    Com_EndParseSession();
+    Com_EndParseSessionInl();
     return &g_load.menuList;
 }
 

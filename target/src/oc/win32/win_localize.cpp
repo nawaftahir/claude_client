@@ -9,6 +9,7 @@ extern "C" int FS_FileSeek( FILE *file, int offset, int whence );
 extern qboolean SEH_GetLanguageIndexForName(const char *name, int *langindex);
 extern void Com_BeginParseSession(const char *name);
 extern void Com_EndParseSession(void);
+extern void Com_EndParseSessionInl(void);
 extern char *Com_Parse( const char *( *data_p ) );
 extern int strcmp(const char *s1, const char *s2);
 extern char *va( const char *format, ... );
@@ -91,12 +92,12 @@ const char *Win_LocalizeRef(const char *ref)
             break;
 
         if (match) {
-            Com_EndParseSession();
+            Com_EndParseSessionInl();
             return va("%s", value);
         }
     }
 
-    Com_EndParseSession();
+    Com_EndParseSessionInl();
     return va("%s", ref);
 }
 
