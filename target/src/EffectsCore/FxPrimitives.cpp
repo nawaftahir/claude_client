@@ -566,6 +566,7 @@ public:
 class Flash : public Light
 {
 public:
+	virtual ~Flash() {}
 	virtual bool Update();
 
 	virtual bool Cull()
@@ -922,7 +923,7 @@ void OrientationPosToWorld( const orientation_t *orient, const float *pos, float
 void OrientationDirToWorld( const orientation_t *orient, const float *dir, float *out );
 void OrientationDirToLocal( const orientation_t *orient, const float *dir, float *out );
 
-FxBoltFrame *FxBoltFrame::g_mFrameList;
+FxBoltFrame *FxBoltFrame::g_mFrameList = NULL;
 FxMemMgr<FxBoltFrame> FxBoltFrame::s_memMgr;
 FxMemMgr<Effect> Effect::s_memMgr;
 FxMemMgr<Light> Light::s_memMgr;

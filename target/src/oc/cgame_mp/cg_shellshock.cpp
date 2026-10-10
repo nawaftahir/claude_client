@@ -231,46 +231,28 @@ void CG_PerturbCamera(void)
 
 qboolean CG_DrawShellShockSavedScreenBlend(const shellshock_parms_t *parms, int start, int duration)
 {
-    cg_t *cgp;
-    int timeLeft;
-    int blend;
-    int fadeDuration;
-    int fadeIn;
+    int dt;
+    int screenBlendTime;
 
-    if (start == 0 || duration <= 0) {
-
-        cgp = cg;
-        cgp->shellshock.hasSavedScreen = 0;
+    if (start && duration > 0) {
+        dt = duration + start - cg->time;
+        if (dt > 0) {
+            screenBlendTime = parms->screenBlend.effectTime;
+            if (dt < parms->screenBlend.fadeTime)
+                screenBlendTime = I_fround((float)dt / (float)parms->screenBlend.fadeTime * (float)screenBlendTime);
+            if (cg->shellshock.hasSavedScreen)
+                CL_BlendSavedScreen(screenBlendTime);
+            CL_SaveScreen();
+            cg->shellshock.hasSavedScreen = 1;
+            return 1;
+        } else {
+            cg->shellshock.hasSavedScreen = 0;
+            return 0;
+        }
+    } else {
+        cg->shellshock.hasSavedScreen = 0;
         return 0;
     }
-
-    cgp = cg;
-    timeLeft = start + duration - cgp->time;
-
-    if (timeLeft <= 0) {
-
-        cgp->shellshock.hasSavedScreen = 0;
-        return 0;
-    }
-
-    fadeDuration = parms->screenBlend.fadeTime;
-    fadeIn = parms->screenBlend.effectTime;
-
-    blend = fadeIn;
-    if (timeLeft < fadeDuration) {
-
-        blend = I_fround((float)timeLeft / (float)fadeDuration * (float)fadeIn);
-    }
-
-    if (cgp->shellshock.hasSavedScreen != 0) {
-
-        CL_BlendSavedScreen(blend);
-    }
-
-    CL_SaveScreen();
-
-    cgp->shellshock.hasSavedScreen = 1;
-    return 1;
 }
 
 qboolean CG_SaveShellShockDvars(const char *name)

@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
+Bool updateScreenCalled = 0;
 extern const vec4_t colorBlack;
 extern refexport_t re;
 extern clientActive_t clients[1];
@@ -93,6 +94,7 @@ extern void CalcScreenPlacementInl(float *x, float *y, float *w, float *h, int h
 void SCR_DrawSmallStringExt(int x, int y, const char *string, const vec_t *setColor);
 void SCR_DrawConsoleString(int x, int y, const short int *string, int maxChars, const vec_t *setColor);
 void SCR_Init(void);
+DemoType CL_GetDemoType(void);
 float CL_GetMenuBlurRadius(void);
 static void CL_CubemapShotUsage(void);
 void CL_CubemapShot_f(void);
@@ -171,12 +173,18 @@ void SCR_Init(void)
     scr_initialized = 1;
 }
 
+// retail 0x4132a0; Kisak cl_scrn_mp
+DemoType CL_GetDemoType(void)
+{
+    return (DemoType)(clc.demoplaying != 0);
+}
+
 // retail 0x4132b0
 qboolean CL_CGameRendering(qboolean renderScreen)
 {
     DemoType demoType;
 
-    demoType = (DemoType)(clc.demoplaying != 0);
+    demoType = CL_GetDemoType();
     return CG_DrawActiveFrame(clients[0].serverTime, demoType, CUBEMAPSHOT_NONE, 0, renderScreen);
 }
 
@@ -394,7 +402,7 @@ void CL_CubemapShot_f(void)
         RE_FUNC(re_ptr_195eca8, 0xec, re_int2_func)(size, 1);
         RE_FUNC(re_ptr_195eca8, 0xa8, re_void_func)();
         CL_ClearScene();
-        CG_DrawActiveFrame(clients[0].serverTime, (DemoType)(clc.demoplaying != 0), (CubemapShot)side, size, 0);
+        CG_DrawActiveFrame(clients[0].serverTime, CL_GetDemoType(), (CubemapShot)side, size, 0);
         RE_FUNC(re_ptr_195eca8, 0xac, re_void_func)();
         RE_FUNC(re_ptr_195eca8, 0xf0, re_int_func)(side);
     }

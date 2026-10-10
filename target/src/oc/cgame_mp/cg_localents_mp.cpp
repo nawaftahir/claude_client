@@ -1,6 +1,11 @@
 #include "common_types.h"
 #include "imports.h"
 #include "headers/PC/cgame_mp/cg_local.h"
+localEntity_t cg_eachClientLocalEntities[1][128];
+localEntity_t cg_eachClientActiveLocalEntities[1];
+localEntity_t *cg_localEntities = cg_eachClientLocalEntities[0];
+localEntity_t *cg_activeLocalEntities = cg_eachClientActiveLocalEntities;
+localEntity_t *cg_freeLocalEntities = NULL;
 /* dvar globals */
 extern const dvar_t *cg_tracerLength;
 
@@ -14,7 +19,6 @@ extern localEntity_t *cg_eachClientFreeLocalEntities[1];
 extern localEntity_t *cg_localEntities;
 extern localEntity_t *cg_activeLocalEntities;
 extern localEntity_t *cg_freeLocalEntities;
-static cg_eachClientLocalEntities_t cg_eachClientLocalEntities;
 
 void CG_InitLocalEntities(void);
 void CG_AddMovingTracer(localEntity_t *le);

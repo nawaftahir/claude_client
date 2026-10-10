@@ -9,6 +9,7 @@ extern bgs_t *bgs;
 extern displayContextDef_t cgDC;
 
 vec3_t maxs = { 4.0f, 4.0f, 4.0f };
+vec3_t mins = { -4.0f, -4.0f, -4.0f };
 
 extern dvar_t *bg_bobMax;
 extern const dvar_t *cg_dumpAnims;
@@ -43,7 +44,7 @@ extern vec3_t maxs;
 
 extern void Com_Printf(const char *fmt, ...);
 extern void FX_FreeSystem(void);
-extern void FX_InitSystem( bool rendererExists );
+extern int FX_InitSystem( bool rendererExists );
 extern int Cmd_Argc(void);
 extern const char *CG_Argv(int arg);
 extern void I_strncpyz(char *dest, const char *src, int destsize);
@@ -182,7 +183,6 @@ static void CG_OffsetThirdPersonView(void)
     trace_t trace;
     vec3_t focusPoint;
     float focusDist;
-    float scale;
     float distSq;
 
     cg->refdef.vieworg[2] += cg->predictedPlayerState.viewHeightCurrent;
@@ -207,10 +207,7 @@ static void CG_OffsetThirdPersonView(void)
     cg->refdefViewAngles[0] *= 0.5;
     cg->refdefViewAngles[1] -= cg_thirdPersonAngle->current.value;
     AngleVectors(cg->refdefViewAngles, forward, right, up);
-    scale = -cg_thirdPersonRange->current.value;
-    view[0] = view[0] + forward[0] * scale;
-    view[1] = view[1] + forward[1] * scale;
-    view[2] = view[2] + forward[2] * scale;
+    VectorMA(view, -cg_thirdPersonRange->current.value, forward, view);
     // keep the camera out of solids
     CG_Trace(&trace, cg->refdef.vieworg, mins, maxs, view, cg->predictedPlayerState.clientNum, 0x811);
     if (trace.fraction != 1.0)
@@ -452,7 +449,7 @@ static void CG_CalcCubemapViewValues(void)
 {
     cg->refdef.x = 0;
     cg->refdef.y = 0;
-    cg->refdef.width = cg->cubemapSize + 2;
+    cg->refdef.width = cg->cubemapSize; cg->refdef.width = cg->refdef.width + 2;
     cg->refdef.height = cg->refdef.width;
     cg->refdef.fov_x = (float)(atan2((double)(cg->cubemapSize + 2), (double)cg->cubemapSize) * 114.59155902616465);
     cg->refdef.fov_y = cg->refdef.fov_x;

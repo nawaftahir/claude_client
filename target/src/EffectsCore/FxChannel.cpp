@@ -97,7 +97,7 @@ static void FxChannel_CreateSampled( FxChannel *target, int dimensions, int flag
 {
 	float keys[128];
 	float t;
-	int timeStep;
+	unsigned int timeStep;
 	float val;
 	int keySize;
 	float *key;

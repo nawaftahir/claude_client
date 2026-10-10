@@ -2,6 +2,170 @@
 #include "imports.h"
 #include "headers/PC/cgame_mp/cg_local.h"
 #include <float.h>
+const dvar_t *cg_shock_soundWetLevel;
+
+const dvar_t *cg_tracerLength;
+
+const dvar_t *cg_marks;
+const dvar_t *cg_hudGrenadePointerPulseMax;
+const dvar_t *cg_shock_mouse_maxyawspeed;
+const dvar_t *cg_shock_volume_weapon;
+const dvar_t *cg_shock_volume_voice;
+const dvar_t *cg_hudCompassMaxRange;
+const dvar_t *cg_gun_y;
+const dvar_t *cg_noTaunt;
+const dvar_t *cg_scoreboardScrollStep;
+const dvar_t *cg_hudSayPosition;
+displayContextDef_t cgDC;
+const dvar_t *cg_shock_volume_auto2d;
+const dvar_t *cg_fovMin;
+const dvar_t *cg_drawBreathHint;
+const dvar_t *cg_shock_volume_shellshock;
+const dvar_t *cg_hudCompassSoundPingFadeTime;
+const dvar_t *cg_shock_volume_announcer;
+const dvar_t *cg_drawFPS;
+const dvar_t *cg_subtitlePosX;
+const dvar_t *cg_subtitlePosY;
+const dvar_t *cg_drawGameMessages;
+const dvar_t *cg_thirdPerson;
+const dvar_t *cg_drawHealth;
+const dvar_t *cg_brass;
+const dvar_t *cg_hudGrenadeIconMaxRange;
+const dvar_t *cg_shock_volume_auto;
+const dvar_t *cg_shock_soundFadeInTime;
+const dvar_t *cg_drawCrosshair;
+const dvar_t *cg_hudObjectiveMinHeight;
+weaponInfo_t cg_weaponsArray[128];
+const dvar_t *cg_hudObjectiveMinAlpha;
+const dvar_t *cg_scoreboardItemHeight;
+const dvar_t *cg_hudGrenadeIconWidth;
+const dvar_t *cg_gun_z;
+const dvar_t *cg_hudDamageIconOffset;
+const dvar_t *cg_voiceIconSize;
+const dvar_t *cg_hudCompassSpringyPointers;
+const dvar_t *cg_gun_move_minspeed;
+const dvar_t *cg_gun_ofs_u;
+const dvar_t *cg_subtitles;
+const dvar_t *cg_hudObjectiveMaxRange;
+const dvar_t *cg_hudStanceHintPrints;
+const dvar_t *cg_youInKillCamSize;
+const dvar_t *cg_shock_sound;
+const dvar_t *cg_hudDamageIconWidth;
+const dvar_t *cg_hudProneY;
+const dvar_t *cg_draw2D;
+const dvar_t *cg_gun_x;
+const dvar_t *cg_crosshairAlpha;
+const dvar_t *cg_hudCompassMinRange;
+const dvar_t *cg_debugPosition;
+const dvar_t *cg_drawGun;
+const dvar_t *cg_shock_soundModEndDelay;
+const dvar_t *cg_hudGrenadeIconOffset;
+const dvar_t *cg_centertime;
+const dvar_t *cg_chatHeight;
+const dvar_t *cg_hudGrenadePointerPulseFreq;
+const dvar_t *cg_minicon;
+const dvar_t *cg_drawCrosshairNamesPosX;
+const dvar_t *cg_gun_move_rate;
+const dvar_t *cg_tracerSpeed;
+unsigned char cgsArray[1]  /* size unknown */;
+const dvar_t *cg_shock_screenBlendFadeTime;
+const dvar_t *cg_shock_viewKickPeriod;
+cg_t cgArray[1];
+const dvar_t *cg_shock_volume_local;
+const dvar_t *cg_hudGrenadePointerPivot;
+const dvar_t *cg_crosshairAlphaMin;
+const dvar_t *cg_shock_volume_body;
+centity_t cg_entities[1024];
+const dvar_t *cg_tracerChance;
+const dvar_t *cg_hudGrenadeIconInScope;
+const dvar_t *cg_fovScale;
+const dvar_t *cg_crosshairEnemyColor;
+const dvar_t *cg_hudCompassMinRadius;
+const dvar_t *cg_tracerScale;
+const dvar_t *cg_weaponCycleDelay;
+const dvar_t *cg_gameMessageWidth;
+const dvar_t *cg_thirdPersonRange;
+const dvar_t *cg_drawSoundOverlay;
+const dvar_t *cg_shock_soundLoopEndDelay;
+const dvar_t *cg_gun_ofs_r;
+const dvar_t *cg_hudGrenadeIconMaxHeight;
+const dvar_t *cg_shock_screenBlendTime;
+const dvar_t *cg_debugEvents;
+const dvar_t *cg_shock_soundDryLevel;
+const dvar_t *cg_hudStanceFlash;
+const dvar_t *cg_drawScriptUsage;
+const dvar_t *cg_shock_soundLoopFadeTime;
+const dvar_t *cg_shock_volume_music;
+const dvar_t *cg_crosshairDynamic;
+const dvar_t *cg_hudDamageIconInScope;
+const dvar_t *cg_drawCrosshairNames;
+const dvar_t *cg_gun_move_r;
+const dvar_t *cg_constantSizeHeadIcons;
+const dvar_t *cg_footsteps;
+const dvar_t *cg_shock_volume_menu;
+const dvar_t *cg_gun_move_f;
+const dvar_t *cg_hudGrenadeIconHeight;
+const dvar_t *cg_shock_mouse_maxpitchspeed;
+const dvar_t *cg_hudGrenadePointerWidth;
+const dvar_t *cg_nopredict;
+const dvar_t *cg_drawMaterial;
+const dvar_t *cg_shock_viewKickRadius;
+const dvar_t *cg_synchronousClients;
+const dvar_t *cg_connectionIconSize;
+const dvar_t *cg_dumpAnims;
+const dvar_t *cg_errorDecay;
+const dvar_t *cg_subtitleWidthStandard;
+const dvar_t *cg_hudGrenadePointerPulseMin;
+const dvar_t *cg_tracerScaleMinDist;
+const dvar_t *cg_drawMantleHint;
+const dvar_t *cg_gameBoldMessageWidth;
+const dvar_t *cg_tracerWidth;
+const dvar_t *cg_centerPrintY;
+const dvar_t *cg_hudCompassSize;
+const dvar_t *cg_drawCrosshairNamesPosY;
+const dvar_t *cg_headIconMinScreenRadius;
+const dvar_t *cg_chatTime;
+const dvar_t *cg_shock_volume_item;
+const dvar_t *cg_marksLimit;
+const dvar_t *cg_hudDamageIconTime;
+const dvar_t *cg_blood;
+const dvar_t *cg_teamChatsOnly;
+dvar_t *cg_viewsize;
+const dvar_t *cg_weaponleftbone;
+const dvar_t *cg_scriptIconSize;
+const dvar_t *cg_showmiss;
+const dvar_t *cg_predictItems;
+const dvar_t *cg_shock_soundRoomType;
+const dvar_t *cg_shock_mouse;
+const dvar_t *cg_descriptiveText;
+const dvar_t *cg_fov;
+const dvar_t *cg_drawLagometer;
+const dvar_t *cg_subtitleWidthWidescreen;
+const dvar_t *cg_developer;
+const dvar_t *cg_subtitleCharHeight;
+itemInfo_t cg_itemsArray[256];
+const dvar_t *cg_hudGrenadePointerHeight;
+const dvar_t *cg_gun_move_u;
+const dvar_t *cg_hintFadeTime;
+const dvar_t *cg_shock_soundFadeOutTime;
+const dvar_t *cg_shock_mouse_sensitivityscale;
+const dvar_t *cg_subtitleMinTime;
+const dvar_t *cg_tracerScaleDistRange;
+const dvar_t *cg_paused;
+const dvar_t *cg_cursorHints;
+const dvar_t *cg_thirdPersonAngle;
+const dvar_t *cg_gun_ofs_f;
+const dvar_t *cg_scoreboardBannerHeight;
+const dvar_t *hud_health_pulserate_injured;
+const dvar_t *hud_health_startpulse_critical;
+const dvar_t *hud_fade_offhand;
+const dvar_t *hud_deathQuoteFadeTime;
+const dvar_t *hud_fade_ammodisplay;
+const dvar_t *hud_health_startpulse_injured;
+const dvar_t *hud_fade_stance;
+const dvar_t *hud_fade_compass;
+const dvar_t *hud_health_pulserate_critical;
+const dvar_t *hud_fade_healthbar;
 extern int bg_iNumWeapons;
 
 extern dvar_t *com_sv_running;
@@ -49,7 +213,7 @@ extern void *Hunk_AllocInternal(int size);
 extern void CL_ConsolePrint(print_msg_type_t type, const char *txt, int duration, int linewidth);
 extern void SCR_UpdateScreen(void);
 extern void Com_Printf(const char *fmt, ...);
-extern void FX_InitSystem( bool rendererExists );
+extern int FX_InitSystem( bool rendererExists );
 extern void FX_CreateDefaultEffect(void);
 extern float FX_GetEffectLength(const EffectTemplate *fx);
 extern void FX_Rewind(int time);
@@ -61,8 +225,8 @@ extern MaterialHandle CL_RegisterMaterialNoMip(const char *name, int imageTrack)
 extern void CG_RegisterScoreboardGraphics(void);
 extern void CG_RegisterItems(void);
 extern int CM_NumInlineModels(void);
-extern int CL_RegisterInlineModel(int index);
-extern void CL_ModelBounds(int model, float *mins, float *maxs);
+extern GfxBrushModel *CL_RegisterInlineModel(int index);
+extern void CL_ModelBounds(GfxBrushModel *model, vec_t *mins, vec_t *maxs);
 extern EffectTemplate * FX_RegisterEffect(const char *fileName);
 extern void CG_SetShellShockParmsFromDvars(shellshock_parms_t *parms);
 extern int CG_LoadShellShockDvars(const char *name);
@@ -352,7 +516,7 @@ static struct XModel *CG_GetXModel(const char *modelName);
 static void CG_CreateDObj(DObjModel_s *dobjModels, unsigned short numModels, struct XAnimTree_s *tree, int handle, clientInfo_t *ci);
 void CG_FreeWeapons(void);
 void CG_Shutdown(void);
-static void *Hunk_AllocXAnimPrecache(int size);
+void *Hunk_AllocXAnimPrecache(int size);
 void *Hunk_AllocXAnimClient(int size);
 int CG_PlaySoundAliasAsMasterByName(int entitynum, const vec_t *origin, const char *aliasname);
 void CG_GetDObjOrientation(int dobjHandle, float (*axis)[3]);
@@ -632,6 +796,123 @@ static void CG_RegisterSounds(void)
     cgs->media.playerBreathOutSound = Com_FindSoundAlias("weap_sniper_breathout");
     cgs->media.playerBreathGaspSound = Com_FindSoundAlias("weap_sniper_breathgasp");
     cgs->media.playerSwapOffhand = Com_FindSoundAlias("weap_offhand_select");
+}
+
+void __attribute_regparm__(1) CG_RegisterGraphics(const char *mapname)
+{
+    int i, j;
+    const char *str;
+    vec3_t mins, maxs;
+
+    SCR_UpdateScreen();
+    Com_Printf("^5---------- Fx System Initialization ---------\n");
+    FX_InitSystem(1);
+    FX_CreateDefaultEffect();
+    Com_Printf("^5----- Fx System Initialization Complete -----\n");
+
+    CG_LoadingString(" - textures");
+
+    cgs->media.lagometerMaterial = (MaterialHandle)(CL_RegisterMaterial("lagometer", 7));
+    cgs->media.connectionMaterial = (MaterialHandle)(CL_RegisterMaterial("headicondisconnected", 7));
+    cgs->media.youInKillCamMaterial = (MaterialHandle)(CL_RegisterMaterial("headiconyouinkillcam", 7));
+    CL_RegisterMaterial("killiconmelee", 7);
+    CL_RegisterMaterial("killiconsuicide", 7);
+    CL_RegisterMaterial("killiconfalling", 7);
+    CL_RegisterMaterial("killiconcrush", 7);
+    CL_RegisterMaterial("killicondied", 7);
+    cgs->media.tracerMaterial = (MaterialHandle)(CL_RegisterMaterial("gfx/misc/tracer", 6));
+    cgs->media.hintMaterials[2] = (MaterialHandle)(CL_RegisterMaterial("gfx/icons/hint_usable", 7));
+    cgs->media.hintMaterials[3] = (MaterialHandle)(CL_RegisterMaterial("hint_health", 7));
+    cgs->media.hintMaterials[4] = (MaterialHandle)(CL_RegisterMaterial("hint_friendly", 7));
+    cgs->media.stanceMaterials[0] = (MaterialHandle)(CL_RegisterMaterial("stance_stand", 7));
+    cgs->media.stanceMaterials[1] = (MaterialHandle)(CL_RegisterMaterial("stance_crouch", 7));
+    cgs->media.stanceMaterials[2] = (MaterialHandle)(CL_RegisterMaterial("stance_prone", 7));
+    cgs->media.stanceMaterials[3] = (MaterialHandle)(CL_RegisterMaterial("stance_flash", 7));
+    cgs->media.objectiveMaterials[0] = (MaterialHandle)(CL_RegisterMaterial("objective", 7));
+    cgs->media.friendMaterials[0] = (MaterialHandle)(CL_RegisterMaterial("objective_friendly", 7));
+    cgs->media.friendMaterials[1] = (MaterialHandle)(CL_RegisterMaterial("objective_friendly_chat", 7));
+    cgs->media.damageMaterial = (MaterialHandle)(CL_RegisterMaterial("hit_direction", 7));
+    cgs->media.mantleHint = (MaterialHandle)(CL_RegisterMaterial("hint_mantle", 7));
+    cgs->media.checkbox_clear = (MaterialHandle)(CL_RegisterMaterialNoMip("ui/assets/checkbox_clear", 7));
+    cgs->media.checkbox_checked = (MaterialHandle)(CL_RegisterMaterialNoMip("ui/assets/checkbox_checked", 7));
+    cgs->media.checkbox_fail = (MaterialHandle)(CL_RegisterMaterialNoMip("ui/assets/checkbox_fail", 7));
+    cgs->media.compassping_friendlyfiring = (MaterialHandle)(CL_RegisterMaterialNoMip("compassping_friendlyfiring", 7));
+    cgs->media.compassping_friendlyyelling = (MaterialHandle)(CL_RegisterMaterialNoMip("compassping_friendlyyelling", 7));
+    cgs->media.compassping_enemyfiring = (MaterialHandle)(CL_RegisterMaterialNoMip("compassping_enemyfiring", 7));
+    cgs->media.compassping_enemyyelling = (MaterialHandle)(CL_RegisterMaterialNoMip("compassping_enemyyelling", 7));
+    cgs->media.compassping_grenade = (MaterialHandle)(CL_RegisterMaterialNoMip("compassping_grenade", 7));
+    cgs->media.compassping_explosion = (MaterialHandle)(CL_RegisterMaterialNoMip("compassping_explosion", 7));
+    cgs->media.grenadeIcon = (MaterialHandle)(CL_RegisterMaterialNoMip("hud_grenadeicon", 7));
+    cgs->media.grenadePointer = (MaterialHandle)(CL_RegisterMaterialNoMip("hud_grenadepointer", 7));
+    cgs->media.teamStatusBar = (MaterialHandle)(CL_RegisterMaterial("hudcolorbar", 7));
+
+    CG_LoadingString(" - models");
+    cgs->media.voiceChatMaterial = (MaterialHandle)(CL_RegisterMaterial("headiconvoicechat", 7));
+    cgs->media.balloonMaterial = (MaterialHandle)(CL_RegisterMaterial("headicontalkballoon", 7));
+    CG_RegisterScoreboardGraphics();
+
+    memset((void *)cg_itemsArray, 0, CG_MAX_ITEMS * sizeof(itemInfo_t));
+    memset((void *)cg_weaponsArray, 0, CG_MAX_WEAPONS * sizeof(weaponInfo_t));
+
+    CG_LoadingString(" - items");
+    CG_RegisterItems();
+
+    CG_LoadingString(" - inline models");
+    cgs->numInlineModels = CM_NumInlineModels();
+
+    for (i = 1; i < cgs->numInlineModels; i++) {
+        cgs->inlineDrawModel[i] = CL_RegisterInlineModel(i);
+
+        GfxBrushModel *model = cgs->inlineDrawModel[i];
+        CL_ModelBounds(model, mins, maxs);
+
+        for (j = 0; j < 3; j++) {
+            float mid = (float)(mins[j] + (maxs[j] - mins[j]) * 0.5);
+            cgs->inlineModelMidpoints[i][j] = mid;
+        }
+    }
+
+    CG_LoadingString(" - server models");
+    for (i = 1; i < 256; i++) {
+        str = CL_GetConfigString(0x14e + i);
+        if (str[0] == '\0')
+            break;
+
+        SCR_UpdateScreen();
+        cgs->gameModels[i] = CL_RegisterModel(str);
+    }
+
+    for (i = 1; i < 64; i++) {
+        str = CL_GetConfigString(0x34e + i);
+        if (str[0] == '\0')
+            break;
+        cgs->fxs[i] = (EffectTemplate *)(FX_RegisterEffect(str));
+    }
+
+    cgs->smokeGrenadeFx = (EffectTemplate *)(FX_RegisterEffect("fx/props/american_smoke_grenade.efx"));
+
+    for (i = 1; i < 16; i++) {
+        str = CL_GetConfigString(0x48e + i);
+        if (str[0] == '\0')
+            break;
+        if (!CG_LoadShellShockDvars(str)) {
+            Com_Error(ERR_DROP, "couldn't register shell shock '%s' -- see console\n", str);
+        }
+        CG_SetShellShockParmsFromDvars(&cgs->shellshockParms[i]);
+    }
+
+    if (!CG_LoadShellShockDvars("hold_breath")) {
+        Com_Error(ERR_DROP, "Couldn't find shock file [hold_breath.shock]\n");
+    }
+    CG_SetShellShockParmsFromDvars(&cgs->holdBreathParams);
+
+    cgs->media.fx = CG_RegisterImpactEffects(mapname);
+    if (!cgs->media.fx) {
+        Com_Error(ERR_DROP, "Error reading CSV files in the fx directory to identify impact effects");
+    }
+    cgs->media.fxNoBloodFleshHit = (EffectTemplate *)(FX_RegisterEffect("fx/impacts/flesh_hit_noblood.efx"));
+
+    CG_LoadingString(" - game media done");
 }
 
 void CG_StartAmbient(void)
@@ -992,7 +1273,7 @@ static void CG_CreateDObj(DObjModel_s *dobjModels, unsigned short numModels, str
 static void CG_InitXAnimTrees(void)
 {
     XAnim *anims;
-    int i;
+    unsigned int i;
 
     anims = (XAnim *)cg->bgs.generic_human.tree.anims;
     for (i = 0; i < 64; i++)
@@ -1208,7 +1489,7 @@ void CG_Shutdown(void)
     memset((void *)cg, 0, sizeof(cg_t));
 }
 
-static void *Hunk_AllocXAnimPrecache(int size)
+void *Hunk_AllocXAnimPrecache(int size)
 {
     return Hunk_AllocAlignInternal(size, 4);
 }

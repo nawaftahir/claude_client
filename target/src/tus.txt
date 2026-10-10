@@ -4,8 +4,8 @@
 universal/assertive.cpp
 qcommon/buildnumber.c
 oc/client_mp/cl_cgame_mp.cpp
+oc/client_mp/cl_cin_mp.cpp
 oc/client_mp/cl_console_mp.cpp
-oc/groupvoice/record.cpp
 oc/client_mp/cl_input.cpp
 oc/client_mp/cl_keys_mp.cpp
 oc/client_mp/cl_main_mp.cpp
@@ -77,21 +77,9 @@ script/scr_compiler.cpp
 script/scr_main.cpp
 script/scr_memorytree.cpp
 script/scr_parser.cpp
+script/scr_parsetree.cpp
 script/scr_stringlist.cpp
 script/scr_tempmemory.cpp
-speex/exc_10_16_table.c /TP
-speex/exc_10_32_table.c /TP
-speex/exc_20_32_table.c /TP
-speex/exc_5_256_table.c /TP
-speex/exc_5_64_table.c /TP
-speex/exc_8_128_table.c /TP
-speex/gain_table.c /TP
-speex/gain_table_lbr.c /TP
-speex/hexc_10_32_table.c /TP
-speex/hexc_table.c /TP
-speex/high_lsp_tables.c /TP
-speex/lbr_48k_tables.c /TP
-speex/lsp_tables_nb.c /TP
 stringed/loc_dvars.cpp
 universal/com_file_wrapper.cpp
 universal/com_memory_high.cpp
@@ -166,8 +154,8 @@ oc/groupvoice/decode.cpp
 oc/groupvoice/encode.cpp
 oc/groupvoice/play.cpp
 groupvoice/play_dsound.cpp
+oc/groupvoice/record.cpp
 groupvoice/record_dsound.cpp
-oc/cgame_mp/cg_registergraphics_new.cpp
 oc/cgame_mp/cg_rumble_mp.cpp
 oc/cgame_mp/cg_main_mp.cpp
 oc/cgame_mp/cg_consolecmds_mp.cpp
@@ -193,13 +181,25 @@ oc/cgame_mp/cg_hudelem_mp.cpp
 oc/cgame_mp/cg_predict_mp.cpp
 cgame/cg_predict_mp.cpp
 oc/cgame_mp/cg_snapshot_mp.cpp
-oc/client_mp/cl_cin_mp.cpp
 oc/client_mp/cl_gamepad.cpp
 oc/cgame_mp/cg_playerstate_mp.cpp
 oc/cgame_mp/cg_event_mp.cpp
+speex/gain_table.c /TP
+speex/exc_5_64_table.c /TP
+speex/hexc_table.c /TP
+speex/gain_table_lbr.c /TP
+speex/exc_5_256_table.c /TP
+speex/exc_8_128_table.c /TP
+speex/exc_20_32_table.c /TP
+speex/hexc_10_32_table.c /TP
+speex/exc_10_16_table.c /TP
+speex/exc_10_32_table.c /TP
+speex/lbr_48k_tables.c /TP
 speex/speex.c /TP
 speex/bits.c /TP
 speex/modes.c /TP
+speex/lsp_tables_nb.c /TP
+speex/high_lsp_tables.c /TP
 speex/misc.c /TP
 speex/quant_lsp.c /TP
 speex/sb_celp.c /TP

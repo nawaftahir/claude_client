@@ -326,3 +326,9 @@ void IN_Frame( void )
 	IN_MouseMove();
 }
 
+// retail 0x461ea0, unreferenced; name from Q3 (SUPPORTED)
+void IN_ClearStates( void )
+{
+	s_wmv.oldButtonState = 0;
+}
+

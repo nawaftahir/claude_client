@@ -24,7 +24,7 @@ static dvar_t      *packetDebug;
 dvar_t      *net_profile;
 dvar_t      *net_showprofile;
 dvar_t      *net_lanauthorize;
-int qport;
+int qport = 0;
 static int net_iProfilingOn;
 
 void CL_Netchan_PrintProfileStats( int bPrintToConsole );

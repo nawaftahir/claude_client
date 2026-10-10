@@ -17,6 +17,30 @@ void SetScreenScaling(float safeAreaRatioHorizontal, float safeAreaRatioVertical
 void CalcScreenPlacement(float *x, float *y, float *w, float *h, int horzAlign, int vertAlign);
 void CalcScreenPlacementInl(float *x, float *y, float *w, float *h, int horzAlign, int vertAlign);
 
+// retail 0x449a60, unreferenced; name unknown
+float ScrPlace_ViewableWidth_449a60(void)
+{
+    return SP->virtualViewableMax[0] - SP->virtualViewableMin[0];
+}
+
+// retail 0x449a70, unreferenced; name unknown
+float ScrPlace_ViewableHeight_449a70(void)
+{
+    return SP->virtualViewableMax[1] - SP->virtualViewableMin[1];
+}
+
+// retail 0x449a80, unreferenced; name unknown
+float ScrPlace_RealViewableWidth_449a80(void)
+{
+    return SP->realViewableMax[0] - SP->realViewableMin[0];
+}
+
+// retail 0x449a90, unreferenced; name unknown
+float ScrPlace_RealViewableHeight_449a90(void)
+{
+    return SP->realViewableMax[1] - SP->realViewableMin[1];
+}
+
 // retail 0x449aa0; name from KisakCOD (SUPPORTED)
 static void ScrPlace_CalcSafeAreaOffsets(float safeAreaRatioHorz, float safeAreaRatioVert,
                                          float viewportX, float viewportY, float viewportWidth, float viewportHeight,

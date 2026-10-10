@@ -61,7 +61,7 @@ extern "C" {
 FILE *FS_FileOpen( const char *filename, const char *mode );
 size_t FS_FileRead( void *ptr, size_t size, size_t nmemb, FILE *stream );
 int FS_FileSeek( FILE *file, int offset, int whence );
-void FS_FileClose( FILE *stream );
+int FS_FileClose( FILE *stream );
 void Com_Memcpy( void *dest, const void *src, int count );
 #endif
 

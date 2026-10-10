@@ -12,7 +12,7 @@ static char g_sv_skel_memory[MAX_GENTITIES * MAX_MODELS] __attribute__((aligned(
 static char *g_sv_skel_memory_start;
 static int g_sv_skel_warn_count;
 
-int sv_serverId_value;
+int sv_serverId_value = 0;
 
 #define SKEL_MEM_ALIGNMENT 16
 

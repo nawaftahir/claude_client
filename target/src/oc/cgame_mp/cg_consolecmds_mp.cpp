@@ -50,16 +50,17 @@ qboolean CG_ConsoleCommand(void);
 qboolean CG_IsConsoleCommandName(const char *cmd);
 void CG_InitConsoleCommands(void);
 
+// order and entries from retail 0x55ddb8; "mr" is forwarded to the server
 static const consoleCommand_t commandsList[] = {
-    { "tcmd", CG_TargetCommand_f },
-    { "sizeup", CG_SizeUp_f },
-    { "sizedown", CG_SizeDown_f },
     { "viewpos", CG_Viewpos_f },
     { "+scores", CG_ScoresDown_f },
     { "-scores", CG_ScoresUp_f },
-    { "weapprev", CG_PrevWeapon_f },
+    { "sizeup", CG_SizeUp_f },
+    { "sizedown", CG_SizeDown_f },
     { "weapnext", CG_NextWeapon_f },
+    { "weapprev", CG_PrevWeapon_f },
     { "weaponslot", CG_WeaponSlot_f },
+    { "tcmd", CG_TargetCommand_f },
     { "fxSetTestPosition", CG_FxSetTestPosition },
     { "fxTest", CG_FxTest },
     { "fxRestart", CG_FxRestart },
@@ -67,15 +68,16 @@ static const consoleCommand_t commandsList[] = {
     { "cg_shellshock_load", CG_ShellShock_Load_f },
     { "cg_shellshock_save", CG_ShellShock_Save_f },
     { "tell_target", CG_TellTarget_f },
-    { "quickmessage", CG_QuickMessage_f },
+    { "mp_QuickMessage", CG_QuickMessage_f },
     { "VoiceChat", CG_VoiceChat_f },
     { "VoiceTeamChat", CG_TeamVoiceChat_f },
+    { "mr", NULL },
     { NULL, NULL }
 };
 
 void CG_TargetCommand_f(void)
 {
-    int targetNum;
+    unsigned int targetNum;
     char test[4];
 
     targetNum = CG_CrosshairPlayer();
@@ -197,7 +199,7 @@ static void CG_ShellShock_Save_f(void)
 
 static void CG_TellTarget_f(void)
 {
-    int clientNum;
+    unsigned int clientNum;
     char command[128];
     char message[128];
 

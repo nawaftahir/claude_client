@@ -992,8 +992,8 @@ ClearObjectInternal
 */
 void ClearObjectInternal( unsigned int parentId )
 {
-	VariableValueInternal *entryValue, *parentValue;
 	unsigned int nextId, id;
+	VariableValueInternal *entryValue, *parentValue;
 
 	parentValue = &scrVarGlob.variableList[parentId];
 	assert((parentValue->w.status & VAR_STAT_MASK) != VAR_STAT_FREE);

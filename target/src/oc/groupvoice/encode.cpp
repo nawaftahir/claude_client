@@ -2,8 +2,12 @@
 #include "common_types.h"
 #include "imports.h"
 
+int g_encoder_quality = 1;
 
-static int g_current_bandwidth_setting = 0x0;
+int g_encoder_samplerate = 8192;
+
+
+int g_current_bandwidth_setting = 0x0;
 int g_frame_size = 0x0;
 static int g_speex_initialized = 0x0;
 
@@ -117,6 +121,12 @@ int Encode_Sample(short *buffer_in, char *buffer_out, int maxLength)
     speex_encode_int(g_encoder, buffer_in, &encodeBits);
 
     return speex_bits_write(&encodeBits, buffer_out, maxLength);
+}
+
+// retail 0x4b67e0, unreferenced twin of Encode_GetFrameSize; name unknown
+int Encode_GetFrameSize_4b67e0(void)
+{
+    return g_frame_size;
 }
 
 // name unknown

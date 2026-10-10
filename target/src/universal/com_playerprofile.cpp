@@ -1,6 +1,10 @@
 #include "../qcommon/qcommon.h"
 #include "com_files.h"
 
+const dvar_t *com_playerProfile;
+
+const dvar_t *ui_playerProfileAlreadyChosen;
+
 extern const dvar_t *com_playerProfile;
 extern const dvar_t *ui_playerProfileAlreadyChosen;
 

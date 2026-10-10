@@ -174,8 +174,8 @@ XModelParts *XModelPartsLoadFile(XModel *model, const char *name, void *(*Alloc)
 	if ( numChildBones )
 	{
 		size = 4 * sizeof(short) * numChildBones;
-		modelParts->quats = (short *)Alloc(size);
 		model->memUsage += size;
+		modelParts->quats = (short *)Alloc(size);
 
 		size = 4 * sizeof(float) * numChildBones;
 		modelParts->trans = (float *)Alloc(size);
@@ -488,6 +488,17 @@ struct refexport_t
 	struct Material *(*LoadXSkins)( XModel *model );
 };
 extern refexport_t re;
+
+// retail 0x48ea60/0x48ea80, unreferenced; names unknown
+XSurface *XModelReadSurface_48ea60(XModel *model, int *partBits, const unsigned char **pos, void *(*Alloc)(int))
+{
+	return re.XModelReadSurface(model, partBits, pos, Alloc);
+}
+
+struct Material *XModelLoadXSkins_48ea80(XModel *model)
+{
+	return re.LoadXSkins(model);
+}
 
 bool XModelSurfsSupported()
 {

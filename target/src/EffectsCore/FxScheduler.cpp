@@ -627,7 +627,7 @@ static FxEffectDef *effectTemplateArray[256];
 static int effectTemplateArrayCount;
 FxMemMgr<ScheduledEffect> ScheduledEffect::s_memMgr;
 FxScheduler *theFxSchedulers[2];
-FxScheduler *theFxScheduler;
+FxScheduler *theFxScheduler = NULL;
 FxEffectDef *g_fxDefaultEffect;
 // Unreferenced storage; original declarations unknown (sized from the layout).
 static int unusedStorage[3];

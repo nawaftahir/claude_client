@@ -47,6 +47,14 @@ static const listColumnInfo_t columnInfo[6] = {
     { LCT_PING, 0.17f, "CGAME_SB_PING", 2 },
 };
 
+// unreferenced scoreboard layout getters, kept by /OPT:NOREF
+float CG_ScoreboardGetter_4d2bb0() { return 0.24f; }
+float CG_ScoreboardGetter_4d2bc0() { return 12.0f; }
+float CG_ScoreboardGetter_4d2bd0() { return 400.0f; }
+float CG_ScoreboardGetter_4d2be0() { return 430.0f; }
+float CG_ScoreboardGetter_4d2bf0() { return 120.0f; }
+float CG_ScoreboardGetter_4d2c00() { return 22.0f; }
+
 int CalcBorderLines(sbpicinfo_t *backdropBorderLines)
 {
 

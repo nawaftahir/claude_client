@@ -2,6 +2,18 @@
 #include "imports.h"
 #include <ctype.h>
 #include <string.h>
+
+PlayerKeyState playerKeys[1];
+field_t *chatField = &playerKeys[0].chatField;
+qboolean *chat_team = &playerKeys[0].chat_team;
+qboolean *key_overstrikeMode = &playerKeys[0].key_overstrikeMode;
+qboolean *anykeydown = &playerKeys[0].anykeydown;
+qkey_t *keys = playerKeys[0].keys;
+
+int historyLine = 0;
+int nextHistoryLine;
+field_t g_consoleField;
+field_t historyEditLines[32];
 extern const dvar_t *cl_bypassMouseInput;
 extern dvar_t *com_sv_running;
 extern dvar_t *sv_disableClientConsole;
@@ -11,8 +23,8 @@ extern int dvar_modifiedFlags;
 extern int g_console_field_width;
 extern float g_console_char_height;
 
-extern keyname_t keynames[99];
-extern keyname_t keynames_localized[100];
+extern keyname_t keynames[96];
+extern keyname_t keynames_localized[96];
 
 extern clientStatic_t cls;
 extern refexport_t re;
@@ -85,18 +97,215 @@ extern field_t historyEditLines[32];
 extern field_t g_consoleField;
 extern int nextHistoryLine;
 extern int historyLine;
-/* migrated from the ILP32 data blob to typed C (x64 port Stage 2). */
+static keyname_t keynames[96] = {
+    { (char *)"TAB", 0x9 },
+    { (char *)"ENTER", 0xd },
+    { (char *)"ESCAPE", 0x1b },
+    { (char *)"SPACE", 0x20 },
+    { (char *)"BACKSPACE", 0x7f },
+    { (char *)"UPARROW", 0x9a },
+    { (char *)"DOWNARROW", 0x9b },
+    { (char *)"LEFTARROW", 0x9c },
+    { (char *)"RIGHTARROW", 0x9d },
+    { (char *)"ALT", 0x9e },
+    { (char *)"CTRL", 0x9f },
+    { (char *)"SHIFT", 0xa0 },
+    { (char *)"CAPSLOCK", 0x97 },
+    { (char *)"F1", 0xa7 },
+    { (char *)"F2", 0xa8 },
+    { (char *)"F3", 0xa9 },
+    { (char *)"F4", 0xaa },
+    { (char *)"F5", 0xab },
+    { (char *)"F6", 0xac },
+    { (char *)"F7", 0xad },
+    { (char *)"F8", 0xae },
+    { (char *)"F9", 0xaf },
+    { (char *)"F10", 0xb0 },
+    { (char *)"F11", 0xb1 },
+    { (char *)"F12", 0xb2 },
+    { (char *)"INS", 0xa1 },
+    { (char *)"DEL", 0xa2 },
+    { (char *)"PGDN", 0xa3 },
+    { (char *)"PGUP", 0xa4 },
+    { (char *)"HOME", 0xa5 },
+    { (char *)"END", 0xa6 },
+    { (char *)"MOUSE1", 0xc8 },
+    { (char *)"MOUSE2", 0xc9 },
+    { (char *)"MOUSE3", 0xca },
+    { (char *)"MOUSE4", 0xcb },
+    { (char *)"MOUSE5", 0xcc },
+    { (char *)"MWHEELUP", 0xce },
+    { (char *)"MWHEELDOWN", 0xcd },
+    { (char *)"AUX1", 0xcf },
+    { (char *)"AUX2", 0xd0 },
+    { (char *)"AUX3", 0xd1 },
+    { (char *)"AUX4", 0xd2 },
+    { (char *)"AUX5", 0xd3 },
+    { (char *)"AUX6", 0xd4 },
+    { (char *)"AUX7", 0xd5 },
+    { (char *)"AUX8", 0xd6 },
+    { (char *)"AUX9", 0xd7 },
+    { (char *)"AUX10", 0xd8 },
+    { (char *)"AUX11", 0xd9 },
+    { (char *)"AUX12", 0xda },
+    { (char *)"AUX13", 0xdb },
+    { (char *)"AUX14", 0xdc },
+    { (char *)"AUX15", 0xdd },
+    { (char *)"AUX16", 0xde },
+    { (char *)"KP_HOME", 0xb6 },
+    { (char *)"KP_UPARROW", 0xb7 },
+    { (char *)"KP_PGUP", 0xb8 },
+    { (char *)"KP_LEFTARROW", 0xb9 },
+    { (char *)"KP_5", 0xba },
+    { (char *)"KP_RIGHTARROW", 0xbb },
+    { (char *)"KP_END", 0xbc },
+    { (char *)"KP_DOWNARROW", 0xbd },
+    { (char *)"KP_PGDN", 0xbe },
+    { (char *)"KP_ENTER", 0xbf },
+    { (char *)"KP_INS", 0xc0 },
+    { (char *)"KP_DEL", 0xc1 },
+    { (char *)"KP_SLASH", 0xc2 },
+    { (char *)"KP_MINUS", 0xc3 },
+    { (char *)"KP_PLUS", 0xc4 },
+    { (char *)"KP_NUMLOCK", 0xc5 },
+    { (char *)"KP_STAR", 0xc6 },
+    { (char *)"KP_EQUALS", 0xc7 },
+    { (char *)"PAUSE", 0x99 },
+    { (char *)"SEMICOLON", 0x3b },
+    { (char *)"COMMAND", 0x96 },
+    { (char *)"181", 0x80 },
+    { (char *)"191", 0x81 },
+    { (char *)"223", 0x82 },
+    { (char *)"224", 0x83 },
+    { (char *)"225", 0x84 },
+    { (char *)"228", 0x85 },
+    { (char *)"229", 0x86 },
+    { (char *)"230", 0x87 },
+    { (char *)"231", 0x88 },
+    { (char *)"232", 0x89 },
+    { (char *)"233", 0x8a },
+    { (char *)"236", 0x8b },
+    { (char *)"241", 0x8c },
+    { (char *)"242", 0x8d },
+    { (char *)"243", 0x8e },
+    { (char *)"246", 0x8f },
+    { (char *)"248", 0x90 },
+    { (char *)"249", 0x91 },
+    { (char *)"250", 0x92 },
+    { (char *)"252", 0x93 },
+    { 0, 0x0 }
+};
+static keyname_t keynames_localized[96] = {
+    { (char *)"KEY_TAB", 0x9 },
+    { (char *)"KEY_ENTER", 0xd },
+    { (char *)"KEY_ESCAPE", 0x1b },
+    { (char *)"KEY_SPACE", 0x20 },
+    { (char *)"KEY_BACKSPACE", 0x7f },
+    { (char *)"KEY_UPARROW", 0x9a },
+    { (char *)"KEY_DOWNARROW", 0x9b },
+    { (char *)"KEY_LEFTARROW", 0x9c },
+    { (char *)"KEY_RIGHTARROW", 0x9d },
+    { (char *)"KEY_ALT", 0x9e },
+    { (char *)"KEY_CTRL", 0x9f },
+    { (char *)"KEY_SHIFT", 0xa0 },
+    { (char *)"KEY_CAPSLOCK", 0x97 },
+    { (char *)"KEY_F1", 0xa7 },
+    { (char *)"KEY_F2", 0xa8 },
+    { (char *)"KEY_F3", 0xa9 },
+    { (char *)"KEY_F4", 0xaa },
+    { (char *)"KEY_F5", 0xab },
+    { (char *)"KEY_F6", 0xac },
+    { (char *)"KEY_F7", 0xad },
+    { (char *)"KEY_F8", 0xae },
+    { (char *)"KEY_F9", 0xaf },
+    { (char *)"KEY_F10", 0xb0 },
+    { (char *)"KEY_F11", 0xb1 },
+    { (char *)"KEY_F12", 0xb2 },
+    { (char *)"KEY_INS", 0xa1 },
+    { (char *)"KEY_DEL", 0xa2 },
+    { (char *)"KEY_PGDN", 0xa3 },
+    { (char *)"KEY_PGUP", 0xa4 },
+    { (char *)"KEY_HOME", 0xa5 },
+    { (char *)"KEY_END", 0xa6 },
+    { (char *)"KEY_MOUSE1", 0xc8 },
+    { (char *)"KEY_MOUSE2", 0xc9 },
+    { (char *)"KEY_MOUSE3", 0xca },
+    { (char *)"KEY_MOUSE4", 0xcb },
+    { (char *)"KEY_MOUSE5", 0xcc },
+    { (char *)"KEY_MWHEELUP", 0xce },
+    { (char *)"KEY_MWHEELDOWN", 0xcd },
+    { (char *)"KEY_AUX1", 0xcf },
+    { (char *)"KEY_AUX2", 0xd0 },
+    { (char *)"KEY_AUX3", 0xd1 },
+    { (char *)"KEY_AUX4", 0xd2 },
+    { (char *)"KEY_AUX5", 0xd3 },
+    { (char *)"KEY_AUX6", 0xd4 },
+    { (char *)"KEY_AUX7", 0xd5 },
+    { (char *)"KEY_AUX8", 0xd6 },
+    { (char *)"KEY_AUX9", 0xd7 },
+    { (char *)"KEY_AUX10", 0xd8 },
+    { (char *)"KEY_AUX11", 0xd9 },
+    { (char *)"KEY_AUX12", 0xda },
+    { (char *)"KEY_AUX13", 0xdb },
+    { (char *)"KEY_AUX14", 0xdc },
+    { (char *)"KEY_AUX15", 0xdd },
+    { (char *)"KEY_AUX16", 0xde },
+    { (char *)"KEY_KP_HOME", 0xb6 },
+    { (char *)"KEY_KP_UPARROW", 0xb7 },
+    { (char *)"KEY_KP_PGUP", 0xb8 },
+    { (char *)"KEY_KP_LEFTARROW", 0xb9 },
+    { (char *)"KEY_KP_5", 0xba },
+    { (char *)"KEY_KP_RIGHTARROW", 0xbb },
+    { (char *)"KEY_KP_END", 0xbc },
+    { (char *)"KEY_KP_DOWNARROW", 0xbd },
+    { (char *)"KEY_KP_PGDN", 0xbe },
+    { (char *)"KEY_KP_ENTER", 0xbf },
+    { (char *)"KEY_KP_INS", 0xc0 },
+    { (char *)"KEY_KP_DEL", 0xc1 },
+    { (char *)"KEY_KP_SLASH", 0xc2 },
+    { (char *)"KEY_KP_MINUS", 0xc3 },
+    { (char *)"KEY_KP_PLUS", 0xc4 },
+    { (char *)"KEY_KP_NUMLOCK", 0xc5 },
+    { (char *)"KEY_KP_STAR", 0xc6 },
+    { (char *)"KEY_KP_EQUALS", 0xc7 },
+    { (char *)"KEY_PAUSE", 0x99 },
+    { (char *)"KEY_SEMICOLON", 0x3b },
+    { (char *)"KEY_COMMAND", 0x96 },
+    { (char *)"\xb5", 0x80 },
+    { (char *)"\xbf", 0x81 },
+    { (char *)"\xdf", 0x82 },
+    { (char *)"\xe0", 0x83 },
+    { (char *)"\xe1", 0x84 },
+    { (char *)"\xe4", 0x85 },
+    { (char *)"\xe5", 0x86 },
+    { (char *)"\xe6", 0x87 },
+    { (char *)"\xe7", 0x88 },
+    { (char *)"\xe8", 0x89 },
+    { (char *)"\xe9", 0x8a },
+    { (char *)"\xec", 0x8b },
+    { (char *)"\xf1", 0x8c },
+    { (char *)"\xf2", 0x8d },
+    { (char *)"\xf3", 0x8e },
+    { (char *)"\xf6", 0x8f },
+    { (char *)"\xf8", 0x90 },
+    { (char *)"\xf9", 0x91 },
+    { (char *)"\xfa", 0x92 },
+    { (char *)"\xfc", 0x93 },
+    { 0, 0x0 }
+};
+
+// French keyboard number row (CP1252), retail 0x58b700 after the key name tables
 static char *frenchNumberKeysMap[10] = {
-    "\xff" "fd",
+    "\xe0",
     "&",
-    "\xff" "fd",
+    "\xe9",
     "\"",
     "'",
     "(",
     "-",
-    "\xff" "fd",
+    "\xe8",
     "_",
-    "\xff" "fd",
+    "\xe7",
 };
 
 #define COMMAND_HISTORY 32
@@ -797,6 +1006,15 @@ void Key_SetOverstrikeMode(qboolean state)
     *key_overstrikeMode = state;
 }
 
+// retail 0x40a490, unreferenced; Q3 Key_IsDown (SUPPORTED)
+qboolean Key_IsDown(int keynum)
+{
+    if (keynum == -1)
+        return 0;
+
+    return keys[keynum].down;
+}
+
 int Key_StringToKeynum(const char *str)
 {
     keyname_t *name;
@@ -1269,403 +1487,5 @@ void Key_Shutdown(void)
 }
 
 
-static keyname_t keynames[99] = {
-    { (char *)&str_002a6bf0, 0x9 },
-    { (char *)&str_002a6bf4, 0xd },
-    { (char *)&str_002a6bfc, 0x1b },
-    { (char *)&str_002a6c04, 0x20 },
-    { (char *)&str_002a6c0c, 0x7f },
-    { (char *)&str_002a6c18, 0x9a },
-    { (char *)&str_002a6c20, 0x9b },
-    { (char *)&str_002a6c2c, 0x9c },
-    { (char *)&str_002a6c38, 0x9d },
-    { (char *)&str_002a6c44, 0x9e },
-    { (char *)&str_002a6c48, 0x9f },
-    { (char *)&str_002a6c50, 0xa0 },
-    { (char *)&str_002a6c58, 0x97 },
-    { (char *)&str_002a6c64, 0xa7 },
-    { (char *)&str_002a6c68, 0xa8 },
-    { (char *)&str_002a6c6c, 0xa9 },
-    { (char *)&str_002a6c70, 0xaa },
-    { (char *)&str_002a6c74, 0xab },
-    { (char *)&str_002a6c78, 0xac },
-    { (char *)&str_002a6c7c, 0xad },
-    { (char *)&str_002a6c80, 0xae },
-    { (char *)&str_002a6c84, 0xaf },
-    { (char *)&str_002a6c88, 0xb0 },
-    { (char *)&str_002a6c8c, 0xb1 },
-    { (char *)&str_002a6c90, 0xb2 },
-    { (char *)&str_002a6c94, 0xb3 },
-    { (char *)&str_002a6c98, 0xb4 },
-    { (char *)&str_002a6c9c, 0xb5 },
-    { (char *)&str_002a6ca0, 0xa1 },
-    { (char *)&str_002a6ca4, 0xa2 },
-    { (char *)&str_002a6ca8, 0xa3 },
-    { (char *)&str_002a6cb0, 0xa4 },
-    { (char *)&str_002a6cb8, 0xa5 },
-    { (char *)&str_002a6cc0, 0xa6 },
-    { (char *)&str_002a6cc4, 0xc8 },
-    { (char *)&str_002a6ccc, 0xc9 },
-    { (char *)&str_002a6cd4, 0xca },
-    { (char *)&str_002a6cdc, 0xcb },
-    { (char *)&str_002a6ce4, 0xcc },
-    { (char *)&str_002a6cec, 0xce },
-    { (char *)&str_002a6cf8, 0xcd },
-    { (char *)&str_002a6d04, 0xcf },
-    { (char *)&str_002a6d0c, 0xd0 },
-    { (char *)&str_002a6d14, 0xd1 },
-    { (char *)&str_002a6d1c, 0xd2 },
-    { (char *)&str_002a6d24, 0xd3 },
-    { (char *)&str_002a6d2c, 0xd4 },
-    { (char *)&str_002a6d34, 0xd5 },
-    { (char *)&str_002a6d3c, 0xd6 },
-    { (char *)&str_002a6d44, 0xd7 },
-    { (char *)&str_002a6d4c, 0xd8 },
-    { (char *)&str_002a6d54, 0xd9 },
-    { (char *)&str_002a6d5c, 0xda },
-    { (char *)&str_002a6d64, 0xdb },
-    { (char *)&str_002a6d6c, 0xdc },
-    { (char *)&str_002a6d74, 0xdd },
-    { (char *)&str_002a6d7c, 0xde },
-    { (char *)&str_002a6d84, 0xb6 },
-    { (char *)&str_002a6d8c, 0xb7 },
-    { (char *)&str_002a6d98, 0xb8 },
-    { (char *)&str_002a6da0, 0xb9 },
-    { (char *)&str_002a6db0, 0xba },
-    { (char *)&str_002a6db8, 0xbb },
-    { (char *)&str_002a6dc8, 0xbc },
-    { (char *)&str_002a6dd0, 0xbd },
-    { (char *)&str_002a6de0, 0xbe },
-    { (char *)&str_002a6de8, 0xbf },
-    { (char *)&str_002a6df4, 0xc0 },
-    { (char *)&str_002a6dfc, 0xc1 },
-    { (char *)&str_002a6e04, 0xc2 },
-    { (char *)&str_002a6e10, 0xc3 },
-    { (char *)&str_002a6e1c, 0xc4 },
-    { (char *)&str_002a6e24, 0xc5 },
-    { (char *)&str_002a6e30, 0xc6 },
-    { (char *)&str_002a6e38, 0xc7 },
-    { (char *)&str_002a6e44, 0x99 },
-    { (char *)&str_002a6e4c, 0x3b },
-    { (char *)&str_002a6e58, 0x96 },
-    { (char *)&str_002a6e60, 0x80 },
-    { (char *)&str_002a6e64, 0x81 },
-    { (char *)&str_002a6e68, 0x82 },
-    { (char *)&str_002a6e6c, 0x83 },
-    { (char *)&str_002a6e70, 0x84 },
-    { (char *)&str_002a6e74, 0x85 },
-    { (char *)&str_002a6e78, 0x86 },
-    { (char *)&str_002a6e7c, 0x87 },
-    { (char *)&str_002a6e80, 0x88 },
-    { (char *)&str_002a6e84, 0x89 },
-    { (char *)&str_002a6e88, 0x8a },
-    { (char *)&str_002a6e8c, 0x8b },
-    { (char *)&str_002a6e90, 0x8c },
-    { (char *)&str_002a6e94, 0x8d },
-    { (char *)&str_002a6e98, 0x8e },
-    { (char *)&str_002a6e9c, 0x8f },
-    { (char *)&str_002a6ea0, 0x90 },
-    { (char *)&str_002a6ea4, 0x91 },
-    { (char *)&str_002a6ea8, 0x92 },
-    { (char *)&str_002a6eac, 0x93 },
-    { 0, 0x0 }
-};
-static keyname_t keynames_localized[100] = {
-    { (char *)&str_002a6808, 0x9 },
-    { (char *)&str_002a6810, 0xd },
-    { (char *)&str_002a681c, 0x1b },
-    { (char *)&str_002a6828, 0x20 },
-    { (char *)&str_002a6834, 0x7f },
-    { (char *)&str_002a6844, 0x9a },
-    { (char *)&str_002a6850, 0x9b },
-    { (char *)&str_002a6860, 0x9c },
-    { (char *)&str_002a6870, 0x9d },
-    { (char *)&str_002a6880, 0x9e },
-    { (char *)&str_002a6888, 0x9f },
-    { (char *)&str_002a6894, 0xa0 },
-    { (char *)&str_002a68a0, 0x97 },
-    { (char *)&str_002a68b0, 0xa7 },
-    { (char *)&str_002a68b8, 0xa8 },
-    { (char *)&str_002a68c0, 0xa9 },
-    { (char *)&str_002a68c8, 0xaa },
-    { (char *)&str_002a68d0, 0xab },
-    { (char *)&str_002a68d8, 0xac },
-    { (char *)&str_002a68e0, 0xad },
-    { (char *)&str_002a68e8, 0xae },
-    { (char *)&str_002a68f0, 0xaf },
-    { (char *)&str_002a68f8, 0xb0 },
-    { (char *)&str_002a6900, 0xb1 },
-    { (char *)&str_002a6908, 0xb2 },
-    { (char *)&str_002a6910, 0xb3 },
-    { (char *)&str_002a6918, 0xb4 },
-    { (char *)&str_002a6920, 0xb5 },
-    { (char *)&str_002a6928, 0xa1 },
-    { (char *)&str_002a6930, 0xa2 },
-    { (char *)&str_002a6938, 0xa3 },
-    { (char *)&str_002a6944, 0xa4 },
-    { (char *)&str_002a6950, 0xa5 },
-    { (char *)&str_002a695c, 0xa6 },
-    { (char *)&str_002a6964, 0xc8 },
-    { (char *)&str_002a6970, 0xc9 },
-    { (char *)&str_002a697c, 0xca },
-    { (char *)&str_002a6988, 0xcb },
-    { (char *)&str_002a6994, 0xcc },
-    { (char *)&str_002a69a0, 0xce },
-    { (char *)&str_002a69b0, 0xcd },
-    { (char *)&str_002a69c0, 0xcf },
-    { (char *)&str_002a69cc, 0xd0 },
-    { (char *)&str_002a69d8, 0xd1 },
-    { (char *)&str_002a69e4, 0xd2 },
-    { (char *)&str_002a69f0, 0xd3 },
-    { (char *)&str_002a69fc, 0xd4 },
-    { (char *)&str_002a6a08, 0xd5 },
-    { (char *)&str_002a6a14, 0xd6 },
-    { (char *)&str_002a6a20, 0xd7 },
-    { (char *)&str_002a6a2c, 0xd8 },
-    { (char *)&str_002a6a38, 0xd9 },
-    { (char *)&str_002a6a44, 0xda },
-    { (char *)&str_002a6a50, 0xdb },
-    { (char *)&str_002a6a5c, 0xdc },
-    { (char *)&str_002a6a68, 0xdd },
-    { (char *)&str_002a6a74, 0xde },
-    { (char *)&str_002a6a80, 0xb6 },
-    { (char *)&str_002a6a8c, 0xb7 },
-    { (char *)&str_002a6a9c, 0xb8 },
-    { (char *)&str_002a6aa8, 0xb9 },
-    { (char *)&str_002a6abc, 0xba },
-    { (char *)&str_002a6ac8, 0xbb },
-    { (char *)&str_002a6adc, 0xbc },
-    { (char *)&str_002a6ae8, 0xbd },
-    { (char *)&str_002a6afc, 0xbe },
-    { (char *)&str_002a6b08, 0xbf },
-    { (char *)&str_002a6b18, 0xc0 },
-    { (char *)&str_002a6b24, 0xc1 },
-    { (char *)&str_002a6b30, 0xc2 },
-    { (char *)&str_002a6b40, 0xc3 },
-    { (char *)&str_002a6b50, 0xc4 },
-    { (char *)&str_002a6b5c, 0xc5 },
-    { (char *)&str_002a6b6c, 0xc6 },
-    { (char *)&str_002a6b78, 0xc7 },
-    { (char *)&str_002a6b88, 0x99 },
-    { (char *)&str_002a6b94, 0x3b },
-    { (char *)&str_002a6ba4, 0x96 },
-    { (char *)&str_002a6bb0, 0x80 },
-    { (char *)&str_002a6bb4, 0x81 },
-    { (char *)&str_002a6bb8, 0x82 },
-    { (char *)&str_002a67f0, 0x83 },
-    { (char *)&str_002a6bbc, 0x84 },
-    { (char *)&str_002a6bc0, 0x85 },
-    { (char *)&str_002a6bc4, 0x86 },
-    { (char *)&str_002a6bc8, 0x87 },
-    { (char *)&str_002a6804, 0x88 },
-    { (char *)&str_002a67fc, 0x89 },
-    { (char *)&str_002a67f4, 0x8a },
-    { (char *)&str_002a6bcc, 0x8b },
-    { (char *)&str_002a6bd0, 0x8c },
-    { (char *)&str_002a6bd4, 0x8d },
-    { (char *)&str_002a6bd8, 0x8e },
-    { (char *)&str_002a6bdc, 0x8f },
-    { (char *)&str_002a6be0, 0x90 },
-    { (char *)&str_002a6be4, 0x91 },
-    { (char *)&str_002a6be8, 0x92 },
-    { (char *)&str_002a6bec, 0x93 },
-    { 0, 0x0 },
-    { 0, 0x0 }
-};
 
-const char str_002a67f0[] = "\xff" "fd";
-const char str_002a67f4[] = "\xff" "fd";
-const char str_002a67fc[] = "\xff" "fd";
-const char str_002a6804[] = "\xff" "fd";
-const char str_002a6808[] = "KEY_TAB";
-const char str_002a6810[] = "KEY_ENTER";
-const char str_002a681c[] = "KEY_ESCAPE";
-const char str_002a6828[] = "KEY_SPACE";
-const char str_002a6834[] = "KEY_BACKSPACE";
-const char str_002a6844[] = "KEY_UPARROW";
-const char str_002a6850[] = "KEY_DOWNARROW";
-const char str_002a6860[] = "KEY_LEFTARROW";
-const char str_002a6870[] = "KEY_RIGHTARROW";
-const char str_002a6880[] = "KEY_ALT";
-const char str_002a6888[] = "KEY_CTRL";
-const char str_002a6894[] = "KEY_SHIFT";
-const char str_002a68a0[] = "KEY_CAPSLOCK";
-const char str_002a68b0[] = "KEY_F1";
-const char str_002a68b8[] = "KEY_F2";
-const char str_002a68c0[] = "KEY_F3";
-const char str_002a68c8[] = "KEY_F4";
-const char str_002a68d0[] = "KEY_F5";
-const char str_002a68d8[] = "KEY_F6";
-const char str_002a68e0[] = "KEY_F7";
-const char str_002a68e8[] = "KEY_F8";
-const char str_002a68f0[] = "KEY_F9";
-const char str_002a68f8[] = "KEY_F10";
-const char str_002a6900[] = "KEY_F11";
-const char str_002a6908[] = "KEY_F12";
-const char str_002a6910[] = "KEY_F13";
-const char str_002a6918[] = "KEY_F14";
-const char str_002a6920[] = "KEY_F15";
-const char str_002a6928[] = "KEY_INS";
-const char str_002a6930[] = "KEY_DEL";
-const char str_002a6938[] = "KEY_PGDN";
-const char str_002a6944[] = "KEY_PGUP";
-const char str_002a6950[] = "KEY_HOME";
-const char str_002a695c[] = "KEY_END";
-const char str_002a6964[] = "KEY_MOUSE1";
-const char str_002a6970[] = "KEY_MOUSE2";
-const char str_002a697c[] = "KEY_MOUSE3";
-const char str_002a6988[] = "KEY_MOUSE4";
-const char str_002a6994[] = "KEY_MOUSE5";
-const char str_002a69a0[] = "KEY_MWHEELUP";
-const char str_002a69b0[] = "KEY_MWHEELDOWN";
-const char str_002a69c0[] = "KEY_AUX1";
-const char str_002a69cc[] = "KEY_AUX2";
-const char str_002a69d8[] = "KEY_AUX3";
-const char str_002a69e4[] = "KEY_AUX4";
-const char str_002a69f0[] = "KEY_AUX5";
-const char str_002a69fc[] = "KEY_AUX6";
-const char str_002a6a08[] = "KEY_AUX7";
-const char str_002a6a14[] = "KEY_AUX8";
-const char str_002a6a20[] = "KEY_AUX9";
-const char str_002a6a2c[] = "KEY_AUX10";
-const char str_002a6a38[] = "KEY_AUX11";
-const char str_002a6a44[] = "KEY_AUX12";
-const char str_002a6a50[] = "KEY_AUX13";
-const char str_002a6a5c[] = "KEY_AUX14";
-const char str_002a6a68[] = "KEY_AUX15";
-const char str_002a6a74[] = "KEY_AUX16";
-const char str_002a6a80[] = "KEY_KP_HOME";
-const char str_002a6a8c[] = "KEY_KP_UPARROW";
-const char str_002a6a9c[] = "KEY_KP_PGUP";
-const char str_002a6aa8[] = "KEY_KP_LEFTARROW";
-const char str_002a6abc[] = "KEY_KP_5";
-const char str_002a6ac8[] = "KEY_KP_RIGHTARROW";
-const char str_002a6adc[] = "KEY_KP_END";
-const char str_002a6ae8[] = "KEY_KP_DOWNARROW";
-const char str_002a6afc[] = "KEY_KP_PGDN";
-const char str_002a6b08[] = "KEY_KP_ENTER";
-const char str_002a6b18[] = "KEY_KP_INS";
-const char str_002a6b24[] = "KEY_KP_DEL";
-const char str_002a6b30[] = "KEY_KP_SLASH";
-const char str_002a6b40[] = "KEY_KP_MINUS";
-const char str_002a6b50[] = "KEY_KP_PLUS";
-const char str_002a6b5c[] = "KEY_KP_NUMLOCK";
-const char str_002a6b6c[] = "KEY_KP_STAR";
-const char str_002a6b78[] = "KEY_KP_EQUALS";
-const char str_002a6b88[] = "KEY_PAUSE";
-const char str_002a6b94[] = "KEY_SEMICOLON";
-const char str_002a6ba4[] = "KEY_COMMAND";
-const char str_002a6bb0[] = "\xff" "fd";
-const char str_002a6bb4[] = "\xff" "fd";
-const char str_002a6bb8[] = "\xff" "fd";
-const char str_002a6bbc[] = "\xff" "fd";
-const char str_002a6bc0[] = "\xff" "fd";
-const char str_002a6bc4[] = "\xff" "fd";
-const char str_002a6bc8[] = "\xff" "fd";
-const char str_002a6bcc[] = "\xff" "fd";
-const char str_002a6bd0[] = "\xff" "fd";
-const char str_002a6bd4[] = "\xff" "fd";
-const char str_002a6bd8[] = "\xff" "fd";
-const char str_002a6bdc[] = "\xff" "fd";
-const char str_002a6be0[] = "\xff" "fd";
-const char str_002a6be4[] = "\xff" "fd";
-const char str_002a6be8[] = "\xff" "fd";
-const char str_002a6bec[] = "\xff" "fd";
-const char str_002a6bf0[] = "TAB";
-const char str_002a6bf4[] = "ENTER";
-const char str_002a6bfc[] = "ESCAPE";
-const char str_002a6c04[] = "SPACE";
-const char str_002a6c0c[] = "BACKSPACE";
-const char str_002a6c18[] = "UPARROW";
-const char str_002a6c20[] = "DOWNARROW";
-const char str_002a6c2c[] = "LEFTARROW";
-const char str_002a6c38[] = "RIGHTARROW";
-const char str_002a6c44[] = "ALT";
-const char str_002a6c48[] = "CTRL";
-const char str_002a6c50[] = "SHIFT";
-const char str_002a6c58[] = "CAPSLOCK";
-const char str_002a6c64[] = "F1";
-const char str_002a6c68[] = "F2";
-const char str_002a6c6c[] = "F3";
-const char str_002a6c70[] = "F4";
-const char str_002a6c74[] = "F5";
-const char str_002a6c78[] = "F6";
-const char str_002a6c7c[] = "F7";
-const char str_002a6c80[] = "F8";
-const char str_002a6c84[] = "F9";
-const char str_002a6c88[] = "F10";
-const char str_002a6c8c[] = "F11";
-const char str_002a6c90[] = "F12";
-const char str_002a6c94[] = "F13";
-const char str_002a6c98[] = "F14";
-const char str_002a6c9c[] = "F15";
-const char str_002a6ca0[] = "INS";
-const char str_002a6ca4[] = "DEL";
-const char str_002a6ca8[] = "PGDN";
-const char str_002a6cb0[] = "PGUP";
-const char str_002a6cb8[] = "HOME";
-const char str_002a6cc0[] = "END";
-const char str_002a6cc4[] = "MOUSE1";
-const char str_002a6ccc[] = "MOUSE2";
-const char str_002a6cd4[] = "MOUSE3";
-const char str_002a6cdc[] = "MOUSE4";
-const char str_002a6ce4[] = "MOUSE5";
-const char str_002a6cec[] = "MWHEELUP";
-const char str_002a6cf8[] = "MWHEELDOWN";
-const char str_002a6d04[] = "AUX1";
-const char str_002a6d0c[] = "AUX2";
-const char str_002a6d14[] = "AUX3";
-const char str_002a6d1c[] = "AUX4";
-const char str_002a6d24[] = "AUX5";
-const char str_002a6d2c[] = "AUX6";
-const char str_002a6d34[] = "AUX7";
-const char str_002a6d3c[] = "AUX8";
-const char str_002a6d44[] = "AUX9";
-const char str_002a6d4c[] = "AUX10";
-const char str_002a6d54[] = "AUX11";
-const char str_002a6d5c[] = "AUX12";
-const char str_002a6d64[] = "AUX13";
-const char str_002a6d6c[] = "AUX14";
-const char str_002a6d74[] = "AUX15";
-const char str_002a6d7c[] = "AUX16";
-const char str_002a6d84[] = "KP_HOME";
-const char str_002a6d8c[] = "KP_UPARROW";
-const char str_002a6d98[] = "KP_PGUP";
-const char str_002a6da0[] = "KP_LEFTARROW";
-const char str_002a6db0[] = "KP_5";
-const char str_002a6db8[] = "KP_RIGHTARROW";
-const char str_002a6dc8[] = "KP_END";
-const char str_002a6dd0[] = "KP_DOWNARROW";
-const char str_002a6de0[] = "KP_PGDN";
-const char str_002a6de8[] = "KP_ENTER";
-const char str_002a6df4[] = "KP_INS";
-const char str_002a6dfc[] = "KP_DEL";
-const char str_002a6e04[] = "KP_SLASH";
-const char str_002a6e10[] = "KP_MINUS";
-const char str_002a6e1c[] = "KP_PLUS";
-const char str_002a6e24[] = "KP_NUMLOCK";
-const char str_002a6e30[] = "KP_STAR";
-const char str_002a6e38[] = "KP_EQUALS";
-const char str_002a6e44[] = "PAUSE";
-const char str_002a6e4c[] = "SEMICOLON";
-const char str_002a6e58[] = "COMMAND";
-const char str_002a6e60[] = "181";
-const char str_002a6e64[] = "191";
-const char str_002a6e68[] = "223";
-const char str_002a6e6c[] = "224";
-const char str_002a6e70[] = "225";
-const char str_002a6e74[] = "228";
-const char str_002a6e78[] = "229";
-const char str_002a6e7c[] = "230";
-const char str_002a6e80[] = "231";
-const char str_002a6e84[] = "232";
-const char str_002a6e88[] = "233";
-const char str_002a6e8c[] = "236";
-const char str_002a6e90[] = "241";
-const char str_002a6e94[] = "242";
-const char str_002a6e98[] = "243";
-const char str_002a6e9c[] = "246";
-const char str_002a6ea0[] = "248";
-const char str_002a6ea4[] = "249";
-const char str_002a6ea8[] = "250";
-const char str_002a6eac[] = "252";
+

@@ -1,6 +1,9 @@
 #include "common_types.h"
 #include "imports.h"
 #include "headers/PC/cgame_mp/cg_local.h"
+
+int removeMeWhenMPStopsCrashingInHere;
+vec3_t ejectBrassCasingOrigin;
 extern const dvar_t *cg_gun_x;
 extern const dvar_t *cg_gun_y;
 extern const dvar_t *cg_gun_z;
@@ -166,7 +169,7 @@ COD2_ASSERT_FIELD(itemInfo_t, ammoPickupSound,  0x20);
 COD2_ASSERT_FIELD(centity_t, localClientNum, 0x220);
 COD2_ASSERT_FIELD(centity_t, bMuzzleFlash,   0x1e2);
 
-static void CG_PlayADSAnim(XAnimTree *pAnimTree, int animIndex);
+static void CG_PlayADSAnim(int animIndex, XAnimTree *pAnimTree);
 int CG_WeaponDObjHandle(int weaponNum);
 void CG_Weapons_SetToDefault(int weaponNum, DObjModel_s *dobjModels);
 void CG_HoldBreathInit(void);
@@ -196,7 +199,7 @@ void CG_NextWeapon_f(void);
 void CG_WeaponRunXModelAnims(playerState_t *ps, weaponInfo_t *weapInfo);
 void CG_UpdateViewWeaponAnim(playerState_t *ps);
 
-static void CG_PlayADSAnim(XAnimTree *pAnimTree, int animIndex);
+static void CG_PlayADSAnim(int animIndex, XAnimTree *pAnimTree);
 void CG_SelectWeaponIndex(int weaponIndex);
 static __forceinline qboolean CG_IsLocalClientEntity(cg_t *cg, entityState_t *ent);
 void CG_RegisterWeapon(int weaponNum);
@@ -242,20 +245,6 @@ inline void VectorMA(const vec3_t v, const float s, const vec3_t b, vec3_t o)
     o[2] = v[2] + s * b[2];
 }
 
-// Original name unknown.
-static __declspec(noinline) void CG_StartWeaponXAnim(struct XAnimTree_s *tree, int weaponIndex, int activeAnim)
-{
-    int i;
-    weaponInfo_t *weapInfo;
-
-    weapInfo = &cg_weaponsArray[weaponIndex];
-    for (i = 0; i < 20; i++) {
-        if (activeAnim == i + 1)
-            XAnimSetGoalWeight(tree, i + 1, 1.0f, 0.0f, weapInfo->viewModelAnimRates[i + 1], 0, 1, 1);
-        else
-            XAnimSetGoalWeight(tree, i + 1, 0.0f, 0.0f, weapInfo->viewModelAnimRates[i + 1], 0, 0, 0);
-    }
-}
 
 void CG_WeaponRunXModelAnims(playerState_t *ps, weaponInfo_t *weapInfo)
 {
@@ -274,14 +263,14 @@ void CG_WeaponRunXModelAnims(playerState_t *ps, weaponInfo_t *weapInfo)
         adsIn = 0;
     } else if (ps->pm_flags & 0x40) {
         adsIn = 1;
-        if (ps->pm_flags & 0x10)
-            adsIn = 0;
     }
+    if (ps->pm_flags & 0x10)
+        adsIn = 0;
     if (weapDef->bADSPositionInfo) {
         int adsAnim = 0x15;
         if (!adsIn)
             adsAnim = 0x16;
-        CG_PlayADSAnim(pAnimTree, adsAnim);
+        CG_PlayADSAnim(adsAnim, pAnimTree);
     }
 
     if (ps->weapAnim == weapInfo->iPrevAnim)
@@ -296,30 +285,30 @@ void CG_WeaponRunXModelAnims(playerState_t *ps, weaponInfo_t *weapInfo)
             }
         }
         if (!ps->ammoclip[BG_ClipForWeapon(weaponIndex)])
-            CG_StartWeaponXAnim(pAnimTree, weaponIndex, 2);
+            StartWeaponAnim(weaponIndex, pAnimTree, 2);
         else
-            CG_StartWeaponXAnim(pAnimTree, weaponIndex, 1);
+            StartWeaponAnim(weaponIndex, pAnimTree, 1);
         break;
-    case 2: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 3); break;
-    case 3: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 5); break;
-    case 4: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 6); break;
-    case 5: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 18); break;
-    case 6: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 19); break;
-    case 7: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 20); break;
-    case 8: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 7); break;
-    case 9: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 13); break;
-    case 10: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 12); break;
-    case 11: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 8); break;
-    case 12: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 9); break;
-    case 13: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 10); break;
-    case 14: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 11); break;
-    case 15: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 15); break;
-    case 16: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 14); break;
-    case 17: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 17); break;
-    case 18: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 16); break;
-    case 19: CG_StartWeaponXAnim(pAnimTree, weaponIndex, 4); break;
+    case 2: StartWeaponAnim(weaponIndex, pAnimTree, 3); break;
+    case 3: StartWeaponAnim(weaponIndex, pAnimTree, 5); break;
+    case 4: StartWeaponAnim(weaponIndex, pAnimTree, 6); break;
+    case 5: StartWeaponAnim(weaponIndex, pAnimTree, 18); break;
+    case 6: StartWeaponAnim(weaponIndex, pAnimTree, 19); break;
+    case 7: StartWeaponAnim(weaponIndex, pAnimTree, 20); break;
+    case 8: StartWeaponAnim(weaponIndex, pAnimTree, 7); break;
+    case 9: StartWeaponAnim(weaponIndex, pAnimTree, 13); break;
+    case 10: StartWeaponAnim(weaponIndex, pAnimTree, 12); break;
+    case 11: StartWeaponAnim(weaponIndex, pAnimTree, 8); break;
+    case 12: StartWeaponAnim(weaponIndex, pAnimTree, 9); break;
+    case 13: StartWeaponAnim(weaponIndex, pAnimTree, 10); break;
+    case 14: StartWeaponAnim(weaponIndex, pAnimTree, 11); break;
+    case 15: StartWeaponAnim(weaponIndex, pAnimTree, 15); break;
+    case 16: StartWeaponAnim(weaponIndex, pAnimTree, 14); break;
+    case 17: StartWeaponAnim(weaponIndex, pAnimTree, 17); break;
+    case 18: StartWeaponAnim(weaponIndex, pAnimTree, 16); break;
+    case 19: StartWeaponAnim(weaponIndex, pAnimTree, 4); break;
     default:
-        CG_StartWeaponXAnim(pAnimTree, weaponIndex, 1);
+        StartWeaponAnim(weaponIndex, pAnimTree, 1);
         Com_Printf("CG_WeaponRunXModelAnims: Unknown weapon animation %i\n", ps->weapAnim & ~0x200);
         break;
     }
@@ -348,7 +337,7 @@ static void CG_ResetViewWeaponAnimTrees(playerState_t *ps)
     }
 }
 
-static void CG_PlayADSAnim(XAnimTree *pAnimTree, int animIndex)
+static void CG_PlayADSAnim(int animIndex, XAnimTree *pAnimTree)
 {
     if (animIndex == 0x15) {
 
@@ -784,11 +773,6 @@ static __forceinline float Vec3DotInl(const vec_t *a, const vec_t *b)
     return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 }
 
-static __forceinline float Vec3LengthInl(const vec_t *v)
-{
-    return sqrtf(v[2] * v[2] + (v[1] * v[1] + v[0] * v[0]));
-}
-
 void CG_SpawnTracer(vec_t *pstart, vec_t *pend)
 {
     vec3_t start;
@@ -846,7 +830,7 @@ void CG_WhizbySound(vec_t *vStart, vec_t *vEnd)
     projPos[1] = viewDist * dir[1] + vStart[1];
     projPos[2] = viewDist * dir[2] + vStart[2];
     Vec3SubInl(projPos, cg->refdef.vieworg, delta);
-    if (Vec3LengthInl(delta) > 140.0f)
+    if (sqrtf(delta[2] * delta[2] + (delta[1] * delta[1] + delta[0] * delta[0])) > 140.0f)
         return;
     projPos[0] = projPos[0] - dir[0] * 16.0f;
     projPos[1] = projPos[1] - dir[1] * 16.0f;
@@ -1890,16 +1874,17 @@ void CG_CycleWeap(qboolean next, qboolean checkAmmo)
 }
 
 // kisak name; retail 0x4cd480
-static void StartWeaponAnim(int weaponNum, struct XAnimTree_s *tree, int activeAnim)
+static __declspec(noinline) void StartWeaponAnim(int weaponNum, struct XAnimTree_s *tree, int activeAnim)
 {
-    weaponInfo_t *weapInfo = &cg_weaponsArray[weaponNum];
     int i;
+    weaponInfo_t *weapInfo;
 
-    for (i = 1; i < 0x15; i++) {
-        if (activeAnim == i)
-            XAnimSetGoalWeight(tree, i, 1.0f, 0.0f, weapInfo->viewModelAnimRates[i], 0, 1, 1);
+    weapInfo = &cg_weaponsArray[weaponNum];
+    for (i = 0; i < 20; i++) {
+        if (activeAnim == i + 1)
+            XAnimSetGoalWeight(tree, i + 1, 1.0f, 0.0f, weapInfo->viewModelAnimRates[i + 1], 0, 1, 1);
         else
-            XAnimSetGoalWeight(tree, i, 0.0f, 0.0f, weapInfo->viewModelAnimRates[i], 0, 0, 0);
+            XAnimSetGoalWeight(tree, i + 1, 0.0f, 0.0f, weapInfo->viewModelAnimRates[i + 1], 0, 0, 0);
     }
 }
 
@@ -1991,8 +1976,8 @@ void CG_FireWeapon(centity_t *cent, int event, int barrel)
         return;
     }
 
-    weapInfo = &cg_weaponsArray[ent->weapon];
     cent->bMuzzleFlash = 1;
+    weapInfo = &cg_weaponsArray[ent->weapon];
 
     if (CG_IsLocalClientEntity(cg, ent))
         BG_WeaponFireRecoil(&cg->predictedPlayerState, cg->vGunSpeed, cg->kickAVel);

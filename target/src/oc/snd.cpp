@@ -1,6 +1,8 @@
 #include "common_types.h"
 #include "imports.h"
 
+snd_local_t g_snd;
+
 const dvar_t *snd_errorOnMissing;
 const dvar_t *snd_touchStreamFilesOnLoad;
 const dvar_t *snd_khz;
@@ -667,14 +669,14 @@ Bool SND_IsAliasChannel3D(int channel)
 
 void SND_SetChannelInfo(int index, int entnum, const snd_alias_t *pAlias0, const snd_alias_t *pAlias1, float lerp, const vec_t *origin, float volume, float pitch, int srcChannelCount, int baserate, int total_msec, int start_msec, int startDelay, Bool master, snd_alias_system_t system)
 {
-    vec3_t org;
     vec3_t axis[3];
+    vec3_t org;
     vec3_t delta;
 
     if (entnum >= 0 && entnum < 1024 && SND_IsAliasChannel3D((pAlias0->flags & 0x780) >> 7)) {
         CG_GetEntityOrientation(entnum, org, axis);
-        delta[0] = origin[0] - org[0];
-        delta[1] = origin[1] - org[1];
+        delta[0] = origin[0]; delta[0] = delta[0] - org[0];
+        delta[1] = origin[1]; delta[1] = delta[1] - org[1];
         delta[2] = origin[2] - org[2];
         g_snd.chaninfo[index].offset[0] = delta[0] * axis[0][0] + delta[1] * axis[0][1] + delta[2] * axis[0][2];
         g_snd.chaninfo[index].offset[1] = delta[0] * axis[1][0] + delta[1] * axis[1][1] + delta[2] * axis[1][2];
@@ -696,7 +698,7 @@ void SND_SetChannelInfo(int index, int entnum, const snd_alias_t *pAlias0, const
     g_snd.chaninfo[index].pAlias0 = pAlias0;
     g_snd.chaninfo[index].looptime = g_snd.looptime;
     g_snd.chaninfo[index].endtime = g_snd.time - start_msec + total_msec;
-    g_snd.chaninfo[index].paused = g_snd.paused && g_snd.pauseSettings[(pAlias0->flags & 0x780) >> 7];
+    g_snd.chaninfo[index].paused = (g_snd.paused && g_snd.pauseSettings[(pAlias0->flags & 0x780) >> 7]) ? 1 : 0;
     g_snd.chaninfo[index].master = master;
     g_snd.chaninfo[index].system = system;
 }

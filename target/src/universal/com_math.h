@@ -405,8 +405,19 @@ SinCos
 */
 TU_STATIC void SinCos(double value, double *pSin, double *pCos)
 {
-	*pSin = sin(value);
-	*pCos = cos(value);
+	__asm
+	{
+		push eax
+		push ecx
+		fld value
+		fsincos
+		mov ecx, pCos
+		mov eax, pSin
+		fstp qword ptr [ecx]
+		fstp qword ptr [eax]
+		pop ecx
+		pop eax
+	}
 }
 
 // Vector helpers, same rule; this block follows the scalar one.

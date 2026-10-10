@@ -672,7 +672,7 @@ inline float XModelDataReadFloat(const unsigned char **pos)
 {
 	int value;
 
-	value = *(const int *)*pos;
+	memcpy(&value, *pos, sizeof(value));
 	*pos += sizeof(value);
 
 	return *(float *)&value;

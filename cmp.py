@@ -74,7 +74,7 @@ for i, (va, name, obj) in enumerate(syms):
     # short anchors (call-dense fns) still need the full masked compare; cov.py counts unique placements only
     if len(lit) >= 8 or (len(lit) >= 4 and len(code) - len(mask) >= 16):
         p = cdata.find(lit)
-        while p >= 0 and len(hits) < 8:
+        while p >= 0 and len(hits) < 64:
             st = p - best[0]
             w = cdata[st:st + len(code)]
             if st >= 0 and len(w) == len(code) and all(w[k] == code[k] for k in range(len(code)) if k not in mask):
@@ -94,6 +94,27 @@ for i, (va, name, obj) in enumerate(syms):
         stats['match_fns'] += 1
         stats['match_bytes'] += len(code)
     res.append({'name': name, 'obj': obj, 'size': len(code), 'hits': hits, **({'paired': 1} if paired else {})})
+
+# import thunks (jmp [IAT], 4 of 6 bytes relocated): pair by imported name
+def iat(p):
+    m = {}
+    for d in getattr(p, 'DIRECTORY_ENTRY_IMPORT', []):
+        for e in d.imports:
+            m[e.address] = (d.dll.decode().lower(), (e.name or b'#%d' % e.ordinal).decode().lstrip('_'))
+    return m
+oiat, ciat, cth = iat(pe), iat(cpe), {}
+for k in range(len(cdata) - 5):
+    if cdata[k] == 0xff and cdata[k + 1] == 0x25:
+        n = ciat.get(int.from_bytes(cdata[k + 2:k + 6], 'little'))
+        if n: cth.setdefault(n, []).append(cva + k)
+for r in res:
+    if r['hits'] or r['size'] != 6 or '.dll' not in r['obj'].lower(): continue
+    va = next(v for v, n, o in syms if n == r['name'])
+    code = tdata[va - tva:va - tva + 6]
+    n = oiat.get(int.from_bytes(code[2:], 'little')) if code[:2] == b'\xff\x25' else None
+    if n and len(cth.get(n, [])) == 1:
+        r['hits'], r['thunk'] = [hex(cth[n][0])], 1
+        stats['match_fns'] += 1; stats['match_bytes'] += 6
 
 json.dump(res, open(sys.argv[4] if len(sys.argv) > 4 else 'cmp.json', 'w'), indent=0)
 print(stats, 'client .text', len(cdata))

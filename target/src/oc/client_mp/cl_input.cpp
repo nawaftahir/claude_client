@@ -3,6 +3,14 @@
 #include "bytematch.h"
 #include "cod2_feature_config.h"
 #include <math.h>
+
+const dvar_t *cl_stanceHoldTime;
+const dvar_t *cl_talking;
+const dvar_t *cl_analog_attack_threshold;
+const dvar_t *cl_yawspeed;
+const dvar_t *cl_bypassMouseInput;
+const dvar_t *cl_pitchspeed;
+const dvar_t *cl_anglespeedkey;
 extern clientActive_t clients[1];
 extern clientConnection_t clc;
 /* dvar globals */
@@ -251,6 +259,12 @@ static float I_fmax(const float x, const float y)
 static float I_fmin(const float x, const float y)
 {
     return I_fsel(y - x, x, y);
+}
+
+// retail 0x409170, unreferenced; name unknown
+void IN_ClearFirstKey_409170(void)
+{
+    kb[0].down[0] = 0;
 }
 
 void IN_MLookDown(void)
@@ -1004,6 +1018,14 @@ void IN_MLookUp(void)
         clientActive_t *cl = clients;
         cl->viewangles[0] = -((float)cl->snap.ps.delta_angles[0] * 0.0054931640625f);
     }
+}
+
+// retail 0x407bd0, unreferenced (CL_CmdButtons inlines it); name unknown
+void CL_CmdButton_407bd0(int *buttons, int index, int bit)
+{
+    if (kb[index].active || kb[index].wasPressed)
+        *buttons |= bit;
+    kb[index].wasPressed = 0;
 }
 
 void CL_CmdButtons(usercmd_t *cmd)

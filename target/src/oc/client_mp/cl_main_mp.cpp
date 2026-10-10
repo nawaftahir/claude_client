@@ -5,6 +5,63 @@
 #include "cod2_feature_config.h"
 #include "pb_public.h"
 #include "www_download.h"
+const dvar_t *cl_shownet = NULL;
+qboolean autoupdateChecked;
+dvar_t *fx_enable;
+dvar_t *fx_draw;
+dvar_t *fx_cull;
+dvar_t *fx_sort;
+dvar_t *fx_profile;
+dvar_t *fx_freeze;
+dvar_t *fx_visMinTraceDist;
+
+const dvar_t *cl_shownuments;
+
+const dvar_t *cl_allowDownload;
+const dvar_t *cl_showSend;
+clientConnection_t clc;
+Bool g_waitingForServer;
+const dvar_t *cl_avidemo;
+refexport_t re;
+const dvar_t *cl_nodelta;
+const dvar_t *cl_showServerCommands;
+const dvar_t *cl_forceavidemo;
+const dvar_t *cl_timeout;
+const dvar_t *m_yaw;
+const dvar_t *m_pitch;
+const dvar_t *cl_activeAction;
+const dvar_t *nextdemo;
+clientStatic_t cls;
+ping_t cl_pinglist[16];
+int old_com_frameTime;
+const dvar_t *fx_debugBolt;
+dvar_t *cl_updatefiles;
+const dvar_t *cl_voice;
+const dvar_t *cl_showMouseRate;
+const dvar_t *fx_count;
+unsigned int frame_msec;
+const dvar_t *m_forward;
+const dvar_t *cl_packetdup;
+const dvar_t *cl_mouseAccel;
+const dvar_t *cl_maxpackets;
+const dvar_t *cl_motdString;
+const dvar_t *cl_freezeDemo;
+const dvar_t *cl_showTimeDelta;
+const dvar_t *fx_debug;
+dvar_t *cl_ingame;
+const dvar_t *cl_inGameVideo;
+const dvar_t *name;
+const dvar_t *cl_noprint;
+const dvar_t *m_side;
+const dvar_t *cl_serverStatusResendTime;
+const dvar_t *m_filter;
+dvar_t *cl_updateversion;
+dvar_t *cl_updateavailable;
+dvar_t *cl_updateoldversion;
+clientActive_t clients[1];
+const dvar_t *cl_freelook;
+int cl_connectedToPureServer = 0;
+qboolean scr_initialized;
 
 extern int qport;
 extern bgs_t *bgs;
@@ -397,6 +454,20 @@ int CL_GetLocalClientActiveCount(void)
     return 1;
 }
 
+// retail 0x40b4e0, unreferenced; name unknown
+int CL_GetFrameActiveClientCount_40b4e0(void)
+{
+    return clients->frameActiveClientCount;
+}
+
+// retail 0x40b4f0, unreferenced; name unknown
+void CL_ResetFrameClients_40b4f0(void)
+{
+    clients->frameActiveClientCount = 1;
+    if (clients->active)
+        clients->frameClientIndex = 0;
+}
+
 Bool CL_AllLocalClientsDisconnected(void)
 {
     int client;
@@ -407,6 +478,18 @@ Bool CL_AllLocalClientsDisconnected(void)
         return 1;
     for (client = 0; client < 1; client++) {
         if (clients[client].active && (&::clc)[client].state >= CA_CONNECTING)
+            return 0;
+    }
+    return 1;
+}
+
+// retail 0x40b560, unreferenced; name unknown
+Bool CL_NoLocalClientsActive_40b560(void)
+{
+    int client;
+
+    for (client = 0; client < 1; client++) {
+        if (clients[client].active)
             return 0;
     }
     return 1;
@@ -447,9 +530,33 @@ Bool CL_IsRenderingSplitScreen(void)
     return 0;
 }
 
+// retail 0x40b620, unreferenced; CoD4 name (SUPPORTED)
+void CL_SetLocalClientConnectionState(connstate_t connstate)
+{
+    ::clc.state = connstate;
+}
+
+// retail 0x40b630, unreferenced; CoD4 name (SUPPORTED)
+connstate_t CL_GetLocalClientConnectionState(void)
+{
+    return ::clc.state;
+}
+
 const char *CL_GetUsernameForLocalClient(int controllerIndex)
 {
     return name->current.string;
+}
+
+// retail 0x40b620, unreferenced; name unknown
+void CL_SetConnectionState_40b620(connstate_t state)
+{
+    clc.state = state;
+}
+
+// retail 0x40b630, unreferenced; name unknown
+connstate_t CL_GetConnectionState_40b630(void)
+{
+    return clc.state;
 }
 
 void CL_AddReliableCommand(const char *cmd)
@@ -1623,6 +1730,12 @@ int CL_GetKeyCatchers(void)
     return clients[0].keyCatchers;
 }
 
+// retail 0x411460, unreferenced twin of CL_GetKeyCatchers; name unknown
+int CL_GetKeyCatchers_411460(void)
+{
+    return clients[0].keyCatchers;
+}
+
 Bool CL_GetDisplayHUDWithKeycatchUI(void)
 {
     return clients[0].displayHUDWithKeycatchUI;
@@ -1631,6 +1744,12 @@ Bool CL_GetDisplayHUDWithKeycatchUI(void)
 FontHandle CL_RegisterFont(const char *fontName, int imageTrack)
 {
     return re.RegisterFont(fontName, imageTrack);
+}
+
+// retail 0x411490, unreferenced; name unknown
+MaterialHandle CL_RegisterMaterial_411490(const char *name, int baseImageFlags, int imageTrack)
+{
+    return re.RegisterMaterial(name, baseImageFlags, imageTrack);
 }
 
 void CL_WriteDemoMessage(msg_t *msg, int headerBytes)
@@ -2252,6 +2371,13 @@ qboolean CL_UpdateDirtyPings_f(int source)
     return status;
 }
 
+// retail 0x40e6b0, unreferenced; name unknown
+void CL_VoiceFrame_40e6b0(void)
+{
+    Voice_GetLocalVoiceData((ClientVoicePacket_t *)&clients[0]);
+    Voice_Playback();
+}
+
 void CL_RunOncePerClientFrame(int msec)
 {
 
@@ -2623,6 +2749,12 @@ void CL_Frame(void)
     CL_SendCmd();
 }
 
+// retail 0x40e820, unreferenced; Kisak cl_main_mp name
+bool CL_IsLocalClientInGame(void)
+{
+    return clc.state == CA_ACTIVE;
+}
+
 void CL_Vid_Restart_f(void)
 {
     MemoryFile memFile;
@@ -2869,23 +3001,12 @@ void CL_Disconnect_f(void)
     }
 }
 
-static __forceinline void Dvar_SetStringInl(dvar_t *dvar, const char *string)
+void CL_MapLoading(const char *mapname)
 {
+    dvar_t *dvar;
     DvarValue newValue;
     char stringCopy[1024];
 
-    if (dvar->type == DVAR_TYPE_STRING) {
-        I_strncpyz(stringCopy, string, sizeof(stringCopy));
-        newValue.string = stringCopy;
-    } else {
-        newValue.integer = Dvar_StringToEnum(&dvar->domain, string);
-    }
-
-    Dvar_SetVariant(dvar, newValue, DVAR_SOURCE_INTERNAL);
-}
-
-void CL_MapLoading(const char *mapname)
-{
     if (!((LegacyHacks *)::legacyHacks)->cl_running)
         return;
     g_waitingForServer = 0;
@@ -2902,7 +3023,15 @@ void CL_MapLoading(const char *mapname)
         I_strncpyz(((LegacyHacks *)::legacyHacks)->cl_serverloadmap, mapname, 0x40);
         ((LegacyHacks *)::legacyHacks)->cl_serverloadwaiting = 0;
     } else {
-        Dvar_SetStringInl((dvar_t *)nextmap, (const char *)"");
+        // Dvar_SetString inlined
+        dvar = (dvar_t *)nextmap;
+        if (dvar->type == DVAR_TYPE_STRING) {
+            I_strncpyz(stringCopy, "", sizeof(stringCopy));
+            newValue.string = stringCopy;
+        } else {
+            newValue.integer = Dvar_StringToEnum(&dvar->domain, "");
+        }
+        Dvar_SetVariant(dvar, newValue, DVAR_SOURCE_INTERNAL);
         I_strncpyz(cls.servername, (const char *)"localhost", sizeof(cls.servername));
         CL_Disconnect();
         UI_CloseAllInl();

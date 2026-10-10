@@ -245,7 +245,7 @@ int FS_CreatePath( char *OSPath );
 extern "C" size_t FS_FileRead( void *ptr, size_t size, size_t nmemb, FILE *stream );
 size_t FS_FileWrite( const void *ptr, size_t size, size_t nmemb, FILE *stream );
 extern "C" FILE *FS_FileOpen( const char *filename, const char *mode );
-extern "C" void FS_FileClose( FILE *stream );
+extern "C" int FS_FileClose( FILE *stream );
 extern "C" int FS_FileSeek( FILE *file, int offset, int whence );
 FILE *FS_FileForHandle( fileHandle_t f );
 int FS_FilenameCompare( const char *s1, const char *s2 );

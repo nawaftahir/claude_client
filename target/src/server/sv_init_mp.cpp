@@ -67,7 +67,7 @@ This is NOT called for map_restart
 ================
 */
 // client-side systems the dedicated server still initialises
-void FX_InitSystem( bool rendererExists );
+int FX_InitSystem( bool rendererExists );
 void FX_CreateDefaultEffect();
 void Dvar_ClearServerInfoNoUpdateFlags();
 

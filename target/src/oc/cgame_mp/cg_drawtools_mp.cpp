@@ -219,7 +219,7 @@ void CG_DrawRotatedQuadPic(float x, float y, vec2_t *verts, float angle, const v
 
     FastSinCos(angle * 0.017453292f, &s, &c);
     for (i = 0; i < 4; i++) {
-        xy[i][0] = c * verts[i][0] + x - s * verts[i][1];
+        xy[i][0] = c * verts[i][0] + x; xy[i][0] = xy[i][0] - s * verts[i][1];
         xy[i][1] = s * verts[i][0] + c * verts[i][1] + y;
     }
 

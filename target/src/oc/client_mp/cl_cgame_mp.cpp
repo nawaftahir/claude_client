@@ -298,6 +298,12 @@ static float CL_ComTimescaleValue(void)
     return ((float)com_timescaleValue);
 }
 
+// retail 0x401240, unreferenced; Q3 CL_GetGameState (SUPPORTED)
+void CL_GetGameState(gameState_t *gs)
+{
+    *gs = clients->gameState;
+}
+
 void CL_GetScreenDimensions(int *width, int *height, float *aspect)
 {
     clientStatic_t *cls = CLS;
@@ -416,6 +422,13 @@ void CL_SetUserCmdInShellshock(qboolean shocked)
 {
     clientActive_t *cl = CL_LOCAL;
     cl->cgameInShellshock = shocked;
+}
+
+// retail 0x4014e0, unreferenced; name unknown
+qboolean CL_GetUserCmdInShellshock_4014e0(void)
+{
+    clientActive_t *cl = CL_LOCAL;
+    return cl->cgameInShellshock;
 }
 
 void CL_SetUserCmdAimValues(vec_t *kickAngles)
@@ -708,6 +721,14 @@ snd_alias_t *CL_PickSoundAlias(const char *aliasname)
     return Com_PickSoundAlias(aliasname);
 }
 
+extern void DObjCreate(struct DObjModel_s *dobjModels, unsigned int numModels, struct XAnimTree_s *tree, struct DObj_s *obj, unsigned int entnum);
+
+// retail 0x402040, unreferenced; name unknown
+void CL_DObjCreate_402040(struct DObjModel_s *dobjModels, unsigned short numModels, struct XAnimTree_s *tree, struct DObj_s *obj)
+{
+    DObjCreate(dobjModels, numModels, tree, obj, 0);
+}
+
 struct XModel *CL_RegisterModel(const char *name)
 {
     return RE->RegisterModel(name);
@@ -721,6 +742,12 @@ struct GfxBrushModel *CL_RegisterInlineModel(int modelIndex)
 void CL_FinishLoadingModels(void)
 {
     RE->FinishLoadingModels();
+}
+
+// retail 0x402090, unreferenced; name unknown
+void CL_SetIgnorePrecacheErrors_402090(qboolean ignore)
+{
+    RE->SetIgnorePrecacheErrors(ignore);
 }
 
 MaterialHandle CL_RegisterMaterial(const char *name, int imageTrack)
@@ -854,6 +881,20 @@ void CL_DrawStretchPic(float x, float y, float w, float h, int horzAlign, int ve
 #endif
 }
 
+#if !defined(COD2_X64) || defined(COD2_GFX_DLL)
+// retail 0x4022d0, unreferenced; name unknown
+void CL_DrawStretchPicRotate_4022d0(float x, float y, float w, float h, float s1, float t1, float s2, float t2, float angle, const vec_t *color, MaterialHandle material)
+{
+    RE->DrawStretchPicRotate(x, y, w, h, s1, t1, s2, t2, angle, color, material);
+}
+
+// retail 0x402310, unreferenced; name unknown
+void CL_GetWorldBounds_402310(vec_t *mins, vec_t *maxs)
+{
+    RE->GetWorldBounds(mins, maxs);
+}
+#endif
+
 void CL_SyncTimes(void)
 {
     clientConnection_t *clui = CLUI_STATE;
@@ -958,6 +999,16 @@ void CL_CapTurnRate(float maxPitchSpeed, float maxYawSpeed)
     clientActive_t *cl = CL_LOCAL;
     cl->cgameMaxPitchSpeed = maxPitchSpeed;
     cl->cgameMaxYawSpeed = maxYawSpeed;
+}
+
+// retail 0x4025e0, unreferenced; name unknown
+void CL_SetViewAngles_4025e0(const vec_t *angles)
+{
+    clientActive_t *cl = CL_LOCAL;
+    vec_t *dst = cl->viewangles;
+    dst[0] = angles[0];
+    dst[1] = angles[1];
+    dst[2] = angles[2];
 }
 
 void LoadWorld(const char *mapname)

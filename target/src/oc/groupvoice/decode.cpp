@@ -1,6 +1,9 @@
 
 #include "common_types.h"
 #include "imports.h"
+void *g_decoder = NULL;
+
+int g_decode_frame_size;
 
 
 static int g_current_decode_bandwidth_setting = 0x0;

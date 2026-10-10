@@ -2,6 +2,14 @@
 #include "common_types.h"
 #include "imports.h"
 #include "bytematch.h"
+
+int g_console_field_width = 620;
+
+const dvar_t *con_restricted;
+const dvar_t *con_boldgamemessagetime;
+const dvar_t *con_gamemessagetime;
+const dvar_t *con_minicontime;
+const dvar_t *con_miniconlines;
 extern field_t *chatField;
 extern qboolean *chat_team;
 extern const vec4_t colorWhite;
@@ -135,7 +143,7 @@ void Con_ClearSubtitles(void);
 static void ConDrawInput_DvarMatch(const char *str);
 const char *Con_TokenizeInput(void);
 Bool Con_AnySpaceAfterCommand(void);
-static void Con_CheckResize(void);
+void Con_CheckResize(void);
 static void Con_OneTimeInit(void);
 static int CL_ConsolePrint_AddLine(print_msg_type_t type, const char *txt, int duration, int linewidth, int color);
 void CL_ConsolePrint(print_msg_type_t type, const char *txt, int duration, int linewidth);
@@ -187,7 +195,7 @@ void Con_ClearSubtitles(void);
 static void ConDrawInput_DvarMatch(const char *str);
 const char *Con_TokenizeInput(void);
 Bool Con_AnySpaceAfterCommand(void);
-static void Con_CheckResize(void);
+void Con_CheckResize(void);
 static void Con_OneTimeInit(void);
 void Con_Close(void);
 static void ConDrawInput_AutoCompleteArg(const char **strings, int stringCount);
@@ -200,6 +208,12 @@ static void Con_DrawInput(void);
 void Con_DrawConsole(void);
 void Con_Init(void);
 void CL_DeathMessagePrint(const char *attackerName, const vec_t *attackerColor, const char *victimName, const vec_t *victimColor, const char *iconShader, float iconWidth, float iconHeight, const vec_t *iconColor, bool horzFlipIcon);
+
+// retail 0x404fc0, unreferenced; name unknown
+int ConDrawInput_TextHeight_404fc0(FontHandle font)
+{
+    return re.TextHeight(font);
+}
 
 static int ConDrawInput_TextWidth(const char *text)
 {
@@ -290,6 +304,25 @@ toggle:
     ((field_t *)field)->fixedSize = 1;
     con.outputVisible = 0;
     clients[0].keyCatchers ^= 1;
+}
+
+// retail 0x4038a0/0x4038b0/0x4038d0, unreferenced; names unknown
+void Con_Open_4038a0(void)
+{
+    if (!(clients[0].keyCatchers & 1))
+        Con_ToggleConsole_f();
+}
+
+void Con_ShowOutput_4038b0(void)
+{
+    if (clients[0].keyCatchers & 1)
+        con.outputVisible = 1;
+}
+
+void Con_Hide_4038d0(void)
+{
+    if (clients[0].keyCatchers & 1)
+        Con_ToggleConsole_f();
 }
 
 static void Con_ChatModePublic_f(void)
@@ -397,12 +430,18 @@ void Con_ClearNotify(void)
     MsgWnd_Clear(&con.messageBuffer->boldgamemsg);
 }
 
+// retail 0x403be0, unreferenced; CoD4 Con_ClearMiniConsole (SUPPORTED)
+void Con_ClearMiniConsole(void)
+{
+    MsgWnd_Clear(&con.messageBuffer->minicon);
+}
+
 void Con_ClearSubtitles(void)
 {
     MsgWnd_Clear(&con.messageBuffer->subtitle);
 }
 
-static void Con_CheckResize(void)
+void Con_CheckResize(void)
 {
     int i;
     int j;
@@ -962,6 +1001,12 @@ static void ConDrawInput_NextLine(void)
     conDrawInputGlob.x = conDrawInputGlob.leftX;
 }
 
+// retail 0x405090, unreferenced; name unknown
+void ConDrawInput_Over_405090(int width)
+{
+    conDrawInputGlob.x += (float)width;
+}
+
 static void ConDrawInput_TextAndOver(const char *str, const vec_t *color)
 {
     ConDrawInput_Text(str, color);
@@ -998,6 +1043,12 @@ static void ConDrawInput_Box(int lines, const vec_t *color)
     w = con.screenMax[0] - con.screenMin[0] - (x - con.screenMin[0]);
     h = (float)lines * conDrawInputGlob.fontHeight + 12.0f;
     ConDraw_Box(x, y, w, h, color);
+}
+
+// retail 0x4052a0, unreferenced; name unknown
+int ConDrawInput_IsMatch_4052a0(const char *str)
+{
+    return I_strnicmp(str, conDrawInputGlob.inputText, conDrawInputGlob.inputTextLen) == 0;
 }
 
 static void ConDrawInput_IncrMatchCounter(const char *str)
@@ -1135,9 +1186,8 @@ static void ConDrawInput_DetailedDvarMatch(const char *str)
     ConDrawInput_Text("  default", con_inputDvarInactiveValueColor);
     conDrawInputGlob.x += 200.0f;
     ConDrawInput_DrawText(Dvar_DisplayableResetValue(dvar), 40, con_inputDvarInactiveValueColor);
-    conDrawInputGlob.y += conDrawInputGlob.fontHeight;
-    conDrawInputGlob.y += conDrawInputGlob.fontHeight;
-    conDrawInputGlob.x = conDrawInputGlob.leftX;
+    ConDrawInput_NextLine();
+    ConDrawInput_NextLine();
     Dvar_DomainToString_GetLines(dvar->type, dvar->domain, dvarInfo, sizeof(dvarInfo), &lineCount);
     ConDrawInput_Box(lineCount + 1, con_inputHintBoxColor->current.vector);
     ConDrawInput_Text(dvarInfo, con_inputDvarInfoColor);
@@ -1538,8 +1588,8 @@ void Con_DrawOuputWindow(void)
     height = con.screenMax[1] - con.screenMin[1] - 32.0f;
     ConDraw_Box(x, y, width, height, con_outputWindowColor->current.vector);
 
-    x += 6.0f;
     y += 6.0f;
+    x += 6.0f;
     width -= 12.0f;
     height -= 12.0f;
     Con_DrawOutputVersion(x, y, height);
@@ -1586,7 +1636,7 @@ void Con_Top(void)
 
 Bool Con_IsActive(void)
 {
-    return (*(int *)((char *)((void *)clients) + 4) & 1) != 0;
+    return clients[0].keyCatchers & 1;
 }
 
 void Con_Close(void)

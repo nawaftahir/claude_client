@@ -9,10 +9,10 @@ int g_sound_channels = 1;
 int (*current_audioCallback)( audioSample_t * );
 dsound_sample_t *s_recordingSamplePtr;
 dsound_sample_t s_recordingSamples[65];
-bool g_recording_initialized;
-bool g_currently_recording;
-LPDIRECTSOUNDCAPTURE g_pDSCaptureInstance;
-dsound_sample_t *g_current_sample;
+bool g_recording_initialized = false;
+bool g_currently_recording = false;
+LPDIRECTSOUNDCAPTURE g_pDSCaptureInstance = NULL;
+dsound_sample_t *g_current_sample = NULL;
 
 void DSOUNDRecord_UpdateSample( dsound_sample_t *pRecSample )
 {
@@ -35,7 +35,7 @@ void DSOUNDRecord_UpdateSample( dsound_sample_t *pRecSample )
 	if ( dwReadPos < pRecSample->dwCaptureOffset )
 		lLockSize = pRecSample->dwBufferSize - pRecSample->dwCaptureOffset + dwReadPos;
 	else
-		lLockSize = dwReadPos - pRecSample->dwCaptureOffset;
+		lLockSize = dwReadPos; lLockSize = lLockSize - pRecSample->dwCaptureOffset;
 	lLockSize -= lLockSize % 4;
 	if ( !lLockSize )
 		return;

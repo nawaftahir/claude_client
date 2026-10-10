@@ -336,6 +336,13 @@ void MediaHandles::AddEffect( FxEffectDef *fx )
 	AddHandle(item);
 }
 
+// Original name unknown; unreferenced in retail.
+void FX_StripExtensionLower_497d90(const char *name, char *out)
+{
+	Com_StripExtension(name, out);
+	_strlwr(out);
+}
+
 void MediaHandles::Shutdown()
 {
 	if ( !mMediaList.elements )

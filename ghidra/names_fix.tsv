@@ -422,3 +422,137 @@
 42b350	Hunk_AllocLowInternal	fix	# shortpair, tail-jumps AllocLowAlign
 41fa60	Cmd_TokenizeStringWithLimit	fix	# shortpair twin of 41fa80
 41fa80	SV_Cmd_TokenizeStringWithLimit	fix	# shortpair twin
+405090	ConDrawInput_Over_405090	fix	# shortpair k2 u0
+4052a0	ConDrawInput_IsMatch_4052a0	fix	# shortpair k2 u0
+433800	Com_StartHunkUsersNoMap_433800	fix	# shortpair k2 u0
+44bc80	SND_ResetPauseSettingsToDefaults	fix	# shortpair k2 u0
+4cb820	CG_SetObjectiveText_4cb820	fix	# shortpair k2 u0
+4cb850	CG_SetScriptMainMenu_4cb850	fix	# shortpair k2 u0
+4b7020	Record_SetRecordingCallback	fix	# stores current_audioCallback 0x135b7c0 (Kisak name)
+402310	CL_GetWorldBounds_402310	fix	# re slot 8 GetWorldBounds wrapper, unreferenced
+4c5bd0	CG_DrawShellShockBlend_4c5bd0	fix	# unreferenced wrapper, esi/eax/ecx call
+4132e0	SCR_DrawConsole_4132e0	fix	# unreferenced Con_DrawConsole twin in cl_scrn
+40b4e0	CL_GetFrameActiveClientCount_40b4e0	fix	# unreferenced
+4d2bb0	CG_ScoreboardGetter_4d2bb0	fix	# unreferenced float const getter
+4d2bc0	CG_ScoreboardGetter_4d2bc0	fix	# unreferenced float const getter
+4d2bd0	CG_ScoreboardGetter_4d2bd0	fix	# unreferenced float const getter
+4d2be0	CG_ScoreboardGetter_4d2be0	fix	# unreferenced float const getter
+4d2bf0	CG_ScoreboardGetter_4d2bf0	fix	# unreferenced float const getter
+4d2c00	CG_ScoreboardGetter_4d2c00	fix	# unreferenced float const getter
+533860	Window_Getter_533860	fix	# unreferenced field getter
+533870	Window_Getter_533870	fix	# unreferenced field getter
+533880	Window_Getter_533880	fix	# unreferenced field getter
+533890	Window_Getter_533890	fix	# unreferenced field getter
+5338a0	Window_Getter_5338a0	fix	# unreferenced field getter
+5338b0	Menu_Getter_5338b0	fix	# unreferenced field getter
+5338c0	Item_Getter_5338c0	fix	# unreferenced field getter
+406b60	Con_IsActive	fix	# keyCatchers & 1
+4038a0	Con_Open_4038a0	fix	# unreferenced
+4038b0	Con_ShowOutput_4038b0	fix	# unreferenced
+4038d0	Con_Hide_4038d0	fix	# unreferenced
+5348c0	Menus_MenuIsInStack_5348c0	fix	# unreferenced twin
+4bf300	CompassIconSize_4bf300	fix	# unreferenced twin
+48ea60	XModelReadSurface_48ea60	fix	# unreferenced re wrapper
+48ea80	XModelLoadXSkins_48ea80	fix	# unreferenced re wrapper
+402090	CL_SetIgnorePrecacheErrors_402090	fix	# unreferenced re wrapper
+404fc0	ConDrawInput_TextHeight_404fc0	fix	# unreferenced re wrapper
+411490	CL_RegisterMaterial_411490	fix	# unreferenced re wrapper
+40e6b0	CL_VoiceFrame_40e6b0	fix	# unreferenced
+42ce60	Com_PickSoundAlias_42ce60	fix	# unreferenced twin
+463280	Sys_Net_Restart_f	fix	# pushed at 0x4632ad
+464f60	NET_Restart	fix	# short anchor
+422d50	FS_FullPath_f	fix	# pushed at 0x439f2f
+422d60	FS_Path_f	fix	# pushed at 0x439f20
+403520	CIN_UploadCinematic	fix	# shortpair 9 B
+475240	TempMalloc	fix	# shortpair 31 B
+489760	XAnimGetNumChildren	fix	# shortpair 6 B
+4aab60	assign	fix	# shortpair 11 B
+4ab060	_Rmost	fix	# shortpair 7 B
+4ab3d0	deallocate	fix	# shortpair 14 B
+4abe90	max_size	fix	# shortpair 6 B
+4ac560	?Eiterator	fix	# shortpair 14 B
+4ac600	allocate	fix	# shortpair 16 B
+4cd070	CG_StartShellShock	fix	# shortpair 18 B
+50d840	BG_FindItemForWeapon	fix	# shortpair 9 B
+406b70	_sqrtf	fix	# shortpair twin, order
+406b80	sqrt	fix	# shortpair twin, order
+406b90	I_sqrt	fix	# shortpair twin, order
+414890	_fabsf	fix	# shortpair twin, order
+4148a0	fabs	fix	# shortpair twin, order
+4148b0	I_fabs	fix	# shortpair twin, order
+4243b0	_acosf	fix	# shortpair twin, order
+424400	acos	fix	# shortpair twin, order
+4243e0	_sinf	fix	# shortpair twin, order
+424450	sin	fix	# shortpair twin, order
+45f940	Sys_SetValue	fix	# shortpair
+51ef80	trigger_use	fix	# shortpair twin, order
+51ef90	trigger_use_touch	fix	# shortpair twin, order
+407690	IN_ToggleADS	fix	# was paired to 0x406660
+406660	Con_ToggleConsoleOutput	fix	# short anchor
+4076a0	IN_LeaveADS	fix	# short anchor
+4025e0	CL_SetViewAngles_4025e0	fix	# unreferenced, cl.viewangles
+4b73f0	Encode_SetBandwidth_4b73f0	fix	# unreferenced twin
+4b2580	MSS_HunkAlloc_4b2580	fix	# unreferenced
+4200b0	FS_FileClose	fix	# returns fclose result
+490190	FX_InitSystem	fix	# unreferenced, returns FX_Init
+490a40	?3Effect	fix	# shortpair nb
+4a8db0	Language_IsAsian	fix	# shortpair nb
+4b26a0	MSS_GetDryLevel	fix	# shortpair nb
+486470	XAnimAbort	fix	# tiny, after XAnimShutdown
+476770	Scr_GetRefCountToObject	fix	# names_loc 0x476630 wrong
+461f90	Win_CopyString_461f90	fix	# unreferenced va wrapper
+532560	UI_IsFullscreen	fix	# followed by UI_ReadableSize
+533600	UI_AnyFullScreenMenuVisible	fix	# twin, before UI_ReplaceConversionString
+501da0	GScr_getStartTime	fix	# level.startTime 0x17c58f8; 0x4fef40 = GScr_GetTime
+42cef0	Com_AllocateTempSoundMemory	fix	# Hunk_AllocateTempMemoryInternal wrapper; 0x42a9c0 = Z_MallocRaw
+5403d0	UI_AddD1Cmd_5403d0	fix	# dead retail fn
+52d200	UI_GetPlayerClientNum_52d200	fix	# dead retail fn
+497d90	FX_StripExtensionLower_497d90	fix	# dead retail fn
+449a60	ScrPlace_ViewableWidth_449a60	fix	# dead retail fn
+449a70	ScrPlace_ViewableHeight_449a70	fix	# dead retail fn
+409170	IN_ClearFirstKey_409170	fix	# dead retail fn
+4cb300	CG_SetTeamScore_4cb300	fix	# dead retail fn
+4b6cb0	DSound_BufferUnderrunOccurred	fix	# Bool return, inlined in retail
+40b620	CL_SetConnectionState_40b620	fix	# dead retail fn
+40b630	CL_GetConnectionState_40b630	fix	# dead retail fn
+411460	CL_GetKeyCatchers_411460	fix	# dead retail twin
+4014e0	CL_GetUserCmdInShellshock_4014e0	fix	# dead retail fn
+4b67e0	Encode_GetFrameSize_4b67e0	fix	# dead retail twin
+449a80	ScrPlace_RealViewableWidth_449a80	fix	# dead retail fn
+449a90	ScrPlace_RealViewableHeight_449a90	fix	# dead retail fn
+4c2c40	CG_CrosshairDisabled_4c2c40	fix	# dead retail fn
+4cb840	CG_SetDrawHud_4cb840	fix	# dead retail fn
+42cd10	Com_SetSoundAliasRandomSeed_42cd10	fix	# dead retail fn
+461ea0	IN_ClearStates	fix	# dead retail fn, Q3 name
+406e50	IN_UpUp	fix	# KeyUp kb12,kb10; twin 407860
+407860	IN_GoStandUp	fix	# twin of IN_UpUp
+406e80	IN_DownDown	fix	# KeyDown kb11
+406ed0	IN_DownUp	fix	# KeyUp kb11
+407200	IN_MeleeBreath_Down	fix	# KeyDown
+407230	IN_MeleeBreath_Up	fix	# KeyUp
+407320	IN_BreathBinoculars_Down	fix	# KeyDown
+407350	IN_BreathBinoculars_Up	fix	# KeyUp
+402370	CL_MarkFragments	fix	# twinpair
+4023b0	CL_PickMaterial	fix	# twinpair
+52b230	Window_Getter_52b230	fix	# dead getter
+52b240	Item_Getter_52b240	fix	# dead getter
+52b250	ListBox_Getter_52b250	fix	# dead getter
+52b260	ListBox_Getter_52b260	fix	# dead getter
+52b270	ListBox_Getter_52b270	fix	# dead getter
+49bad0	SetModel	fix	# Emitter::SetModel, dead
+49b9f0	?2Particle	fix	# Particle::operator new, Alloc callee order
+49ba00	?2Cloud	fix	# Cloud::operator new, Alloc callee order
+49ba30	?2Line	fix	# Line::operator new, Alloc callee order
+49ba60	?2OrientedParticle	fix	# OrientedParticle::operator new, Alloc callee order
+49ba90	?2Tail	fix	# Tail::operator new, Alloc callee order
+49bac0	?2Cylinder	fix	# Cylinder::operator new, Alloc callee order
+49bc60	?2Emitter	fix	# Emitter::operator new, Alloc callee order
+42c3b0	Com_GetVolumeFalloffCurveKnots_42c3b0	fix	# dead
+4d5690	CG_SetByte4_4d5690	fix	# dead
+4bd110	MemFile_ArchiveData	fix	# dead, cg_newDraw copy
+4bd120	MemFile_ArchiveInt_4bd120	fix	# dead
+4b4890	SND_LoadFromSound_4b4890	fix	# dead
+49b650	FxRange_Set_49b650	fix	# dead
+4c20c0	CG_CenterPrint	fix	# dead
+45f980	UI_Component_InitIfStarted_45f980	fix	# dead
+49b900	Particle::SetMaterial	fix	# Particle::SetMaterial

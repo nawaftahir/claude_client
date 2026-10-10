@@ -844,9 +844,9 @@ static qboolean CM_PointTraceStaticModelsComplete_r( staticmodeltrace_t *clip, u
 	worldSector_t *node;
 	vec3_t p1;
 
-	VectorCopy(p1_, p1);
-
-	while ( 1 )
+	p1[0] = p1_[0];
+	p1[1] = p1_[1];
+	for ( p1[2] = p1_[2]; ; p1[2] = mid[2] )
 	{
 		while ( 1 )
 		{
@@ -880,12 +880,14 @@ static qboolean CM_PointTraceStaticModelsComplete_r( staticmodeltrace_t *clip, u
 			t1 = p1[node->tree.axis] - node->tree.dist;
 			t2 = p2[node->tree.axis] - node->tree.dist;
 
-			if ( !((float)(t1 * t2) >= 0.0f) )
+			if ( (float)(t1 * t2) >= 0.0f )
 			{
-				break;
+				frac = (float)(t2 - t1) >= 0.0f ? t1 : t2;
+				nodeIndex = node->tree.child[1 - (frac >= 0.0f)];
+				continue;
 			}
 
-			nodeIndex = node->tree.child[1 - I_side(I_fmin(t1, t2))];
+			break;
 		}
 
 		assert(t1 - t2);
@@ -903,12 +905,12 @@ static qboolean CM_PointTraceStaticModelsComplete_r( staticmodeltrace_t *clip, u
 
 		if ( !CM_PointTraceStaticModelsComplete_r(clip, node->tree.child[side], p1, mid) )
 		{
-			return qfalse;
+			break;
 		}
 
 		nodeIndex = node->tree.child[1 - side];
-
-		VectorCopy(mid, p1);
+		p1[0] = mid[0];
+		p1[1] = mid[1];
 	}
 
 	return qfalse;

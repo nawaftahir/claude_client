@@ -215,6 +215,17 @@ static qboolean CG_PlayerOwnsWeapon(const int *weapons, int weaponIndex)
     return (weapons[weaponIndex >> 5] & (1 << (weaponIndex & 31))) != 0;
 }
 
+// retail 0x4bd110/0x4bd120, unreferenced; MemFile_ArchiveData from CoD4 (SUPPORTED), int form name unknown
+void MemFile_ArchiveData(MemoryFile *memFile, int bytes, void *data)
+{
+    ((MemoryFileArchiveProc)memFile->archiveProc)(memFile, bytes, data);
+}
+
+void MemFile_ArchiveInt_4bd120(MemoryFile *memFile, int *data)
+{
+    ((MemoryFileArchiveProc)memFile->archiveProc)(memFile, 4, data);
+}
+
 void CG_AntiBurnInHUD_RegisterDvars(void)
 {
     hud_fadeout_speed = Dvar_RegisterFloat("hud_fadeout_speed", 0.1f, 0.0f, 1.0f, 0x1001);
@@ -456,7 +467,7 @@ static void CG_DrawPlayerAmmoValue(const rectDef_t *rect, struct Font_s *font, f
         flashColor[0] = 0.89f;
         flashColor[1] = 0.18f;
         flashColor[2] = 0.01f;
-        flashColor[3] = (float)(cg->lastClipFlashTime + 800 - cg->time) * 0.00125f;
+        flashColor[3] = (float)(cg->lastClipFlashTime + 800 - cg->time); flashColor[3] = flashColor[3] * 0.00125f;
         if (color[3] < flashColor[3])
             flashColor[3] = color[3];
     }
@@ -1773,3 +1784,10 @@ const unsigned char __ZZ21CG_DrawHoldBreathHintPK9rectDef_sP6Font_sfiE5color[896
     0xff, 0xff, 0xff, 0x7f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
+
+// retail 0x4bf300, unreferenced twin of CompassIconSize; name unknown
+void CompassIconSize_4bf300(float *w, float *h)
+{
+    *w = cg_hudCompassSize->current.value * 10.0f;
+    *h = cg_hudCompassSize->current.value * 10.0f;
+}

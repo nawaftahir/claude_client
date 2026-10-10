@@ -11,6 +11,7 @@ extern void ROQ_DrawCinematic(void);
 extern void ROQ_RunCinematic(void);
 extern void ROQ_UploadCinematicFromHandle(int handle);
 extern void ROQ_CloseAllVideos(void);
+extern void ROQ_SetLoopingFromHandle(int handle, qboolean loop);
 void SND_StopSounds(snd_stopsounds_arg_t which);
 
 extern int CL_handle;
@@ -33,6 +34,11 @@ int CIN_PlayCinematic(const char *arg, int x, int y, int w, int h, int systemBit
 void CIN_SetExtents(int handle, int x, int y, int w, int h)
 {
     ROQ_SetExtentsFromHandle(handle, x, y, w, h);
+}
+
+void CIN_SetLooping(int handle, qboolean loop)
+{
+    ROQ_SetLoopingFromHandle(handle, loop);
 }
 
 void CIN_DrawCinematic(int handle)

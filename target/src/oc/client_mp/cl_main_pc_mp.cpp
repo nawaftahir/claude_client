@@ -111,7 +111,7 @@ short BigShort(short l);
 
 void CL_ServerStatusResponse(netadr_t from, msg_t *msg);
 // names from CoD1 (SUPPORTED)
-qboolean autoupdateChecked;
+extern qboolean autoupdateChecked;
 
 short BigShort(short l);
 

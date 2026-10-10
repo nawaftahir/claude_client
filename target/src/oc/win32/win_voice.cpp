@@ -2,6 +2,19 @@
 #include "imports.h"
 #include "bytematch.h"
 #include <stdio.h>
+int voice_freq = 0;
+int sampleCount = 0;
+
+float voice_current_voicelevel;
+
+int mic_old_reclevel;
+const dvar_t *winvoice_mic_reclevel;
+char old_rec_source[256] = {0};
+int mic_current_reclevel;
+const dvar_t *winvoice_mic_mute;
+const dvar_t *winvoice_mic_scaler;
+float levelSamples[6];
+const dvar_t *winvoice_save_voice;
 
 static int g_voice_initialized = 0x0;
 

@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+itemDef_t *g_editItem = NULL;
+qboolean g_waitingForKey = 0;
 extern sharedUiInfo_t sharedUiInfo;
 
 extern commandDef_t commandList[29];
@@ -1007,6 +1009,21 @@ qboolean Menu_CheckOnKey(displayContextDef_t *dc, menuDef_t *menu, int key)
     return 0;
 }
 
+// unreferenced field getters, kept by /OPT:NOREF
+int Window_Getter_533860(Window *w) { return w->offsetTime[0]; }
+UiRectangle *Window_Getter_533870(Window *w) { return &w->rectClient[0]; }
+UiRectangle *Window_Getter_533880(Window *w) { return &w->rectEffects0[0]; }
+UiRectangle *Window_Getter_533890(Window *w) { return &w->rectEffects1[0]; }
+int Window_Getter_5338a0(Window *w) { return w->staticFlags; }
+int Menu_Getter_5338b0(menuDef_t *menu) { return menu->cursorItem[0]; }
+UiRectangle *Item_Getter_5338c0(itemDef_t *item) { return &item->textRect[0]; }
+// retail 0x52b230..0x52b270, unreferenced; names unknown
+int Window_Getter_52b230(Window *w) { return w->dynamicFlags[0]; }
+int Item_Getter_52b240(itemDef_t *item) { return item->cursorPos[0]; }
+int ListBox_Getter_52b250(listBoxDef_s *listPtr) { return listPtr->cursorPos[0]; }
+int ListBox_Getter_52b260(listBoxDef_s *listPtr) { return listPtr->startPos[0]; }
+int ListBox_Getter_52b270(listBoxDef_s *listPtr) { return listPtr->endPos[0]; }
+
 static bool Window_IsHorizontal(Window *w)
 {
     return ((unsigned int)w->staticFlags >> 21) & 1;
@@ -1212,6 +1229,18 @@ void Menus_AddToStack(displayContextDef_t *dc, menuDef_t *menu)
     if (dc->openMenuCount == 16)
         Com_Error(ERR_DROP, "\x15Too many menus opened");
     dc->menuStack[dc->openMenuCount++] = menu;
+}
+
+// retail 0x5348c0, unreferenced twin of Menus_MenuIsInStack; name unknown
+qboolean Menus_MenuIsInStack_5348c0(displayContextDef_t *dc, menuDef_t *menu)
+{
+    int i;
+
+    for (i = dc->openMenuCount - 1; i >= 0; i--) {
+        if (dc->menuStack[i] == menu)
+            return 1;
+    }
+    return 0;
 }
 
 static qboolean Menus_MenuIsInStack(displayContextDef_t *dc, menuDef_t *menu)
@@ -3212,8 +3241,6 @@ static void Scroll_ListBox_ThumbFunc(displayContextDef_t *dc, void *p)
     }
 }
 
-extern const char str_002157b8[];
-
 static int Item_ContainsMouse(displayContextDef_t *dc, itemDef_t *item)
 {
     return Rect_ContainsPoint(&item->window.rect[0], (float)dc->cursorx, (float)dc->cursory);
@@ -3902,8 +3929,8 @@ static void Item_Action(displayContextDef_t *dc, itemDef_t *item)
 
 void Menu_HandleKey(displayContextDef_t *dc, menuDef_t *menu, int key, qboolean down)
 {
-    int i;
     itemDef_t *item = NULL;
+    int i;
 
     if (g_waitingForKey && down) {
         Item_Bind_HandleKey(dc, g_bindItem, key, down);
@@ -4144,7 +4171,7 @@ void Item_Paint(displayContextDef_t *dc, itemDef_t *item)
             item->window.nextTime = dc->realTime + item->window.offsetTime[0];
             r = &item->window.rectClient[0];
             w = r->w * 0.5f;
-            h = r->h * 0.5f;
+            h = r->h; h = h * 0.5f;
             rx = r->x + w; rx = rx - item->window.rectEffects0[0].x;
             ry = r->y + h - item->window.rectEffects0[0].y;
             FastSinCos(0.05235988f, &s, &c);
@@ -4421,94 +4448,94 @@ void Menus_HandleOOBClick(displayContextDef_t *dc, menuDef_t *menu, int key, qbo
 }
 
 static commandDef_t commandList[29] = {
-    { (const char *)&str_002abdc4, (void (*)())&Script_FadeIn },
-    { (const char *)&str_002abdcc, (void (*)())&Script_FadeOut },
-    { (const char *)&str_002abdd4, (void (*)())&Script_Show },
-    { (const char *)&str_002abddc, (void (*)())&Script_Hide },
-    { (const char *)&str_002abde4, (void (*)())&Script_SetColor },
-    { (const char *)&str_002abdf0, (void (*)())&Script_Open },
-    { (const char *)&str_002abdf8, (void (*)())&Script_OpenForGameType },
-    { (const char *)&str_002abe08, (void (*)())&Script_CloseForGameType },
-    { (const char *)&str_002abe1c, (void (*)())&Script_Close },
-    { (const char *)&str_002abe24, (void (*)())&Script_InGameOpen },
-    { (const char *)&str_002abe30, (void (*)())&Script_InGameClose },
-    { (const char *)&str_002abe3c, (void (*)())&Script_SetBackground },
-    { (const char *)&str_002abe4c, (void (*)())&Script_SetItemColor },
-    { (const char *)&str_002abe5c, (void (*)())&Script_SetFocus },
-    { (const char *)&str_002abe68, (void (*)())&Script_SetFocusByDvar },
-    { (const char *)&str_002abe78, (void (*)())&Script_Transition },
-    { (const char *)&str_002abe84, (void (*)())&Script_SetDvar },
-    { (const char *)&str_00219060, (void (*)())&Script_Exec },
-    { (const char *)&str_002abe8c, (void (*)())&Script_ExecNow },
-    { (const char *)&str_002abe94, (void (*)())&Script_ExecOnDvarStringValue },
-    { (const char *)&str_002abeac, (void (*)())&Script_ExecOnDvarIntValue },
-    { (const char *)&str_002abec0, (void (*)())&Script_ExecOnDvarFloatValue },
-    { (const char *)&str_002abed8, (void (*)())&Script_ExecNowOnDvarStringValue },
-    { (const char *)&str_002abef4, (void (*)())&Script_ExecNowOnDvarIntValue },
-    { (const char *)&str_002abf0c, (void (*)())&Script_ExecNowOnDvarFloatValue },
-    { (const char *)&str_002abf24, (void (*)())&Script_Play },
-    { (const char *)&str_002abf2c, (void (*)())&Script_Orbit },
+    { "fadein", (void (*)())&Script_FadeIn },
+    { "fadeout", (void (*)())&Script_FadeOut },
+    { "show", (void (*)())&Script_Show },
+    { "hide", (void (*)())&Script_Hide },
+    { "setcolor", (void (*)())&Script_SetColor },
+    { "open", (void (*)())&Script_Open },
+    { "openforgametype", (void (*)())&Script_OpenForGameType },
+    { "closeforgametype", (void (*)())&Script_CloseForGameType },
+    { "close", (void (*)())&Script_Close },
+    { "ingameopen", (void (*)())&Script_InGameOpen },
+    { "ingameclose", (void (*)())&Script_InGameClose },
+    { "setbackground", (void (*)())&Script_SetBackground },
+    { "setitemcolor", (void (*)())&Script_SetItemColor },
+    { "setfocus", (void (*)())&Script_SetFocus },
+    { "setfocusbydvar", (void (*)())&Script_SetFocusByDvar },
+    { "transition", (void (*)())&Script_Transition },
+    { "setdvar", (void (*)())&Script_SetDvar },
+    { "exec", (void (*)())&Script_Exec },
+    { "execnow", (void (*)())&Script_ExecNow },
+    { "execOnDvarStringValue", (void (*)())&Script_ExecOnDvarStringValue },
+    { "execOnDvarIntValue", (void (*)())&Script_ExecOnDvarIntValue },
+    { "execOnDvarFloatValue", (void (*)())&Script_ExecOnDvarFloatValue },
+    { "execNowOnDvarStringValue", (void (*)())&Script_ExecNowOnDvarStringValue },
+    { "execNowOnDvarIntValue", (void (*)())&Script_ExecNowOnDvarIntValue },
+    { "execNowOnDvarFloatValue", (void (*)())&Script_ExecNowOnDvarFloatValue },
+    { "play", (void (*)())&Script_Play },
+    { "orbit", (void (*)())&Script_Orbit },
     { "getautoupdate", (void (*)())&Script_GetAutoUpdate },
-    { (const char *)&str_002abf34, (void (*)())&Script_ScriptMenuResponse }
+    { "scriptmenuresponse", (void (*)())&Script_ScriptMenuResponse }
 };
 static int scriptCommandCount = sizeof(commandList) / sizeof(commandDef_t);
 static bind_t g_bindings[56] = {
-    { (char *)&str_002abf48, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)&str_002abf50, 0xc9, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)&str_002abf58, 0x77, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)&str_002abf64, 0x73, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)&str_002abf6c, 0x2c, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)&str_002abf78, 0x2e, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)&str_002abf84, 0x20, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)&str_002abf8c, 0x63, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)&str_002abf98, 0x9c, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)&str_002abfa0, 0x9d, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)&str_002abfa8, 0x9e, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)&str_002abfb0, 0xa3, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)&str_002abfb8, 0xa2, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)&str_002abfc4, 0x2f, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)&str_002abfcc, 0xa6, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)&str_002abfd8, 0x9f, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)&str_002abfe0, 0xcd, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)&str_002abfec, 0xce, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)&str_002abff8, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)&str_002ac000, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)&str_002ac008, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)&str_002ac014, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)&str_002ab890, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)&str_002ab8a0, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)&str_002ac020, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)&str_002ac02c, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)&str_002ac034, 0xa7, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)&str_002ac03c, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)&str_002ac048, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)&str_002ac054, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)&str_002ac060, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)&str_002ac06c, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)&str_002ac074, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)&str_002ac084, 0x31, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)&str_002ac098, 0x32, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)&str_002ac0ac, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)&str_002ac0b8, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)&str_002ac0cc, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)&str_002ac0d4, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)&str_002ac0e0, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)&str_002ac0f0, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)&str_002ac0f8, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)&str_002ac100, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)&str_002ac10c, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)&str_002ac118, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)&str_002ac128, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)&str_002ac134, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)&str_002ac13c, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)&str_002ac148, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)&str_002ac154, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)&str_002ac160, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)&str_002ac16c, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)&str_002ac174, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)&str_00225608, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)&str_002ac180, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)&str_002ac190, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff }
+    { (char *)"+scores", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+speed", 0xc9, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+forward", 0x77, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+back", 0x73, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+moveleft", 0x2c, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+moveright", 0x2e, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+moveup", 0x20, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+movedown", 0x63, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+left", 0x9c, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+right", 0x9d, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+strafe", 0x9e, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+lookup", 0xa3, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+lookdown", 0xa2, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+mlook", 0x2f, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"centerview", 0xa6, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+attack", 0x9f, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"weapprev", 0xcd, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"weapnext", 0xce, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+frag", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+smoke", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"scoresUp", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"scoresDown", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"chatmodepublic", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"chatmodeteam", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+activate", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+reload", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"help", 0xa7, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+leanleft", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+leanright", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+usereload", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"vote yes", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"vote no", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"mp_QuickMessage", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"weaponslot primary", 0x31, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"weaponslot primaryb", 0x32, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+binoculars", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+breath_binoculars", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+melee", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+holdbreath", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+melee_breath", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+prone", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+stance", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"lowerstance", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"raisestance", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"togglecrouch", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"toggleprone", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"goprone", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"gocrouch", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+gostand", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"toggleads", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"leaveads", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+talk", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"togglemenu", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"screenshot", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"screenshotJPEG", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"openScriptMenu ingame changeweapon", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff }
 };
 
 const unsigned char border[96] = {
@@ -4520,87 +4547,3 @@ const unsigned char border[96] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
-const char str_00219060[] = "exec";
-const char str_00225608[] = "screenshot";
-const char str_002ab890[] = "chatmodepublic";
-const char str_002ab8a0[] = "chatmodeteam";
-const char str_002abdc4[] = "fadein";
-const char str_002abdcc[] = "fadeout";
-const char str_002abdd4[] = "show";
-const char str_002abddc[] = "hide";
-const char str_002abde4[] = "setcolor";
-const char str_002abdf0[] = "open";
-const char str_002abdf8[] = "openforgametype";
-const char str_002abe08[] = "closeforgametype";
-const char str_002abe1c[] = "close";
-const char str_002abe24[] = "ingameopen";
-const char str_002abe30[] = "ingameclose";
-const char str_002abe3c[] = "setbackground";
-const char str_002abe4c[] = "setitemcolor";
-const char str_002abe5c[] = "setfocus";
-const char str_002abe68[] = "setfocusbydvar";
-const char str_002abe78[] = "transition";
-const char str_002abe84[] = "setdvar";
-const char str_002abe8c[] = "execnow";
-const char str_002abe94[] = "execOnDvarStringValue";
-const char str_002abeac[] = "execOnDvarIntValue";
-const char str_002abec0[] = "execOnDvarFloatValue";
-const char str_002abed8[] = "execNowOnDvarStringValue";
-const char str_002abef4[] = "execNowOnDvarIntValue";
-const char str_002abf0c[] = "execNowOnDvarFloatValue";
-const char str_002abf24[] = "play";
-const char str_002abf2c[] = "orbit";
-const char str_002abf34[] = "scriptmenuresponse";
-const char str_002abf48[] = "+scores";
-const char str_002abf50[] = "+speed";
-const char str_002abf58[] = "+forward";
-const char str_002abf64[] = "+back";
-const char str_002abf6c[] = "+moveleft";
-const char str_002abf78[] = "+moveright";
-const char str_002abf84[] = "+moveup";
-const char str_002abf8c[] = "+movedown";
-const char str_002abf98[] = "+left";
-const char str_002abfa0[] = "+right";
-const char str_002abfa8[] = "+strafe";
-const char str_002abfb0[] = "+lookup";
-const char str_002abfb8[] = "+lookdown";
-const char str_002abfc4[] = "+mlook";
-const char str_002abfcc[] = "centerview";
-const char str_002abfd8[] = "+attack";
-const char str_002abfe0[] = "weapprev";
-const char str_002abfec[] = "weapnext";
-const char str_002abff8[] = "+frag";
-const char str_002ac000[] = "+smoke";
-const char str_002ac008[] = "scoresUp";
-const char str_002ac014[] = "scoresDown";
-const char str_002ac020[] = "+activate";
-const char str_002ac02c[] = "+reload";
-const char str_002ac034[] = "help";
-const char str_002ac03c[] = "+leanleft";
-const char str_002ac048[] = "+leanright";
-const char str_002ac054[] = "+usereload";
-const char str_002ac060[] = "vote yes";
-const char str_002ac06c[] = "vote no";
-const char str_002ac074[] = "mp_QuickMessage";
-const char str_002ac084[] = "weaponslot primary";
-const char str_002ac098[] = "weaponslot primaryb";
-const char str_002ac0ac[] = "+binoculars";
-const char str_002ac0b8[] = "+breath_binoculars";
-const char str_002ac0cc[] = "+melee";
-const char str_002ac0d4[] = "+holdbreath";
-const char str_002ac0e0[] = "+melee_breath";
-const char str_002ac0f0[] = "+prone";
-const char str_002ac0f8[] = "+stance";
-const char str_002ac100[] = "lowerstance";
-const char str_002ac10c[] = "raisestance";
-const char str_002ac118[] = "togglecrouch";
-const char str_002ac128[] = "toggleprone";
-const char str_002ac134[] = "goprone";
-const char str_002ac13c[] = "gocrouch";
-const char str_002ac148[] = "+gostand";
-const char str_002ac154[] = "toggleads";
-const char str_002ac160[] = "leaveads";
-const char str_002ac16c[] = "+talk";
-const char str_002ac174[] = "togglemenu";
-const char str_002ac180[] = "screenshotJPEG";
-const char str_002ac190[] = "openScriptMenu ingame changeweapon";

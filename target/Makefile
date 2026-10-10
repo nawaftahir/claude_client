@@ -71,19 +71,21 @@ build/obj/%.obj: src/%.c
 	@$(deps)
 
 IMPLIBS := build/lib/mss32.lib build/lib/d3d9.lib
-LIBS   := winmm.lib wsock32.lib $(call win,$(IMPLIBS)) dsound.lib libcmt.lib kernel32.lib user32.lib gdi32.lib advapi32.lib shell32.lib
+LIBS   := winmm.lib wsock32.lib $(call win,$(IMPLIBS)) dsound.lib kernel32.lib user32.lib gdi32.lib advapi32.lib shell32.lib libcmt.lib
 
-build/lib/%.lib: src/lib/%.def
+build/lib/%.lib: src/lib/%.def src/lib/impname.pl
 	@mkdir -p $(dir $@)
 	@wine /opt/msvc710/Vc7/bin/lib.exe /nologo /machine:x86 /def:$(call win,$<) /out:$(call win,$@) > $@.log 2>&1 || (cat $@.log; false)
+	@perl src/lib/impname.pl $@ 3 >> $@.log
 
 # the retail mss32.lib also carries MSS_auto_cleanup (plain object, not LTCG)
 build/lib/mss_auto.obj: src/lib/mss_auto.c
 	@mkdir -p $(dir $@)
 	@cd src && $(CL) /nologo /c /O2 /MT /DNDEBUG /Fo..\\build\\lib\\mss_auto.obj lib\\mss_auto.c > ../$@.log 2>&1 || (cat ../$@.log; false)
 
-build/lib/mss32.lib: src/lib/mss32.def build/lib/mss_auto.obj
+build/lib/mss32.lib: src/lib/mss32.def build/lib/mss_auto.obj src/lib/impname.pl
 	@wine /opt/msvc710/Vc7/bin/lib.exe /nologo /machine:x86 /def:$(call win,$<) /out:build\\lib\\mss32_imp.lib > $@.log 2>&1 || (cat $@.log; false)
+	@perl src/lib/impname.pl build/lib/mss32_imp.lib 1 >> $@.log
 	@wine /opt/msvc710/Vc7/bin/lib.exe /nologo /out:$(call win,$@) build\\lib\\mss32_imp.lib build\\lib\\mss_auto.obj >> $@.log 2>&1 || (cat $@.log; false)
 
 # icon comes from the local retail exe (host step above); .rsrc is byte-identical to retail

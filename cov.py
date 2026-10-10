@@ -2,6 +2,12 @@
 """Union of client .text bytes covered by uniquely-placed matches in a cmp.py result, split by origin."""
 import collections, json, sys
 r = json.load(open(sys.argv[1]))
+# an unaligned extra hit is the same body inlined inside a bigger fn, not a placement
+for x in r:
+    if len(x['hits']) > 1 and ':' not in x['obj']:
+        a = [h for h in x['hits'] if int(h, 16) % 16 == 0]
+        if a:
+            x['hits'] = a
 speex = {'bits', 'cb_search', 'filters', 'lpc', 'lsp', 'ltp', 'misc', 'modes', 'nb_celp', 'quant_lsp',
          'sb_celp', 'speex', 'speex_callbacks', 'vbr', 'vq'}
 
@@ -20,7 +26,7 @@ for x in u:
 # k fns sharing the same k hit sites cover all k, whichever way they pair up
 grp = collections.defaultdict(list)
 for x in r:
-    if 1 < len(x['hits']) < 8:
+    if 1 < len(x['hits']) < 64:
         grp[tuple(sorted(x['hits']))].append(x)
 for hits, xs in grp.items():
     if len(xs) == len(hits) and len({x['size'] for x in xs}) == 1:

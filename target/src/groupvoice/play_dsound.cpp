@@ -6,11 +6,8 @@ int MIN_COMFORTABLE_BUFFER_AMOUNT = 0x140;
 int MAX_COMFORTABLE_BUFFER_AMOUNT = 0x2710;
 int COMFORTABLE_BUFFER_AMOUNT = 0x1770;
 
-float maxScalingUpMultiplier = 0.0099999998f;
-float maxScalingDownMultiplier = 0.0099999998f;
-
-bool dsoundplay_initialized;
-LPDIRECTSOUND8 lpds;
+bool dsoundplay_initialized = false;
+LPDIRECTSOUND8 lpds = NULL;
 
 static int DSound_GetBytesLeft( dsound_sample_t *sample )
 {
@@ -121,6 +118,8 @@ int DSound_UpdateSample( dsound_sample_t *sample, char *data, unsigned int data_
 
 void DSound_AdjustSamplePlayback( dsound_sample_t *sample, int bytesLeft )
 {
+	static float maxScalingDownMultiplier = 0.0099999998f;
+	static float maxScalingUpMultiplier = 0.0099999998f;
 	if ( bytesLeft < MIN_COMFORTABLE_BUFFER_AMOUNT )
 	{
 		sample->playMode = 1;
@@ -151,7 +150,7 @@ void DSound_AdjustSamplePlayback( dsound_sample_t *sample, int bytesLeft )
 	}
 }
 
-bool DSound_BufferUnderrunOccurred( dsound_sample_t *sample )
+unsigned char DSound_BufferUnderrunOccurred( dsound_sample_t *sample )
 {
 	return sample->bytesBuffered <= 0;
 }

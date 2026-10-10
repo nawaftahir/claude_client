@@ -4,7 +4,7 @@ extern "C"
 {
 size_t FS_FileRead( void *ptr, size_t size, size_t nmemb, FILE *stream );
 FILE *FS_FileOpen( const char *filename, const char *mode );
-void FS_FileClose( FILE *stream );
+int FS_FileClose( FILE *stream );
 int FS_FileSeek( FILE *file, int offset, int whence );
 }
 
@@ -29,9 +29,9 @@ FILE *FS_FileOpen( const char *filename, const char *mode )
 	return file;
 }
 
-void FS_FileClose( FILE *stream )
+int FS_FileClose( FILE *stream )
 {
-	fclose(stream);
+	return fclose(stream);
 }
 
 int FS_FileSeek( FILE *file, int offset, int whence )

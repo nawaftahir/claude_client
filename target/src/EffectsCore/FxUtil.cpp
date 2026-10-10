@@ -557,6 +557,7 @@ public:
 class Flash : public Light
 {
 public:
+	virtual ~Flash() {}
 	virtual bool Update();
 
 	virtual bool Cull()
@@ -568,9 +569,9 @@ public:
 	virtual unsigned char TypeID();
 	virtual void Archive( FxArchive *arch );
 
-	void SetMaterial( TMediaElement material )
+	void SetMaterial( Material *material )
 	{
-		mRefEnt.customMaterial = material.material;
+		mRefEnt.customMaterial = material;
 	}
 
 	void Init();
@@ -592,9 +593,9 @@ public:
 	virtual void Archive( FxArchive *arch );
 	virtual void FixupArchiveLoad( const PrimitiveTemplate *primTemplate );
 
-	void SetMaterial( TMediaElement material )
+	void SetMaterial( Material *material )
 	{
-		mRefEnt.customMaterial = material.material;
+		mRefEnt.customMaterial = material;
 	}
 
 	void SetGravity( float gravity )
@@ -892,9 +893,9 @@ public:
 		mEmitDist = mEmitDistBase + crandom() * mEmitDistRand;
 	}
 
-	void SetModel( TMediaElement model )
+	void SetModel( XModel *model )
 	{
-		mModel = model.model;
+		mModel = model;
 	}
 
 	void SetAngles( const vec3_t angles )
@@ -1091,7 +1092,7 @@ int cullEffectCountNonBolt;
 int effectBlockSightCount;
 FxHelper theFxHelpers[1];
 FxHelper *theFxHelper = theFxHelpers;
-int fxInitialized[1];
+int fxInitialized[1] = {0};
 SortedEffect visibleEffectsNonBolt[1800];
 int visibleEffectCountNonBolt;
 SortedEffect visibleEffectsBolt[1800];
@@ -1931,7 +1932,7 @@ void FX_CalcOriginAndAxis( EffectPrimitive *prim, vec3_t out, const vec3_t origi
 		FastSinCos(pitch, &sinPitch, &cosPitch);
 		radius = FxRange_GetVal(&primTemp->mRadius);
 		height = FxRange_GetVal(&primTemp->mHeight);
-		VectorSet(dir, sinYaw * radius * sinPitch, cosYaw * radius * sinPitch, cosPitch * height);
+		radius *= sinPitch; VectorSet(dir, radius * sinYaw, radius * cosYaw, height * cosPitch);
 		VectorAdd(pos, dir, pos);
 		if ( primTemp->mSpawnFlags & 2 )
 		{
@@ -2115,7 +2116,7 @@ void FX_SetMaterialAndSequenceParams( const PrimitiveTemplate *primTemp, Particl
 	particle->SetFrameRate(frameRate);
 	particle->SetLoopMode(primTemp->mSequenceLoopMode);
 	particle->SetLoopTimes(primTemp->mSequenceLoopTimes);
-	particle->SetMaterial(material);
+	particle->SetMaterial(material.material);
 	FX_SetSortGroup(particle);
 }
 
@@ -2211,7 +2212,7 @@ void FX_AddLine( EffectPrimitive *prim, vec3_t axis[3], const vec3_t origin, int
 		line->SetEndpoint(endOut);
 	}
 	line->SetOrigin(startOut);
-	line->SetMaterial(material);
+	line->SetMaterial(material.material);
 	if ( primTemp->mAttributeFlags & 0x2000 )
 		line->SetColorBlendFactor(flrand(0.0f, 1.0f));
 	if ( primTemp->mAttributeFlags & 0x4000 )
@@ -2341,7 +2342,7 @@ void FX_AddEmitter( EffectPrimitive *prim, vec3_t axis[3], const vec3_t origin, 
 	emitter->SetEmitVelocity(velocity);
 	emitter->SetAngles(angles);
 	emitter->SetAngleDelta(angleDelta);
-	emitter->SetModel(model);
+	emitter->SetModel(model.model);
 	emitter->SetEmitFx(emitFx);
 	emitter->SetEmitDistBase(emitDistBase);
 	emitter->SetEmitDistRand(emitDistRand);
@@ -2461,7 +2462,7 @@ void FX_AddFlash( EffectPrimitive *prim, vec3_t axis[3], const vec3_t origin, in
 	primTemp = prim->primTemp;
 	material = primTemp->mMediaHandles.GetHandle();
 	flash->SetOrigin(origin);
-	flash->SetMaterial(material);
+	flash->SetMaterial(material.material);
 	if ( primTemp->mAttributeFlags & 0x2000 )
 		flash->SetColorBlendFactor(flrand(0.0f, 1.0f));
 	FX_SetSortGroup(flash);

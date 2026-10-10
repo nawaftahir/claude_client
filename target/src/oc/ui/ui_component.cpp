@@ -132,6 +132,13 @@ static inline void Vector2Add(const vec2_t a, const vec2_t b, vec2_t c)
     c[1] = a[1] + b[1];
 }
 
+// retail 0x45f980, unreferenced; name unknown
+void UI_Component_InitIfStarted_45f980(void)
+{
+    if (cls.uiStarted)
+        UI_Component_Init();
+}
+
 void UI_Component_Init(void)
 {
     memset(&UI_Component_g, 0, sizeof(UI_Component_data_t));
@@ -416,15 +423,15 @@ void UI_VerticalDivider::Draw(float x, float y, float width, float height, float
             this->bottomComp->Draw(x, y, width, height, 0.0f, 0.0f);
             return;
         }
-        topHeight = this->posY - compY;
-        if (topHeight >= height)
+        ;
+        if ((this->posY - compY) >= height)
         {
             DrawTop(x, y, width, height);
         }
         else
         {
-            this->bottomComp->Draw(x, y + this->posY, width, height - topHeight, 0.0f, 0.0f);
-            DrawTop(x, y, width, topHeight);
+            this->bottomComp->Draw(x, y + this->posY, width, height - (this->posY - compY), 0.0f, 0.0f);
+            DrawTop(x, y, width, (this->posY - compY));
         }
     }
     else

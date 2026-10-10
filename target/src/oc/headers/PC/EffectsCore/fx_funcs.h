@@ -26,7 +26,7 @@ int FX_GetBoneIndex(const int entNum, unsigned int bone);
 void FX_PlaySimpleEffect(const EffectTemplate *fx, const vec_t *org);
 void FX_PlayEffect(const EffectTemplate *fx, const vec_t *org, const vec_t *fwd);
 void FX_PlayEntityEffect(const EffectTemplate *fx, const vec_t *org, const vec3_t *axis, const FxBoltInfo *bolt);
-void FX_InitSystem( bool rendererExists );
+int FX_InitSystem( bool rendererExists );
 void FX_FreeSystem(void);
 void FX_FreeActive(void);
 void FX_AdjustCamera(const refdef_t *refdef, float zfar);

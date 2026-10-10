@@ -23,6 +23,14 @@ float UI_ClampFloat_5403a0(float min, float max, float val)
     return val;
 }
 
+void Cbuf_AddText(const char *text);
+
+// Original name unknown; unreferenced in retail.
+void UI_AddD1Cmd_5403d0(void)
+{
+    Cbuf_AddText("d1\n");
+}
+
 void UI_DrawHandlePic(float x, float y, float w, float h, int horzAlign, int vertAlign, const vec_t *color, MaterialHandle hMaterial)
 {
     float s0, t0, s1, t1;

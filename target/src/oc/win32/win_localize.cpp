@@ -4,7 +4,7 @@
 
 extern "C" FILE *FS_FileOpen( const char *filename, const char *mode );
 extern "C" size_t FS_FileRead( void *ptr, size_t size, size_t nmemb, FILE *stream );
-extern "C" void FS_FileClose( FILE *stream );
+extern "C" int FS_FileClose( FILE *stream );
 extern "C" int FS_FileSeek( FILE *file, int offset, int whence );
 extern qboolean SEH_GetLanguageIndexForName(const char *name, int *langindex);
 extern void Com_BeginParseSession(const char *name);
@@ -23,7 +23,6 @@ language_t Win_InitLocalization(void)
     FILE *fp;
     int size;
     int i;
-    char ch;
     int lang;
 
     localization = 0;
@@ -49,16 +48,13 @@ language_t Win_InitLocalization(void)
     localization[size] = '\0';
 
     lang = (language_t)(0);
-    i = 0;
-    ch = localization[0];
-    while (ch) {
-        if (ch == '\n') {
+    for (i = 0; localization[i]; i++) {
+        if (localization[i] == '\n') {
             localization[i] = '\0';
             localized_strings = &localization[i + 1];
             SEH_GetLanguageIndexForName(localization, &lang);
             break;
         }
-        ch = localization[++i];
     }
 
     return (language_t)lang;
@@ -68,6 +64,12 @@ void Win_ShutdownLocalization(void)
 {
     localization = 0;
     localized_strings = 0;
+}
+
+// retail 0x461f90, unreferenced; name unknown
+const char *Win_CopyString_461f90(const char *s)
+{
+    return va("%s", s);
 }
 
 const char *Win_LocalizeRef(const char *ref)

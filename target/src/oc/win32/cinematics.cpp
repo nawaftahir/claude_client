@@ -1,6 +1,18 @@
 #include <math.h>
 #include "common_types.h"
 #include "imports.h"
+
+struct cinematics_t cin;
+cin_cache cinTable[16];
+
+short unsigned int vq4[65536];
+long int ROQ_UG_tab[256];
+long int ROQ_VG_tab[256];
+short unsigned int vq8[262144];
+short unsigned int vq2[16384];
+long int ROQ_VR_tab[256];
+long int ROQ_YY_tab[256];
+long int ROQ_UB_tab[256];
 extern refexport_t re;
 extern snd_local_t g_snd;
 extern clientConnection_t clc;
@@ -143,6 +155,15 @@ void ROQ_CloseAllVideos(void)
     }
 }
 
+void ROQ_StopCinematic(void)
+{
+    if (CL_handle >= 0 && CL_handle < 16) {
+        ROQ_StopCinematicFromHandle(CL_handle);
+        SND_StopSounds(SND_STOP_ALL);
+        CL_handle = -1;
+    }
+}
+
 static int CIN_findHandle(void)
 {
     int i;
@@ -169,7 +190,7 @@ static void RllSetupTable(void)
 long RllDecodeMonoToMono(unsigned char *from, short *to, unsigned int size, char signedOutput, unsigned short flag)
 {
     unsigned int z;
-    int prev;
+    short prev;
 
     if (signedOutput)
         prev = flag - 0x8000;
@@ -1089,7 +1110,7 @@ static void RoQ_init(void)
     cinTable[currentHandle].roq_flags = cin.file[14] + cin.file[15] * 256;
 }
 
-static void ROQ_SetLoopingFromHandle(int handle, qboolean loop)
+void ROQ_SetLoopingFromHandle(int handle, qboolean loop)
 {
     if (handle < 0 || handle >= 16 || cinTable[handle].status == FMV_EOF) return;
     cinTable[handle].looping = loop;
@@ -1370,7 +1391,7 @@ static void ROQ_DrawLetterBox(int x, int y, int w, int h, const float *color)
 {
     float barSize;
     int barTop;
-    int barBottom;
+    unsigned int barBottom;
     refexport_t *re;
 
     barSize = ((float)cls.vidConfig.height * (1.0f / 480.0f)) * 105.0f;

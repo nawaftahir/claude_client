@@ -194,8 +194,8 @@ static void CG_SetVoteStringFromConfigString(const char *configString)
     int inPos;
     int outPos;
 
-    outPos = 0;
     inPos = 0;
+    outPos = 0;
     do {
         displayName = UI_GetMapDisplayNameFromPartialLoadNameMatch(configString + inPos, &mapLoadNameLen);
         if (displayName) {
@@ -705,10 +705,59 @@ void CG_MenuShowNotify(int menuToShow)
     }
 }
 
+// retail 0x4cb1a0, unreferenced
+void CG_HudMenuShowAllTimed(void)
+{
+    menuDef_t *menu;
+
+    if (cg->healthFadeTime < cg->time) {
+        cg->healthFadeTime = cg->time;
+        menu = Menus_FindByName(&cgDC, "Health");
+        if (menu)
+            Window_AddDynamicFlags((Window *)menu, 4);
+    }
+    if (cg->ammoFadeTime < cg->time) {
+        cg->ammoFadeTime = cg->time;
+        menu = Menus_FindByName(&cgDC, "weaponinfo");
+        if (menu)
+            Window_AddDynamicFlags((Window *)menu, 4);
+    }
+    if (cg->compassFadeTime < cg->time) {
+        cg->compassFadeTime = cg->time;
+        menu = Menus_FindByName(&cgDC, "Compass");
+        if (menu)
+            Window_AddDynamicFlags((Window *)menu, 4);
+    }
+    if (cg->stanceFadeTime < cg->time) {
+        cg->stanceFadeTime = cg->time;
+        menu = Menus_FindByName(&cgDC, "stance");
+        if (menu)
+            Window_AddDynamicFlags((Window *)menu, 4);
+    }
+    if (cg->offhandFadeTime < cg->time) {
+        cg->offhandFadeTime = cg->time;
+        menu = Menus_FindByName(&cgDC, "offhandinfo");
+        if (menu)
+            Window_AddDynamicFlags((Window *)menu, 4);
+    }
+    if (cg->scoreFadeTime < cg->time) {
+        cg->scoreFadeTime = cg->time;
+        menu = Menus_FindByName(&cgDC, "objectiveinfo");
+        if (menu)
+            Window_AddDynamicFlags((Window *)menu, 4);
+    }
+}
+
 // retail 0x4cb820, unreferenced; name unknown
 void CG_SetObjectiveText_4cb820(const char *text)
 {
     I_strncpyz(cg->objectiveText, text, sizeof(cg->objectiveText));
+}
+
+// retail 0x4cb840, unreferenced; name unknown
+void CG_SetDrawHud_4cb840(int drawHud)
+{
+    cg->drawHud = drawHud;
 }
 
 // retail 0x4cb850, unreferenced; name unknown
@@ -729,6 +778,12 @@ static void __attribute_regparm__(2) CG_SetClientDvarFromServer(const char *dvar
     } else {
         Dvar_SetFromStringByName(dvarname, value);
     }
+}
+
+// retail 0x4cb300, unreferenced; name unknown
+void CG_SetTeamScore_4cb300(int team, int score)
+{
+    cgs->teamScores[team] = score;
 }
 
 static void CG_RemoveChatEscapeChar(char *text)

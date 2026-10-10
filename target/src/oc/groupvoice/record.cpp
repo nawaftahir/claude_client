@@ -19,6 +19,7 @@ extern int DSOUNDRecord_DestroySample(recordingSample_t *sample);
 extern void DSOUNDRecord_Shutdown(void);
 extern void DSOUNDRecord_Frame(void);
 extern int DSOUNDRecord_Init(bool bCallDsoundInit);
+extern bool DSOUNDRecord_SetFrequency(int frequency);
 extern void Record_SetRecordingCallback(int (*new_audioCallback)(audioSample_t *));
 extern Bool Encode_Shutdown(void);
 extern int Encode_GetFrameSize(void);
@@ -156,5 +157,24 @@ int Record_Init(int callInit, const void *handle)
 {
     Record_SetRecordingCallback(Record_AudioCallback);
     return DSOUNDRecord_Init(true);
+}
+
+extern int g_current_bandwidth_setting;
+extern Bool Encode_Shutdown(void);
+extern bool Encode_Init(int bandwidthEnum);
+
+// retail 0x4b73f0, unreferenced twin of Encode_SetBandwidth_4b67f0; name unknown
+bool Encode_SetBandwidth_4b73f0(int bandwidthEnum)
+{
+    if (bandwidthEnum == g_current_bandwidth_setting)
+        return 1;
+    Encode_Shutdown();
+    return Encode_Init(bandwidthEnum);
+}
+
+// retail 0x4b7410; name not recovered (Record_* -> DSOUNDRecord_* wrapper)
+bool Record_SetFrequency(int frequency)
+{
+    return DSOUNDRecord_SetFrequency(frequency);
 }
 

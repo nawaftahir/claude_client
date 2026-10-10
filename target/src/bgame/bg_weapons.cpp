@@ -5,7 +5,7 @@ int BG_WeaponShotCount( int weapIndex );
 qboolean BG_SetPlayerWeaponForSlot( playerState_t *ps, int slot, int weaponIndex );
 
 
-int bg_iNumWeapons;
+int bg_iNumWeapons = 0;
 static WeaponDef *bg_weaponDefs[MAX_WEAPONS];
 
 static WeaponDef *bg_weapAmmoTypes[MAX_WEAPONS];

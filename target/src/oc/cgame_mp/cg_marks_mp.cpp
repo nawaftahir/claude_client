@@ -2,6 +2,11 @@
 #include "imports.h"
 #include "bytematch.h"
 #include "headers/PC/cgame_mp/cg_local.h"
+
+GfxWorldVertex markVerts[1024];
+
+MarkPoly *cg_freeMarkPolys;
+MarkPoly cg_markPolys[1024];
 extern FxHelper *theFxHelper;
 
 extern const dvar_t *cg_marks;
@@ -114,6 +119,17 @@ void CG_AddMarks(void)
     } while (markPoly != &cg->activeMarkPolys);
 }
 
+// retail 0x4c7f70; Q3 cg_marks.c, keeps Q3's error string
+void CG_FreeMarkPoly(MarkPoly *le)
+{
+    if (!le->prevMark)
+        Com_Error(ERR_DROP, "CG_FreeLocalEntity: not active");
+    le->prevMark->nextMark = le->nextMark;
+    le->nextMark->prevMark = le->prevMark;
+    le->nextMark = cg_freeMarkPolys;
+    cg_freeMarkPolys = le;
+}
+
 // retail 0x4c7fb0, unreferenced (CG_AllocMark has its own copy); name unknown
 MarkPoly *CG_LeastRecentlyDrawnMark_4c7fb0(void)
 {
@@ -143,12 +159,7 @@ static MarkPoly *CG_AllocMark(void)
                 le = mark;
             mark = mark->prevMark;
         }
-        if (!le->prevMark)
-            Com_Error(ERR_DROP, "CG_FreeLocalEntity: not active");
-        le->prevMark->nextMark = le->nextMark;
-        le->nextMark->prevMark = le->prevMark;
-        le->nextMark = cg_freeMarkPolys;
-        cg_freeMarkPolys = le;
+        CG_FreeMarkPoly(le);
     }
 
     le = cg_freeMarkPolys;

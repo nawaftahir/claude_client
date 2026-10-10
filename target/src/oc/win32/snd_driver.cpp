@@ -1,6 +1,9 @@
 #include "common_types.h"
 #include "imports.h"
 #include "bytematch.h"
+
+const dvar_t *mss_3d_provider;
+const dvar_t *mss_q3fs;
 extern const dvar_t *snd_bits;
 extern const dvar_t *snd_enableReverb;
 extern const dvar_t *snd_khz;
@@ -165,7 +168,7 @@ void SND_SetStreamChannelVolumePan(int index, float volume, float pan);
 void SND_UpdateStreamChannel(int i, int frametime);
 void SND_Update2DChannel(int i, int frametime);
 void SND_Set2DChannelVolumePan(int index, float volume, float pan);
-static MssSound *SND_LoadFromBuffer(void *buffer, const char *realname, const void *unused);
+MssSound *SND_LoadFromBuffer(void *buffer, const char *realname, const void *unused);
 void SND_LoadSoundFile(SoundFile *soundFile);
 int SND_StartAlias2DSample(const snd_alias_t *pAlias0, const snd_alias_t *pAlias1, float lerp, int entnum, float volume, float pitch, int timeshift, float fraction, int startDelay, Bool master, int *pChannel, snd_alias_system_t system);
 int SND_StartAlias3DSample(const snd_alias_t *pAlias0, const snd_alias_t *pAlias1, float lerp, int entnum, const vec_t *org, float volume, float pitch, int timeshift, float fraction, int startDelay, Bool master, int *pChannel, snd_alias_system_t system);
@@ -277,6 +280,14 @@ static inline int I_max(const int x, const int y)
 static inline float I_sqrt(const float value)
 {
     return sqrt(value);
+}
+
+void *Hunk_AllocAlignInternal(int size, int align);
+
+// retail 0x4b2580, unreferenced; name unknown
+void *MSS_HunkAlloc_4b2580(int size)
+{
+    return Hunk_AllocAlignInternal(size, 32);
 }
 
 static long unsigned int __stdcall MSS_FileOpenCallback(const char *pszFilename, long unsigned int *phFileHandle)
@@ -1359,7 +1370,7 @@ int SND_GetSoundFileSize(const void *pSoundFile)
 
 // Original name unknown (KisakCOD calls it SND_LoadFromBuffer). The third
 // parameter is pushed by every caller but never read in 1.0; its type is unknown.
-static MssSound *SND_LoadFromBuffer(void *buffer, const char *realname, const void *unused)
+MssSound *SND_LoadFromBuffer(void *buffer, const char *realname, const void *unused)
 {
     AILMIXINFO mixinfo;
     int datasize, totalSize;
@@ -1424,6 +1435,12 @@ static MssSound *SND_LoadFromBuffer(void *buffer, const char *realname, const vo
     }
 
     return sound;
+}
+
+// retail 0x4b4890, unreferenced; name unknown
+MssSound *SND_LoadFromSound_4b4890(MssSound **sound, const char *realname)
+{
+    return SND_LoadFromBuffer((*sound)->data, realname, *sound);
 }
 
 void SND_LoadSoundFile(SoundFile *soundFile)

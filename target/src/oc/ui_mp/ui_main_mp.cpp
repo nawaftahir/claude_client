@@ -7,6 +7,33 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+
+const dvar_t *ui_netSource;
+const dvar_t *ui_bigFont;
+const dvar_t *ui_extraBigFont;
+const dvar_t *ui_smallFont;
+sharedUiInfo_t sharedUiInfo;
+
+const dvar_t *ui_playerProfileCount;
+const dvar_t *ui_netGameTypeName;
+const dvar_t *ui_browserShowPure;
+const dvar_t *ui_currentNetMap;
+const dvar_t *ui_browserKillcam;
+const dvar_t *ui_gametype;
+const dvar_t *ui_currentMap;
+const dvar_t *ui_netGameType;
+const dvar_t *ui_joinGameType;
+const dvar_t *ui_browserShowNoPassword;
+const dvar_t *ui_browserShowEmpty;
+const dvar_t *ui_browserShowDedicated;
+const dvar_t *ui_dedicated;
+const dvar_t *ui_playerProfileSelected;
+const dvar_t *ui_serverStatusTimeOut;
+const dvar_t *ui_browserFriendlyfire;
+const dvar_t *ui_browserMod;
+const dvar_t *ui_browserShowFull;
+const dvar_t *ui_playerProfileNameNew;
+const dvar_t *ui_browserShowPassword;
 extern const vec4_t colorBlack;
 extern const vec4_t colorLtGrey;
 extern const vec4_t colorRed;
@@ -27,12 +54,9 @@ extern dvar_t *sv_voice;
 
 extern serverStatusDvar_t serverStatusDvars[23];
 
-static char etaText[18] = { 0x45, 0x58, 0x45, 0x5f, 0x45, 0x53, 0x54, 0x5f, 0x54, 0x49, 0x4d, 0x45, 0x5f, 0x4c, 0x45, 0x46, 0x54, 0x0 };
-static int tleEstimates[80] = { 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c };
-static char xferText[15] = { 0x45, 0x58, 0x45, 0x5f, 0x54, 0x52, 0x41, 0x4e, 0x53, 0x5f, 0x52, 0x41, 0x54, 0x45, 0x0 };
 
-static const char *MonthAbbrev[12] = { (const char *)&str_002a9d68, (const char *)&str_002a9d80, (const char *)&str_002a9d98, (const char *)&str_002a9dac, (const char *)&str_002a9dc0, (const char *)&str_002a9dd4, (const char *)&str_002a9de8, (const char *)&str_002a9dfc, (const char *)&str_002a9e14, (const char *)&str_002a9e2c, (const char *)&str_002a9e44, (const char *)&str_002a9e5c };
-static const char *netSources[3] = { (const char *)&str_002a9e74, (const char *)&str_002a9e80, (const char *)&str_002a9e90 };
+static const char *MonthAbbrev[12] = { "EXE_MONTH_ABV_JANUARY", "EXE_MONTH_ABV_FEBRUARY", "EXE_MONTH_ABV_MARCH", "EXE_MONTH_ABV_APRIL", "EXE_MONTH_ABV_MAY", "EXE_MONTH_ABV_JUN", "EXE_MONTH_ABV_JULY", "EXE_MONTH_ABV_AUGUST", "EXE_MONTH_ABV_SEPTEMBER", "EXE_MONTH_ABV_OCTOBER", "EXE_MONTH_ABV_NOVEMBER", "EXE_MONTH_ABV_DECEMBER" };
+static const char *netSources[3] = { "EXE_LOCAL", "EXE_INTERNET", "EXE_FAVORITES" };
 
 static int lastColumn = 0xffffffff;
 
@@ -140,7 +164,8 @@ extern const dvar_t *ui_browserKillcam;
 extern const dvar_t *ui_serverStatusTimeOut;
 extern struct sharedUiInfo_t sharedUiInfo;
 extern uiInfo_t *uiInfo;
-extern uiInfo_t uiInfoArray[1];
+uiInfo_t uiInfoArray[1];
+uiInfo_t *uiInfo = uiInfoArray;
 COD2_ASSERT_FIELD(struct sharedUiInfo_t, mapCount, 4944);
 COD2_ASSERT_FIELD(struct sharedUiInfo_t, mapList, 4948);
 COD2_ASSERT_FIELD(struct mapInfo, active, 0xa0);
@@ -196,11 +221,6 @@ static int lastTime;
 /* 3 duplicate `static char info_00ecf960[1024];` removed (same name -> C++ C2086; only one is referenceable) */
 static int numFound;
 static int numTimeOuts;
-extern char dlText[16];
-extern char etaText[18];
-extern char xferText[15];
-extern int tleEstimates[80];
-static int tleIndex;
 static char g_mapname[64];
 static char g_gametype[64];
 static Bool g_ingameMenusLoaded;
@@ -1149,6 +1169,12 @@ static int UI_GetPlayerListIndex(int client)
             return index;
     }
     return -1;
+}
+
+// Original name unknown; unreferenced in retail.
+int UI_GetPlayerClientNum_52d200(int index)
+{
+    return sharedUiInfo.playerClientNums[index];
 }
 
 static void UI_DrawTalkerNum(int num, rectDef_t *rect, FontHandle font, vec_t *color, float scale, int textStyle)
@@ -3271,6 +3297,11 @@ static void Text_PaintCenter(FontHandle font, const char *text, float x, float y
 
 static void UI_DisplayDownloadInfo(const char *downloadName, float centerPoint, float yStart, FontHandle font, float scale)
 {
+    static char dlText[] = "EXE_DOWNLOADING";
+    static char etaText[] = "EXE_EST_TIME_LEFT";
+    static char xferText[] = "EXE_TRANS_RATE";
+    static int tleEstimates[80] = { 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60 };
+    static int tleIndex;
     LegacyHacks *legacyBase = legacyHacks;
     int downloadSize = legacyBase->cl_downloadSize;
     int downloadCount = legacyBase->cl_downloadCount;
@@ -3685,87 +3716,28 @@ void UI_CloseFocusedMenu(void)
 
 
 static serverStatusDvar_t serverStatusDvars[23] = {
-    { (const char *)&str_002a714c, (const char *)&str_002a9ab8, (sscType_t)0x0 },
-    { (const char *)&str_002a9ad0, (const char *)&str_002a9ad8, (sscType_t)0x0 },
-    { (const char *)&str_002a9af0, (const char *)&str_002a9af8, (sscType_t)0x1 },
-    { (const char *)&str_002a9b10, (const char *)&str_002a9b1c, (sscType_t)0x0 },
-    { (const char *)&str_002a7100, (const char *)&str_002a9b34, (sscType_t)0x0 },
-    { (const char *)&str_002a71f0, (const char *)&str_002a9b4c, (sscType_t)0x1 },
-    { (const char *)&str_002a7124, (const char *)&str_002a9b60, (sscType_t)0x0 },
-    { (const char *)&str_002168fc, (const char *)&str_002a9b74, (sscType_t)0x0 },
-    { (const char *)&str_002a7118, (const char *)&str_002a9b8c, (sscType_t)0x0 },
-    { (const char *)&str_002a9ba4, (const char *)&str_002a9bb0, (sscType_t)0x0 },
-    { (const char *)&str_002a9bc8, (const char *)&str_002a9bd4, (sscType_t)0x0 },
-    { (const char *)&str_002a9bec, (const char *)&str_002a9bf8, (sscType_t)0x0 },
-    { (const char *)&str_002a9c10, (const char *)&str_002a9c20, (sscType_t)0x1 },
-    { (const char *)&str_002a9c3c, (const char *)&str_002a9c50, (sscType_t)0x0 },
-    { (const char *)&str_002a70dc, (const char *)&str_002a9c68, (sscType_t)0x0 },
-    { (const char *)&str_002a9c80, (const char *)&str_002a9c94, (sscType_t)0x0 },
-    { (const char *)&str_002a9cb0, (const char *)&str_002a9cc4, (sscType_t)0x0 },
-    { (const char *)&str_00216d64, (const char *)&str_002a9ce0, (sscType_t)0x0 },
-    { (const char *)&str_002a9cf4, (const char *)&str_002a9cf8, (sscType_t)0x1 },
-    { (const char *)&str_002a9d04, (const char *)&str_002a9d10, (sscType_t)0x1 },
-    { (const char *)&str_002a9d28, (const char *)&str_002a9d34, (sscType_t)0x1 },
-    { (const char *)&str_002a71c8, (const char *)&str_002a9d4c, (sscType_t)0x1 },
+    { "sv_hostname", "@EXE_SV_INFO_SERVERNAME", (sscType_t)0x0 },
+    { "address", "@EXE_SV_INFO_ADDRESS", (sscType_t)0x0 },
+    { "pswrd", "@EXE_SV_INFO_PASSWORD", (sscType_t)0x1 },
+    { "gamename", "@EXE_SV_INFO_GAMENAME", (sscType_t)0x0 },
+    { "g_gametype", "@EXE_SV_INFO_GAMETYPE", (sscType_t)0x0 },
+    { "sv_pure", "@EXE_SV_INFO_PURE", (sscType_t)0x1 },
+    { "mapname", "@EXE_SV_INFO_MAP", (sscType_t)0x0 },
+    { "shortversion", "@EXE_SV_INFO_VERSION", (sscType_t)0x0 },
+    { "protocol", "@EXE_SV_INFO_PROTOCOL", (sscType_t)0x0 },
+    { "sv_maxping", "@EXE_SV_INFO_MAXPING", (sscType_t)0x0 },
+    { "sv_minping", "@EXE_SV_INFO_MINPING", (sscType_t)0x0 },
+    { "sv_maxrate", "@EXE_SV_INFO_MAXRATE", (sscType_t)0x0 },
+    { "sv_floodprotect", "@EXE_SV_INFO_FLOODPROTECT", (sscType_t)0x1 },
+    { "sv_allowanonymous", "@EXE_SV_INFO_ALLOWANON", (sscType_t)0x0 },
+    { "sv_maxclients", "@EXE_SV_INFO_MAXCLIENTS", (sscType_t)0x0 },
+    { "sv_privateclients", "@EXE_SV_INFO_PRIVATECLIENTS", (sscType_t)0x0 },
+    { "scr_friendlyFire", "@EXE_SV_INFO_FRIENDLY_FIRE", (sscType_t)0x0 },
+    { "fs_game", "@EXE_SV_INFO_MOD", (sscType_t)0x0 },
+    { "mod", "@MENU_MODS", (sscType_t)0x1 },
+    { "scr_killcam", "@EXE_SV_INFO_KILLCAM", (sscType_t)0x1 },
+    { "g_antilag", "@EXE_SV_INFO_ANTILAG", (sscType_t)0x1 },
+    { "sv_voice", "@EXE_SV_INFO_VOICE", (sscType_t)0x1 },
     { 0, 0, (sscType_t)0x0 }
 };
 
-const char str_002168fc[] = "shortversion";
-const char str_00216d64[] = "fs_game";
-const char str_002a70dc[] = "sv_maxclients";
-const char str_002a7100[] = "g_gametype";
-const char str_002a7118[] = "protocol";
-const char str_002a7124[] = "mapname";
-const char str_002a714c[] = "sv_hostname";
-const char str_002a71c8[] = "sv_voice";
-const char str_002a71f0[] = "sv_pure";
-const char str_002a9ab8[] = "@EXE_SV_INFO_SERVERNAME";
-const char str_002a9ad0[] = "address";
-const char str_002a9ad8[] = "@EXE_SV_INFO_ADDRESS";
-const char str_002a9af0[] = "pswrd";
-const char str_002a9af8[] = "@EXE_SV_INFO_PASSWORD";
-const char str_002a9b10[] = "gamename";
-const char str_002a9b1c[] = "@EXE_SV_INFO_GAMENAME";
-const char str_002a9b34[] = "@EXE_SV_INFO_GAMETYPE";
-const char str_002a9b4c[] = "@EXE_SV_INFO_PURE";
-const char str_002a9b60[] = "@EXE_SV_INFO_MAP";
-const char str_002a9b74[] = "@EXE_SV_INFO_VERSION";
-const char str_002a9b8c[] = "@EXE_SV_INFO_PROTOCOL";
-const char str_002a9ba4[] = "sv_maxping";
-const char str_002a9bb0[] = "@EXE_SV_INFO_MAXPING";
-const char str_002a9bc8[] = "sv_minping";
-const char str_002a9bd4[] = "@EXE_SV_INFO_MINPING";
-const char str_002a9bec[] = "sv_maxrate";
-const char str_002a9bf8[] = "@EXE_SV_INFO_MAXRATE";
-const char str_002a9c10[] = "sv_floodprotect";
-const char str_002a9c20[] = "@EXE_SV_INFO_FLOODPROTECT";
-const char str_002a9c3c[] = "sv_allowanonymous";
-const char str_002a9c50[] = "@EXE_SV_INFO_ALLOWANON";
-const char str_002a9c68[] = "@EXE_SV_INFO_MAXCLIENTS";
-const char str_002a9c80[] = "sv_privateclients";
-const char str_002a9c94[] = "@EXE_SV_INFO_PRIVATECLIENTS";
-const char str_002a9cb0[] = "scr_friendlyFire";
-const char str_002a9cc4[] = "@EXE_SV_INFO_FRIENDLY_FIRE";
-const char str_002a9ce0[] = "@EXE_SV_INFO_MOD";
-const char str_002a9cf4[] = "mod";
-const char str_002a9cf8[] = "@MENU_MODS";
-const char str_002a9d04[] = "scr_killcam";
-const char str_002a9d10[] = "@EXE_SV_INFO_KILLCAM";
-const char str_002a9d28[] = "g_antilag";
-const char str_002a9d34[] = "@EXE_SV_INFO_ANTILAG";
-const char str_002a9d4c[] = "@EXE_SV_INFO_VOICE";
-const char str_002a9d68[] = "EXE_MONTH_ABV_JANUARY";
-const char str_002a9d80[] = "EXE_MONTH_ABV_FEBRUARY";
-const char str_002a9d98[] = "EXE_MONTH_ABV_MARCH";
-const char str_002a9dac[] = "EXE_MONTH_ABV_APRIL";
-const char str_002a9dc0[] = "EXE_MONTH_ABV_MAY";
-const char str_002a9dd4[] = "EXE_MONTH_ABV_JUN";
-const char str_002a9de8[] = "EXE_MONTH_ABV_JULY";
-const char str_002a9dfc[] = "EXE_MONTH_ABV_AUGUST";
-const char str_002a9e14[] = "EXE_MONTH_ABV_SEPTEMBER";
-const char str_002a9e2c[] = "EXE_MONTH_ABV_OCTOBER";
-const char str_002a9e44[] = "EXE_MONTH_ABV_NOVEMBER";
-const char str_002a9e5c[] = "EXE_MONTH_ABV_DECEMBER";
-const char str_002a9e74[] = "EXE_LOCAL";
-const char str_002a9e80[] = "EXE_INTERNET";
-const char str_002a9e90[] = "EXE_FAVORITES";

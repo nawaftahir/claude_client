@@ -121,7 +121,7 @@ void Com_CleanupBsp(void);
 extern "C" size_t FS_FileRead( void *ptr, size_t size, size_t nmemb, FILE *stream );
 size_t FS_FileWrite(const void *ptr, size_t size, size_t nitems, FILE *stream);
 extern "C" FILE *FS_FileOpen( const char *filename, const char *mode );
-extern "C" void FS_FileClose( FILE *stream );
+extern "C" int FS_FileClose( FILE *stream );
 extern "C" int FS_FileSeek( FILE *file, int offset, int whence );
 
 Bool Com_HasPlayerProfile(void);

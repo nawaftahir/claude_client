@@ -3,6 +3,8 @@ extern void Com_Printf(const char *fmt, ...);
 #include "imports.h"
 #include "bytematch.h"
 #include "headers/PC/cgame_mp/cg_local.h"
+
+struct lagometer_t lagometer;
 extern weaponInfo_t cg_weaponsArray[];
 extern displayContextDef_t cgDC;
 
@@ -745,6 +747,12 @@ void CG_PriorityCenterPrint(const char *str, float charWidth, int priority)
     }
 }
 
+// retail 0x4c20c0, unreferenced; Q3 CG_CenterPrint (SUPPORTED)
+void CG_CenterPrint(const char *str, float charWidth)
+{
+    CG_PriorityCenterPrint(str, charWidth, 0);
+}
+
 static void CG_DrawCenterString(void)
 {
     char *start;
@@ -871,7 +879,7 @@ void CG_DrawFrameOverlay(float innerLeft, float innerRight, float innerTop, floa
     }
 }
 
-static void CG_DrawAdsOverlay(int weapIndex, const WeaponDef *weapDef, const float *color, const float *crosshairPos)
+static void CG_DrawAdsOverlay(const WeaponDef *weapDef, int weapIndex, const float *color, const float *crosshairPos)
 {
     MaterialHandle material;
     vec2_t drawPos;
@@ -939,7 +947,7 @@ float CG_DrawWeapReticle(void)
     color[2] = 1.0f;
     color[3] = zoomFrac;
     CG_CalcCrosshairPosition(&crosshairPos[0], &crosshairPos[1]);
-    CG_DrawAdsOverlay(weapIndex, weapDef, color, crosshairPos);
+    CG_DrawAdsOverlay(weapDef, weapIndex, color, crosshairPos);
     return 1.0f - zoomFrac;
 }
 
@@ -959,6 +967,12 @@ static void CG_CalcCrosshairColor(float alpha, float *color)
         color[2] = 1.0f;
     }
     color[3] = alpha * cg_crosshairAlpha->current.value;
+}
+
+// retail 0x4c2c40, unreferenced; name unknown
+Bool CG_CrosshairDisabled_4c2c40(void)
+{
+    return !cg_drawCrosshair->current.enabled;
 }
 
 static bool AllowedToDrawCrosshair(void)
@@ -982,7 +996,7 @@ static void CG_DrawAdsAimIndicator(int weapIndex, const WeaponDef *weapDef, cons
     if (!cg_drawGun->current.enabled && !(transScale >= 1.0f)) {
         material = cg_weaponsArray[weapIndex].hReticleCenter;
         if (material) {
-            w = (1.5f - transScale) * (float)weapDef->iReticleCenterSize;
+            w = 1.5f - transScale; w = w * ((float)weapDef->iReticleCenterSize);
             CL_DrawStretchPic(centerX - w * 0.5f, centerY - w * 0.5f, w, w, 2, 2, 0.0f, 0.0f, 1.0f, 1.0f, color, material);
         }
     }
@@ -1011,7 +1025,7 @@ static void CG_TransitionToAds(const WeaponDef *weapDef, float posLerp, float *t
     }
 }
 
-static void CG_DrawReticleCenter(int weapIndex, const WeaponDef *weapDef, const float *color, float centerX, float centerY, float transScale)
+static void CG_DrawReticleCenter(const WeaponDef *weapDef, int weapIndex, const float *color, float centerX, float centerY, float transScale)
 {
     MaterialHandle material;
     float drawSize;
@@ -1035,7 +1049,8 @@ static __declspec(noinline) void CG_CalcReticleSpread(const WeaponDef *weapDef, 
     float scale;
 
     BG_GetSpreadForWeapon(&cg->predictedPlayerState, weapIndex, &minSpread, &maxSpread);
-    f = ((maxSpread - minSpread) * (cg->predictedPlayerState.aimSpreadScale * (1.0f / 255.0f)) + minSpread) * transScale;
+    f = ((maxSpread - minSpread) * (cg->predictedPlayerState.aimSpreadScale * (1.0f / 255.0f)) + minSpread);
+    f = f * transScale;
     scale = tan(f * 0.017453292f) / tan(0.5f * (cg->refdef.fov_y * 0.017453292f)) * 240.0f;
     if (scale < (float)weapDef->iReticleMinOfs)
         scale = (float)weapDef->iReticleMinOfs;
@@ -1163,7 +1178,7 @@ void CG_DrawCrosshair(void)
                 centerX = 0.0f;
                 centerY = transShift;
             }
-            CG_DrawReticleCenter(weapIndex, weapDef, color, centerX, centerY, transScale);
+            CG_DrawReticleCenter(weapDef, weapIndex, color, centerX, centerY, transScale);
             CG_DrawReticleSides(weapDef, weapIndex, color, centerX, centerY, transScale);
         }
     }

@@ -23,13 +23,13 @@ static dvar_t *fs_gameDirVar;
 dvar_t *fs_restrict;
 dvar_t *fs_ignoreLocalized;
 
-searchpath_t *fs_searchpaths;
+searchpath_t *fs_searchpaths = NULL;
 static int fs_packFiles;
 int fs_fakeChkSum;
 int fs_checksumFeed;
 fileHandleData_t fsh[MAX_FILE_HANDLES];
 
-int fs_numServerIwds;
+int fs_numServerIwds = 0;
 int fs_serverIwds[MAX_IWDFILES];
 const char *fs_serverIwdNames[MAX_IWDFILES];
 int fs_numServerReferencedIwds;
@@ -2292,7 +2292,7 @@ void FS_FullPath_f(void)
 
 void FS_Path_f(void)
 {
-	FS_DisplayPath(0);
+	FS_DisplayPath(1);
 }
 
 static const char* IwdFileLanguage(const char *instr)

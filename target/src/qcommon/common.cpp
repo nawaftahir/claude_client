@@ -9,6 +9,8 @@
 #include "../universal/universal_public.h"
 #include "../xanim/xanim_public.h"
 
+const dvar_t *com_statmon;
+
 // storage with no remaining references; size from the layout, name unknown
 static char com_unreferenced0[0x16c];
 
@@ -26,10 +28,10 @@ static dvar_t *com_maxfps;
 dvar_t *com_sv_running;
 dvar_t *com_logfile;
 dvar_t *version;
-dvar_t *shortversion;
+dvar_t *shortversion = NULL;
 dvar_t *com_introPlayed;
 dvar_t *cl_paused;
-dvar_t *nextmap;
+dvar_t *nextmap = NULL;
 dvar_t *com_expectedHunkUsage;
 dvar_t *sv_paused;
 static int com_unreferenced2;

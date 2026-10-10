@@ -103,7 +103,7 @@ sval_u node3_( sval_u val1, sval_u val2, sval_u val3 );
 sval_u node4_( sval_u val1, sval_u val2, sval_u val3, sval_u val4 );
 int yylex();
 
-static const short yy_accept[] =
+static short yy_accept[] =
 {
 	    0,     0,     0,     0,     0,     0,     0,    94,    92,     1,
 	    4,    33,    92,    92,    89,    32,    19,    11,    12,    30,
@@ -133,7 +133,7 @@ static const short yy_accept[] =
 	    0,    90,    68,    90,    74,     0,
 };
 
-static const int yy_ec[] =
+static int yy_ec[] =
 {
 	0, 1, 1, 1, 1, 1, 1, 1, 1, 2,
 	3, 1, 1, 2, 1, 1, 1, 1, 1, 1,
@@ -163,7 +163,7 @@ static const int yy_ec[] =
 	1, 1, 1, 1, 1, 1
 };
 
-static const int yy_meta[] =
+static int yy_meta[] =
 {
 	0,    1,    1,    2,    1,    1,    1,    1,    1,    1,
 	1,    1,    1,    1,    1,    1,    1,    1,    3,    1,
@@ -173,7 +173,7 @@ static const int yy_meta[] =
 	4,    4,    4,    4,    4,    1,    1,    1,    1,
 };
 
-static const short yy_base[] =
+static short yy_base[] =
 {
 	    0,   427,   426,     0,     0,    56,    57,   428,   431,   431,
 	  425,   404,    56,    45,   431,   403,    58,   431,   431,   402,
@@ -205,7 +205,7 @@ static const short yy_base[] =
 	    0,     0,
 };
 
-static const short yy_def[] =
+static short yy_def[] =
 {
 	    0,   256,   256,   255,     3,   257,   257,   255,   255,   255,
 	  255,   255,   258,   255,   255,   255,   255,   255,   255,   255,
@@ -237,7 +237,7 @@ static const short yy_def[] =
 	    0,     0,
 };
 
-static const short yy_nxt[] =
+static short yy_nxt[] =
 {
 	    0,     8,    10,     9,    11,    12,    13,    14,    15,    16,
 	   17,    18,    19,    20,    21,    22,    23,    24,    25,    26,
@@ -291,7 +291,7 @@ static const short yy_nxt[] =
 	    0,     0,     0,     0,     0,     0,
 };
 
-static const short yy_chk[] =
+static short yy_chk[] =
 {
 	    0,     3,     3,     3,     3,     3,     3,     3,     3,     3,
 	    3,     3,     3,     3,     3,     3,     3,     3,     3,     3,
@@ -384,7 +384,7 @@ yy_flush_buffer
 
 #define YYTRANSLATE(x) ((unsigned)(x) <= 343 ? yytranslate[x] : 116)
 
-static const char yytranslate[] = {     0,
+static char yytranslate[] = {     0,
      2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
      2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
      2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
@@ -423,7 +423,7 @@ static const char yytranslate[] = {     0,
 };
 
 #if YYDEBUG != 0
-static const short yyprhs[] = {     0,
+static short yyprhs[] = {     0,
      0,     4,     7,    10,    13,    15,    19,    23,    27,    31,
     35,    39,    43,    47,    51,    55,    59,    63,    67,    71,
     75,    79,    83,    87,    90,    93,    95,    96,    98,   100,
@@ -439,7 +439,7 @@ static const short yyprhs[] = {     0,
    404,   406,   414,   420,   422,   424,   427,   428,   431,   435
 };
 
-static const short yyrhs[] = {    26,
+static short yyrhs[] = {    26,
    115,   113,     0,    28,    91,     0,    28,   101,     0,    28,
    104,     0,    99,     0,    91,    13,    91,     0,    91,    14,
     91,     0,    91,    15,    91,     0,    91,    16,    91,     0,
@@ -489,7 +489,7 @@ static const short yyrhs[] = {    26,
 #endif
 
 #if YYDEBUG != 0
-static const short yyrline[] = { 0,
+static short yyrline[] = { 0,
     19,    20,    21,    22,    23,    24,    25,    26,    27,    28,
     29,    30,    31,    32,    33,    34,    35,    36,    37,    38,
     39,    40,    41,    42,    43,    44,    45,    46,    47,    48,
@@ -557,7 +557,7 @@ static const short yyr2[] = {     0,
      1,     7,     5,     1,     1,     2,     0,     2,     3,     0
 };
 
-static const short yydefact[] = {     0,
+static short yydefact[] = {     0,
    130,     0,   127,    63,    45,    46,   109,   112,     0,     0,
      0,     0,     0,    41,    42,    68,     0,     0,    49,    50,
     51,    52,    53,     0,     0,     0,    60,     0,    29,    84,
@@ -586,13 +586,13 @@ static const short yydefact[] = {     0,
    101,   122,     0,     0,     0
 };
 
-static const short yydefgoto[] = {   253,
+static short yydefgoto[] = {   253,
     57,   203,    42,    43,    44,    45,    46,    58,    59,    60,
    139,    51,   239,   140,   141,    56,    61,   218,   210,   212,
    214,   132,    54,    55,     3
 };
 
-static const short yypact[] = {     0,
+static short yypact[] = {     0,
 -32768,   688,   -66,    -8,-32768,-32768,-32768,   974,    53,   -17,
     29,   974,   974,-32768,-32768,   974,   974,    11,-32768,-32768,
 -32768,-32768,-32768,    26,    31,    38,-32768,    34,-32768,-32768,
@@ -621,7 +621,7 @@ static const short yypact[] = {     0,
 -32768,-32768,   174,   178,-32768
 };
 
-static const short yypgoto[] = {-32768,
+static short yypgoto[] = {-32768,
     32,-32768,    23,-32768,-32768,   161,   -38,     2,    -2,    16,
    186,   -34,-32768,     6,   114,   -36,   -96,-32768,-32768,-32768,
 -32768,-32768,-32768,-32768,-32768
@@ -631,7 +631,7 @@ static const short yypgoto[] = {-32768,
 #define	YYLAST		1312
 
 
-static const short yytable[] = {    48,
+static short yytable[] = {    48,
    -31,    53,    82,    47,   128,   142,   172,    52,   175,   111,
    126,    71,   207,   -92,    71,    64,    65,    49,   104,   226,
    111,    72,    99,   100,   101,     1,   228,     2,    71,   230,
@@ -766,7 +766,7 @@ static const short yytable[] = {    48,
    100,   101
 };
 
-static const short yycheck[] = {     2,
+static short yycheck[] = {     2,
      9,    68,    39,     2,     4,    10,   103,     2,     4,    48,
      4,     4,    10,    10,     4,    33,    34,     2,    11,    10,
     59,    11,    28,    29,    30,    26,    10,    28,     4,    10,

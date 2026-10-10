@@ -3,7 +3,7 @@
 loadAnim_t *BG_LoadAnimForAnimIndex( unsigned int index );
 
 
-bgs_t *bgs;
+bgs_t *bgs = NULL;
 
 // Original name unknown; unreferenced.
 static const float unusedConstant = 50.0f;

@@ -93,9 +93,9 @@ void FX_PlayEntityEffect( const FxEffectDef *fx, const float *origin, const vec3
 	theFxScheduler->PlayEffect(fx, origin, axis, bolt);
 }
 
-void FX_InitSystem( bool rendererExists )
+int FX_InitSystem( bool rendererExists )
 {
-	FX_Init(rendererExists);
+	return FX_Init(rendererExists);
 }
 
 void FX_FreeSystem()

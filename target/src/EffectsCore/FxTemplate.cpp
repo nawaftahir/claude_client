@@ -2055,6 +2055,13 @@ int FX_PrimTypeIsEmitter( PrimType type )
 	}
 }
 
+// retail 0x49b650, unreferenced; name unknown (ret 8 = stdcall like FxRange_GetValPct)
+void __stdcall FxRange_Set_49b650( FxRange *range, float min, float max )
+{
+	range->min = min;
+	range->max = max;
+}
+
 float FxRange_GetVal( const FxRange *range )
 {
 	if ( range->min == range->max )

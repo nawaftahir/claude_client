@@ -30,6 +30,13 @@ float Com_GetVolumeFalloffCurveValue( SndCurve *volumeFalloffCurve, float fracti
 	return GraphGetValueFromFraction(volumeFalloffCurve->knotCount, volumeFalloffCurve->knots, fraction);
 }
 
+// retail 0x42c3b0, unreferenced; name unknown
+int Com_GetVolumeFalloffCurveKnots_42c3b0( SndCurve *volumeFalloffCurve, vec2_t **knots )
+{
+	*knots = volumeFalloffCurve->knots;
+	return volumeFalloffCurve->knotCount;
+}
+
 static void Com_LoadedSoundList( snd_alias_system_t system )
 {
 	int totalSize;
@@ -415,6 +422,12 @@ int Com_GetSoundAliasRandomSeed()
 	return g_sa.randSeed;
 }
 
+// retail 0x42cd10, unreferenced; name unknown
+void Com_SetSoundAliasRandomSeed_42cd10(int seed)
+{
+	g_sa.randSeed = seed;
+}
+
 void Com_SetSoundAliasRandomSeed( int seed )
 {
 	g_sa.randSeed = seed;
@@ -477,6 +490,15 @@ snd_alias_t *Com_PickSoundAliasFromList( snd_alias_list_t *aliasList )
 	}
 	select->sequence = maxSequence + 1;
 	return select;
+}
+
+// retail 0x42ce60, unreferenced twin of Com_PickSoundAlias; name unknown
+snd_alias_t *Com_PickSoundAlias_42ce60( const char *aliasName )
+{
+	snd_alias_list_t *aliasList;
+
+	aliasList = Com_FindSoundAlias(aliasName);
+	return Com_PickSoundAliasFromList(aliasList);
 }
 
 SndCurve *Com_RegisterSoundAliasVolumeFalloffCurve( const char *filename, const char *sourceFile )

@@ -196,6 +196,7 @@ int Com_RealTime( qtime_t *qtime )
 
 #undef Com_Memcpy
 #undef Com_Memset
+#undef Com_Memcmp
 
 static void _copyDWord( unsigned int *dest, const unsigned int constant, const unsigned int count )
 {
@@ -440,5 +441,36 @@ skipB:
 		mov		byte ptr [ebx], al
 skipA:
 	}
+}
+
+// retail 0x42c290, unreferenced; Q3 Com_Memcmp (SUPPORTED)
+qboolean Com_Memcmp( const void *src0, const void *src1, const unsigned int count )
+{
+	unsigned int i;
+
+	if ( count >= 16 )
+	{
+		unsigned int *dw = (unsigned int *)src0;
+		unsigned int *sw = (unsigned int *)src1;
+
+		unsigned int nm2 = count / 16;
+		for ( i = 0; i < nm2; i += 4 )
+		{
+			unsigned int tmp = ( dw[i + 0] - sw[i + 0] ) | ( dw[i + 1] - sw[i + 1] ) |
+			                   ( dw[i + 2] - sw[i + 2] ) | ( dw[i + 3] - sw[i + 3] );
+			if ( tmp )
+				return qfalse;
+		}
+	}
+	if ( count & 15 )
+	{
+		byte *d = (byte *)src0;
+		byte *s = (byte *)src1;
+		for ( i = count & 0xfffffff0; i < count; i++ )
+			if ( d[i] != s[i] )
+				return qfalse;
+	}
+
+	return qtrue;
 }
 

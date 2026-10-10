@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Instruction diff: our function (by mangled-name substring) vs client code at an address."""
-import difflib, re, sys
+import os, difflib, re, sys
 import pefile, capstone
 
 img, mapf, target, pat, caddr = sys.argv[1:6]
@@ -38,7 +38,7 @@ def norm(code, start):
 a, b = norm(ours, va), norm(theirs, caddr)
 print(name, len(ours), 'bytes;', len(a), 'vs', len(b), 'insns')
 n = 0
-for line in difflib.unified_diff(a, b, 'ours', 'client', n=2, lineterm=''):
+for line in difflib.unified_diff(a, b, 'ours', 'client', n=int(os.environ.get("FDN", 2)), lineterm=''):
     print(line)
     n += 1
     if n > int(sys.argv[6] if len(sys.argv) > 6 else 60):

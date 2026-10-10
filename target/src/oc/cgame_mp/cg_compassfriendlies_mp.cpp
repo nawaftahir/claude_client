@@ -181,7 +181,7 @@ void CG_DrawCompassFriendlies(rectDef_t *rect, MaterialHandle material, vec_t *c
     CG_UpdateCompPointerOrientation();
 
     centerX = rect->x + rect->w * cg_hudCompassSize->current.value * 0.5f;
-    centerY = rect->y; centerY = centerY + rect->h; centerY = centerY - cg_hudCompassSize->current.value * rect->h * 0.5f;
+    centerY = rect->y + rect->h - cg_hudCompassSize->current.value * rect->h * 0.5f;
 
     fadedColor[0] = color[0];
     fadedColor[1] = color[1];

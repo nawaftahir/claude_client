@@ -65,6 +65,15 @@ void CG_Corpse(centity_t *cent);
 
 void CG_Player(centity_t *cent);
 
+// retail 0x4d5690, unreferenced; name unknown
+void CG_SetByte4_4d5690(unsigned char *out, unsigned char r, unsigned char g, unsigned char b, unsigned char a)
+{
+    out[0] = r;
+    out[1] = g;
+    out[2] = b;
+    out[3] = a;
+}
+
 static void CG_PlayerFloatSprite(centity_t *cent, MaterialHandle material, float additionalRadiusSize, int height, Bool fixedScreenSize)
 {
     byte *snap;

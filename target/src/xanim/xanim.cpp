@@ -2930,7 +2930,7 @@ void XAnimSetAnimRateInternal(XAnimTree_s *tree, unsigned int animIndex, float r
 	g_xAnimInfo[childIndex].state.rate = rate;
 }
 
-void *Hunk_AllocXAnimPrecache(int size)
+static void *Hunk_AllocXAnimPrecache(int size)
 {
 	return Hunk_AllocAlignInternal(size, 4);
 }

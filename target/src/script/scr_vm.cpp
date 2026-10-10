@@ -1,5 +1,7 @@
 #include "../qcommon/qcommon.h"
 #include "script_public.h"
+// Unreferenced storage at 0xdb00d8; original declaration unknown (sized from the layout).
+int scrVmUnknown_DB00D8[65578];
 
 static inline unsigned int Scr_GetLocalVarAtIndex( int index );
 static inline unsigned int Scr_GetLocalVar( const char *pos );
@@ -131,7 +133,7 @@ void Scr_ResetTimeout();
 void Scr_StackClear( void );
 void Scr_TraverseScript( char const *pos );
 
-char g_EndPos;
+char g_EndPos = 0;
 static jmp_buf g_script_error[MAX_VM_STACK_DEPTH + 1];
 static int g_script_error_level;
 scrVmGlob_t scrVmGlob __attribute__((aligned(128)));
@@ -2876,8 +2878,8 @@ VM_Notify
 void VM_Notify( unsigned int notifyListOwnerId, unsigned int stringValue, VariableValue *top )
 {
 	unsigned int notifyNameListId;
-	unsigned int notifyListId;
 	unsigned int startLocalId;
+	unsigned int notifyListId;
 	VariableValue *currentValue;
 	VariableUnion *tempValue;
 	VariableStackBuffer *stackValue;

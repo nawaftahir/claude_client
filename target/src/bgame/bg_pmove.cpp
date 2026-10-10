@@ -3293,10 +3293,10 @@ void PM_UpdateViewAngles( playerState_t *ps, float msec, usercmd_t *cmd, byte ha
 
 			ps->delta_angles[YAW] += ANGLE2SHORT(delta);
 
-			if ( delta > 0 )
-				ps->viewangles[YAW] = AngleNormalize360Accurate(ladderFacing - bg_ladder_yawcap->current.decimal);
-			else
+			if ( delta <= 0 )
 				ps->viewangles[YAW] = AngleNormalize360Accurate(ladderFacing + bg_ladder_yawcap->current.decimal);
+			else
+				ps->viewangles[YAW] = AngleNormalize360Accurate(ladderFacing - bg_ladder_yawcap->current.decimal);
 		}
 	}
 

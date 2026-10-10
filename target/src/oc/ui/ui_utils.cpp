@@ -141,6 +141,7 @@ bool Menu_HasItemLeft_5407e0(menuDef_t *menu)
             && menu->items[i]->window.rect[0].h + menu->items[i]->window.rect[0].y > y
             && menu->items[i]->window.rect[0].x < cur->window.rect[0].x)
             return 1;
+        return 0;
     }
     return 0;
 }
@@ -163,6 +164,7 @@ bool Menu_HasItemRight_5408c0(menuDef_t *menu)
             && menu->items[i]->window.rect[0].h + menu->items[i]->window.rect[0].y > y
             && menu->items[i]->window.rect[0].x > cur->window.rect[0].x)
             return 1;
+        return 0;
     }
     return 0;
 }
