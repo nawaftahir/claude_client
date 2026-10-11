@@ -2657,7 +2657,7 @@ void CL_Init(void)
 
     clientActive_t *c = clients;
 
-    Com_ClientDObjClearAllSkel();
+    CL_ClearState();
     CL_ClearMutedList();
     c->voicePacketCount = 0;
 

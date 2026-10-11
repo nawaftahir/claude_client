@@ -101,3 +101,23 @@ after initialization. No runtime smoke or new whole-file identity is claimed.
 Nine bounded effects vtables show no contradictions in known matched slots. This does
 not prove unmatched slots. SCR/ROQ_RunCinematic candidates are 0x4034d0/0x4aff30, not
 the misleading DB address 0x4143c0; current wrappers still tail-jump instead of call/pop.
+
+The subsequent call audit confirmed three more source corrections, still at 1,230,754 B:
+CL_Init calls the existing CL_ClearState, rename notifications use plain CG_GameMessage,
+and HUD clock case blocks precede material. Targeted linked checks validate four call PCs
+and all twelve HUD type dispatches (byte remap plus relative jump-table destinations).
+Native init fixtures reject the old skeleton-only call and retain the five required flags.
+The retail state-clear export from Ghidra omits those flag saves; actual machine code proves
+the existing source's saves/restores are correct, so the state-clear body was not changed.
+
+```
+python3 scratch/codex_1012/test_client_init.py
+python3 scratch/codex_1012/test_call_bindings.py
+```
+
+Broad bindcheck candidate counts: 5,109 ok / 2,959 unknown / 119 bad. These are candidate
+counts, not source coverage: most bad candidates have another valid hit. The only remaining
+all-bad names are two short decrement-iterator pairings incorrectly assigned to 0x4abb40
+(_Inc); actual _Dec wrappers are 0x4abb50 and 0x4ac590. Those DB corrections remain research,
+not accepted source gains. The call checker does not validate every data operand or unknown
+callee. No claim of complete binding verification is made.

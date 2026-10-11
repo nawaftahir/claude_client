@@ -395,7 +395,7 @@ void CG_SetNextSnap(snapshot_t *snap)
 
         if (strcmp(ci->name, clientState->name)) {
             if (ci->name[0])
-                CG_BoldGameMessage(va("%s^7 %s %s", ci->name, UI_SafeTranslateString("CGAME_PLAYERRENAMES"), clientState->name));
+                CG_GameMessage(va("%s^7 %s %s", ci->name, UI_SafeTranslateString("CGAME_PLAYERRENAMES"), clientState->name));
             I_strncpyz(ci->name, clientState->name, sizeof(ci->name));
         }
 

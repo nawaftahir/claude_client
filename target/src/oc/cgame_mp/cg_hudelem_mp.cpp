@@ -580,12 +580,12 @@ void DrawSingleHudElem2d(const hudelem_t *elem)
         if (cghe.hudElemText[0])
             DrawHudElemString(cghe.hudElemText, elem, &cghe);
         break;
-    case HE_TYPE_MATERIAL:
-        DrawHudElemMaterial(elem, &cghe);
-        break;
     case HE_TYPE_CLOCK_DOWN:
     case HE_TYPE_CLOCK_UP:
         DrawHudElemClock(elem, &cghe);
+        break;
+    case HE_TYPE_MATERIAL:
+        DrawHudElemMaterial(elem, &cghe);
         break;
     }
 }
