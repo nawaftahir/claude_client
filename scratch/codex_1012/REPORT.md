@@ -59,3 +59,45 @@ Cold ledger SHA-256: `26318e35f312fdd2a1dc27a91be1ca0c73e356d9031e89d7d476ba0dcc
 Cold dev EXE SHA-256: `9ef03b3f99634c0cc2ff86d0c026b4deb8f5909162bad7e30bbde181802be41f`.
 Toolchain image: `sha256:17ddd3cc30517bc070c4e1a1d8bec9c4abd0d8b453115dfa0324e7e20dc94131`.
 No retail bytes were copied into code; no canonical release tree changes and no push.
+
+## Continuing source/data work, 2026-10-11
+
+This section follows the earlier cold checkpoint; it is not another cold-build claim.
+Two batched parameter-reuse probes, two UI loop forms and one expanded VectorMA form
+gave no real code matches and were reverted. The existing vary.py change is untouched.
+
+The next literal audit checked 4,337 memory operands in uniquely matched functions.
+It found real data errors hidden by relocation masking. Kept corrections in target/src:
+
+- Sound selection: both probability multipliers are +32768.0f, not -2147483648.0f.
+- Degrees-per-radian: the retail float is 57.2957763671875.
+- Scoreboard header baseline: the retail float is 11.75999927520752.
+- Camera zoom numerator: retail lifts float 0.69813174f to double for tan.
+
+The final fresh build still measures **1,230,754 B (87.37%)**, with direct start-ledger
+ratchet green. These changes fix numeric behavior, not new .text coverage. The earlier
+cold-build hashes describe that earlier checkpoint, not these modified sources.
+
+Additional tests:
+
+```
+python3 scratch/codex_1012/test_sound_selection.py
+python3 scratch/codex_1012/test_retail_constants.py
+python3 scratch/codex_1012/audit_real_constants.py
+```
+
+The actual selector passes null/single, both two-alias choices and three-alias sequence
+fixtures; its old negative multiplier fails the first selection fixture. Eight linked
+functions use the pinned numeric operands, including both ambiguous asin/acos hits.
+All five previous tests also pass. Another 49 literal sites in multi-hit functions
+have no unanimous numeric contradiction.
+
+The literal audit leaves one diagnostic in CL_RunOncePerClientFrame: ours commutes
+timescale/1000 between fdivr and fmul; both values exist, so it is not a missing constant.
+A direct-global source probe did not change it and was reverted. This operand ordering
+still needs exact reconstruction; zero-filled initial timescale storage is not its value
+after initialization. No runtime smoke or new whole-file identity is claimed.
+
+Nine bounded effects vtables show no contradictions in known matched slots. This does
+not prove unmatched slots. SCR/ROQ_RunCinematic candidates are 0x4034d0/0x4aff30, not
+the misleading DB address 0x4143c0; current wrappers still tail-jump instead of call/pop.

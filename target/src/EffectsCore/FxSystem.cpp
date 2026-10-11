@@ -222,7 +222,7 @@ void FxHelper::AdjustCamera( const refdef_t *refdef, float zfar )
 	if ( refdef->fov_x != 80.0f )
 	{
 		float halfFov = refdef->fov_x * 0.5f;
-		adsZoomFactor = tan(80.0 * 0.5 * (M_PI / 180.0)) / tan(halfFov * (float)(M_PI / 180.0));
+		adsZoomFactor = tan((double)0.69813174f) / tan(halfFov * (float)(M_PI / 180.0));
 	}
 	else
 		adsZoomFactor = 1.0f;

@@ -345,7 +345,7 @@ float CG_DrawScoreboard_ListColumnHeaders(const float *color, float y, float lis
                 xAdj = listWidth * info[i].fWidth - UI_TextWidth(translation, 0, font, 0.3f);
             else
                 xAdj = 0.0f;
-            UI_DrawText(translation, 0x7fffffff, font, x + xAdj, y + 11.76f, 0, 0, 0.3f, color, 3);
+            UI_DrawText(translation, 0x7fffffff, font, x + xAdj, y + 11.75999927520752f, 0, 0, 0.3f, color, 3);
         }
         x += listWidth * info[i].fWidth;
     }
