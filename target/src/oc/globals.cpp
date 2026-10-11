@@ -141,14 +141,13 @@ static void *imp_sv_disableClientConsole;
 static void *imp_sv_paused;
 static void *imp_theFxHelper;
 keywordHash_t *itemParseKeywordHash[512];
-int lastLeadTeam;
 LegacyHacks legacyHacksData;
 LegacyHacks *legacyHacks = &legacyHacksData;
 
 static byte *net_profile_dvar;
 short int partial_audio_buffer[640];
 static byte *record_callback_ptr;
-unsigned char spGlob[1]  /* size unknown */;
+ScreenPlacementGlob spGlob;
 static const void *speex_nb_mode_ptr;
 static int *speex_quality_ptr;
 static const void *speex_uwb_mode_ptr;

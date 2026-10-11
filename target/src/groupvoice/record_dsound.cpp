@@ -35,7 +35,7 @@ void DSOUNDRecord_UpdateSample( dsound_sample_t *pRecSample )
 	if ( dwReadPos < pRecSample->dwCaptureOffset )
 		lLockSize = pRecSample->dwBufferSize - pRecSample->dwCaptureOffset + dwReadPos;
 	else
-		lLockSize = dwReadPos; lLockSize = lLockSize - pRecSample->dwCaptureOffset;
+		lLockSize = dwReadPos - pRecSample->dwCaptureOffset;
 	lLockSize -= lLockSize % 4;
 	if ( !lLockSize )
 		return;

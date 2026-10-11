@@ -1,8 +1,8 @@
 #include "common_types.h"
 #include "imports.h"
 
-extern unsigned char spGlob[];
-#define SP ((struct ScreenPlacementGlob *)spGlob)
+extern ScreenPlacementGlob spGlob;
+#define SP (&spGlob)
 
 extern clientStatic_t cls;
 

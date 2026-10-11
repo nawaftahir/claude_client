@@ -36,7 +36,6 @@ extern char *va( const char *format, ... );
 extern qboolean Language_IsAsian(void);
 extern unsigned int SEH_ReadCharFromString(const char **ppsText, qboolean *pbIsTrailingPunctuation);
 
-extern int lastLeadTeam;
 
 static const listColumnInfo_t columnInfo[6] = {
     { LCT_TALKING_ICON, 0.05f, "", 0 },
@@ -691,6 +690,7 @@ void CG_DrawScrollbar(const float *color, float top, int totalLines, int drawLin
 
 void CG_DrawScoreboard_ScoresList(float alpha)
 {
+    static int lastLeadTeam = 2;
     float color[4];
     float y;
     float headerY;
