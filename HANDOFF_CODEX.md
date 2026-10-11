@@ -1,5 +1,130 @@
 # Handoff: CoD2MP_s.exe 1.0 client, 2026-10-12
 
+## Larger-group continuation - actual date 2026-10-11
+
+Latest accepted incremental build: **1,231,862 B / 87.45% matched .text**.
+This continuation adds **826 genuine bytes**, XModelPartsLoadFile 0x48dc70.
+The function has an exact match and checked direct calls/six string operands;
+all sixteen current test_*.py suites pass. The old allocation/accounting
+order is rejected by the native allocator-observation fixture.
+
+Clean source is in target/src/xanim: xanim_public.h returns the two-byte
+XModelFileShort aggregate from the existing XModelDataReadShort helper;
+all eighteen callers in xanim_load.cpp/xmodel_load.cpp use .value.
+XModelPartsLoadFile accounts quaternion allocation AFTER its allocator call,
+as retail does. No extra helper or public-loader ABI change. This source
+form matches; its type/name are not claimed as recovered historical text.
+
+The private-reader prototype gave an intermediate meter of 1,231,246 B
+(826 new, known Scr_ParseGameTypeList tie -572, four-hit helper group -44).
+Reusing the existing reader removes that fifth copy and restores the group;
+neither the 44-B recovery nor the known tie is additional reconstruction.
+Current strict accepted ledger is target/build/good.json, SHA-256
+f860f1230bcddfc20d2c36edfcacdc1dbcc2b7dd777e42e2a6a69b860836f1be.
+Final replay: model_final_gate_1011.log and model_final_tests_1011.log.
+It equals the strict replay of the cold model build byte-for-byte.
+
+XAnimLoadFile remains unmatched, but the shared unsigned-reader + existing
+final FS_FreeFileInl draft reaches the retail 4053-byte size/frame. Local
+temp2/temp in each continuity loop then reduce 14 -> SIX diff lines; only
+the delta-quaternion imul/add destination remains different. All drafts are
+restored; animation_6diff_1011.patch saves this lead against HEAD (also
+contains the accepted signed-reader edits: never blindly apply). Its native
+i386 actual-loader/types test passes 20 quaternion/flip fixtures and four
+failures, but the function is NOT counted. The apparent protected
+8-byte library _Copy EH loss was an out-of-text linker placeholder, not code.
+The bounds correction below resolves that false regression. Operand
+swapping and statement splitting did not help. Saved animation_14diff_1011.patch
+(against HEAD, includes the accepted signed-reader edits) and .txt: inspect
+before applying, never apply it blindly over current accepted edits.
+
+Bounded final trials are recorded in deepseek/LESSONS.md, not to be repeated:
+casts, const inputs, guards, component caches, index/pointer forms, inline
+dot helper and union readers did not finish the delta multiply. The genuine
+inline helper also emitted an unwanted 25-byte copy and is removed. A
+two-component loop worsens to 212 diffs. Speex open_loop_nbest_pitch pointer
+IVs worsen its frame/body and lose two real callers / 5663 B; restored.
+None of these trials adds code coverage or changes ties/masks.
+
+A fresh all-253-TU cold verification of the accepted signed-reader source
+finished green, model_cold_1011.log. Prior build preserved at
+pre_model_cold_1011. No whole-file SHA identity or runtime claim.
+Verified source is ready for a local review checkpoint; no push. Renderer remains safely parked.
+
+Comparator repair: cmp.py now rejects map entries outside the actual .text
+section. Three linker placeholders previously sliced code using negative
+Python indices, one falsely matching eight bytes inside another retail body.
+Both saved start and current physical binaries were independently replayed
+with the stricter referee. Union coverage remains 1,231,036 -> 1,231,862 B:
+those eight bytes were already covered by another genuine match, so removing
+the false entry changes neither total. Do not subtract eight from the meter.
+The unchanged-ties ratchet reports only the genuine new 826-byte loader.
+fdiff.py/alldiff_lib.py apply the same source bounds to avoid selecting the
+phantom duplicate for diagnostics. Test test_matcher_bounds.py uses three
+actual rows extracted from shared_reader_accepted_1011.json (ledger SHA
+71db428942bdae367b3f03bcdf8a1ac272cda997380f7d2801c3e8319da6840f)
+as matcher_bounds_legacy.json; no copied machine code or invented golden.
+Evidence: model_strict_good,
+client_first_strict_start, model_strict_gate and model_strict_tests_1011 logs.
+Any pre-fix JSON remains historical evidence, not the new referee baseline.
+
+Comparator speed: disasm_lite avoids per-instruction Python objects in the
+same direct-call/jump masking pass. Every instruction/mask stream (7344)
+and the entire same-image JSON ledger compare equal with the previous
+decoder. Same-image timing 15.32 -> 8.42 seconds; no result cache. Persistent
+test_matcher_lite.py checks the current complete image. Benchmark logs are
+matcher_lite_1011 / matcher_objects_replay_1011; their image is the rejected
+Speex draft, NOT accepted progress. Final accepted source replay above
+equals the cold strict ledger; six-line animation source is saved, not live.
+Manifest model_final_inputs_1011.sha256 passes. Four changes vs the original
+model-cold manifest are explicit: one blank line in xanim_public.h, the
+cmp.py/fdiff.py fixes and test_model_loader.py's actual-declaration extraction.
+New tests and alldiff_lib.py are also included in the final manifest.
+
+Final /FIXED release link succeeds without unresolved symbols but differs
+from retail: 21efabc4b21d176c1c4af3224d06121dbb4e568a8aab8d318f4345424f7e6176
+vs 8caf434c9509020b9c94720d0407a31d61411312996dab9964f46865f070900e.
+V4/V5 remain unmet; source/metric completion is NOT being claimed.
+
+## Latest continuation - actual date 2026-10-11
+
+Owner cleared the renderer goal and selected client first. Branch remains
+codex/1012; do not create it again. Latest existing commit is f5c3adb.
+Clean source stays in target/src, research/tests in scratch/codex_1012.
+
+Fresh gated start 1,230,754 B; latest 1,231,036 B (87.39% matched .text),
+**282 genuine new bytes**, no real losses. New uncommitted source matches:
+CG_LockLightingOrigin 0x4c5cc0/170 and EmitAssignmentStatement 0x46d3f0/112.
+Both have actual-body native tests; assignment also validates five call
+bindings. See the latest section of scratch/codex_1012/REPORT.md for exact
+files, tests and attempts. Do not count the historical 2783-B tie as new work.
+
+Latest numeric-only correction in cg_weapons.cpp restores the retail weapon
+movement smoothing minimum: (0.001f * 0.1f), bits 0x38d1b718, and its negative.
+The old 0.0001f was one float step too small. Actual-loop and linked-literal
+tests pass, the ratchet is green and accepted; no additional code credit.
+Removing the redundant outer loop lost two protected functions / 683 B and
+was reverted. Two bounded vector-copy batches also kept nothing; all drafts
+are restored. Latest total remains 1,231,036 B, not whole-file identity.
+
+Fresh client-first cold checkpoint: all 253 source objects rebuilt from an
+empty object tree, with the old build preserved at
+scratch/codex_1012/pre_cold_build_client_first_1011. The complete comparison
+ledger equals the incremental ledger (SHA 0217a895e6c3f35f228c6b2b28c4cc60db782e6c70597cdb206aa076363f1e5e).
+All twelve current test_*.py suites pass; input hashes pass before/after.
+The release link has no unresolved externals but is NOT SHA-identical to
+retail. Logs: client_first_cold_1011.log, client_first_tests_1011.log,
+client_first_release_1011.log; source/tool manifest client_first_inputs_1011.sha256.
+This supersedes older cold-build caveats below, not the unresolved V4/V5 gates.
+
+Two bounded batch searches gave no additional accepted changes; all drafts
+restored. Earlier source behavior/data fixes are committed through f5c3adb.
+Existing vary.py edits remain the owner's unrelated work. No commit or push
+this continuation; full SHA and runtime proof are still outstanding.
+Renderer recovery is gfx/target/scratch/codex35/proof_checkpoint19, 37.366%
+verified game code; its text/source packet is staged for owner review.
+The renderer goal is cleared, not active and not completed.
+
 You take over the client reconstruction for today. Claude reviews your branch afterwards; nothing
 merges without that review.
 
@@ -99,6 +224,6 @@ Codex checkpoint, actual environment date 2026-10-11 (the original handoff label
 - Existing unrelated `vary.py` change preserved. No gfx/codex/glm/release monorepo edits; no push.
 - Confirmed facts/dead ends appended to `deepseek/LESSONS.md` and the client-recon skill.
 
-Next reviewer: reproduce `../lab/mym.sh`, all five REPORT tests and direct start-ledger ratchet;
+Next reviewer: reproduce `../lab/mym.sh`, all twelve current REPORT tests and direct start-ledger ratchet;
 inspect data/behavior changes as well as code scores. Full SHA, BSS placement, library provenance,
 remaining code gaps and runtime behavior still need work. Do not relabel tie gains as reconstruction.

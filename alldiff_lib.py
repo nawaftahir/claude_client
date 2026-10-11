@@ -4,10 +4,10 @@ def section(path):
     pe = pefile.PE(path)
     t = next(s for s in pe.sections if s.Name.startswith(b'.text'))
     return t.get_data(), pe.OPTIONAL_HEADER.ImageBase + t.VirtualAddress
-syms = sorted((int(m.group(2), 16), m.group(1)) for m in
-              (re.match(r'\s*0001:\S+\s+(\S+)\s+([0-9a-f]{8}) f', l) for l in open('build/CoD2MP_s.map', errors='replace')) if m)
-nxt = {s[1]: (s[0], syms[k+1][0]) for k, s in enumerate(syms[:-1])}
 d, base = section('build/CoD2MP_s.exe')
+syms = sorted((int(m.group(2), 16), m.group(1)) for m in
+              (re.match(r'\s*0001:\S+\s+(\S+)\s+([0-9a-f]{8}) f', l) for l in open('build/CoD2MP_s.map', errors='replace')) if m and base <= int(m.group(2), 16) < base + len(d))
+nxt = {s[1]: (s[0], syms[k+1][0]) for k, s in enumerate(syms[:-1])}
 cd, cbase = section('../../cod2engineold/binaries/windows/1.0/CoD2MP_s.exe')
 names = {}
 located = set()  # mid-function hits; CRT names are legitimately unaligned

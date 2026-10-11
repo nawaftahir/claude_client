@@ -1050,16 +1050,16 @@ void CalculateWeaponPosition_BasePosition_movement(float *origin)
 
             if (cg->playerEntity.vLastMoveOrg[i] < targetPos[i])
             {
-                if (delta < (float)cg->frametime * 0.0001f)
-                    delta = (float)cg->frametime * 0.0001f;
+                if (delta < (float)cg->frametime * (0.001f * 0.1f))
+                    delta = (float)cg->frametime * (0.001f * 0.1f);
                 cg->playerEntity.vLastMoveOrg[i] = cg->playerEntity.vLastMoveOrg[i] + delta;
                 if (cg->playerEntity.vLastMoveOrg[i] > targetPos[i])
                     cg->playerEntity.vLastMoveOrg[i] = targetPos[i];
             }
             else
             {
-                if (delta > (float)cg->frametime * -0.0001f)
-                    delta = (float)cg->frametime * -0.0001f;
+                if (delta > (float)cg->frametime * (0.001f * -0.1f))
+                    delta = (float)cg->frametime * (0.001f * -0.1f);
                 cg->playerEntity.vLastMoveOrg[i] = cg->playerEntity.vLastMoveOrg[i] + delta;
                 if (cg->playerEntity.vLastMoveOrg[i] < targetPos[i])
                     cg->playerEntity.vLastMoveOrg[i] = targetPos[i];

@@ -18,7 +18,9 @@ syms = []
 for line in open(mapf, errors='replace'):
     m = re.match(r'\s*0001:[0-9a-f]+\s+(\S+)\s+([0-9a-f]{8}) f', line)
     if m:
-        syms.append((int(m.group(2), 16), m.group(1), line.split()[-1]))
+        address = int(m.group(2), 16)
+        if tva <= address < tva + len(tdata):
+            syms.append((address, m.group(1), line.split()[-1]))
 syms.sort()
 
 _pairs = None
@@ -55,11 +57,12 @@ for i, (va, name, obj) in enumerate(syms):
     mask = set()
     for r in relocs[bisect.bisect_left(relocs, va):bisect.bisect_left(relocs, va + len(code))]:
         mask.update(range(r - va, r - va + 4))
-    for ins in md.disasm(code, va):
-        if ins.mnemonic in ('call', 'jmp') and ins.size == 5 and ins.bytes[0] in (0xe8, 0xe9):
-            tgt = int.from_bytes(ins.bytes[1:], 'little', signed=True) + ins.address + 5
+    for address, size, mnemonic, _ in md.disasm_lite(code, va):
+        offset = address - va
+        if mnemonic in ('call', 'jmp') and size == 5 and code[offset] in (0xe8, 0xe9):
+            tgt = int.from_bytes(code[offset + 1:offset + 5], 'little', signed=True) + address + 5
             if not va <= tgt < va + len(code):
-                mask.update(range(ins.address - va + 1, ins.address - va + 5))
+                mask.update(range(offset + 1, offset + 5))
     # longest unmasked run as the search anchor
     best, s = (0, 0), 0
     for k in range(len(code) + 1):

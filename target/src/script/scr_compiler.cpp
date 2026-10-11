@@ -3668,7 +3668,7 @@ EmitAssignmentStatement
 */
 void EmitAssignmentStatement( sval_u lhs, sval_u rhs, sval_u sourcePos, sval_u rhsSourcePos, scr_block_s *block )
 {
-	if ( IsUndefinedExpression(rhs) )
+	if ( (unsigned char)IsUndefinedExpression(rhs) )
 	{
 		if ( EmitClearVariableExpression(lhs, rhsSourcePos, block) )
 		{

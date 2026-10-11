@@ -648,12 +648,14 @@ int XAnim_ReadUnsignedShort(const unsigned char **pos);
 int XAnim_ReadInt(const unsigned char **pos);
 float XAnim_ReadFloat(const unsigned char **pos);
 void ConsumeQuat(const unsigned char **pos, short *out);
-inline short XModelDataReadShort(const unsigned char **pos)
+// Preserve word-sized count stores in the 2005 compiler.
+struct XModelFileShort { short value; };
+inline XModelFileShort XModelDataReadShort(const unsigned char **pos)
 {
-	short value;
+	XModelFileShort value;
 
-	memcpy(&value, *pos, sizeof(value));
-	*pos += sizeof(value);
+	memcpy(&value.value, *pos, sizeof(value.value));
+	*pos += sizeof(value.value);
 
 	return value;
 }
@@ -664,6 +666,7 @@ inline unsigned short XModelDataReadUnsignedShort(const unsigned char **pos)
 
 	memcpy(&value, *pos, sizeof(value));
 	*pos += sizeof(value);
+
 
 	return value;
 }

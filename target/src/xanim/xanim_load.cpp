@@ -12,9 +12,9 @@ void ConsumeQuat(const unsigned char **pos, short *out)
 	int x;
 	int temp;
 
-	out[0] = XModelDataReadShort(pos);
-	out[1] = XModelDataReadShort(pos);
-	out[2] = XModelDataReadShort(pos);
+	out[0] = XModelDataReadShort(pos).value;
+	out[1] = XModelDataReadShort(pos).value;
+	out[2] = XModelDataReadShort(pos).value;
 
 	x = out[0];
 	y = out[1];
@@ -32,7 +32,7 @@ void ConsumeQuat2(const unsigned char **pos, short *out)
 	int x;
 	int temp;
 
-	out[0] = XModelDataReadShort(pos);
+	out[0] = XModelDataReadShort(pos).value;
 
 	x = out[0];
 
@@ -120,7 +120,7 @@ XAnimParts *XAnimLoadFile(const char *name, void *(*Alloc)(int))
 		return NULL;
 	}
 	pos = buf;
-	version = XModelDataReadShort(&pos);
+	version = XModelDataReadShort(&pos).value;
 	if (version != XANIM_VERSION)
 	{
 		FS_FreeFile(buf);
@@ -128,14 +128,14 @@ XAnimParts *XAnimLoadFile(const char *name, void *(*Alloc)(int))
 		return NULL;
 	}
 	{
-		frames = XModelDataReadShort(&pos);
-		boneCount = XModelDataReadShort(&pos);
+		frames = XModelDataReadShort(&pos).value;
+		boneCount = XModelDataReadShort(&pos).value;
 		names = boneCount ? (unsigned short *)Alloc(2 * boneCount) : 0;
 		flags = *pos;
 		pos += 1;
 		bLoop = flags & 1;
 		bDelta = (flags & 2) != 0;
-		framerate = XModelDataReadShort(&pos);
+		framerate = XModelDataReadShort(&pos).value;
 		parts = (XAnimParts *)Alloc(44);
 		parts->boneCount = boneCount;
 		parts->names = names;

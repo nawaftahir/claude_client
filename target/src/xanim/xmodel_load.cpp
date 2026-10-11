@@ -12,9 +12,9 @@ void XModelConsumeQuat(const unsigned char **pos, short *out)
 	int x;
 	int temp;
 
-	out[0] = XModelDataReadShort(pos);
-	out[1] = XModelDataReadShort(pos);
-	out[2] = XModelDataReadShort(pos);
+	out[0] = XModelDataReadShort(pos).value;
+	out[1] = XModelDataReadShort(pos).value;
+	out[2] = XModelDataReadShort(pos).value;
 
 	x = out[0];
 	y = out[1];
@@ -136,7 +136,7 @@ XModelParts *XModelPartsLoadFile(XModel *model, const char *name, void *(*Alloc)
 	}
 
 	pos = buf;
-	version = XModelDataReadShort(&pos);
+	version = XModelDataReadShort(&pos).value;
 
 	if ( version != XMODEL_VERSION )
 	{
@@ -145,8 +145,8 @@ XModelParts *XModelPartsLoadFile(XModel *model, const char *name, void *(*Alloc)
 		return NULL;
 	}
 
-	numChildBones = XModelDataReadShort(&pos);
-	numRootBones = XModelDataReadShort(&pos);
+	numChildBones = XModelDataReadShort(&pos).value;
+	numRootBones = XModelDataReadShort(&pos).value;
 	numBones = numChildBones + numRootBones;
 
 	size = sizeof(*boneNames) * numBones;
@@ -174,8 +174,8 @@ XModelParts *XModelPartsLoadFile(XModel *model, const char *name, void *(*Alloc)
 	if ( numChildBones )
 	{
 		size = 4 * sizeof(short) * numChildBones;
-		model->memUsage += size;
 		modelParts->quats = (short *)Alloc(size);
+		model->memUsage += size;
 
 		size = 4 * sizeof(float) * numChildBones;
 		modelParts->trans = (float *)Alloc(size);
@@ -232,7 +232,7 @@ bool XModelLoadConfigFile(const char *name, const unsigned char **pos, XModelCon
 	int i;
 	short version;
 
-	version = XModelDataReadShort(pos);
+	version = XModelDataReadShort(pos).value;
 
 	if ( version != XMODEL_VERSION )
 	{
@@ -407,7 +407,7 @@ XModel *XModelLoadFile(const char *name, void *(*Alloc)(int), void *(*AllocColl)
 		if ( *dest )
 		{
 			++model->numLods;
-			model->lodInfo[i].numsurfs = XModelDataReadShort(&pos);
+			model->lodInfo[i].numsurfs = XModelDataReadShort(&pos).value;
 			size = sizeof(unsigned short) * model->lodInfo[i].numsurfs;
 			model->lodInfo[i].surfNames = (unsigned short *)Alloc(size);
 			model->memUsage += size;
@@ -548,7 +548,7 @@ XModelSurfs *XModelReadSurface(XModel *model, const char *name, void *(*Alloc)(i
 	}
 
 	pos = buf;
-	version = XModelDataReadShort(&pos);
+	version = XModelDataReadShort(&pos).value;
 
 	if ( version != XMODEL_VERSION )
 	{
@@ -557,7 +557,7 @@ XModelSurfs *XModelReadSurface(XModel *model, const char *name, void *(*Alloc)(i
 		return NULL;
 	}
 
-	fileNumSurfs = XModelDataReadShort(&pos);
+	fileNumSurfs = XModelDataReadShort(&pos).value;
 
 	if ( fileNumSurfs != numsurfs )
 	{

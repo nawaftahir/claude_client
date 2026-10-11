@@ -1,0 +1,20 @@
+[
+  {
+    "name": "__ehhandler$?_Copy@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@IAEXII@Z",
+    "obj": "libcpmt:string.obj",
+    "size": 8,
+    "hits": ["0x558400"]
+  },
+  {
+    "name": "__ehhandler$??0logic_error@std@@QAE@ABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z",
+    "obj": "libcpmt:string.obj",
+    "size": 87,
+    "hits": []
+  },
+  {
+    "name": "$L11471",
+    "obj": "libcpmt:string.obj",
+    "size": 116,
+    "hits": []
+  }
+]
