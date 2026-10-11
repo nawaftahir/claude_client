@@ -76,6 +76,8 @@ and any new PINNED fact. Claude will re-measure the branch from a clean build an
 Codex checkpoint, actual environment date 2026-10-11 (the original handoff label says 10-12).
 
 - Branch `codex/1012`, base `e30122f`; Claude remains the independent reviewer, sequential ownership.
+- Source/test checkpoint commit: `d191273` (`client: restore retail state and data behavior`).
+  The following evidence-only commit records this ID and removes blank diff-context whitespace.
 - Fresh start: **1,227,971 B**. End incremental AND cold rebuild: **1,230,754 B**.
   +2,783 B is only the known SV_ArchiveSnapshot tie. **Zero new real code credit**;
   requested 1,242,058 B has NOT been reached. No real matches lost and no metric/gate changes.
@@ -84,6 +86,8 @@ Codex checkpoint, actual environment date 2026-10-11 (the original handoff label
   Source is in `target/src/`; detailed evidence/tests are in `scratch/codex_1012/REPORT.md`.
 - Fixed the existing untracked `splitsw.py` generator's branch scope. Isolated patch retained as
   `scratch/codex_1012/splitsw.patch`; no bulk import of previously untracked tooling.
+  It is a zero-context diff: use `git apply --unidiff-zero` if applying to the original tool;
+  reverse check with that flag passes against the current fixed tool. Do not apply it twice.
 - All 253 TUs rebuilt into an empty build tree, cold ledger exactly identical to incremental.
   Five targeted native/source/linked-data tests pass; direct ratchet against starting ledger passes.
   Old build preserved in `scratch/codex_1012/pre_cold_build/`; no artifacts deleted.
