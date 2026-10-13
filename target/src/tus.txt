@@ -122,7 +122,6 @@ EffectsCore/FxChannel.cpp
 EffectsCore/FxCurve.cpp
 EffectsCore/FxCurve_load_obj.cpp
 EffectsCore/fx_dvars.cpp
-bgame/bg_misctables.cpp
 EffectsCore/Fxexport.cpp
 EffectsCore/FxMemMgr.cpp
 EffectsCore/FxPrimitives.cpp
@@ -238,6 +237,7 @@ game/g_spawn_mp.cpp
 bgame/bg_mantle.cpp
 game/scr_const_mp.cpp
 bgame/bg_misc.cpp
+bgame/bg_misctables.cpp
 bgame/bg_pmove.cpp
 bgame/bg_weapons_load_obj.cpp
 game/g_misc_mp.cpp
