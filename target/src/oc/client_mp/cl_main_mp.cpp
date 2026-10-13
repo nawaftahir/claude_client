@@ -19,7 +19,8 @@ const dvar_t *cl_shownuments;
 
 const dvar_t *cl_allowDownload;
 const dvar_t *cl_showSend;
-clientConnection_t clc;
+clientConnection_t clientConnections[1];
+#define clc clientConnections[0]
 Bool g_waitingForServer;
 const dvar_t *cl_avidemo;
 refexport_t re;
@@ -281,7 +282,6 @@ extern float floorf(float);
 extern int puts(const char *);
 
 extern refexport_t re;
-extern clientConnection_t clc;
 extern struct clientStatic_t cls;
 extern const dvar_t *cl_nodelta;
 extern const dvar_t *cl_noprint;

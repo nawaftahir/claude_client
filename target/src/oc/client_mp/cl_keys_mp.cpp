@@ -18,7 +18,8 @@ extern const dvar_t *cl_bypassMouseInput;
 extern dvar_t *com_sv_running;
 extern dvar_t *sv_disableClientConsole;
 extern clientActive_t clients[1];
-extern clientConnection_t clc;
+extern clientConnection_t clientConnections[1];
+#define clc clientConnections[0]
 extern int dvar_modifiedFlags;
 extern int g_console_field_width;
 extern float g_console_char_height;

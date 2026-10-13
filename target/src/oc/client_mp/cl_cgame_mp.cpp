@@ -10,7 +10,8 @@ extern float com_timescaleValue;
 extern dvar_t *loc_warnings;
 extern dvar_t *loc_warningsAsErrors;
 extern dvar_t *sv_paused;
-extern clientConnection_t clc;
+extern clientConnection_t clientConnections[1];
+#define clc clientConnections[0]
 extern clientStatic_t cls;
 extern const dvar_t *cl_activeAction;
 /* dvar globals */

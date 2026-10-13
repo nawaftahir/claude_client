@@ -7,7 +7,8 @@ extern "C" __declspec(dllimport) unsigned short __stdcall ntohs(unsigned short n
 extern int qport;
 extern ping_t cl_pinglist[];
 extern clientActive_t clients[1];
-extern clientConnection_t clc;
+extern clientConnection_t clientConnections[1];
+#define clc clientConnections[0]
 /* dvar globals */
 extern const dvar_t *cl_serverStatusResendTime;
 extern dvar_t *com_sv_running;

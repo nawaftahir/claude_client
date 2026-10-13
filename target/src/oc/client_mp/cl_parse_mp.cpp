@@ -43,7 +43,8 @@ static char *svc_strings[256] = {
 
 extern clientActive_t clients[1];
 extern byte cls_ptr[];
-extern clientConnection_t clc;
+extern clientConnection_t clientConnections[1];
+#define clc clientConnections[0]
 extern dvar_t *com_dedicated;
 extern dvar_t *cl_paused;
 extern dvar_t *net_lanauthorize;
@@ -184,7 +185,7 @@ void CL_SystemInfoChanged(void)
 
 void CL_ParseGamestate(msg_t *msg)
 {
-    clientConnection_t *clc;
+    clientConnection_t *conn;
     clientActive_t *cla;
     int newnum;
     int i;
@@ -194,12 +195,12 @@ void CL_ParseGamestate(msg_t *msg)
 
     Con_Close();
 
-    clc = &::clc;
-    clc->connectPacketCount = 0;
+    conn = &::clc;
+    conn->connectPacketCount = 0;
 
     CL_ClearState();
 
-    clc->serverCommandSequence = MSG_ReadLong(msg);
+    conn->serverCommandSequence = MSG_ReadLong(msg);
 
     cla = clients;
     cla->gameState.dataCount = 1;
@@ -254,16 +255,16 @@ void CL_ParseGamestate(msg_t *msg)
         }
     }
 
-    clc = &::clc;
-    clc->clientNum = MSG_ReadLong(msg);
+    conn = &::clc;
+    conn->clientNum = MSG_ReadLong(msg);
 
-    clc->checksumFeed = MSG_ReadLong(msg);
+    conn->checksumFeed = MSG_ReadLong(msg);
 
     CL_SystemInfoChanged();
 
-    FS_ConditionalRestart(clc->checksumFeed);
+    FS_ConditionalRestart(conn->checksumFeed);
 
-    if (net_lanauthorize->current.enabled || !Sys_IsLANAddress(clc->serverAddress)) {
+    if (net_lanauthorize->current.enabled || !Sys_IsLANAddress(conn->serverAddress)) {
         CL_RequestAuthorization();
     }
 

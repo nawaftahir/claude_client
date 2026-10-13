@@ -10,6 +10,7 @@ extern cg_t cgArray[1];
 static cg_t * const cg = &cgArray[0];
 extern cgs_t cgsArray[1];
 static cgs_t * const cgs = &cgsArray[0];
-extern centity_t cg_entities[];
+extern centity_t cg_entitiesArray[1][1024];
+static centity_t * const cg_entities = cg_entitiesArray[0];
 
 #endif

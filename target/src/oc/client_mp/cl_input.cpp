@@ -12,7 +12,8 @@ const dvar_t *cl_bypassMouseInput;
 const dvar_t *cl_pitchspeed;
 const dvar_t *cl_anglespeedkey;
 extern clientActive_t clients[1];
-extern clientConnection_t clc;
+extern clientConnection_t clientConnections[1];
+#define clc clientConnections[0]
 /* dvar globals */
 extern LegacyHacks *legacyHacks;
 extern const dvar_t *cl_nodelta;
@@ -1122,11 +1123,11 @@ usercmd_t CL_CreateCmd(void)
 
 void CL_CreateNewCommands(void)
 {
-    clientConnection_t *clc;
+    clientConnection_t *conn;
     clientActive_t *cl;
 
-    clc = &::clc;
-    if (clc->state >= CA_PRIMED) {
+    conn = &::clc;
+    if (conn->state >= CA_PRIMED) {
         int cmdNum;
 
         cl = clients;
@@ -1137,37 +1138,37 @@ void CL_CreateNewCommands(void)
 
 qboolean CL_ReadyToSendPacket(void)
 {
-    clientConnection_t *clc;
+    clientConnection_t *conn;
     clientActive_t *cl;
     outPacket_t *outPacket;
     int realtime;
 
-    clc = &::clc;
-    if (clc->demoplaying || clc->state == CA_CINEMATIC || clc->state == CA_LOGO) {
+    conn = &::clc;
+    if (conn->demoplaying || conn->state == CA_CINEMATIC || conn->state == CA_LOGO) {
         return 0;
     }
 
     realtime = cls.realtime;
 
-    if (clc->downloadTempName[0] && realtime - clc->lastPacketSentTime < 50) {
+    if (conn->downloadTempName[0] && realtime - conn->lastPacketSentTime < 50) {
         return 0;
     }
 
-    if (clc->state != CA_ACTIVE && clc->state != CA_PRIMED && !clc->downloadTempName[0]
-        && realtime - clc->lastPacketSentTime < 1000) {
+    if (conn->state != CA_ACTIVE && conn->state != CA_PRIMED && !conn->downloadTempName[0]
+        && realtime - conn->lastPacketSentTime < 1000) {
         return 0;
     }
 
-    if (clc->serverAddress.type == NA_LOOPBACK) {
+    if (conn->serverAddress.type == NA_LOOPBACK) {
         return 1;
     }
 
-    if (Sys_IsLANAddress(clc->serverAddress)) {
+    if (Sys_IsLANAddress(conn->serverAddress)) {
         return 1;
     }
 
     cl = clients;
-    outPacket = &cl->outPackets[(clc->netchan.outgoingSequence - 1) & 31];
+    outPacket = &cl->outPackets[(conn->netchan.outgoingSequence - 1) & 31];
     return cls.realtime - outPacket->p_realtime >= 1000 / cl_maxpackets->current.integer;
 }
 
@@ -1187,20 +1188,20 @@ void CL_SendCmdInternal(void)
 
 void CL_WriteVoicePacket(void)
 {
-    clientConnection_t *clc;
+    clientConnection_t *conn;
     clientActive_t *cl;
     msg_t msg;
     byte data[MAX_MSGLEN];
     int voicePacket;
 
-    clc = &::clc;
-    if (clc->demoplaying || (clc->state != CA_ACTIVE && clc->state != CA_LOADING)) {
+    conn = &::clc;
+    if (conn->demoplaying || (conn->state != CA_ACTIVE && conn->state != CA_LOADING)) {
         return;
     }
 
     MSG_Init(&msg, data, sizeof(data));
     MSG_WriteString(&msg, (const char *)"v");
-    MSG_WriteShort(&msg, clc->qport);
+    MSG_WriteShort(&msg, conn->qport);
 
     cl = clients;
     MSG_WriteByte(&msg, (byte)cl->voicePacketCount);
@@ -1214,8 +1215,8 @@ void CL_WriteVoicePacket(void)
         Com_Printf((const char *)"voice: %i\n", msg.cursize);
     }
 
-    clc = &::clc;
-    NET_OutOfBandVoiceData(clc->netchan.sock, clc->serverAddress, msg.data, msg.cursize);
+    conn = &::clc;
+    NET_OutOfBandVoiceData(conn->netchan.sock, conn->serverAddress, msg.data, msg.cursize);
 }
 
 void CL_WritePacket(void)

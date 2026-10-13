@@ -3,7 +3,8 @@
 #include <stddef.h>
 #include <stdio.h>
 
-extern clientConnection_t clc;
+extern clientConnection_t clientConnections[1];
+#define clc clientConnections[0]
 extern byte *cl_ptr;
 extern clientActive_t clients[1];
 extern dvar_t *net_profile;

@@ -321,7 +321,8 @@ struct clientConnection_t
 	int unused1[3];
 	fileHandle_t demofile;
 };
-extern clientConnection_t clc;
+extern clientConnection_t clientConnections[1];
+#define clc clientConnections[0]
 extern refexport_t re;
 extern clientStatic_t cls;
 extern unsigned char updateScreenCalled;

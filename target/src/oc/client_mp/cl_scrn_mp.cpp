@@ -8,7 +8,8 @@ Bool updateScreenCalled = 0;
 extern const vec4_t colorBlack;
 extern refexport_t re;
 extern clientActive_t clients[1];
-extern clientConnection_t clc;
+extern clientConnection_t clientConnections[1];
+#define clc clientConnections[0]
 extern clientStatic_t cls;
 #define stricmp strcasecmp
 

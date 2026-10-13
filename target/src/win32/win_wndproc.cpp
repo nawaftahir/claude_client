@@ -25,7 +25,8 @@ struct clientStatic_t
 {
 	qboolean quit;
 };
-extern clientConnection_t clc;
+extern clientConnection_t clientConnections[1];
+#define clc clientConnections[0]
 extern clientStatic_t cls;
 
 void Key_ClearStates( void );

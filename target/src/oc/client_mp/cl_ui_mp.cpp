@@ -5,7 +5,8 @@
 #include <stdio.h>
 #include <string.h>
 extern clientActive_t clients[1];
-extern clientConnection_t clc;
+extern clientConnection_t clientConnections[1];
+#define clc clientConnections[0]
 extern clientStatic_t cls;
 
 extern int I_stricmp(const char *s1, const char *s2);

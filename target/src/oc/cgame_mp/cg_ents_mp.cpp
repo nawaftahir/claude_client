@@ -7,7 +7,6 @@ extern itemInfo_t cg_itemsArray[];
 extern weaponInfo_t cg_weaponsArray[];
 extern gitem_t bg_itemlist[];
 extern const int bg_numItems;
-extern centity_t cg_entities[];
 extern scr_const_t scr_const;
 
 /* File-scope alias: bound where no local can shadow `scr_const`, so uses below

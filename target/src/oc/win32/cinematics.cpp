@@ -15,7 +15,8 @@ long int ROQ_YY_tab[256];
 long int ROQ_UB_tab[256];
 extern refexport_t re;
 extern snd_local_t g_snd;
-extern clientConnection_t clc;
+extern clientConnection_t clientConnections[1];
+#define clc clientConnections[0]
 extern clientStatic_t cls;
 
 /* ((void *)&clc) holds the address of the `clc` POINTER, not of the connection itself, so
