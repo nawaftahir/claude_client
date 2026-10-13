@@ -79,7 +79,7 @@ extern void DObjGetBoneInfo( const DObj *obj, XBoneInfo **boneInfo );
 extern int DObjGetNumModels( const DObj_s *obj );
 extern bool DObjIgnoreCollision( const DObj_s *obj, int modelIndex );
 extern void CL_AddDebugLine( const vec_t *start, const vec_t *end, const vec_t *color, qboolean depthTest, int duration, qboolean fromServer );
-int boxVerts[24][3] =
+extern const int boxVerts[24][3] =
 {
 	{ 0, 0, 0 }, { 1, 0, 0 },
 	{ 0, 0, 0 }, { 0, 1, 0 },
