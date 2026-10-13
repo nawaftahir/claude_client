@@ -37,7 +37,7 @@ const char *XModelGetSurfaceName(const XModel *model, int surfIndex, int lod)
 	return "DEFAULT";
 }
 
-int XModelGetSurfaces(const XModel *model, XSurface **surfaces, int lod, int **partBits)
+int XModelGetSurfaces(const XModel *model, XSurface ***surfaces, int lod, int **partBits)
 {
 	const XModelLodInfo *lodInfo;
 

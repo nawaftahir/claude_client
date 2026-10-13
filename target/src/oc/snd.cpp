@@ -343,13 +343,21 @@ static __attribute_regparm__(3)
     return 1;
 }
 
+COD2_ASSERT_SIZE(snd_save_stream_t, 0x20);
+COD2_ASSERT_FIELD(snd_save_stream_t, fraction, 0x0);
+COD2_ASSERT_FIELD(snd_save_stream_t, rate, 0x4);
+COD2_ASSERT_FIELD(snd_save_stream_t, basevolume, 0x8);
+COD2_ASSERT_FIELD(snd_save_stream_t, volume, 0xc);
+COD2_ASSERT_FIELD(snd_save_stream_t, pan, 0x10);
+COD2_ASSERT_FIELD(snd_save_stream_t, org, 0x14);
+
 static __attribute_regparm__(2)
     Bool SND_RestoreStreamChannel(int channel, MemoryFile *memFile)
 {
     const snd_alias_t *pAlias0;
     const snd_alias_t *pAlias1;
     snd_channel_info_t chaninfo;
-    char info[0x20];
+    snd_save_stream_t info;
     int rate;
     int type;
     pAlias0 = SND_RestoreSoundAlias(memFile);
@@ -357,7 +365,7 @@ static __attribute_regparm__(2)
         return 0;
     pAlias1 = SND_RestoreSoundAlias(memFile);
     SND_RestoreChanInfo(&chaninfo, memFile);
-    MemFile_ReadData(memFile, 0x20, info);
+    MemFile_ReadData(memFile, sizeof(info), &info);
     type = (pAlias0->flags & 0x60) >> 5;
     if (type != 2 && type != 3)
         return 1;
@@ -367,18 +375,18 @@ static __attribute_regparm__(2)
     if (!SND_ValidateSoundAliasBlend(pAlias0, pAlias1, 0))
         return 1;
     if (channel < 0) {
-        SND_StartAliasStream(pAlias0, pAlias1, chaninfo.lerp, chaninfo.entnum, (const vec_t *)&info[0x14], *(float *)&info[8], 1.0f, 0, *(float *)&info[0], 0, &channel, (snd_alias_system_t)(1));
+        SND_StartAliasStream(pAlias0, pAlias1, chaninfo.lerp, chaninfo.entnum, info.org, info.basevolume, 1.0f, 0, info.fraction, 0, &channel, (snd_alias_system_t)(1));
     } else {
         if (!*(unsigned char *)((char *)snd_enableStream + 8))
             return 1;
-        SND_StartAliasStreamOnChannel(pAlias0, pAlias1, chaninfo.lerp, chaninfo.entnum, (const vec_t *)&info[0x14], *(float *)&info[8], 1.0f, 0, *(float *)&info[0], chaninfo.startDelay, chaninfo.master, channel, (snd_alias_system_t)(1));
+        SND_StartAliasStreamOnChannel(pAlias0, pAlias1, chaninfo.lerp, chaninfo.entnum, info.org, info.basevolume, 1.0f, 0, info.fraction, chaninfo.startDelay, chaninfo.master, channel, (snd_alias_system_t)(1));
     }
     if (channel < 0)
         return 1;
     if (SND_IsStreamChannelFree(channel))
         return 1;
-    SND_SetStreamChannelFromSaveInfo(channel, (snd_save_stream_t *)info);
-    rate = I_fround((float)(*(int *)&info[4]) * g_snd.chaninfo[channel].pitch * g_snd.timescale);
+    SND_SetStreamChannelFromSaveInfo(channel, &info);
+    rate = I_fround((float)info.rate * g_snd.chaninfo[channel].pitch * g_snd.timescale);
     SND_SetStreamChannelPlaybackRate(channel, rate);
     g_snd.chaninfo[channel].offset[0] = chaninfo.offset[0];
     g_snd.chaninfo[channel].offset[1] = chaninfo.offset[1];

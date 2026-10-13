@@ -100,30 +100,10 @@ struct FxBoltInfo
 	int boneIndex;
 };
 
-struct FxCamera
-{
-	vec3_t vieworg;
-	vec4_t frustum[6];
-	int numPlanes;
-};
+#include "FxCamera.h"
 
-struct FxHelper
-{
-	int GetSeed();
-	void SetIgnorePrecacheErrors( bool ignore );
-	void AddPlume( const float *origin, int score, const float *color, int duration );
-	bool CullSpherePreviousFrame( const vec3_t worldPos, float radius );
-
-	int time;
-	int mTime;
-	int mOldTime;
-	int mFrameTime;
-	int mTimeFrozen;
-	FxCamera mCamera;
-	FxCamera mPrevCamera;
-	int mSeed;
-	float adsZoomFactor;
-};
+struct trace_t;
+#include "FxHelper.h"
 
 extern FxHelper *theFxHelper;
 

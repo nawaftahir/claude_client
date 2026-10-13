@@ -20,16 +20,19 @@ measure: all
 	@prev=$$(ls ../runs | tail -1); python3 ../delta.py ../runs/$$prev build/cmp.json 10
 	@cp build/cmp.json ../runs/r$$(printf %03d $$(($$(ls ../runs | wc -l) + 1))).json
 
-# whole-file image: same objects, /FIXED (no .reloc, as retail); dev builds keep .reloc for cmp.py
+# Retail has a fixed image and a linker-generated CodeView/PDB record.
 release:
 	@mkdir -p build && python3 ../rsrc.py $(ANCHOR) build/cod2mp.ico
 	docker run --rm -v $(CURDIR):/w -w /w $(IMAGE) sh -c 'make -j$$(nproc) -k IN_IMAGE=1 $(REL); s=$$?; chown -R $(shell id -u):$(shell id -g) build; exit $$s'
 	@sha256sum $(REL) $(ANCHOR)
 
+check: release
+	cmp $(REL) $(ANCHOR)
+
 clean:
 	rm -rf build
 
-.PHONY: $(OUT) all measure release clean
+.PHONY: $(OUT) all measure release check clean
 
 else
 
@@ -55,6 +58,7 @@ win = $(subst /,\\,$(1))
 deps = awk '/including file:/{sub(/.*including file: */,""); gsub(/\\/,"/"); if ($$0 ~ /^[zZ]:\/opt/) next; \
 	sub(/^[zZ]:\/w\/src\//,"src/"); sub(/^(\.\/)+/,"src/"); while (sub(/\/[^\/.][^\/]*\/\.\.\//,"/")); \
 	sub(/\/headers\/pc\//,"/headers/PC/"); sub(/\/headers\/mac\//,"/headers/Mac/"); \
+	sub(/\/effectscore\//,"/EffectsCore/"); \
 	print "$@: " $$0; print $$0 ":"}' $@.log > $@.d
 
 -include $(OBJS:=.d)
@@ -96,9 +100,12 @@ $(OUT): $(OBJS) $(IMPLIBS) build/cod2mp.res src/tus.txt
 	@printf '%s\n' $(call win,$(OBJS)) > build/objs.rsp
 	$(LINK) $(LFLAGS) /OUT:$(call win,$@) @build\\objs.rsp build\\cod2mp.res $(LIBS) > build/link.log 2>&1; tail -1 build/link.log
 
-$(REL): $(OBJS) $(IMPLIBS) build/cod2mp.res src/tus.txt
+$(REL): $(OBJS) $(IMPLIBS) build/cod2mp.res src/tus.txt Makefile
 	@mkdir -p $(dir $@)
+	@mkdir -p "$$(winepath -u 'c:\builds\crc6_v1\pc\cod2\pc')"
 	@printf '%s\n' $(call win,$(OBJS)) > build/objs.rsp
-	$(LINK) $(subst /FIXED:NO,/FIXED,$(subst build\\CoD2MP_s.map,build\\release\\CoD2MP_s.map,$(LFLAGS))) /OUT:$(call win,$@) @build\\objs.rsp build\\cod2mp.res $(LIBS) > build/release/link.log 2>&1; tail -1 build/release/link.log
+	$(LINK) $(subst /FIXED:NO,/FIXED,$(subst build\\CoD2MP_s.map,build\\release\\CoD2MP_s.map,$(LFLAGS))) /DEBUG '/PDB:c:\builds\crc6_v1\pc\cod2\pc\CoD2MP_s.pdb' /OUT:$(call win,$@) @build\\objs.rsp build\\cod2mp.res $(LIBS) > build/release/link.log 2>&1 || { tail -10 build/release/link.log; exit 1; }
+	@! grep -E 'LNK2001|LNK2019|fatal error' build/release/link.log
+	@cp "$$(winepath -u 'c:\builds\crc6_v1\pc\cod2\pc\CoD2MP_s.pdb')" build/release/CoD2MP_s.pdb
 
 endif

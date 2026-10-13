@@ -392,11 +392,7 @@ void CG_Player(centity_t *cent)
     entityState_t *es;
     int iClientNum;
     struct DObj_s *obj;
-    /* Scratch GfxEntity handed to the renderer. Retail clears/sizes 0x74
-     * (`rep stosd` count 0x1d at 0x4d6271); the code below writes some fields
-     * through centity_t offset-puns (currentState.time2, pos.trDuration) that
-     * coincide with GfxEntity.materialRGBA / .axis. */
-    byte body[0x74];
+    GfxEntity body;
 
     es = &cent->nextState;
 
@@ -407,9 +403,9 @@ void CG_Player(centity_t *cent)
         return;
 
     {
-        byte *snap = (*(byte **)&cg->nextSnap);
-        if (*(int *)(snap + 0x18) & 0xc00000) {
-            if (es->number == ((snapshot_t *)snap)->ps.clientNum) {
+        const snapshot_t *snap = cg->nextSnap;
+        if (snap->ps.pm_flags & 0xc00000) {
+            if (es->number == snap->ps.clientNum) {
                 if (!cg->renderingThirdPerson)
                     return;
             }
@@ -422,31 +418,31 @@ void CG_Player(centity_t *cent)
     if (!obj)
         return;
 
-    memset(body, 0, sizeof(body));
-    ((GfxEntity *)body)->materialRGBA[0] = 0xFF;
-    ((GfxEntity *)body)->materialRGBA[1] = 0xFF;
-    ((GfxEntity *)body)->materialRGBA[2] = 0xFF;
-    ((GfxEntity *)body)->materialRGBA[3] = 0xFF;
+    memset(&body, 0, sizeof(body));
+    body.materialRGBA[0] = 0xFF;
+    body.materialRGBA[1] = 0xFF;
+    body.materialRGBA[2] = 0xFF;
+    body.materialRGBA[3] = 0xFF;
 
     {
-        byte *ci = (byte *)(((char *)cg + offsetof(cg_t, bgs.clientinfo[0].infoValid)) + iClientNum * CI_STRIDE);
-        BG_PlayerAnimation(obj, es, (clientInfo_t *)ci);
+        clientInfo_t *ci = &cg->bgs.clientinfo[iClientNum];
+        BG_PlayerAnimation(obj, es, ci);
     }
 
     if (es->eFlags & 0x300)
         CG_PlayerTurretPositionAndBlend(cent);
 
-    AnglesToAxis(cent->lerpAngles, ((GfxEntity *)body)->axis);
+    AnglesToAxis(cent->lerpAngles, body.axis);
 
-    ((GfxEntity *)body)->origin[0] = cent->lerpOrigin[0];
-    ((GfxEntity *)body)->origin[1] = cent->lerpOrigin[1];
-    ((GfxEntity *)body)->origin[2] = cent->lerpOrigin[2];
+    body.origin[0] = cent->lerpOrigin[0];
+    body.origin[1] = cent->lerpOrigin[1];
+    body.origin[2] = cent->lerpOrigin[2];
 
-    ((GfxEntity *)body)->lighting.baseCoords[0] = ((GfxEntity *)body)->origin[0];
-    ((GfxEntity *)body)->lighting.baseCoords[1] = ((GfxEntity *)body)->origin[1];
+    body.lighting.baseCoords[0] = body.origin[0];
+    body.lighting.baseCoords[1] = body.origin[1];
 
     {
-        float z = ((GfxEntity *)body)->origin[2] + es->fTorsoHeight;
+        float z = body.origin[2] + es->fTorsoHeight;
 
         if (es->eFlags & 8)
             z += 12.0f;
@@ -455,28 +451,28 @@ void CG_Player(centity_t *cent)
         else
             z += 32.0f;
 
-        ((GfxEntity *)body)->lighting.baseCoords[2] = z;
+        body.lighting.baseCoords[2] = z;
     }
 
-    ((GfxEntity *)body)->reType = (refEntityType_t)(0);
+    body.reType = RT_DOBJ;
 
-    ((GfxEntity *)body)->renderFxFlags = 0x80;
+    body.renderFxFlags = 0x80;
 
-    CG_AddCEntityToScene((const GfxEntity *)body, obj, cent);
+    CG_AddCEntityToScene(&body, obj, cent);
 
     if (es->eFlags & 0x20000)
         return;
 
-    CG_AddPlayerWeapon((GfxEntity *)body, 0, cent, 1);
+    CG_AddPlayerWeapon(&body, 0, cent, 1);
 }
 
 void CG_Corpse(centity_t *cent)
 {
     entityState_t *es;
-    byte *ci;
+    clientInfo_t *ci;
     int clientNum;
     struct DObj_s *obj;
-    byte body[0x74];
+    GfxEntity body;
 
     es = &cent->nextState;
 
@@ -485,53 +481,53 @@ void CG_Corpse(centity_t *cent)
 
     clientNum = cent->nextState.number;
 
-    ci = (byte *)&cgs->corpseinfo[clientNum - 0x40];
+    ci = &cgs->corpseinfo[clientNum - 0x40];
 
     obj = Com_GetClientDObj(clientNum, cent->localClientNum);
-    BG_UpdatePlayerDObj(obj, es, (clientInfo_t *)ci, 0);
+    BG_UpdatePlayerDObj(obj, es, ci, 0);
 
     obj = Com_GetClientDObj(cent->nextState.number, cent->localClientNum);
     if (!obj)
         return;
 
-    memset(body, 0, sizeof(body));
+    memset(&body, 0, sizeof(body));
 
-    ((GfxEntity *)body)->materialRGBA[0] = 0xFF;
-    ((GfxEntity *)body)->materialRGBA[1] = 0xFF;
-    ((GfxEntity *)body)->materialRGBA[2] = 0xFF;
-    ((GfxEntity *)body)->materialRGBA[3] = 0xFF;
+    body.materialRGBA[0] = 0xFF;
+    body.materialRGBA[1] = 0xFF;
+    body.materialRGBA[2] = 0xFF;
+    body.materialRGBA[3] = 0xFF;
 
-    BG_PlayerAnimation(obj, es, (clientInfo_t *)ci);
+    BG_PlayerAnimation(obj, es, ci);
 
-    AnglesToAxis(cent->lerpAngles, ((GfxEntity *)body)->axis);
+    AnglesToAxis(cent->lerpAngles, body.axis);
 
-    ((GfxEntity *)body)->origin[0] = cent->lerpOrigin[0];
-    ((GfxEntity *)body)->origin[1] = cent->lerpOrigin[1];
-    ((GfxEntity *)body)->origin[2] = cent->lerpOrigin[2];
-    ((GfxEntity *)body)->lighting.baseCoords[0] = ((GfxEntity *)body)->origin[0];
-    ((GfxEntity *)body)->lighting.baseCoords[1] = ((GfxEntity *)body)->origin[1];
-    ((GfxEntity *)body)->lighting.baseCoords[2] = ((GfxEntity *)body)->origin[2] + es->fTorsoHeight;
+    body.origin[0] = cent->lerpOrigin[0];
+    body.origin[1] = cent->lerpOrigin[1];
+    body.origin[2] = cent->lerpOrigin[2];
+    body.lighting.baseCoords[0] = body.origin[0];
+    body.lighting.baseCoords[1] = body.origin[1];
+    body.lighting.baseCoords[2] = body.origin[2] + es->fTorsoHeight;
 
     if (es->eFlags & 8) {
-        ((GfxEntity *)body)->lighting.baseCoords[2] += 12.0f;
+        body.lighting.baseCoords[2] += 12.0f;
     } else if (es->eFlags & 4) {
-        ((GfxEntity *)body)->lighting.baseCoords[2] += 20.0f;
+        body.lighting.baseCoords[2] += 20.0f;
     } else {
-        ((GfxEntity *)body)->lighting.baseCoords[2] += 32.0f;
+        body.lighting.baseCoords[2] += 32.0f;
     }
 
-    ((GfxEntity *)body)->reType = (refEntityType_t)(0);
+    body.reType = RT_DOBJ;
 
-    ((GfxEntity *)body)->renderFxFlags = 0x80;
+    body.renderFxFlags = 0x80;
 
-    CG_AddCEntityToScene((const GfxEntity *)body, obj, cent);
+    CG_AddCEntityToScene(&body, obj, cent);
 }
 
 void CG_UpdatePlayerDObj(centity_t *cent)
 {
     entityState_t *es;
     int clientNum;
-    byte *ci;
+    clientInfo_t *ci;
     struct DObj_s *obj;
 
     if (!cent->nextValid)
@@ -541,8 +537,8 @@ void CG_UpdatePlayerDObj(centity_t *cent)
     clientNum = es->clientNum;
 
     obj = Com_GetClientDObj(clientNum, cent->localClientNum);
-    ci = (byte *)(((char *)cg + offsetof(cg_t, bgs.clientinfo[0].infoValid)) + clientNum * CI_STRIDE);
-    BG_UpdatePlayerDObj(obj, es, (clientInfo_t *)ci, 0);
+    ci = &cg->bgs.clientinfo[clientNum];
+    BG_UpdatePlayerDObj(obj, es, ci, 0);
 }
 
 void CG_ResetPlayerEntity(centity_t *cent)

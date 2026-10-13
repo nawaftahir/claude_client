@@ -493,7 +493,7 @@ void CG_DrawChatMessages(void)
         y = (float)(hudChatY + (i - cgs->teamChatPos) * 10);
         w = (float)(UI_TextWidth(msg, 0, font, 0.20833333f) + 24);
         UI_DrawHandlePic(0.0f, y, w, 10.0f, 1, 1, color,
-                         cgs->media.whiteMaterial);
+                         cgs->media.teamStatusBar);
 
         color[0] = 1.0f;
         color[1] = 1.0f;
@@ -2181,7 +2181,7 @@ qboolean CG_DrawFollow(void)
     float x;
     int textWidth;
 
-    if (!(cg->snap->ps.pm_flags & 0x400000)) {
+    if (!(cg->nextSnap->ps.pm_flags & 0x400000)) {
         return 0;
     }
 
@@ -2189,8 +2189,8 @@ qboolean CG_DrawFollow(void)
         return 0;
     }
 
-    if (cg->bgs.clientinfo[cg->snap->ps.clientNum].infoValid)
-        clientName = cg->bgs.clientinfo[cg->snap->ps.clientNum].name;
+    if (cg->bgs.clientinfo[cg->nextSnap->ps.clientNum].infoValid)
+        clientName = cg->bgs.clientinfo[cg->nextSnap->ps.clientNum].name;
     else
         clientName = "?";
 

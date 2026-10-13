@@ -16,7 +16,7 @@ def score(name, addr):
     r = subprocess.run(['make'], cwd=T, capture_output=True, text=True)
     if r.returncode:
         return 10**6, 'build error'
-    out = subprocess.run(['python3', D + '/fdiff.py', 'build/CoD2MP_s.exe', 'build/CoD2MP_s.map', CL, name, addr, '400'],
+    out = subprocess.run(['python3', D + '/fdiff.py', 'build/CoD2MP_s.exe', 'build/CoD2MP_s.map', CL, name, addr, os.environ.get('VSIZE', '400')],
                          cwd=T, capture_output=True, text=True).stdout
     n = sum(1 for l in out.splitlines() if l[:1] in '+-' and not l.startswith(('+++', '---')))
     return n, out.splitlines()[0] if out else ''

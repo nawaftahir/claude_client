@@ -8,9 +8,8 @@ extern cg_t cgArray[1];
  * absolute access. Deliberately a plain identifier and NOT a macro: the functions that
  * take a `cg_t *cg` PARAMETER must still be able to shadow it under normal C scoping. */
 static cg_t * const cg = &cgArray[0];
-/* same treatment as `cg` above; the shared cgs storage is defined in bss.c. */
-extern unsigned char cgsArray[];
-static cgs_t * const cgs = (cgs_t *)cgsArray;
+extern cgs_t cgsArray[1];
+static cgs_t * const cgs = &cgsArray[0];
 extern centity_t cg_entities[];
 
 #endif

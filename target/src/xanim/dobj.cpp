@@ -959,7 +959,7 @@ int DObjGetSurfaceCount( const DObj *obj, const char *lods )
 
 void *DObjGetModelSurface( const DObj *obj, int modelIndex, int surfIndex, int lod )
 {
-	return ((void **)obj->models[modelIndex]->lodInfo[lod].surfs->surf)[surfIndex];
+	return obj->models[modelIndex]->lodInfo[lod].surfs->surf[surfIndex];
 }
 
 const char *DObjGetModelSurfaceName( const DObj *obj, int modelIndex, int surfIndex, int lod )
@@ -992,7 +992,7 @@ int DObjGetSurfaceList( const DObj *obj, DObjSurfRef *list, unsigned int *surfPa
 	int startWord;
 	int total;
 	int j;
-	XSurface *surfaces;
+	XSurface **surfaces;
 	XModelLodInfo *lodInfo;
 	int *modelPartBits;
 

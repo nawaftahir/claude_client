@@ -485,7 +485,7 @@ struct refexport_t
 {
 	void *unused0[96];
 	XSurface *(*XModelReadSurface)( XModel *model, int *partBits, const unsigned char **pos, void *(*Alloc)(int) );
-	struct Material *(*LoadXSkins)( XModel *model );
+	trXSkin_t *(*LoadXSkins)( XModel *model );
 };
 extern refexport_t re;
 
@@ -495,7 +495,7 @@ XSurface *XModelReadSurface_48ea60(XModel *model, int *partBits, const unsigned 
 	return re.XModelReadSurface(model, partBits, pos, Alloc);
 }
 
-struct Material *XModelLoadXSkins_48ea80(XModel *model)
+trXSkin_t *XModelLoadXSkins_48ea80(XModel *model)
 {
 	return re.LoadXSkins(model);
 }
@@ -506,7 +506,7 @@ bool XModelSurfsSupported()
 }
 
 // retail 0x48eaa0
-static __declspec(noinline) void XModelReadSurfaces(XModel *model, void **out, int *partBits, const unsigned char **pos, void *(*Alloc)(int), int numsurfs)
+static __declspec(noinline) void XModelReadSurfaces(XModel *model, XSurface **out, int *partBits, const unsigned char **pos, void *(*Alloc)(int), int numsurfs)
 {
 	int i;
 
@@ -569,8 +569,8 @@ XModelSurfs *XModelReadSurface(XModel *model, const char *name, void *(*Alloc)(i
 	size = numsurfs * 4 + sizeof(XModelSurfs);
 	surfs = (XModelSurfs *)Alloc(size);
 	model->memUsage += size;
-	surfs->surf = (struct XSurface *)(surfs + 1);
-	XModelReadSurfaces(model, (void **)(surfs + 1), surfs->partBits, &pos, Alloc, numsurfs);
+	surfs->surf = (XSurface **)(surfs + 1);
+	XModelReadSurfaces(model, surfs->surf, surfs->partBits, &pos, Alloc, numsurfs);
 	FS_FreeFile(buf);
 	return surfs;
 }

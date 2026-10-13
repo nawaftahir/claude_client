@@ -22,7 +22,7 @@ void Dvar_SetVec4ByName(const char *dvarName, float x, float y, float z, float w
 void Dvar_UpdateEnumDomain(const dvar_t *dvar, const char **stringTable);
 unsigned int SEH_ReadCharFromString( const char **text, int *isTrailingPunctuation );
 int XModelGetMemUsage(const XModel *model);
-Material *XModelGetSkins(const XModel *model);
+const trXSkin_t *XModelGetSkins(const XModel *model);
 const char *XModelGetSurfaceName(const XModel *model, int surfIndex, int lod);
 const char *Dvar_EnumToString(const dvar_t *dvar);
 int DObjGetSurfaceList( const DObj *obj, DObjSurfRef *list, unsigned int *surfPartBits, const char *lods );

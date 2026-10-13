@@ -293,9 +293,11 @@ typedef struct XModelParts_s
 static_assert((sizeof(XModelParts) == 100), "ERROR: XModelParts size is invalid!");
 #endif
 
+typedef struct XSurface_s XSurface;
+
 typedef struct XModelSurfs_s
 {
-	struct XSurface *surf; // !!! Not loaded in server binary
+	XSurface **surf;
 	int partBits[4];
 } XModelSurfs;
 #if defined(__i386__)
@@ -322,6 +324,9 @@ typedef struct XModelCollSurf_s
 	int surfFlags;
 } XModelCollSurf;
 
+struct Material;
+struct trXSkin_t;
+
 typedef struct
 {
 	XModelParts_s *parts;
@@ -334,7 +339,7 @@ typedef struct
 	vec3_t maxs;
 	short numLods;
 	short collLod;
-	struct Material *xskins; // !!! Not loaded in server binary
+	trXSkin_t *xskins;
 	int memUsage;
 	const char *name;
 	char flags;
@@ -576,7 +581,7 @@ struct DObjSurfRef
 
 const char *DObjGetBoneName(const DObj_s *obj, int boneIndex);
 XModel *DObjGetModel(const DObj_s *obj, int modelIndex);
-int XModelGetSurfaces(const XModel *model, XSurface **surfaces, int lod, int **partBits);
+int XModelGetSurfaces(const XModel *model, XSurface ***surfaces, int lod, int **partBits);
 int XModelGetLodForDist(const XModel *model, float dist);
 float XModelGetLodOutDist(const XModel *model);
 unsigned char XModelGetFlags(const XModel *model);
