@@ -171,31 +171,24 @@ COD2_ASSERT_FIELD(WeaponDef,     overlayReticle, 0x278);
 COD2_ASSERT_FIELD(WeaponDef,     bWideListIcon,  0x344);
 COD2_ASSERT_FIELD(playerState_t, fWeaponPosFrac, 0xdc);
 
-inline float I_fclamp(const float val, const float min, const float max);
-
-static void __attribute_regparm__(3)
-    CG_DrawScore(int team, const rectDef_t *rect, struct Font_s *font, float scale, vec_t *color, MaterialHandle material, int textStyle)
+// retail 0x4bd0c0, unreferenced; Q3 CG_TeamColor (constants PINNED)
+float *CG_TeamColor(int team)
 {
-    char scoreText[16];
-    int textWidth;
-    (void)material;
-    if (cgs->teamScores[team] == -9999) {
-        Com_sprintf(scoreText, sizeof(scoreText), "-");
-    } else {
-        Com_sprintf(scoreText, sizeof(scoreText), "%i", cgs->teamScores[team]);
+    static vec4_t red = { 1.0f, 0.2f, 0.2f, 1.0f };
+    static vec4_t blue = { 0.2f, 0.2f, 1.0f, 1.0f };
+    static vec4_t other = { 1.0f, 1.0f, 1.0f, 1.0f };
+    static vec4_t spectator = { 0.7f, 0.7f, 0.7f, 1.0f };
+
+    switch (team) {
+    case 1:
+        return red;
+    case 2:
+        return blue;
+    case 3:
+        return spectator;
+    default:
+        return other;
     }
-    textWidth = UI_TextWidth(scoreText, 0, font, scale);
-    UI_DrawText(
-        scoreText,
-        0x7fffffff,
-        font,
-        rect->x + rect->w - (float)textWidth,
-        rect->y + rect->h,
-        rect->horzAlign,
-        rect->vertAlign,
-        scale,
-        color,
-        textStyle);
 }
 
 inline float I_fclamp(const float val, const float min, const float max);
@@ -1456,75 +1449,6 @@ const char *CG_GetTranslatedLocationString(int iLocation)
     return szErrorString;
 }
 
-// retail 0x4c08a0, unreferenced; Q3 CG_ClientNumFromName (SUPPORTED)
-int CG_ClientNumFromName(const char *p)
-{
-    int i;
-
-    for (i = 0; i < cgs->maxclients; i++) {
-        if (cg->bgs.clientinfo[i].infoValid && !I_stricmp(cg->bgs.clientinfo[i].name, p))
-            return i;
-    }
-    return -1;
-}
-
-// retail 0x4bd0c0, unreferenced; Q3 CG_TeamColor (constants PINNED)
-float *CG_TeamColor(int team)
-{
-    static vec4_t red = { 1.0f, 0.2f, 0.2f, 1.0f };
-    static vec4_t blue = { 0.2f, 0.2f, 1.0f, 1.0f };
-    static vec4_t other = { 1.0f, 1.0f, 1.0f, 1.0f };
-    static vec4_t spectator = { 0.7f, 0.7f, 0.7f, 1.0f };
-
-    switch (team) {
-    case 1:
-        return red;
-    case 2:
-        return blue;
-    case 3:
-        return spectator;
-    default:
-        return other;
-    }
-}
-
-extern displayContextDef_t cgDC;
-extern qboolean Menus_OpenByName(displayContextDef_t *dc, const char *p);
-
-// retail 0x4c0900, unreferenced; Q3 CG_ShowResponseHead (SUPPORTED)
-void CG_ShowResponseHead(void)
-{
-    Menus_OpenByName(&cgDC, "voiceMenu");
-    cg->voiceTime = cg->time;
-}
-
-// retail 0x4c0940, unreferenced; Q3 CG_GetTeamColor (SUPPORTED)
-void CG_GetTeamColor(vec4_t *color)
-{
-    if (cg->bgs.clientinfo[cg->nextSnap->ps.clientNum].infoValid)
-    {
-        if (cg->bgs.clientinfo[cg->nextSnap->ps.clientNum].team == 1)
-        {
-            (*color)[0] = 1.0f;
-            (*color)[1] = 0.0f;
-            (*color)[2] = 0.0f;
-            (*color)[3] = 0.25f;
-            return;
-        }
-        if (cg->bgs.clientinfo[cg->nextSnap->ps.clientNum].team == 2)
-        {
-            (*color)[0] = (*color)[1] = 0.0f;
-            (*color)[2] = 1.0f;
-            (*color)[3] = 0.25f;
-            return;
-        }
-    }
-    (*color)[0] = 0.0f;
-    (*color)[1] = 0.17f;
-    (*color)[2] = 0.0f;
-    (*color)[3] = 0.25f;
-}
-
 static void CG_DrawPlayerLocation(const rectDef_t *rect, struct Font_s *font, float scale, vec_t *color, int textStyle)
 {
     clientInfo_t *ci;
@@ -1536,6 +1460,31 @@ static void CG_DrawPlayerLocation(const rectDef_t *rect, struct Font_s *font, fl
         s = CG_GetTranslatedLocationString(ci->location);
         UI_DrawText(s, 0x7fffffff, font, rect->x, rect->y + rect->h, rect->horzAlign, rect->vertAlign, scale, color, textStyle);
     }
+}
+
+static void __attribute_regparm__(3)
+    CG_DrawScore(int team, const rectDef_t *rect, struct Font_s *font, float scale, vec_t *color, MaterialHandle material, int textStyle)
+{
+    char scoreText[16];
+    int textWidth;
+    (void)material;
+    if (cgs->teamScores[team] == -9999) {
+        Com_sprintf(scoreText, sizeof(scoreText), "-");
+    } else {
+        Com_sprintf(scoreText, sizeof(scoreText), "%i", cgs->teamScores[team]);
+    }
+    textWidth = UI_TextWidth(scoreText, 0, font, scale);
+    UI_DrawText(
+        scoreText,
+        0x7fffffff,
+        font,
+        rect->x + rect->w - (float)textWidth,
+        rect->y + rect->h,
+        rect->horzAlign,
+        rect->vertAlign,
+        scale,
+        color,
+        textStyle);
 }
 
 static void CG_DrawTeamColor(const rectDef_t *rect, vec_t *color)
@@ -1728,6 +1677,55 @@ int CG_KeyInterceptEvent(int key, qboolean down)
     }
 
     return 0;
+}
+
+// retail 0x4c08a0, unreferenced; Q3 CG_ClientNumFromName (SUPPORTED)
+int CG_ClientNumFromName(const char *p)
+{
+    int i;
+
+    for (i = 0; i < cgs->maxclients; i++) {
+        if (cg->bgs.clientinfo[i].infoValid && !I_stricmp(cg->bgs.clientinfo[i].name, p))
+            return i;
+    }
+    return -1;
+}
+
+extern displayContextDef_t cgDC;
+extern qboolean Menus_OpenByName(displayContextDef_t *dc, const char *p);
+
+// retail 0x4c0900, unreferenced; Q3 CG_ShowResponseHead (SUPPORTED)
+void CG_ShowResponseHead(void)
+{
+    Menus_OpenByName(&cgDC, "voiceMenu");
+    cg->voiceTime = cg->time;
+}
+
+// retail 0x4c0940, unreferenced; Q3 CG_GetTeamColor (SUPPORTED)
+void CG_GetTeamColor(vec4_t *color)
+{
+    if (cg->bgs.clientinfo[cg->nextSnap->ps.clientNum].infoValid)
+    {
+        if (cg->bgs.clientinfo[cg->nextSnap->ps.clientNum].team == 1)
+        {
+            (*color)[0] = 1.0f;
+            (*color)[1] = 0.0f;
+            (*color)[2] = 0.0f;
+            (*color)[3] = 0.25f;
+            return;
+        }
+        if (cg->bgs.clientinfo[cg->nextSnap->ps.clientNum].team == 2)
+        {
+            (*color)[0] = (*color)[1] = 0.0f;
+            (*color)[2] = 1.0f;
+            (*color)[3] = 0.25f;
+            return;
+        }
+    }
+    (*color)[0] = 0.0f;
+    (*color)[1] = 0.17f;
+    (*color)[2] = 0.0f;
+    (*color)[3] = 0.25f;
 }
 
 void CG_ArchiveState(MemoryFile *memFile)
