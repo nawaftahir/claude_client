@@ -135,9 +135,53 @@ void CG_ScriptMover(centity_t *cent);
 void CG_ProcessEntity(centity_t *cent);
 void CG_AddPacketEntities(void);
 
+static __forceinline void EntVectorCopy(const vec_t *a, vec_t *b);
+
 static clientInfo_t *CG_CorpseInfoForEntityNum(int entNum)
 {
     return &cgs->corpseinfo[entNum - 0x40];
+}
+
+static void CG_LockLightingOrigin(centity_t *cent, GfxEntity *ent)
+{
+    if (cent->nextState.eFlags & 0x400) {
+        if (cent->lightingOrigin[0] == 0.0f &&
+            cent->lightingOrigin[1] == 0.0f &&
+            cent->lightingOrigin[2] == 0.0f) {
+            EntVectorCopy(cent->lerpOrigin, cent->lightingOrigin);
+        }
+
+        EntVectorCopy(cent->lightingOrigin, ent->lighting.origin);
+        ent->renderFxFlags |= 0x80;
+    } else {
+        cent->lightingOrigin[0] = 0.0f;
+        cent->lightingOrigin[1] = 0.0f;
+        cent->lightingOrigin[2] = 0.0f;
+    }
+}
+
+void CG_General(centity_t *cent)
+{
+    entityState_t *s1 = &cent->nextState;
+    struct DObj_s *obj;
+    GfxEntity ent;
+
+    if (s1->eFlags & 0x20)
+        return;
+
+    obj = CG_PreProcess_GetDObj(s1->number, s1->eType, cgs->gameModels[s1->index.xmodel]);
+    if (!obj)
+        return;
+
+    memset(&ent, 0, sizeof(ent));
+    ent.origin[0] = cent->lerpOrigin[0];
+    ent.origin[1] = cent->lerpOrigin[1];
+    ent.origin[2] = cent->lerpOrigin[2];
+    AnglesToAxis(cent->lerpAngles, ent.axis);
+    ent.reType = (refEntityType_t)(0);
+
+    CG_LockLightingOrigin(cent, &ent);
+    CG_AddCEntityToScene(&ent, obj, cent);
 }
 
 // Original name unknown.
@@ -158,6 +202,45 @@ qboolean CG_FlareInViewCone(const centity_t *cent, int atTime)
 
     dot = cg->refdef.viewaxis[0][2] * dir[2] + cg->refdef.viewaxis[0][1] * dir[1] + cg->refdef.viewaxis[0][0] * dir[0];
     return !(dot > -0.94f - (dist * (1.0f / 255.0f)) * 0.057f);
+}
+
+void CG_Item(centity_t *cent)
+{
+    entityState_t *s1 = &cent->nextState;
+    itemInfo_t *itemInfo;
+    gitem_t *item;
+    struct DObj_s *obj;
+    GfxEntity ent;
+
+    if (s1->index.item >= bg_numItems)
+        Com_Error(ERR_DROP, (const char *)"\x15"
+                                   "Bad item index %i on entity",
+                  s1->index.item);
+
+    if (s1->eFlags & 0x20)
+        return;
+
+    item = &((gitem_t *)((void *)&bg_itemlist))[s1->index.item];
+    itemInfo = &(cg_itemsArray)[s1->index.item];
+    if (!itemInfo->registered) {
+        CG_RegisterItemVisuals(s1->index.item);
+        return;
+    }
+
+    if (!itemInfo->models[0])
+        Com_Error(ERR_DROP, (const char *)"\x15No XModel loaded for item index %i (%s)", s1->index.item, item->pickup_name);
+
+    obj = CG_PreProcess_GetDObj(s1->number, s1->eType, itemInfo->models[0]);
+    if (!obj)
+        return;
+
+    memset(&ent, 0, sizeof(ent));
+    AnglesToAxis(cent->lerpAngles, ent.axis);
+    ent.origin[0] = cent->lerpOrigin[0];
+    ent.origin[1] = cent->lerpOrigin[1];
+    ent.origin[2] = cent->lerpOrigin[2];
+    ent.reType = (refEntityType_t)(0);
+    CG_AddCEntityToScene(&ent, obj, cent);
 }
 
 void CG_EntityEffects(centity_t *cent)
@@ -357,26 +440,6 @@ void CG_Missile(centity_t *cent)
     CG_AddCEntityToScene(&ent, obj, cent);
 }
 
-static __forceinline void EntVectorCopy(const vec_t *a, vec_t *b);
-
-static void CG_LockLightingOrigin(centity_t *cent, GfxEntity *ent)
-{
-    if (cent->nextState.eFlags & 0x400) {
-        if (cent->lightingOrigin[0] == 0.0f &&
-            cent->lightingOrigin[1] == 0.0f &&
-            cent->lightingOrigin[2] == 0.0f) {
-            EntVectorCopy(cent->lerpOrigin, cent->lightingOrigin);
-        }
-
-        EntVectorCopy(cent->lightingOrigin, ent->lighting.origin);
-        ent->renderFxFlags |= 0x80;
-    } else {
-        cent->lightingOrigin[0] = 0.0f;
-        cent->lightingOrigin[1] = 0.0f;
-        cent->lightingOrigin[2] = 0.0f;
-    }
-}
-
 void CG_ScriptMover(centity_t *cent)
 {
     entityState_t *s1 = &cent->nextState;
@@ -409,59 +472,54 @@ void CG_ScriptMover(centity_t *cent)
     }
 }
 
-static void CG_PlayLoopedFx(centity_t *cent)
+void CG_AdjustPositionForMover(const vec_t *in, int moverNum, int fromTime, int toTime, vec_t *out, vec_t *outDeltaAngles)
 {
-    entityState_t *s1 = &cent->nextState;
-    int repeat;
-    int fxIndex;
-    EffectTemplate *fx;
-    const vec_t *forward;
-    float cullDist;
+    centity_t *cent;
+    vec3_t oldOrigin;
+    vec3_t oldAngles;
+    vec3_t origin;
+    vec3_t angles;
+    vec3_t deltaOrigin;
+    vec3_t deltaAngles;
 
-    if (cg->time >= cent->dl_time) {
-        repeat = (int)s1->angles2[1];
-        if (cg->time - cent->dl_time < repeat)
-            return;
-
-        do {
-            cent->dl_time += repeat;
-        } while (cg->time - cent->dl_time >= repeat);
-    } else {
-        cent->dl_time = cg->time;
+    if (outDeltaAngles) {
+        outDeltaAngles[0] = 0.0f;
+        outDeltaAngles[1] = 0.0f;
+        outDeltaAngles[2] = 0.0f;
     }
 
-    cullDist = s1->angles2[0];
-    if (cullDist != 0.0f) {
-        if (Vec3DistanceSq(cg->refdef.vieworg, cent->lerpOrigin) >= cullDist * cullDist)
+    if (moverNum > 0 && moverNum < 1022) {
+        cent = &(((centity_t *)cg_entities))[moverNum];
+        if (cent->nextState.eType != 6) {
+            out[0] = in[0];
+            out[1] = in[1];
+            out[2] = in[2];
             return;
-    }
+        }
+        BG_EvaluateTrajectory(&cent->currentState.pos, fromTime, oldOrigin);
+        BG_EvaluateTrajectory(&cent->currentState.apos, fromTime, oldAngles);
+        BG_EvaluateTrajectory(&cent->currentState.pos, toTime, origin);
+        BG_EvaluateTrajectory(&cent->currentState.apos, toTime, angles);
 
-    fxIndex = s1->scale;
-    if (fxIndex > 0 && fxIndex < 64) {
-        fx = cgs->fxs[fxIndex];
-        forward = s1->origin2;
-        if (forward[0] * forward[0] + forward[1] * forward[1] + forward[2] * forward[2] != 0.0f) {
-            if (!s1->eventParm) {
-                FX_PlayEffect(fx, cent->lerpOrigin, forward);
-            } else {
-                vec3_t up;
-                float dot;
-                float scale;
+        deltaOrigin[0] = origin[0] - oldOrigin[0];
+        deltaOrigin[1] = origin[1] - oldOrigin[1];
+        deltaOrigin[2] = origin[2] - oldOrigin[2];
+        deltaAngles[0] = angles[0] - oldAngles[0];
+        deltaAngles[1] = angles[1] - oldAngles[1];
+        deltaAngles[2] = angles[2] - oldAngles[2];
+        out[0] = in[0] + deltaOrigin[0];
+        out[1] = in[1] + deltaOrigin[1];
+        out[2] = in[2] + deltaOrigin[2];
 
-                ByteToDir(s1->eventParm, up);
-                dot = up[1] * forward[1] + up[2] * forward[2] + up[0] * forward[0];
-                scale = -dot;
-                up[0] = scale * forward[0] + up[0];
-                up[1] = scale * forward[1] + up[1];
-                up[2] = scale * forward[2] + up[2];
-                Vec3Normalize(up);
-                FX_PlayOrientedEffect(fx, cent->lerpOrigin, forward, up);
-            }
-        } else {
-            FX_PlaySimpleEffect(fx, cent->lerpOrigin);
+        if (outDeltaAngles) {
+            outDeltaAngles[0] = deltaAngles[0];
+            outDeltaAngles[1] = deltaAngles[1];
+            outDeltaAngles[2] = deltaAngles[2];
         }
     } else {
-        Com_Printf("ERROR: CG_PlayFx called with invalid effect id %i\n", fxIndex);
+        out[0] = in[0];
+        out[1] = in[1];
+        out[2] = in[2];
     }
 }
 
@@ -554,6 +612,45 @@ void CG_DObjUpdateInfo(struct DObj_s *obj)
     DObjUpdateClientInfo(obj, timescale);
 }
 
+DObjAnimMat *CG_DObjGetLocalTagMatrix(const centity_t *cent, struct DObj_s *obj, unsigned int tagName)
+{
+    DObjAnimMat *mat;
+    int boneIndex;
+
+    boneIndex = DObjGetBoneIndex(obj, tagName);
+    if (boneIndex < 0)
+        return 0;
+
+    CG_DObjCalcBone(cent, obj, boneIndex);
+    mat = DObjGetRotTransArray(obj);
+    return mat ? &mat[boneIndex] : 0;
+}
+
+// retail 0x4c6ae0, unreferenced (G_DObjGetWorldTagMatrix twin)
+qboolean CG_DObjGetWorldTagMatrix(const centity_t *cent, struct DObj_s *obj, unsigned int tagName, float tagMat[4][3])
+{
+    DObjAnimMat *mat;
+    float ent_axis[4][3];
+    float axis[3][3];
+
+    mat = CG_DObjGetLocalTagMatrix(cent, obj, tagName);
+
+    if (!mat)
+        return 0;
+
+    AnglesToAxis(cent->lerpAngles, ent_axis);
+    ent_axis[3][0] = cent->lerpOrigin[0];
+    ent_axis[3][1] = cent->lerpOrigin[1];
+    ent_axis[3][2] = cent->lerpOrigin[2];
+
+    ConvertQuatToMat(mat, axis);
+
+    MatrixMultiply(axis, ent_axis, tagMat);
+    MatrixTransformVector43(mat->trans, ent_axis, tagMat[3]);
+
+    return 1;
+}
+
 qboolean CG_DObjGetWorldTagPos(const centity_t *cent, struct DObj_s *obj, unsigned int tagName, vec_t *pos)
 {
     DObjAnimMat *mat;
@@ -571,69 +668,6 @@ qboolean CG_DObjGetWorldTagPos(const centity_t *cent, struct DObj_s *obj, unsign
     pos[1] = mat->trans[1] * ent_axis[1][1] + mat->trans[0] * ent_axis[0][1] + mat->trans[2] * ent_axis[2][1] + ent_axis[3][1];
     pos[2] = mat->trans[1] * ent_axis[1][2] + mat->trans[0] * ent_axis[0][2] + mat->trans[2] * ent_axis[2][2] + ent_axis[3][2];
     return 1;
-}
-
-void CG_General(centity_t *cent)
-{
-    entityState_t *s1 = &cent->nextState;
-    struct DObj_s *obj;
-    GfxEntity ent;
-
-    if (s1->eFlags & 0x20)
-        return;
-
-    obj = CG_PreProcess_GetDObj(s1->number, s1->eType, cgs->gameModels[s1->index.xmodel]);
-    if (!obj)
-        return;
-
-    memset(&ent, 0, sizeof(ent));
-    ent.origin[0] = cent->lerpOrigin[0];
-    ent.origin[1] = cent->lerpOrigin[1];
-    ent.origin[2] = cent->lerpOrigin[2];
-    AnglesToAxis(cent->lerpAngles, ent.axis);
-    ent.reType = (refEntityType_t)(0);
-
-    CG_LockLightingOrigin(cent, &ent);
-    CG_AddCEntityToScene(&ent, obj, cent);
-}
-
-void CG_Item(centity_t *cent)
-{
-    entityState_t *s1 = &cent->nextState;
-    itemInfo_t *itemInfo;
-    gitem_t *item;
-    struct DObj_s *obj;
-    GfxEntity ent;
-
-    if (s1->index.item >= bg_numItems)
-        Com_Error(ERR_DROP, (const char *)"\x15"
-                                   "Bad item index %i on entity",
-                  s1->index.item);
-
-    if (s1->eFlags & 0x20)
-        return;
-
-    item = &((gitem_t *)((void *)&bg_itemlist))[s1->index.item];
-    itemInfo = &(cg_itemsArray)[s1->index.item];
-    if (!itemInfo->registered) {
-        CG_RegisterItemVisuals(s1->index.item);
-        return;
-    }
-
-    if (!itemInfo->models[0])
-        Com_Error(ERR_DROP, (const char *)"\x15No XModel loaded for item index %i (%s)", s1->index.item, item->pickup_name);
-
-    obj = CG_PreProcess_GetDObj(s1->number, s1->eType, itemInfo->models[0]);
-    if (!obj)
-        return;
-
-    memset(&ent, 0, sizeof(ent));
-    AnglesToAxis(cent->lerpAngles, ent.axis);
-    ent.origin[0] = cent->lerpOrigin[0];
-    ent.origin[1] = cent->lerpOrigin[1];
-    ent.origin[2] = cent->lerpOrigin[2];
-    ent.reType = (refEntityType_t)(0);
-    CG_AddCEntityToScene(&ent, obj, cent);
 }
 
 qboolean CG_DObjGetViewModelTagPos(struct DObj_s *obj, unsigned int tagName, vec_t *pos)
@@ -697,17 +731,60 @@ void CG_SoundBlend(centity_t *cent)
     SND_PlayBlendedSoundAliases(alias0, alias1, lerp, nextState->number, cent->lerpOrigin, 0, (snd_alias_system_t)(1));
 }
 
-// retail 0x4c78e0, unreferenced; name unknown
-struct XAnim_s *CG_GetEntityAnims_4c78e0(int eType, int entnum)
+static void CG_PlayLoopedFx(centity_t *cent)
 {
-    if (eType != 9)
-        return 0;
-    return CG_GetMG42Anims(&(((centity_t *)cg_entities))[entnum]);
-}
+    entityState_t *s1 = &cent->nextState;
+    int repeat;
+    int fxIndex;
+    EffectTemplate *fx;
+    const vec_t *forward;
+    float cullDist;
 
-static long unsigned int *CG_AllocAnimTree(int size)
-{
-    return (long unsigned int *)MT_Alloc(size, 5);
+    if (cg->time >= cent->dl_time) {
+        repeat = (int)s1->angles2[1];
+        if (cg->time - cent->dl_time < repeat)
+            return;
+
+        do {
+            cent->dl_time += repeat;
+        } while (cg->time - cent->dl_time >= repeat);
+    } else {
+        cent->dl_time = cg->time;
+    }
+
+    cullDist = s1->angles2[0];
+    if (cullDist != 0.0f) {
+        if (Vec3DistanceSq(cg->refdef.vieworg, cent->lerpOrigin) >= cullDist * cullDist)
+            return;
+    }
+
+    fxIndex = s1->scale;
+    if (fxIndex > 0 && fxIndex < 64) {
+        fx = cgs->fxs[fxIndex];
+        forward = s1->origin2;
+        if (forward[0] * forward[0] + forward[1] * forward[1] + forward[2] * forward[2] != 0.0f) {
+            if (!s1->eventParm) {
+                FX_PlayEffect(fx, cent->lerpOrigin, forward);
+            } else {
+                vec3_t up;
+                float dot;
+                float scale;
+
+                ByteToDir(s1->eventParm, up);
+                dot = up[1] * forward[1] + up[2] * forward[2] + up[0] * forward[0];
+                scale = -dot;
+                up[0] = scale * forward[0] + up[0];
+                up[1] = scale * forward[1] + up[1];
+                up[2] = scale * forward[2] + up[2];
+                Vec3Normalize(up);
+                FX_PlayOrientedEffect(fx, cent->lerpOrigin, forward, up);
+            }
+        } else {
+            FX_PlaySimpleEffect(fx, cent->lerpOrigin);
+        }
+    } else {
+        Com_Printf("ERROR: CG_PlayFx called with invalid effect id %i\n", fxIndex);
+    }
 }
 
 static void CG_InterpolateEntityPosition(centity_t *cent)
@@ -786,6 +863,19 @@ void CG_CalcEntityLerpPositions(centity_t *cent)
         CG_AdjustPositionForMover(cent->lerpOrigin, cent->currentState.groundEntityNum, cg->snap->serverTime, cg->time, cent->lerpOrigin, NULL);
 }
 
+// retail 0x4c78e0, unreferenced; name unknown
+struct XAnim_s *CG_GetEntityAnims_4c78e0(int eType, int entnum)
+{
+    if (eType != 9)
+        return 0;
+    return CG_GetMG42Anims(&(((centity_t *)cg_entities))[entnum]);
+}
+
+static long unsigned int *CG_AllocAnimTree(int size)
+{
+    return (long unsigned int *)MT_Alloc(size, 5);
+}
+
 static struct DObj_s *CG_PreProcess_GetDObj(int iEntNum, int iEntType, struct XModel *model)
 {
     DObjModel_s dobjModel;
@@ -819,24 +909,6 @@ static struct DObj_s *CG_PreProcess_GetDObj(int iEntNum, int iEntType, struct XM
     return (struct DObj_s *)Com_GetClientDObj(iEntNum, 0);
 }
 
-void CG_DObjCalcPose(const centity_t *cent, const struct DObj_s *obj, int *partBits)
-{
-    int completePartBits[4];
-
-    completePartBits[0] = partBits[0];
-    completePartBits[1] = partBits[1];
-    completePartBits[2] = partBits[2];
-    completePartBits[3] = partBits[3];
-
-    DObjCompleteHierarchyBits((DObj_s *)obj, completePartBits);
-    if (CL_DObjCreateSkelForBones(obj, completePartBits, cent->localClientNum))
-        return;
-
-    DObjCalcAnim(obj, completePartBits);
-    CG_RunDObjControllers(cent, completePartBits);
-    DObjCalcSkel((DObj *)obj, completePartBits);
-}
-
 // Name from CoD4; original CoD2 name unknown.
 static void CG_Player_DoControllers(const centity_t *cent, int *partBits)
 {
@@ -860,6 +932,24 @@ static void CG_RunDObjControllers(const centity_t *cent, int *partBits)
     }
 }
 
+void CG_DObjCalcPose(const centity_t *cent, const struct DObj_s *obj, int *partBits)
+{
+    int completePartBits[4];
+
+    completePartBits[0] = partBits[0];
+    completePartBits[1] = partBits[1];
+    completePartBits[2] = partBits[2];
+    completePartBits[3] = partBits[3];
+
+    DObjCompleteHierarchyBits((DObj_s *)obj, completePartBits);
+    if (CL_DObjCreateSkelForBones(obj, completePartBits, cent->localClientNum))
+        return;
+
+    DObjCalcAnim(obj, completePartBits);
+    CG_RunDObjControllers(cent, completePartBits);
+    DObjCalcSkel((DObj *)obj, completePartBits);
+}
+
 void CG_DObjCalcBone(const centity_t *cent, struct DObj_s *obj, int boneIndex)
 {
     int partBits[4];
@@ -871,45 +961,6 @@ void CG_DObjCalcBone(const centity_t *cent, struct DObj_s *obj, int boneIndex)
     DObjCalcAnim(obj, partBits);
     CG_RunDObjControllers(cent, partBits);
     DObjCalcSkel(obj, partBits);
-}
-
-DObjAnimMat *CG_DObjGetLocalTagMatrix(const centity_t *cent, struct DObj_s *obj, unsigned int tagName)
-{
-    DObjAnimMat *mat;
-    int boneIndex;
-
-    boneIndex = DObjGetBoneIndex(obj, tagName);
-    if (boneIndex < 0)
-        return 0;
-
-    CG_DObjCalcBone(cent, obj, boneIndex);
-    mat = DObjGetRotTransArray(obj);
-    return mat ? &mat[boneIndex] : 0;
-}
-
-// retail 0x4c6ae0, unreferenced (G_DObjGetWorldTagMatrix twin)
-qboolean CG_DObjGetWorldTagMatrix(const centity_t *cent, struct DObj_s *obj, unsigned int tagName, float tagMat[4][3])
-{
-    DObjAnimMat *mat;
-    float ent_axis[4][3];
-    float axis[3][3];
-
-    mat = CG_DObjGetLocalTagMatrix(cent, obj, tagName);
-
-    if (!mat)
-        return 0;
-
-    AnglesToAxis(cent->lerpAngles, ent_axis);
-    ent_axis[3][0] = cent->lerpOrigin[0];
-    ent_axis[3][1] = cent->lerpOrigin[1];
-    ent_axis[3][2] = cent->lerpOrigin[2];
-
-    ConvertQuatToMat(mat, axis);
-
-    MatrixMultiply(axis, ent_axis, tagMat);
-    MatrixTransformVector43(mat->trans, ent_axis, tagMat[3]);
-
-    return 1;
 }
 
 void CG_DObjCalcBoneGeneric(int handle, int localClientNum, int boneIndex)
@@ -931,57 +982,6 @@ void CG_DObjCalcBoneGeneric(int handle, int localClientNum, int boneIndex)
     }
 
     DObjCalcSkel(obj, partBits);
-}
-
-void CG_AdjustPositionForMover(const vec_t *in, int moverNum, int fromTime, int toTime, vec_t *out, vec_t *outDeltaAngles)
-{
-    centity_t *cent;
-    vec3_t oldOrigin;
-    vec3_t oldAngles;
-    vec3_t origin;
-    vec3_t angles;
-    vec3_t deltaOrigin;
-    vec3_t deltaAngles;
-
-    if (outDeltaAngles) {
-        outDeltaAngles[0] = 0.0f;
-        outDeltaAngles[1] = 0.0f;
-        outDeltaAngles[2] = 0.0f;
-    }
-
-    if (moverNum > 0 && moverNum < 1022) {
-        cent = &(((centity_t *)cg_entities))[moverNum];
-        if (cent->nextState.eType != 6) {
-            out[0] = in[0];
-            out[1] = in[1];
-            out[2] = in[2];
-            return;
-        }
-        BG_EvaluateTrajectory(&cent->currentState.pos, fromTime, oldOrigin);
-        BG_EvaluateTrajectory(&cent->currentState.apos, fromTime, oldAngles);
-        BG_EvaluateTrajectory(&cent->currentState.pos, toTime, origin);
-        BG_EvaluateTrajectory(&cent->currentState.apos, toTime, angles);
-
-        deltaOrigin[0] = origin[0] - oldOrigin[0];
-        deltaOrigin[1] = origin[1] - oldOrigin[1];
-        deltaOrigin[2] = origin[2] - oldOrigin[2];
-        deltaAngles[0] = angles[0] - oldAngles[0];
-        deltaAngles[1] = angles[1] - oldAngles[1];
-        deltaAngles[2] = angles[2] - oldAngles[2];
-        out[0] = in[0] + deltaOrigin[0];
-        out[1] = in[1] + deltaOrigin[1];
-        out[2] = in[2] + deltaOrigin[2];
-
-        if (outDeltaAngles) {
-            outDeltaAngles[0] = deltaAngles[0];
-            outDeltaAngles[1] = deltaAngles[1];
-            outDeltaAngles[2] = deltaAngles[2];
-        }
-    } else {
-        out[0] = in[0];
-        out[1] = in[1];
-        out[2] = in[2];
-    }
 }
 
 void CG_ProcessEntity(centity_t *cent)
@@ -1059,4 +1059,5 @@ void CG_AddCEntityToScene(const GfxEntity *ent, const struct DObj_s *obj, const 
         R_SkinGfxEntityDelayed(sceneEnt);
     }
 }
+
 
