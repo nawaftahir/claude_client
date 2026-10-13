@@ -354,18 +354,6 @@ void CG_DrawCompassFriendlies(rectDef_t *rect, MaterialHandle material, vec_t *c
 extern qboolean CG_ServerMaterialName(int index, char *materialName, int maxLen);
 extern MaterialHandle CL_RegisterMaterialNoMip(const char *name, int imageTrack);
 
-
-// Original name unknown.
-MaterialHandle CG_ObjectiveIconMaterial(int icon, int index)
-{
-    char materialName[64];
-
-    if (icon && CG_ServerMaterialName(icon, materialName, 64))
-        return CL_RegisterMaterialNoMip(materialName, 7);
-
-    return cgs->media.objectiveMaterials[index];
-}
-
 void CG_DrawPlayerCompassPointers(const rectDef_t *rect, vec_t *color)
 {
     float fadeAlpha;

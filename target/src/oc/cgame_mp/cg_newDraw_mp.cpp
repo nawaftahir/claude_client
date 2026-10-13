@@ -1047,6 +1047,40 @@ void CG_DrawPlayerLowHealthOverlay(const rectDef_t *rect, MaterialHandle materia
     CL_DrawStretchPic(rect->x, rect->y, rect->w, rect->h, rect->horzAlign, rect->vertAlign, 0.0f, 0.0f, 1.0f, 1.0f, color, material);
 }
 
+qboolean CG_ServerMaterialName(int index, char *materialName, int maxLen)
+{
+    const char *configString;
+
+    if (index <= 0 || index >= 128) {
+        return 0;
+    }
+
+    configString = CL_GetConfigString(index + 0x61e);
+    if (configString[0] == '\0') {
+        return 0;
+    }
+
+    if (strlen(configString) >= (unsigned int)maxLen) {
+        return 0;
+    }
+
+    strcpy(materialName, configString);
+    return 1;
+}
+
+extern MaterialHandle CL_RegisterMaterialNoMip(const char *name, int imageTrack);
+
+// Unreferenced; original name unknown.
+MaterialHandle CG_ObjectiveIconMaterial(int icon, int index)
+{
+    char materialName[64];
+
+    if (icon && CG_ServerMaterialName(icon, materialName, 64))
+        return CL_RegisterMaterialNoMip(materialName, 7);
+
+    return cgs->media.objectiveMaterials[index];
+}
+
 // retail 0x4bf0c0, unreferenced; name unknown
 void CG_CompassCalcDimensions_4bf0c0(const rectDef_t *rect, float *x, float *y, float *w, float *h)
 {
@@ -1082,27 +1116,6 @@ void CG_DrawPlayerCompass(const rectDef_t *rect, MaterialHandle material, vec_t 
     CG_DrawRotatedPic(x, y, w, h, rect->horzAlign, rect->vertAlign, cg->compassYaw, color, material);
 }
 
-qboolean CG_ServerMaterialName(int index, char *materialName, int maxLen)
-{
-    const char *configString;
-
-    if (index <= 0 || index >= 128) {
-        return 0;
-    }
-
-    configString = CL_GetConfigString(index + 0x61e);
-    if (configString[0] == '\0') {
-        return 0;
-    }
-
-    if (strlen(configString) >= (unsigned int)maxLen) {
-        return 0;
-    }
-
-    strcpy(materialName, configString);
-    return 1;
-}
-
 void CG_ApplySplitScreenCompassScale(float *x, float *y, float *w, float *h)
 {
 
@@ -1135,6 +1148,13 @@ void CG_DrawPlayerCompassBack(const rectDef_t *rect, MaterialHandle material, ve
         1.0f,
         color,
         material);
+}
+
+// retail 0x4bf300, unreferenced twin of CompassIconSize; name unknown
+void CompassIconSize_4bf300(float *w, float *h)
+{
+    *w = cg_hudCompassSize->current.value * 10.0f;
+    *h = cg_hudCompassSize->current.value * 10.0f;
 }
 
 static void CG_UpdateCursorHints(void)
@@ -1785,9 +1805,3 @@ const unsigned char __ZZ21CG_DrawHoldBreathHintPK9rectDef_sP6Font_sfiE5color[896
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
-// retail 0x4bf300, unreferenced twin of CompassIconSize; name unknown
-void CompassIconSize_4bf300(float *w, float *h)
-{
-    *w = cg_hudCompassSize->current.value * 10.0f;
-    *h = cg_hudCompassSize->current.value * 10.0f;
-}
