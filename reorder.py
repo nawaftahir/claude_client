@@ -4,7 +4,8 @@ import re,sys
 p=sys.argv[1]; names=sys.argv[2:]
 L=open(p).read().split('\n')
 def chunk(n):
-    hit=[i for i,l in enumerate(L) if l and not l[0].isspace() and not l.startswith(('//','#','}','{'))
+    if re.fullmatch(r'L\d+',n): hit=[int(n[1:])-1]  # Lnnn = def at line nnn (overloads)
+    else: hit=[i for i,l in enumerate(L) if l and not l[0].isspace() and not l.startswith(('//','#','}','{'))
          and re.search(r'\b%s\s*\('%re.escape(n),l) and not l.rstrip().endswith(';')]
     # a def may wrap: "static void attr\n    Name(" ; check the previous line
     if not hit:

@@ -122,19 +122,6 @@ private:
 
 static char token[MAX_TOKEN_SIZE];
 
-GPGroup::GPGroup( const char *initName, GPGroup *initParent ) :
-	GPObject(initName),
-	mPairs(0),
-	mInOrderPairs(0),
-	mCurrentPair(0),
-	mSubGroups(0),
-	mInOrderSubGroups(0),
-	mCurrentSubGroup(0),
-	mParent(initParent),
-	mWriteable(false)
-{
-}
-
 static char *GetToken( char **text, bool allowLineBreaks, bool readUntilEOL = false )
 {
 	char *pointer = *text;
@@ -328,6 +315,32 @@ GPValue::~GPValue()
 	}
 }
 
+GPValue *GPValue::Duplicate( TextPool **textPool )
+{
+	GPValue *newValue;
+	GPObject *iterator;
+	char *name;
+
+	if ( textPool )
+		name = ( *textPool )->AllocText((char *)mName, true, textPool);
+	else
+		name = (char *)mName;
+
+	newValue = new GPValue(name);
+	iterator = mList;
+	while ( iterator )
+	{
+		if ( textPool )
+			name = ( *textPool )->AllocText((char *)iterator->GetName(), true, textPool);
+		else
+			name = (char *)iterator->GetName();
+		newValue->AddValue(name);
+		iterator = iterator->GetNext();
+	}
+
+	return newValue;
+}
+
 bool GPValue::IsList()
 {
 	if ( !mList || !mList->GetNext() )
@@ -359,6 +372,86 @@ void GPValue::AddValue( const char *newValue, TextPool **textPool )
 		mList->GetInOrderNext()->SetNext(new GPObject(newValue));
 		mList->SetInOrderNext(mList->GetInOrderNext()->GetNext());
 	}
+}
+
+bool GPValue::Parse( char **dataPtr, TextPool **textPool )
+{
+	char *token;
+	char *value;
+
+	while ( 1 )
+	{
+		token = GetToken(dataPtr, true, true);
+
+		if ( !token[0] )
+			return false;
+		else if ( stricmp(token, "]") == 0 )
+			break;
+
+		value = ( *textPool )->AllocText(token, true, textPool);
+		AddValue(value);
+	}
+
+	return true;
+}
+
+bool GPValue::Write( TextPool **textPool, int depth )
+{
+	int i;
+	GPObject *next;
+
+	if ( !mList )
+		return true;
+
+	for ( i = 0; i < depth; i++ )
+		( *textPool )->AllocText("\t", false, textPool);
+
+	WriteText(textPool, mName);
+
+	if ( !mList->GetNext() )
+	{
+		( *textPool )->AllocText("\t\t", false, textPool);
+		mList->WriteText(textPool, mList->GetName());
+		( *textPool )->AllocText("\r\n", false, textPool);
+	}
+	else
+	{
+		( *textPool )->AllocText("\r\n", false, textPool);
+
+		for ( i = 0; i < depth; i++ )
+			( *textPool )->AllocText("\t", false, textPool);
+		( *textPool )->AllocText("[\r\n", false, textPool);
+
+		next = mList;
+		while ( next )
+		{
+			for ( i = 0; i < depth + 1; i++ )
+				( *textPool )->AllocText("\t", false, textPool);
+			mList->WriteText(textPool, next->GetName());
+			( *textPool )->AllocText("\r\n", false, textPool);
+
+			next = next->GetNext();
+		}
+
+		for ( i = 0; i < depth; i++ )
+			( *textPool )->AllocText("\t", false, textPool);
+		( *textPool )->AllocText("]\r\n", false, textPool);
+	}
+
+	return true;
+}
+
+GPGroup::GPGroup( const char *initName, GPGroup *initParent ) :
+	GPObject(initName),
+	mPairs(0),
+	mInOrderPairs(0),
+	mCurrentPair(0),
+	mSubGroups(0),
+	mInOrderSubGroups(0),
+	mCurrentSubGroup(0),
+	mParent(initParent),
+	mWriteable(false)
+{
 }
 
 int GPGroup::GetNumSubGroups()
@@ -395,30 +488,31 @@ int GPGroup::GetNumPairs()
 	return count;
 }
 
-GPValue *GPValue::Duplicate( TextPool **textPool )
+void GPGroup::Clean()
 {
-	GPValue *newValue;
-	GPObject *iterator;
-	char *name;
-
-	if ( textPool )
-		name = ( *textPool )->AllocText((char *)mName, true, textPool);
-	else
-		name = (char *)mName;
-
-	newValue = new GPValue(name);
-	iterator = mList;
-	while ( iterator )
+	while ( mPairs )
 	{
-		if ( textPool )
-			name = ( *textPool )->AllocText((char *)iterator->GetName(), true, textPool);
-		else
-			name = (char *)iterator->GetName();
-		newValue->AddValue(name);
-		iterator = iterator->GetNext();
+		mCurrentPair = mPairs->GetNext();
+		delete mPairs;
+		mPairs = mCurrentPair;
 	}
 
-	return newValue;
+	while ( mSubGroups )
+	{
+		mCurrentSubGroup = mSubGroups->GetNext();
+		delete mSubGroups;
+		mSubGroups = mCurrentSubGroup;
+	}
+
+	mPairs = mInOrderPairs = mCurrentPair = 0;
+	mSubGroups = mInOrderSubGroups = mCurrentSubGroup = 0;
+	mParent = 0;
+	mWriteable = false;
+}
+
+GPGroup::~GPGroup()
+{
+	Clean();
 }
 
 GPGroup *GPGroup::Duplicate( TextPool **textPool, GPGroup *initParent )
@@ -555,61 +649,6 @@ GPGroup *GPGroup::FindSubGroup( const char *name )
 	return NULL;
 }
 
-GPValue *GPGroup::FindPair( const char *key )
-{
-	GPValue *pair = mPairs;
-
-	while ( pair )
-	{
-		if ( stricmp(pair->GetName(), key) == 0 )
-			return pair;
-
-		pair = pair->GetNext();
-	}
-
-	return 0;
-}
-
-const char *GPGroup::FindPairValue( const char *key, const char *defaultVal )
-{
-	GPValue *pair = FindPair(key);
-
-	if ( pair )
-		return pair->GetTopValue();
-
-	return defaultVal;
-}
-
-GenericParser2::GenericParser2() : mTextPool(0), mWriteable(false)
-{
-}
-
-GenericParser2::~GenericParser2()
-{
-	Clean();
-}
-
-bool GPValue::Parse( char **dataPtr, TextPool **textPool )
-{
-	char *token;
-	char *value;
-
-	while ( 1 )
-	{
-		token = GetToken(dataPtr, true, true);
-
-		if ( !token[0] )
-			return false;
-		else if ( stricmp(token, "]") == 0 )
-			break;
-
-		value = ( *textPool )->AllocText(token, true, textPool);
-		AddValue(value);
-	}
-
-	return true;
-}
-
 bool GPGroup::Parse( char **dataPtr, TextPool **textPool )
 {
 	char *token;
@@ -658,103 +697,6 @@ bool GPGroup::Parse( char **dataPtr, TextPool **textPool )
 	return true;
 }
 
-bool GenericParser2::Parse( char **dataPtr, bool cleanFirst, bool writeable )
-{
-	TextPool *topPool;
-
-	if ( cleanFirst )
-		Clean();
-
-	if ( !mTextPool )
-		mTextPool = new TextPool;
-
-	SetWriteable(writeable);
-	mTopLevel.SetWriteable(writeable);
-	topPool = mTextPool;
-	return mTopLevel.Parse(dataPtr, &topPool);
-}
-
-void GPGroup::Clean()
-{
-	while ( mPairs )
-	{
-		mCurrentPair = mPairs->GetNext();
-		delete mPairs;
-		mPairs = mCurrentPair;
-	}
-
-	while ( mSubGroups )
-	{
-		mCurrentSubGroup = mSubGroups->GetNext();
-		delete mSubGroups;
-		mSubGroups = mCurrentSubGroup;
-	}
-
-	mPairs = mInOrderPairs = mCurrentPair = 0;
-	mSubGroups = mInOrderSubGroups = mCurrentSubGroup = 0;
-	mParent = 0;
-	mWriteable = false;
-}
-
-void GenericParser2::Clean()
-{
-	mTopLevel.Clean();
-
-	CleanTextPool(mTextPool);
-	mTextPool = 0;
-}
-
-bool GPValue::Write( TextPool **textPool, int depth )
-{
-	int i;
-	GPObject *next;
-
-	if ( !mList )
-		return true;
-
-	for ( i = 0; i < depth; i++ )
-		( *textPool )->AllocText("\t", false, textPool);
-
-	WriteText(textPool, mName);
-
-	if ( !mList->GetNext() )
-	{
-		( *textPool )->AllocText("\t\t", false, textPool);
-		mList->WriteText(textPool, mList->GetName());
-		( *textPool )->AllocText("\r\n", false, textPool);
-	}
-	else
-	{
-		( *textPool )->AllocText("\r\n", false, textPool);
-
-		for ( i = 0; i < depth; i++ )
-			( *textPool )->AllocText("\t", false, textPool);
-		( *textPool )->AllocText("[\r\n", false, textPool);
-
-		next = mList;
-		while ( next )
-		{
-			for ( i = 0; i < depth + 1; i++ )
-				( *textPool )->AllocText("\t", false, textPool);
-			mList->WriteText(textPool, next->GetName());
-			( *textPool )->AllocText("\r\n", false, textPool);
-
-			next = next->GetNext();
-		}
-
-		for ( i = 0; i < depth; i++ )
-			( *textPool )->AllocText("\t", false, textPool);
-		( *textPool )->AllocText("]\r\n", false, textPool);
-	}
-
-	return true;
-}
-
-GPGroup::~GPGroup()
-{
-	Clean();
-}
-
 bool GPGroup::Write( TextPool **textPool, int depth )
 {
 	int i;
@@ -793,6 +735,64 @@ bool GPGroup::Write( TextPool **textPool, int depth )
 	}
 
 	return true;
+}
+
+GPValue *GPGroup::FindPair( const char *key )
+{
+	GPValue *pair = mPairs;
+
+	while ( pair )
+	{
+		if ( stricmp(pair->GetName(), key) == 0 )
+			return pair;
+
+		pair = pair->GetNext();
+	}
+
+	return 0;
+}
+
+const char *GPGroup::FindPairValue( const char *key, const char *defaultVal )
+{
+	GPValue *pair = FindPair(key);
+
+	if ( pair )
+		return pair->GetTopValue();
+
+	return defaultVal;
+}
+
+GenericParser2::GenericParser2() : mTextPool(0), mWriteable(false)
+{
+}
+
+GenericParser2::~GenericParser2()
+{
+	Clean();
+}
+
+bool GenericParser2::Parse( char **dataPtr, bool cleanFirst, bool writeable )
+{
+	TextPool *topPool;
+
+	if ( cleanFirst )
+		Clean();
+
+	if ( !mTextPool )
+		mTextPool = new TextPool;
+
+	SetWriteable(writeable);
+	mTopLevel.SetWriteable(writeable);
+	topPool = mTextPool;
+	return mTopLevel.Parse(dataPtr, &topPool);
+}
+
+void GenericParser2::Clean()
+{
+	mTopLevel.Clean();
+
+	CleanTextPool(mTextPool);
+	mTextPool = 0;
 }
 
 bool GenericParser2::Write( TextPool *textPool )
