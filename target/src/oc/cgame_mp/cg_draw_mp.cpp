@@ -225,6 +225,15 @@ extern const vec3_t vec3_origin;
 
 extern int I_stricmp(const char *s1, const char *s2);
 
+
+
+extern void CalcScreenPlacementInl(float *x, float *y, float *w, float *h, int horzAlign, int vertAlign);
+/* qboolean (int), not Bool: callers (cg_weapons.c, cg_predict_mp.c) declare it
+ * `extern qboolean` and read full eax; a 1-byte Bool return leaves eax's upper
+ * bytes dirty under MSVC -> garbage non-zero -> !CG_GetWeapReticleZoom() == 0 ->
+ * drawGun never set -> the viewmodel was hidden even when spawned. */
+
+
 // Original name unknown.
 int CG_DrawFieldWidth(int width, int value, int charWidth)
 {
@@ -504,51 +513,6 @@ void CG_DrawChatMessages(void)
     }
 }
 
-// inlined com_math Vec3Dot
-static __forceinline float Vec3DotCH(const vec_t *a, const vec_t *b)
-{
-    return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
-}
-
-static void __attribute_regparm__(2) CG_CalcCrosshairPosition(float *x, float *y)
-{
-    vec3_t gunAng;
-    vec3_t gunDir;
-    float forward;
-
-    gunAng[0] = cg->gunPitch;
-    gunAng[2] = cg->refdefViewAngles[2];
-    gunAng[1] = cg->gunYaw;
-    AngleVectors(gunAng, gunDir, NULL, NULL);
-
-    forward = Vec3DotCH(cg->refdef.viewaxis[0], gunDir);
-    if (forward <= 0.0f || cg->refdef.fov_x <= 0.0f || cg->refdef.fov_y <= 0.0f) {
-        *x = 0.0f;
-        *y = 0.0f;
-        return;
-    }
-
-    *x = Vec3DotCH(cg->refdef.viewaxis[1], gunDir) / (tan(cg->refdef.fov_x * 0.0087266462f) * forward) * -320.0f;
-    *y = Vec3DotCH(cg->refdef.viewaxis[2], gunDir) / (tan(cg->refdef.fov_y * 0.0087266462f) * forward) * -240.0f;
-}
-
-static inline int CG_RoundFPS(float value)
-{
-#if defined(_MSC_VER) && defined(_M_IX86)
-    int result;
-    /* Break exact half-way ties upward before x87's round-to-nearest. */
-    const double roundEpsilon = 1.0 / 1073741824.0;
-
-    __asm fld value
-    __asm fadd roundEpsilon
-    __asm fistp result
-
-    return result;
-#else
-    return I_fround(value);
-#endif
-}
-
 void CG_AddLagometerFrameInfo(void)
 {
     lagometer.frameSamples[lagometer.frameCount & 0x7f] = cg->time - cg->latestSnapshotTime;
@@ -602,7 +566,6 @@ void CG_DrawDisconnect(void)
     }
 }
 
-extern void CalcScreenPlacementInl(float *x, float *y, float *w, float *h, int horzAlign, int vertAlign);
 // retail inlines CL_DrawStretchPic here (placement folded) and calls the Physical
 static __forceinline void CL_DrawStretchPicInl(float x, float y, float w, float h, int horzAlign, int vertAlign, float s1, float t1, float s2, float t2, const vec_t *color, MaterialHandle material)
 {
@@ -809,10 +772,33 @@ static void CG_DrawCenterString(void)
     }
 }
 
-/* qboolean (int), not Bool: callers (cg_weapons.c, cg_predict_mp.c) declare it
- * `extern qboolean` and read full eax; a 1-byte Bool return leaves eax's upper
- * bytes dirty under MSVC -> garbage non-zero -> !CG_GetWeapReticleZoom() == 0 ->
- * drawGun never set -> the viewmodel was hidden even when spawned. */
+// inlined com_math Vec3Dot
+static __forceinline float Vec3DotCH(const vec_t *a, const vec_t *b)
+{
+    return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+}
+static void __attribute_regparm__(2) CG_CalcCrosshairPosition(float *x, float *y)
+{
+    vec3_t gunAng;
+    vec3_t gunDir;
+    float forward;
+
+    gunAng[0] = cg->gunPitch;
+    gunAng[2] = cg->refdefViewAngles[2];
+    gunAng[1] = cg->gunYaw;
+    AngleVectors(gunAng, gunDir, NULL, NULL);
+
+    forward = Vec3DotCH(cg->refdef.viewaxis[0], gunDir);
+    if (forward <= 0.0f || cg->refdef.fov_x <= 0.0f || cg->refdef.fov_y <= 0.0f) {
+        *x = 0.0f;
+        *y = 0.0f;
+        return;
+    }
+
+    *x = Vec3DotCH(cg->refdef.viewaxis[1], gunDir) / (tan(cg->refdef.fov_x * 0.0087266462f) * forward) * -320.0f;
+    *y = Vec3DotCH(cg->refdef.viewaxis[2], gunDir) / (tan(cg->refdef.fov_y * 0.0087266462f) * forward) * -240.0f;
+}
+
 bool CG_GetWeapReticleZoom(float *pfZoom)
 {
     WeaponDef *weaponDef;
@@ -967,6 +953,41 @@ static void CG_CalcCrosshairColor(float alpha, float *color)
         color[2] = 1.0f;
     }
     color[3] = alpha * cg_crosshairAlpha->current.value;
+}
+
+void CG_DrawTurretCrossHair(void)
+{
+    int weapIndex;
+    MaterialHandle material;
+    WeaponDef *weapDef;
+    vec4_t color;
+    float size;
+    float x;
+    float y;
+    float w;
+    float h;
+
+    if (!cg_drawTurretCrosshair->current.enabled || cg_paused->current.integer)
+        return;
+
+    weapIndex = cg_entities[cg->predictedPlayerState.viewlocked_entNum].nextState.weapon;
+    if (!weapIndex)
+        return;
+    material = cg_weaponsArray[weapIndex].hReticleCenter;
+    if (!material)
+        return;
+    if (cg_crosshairAlpha->current.value < 0.01f)
+        return;
+
+    CG_CalcCrosshairColor(1.0f, color);
+    weapDef = (WeaponDef *)BG_GetWeaponDef(weapIndex);
+    size = (float)weapDef->iReticleCenterSize;
+    w = size;
+    h = size;
+    x = size * -0.5f;
+    y = x;
+    CalcScreenPlacement(&x, &y, &w, &h, 2, 2);
+    CL_DrawStretchPicPhysical(x, y, w, h, 0.0f, 0.0f, 1.0f, 1.0f, color, material);
 }
 
 // retail 0x4c2c40, unreferenced; name unknown
@@ -1444,23 +1465,6 @@ static bool CG_ShouldDrawGrenadeIndicator(const entityState_t *es)
     if (offset[2] * offset[2] + (offset[0] * offset[0] + offset[1] * offset[1]) > maxRange * maxRange)
         return false;
     return true;
-}
-
-static inline void FastSinCos(const float value, float *pSin, float *pCos)
-{
-    __asm
-    {
-        push eax
-        push ecx
-        fld value
-        fsincos
-        mov ecx, pCos
-        mov eax, pSin
-        fstp dword ptr [ecx]
-        fstp dword ptr [eax]
-        pop ecx
-        pop eax
-    }
 }
 
 static void CG_DrawGrenadeIndicators(void)
@@ -2209,41 +2213,6 @@ qboolean CG_DrawFollow(void)
     return 1;
 }
 
-void CG_DrawTurretCrossHair(void)
-{
-    int weapIndex;
-    MaterialHandle material;
-    WeaponDef *weapDef;
-    vec4_t color;
-    float size;
-    float x;
-    float y;
-    float w;
-    float h;
-
-    if (!cg_drawTurretCrosshair->current.enabled || cg_paused->current.integer)
-        return;
-
-    weapIndex = cg_entities[cg->predictedPlayerState.viewlocked_entNum].nextState.weapon;
-    if (!weapIndex)
-        return;
-    material = cg_weaponsArray[weapIndex].hReticleCenter;
-    if (!material)
-        return;
-    if (cg_crosshairAlpha->current.value < 0.01f)
-        return;
-
-    CG_CalcCrosshairColor(1.0f, color);
-    weapDef = (WeaponDef *)BG_GetWeaponDef(weapIndex);
-    size = (float)weapDef->iReticleCenterSize;
-    w = size;
-    h = size;
-    x = size * -0.5f;
-    y = x;
-    CalcScreenPlacement(&x, &y, &w, &h, 2, 2);
-    CL_DrawStretchPicPhysical(x, y, w, h, 0.0f, 0.0f, 1.0f, 1.0f, color, material);
-}
-
 void CG_DrawPlayerSprites(void)
 {
     int entityIndex;
@@ -2391,4 +2360,36 @@ void CG_DrawActive(void)
     CG_TileClear();
 }
 
+static inline int CG_RoundFPS(float value)
+{
+#if defined(_MSC_VER) && defined(_M_IX86)
+    int result;
+    /* Break exact half-way ties upward before x87's round-to-nearest. */
+    const double roundEpsilon = 1.0 / 1073741824.0;
+
+    __asm fld value
+    __asm fadd roundEpsilon
+    __asm fistp result
+
+    return result;
+#else
+    return I_fround(value);
+#endif
+}
+static inline void FastSinCos(const float value, float *pSin, float *pCos)
+{
+    __asm
+    {
+        push eax
+        push ecx
+        fld value
+        fsincos
+        mov ecx, pCos
+        mov eax, pSin
+        fstp dword ptr [ecx]
+        fstp dword ptr [eax]
+        pop ecx
+        pop eax
+    }
+}
 
