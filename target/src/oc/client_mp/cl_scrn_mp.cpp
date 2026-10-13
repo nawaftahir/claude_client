@@ -18,16 +18,6 @@ extern int com_errorEntered;
 extern int g_cginit_loading;
 extern Bool updateScreenCalled;
 
-__attribute__((used, packed, aligned(4)))
-const char *szShotName[] = {
-    "_up",
-    "_dn",
-    "_lf",
-    "_rt",
-    "_ft",
-    "_bk",
-    NULL,
-};
 
 #define re_ptr_195eca8 ((refexport_t *)((void *)&re))
 #define cls_ptr_195ecac (((byte *)&::cls))
@@ -345,6 +335,7 @@ static void CL_CubemapShotUsage(void)
 
 void CL_CubemapShot_f(void)
 {
+    static const char *szShotName[] = { "_up", "_dn", "_lf", "_rt", "_ft", "_bk" };
     char szBaseName[64];
     float rgb[3];
     float n0, n1;

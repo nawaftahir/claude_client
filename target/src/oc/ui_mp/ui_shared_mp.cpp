@@ -770,7 +770,6 @@ void Controls_GetConfig(void)
 }
 
 extern void Key_SetBinding(int key, const char *command);
-extern byte szShotName[];
 void Controls_SetConfig(qboolean restart)
 {
     int i;

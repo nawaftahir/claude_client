@@ -7,8 +7,6 @@ SV_GetClientPositionsAtTime
 ===============
 */
 // The frame biases are initialized data, not constants.
-static int sv_clientPosStartFrameBias = 2;
-static int sv_clientPosEndFrameBias = 1;
 
 /*
 ====================
@@ -1062,6 +1060,8 @@ qboolean SV_GetCurrentClientInfo( int clientNum, playerState_t *ps, clientState_
 
 bool SV_GetClientPositionsAtTime( int clientNum, int gametime, vec3_t pos )
 {
+	static int sv_clientPosStartFrameBias = 2;
+	static int sv_clientPosEndFrameBias = 1;
 	int j;
 	float progress;
 	int startOffset;
