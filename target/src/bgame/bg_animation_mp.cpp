@@ -233,6 +233,17 @@ static uint16_t* controller_names[] =
 	&scr_const.pelvis
 };
 
+static animStringItem_t animParseModesStr[] =
+{
+	{"defines", -1},
+	{"animations", -1},
+	{"canned_animations", -1},
+	{"statechanges", -1},
+	{"events", -1},
+
+	{NULL, -1},
+};
+
 
 
 void BG_AnimParseAnimScript( animScriptData_t *scriptData, loadAnim_t *pLoadAnims, int *piNumAnims );
@@ -1294,17 +1305,6 @@ BG_AnimParseAnimScript
 */
 void BG_AnimParseAnimScript( animScriptData_t *scriptData, loadAnim_t *pLoadAnims, int *piNumAnims )
 {
-	static animStringItem_t animParseModesStr[] =
-	{
-		{"defines", -1},
-		{"animations", -1},
-		{"canned_animations", -1},
-		{"statechanges", -1},
-		{"events", -1},
-
-		{NULL, -1},
-	};
-
 #define MAX_INDENT_LEVELS   3
 
 	const char    *text_p, *token;

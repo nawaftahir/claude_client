@@ -5,8 +5,8 @@
 #include <stdio.h>
 #include <string.h>
 
-extern keywordHash_t itemParseKeywords[67];
-extern keywordHash_t menuParseKeywords[35];
+extern keywordHash_t itemParseKeywords[66];
+extern keywordHash_t menuParseKeywords[33];
 
 extern char *va( const char *format, ... );
 
@@ -2006,7 +2006,42 @@ MenuList *UI_LoadMenus(const char *menuFile, int imageTrack)
 }
 
 
-static keywordHash_t itemParseKeywords[67] = {
+static keywordHash_t menuParseKeywords[] = {
+    { (char *)"name", (qboolean(*)())&MenuParse_name, 0x0 },
+    { (char *)"fullscreen", (qboolean(*)())&MenuParse_fullscreen, 0x0 },
+    { (char *)"rect", (qboolean(*)())&MenuParse_rect, 0x0 },
+    { (char *)"style", (qboolean(*)())&MenuParse_style, 0x0 },
+    { (char *)"visible", (qboolean(*)())&MenuParse_visible, 0x0 },
+    { (char *)"onOpen", (qboolean(*)())&MenuParse_onOpen, 0x0 },
+    { (char *)"onClose", (qboolean(*)())&MenuParse_onClose, 0x0 },
+    { (char *)"onESC", (qboolean(*)())&MenuParse_onESC, 0x0 },
+    { (char *)"border", (qboolean(*)())&MenuParse_border, 0x0 },
+    { (char *)"borderSize", (qboolean(*)())&MenuParse_borderSize, 0x0 },
+    { (char *)"backcolor", (qboolean(*)())&MenuParse_backcolor, 0x0 },
+    { (char *)"forecolor", (qboolean(*)())&MenuParse_forecolor, 0x0 },
+    { (char *)"bordercolor", (qboolean(*)())&MenuParse_bordercolor, 0x0 },
+    { (char *)"focuscolor", (qboolean(*)())&MenuParse_focuscolor, 0x0 },
+    { (char *)"disablecolor", (qboolean(*)())&MenuParse_disablecolor, 0x0 },
+    { (char *)"outlinecolor", (qboolean(*)())&MenuParse_outlinecolor, 0x0 },
+    { (char *)"background", (qboolean(*)())&MenuParse_background, 0x0 },
+    { (char *)"ownerdraw", (qboolean(*)())&MenuParse_ownerdraw, 0x0 },
+    { (char *)"ownerdrawFlag", (qboolean(*)())&MenuParse_ownerdrawFlag, 0x0 },
+    { (char *)"outOfBoundsClick", (qboolean(*)())&MenuParse_outOfBounds, 0x0 },
+    { (char *)"soundLoop", (qboolean(*)())&MenuParse_soundLoop, 0x0 },
+    { (char *)"itemDef", (qboolean(*)())&MenuParse_itemDef, 0x0 },
+    { (char *)"cinematic", (qboolean(*)())&MenuParse_cinematic, 0x0 },
+    { (char *)"popup", (qboolean(*)())&MenuParse_popup, 0x0 },
+    { (char *)"fadeClamp", (qboolean(*)())&MenuParse_fadeClamp, 0x0 },
+    { (char *)"fadeCycle", (qboolean(*)())&MenuParse_fadeCycle, 0x0 },
+    { (char *)"fadeAmount", (qboolean(*)())&MenuParse_fadeAmount, 0x0 },
+    { (char *)"fadeInAmount", (qboolean(*)())&MenuParse_fadeInAmount, 0x0 },
+    { (char *)"execKey", (qboolean(*)())&MenuParse_execKey, 0x0 },
+    { (char *)"execKeyInt", (qboolean(*)())&MenuParse_execKeyInt, 0x0 },
+    { (char *)"blurWorld", (qboolean(*)())&MenuParse_blurWorld, 0x0 },
+    { (char *)"legacySplitScreenScale", (qboolean(*)())&MenuParse_legacySplitScreenScale, 0x0 },
+    { 0, 0, 0x0 }
+};
+static keywordHash_t itemParseKeywords[] = {
     { (char *)"name", (qboolean(*)())&ItemParse_name, 0x0 },
     { (char *)"text", (qboolean(*)())&ItemParse_text, 0x0 },
     { (char *)"textfile", (qboolean(*)())&ItemParse_textfile, 0x0 },
@@ -2072,44 +2107,6 @@ static keywordHash_t itemParseKeywords[67] = {
     { (char *)"doubleclick", (qboolean(*)())&ItemParse_doubleClick, 0x0 },
     { (char *)"execKey", (qboolean(*)())&ItemParse_execKey, 0x0 },
     { (char *)"execKeyInt", (qboolean(*)())&ItemParse_execKeyInt, 0x0 },
-    { 0, 0, 0x0 },
-    { 0 }
-};
-static keywordHash_t menuParseKeywords[35] = {
-    { (char *)"name", (qboolean(*)())&MenuParse_name, 0x0 },
-    { (char *)"fullscreen", (qboolean(*)())&MenuParse_fullscreen, 0x0 },
-    { (char *)"rect", (qboolean(*)())&MenuParse_rect, 0x0 },
-    { (char *)"style", (qboolean(*)())&MenuParse_style, 0x0 },
-    { (char *)"visible", (qboolean(*)())&MenuParse_visible, 0x0 },
-    { (char *)"onOpen", (qboolean(*)())&MenuParse_onOpen, 0x0 },
-    { (char *)"onClose", (qboolean(*)())&MenuParse_onClose, 0x0 },
-    { (char *)"onESC", (qboolean(*)())&MenuParse_onESC, 0x0 },
-    { (char *)"border", (qboolean(*)())&MenuParse_border, 0x0 },
-    { (char *)"borderSize", (qboolean(*)())&MenuParse_borderSize, 0x0 },
-    { (char *)"backcolor", (qboolean(*)())&MenuParse_backcolor, 0x0 },
-    { (char *)"forecolor", (qboolean(*)())&MenuParse_forecolor, 0x0 },
-    { (char *)"bordercolor", (qboolean(*)())&MenuParse_bordercolor, 0x0 },
-    { (char *)"focuscolor", (qboolean(*)())&MenuParse_focuscolor, 0x0 },
-    { (char *)"disablecolor", (qboolean(*)())&MenuParse_disablecolor, 0x0 },
-    { (char *)"outlinecolor", (qboolean(*)())&MenuParse_outlinecolor, 0x0 },
-    { (char *)"background", (qboolean(*)())&MenuParse_background, 0x0 },
-    { (char *)"ownerdraw", (qboolean(*)())&MenuParse_ownerdraw, 0x0 },
-    { (char *)"ownerdrawFlag", (qboolean(*)())&MenuParse_ownerdrawFlag, 0x0 },
-    { (char *)"outOfBoundsClick", (qboolean(*)())&MenuParse_outOfBounds, 0x0 },
-    { (char *)"soundLoop", (qboolean(*)())&MenuParse_soundLoop, 0x0 },
-    { (char *)"itemDef", (qboolean(*)())&MenuParse_itemDef, 0x0 },
-    { (char *)"cinematic", (qboolean(*)())&MenuParse_cinematic, 0x0 },
-    { (char *)"popup", (qboolean(*)())&MenuParse_popup, 0x0 },
-    { (char *)"fadeClamp", (qboolean(*)())&MenuParse_fadeClamp, 0x0 },
-    { (char *)"fadeCycle", (qboolean(*)())&MenuParse_fadeCycle, 0x0 },
-    { (char *)"fadeAmount", (qboolean(*)())&MenuParse_fadeAmount, 0x0 },
-    { (char *)"fadeInAmount", (qboolean(*)())&MenuParse_fadeInAmount, 0x0 },
-    { (char *)"execKey", (qboolean(*)())&MenuParse_execKey, 0x0 },
-    { (char *)"execKeyInt", (qboolean(*)())&MenuParse_execKeyInt, 0x0 },
-    { (char *)"blurWorld", (qboolean(*)())&MenuParse_blurWorld, 0x0 },
-    { (char *)"legacySplitScreenScale", (qboolean(*)())&MenuParse_legacySplitScreenScale, 0x0 },
-    { 0, 0, 0x0 },
-    { 0, 0, 0x0 },
-    { 0 }
+    { 0, 0, 0x0 }
 };
 

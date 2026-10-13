@@ -24,18 +24,6 @@ extern void Com_Printf(const char *fmt, ...);
 #define STRPOOL_ALLOC(sz, al) Hunk_AllocAlignInternal((sz), (al))
 #endif
 
-__attribute__((used, packed, aligned(4)))
-static const char *staticNULL[] = {
-    "",
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-};
-#define staticNULL (*(const char **)&staticNULL[0])
 static stringDef_t *g_strHandle[2048];
 
 void Window_SetStaticFlags(Window *w, const int flags);
@@ -420,6 +408,7 @@ void String_Init(void)
 
 const char *String_Alloc(const char *p)
 {
+    static const char *staticNULL = "";
     long hash;
     char *str;
     stringDef_t *s;

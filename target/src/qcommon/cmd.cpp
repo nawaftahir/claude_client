@@ -11,8 +11,8 @@ typedef struct
 } cmd_t;
 
 static int			cmd_wait;
-static cmd_t		s_cmdText;
-cmd_t		&cmd_text = s_cmdText;
+cmd_t		cmd_texts[1];
+cmd_t		*cmd_text = cmd_texts;
 // each command buffer sits on a 128-byte boundary
 static byte		cmd_text_buf[MAX_CMD_BUFFER] __attribute__((aligned(128)));
 
@@ -111,9 +111,9 @@ void Cbuf_Init( void )
 
 	for ( i = 0; i < 1; i++ )
 	{
-		(&s_cmdText)[i].data = &cmd_text_buf[i * 0x10000];
-		(&s_cmdText)[i].maxsize = MAX_CMD_BUFFER;
-		(&s_cmdText)[i].cursize = 0;
+		cmd_texts[i].data = &cmd_text_buf[i * 0x10000];
+		cmd_texts[i].maxsize = MAX_CMD_BUFFER;
+		cmd_texts[i].cursize = 0;
 	}
 }
 
@@ -129,13 +129,13 @@ void Cbuf_AddText( const char *text )
 
 	l = strlen( text );
 
-	if ( cmd_text.cursize + l >= cmd_text.maxsize )
+	if ( cmd_text->cursize + l >= cmd_text->maxsize )
 	{
 		Com_Printf( "Cbuf_AddText: overflow\n" );
 		return;
 	}
-	memcpy( &cmd_text.data[cmd_text.cursize], text, l );
-	cmd_text.cursize += l;
+	memcpy( &cmd_text->data[cmd_text->cursize], text, l );
+	cmd_text->cursize += l;
 }
 
 /*
@@ -152,24 +152,24 @@ void Cbuf_InsertText( const char *text )
 
 	len = strlen( text ) + 1;
 
-	if ( len + cmd_text.cursize > cmd_text.maxsize )
+	if ( len + cmd_text->cursize > cmd_text->maxsize )
 	{
 		Com_Printf( "Cbuf_InsertText overflowed\n" );
 		return;
 	}
 
 	// move the existing command text
-	for ( i = cmd_text.cursize - 1 ; i >= 0 ; i-- )
+	for ( i = cmd_text->cursize - 1 ; i >= 0 ; i-- )
 	{
-		cmd_text.data[ i + len ] = cmd_text.data[ i ];
+		cmd_text->data[ i + len ] = cmd_text->data[ i ];
 	}
 
 	// copy the new text in
-	memcpy( cmd_text.data, text, len - 1 );
+	memcpy( cmd_text->data, text, len - 1 );
 
 	// add a \n
-	cmd_text.data[ len - 1 ] = '\n';
-	cmd_text.cursize += len;
+	cmd_text->data[ len - 1 ] = '\n';
+	cmd_text->cursize += len;
 }
 
 /*
@@ -214,7 +214,7 @@ void Cbuf_ExecuteInternal( void )
 	char line[MAX_CMD_LINE];
 	int quotes;
 
-	while ( cmd_text.cursize )
+	while ( cmd_text->cursize )
 	{
 		if ( cmd_wait )
 		{
@@ -225,10 +225,10 @@ void Cbuf_ExecuteInternal( void )
 		}
 
 		// find a \n or ; line break
-		text = (char *)cmd_text.data;
+		text = (char *)cmd_text->data;
 
 		quotes = 0;
-		for ( i = 0 ; i < cmd_text.cursize ; i++ )
+		for ( i = 0 ; i < cmd_text->cursize ; i++ )
 		{
 			if ( text[i] == '"' )
 			{
@@ -256,15 +256,15 @@ void Cbuf_ExecuteInternal( void )
 // this is necessary because commands (exec) can insert data at the
 // beginning of the text buffer
 
-		if ( i == cmd_text.cursize )
+		if ( i == cmd_text->cursize )
 		{
-			cmd_text.cursize = 0;
+			cmd_text->cursize = 0;
 		}
 		else
 		{
 			i++;
-			cmd_text.cursize -= i;
-			memmove( text, text + i, cmd_text.cursize );
+			cmd_text->cursize -= i;
+			memmove( text, text + i, cmd_text->cursize );
 		}
 
 // execute the command line
