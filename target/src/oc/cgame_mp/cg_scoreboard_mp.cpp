@@ -36,7 +36,6 @@ extern char *va( const char *format, ... );
 extern qboolean Language_IsAsian(void);
 extern unsigned int SEH_ReadCharFromString(const char **ppsText, qboolean *pbIsTrailingPunctuation);
 
-extern int lastLeadTeam;
 
 static const listColumnInfo_t columnInfo[6] = {
     { LCT_TALKING_ICON, 0.05f, "", 0 },
@@ -346,7 +345,7 @@ float CG_DrawScoreboard_ListColumnHeaders(const float *color, float y, float lis
                 xAdj = listWidth * info[i].fWidth - UI_TextWidth(translation, 0, font, 0.3f);
             else
                 xAdj = 0.0f;
-            UI_DrawText(translation, 0x7fffffff, font, x + xAdj, y + 11.76f, 0, 0, 0.3f, color, 3);
+            UI_DrawText(translation, 0x7fffffff, font, x + xAdj, y + 11.75999927520752f, 0, 0, 0.3f, color, 3);
         }
         x += listWidth * info[i].fWidth;
     }
@@ -691,6 +690,7 @@ void CG_DrawScrollbar(const float *color, float top, int totalLines, int drawLin
 
 void CG_DrawScoreboard_ScoresList(float alpha)
 {
+    static int lastLeadTeam = 2;
     float color[4];
     float y;
     float headerY;

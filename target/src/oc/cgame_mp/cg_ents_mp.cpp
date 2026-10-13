@@ -358,21 +358,19 @@ void CG_Missile(centity_t *cent)
     CG_AddCEntityToScene(&ent, obj, cent);
 }
 
+static __forceinline void EntVectorCopy(const vec_t *a, vec_t *b);
+
 static void CG_LockLightingOrigin(centity_t *cent, GfxEntity *ent)
 {
     if (cent->nextState.eFlags & 0x400) {
         if (cent->lightingOrigin[0] == 0.0f &&
             cent->lightingOrigin[1] == 0.0f &&
             cent->lightingOrigin[2] == 0.0f) {
-            cent->lightingOrigin[0] = cent->lerpOrigin[0];
-            cent->lightingOrigin[1] = cent->lerpOrigin[1];
-            cent->lightingOrigin[2] = cent->lerpOrigin[2];
+            EntVectorCopy(cent->lerpOrigin, cent->lightingOrigin);
         }
 
-        ent->lighting.origin[0] = cent->lightingOrigin[0];
-        ent->lighting.origin[1] = cent->lightingOrigin[1];
+        EntVectorCopy(cent->lightingOrigin, ent->lighting.origin);
         ent->renderFxFlags |= 0x80;
-        ent->lighting.origin[2] = cent->lightingOrigin[2];
     } else {
         cent->lightingOrigin[0] = 0.0f;
         cent->lightingOrigin[1] = 0.0f;

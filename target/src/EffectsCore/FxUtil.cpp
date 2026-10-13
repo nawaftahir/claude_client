@@ -196,35 +196,11 @@ struct FxBoltInfo
 	int boneIndex;
 };
 
-struct FxCamera
-{
-	vec3_t vieworg;
-	vec4_t frustum[6];
-	int numPlanes;
-};
+#include "FxCamera.h"
 
 class FxArchive;
 
-struct FxHelper
-{
-	FxHelper();
-	void Init();
-	void Trace( trace_t *tr, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, int skipEntNum, int flags );
-	void Archive( FxArchive *arch );
-	int GetMaterialSubimageCount( Material *material );
-	bool IsMaterialRefractive( Material *material );
-	void CameraShake( const vec3_t origin, float intensity, int radius, int time );
-
-	int time;
-	int mTime;
-	int mOldTime;
-	int mFrameTime;
-	int mTimeFrozen;
-	FxCamera mCamera;
-	FxCamera mPrevCamera;
-	int mSeed;
-	float adsZoomFactor;
-};
+#include "FxHelper.h"
 
 // Every pooled type is carved from 32 KB blocks of the shared effects arena.
 struct FxMemBlock

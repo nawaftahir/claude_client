@@ -31,10 +31,8 @@ struct FxChannelInstance
 	float scale;
 };
 // Only the member called here.
-struct FxHelper
-{
-	const char *GetMaterialName( Material *material );
-};
+struct trace_t;
+#include "FxHelper.h"
 extern FxHelper *theFxHelper;
 FxEffectDef *FX_RegisterEffect( const char *name );
 Material *FX_RegisterMaterial( const char *name );

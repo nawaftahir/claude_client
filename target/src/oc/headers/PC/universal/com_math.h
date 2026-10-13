@@ -46,19 +46,7 @@ typedef struct weaponInfo_s weaponInfo_t;
 typedef int jmp_buf[39];
 #endif
 
-struct FxHelper {
-    int time;
-    int mTime;
-    int mOldTime;
-    int mFrameTime;
-    qboolean mTimeFrozen;
-    struct FxCamera mCamera;
-    FxCamera mPrevCamera;
-    int mSeed;
-    float adsZoomFactor;
-
-    bool CullSphere(const float worldPos[3], float radius, int planeCount);
-};
+#include "../../../../EffectsCore/FxHelper.h"
 
 struct GfxGammaRamp {
     short unsigned int entries[256];
@@ -293,7 +281,7 @@ struct refimport_t {
     int (*CM_BoxSightTrace)(int oldHitNum, const vec_t *start, const vec_t *end, const vec_t *mins, const vec_t *maxs, clipHandle_t model, int brushmask);
     int (*CM_RayTriangleIntersect)();
     struct XModel * (*XModelPrecache)(const char *name, Alloc_t Alloc, Alloc_t AllocColl);
-    int (*XModelGetSurfaces)(const XModel *model, void ***surfaces, int lod, int **partBits);
+    int (*XModelGetSurfaces)(const XModel *model, struct XSurface_s ***surfaces, int lod, int **partBits);
     int (*XModelBad)(const XModel *model);
     void (*Hunk_OverrideDataForFile)(int type, const char *name, void *data);
     int (*XModelGetNumLods)(const XModel *model);
@@ -304,7 +292,7 @@ struct refimport_t {
     const char * (*XModelGetName)(const XModel *model);
     unsigned char (*XModelGetFlags)(const XModel *model);
     int (*XModelNumBones)(const XModel *model);
-    void * (*XModelGetSkins)(const XModel *model);
+    const trXSkin_t * (*XModelGetSkins)(const XModel *model);
     int (*XModelGetMemUsage)(const XModel *model);
     const char * (*XModelGetLodName)(const XModel *model, int lod);
     void * (*XModelGetBasePose)(const XModel *model);

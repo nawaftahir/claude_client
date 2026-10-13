@@ -2,6 +2,7 @@
 #include "imports.h"
 #include "headers/PC/cgame_mp/cg_local.h"
 #include <float.h>
+COD2_ASSERT_SIZE(cgs_t, 0xe7d4);
 const dvar_t *cg_shock_soundWetLevel;
 
 const dvar_t *cg_tracerLength;
@@ -67,7 +68,7 @@ const dvar_t *cg_minicon;
 const dvar_t *cg_drawCrosshairNamesPosX;
 const dvar_t *cg_gun_move_rate;
 const dvar_t *cg_tracerSpeed;
-unsigned char cgsArray[1]  /* size unknown */;
+cgs_t cgsArray[1];
 const dvar_t *cg_shock_screenBlendFadeTime;
 const dvar_t *cg_shock_viewKickPeriod;
 cg_t cgArray[1];
@@ -439,9 +440,6 @@ extern const dvar_t *cg_weaponleftbone;
 extern const dvar_t *cg_weaponrightbone;
 static char buffer[1024];
 extern cg_t cgArray[1];
-/* removed `static cgs_t cgsArray[1];` -- it was DEAD (declared, never referenced; this file
- * uses `cgs->` instead) and it collided with the real shared object in bss.c, which is what
- * `cgs` must bind to. See cg_local.h. */
 static centityArray_t cg_entitiesArray[1];
 extern weaponInfo_t cg_weaponsArray[CG_MAX_WEAPONS];
 extern itemInfo_t cg_itemsArray[CG_MAX_ITEMS];

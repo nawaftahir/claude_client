@@ -1026,11 +1026,11 @@ int XModelBad(struct XModel *);
 int XModelGetLodForDist(struct XModel const *,float);
 int XModelGetMemUsage(struct XModel const *);
 int XModelGetNumLods(struct XModel const *);
-int XModelGetSurfaces(struct XModel const *,struct XSurface * *,int,int * *);
+int XModelGetSurfaces(const XModel *, XSurface ***, int, int **);
 int XModelNumBones(struct XModel const *);
 struct DObjAnimMat * DObjGetRotTransArray(struct DObj_s const *);
 struct DObjAnimMat * XModelGetBasePose(struct XModel const *);
-struct Material * XModelGetSkins(struct XModel const *);
+const trXSkin_t *XModelGetSkins(const XModel *model);
 struct XModel * DObjGetModel(struct DObj_s const *,int);
 struct XModel * XModelPrecache(char const *,void * (__cdecl*)(int),void * (__cdecl*)(int));
 struct dvar_s * Dvar_RegisterColor(char const *,float,float,float,float,unsigned short);
@@ -1190,7 +1190,7 @@ void CL_InitRef(void)
     *(void **)&ri_local.CL_FlushDebugData = (void *)CL_FlushDebugData;
     *(void **)&ri_local.StatMon_Warning = (void *)StatMon_Warning;
     *(void **)&ri_local.XModelPrecache = (void *)XModelPrecache;
-    *(void **)&ri_local.XModelGetSurfaces = (void *)XModelGetSurfaces;
+    ri_local.XModelGetSurfaces = XModelGetSurfaces;
     *(void **)&ri_local.XModelBad = (void *)XModelBad;
     *(void **)&ri_local.Hunk_OverrideDataForFile = (void *)Hunk_OverrideDataForFile;
     *(void **)&ri_local.XModelGetNumLods = (void *)XModelGetNumLods;
@@ -1201,7 +1201,7 @@ void CL_InitRef(void)
     *(void **)&ri_local.XModelGetName = (void *)XModelGetName;
     *(void **)&ri_local.XModelGetFlags = (void *)XModelGetFlags;
     *(void **)&ri_local.XModelNumBones = (void *)XModelNumBones;
-    *(void **)&ri_local.XModelGetSkins = (void *)XModelGetSkins;
+    ri_local.XModelGetSkins = XModelGetSkins;
     *(void **)&ri_local.XModelGetMemUsage = (void *)XModelGetMemUsage;
     *(void **)&ri_local.XModelGetLodName = (void *)XModelGetLodName;
     *(void **)&ri_local.XModelGetBasePose = (void *)XModelGetBasePose;
@@ -2657,7 +2657,7 @@ void CL_Init(void)
 
     clientActive_t *c = clients;
 
-    Com_ClientDObjClearAllSkel();
+    CL_ClearState();
     CL_ClearMutedList();
     c->voicePacketCount = 0;
 

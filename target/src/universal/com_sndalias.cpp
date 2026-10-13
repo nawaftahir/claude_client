@@ -462,7 +462,7 @@ snd_alias_t *Com_PickSoundAliasFromList( snd_alias_list_t *aliasList )
 	{
 		alias++;
 		totalProb += alias->probability;
-		if ( Com_SoundAliasRandom() * totalProb < alias->probability * -2147483648.0f )
+		if ( Com_SoundAliasRandom() * totalProb < alias->probability * 32768.0f )
 		{
 			select = alias;
 		}
@@ -482,7 +482,7 @@ snd_alias_t *Com_PickSoundAliasFromList( snd_alias_list_t *aliasList )
 				continue;
 			}
 			totalProb += alias->probability;
-			if ( Com_SoundAliasRandom() * totalProb < alias->probability * -2147483648.0f )
+			if ( Com_SoundAliasRandom() * totalProb < alias->probability * 32768.0f )
 			{
 				select = alias;
 			}

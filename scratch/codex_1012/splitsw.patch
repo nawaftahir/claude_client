@@ -1,0 +1,6 @@
+--- a/splitsw.py
++++ b/splitsw.py
+@@ -40 +40,2 @@
+-        out.append(('%s' % lhs, e, {i: '%s%s = %s; %s = %s %s %s;%s' % (ind, lhs, A, lhs, lhs, op, B, rest)}))
++        # Both statements must stay inside an unbraced if/else or loop body.
++        out.append(('%s' % lhs, e, {i: '%s{ %s = %s; %s = %s %s %s; }%s' % (ind, lhs, A, lhs, lhs, op, B, rest)}))

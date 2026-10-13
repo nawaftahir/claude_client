@@ -646,9 +646,9 @@ void CG_RegisterWeapon(int weaponNum)
 
     if (weapDef->szHudIcon[0]) {
         weapInfo->hHudIcon = (MaterialHandle)CL_RegisterMaterial(weapDef->szHudIcon, 7);
-        cgs->media.hintMaterials[weaponNum + 2] = weapInfo->hHudIcon;
+        cgs->media.hintMaterials[weaponNum + 4] = weapInfo->hHudIcon;
     } else {
-        cgs->media.hintMaterials[weaponNum + 2] = cgs->media.hintMaterials[0];
+        cgs->media.hintMaterials[weaponNum + 4] = cgs->media.hintMaterials[2];
     }
 
     if (weapDef->killIcon[0]) {
@@ -1050,16 +1050,16 @@ void CalculateWeaponPosition_BasePosition_movement(float *origin)
 
             if (cg->playerEntity.vLastMoveOrg[i] < targetPos[i])
             {
-                if (delta < (float)cg->frametime * 0.0001f)
-                    delta = (float)cg->frametime * 0.0001f;
+                if (delta < (float)cg->frametime * (0.001f * 0.1f))
+                    delta = (float)cg->frametime * (0.001f * 0.1f);
                 cg->playerEntity.vLastMoveOrg[i] = cg->playerEntity.vLastMoveOrg[i] + delta;
                 if (cg->playerEntity.vLastMoveOrg[i] > targetPos[i])
                     cg->playerEntity.vLastMoveOrg[i] = targetPos[i];
             }
             else
             {
-                if (delta > (float)cg->frametime * -0.0001f)
-                    delta = (float)cg->frametime * -0.0001f;
+                if (delta > (float)cg->frametime * (0.001f * -0.1f))
+                    delta = (float)cg->frametime * (0.001f * -0.1f);
                 cg->playerEntity.vLastMoveOrg[i] = cg->playerEntity.vLastMoveOrg[i] + delta;
                 if (cg->playerEntity.vLastMoveOrg[i] < targetPos[i])
                     cg->playerEntity.vLastMoveOrg[i] = targetPos[i];
@@ -1433,7 +1433,7 @@ void CG_AddViewWeapon(playerState_t *ps)
     if (cg->cubemapShot || !cg_drawGun->current.enabled || CG_GetWeapReticleZoom(&fZoom))
         drawGun = 0;
 
-    if (cg->shellshock.hasSavedScreen)
+    if (cg->testGun)
         return;
 
     if (ps->eFlags & 0x300)

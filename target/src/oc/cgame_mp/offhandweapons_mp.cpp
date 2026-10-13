@@ -284,7 +284,7 @@ void CG_UseOffHand(centity_t *cent, int event, int eventParam)
 
     clientNum = cent->nextState.number;
 
-    if (clientNum == cg->snap->ps.clientNum) {
+    if (clientNum == cg->nextSnap->ps.clientNum) {
 
         struct DObj_s *viewModel = (struct DObj_s *)wi->viewModelDObj;
         if (viewModel != NULL) {

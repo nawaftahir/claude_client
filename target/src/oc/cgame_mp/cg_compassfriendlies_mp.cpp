@@ -348,7 +348,10 @@ void CG_DrawCompassFriendlies(rectDef_t *rect, MaterialHandle material, vec_t *c
         if (cg->compassActors[i].beginFadeTime >= cg->time)
             fadedColor[3] = 1.0f;
         else
-            fadedColor[3] = 1.0f; fadedColor[3] = fadedColor[3] - (float)(cg->time - cg->compassActors[i].beginFadeTime) / (cg_hudCompassSoundPingFadeTime->current.value * 1000.0f);
+        {
+            fadedColor[3] = 1.0f;
+            fadedColor[3] = fadedColor[3] - (float)(cg->time - cg->compassActors[i].beginFadeTime) / (cg_hudCompassSoundPingFadeTime->current.value * 1000.0f);
+        }
         if (compassFadeOutAlpha < fadedColor[3])
             fadedColor[3] = compassFadeOutAlpha;
 

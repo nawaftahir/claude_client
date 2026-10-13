@@ -12,9 +12,9 @@ void XModelConsumeQuat(const unsigned char **pos, short *out)
 	int x;
 	int temp;
 
-	out[0] = XModelDataReadShort(pos);
-	out[1] = XModelDataReadShort(pos);
-	out[2] = XModelDataReadShort(pos);
+	out[0] = XModelDataReadShort(pos).value;
+	out[1] = XModelDataReadShort(pos).value;
+	out[2] = XModelDataReadShort(pos).value;
 
 	x = out[0];
 	y = out[1];
@@ -136,7 +136,7 @@ XModelParts *XModelPartsLoadFile(XModel *model, const char *name, void *(*Alloc)
 	}
 
 	pos = buf;
-	version = XModelDataReadShort(&pos);
+	version = XModelDataReadShort(&pos).value;
 
 	if ( version != XMODEL_VERSION )
 	{
@@ -145,8 +145,8 @@ XModelParts *XModelPartsLoadFile(XModel *model, const char *name, void *(*Alloc)
 		return NULL;
 	}
 
-	numChildBones = XModelDataReadShort(&pos);
-	numRootBones = XModelDataReadShort(&pos);
+	numChildBones = XModelDataReadShort(&pos).value;
+	numRootBones = XModelDataReadShort(&pos).value;
 	numBones = numChildBones + numRootBones;
 
 	size = sizeof(*boneNames) * numBones;
@@ -174,8 +174,8 @@ XModelParts *XModelPartsLoadFile(XModel *model, const char *name, void *(*Alloc)
 	if ( numChildBones )
 	{
 		size = 4 * sizeof(short) * numChildBones;
-		model->memUsage += size;
 		modelParts->quats = (short *)Alloc(size);
+		model->memUsage += size;
 
 		size = 4 * sizeof(float) * numChildBones;
 		modelParts->trans = (float *)Alloc(size);
@@ -232,7 +232,7 @@ bool XModelLoadConfigFile(const char *name, const unsigned char **pos, XModelCon
 	int i;
 	short version;
 
-	version = XModelDataReadShort(pos);
+	version = XModelDataReadShort(pos).value;
 
 	if ( version != XMODEL_VERSION )
 	{
@@ -407,7 +407,7 @@ XModel *XModelLoadFile(const char *name, void *(*Alloc)(int), void *(*AllocColl)
 		if ( *dest )
 		{
 			++model->numLods;
-			model->lodInfo[i].numsurfs = XModelDataReadShort(&pos);
+			model->lodInfo[i].numsurfs = XModelDataReadShort(&pos).value;
 			size = sizeof(unsigned short) * model->lodInfo[i].numsurfs;
 			model->lodInfo[i].surfNames = (unsigned short *)Alloc(size);
 			model->memUsage += size;
@@ -485,7 +485,7 @@ struct refexport_t
 {
 	void *unused0[96];
 	XSurface *(*XModelReadSurface)( XModel *model, int *partBits, const unsigned char **pos, void *(*Alloc)(int) );
-	struct Material *(*LoadXSkins)( XModel *model );
+	trXSkin_t *(*LoadXSkins)( XModel *model );
 };
 extern refexport_t re;
 
@@ -495,7 +495,7 @@ XSurface *XModelReadSurface_48ea60(XModel *model, int *partBits, const unsigned 
 	return re.XModelReadSurface(model, partBits, pos, Alloc);
 }
 
-struct Material *XModelLoadXSkins_48ea80(XModel *model)
+trXSkin_t *XModelLoadXSkins_48ea80(XModel *model)
 {
 	return re.LoadXSkins(model);
 }
@@ -506,7 +506,7 @@ bool XModelSurfsSupported()
 }
 
 // retail 0x48eaa0
-static __declspec(noinline) void XModelReadSurfaces(XModel *model, void **out, int *partBits, const unsigned char **pos, void *(*Alloc)(int), int numsurfs)
+static __declspec(noinline) void XModelReadSurfaces(XModel *model, XSurface **out, int *partBits, const unsigned char **pos, void *(*Alloc)(int), int numsurfs)
 {
 	int i;
 
@@ -548,7 +548,7 @@ XModelSurfs *XModelReadSurface(XModel *model, const char *name, void *(*Alloc)(i
 	}
 
 	pos = buf;
-	version = XModelDataReadShort(&pos);
+	version = XModelDataReadShort(&pos).value;
 
 	if ( version != XMODEL_VERSION )
 	{
@@ -557,7 +557,7 @@ XModelSurfs *XModelReadSurface(XModel *model, const char *name, void *(*Alloc)(i
 		return NULL;
 	}
 
-	fileNumSurfs = XModelDataReadShort(&pos);
+	fileNumSurfs = XModelDataReadShort(&pos).value;
 
 	if ( fileNumSurfs != numsurfs )
 	{
@@ -569,8 +569,8 @@ XModelSurfs *XModelReadSurface(XModel *model, const char *name, void *(*Alloc)(i
 	size = numsurfs * 4 + sizeof(XModelSurfs);
 	surfs = (XModelSurfs *)Alloc(size);
 	model->memUsage += size;
-	surfs->surf = (struct XSurface *)(surfs + 1);
-	XModelReadSurfaces(model, (void **)(surfs + 1), surfs->partBits, &pos, Alloc, numsurfs);
+	surfs->surf = (XSurface **)(surfs + 1);
+	XModelReadSurfaces(model, surfs->surf, surfs->partBits, &pos, Alloc, numsurfs);
 	FS_FreeFile(buf);
 	return surfs;
 }

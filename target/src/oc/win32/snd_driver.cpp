@@ -79,9 +79,9 @@ extern "C" __declspec(dllimport) void *__stdcall AIL_open_stream(void *dig, cons
 extern "C" __declspec(dllimport) void __stdcall AIL_stream_info(void *stream, int *a, int *b, int *c, int *d);
 extern "C" __declspec(dllimport) int __stdcall AIL_sample_buffer_ready(void *S);
 extern "C" __declspec(dllimport) void __stdcall AIL_load_sample_buffer(void *S, int buf_num, void *buffer, int size);
-extern "C" __declspec(dllimport) int __stdcall AIL_WAV_info(void *data, void *info);
-extern "C" __declspec(dllimport) int __stdcall AIL_size_processed_digital_audio(int rate, int format, int num, void *info);
-extern "C" __declspec(dllimport) long int __stdcall AIL_process_digital_audio(void *dest, long int size, unsigned long rate, unsigned long format, long int num, void *info);
+extern "C" __declspec(dllimport) int __stdcall AIL_WAV_info(const void *data, AILSOUNDINFO *info);
+extern "C" __declspec(dllimport) int __stdcall AIL_size_processed_digital_audio(unsigned int rate, unsigned int format, int num, const AILMIXINFO *info);
+extern "C" __declspec(dllimport) int __stdcall AIL_process_digital_audio(void *dest, int size, unsigned int rate, unsigned int format, int num, AILMIXINFO *info);
 extern "C" __declspec(dllimport) void __stdcall AIL_set_digital_master_room_type(void *dig, int room_type);
 extern "C" __declspec(dllimport) void __stdcall AIL_set_DirectSound_HWND(void *dig, HWND wnd);
 extern "C" __declspec(dllimport) void __stdcall AIL_set_digital_master_reverb_levels(void *dig, float dry, float wet);
@@ -714,6 +714,19 @@ Bool SND_IsStreamChannelFree(int index)
     return 0;
 }
 
+// Retail 0x4b30f0; historical name unknown.
+int SND_GetSampleType_4b30f0(int format, int channels, int bits)
+{
+    if (channels == 1) {
+        if (format == 0x11)
+            return 5;
+        return bits > 8;
+    }
+    if (format == 0x11)
+        return 7;
+    return (bits > 8) + 2;
+}
+
 int SND_StartAlias2DSample(const snd_alias_t *pAlias0, const snd_alias_t *pAlias1, float lerp, int entnum, float volume, float pitch, int timeshift, float fraction, int startDelay, Bool master, int *pChannel, snd_alias_system_t system)
 {
     int index, channel, aliasFlags, sampleType;
@@ -741,18 +754,7 @@ int SND_StartAlias2DSample(const snd_alias_t *pAlias0, const snd_alias_t *pAlias
     bits = (int)((MssSound *)sound)->info.bits;
     format = (int)((MssSound *)sound)->info.format;
 
-    // mono/stereo: ADPCM, else 16-bit if bits > 8
-    if (channels == 1) {
-        if (format == 0x11)
-            sampleType = 5;
-        else
-            sampleType = bits > 8 ? 1 : 0;
-    } else {
-        if (format == 0x11)
-            sampleType = 7;
-        else
-            sampleType = bits > 8 ? 3 : 2;
-    }
+    sampleType = SND_GetSampleType_4b30f0(format, channels, bits);
 
     AIL_set_sample_type(handle, sampleType, 0);
     AIL_set_sample_address(handle, (void *)((MssSound *)sound)->info.data_ptr, (int)((MssSound *)sound)->info.data_len);
@@ -920,8 +922,10 @@ int SND_StartAliasStreamOnChannel(const snd_alias_t *pAlias0, const snd_alias_t 
     sprintf(realname, "sound/%s", Com_GetSoundFileName(pAlias0));
     if (mss_q3fs->current.enabled)
         handle = (HSTREAM)AIL_open_stream((void *)milesGlob.driver_2D, realname, 0);
-    else
-        handle = (HSTREAM)AIL_open_stream((void *)milesGlob.driver_2D, FS_ShortOSFilePath(realname), 0);
+    else {
+        const char *filename = FS_ShortOSFilePath(realname);
+        handle = (HSTREAM)AIL_open_stream((void *)milesGlob.driver_2D, filename, 0);
+    }
     if (!handle) {
         Com_Printf("Couldn't play stream '%s' from alias '%s' - %s\n", realname, pAlias0->pszAliasName, AIL_last_error());
         return 0;
@@ -1379,7 +1383,7 @@ MssSound *SND_LoadFromBuffer(void *buffer, const char *realname, const void *unu
     int targetBits, targetChannels;
     int procFormat;
 
-    if (!AIL_WAV_info(buffer, &mixinfo)) {
+    if (!AIL_WAV_info(buffer, &mixinfo.Info)) {
         Com_Printf((const char *)"^1ERROR: Sound file '%s' is in an invalid or corrupted format\n", realname);
         sound = NULL;
     } else if ((totalSize = (int)mixinfo.Info.data_len + 0x24) == 0) {

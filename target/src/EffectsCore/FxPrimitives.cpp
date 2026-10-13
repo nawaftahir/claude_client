@@ -99,12 +99,7 @@ struct FxBoltInfo
 	int boneIndex;
 };
 
-struct FxCamera
-{
-	vec3_t vieworg;
-	vec4_t frustum[6];
-	int numPlanes;
-};
+#include "FxCamera.h"
 
 struct GfxEntity
 {
@@ -124,22 +119,7 @@ struct GfxEntity
 	float minScreenRadius;
 };
 
-struct FxHelper
-{
-	void Trace( trace_t *tr, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, int skipEntNum, int flags );
-	void AddFxToScene( GfxEntity *ent, XModel *model );
-	int GetMaterialSubimageCount( Material *material );
-	void AddLightToScene( const vec3_t org, float radius, float red, float green, float blue );
-	bool CullSphere( const vec3_t worldPos, float radius, int planeCount );
-	bool CullCylinder( const vec3_t worldPos0, const vec3_t worldPos1, float radius0, float radius1, int planeCount );
-
-	int time;
-	int mTime;
-	int mOldTime;
-	int mFrameTime;
-	int mTimeFrozen;
-	FxCamera mCamera;
-};
+#include "FxHelper.h"
 
 struct FxScheduler
 {

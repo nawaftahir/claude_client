@@ -70,7 +70,7 @@ def build():
     r = subprocess.run(['make'], cwd=T, capture_output=True, text=True)
     bad = set()
     for m in re.finditer(r'^(\S+?)\((\d+)\) : (?:fatal )?error', r.stdout + r.stderr, re.M):
-        bad.add(os.path.basename(m.group(1)).lower())
+        bad.add(os.path.basename(m.group(1).replace('\\', '/')).lower())
     return r.returncode == 0, bad
 
 def main():

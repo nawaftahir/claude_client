@@ -4028,7 +4028,7 @@ enum DvarType {
 };
 
 union DvarValue {
-    Bool enabled;
+    bool enabled;
     int integer;
     float value;
     vec_t *vector;
@@ -4167,11 +4167,7 @@ struct FxBoltInfo {
     int boneIndex;
 };
 
-struct FxCamera {
-    vec3_t vieworg;
-    vec4_t frustum[6];
-    int numPlanes;
-};
+#include "../../EffectsCore/FxCamera.h"
 
 struct FxCurveIterator {
     const FxCurve *master;
@@ -6574,7 +6570,7 @@ struct XModelLodInfo {
 };
 
 struct XModel {
-    void (*parts)();
+    XModelParts_s *parts;
     XModelLodInfo lodInfo[4];
     XModelCollSurf *collSurfs;
     int numCollSurfs;
@@ -6602,7 +6598,7 @@ struct XModelParts_s {
 };
 
 struct XModelSurfs_s {
-    void *surfs;
+    XSurface **surfs;
     XPartBits partBits;
 };
 
@@ -7530,13 +7526,13 @@ struct dvar_s {
     const char *name;
     short unsigned int flags;
     byte type;
-    Bool modified;
+    bool modified;
     union DvarValue current;
     DvarValue latched;
     DvarValue reset;
     union DvarLimits domain;
-    intptr_t next;
-    intptr_t hashNext;
+    dvar_s *next;
+    dvar_s *hashNext;
 };
 
 struct editFieldDef_s {
@@ -9955,7 +9951,7 @@ struct trStatistics_t {
 };
 
 struct trXSkin_t {
-    XVertexBuffer (*materialHandles)();
+    MaterialHandle *materialHandles;
 };
 
 struct trace_t {

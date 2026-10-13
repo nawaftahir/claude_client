@@ -8,9 +8,6 @@ void CG_ProcessSnapshots();
 extern bgs_t *bgs;
 extern displayContextDef_t cgDC;
 
-vec3_t maxs = { 4.0f, 4.0f, 4.0f };
-vec3_t mins = { -4.0f, -4.0f, -4.0f };
-
 extern dvar_t *bg_bobMax;
 extern const dvar_t *cg_dumpAnims;
 extern const dvar_t *cg_errorDecay;
@@ -38,9 +35,6 @@ extern void CG_Draw2D(void);
 extern void CG_AddPacketEntities(void);
 extern void CG_AddLocalEntities(void);
 extern void CG_AddLagometerFrameInfo(void);
-
-extern vec3_t mins;
-extern vec3_t maxs;
 
 extern void Com_Printf(const char *fmt, ...);
 extern void FX_FreeSystem(void);
@@ -177,6 +171,8 @@ static void CG_CalcVrect(int size)
 
 static void CG_OffsetThirdPersonView(void)
 {
+    static vec3_t mins = { -4.0f, -4.0f, -4.0f };
+    static vec3_t maxs = { 4.0f, 4.0f, 4.0f };
     vec3_t forward, right, up;
     vec3_t view;
     vec3_t focusAngles;

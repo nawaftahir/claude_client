@@ -253,10 +253,17 @@ outta:
 	}
 }
 
-// optimized memory copy routine that handles all alignment cases and block sizes efficiently
-void Com_Memcpy( void *dest, const void *src, int count )
+enum e_prefetch { PRE_READ, PRE_WRITE, PRE_READ_WRITE };
+
+// Retail 0x42c330 retains this helper as well as the inlined memory-copy loop.
+__forceinline void Com_Prefetch( const void *src, int count, e_prefetch type )
 {
-	// prefetch source (Q3 Com_Prefetch, PRE_READ)
+	switch (type)
+	{
+	case PRE_WRITE:
+		break;
+	case PRE_READ:
+	case PRE_READ_WRITE:
 	__asm
 	{
 			mov		ebx, src
@@ -277,6 +284,14 @@ loopie:
 			jnz		loopie
 skip:
 	}
+		break;
+	}
+}
+
+// optimized memory copy routine that handles all alignment cases and block sizes efficiently
+void Com_Memcpy( void *dest, const void *src, int count )
+{
+	Com_Prefetch(src, count, PRE_READ);
 
 	__asm
 	{

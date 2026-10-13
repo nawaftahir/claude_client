@@ -10,12 +10,7 @@ struct FxBoltInfo
 	int boneIndex;
 };
 
-struct FxHelper
-{
-	void AdjustTime( int intime );
-	void WarpTime( int intime );
-	void AdjustCamera( const refdef_t *refdef, float zfar );
-};
+#include "FxHelper.h"
 
 struct FxScheduler
 {

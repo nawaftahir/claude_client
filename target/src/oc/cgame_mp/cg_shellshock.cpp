@@ -73,12 +73,11 @@ void CG_SetShellShockParmsFromDvars(shellshock_parms_t *parms);
 void CG_UpdateShellShock(const shellshock_parms_t *parms, int start, int duration);
 
 /* migrated from the ILP32 data blob to typed C (x64 port Stage 2). */
-static const char *cg_shock_dvar_names[30] = {
+static const char *cg_shock_dvar_names[29] = {
     "cg_shock_screenBlendTime",
     "cg_shock_screenBlendFadeTime",
     "cg_shock_viewKickPeriod",
     "cg_shock_viewKickRadius",
-    "cg_shock_viewKickFadeTime",
     "cg_shock_sound",
     "cg_shock_soundFadeInTime",
     "cg_shock_soundFadeOutTime",

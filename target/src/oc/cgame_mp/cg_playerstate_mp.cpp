@@ -94,8 +94,8 @@ void CG_DamageFeedback(int yawByte, int pitchByte, int damage)
         angles[2] = 0.0f;
         AngleVectors(angles, dir, NULL, NULL);
 
-        cg->v_dmg_roll = -((dir[0] * cg->refdef.viewaxis[2][0] + dir[1] * cg->refdef.viewaxis[2][1] + dir[2] * cg->refdef.viewaxis[2][2]) * kick);
-        cg->v_dmg_pitch = (dir[0] * cg->refdef.viewaxis[1][0] + dir[1] * cg->refdef.viewaxis[1][1] + dir[2] * cg->refdef.viewaxis[1][2]) * kick;
+        cg->v_dmg_roll = -((dir[0] * cg->refdef.viewaxis[1][0] + dir[1] * cg->refdef.viewaxis[1][1] + dir[2] * cg->refdef.viewaxis[1][2]) * kick);
+        cg->v_dmg_pitch = (dir[0] * cg->refdef.viewaxis[0][0] + dir[1] * cg->refdef.viewaxis[0][1] + dir[2] * cg->refdef.viewaxis[0][2]) * kick;
 
         slot = 0;
         for (i = 1; i < 8; i++) {

@@ -580,12 +580,12 @@ void DrawSingleHudElem2d(const hudelem_t *elem)
         if (cghe.hudElemText[0])
             DrawHudElemString(cghe.hudElemText, elem, &cghe);
         break;
-    case HE_TYPE_MATERIAL:
-        DrawHudElemMaterial(elem, &cghe);
-        break;
     case HE_TYPE_CLOCK_DOWN:
     case HE_TYPE_CLOCK_UP:
         DrawHudElemClock(elem, &cghe);
+        break;
+    case HE_TYPE_MATERIAL:
+        DrawHudElemMaterial(elem, &cghe);
         break;
     }
 }
@@ -627,7 +627,7 @@ int GetSortedHudElems(hudelem_t **elems)
     int elemCount;
     int i;
 
-    ps = &cg->snap->ps;
+    ps = &cg->nextSnap->ps;
     elemCount = 0;
     for (i = 0; i < 31 && ps->hud.archival[i].type; i++)
         elems[elemCount++] = &ps->hud.archival[i];

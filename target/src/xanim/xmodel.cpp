@@ -295,7 +295,7 @@ int XModelGetCollLod(const XModel *model)
 	return model->collLod;
 }
 
-Material *XModelGetSkins(const XModel *model)
+const trXSkin_t *XModelGetSkins(const XModel *model)
 {
 	return model->xskins;
 }

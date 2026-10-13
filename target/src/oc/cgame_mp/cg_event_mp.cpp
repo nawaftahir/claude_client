@@ -975,7 +975,7 @@ void CG_EntityEvent(centity_t *cent, int event)
         case 0xb6:
         case 0xb7:
             ByteToDir(es->eventParm, dir);
-            ByteToDir(es->dmgFlags, reflect);
+            ByteToDir(es->eventParm2, reflect);
             CG_BulletHitEvent(es->otherEntityNum, position, dir, reflect, es->surfType, event);
             return;
 
