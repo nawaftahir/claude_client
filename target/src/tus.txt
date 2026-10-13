@@ -114,6 +114,8 @@ xanim/xanim.cpp
 xanim/xanim_load.cpp
 xanim/xmodel.cpp
 xanim/xmodel_load.cpp
+xanim/r_xsurface_load_obj.cpp
+xanim/xmodel_load_obj.cpp
 xanim/xmodel_utils.cpp
 EffectsCore/FxArchive.cpp
 EffectsCore/FxChannel.cpp
