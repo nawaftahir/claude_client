@@ -148,21 +148,8 @@ void CG_DrawCompassFriendlies(rectDef_t *rect, MaterialHandle material, vec_t *c
     int eFlags;
     centity_t *cent;
     vec2_t delta;
-    float yaw;
-    float dist;
-    float radius;
-    float s;
-    float c;
-    float x;
-    float y;
-    float w;
-    float h;
-    float angle;
-    int flash;
     float fadeTime;
-    MaterialHandle pingMat;
     vec4_t fadedColor;
-    vec4_t actorColor;
 
     const dvar_t *fadeDvar = hud_fade_compass;
     int duration = I_fround(fadeDvar->current.value * 1000.0f);
@@ -249,6 +236,10 @@ void CG_DrawCompassFriendlies(rectDef_t *rect, MaterialHandle material, vec_t *c
                 continue;
             if (cg->nextSnap->ps.clientNum == i)
                 continue;
+            float yaw, dist, radius, s, c, x, y, w, h, angle;
+            int flash;
+            MaterialHandle pingMat;
+            vec4_t actorColor;
 
             if (I_fabs(cg->compassActors[i].vLastPos[0]) <= 1.0f && I_fabs(cg->compassActors[i].vLastPos[1]) <= 1.0f)
             {
@@ -332,6 +323,7 @@ void CG_DrawCompassFriendlies(rectDef_t *rect, MaterialHandle material, vec_t *c
         if (!cg->compassActors[i].beginFadeTime)
             continue;
 
+        float yaw, dist, radius, s, c, x, y, w, h;
         delta[0] = cg->compassActors[i].vLastPos[0] - cg->refdef.vieworg[0];
         delta[1] = cg->compassActors[i].vLastPos[1] - cg->refdef.vieworg[1];
         yaw = AngleNormalize360(vectoyaw(delta) - cg->compPointerYaw);

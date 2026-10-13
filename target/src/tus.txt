@@ -9,6 +9,7 @@ oc/client_mp/cl_console_mp.cpp
 oc/client_mp/cl_input.cpp
 oc/client_mp/cl_keys_mp.cpp
 oc/client_mp/cl_main_mp.cpp
+oc/client_mp/cl_devgui.cpp
 oc/client_mp/cl_net_chan_mp.cpp
 oc/client_mp/cl_parse_mp.cpp
 oc/client_mp/cl_scrn_mp.cpp
@@ -34,6 +35,8 @@ universal/com_shared.cpp
 universal/com_sndalias.cpp
 universal/com_sndalias_load_obj.cpp
 qcommon/common.cpp
+qcommon/legacyhacks.cpp
+qcommon/mem_track.cpp
 qcommon/dobj_management.cpp
 universal/dvar.cpp
 universal/dvar_cmds.cpp
@@ -50,6 +53,7 @@ universal/q_parse.cpp
 universal/q_shared.cpp
 oc/client_mp/screen_placement_mp.cpp
 oc/snd.cpp
+oc/snd_utils.cpp
 oc/qcommon/statmonitor.cpp
 server/sv_ccmds_mp.cpp
 server/sv_client_mp.cpp
@@ -74,6 +78,8 @@ oc/win32/win_syscon.cpp
 win32/win_wndproc.cpp
 script/scr_animtree.cpp
 script/scr_compiler.cpp
+script/scr_debugger.cpp
+script/scr_evaluate.cpp
 script/scr_main.cpp
 script/scr_memorytree.cpp
 script/scr_parser.cpp
@@ -118,6 +124,7 @@ bgame/bg_misctables.cpp
 EffectsCore/Fxexport.cpp
 EffectsCore/FxMemMgr.cpp
 EffectsCore/FxPrimitives.cpp
+EffectsCore/FxProfile.cpp
 EffectsCore/FxScheduler.cpp
 EffectsCore/FxScheduler_load_obj.cpp
 EffectsCore/FxSystem.cpp
@@ -158,6 +165,10 @@ oc/groupvoice/record.cpp
 groupvoice/record_dsound.cpp
 oc/cgame_mp/cg_rumble_mp.cpp
 oc/cgame_mp/cg_main_mp.cpp
+oc/cgame_mp/cg_devgui.cpp
+devgui/devgui.cpp
+devgui/devgui_input.cpp
+devgui/devgui_util.cpp
 oc/cgame_mp/cg_consolecmds_mp.cpp
 oc/cgame_mp/cg_drawtools_mp.cpp
 game/g_debug_mp.cpp

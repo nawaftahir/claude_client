@@ -200,9 +200,8 @@ void CG_PlayerSprites(centity_t *cent)
 
 // ease an anim toward a goal weight over one frame
 #define CG_TURRET_GOAL_WEIGHT(anim, weight) do { \
-    goalWeight = (weight); \
-    rate = (float)fabs(XAnimGetWeight(pAnimTree, (anim)) - goalWeight) * (1000.0f / (float)cg->frametime); \
-    XAnimSetGoalWeight(pAnimTree, (anim), goalWeight, rate > 0.0f ? 1.0f / rate : 0.0f, 1.0f, 0, 0, 0); \
+    float rate = (float)fabs(XAnimGetWeight(pAnimTree, (anim)) - (weight)) * (1000.0f / (float)cg->frametime); \
+    XAnimSetGoalWeight(pAnimTree, (anim), (weight), rate > 0.0f ? 1.0f / rate : 0.0f, 1.0f, 0, 0, 0); \
 } while (0)
 
 // retail 0x4d5970
@@ -240,8 +239,6 @@ static void CG_PlayerTurretPositionAndBlend(centity_t *cent)
     float fPrevBlend;
     float fPrevTransZ;
     float fHeightRatio;
-    float goalWeight;
-    float rate;
     float rot[2];
     float trans[3];
     float vDelta[3];
@@ -375,10 +372,10 @@ static void CG_PlayerTurretPositionAndBlend(centity_t *cent)
 
     start[0] = cent->lerpOrigin[0];
     start[1] = cent->lerpOrigin[1];
-    start[2] = pTurretCEnt->lerpOrigin[2];
     end[0] = cent->lerpOrigin[0];
     end[1] = cent->lerpOrigin[1];
     end[2] = cent->lerpOrigin[2];
+    start[2] = pTurretCEnt->lerpOrigin[2];
     CG_Trace(&trace, start, vec3_origin, vec3_origin, end, cent->nextState.number, 0x2810011);
     if (trace.fraction < 1.0f)
     {

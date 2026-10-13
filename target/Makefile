@@ -7,11 +7,14 @@ IMAGE  := cod2-msvc71-build
 OUT    := build/CoD2MP_s.exe
 REL    := build/release/CoD2MP_s.exe
 ANCHOR ?= ../../cod2engineold/binaries/windows/1.0/CoD2MP_s.exe
+# retail links the DirectX 9.0c SDK d3d9.lib (Rich: Implib 7.10.4035)
+DXSDK  ?= ../../sdk/dec2004
 
 ifndef IN_IMAGE
 
 $(OUT) all:
 	@mkdir -p build && python3 ../rsrc.py $(ANCHOR) build/cod2mp.ico
+	@mkdir -p build/lib && cp -p $(DXSDK)/Lib/d3d9.lib build/lib/d3d9.lib
 	docker run --rm -v $(CURDIR):/w -w /w $(IMAGE) sh -c 'make -j$$(nproc) -k IN_IMAGE=1 $(OUT); s=$$?; chown -R $(shell id -u):$(shell id -g) build; exit $$s'
 
 measure: all
@@ -23,6 +26,7 @@ measure: all
 # Retail has a fixed image and a linker-generated CodeView/PDB record.
 release:
 	@mkdir -p build && python3 ../rsrc.py $(ANCHOR) build/cod2mp.ico
+	@mkdir -p build/lib && cp -p $(DXSDK)/Lib/d3d9.lib build/lib/d3d9.lib
 	docker run --rm -v $(CURDIR):/w -w /w $(IMAGE) sh -c 'make -j$$(nproc) -k IN_IMAGE=1 $(REL); s=$$?; chown -R $(shell id -u):$(shell id -g) build; exit $$s'
 	@sha256sum $(REL) $(ANCHOR)
 

@@ -4174,7 +4174,8 @@ void Item_Paint(displayContextDef_t *dc, itemDef_t *item)
             h = r->h; h = h * 0.5f;
             rx = r->x + w; rx = rx - item->window.rectEffects0[0].x;
             ry = r->y + h - item->window.rectEffects0[0].y;
-            FastSinCos(0.05235988f, &s, &c);
+            float ang = 0.05235988f;
+            FastSinCos(ang, &s, &c);
             newRect = *r;
             newRect.x = rx * c - ry * s + item->window.rectEffects0[0].x; newRect.x = newRect.x - w;
             newRect.y = rx * s + ry * c + item->window.rectEffects0[0].y - h;

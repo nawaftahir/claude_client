@@ -2447,6 +2447,7 @@ void PM_FootstepEvent( pmove_t *pm, pml_t *pml, int iOldBobCycle, int iNewBobCyc
 	playerState_t *ps;
 	int iSurfaceType;
 	int iClipMask;
+	int iClientNum;
 	float fTraceDist;
 	vec3_t mins;
 	vec3_t maxs;
@@ -2485,11 +2486,12 @@ void PM_FootstepEvent( pmove_t *pm, pml_t *pml, int iOldBobCycle, int iNewBobCyc
 					assert(maxs[2] >= mins[2]);
 
 					iClipMask = pm->tracemask & ~( CONTENTS_BODY | CONTENTS_PLAYERCLIP );
+					iClientNum = ps->clientNum;
 					fTraceDist = -31.0f;
 
 					VectorMA(ps->origin, fTraceDist, ps->vLadderVec, vEnd);
 
-					PM_playerTrace(pm, &trace, ps->origin, mins, maxs, vEnd, ps->clientNum, iClipMask);
+					PM_playerTrace(pm, &trace, ps->origin, mins, maxs, vEnd, iClientNum, iClipMask);
 					iSurfaceType = (byte)( ( trace.surfaceFlags & ( 0x1f << SURF_START_BIT ) ) >> SURF_START_BIT );
 
 					if ( trace.fraction == 1.0f || !iSurfaceType )
