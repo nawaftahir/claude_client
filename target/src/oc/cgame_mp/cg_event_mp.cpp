@@ -614,12 +614,12 @@ void CG_EntityEvent(centity_t *cent, int event)
         case 0xaa:
         case 0xab:
         case 0xac:
-            return;
+            break;
 
         case 0x8b: {
             CG_PlayEntitySoundAlias(es->number,
                                     cgs->media.foliageMovement);
-            return;
+            break;
         }
 
         case 0x8c: {
@@ -627,51 +627,51 @@ void CG_EntityEvent(centity_t *cent, int event)
 
                 char **eventNames2 = CG_EventNames();
                 Com_DPrintf((const char *)"Event %s just for client %i was sent to other clients\n", eventNames2[event], clientNum);
-                return;
+                break;
             }
 
             if (!legacyHacks->cl_stanceTemp)
                 legacyHacks->cl_stance = 0;
-            return;
+            break;
         }
 
         case 0x8d: {
             if (clientNum != cg->predictedPlayerState.clientNum) {
                 char **eventNames2 = CG_EventNames();
                 Com_DPrintf((const char *)"Event %s just for client %i was sent to other clients\n", eventNames2[event], clientNum);
-                return;
+                break;
             }
 
             if (!legacyHacks->cl_stanceTemp)
                 legacyHacks->cl_stance = 1;
-            return;
+            break;
         }
 
         case 0x8e: {
             if (clientNum != cg->predictedPlayerState.clientNum) {
                 char **eventNames2 = CG_EventNames();
                 Com_DPrintf((const char *)"Event %s just for client %i was sent to other clients\n", eventNames2[event], clientNum);
-                return;
+                break;
             }
 
             if (!legacyHacks->cl_stanceTemp)
                 legacyHacks->cl_stance = 2;
-            return;
+            break;
         }
 
         case 0x8f: {
             if (clientNum != cg->predictedPlayerState.clientNum) {
                 char **eventNames2 = CG_EventNames();
                 Com_DPrintf((const char *)"Event %s just for client %i was sent to other clients\n", eventNames2[event], clientNum);
-                return;
+                break;
             }
 
             if (cg->demoType != 0)
-                return;
+                break;
             if (cg_nopredict->current.enabled != 0)
-                return;
+                break;
             if (cg_synchronousClients->current.enabled != 0)
-                return;
+                break;
 
             // smooth out stair climbing, q3 EV_STEP
             int deltaTime = cg->time - cg->stepTime;
@@ -688,7 +688,7 @@ void CG_EntityEvent(centity_t *cent, int event)
             else if (cg->stepChange < -16.0f)
                 cg->stepChange = -16.0f;
             cg->stepTime = cg->time;
-            return;
+            break;
         }
 
         case 0x90:
@@ -696,7 +696,7 @@ void CG_EntityEvent(centity_t *cent, int event)
         {
             int itemIndex = es->eventParm;
             if (itemIndex < 1 || itemIndex >= bg_numItems)
-                return;
+                break;
 
             itemInfo_t *item = &cg_itemsArray[itemIndex];
             if (event == 0x90)
@@ -706,74 +706,50 @@ void CG_EntityEvent(centity_t *cent, int event)
 
             if (CG_IsLocalEntity(es))
                 CG_ItemPickup(itemIndex);
-            return;
+            break;
         }
 
         case 0x96:
-            if (isFirstPerson)
-            {
-                if (cg_weaponsArray[es->weapon].reloadSoundPlayer)
-                {
-                    CG_PlayEntitySoundAlias(es->number, cg_weaponsArray[es->weapon].reloadSoundPlayer);
-                    return;
-                }
-                if (cg_weaponsArray[es->weapon].reloadEmptySoundPlayer)
-                {
-                    CG_PlayEntitySoundAlias(es->number, cg_weaponsArray[es->weapon].reloadEmptySoundPlayer);
-                    return;
-                }
-            }
-            if (cg_weaponsArray[es->weapon].reloadSound)
-            {
+            if (isFirstPerson && cg_weaponsArray[es->weapon].reloadSoundPlayer)
+                CG_PlayEntitySoundAlias(es->number, cg_weaponsArray[es->weapon].reloadSoundPlayer);
+            else if (isFirstPerson && cg_weaponsArray[es->weapon].reloadEmptySoundPlayer)
+                CG_PlayEntitySoundAlias(es->number, cg_weaponsArray[es->weapon].reloadEmptySoundPlayer);
+            else if (cg_weaponsArray[es->weapon].reloadSound)
                 CG_PlayEntitySoundAlias(es->number, cg_weaponsArray[es->weapon].reloadSound);
-                return;
-            }
-            if (cg_weaponsArray[es->weapon].reloadEmptySound)
+            else if (cg_weaponsArray[es->weapon].reloadEmptySound)
                 CG_PlayEntitySoundAlias(es->number, cg_weaponsArray[es->weapon].reloadEmptySound);
-            return;
+            break;
 
         case 0x97:
-            if (isFirstPerson)
-            {
-                if (cg_weaponsArray[es->weapon].reloadEmptySoundPlayer)
-                {
-                    CG_PlayEntitySoundAlias(es->number, cg_weaponsArray[es->weapon].reloadEmptySoundPlayer);
-                    return;
-                }
-                if (cg_weaponsArray[es->weapon].reloadSoundPlayer)
-                {
-                    CG_PlayEntitySoundAlias(es->number, cg_weaponsArray[es->weapon].reloadSoundPlayer);
-                    return;
-                }
-            }
-            if (cg_weaponsArray[es->weapon].reloadEmptySound)
-            {
+            if (isFirstPerson && cg_weaponsArray[es->weapon].reloadEmptySoundPlayer)
+                CG_PlayEntitySoundAlias(es->number, cg_weaponsArray[es->weapon].reloadEmptySoundPlayer);
+            else if (isFirstPerson && cg_weaponsArray[es->weapon].reloadSoundPlayer)
+                CG_PlayEntitySoundAlias(es->number, cg_weaponsArray[es->weapon].reloadSoundPlayer);
+            else if (cg_weaponsArray[es->weapon].reloadEmptySound)
                 CG_PlayEntitySoundAlias(es->number, cg_weaponsArray[es->weapon].reloadEmptySound);
-                return;
-            }
-            if (cg_weaponsArray[es->weapon].reloadSound)
+            else if (cg_weaponsArray[es->weapon].reloadSound)
                 CG_PlayEntitySoundAlias(es->number, cg_weaponsArray[es->weapon].reloadSound);
-            return;
+            break;
 
         case 0x98:
             if (isFirstPerson && cg_weaponsArray[es->weapon].reloadStartSoundPlayer)
             {
                 CG_PlayEntitySoundAlias(es->number, cg_weaponsArray[es->weapon].reloadStartSoundPlayer);
-                return;
+                break;
             }
             if (cg_weaponsArray[es->weapon].reloadStartSound)
                 CG_PlayEntitySoundAlias(es->number, cg_weaponsArray[es->weapon].reloadStartSound);
-            return;
+            break;
 
         case 0x99:
             if (isFirstPerson && cg_weaponsArray[es->weapon].reloadEndSoundPlayer)
             {
                 CG_PlayEntitySoundAlias(es->number, cg_weaponsArray[es->weapon].reloadEndSoundPlayer);
-                return;
+                break;
             }
             if (cg_weaponsArray[es->weapon].reloadEndSound)
                 CG_PlayEntitySoundAlias(es->number, cg_weaponsArray[es->weapon].reloadEndSound);
-            return;
+            break;
 
         case 0x92:
         {
@@ -786,54 +762,54 @@ void CG_EntityEvent(centity_t *cent, int event)
 
             snap = (char *)cg->nextSnap;
             if (!(*(int *)(snap + SNAP_FLAGS) & 0xc00000))
-                return;
+                break;
             if (es->number != *(int *)(snap + SNAP_PS_CLIENTNUM))
-                return;
+                break;
 
             CG_OutOfAmmoChange();
-            return;
+            break;
         }
 
         case 0x94:
         {
             snap = (char *)cg->nextSnap;
             if (!(*(int *)(snap + SNAP_FLAGS) & 0xc00000))
-                return;
+                break;
             if (es->number != *(int *)(snap + SNAP_PS_CLIENTNUM))
-                return;
+                break;
 
             CG_MenuShowNotify(4);
 
             CG_SwitchOffHandCmd();
-            return;
+            break;
         }
 
         case 0x95:
         {
             snap = (char *)cg->nextSnap;
             if (!(*(int *)(snap + SNAP_FLAGS) & 0xc00000))
-                return;
+                break;
             if (es->number != *(int *)(snap + SNAP_PS_CLIENTNUM))
-                return;
+                break;
 
             CL_SetADS(0);
-            return;
+            break;
         }
 
         case 0x9a:
             if (cg_weaponsArray[es->weapon].raiseSound)
                 CG_PlayEntitySoundAlias(es->number, cg_weaponsArray[es->weapon].raiseSound);
-            return;
+            break;
 
         case 0x9b:
             if (cg_weaponsArray[es->weapon].putawaySound)
                 CG_PlayEntitySoundAlias(es->number, cg_weaponsArray[es->weapon].putawaySound);
-            return;
+            break;
 
         case 0x9c:
             if (cg_weaponsArray[es->weapon].altSwitchSound)
                 CG_PlayEntitySoundAlias(es->number, cg_weaponsArray[es->weapon].altSwitchSound);
-            return;
+            break;
 
         case 0xb0:
         {
@@ -841,7 +817,7 @@ void CG_EntityEvent(centity_t *cent, int event)
             CG_FireWeapon(cent, event, 0);
 
             CG_FireWeapon(cent, event, 1);
-            return;
+            break;
         }
 
         case 0xb1:
@@ -850,7 +826,7 @@ void CG_EntityEvent(centity_t *cent, int event)
             CG_FireWeapon(cent, event, 2);
 
             CG_FireWeapon(cent, event, 3);
-            return;
+            break;
         }
 
         case 0xaf:
@@ -868,23 +844,23 @@ void CG_EntityEvent(centity_t *cent, int event)
                 char *entData = ents + entStride * 4;
 
                 if (((centity_t *)entData)->nextValid == 0)
-                    return;
+                    break;
                 if (((centity_t *)entData)->nextState.eType != 1)
-                    return;
+                    break;
                 snap = (char *)cg->nextSnap;
                 int snapWeapon = *(int *)(snap + SNAP_PS_WEAPON) ;
                 if (snapWeapon == cent->nextState.number)
-                    return;
+                    break;
 
                 CG_CompassAddWeaponPingInfo((centity_t *)entData, position, 50);
             }
-            return;
+            break;
         }
 
         case 0x9d:
             if (cg_weaponsArray[es->weapon].pullbackSound)
                 CG_PlayEntitySoundAlias(es->number, cg_weaponsArray[es->weapon].pullbackSound);
-            return;
+            break;
 
         case 0x9e:
         case 0x9f:
@@ -892,65 +868,65 @@ void CG_EntityEvent(centity_t *cent, int event)
         {
 
             CG_FireWeapon(cent, event, 0);
-            return;
+            break;
         }
 
         case 0xa1:
             if (isFirstPerson && cg_weaponsArray[es->weapon].rechamberSoundPlayer)
             {
                 CG_PlayEntitySoundAlias(es->number, cg_weaponsArray[es->weapon].rechamberSoundPlayer);
-                return;
+                break;
             }
             if (cg_weaponsArray[es->weapon].rechamberSound)
                 CG_PlayEntitySoundAlias(es->number, cg_weaponsArray[es->weapon].rechamberSound);
-            return;
+            break;
 
         case 0xa2: {
 
             CG_EjectWeaponBrass(es, event);
-            return;
+            break;
         }
 
         case 0xa3:
             if (cg_weaponsArray[es->weapon].meleeSwipeSound)
                 CG_PlayEntitySoundAlias(es->number, cg_weaponsArray[es->weapon].meleeSwipeSound);
-            return;
+            break;
 
         case 0xa5:
         {
 
             CG_PrepOffHand(es, event, es->eventParm);
-            return;
+            break;
         }
 
         case 0xa6:
         {
 
             CG_UseOffHand(cent, event, es->eventParm);
-            return;
+            break;
         }
 
         case 0xa7:
         {
 
             if (!isFirstPerson)
-                return;
+                break;
             CG_SetEquippedOffHand(es->eventParm);
-            return;
+            break;
         }
 
         case 0xad:
         {
             CG_PlayEntitySoundAlias(es->otherEntityNum,
                                     cgs->media.meleeHit);
-            return;
+            break;
         }
 
         case 0xae:
         {
             CG_PlaySoundAlias(es->otherEntityNum, position,
                               cgs->media.meleeHitOther);
-            return;
+            break;
         }
 
         case 0xc5:
@@ -968,7 +944,7 @@ void CG_EntityEvent(centity_t *cent, int event)
                 MakeNormalVectors(axis[0], axis[1], axis[2]);
                 FX_PlayEntityEffect(fx, position, axis, NULL);
             }
-            return;
+            break;
         }
 
         case 0xb5:
@@ -977,12 +953,12 @@ void CG_EntityEvent(centity_t *cent, int event)
             ByteToDir(es->eventParm, dir);
             ByteToDir(es->eventParm2, reflect);
             CG_BulletHitEvent(es->otherEntityNum, position, dir, reflect, es->surfType, event);
-            return;
+            break;
 
         case 0xb9:
         case 0xba:
             CG_BulletHitClientEvent(es->otherEntityNum, position, es->surfType, event);
-            return;
+            break;
 
         case 0xbb:
         {
@@ -997,7 +973,7 @@ void CG_EntityEvent(centity_t *cent, int event)
                 MakeNormalVectors(axis[0], axis[1], axis[2]);
                 FX_PlayEntityEffect(fx, position, axis, NULL);
             }
-            return;
+            break;
         }
 
         case 0xbc:
@@ -1006,12 +982,12 @@ void CG_EntityEvent(centity_t *cent, int event)
 
             CG_PlaySoundAlias(ENTITYNUM_WORLD, position, cgs->media.grenadeExplodeSound[es->surfType]);
 
-            fx = cgs->media.fx->table[IMPACT_GRENADE_EXPLODE * SURF_TYPECOUNT + es->surfType];
-            if (fx)
+            const EffectTemplate *impactFx = cgs->media.fx->table[IMPACT_GRENADE_EXPLODE * SURF_TYPECOUNT + es->surfType];
+            if (impactFx)
             {
                 VectorCopy(dir, axis[0]);
                 MakeNormalVectors(axis[0], axis[1], axis[2]);
-                FX_PlayEntityEffect(fx, position, axis, NULL);
+                FX_PlayEntityEffect(impactFx, position, axis, NULL);
             }
 
             fx = cg_weaponsArray[es->weapon].projExplosionEffect;
@@ -1024,7 +1000,7 @@ void CG_EntityEvent(centity_t *cent, int event)
 
             if (cg_weaponsArray[es->weapon].projExplosionSound)
                 CG_PlaySoundAlias(ENTITYNUM_WORLD, position, cg_weaponsArray[es->weapon].projExplosionSound);
-            return;
+            break;
         }
 
         case 0xbf:
@@ -1041,13 +1017,13 @@ void CG_EntityEvent(centity_t *cent, int event)
             }
 
             if (!cg_weaponsArray[es->weapon].projExplosionSound)
-                return;
+                break;
 
             if ((es->eFlags & 0x10000) && cg->time - es->time >= 50)
-                return;
+                break;
 
             CG_PlaySoundAlias(ENTITYNUM_WORLD, position, cg_weaponsArray[es->weapon].projExplosionSound);
-            return;
+            break;
         }
 
         case 0xbe:
@@ -1060,12 +1036,12 @@ void CG_EntityEvent(centity_t *cent, int event)
 
             CG_PlaySoundAlias(ENTITYNUM_WORLD, position, cgs->media.rocketExplodeSound[es->surfType]);
 
-            fx = cgs->media.fx->table[IMPACT_ROCKET_EXPLODE * SURF_TYPECOUNT + es->surfType];
-            if (fx)
+            const EffectTemplate *impactFx = cgs->media.fx->table[IMPACT_ROCKET_EXPLODE * SURF_TYPECOUNT + es->surfType];
+            if (impactFx)
             {
                 VectorCopy(dir, axis[0]);
                 MakeNormalVectors(axis[0], axis[1], axis[2]);
-                FX_PlayEntityEffect(fx, position, axis, NULL);
+                FX_PlayEntityEffect(impactFx, position, axis, NULL);
             }
 
             fx = cg_weaponsArray[es->weapon].projExplosionEffect;
@@ -1080,7 +1056,7 @@ void CG_EntityEvent(centity_t *cent, int event)
                 CG_PlaySoundAlias(ENTITYNUM_WORLD, position, cg_weaponsArray[es->weapon].projExplosionSound);
 
             cg->nomarks = 0;
-            return;
+            break;
         }
 
         case 0xb3:
@@ -1088,7 +1064,7 @@ void CG_EntityEvent(centity_t *cent, int event)
             int csIndex = es->eventParm + 0x24e;
             const char *csStr = CL_GetConfigString(csIndex);
             CG_PlaySoundAliasByName(es->number, es->pos.trBase, csStr);
-            return;
+            break;
         }
 
         case 0xb4:
@@ -1096,30 +1072,30 @@ void CG_EntityEvent(centity_t *cent, int event)
             int csIndex = es->eventParm + 0x24e;
             const char *csStr = CL_GetConfigString(csIndex);
             CG_PlaySoundAliasAsMasterByName(es->number, es->pos.trBase, csStr);
-            return;
+            break;
         }
 
         case 0xc6:
             CG_Obituary(es);
-            return;
+            break;
 
         case 0xc2:
             CG_PlayFx(cent, es->apos.trBase);
-            return;
+            break;
 
         case 0xc3:
             CG_PlayFxOnTag(cent, es->eventParm);
-            return;
+            break;
 
         case 0xc4:
         {
             CG_StartShakeCamera(es->angles2[0], es->time, position, es->angles2[1]);
-            return;
+            break;
         }
 
         default:
             Com_Error(ERR_DROP, (const char *)"\x15Unknown event: '%s'", CG_EventNames()[event]);
-            return;
+            break;
 
         }
     }
