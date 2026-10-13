@@ -55,10 +55,7 @@ extern dvar_t *sv_voice;
 extern serverStatusDvar_t serverStatusDvars[23];
 
 
-static const char *MonthAbbrev[12] = { "EXE_MONTH_ABV_JANUARY", "EXE_MONTH_ABV_FEBRUARY", "EXE_MONTH_ABV_MARCH", "EXE_MONTH_ABV_APRIL", "EXE_MONTH_ABV_MAY", "EXE_MONTH_ABV_JUN", "EXE_MONTH_ABV_JULY", "EXE_MONTH_ABV_AUGUST", "EXE_MONTH_ABV_SEPTEMBER", "EXE_MONTH_ABV_OCTOBER", "EXE_MONTH_ABV_NOVEMBER", "EXE_MONTH_ABV_DECEMBER" };
-static const char *netSources[3] = { "EXE_LOCAL", "EXE_INTERNET", "EXE_FAVORITES" };
 
-static int lastColumn = 0xffffffff;
 
 #    define UI_REGPARM1 __attribute__((regparm(1)))
 
@@ -166,6 +163,8 @@ extern struct sharedUiInfo_t sharedUiInfo;
 extern uiInfo_t *uiInfo;
 uiInfo_t uiInfoArray[1];
 uiInfo_t *uiInfo = uiInfoArray;
+static const char *MonthAbbrev[12] = { "EXE_MONTH_ABV_JANUARY", "EXE_MONTH_ABV_FEBRUARY", "EXE_MONTH_ABV_MARCH", "EXE_MONTH_ABV_APRIL", "EXE_MONTH_ABV_MAY", "EXE_MONTH_ABV_JUN", "EXE_MONTH_ABV_JULY", "EXE_MONTH_ABV_AUGUST", "EXE_MONTH_ABV_SEPTEMBER", "EXE_MONTH_ABV_OCTOBER", "EXE_MONTH_ABV_NOVEMBER", "EXE_MONTH_ABV_DECEMBER" };
+static const char *netSources[3] = { "EXE_LOCAL", "EXE_INTERNET", "EXE_FAVORITES" };
 COD2_ASSERT_FIELD(struct sharedUiInfo_t, mapCount, 4944);
 COD2_ASSERT_FIELD(struct sharedUiInfo_t, mapList, 4948);
 COD2_ASSERT_FIELD(struct mapInfo, active, 0xa0);
@@ -216,7 +215,6 @@ static qboolean bypassKeyClear;
 static int numclean;
 static char info_00ecf960[1024];
 static char clientBuff[32];
-extern int lastColumn;
 static int lastTime;
 /* 3 duplicate `static char info_00ecf960[1024];` removed (same name -> C++ C2086; only one is referenceable) */
 static int numFound;
@@ -2735,6 +2733,7 @@ static int UI_ListIndexForMap(int map)
 
 const char *UI_FeederItemText(float feederID, int index, int column, MaterialHandle *handle)
 {
+    static int lastColumn = -1;
     int actual;
 
     *handle = 0;
