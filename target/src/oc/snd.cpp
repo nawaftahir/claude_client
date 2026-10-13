@@ -16,7 +16,7 @@ static const dvar_t *snd_enable2D;
 static const dvar_t *snd_enable3D;
 static const dvar_t *snd_enableStream;
 /* migrated from the ILP32 data blob to typed C (x64 port Stage 2). */
-static const char *snd_roomStrings[32] = {
+static const char *snd_roomStrings[] = {
     "generic",
     "paddedcell",
     "room",
@@ -43,11 +43,6 @@ static const char *snd_roomStrings[32] = {
     "drugged",
     "dizzy",
     "psychotic",
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
     NULL,
 };
 

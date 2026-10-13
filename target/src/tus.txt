@@ -26,6 +26,7 @@ qcommon/cm_tracebox.cpp
 qcommon/cm_world.cpp
 qcommon/cmd.cpp
 qcommon/com_bsp_load_obj.cpp
+universal/com_file_wrapper.cpp
 qcommon/unused_stubs.cpp
 universal/com_files.cpp
 universal/com_math.cpp
@@ -55,6 +56,7 @@ oc/client_mp/screen_placement_mp.cpp
 oc/snd.cpp
 oc/snd_utils.cpp
 oc/qcommon/statmonitor.cpp
+universal/surfaceflags.cpp
 server/sv_ccmds_mp.cpp
 server/sv_client_mp.cpp
 server/sv_game_mp.cpp
@@ -87,10 +89,8 @@ script/scr_parsetree.cpp
 script/scr_stringlist.cpp
 script/scr_tempmemory.cpp
 stringed/loc_dvars.cpp
-universal/com_file_wrapper.cpp
 universal/com_memory_high.cpp
 universal/dedicated_dvar.cpp
-universal/surfaceflags.cpp
 unknown/after_assertive.cpp
 unknown/after_bg_weapons_load_obj.cpp
 unknown/after_cm_polylib.cpp
