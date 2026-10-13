@@ -186,33 +186,6 @@ static void CG_ParseScores(void)
     }
 }
 
-static void CG_SetVoteStringFromConfigString(const char *configString)
-{
-    char converted[256];
-    int mapLoadNameLen;
-    const char *displayName;
-    int inPos;
-    int outPos;
-
-    inPos = 0;
-    outPos = 0;
-    do {
-        displayName = UI_GetMapDisplayNameFromPartialLoadNameMatch(configString + inPos, &mapLoadNameLen);
-        if (displayName) {
-            // retail bounds on inPos, not outPos
-            if (inPos < 256) {
-                for (; *displayName; displayName++)
-                    converted[outPos++] = *displayName;
-            }
-            inPos += mapLoadNameLen;
-        }
-        converted[outPos++] = configString[inPos];
-    } while (configString[inPos] && ++inPos < 256);
-
-    converted[255] = 0;
-    I_strncpyz(cgs->voteString, SEH_LocalizeTextMessage(converted, "vote string", (msgLocErrType_t)0), sizeof(cgs->voteString));
-}
-
 void CG_ParseServerinfo(void)
 {
     const char *info;
@@ -243,6 +216,187 @@ void CG_ParseCodinfo(void)
             break;
         }
         Dvar_SetFromStringByName(key, CL_GetConfigString(i + 0x60));
+    }
+}
+
+void CG_ParseFog(void)
+{
+    const char *info;
+    const char *token;
+    float halfDist, val3;
+    float start;
+    int r, g, b;
+    int transitionTime;
+
+    info = CL_GetConfigString(12);
+
+    token = Com_Parse(&info);
+    start = (float)atof(token);
+
+    token = Com_Parse(&info);
+    if (token == NULL || *token == '\0') {
+
+        CL_SwitchFog(0, cg->time, (int)start);
+        return;
+    }
+
+    halfDist = (float)atof(token);
+
+    val3 = (float)atof(Com_Parse(&info));
+    r = I_fround((float)atof(Com_Parse(&info)) * 255.0f);
+    g = I_fround((float)atof(Com_Parse(&info)) * 255.0f);
+    b = I_fround((float)atof(Com_Parse(&info)) * 255.0f);
+
+    token = Com_Parse(&info);
+    transitionTime = atoi(token);
+
+    CL_SetFog(1, start, halfDist, r, g, b, val3);
+
+    CL_SwitchFog(1, cg->time, transitionTime);
+}
+
+// retail 0x4ca770, unreferenced; Kisak CG_PrecacheScriptMenu (SUPPORTED)
+void CG_PrecacheScriptMenu(int iConfigNum)
+{
+    const char *configString;
+
+    configString = CL_GetConfigString(iConfigNum);
+    if (!*configString)
+        return;
+    if (!Load_ScriptMenu(configString, 7))
+        Com_Error(ERR_DROP, (const char *)"\x15"
+                                          "Could not load script menu file '%s'\n",
+                  configString);
+}
+
+// retail 0x4ca7c0, index in eax
+static void CG_RegisterConfigMaterial(int index)
+{
+    const char *str;
+
+    str = CL_GetConfigString(index);
+    if (*str) {
+        CL_RegisterMaterialNoMip(str, 7);
+    }
+}
+
+void CG_SetConfigValues(void)
+{
+    int i;
+    const char *str;
+
+    cgs->teamScores[0] = atoi(CL_GetConfigString(5));
+    cgs->teamScores[1] = atoi(CL_GetConfigString(6));
+    cgs->levelStartTime = atoi(CL_GetConfigString(13));
+
+    CL_SwitchFog(0, cg->time, 0);
+
+    for (i = 0x4de; i < 0x4fe; i++) {
+        str = CL_GetConfigString(i);
+        if (*str == '\0') {
+            continue;
+        }
+        if (!Load_ScriptMenu(str, 7)) {
+            Com_Error(ERR_DROP, (const char *)"\x15"
+                                              "Could not load script menu file '%s'\n",
+                      str);
+        }
+    }
+
+    for (i = 0x17; i < 0x1f; i++) {
+        CL_RegisterMaterialNoMip(CL_GetConfigString(i), 7);
+    }
+
+    for (i = 0x1f; i < 0x2e; i++) {
+        CL_RegisterMaterial(CL_GetConfigString(i), 7);
+    }
+
+    for (i = 0x61f; i < 0x69e; i++) {
+        str = CL_GetConfigString(i);
+        if (*str == '\0') {
+            continue;
+        }
+        CL_RegisterMaterialNoMip(str, 7);
+    }
+}
+
+static void CG_SetVoteStringFromConfigString(const char *configString)
+{
+    char converted[256];
+    int mapLoadNameLen;
+    const char *displayName;
+    int inPos;
+    int outPos;
+
+    inPos = 0;
+    outPos = 0;
+    do {
+        displayName = UI_GetMapDisplayNameFromPartialLoadNameMatch(configString + inPos, &mapLoadNameLen);
+        if (displayName) {
+            // retail bounds on inPos, not outPos
+            if (inPos < 256) {
+                for (; *displayName; displayName++)
+                    converted[outPos++] = *displayName;
+            }
+            inPos += mapLoadNameLen;
+        }
+        converted[outPos++] = configString[inPos];
+    } while (configString[inPos] && ++inPos < 256);
+
+    converted[255] = 0;
+    I_strncpyz(cgs->voteString, SEH_LocalizeTextMessage(converted, "vote string", (msgLocErrType_t)0), sizeof(cgs->voteString));
+}
+
+static void CG_ConfigStringModified(void)
+{
+    const char *str;
+    int num;
+
+    num = atoi(CG_Argv(1));
+    str = CL_GetConfigString(num);
+
+    if (num == 7) {
+        CG_SetupWeaponDef();
+    } else if (num == 8) {
+        CG_RegisterItems();
+    } else if (num == 3) {
+        CG_StartAmbient();
+    } else if (num == 0) {
+        CG_ParseServerinfo();
+    } else if (num >= 0x8e && num < 0x14e) {
+        CG_ParseCodinfo();
+    } else if (num == 5) {
+        cgs->teamScores[0] = atoi(str);
+    } else if (num == 6) {
+        cgs->teamScores[1] = atoi(str);
+    } else if (num == 13) {
+        cgs->levelStartTime = atoi(str);
+    } else if (num == 15) {
+        cgs->voteTime = atoi(str);
+    } else if (num == 17) {
+        cgs->voteYes = atoi(str);
+    } else if (num == 18) {
+        cgs->voteNo = atoi(str);
+    } else if (num == 16) {
+        CG_SetVoteStringFromConfigString(str);
+    } else if (num == 12) {
+        CG_ParseFog();
+    } else if (num >= 0x14e && num < 0x24e) {
+        cgs->gameModels[num - 0x14e] = CL_RegisterModel(str);
+    } else if (num >= 0x34e && num < 0x38e) {
+        cgs->fxs[num - 0x34e] = FX_RegisterEffect(str);
+    } else if (num >= 0x48e && num < 0x49e) {
+        if (*str && CG_LoadShellShockDvars(str)) {
+            CG_SetShellShockParmsFromDvars(&cgs->shellshockParms[num - 0x48e]);
+        }
+    } else if (num >= 0x17 && num < 0x1f) {
+        CL_RegisterMaterialNoMip(str, 7);
+    } else if (num >= 0x1f && num < 0x2e) {
+        CL_RegisterMaterial(str, 7);
+    } else if (num >= 0x61e && num < 0x69e) {
+        CG_RegisterConfigMaterial(num);
+    } else if (num == 11) {
+        CG_NorthDirectionChanged();
     }
 }
 
@@ -305,160 +459,6 @@ static void __attribute_regparm__(1) CG_AddToTeamChat(const char *str)
 
     if (cgs->teamChatPos - cgs->teamLastChatPos > chatHeight)
         cgs->teamLastChatPos = cgs->teamChatPos - chatHeight;
-}
-
-void CG_ParseFog(void)
-{
-    const char *info;
-    const char *token;
-    float halfDist, val3;
-    float start;
-    int r, g, b;
-    int transitionTime;
-
-    info = CL_GetConfigString(12);
-
-    token = Com_Parse(&info);
-    start = (float)atof(token);
-
-    token = Com_Parse(&info);
-    if (token == NULL || *token == '\0') {
-
-        CL_SwitchFog(0, cg->time, (int)start);
-        return;
-    }
-
-    halfDist = (float)atof(token);
-
-    val3 = (float)atof(Com_Parse(&info));
-    r = I_fround((float)atof(Com_Parse(&info)) * 255.0f);
-    g = I_fround((float)atof(Com_Parse(&info)) * 255.0f);
-    b = I_fround((float)atof(Com_Parse(&info)) * 255.0f);
-
-    token = Com_Parse(&info);
-    transitionTime = atoi(token);
-
-    CL_SetFog(1, start, halfDist, r, g, b, val3);
-
-    CL_SwitchFog(1, cg->time, transitionTime);
-}
-
-// retail 0x4ca7c0, index in eax
-static void CG_RegisterConfigMaterial(int index)
-{
-    const char *str;
-
-    str = CL_GetConfigString(index);
-    if (*str) {
-        CL_RegisterMaterialNoMip(str, 7);
-    }
-}
-
-// retail 0x4ca770, unreferenced; Kisak CG_PrecacheScriptMenu (SUPPORTED)
-void CG_PrecacheScriptMenu(int iConfigNum)
-{
-    const char *configString;
-
-    configString = CL_GetConfigString(iConfigNum);
-    if (!*configString)
-        return;
-    if (!Load_ScriptMenu(configString, 7))
-        Com_Error(ERR_DROP, (const char *)"\x15"
-                                          "Could not load script menu file '%s'\n",
-                  configString);
-}
-
-void CG_SetConfigValues(void)
-{
-    int i;
-    const char *str;
-
-    cgs->teamScores[0] = atoi(CL_GetConfigString(5));
-    cgs->teamScores[1] = atoi(CL_GetConfigString(6));
-    cgs->levelStartTime = atoi(CL_GetConfigString(13));
-
-    CL_SwitchFog(0, cg->time, 0);
-
-    for (i = 0x4de; i < 0x4fe; i++) {
-        str = CL_GetConfigString(i);
-        if (*str == '\0') {
-            continue;
-        }
-        if (!Load_ScriptMenu(str, 7)) {
-            Com_Error(ERR_DROP, (const char *)"\x15"
-                                              "Could not load script menu file '%s'\n",
-                      str);
-        }
-    }
-
-    for (i = 0x17; i < 0x1f; i++) {
-        CL_RegisterMaterialNoMip(CL_GetConfigString(i), 7);
-    }
-
-    for (i = 0x1f; i < 0x2e; i++) {
-        CL_RegisterMaterial(CL_GetConfigString(i), 7);
-    }
-
-    for (i = 0x61f; i < 0x69e; i++) {
-        str = CL_GetConfigString(i);
-        if (*str == '\0') {
-            continue;
-        }
-        CL_RegisterMaterialNoMip(str, 7);
-    }
-}
-
-static void CG_ConfigStringModified(void)
-{
-    const char *str;
-    int num;
-
-    num = atoi(CG_Argv(1));
-    str = CL_GetConfigString(num);
-
-    if (num == 7) {
-        CG_SetupWeaponDef();
-    } else if (num == 8) {
-        CG_RegisterItems();
-    } else if (num == 3) {
-        CG_StartAmbient();
-    } else if (num == 0) {
-        CG_ParseServerinfo();
-    } else if (num >= 0x8e && num < 0x14e) {
-        CG_ParseCodinfo();
-    } else if (num == 5) {
-        cgs->teamScores[0] = atoi(str);
-    } else if (num == 6) {
-        cgs->teamScores[1] = atoi(str);
-    } else if (num == 13) {
-        cgs->levelStartTime = atoi(str);
-    } else if (num == 15) {
-        cgs->voteTime = atoi(str);
-    } else if (num == 17) {
-        cgs->voteYes = atoi(str);
-    } else if (num == 18) {
-        cgs->voteNo = atoi(str);
-    } else if (num == 16) {
-        CG_SetVoteStringFromConfigString(str);
-    } else if (num == 12) {
-        CG_ParseFog();
-    } else if (num >= 0x14e && num < 0x24e) {
-        cgs->gameModels[num - 0x14e] = CL_RegisterModel(str);
-    } else if (num >= 0x34e && num < 0x38e) {
-        cgs->fxs[num - 0x34e] = FX_RegisterEffect(str);
-    } else if (num >= 0x48e && num < 0x49e) {
-        if (*str && CG_LoadShellShockDvars(str)) {
-            CG_SetShellShockParmsFromDvars(&cgs->shellshockParms[num - 0x48e]);
-        }
-    } else if (num >= 0x17 && num < 0x1f) {
-        CL_RegisterMaterialNoMip(str, 7);
-    } else if (num >= 0x1f && num < 0x2e) {
-        CL_RegisterMaterial(str, 7);
-    } else if (num >= 0x61e && num < 0x69e) {
-        CG_RegisterConfigMaterial(num);
-    } else if (num == 11) {
-        CG_NorthDirectionChanged();
-    }
 }
 
 void CG_MapRestart(qboolean savepersist)
@@ -748,44 +748,6 @@ void CG_HudMenuShowAllTimed(void)
     }
 }
 
-// retail 0x4cb820, unreferenced; name unknown
-void CG_SetObjectiveText_4cb820(const char *text)
-{
-    I_strncpyz(cg->objectiveText, text, sizeof(cg->objectiveText));
-}
-
-// retail 0x4cb840, unreferenced; name unknown
-void CG_SetDrawHud_4cb840(int drawHud)
-{
-    cg->drawHud = drawHud;
-}
-
-// retail 0x4cb850, unreferenced; name unknown
-void CG_SetScriptMainMenu_4cb850(const char *text)
-{
-    I_strncpyz(cg->scriptMainMenu, text, sizeof(cg->scriptMainMenu));
-}
-
-static void __attribute_regparm__(2) CG_SetClientDvarFromServer(const char *dvarname, const char *value)
-{
-    if (stricmp(dvarname, (const char *)"cg_objectiveText") == 0) {
-        I_strncpyz(cg->objectiveText, value, sizeof(cg->objectiveText));
-    } else if (stricmp(dvarname, (const char *)"cg_drawHud") == 0) {
-        int hud = atoi(value);
-        cg->drawHud = hud;
-    } else if (stricmp(dvarname, (const char *)"g_scriptMainMenu") == 0) {
-        I_strncpyz(cg->scriptMainMenu, value, sizeof(cg->scriptMainMenu));
-    } else {
-        Dvar_SetFromStringByName(dvarname, value);
-    }
-}
-
-// retail 0x4cb300, unreferenced; name unknown
-void CG_SetTeamScore_4cb300(int team, int score)
-{
-    cgs->teamScores[team] = score;
-}
-
 static void CG_RemoveChatEscapeChar(char *text)
 {
     int i;
@@ -799,6 +761,12 @@ static void CG_RemoveChatEscapeChar(char *text)
         text[l++] = text[i];
     }
     text[l] = 0;
+}
+
+// retail 0x4cb300, unreferenced; name unknown
+void CG_SetTeamScore_4cb300(int team, int score)
+{
+    cgs->teamScores[team] = score;
 }
 
 static void CG_ReverbCmd(void)
@@ -899,6 +867,38 @@ static void CG_LocalSoundCmd(void)
     }
 
     Com_Printf("ERROR: CG_LocalSound called with index %i (should be in range[1,%i])\n", soundIndex, 0x100);
+}
+
+// retail 0x4cb820, unreferenced; name unknown
+void CG_SetObjectiveText_4cb820(const char *text)
+{
+    I_strncpyz(cg->objectiveText, text, sizeof(cg->objectiveText));
+}
+
+// retail 0x4cb840, unreferenced; name unknown
+void CG_SetDrawHud_4cb840(int drawHud)
+{
+    cg->drawHud = drawHud;
+}
+
+// retail 0x4cb850, unreferenced; name unknown
+void CG_SetScriptMainMenu_4cb850(const char *text)
+{
+    I_strncpyz(cg->scriptMainMenu, text, sizeof(cg->scriptMainMenu));
+}
+
+static void __attribute_regparm__(2) CG_SetClientDvarFromServer(const char *dvarname, const char *value)
+{
+    if (stricmp(dvarname, (const char *)"cg_objectiveText") == 0) {
+        I_strncpyz(cg->objectiveText, value, sizeof(cg->objectiveText));
+    } else if (stricmp(dvarname, (const char *)"cg_drawHud") == 0) {
+        int hud = atoi(value);
+        cg->drawHud = hud;
+    } else if (stricmp(dvarname, (const char *)"g_scriptMainMenu") == 0) {
+        I_strncpyz(cg->scriptMainMenu, value, sizeof(cg->scriptMainMenu));
+    } else {
+        Dvar_SetFromStringByName(dvarname, value);
+    }
 }
 
 void CG_ServerCommand(void)
