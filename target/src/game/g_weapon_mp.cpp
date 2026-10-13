@@ -170,7 +170,7 @@ bool Melee_Trace( gentity_t *ent, weaponParms *wp, int damage, float range, floa
 		VectorMA(wp->muzzleTrace, range, wp->forward, endPos);
 
 		VectorMA(endPos, width * traceOffsets[traceIndex][0], wp->right, endPos);
-		VectorMA(endPos, height * traceOffsets[traceIndex][1], wp->up, endPos);
+		VectorMA(endPos, (height * traceOffsets[traceIndex][1]), wp->up, endPos);
 
 		G_LocationalTrace(traceResult, wp->muzzleTrace, endPos, ent->s.number, MASK_SHOT, bulletPriorityMap);
 		Vec3Lerp(wp->muzzleTrace, endPos, traceResult->fraction, hitOrigin);
@@ -267,7 +267,7 @@ void gunrandom( float *x, float *y )
 	theta = randomf() * 360;
 	r = randomf();
 
-	FastSinCos(theta * RADINDEG, &sinT, &cosT);
+	FastSinCos((theta * RADINDEG), &sinT, &cosT);
 
 	*x = r * cosT;
 	*y = r * sinT;

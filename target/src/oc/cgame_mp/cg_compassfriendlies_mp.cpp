@@ -442,7 +442,7 @@ void CG_DrawPlayerCompassPointers(const rectDef_t *rect, vec_t *color)
         }
         radius = cg_hudCompassSize->current.value * radius * 43.75;
 
-        FastSinCos(yaw * 0.017453292f, &s, &c);
+        FastSinCos((yaw * 0.017453292f), &s, &c);
         w = cg_hudCompassSize->current.value * 16.0f;
         x = centerX - w * 0.5f - s * radius;
         y = centerY - w * 0.5f - c * radius;

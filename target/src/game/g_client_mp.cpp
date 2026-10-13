@@ -119,7 +119,7 @@ void G_GetPlayerViewOrigin( gentity_t *ent, vec3_t origin )
 	xyspeed = BG_GetSpeed(&client->ps, level.time);
 
 	deltaVert = BG_GetVerticalBobFactor(&client->ps, fBobCycle, xyspeed, bg_bobMax->current.decimal);
-	origin[2] = origin[2] + deltaVert;
+	origin[2] = (origin[2] + deltaVert);
 
 	deltaHorz = BG_GetHorizontalBobFactor(&client->ps, fBobCycle, xyspeed, bg_bobMax->current.decimal);
 	G_GetPlayerViewDirection(ent, 0, vRight, 0);

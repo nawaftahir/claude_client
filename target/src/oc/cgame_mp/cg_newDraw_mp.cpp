@@ -892,7 +892,7 @@ void CG_DrawPlayerBarHealth(const rectDef_t *rect, MaterialHandle material, vec_
 
     if (cg->lastHealth > health)
     {
-        x = health * rect->w + rect->x;
+        x = (health * rect->w) + rect->x;
         y = rect->y;
         w = (cg->lastHealth - health) * rect->w;
         h = rect->h;

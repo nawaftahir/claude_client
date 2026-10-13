@@ -904,7 +904,7 @@ static void CG_DrawAdsOverlay(const WeaponDef *weapDef, int weapIndex, const flo
         CG_DrawFrameOverlay(drawPos[0], drawPos[0] + drawSize[0] * 2.0f,
                             drawPos[1], drawPos[1] + drawSize[1] * 2.0f, color, material);
     } else {
-        drawPos[0] = crosshairPos[0] - drawSize[0] * 0.5f;
+        drawPos[0] = (crosshairPos[0] - drawSize[0] * 0.5f);
         drawPos[1] = crosshairPos[1] - drawSize[1] * 0.5f;
         CL_DrawStretchPic(drawPos[0], drawPos[1], drawSize[0], drawSize[1], 2, 2,
                           0.0f, 0.0f, 1.0f, 1.0f, color, material);

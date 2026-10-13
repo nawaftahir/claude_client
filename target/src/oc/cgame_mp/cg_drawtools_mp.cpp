@@ -462,7 +462,7 @@ void CG_DrawRotatedPicPhysical(float x, float y, float width, float height, floa
     vec2_t verts[4];
     int i;
 
-    FastSinCos(angle * 0.017453292f, &s, &c);
+    FastSinCos((angle * 0.017453292f), &s, &c);
     halfW = width * 0.5f;
     halfH = height * 0.5f;
     center[0] = x + halfW;
@@ -485,7 +485,7 @@ void CG_DrawRotatedQuadPic(float x, float y, vec2_t *verts, float angle, const v
     vec2_t xy[4];
     int i;
 
-    FastSinCos(angle * 0.017453292f, &s, &c);
+    FastSinCos((angle * 0.017453292f), &s, &c);
     for (i = 0; i < 4; i++) {
         xy[i][0] = c * verts[i][0] + x; xy[i][0] = xy[i][0] - s * verts[i][1];
         xy[i][1] = s * verts[i][0] + c * verts[i][1] + y;

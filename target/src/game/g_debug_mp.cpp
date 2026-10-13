@@ -117,7 +117,7 @@ void G_DebugArc( const float *center, float radius, float angle0, float angle1, 
 
 	for ( i = 0; i < sizeof(verts) / sizeof(verts[0]); i++ )
 	{
-		angle = ( angle0 + i * angleStep ) * 0.017453292f;
+		angle = (( angle0 + i * angleStep ) * 0.017453292f);
 		FastSinCos(angle, &s, &c);
 		verts[i][0] = center[0] + c * radius;
 		verts[i][1] = center[1] + s * radius;

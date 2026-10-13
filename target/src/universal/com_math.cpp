@@ -2327,7 +2327,7 @@ void MatrixRotationX( vec3_t m[3], float angle )
 	float c;
 	float s;
 
-	FastSinCos(angle * 0.017453292519943295f, &s, &c);
+	FastSinCos((angle * 0.017453292519943295f), &s, &c);
 	m[0][0] = 1.0f;
 	m[0][1] = 0;
 	m[0][2] = 0;
@@ -3212,13 +3212,13 @@ void AxisToAngles( vec3_t axis[3], vec3_t angles )
 	VectorCopy( axis[1], right );
 
 	// get the angle difference between the tmpAxis[2] and axis[2] after they have been reverse-rotated
-	a = (-angles[YAW]) * 0.017453292519943295f;
+	a = ((-angles[YAW]) * 0.017453292519943295f);
 	FastSinCos(a, &fSin, &fCos);
 
 	temp = fCos * right[0] - fSin * right[1];
 	right[1] = fSin * right[0] + fCos * right[1];
 
-	a = (-angles[PITCH]) * 0.017453292519943295f;
+	a = ((-angles[PITCH]) * 0.017453292519943295f);
 	FastSinCos(a, &fSin, &fCos);
 
 	right[0] = (fSin * right[2]) + (fCos * temp);
@@ -3944,7 +3944,6 @@ void VectorRotate( const vec3_t vIn, const vec3_t vRotation, vec3_t out )
 	vec3_t va;
 	int nIndex[3][2];
 	int i;
-	double dAngle;
 	double s;
 	double c;
 
@@ -3962,7 +3961,6 @@ void VectorRotate( const vec3_t vIn, const vec3_t vRotation, vec3_t out )
 	{
 		if ( vRotation[i] != 0 )
 		{
-			;
 			SinCos((vRotation[i] * M_PI / 180.0), &s, &c);
 			vWork[nIndex[i][0]] = va[nIndex[i][0]] * c - va[nIndex[i][1]] * s;
 			vWork[nIndex[i][1]] = va[nIndex[i][0]] * s + va[nIndex[i][1]] * c;

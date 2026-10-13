@@ -354,7 +354,7 @@ bool Mantle_CheckLedge( pmove_t *pmove, pml_t *pml, MantleResults *mresults, flo
 	Mantle_DebugPrint(va("Checking for ledge at %f units", units));
 
 	VectorSet(mins, -m0, -m0, 0.0);
-	VectorSet(maxs, m0, m0, m0 * 2.0f);
+	VectorSet(maxs, m0, m0, (m0 * 2.0f));
 
 	VectorCopy(mresults->startPos, start);
 	start[2] = start[2] + units;

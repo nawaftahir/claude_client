@@ -839,7 +839,7 @@ void CG_EntityEvent(centity_t *cent, int event)
             {
                 int ep = eventParm;
                 int entStride = ep * 16 + ep;
-                entStride = ep + entStride * 8;
+                entStride = (ep + entStride * 8);
                 char *ents = (char *)cg_entities;
                 char *entData = ents + entStride * 4;
 

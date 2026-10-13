@@ -249,7 +249,7 @@ static void CG_PlayADSAnim(int animIndex, XAnimTree *pAnimTree)
     }
 
     XAnimSetTime(pAnimTree, 0x15, cg->predictedPlayerState.fWeaponPosFrac);
-    XAnimSetTime(pAnimTree, 0x16, 1.0f - cg->predictedPlayerState.fWeaponPosFrac);
+    XAnimSetTime(pAnimTree, 0x16, (1.0f - cg->predictedPlayerState.fWeaponPosFrac));
 }
 
 static void CG_PlayViewWeaponNotetrackSounds(void)
