@@ -53,6 +53,21 @@ void IN_Frame( void );
 */
 
 /*
+===========
+IN_DeactivateMouse
+
+Called when the window loses focus
+===========
+*/
+
+/*
+===========
+IN_Shutdown
+===========
+*/
+
+
+/*
 ================
 IN_ActivateWin32Mouse
 ================
@@ -84,6 +99,17 @@ static void IN_DeactivateWin32Mouse( void )
 
 	while ( ShowCursor( TRUE ) < 0 )
 		;
+}
+
+void IN_SetForegroundWindow( void )
+{
+	SetForegroundWindow( g_wv.hWnd );
+	SetFocus( g_wv.hWnd );
+}
+
+qboolean IN_IsForegroundWindow( void )
+{
+	return GetForegroundWindow() == g_wv.hWnd;
 }
 
 /*
@@ -143,37 +169,6 @@ void IN_ActivateMouse( qboolean force )
 
 	s_wmv.mouseActive = true;
 	IN_ActivateWin32Mouse();
-}
-
-/*
-===========
-IN_DeactivateMouse
-
-Called when the window loses focus
-===========
-*/
-void IN_DeactivateMouse( void )
-{
-	if ( !s_wmv.mouseInitialized )
-		return;
-
-	if ( !s_wmv.mouseActive )
-		return;
-
-	s_wmv.mouseActive = false;
-
-	IN_DeactivateWin32Mouse();
-}
-
-void IN_SetForegroundWindow( void )
-{
-	SetForegroundWindow( g_wv.hWnd );
-	SetFocus( g_wv.hWnd );
-}
-
-qboolean IN_IsForegroundWindow( void )
-{
-	return GetForegroundWindow() == g_wv.hWnd;
 }
 
 /*
@@ -257,16 +252,6 @@ void IN_Startup( void )
 
 /*
 ===========
-IN_Shutdown
-===========
-*/
-void IN_Shutdown( void )
-{
-	IN_DeactivateMouse();
-}
-
-/*
-===========
 IN_Init
 ===========
 */
@@ -332,3 +317,19 @@ void IN_ClearStates( void )
 	s_wmv.oldButtonState = 0;
 }
 
+void IN_DeactivateMouse( void )
+{
+	if ( !s_wmv.mouseInitialized )
+		return;
+
+	if ( !s_wmv.mouseActive )
+		return;
+
+	s_wmv.mouseActive = false;
+
+	IN_DeactivateWin32Mouse();
+}
+void IN_Shutdown( void )
+{
+	IN_DeactivateMouse();
+}

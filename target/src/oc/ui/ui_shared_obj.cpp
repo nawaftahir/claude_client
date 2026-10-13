@@ -188,6 +188,31 @@ qboolean PC_Int_Parse(int handle, int *i);
 static bool Menu_New(int handle, int imageTrack);
 static Bool __attribute_regparm__(2) UI_ParseMenuInternal(const char *menuFile, int imageTrack);
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // Name from CoD4; original CoD2 name unknown.
 static void UI_ParseMenuMaterial(const char *key, const char *value)
 {
@@ -288,6 +313,19 @@ qboolean PC_Float_Parse(int handle, float *f)
     return 1;
 }
 
+qboolean PC_Color_Parse(int handle, float (*c)[4])
+{
+    int i;
+    float f;
+
+    for (i = 0; i < 4; i++) {
+        if (!PC_Float_Parse(handle, &f))
+            return 0;
+        (*c)[i] = f;
+    }
+    return 1;
+}
+
 // name unconfirmed; PC_Int_Parse on the current line only
 qboolean PC_Int_ParseLine(int handle, int *i)
 {
@@ -311,43 +349,6 @@ qboolean PC_Int_ParseLine(int handle, int *i)
         *i = -*i;
     return 1;
 }
-
-qboolean PC_Color_Parse(int handle, float (*c)[4])
-{
-    int i;
-    float f;
-
-    for (i = 0; i < 4; i++) {
-        if (!PC_Float_Parse(handle, &f))
-            return 0;
-        (*c)[i] = f;
-    }
-    return 1;
-}
-
-qboolean PC_Int_Parse(int handle, int *i)
-{
-    pc_token_t token;
-    int negative;
-
-    if (!PC_ReadTokenHandle(handle, &token))
-        return 0;
-    negative = 0;
-    if (token.string[0] == '-') {
-        if (!PC_ReadTokenHandle(handle, &token))
-            return 0;
-        negative = 1;
-    }
-    if (token.type != 3) {
-        PC_SourceError(handle, "expected integer but found %s\n", token.string);
-        return 0;
-    }
-    *i = token.intvalue;
-    if (negative)
-        *i = -*i;
-    return 1;
-}
-
 qboolean PC_Rect_Parse(int handle, rectDef_t *r)
 {
     if (PC_Float_Parse(handle, &r->x) && PC_Float_Parse(handle, &r->y) && PC_Float_Parse(handle, &r->w) && PC_Float_Parse(handle, &r->h))
@@ -525,16 +526,6 @@ void Item_InitControls(const char (*item)[4])
     ListBox_SetEndPos(listPtr, 0);
 }
 
-qboolean ItemParse_name(itemDef_t *item, int handle)
-{
-    pc_token_t token;
-
-    if (!PC_ReadTokenHandle(handle, &token))
-        return 0;
-    item->window.name = String_Alloc(token.string);
-    return 1;
-}
-
 qboolean MenuParse_fullscreen(const char (*item)[4], int handle)
 {
     if (!PC_Int_Parse(handle, (int *)&((menuDef_t *)item)->fullScreen))
@@ -553,48 +544,10 @@ qboolean MenuParse_rect(const char (*item)[4], int handle)
     return 1;
 }
 
-qboolean MenuParse_borderSize(const char (*item)[4], int handle)
-{
-    if (!PC_Float_Parse(handle, (float *)&((itemDef_t *)item)->window.borderSize))
-        return 0;
-    return 1;
-}
-
 qboolean MenuParse_style(const char (*item)[4], int handle)
 {
     if (!PC_Int_Parse(handle, (int *)&((itemDef_t *)item)->window.style))
         return 0;
-    return 1;
-}
-
-qboolean MenuParse_visible(const char (*item)[4], int handle)
-{
-    int visible;
-
-    if (!PC_Int_Parse(handle, &visible))
-        return 0;
-
-    if (visible)
-        ((itemDef_t *)item)->window.dynamicFlags[0] |= 4;
-
-    return 1;
-}
-
-qboolean MenuParse_border(const char (*item)[4], int handle)
-{
-    if (!PC_Int_Parse(handle, (int *)&((itemDef_t *)item)->window.border))
-        return 0;
-    return 1;
-}
-
-qboolean MenuParse_ownerdrawFlag(const char (*item)[4], int handle)
-{
-    int flags;
-
-    if (!PC_Int_Parse(handle, &flags))
-        return 0;
-
-    ((itemDef_t *)item)->window.ownerDrawFlags |= flags;
     return 1;
 }
 
@@ -623,20 +576,6 @@ qboolean MenuParse_backcolor(const char (*item)[4], int handle)
         if (!PC_Float_Parse(handle, &f))
             return 0;
         menu->window.backColor[i] = f;
-    }
-    return 1;
-}
-
-qboolean MenuParse_forecolor(const char (*item)[4], int handle)
-{
-    int i;
-    float f;
-
-    for (i = 0; i < 4; i++) {
-        if (!PC_Float_Parse(handle, &f))
-            return 0;
-        ((itemDef_t *)item)->window.foreColor[i] = f;
-        ((itemDef_t *)item)->window.dynamicFlags[0] |= 0x10000;
     }
     return 1;
 }
@@ -696,31 +635,6 @@ qboolean MenuParse_background(const char (*item)[4], int handle)
     return 1;
 }
 
-qboolean MenuParse_cinematic(menuDef_t *menu, int handle)
-{
-    if (!PC_String_Parse(handle, &menu->window.cinematicName))
-        return 0;
-    return 1;
-}
-
-qboolean ItemParse_cinematic(itemDef_t *item, int handle)
-{
-    if (!PC_String_Parse(handle, &item->window.cinematicName))
-        return 0;
-    return 1;
-}
-
-qboolean ItemParse_ownerdrawFlag(const char (*item)[4], int handle)
-{
-    int flags;
-
-    if (!PC_Int_Parse(handle, &flags))
-        return 0;
-
-    ((itemDef_t *)item)->window.ownerDrawFlags |= flags;
-    return 1;
-}
-
 qboolean MenuParse_ownerdraw(const char (*item)[4], int handle)
 {
     if (!PC_Int_Parse(handle, (int *)&((itemDef_t *)item)->window.ownerDraw))
@@ -749,34 +663,6 @@ qboolean MenuParse_soundLoop(const char (*item)[4], int handle)
     if (token.string[0])
         ((menuDef_t *)item)->soundName = String_Alloc(token.string);
     return 1;
-}
-
-void __attribute_regparm__(2) Item_ValidateTypeData(itemDef_t *item, int handle)
-{
-    editFieldDef_t *editPtr;
-
-    if (item->typeData.data) {
-        if (item->dataType != item->type) {
-            PC_SourceError(handle,
-                           "Attempting to change type from %d to %d.\nMove the type definition higher up in the itemDef.\n",
-                           item->dataType, item->type);
-        }
-        return;
-    }
-    item->dataType = item->type;
-    if (item->type == 6) {
-        item->typeData.listBox = (listBoxDef_t *)UI_Alloc(sizeof(listBoxDef_t), 4);
-    } else if (item->type == 4 || item->type == 9 || item->type == 16 || item->type == 18 || item->type == 11
-               || item->type == 14 || item->type == 10 || item->type == 0 || item->type == 17) {
-        item->typeData.editField = (editFieldDef_t *)UI_Alloc(sizeof(editFieldDef_t), 4);
-        if (item->type == 4 || item->type == 16 || item->type == 9 || item->type == 18 || item->type == 17) {
-            editPtr = Item_GetEditFieldDef(item);
-            if (!editPtr->maxPaintChars)
-                editPtr->maxPaintChars = 256;
-        }
-    } else if (item->type == 12) {
-        item->typeData.multi = (multiDef_t *)UI_Alloc(sizeof(multiDef_t), 4);
-    }
 }
 
 qboolean MenuParse_fadeClamp(const char (*item)[4], int handle)
@@ -883,15 +769,6 @@ qboolean MenuParse_legacySplitScreenScale(const char (*item)[4], int handle)
     return 1;
 }
 
-void Menu_SetupKeywordHash(void)
-{
-    int i;
-
-    memset(menuParseKeywordHash, 0, sizeof(menuParseKeywordHash));
-    for (i = 0; menuParseKeywords[i].keyword; i++)
-        KeywordHash_Add(menuParseKeywordHash, &menuParseKeywords[i]);
-}
-
 // name from KisakCOD; 1.0 has no buffer-size check
 char *UI_FileText(const char *fileName)
 {
@@ -905,6 +782,34 @@ char *UI_FileText(const char *fileName)
     menuBuf1[len] = 0;
     FS_FCloseFile(f);
     return menuBuf1;
+}
+
+void __attribute_regparm__(2) Item_ValidateTypeData(itemDef_t *item, int handle)
+{
+    editFieldDef_t *editPtr;
+
+    if (item->typeData.data) {
+        if (item->dataType != item->type) {
+            PC_SourceError(handle,
+                           "Attempting to change type from %d to %d.\nMove the type definition higher up in the itemDef.\n",
+                           item->dataType, item->type);
+        }
+        return;
+    }
+    item->dataType = item->type;
+    if (item->type == 6) {
+        item->typeData.listBox = (listBoxDef_t *)UI_Alloc(sizeof(listBoxDef_t), 4);
+    } else if (item->type == 4 || item->type == 9 || item->type == 16 || item->type == 18 || item->type == 11
+               || item->type == 14 || item->type == 10 || item->type == 0 || item->type == 17) {
+        item->typeData.editField = (editFieldDef_t *)UI_Alloc(sizeof(editFieldDef_t), 4);
+        if (item->type == 4 || item->type == 16 || item->type == 9 || item->type == 18 || item->type == 17) {
+            editPtr = Item_GetEditFieldDef(item);
+            if (!editPtr->maxPaintChars)
+                editPtr->maxPaintChars = 256;
+        }
+    } else if (item->type == 12) {
+        item->typeData.multi = (multiDef_t *)UI_Alloc(sizeof(multiDef_t), 4);
+    }
 }
 
 qboolean ItemParse_focusSound(const char (*item)[4], int handle)
@@ -963,22 +868,6 @@ qboolean ItemParse_rect(const char (*item)[4], int handle)
         return 0;
 
     Window_SetRectClient((Window *)item, &rectClient);
-    return 1;
-}
-
-qboolean ItemParse_origin(const char (*item)[4], int handle)
-{
-    UiRectangle newRect;
-    int x, y;
-
-    if (!PC_Int_Parse(handle, &x))
-        return 0;
-    if (!PC_Int_Parse(handle, &y))
-        return 0;
-    newRect = ((Window *)item)->rectClient[0];
-    newRect.x = x + newRect.x;
-    newRect.y = y + newRect.y;
-    Window_SetRectClient((Window *)item, &newRect);
     return 1;
 }
 
@@ -1080,20 +969,6 @@ qboolean ItemParse_elementheight(const char (*item)[4], int handle)
     return 1;
 }
 
-qboolean ItemParse_feeder(const char (*item)[4], int handle)
-{
-    if (!PC_Float_Parse(handle, (float *)&((itemDef_t *)item)->special))
-        return 0;
-    return 1;
-}
-
-qboolean ItemParse_bordersize(const char (*item)[4], int handle)
-{
-    if (!PC_Float_Parse(handle, (float *)&((itemDef_t *)item)->window.borderSize))
-        return 0;
-    return 1;
-}
-
 qboolean ItemParse_elementtype(const char (*item)[4], int handle)
 {
     itemDef_t *itemDef = (itemDef_t *)item;
@@ -1141,24 +1016,6 @@ qboolean ItemParse_columns(const char (*item)[4], int handle)
             return 0;
         }
     }
-    return 1;
-}
-
-qboolean ItemParse_border(const char (*item)[4], int handle)
-{
-    if (!PC_Int_Parse(handle, (int *)&((itemDef_t *)item)->window.border))
-        return 0;
-    return 1;
-}
-
-qboolean ItemParse_visible(const char (*item)[4], int handle)
-{
-    int visible;
-
-    if (!PC_Int_Parse(handle, &visible))
-        return 0;
-    if (visible)
-        ((itemDef_t *)item)->window.dynamicFlags[0] |= 4;
     return 1;
 }
 
@@ -1235,20 +1092,6 @@ qboolean ItemParse_backcolor(const char (*item)[4], int handle)
     return 1;
 }
 
-qboolean ItemParse_forecolor(const char (*item)[4], int handle)
-{
-    int i;
-    float f;
-
-    for (i = 0; i < 4; i++) {
-        if (!PC_Float_Parse(handle, &f))
-            return 0;
-        ((itemDef_t *)item)->window.foreColor[i] = f;
-        ((itemDef_t *)item)->window.dynamicFlags[0] |= 0x10000;
-    }
-    return 1;
-}
-
 qboolean ItemParse_bordercolor(const char (*item)[4], int handle)
 {
     int i;
@@ -1259,13 +1102,6 @@ qboolean ItemParse_bordercolor(const char (*item)[4], int handle)
             return 0;
         ((itemDef_t *)item)->window.borderColor[i] = f;
     }
-    return 1;
-}
-
-qboolean ItemParse_special(const char (*item)[4], int handle)
-{
-    if (!PC_Float_Parse(handle, (float *)&((itemDef_t *)item)->special))
-        return 0;
     return 1;
 }
 
@@ -1532,20 +1368,6 @@ qboolean ItemParse_dvarEnumList(const char (*item)[4], int handle)
     return PC_String_Parse(handle, (const char **)&itemDef->typeData.data);
 }
 
-qboolean ItemParse_outlinecolor(const char (*item)[4], int handle)
-{
-    if (!PC_Color_Parse(handle, &((itemDef_t *)item)->window.outlineColor))
-        return 0;
-    return 1;
-}
-
-qboolean MenuParse_outlinecolor(const char (*item)[4], int handle)
-{
-    if (!PC_Color_Parse(handle, &((itemDef_t *)item)->window.outlineColor))
-        return 0;
-    return 1;
-}
-
 qboolean ItemParse_enableDvar(const char (*item)[4], int handle)
 {
     if (PC_Script_Parse(handle, (const char **)&((itemDef_t *)item)->enableDvar)) {
@@ -1629,15 +1451,6 @@ qboolean ItemParse_execKeyInt(const char (*item)[4], int handle)
     handler->next = (intptr_t)itemDef->onKey;
     itemDef->onKey = handler;
     return 1;
-}
-
-void Item_SetupKeywordHash(void)
-{
-    int i;
-
-    memset(itemParseKeywordHash, 0, sizeof(itemParseKeywordHash));
-    for (i = 0; itemParseKeywords[i].keyword; i++)
-        KeywordHash_Add(itemParseKeywordHash, &itemParseKeywords[i]);
 }
 
 static qboolean UI_ParseAssetGlobalDef(int handle, int imageTrack)
@@ -1795,31 +1608,6 @@ static qboolean UI_ParseAssetGlobalDef(int handle, int imageTrack)
     }
 }
 
-static Bool __attribute_regparm__(2) UI_ParseMenuInternal(const char *menuFile, int imageTrack)
-{
-    int handle;
-    pc_token_t token;
-
-    Com_Printf("\tLoading '%s'...\n", menuFile);
-
-    handle = PC_LoadSourceHandle(menuFile);
-    if (!handle)
-        return 0;
-
-    while (PC_ReadTokenHandle(handle, &token) && token.string[0] != '}') {
-        if (!I_stricmp(token.string, "assetGlobalDef")) {
-            if (!UI_ParseAssetGlobalDef(handle, imageTrack))
-                break;
-        } else if (!I_stricmp(token.string, "menudef")) {
-            if (!Menu_New(handle, imageTrack))
-                break;
-        }
-    }
-
-    PC_FreeSourceHandle(handle);
-    return 1;
-}
-
 qboolean Menu_Parse(int handle, menuDef_t *menu)
 {
     pc_token_t token;
@@ -1889,13 +1677,28 @@ static bool Menu_New(int handle, int imageTrack)
     return true;
 }
 
-qboolean MenuParse_name(menuDef_t *menu, int handle)
+static Bool __attribute_regparm__(2) UI_ParseMenuInternal(const char *menuFile, int imageTrack)
 {
+    int handle;
     pc_token_t token;
 
-    if (!PC_ReadTokenHandle(handle, &token))
+    Com_Printf("\tLoading '%s'...\n", menuFile);
+
+    handle = PC_LoadSourceHandle(menuFile);
+    if (!handle)
         return 0;
-    menu->window.name = String_Alloc(token.string);
+
+    while (PC_ReadTokenHandle(handle, &token) && token.string[0] != '}') {
+        if (!I_stricmp(token.string, "assetGlobalDef")) {
+            if (!UI_ParseAssetGlobalDef(handle, imageTrack))
+                break;
+        } else if (!I_stricmp(token.string, "menudef")) {
+            if (!Menu_New(handle, imageTrack))
+                break;
+        }
+    }
+
+    PC_FreeSourceHandle(handle);
     return 1;
 }
 
@@ -2005,7 +1808,205 @@ MenuList *UI_LoadMenus(const char *menuFile, int imageTrack)
     return &g_load.menuList;
 }
 
+qboolean PC_Int_Parse(int handle, int *i)
+{
+    pc_token_t token;
+    int negative;
 
+    if (!PC_ReadTokenHandle(handle, &token))
+        return 0;
+    negative = 0;
+    if (token.string[0] == '-') {
+        if (!PC_ReadTokenHandle(handle, &token))
+            return 0;
+        negative = 1;
+    }
+    if (token.type != 3) {
+        PC_SourceError(handle, "expected integer but found %s\n", token.string);
+        return 0;
+    }
+    *i = token.intvalue;
+    if (negative)
+        *i = -*i;
+    return 1;
+}
+qboolean ItemParse_name(itemDef_t *item, int handle)
+{
+    pc_token_t token;
+
+    if (!PC_ReadTokenHandle(handle, &token))
+        return 0;
+    item->window.name = String_Alloc(token.string);
+    return 1;
+}
+qboolean MenuParse_borderSize(const char (*item)[4], int handle)
+{
+    if (!PC_Float_Parse(handle, (float *)&((itemDef_t *)item)->window.borderSize))
+        return 0;
+    return 1;
+}
+qboolean MenuParse_visible(const char (*item)[4], int handle)
+{
+    int visible;
+
+    if (!PC_Int_Parse(handle, &visible))
+        return 0;
+
+    if (visible)
+        ((itemDef_t *)item)->window.dynamicFlags[0] |= 4;
+
+    return 1;
+}
+qboolean MenuParse_border(const char (*item)[4], int handle)
+{
+    if (!PC_Int_Parse(handle, (int *)&((itemDef_t *)item)->window.border))
+        return 0;
+    return 1;
+}
+qboolean MenuParse_ownerdrawFlag(const char (*item)[4], int handle)
+{
+    int flags;
+
+    if (!PC_Int_Parse(handle, &flags))
+        return 0;
+
+    ((itemDef_t *)item)->window.ownerDrawFlags |= flags;
+    return 1;
+}
+qboolean MenuParse_forecolor(const char (*item)[4], int handle)
+{
+    int i;
+    float f;
+
+    for (i = 0; i < 4; i++) {
+        if (!PC_Float_Parse(handle, &f))
+            return 0;
+        ((itemDef_t *)item)->window.foreColor[i] = f;
+        ((itemDef_t *)item)->window.dynamicFlags[0] |= 0x10000;
+    }
+    return 1;
+}
+qboolean MenuParse_cinematic(menuDef_t *menu, int handle)
+{
+    if (!PC_String_Parse(handle, &menu->window.cinematicName))
+        return 0;
+    return 1;
+}
+qboolean ItemParse_cinematic(itemDef_t *item, int handle)
+{
+    if (!PC_String_Parse(handle, &item->window.cinematicName))
+        return 0;
+    return 1;
+}
+qboolean ItemParse_ownerdrawFlag(const char (*item)[4], int handle)
+{
+    int flags;
+
+    if (!PC_Int_Parse(handle, &flags))
+        return 0;
+
+    ((itemDef_t *)item)->window.ownerDrawFlags |= flags;
+    return 1;
+}
+void Menu_SetupKeywordHash(void)
+{
+    int i;
+
+    memset(menuParseKeywordHash, 0, sizeof(menuParseKeywordHash));
+    for (i = 0; menuParseKeywords[i].keyword; i++)
+        KeywordHash_Add(menuParseKeywordHash, &menuParseKeywords[i]);
+}
+qboolean ItemParse_origin(const char (*item)[4], int handle)
+{
+    UiRectangle newRect;
+    int x, y;
+
+    if (!PC_Int_Parse(handle, &x))
+        return 0;
+    if (!PC_Int_Parse(handle, &y))
+        return 0;
+    newRect = ((Window *)item)->rectClient[0];
+    newRect.x = x + newRect.x;
+    newRect.y = y + newRect.y;
+    Window_SetRectClient((Window *)item, &newRect);
+    return 1;
+}
+qboolean ItemParse_feeder(const char (*item)[4], int handle)
+{
+    if (!PC_Float_Parse(handle, (float *)&((itemDef_t *)item)->special))
+        return 0;
+    return 1;
+}
+qboolean ItemParse_bordersize(const char (*item)[4], int handle)
+{
+    if (!PC_Float_Parse(handle, (float *)&((itemDef_t *)item)->window.borderSize))
+        return 0;
+    return 1;
+}
+qboolean ItemParse_border(const char (*item)[4], int handle)
+{
+    if (!PC_Int_Parse(handle, (int *)&((itemDef_t *)item)->window.border))
+        return 0;
+    return 1;
+}
+qboolean ItemParse_visible(const char (*item)[4], int handle)
+{
+    int visible;
+
+    if (!PC_Int_Parse(handle, &visible))
+        return 0;
+    if (visible)
+        ((itemDef_t *)item)->window.dynamicFlags[0] |= 4;
+    return 1;
+}
+qboolean ItemParse_forecolor(const char (*item)[4], int handle)
+{
+    int i;
+    float f;
+
+    for (i = 0; i < 4; i++) {
+        if (!PC_Float_Parse(handle, &f))
+            return 0;
+        ((itemDef_t *)item)->window.foreColor[i] = f;
+        ((itemDef_t *)item)->window.dynamicFlags[0] |= 0x10000;
+    }
+    return 1;
+}
+qboolean ItemParse_special(const char (*item)[4], int handle)
+{
+    if (!PC_Float_Parse(handle, (float *)&((itemDef_t *)item)->special))
+        return 0;
+    return 1;
+}
+qboolean ItemParse_outlinecolor(const char (*item)[4], int handle)
+{
+    if (!PC_Color_Parse(handle, &((itemDef_t *)item)->window.outlineColor))
+        return 0;
+    return 1;
+}
+qboolean MenuParse_outlinecolor(const char (*item)[4], int handle)
+{
+    if (!PC_Color_Parse(handle, &((itemDef_t *)item)->window.outlineColor))
+        return 0;
+    return 1;
+}
+void Item_SetupKeywordHash(void)
+{
+    int i;
+
+    memset(itemParseKeywordHash, 0, sizeof(itemParseKeywordHash));
+    for (i = 0; itemParseKeywords[i].keyword; i++)
+        KeywordHash_Add(itemParseKeywordHash, &itemParseKeywords[i]);
+}
+qboolean MenuParse_name(menuDef_t *menu, int handle)
+{
+    pc_token_t token;
+
+    if (!PC_ReadTokenHandle(handle, &token))
+        return 0;
+    menu->window.name = String_Alloc(token.string);
+    return 1;
+}
 static keywordHash_t menuParseKeywords[] = {
     { (char *)"name", (qboolean(*)())&MenuParse_name, 0x0 },
     { (char *)"fullscreen", (qboolean(*)())&MenuParse_fullscreen, 0x0 },

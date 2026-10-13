@@ -112,44 +112,6 @@ void PM_AddTouchEnt( pmove_t *pm, int entityNum );
 float PM_GetViewHeightLerp(const pmove_t *pm, int iFromHeight, int iToHeight);
 void PM_UpdateLean(playerState_t *ps, float msec, usercmd_t *cmd, void (*capsuleTrace)(trace_t *, const float *, const float *, const float *, const float *, int, int));
 
-/*
-===============
-PM_trace
-===============
-*/
-void PM_trace( pmove_t *pm, trace_t *results, const vec3_t start,
-               const vec3_t mins, const vec3_t maxs, const vec3_t end,
-               int passEntityNum, int contentMask )
-{
-	pmoveHandlers[pm->handler].trace(results, start, mins, maxs, end, passEntityNum, contentMask);
-}
-
-/*
-===============
-PM_playerTrace
-===============
-*/
-void PM_playerTrace( pmove_t *pm, trace_t *results, const vec3_t start,
-                     const vec3_t mins, const vec3_t maxs, const vec3_t end,
-                     int passEntityNum, int contentMask )
-{
-	pmoveHandlers[pm->handler].trace(results, start, mins, maxs, end, passEntityNum, contentMask);
-
-	if ( !results->startsolid )
-	{
-		return;
-	}
-
-	if ( !(results->contents & CONTENTS_BODY) )
-	{
-		return;
-	}
-
-	PM_AddTouchEnt(pm, results->entityNum);
-	pm->tracemask &= ~CONTENTS_BODY;
-	pmoveHandlers[pm->handler].trace(results, start, mins, maxs, end, passEntityNum, contentMask & ~CONTENTS_BODY);
-}
-
 void PM_AddEvent( playerState_t *ps, int newEvent );
 void PM_AddTouchEnt( pmove_t *pm, int entityNum );
 void PM_ClipVelocity( const vec3_t in, const vec3_t normal, vec3_t out );
@@ -204,85 +166,88 @@ void Pmove( pmove_t *pmove );
 float BG_GetSpeed( const playerState_t *ps, int iTime );
 
 /*
-==================
-PM_UpdateLean
-==================
+==============
+PM_Accelerate
+
+Handles user intended acceleration
+==============
 */
-void PM_UpdateLean(playerState_t *ps, float msec, usercmd_t *cmd,
-	void (*capsuleTrace)(trace_t *, const float *, const float *, const float *, const float *, int, int))
+
+/*
+==============
+PM_CheckDuck
+
+Sets mins, maxs, and pm->ps->viewheight
+==============
+*/
+
+/*
+===============
+PM_FootstepEvent
+===============
+*/
+
+/*
+===============
+PM_Footsteps
+===============
+*/
+
+/*
+================
+PM_UpdateViewAngles
+
+This can be used as another entry point when only the viewangles
+are being updated isntead of a full move
+
+	!! NOTE !! Any changes to mounted/prone view should be duplicated in BotEntityWithinView()
+================
+*/
+
+
+/*
+================
+PM_SetLadderFlag
+================
+*/
+
+
+/*
+===============
+PM_trace
+===============
+*/
+void PM_trace( pmove_t *pm, trace_t *results, const vec3_t start,
+               const vec3_t mins, const vec3_t maxs, const vec3_t end,
+               int passEntityNum, int contentMask )
 {
-	vec3_t start;
-	vec3_t end;
-	vec3_t tmins;
-	vec3_t tmaxs;
-	int leaning;
-	float leanofs;
-	trace_t trace;
-	float fLeanMax;
-	int stance;
-	float fLean;
-	leaning = 0;
-	leanofs = 0;
-	if ((cmd->buttons & (BUTTON_LEANLEFT | BUTTON_LEANRIGHT)) && !(ps->pm_flags & PMF_FROZEN) && ps->pm_type < 6
-		&& (ps->groundEntityNum != ENTITYNUM_NONE || ps->pm_type == PM_NORMAL_LINKED))
+	pmoveHandlers[pm->handler].trace(results, start, mins, maxs, end, passEntityNum, contentMask);
+}
+
+/*
+===============
+PM_playerTrace
+===============
+*/
+void PM_playerTrace( pmove_t *pm, trace_t *results, const vec3_t start,
+                     const vec3_t mins, const vec3_t maxs, const vec3_t end,
+                     int passEntityNum, int contentMask )
+{
+	pmoveHandlers[pm->handler].trace(results, start, mins, maxs, end, passEntityNum, contentMask);
+
+	if ( !results->startsolid )
 	{
-		if (cmd->buttons & BUTTON_LEANLEFT)
-			leaning--;
-		if (cmd->buttons & BUTTON_LEANRIGHT)
-			leaning++;
+		return;
 	}
-	if (ps->eFlags & 0x300)
-		leaning = 0;
-	stance = PM_GetEffectiveStance(ps);
-	if (stance == PM_EFF_STANCE_PRONE)
-		fLeanMax = 0.25;
-	else
-		fLeanMax = 0.5;
-	leanofs = ps->leanf;
-	if (!leaning)
+
+	if ( !(results->contents & CONTENTS_BODY) )
 	{
-		if (leanofs > 0)
-		{
-			leanofs = leanofs - fLeanMax * (msec / 280.0f);
-			if (leanofs < 0)
-				leanofs = 0;
-		}
-		else if (leanofs < 0)
-		{
-			leanofs = fLeanMax * (msec / 280.0f) + leanofs;
-			if (leanofs > 0)
-				leanofs = 0;
-		}
+		return;
 	}
-	else if (leaning > 0)
-	{
-		if (leanofs < fLeanMax)
-			leanofs = fLeanMax * (msec / 350.0f) + leanofs;
-		if (leanofs > fLeanMax)
-			leanofs = fLeanMax;
-	}
-	else
-	{
-		if (leanofs > -fLeanMax)
-			leanofs = leanofs - fLeanMax * (msec / 350.0f);
-		if (leanofs < -fLeanMax)
-			leanofs = -fLeanMax;
-	}
-	ps->leanf = leanofs;
-	if (ps->leanf != 0)
-	{
-	fLean = FloatSign(ps->leanf);
-	VectorCopy(ps->origin, start);
-	start[2] = start[2] + ps->viewHeightCurrent;
-	VectorCopy(start, end);
-	AddLeanToPosition(end, ps->viewangles[1], fLean, 16.0, 20.0);
-	VectorSet(tmins, -8.0, -8.0, -8.0);
-	VectorSet(tmaxs, 8.0, 8.0, 8.0);
-	capsuleTrace(&trace, start, tmins, tmaxs, end, ps->clientNum, MASK_PLAYERSOLID);
-	fLean = UnGetLeanFraction(trace.fraction);
-	if (I_fabs(ps->leanf) > fLean)
-		ps->leanf = fLean * FloatSign(ps->leanf);
-	}
+
+	PM_AddTouchEnt(pm, results->entityNum);
+	pm->tracemask &= ~CONTENTS_BODY;
+	pmoveHandlers[pm->handler].trace(results, start, mins, maxs, end, passEntityNum, contentMask & ~CONTENTS_BODY);
 }
 
 /*
@@ -497,54 +462,6 @@ float PM_PlayerInertia( playerState_t *ps, float accelspeed, const vec3_t wishdi
 	}
 
 	return inertiaMax->current.decimal;
-}
-
-/*
-==============
-PM_Accelerate
-
-Handles user intended acceleration
-==============
-*/
-void PM_Accelerate( playerState_t *ps, const pml_t *pml, vec3_t wishdir, float wishspeed, float accel )
-{
-	float addspeed;
-	float accelspeed;
-	float currentspeed;
-	float canPush;
-	float control;
-	vec3_t wishVelocity;
-	vec3_t pushDir;
-
-	if ( !(ps->pm_flags & PMF_LADDER) )
-	{
-		currentspeed = DotProduct(ps->velocity, wishdir);
-		addspeed = wishspeed - currentspeed;
-
-		if ( addspeed <= 0 )
-			return;
-
-		control = wishspeed < stopspeed->current.decimal ? stopspeed->current.decimal : wishspeed;
-		accelspeed = accel * pml->frametime * control;
-
-		if ( accelspeed > addspeed )
-			accelspeed = addspeed;
-
-		canPush = PM_PlayerInertia(ps, accelspeed, wishdir);
-		VectorMA(ps->velocity, canPush, wishdir, ps->velocity);
-	}
-	else
-	{
-		VectorScale(wishdir, wishspeed, wishVelocity);
-		VectorSubtract(wishVelocity, ps->velocity, pushDir);
-		control = Vec3Normalize(pushDir);
-		canPush = accel * pml->frametime * wishspeed;
-
-		if ( canPush > control )
-			canPush = control;
-
-		VectorMA(ps->velocity, canPush, pushDir, ps->velocity);
-	}
 }
 
 /*
@@ -2130,387 +2047,6 @@ void PM_ViewHeightAdjust( pmove_t *pm, pml_t *pml )
 }
 
 /*
-==============
-PM_CheckDuck
-
-Sets mins, maxs, and pm->ps->viewheight
-==============
-*/
-void PM_CheckDuck( pmove_t *pm, pml_t *pml )
-{
-	qboolean bWasProne;
-	qboolean bWasStanding;
-	trace_t trace;
-	int iStance;
-	playerState_t *ps;
-	vec3_t vPoint;
-	float delta;
-	vec3_t vEnd;
-
-	assert(pm);
-	ps = pm->ps;
-	assert(ps);
-
-	pm->proneChange = qfalse;
-
-	if ( ps->pm_type == PM_SPECTATOR )
-	{
-		// Ridah, modified this for configurable bounding boxes
-		pm->mins[0] = -8.0;
-		pm->mins[1] = -8.0;
-		pm->mins[2] = -8.0;
-
-		pm->maxs[0] = 8.0;
-		pm->maxs[1] = 8.0;
-		pm->maxs[2] = 16.0;
-
-		ps->pm_flags &= ~(PMF_PRONE | PMF_DUCKED);
-
-		if ( pm->cmd.buttons & BUTTON_PRONE )
-		{
-			pm->cmd.buttons &= ~BUTTON_PRONE;
-			BG_AddPredictableEventToPlayerstate(EV_STANCE_FORCE_STAND, 0, ps);
-		}
-
-		ps->viewHeightTarget = 0;
-		ps->viewHeightCurrent = 0;
-
-		return;
-	}
-
-	bWasProne = ps->pm_flags & PMF_PRONE ? qtrue : qfalse;
-	bWasStanding = !(ps->pm_flags & (PMF_PRONE | PMF_DUCKED));
-
-	// Ridah, modified this for configurable bounding boxes
-	pm->mins[0] = ps->mins[0];
-	pm->mins[1] = ps->mins[1];
-
-	pm->maxs[0] = ps->maxs[0];
-	pm->maxs[1] = ps->maxs[1];
-
-	pm->mins[2] = ps->mins[2];
-
-	if ( ps->pm_type >= PM_DEAD )
-	{
-		pm->maxs[2] = ps->maxs[2];  // NOTE: must set death bounding box in game code
-		ps->viewHeightTarget = DEAD_VIEWHEIGHT;
-		PM_ViewHeightAdjust(pm, pml);
-		return;
-	}
-
-	if ( ps->eFlags & EF_TURRET_ACTIVE )
-	{
-		if ( ps->eFlags & EF_TURRET_PRONE && !(ps->eFlags & EF_TURRET_DUCK) )
-		{
-			ps->pm_flags |= PMF_PRONE;
-			ps->pm_flags &= ~PMF_DUCKED;
-		}
-		else
-		{
-			if ( ps->eFlags & EF_TURRET_DUCK && !(ps->eFlags & EF_TURRET_PRONE) )
-			{
-				ps->pm_flags |= PMF_DUCKED;
-				ps->pm_flags &= ~PMF_PRONE;
-			}
-			else
-			{
-				ps->pm_flags &= ~(PMF_PRONE | PMF_DUCKED);
-			}
-		}
-	}
-	else if ( ps->pm_flags & PMF_FROZEN )
-	{
-	}
-	else
-	{
-		if ( ps->pm_flags & PMF_LADDER && pm->cmd.buttons & (BUTTON_PRONE | BUTTON_CROUCH) )
-		{
-			pm->cmd.buttons &= ~(BUTTON_PRONE | BUTTON_CROUCH);
-			BG_AddPredictableEventToPlayerstate(EV_STANCE_FORCE_STAND, 0, ps);
-		}
-
-		if ( pm->cmd.buttons & BUTTON_PRONE )
-		{
-			if ( ps->pm_flags & PMF_PRONE || ps->groundEntityNum != ENTITYNUM_NONE
-			        && BG_CheckProne( ps->clientNum, ps->origin, pm->maxs[0], 30.0,
-			                          ps->viewangles[YAW], &ps->fTorsoHeight, &ps->fTorsoPitch, &ps->fWaistPitch,
-			                          qfalse, ps->groundEntityNum != ENTITYNUM_NONE, NULL, pm->handler, PCT_CLIENT, 66.0) )
-			{
-				ps->pm_flags |= PMF_PRONE;
-				ps->pm_flags &= ~PMF_DUCKED;
-			}
-			else if ( ps->groundEntityNum != ENTITYNUM_NONE )
-			{
-				ps->pm_flags |= PMF_PRONE_BLOCKED;
-
-				if ( !(pm->cmd.buttons & BUTTON_CANNOT_PRONE) )
-				{
-					if ( ps->pm_flags & PMF_DUCKED)
-						BG_AddPredictableEventToPlayerstate(EV_STANCE_FORCE_CROUCH, 0, ps);
-					else
-						BG_AddPredictableEventToPlayerstate(EV_STANCE_FORCE_STAND, 0, ps);
-				}
-			}
-		}
-		else if ( pm->cmd.buttons & BUTTON_CROUCH )
-		{
-			if ( ps->pm_flags & PMF_PRONE )
-			{
-				pm->maxs[2] = 50.0;
-				pmoveHandlers[pm->handler].trace(&trace, ps->origin, pm->mins, pm->maxs, ps->origin, ps->clientNum, pm->tracemask & ~CONTENTS_BODY);
-
-				if ( !trace.allsolid )
-				{
-					BG_AnimScriptEvent(ps, ANIM_ET_PRONE_TO_CROUCH, qfalse, qfalse);
-
-					ps->pm_flags &= ~PMF_PRONE;
-					ps->pm_flags |= PMF_DUCKED;
-				}
-				else
-				{
-					if ( !(pm->cmd.buttons & BUTTON_CANNOT_PRONE) )
-					{
-						BG_AddPredictableEventToPlayerstate(EV_STANCE_FORCE_PRONE, 2, ps);
-					}
-				}
-			}
-			else
-			{
-				BG_AnimScriptEvent(ps, ANIM_ET_STAND_TO_CROUCH, qfalse, qfalse);
-				ps->pm_flags |= PMF_DUCKED;
-			}
-		}
-		else if ( ps->pm_flags & PMF_PRONE )
-		{
-			pm->maxs[2] = ps->maxs[2];
-			pmoveHandlers[pm->handler].trace(&trace, ps->origin, pm->mins, pm->maxs, ps->origin, ps->clientNum, pm->tracemask & ~CONTENTS_BODY);
-
-			if ( !trace.allsolid )
-			{
-				BG_AnimScriptEvent(ps, ANIM_ET_PRONE_TO_STAND, qfalse, qfalse);
-				ps->pm_flags &= ~(PMF_PRONE | PMF_DUCKED);
-			}
-			else
-			{
-				pm->maxs[2] = 50.0;
-				pmoveHandlers[pm->handler].trace(&trace, ps->origin, pm->mins, pm->maxs, ps->origin, ps->clientNum, pm->tracemask & ~CONTENTS_BODY);
-
-				if ( !trace.allsolid )
-				{
-					ps->pm_flags &= ~PMF_PRONE;
-					ps->pm_flags |= PMF_DUCKED;
-				}
-				else
-				{
-					if ( !(pm->cmd.buttons & BUTTON_CANNOT_PRONE) )
-					{
-						BG_AddPredictableEventToPlayerstate(EV_STANCE_FORCE_PRONE, 1, ps);
-					}
-				}
-			}
-		}
-		else if ( ps->pm_flags & PMF_DUCKED )
-		{
-			pm->maxs[2] = ps->maxs[2];
-			pmoveHandlers[pm->handler].trace(&trace, ps->origin, pm->mins, pm->maxs, ps->origin, ps->clientNum, pm->tracemask & ~CONTENTS_BODY);
-
-			if ( !trace.allsolid )
-			{
-				BG_AnimScriptEvent(ps, ANIM_ET_CROUCH_TO_STAND, qfalse, qfalse);
-				ps->pm_flags &= ~PMF_DUCKED;
-			}
-			else
-			{
-				if ( !(pm->cmd.buttons & BUTTON_CANNOT_PRONE) )
-				{
-					BG_AddPredictableEventToPlayerstate(EV_STANCE_FORCE_CROUCH, 1, ps);
-				}
-			}
-		}
-	}
-
-	if ( !ps->viewHeightLerpTime )
-	{
-		if ( ps->pm_flags & PMF_PRONE )
-		{
-			if ( ps->viewHeightTarget == DEFAULT_VIEWHEIGHT )
-			{
-				ps->viewHeightTarget = CROUCH_VIEWHEIGHT;
-			}
-			else if ( ps->viewHeightTarget != PRONE_VIEWHEIGHT )
-			{
-				ps->viewHeightTarget = PRONE_VIEWHEIGHT;
-				pm->proneChange = qtrue;
-
-				BG_PlayAnim(ps, ANIM_MT_UNUSED, ANIM_BP_TORSO, 0, qfalse, qtrue, qtrue);
-				Jump_ActivateSlowdown(ps);
-			}
-		}
-		else if ( ps->viewHeightTarget == PRONE_VIEWHEIGHT )
-		{
-			ps->viewHeightTarget = CROUCH_VIEWHEIGHT;
-			pm->proneChange = qtrue;
-
-			BG_PlayAnim(ps, ANIM_MT_UNUSED, ANIM_BP_TORSO, 0, qfalse, qtrue, qtrue);
-		}
-		else if ( ps->pm_flags & PMF_DUCKED )
-		{
-			ps->viewHeightTarget = CROUCH_VIEWHEIGHT;
-		}
-		else
-		{
-			ps->viewHeightTarget = DEFAULT_VIEWHEIGHT;
-		}
-	}
-
-	PM_ViewHeightAdjust(pm, pml);
-	iStance = PM_GetEffectiveStance(ps);
-
-	if ( iStance == PM_EFF_STANCE_PRONE )
-	{
-		pm->maxs[2] = 30.0;
-
-		ps->eFlags |= EF_PRONE;
-		ps->eFlags &= ~EF_CROUCH;
-
-		ps->pm_flags |= PMF_PRONE;
-		ps->pm_flags &= ~PMF_DUCKED;
-	}
-	else
-	{
-		if ( iStance == PM_EFF_STANCE_CROUCH )
-		{
-			pm->maxs[2] = 50.0;
-
-			ps->eFlags |= EF_CROUCH;
-			ps->eFlags &= ~EF_PRONE;
-
-			ps->pm_flags |= PMF_DUCKED;
-			ps->pm_flags &= ~PMF_PRONE;
-		}
-		else
-		{
-			pm->maxs[2] = ps->maxs[2];
-
-			ps->eFlags &= ~(EF_CROUCH | EF_PRONE);
-			ps->pm_flags = ps->pm_flags & ~(PMF_PRONE | PMF_DUCKED);
-		}
-	}
-
-	if ( ps->pm_flags & PMF_PRONE && !bWasProne )
-	{
-		if ( pm->cmd.forwardmove || pm->cmd.rightmove )
-		{
-			ps->pm_flags &= ~PMF_ADS_OVERRIDE;
-			PM_ExitAimDownSight(ps);
-		}
-
-		VectorCopy(ps->origin, vEnd);
-		vEnd[2] = vEnd[2] + 10.0f;
-
-		pmoveHandlers[pm->handler].trace(&trace, ps->origin, pm->mins, pm->maxs, vEnd, ps->clientNum, pm->tracemask & ~CONTENTS_BODY);
-
-		Vec3Lerp(ps->origin, vEnd, trace.fraction, vEnd);
-		pmoveHandlers[pm->handler].trace(&trace, vEnd, pm->mins, pm->maxs, ps->origin, ps->clientNum, pm->tracemask & ~CONTENTS_BODY);
-
-		Vec3Lerp(vEnd, ps->origin, trace.fraction, ps->origin);
-		ps->proneDirection = ps->viewangles[YAW];
-
-		VectorCopy(ps->origin, vPoint);
-		vPoint[2] = vPoint[2] - 0.25f;
-
-		pmoveHandlers[pm->handler].trace(&trace, ps->origin, pm->mins, pm->maxs, vPoint, ps->clientNum, pm->tracemask & ~CONTENTS_BODY);
-
-		if ( !trace.startsolid && trace.fraction < 1.0f )
-			ps->proneDirectionPitch = PitchForYawOnNormal(ps->proneDirection, trace.normal);
-		else
-			ps->proneDirectionPitch = 0;
-
-		delta = AngleDelta(ps->proneDirectionPitch, ps->viewangles[PITCH]);
-
-		if ( delta < -45.0f )
-			ps->proneTorsoPitch = ps->viewangles[PITCH] - 45.0f;
-		else if ( delta > 45.0f )
-			ps->proneTorsoPitch = ps->viewangles[PITCH] + 45.0f;
-		else
-			ps->proneTorsoPitch = ps->proneDirectionPitch;
-	}
-}
-
-/*
-===============
-PM_FootstepEvent
-===============
-*/
-void PM_FootstepEvent( pmove_t *pm, pml_t *pml, int iOldBobCycle, int iNewBobCycle, qboolean bFootStep )
-{
-	playerState_t *ps;
-	int iSurfaceType;
-	int iClipMask;
-	int iClientNum;
-	float fTraceDist;
-	vec3_t mins;
-	vec3_t maxs;
-	vec3_t vEnd;
-	trace_t trace;
-
-	ps = pm->ps;
-	assert(ps);
-
-	if ( ( ( iOldBobCycle + 64 ) ^ ( iNewBobCycle + 64 ) ) & 128 )
-	{
-		if ( ps->groundEntityNum == ENTITYNUM_NONE )
-		{
-			if ( bFootStep )
-			{
-				if ( ps->pm_flags & PMF_LADDER )
-				{
-					VectorCopy(pm->mins, mins);
-
-					mins[0] = mins[0] + 6.0f;
-					mins[1] = mins[1] + 6.0f;
-					mins[2] = 8.0f;
-
-					VectorCopy(pm->maxs, maxs);
-
-					maxs[0] = maxs[0] - 6.0f;
-					maxs[1] = maxs[1] - 6.0f;
-
-					if ( maxs[2] < mins[2] )
-					{
-						maxs[2] = mins[2];
-					}
-
-					assert(maxs[0] >= mins[0]);
-					assert(maxs[1] >= mins[1]);
-					assert(maxs[2] >= mins[2]);
-
-					iClipMask = pm->tracemask & ~( CONTENTS_BODY | CONTENTS_PLAYERCLIP );
-					iClientNum = ps->clientNum;
-					fTraceDist = -31.0f;
-
-					VectorMA(ps->origin, fTraceDist, ps->vLadderVec, vEnd);
-
-					PM_playerTrace(pm, &trace, ps->origin, mins, maxs, vEnd, iClientNum, iClipMask);
-					iSurfaceType = (byte)( ( trace.surfaceFlags & ( 0x1f << SURF_START_BIT ) ) >> SURF_START_BIT );
-
-					if ( trace.fraction == 1.0f || !iSurfaceType )
-					{
-						iSurfaceType = SURF_TYPE_WOOD;
-					}
-
-					PM_AddEvent(ps, iSurfaceType + 1);
-				}
-			}
-		}
-		else if ( bFootStep )
-		{
-			PM_AddEvent(ps, PM_FootstepForSurface(ps, pml));
-		}
-	}
-}
-
-/*
 ===============
 PM_ShouldMakeFootsteps
 ===============
@@ -2575,480 +2111,6 @@ int PM_GetFlinchAnim( float yaw )
 	}
 
 	return ANIM_MT_FLINCH_RIGHT;
-}
-
-/*
-===============
-PM_Footsteps
-===============
-*/
-void PM_Footsteps( pmove_t *pm, pml_t *pml )
-{
-	float bobmove;
-	int old;
-	int footstep;
-	int iStance;
-	float scale;
-	float lerpFrac;
-	playerState_t *ps;
-	int stumbleTime;
-	int stumble_end_time;
-	int flinchTime;
-	int flinch_end_time;
-	int flinchAnim;
-	clientInfo_t *ci;
-	int turnAdjust;
-	int animResult;
-	qboolean walking;
-
-	ps = pm->ps;
-	animResult = -1;
-
-	if ( ps->pm_type >= PM_DEAD )
-	{
-		return;
-	}
-
-	if ( ps->clientNum < MAX_CLIENTS )
-	{
-		ci = &bgs->clientinfo[ps->clientNum];
-	}
-	else
-	{
-		ci = NULL;
-	}
-
-	stumbleTime = player_dmgtimer_stumbleTime->current.integer;
-	stumble_end_time = ps->damageDuration - stumbleTime;
-
-	if ( stumble_end_time < 0 )
-	{
-		stumble_end_time = 0;
-	}
-
-	flinchTime = player_dmgtimer_flinchTime->current.integer;
-	flinch_end_time = ps->damageDuration - flinchTime;
-
-	if ( flinch_end_time < 0 )
-	{
-		flinch_end_time = 0;
-	}
-
-	//
-	// calculate speed and cycle to be used for
-	// all cyclic walking effects
-	//
-	pm->xyspeed = I_sqrt( Square(ps->velocity[0]) + Square(ps->velocity[1]) );
-
-	// mg42, always idle
-	if ( ps->eFlags & EF_TURRET_ACTIVE )
-	{
-		if ( ps->pm_flags & PMF_PRONE )
-		{
-			BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_IDLEPRONE, qtrue);
-			return;
-		}
-
-		if ( ps->pm_flags & PMF_DUCKED )
-		{
-			BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_IDLECR, qtrue);
-			return;
-		}
-
-		BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_IDLE, qtrue);
-		return;
-	}
-
-	iStance = PM_GetEffectiveStance(ps);
-
-	// in the air
-	if ( ps->groundEntityNum == ENTITYNUM_NONE && ps->pm_type != PM_NORMAL_LINKED )
-	{
-		if ( ps->pm_flags & PMF_LADDER ) // on ladder
-		{
-			float fLadderSpeed;
-
-			if ( pm->cmd.serverTime - ps->jumpTime < 300 )
-			{
-				return;
-			}
-
-			fLadderSpeed = ps->velocity[2];
-			scale = (0.5 * 1.5) * 127.0;
-
-			if ( (ps->pm_flags & PMF_ADS_WALK) || ps->leanf != 0 )
-			{
-				bobmove = ( fLadderSpeed / ( scale * 0.40000001f ) ) * 0.34999999f;
-			}
-			else
-			{
-				bobmove = ( fLadderSpeed / scale ) * 0.44999999f;
-			}
-
-			if ( fLadderSpeed >= 0.0f )
-			{
-				animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_CLIMBUP, qtrue);
-			}
-			else
-			{
-				animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_CLIMBDOWN, qtrue);
-			}
-
-			// check for footstep / splash sounds
-			old = ps->bobCycle;
-			ps->bobCycle = (int)( old + pml->msec * bobmove ) & 255;
-			PM_FootstepEvent(pm, pml, old, ps->bobCycle, qtrue);
-		}
-
-		if ( iStance == (ps->pm_flags & ( PMF_DUCKED | PMF_PRONE) ) )
-		{
-			return;
-		}
-	}
-
-	walking = (ps->pm_flags & PMF_ADS_WALK) || ps->leanf != 0;
-
-	// if not trying to move
-	if ( pm->xyspeed < player_moveThreshhold->current.decimal || ps->pm_type == PM_NORMAL_LINKED )
-	{
-		if ( pm->xyspeed < 1 )
-		{
-			ps->bobCycle = 0; // start at beginning of cycle again
-		}
-
-		turnAdjust = ANIM_MT_UNUSED;
-
-		if ( ci && player_turnAnims->current.boolean )
-		{
-			if ( ci->turnAnimType && ci->turnAnimEndTime )
-			{
-				Com_DPrintf("turn anim end time is %i, time is %i\n", ci->turnAnimEndTime, bgs->time);
-			}
-
-			if ( ci->legs.yawing )
-			{
-				if ( ci->legs.yawAngle > ci->torso.yawAngle )
-					turnAdjust = ANIM_MT_TURNRIGHT;
-				else
-					turnAdjust = ANIM_MT_TURNLEFT;
-
-				ci->legs.yawAngle = ci->torso.yawAngle;
-				ci->turnAnimType = turnAdjust;
-
-				if ( ci->turnAnimEndTime < bgs->time )
-				{
-					ci->turnAnimEndTime = 0;
-				}
-			}
-			else
-			{
-				if ( ci->turnAnimEndTime > bgs->time )
-				{
-					turnAdjust = ci->turnAnimType;
-					ci->legs.yawAngle = ci->torso.yawAngle;
-					return;
-				}
-
-				if ( ci->turnAnimEndTime )
-				{
-					ci->turnAnimEndTime = 0;
-					ci->legs.yawAngle = ci->torso.yawAngle;
-				}
-			}
-		}
-
-		if ( ps->viewHeightTarget == PRONE_VIEWHEIGHT )
-		{
-			animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_IDLEPRONE, qtrue);
-		}
-		else if ( ps->viewHeightTarget == CROUCH_VIEWHEIGHT )
-		{
-			if ( turnAdjust == ANIM_MT_TURNRIGHT )
-			{
-				animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_TURNRIGHTCR, qtrue);
-
-				if ( animResult > 0 && !ci->turnAnimEndTime )
-				{
-					ci->turnAnimEndTime = bgs->time + ps->legsAnimDuration;
-				}
-			}
-			else if ( turnAdjust == ANIM_MT_TURNLEFT )
-			{
-				animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_TURNLEFTCR, qtrue);
-
-				if ( animResult > 0 && !ci->turnAnimEndTime )
-				{
-					ci->turnAnimEndTime = bgs->time + ps->legsAnimDuration;
-				}
-			}
-			else
-			{
-				animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_IDLECR, qtrue);
-			}
-		}
-		else if ( turnAdjust == ANIM_MT_TURNRIGHT )
-		{
-			animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_TURNRIGHT, qtrue);
-
-			if ( animResult > 0 && !ci->turnAnimEndTime )
-			{
-				ci->turnAnimEndTime = bgs->time + ps->legsAnimDuration;
-			}
-		}
-		else if ( turnAdjust == ANIM_MT_TURNLEFT )
-		{
-			animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_TURNLEFT, qtrue);
-
-			if ( animResult > 0 && !ci->turnAnimEndTime )
-			{
-				ci->turnAnimEndTime = bgs->time + ps->legsAnimDuration;
-			}
-		}
-		else
-		{
-			if ( ps->damageTimer > stumble_end_time )
-			{
-				flinchAnim = PM_GetFlinchAnim(ps->flinchYaw);
-				animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, flinchAnim, qtrue);
-				return;
-			}
-
-			animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_IDLE, qtrue);
-		}
-
-		if ( animResult < 0 )
-		{
-			if ( ps->viewHeightTarget == CROUCH_VIEWHEIGHT )
-			{
-				animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_IDLECR, qtrue);
-				return;
-			}
-
-			if ( ps->damageTimer > stumble_end_time )
-			{
-				animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_FLINCH_FORWARD, qtrue);
-				return;
-			}
-
-			animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_IDLE, qtrue);
-			return;
-		}
-
-		return;
-	}
-
-	scale = ps->speed;
-
-	if ( pm->cmd.forwardmove )
-	{
-		if ( pm->cmd.rightmove )
-		{
-			scale = ( ( ( ( player_strafeSpeedScale->current.decimal - 1.0f ) * 0.75f + 1.0f ) + 1.0f ) * scale ) * 0.5f;
-
-			if ( pm->cmd.forwardmove < 0 )
-			{
-				scale = (player_backSpeedScale->current.decimal + 1.0f) * 0.5f * scale;
-			}
-		}
-		else if ( pm->cmd.forwardmove < 0 )
-		{
-			scale = scale * player_backSpeedScale->current.decimal;
-		}
-
-		BG_UpdateConditionValue(ps->clientNum, ANIM_COND_STRAFING, LEANING_NOT, qtrue);
-	}
-	else if ( pm->cmd.rightmove )
-	{
-		scale = ((player_strafeSpeedScale->current.decimal - 1.0f) * 0.75f + 1.0f) * scale;
-
-		if ( pm->cmd.rightmove > 0 )
-			BG_UpdateConditionValue(ps->clientNum, ANIM_COND_STRAFING, LEANING_RIGHT, qtrue);
-		else
-			BG_UpdateConditionValue(ps->clientNum, ANIM_COND_STRAFING, LEANING_LEFT, qtrue);
-	}
-
-	if ( walking )
-	{
-		scale = scale * 0.40000001f;
-	}
-
-	lerpFrac = PM_GetViewHeightLerp(pm, CROUCH_VIEWHEIGHT, PRONE_VIEWHEIGHT);
-
-	if ( lerpFrac != 0 )
-	{
-		scale = (lerpFrac * 0.15000001f + (1.0f - lerpFrac) * 0.64999998f) * scale;
-	}
-	else
-	{
-		lerpFrac = PM_GetViewHeightLerp(pm, PRONE_VIEWHEIGHT, CROUCH_VIEWHEIGHT);
-
-		if ( lerpFrac != 0 )
-		{
-			scale = (lerpFrac * 0.64999998f + (1.0f - lerpFrac) * 0.15000001f) * scale;
-		}
-		else if ( iStance == PM_EFF_STANCE_PRONE )
-		{
-			scale = scale * 0.15000001f;
-		}
-		else if ( iStance == PM_EFF_STANCE_CROUCH )
-		{
-			scale = scale * 0.64999998f;
-		}
-	}
-
-	if ( iStance == PM_EFF_STANCE_PRONE )
-	{
-		if ( walking )
-			bobmove = pm->xyspeed / scale * 0.23999999f;
-		else
-			bobmove = pm->xyspeed / scale * 0.25f;
-
-		if ( ps->pm_flags & PMF_BACKWARDS_RUN )
-			animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_WALKPRONEBK, qtrue);
-		else
-			animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_WALKPRONE, qtrue);
-	}
-	else if ( iStance == PM_EFF_STANCE_CROUCH )
-	{
-		if ( walking )
-			bobmove = pm->xyspeed / scale * 0.315f;
-		else
-			bobmove = pm->xyspeed / scale * 0.34f;
-
-		if ( ps->pm_flags & PMF_BACKWARDS_RUN )
-		{
-			if ( walking )
-			{
-				if ( ps->damageTimer > stumble_end_time )
-				{
-					animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_STUMBLE_CROUCH_BACKWARD, qtrue);
-					goto footstep;
-				}
-
-				animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_WALKCRBK, qtrue);
-				goto footstep;
-			}
-			else
-			{
-				if ( ps->damageTimer > stumble_end_time )
-				{
-					animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_STUMBLE_CROUCH_BACKWARD, qtrue);
-					goto footstep;
-				}
-
-				animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_RUNCRBK, qtrue);
-				goto footstep;
-			}
-		}
-		else
-		{
-			if ( walking )
-			{
-				if ( ps->damageTimer > stumble_end_time )
-				{
-					animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_STUMBLE_CROUCH_FORWARD, qtrue);
-					goto footstep;
-				}
-
-				animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_WALKCR, qtrue);
-				goto footstep;
-			}
-			else
-			{
-				if ( ps->damageTimer > stumble_end_time )
-				{
-					animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_STUMBLE_CROUCH_FORWARD, qtrue);
-					goto footstep;
-				}
-
-				animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_RUNCR, qtrue);
-				goto footstep;
-			}
-		}
-	}
-	else if ( ps->pm_flags & PMF_BACKWARDS_RUN )
-	{
-		if ( walking )
-		{
-			bobmove = pm->xyspeed / scale * 0.32499999f;
-
-			if ( ps->damageTimer > stumble_end_time )
-				animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_STUMBLE_WALK_BACKWARD, qtrue);
-			else
-				animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_WALKBK, qtrue);
-		}
-		else
-		{
-			bobmove = pm->xyspeed / scale * 0.36000001f;
-
-			if ( ps->damageTimer > stumble_end_time )
-				animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_STUMBLE_BACKWARD, qtrue);
-			else
-				animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_RUNBK, qtrue);
-		}
-	}
-	else if ( walking )
-	{
-		bobmove = pm->xyspeed / scale * 0.30500001f;
-
-		if ( ps->damageTimer > stumble_end_time )
-			animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_STUMBLE_WALK_FORWARD, qtrue);
-		else
-			animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_WALK, qtrue);
-	}
-	else
-	{
-		bobmove = pm->xyspeed / scale * 0.33500001f;
-
-		if ( ps->damageTimer > stumble_end_time )
-			animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_STUMBLE_FORWARD, qtrue);
-		else
-			animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_RUN, qtrue);
-	}
-
-footstep:
-	// check for footstep / splash sounds
-	footstep = PM_ShouldMakeFootsteps(pm);
-	old = ps->bobCycle;
-	ps->bobCycle = (int)( old + pml->msec * bobmove ) & 255;
-
-	if ( !pm->cmd.forwardmove && !pm->cmd.rightmove )
-	{
-		if ( pm->xyspeed > 120.0f )
-		{
-			return; // continue what they were doing last frame, until we stop
-		}
-
-		if ( ps->viewHeightTarget == PRONE_VIEWHEIGHT )
-		{
-			animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_IDLEPRONE, qtrue);
-		}
-		else if ( ps->viewHeightTarget == CROUCH_VIEWHEIGHT )
-		{
-			animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_IDLECR, qtrue);
-		}
-
-		if ( animResult < 0 )
-		{
-			if ( ps->damageTimer > stumble_end_time )
-			{
-				animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_FLINCH_FORWARD, qtrue);
-				return;
-			}
-
-			animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_IDLE, qtrue);
-			return;
-		}
-
-		return;
-	}
-
-	if ( animResult < 0 )
-	{
-		animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_IDLE, qtrue);
-	}
-
-	PM_FootstepEvent(pm, pml, old, ps->bobCycle, footstep);
 }
 
 /*
@@ -3147,6 +2209,88 @@ static void PM_DropTimers( playerState_t *ps, pml_t *pml )
 }
 
 /*
+==================
+PM_UpdateLean
+==================
+*/
+void PM_UpdateLean(playerState_t *ps, float msec, usercmd_t *cmd,
+	void (*capsuleTrace)(trace_t *, const float *, const float *, const float *, const float *, int, int))
+{
+	vec3_t start;
+	vec3_t end;
+	vec3_t tmins;
+	vec3_t tmaxs;
+	int leaning;
+	float leanofs;
+	trace_t trace;
+	float fLeanMax;
+	int stance;
+	float fLean;
+	leaning = 0;
+	leanofs = 0;
+	if ((cmd->buttons & (BUTTON_LEANLEFT | BUTTON_LEANRIGHT)) && !(ps->pm_flags & PMF_FROZEN) && ps->pm_type < 6
+		&& (ps->groundEntityNum != ENTITYNUM_NONE || ps->pm_type == PM_NORMAL_LINKED))
+	{
+		if (cmd->buttons & BUTTON_LEANLEFT)
+			leaning--;
+		if (cmd->buttons & BUTTON_LEANRIGHT)
+			leaning++;
+	}
+	if (ps->eFlags & 0x300)
+		leaning = 0;
+	stance = PM_GetEffectiveStance(ps);
+	if (stance == PM_EFF_STANCE_PRONE)
+		fLeanMax = 0.25;
+	else
+		fLeanMax = 0.5;
+	leanofs = ps->leanf;
+	if (!leaning)
+	{
+		if (leanofs > 0)
+		{
+			leanofs = leanofs - fLeanMax * (msec / 280.0f);
+			if (leanofs < 0)
+				leanofs = 0;
+		}
+		else if (leanofs < 0)
+		{
+			leanofs = fLeanMax * (msec / 280.0f) + leanofs;
+			if (leanofs > 0)
+				leanofs = 0;
+		}
+	}
+	else if (leaning > 0)
+	{
+		if (leanofs < fLeanMax)
+			leanofs = fLeanMax * (msec / 350.0f) + leanofs;
+		if (leanofs > fLeanMax)
+			leanofs = fLeanMax;
+	}
+	else
+	{
+		if (leanofs > -fLeanMax)
+			leanofs = leanofs - fLeanMax * (msec / 350.0f);
+		if (leanofs < -fLeanMax)
+			leanofs = -fLeanMax;
+	}
+	ps->leanf = leanofs;
+	if (ps->leanf != 0)
+	{
+	fLean = FloatSign(ps->leanf);
+	VectorCopy(ps->origin, start);
+	start[2] = start[2] + ps->viewHeightCurrent;
+	VectorCopy(start, end);
+	AddLeanToPosition(end, ps->viewangles[1], fLean, 16.0, 20.0);
+	VectorSet(tmins, -8.0, -8.0, -8.0);
+	VectorSet(tmaxs, 8.0, 8.0, 8.0);
+	capsuleTrace(&trace, start, tmins, tmaxs, end, ps->clientNum, MASK_PLAYERSOLID);
+	fLean = UnGetLeanFraction(trace.fraction);
+	if (I_fabs(ps->leanf) > fLean)
+		ps->leanf = fLean * FloatSign(ps->leanf);
+	}
+}
+
+/*
 ============
 BG_CheckProneTurned
 ============
@@ -3166,329 +2310,6 @@ qboolean BG_CheckProneTurned( playerState_t *ps, float newProneYaw, byte handler
 	return BG_CheckProne( ps->clientNum, ps->origin, ps->maxs[0], 30.0, testYaw,
 	                      &ps->fTorsoHeight, &ps->fTorsoPitch, &ps->fWaistPitch,
 	                      qtrue, ps->groundEntityNum != ENTITYNUM_NONE, NULL, handler, PCT_CLIENT, feet_dist );
-}
-
-/*
-================
-PM_UpdateViewAngles
-
-This can be used as another entry point when only the viewangles
-are being updated isntead of a full move
-
-	!! NOTE !! Any changes to mounted/prone view should be duplicated in BotEntityWithinView()
-================
-*/
-// rain - take a tracemask as well - we can't use anything out of pm
-__declspec(noinline) float AngleDeltaNI( float angle1, float angle2 )
-{
-	return AngleDelta(angle1, angle2);
-}
-
-void PM_UpdateViewAngles( playerState_t *ps, float msec, usercmd_t *cmd, byte handler )
-{
-	int pmFlags;
-	short temp;
-	int i;
-	float delta;
-	float newProneYaw;
-	qboolean bProneOK;
-	qboolean bRetry;
-	float oldViewYaw;
-	float newViewYaw;
-	qboolean proneBlocked;
-	float deltaYaw1;
-	float deltaYaw2;
-	float ladderFacing;
-	int minPitch;
-	int maxPitch;
-
-	if ( ps->pm_type == PM_INTERMISSION )
-	{
-		return; // no view changes at all
-	}
-
-	if ( ps->pm_type >= PM_DEAD )
-	{
-		temp = cmd->angles[YAW] + ps->delta_angles[YAW];
-
-		if ( ps->stats[STAT_DEAD_YAW] == 999 )
-		{
-			ps->stats[STAT_DEAD_YAW] = SHORT2ANGLE ( temp );
-		}
-
-		PM_UpdateLean(ps, msec, cmd, pmoveHandlers[handler].trace);
-		return; // no view changes at all
-	}
-
-	oldViewYaw = ps->viewangles[YAW];
-
-	minPitch = ANGLE2SHORT(player_view_pitch_up->current.decimal);
-	maxPitch = ANGLE2SHORT(player_view_pitch_down->current.decimal);
-
-	for ( i = 0; i < 3; i++ )
-	{
-		temp = cmd->angles[i] + ps->delta_angles[i];
-
-		if ( i == PITCH )
-		{
-			if ( temp > maxPitch )
-			{
-				ps->delta_angles[i] = maxPitch - cmd->angles[i];
-				temp = maxPitch;
-			}
-			else if ( temp < -minPitch )
-			{
-				ps->delta_angles[i] = -minPitch - cmd->angles[i];
-				temp = -minPitch;
-			}
-		}
-
-		ps->viewangles[i] = SHORT2ANGLE ( temp );
-	}
-
-	newViewYaw = ps->viewangles[YAW];
-
-	if ( ps->eFlags & EF_TURRET_ACTIVE )
-	{
-		for ( i = 0; i < 2; i++ )
-		{
-			delta = AngleDelta(ps->viewAngleClampBase[i], ps->viewangles[i]);
-
-			if ( delta > ps->viewAngleClampRange[i] || -ps->viewAngleClampRange[i] > delta )
-			{
-				if ( delta > ps->viewAngleClampRange[i] )
-					delta -= ps->viewAngleClampRange[i];
-				else
-					delta += ps->viewAngleClampRange[i];
-
-				ps->delta_angles[i] += ANGLE2SHORT(delta);
-
-				if ( delta > 0 )
-					ps->viewangles[i] = AngleNormalize360Accurate(ps->viewAngleClampBase[i] - ps->viewAngleClampRange[i]);
-				else
-					ps->viewangles[i] = AngleNormalize360Accurate(ps->viewAngleClampBase[i] + ps->viewAngleClampRange[i]);
-			}
-		}
-
-		return;
-	}
-
-	pmFlags = ps->pm_flags;
-
-	if ( pmFlags & PMF_MANTLE )
-	{
-		Mantle_CapView(ps);
-		return;
-	}
-
-	if ( pmFlags & PMF_LADDER && ps->groundEntityNum == ENTITYNUM_NONE && bg_ladder_yawcap->current.decimal != 0 )
-	{
-		ladderFacing = vectoyaw(ps->vLadderVec) + 180;
-		delta = AngleDelta(ladderFacing, ps->viewangles[YAW]);
-
-		if ( delta > bg_ladder_yawcap->current.decimal || -bg_ladder_yawcap->current.decimal > delta )
-		{
-			if ( delta > bg_ladder_yawcap->current.decimal )
-				delta -= bg_ladder_yawcap->current.decimal;
-			else
-				delta += bg_ladder_yawcap->current.decimal;
-
-			ps->delta_angles[YAW] += ANGLE2SHORT(delta);
-
-			if ( delta <= 0 )
-				ps->viewangles[YAW] = AngleNormalize360Accurate(ladderFacing + bg_ladder_yawcap->current.decimal);
-			else
-				ps->viewangles[YAW] = AngleNormalize360Accurate(ladderFacing - bg_ladder_yawcap->current.decimal);
-		}
-	}
-
-	if ( pmFlags & PMF_PRONE )
-	{
-		proneBlocked = qfalse;
-
-		delta = AngleDelta(ps->proneDirection, ps->viewangles[YAW]);
-
-		if ( delta > bg_prone_yawcap->current.decimal - 5.0f || -(bg_prone_yawcap->current.decimal - 5.0f) > delta || (cmd->forwardmove || cmd->rightmove) && delta != 0 )
-		{
-			if ( I_fabs(delta) < msec * 55.0f * 0.001f )
-			{
-				newProneYaw = ps->viewangles[YAW];
-			}
-			else
-			{
-				if ( delta > 0 )
-					newProneYaw = ps->proneDirection - msec * 55.0f * 0.001f;
-				else
-					newProneYaw = ps->proneDirection + msec * 55.0f * 0.001f;
-			}
-
-			bRetry = qtrue;
-
-			while ( 1 )
-			{
-				if ( BG_CheckProneTurned(ps, newProneYaw, handler) )
-				{
-					bProneOK = BG_CheckProne(ps->clientNum, ps->origin, ps->maxs[0], 30.0, ps->viewangles[YAW],
-					                         NULL, NULL, NULL, qtrue, ps->groundEntityNum != ENTITYNUM_NONE, NULL, handler, PCT_CLIENT, PRONE_FEET_DIST_TURNED);
-					if ( bProneOK )
-					{
-						bProneOK = BG_CheckProne(ps->clientNum, ps->origin, ps->maxs[0], 30.0, newProneYaw,
-						                         NULL, NULL, NULL, qtrue, ps->groundEntityNum != ENTITYNUM_NONE, NULL, handler, PCT_CLIENT, PRONE_FEET_DIST_TURNED);
-						if ( bProneOK )
-						{
-							ps->proneDirection = newProneYaw;
-						}
-					}
-
-					if ( !bProneOK )
-					{
-						proneBlocked = qtrue;
-					}
-
-					break;
-				}
-
-				if ( !bRetry )
-				{
-					break;
-				}
-
-				delta = AngleDelta(ps->proneDirection, newProneYaw);
-
-				bRetry = I_fabs(delta) > 1;
-
-				if ( bRetry )
-				{
-					if ( delta > 0 )
-						delta = 1;
-					else
-						delta = -1;
-				}
-				else
-				{
-					proneBlocked = qtrue;
-				}
-
-				newProneYaw = AngleNormalize360Accurate(newProneYaw + delta);
-			}
-		}
-
-		delta = AngleDelta(ps->proneDirection, ps->viewangles[YAW]);
-
-		if ( delta != 0 )
-		{
-			newProneYaw = ps->proneDirection;
-			bRetry = qtrue;
-
-			while ( 1 )
-			{
-				bProneOK = BG_CheckProne(ps->clientNum, ps->origin, ps->maxs[0], 30.0, newProneYaw,
-				                         NULL, NULL, NULL, qtrue, ps->groundEntityNum != ENTITYNUM_NONE, NULL, handler, PCT_CLIENT, PRONE_FEET_DIST_TURNED);
-				if ( bProneOK )
-				{
-					if ( BG_CheckProneTurned(ps, newProneYaw, handler) )
-					{
-						ps->proneDirection = newProneYaw;
-						break;
-					}
-				}
-
-				if ( !bRetry )
-				{
-					break;
-				}
-
-				bRetry = I_fabs(delta) > 1;
-
-				if ( bRetry )
-				{
-					if ( delta > 0 )
-						delta = 1;
-					else
-						delta = -1;
-				}
-
-				proneBlocked = qtrue;
-
-				ps->delta_angles[YAW] += ANGLE2SHORT(delta);
-				ps->viewangles[YAW] = AngleNormalize360Accurate(ps->viewangles[YAW] + delta);
-
-				delta = AngleDelta(ps->proneDirection, ps->viewangles[YAW]);
-
-				if ( !bProneOK )
-				{
-					newProneYaw = AngleNormalize360Accurate(newProneYaw + delta);
-				}
-			}
-		}
-
-		if ( delta > bg_prone_yawcap->current.decimal || -bg_prone_yawcap->current.decimal > delta )
-		{
-			if ( delta > bg_prone_yawcap->current.decimal )
-				delta -= bg_prone_yawcap->current.decimal;
-			else
-				delta += bg_prone_yawcap->current.decimal;
-
-			ps->delta_angles[YAW] += ANGLE2SHORT(delta);
-
-			if ( delta > 0 )
-				ps->viewangles[YAW] = AngleNormalize360Accurate(ps->proneDirection - bg_prone_yawcap->current.decimal);
-			else
-				ps->viewangles[YAW] = AngleNormalize360Accurate(ps->proneDirection + bg_prone_yawcap->current.decimal);
-		}
-
-		if ( proneBlocked )
-		{
-			ps->pm_flags |= PMF_PRONE_BLOCKED;
-			deltaYaw1 = AngleDelta(oldViewYaw, ps->viewangles[YAW]);
-
-			if ( I_fabs(deltaYaw1) <= 1 )
-			{
-				deltaYaw2 = AngleDeltaNI(newViewYaw, ps->viewangles[YAW]);
-
-				if ( deltaYaw1 * deltaYaw2 > 0 )
-				{
-					deltaYaw1 *= 0.98000002f;
-					ps->viewangles[YAW] = AngleNormalize360Accurate(ps->viewangles[YAW] + deltaYaw1);
-					ps->delta_angles[YAW] += ANGLE2SHORT(deltaYaw1);
-				}
-			}
-		}
-
-		delta = AngleDelta(ps->proneTorsoPitch, ps->viewangles[PITCH]);
-
-		if ( delta > 45 || delta < -45 )
-		{
-			if ( delta > 45 )
-				delta -= 45;
-			else
-				delta += 45;
-
-			ps->delta_angles[PITCH] += ANGLE2SHORT(delta);
-
-			if ( delta > 0 )
-				ps->viewangles[PITCH] = AngleNormalize180Accurate(ps->proneTorsoPitch - 45);
-			else
-				ps->viewangles[PITCH] = AngleNormalize180Accurate(ps->proneTorsoPitch + 45);
-		}
-	}
-
-	if ( ps->pm_type == PM_UFO )
-	{
-		return;
-	}
-
-	if ( ps->pm_type == PM_NOCLIP )
-	{
-		return;
-	}
-
-	if ( ps->pm_type == PM_SPECTATOR )
-	{
-		return;
-	}
-
-	PM_UpdateLean(ps, msec, cmd, pmoveHandlers[handler].trace);
 }
 
 /*
@@ -3640,16 +2461,6 @@ void PM_UpdatePlayerWalkingFlag( pmove_t *pm )
 	}
 
 	ps->pm_flags |= PMF_ADS_WALK;
-}
-
-/*
-================
-PM_SetLadderFlag
-================
-*/
-void PM_SetLadderFlag( playerState_t *ps )
-{
-	ps->pm_flags |= PMF_LADDER;
 }
 
 /*
@@ -4349,4 +3160,1194 @@ float BG_GetSpeed( const playerState_t *ps, int iTime )
 	return Vec2Length(ps->velocity);
 }
 
+void PM_Accelerate( playerState_t *ps, const pml_t *pml, vec3_t wishdir, float wishspeed, float accel )
+{
+	float addspeed;
+	float accelspeed;
+	float currentspeed;
+	float canPush;
+	float control;
+	vec3_t wishVelocity;
+	vec3_t pushDir;
+
+	if ( !(ps->pm_flags & PMF_LADDER) )
+	{
+		currentspeed = DotProduct(ps->velocity, wishdir);
+		addspeed = wishspeed - currentspeed;
+
+		if ( addspeed <= 0 )
+			return;
+
+		control = wishspeed < stopspeed->current.decimal ? stopspeed->current.decimal : wishspeed;
+		accelspeed = accel * pml->frametime * control;
+
+		if ( accelspeed > addspeed )
+			accelspeed = addspeed;
+
+		canPush = PM_PlayerInertia(ps, accelspeed, wishdir);
+		VectorMA(ps->velocity, canPush, wishdir, ps->velocity);
+	}
+	else
+	{
+		VectorScale(wishdir, wishspeed, wishVelocity);
+		VectorSubtract(wishVelocity, ps->velocity, pushDir);
+		control = Vec3Normalize(pushDir);
+		canPush = accel * pml->frametime * wishspeed;
+
+		if ( canPush > control )
+			canPush = control;
+
+		VectorMA(ps->velocity, canPush, pushDir, ps->velocity);
+	}
+}
+void PM_CheckDuck( pmove_t *pm, pml_t *pml )
+{
+	qboolean bWasProne;
+	qboolean bWasStanding;
+	trace_t trace;
+	int iStance;
+	playerState_t *ps;
+	vec3_t vPoint;
+	float delta;
+	vec3_t vEnd;
+
+	assert(pm);
+	ps = pm->ps;
+	assert(ps);
+
+	pm->proneChange = qfalse;
+
+	if ( ps->pm_type == PM_SPECTATOR )
+	{
+		// Ridah, modified this for configurable bounding boxes
+		pm->mins[0] = -8.0;
+		pm->mins[1] = -8.0;
+		pm->mins[2] = -8.0;
+
+		pm->maxs[0] = 8.0;
+		pm->maxs[1] = 8.0;
+		pm->maxs[2] = 16.0;
+
+		ps->pm_flags &= ~(PMF_PRONE | PMF_DUCKED);
+
+		if ( pm->cmd.buttons & BUTTON_PRONE )
+		{
+			pm->cmd.buttons &= ~BUTTON_PRONE;
+			BG_AddPredictableEventToPlayerstate(EV_STANCE_FORCE_STAND, 0, ps);
+		}
+
+		ps->viewHeightTarget = 0;
+		ps->viewHeightCurrent = 0;
+
+		return;
+	}
+
+	bWasProne = ps->pm_flags & PMF_PRONE ? qtrue : qfalse;
+	bWasStanding = !(ps->pm_flags & (PMF_PRONE | PMF_DUCKED));
+
+	// Ridah, modified this for configurable bounding boxes
+	pm->mins[0] = ps->mins[0];
+	pm->mins[1] = ps->mins[1];
+
+	pm->maxs[0] = ps->maxs[0];
+	pm->maxs[1] = ps->maxs[1];
+
+	pm->mins[2] = ps->mins[2];
+
+	if ( ps->pm_type >= PM_DEAD )
+	{
+		pm->maxs[2] = ps->maxs[2];  // NOTE: must set death bounding box in game code
+		ps->viewHeightTarget = DEAD_VIEWHEIGHT;
+		PM_ViewHeightAdjust(pm, pml);
+		return;
+	}
+
+	if ( ps->eFlags & EF_TURRET_ACTIVE )
+	{
+		if ( ps->eFlags & EF_TURRET_PRONE && !(ps->eFlags & EF_TURRET_DUCK) )
+		{
+			ps->pm_flags |= PMF_PRONE;
+			ps->pm_flags &= ~PMF_DUCKED;
+		}
+		else
+		{
+			if ( ps->eFlags & EF_TURRET_DUCK && !(ps->eFlags & EF_TURRET_PRONE) )
+			{
+				ps->pm_flags |= PMF_DUCKED;
+				ps->pm_flags &= ~PMF_PRONE;
+			}
+			else
+			{
+				ps->pm_flags &= ~(PMF_PRONE | PMF_DUCKED);
+			}
+		}
+	}
+	else if ( ps->pm_flags & PMF_FROZEN )
+	{
+	}
+	else
+	{
+		if ( ps->pm_flags & PMF_LADDER && pm->cmd.buttons & (BUTTON_PRONE | BUTTON_CROUCH) )
+		{
+			pm->cmd.buttons &= ~(BUTTON_PRONE | BUTTON_CROUCH);
+			BG_AddPredictableEventToPlayerstate(EV_STANCE_FORCE_STAND, 0, ps);
+		}
+
+		if ( pm->cmd.buttons & BUTTON_PRONE )
+		{
+			if ( ps->pm_flags & PMF_PRONE || ps->groundEntityNum != ENTITYNUM_NONE
+			        && BG_CheckProne( ps->clientNum, ps->origin, pm->maxs[0], 30.0,
+			                          ps->viewangles[YAW], &ps->fTorsoHeight, &ps->fTorsoPitch, &ps->fWaistPitch,
+			                          qfalse, ps->groundEntityNum != ENTITYNUM_NONE, NULL, pm->handler, PCT_CLIENT, 66.0) )
+			{
+				ps->pm_flags |= PMF_PRONE;
+				ps->pm_flags &= ~PMF_DUCKED;
+			}
+			else if ( ps->groundEntityNum != ENTITYNUM_NONE )
+			{
+				ps->pm_flags |= PMF_PRONE_BLOCKED;
+
+				if ( !(pm->cmd.buttons & BUTTON_CANNOT_PRONE) )
+				{
+					if ( ps->pm_flags & PMF_DUCKED)
+						BG_AddPredictableEventToPlayerstate(EV_STANCE_FORCE_CROUCH, 0, ps);
+					else
+						BG_AddPredictableEventToPlayerstate(EV_STANCE_FORCE_STAND, 0, ps);
+				}
+			}
+		}
+		else if ( pm->cmd.buttons & BUTTON_CROUCH )
+		{
+			if ( ps->pm_flags & PMF_PRONE )
+			{
+				pm->maxs[2] = 50.0;
+				pmoveHandlers[pm->handler].trace(&trace, ps->origin, pm->mins, pm->maxs, ps->origin, ps->clientNum, pm->tracemask & ~CONTENTS_BODY);
+
+				if ( !trace.allsolid )
+				{
+					BG_AnimScriptEvent(ps, ANIM_ET_PRONE_TO_CROUCH, qfalse, qfalse);
+
+					ps->pm_flags &= ~PMF_PRONE;
+					ps->pm_flags |= PMF_DUCKED;
+				}
+				else
+				{
+					if ( !(pm->cmd.buttons & BUTTON_CANNOT_PRONE) )
+					{
+						BG_AddPredictableEventToPlayerstate(EV_STANCE_FORCE_PRONE, 2, ps);
+					}
+				}
+			}
+			else
+			{
+				BG_AnimScriptEvent(ps, ANIM_ET_STAND_TO_CROUCH, qfalse, qfalse);
+				ps->pm_flags |= PMF_DUCKED;
+			}
+		}
+		else if ( ps->pm_flags & PMF_PRONE )
+		{
+			pm->maxs[2] = ps->maxs[2];
+			pmoveHandlers[pm->handler].trace(&trace, ps->origin, pm->mins, pm->maxs, ps->origin, ps->clientNum, pm->tracemask & ~CONTENTS_BODY);
+
+			if ( !trace.allsolid )
+			{
+				BG_AnimScriptEvent(ps, ANIM_ET_PRONE_TO_STAND, qfalse, qfalse);
+				ps->pm_flags &= ~(PMF_PRONE | PMF_DUCKED);
+			}
+			else
+			{
+				pm->maxs[2] = 50.0;
+				pmoveHandlers[pm->handler].trace(&trace, ps->origin, pm->mins, pm->maxs, ps->origin, ps->clientNum, pm->tracemask & ~CONTENTS_BODY);
+
+				if ( !trace.allsolid )
+				{
+					ps->pm_flags &= ~PMF_PRONE;
+					ps->pm_flags |= PMF_DUCKED;
+				}
+				else
+				{
+					if ( !(pm->cmd.buttons & BUTTON_CANNOT_PRONE) )
+					{
+						BG_AddPredictableEventToPlayerstate(EV_STANCE_FORCE_PRONE, 1, ps);
+					}
+				}
+			}
+		}
+		else if ( ps->pm_flags & PMF_DUCKED )
+		{
+			pm->maxs[2] = ps->maxs[2];
+			pmoveHandlers[pm->handler].trace(&trace, ps->origin, pm->mins, pm->maxs, ps->origin, ps->clientNum, pm->tracemask & ~CONTENTS_BODY);
+
+			if ( !trace.allsolid )
+			{
+				BG_AnimScriptEvent(ps, ANIM_ET_CROUCH_TO_STAND, qfalse, qfalse);
+				ps->pm_flags &= ~PMF_DUCKED;
+			}
+			else
+			{
+				if ( !(pm->cmd.buttons & BUTTON_CANNOT_PRONE) )
+				{
+					BG_AddPredictableEventToPlayerstate(EV_STANCE_FORCE_CROUCH, 1, ps);
+				}
+			}
+		}
+	}
+
+	if ( !ps->viewHeightLerpTime )
+	{
+		if ( ps->pm_flags & PMF_PRONE )
+		{
+			if ( ps->viewHeightTarget == DEFAULT_VIEWHEIGHT )
+			{
+				ps->viewHeightTarget = CROUCH_VIEWHEIGHT;
+			}
+			else if ( ps->viewHeightTarget != PRONE_VIEWHEIGHT )
+			{
+				ps->viewHeightTarget = PRONE_VIEWHEIGHT;
+				pm->proneChange = qtrue;
+
+				BG_PlayAnim(ps, ANIM_MT_UNUSED, ANIM_BP_TORSO, 0, qfalse, qtrue, qtrue);
+				Jump_ActivateSlowdown(ps);
+			}
+		}
+		else if ( ps->viewHeightTarget == PRONE_VIEWHEIGHT )
+		{
+			ps->viewHeightTarget = CROUCH_VIEWHEIGHT;
+			pm->proneChange = qtrue;
+
+			BG_PlayAnim(ps, ANIM_MT_UNUSED, ANIM_BP_TORSO, 0, qfalse, qtrue, qtrue);
+		}
+		else if ( ps->pm_flags & PMF_DUCKED )
+		{
+			ps->viewHeightTarget = CROUCH_VIEWHEIGHT;
+		}
+		else
+		{
+			ps->viewHeightTarget = DEFAULT_VIEWHEIGHT;
+		}
+	}
+
+	PM_ViewHeightAdjust(pm, pml);
+	iStance = PM_GetEffectiveStance(ps);
+
+	if ( iStance == PM_EFF_STANCE_PRONE )
+	{
+		pm->maxs[2] = 30.0;
+
+		ps->eFlags |= EF_PRONE;
+		ps->eFlags &= ~EF_CROUCH;
+
+		ps->pm_flags |= PMF_PRONE;
+		ps->pm_flags &= ~PMF_DUCKED;
+	}
+	else
+	{
+		if ( iStance == PM_EFF_STANCE_CROUCH )
+		{
+			pm->maxs[2] = 50.0;
+
+			ps->eFlags |= EF_CROUCH;
+			ps->eFlags &= ~EF_PRONE;
+
+			ps->pm_flags |= PMF_DUCKED;
+			ps->pm_flags &= ~PMF_PRONE;
+		}
+		else
+		{
+			pm->maxs[2] = ps->maxs[2];
+
+			ps->eFlags &= ~(EF_CROUCH | EF_PRONE);
+			ps->pm_flags = ps->pm_flags & ~(PMF_PRONE | PMF_DUCKED);
+		}
+	}
+
+	if ( ps->pm_flags & PMF_PRONE && !bWasProne )
+	{
+		if ( pm->cmd.forwardmove || pm->cmd.rightmove )
+		{
+			ps->pm_flags &= ~PMF_ADS_OVERRIDE;
+			PM_ExitAimDownSight(ps);
+		}
+
+		VectorCopy(ps->origin, vEnd);
+		vEnd[2] = vEnd[2] + 10.0f;
+
+		pmoveHandlers[pm->handler].trace(&trace, ps->origin, pm->mins, pm->maxs, vEnd, ps->clientNum, pm->tracemask & ~CONTENTS_BODY);
+
+		Vec3Lerp(ps->origin, vEnd, trace.fraction, vEnd);
+		pmoveHandlers[pm->handler].trace(&trace, vEnd, pm->mins, pm->maxs, ps->origin, ps->clientNum, pm->tracemask & ~CONTENTS_BODY);
+
+		Vec3Lerp(vEnd, ps->origin, trace.fraction, ps->origin);
+		ps->proneDirection = ps->viewangles[YAW];
+
+		VectorCopy(ps->origin, vPoint);
+		vPoint[2] = vPoint[2] - 0.25f;
+
+		pmoveHandlers[pm->handler].trace(&trace, ps->origin, pm->mins, pm->maxs, vPoint, ps->clientNum, pm->tracemask & ~CONTENTS_BODY);
+
+		if ( !trace.startsolid && trace.fraction < 1.0f )
+			ps->proneDirectionPitch = PitchForYawOnNormal(ps->proneDirection, trace.normal);
+		else
+			ps->proneDirectionPitch = 0;
+
+		delta = AngleDelta(ps->proneDirectionPitch, ps->viewangles[PITCH]);
+
+		if ( delta < -45.0f )
+			ps->proneTorsoPitch = ps->viewangles[PITCH] - 45.0f;
+		else if ( delta > 45.0f )
+			ps->proneTorsoPitch = ps->viewangles[PITCH] + 45.0f;
+		else
+			ps->proneTorsoPitch = ps->proneDirectionPitch;
+	}
+}
+void PM_FootstepEvent( pmove_t *pm, pml_t *pml, int iOldBobCycle, int iNewBobCycle, qboolean bFootStep )
+{
+	playerState_t *ps;
+	int iSurfaceType;
+	int iClipMask;
+	int iClientNum;
+	float fTraceDist;
+	vec3_t mins;
+	vec3_t maxs;
+	vec3_t vEnd;
+	trace_t trace;
+
+	ps = pm->ps;
+	assert(ps);
+
+	if ( ( ( iOldBobCycle + 64 ) ^ ( iNewBobCycle + 64 ) ) & 128 )
+	{
+		if ( ps->groundEntityNum == ENTITYNUM_NONE )
+		{
+			if ( bFootStep )
+			{
+				if ( ps->pm_flags & PMF_LADDER )
+				{
+					VectorCopy(pm->mins, mins);
+
+					mins[0] = mins[0] + 6.0f;
+					mins[1] = mins[1] + 6.0f;
+					mins[2] = 8.0f;
+
+					VectorCopy(pm->maxs, maxs);
+
+					maxs[0] = maxs[0] - 6.0f;
+					maxs[1] = maxs[1] - 6.0f;
+
+					if ( maxs[2] < mins[2] )
+					{
+						maxs[2] = mins[2];
+					}
+
+					assert(maxs[0] >= mins[0]);
+					assert(maxs[1] >= mins[1]);
+					assert(maxs[2] >= mins[2]);
+
+					iClipMask = pm->tracemask & ~( CONTENTS_BODY | CONTENTS_PLAYERCLIP );
+					iClientNum = ps->clientNum;
+					fTraceDist = -31.0f;
+
+					VectorMA(ps->origin, fTraceDist, ps->vLadderVec, vEnd);
+
+					PM_playerTrace(pm, &trace, ps->origin, mins, maxs, vEnd, iClientNum, iClipMask);
+					iSurfaceType = (byte)( ( trace.surfaceFlags & ( 0x1f << SURF_START_BIT ) ) >> SURF_START_BIT );
+
+					if ( trace.fraction == 1.0f || !iSurfaceType )
+					{
+						iSurfaceType = SURF_TYPE_WOOD;
+					}
+
+					PM_AddEvent(ps, iSurfaceType + 1);
+				}
+			}
+		}
+		else if ( bFootStep )
+		{
+			PM_AddEvent(ps, PM_FootstepForSurface(ps, pml));
+		}
+	}
+}
+void PM_Footsteps( pmove_t *pm, pml_t *pml )
+{
+	float bobmove;
+	int old;
+	int footstep;
+	int iStance;
+	float scale;
+	float lerpFrac;
+	playerState_t *ps;
+	int stumbleTime;
+	int stumble_end_time;
+	int flinchTime;
+	int flinch_end_time;
+	int flinchAnim;
+	clientInfo_t *ci;
+	int turnAdjust;
+	int animResult;
+	qboolean walking;
+
+	ps = pm->ps;
+	animResult = -1;
+
+	if ( ps->pm_type >= PM_DEAD )
+	{
+		return;
+	}
+
+	if ( ps->clientNum < MAX_CLIENTS )
+	{
+		ci = &bgs->clientinfo[ps->clientNum];
+	}
+	else
+	{
+		ci = NULL;
+	}
+
+	stumbleTime = player_dmgtimer_stumbleTime->current.integer;
+	stumble_end_time = ps->damageDuration - stumbleTime;
+
+	if ( stumble_end_time < 0 )
+	{
+		stumble_end_time = 0;
+	}
+
+	flinchTime = player_dmgtimer_flinchTime->current.integer;
+	flinch_end_time = ps->damageDuration - flinchTime;
+
+	if ( flinch_end_time < 0 )
+	{
+		flinch_end_time = 0;
+	}
+
+	//
+	// calculate speed and cycle to be used for
+	// all cyclic walking effects
+	//
+	pm->xyspeed = I_sqrt( Square(ps->velocity[0]) + Square(ps->velocity[1]) );
+
+	// mg42, always idle
+	if ( ps->eFlags & EF_TURRET_ACTIVE )
+	{
+		if ( ps->pm_flags & PMF_PRONE )
+		{
+			BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_IDLEPRONE, qtrue);
+			return;
+		}
+
+		if ( ps->pm_flags & PMF_DUCKED )
+		{
+			BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_IDLECR, qtrue);
+			return;
+		}
+
+		BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_IDLE, qtrue);
+		return;
+	}
+
+	iStance = PM_GetEffectiveStance(ps);
+
+	// in the air
+	if ( ps->groundEntityNum == ENTITYNUM_NONE && ps->pm_type != PM_NORMAL_LINKED )
+	{
+		if ( ps->pm_flags & PMF_LADDER ) // on ladder
+		{
+			float fLadderSpeed;
+
+			if ( pm->cmd.serverTime - ps->jumpTime < 300 )
+			{
+				return;
+			}
+
+			fLadderSpeed = ps->velocity[2];
+			scale = (0.5 * 1.5) * 127.0;
+
+			if ( (ps->pm_flags & PMF_ADS_WALK) || ps->leanf != 0 )
+			{
+				bobmove = ( fLadderSpeed / ( scale * 0.40000001f ) ) * 0.34999999f;
+			}
+			else
+			{
+				bobmove = ( fLadderSpeed / scale ) * 0.44999999f;
+			}
+
+			if ( fLadderSpeed >= 0.0f )
+			{
+				animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_CLIMBUP, qtrue);
+			}
+			else
+			{
+				animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_CLIMBDOWN, qtrue);
+			}
+
+			// check for footstep / splash sounds
+			old = ps->bobCycle;
+			ps->bobCycle = (int)( old + pml->msec * bobmove ) & 255;
+			PM_FootstepEvent(pm, pml, old, ps->bobCycle, qtrue);
+		}
+
+		if ( iStance == (ps->pm_flags & ( PMF_DUCKED | PMF_PRONE) ) )
+		{
+			return;
+		}
+	}
+
+	walking = (ps->pm_flags & PMF_ADS_WALK) || ps->leanf != 0;
+
+	// if not trying to move
+	if ( pm->xyspeed < player_moveThreshhold->current.decimal || ps->pm_type == PM_NORMAL_LINKED )
+	{
+		if ( pm->xyspeed < 1 )
+		{
+			ps->bobCycle = 0; // start at beginning of cycle again
+		}
+
+		turnAdjust = ANIM_MT_UNUSED;
+
+		if ( ci && player_turnAnims->current.boolean )
+		{
+			if ( ci->turnAnimType && ci->turnAnimEndTime )
+			{
+				Com_DPrintf("turn anim end time is %i, time is %i\n", ci->turnAnimEndTime, bgs->time);
+			}
+
+			if ( ci->legs.yawing )
+			{
+				if ( ci->legs.yawAngle > ci->torso.yawAngle )
+					turnAdjust = ANIM_MT_TURNRIGHT;
+				else
+					turnAdjust = ANIM_MT_TURNLEFT;
+
+				ci->legs.yawAngle = ci->torso.yawAngle;
+				ci->turnAnimType = turnAdjust;
+
+				if ( ci->turnAnimEndTime < bgs->time )
+				{
+					ci->turnAnimEndTime = 0;
+				}
+			}
+			else
+			{
+				if ( ci->turnAnimEndTime > bgs->time )
+				{
+					turnAdjust = ci->turnAnimType;
+					ci->legs.yawAngle = ci->torso.yawAngle;
+					return;
+				}
+
+				if ( ci->turnAnimEndTime )
+				{
+					ci->turnAnimEndTime = 0;
+					ci->legs.yawAngle = ci->torso.yawAngle;
+				}
+			}
+		}
+
+		if ( ps->viewHeightTarget == PRONE_VIEWHEIGHT )
+		{
+			animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_IDLEPRONE, qtrue);
+		}
+		else if ( ps->viewHeightTarget == CROUCH_VIEWHEIGHT )
+		{
+			if ( turnAdjust == ANIM_MT_TURNRIGHT )
+			{
+				animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_TURNRIGHTCR, qtrue);
+
+				if ( animResult > 0 && !ci->turnAnimEndTime )
+				{
+					ci->turnAnimEndTime = bgs->time + ps->legsAnimDuration;
+				}
+			}
+			else if ( turnAdjust == ANIM_MT_TURNLEFT )
+			{
+				animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_TURNLEFTCR, qtrue);
+
+				if ( animResult > 0 && !ci->turnAnimEndTime )
+				{
+					ci->turnAnimEndTime = bgs->time + ps->legsAnimDuration;
+				}
+			}
+			else
+			{
+				animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_IDLECR, qtrue);
+			}
+		}
+		else if ( turnAdjust == ANIM_MT_TURNRIGHT )
+		{
+			animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_TURNRIGHT, qtrue);
+
+			if ( animResult > 0 && !ci->turnAnimEndTime )
+			{
+				ci->turnAnimEndTime = bgs->time + ps->legsAnimDuration;
+			}
+		}
+		else if ( turnAdjust == ANIM_MT_TURNLEFT )
+		{
+			animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_TURNLEFT, qtrue);
+
+			if ( animResult > 0 && !ci->turnAnimEndTime )
+			{
+				ci->turnAnimEndTime = bgs->time + ps->legsAnimDuration;
+			}
+		}
+		else
+		{
+			if ( ps->damageTimer > stumble_end_time )
+			{
+				flinchAnim = PM_GetFlinchAnim(ps->flinchYaw);
+				animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, flinchAnim, qtrue);
+				return;
+			}
+
+			animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_IDLE, qtrue);
+		}
+
+		if ( animResult < 0 )
+		{
+			if ( ps->viewHeightTarget == CROUCH_VIEWHEIGHT )
+			{
+				animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_IDLECR, qtrue);
+				return;
+			}
+
+			if ( ps->damageTimer > stumble_end_time )
+			{
+				animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_FLINCH_FORWARD, qtrue);
+				return;
+			}
+
+			animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_IDLE, qtrue);
+			return;
+		}
+
+		return;
+	}
+
+	scale = ps->speed;
+
+	if ( pm->cmd.forwardmove )
+	{
+		if ( pm->cmd.rightmove )
+		{
+			scale = ( ( ( ( player_strafeSpeedScale->current.decimal - 1.0f ) * 0.75f + 1.0f ) + 1.0f ) * scale ) * 0.5f;
+
+			if ( pm->cmd.forwardmove < 0 )
+			{
+				scale = (player_backSpeedScale->current.decimal + 1.0f) * 0.5f * scale;
+			}
+		}
+		else if ( pm->cmd.forwardmove < 0 )
+		{
+			scale = scale * player_backSpeedScale->current.decimal;
+		}
+
+		BG_UpdateConditionValue(ps->clientNum, ANIM_COND_STRAFING, LEANING_NOT, qtrue);
+	}
+	else if ( pm->cmd.rightmove )
+	{
+		scale = ((player_strafeSpeedScale->current.decimal - 1.0f) * 0.75f + 1.0f) * scale;
+
+		if ( pm->cmd.rightmove > 0 )
+			BG_UpdateConditionValue(ps->clientNum, ANIM_COND_STRAFING, LEANING_RIGHT, qtrue);
+		else
+			BG_UpdateConditionValue(ps->clientNum, ANIM_COND_STRAFING, LEANING_LEFT, qtrue);
+	}
+
+	if ( walking )
+	{
+		scale = scale * 0.40000001f;
+	}
+
+	lerpFrac = PM_GetViewHeightLerp(pm, CROUCH_VIEWHEIGHT, PRONE_VIEWHEIGHT);
+
+	if ( lerpFrac != 0 )
+	{
+		scale = (lerpFrac * 0.15000001f + (1.0f - lerpFrac) * 0.64999998f) * scale;
+	}
+	else
+	{
+		lerpFrac = PM_GetViewHeightLerp(pm, PRONE_VIEWHEIGHT, CROUCH_VIEWHEIGHT);
+
+		if ( lerpFrac != 0 )
+		{
+			scale = (lerpFrac * 0.64999998f + (1.0f - lerpFrac) * 0.15000001f) * scale;
+		}
+		else if ( iStance == PM_EFF_STANCE_PRONE )
+		{
+			scale = scale * 0.15000001f;
+		}
+		else if ( iStance == PM_EFF_STANCE_CROUCH )
+		{
+			scale = scale * 0.64999998f;
+		}
+	}
+
+	if ( iStance == PM_EFF_STANCE_PRONE )
+	{
+		if ( walking )
+			bobmove = pm->xyspeed / scale * 0.23999999f;
+		else
+			bobmove = pm->xyspeed / scale * 0.25f;
+
+		if ( ps->pm_flags & PMF_BACKWARDS_RUN )
+			animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_WALKPRONEBK, qtrue);
+		else
+			animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_WALKPRONE, qtrue);
+	}
+	else if ( iStance == PM_EFF_STANCE_CROUCH )
+	{
+		if ( walking )
+			bobmove = pm->xyspeed / scale * 0.315f;
+		else
+			bobmove = pm->xyspeed / scale * 0.34f;
+
+		if ( ps->pm_flags & PMF_BACKWARDS_RUN )
+		{
+			if ( walking )
+			{
+				if ( ps->damageTimer > stumble_end_time )
+				{
+					animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_STUMBLE_CROUCH_BACKWARD, qtrue);
+					goto footstep;
+				}
+
+				animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_WALKCRBK, qtrue);
+				goto footstep;
+			}
+			else
+			{
+				if ( ps->damageTimer > stumble_end_time )
+				{
+					animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_STUMBLE_CROUCH_BACKWARD, qtrue);
+					goto footstep;
+				}
+
+				animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_RUNCRBK, qtrue);
+				goto footstep;
+			}
+		}
+		else
+		{
+			if ( walking )
+			{
+				if ( ps->damageTimer > stumble_end_time )
+				{
+					animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_STUMBLE_CROUCH_FORWARD, qtrue);
+					goto footstep;
+				}
+
+				animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_WALKCR, qtrue);
+				goto footstep;
+			}
+			else
+			{
+				if ( ps->damageTimer > stumble_end_time )
+				{
+					animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_STUMBLE_CROUCH_FORWARD, qtrue);
+					goto footstep;
+				}
+
+				animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_RUNCR, qtrue);
+				goto footstep;
+			}
+		}
+	}
+	else if ( ps->pm_flags & PMF_BACKWARDS_RUN )
+	{
+		if ( walking )
+		{
+			bobmove = pm->xyspeed / scale * 0.32499999f;
+
+			if ( ps->damageTimer > stumble_end_time )
+				animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_STUMBLE_WALK_BACKWARD, qtrue);
+			else
+				animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_WALKBK, qtrue);
+		}
+		else
+		{
+			bobmove = pm->xyspeed / scale * 0.36000001f;
+
+			if ( ps->damageTimer > stumble_end_time )
+				animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_STUMBLE_BACKWARD, qtrue);
+			else
+				animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_RUNBK, qtrue);
+		}
+	}
+	else if ( walking )
+	{
+		bobmove = pm->xyspeed / scale * 0.30500001f;
+
+		if ( ps->damageTimer > stumble_end_time )
+			animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_STUMBLE_WALK_FORWARD, qtrue);
+		else
+			animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_WALK, qtrue);
+	}
+	else
+	{
+		bobmove = pm->xyspeed / scale * 0.33500001f;
+
+		if ( ps->damageTimer > stumble_end_time )
+			animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_STUMBLE_FORWARD, qtrue);
+		else
+			animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_RUN, qtrue);
+	}
+
+footstep:
+	// check for footstep / splash sounds
+	footstep = PM_ShouldMakeFootsteps(pm);
+	old = ps->bobCycle;
+	ps->bobCycle = (int)( old + pml->msec * bobmove ) & 255;
+
+	if ( !pm->cmd.forwardmove && !pm->cmd.rightmove )
+	{
+		if ( pm->xyspeed > 120.0f )
+		{
+			return; // continue what they were doing last frame, until we stop
+		}
+
+		if ( ps->viewHeightTarget == PRONE_VIEWHEIGHT )
+		{
+			animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_IDLEPRONE, qtrue);
+		}
+		else if ( ps->viewHeightTarget == CROUCH_VIEWHEIGHT )
+		{
+			animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_IDLECR, qtrue);
+		}
+
+		if ( animResult < 0 )
+		{
+			if ( ps->damageTimer > stumble_end_time )
+			{
+				animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_FLINCH_FORWARD, qtrue);
+				return;
+			}
+
+			animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_IDLE, qtrue);
+			return;
+		}
+
+		return;
+	}
+
+	if ( animResult < 0 )
+	{
+		animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_IDLE, qtrue);
+	}
+
+	PM_FootstepEvent(pm, pml, old, ps->bobCycle, footstep);
+}
+// rain - take a tracemask as well - we can't use anything out of pm
+__declspec(noinline) float AngleDeltaNI( float angle1, float angle2 )
+{
+	return AngleDelta(angle1, angle2);
+}
+void PM_UpdateViewAngles( playerState_t *ps, float msec, usercmd_t *cmd, byte handler )
+{
+	int pmFlags;
+	short temp;
+	int i;
+	float delta;
+	float newProneYaw;
+	qboolean bProneOK;
+	qboolean bRetry;
+	float oldViewYaw;
+	float newViewYaw;
+	qboolean proneBlocked;
+	float deltaYaw1;
+	float deltaYaw2;
+	float ladderFacing;
+	int minPitch;
+	int maxPitch;
+
+	if ( ps->pm_type == PM_INTERMISSION )
+	{
+		return; // no view changes at all
+	}
+
+	if ( ps->pm_type >= PM_DEAD )
+	{
+		temp = cmd->angles[YAW] + ps->delta_angles[YAW];
+
+		if ( ps->stats[STAT_DEAD_YAW] == 999 )
+		{
+			ps->stats[STAT_DEAD_YAW] = SHORT2ANGLE ( temp );
+		}
+
+		PM_UpdateLean(ps, msec, cmd, pmoveHandlers[handler].trace);
+		return; // no view changes at all
+	}
+
+	oldViewYaw = ps->viewangles[YAW];
+
+	minPitch = ANGLE2SHORT(player_view_pitch_up->current.decimal);
+	maxPitch = ANGLE2SHORT(player_view_pitch_down->current.decimal);
+
+	for ( i = 0; i < 3; i++ )
+	{
+		temp = cmd->angles[i] + ps->delta_angles[i];
+
+		if ( i == PITCH )
+		{
+			if ( temp > maxPitch )
+			{
+				ps->delta_angles[i] = maxPitch - cmd->angles[i];
+				temp = maxPitch;
+			}
+			else if ( temp < -minPitch )
+			{
+				ps->delta_angles[i] = -minPitch - cmd->angles[i];
+				temp = -minPitch;
+			}
+		}
+
+		ps->viewangles[i] = SHORT2ANGLE ( temp );
+	}
+
+	newViewYaw = ps->viewangles[YAW];
+
+	if ( ps->eFlags & EF_TURRET_ACTIVE )
+	{
+		for ( i = 0; i < 2; i++ )
+		{
+			delta = AngleDelta(ps->viewAngleClampBase[i], ps->viewangles[i]);
+
+			if ( delta > ps->viewAngleClampRange[i] || -ps->viewAngleClampRange[i] > delta )
+			{
+				if ( delta > ps->viewAngleClampRange[i] )
+					delta -= ps->viewAngleClampRange[i];
+				else
+					delta += ps->viewAngleClampRange[i];
+
+				ps->delta_angles[i] += ANGLE2SHORT(delta);
+
+				if ( delta > 0 )
+					ps->viewangles[i] = AngleNormalize360Accurate(ps->viewAngleClampBase[i] - ps->viewAngleClampRange[i]);
+				else
+					ps->viewangles[i] = AngleNormalize360Accurate(ps->viewAngleClampBase[i] + ps->viewAngleClampRange[i]);
+			}
+		}
+
+		return;
+	}
+
+	pmFlags = ps->pm_flags;
+
+	if ( pmFlags & PMF_MANTLE )
+	{
+		Mantle_CapView(ps);
+		return;
+	}
+
+	if ( pmFlags & PMF_LADDER && ps->groundEntityNum == ENTITYNUM_NONE && bg_ladder_yawcap->current.decimal != 0 )
+	{
+		ladderFacing = vectoyaw(ps->vLadderVec) + 180;
+		delta = AngleDelta(ladderFacing, ps->viewangles[YAW]);
+
+		if ( delta > bg_ladder_yawcap->current.decimal || -bg_ladder_yawcap->current.decimal > delta )
+		{
+			if ( delta > bg_ladder_yawcap->current.decimal )
+				delta -= bg_ladder_yawcap->current.decimal;
+			else
+				delta += bg_ladder_yawcap->current.decimal;
+
+			ps->delta_angles[YAW] += ANGLE2SHORT(delta);
+
+			if ( delta <= 0 )
+				ps->viewangles[YAW] = AngleNormalize360Accurate(ladderFacing + bg_ladder_yawcap->current.decimal);
+			else
+				ps->viewangles[YAW] = AngleNormalize360Accurate(ladderFacing - bg_ladder_yawcap->current.decimal);
+		}
+	}
+
+	if ( pmFlags & PMF_PRONE )
+	{
+		proneBlocked = qfalse;
+
+		delta = AngleDelta(ps->proneDirection, ps->viewangles[YAW]);
+
+		if ( delta > bg_prone_yawcap->current.decimal - 5.0f || -(bg_prone_yawcap->current.decimal - 5.0f) > delta || (cmd->forwardmove || cmd->rightmove) && delta != 0 )
+		{
+			if ( I_fabs(delta) < msec * 55.0f * 0.001f )
+			{
+				newProneYaw = ps->viewangles[YAW];
+			}
+			else
+			{
+				if ( delta > 0 )
+					newProneYaw = ps->proneDirection - msec * 55.0f * 0.001f;
+				else
+					newProneYaw = ps->proneDirection + msec * 55.0f * 0.001f;
+			}
+
+			bRetry = qtrue;
+
+			while ( 1 )
+			{
+				if ( BG_CheckProneTurned(ps, newProneYaw, handler) )
+				{
+					bProneOK = BG_CheckProne(ps->clientNum, ps->origin, ps->maxs[0], 30.0, ps->viewangles[YAW],
+					                         NULL, NULL, NULL, qtrue, ps->groundEntityNum != ENTITYNUM_NONE, NULL, handler, PCT_CLIENT, PRONE_FEET_DIST_TURNED);
+					if ( bProneOK )
+					{
+						bProneOK = BG_CheckProne(ps->clientNum, ps->origin, ps->maxs[0], 30.0, newProneYaw,
+						                         NULL, NULL, NULL, qtrue, ps->groundEntityNum != ENTITYNUM_NONE, NULL, handler, PCT_CLIENT, PRONE_FEET_DIST_TURNED);
+						if ( bProneOK )
+						{
+							ps->proneDirection = newProneYaw;
+						}
+					}
+
+					if ( !bProneOK )
+					{
+						proneBlocked = qtrue;
+					}
+
+					break;
+				}
+
+				if ( !bRetry )
+				{
+					break;
+				}
+
+				delta = AngleDelta(ps->proneDirection, newProneYaw);
+
+				bRetry = I_fabs(delta) > 1;
+
+				if ( bRetry )
+				{
+					if ( delta > 0 )
+						delta = 1;
+					else
+						delta = -1;
+				}
+				else
+				{
+					proneBlocked = qtrue;
+				}
+
+				newProneYaw = AngleNormalize360Accurate(newProneYaw + delta);
+			}
+		}
+
+		delta = AngleDelta(ps->proneDirection, ps->viewangles[YAW]);
+
+		if ( delta != 0 )
+		{
+			newProneYaw = ps->proneDirection;
+			bRetry = qtrue;
+
+			while ( 1 )
+			{
+				bProneOK = BG_CheckProne(ps->clientNum, ps->origin, ps->maxs[0], 30.0, newProneYaw,
+				                         NULL, NULL, NULL, qtrue, ps->groundEntityNum != ENTITYNUM_NONE, NULL, handler, PCT_CLIENT, PRONE_FEET_DIST_TURNED);
+				if ( bProneOK )
+				{
+					if ( BG_CheckProneTurned(ps, newProneYaw, handler) )
+					{
+						ps->proneDirection = newProneYaw;
+						break;
+					}
+				}
+
+				if ( !bRetry )
+				{
+					break;
+				}
+
+				bRetry = I_fabs(delta) > 1;
+
+				if ( bRetry )
+				{
+					if ( delta > 0 )
+						delta = 1;
+					else
+						delta = -1;
+				}
+
+				proneBlocked = qtrue;
+
+				ps->delta_angles[YAW] += ANGLE2SHORT(delta);
+				ps->viewangles[YAW] = AngleNormalize360Accurate(ps->viewangles[YAW] + delta);
+
+				delta = AngleDelta(ps->proneDirection, ps->viewangles[YAW]);
+
+				if ( !bProneOK )
+				{
+					newProneYaw = AngleNormalize360Accurate(newProneYaw + delta);
+				}
+			}
+		}
+
+		if ( delta > bg_prone_yawcap->current.decimal || -bg_prone_yawcap->current.decimal > delta )
+		{
+			if ( delta > bg_prone_yawcap->current.decimal )
+				delta -= bg_prone_yawcap->current.decimal;
+			else
+				delta += bg_prone_yawcap->current.decimal;
+
+			ps->delta_angles[YAW] += ANGLE2SHORT(delta);
+
+			if ( delta > 0 )
+				ps->viewangles[YAW] = AngleNormalize360Accurate(ps->proneDirection - bg_prone_yawcap->current.decimal);
+			else
+				ps->viewangles[YAW] = AngleNormalize360Accurate(ps->proneDirection + bg_prone_yawcap->current.decimal);
+		}
+
+		if ( proneBlocked )
+		{
+			ps->pm_flags |= PMF_PRONE_BLOCKED;
+			deltaYaw1 = AngleDelta(oldViewYaw, ps->viewangles[YAW]);
+
+			if ( I_fabs(deltaYaw1) <= 1 )
+			{
+				deltaYaw2 = AngleDeltaNI(newViewYaw, ps->viewangles[YAW]);
+
+				if ( deltaYaw1 * deltaYaw2 > 0 )
+				{
+					deltaYaw1 *= 0.98000002f;
+					ps->viewangles[YAW] = AngleNormalize360Accurate(ps->viewangles[YAW] + deltaYaw1);
+					ps->delta_angles[YAW] += ANGLE2SHORT(deltaYaw1);
+				}
+			}
+		}
+
+		delta = AngleDelta(ps->proneTorsoPitch, ps->viewangles[PITCH]);
+
+		if ( delta > 45 || delta < -45 )
+		{
+			if ( delta > 45 )
+				delta -= 45;
+			else
+				delta += 45;
+
+			ps->delta_angles[PITCH] += ANGLE2SHORT(delta);
+
+			if ( delta > 0 )
+				ps->viewangles[PITCH] = AngleNormalize180Accurate(ps->proneTorsoPitch - 45);
+			else
+				ps->viewangles[PITCH] = AngleNormalize180Accurate(ps->proneTorsoPitch + 45);
+		}
+	}
+
+	if ( ps->pm_type == PM_UFO )
+	{
+		return;
+	}
+
+	if ( ps->pm_type == PM_NOCLIP )
+	{
+		return;
+	}
+
+	if ( ps->pm_type == PM_SPECTATOR )
+	{
+		return;
+	}
+
+	PM_UpdateLean(ps, msec, cmd, pmoveHandlers[handler].trace);
+}
+void PM_SetLadderFlag( playerState_t *ps )
+{
+	ps->pm_flags |= PMF_LADDER;
+}
 

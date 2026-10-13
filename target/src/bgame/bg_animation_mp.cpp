@@ -296,197 +296,16 @@ void BG_LoadAnim();
 
 /*
 =================
-BG_IsCrouchingAnim
+BG_AnimationIndexForString
 =================
 */
-qboolean BG_IsCrouchingAnim( const clientInfo_t *ci, int animNum ) // not sure about this
-{
-	animation_t *anim;
-	qboolean result;
-	animNum &= ~ANIM_TOGGLEBIT;
-	anim = BG_GetAnimationForIndex(ci->clientNum, animNum);
-	if ( anim->movetype & ((1LL<<ANIM_MT_IDLECR)|(1LL<<ANIM_MT_WALKCR)|(1LL<<ANIM_MT_WALKCRBK)
-	                          |(1LL<<ANIM_MT_STUMBLE_CROUCH_FORWARD)|(1LL<<ANIM_MT_STUMBLE_CROUCH_BACKWARD)) )
-		result = qtrue;
-	else
-		result = qfalse;
-	return result;
-}
 
 /*
-===============
-BG_PlayerAngles
-Handles seperate torso motion
-  legs pivot based on direction of movement
-  head always looks exactly at cent->lerpAngles
-  if motion < 20 degrees, show in head only
-  if < 45 degrees, also show in torso
-===============
+=================
+BG_ParseCommands
+=================
 */
-void BG_PlayerAngles( const entityState_s *es, clientInfo_t *ci ) // not sure about this
-{
-	float destination;
-	float clampTolerance;
-	float fraction;
-	float moveDir;
-	vec3_t vLegsAngles;
-	vec3_t vTorsoAngles;
-	vec3_t vHeadAngles;
-	fraction = GetLeanFraction(ci->lerpLean);
-	moveDir = ci->lerpMoveDir;
-	VectorCopy(ci->playerAngles, vHeadAngles);
-	vHeadAngles[YAW] = AngleMod(vHeadAngles[YAW]);
-	VectorClear(vLegsAngles);
-	VectorClear(vTorsoAngles);
-	// --------- yaw -------------
-	// allow yaw to drift a bit, unless these conditions don't allow them
-	if ( es->eFlags & EF_TURRET_ACTIVE )
-	{
-		// if not standing still, always point all in the same direction
-		ci->torso.yawing = qtrue;
-		ci->torso.pitching = qtrue;
-		ci->legs.yawing = qtrue;
-	}
-	else if ( (BG_GetConditionValue(ci, ANIM_COND_MOVETYPE, qfalse) & ((1<<ANIM_MT_CLIMBUP)|(1<<ANIM_MT_CLIMBDOWN)) ) )
-	{
-		ci->torso.yawing = qtrue;
-		ci->torso.pitching = qtrue;
-		ci->legs.yawing = qtrue;
-	}
-	else if ( es->eFlags & EF_MANTLE )
-	{
-		ci->torso.yawing = qtrue;
-		ci->torso.pitching = qtrue;
-		ci->legs.yawing = qtrue;
-	}
-	else if ( !(BG_GetConditionValue(ci, ANIM_COND_MOVETYPE, qfalse) & ((1<<ANIM_MT_IDLE)|(1<<ANIM_MT_IDLECR)) ) )
-	{
-		ci->torso.yawing = qtrue;
-		ci->torso.pitching = qtrue;
-		ci->legs.yawing = qtrue;
-	}
-	else if ( BG_GetConditionValue(ci, ANIM_COND_FIRING, qtrue) )
-	{
-		// if firing, make sure torso and head are always aligned
-		ci->torso.yawing = qtrue;
-		ci->torso.pitching = qtrue;
-	}
-	// adjust legs for movement dir
-	vLegsAngles[YAW] = vHeadAngles[YAW] + moveDir;
-	if ( es->eFlags & EF_DEAD )
-	{
-		vLegsAngles[YAW] = vHeadAngles[YAW];
-		vTorsoAngles[YAW] = vHeadAngles[YAW];
-		clampTolerance = 90;
-	}
-	else if ( (BG_GetConditionValue(ci, ANIM_COND_MOVETYPE, qfalse) & ((1<<ANIM_MT_CLIMBUP)|(1<<ANIM_MT_CLIMBDOWN)) ) )
-	{
-		vTorsoAngles[YAW] = vLegsAngles[YAW];
-		clampTolerance = 0;
-	}
-	else if ( es->eFlags & EF_MANTLE )
-	{
-		vLegsAngles[YAW] = vTorsoAngles[YAW] = vHeadAngles[YAW];
-		vTorsoAngles[PITCH] = 90;
-		clampTolerance = 90;
-	}
-	else if ( es->eFlags & EF_PRONE )
-	{
-		vTorsoAngles[YAW] = vHeadAngles[YAW];
-		clampTolerance = 90;
-	}
-	else if ( !(es->eFlags & EF_FIRING) )
-	{
-		if ( es->eFlags & EF_AIMDOWNSIGHT )
-		{
-			vTorsoAngles[YAW] = vHeadAngles[YAW];
-		}
-		else
-		{
-			vTorsoAngles[YAW] = vHeadAngles[YAW] + moveDir * 0.30000001f;
-		}
-		clampTolerance = 90;
-	}
-	else
-	{
-		vTorsoAngles[YAW] = vHeadAngles[YAW];
-		clampTolerance = 45;
-	}
-	// torso
-	BG_SwingAngles(vTorsoAngles[YAW], 0, clampTolerance, bg_swingSpeed->current.decimal, &ci->torso.yawAngle, &ci->torso.yawing);
-	// if the legs are yawing (facing heading direction), allow them to rotate a bit, so we don't keep calling
-	// the legs_turn animation while an AI is firing, and therefore his angles will be randomizing according to their accuracy
-	clampTolerance = 150;
-	if ( es->eFlags & EF_DEAD )
-	{
-		BG_SwingAngles(vLegsAngles[YAW], 0, clampTolerance, bg_swingSpeed->current.decimal, &ci->legs.yawAngle, &ci->legs.yawing);
-	}
-	else if ( es->eFlags & EF_PRONE )
-	{
-		ci->legs.yawing = qfalse;
-		ci->legs.yawAngle = vHeadAngles[YAW] + moveDir;
-	}
-	else if ( bgs->animScriptData.animations[es->legsAnim & ~ANIM_TOGGLEBIT].flags & 0x30 )
-	{
-		ci->legs.yawing = qfalse; // set it if they really need to swing
-		vLegsAngles[YAW] = vHeadAngles[YAW];
-		BG_SwingAngles(vLegsAngles[YAW], 0, clampTolerance, bg_swingSpeed->current.decimal, &ci->legs.yawAngle, &ci->legs.yawing);
-	}
-	else if ( ci->legs.yawing )
-	{
-		BG_SwingAngles(vLegsAngles[YAW], 0, clampTolerance, bg_swingSpeed->current.decimal, &ci->legs.yawAngle, &ci->legs.yawing);
-	}
-	else
-	{
-		BG_SwingAngles(vLegsAngles[YAW], 40, clampTolerance, bg_swingSpeed->current.decimal, &ci->legs.yawAngle, &ci->legs.yawing);
-	}
-	if ( es->eFlags & EF_TURRET_ACTIVE )
-	{
-		ci->torso.yawAngle = vHeadAngles[YAW];
-		ci->legs.yawAngle = vHeadAngles[YAW];
-	}
-	else if ( (BG_GetConditionValue(ci, ANIM_COND_MOVETYPE, qfalse) & ((1<<ANIM_MT_CLIMBUP)|(1<<ANIM_MT_CLIMBDOWN)) ) )
-	{
-		ci->torso.yawAngle = vHeadAngles[YAW] + moveDir;
-		ci->legs.yawAngle = vHeadAngles[YAW] + moveDir;
-	}
-	if ( es->eFlags & EF_DEAD )
-	{
-		destination = 0;
-	}
-	else if ( es->eFlags & EF_TURRET_ACTIVE )
-	{
-		destination = 0;
-	}
-	else if ( (BG_GetConditionValue(ci, ANIM_COND_MOVETYPE, qfalse) & ((1<<ANIM_MT_CLIMBUP)|(1<<ANIM_MT_CLIMBDOWN)) ) )
-	{
-		destination = 0;
-	}
-	else if ( es->eFlags == EF_MANTLE )
-	{
-		destination = 0;
-	}
-	else if ( vHeadAngles[PITCH] > 180 )
-	{
-		destination = (vHeadAngles[0] + -360.0f) * 0.60000002f;
-	}
-	else
-	{
-		destination = vHeadAngles[0] * 0.60000002f;
-	}
-	BG_SwingAngles(destination, 0, 45, 0.15000001f, &ci->torso.pitchAngle, &ci->torso.pitching);
-}
 
-/*
-===============
-BG_InitWeaponString
-===============
-*/
-void BG_InitWeaponString( int index, const char *name )
-{
-	weaponStrings[index].string = name;
-	weaponStrings[index].hash = BG_StringHashValue(name);
-}
 
 /*
 ===============
@@ -539,63 +358,6 @@ void BG_AnimParseError( const char *msg, ... )
 	{
 		Com_Error( ERR_DROP,  "\x15" "%s", text );
 	}
-}
-
-/*
-=================
-BG_AnimationIndexForString
-=================
-*/
-int BG_AnimationIndexForString( const char *string )
-{
-	if ( !g_pLoadAnims )
-	{
-		int i;
-		int hash;
-		animation_t *anim;
-
-		hash = BG_StringHashValue( string );
-
-		for ( i = 0, anim = globalScriptData->animations; i < globalScriptData->numAnimations; i++, anim++ )
-		{
-			if ( ( hash == anim->nameHash ) && !Q_stricmp( string, anim->name ) )
-			{
-				// found a match
-				return i;
-			}
-		}
-
-		// no match found
-		BG_AnimParseError( "BG_AnimationIndexForString: unknown player animation '%s'", string );
-	}
-	else
-	{
-		int i;
-		int hash;
-		loadAnim_t *loadAnim;
-
-		hash = BG_StringHashValue( string );
-
-		for ( i = 0, loadAnim = g_pLoadAnims; i < *g_piNumLoadAnims; i++, loadAnim++ )
-		{
-			if ( ( hash == loadAnim->nameHash ) && !Q_stricmp( string, loadAnim->name ) )
-			{
-				// found a match
-				return i;
-			}
-		}
-
-		loadAnim = &g_pLoadAnims[*g_piNumLoadAnims];
-		Scr_FindAnim(DEFAULT_ANIM_TREE_NAME, string, &loadAnim->anim, bgs->anim_user);
-
-		strcpy(loadAnim->name, string);
-		loadAnim->nameHash = hash;
-
-		*g_piNumLoadAnims = *g_piNumLoadAnims + 1;
-		return *g_piNumLoadAnims - 1;
-	}
-
-	return -1;  // shutup compiler
 }
 
 /*
@@ -681,6 +443,17 @@ char *BG_CopyStringIntoBuffer( const char *string, char *buffer, int bufSize, in
 	*offset += strlen( string ) + 1;
 
 	return pch;
+}
+
+/*
+===============
+BG_InitWeaponString
+===============
+*/
+void BG_InitWeaponString( int index, const char *name )
+{
+	weaponStrings[index].string = name;
+	weaponStrings[index].hash = BG_StringHashValue(name);
 }
 
 /*
@@ -1084,217 +857,6 @@ qboolean BG_ParseConditions( const char **text_pp, animScriptItem_t *scriptItem 
 	}
 
 	return qtrue;
-}
-
-/*
-=================
-BG_ParseCommands
-=================
-*/
-void BG_ParseCommands( const char **input, animScriptItem_t *scriptItem, animScriptData_t *scriptData )
-{
-	char    *token;
-	// TTimo gcc: might be used uninitialized
-	animScriptCommand_t *command = NULL;
-	int partIndex = 0;
-	int i;
-	qboolean bCommandFound;
-
-	while ( 1 )
-	{
-		// parse the body part
-		token = partIndex < 1 ? Com_Parse(input) : Com_ParseOnLine(input);
-		if ( !token || !*token )
-		{
-			break;
-		}
-		if ( !Q_stricmp( token, "}" ) )
-		{
-			// unget the bracket and get out of here
-			*input -= strlen( token );
-			break;
-		}
-
-		// new command?
-		if ( partIndex == 0 )
-		{
-			// have we exceeded the maximum number of commands?
-			if ( scriptItem->numCommands >= MAX_ANIMSCRIPT_ANIMCOMMANDS )
-			{
-				BG_AnimParseError( "BG_ParseCommands: exceeded maximum number of animations (%i)", MAX_ANIMSCRIPT_ANIMCOMMANDS );
-			}
-			command = &scriptItem->commands[scriptItem->numCommands++];
-			memset( command, 0, sizeof( command ) );
-		}
-
-		command->bodyPart[partIndex] = BG_IndexForString( token, animBodyPartsStr, qtrue );
-		if ( command->bodyPart[partIndex] > 0 )
-		{
-			// parse the animation
-			token = Com_ParseOnLine( input );
-			if ( !token || !token[0] )
-			{
-				BG_AnimParseError( "BG_ParseCommands: expected animation" );
-			}
-			command->animIndex[partIndex] = BG_AnimationIndexForString( token );
-			command->animDuration[partIndex] = scriptData->animations[command->animIndex[partIndex]].duration;
-			if ( !g_pLoadAnims )
-			{
-				// if this is a locomotion, set the movetype of the animation so we can reverse engineer the movetype from the animation, on the client
-				if ( parseMovetype != ANIM_MT_UNUSED && command->bodyPart[partIndex] != ANIM_BP_TORSO )
-				{
-					scriptData->animations[command->animIndex[partIndex]].movetype |= ( 1LL << parseMovetype );
-
-					// if this is a mantle event, then this is a mantle animation
-					if ( (parseMovetype == ANIM_MT_CLIMBUP || parseMovetype == ANIM_MT_CLIMBDOWN)
-					        && scriptData->animations[command->animIndex[partIndex]].moveSpeed != 0 )
-					{
-						scriptData->animations[command->animIndex[partIndex]].flags |= 2;
-					}
-
-					for ( i = 0; i < scriptItem->numConditions; i++ )
-					{
-						if ( scriptItem->conditions[i].index == ANIM_COND_STRAFING )
-						{
-							if ( scriptItem->conditions[i].value[0] == 1 )
-							{
-								scriptData->animations[command->animIndex[partIndex]].flags |= 0x10;
-							}
-							else if ( scriptItem->conditions[i].value[0] == 2 )
-							{
-								scriptData->animations[command->animIndex[partIndex]].flags |= 0x20;
-							}
-							break;
-						}
-					}
-				}
-
-				if ( parseEvent == ANIM_ET_FIREWEAPON )
-				{
-					scriptData->animations[command->animIndex[partIndex]].flags |= 8;
-					scriptData->animations[command->animIndex[partIndex]].initialLerp = 30;
-				}
-				else if ( parseEvent == ANIM_ET_DEATH )
-				{
-					scriptData->animations[command->animIndex[partIndex]].moveSpeed = 0;
-					scriptData->animations[command->animIndex[partIndex]].flags |= 0x40;
-				}
-				else if ( parseEvent == ANIM_ET_RELOAD )
-				{
-					scriptData->animations[command->animIndex[partIndex]].moveSpeed = 0;
-				}
-				else
-				{
-					if ( parseMovetype >= ANIM_MT_MANTLE_UP_57 && parseMovetype <= ANIM_MT_MANTLE_OVER_LOW )
-					{
-						scriptData->animations[command->animIndex[partIndex]].moveSpeed = 0;
-					}
-				}
-			}
-			do
-			{
-				// check for a duration for this animation instance
-				bCommandFound = qfalse;
-				token = Com_ParseOnLine( input );
-				if ( token && token[0] )
-				{
-					if ( !Q_stricmp( token, "duration" ) )
-					{
-						// read the duration
-						bCommandFound = qtrue;
-						token = Com_ParseOnLine( input );
-						if ( !token || !token[0] )
-						{
-							BG_AnimParseError( "BG_ParseCommands: expected duration value" );
-						}
-						command->animDuration[partIndex] = atoi( token );
-					}
-					else if ( !Q_stricmp( token, "turretanim" ) )
-					{
-						// read the turretanim
-						bCommandFound = qtrue;
-						if ( !g_pLoadAnims )
-						{
-							scriptData->animations[command->animIndex[partIndex]].flags |= 4;
-						}
-						if ( command->bodyPart[partIndex] != ANIM_BP_BOTH )
-						{
-							BG_AnimParseError("BG_ParseCommands: Turret animations can only be played on the 'both' body part");
-						}
-					}
-					else if ( !Q_stricmp( token, "blendtime" ) )
-					{
-						// read the blendtime
-						bCommandFound = qtrue;
-						token = Com_ParseOnLine( input );
-						if ( !token || !token[0] )
-						{
-							BG_AnimParseError("BG_ParseCommands: expected blendtime value");
-						}
-						if ( !g_pLoadAnims )
-						{
-							scriptData->animations[command->animIndex[partIndex]].initialLerp = atoi( token );
-						}
-					}
-					else
-					{
-						Com_UngetToken( );  // unget the token
-					}
-				}
-				else
-				{
-					Com_UngetToken( );
-				}
-			}
-			while ( bCommandFound );
-			if ( command->bodyPart[partIndex] != ANIM_BP_BOTH && partIndex++ < 1 )
-			{
-				continue;   // allow parsing of another bodypart
-			}
-		}
-		else
-		{
-			// unget the token
-			*input -= strlen( token );
-		}
-
-		// parse optional parameters (sounds, etc)
-		for ( ;; )
-		{
-			token = Com_ParseOnLine( input );
-			if ( !token || !token[0] )
-			{
-				break;
-			}
-
-			if ( !Q_stricmp( token, "sound" ) )
-			{
-				token = Com_ParseOnLine( input );
-				if ( !token || !token[0] )
-				{
-					BG_AnimParseError( "BG_ParseCommands: expected sound" );
-				}
-				// NOTE: only sound script are supported at this stage
-				if ( strstr( token, ".wav" ) )
-				{
-					BG_AnimParseError( "BG_ParseCommands: wav files not supported, only sound scripts" );    // RF mod
-				}
-				// ydnar: this was crashing because soundIndex wasn't initialized
-				// FIXME: find the reason
-				// Gordon: hmmm, soundindex is setup on both client and server :/
-				//	cgs.animScriptData.soundIndex = CG_SoundScriptPrecache;
-				//	level.animScriptData.soundIndex = G_SoundIndex;
-				command->soundAlias = globalScriptData->soundAlias( token );
-			}
-			else
-			{
-				// unknown??
-				BG_AnimParseError( "BG_ParseCommands: unknown parameter '%s'", token );
-			}
-		}
-
-		partIndex = 0;
-	}
 }
 
 /*
@@ -2217,6 +1779,25 @@ void BG_AnimUpdatePlayerStateConditions( pmove_t *pmove )
 
 /*
 =================
+BG_IsCrouchingAnim
+=================
+*/
+qboolean BG_IsCrouchingAnim( const clientInfo_t *ci, int animNum ) // not sure about this
+{
+	animation_t *anim;
+	qboolean result;
+	animNum &= ~ANIM_TOGGLEBIT;
+	anim = BG_GetAnimationForIndex(ci->clientNum, animNum);
+	if ( anim->movetype & ((1LL<<ANIM_MT_IDLECR)|(1LL<<ANIM_MT_WALKCR)|(1LL<<ANIM_MT_WALKCRBK)
+	                          |(1LL<<ANIM_MT_STUMBLE_CROUCH_FORWARD)|(1LL<<ANIM_MT_STUMBLE_CROUCH_BACKWARD)) )
+		result = qtrue;
+	else
+		result = qfalse;
+	return result;
+}
+
+/*
+=================
 BG_IsProneAnim
 =================
 */
@@ -2678,6 +2259,170 @@ void BG_SwingAngles( float destination,  float swingTolerance, float clampTolera
 			*angle = AngleMod(destination + clampTolerance);
 		}
 	}
+}
+
+/*
+===============
+BG_PlayerAngles
+Handles seperate torso motion
+  legs pivot based on direction of movement
+  head always looks exactly at cent->lerpAngles
+  if motion < 20 degrees, show in head only
+  if < 45 degrees, also show in torso
+===============
+*/
+void BG_PlayerAngles( const entityState_s *es, clientInfo_t *ci ) // not sure about this
+{
+	float destination;
+	float clampTolerance;
+	float fraction;
+	float moveDir;
+	vec3_t vLegsAngles;
+	vec3_t vTorsoAngles;
+	vec3_t vHeadAngles;
+	fraction = GetLeanFraction(ci->lerpLean);
+	moveDir = ci->lerpMoveDir;
+	VectorCopy(ci->playerAngles, vHeadAngles);
+	vHeadAngles[YAW] = AngleMod(vHeadAngles[YAW]);
+	VectorClear(vLegsAngles);
+	VectorClear(vTorsoAngles);
+	// --------- yaw -------------
+	// allow yaw to drift a bit, unless these conditions don't allow them
+	if ( es->eFlags & EF_TURRET_ACTIVE )
+	{
+		// if not standing still, always point all in the same direction
+		ci->torso.yawing = qtrue;
+		ci->torso.pitching = qtrue;
+		ci->legs.yawing = qtrue;
+	}
+	else if ( (BG_GetConditionValue(ci, ANIM_COND_MOVETYPE, qfalse) & ((1<<ANIM_MT_CLIMBUP)|(1<<ANIM_MT_CLIMBDOWN)) ) )
+	{
+		ci->torso.yawing = qtrue;
+		ci->torso.pitching = qtrue;
+		ci->legs.yawing = qtrue;
+	}
+	else if ( es->eFlags & EF_MANTLE )
+	{
+		ci->torso.yawing = qtrue;
+		ci->torso.pitching = qtrue;
+		ci->legs.yawing = qtrue;
+	}
+	else if ( !(BG_GetConditionValue(ci, ANIM_COND_MOVETYPE, qfalse) & ((1<<ANIM_MT_IDLE)|(1<<ANIM_MT_IDLECR)) ) )
+	{
+		ci->torso.yawing = qtrue;
+		ci->torso.pitching = qtrue;
+		ci->legs.yawing = qtrue;
+	}
+	else if ( BG_GetConditionValue(ci, ANIM_COND_FIRING, qtrue) )
+	{
+		// if firing, make sure torso and head are always aligned
+		ci->torso.yawing = qtrue;
+		ci->torso.pitching = qtrue;
+	}
+	// adjust legs for movement dir
+	vLegsAngles[YAW] = vHeadAngles[YAW] + moveDir;
+	if ( es->eFlags & EF_DEAD )
+	{
+		vLegsAngles[YAW] = vHeadAngles[YAW];
+		vTorsoAngles[YAW] = vHeadAngles[YAW];
+		clampTolerance = 90;
+	}
+	else if ( (BG_GetConditionValue(ci, ANIM_COND_MOVETYPE, qfalse) & ((1<<ANIM_MT_CLIMBUP)|(1<<ANIM_MT_CLIMBDOWN)) ) )
+	{
+		vTorsoAngles[YAW] = vLegsAngles[YAW];
+		clampTolerance = 0;
+	}
+	else if ( es->eFlags & EF_MANTLE )
+	{
+		vLegsAngles[YAW] = vTorsoAngles[YAW] = vHeadAngles[YAW];
+		vTorsoAngles[PITCH] = 90;
+		clampTolerance = 90;
+	}
+	else if ( es->eFlags & EF_PRONE )
+	{
+		vTorsoAngles[YAW] = vHeadAngles[YAW];
+		clampTolerance = 90;
+	}
+	else if ( !(es->eFlags & EF_FIRING) )
+	{
+		if ( es->eFlags & EF_AIMDOWNSIGHT )
+		{
+			vTorsoAngles[YAW] = vHeadAngles[YAW];
+		}
+		else
+		{
+			vTorsoAngles[YAW] = vHeadAngles[YAW] + moveDir * 0.30000001f;
+		}
+		clampTolerance = 90;
+	}
+	else
+	{
+		vTorsoAngles[YAW] = vHeadAngles[YAW];
+		clampTolerance = 45;
+	}
+	// torso
+	BG_SwingAngles(vTorsoAngles[YAW], 0, clampTolerance, bg_swingSpeed->current.decimal, &ci->torso.yawAngle, &ci->torso.yawing);
+	// if the legs are yawing (facing heading direction), allow them to rotate a bit, so we don't keep calling
+	// the legs_turn animation while an AI is firing, and therefore his angles will be randomizing according to their accuracy
+	clampTolerance = 150;
+	if ( es->eFlags & EF_DEAD )
+	{
+		BG_SwingAngles(vLegsAngles[YAW], 0, clampTolerance, bg_swingSpeed->current.decimal, &ci->legs.yawAngle, &ci->legs.yawing);
+	}
+	else if ( es->eFlags & EF_PRONE )
+	{
+		ci->legs.yawing = qfalse;
+		ci->legs.yawAngle = vHeadAngles[YAW] + moveDir;
+	}
+	else if ( bgs->animScriptData.animations[es->legsAnim & ~ANIM_TOGGLEBIT].flags & 0x30 )
+	{
+		ci->legs.yawing = qfalse; // set it if they really need to swing
+		vLegsAngles[YAW] = vHeadAngles[YAW];
+		BG_SwingAngles(vLegsAngles[YAW], 0, clampTolerance, bg_swingSpeed->current.decimal, &ci->legs.yawAngle, &ci->legs.yawing);
+	}
+	else if ( ci->legs.yawing )
+	{
+		BG_SwingAngles(vLegsAngles[YAW], 0, clampTolerance, bg_swingSpeed->current.decimal, &ci->legs.yawAngle, &ci->legs.yawing);
+	}
+	else
+	{
+		BG_SwingAngles(vLegsAngles[YAW], 40, clampTolerance, bg_swingSpeed->current.decimal, &ci->legs.yawAngle, &ci->legs.yawing);
+	}
+	if ( es->eFlags & EF_TURRET_ACTIVE )
+	{
+		ci->torso.yawAngle = vHeadAngles[YAW];
+		ci->legs.yawAngle = vHeadAngles[YAW];
+	}
+	else if ( (BG_GetConditionValue(ci, ANIM_COND_MOVETYPE, qfalse) & ((1<<ANIM_MT_CLIMBUP)|(1<<ANIM_MT_CLIMBDOWN)) ) )
+	{
+		ci->torso.yawAngle = vHeadAngles[YAW] + moveDir;
+		ci->legs.yawAngle = vHeadAngles[YAW] + moveDir;
+	}
+	if ( es->eFlags & EF_DEAD )
+	{
+		destination = 0;
+	}
+	else if ( es->eFlags & EF_TURRET_ACTIVE )
+	{
+		destination = 0;
+	}
+	else if ( (BG_GetConditionValue(ci, ANIM_COND_MOVETYPE, qfalse) & ((1<<ANIM_MT_CLIMBUP)|(1<<ANIM_MT_CLIMBDOWN)) ) )
+	{
+		destination = 0;
+	}
+	else if ( es->eFlags == EF_MANTLE )
+	{
+		destination = 0;
+	}
+	else if ( vHeadAngles[PITCH] > 180 )
+	{
+		destination = (vHeadAngles[0] + -360.0f) * 0.60000002f;
+	}
+	else
+	{
+		destination = vHeadAngles[0] * 0.60000002f;
+	}
+	BG_SwingAngles(destination, 0, 45, 0.15000001f, &ci->torso.pitchAngle, &ci->torso.pitching);
 }
 
 void BG_AnimPlayerConditions( entityState_t *es, clientInfo_t *ci )
@@ -3187,3 +2932,259 @@ void BG_LoadAnim()
 	BG_FinalizePlayerAnims();
 }
 
+int BG_AnimationIndexForString( const char *string )
+{
+	if ( !g_pLoadAnims )
+	{
+		int i;
+		int hash;
+		animation_t *anim;
+
+		hash = BG_StringHashValue( string );
+
+		for ( i = 0, anim = globalScriptData->animations; i < globalScriptData->numAnimations; i++, anim++ )
+		{
+			if ( ( hash == anim->nameHash ) && !Q_stricmp( string, anim->name ) )
+			{
+				// found a match
+				return i;
+			}
+		}
+
+		// no match found
+		BG_AnimParseError( "BG_AnimationIndexForString: unknown player animation '%s'", string );
+	}
+	else
+	{
+		int i;
+		int hash;
+		loadAnim_t *loadAnim;
+
+		hash = BG_StringHashValue( string );
+
+		for ( i = 0, loadAnim = g_pLoadAnims; i < *g_piNumLoadAnims; i++, loadAnim++ )
+		{
+			if ( ( hash == loadAnim->nameHash ) && !Q_stricmp( string, loadAnim->name ) )
+			{
+				// found a match
+				return i;
+			}
+		}
+
+		loadAnim = &g_pLoadAnims[*g_piNumLoadAnims];
+		Scr_FindAnim(DEFAULT_ANIM_TREE_NAME, string, &loadAnim->anim, bgs->anim_user);
+
+		strcpy(loadAnim->name, string);
+		loadAnim->nameHash = hash;
+
+		*g_piNumLoadAnims = *g_piNumLoadAnims + 1;
+		return *g_piNumLoadAnims - 1;
+	}
+
+	return -1;  // shutup compiler
+}
+void BG_ParseCommands( const char **input, animScriptItem_t *scriptItem, animScriptData_t *scriptData )
+{
+	char    *token;
+	// TTimo gcc: might be used uninitialized
+	animScriptCommand_t *command = NULL;
+	int partIndex = 0;
+	int i;
+	qboolean bCommandFound;
+
+	while ( 1 )
+	{
+		// parse the body part
+		token = partIndex < 1 ? Com_Parse(input) : Com_ParseOnLine(input);
+		if ( !token || !*token )
+		{
+			break;
+		}
+		if ( !Q_stricmp( token, "}" ) )
+		{
+			// unget the bracket and get out of here
+			*input -= strlen( token );
+			break;
+		}
+
+		// new command?
+		if ( partIndex == 0 )
+		{
+			// have we exceeded the maximum number of commands?
+			if ( scriptItem->numCommands >= MAX_ANIMSCRIPT_ANIMCOMMANDS )
+			{
+				BG_AnimParseError( "BG_ParseCommands: exceeded maximum number of animations (%i)", MAX_ANIMSCRIPT_ANIMCOMMANDS );
+			}
+			command = &scriptItem->commands[scriptItem->numCommands++];
+			memset( command, 0, sizeof( command ) );
+		}
+
+		command->bodyPart[partIndex] = BG_IndexForString( token, animBodyPartsStr, qtrue );
+		if ( command->bodyPart[partIndex] > 0 )
+		{
+			// parse the animation
+			token = Com_ParseOnLine( input );
+			if ( !token || !token[0] )
+			{
+				BG_AnimParseError( "BG_ParseCommands: expected animation" );
+			}
+			command->animIndex[partIndex] = BG_AnimationIndexForString( token );
+			command->animDuration[partIndex] = scriptData->animations[command->animIndex[partIndex]].duration;
+			if ( !g_pLoadAnims )
+			{
+				// if this is a locomotion, set the movetype of the animation so we can reverse engineer the movetype from the animation, on the client
+				if ( parseMovetype != ANIM_MT_UNUSED && command->bodyPart[partIndex] != ANIM_BP_TORSO )
+				{
+					scriptData->animations[command->animIndex[partIndex]].movetype |= ( 1LL << parseMovetype );
+
+					// if this is a mantle event, then this is a mantle animation
+					if ( (parseMovetype == ANIM_MT_CLIMBUP || parseMovetype == ANIM_MT_CLIMBDOWN)
+					        && scriptData->animations[command->animIndex[partIndex]].moveSpeed != 0 )
+					{
+						scriptData->animations[command->animIndex[partIndex]].flags |= 2;
+					}
+
+					for ( i = 0; i < scriptItem->numConditions; i++ )
+					{
+						if ( scriptItem->conditions[i].index == ANIM_COND_STRAFING )
+						{
+							if ( scriptItem->conditions[i].value[0] == 1 )
+							{
+								scriptData->animations[command->animIndex[partIndex]].flags |= 0x10;
+							}
+							else if ( scriptItem->conditions[i].value[0] == 2 )
+							{
+								scriptData->animations[command->animIndex[partIndex]].flags |= 0x20;
+							}
+							break;
+						}
+					}
+				}
+
+				if ( parseEvent == ANIM_ET_FIREWEAPON )
+				{
+					scriptData->animations[command->animIndex[partIndex]].flags |= 8;
+					scriptData->animations[command->animIndex[partIndex]].initialLerp = 30;
+				}
+				else if ( parseEvent == ANIM_ET_DEATH )
+				{
+					scriptData->animations[command->animIndex[partIndex]].moveSpeed = 0;
+					scriptData->animations[command->animIndex[partIndex]].flags |= 0x40;
+				}
+				else if ( parseEvent == ANIM_ET_RELOAD )
+				{
+					scriptData->animations[command->animIndex[partIndex]].moveSpeed = 0;
+				}
+				else
+				{
+					if ( parseMovetype >= ANIM_MT_MANTLE_UP_57 && parseMovetype <= ANIM_MT_MANTLE_OVER_LOW )
+					{
+						scriptData->animations[command->animIndex[partIndex]].moveSpeed = 0;
+					}
+				}
+			}
+			do
+			{
+				// check for a duration for this animation instance
+				bCommandFound = qfalse;
+				token = Com_ParseOnLine( input );
+				if ( token && token[0] )
+				{
+					if ( !Q_stricmp( token, "duration" ) )
+					{
+						// read the duration
+						bCommandFound = qtrue;
+						token = Com_ParseOnLine( input );
+						if ( !token || !token[0] )
+						{
+							BG_AnimParseError( "BG_ParseCommands: expected duration value" );
+						}
+						command->animDuration[partIndex] = atoi( token );
+					}
+					else if ( !Q_stricmp( token, "turretanim" ) )
+					{
+						// read the turretanim
+						bCommandFound = qtrue;
+						if ( !g_pLoadAnims )
+						{
+							scriptData->animations[command->animIndex[partIndex]].flags |= 4;
+						}
+						if ( command->bodyPart[partIndex] != ANIM_BP_BOTH )
+						{
+							BG_AnimParseError("BG_ParseCommands: Turret animations can only be played on the 'both' body part");
+						}
+					}
+					else if ( !Q_stricmp( token, "blendtime" ) )
+					{
+						// read the blendtime
+						bCommandFound = qtrue;
+						token = Com_ParseOnLine( input );
+						if ( !token || !token[0] )
+						{
+							BG_AnimParseError("BG_ParseCommands: expected blendtime value");
+						}
+						if ( !g_pLoadAnims )
+						{
+							scriptData->animations[command->animIndex[partIndex]].initialLerp = atoi( token );
+						}
+					}
+					else
+					{
+						Com_UngetToken( );  // unget the token
+					}
+				}
+				else
+				{
+					Com_UngetToken( );
+				}
+			}
+			while ( bCommandFound );
+			if ( command->bodyPart[partIndex] != ANIM_BP_BOTH && partIndex++ < 1 )
+			{
+				continue;   // allow parsing of another bodypart
+			}
+		}
+		else
+		{
+			// unget the token
+			*input -= strlen( token );
+		}
+
+		// parse optional parameters (sounds, etc)
+		for ( ;; )
+		{
+			token = Com_ParseOnLine( input );
+			if ( !token || !token[0] )
+			{
+				break;
+			}
+
+			if ( !Q_stricmp( token, "sound" ) )
+			{
+				token = Com_ParseOnLine( input );
+				if ( !token || !token[0] )
+				{
+					BG_AnimParseError( "BG_ParseCommands: expected sound" );
+				}
+				// NOTE: only sound script are supported at this stage
+				if ( strstr( token, ".wav" ) )
+				{
+					BG_AnimParseError( "BG_ParseCommands: wav files not supported, only sound scripts" );    // RF mod
+				}
+				// ydnar: this was crashing because soundIndex wasn't initialized
+				// FIXME: find the reason
+				// Gordon: hmmm, soundindex is setup on both client and server :/
+				//	cgs.animScriptData.soundIndex = CG_SoundScriptPrecache;
+				//	level.animScriptData.soundIndex = G_SoundIndex;
+				command->soundAlias = globalScriptData->soundAlias( token );
+			}
+			else
+			{
+				// unknown??
+				BG_AnimParseError( "BG_ParseCommands: unknown parameter '%s'", token );
+			}
+		}
+
+		partIndex = 0;
+	}
+}

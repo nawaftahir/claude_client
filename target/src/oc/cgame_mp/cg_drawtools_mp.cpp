@@ -72,26 +72,6 @@ static inline void FastSinCos(const float value, float *pSin, float *pCos)
     }
 }
 
-void CG_DrawStringExt(float x, float y, const char *string, const vec_t *setColor, qboolean forceColor, qboolean shadow, float charHeight, qboolean adjust)
-{
-    float baselineY = y + charHeight * 0.8f;
-    float fontScale = charHeight / 48.0f;
-
-    if (!setColor) {
-        setColor = colorWhite;
-    }
-
-    FontHandle font = UI_GetFontHandle(5, fontScale);
-    int style = shadow ? 3 : 0;
-
-    UI_DrawText(string, 0x7fffffff, font, x, baselineY, 1, 1, fontScale, setColor, style);
-}
-
-static __forceinline int CG_FloatIsNegative(const float x)
-{
-    return *(const int *)&x < 0;
-}
-
 // RtCW bar flags
 #define BAR_LEFT 0x0001
 #define BAR_CENTER 0x0002
@@ -101,6 +81,29 @@ static __forceinline int CG_FloatIsNegative(const float x)
 #define BAR_BGSPACING_X0Y0 0x0040
 #define BAR_LERP_COLOR 0x0100
 #define BAR_BORDERSIZE 1
+
+
+
+
+
+
+
+
+
+
+static __forceinline int CG_FloatIsNegative(const float x)
+{
+    return *(const int *)&x < 0;
+}
+
+// retail 0x4bbcd0, unreferenced; Kisak name
+void Vec4Lerp(const float *from, const float *to, float frac, float *result)
+{
+    result[0] = (to[0] - from[0]) * frac + from[0];
+    result[1] = (to[1] - from[1]) * frac + from[1];
+    result[2] = (to[2] - from[2]) * frac + from[2];
+    result[3] = (to[3] - from[3]) * frac + from[3];
+}
 
 // retail 0x4bbd10, unreferenced (RtCW shape, no hud alpha)
 void CG_FilledBar(float x, float y, float w, float h, const float *startColor, const float *endColor, const float *bgColor, float frac, int flags)
@@ -175,106 +178,25 @@ void CG_HorizontalPercentBar(float x, float y, float width, float height, float 
     CG_FilledBar(x, y, width, height, color, NULL, bgcolor, percent, BAR_BG);
 }
 
-void CG_DrawRotatedPicPhysical(float x, float y, float width, float height, float angle, const vec_t *color, MaterialHandle material)
-{
-    static const float sign[4][2] = { { -1.0f, -1.0f }, { 1.0f, -1.0f }, { 1.0f, 1.0f }, { -1.0f, 1.0f } };
-    float c;
-    float s;
-    float halfW;
-    float halfH;
-    float center[2];
-    float scale[2][2];
-    vec2_t verts[4];
-    int i;
-
-    FastSinCos(angle * 0.017453292f, &s, &c);
-    halfW = width * 0.5f;
-    halfH = height * 0.5f;
-    center[0] = x + halfW;
-    center[1] = halfH + y;
-    scale[0][0] = c * halfW;
-    scale[0][1] = s * halfW;
-    scale[1][0] = s * halfH;
-    scale[1][1] = c * halfH;
-    for (i = 0; i < 4; i++) {
-        verts[i][0] = center[0] + scale[0][0] * sign[i][0] - scale[0][1] * sign[i][1];
-        verts[i][1] = scale[1][0] * sign[i][0] + scale[1][1] * sign[i][1]; verts[i][1] = verts[i][1] + center[1];
-    }
-
-    CL_DrawQuadPic(verts, color, material);
-}
-
 void CG_DrawRotatedPic(float x, float y, float width, float height, int horzAlign, int vertAlign, float angle, const vec_t *color, MaterialHandle material)
 {
     CalcScreenPlacement(&x, &y, &width, &height, horzAlign, vertAlign);
     CG_DrawRotatedPicPhysical(x, y, width, height, angle, color, material);
 }
 
-void CG_DrawRotatedQuadPic(float x, float y, vec2_t *verts, float angle, const vec_t *color, MaterialHandle material)
+void CG_DrawStringExt(float x, float y, const char *string, const vec_t *setColor, qboolean forceColor, qboolean shadow, float charHeight, qboolean adjust)
 {
-    float c;
-    float s;
-    vec2_t xy[4];
-    int i;
+    float baselineY = y + charHeight * 0.8f;
+    float fontScale = charHeight / 48.0f;
 
-    FastSinCos(angle * 0.017453292f, &s, &c);
-    for (i = 0; i < 4; i++) {
-        xy[i][0] = c * verts[i][0] + x; xy[i][0] = xy[i][0] - s * verts[i][1];
-        xy[i][1] = s * verts[i][0] + c * verts[i][1] + y;
+    if (!setColor) {
+        setColor = colorWhite;
     }
 
-    CL_DrawQuadPic(xy, color, material);
-}
+    FontHandle font = UI_GetFontHandle(5, fontScale);
+    int style = shadow ? 3 : 0;
 
-int CG_DrawDevString(float x, float y, const char *s, const vec_t *color, int align, FontHandle font, int style)
-{
-    int height;
-
-    if ((align & 3) != 1)
-        x = (float)CL_TextWidth(s, 0, font);
-
-    height = CL_TextHeight(font);
-    if ((align & 0xc) != 8) {
-        if ((align & 0xc) == 0xc)
-            y += height * 0.5f;
-        else
-            y += height;
-    }
-
-    CL_DrawText(s, 0x7fffffff, font, -(float)CL_TextWidth(s, 0, font), y, 3, 1, 1.0f, 1.0f, color, style);
-    return height;
-}
-
-int CG_DrawBigDevString(float x, float y, const char *s, float alpha, int align)
-{
-    vec4_t c;
-    c[0] = 1.0f;
-    c[1] = 1.0f;
-    c[2] = 1.0f;
-    c[3] = alpha;
-
-    return CG_DrawDevString(x, y, s, c, align, cgs->media.bigDevFont, 0);
-}
-
-int CG_DrawBigDevStringColor(float x, float y, const char *s, const vec_t *color, int align)
-{
-    return CG_DrawDevString(x, y, s, color, align, cgs->media.bigDevFont, 0);
-}
-
-int CG_DrawSmallDevString(float x, float y, const char *s, float alpha, int align)
-{
-    vec4_t c;
-    c[0] = 1.0f;
-    c[1] = 1.0f;
-    c[2] = 1.0f;
-    c[3] = alpha;
-
-    return CG_DrawDevString(x, y, s, c, align, cgs->media.smallDevFont, 0);
-}
-
-int CG_DrawSmallDevStringColor(float x, float y, const char *s, const vec_t *color, int align)
-{
-    return CG_DrawDevString(x, y, s, color, align, cgs->media.smallDevFont, 0);
+    UI_DrawText(string, 0x7fffffff, font, x, baselineY, 1, 1, fontScale, setColor, style);
 }
 
 // Original name unknown.
@@ -325,15 +247,6 @@ float *CG_FadeColor(int startMsec, int totalMsec, int fadeMsec)
     color[1] = 1.0f;
     color[0] = 1.0f;
     return color;
-}
-
-// retail 0x4bbcd0, unreferenced; Kisak name
-void Vec4Lerp(const float *from, const float *to, float frac, float *result)
-{
-    result[0] = (to[0] - from[0]) * frac + from[0];
-    result[1] = (to[1] - from[1]) * frac + from[1];
-    result[2] = (to[2] - from[2]) * frac + from[2];
-    result[3] = (to[3] - from[3]) * frac + from[3];
 }
 
 // retail 0x4bc5c0, unreferenced; Q3 shape without armor (SUPPORTED)
@@ -537,3 +450,92 @@ void CG_UpdateCompPointerOrientation(void)
     cg->compPointerYaw = AngleNormalize360(fDiff + cg->refdefViewAngles[1]);
 }
 
+void CG_DrawRotatedPicPhysical(float x, float y, float width, float height, float angle, const vec_t *color, MaterialHandle material)
+{
+    static const float sign[4][2] = { { -1.0f, -1.0f }, { 1.0f, -1.0f }, { 1.0f, 1.0f }, { -1.0f, 1.0f } };
+    float c;
+    float s;
+    float halfW;
+    float halfH;
+    float center[2];
+    float scale[2][2];
+    vec2_t verts[4];
+    int i;
+
+    FastSinCos(angle * 0.017453292f, &s, &c);
+    halfW = width * 0.5f;
+    halfH = height * 0.5f;
+    center[0] = x + halfW;
+    center[1] = halfH + y;
+    scale[0][0] = c * halfW;
+    scale[0][1] = s * halfW;
+    scale[1][0] = s * halfH;
+    scale[1][1] = c * halfH;
+    for (i = 0; i < 4; i++) {
+        verts[i][0] = center[0] + scale[0][0] * sign[i][0] - scale[0][1] * sign[i][1];
+        verts[i][1] = scale[1][0] * sign[i][0] + scale[1][1] * sign[i][1]; verts[i][1] = verts[i][1] + center[1];
+    }
+
+    CL_DrawQuadPic(verts, color, material);
+}
+void CG_DrawRotatedQuadPic(float x, float y, vec2_t *verts, float angle, const vec_t *color, MaterialHandle material)
+{
+    float c;
+    float s;
+    vec2_t xy[4];
+    int i;
+
+    FastSinCos(angle * 0.017453292f, &s, &c);
+    for (i = 0; i < 4; i++) {
+        xy[i][0] = c * verts[i][0] + x; xy[i][0] = xy[i][0] - s * verts[i][1];
+        xy[i][1] = s * verts[i][0] + c * verts[i][1] + y;
+    }
+
+    CL_DrawQuadPic(xy, color, material);
+}
+int CG_DrawDevString(float x, float y, const char *s, const vec_t *color, int align, FontHandle font, int style)
+{
+    int height;
+
+    if ((align & 3) != 1)
+        x = (float)CL_TextWidth(s, 0, font);
+
+    height = CL_TextHeight(font);
+    if ((align & 0xc) != 8) {
+        if ((align & 0xc) == 0xc)
+            y += height * 0.5f;
+        else
+            y += height;
+    }
+
+    CL_DrawText(s, 0x7fffffff, font, -(float)CL_TextWidth(s, 0, font), y, 3, 1, 1.0f, 1.0f, color, style);
+    return height;
+}
+int CG_DrawBigDevString(float x, float y, const char *s, float alpha, int align)
+{
+    vec4_t c;
+    c[0] = 1.0f;
+    c[1] = 1.0f;
+    c[2] = 1.0f;
+    c[3] = alpha;
+
+    return CG_DrawDevString(x, y, s, c, align, cgs->media.bigDevFont, 0);
+}
+int CG_DrawBigDevStringColor(float x, float y, const char *s, const vec_t *color, int align)
+{
+    return CG_DrawDevString(x, y, s, color, align, cgs->media.bigDevFont, 0);
+}
+int CG_DrawSmallDevString(float x, float y, const char *s, float alpha, int align)
+{
+    vec4_t c;
+    c[0] = 1.0f;
+    c[1] = 1.0f;
+    c[2] = 1.0f;
+    c[3] = alpha;
+
+    return CG_DrawDevString(x, y, s, c, align, cgs->media.smallDevFont, 0);
+}
+int CG_DrawSmallDevStringColor(float x, float y, const char *s, const vec_t *color, int align)
+{
+    return CG_DrawDevString(x, y, s, color, align, cgs->media.smallDevFont, 0);
+}

@@ -27,15 +27,15 @@ extern vec_t Vec2Normalize( vec3_t v );
 
 #define COMPASS_ACTOR_COUNT 64
 
+static inline float I_sqrt(const float value)
+{
+    return sqrt(value);
+}
+
 // universal/com_math.h inlines
 static inline float I_fabs(const float value)
 {
     return fabs(value);
-}
-
-static inline float I_sqrt(const float value)
-{
-    return sqrt(value);
 }
 
 static inline vec_t Vec2Length(const vec2_t v)

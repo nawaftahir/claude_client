@@ -262,21 +262,31 @@ static float I_fmin(const float x, const float y)
     return I_fsel(y - x, x, y);
 }
 
-// retail 0x409170, unreferenced; name unknown
-void IN_ClearFirstKey_409170(void)
-{
-    kb[0].down[0] = 0;
-}
+
+
+
+
+
+
+
+
+
+
+
+
 
 void IN_MLookDown(void)
 {
     kb[13].active = 1;
 }
 
-void IN_CenterView(void)
+void IN_MLookUp(void)
 {
-    clientActive_t *cl = clients;
-    cl->viewangles[0] = -((float)cl->snap.ps.delta_angles[0] * 0.0054931640625f);
+    kb[13].active = 0;
+    if ((cl_freelook)->current.enabled == 0) {
+        clientActive_t *cl = clients;
+        cl->viewangles[0] = -((float)cl->snap.ps.delta_angles[0] * 0.0054931640625f);
+    }
 }
 
 void IN_KeyDown(kbutton_t *b)
@@ -406,12 +416,6 @@ void IN_UpDown(void)
     }
 }
 
-void IN_UpUp(void)
-{
-    IN_KeyUp(&kb[12]);
-    IN_KeyUp(&kb[10]);
-}
-
 void IN_LeftDown(void)
 {
     IN_KeyDown(kb);
@@ -532,18 +536,6 @@ void IN_Breath_Up(void)
     IN_KeyUp(&kb[15]);
 }
 
-void IN_MeleeBreath_Down(void)
-{
-    IN_KeyDown(&kb[19]);
-    IN_KeyDown(&kb[15]);
-}
-
-void IN_MeleeBreath_Up(void)
-{
-    IN_KeyUp(&kb[19]);
-    IN_KeyUp(&kb[15]);
-}
-
 void IN_Frag_Down(void)
 {
     IN_KeyDown(&kb[16]);
@@ -571,18 +563,6 @@ void IN_Binoculars_Down(void)
 
 void IN_Binoculars_Up(void)
 {
-    IN_KeyUp(&kb[18]);
-}
-
-void IN_BreathBinoculars_Down(void)
-{
-    IN_KeyDown(&kb[15]);
-    IN_KeyDown(&kb[18]);
-}
-
-void IN_BreathBinoculars_Up(void)
-{
-    IN_KeyUp(&kb[15]);
     IN_KeyUp(&kb[18]);
 }
 
@@ -687,6 +667,12 @@ void IN_Kb26_Up_407650(void)
     IN_KeyUp(&kb[26]);
 }
 
+void IN_CenterView(void)
+{
+    clientActive_t *cl = clients;
+    cl->viewangles[0] = -((float)cl->snap.ps.delta_angles[0] * 0.0054931640625f);
+}
+
 void IN_ToggleADS(void)
 {
     clientActive_t *p = clients;
@@ -771,12 +757,6 @@ void IN_GoStandDown(void)
     *stance = 0;
 }
 
-void IN_GoStandUp(void)
-{
-    IN_KeyUp(&kb[12]);
-    IN_KeyUp(&kb[10]);
-}
-
 void IN_TalkDown(void)
 {
     IN_KeyDown(&kb[27]);
@@ -790,16 +770,6 @@ void IN_TalkUp(void)
 Bool IsTalking(void)
 {
     return kb[27].active;
-}
-
-void CL_MouseEvent(int dx, int dy)
-{
-    if ((clients->keyCatchers & 8) && !cl_bypassMouseInput->current.enabled) {
-        UI_MouseEvent(dx, dy);
-    } else {
-        clients->mouseDx[clients->mouseIndex] += dx;
-        clients->mouseDy[clients->mouseIndex] += dy;
-    }
 }
 
 void CL_AdjustAngles(void)
@@ -908,6 +878,14 @@ void CL_KeyMove(usercmd_t *cmd)
 #undef KB_AT
 }
 
+// retail 0x407bd0, unreferenced (CL_CmdButtons inlines it); name unknown
+void CL_CmdButton_407bd0(int *buttons, int index, int bit)
+{
+    if (kb[index].active || kb[index].wasPressed)
+        *buttons |= bit;
+    kb[index].wasPressed = 0;
+}
+
 void CL_MouseMove(usercmd_t *cmd)
 {
     float mx, my;
@@ -974,59 +952,6 @@ void CL_MouseMove(usercmd_t *cmd)
     } else {
         cmd->forwardmove = ClampChar(cmd->forwardmove - (int)(my * m_forward->current.value));
     }
-}
-
-void IN_DownDown(void)
-{
-    IN_KeyDown(&kb[11]);
-    if (kb[25].active || kb[11].active )
-        legacyHacks->cl_stanceTemp = 1;
-    else
-        legacyHacks->cl_stanceTemp = 0;
-}
-
-void IN_DownUp(void)
-{
-    IN_KeyUp(&kb[11]);
-    if (kb[25].active || kb[11].active )
-        legacyHacks->cl_stanceTemp = 1;
-    else
-        legacyHacks->cl_stanceTemp = 0;
-}
-
-void IN_Prone_Down(void)
-{
-    IN_KeyDown(&kb[25]);
-    if (kb[25].active || kb[11].active )
-        legacyHacks->cl_stanceTemp = 1;
-    else
-        legacyHacks->cl_stanceTemp = 0;
-}
-
-void IN_Prone_Up(void)
-{
-    IN_KeyUp(&kb[25]);
-    if (kb[25].active || kb[11].active )
-        legacyHacks->cl_stanceTemp = 1;
-    else
-        legacyHacks->cl_stanceTemp = 0;
-}
-
-void IN_MLookUp(void)
-{
-    kb[13].active = 0;
-    if ((cl_freelook)->current.enabled == 0) {
-        clientActive_t *cl = clients;
-        cl->viewangles[0] = -((float)cl->snap.ps.delta_angles[0] * 0.0054931640625f);
-    }
-}
-
-// retail 0x407bd0, unreferenced (CL_CmdButtons inlines it); name unknown
-void CL_CmdButton_407bd0(int *buttons, int index, int bit)
-{
-    if (kb[index].active || kb[index].wasPressed)
-        *buttons |= bit;
-    kb[index].wasPressed = 0;
 }
 
 void CL_CmdButtons(usercmd_t *cmd)
@@ -1170,20 +1095,6 @@ qboolean CL_ReadyToSendPacket(void)
     cl = clients;
     outPacket = &cl->outPackets[(conn->netchan.outgoingSequence - 1) & 31];
     return cls.realtime - outPacket->p_realtime >= 1000 / cl_maxpackets->current.integer;
-}
-
-void CL_SendCmdInternal(void)
-{
-    CL_CreateNewCommands();
-
-    if (!CL_ReadyToSendPacket()) {
-        if (cl_showSend->current.enabled) {
-            Com_Printf((const char *)". ");
-        }
-        return;
-    }
-
-    CL_WritePacket();
 }
 
 void CL_WriteVoicePacket(void)
@@ -1478,3 +1389,93 @@ void CL_ShutdownInput(void)
 #endif
 }
 
+// retail 0x409170, unreferenced; name unknown
+void IN_ClearFirstKey_409170(void)
+{
+    kb[0].down[0] = 0;
+}
+
+void IN_UpUp(void)
+{
+    IN_KeyUp(&kb[12]);
+    IN_KeyUp(&kb[10]);
+}
+void IN_MeleeBreath_Down(void)
+{
+    IN_KeyDown(&kb[19]);
+    IN_KeyDown(&kb[15]);
+}
+void IN_MeleeBreath_Up(void)
+{
+    IN_KeyUp(&kb[19]);
+    IN_KeyUp(&kb[15]);
+}
+void IN_BreathBinoculars_Down(void)
+{
+    IN_KeyDown(&kb[15]);
+    IN_KeyDown(&kb[18]);
+}
+void IN_BreathBinoculars_Up(void)
+{
+    IN_KeyUp(&kb[15]);
+    IN_KeyUp(&kb[18]);
+}
+void IN_GoStandUp(void)
+{
+    IN_KeyUp(&kb[12]);
+    IN_KeyUp(&kb[10]);
+}
+void CL_MouseEvent(int dx, int dy)
+{
+    if ((clients->keyCatchers & 8) && !cl_bypassMouseInput->current.enabled) {
+        UI_MouseEvent(dx, dy);
+    } else {
+        clients->mouseDx[clients->mouseIndex] += dx;
+        clients->mouseDy[clients->mouseIndex] += dy;
+    }
+}
+void IN_DownDown(void)
+{
+    IN_KeyDown(&kb[11]);
+    if (kb[25].active || kb[11].active )
+        legacyHacks->cl_stanceTemp = 1;
+    else
+        legacyHacks->cl_stanceTemp = 0;
+}
+void IN_DownUp(void)
+{
+    IN_KeyUp(&kb[11]);
+    if (kb[25].active || kb[11].active )
+        legacyHacks->cl_stanceTemp = 1;
+    else
+        legacyHacks->cl_stanceTemp = 0;
+}
+void IN_Prone_Down(void)
+{
+    IN_KeyDown(&kb[25]);
+    if (kb[25].active || kb[11].active )
+        legacyHacks->cl_stanceTemp = 1;
+    else
+        legacyHacks->cl_stanceTemp = 0;
+}
+void IN_Prone_Up(void)
+{
+    IN_KeyUp(&kb[25]);
+    if (kb[25].active || kb[11].active )
+        legacyHacks->cl_stanceTemp = 1;
+    else
+        legacyHacks->cl_stanceTemp = 0;
+}
+void CL_SendCmdInternal(void)
+{
+    CL_CreateNewCommands();
+
+    if (!CL_ReadyToSendPacket()) {
+        if (cl_showSend->current.enabled) {
+            Com_Printf((const char *)". ");
+        }
+        return;
+    }
+
+    CL_WritePacket();
+}

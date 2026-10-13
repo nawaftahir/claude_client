@@ -46,6 +46,12 @@ const char *SEH_GetLanguageName( const int iLanguage );
 int SEH_IsKoreanLeadTrail( unsigned char lead, unsigned char trail );
 unsigned char SEH_IsKoreanChar( unsigned int c ) throw();
 
+
+
+
+
+
+
 void Language_UpdateCurrentAsian()
 {
 	switch ( loc_language->current.integer )
@@ -126,16 +132,6 @@ int SEH_VerifyLanguageSelection( int iLanguage )
 			return (iLanguage + i) % MAX_LANGUAGES;
 	}
 	return 0;
-}
-
-void SEH_Init_StringEd()
-{
-	SE_Init();
-}
-
-void SEH_Shutdown_StringEd()
-{
-	SE_ShutDown();
 }
 
 int SEH_StringEd_SetLanguageStrings( int iLanguage )
@@ -347,6 +343,11 @@ const char *SEH_LocalizeTextMessage( const char *pszInputBuffer, const char *psz
 	return pszString;
 }
 
+unsigned char SEH_IsKoreanChar( unsigned int c ) throw()
+{
+	return SEH_IsKoreanLeadTrail(c >> 8, c);
+}
+
 unsigned int SEH_KoreanCharToIndex( unsigned int c )
 {
 	if ( SEH_IsKoreanChar(c) )
@@ -402,15 +403,9 @@ unsigned char SEH_IsJapaneseLeadTrail( unsigned char lead, unsigned char trail )
 	}
 	return 0;
 }
-
 unsigned char SEH_IsJapaneseChar( unsigned int c ) throw()
 {
 	return SEH_IsJapaneseLeadTrail(c >> 8, c);
-}
-
-unsigned char SEH_IsChineseChar( unsigned int c ) throw()
-{
-	return SEH_IsChineseLeadTrail(c >> 8, c);
 }
 
 unsigned char SEH_IsJapanesePunctuation( unsigned int c )
@@ -435,11 +430,9 @@ unsigned int SEH_JapaneseCharToIndex( unsigned int c )
 	return 0;
 }
 
-int SEH_IsChineseLeadTrail( unsigned char lead, unsigned char trail )
+unsigned char SEH_IsChineseChar( unsigned int c ) throw()
 {
-	if ( lead >= 0xa1 && lead <= 0xf7 && trail > 0xa0 && trail < 0xff )
-		return 1;
-	return 0;
+	return SEH_IsChineseLeadTrail(c >> 8, c);
 }
 
 bool SEH_IsChinesePunctuation( unsigned int c )
@@ -583,15 +576,23 @@ qboolean SEH_GetLanguageIndexForName( const char *language, int *langindex )
 	return qfalse;
 }
 
+void SEH_Init_StringEd()
+{
+	SE_Init();
+}
+void SEH_Shutdown_StringEd()
+{
+	SE_ShutDown();
+}
+int SEH_IsChineseLeadTrail( unsigned char lead, unsigned char trail )
+{
+	if ( lead >= 0xa1 && lead <= 0xf7 && trail > 0xa0 && trail < 0xff )
+		return 1;
+	return 0;
+}
 int SEH_IsKoreanLeadTrail( unsigned char lead, unsigned char trail )
 {
 	if ( lead >= 0xb0 && lead <= 0xc8 && trail > 0xa0 && trail < 0xff )
 		return 1;
 	return 0;
 }
-
-unsigned char SEH_IsKoreanChar( unsigned int c ) throw()
-{
-	return SEH_IsKoreanLeadTrail(c >> 8, c);
-}
-

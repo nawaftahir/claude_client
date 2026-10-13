@@ -71,6 +71,133 @@ const char *modNames[] =
 	"MOD_EXPLOSIVE",
 };
 
+
+
+/*
+============
+G_HitLocStrcpy
+============
+*/
+void G_HitLocStrcpy( unsigned char *member, const char *keyValue )
+{
+	strcpy((char *)member, keyValue);
+}
+
+/*
+==================
+G_ParseHitLocDmgTable
+==================
+*/
+void G_ParseHitLocDmgTable()
+{
+	int i;
+	const char *filename;
+	const char *ident;
+	int n;
+	cspField_t pFieldList[HITLOC_NUM];
+	char loadBuffer[8192];
+	int len;
+	fileHandle_t f;
+
+	filename = "info/mp_lochit_dmgtable";
+	ident = "LOCDMGTABLE";
+	n = strlen(ident);
+
+	for ( i = 0; i < HITLOC_NUM; i++ )
+	{
+		g_fHitLocDamageMult[i] = 1.0f;
+
+		pFieldList[i].szName = g_HitLocNames[i];
+		pFieldList[i].iOffset = i * sizeof( float );
+		pFieldList[i].iFieldType = CSPFT_FLOAT;
+
+		g_HitLocConstNames[i] = Scr_AllocString(g_HitLocNames[i], 1);
+	}
+
+	// the gun itself takes no damage
+	g_fHitLocDamageMult[HITLOC_GUN] = 0;
+
+	len = FS_FOpenFileByMode(filename, &f, FS_READ);
+
+	if ( len <= 0 )
+	{
+		Com_Error(ERR_DROP, "\x15" "Could not load hitloc damage table %s\n", filename);
+	}
+
+	FS_Read(loadBuffer, n, f);
+	loadBuffer[n] = 0;
+
+	if ( strncmp(loadBuffer, ident, n) )
+	{
+		Com_Error(ERR_DROP, "\x15" "\"%s\" does not appear to be a hitloc damage table\n", filename);
+	}
+
+	if ( len - n >= (int)sizeof(loadBuffer) )
+	{
+		Com_Error(ERR_DROP, "\x15" "\"%s\" Is too long of a hitloc damage table to parse\n", filename);
+	}
+
+	FS_Read(loadBuffer, len - n, f);
+	loadBuffer[len - n] = 0;
+	FS_FCloseFile(f);
+
+	if ( !Info_Validate(loadBuffer) )
+	{
+		Com_Error(ERR_DROP, "\x15" "\"%s\" is not a valid hitloc damage table\n", filename);
+	}
+
+	if ( !ParseConfigStringToStruct((unsigned char *)g_fHitLocDamageMult, pFieldList, HITLOC_NUM, loadBuffer, 0, NULL, G_HitLocStrcpy) )
+	{
+		Com_Error(ERR_DROP, "\x15" "Error parsing hitloc damage table %s\n", filename);
+	}
+}
+
+/*
+==================
+LookAtKiller
+==================
+*/
+void LookAtKiller( gentity_t *self, gentity_t *inflictor, gentity_t *attacker )
+{
+	vec3_t		dir;
+
+	if ( attacker && attacker != self )
+	{
+		VectorSubtract (attacker->r.currentOrigin, self->r.currentOrigin, dir);
+	}
+	else if ( inflictor && inflictor != self )
+	{
+		VectorSubtract (inflictor->r.currentOrigin, self->r.currentOrigin, dir);
+	}
+	else
+	{
+		self->client->ps.stats[STAT_DEAD_YAW] = self->r.currentAngles[YAW];
+		return;
+	}
+
+	assert(self->client);
+	self->client->ps.stats[STAT_DEAD_YAW] = vectoyaw ( dir );
+}
+
+/*
+==================
+G_IndexForMeansOfDeath
+==================
+*/
+int G_IndexForMeansOfDeath( const char *name )
+{
+	for ( int i = 0; i < MOD_NUM; i++ )
+	{
+		if ( !I_stricmp(name, modNames[i]) )
+		{
+			return i;
+		}
+	}
+
+	Com_Printf("Unknown means of death string '%s'\n", name);
+	return MOD_UNKNOWN;
+}
+
 /*
 ==================
 player_die
@@ -161,6 +288,32 @@ alive:
 }
 
 /*
+===============
+G_GetWeaponHitLocationMultiplier
+===============
+*/
+float G_GetWeaponHitLocationMultiplier( int hitLoc, int weapon )
+{
+	WeaponDef *weapDef;
+
+	assert((hitLoc >= HITLOC_NONE) && (hitLoc < HITLOC_NUM));
+
+	if ( !weapon )
+	{
+		return g_fHitLocDamageMult[hitLoc];
+	}
+
+	weapDef = BG_GetWeaponDef(weapon);
+
+	if ( !weapDef || weapDef->weaponType != WEAPTYPE_BULLET )
+	{
+		return g_fHitLocDamageMult[hitLoc];
+	}
+
+	return weapDef->locationDamageMultipliers[hitLoc];
+}
+
+/*
 ==================
 G_DamageClient
 ==================
@@ -201,162 +354,6 @@ void G_DamageClient( gentity_t *self, gentity_t *inflictor, gentity_t *attacker,
 		return;
 	}
 	Scr_PlayerDamage(self, inflictor, attacker, damage, dflags, meansOfDeath, weapon, vPoint, vDir, hitLoc, timeOffset);
-}
-
-/*
-============
-G_HitLocStrcpy
-============
-*/
-void G_HitLocStrcpy( unsigned char *member, const char *keyValue )
-{
-	strcpy((char *)member, keyValue);
-}
-
-/*
-==================
-G_ParseHitLocDmgTable
-==================
-*/
-void G_ParseHitLocDmgTable()
-{
-	int i;
-	const char *filename;
-	const char *ident;
-	int n;
-	cspField_t pFieldList[HITLOC_NUM];
-	char loadBuffer[8192];
-	int len;
-	fileHandle_t f;
-
-	filename = "info/mp_lochit_dmgtable";
-	ident = "LOCDMGTABLE";
-	n = strlen(ident);
-
-	for ( i = 0; i < HITLOC_NUM; i++ )
-	{
-		g_fHitLocDamageMult[i] = 1.0f;
-
-		pFieldList[i].szName = g_HitLocNames[i];
-		pFieldList[i].iOffset = i * sizeof( float );
-		pFieldList[i].iFieldType = CSPFT_FLOAT;
-
-		g_HitLocConstNames[i] = Scr_AllocString(g_HitLocNames[i], 1);
-	}
-
-	// the gun itself takes no damage
-	g_fHitLocDamageMult[HITLOC_GUN] = 0;
-
-	len = FS_FOpenFileByMode(filename, &f, FS_READ);
-
-	if ( len <= 0 )
-	{
-		Com_Error(ERR_DROP, "\x15" "Could not load hitloc damage table %s\n", filename);
-	}
-
-	FS_Read(loadBuffer, n, f);
-	loadBuffer[n] = 0;
-
-	if ( strncmp(loadBuffer, ident, n) )
-	{
-		Com_Error(ERR_DROP, "\x15" "\"%s\" does not appear to be a hitloc damage table\n", filename);
-	}
-
-	if ( len - n >= (int)sizeof(loadBuffer) )
-	{
-		Com_Error(ERR_DROP, "\x15" "\"%s\" Is too long of a hitloc damage table to parse\n", filename);
-	}
-
-	FS_Read(loadBuffer, len - n, f);
-	loadBuffer[len - n] = 0;
-	FS_FCloseFile(f);
-
-	if ( !Info_Validate(loadBuffer) )
-	{
-		Com_Error(ERR_DROP, "\x15" "\"%s\" is not a valid hitloc damage table\n", filename);
-	}
-
-	if ( !ParseConfigStringToStruct((unsigned char *)g_fHitLocDamageMult, pFieldList, HITLOC_NUM, loadBuffer, 0, NULL, G_HitLocStrcpy) )
-	{
-		Com_Error(ERR_DROP, "\x15" "Error parsing hitloc damage table %s\n", filename);
-	}
-}
-
-// unreferenced; original name unknown
-void G_NullStub()
-{
-}
-
-/*
-==================
-LookAtKiller
-==================
-*/
-void LookAtKiller( gentity_t *self, gentity_t *inflictor, gentity_t *attacker )
-{
-	vec3_t		dir;
-
-	if ( attacker && attacker != self )
-	{
-		VectorSubtract (attacker->r.currentOrigin, self->r.currentOrigin, dir);
-	}
-	else if ( inflictor && inflictor != self )
-	{
-		VectorSubtract (inflictor->r.currentOrigin, self->r.currentOrigin, dir);
-	}
-	else
-	{
-		self->client->ps.stats[STAT_DEAD_YAW] = self->r.currentAngles[YAW];
-		return;
-	}
-
-	assert(self->client);
-	self->client->ps.stats[STAT_DEAD_YAW] = vectoyaw ( dir );
-}
-
-/*
-==================
-G_IndexForMeansOfDeath
-==================
-*/
-int G_IndexForMeansOfDeath( const char *name )
-{
-	for ( int i = 0; i < MOD_NUM; i++ )
-	{
-		if ( !I_stricmp(name, modNames[i]) )
-		{
-			return i;
-		}
-	}
-
-	Com_Printf("Unknown means of death string '%s'\n", name);
-	return MOD_UNKNOWN;
-}
-
-/*
-===============
-G_GetWeaponHitLocationMultiplier
-===============
-*/
-float G_GetWeaponHitLocationMultiplier( int hitLoc, int weapon )
-{
-	WeaponDef *weapDef;
-
-	assert((hitLoc >= HITLOC_NONE) && (hitLoc < HITLOC_NUM));
-
-	if ( !weapon )
-	{
-		return g_fHitLocDamageMult[hitLoc];
-	}
-
-	weapDef = BG_GetWeaponDef(weapon);
-
-	if ( !weapDef || weapDef->weaponType != WEAPTYPE_BULLET )
-	{
-		return g_fHitLocDamageMult[hitLoc];
-	}
-
-	return weapDef->locationDamageMultipliers[hitLoc];
 }
 
 /*
@@ -743,3 +740,7 @@ int G_GetHitLocationIndexFromString( unsigned short sString )
 	return 0;
 }
 
+// unreferenced; original name unknown
+void G_NullStub()
+{
+}

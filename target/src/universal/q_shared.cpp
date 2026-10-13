@@ -53,101 +53,20 @@ TraceThreadInfo g_traceThreadInfo[NUMTHREADS];
 // two buffers so compares work without stomping on each other
 static char infoValue[2][BIG_INFO_VALUE];
 
-qboolean ParseConfigStringToStruct( unsigned char *pStruct, const cspField_t *pFieldList, int iNumFields, const char *pszBuffer, int iMaxFieldTypes,
-                                    int ( *parseSpecialFieldType )( unsigned char *, const char *, const int ), void ( *parseStrCpy )( unsigned char *, const char * ) )
-{
-	int iField;
-	const char *pszKeyValue;
-	const cspField_t *pField;
-	for ( iField = 0, pField = pFieldList; iField < iNumFields; iField++, pField++ )
-	{
-		pszKeyValue = Info_ValueForKey( pszBuffer, pField->szName );
-		if ( !*pszKeyValue )
-		{
-			continue;
-		}
-		if ( pField->iFieldType < CSPFT_NUM_BASE_FIELD_TYPES )
-		{
-			switch ( pField->iFieldType )
-			{
-			case CSPFT_STRING:
-				parseStrCpy( &pStruct[pField->iOffset], pszKeyValue );
-				break;
-			case CSPFT_STRING_MAX_STRING_CHARS:
-				I_strncpyz( (char *)&pStruct[pField->iOffset], pszKeyValue, MAX_STRING_CHARS );
-				break;
-			case CSPFT_STRING_MAX_QPATH:
-				I_strncpyz( (char *)&pStruct[pField->iOffset], pszKeyValue, MAX_QPATH );
-				break;
-			case CSPFT_STRING_MAX_OSPATH:
-				I_strncpyz( (char *)&pStruct[pField->iOffset], pszKeyValue, MAX_OSPATH );
-				break;
-			case CSPFT_INT:
-				*(int *)&pStruct[pField->iOffset] = atoi( pszKeyValue );
-				break;
-			case CSPFT_QBOOLEAN:
-				*(qboolean *)&pStruct[pField->iOffset] = atoi( pszKeyValue ) != 0;
-				break;
-			case CSPFT_FLOAT:
-				*(float *)&pStruct[pField->iOffset] = atof( pszKeyValue );
-				break;
-			case CSPFT_MILLISECONDS:
-				*(int *)&pStruct[pField->iOffset] = (float)atof( pszKeyValue ) * 1000.0f;
-				break;
-			default:
-				// a check compiled out of this build; its empty test still shapes the code
-				if ( pszKeyValue )
-				{
-				}
-				break;
-			}
-		}
-		else if ( iMaxFieldTypes > 0 && pField->iFieldType < iMaxFieldTypes )
-		{
-			if ( !parseSpecialFieldType( pStruct, pszKeyValue, pField->iFieldType ) )
-			{
-				return qfalse;
-			}
-		}
-		else
-		{
-			Com_Error( ERR_DROP, "\x15" "Bad field type %i\n", pField->iFieldType );
-		}
-	}
-	if ( iField != iNumFields )
-	{
-		return qfalse;
-	}
-	return qtrue;
-}
-
 struct orientation_t
 {
 	vec3_t origin;
 	vec3_t axis[3];
 };
 
-void Swap_InitLittleEndian()
-{
-	_BigShort = ShortSwap;
-	_LittleShort = ShortNoSwap;
-	_BigLong = LongSwap;
-	_LittleLong = LongNoSwap;
-	_LittleLong64 = Long64NoSwap;
-	_LittleFloat = FloatNoSwap;
-	_LittleFloatAsInt = FloatNoSwapAsInt;
-}
 
-void Swap_InitBigEndian()
-{
-	_BigShort = ShortNoSwap;
-	_LittleShort = ShortSwap;
-	_BigLong = LongNoSwap;
-	_LittleLong = LongSwap;
-	_LittleLong64 = Long64Swap;
-	_LittleFloat = FloatSwap;
-	_LittleFloatAsInt = FloatSwapAsInt;
-}
+
+
+
+
+
+
+
 
 unsigned char ColorIndex( unsigned char c )
 {
@@ -301,11 +220,6 @@ int LittleLongRuntime( int l )
 	return _LittleLong( l );
 }
 
-float LittleFloat( float l )
-{
-	return _LittleFloat( l );
-}
-
 int LittleFloatAsInt( float l )
 {
 	return _LittleFloatAsInt( l );
@@ -338,11 +252,6 @@ int LongSwap( int l )
 	return ( (int)b1 << 24 ) + ( (int)b2 << 16 ) + ( (int)b3 << 8 ) + b4;
 }
 
-int LongNoSwap( int l )
-{
-	return l;
-}
-
 int64_t Long64Swap( int64_t l )
 {
 	byte b1, b2, b3, b4, b5, b6, b7, b8;
@@ -365,28 +274,6 @@ int64_t Long64NoSwap( int64_t l )
 	return l;
 }
 
-float FloatSwap( float f )
-{
-	union
-	{
-		float f;
-		byte b[4];
-	} dat1, dat2;
-
-	dat1.f = f;
-	dat2.b[0] = dat1.b[3];
-	dat2.b[1] = dat1.b[2];
-	dat2.b[2] = dat1.b[1];
-	dat2.b[3] = dat1.b[0];
-
-	return dat2.f;
-}
-
-float FloatNoSwap( float f )
-{
-	return FloatIdentity( f );
-}
-
 int FloatSwapAsInt( float f )
 {
 	union
@@ -405,9 +292,26 @@ int FloatSwapAsInt( float f )
 	return dat2.i;
 }
 
-int FloatNoSwapAsInt( float f )
+void Swap_InitLittleEndian()
 {
-	return FloatAsInt( f );
+	_BigShort = ShortSwap;
+	_LittleShort = ShortNoSwap;
+	_BigLong = LongSwap;
+	_LittleLong = LongNoSwap;
+	_LittleLong64 = Long64NoSwap;
+	_LittleFloat = FloatNoSwap;
+	_LittleFloatAsInt = FloatNoSwapAsInt;
+}
+
+void Swap_InitBigEndian()
+{
+	_BigShort = ShortNoSwap;
+	_LittleShort = ShortSwap;
+	_BigLong = LongNoSwap;
+	_LittleLong = LongSwap;
+	_LittleLong64 = Long64Swap;
+	_LittleFloat = FloatSwap;
+	_LittleFloatAsInt = FloatSwapAsInt;
 }
 
 void Swap_Init()
@@ -432,11 +336,6 @@ bool I_isprint( int c )
 bool I_islower( int c )
 {
 	return c >= 'a' && c <= 'z';
-}
-
-bool I_isupper( int c )
-{
-	return c >= 'A' && c <= 'Z';
 }
 
 bool I_isalpha( int c )
@@ -581,26 +480,6 @@ int I_stricmpwild( const char *wild, const char *s )
 	while ( charWild );
 
 	return 0;
-}
-
-__forceinline char *I_strlwrInl( char *s )
-{
-	char *iter;
-
-	for ( iter = s; *iter; iter++ )
-	{
-		if ( I_isupper( *iter ) )
-		{
-			*iter += 'a' - 'A';
-		}
-	}
-
-	return s;
-}
-
-__declspec(noinline) char *I_strlwr( char *s )
-{
-	return I_strlwrInl( s );
 }
 
 char *I_strupr( char *s )
@@ -1197,6 +1076,74 @@ void Info_SetValueForKey_Big( char *s, const char *key, const char *value )
 	strcat( s, newi );
 }
 
+qboolean ParseConfigStringToStruct( unsigned char *pStruct, const cspField_t *pFieldList, int iNumFields, const char *pszBuffer, int iMaxFieldTypes,
+                                    int ( *parseSpecialFieldType )( unsigned char *, const char *, const int ), void ( *parseStrCpy )( unsigned char *, const char * ) )
+{
+	int iField;
+	const char *pszKeyValue;
+	const cspField_t *pField;
+	for ( iField = 0, pField = pFieldList; iField < iNumFields; iField++, pField++ )
+	{
+		pszKeyValue = Info_ValueForKey( pszBuffer, pField->szName );
+		if ( !*pszKeyValue )
+		{
+			continue;
+		}
+		if ( pField->iFieldType < CSPFT_NUM_BASE_FIELD_TYPES )
+		{
+			switch ( pField->iFieldType )
+			{
+			case CSPFT_STRING:
+				parseStrCpy( &pStruct[pField->iOffset], pszKeyValue );
+				break;
+			case CSPFT_STRING_MAX_STRING_CHARS:
+				I_strncpyz( (char *)&pStruct[pField->iOffset], pszKeyValue, MAX_STRING_CHARS );
+				break;
+			case CSPFT_STRING_MAX_QPATH:
+				I_strncpyz( (char *)&pStruct[pField->iOffset], pszKeyValue, MAX_QPATH );
+				break;
+			case CSPFT_STRING_MAX_OSPATH:
+				I_strncpyz( (char *)&pStruct[pField->iOffset], pszKeyValue, MAX_OSPATH );
+				break;
+			case CSPFT_INT:
+				*(int *)&pStruct[pField->iOffset] = atoi( pszKeyValue );
+				break;
+			case CSPFT_QBOOLEAN:
+				*(qboolean *)&pStruct[pField->iOffset] = atoi( pszKeyValue ) != 0;
+				break;
+			case CSPFT_FLOAT:
+				*(float *)&pStruct[pField->iOffset] = atof( pszKeyValue );
+				break;
+			case CSPFT_MILLISECONDS:
+				*(int *)&pStruct[pField->iOffset] = (float)atof( pszKeyValue ) * 1000.0f;
+				break;
+			default:
+				// a check compiled out of this build; its empty test still shapes the code
+				if ( pszKeyValue )
+				{
+				}
+				break;
+			}
+		}
+		else if ( iMaxFieldTypes > 0 && pField->iFieldType < iMaxFieldTypes )
+		{
+			if ( !parseSpecialFieldType( pStruct, pszKeyValue, pField->iFieldType ) )
+			{
+				return qfalse;
+			}
+		}
+		else
+		{
+			Com_Error( ERR_DROP, "\x15" "Bad field type %i\n", pField->iFieldType );
+		}
+	}
+	if ( iField != iNumFields )
+	{
+		return qfalse;
+	}
+	return qtrue;
+}
+
 float GetLeanFraction( const float fFrac )
 {
 	return ( 2.0f - I_fabs( fFrac ) ) * fFrac;
@@ -1312,6 +1259,60 @@ void ScaledOrientationPlaneToLocal( const orientation_t *orient, float scale, co
 	out[3] = ( plane[3] - DotProduct( orient->origin, plane ) ) / scale;
 }
 
+float LittleFloat( float l )
+{
+	return _LittleFloat( l );
+}
+int LongNoSwap( int l )
+{
+	return l;
+}
+float FloatSwap( float f )
+{
+	union
+	{
+		float f;
+		byte b[4];
+	} dat1, dat2;
+
+	dat1.f = f;
+	dat2.b[0] = dat1.b[3];
+	dat2.b[1] = dat1.b[2];
+	dat2.b[2] = dat1.b[1];
+	dat2.b[3] = dat1.b[0];
+
+	return dat2.f;
+}
+float FloatNoSwap( float f )
+{
+	return FloatIdentity( f );
+}
+int FloatNoSwapAsInt( float f )
+{
+	return FloatAsInt( f );
+}
+bool I_isupper( int c )
+{
+	return c >= 'A' && c <= 'Z';
+}
+__forceinline char *I_strlwrInl( char *s )
+{
+	char *iter;
+
+	for ( iter = s; *iter; iter++ )
+	{
+		if ( I_isupper( *iter ) )
+		{
+			*iter += 'a' - 'A';
+		}
+	}
+
+	return s;
+}
+__declspec(noinline) char *I_strlwr( char *s )
+{
+	return I_strlwrInl( s );
+}
 
 // Unreferenced storage; original declarations unknown (sized from the layout).
 static int unusedStorage[2];

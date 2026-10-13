@@ -505,65 +505,118 @@ static scr_method_t methods[] =
 
 /*
 ===============
-Scr_PlayerDamage
-===============
-*/
-void Scr_PlayerDamage( gentity_t *self, gentity_t *inflictor, gentity_t *attacker,
-                       int damage, int dflags, int meansOfDeath, int iWeapon,
-                       const vec3_t vPoint, const vec3_t vDir, int hitLoc, int timeOffset )
-{
-	unsigned short threadId;
-	Scr_AddInt(timeOffset);
-	Scr_AddConstString(G_GetHitLocationString(hitLoc));
-	GScr_AddVector(vDir);
-	GScr_AddVector(vPoint);
-	Scr_AddString(BG_GetWeaponDef(iWeapon)->szInternalName);
-	if ( meansOfDeath < 0 || (unsigned int)meansOfDeath >= MOD_NUM )
-		Scr_AddString("badMOD");
-	else
-		Scr_AddString(modNames[meansOfDeath]);
-	Scr_AddInt(dflags);
-	Scr_AddInt(damage);
-	GScr_AddEntity(attacker);
-	GScr_AddEntity(inflictor);
-	threadId = Scr_ExecEntThread( self, g_scr_data.gametype.playerdamage, 10 );
-	Scr_FreeThread( threadId );
-}
-/*
-===============
-Scr_PlayerKilled
-===============
-*/
-void Scr_PlayerKilled( gentity_t *self, gentity_t *inflictor, gentity_t *attacker,
-                       int damage, int meansOfDeath, int iWeapon,
-                       const vec3_t vDir, int hitLoc, int psTimeOffset, int deathAnimDuration )
-{
-	unsigned short threadId;
-	Scr_AddInt(deathAnimDuration);
-	Scr_AddInt(psTimeOffset);
-	Scr_AddConstString(G_GetHitLocationString(hitLoc));
-	GScr_AddVector(vDir);
-	Scr_AddString(BG_GetWeaponDef(iWeapon)->szInternalName);
-	if ( meansOfDeath < 0 || (unsigned int)meansOfDeath >= MOD_NUM )
-		Scr_AddString("badMOD");
-	else
-		Scr_AddString(modNames[meansOfDeath]);
-	Scr_AddInt(damage);
-	GScr_AddEntity(attacker);
-	GScr_AddEntity(inflictor);
-	threadId = Scr_ExecEntThread( self, g_scr_data.gametype.playerkilled, 9 );
-	Scr_FreeThread( threadId );
-}
-
-/*
-===============
 GScr_AllocString
 ===============
 */
-unsigned int GScr_AllocString( const char *s )
-{
-	return Scr_AllocString(s, 1);
-}
+
+/*
+===============
+ScrCmd_PlayRumble
+===============
+*/
+
+/*
+===============
+ScrCmd_PlayLoopRumble
+===============
+*/
+
+/*
+===============
+ScrCmd_StopRumble
+===============
+*/
+
+/*
+===============
+GScr_asin
+===============
+*/
+
+/*
+===============
+GScr_acos
+===============
+*/
+
+/*
+===============
+Scr_ToLower
+===============
+*/
+
+/*
+===============
+Scr_PrecacheRumble
+===============
+*/
+
+/*
+===============
+GScr_KickPlayer
+===============
+*/
+
+/*
+===============
+GScr_BanPlayer
+===============
+*/
+
+/*
+===============
+Scr_PlayRumbleOnPos
+===============
+*/
+
+/*
+===============
+Scr_PlayLoopRumbleOnPos
+===============
+*/
+
+/*
+===============
+Scr_StopAllRumbles
+===============
+*/
+
+/*
+===============
+GScr_MatchEnd
+===============
+*/
+
+/*
+===============
+GScr_SetPlayerTeamRank
+===============
+*/
+
+/*
+===============
+GScr_SendXboxLiveRanks
+===============
+*/
+
+/*
+===============
+Scr_IsValidGameType
+===============
+*/
+
+/*
+===============
+Scr_PlayerConnect
+===============
+*/
+
+/*
+===============
+Scr_PlayerDisconnect
+===============
+*/
+
 
 /*
 ===============
@@ -1990,36 +2043,6 @@ void ScrCmd_StopLoopSound( scr_entref_t entref )
 
 /*
 ===============
-ScrCmd_PlayRumble
-===============
-*/
-void ScrCmd_PlayRumble( scr_entref_t entref )
-{
-	;
-}
-
-/*
-===============
-ScrCmd_PlayLoopRumble
-===============
-*/
-void ScrCmd_PlayLoopRumble( scr_entref_t entref )
-{
-	;
-}
-
-/*
-===============
-ScrCmd_StopRumble
-===============
-*/
-void ScrCmd_StopRumble( scr_entref_t entref )
-{
-	;
-}
-
-/*
-===============
 ScrCmd_Delete
 ===============
 */
@@ -3432,49 +3455,6 @@ void GScr_tan()
 
 /*
 ===============
-GScr_asin
-===============
-*/
-void GScr_asin()
-{
-	float v4;
-	int v3;
-
-	v4 = Scr_GetFloat(0);
-
-	if ( v4 < -1.0f || v4 > 1.0f )
-	{
-		Scr_Error(va("%g out of range", v4));
-	}
-
-	*(float *)&v3 = asin(v4);
-	*(float *)&v3 = *(float *)&v3 * DEGINRAD;
-	Scr_AddFloat(*(float *)&v3);
-}
-
-/*
-===============
-GScr_acos
-===============
-*/
-void GScr_acos()
-{
-	float v4;
-
-	v4 = Scr_GetFloat(0);
-
-	if ( v4 < -1.0f || v4 > 1.0f )
-	{
-		Scr_Error(va("%g out of range", v4));
-	}
-
-	v4 = acos(v4);
-	v4 = v4 * DEGINRAD;
-	Scr_AddFloat(v4);
-}
-
-/*
-===============
 GScr_atan
 ===============
 */
@@ -3741,35 +3721,6 @@ void Scr_GetSubStr()
 
 /*
 ===============
-Scr_ToLower
-===============
-*/
-void Scr_ToLower()
-{
-	char tempString[MAX_STRING_CHARS];
-	const char *s;
-	int i;
-	char c;
-
-	s = Scr_GetString(0);
-
-	for ( i = 0; i < MAX_STRING_CHARS; i++ )
-	{
-		c = tolower(*s++);
-		tempString[i] = c;
-
-		if ( !c )
-		{
-			Scr_AddString(tempString);
-			return;
-		}
-	}
-
-	Scr_Error("string too long");
-}
-
-/*
-===============
 Scr_StrTok
 ===============
 */
@@ -4003,16 +3954,6 @@ void Scr_PrecacheString()
 	{
 		G_LocalizedStringIndex(string);
 	}
-}
-
-/*
-===============
-Scr_PrecacheRumble
-===============
-*/
-void Scr_PrecacheRumble()
-{
-	;
 }
 
 /*
@@ -5516,42 +5457,6 @@ void GScr_SetVoteNoCount()
 
 /*
 ===============
-GScr_KickPlayer
-===============
-*/
-void GScr_KickPlayer()
-{
-	int v1;
-
-	if ( Scr_GetNumParam() <= 0 )
-	{
-		return;
-	}
-
-	v1 = Scr_GetInt(0);
-	Cbuf_ExecuteText(EXEC_APPEND, va("tempBanClient %i\n", v1));
-}
-
-/*
-===============
-GScr_BanPlayer
-===============
-*/
-void GScr_BanPlayer()
-{
-	int v1;
-
-	if ( Scr_GetNumParam() <= 0 )
-	{
-		return;
-	}
-
-	v1 = Scr_GetInt(0);
-	Cbuf_ExecuteText(EXEC_APPEND, va("banClient %i\n", v1));
-}
-
-/*
-===============
 GScr_ClientPrint
 ===============
 */
@@ -5904,72 +5809,12 @@ void GScr_SetArchive()
 
 /*
 ===============
-Scr_PlayRumbleOnPos
-===============
-*/
-void Scr_PlayRumbleOnPos()
-{
-	;
-}
-
-/*
-===============
-Scr_PlayLoopRumbleOnPos
-===============
-*/
-void Scr_PlayLoopRumbleOnPos()
-{
-	;
-}
-
-/*
-===============
-Scr_StopAllRumbles
-===============
-*/
-void Scr_StopAllRumbles()
-{
-	;
-}
-
-/*
-===============
 Scr_IsSplitscreen
 ===============
 */
 void Scr_IsSplitscreen()
 {
 	Scr_AddInt(0);
-}
-
-/*
-===============
-GScr_MatchEnd
-===============
-*/
-void GScr_MatchEnd()
-{
-	;
-}
-
-/*
-===============
-GScr_SetPlayerTeamRank
-===============
-*/
-void GScr_SetPlayerTeamRank()
-{
-	;
-}
-
-/*
-===============
-GScr_SendXboxLiveRanks
-===============
-*/
-void GScr_SendXboxLiveRanks()
-{
-	;
 }
 
 /*
@@ -6359,27 +6204,6 @@ char* Scr_GetGameTypeNameForScript( const char *pszGameTypeScript )
 
 /*
 ===============
-Scr_IsValidGameType
-===============
-*/
-qboolean Scr_IsValidGameType( const char *pszGameType )
-{
-	int valid;
-
-	if ( Scr_GetGameTypeNameForScript(pszGameType) )
-	{
-		valid = 1;
-	}
-	else
-	{
-		valid = 0;
-	}
-
-	return valid;
-}
-
-/*
-===============
 Scr_LoadGameType
 ===============
 */
@@ -6406,27 +6230,53 @@ void Scr_StartupGameType()
 
 /*
 ===============
-Scr_PlayerConnect
+Scr_PlayerDamage
 ===============
 */
-void Scr_PlayerConnect( gentity_t *self )
+void Scr_PlayerDamage( gentity_t *self, gentity_t *inflictor, gentity_t *attacker,
+                       int damage, int dflags, int meansOfDeath, int iWeapon,
+                       const vec3_t vPoint, const vec3_t vDir, int hitLoc, int timeOffset )
 {
 	unsigned short threadId;
-
-	threadId = Scr_ExecEntThread( self, g_scr_data.gametype.playerconnect, 0 );
+	Scr_AddInt(timeOffset);
+	Scr_AddConstString(G_GetHitLocationString(hitLoc));
+	GScr_AddVector(vDir);
+	GScr_AddVector(vPoint);
+	Scr_AddString(BG_GetWeaponDef(iWeapon)->szInternalName);
+	if ( meansOfDeath < 0 || (unsigned int)meansOfDeath >= MOD_NUM )
+		Scr_AddString("badMOD");
+	else
+		Scr_AddString(modNames[meansOfDeath]);
+	Scr_AddInt(dflags);
+	Scr_AddInt(damage);
+	GScr_AddEntity(attacker);
+	GScr_AddEntity(inflictor);
+	threadId = Scr_ExecEntThread( self, g_scr_data.gametype.playerdamage, 10 );
 	Scr_FreeThread( threadId );
 }
-
 /*
 ===============
-Scr_PlayerDisconnect
+Scr_PlayerKilled
 ===============
 */
-void Scr_PlayerDisconnect( gentity_t *self )
+void Scr_PlayerKilled( gentity_t *self, gentity_t *inflictor, gentity_t *attacker,
+                       int damage, int meansOfDeath, int iWeapon,
+                       const vec3_t vDir, int hitLoc, int psTimeOffset, int deathAnimDuration )
 {
 	unsigned short threadId;
-
-	threadId = Scr_ExecEntThread( self, g_scr_data.gametype.playerdisconnect, 0 );
+	Scr_AddInt(deathAnimDuration);
+	Scr_AddInt(psTimeOffset);
+	Scr_AddConstString(G_GetHitLocationString(hitLoc));
+	GScr_AddVector(vDir);
+	Scr_AddString(BG_GetWeaponDef(iWeapon)->szInternalName);
+	if ( meansOfDeath < 0 || (unsigned int)meansOfDeath >= MOD_NUM )
+		Scr_AddString("badMOD");
+	else
+		Scr_AddString(modNames[meansOfDeath]);
+	Scr_AddInt(damage);
+	GScr_AddEntity(attacker);
+	GScr_AddEntity(inflictor);
+	threadId = Scr_ExecEntThread( self, g_scr_data.gametype.playerkilled, 9 );
 	Scr_FreeThread( threadId );
 }
 
@@ -6455,6 +6305,157 @@ void Scr_PlayerVote( gentity_t *self, const char *option )
 	Scr_Notify(self, scr_const.vote, 1);
 }
 
+unsigned int GScr_AllocString( const char *s )
+{
+	return Scr_AllocString(s, 1);
+}
+void ScrCmd_PlayRumble( scr_entref_t entref )
+{
+	;
+}
+void ScrCmd_PlayLoopRumble( scr_entref_t entref )
+{
+	;
+}
+void ScrCmd_StopRumble( scr_entref_t entref )
+{
+	;
+}
+void GScr_asin()
+{
+	float v4;
+	int v3;
+
+	v4 = Scr_GetFloat(0);
+
+	if ( v4 < -1.0f || v4 > 1.0f )
+	{
+		Scr_Error(va("%g out of range", v4));
+	}
+
+	*(float *)&v3 = asin(v4);
+	*(float *)&v3 = *(float *)&v3 * DEGINRAD;
+	Scr_AddFloat(*(float *)&v3);
+}
+void GScr_acos()
+{
+	float v4;
+
+	v4 = Scr_GetFloat(0);
+
+	if ( v4 < -1.0f || v4 > 1.0f )
+	{
+		Scr_Error(va("%g out of range", v4));
+	}
+
+	v4 = acos(v4);
+	v4 = v4 * DEGINRAD;
+	Scr_AddFloat(v4);
+}
+void Scr_ToLower()
+{
+	char tempString[MAX_STRING_CHARS];
+	const char *s;
+	int i;
+	char c;
+
+	s = Scr_GetString(0);
+
+	for ( i = 0; i < MAX_STRING_CHARS; i++ )
+	{
+		c = tolower(*s++);
+		tempString[i] = c;
+
+		if ( !c )
+		{
+			Scr_AddString(tempString);
+			return;
+		}
+	}
+
+	Scr_Error("string too long");
+}
+void Scr_PrecacheRumble()
+{
+	;
+}
+void GScr_KickPlayer()
+{
+	int v1;
+
+	if ( Scr_GetNumParam() <= 0 )
+	{
+		return;
+	}
+
+	v1 = Scr_GetInt(0);
+	Cbuf_ExecuteText(EXEC_APPEND, va("tempBanClient %i\n", v1));
+}
+void GScr_BanPlayer()
+{
+	int v1;
+
+	if ( Scr_GetNumParam() <= 0 )
+	{
+		return;
+	}
+
+	v1 = Scr_GetInt(0);
+	Cbuf_ExecuteText(EXEC_APPEND, va("banClient %i\n", v1));
+}
+void Scr_PlayRumbleOnPos()
+{
+	;
+}
+void Scr_PlayLoopRumbleOnPos()
+{
+	;
+}
+void Scr_StopAllRumbles()
+{
+	;
+}
+void GScr_MatchEnd()
+{
+	;
+}
+void GScr_SetPlayerTeamRank()
+{
+	;
+}
+void GScr_SendXboxLiveRanks()
+{
+	;
+}
+qboolean Scr_IsValidGameType( const char *pszGameType )
+{
+	int valid;
+
+	if ( Scr_GetGameTypeNameForScript(pszGameType) )
+	{
+		valid = 1;
+	}
+	else
+	{
+		valid = 0;
+	}
+
+	return valid;
+}
+void Scr_PlayerConnect( gentity_t *self )
+{
+	unsigned short threadId;
+
+	threadId = Scr_ExecEntThread( self, g_scr_data.gametype.playerconnect, 0 );
+	Scr_FreeThread( threadId );
+}
+void Scr_PlayerDisconnect( gentity_t *self )
+{
+	unsigned short threadId;
+
+	threadId = Scr_ExecEntThread( self, g_scr_data.gametype.playerdisconnect, 0 );
+	Scr_FreeThread( threadId );
+}
 /*
 ===============
 GScr_Stub

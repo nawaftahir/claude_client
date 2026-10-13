@@ -52,18 +52,6 @@ static __declspec(noinline) unsigned int GetNewVariableIndexInternal2NI( unsigne
 	return GetNewVariableIndexInternal2( parentId, name, index );
 }
 
-static __forceinline unsigned int GetVariableI2NI( unsigned int parentId, unsigned int name )
-{
-	unsigned int hash = ( name + parentId ) % ( VARIABLELIST_CHILD_SIZE - 1 ) + 1;
-	unsigned int newIndex = FindVariableIndexInternal( name, hash );
-
-	if ( !newIndex )
-	{
-		newIndex = GetNewVariableIndexInternal2NI( parentId, name, hash );
-	}
-
-	return scrVarGlob.variableList[ newIndex ].hash.id;
-}
 __declspec(noinline) void Scr_TerminateThread( unsigned int localId );
 void VM_Notify( unsigned int notifyListOwnerId, unsigned int stringValue, VariableValue *top );
 void Scr_NotifyNum( int entnum, int classnum, unsigned int stringValue, unsigned int paramcount );
@@ -154,59 +142,9 @@ void Scr_ResetTimeout();
 
 /*
 ==============
-Scr_GetAnimTree
-==============
-*/
-scr_animtree_t Scr_GetAnimTree( unsigned int index ) // untested
-{
-	VariableValue *value;
-	if ( index < scrVmPub.outparamcount )
-	{
-		value = scrVmPub.top - index;
-		if ( value->type == VAR_INTEGER )
-		{
-			if ( value->u.intValue <= scrAnimPub.xanim_num[SCR_XANIM_SERVER] )
-			{
-				if ( scrAnimPub.xanim_lookup[SCR_XANIM_SERVER][value->u.intValue].anims )
-					return scrAnimPub.xanim_lookup[SCR_XANIM_SERVER][value->u.intValue];
-			}
-			scrVarPub.error_message = "bad anim tree";
-		}
-		else
-		{
-			scrVarPub.error_message = va("type %s is not an animtree", var_typename[value->type]);
-		}
-		RemoveRefToValue(value);
-		value->type = VAR_UNDEFINED;
-		scrVarPub.error_index = index + 1;
-		Scr_ErrorInternal();
-	}
-	Scr_Error(va("parameter %d does not exist", index + 1));
-	return scrAnimPub.xanim_lookup[SCR_XANIM_SERVER][0];
-}
-
-/*
-==============
 Scr_IsSystemActive
 ==============
 */
-int Scr_IsSystemActive( bool unused )
-{
-	return scrVarPub.timeArrayId != 0;
-}
-
-/*
-==============
-Scr_ErrorWithDialogMessage
-==============
-*/
-void Scr_ErrorWithDialogMessage( const char *error, const char *dialog_error )
-{
-	scrVarPub.error_message = error;
-	scrVmGlob.dialog_error_message = dialog_error;
-
-	Scr_ErrorInternal();
-}
 
 /*
 ==============
@@ -215,16 +153,104 @@ Scr_ResetTimeout
 */
 // retail times scripts in rdtsc/4 ticks; the result is left in edx:eax
 #pragma warning(disable: 4035)
-static __forceinline unsigned __int64 Sys_Rdtsc()
-{
-	__asm rdtsc
-}
 
-void Scr_ResetTimeout()
-{
-	scrVmGlob.starttime = (int)(Sys_Rdtsc() >> 2);
-}
+/*
+==============
+Scr_ReadShort
+==============
+*/
 
+/*
+==============
+Scr_ReadInt
+==============
+*/
+
+/*
+==============
+Scr_ReadUnsignedShort
+==============
+*/
+
+/*
+==============
+Scr_ReadUnsigned
+==============
+*/
+
+/*
+==============
+Scr_ReadCodePos
+==============
+*/
+
+/*
+==============
+VM_Shutdown
+==============
+*/
+
+/*
+==============
+Scr_GetNumScriptThreads
+==============
+*/
+
+/*
+==============
+Scr_GetNextCodepos
+==============
+*/
+
+/*
+==============
+Scr_TerminateThread
+==============
+*/
+
+/*
+==============
+VM_Notify
+==============
+*/
+
+/*
+==============
+Scr_GetStringIncludeNull
+==============
+*/
+
+/*
+==============
+Scr_GetIString
+==============
+*/
+
+/*
+==============
+Scr_AddBool
+==============
+*/
+
+/*
+==============
+Scr_AddInt
+==============
+*/
+
+
+static __forceinline unsigned int GetVariableI2NI( unsigned int parentId, unsigned int name )
+{
+	unsigned int hash = ( name + parentId ) % ( VARIABLELIST_CHILD_SIZE - 1 ) + 1;
+	unsigned int newIndex = FindVariableIndexInternal( name, hash );
+
+	if ( !newIndex )
+	{
+		newIndex = GetNewVariableIndexInternal2NI( parentId, name, hash );
+	}
+
+	return scrVarGlob.variableList[ newIndex ].hash.id;
+}
 /*
 ==============
 Scr_GetLocalVarAtIndex
@@ -243,32 +269,6 @@ Scr_GetLocalVar
 static inline unsigned int Scr_GetLocalVar( const char *pos )
 {
 	return Scr_GetLocalVarAtIndex( *(unsigned char *)pos );
-}
-
-/*
-==============
-Scr_ReadShort
-==============
-*/
-static inline short Scr_ReadShort( const char **pos )
-{
-	short value = *(reinterpret_cast<const short *>(*pos));
-	*pos += sizeof(short);
-
-	return value;
-}
-
-/*
-==============
-Scr_ReadInt
-==============
-*/
-static inline int Scr_ReadInt( const char **pos )
-{
-	int value = *(reinterpret_cast<const int *>(*pos));
-	*pos += sizeof(int);
-
-	return value;
 }
 
 /*
@@ -299,26 +299,6 @@ static inline const int* Scr_ReadIntArray( const char **pos, int count )
 
 /*
 ==============
-Scr_ReadUnsignedShort
-==============
-*/
-static inline unsigned short Scr_ReadUnsignedShort( const char **pos )
-{
-	return (unsigned short)Scr_ReadShort(pos);
-}
-
-/*
-==============
-Scr_ReadUnsigned
-==============
-*/
-static inline unsigned int Scr_ReadUnsigned( const char **pos )
-{
-	return Scr_ReadInt( pos );
-}
-
-/*
-==============
 Scr_ReadFloat
 ==============
 */
@@ -328,16 +308,6 @@ static inline float Scr_ReadFloat( const char **pos )
 	*pos += sizeof(float);
 
 	return value;
-}
-
-/*
-==============
-Scr_ReadCodePos
-==============
-*/
-static inline const char* Scr_ReadCodePos( const char **pos )
-{
-	return (const char *)Scr_ReadInt( pos );
 }
 
 /*
@@ -391,20 +361,6 @@ void Scr_VM_Init()
 
 	scrVmPub.stack->type = VAR_CODEPOS;
 	scrVmGlob.loading = false;
-}
-
-/*
-==============
-VM_Shutdown
-==============
-*/
-void VM_Shutdown()
-{
-	if ( scrVarPub.tempVariable )
-	{
-		FreeValue(scrVarPub.tempVariable);
-		scrVarPub.tempVariable = 0;
-	}
 }
 
 /*
@@ -529,16 +485,6 @@ void Scr_ErrorInternal()
 
 /*
 ==============
-Scr_GetNumScriptThreads
-==============
-*/
-unsigned int Scr_GetNumScriptThreads()
-{
-	return 0;
-}
-
-/*
-==============
 Scr_ClearOutParams
 ==============
 */
@@ -575,6 +521,10 @@ unsigned int GetDummyFieldValue( void )
 	return scrVarPub.tempVariable;
 }
 
+static __forceinline unsigned __int64 Sys_Rdtsc()
+{
+	__asm rdtsc
+}
 /*
 ==============
 VM_Execute
@@ -2007,281 +1957,6 @@ char* Scr_GetReturnPos( unsigned int *localId )
 
 /*
 ==============
-Scr_GetNextCodepos
-==============
-*/
-const char* Scr_GetNextCodepos( VariableValue *top, const char *pos, int opcode, int mode, unsigned int *localId )
-{
-	VariableValue value;
-	unsigned int caseCount;
-	unsigned int caseValue;
-	int offset;
-	unsigned int currentCaseValue;
-	const char *currentCodePos;
-
-	*localId = scrVmPub.function_frame->fs.localId;
-
-	while ( 2 )
-	{
-		pos++;
-
-		if ( mode == 2 )
-		{
-			switch ( opcode )
-			{
-			case 0x52:
-			case 0x56:
-				if ( top->type != 1 )
-				{
-					goto LABEL_11;
-				}
-				// fallthrough
-			case 0x4f:
-			case 0x50:
-			case 0x54:
-				if ( scrVmPub.function_count >= 32 )
-				{
-					goto LABEL_11;
-				}
-				*localId = 0;
-				return Scr_ReadCodePos( &pos );
-
-			case 0x53:
-			case 0x57:
-				if ( top[-1].type != 1 )
-				{
-					goto LABEL_11;
-				}
-				// fallthrough
-			case 0x51:
-			case 0x55:
-				if ( top->type != 9 )
-				{
-					goto LABEL_11;
-				}
-				if ( scrVmPub.function_count >= 32 )
-				{
-					goto LABEL_11;
-				}
-				*localId = 0;
-				return (const char *)top->u.intValue;
-
-			default:
-				goto LABEL_11;
-			}
-		}
-		else
-		{
-		LABEL_11:
-			switch ( opcode )
-			{
-			case 0:
-			case 1:
-				return Scr_GetReturnPos( localId );
-
-			case 94:
-			case 96:
-				value = *top;
-				AddRefToValue( value.type, value.u );
-				Scr_CastBool( &value );
-				offset = Scr_ReadUnsignedShort( &pos );
-				if ( !scrVarPub.error_message )
-				{
-					if ( value.u.intValue )
-					{
-						return pos;
-					}
-					return &pos[offset];
-				}
-				goto LABEL_44;
-
-			case 95:
-			case 97:
-				value = *top;
-				AddRefToValue( value.type, value.u );
-				Scr_CastBool( &value );
-				offset = Scr_ReadUnsignedShort( &pos );
-				if ( !scrVarPub.error_message )
-				{
-					if ( !value.u.intValue )
-					{
-						return pos;
-					}
-					return &pos[offset];
-				}
-				goto LABEL_44;
-
-			case 98:
-				offset = Scr_ReadInt( &pos );
-				return &pos[offset];
-
-			case 99:
-				offset = (unsigned short)Scr_ReadUnsignedShort( &pos );
-				return &pos[-offset];
-
-			case 124:
-				offset = Scr_ReadInt( &pos );
-				pos += offset;
-				caseCount = Scr_ReadUnsignedShort( &pos );
-
-				switch ( top->type )
-				{
-				case 6:
-					if ( IsValidArrayIndex( top->u.intValue ) )
-					{
-						caseValue = GetInternalVariableIndex( top->u.intValue );
-					}
-					else
-					{
-						pos += 8 * caseCount;
-						return pos;
-					}
-					break;
-
-				case 2:
-					caseValue = top->u.intValue;
-					break;
-
-				default:
-					pos += 8 * caseCount;
-					return pos;
-				}
-
-				top--;
-
-				if ( caseCount )
-				{
-					do
-					{
-						currentCaseValue = Scr_ReadUnsigned( &pos );
-						currentCodePos = Scr_ReadCodePos( &pos );
-
-						if ( currentCaseValue == caseValue )
-						{
-							pos = currentCodePos;
-							return pos;
-						}
-
-						caseCount--;
-					}
-					while ( caseCount );
-
-					if ( !currentCaseValue )
-					{
-						pos = currentCodePos;
-					}
-				}
-				return pos;
-
-			case 125:
-				caseCount = Scr_ReadUnsignedShort( &pos );
-				Scr_ReadIntArray( &pos, 2 * caseCount );
-				return pos;
-
-			case 4:
-			case 5:
-			case 23:
-			case 30:
-			case 31:
-			case 34:
-			case 50:
-			case 51:
-			case 55:
-			case 61:
-			case 90:
-			case 119:
-			case 133:
-			case 134:
-				pos++;
-				goto LABEL_44;
-
-			case 10:
-			case 11:
-			case 22:
-			case 39:
-			case 40:
-			case 41:
-			case 42:
-			case 43:
-			case 44:
-			case 45:
-			case 46:
-			case 47:
-			case 48:
-			case 56:
-			case 58:
-			case 59:
-			case 130:
-			case 131:
-			case 132:
-				Scr_ReadUnsignedShort( &pos );
-				goto LABEL_44;
-
-			case 68:
-			case 75:
-				pos++;
-				Scr_ReadUnsignedShort( &pos );
-				goto LABEL_44;
-
-			case 6:
-			case 7:
-			case 62:
-			case 63:
-			case 64:
-			case 65:
-			case 66:
-			case 67:
-			case 69:
-			case 70:
-			case 71:
-			case 72:
-			case 73:
-			case 74:
-				Scr_ReadUnsignedShort( &pos );
-				goto LABEL_44;
-
-			case 8:
-			case 9:
-			case 19:
-			case 21:
-			case 79:
-			case 80:
-			case 82:
-			case 85:
-			case 87:
-				Scr_ReadInt( &pos );
-				goto LABEL_44;
-
-			case 84:
-			case 86:
-			case 129:
-				Scr_ReadInt( &pos );
-				Scr_ReadInt( &pos );
-				goto LABEL_44;
-
-			case 12:
-				Scr_ReadVector( &pos );
-				goto LABEL_44;
-
-			default:
-			LABEL_44:
-				Scr_ClearErrorMessage();
-
-				if ( ( opcode = *(const char *)pos ) != 57 )
-				{
-					return pos;
-				}
-				else
-				{
-					continue;
-				}
-			}
-		}
-	}
-}
-
-/*
-==============
 VM_CancelNotifyInternal
 ==============
 */
@@ -2839,286 +2514,6 @@ bool Scr_IsEndonThread( unsigned int localId )
 
 	assert((type == VAR_UNDEFINED) || (type == VAR_STACK));
 	return type == VAR_UNDEFINED;
-}
-
-/*
-==============
-Scr_TerminateThread
-==============
-*/
-__declspec(noinline) void Scr_TerminateThread( unsigned int localId )
-{
-	unsigned int startLocalId = GetStartLocalId(localId);
-
-	switch ( (int)GetObjectType(startLocalId) )
-	{
-	case VAR_THREAD:
-		Scr_TerminateRunningThread(localId);
-		break;
-
-	case VAR_NOTIFY_THREAD:
-		Scr_TerminateWaittillThread(localId, startLocalId);
-		break;
-
-	case VAR_TIME_THREAD:
-		Scr_TerminateWaitThread(localId, startLocalId);
-		break;
-
-	default:
-		assert(0); // unreachable
-		break;
-	}
-}
-
-/*
-==============
-VM_Notify
-==============
-*/
-void VM_Notify( unsigned int notifyListOwnerId, unsigned int stringValue, VariableValue *top )
-{
-	unsigned int notifyNameListId;
-	unsigned int startLocalId;
-	unsigned int notifyListId;
-	VariableValue *currentValue;
-	VariableUnion *tempValue;
-	VariableStackBuffer *stackValue;
-	VariableStackBuffer *newStackValue;
-	char *buf;
-	int size;
-	int newSize;
-	int len;
-	int bufLen;
-	unsigned int selfId;
-	unsigned int selfNameId;
-	unsigned int notifyListEntry;
-	bool bNoStack;
-	VariableValue tempValue2;
-	VariableValue tempValue3;
-	VariableValue tempValue5;
-	unsigned int stackId;
-	int type;
-
-	notifyListId = FindVariable(notifyListOwnerId, OBJECT_NOTIFY_LIST);
-
-	if ( !notifyListId )
-	{
-		return;
-	}
-
-	notifyListId = FindObject(notifyListId);
-	assert(notifyListId);
-
-	notifyNameListId = FindVariable(notifyListId, stringValue);
-
-	if ( !notifyNameListId )
-	{
-		return;
-	}
-
-	notifyNameListId = FindObject(notifyNameListId);
-	assert(notifyNameListId);
-
-	AddRefToObject(notifyNameListId);
-
-	assert(!scrVarPub.evaluate);
-	scrVarPub.evaluate = true;
-
-	notifyListEntry = notifyNameListId;
-
-	while ( 1 )
-	{
-next:
-		notifyListEntry = FindPrevSibling(notifyListEntry);
-
-		if ( !notifyListEntry )
-		{
-			break;
-		}
-
-		startLocalId = GetVariableKeyObject(notifyListEntry);
-		selfId = Scr_GetSelf(startLocalId);
-		selfNameId = FindObject(FindObjectVariable(scrVarPub.pauseArrayId, selfId));
-
-		if ( !GetObjectType(notifyListEntry) )
-		{
-			VM_CancelNotifyInternal(notifyListOwnerId, startLocalId, notifyListId, notifyNameListId, stringValue);
-			Scr_KillEndonThread(startLocalId);
-
-			RemoveVariableNI(selfNameId, startLocalId + SL_MAX_STRING_INDEX);
-
-			if ( !GetArraySize(selfNameId) )
-			{
-				RemoveVariableNI(scrVarPub.pauseArrayId, selfId + SL_MAX_STRING_INDEX);
-			}
-
-			Scr_TerminateThread(selfId);
-
-			notifyListEntry = notifyNameListId;
-			continue;
-		}
-
-		assert(GetObjectType( notifyListEntry ) == VAR_STACK);
-
-		tempValue = GetVariableValueAddress(notifyListEntry);
-		stackValue = tempValue->stackValue;
-
-		if ( *((unsigned char *)stackValue->pos - 1) == OP_waittillmatch )
-		{
-			size = *stackValue->pos;
-			assert(size >= 0);
-			assert(size <= stackValue->size);
-
-			buf = &stackValue->buf[STACKBUF_BUFFER_SIZE * (stackValue->size - size)];
-
-			for ( currentValue = top; size; currentValue-- )
-			{
-				assert(currentValue->type != VAR_CODEPOS);
-
-				if ( currentValue->type == VAR_PRECODEPOS )
-				{
-					goto next;
-				}
-
-				size--;
-
-				tempValue3.type = *(unsigned char *)buf;
-				assert(tempValue3.type != VAR_CODEPOS);
-
-				if ( tempValue3.type == VAR_PRECODEPOS )
-				{
-					break;
-				}
-
-				buf += sizeof(unsigned char);
-
-				tempValue3.u.codePosValue = *(const char **)buf;
-				buf += sizeof(VariableUnion);
-
-				AddRefToValue(&tempValue3);
-
-				tempValue2 = *currentValue;
-
-				AddRefToValue(&tempValue2);
-
-				Scr_EvalEquality(&tempValue3, &tempValue2);
-
-			if ( !scrVarPub.error_message )
-			{
-				if ( !tempValue3.u.intValue )
-				{
-					goto next;
-				}
-			}
-			else
-			{
-				goto error;
-			}
-		}
-
-		goto done;
-	error:
-		RuntimeError( stackValue->pos, *stackValue->pos - size + int( sizeof(VariableUnion) - sizeof(unsigned char) ), scrVarPub.error_message, scrVmGlob.dialog_error_message );
-		Scr_ClearErrorMessage();
-
-		goto next;
-	done:
-		stackValue->pos++;
-		bNoStack = true;
-		}
-		else
-		{
-			bNoStack = top->type == VAR_PRECODEPOS;
-		}
-
-		tempValue5.type = VAR_STACK;
-		tempValue5.u.stackValue = stackValue;
-
-		stackId = GetNewObjectVariable(GetArray(GetVariableI2NI(scrVarPub.timeArrayId, scrVarPub.time)), startLocalId);
-		SetNewVariableValue(stackId, &tempValue5);
-
-		tempValue = GetVariableValueAddress(stackId);
-
-		VM_CancelNotifyInternal(notifyListOwnerId, startLocalId, notifyListId, notifyNameListId, stringValue);
-		RemoveVariableNI(selfNameId, startLocalId + SL_MAX_STRING_INDEX);
-
-		if ( !GetArraySize(selfNameId) )
-		{
-			RemoveVariableNI(scrVarPub.pauseArrayId, selfId + SL_MAX_STRING_INDEX);
-		}
-
-		Scr_SetThreadWaitTime(startLocalId, scrVarPub.time);
-
-		if ( bNoStack )
-		{
-			notifyListEntry = notifyNameListId;
-		}
-		else
-		{
-			assert(top->type != VAR_PRECODEPOS);
-			assert(top->type != VAR_CODEPOS);
-
-			size = stackValue->size;
-			newSize = size;
-			currentValue = top;
-
-			do
-			{
-				newSize++;
-				currentValue--;
-				assert(currentValue->type != VAR_CODEPOS);
-			}
-			while ( currentValue->type != VAR_PRECODEPOS );
-			assert(newSize >= 0 && newSize < (1 << 16));
-
-			len = STACKBUF_BUFFER_SIZE; len = len * size;
-			bufLen = STACKBUF_BUFFER_SIZE * newSize + sizeof(*stackValue) - 1;
-
-			if ( !MT_Realloc(stackValue->bufLen, bufLen) )
-			{
-				newStackValue = (VariableStackBuffer *)MT_Alloc(bufLen, 1);
-
-				newStackValue->bufLen = bufLen;
-				newStackValue->pos = stackValue->pos;
-				newStackValue->localId = stackValue->localId;
-
-				memcpy(newStackValue->buf, stackValue->buf, len);
-				MT_Free(stackValue, stackValue->bufLen);
-
-				stackValue = newStackValue;
-				tempValue->stackValue = stackValue;
-			}
-
-			stackValue->size = newSize;
-			buf = &stackValue->buf[len];
-
-			newSize -= size;
-			assert(newSize);
-
-			do
-			{
-				currentValue++;
-				AddRefToValue(currentValue);
-
-				*buf = currentValue->type;
-				buf += sizeof(unsigned char);
-
-				*(const char **)buf = currentValue->u.codePosValue;
-				buf += sizeof(VariableUnion);
-
-				newSize--;
-			}
-			while ( newSize );
-
-			assert(buf - (const char *)stackValue == bufLen);
-			notifyListEntry = notifyNameListId;
-		}
-	}
-
-	RemoveRefToObject(notifyNameListId);
-
-	assert(scrVarPub.evaluate);
-	scrVarPub.evaluate = false;
 }
 
 /*
@@ -3882,6 +3277,39 @@ error:
 
 /*
 ==============
+Scr_GetAnimTree
+==============
+*/
+scr_animtree_t Scr_GetAnimTree( unsigned int index ) // untested
+{
+	VariableValue *value;
+	if ( index < scrVmPub.outparamcount )
+	{
+		value = scrVmPub.top - index;
+		if ( value->type == VAR_INTEGER )
+		{
+			if ( value->u.intValue <= scrAnimPub.xanim_num[SCR_XANIM_SERVER] )
+			{
+				if ( scrAnimPub.xanim_lookup[SCR_XANIM_SERVER][value->u.intValue].anims )
+					return scrAnimPub.xanim_lookup[SCR_XANIM_SERVER][value->u.intValue];
+			}
+			scrVarPub.error_message = "bad anim tree";
+		}
+		else
+		{
+			scrVarPub.error_message = va("type %s is not an animtree", var_typename[value->type]);
+		}
+		RemoveRefToValue(value);
+		value->type = VAR_UNDEFINED;
+		scrVarPub.error_index = index + 1;
+		Scr_ErrorInternal();
+	}
+	Scr_Error(va("parameter %d does not exist", index + 1));
+	return scrAnimPub.xanim_lookup[SCR_XANIM_SERVER][0];
+}
+
+/*
+==============
 Scr_GetFloat
 ==============
 */
@@ -4010,16 +3438,6 @@ unsigned int Scr_GetConstStringIncludeNull( unsigned int index )
 
 /*
 ==============
-Scr_GetStringIncludeNull
-==============
-*/
-const char* Scr_GetStringIncludeNull( unsigned int index )
-{
-	return SL_ConvertToString( Scr_GetConstString( index ) );
-}
-
-/*
-==============
 Scr_GetDebugString
 ==============
 */
@@ -4062,16 +3480,6 @@ unsigned int Scr_GetConstIString( unsigned int index )
 
 	Scr_Error(va("parameter %d does not exist", index + 1));
 	return 0;
-}
-
-/*
-==============
-Scr_GetIString
-==============
-*/
-const char* Scr_GetIString( unsigned int index )
-{
-	return SL_ConvertToString( Scr_GetConstIString( index ) );
 }
 
 /*
@@ -4253,33 +3661,6 @@ Scr_GetNumParam
 unsigned int Scr_GetNumParam()
 {
 	return scrVmPub.outparamcount;
-}
-
-/*
-==============
-Scr_AddBool
-==============
-*/
-void Scr_AddBool( int value )
-{
-	assert(value == false || value == true);
-	IncInParam();
-
-	scrVmPub.top->type = VAR_INTEGER;
-	scrVmPub.top->u.intValue = value;
-}
-
-/*
-==============
-Scr_AddInt
-==============
-*/
-void Scr_AddInt( int value )
-{
-	IncInParam();
-
-	scrVmPub.top->type = VAR_INTEGER;
-	scrVmPub.top->u.intValue = value;
 }
 
 /*
@@ -4491,6 +3872,19 @@ void Scr_Error( const char *error )
 
 /*
 ==============
+Scr_ErrorWithDialogMessage
+==============
+*/
+void Scr_ErrorWithDialogMessage( const char *error, const char *dialog_error )
+{
+	scrVarPub.error_message = error;
+	scrVmGlob.dialog_error_message = dialog_error;
+
+	Scr_ErrorInternal();
+}
+
+/*
+==============
 Scr_TerminalError
 ==============
 */
@@ -4673,6 +4067,11 @@ void Scr_RunCurrentThreads()
 	assert(scrVmPub.top == scrVmPub.stack);
 
 	VM_SetTime();
+}
+
+void Scr_ResetTimeout()
+{
+	scrVmGlob.starttime = (int)(Sys_Rdtsc() >> 2);
 }
 
 /*
@@ -4871,4 +4270,606 @@ loop:
 	}
 }
 
+int Scr_IsSystemActive( bool unused )
+{
+	return scrVarPub.timeArrayId != 0;
+}
+static inline short Scr_ReadShort( const char **pos )
+{
+	short value = *(reinterpret_cast<const short *>(*pos));
+	*pos += sizeof(short);
+
+	return value;
+}
+static inline int Scr_ReadInt( const char **pos )
+{
+	int value = *(reinterpret_cast<const int *>(*pos));
+	*pos += sizeof(int);
+
+	return value;
+}
+static inline unsigned short Scr_ReadUnsignedShort( const char **pos )
+{
+	return (unsigned short)Scr_ReadShort(pos);
+}
+static inline unsigned int Scr_ReadUnsigned( const char **pos )
+{
+	return Scr_ReadInt( pos );
+}
+static inline const char* Scr_ReadCodePos( const char **pos )
+{
+	return (const char *)Scr_ReadInt( pos );
+}
+void VM_Shutdown()
+{
+	if ( scrVarPub.tempVariable )
+	{
+		FreeValue(scrVarPub.tempVariable);
+		scrVarPub.tempVariable = 0;
+	}
+}
+unsigned int Scr_GetNumScriptThreads()
+{
+	return 0;
+}
+const char* Scr_GetNextCodepos( VariableValue *top, const char *pos, int opcode, int mode, unsigned int *localId )
+{
+	VariableValue value;
+	unsigned int caseCount;
+	unsigned int caseValue;
+	int offset;
+	unsigned int currentCaseValue;
+	const char *currentCodePos;
+
+	*localId = scrVmPub.function_frame->fs.localId;
+
+	while ( 2 )
+	{
+		pos++;
+
+		if ( mode == 2 )
+		{
+			switch ( opcode )
+			{
+			case 0x52:
+			case 0x56:
+				if ( top->type != 1 )
+				{
+					goto LABEL_11;
+				}
+				// fallthrough
+			case 0x4f:
+			case 0x50:
+			case 0x54:
+				if ( scrVmPub.function_count >= 32 )
+				{
+					goto LABEL_11;
+				}
+				*localId = 0;
+				return Scr_ReadCodePos( &pos );
+
+			case 0x53:
+			case 0x57:
+				if ( top[-1].type != 1 )
+				{
+					goto LABEL_11;
+				}
+				// fallthrough
+			case 0x51:
+			case 0x55:
+				if ( top->type != 9 )
+				{
+					goto LABEL_11;
+				}
+				if ( scrVmPub.function_count >= 32 )
+				{
+					goto LABEL_11;
+				}
+				*localId = 0;
+				return (const char *)top->u.intValue;
+
+			default:
+				goto LABEL_11;
+			}
+		}
+		else
+		{
+		LABEL_11:
+			switch ( opcode )
+			{
+			case 0:
+			case 1:
+				return Scr_GetReturnPos( localId );
+
+			case 94:
+			case 96:
+				value = *top;
+				AddRefToValue( value.type, value.u );
+				Scr_CastBool( &value );
+				offset = Scr_ReadUnsignedShort( &pos );
+				if ( !scrVarPub.error_message )
+				{
+					if ( value.u.intValue )
+					{
+						return pos;
+					}
+					return &pos[offset];
+				}
+				goto LABEL_44;
+
+			case 95:
+			case 97:
+				value = *top;
+				AddRefToValue( value.type, value.u );
+				Scr_CastBool( &value );
+				offset = Scr_ReadUnsignedShort( &pos );
+				if ( !scrVarPub.error_message )
+				{
+					if ( !value.u.intValue )
+					{
+						return pos;
+					}
+					return &pos[offset];
+				}
+				goto LABEL_44;
+
+			case 98:
+				offset = Scr_ReadInt( &pos );
+				return &pos[offset];
+
+			case 99:
+				offset = (unsigned short)Scr_ReadUnsignedShort( &pos );
+				return &pos[-offset];
+
+			case 124:
+				offset = Scr_ReadInt( &pos );
+				pos += offset;
+				caseCount = Scr_ReadUnsignedShort( &pos );
+
+				switch ( top->type )
+				{
+				case 6:
+					if ( IsValidArrayIndex( top->u.intValue ) )
+					{
+						caseValue = GetInternalVariableIndex( top->u.intValue );
+					}
+					else
+					{
+						pos += 8 * caseCount;
+						return pos;
+					}
+					break;
+
+				case 2:
+					caseValue = top->u.intValue;
+					break;
+
+				default:
+					pos += 8 * caseCount;
+					return pos;
+				}
+
+				top--;
+
+				if ( caseCount )
+				{
+					do
+					{
+						currentCaseValue = Scr_ReadUnsigned( &pos );
+						currentCodePos = Scr_ReadCodePos( &pos );
+
+						if ( currentCaseValue == caseValue )
+						{
+							pos = currentCodePos;
+							return pos;
+						}
+
+						caseCount--;
+					}
+					while ( caseCount );
+
+					if ( !currentCaseValue )
+					{
+						pos = currentCodePos;
+					}
+				}
+				return pos;
+
+			case 125:
+				caseCount = Scr_ReadUnsignedShort( &pos );
+				Scr_ReadIntArray( &pos, 2 * caseCount );
+				return pos;
+
+			case 4:
+			case 5:
+			case 23:
+			case 30:
+			case 31:
+			case 34:
+			case 50:
+			case 51:
+			case 55:
+			case 61:
+			case 90:
+			case 119:
+			case 133:
+			case 134:
+				pos++;
+				goto LABEL_44;
+
+			case 10:
+			case 11:
+			case 22:
+			case 39:
+			case 40:
+			case 41:
+			case 42:
+			case 43:
+			case 44:
+			case 45:
+			case 46:
+			case 47:
+			case 48:
+			case 56:
+			case 58:
+			case 59:
+			case 130:
+			case 131:
+			case 132:
+				Scr_ReadUnsignedShort( &pos );
+				goto LABEL_44;
+
+			case 68:
+			case 75:
+				pos++;
+				Scr_ReadUnsignedShort( &pos );
+				goto LABEL_44;
+
+			case 6:
+			case 7:
+			case 62:
+			case 63:
+			case 64:
+			case 65:
+			case 66:
+			case 67:
+			case 69:
+			case 70:
+			case 71:
+			case 72:
+			case 73:
+			case 74:
+				Scr_ReadUnsignedShort( &pos );
+				goto LABEL_44;
+
+			case 8:
+			case 9:
+			case 19:
+			case 21:
+			case 79:
+			case 80:
+			case 82:
+			case 85:
+			case 87:
+				Scr_ReadInt( &pos );
+				goto LABEL_44;
+
+			case 84:
+			case 86:
+			case 129:
+				Scr_ReadInt( &pos );
+				Scr_ReadInt( &pos );
+				goto LABEL_44;
+
+			case 12:
+				Scr_ReadVector( &pos );
+				goto LABEL_44;
+
+			default:
+			LABEL_44:
+				Scr_ClearErrorMessage();
+
+				if ( ( opcode = *(const char *)pos ) != 57 )
+				{
+					return pos;
+				}
+				else
+				{
+					continue;
+				}
+			}
+		}
+	}
+}
+__declspec(noinline) void Scr_TerminateThread( unsigned int localId )
+{
+	unsigned int startLocalId = GetStartLocalId(localId);
+
+	switch ( (int)GetObjectType(startLocalId) )
+	{
+	case VAR_THREAD:
+		Scr_TerminateRunningThread(localId);
+		break;
+
+	case VAR_NOTIFY_THREAD:
+		Scr_TerminateWaittillThread(localId, startLocalId);
+		break;
+
+	case VAR_TIME_THREAD:
+		Scr_TerminateWaitThread(localId, startLocalId);
+		break;
+
+	default:
+		assert(0); // unreachable
+		break;
+	}
+}
+void VM_Notify( unsigned int notifyListOwnerId, unsigned int stringValue, VariableValue *top )
+{
+	unsigned int notifyNameListId;
+	unsigned int startLocalId;
+	unsigned int notifyListId;
+	VariableValue *currentValue;
+	VariableUnion *tempValue;
+	VariableStackBuffer *stackValue;
+	VariableStackBuffer *newStackValue;
+	char *buf;
+	int size;
+	int newSize;
+	int len;
+	int bufLen;
+	unsigned int selfId;
+	unsigned int selfNameId;
+	unsigned int notifyListEntry;
+	bool bNoStack;
+	VariableValue tempValue2;
+	VariableValue tempValue3;
+	VariableValue tempValue5;
+	unsigned int stackId;
+	int type;
+
+	notifyListId = FindVariable(notifyListOwnerId, OBJECT_NOTIFY_LIST);
+
+	if ( !notifyListId )
+	{
+		return;
+	}
+
+	notifyListId = FindObject(notifyListId);
+	assert(notifyListId);
+
+	notifyNameListId = FindVariable(notifyListId, stringValue);
+
+	if ( !notifyNameListId )
+	{
+		return;
+	}
+
+	notifyNameListId = FindObject(notifyNameListId);
+	assert(notifyNameListId);
+
+	AddRefToObject(notifyNameListId);
+
+	assert(!scrVarPub.evaluate);
+	scrVarPub.evaluate = true;
+
+	notifyListEntry = notifyNameListId;
+
+	while ( 1 )
+	{
+next:
+		notifyListEntry = FindPrevSibling(notifyListEntry);
+
+		if ( !notifyListEntry )
+		{
+			break;
+		}
+
+		startLocalId = GetVariableKeyObject(notifyListEntry);
+		selfId = Scr_GetSelf(startLocalId);
+		selfNameId = FindObject(FindObjectVariable(scrVarPub.pauseArrayId, selfId));
+
+		if ( !GetObjectType(notifyListEntry) )
+		{
+			VM_CancelNotifyInternal(notifyListOwnerId, startLocalId, notifyListId, notifyNameListId, stringValue);
+			Scr_KillEndonThread(startLocalId);
+
+			RemoveVariableNI(selfNameId, startLocalId + SL_MAX_STRING_INDEX);
+
+			if ( !GetArraySize(selfNameId) )
+			{
+				RemoveVariableNI(scrVarPub.pauseArrayId, selfId + SL_MAX_STRING_INDEX);
+			}
+
+			Scr_TerminateThread(selfId);
+
+			notifyListEntry = notifyNameListId;
+			continue;
+		}
+
+		assert(GetObjectType( notifyListEntry ) == VAR_STACK);
+
+		tempValue = GetVariableValueAddress(notifyListEntry);
+		stackValue = tempValue->stackValue;
+
+		if ( *((unsigned char *)stackValue->pos - 1) == OP_waittillmatch )
+		{
+			size = *stackValue->pos;
+			assert(size >= 0);
+			assert(size <= stackValue->size);
+
+			buf = &stackValue->buf[STACKBUF_BUFFER_SIZE * (stackValue->size - size)];
+
+			for ( currentValue = top; size; currentValue-- )
+			{
+				assert(currentValue->type != VAR_CODEPOS);
+
+				if ( currentValue->type == VAR_PRECODEPOS )
+				{
+					goto next;
+				}
+
+				size--;
+
+				tempValue3.type = *(unsigned char *)buf;
+				assert(tempValue3.type != VAR_CODEPOS);
+
+				if ( tempValue3.type == VAR_PRECODEPOS )
+				{
+					break;
+				}
+
+				buf += sizeof(unsigned char);
+
+				tempValue3.u.codePosValue = *(const char **)buf;
+				buf += sizeof(VariableUnion);
+
+				AddRefToValue(&tempValue3);
+
+				tempValue2 = *currentValue;
+
+				AddRefToValue(&tempValue2);
+
+				Scr_EvalEquality(&tempValue3, &tempValue2);
+
+			if ( !scrVarPub.error_message )
+			{
+				if ( !tempValue3.u.intValue )
+				{
+					goto next;
+				}
+			}
+			else
+			{
+				goto error;
+			}
+		}
+
+		goto done;
+	error:
+		RuntimeError( stackValue->pos, *stackValue->pos - size + int( sizeof(VariableUnion) - sizeof(unsigned char) ), scrVarPub.error_message, scrVmGlob.dialog_error_message );
+		Scr_ClearErrorMessage();
+
+		goto next;
+	done:
+		stackValue->pos++;
+		bNoStack = true;
+		}
+		else
+		{
+			bNoStack = top->type == VAR_PRECODEPOS;
+		}
+
+		tempValue5.type = VAR_STACK;
+		tempValue5.u.stackValue = stackValue;
+
+		stackId = GetNewObjectVariable(GetArray(GetVariableI2NI(scrVarPub.timeArrayId, scrVarPub.time)), startLocalId);
+		SetNewVariableValue(stackId, &tempValue5);
+
+		tempValue = GetVariableValueAddress(stackId);
+
+		VM_CancelNotifyInternal(notifyListOwnerId, startLocalId, notifyListId, notifyNameListId, stringValue);
+		RemoveVariableNI(selfNameId, startLocalId + SL_MAX_STRING_INDEX);
+
+		if ( !GetArraySize(selfNameId) )
+		{
+			RemoveVariableNI(scrVarPub.pauseArrayId, selfId + SL_MAX_STRING_INDEX);
+		}
+
+		Scr_SetThreadWaitTime(startLocalId, scrVarPub.time);
+
+		if ( bNoStack )
+		{
+			notifyListEntry = notifyNameListId;
+		}
+		else
+		{
+			assert(top->type != VAR_PRECODEPOS);
+			assert(top->type != VAR_CODEPOS);
+
+			size = stackValue->size;
+			newSize = size;
+			currentValue = top;
+
+			do
+			{
+				newSize++;
+				currentValue--;
+				assert(currentValue->type != VAR_CODEPOS);
+			}
+			while ( currentValue->type != VAR_PRECODEPOS );
+			assert(newSize >= 0 && newSize < (1 << 16));
+
+			len = STACKBUF_BUFFER_SIZE; len = len * size;
+			bufLen = STACKBUF_BUFFER_SIZE * newSize + sizeof(*stackValue) - 1;
+
+			if ( !MT_Realloc(stackValue->bufLen, bufLen) )
+			{
+				newStackValue = (VariableStackBuffer *)MT_Alloc(bufLen, 1);
+
+				newStackValue->bufLen = bufLen;
+				newStackValue->pos = stackValue->pos;
+				newStackValue->localId = stackValue->localId;
+
+				memcpy(newStackValue->buf, stackValue->buf, len);
+				MT_Free(stackValue, stackValue->bufLen);
+
+				stackValue = newStackValue;
+				tempValue->stackValue = stackValue;
+			}
+
+			stackValue->size = newSize;
+			buf = &stackValue->buf[len];
+
+			newSize -= size;
+			assert(newSize);
+
+			do
+			{
+				currentValue++;
+				AddRefToValue(currentValue);
+
+				*buf = currentValue->type;
+				buf += sizeof(unsigned char);
+
+				*(const char **)buf = currentValue->u.codePosValue;
+				buf += sizeof(VariableUnion);
+
+				newSize--;
+			}
+			while ( newSize );
+
+			assert(buf - (const char *)stackValue == bufLen);
+			notifyListEntry = notifyNameListId;
+		}
+	}
+
+	RemoveRefToObject(notifyNameListId);
+
+	assert(scrVarPub.evaluate);
+	scrVarPub.evaluate = false;
+}
+const char* Scr_GetStringIncludeNull( unsigned int index )
+{
+	return SL_ConvertToString( Scr_GetConstString( index ) );
+}
+const char* Scr_GetIString( unsigned int index )
+{
+	return SL_ConvertToString( Scr_GetConstIString( index ) );
+}
+void Scr_AddBool( int value )
+{
+	assert(value == false || value == true);
+	IncInParam();
+
+	scrVmPub.top->type = VAR_INTEGER;
+	scrVmPub.top->u.intValue = value;
+}
+void Scr_AddInt( int value )
+{
+	IncInParam();
+
+	scrVmPub.top->type = VAR_INTEGER;
+	scrVmPub.top->u.intValue = value;
+}
 

@@ -116,11 +116,12 @@ extern qboolean autoupdateChecked;
 
 short BigShort(short l);
 
-void CL_RconInit(void)
-{
-    rconGlob.password[0] = '\0';
-    rconGlob.address.type = NA_BAD;
-}
+
+
+
+
+
+
 
 static int CL_CompareAdrSigned(const void *a, const void *b)
 {
@@ -128,58 +129,6 @@ static int CL_CompareAdrSigned(const void *a, const void *b)
     serverInfo_t *serverB = (serverInfo_t *)b;
 
     return NET_CompareAdrSigned(&serverA->adr, &serverB->adr);
-}
-
-// retail calls NET_CompareAdr at the favorites loop only
-static __declspec(noinline) qboolean NET_CompareAdrNI(netadr_t a, netadr_t b)
-{
-    return NET_CompareAdr(a, b);
-}
-
-void CL_SetServerInfoByAddress(netadr_t from, const char *info, int ping)
-{
-    int i;
-    int low;
-    int high;
-    int mid;
-    int compare;
-
-    Com_PumpMessageLoop();
-
-    for (i = 0; i < 128; i++) {
-        if (NET_CompareAdr(from, cls.localServers[i].adr))
-            CL_SetServerInfo(&cls.localServers[i], info, ping);
-    }
-
-    // global servers are sorted by address
-    low = 0;
-    high = cls.numglobalservers;
-    while (low < high) {
-        mid = (low + high) / 2;
-        compare = NET_CompareAdrSigned(&from, &cls.globalServers[mid].adr);
-        if (compare < 0) {
-            high = mid;
-        } else if (compare > 0) {
-            low = mid + 1;
-        } else {
-            // back up to the first matching entry
-            i = mid;
-            do {
-                i--;
-            } while (i >= 0 && !NET_CompareAdrSigned(&from, &cls.globalServers[i].adr));
-            i++;
-            do {
-                CL_SetServerInfo(&cls.globalServers[i], info, ping);
-                i++;
-            } while (i < cls.numglobalservers && !NET_CompareAdrSigned(&from, &cls.globalServers[i].adr));
-            break;
-        }
-    }
-
-    for (i = 0; i < 128; i++) {
-        if (NET_CompareAdrNI(from, cls.favoriteServers[i].adr))
-            CL_SetServerInfo(&cls.favoriteServers[i], info, ping);
-    }
 }
 
 void CL_SetServerInfo(serverInfo_t *server, const char *info, int ping)
@@ -309,32 +258,62 @@ void CL_ServerInfoPacket(netadr_t from, msg_t *msg, int time)
     }
 }
 
-qboolean CL_CDKeyValidate(const char *key, const char *checksum)
+void CL_Connect_f(void)
 {
-    unsigned int crc = 0;
-    char chs[8];
-    int i;
+    const char *server;
+    LegacyHacks *legacy;
 
-    for (i = 0; i < 16; i++) {
-        int ch = (signed char)key[i];
-        int j;
-        crc ^= (unsigned int)ch;
-        for (j = 8; j != 0; j--) {
-            if (crc & 1) {
-                crc >>= 1;
-                crc ^= 0xa001;
-            } else {
-                crc >>= 1;
-            }
-        }
+    if (Cmd_Argc() != 2) {
+        Com_Printf("usage: connect [server]\n");
+        return;
     }
 
-    sprintf(chs, (const char *)"%04x", crc);
+    SND_StopSounds((snd_stopsounds_arg_t)0);
+    clc.serverMessage[0] = 0;
+    server = Cmd_Argv(1);
 
-    if (checksum == NULL || I_strnicmp(chs, checksum, 4) == 0)
-        return 1;
+    if (((dvar_t *)com_sv_running)->current.enabled && !strcmp(server, "localhost"))
+        ((LegacyHacks *)::legacyHacks)->sv_killserver = 1;
+    legacy = (LegacyHacks *)::legacyHacks;
+    legacy->cl_serverloadmap[0] = 0;
+    legacy->cl_serverloadgametype[0] = 0;
 
-    return 0;
+    SV_Frame(0);
+    CL_Disconnect();
+    Con_Close();
+
+    I_strncpyz(cls.servername, server, sizeof(cls.servername));
+
+    if (!NET_StringToAdr(cls.servername, &clc.serverAddress)) {
+        Com_Printf("Bad server address\n");
+        clc.state = (connstate_t)0;
+        return;
+    }
+    if (clc.serverAddress.port == 0)
+        clc.serverAddress.port = BigShort(28960);
+    Com_Printf("%s resolved to %i.%i.%i.%i:%i\n", cls.servername, clc.serverAddress.ip[0], clc.serverAddress.ip[1],
+               clc.serverAddress.ip[2], clc.serverAddress.ip[3], BigShort(clc.serverAddress.port));
+
+    netadr_t adr = clc.serverAddress;
+    if (!NET_IsLocalAddress(adr) && !CL_CDKeyValidate(cl_cdkey, cl_cdkeychecksum)) {
+        Com_Error(ERR_DROP, "EXE_ERR_INVALID_CD_KEY");
+        return;
+    }
+
+    adr = clc.serverAddress;
+    if (NET_IsLocalAddress(adr))
+        clc.state = (connstate_t)4;
+    else
+        clc.state = (connstate_t)3;
+
+    clients->keyCatchers = 0;
+    clients->displayHUDWithKeycatchUI = 0;
+    clc.connectTime = -99999;
+    clc.connectPacketCount = 0;
+    clc.qport = ::qport;
+
+    UI_CloseAll();
+    SCR_UpdateScreen();
 }
 
 void CL_SortGlobalServers(void)
@@ -393,81 +372,6 @@ static int CL_RefreshKnownGlobalServer(netadr_t adr)
     return 0;
 }
 
-void CL_ServersResponsePacket(netadr_t from, msg_t *msg)
-{
-    int i, count, numservers;
-    serverAddress_t addresses[256];
-    byte *buffptr;
-    byte *buffend;
-    netadr_t adr;
-    serverInfo_t *server;
-
-    Com_PumpMessageLoop();
-    Com_Printf("CL_ServersResponsePacket\n");
-
-    cls.waitglobalserverresponse = 0;
-
-    numservers = 0;
-    buffptr = msg->data;
-    buffend = buffptr + msg->cursize;
-    while (buffptr + 1 < buffend) {
-        do {
-            if (*buffptr++ == '\\')
-                break;
-        } while (buffptr < buffend);
-
-        if (buffptr >= buffend - 6)
-            break;
-
-        addresses[numservers].ip[0] = *buffptr++;
-        addresses[numservers].ip[1] = *buffptr++;
-        addresses[numservers].ip[2] = *buffptr++;
-        addresses[numservers].ip[3] = *buffptr++;
-
-        addresses[numservers].port = (*buffptr++) << 8;
-        addresses[numservers].port += *buffptr++;
-        addresses[numservers].port = BigShort(addresses[numservers].port);
-
-        if (*buffptr != '\\')
-            break;
-
-        Com_DPrintf("server: %d ip: %d.%d.%d.%d:%d\n", numservers,
-                    addresses[numservers].ip[0],
-                    addresses[numservers].ip[1],
-                    addresses[numservers].ip[2],
-                    addresses[numservers].ip[3],
-                    addresses[numservers].port);
-
-        numservers++;
-        if (numservers >= 256)
-            break;
-
-        if (buffptr[1] == 'E' && buffptr[2] == 'O' && buffptr[3] == 'T')
-            break;
-    }
-
-    count = cls.numglobalservers;
-    for (i = 0; i < numservers && count < MAX_GLOBALSERVERS; i++) {
-        adr.type = NA_IP;
-        adr.ip[0] = addresses[i].ip[0];
-        adr.ip[1] = addresses[i].ip[1];
-        adr.ip[2] = addresses[i].ip[2];
-        adr.ip[3] = addresses[i].ip[3];
-        adr.port = addresses[i].port;
-
-        if (!CL_RefreshKnownGlobalServer(adr)) {
-            server = &cls.globalServers[count];
-            count++;
-            CL_InitServerInfo(server, adr);
-        }
-    }
-
-    cls.numglobalservers = count;
-    CL_SortGlobalServers();
-
-    Com_Printf("%d servers parsed (total %d)\n", numservers, count);
-}
-
 void CL_GlobalServers_f(void)
 {
     netadr_t to;
@@ -508,6 +412,12 @@ void CL_GlobalServers_f(void)
         buffptr += sprintf(buffptr, " demo");
 
     NET_OutOfBandPrint(NS_SERVER, to, command);
+}
+
+void CL_RconInit(void)
+{
+    rconGlob.password[0] = '\0';
+    rconGlob.address.type = NA_BAD;
 }
 
 // helper names are ours; retail keeps them as separate functions
@@ -674,7 +584,6 @@ ping_t *CL_GetFreePing(void)
 
     return best;
 }
-
 void CL_Ping_f(void)
 {
     netadr_t to;
@@ -702,64 +611,6 @@ void CL_Ping_f(void)
     CL_SetServerInfoByAddress(pingptr->adr, NULL, 0);
 
     NET_OutOfBandPrint(NS_CLIENT1, to, "getinfo xxx");
-}
-
-void CL_Connect_f(void)
-{
-    const char *server;
-    LegacyHacks *legacy;
-
-    if (Cmd_Argc() != 2) {
-        Com_Printf("usage: connect [server]\n");
-        return;
-    }
-
-    SND_StopSounds((snd_stopsounds_arg_t)0);
-    clc.serverMessage[0] = 0;
-    server = Cmd_Argv(1);
-
-    if (((dvar_t *)com_sv_running)->current.enabled && !strcmp(server, "localhost"))
-        ((LegacyHacks *)::legacyHacks)->sv_killserver = 1;
-    legacy = (LegacyHacks *)::legacyHacks;
-    legacy->cl_serverloadmap[0] = 0;
-    legacy->cl_serverloadgametype[0] = 0;
-
-    SV_Frame(0);
-    CL_Disconnect();
-    Con_Close();
-
-    I_strncpyz(cls.servername, server, sizeof(cls.servername));
-
-    if (!NET_StringToAdr(cls.servername, &clc.serverAddress)) {
-        Com_Printf("Bad server address\n");
-        clc.state = (connstate_t)0;
-        return;
-    }
-    if (clc.serverAddress.port == 0)
-        clc.serverAddress.port = BigShort(28960);
-    Com_Printf("%s resolved to %i.%i.%i.%i:%i\n", cls.servername, clc.serverAddress.ip[0], clc.serverAddress.ip[1],
-               clc.serverAddress.ip[2], clc.serverAddress.ip[3], BigShort(clc.serverAddress.port));
-
-    netadr_t adr = clc.serverAddress;
-    if (!NET_IsLocalAddress(adr) && !CL_CDKeyValidate(cl_cdkey, cl_cdkeychecksum)) {
-        Com_Error(ERR_DROP, "EXE_ERR_INVALID_CD_KEY");
-        return;
-    }
-
-    adr = clc.serverAddress;
-    if (NET_IsLocalAddress(adr))
-        clc.state = (connstate_t)4;
-    else
-        clc.state = (connstate_t)3;
-
-    clients->keyCatchers = 0;
-    clients->displayHUDWithKeycatchUI = 0;
-    clc.connectTime = -99999;
-    clc.connectPacketCount = 0;
-    clc.qport = ::qport;
-
-    UI_CloseAll();
-    SCR_UpdateScreen();
 }
 
 __declspec(noinline) serverStatusRequest_t *CL_GetServerStatus(netadr_t from)
@@ -1063,3 +914,154 @@ void CL_ClearMutedList(void)
     memset(s_playerMute, 0, sizeof(s_playerMute));
 }
 
+// retail calls NET_CompareAdr at the favorites loop only
+static __declspec(noinline) qboolean NET_CompareAdrNI(netadr_t a, netadr_t b)
+{
+    return NET_CompareAdr(a, b);
+}
+void CL_SetServerInfoByAddress(netadr_t from, const char *info, int ping)
+{
+    int i;
+    int low;
+    int high;
+    int mid;
+    int compare;
+
+    Com_PumpMessageLoop();
+
+    for (i = 0; i < 128; i++) {
+        if (NET_CompareAdr(from, cls.localServers[i].adr))
+            CL_SetServerInfo(&cls.localServers[i], info, ping);
+    }
+
+    // global servers are sorted by address
+    low = 0;
+    high = cls.numglobalservers;
+    while (low < high) {
+        mid = (low + high) / 2;
+        compare = NET_CompareAdrSigned(&from, &cls.globalServers[mid].adr);
+        if (compare < 0) {
+            high = mid;
+        } else if (compare > 0) {
+            low = mid + 1;
+        } else {
+            // back up to the first matching entry
+            i = mid;
+            do {
+                i--;
+            } while (i >= 0 && !NET_CompareAdrSigned(&from, &cls.globalServers[i].adr));
+            i++;
+            do {
+                CL_SetServerInfo(&cls.globalServers[i], info, ping);
+                i++;
+            } while (i < cls.numglobalservers && !NET_CompareAdrSigned(&from, &cls.globalServers[i].adr));
+            break;
+        }
+    }
+
+    for (i = 0; i < 128; i++) {
+        if (NET_CompareAdrNI(from, cls.favoriteServers[i].adr))
+            CL_SetServerInfo(&cls.favoriteServers[i], info, ping);
+    }
+}
+qboolean CL_CDKeyValidate(const char *key, const char *checksum)
+{
+    unsigned int crc = 0;
+    char chs[8];
+    int i;
+
+    for (i = 0; i < 16; i++) {
+        int ch = (signed char)key[i];
+        int j;
+        crc ^= (unsigned int)ch;
+        for (j = 8; j != 0; j--) {
+            if (crc & 1) {
+                crc >>= 1;
+                crc ^= 0xa001;
+            } else {
+                crc >>= 1;
+            }
+        }
+    }
+
+    sprintf(chs, (const char *)"%04x", crc);
+
+    if (checksum == NULL || I_strnicmp(chs, checksum, 4) == 0)
+        return 1;
+
+    return 0;
+}
+void CL_ServersResponsePacket(netadr_t from, msg_t *msg)
+{
+    int i, count, numservers;
+    serverAddress_t addresses[256];
+    byte *buffptr;
+    byte *buffend;
+    netadr_t adr;
+    serverInfo_t *server;
+
+    Com_PumpMessageLoop();
+    Com_Printf("CL_ServersResponsePacket\n");
+
+    cls.waitglobalserverresponse = 0;
+
+    numservers = 0;
+    buffptr = msg->data;
+    buffend = buffptr + msg->cursize;
+    while (buffptr + 1 < buffend) {
+        do {
+            if (*buffptr++ == '\\')
+                break;
+        } while (buffptr < buffend);
+
+        if (buffptr >= buffend - 6)
+            break;
+
+        addresses[numservers].ip[0] = *buffptr++;
+        addresses[numservers].ip[1] = *buffptr++;
+        addresses[numservers].ip[2] = *buffptr++;
+        addresses[numservers].ip[3] = *buffptr++;
+
+        addresses[numservers].port = (*buffptr++) << 8;
+        addresses[numservers].port += *buffptr++;
+        addresses[numservers].port = BigShort(addresses[numservers].port);
+
+        if (*buffptr != '\\')
+            break;
+
+        Com_DPrintf("server: %d ip: %d.%d.%d.%d:%d\n", numservers,
+                    addresses[numservers].ip[0],
+                    addresses[numservers].ip[1],
+                    addresses[numservers].ip[2],
+                    addresses[numservers].ip[3],
+                    addresses[numservers].port);
+
+        numservers++;
+        if (numservers >= 256)
+            break;
+
+        if (buffptr[1] == 'E' && buffptr[2] == 'O' && buffptr[3] == 'T')
+            break;
+    }
+
+    count = cls.numglobalservers;
+    for (i = 0; i < numservers && count < MAX_GLOBALSERVERS; i++) {
+        adr.type = NA_IP;
+        adr.ip[0] = addresses[i].ip[0];
+        adr.ip[1] = addresses[i].ip[1];
+        adr.ip[2] = addresses[i].ip[2];
+        adr.ip[3] = addresses[i].ip[3];
+        adr.port = addresses[i].port;
+
+        if (!CL_RefreshKnownGlobalServer(adr)) {
+            server = &cls.globalServers[count];
+            count++;
+            CL_InitServerInfo(server, adr);
+        }
+    }
+
+    cls.numglobalservers = count;
+    CL_SortGlobalServers();
+
+    Com_Printf("%d servers parsed (total %d)\n", numservers, count);
+}
