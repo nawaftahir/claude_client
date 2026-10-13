@@ -665,13 +665,13 @@ inline XModelFileShort XModelDataReadShort(const unsigned char **pos)
 	return value;
 }
 
-inline unsigned short XModelDataReadUnsignedShort(const unsigned char **pos)
+struct XModelFileUnsignedShort { unsigned short value; };
+inline XModelFileUnsignedShort XModelDataReadUnsignedShort(const unsigned char **pos)
 {
-	unsigned short value;
+	XModelFileUnsignedShort value;
 
-	memcpy(&value, *pos, sizeof(value));
-	*pos += sizeof(value);
-
+	memcpy(&value.value, *pos, sizeof(value.value));
+	*pos += sizeof(value.value);
 
 	return value;
 }

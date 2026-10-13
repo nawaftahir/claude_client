@@ -3,6 +3,8 @@
 
 #define XANIM_VERSION 14
 
+extern void FS_FreeFileInl(void *buffer);
+
 void ConsumeQuat(const unsigned char **pos, short *out)
 {
 	int unused[2];
@@ -59,7 +61,7 @@ void XAnimLoadNotifyInfo(const char *name, const unsigned char **pos, XAnimParts
 	{
 		notify->name = SL_GetString_((const char *)*pos, 0, 3);
 		*pos = *pos + strlen((const char *)*pos) + 1;
-		frame = XModelDataReadUnsignedShort(pos);
+		frame = XModelDataReadUnsignedShort(pos).value;
 		notify->time = parts->numframes ? (float)frame / parts->numframes : 0.0f;
 	}
 
@@ -96,8 +98,6 @@ XAnimParts *XAnimLoadFile(const char *name, void *(*Alloc)(int))
 	int n;
 	int i;
 	short *sQ;
-	short *temp2;
-	int temp;
 	char *simpleQuatBits;
 	bool bFlipQuat;
 	bool bSimpleQuat;
@@ -150,7 +150,7 @@ XAnimParts *XAnimLoadFile(const char *name, void *(*Alloc)(int))
 		{
 			deltaPart = (XAnimDeltaPart *)Alloc(8);
 			parts->deltaPart = deltaPart;
-			numQuatIndices = XModelDataReadUnsignedShort(&pos);
+			numQuatIndices = XModelDataReadUnsignedShort(&pos).value;
 			if (!numQuatIndices)
 			{
 				deltaPart->quat = 0;
@@ -198,9 +198,9 @@ XAnimParts *XAnimLoadFile(const char *name, void *(*Alloc)(int))
 					}
 					for (i = 1; i < numQuatIndices; ++i)
 					{
-						sQ = deltaPart->quat->u.frames.frames[i];
-						temp2 = deltaPart->quat->u.frames.frames[i] - 2;
-						temp = sQ[0] * temp2[0] + sQ[1] * temp2[1];
+						short *sQ = deltaPart->quat->u.frames.frames[i];
+						short *temp2 = sQ - 2;
+						int temp = sQ[0] * temp2[0] + sQ[1] * temp2[1];
 						if (temp < 0)
 						{
 							sQ[0] = -sQ[0];
@@ -209,7 +209,7 @@ XAnimParts *XAnimLoadFile(const char *name, void *(*Alloc)(int))
 					}
 				}
 			}
-			numTransIndices = XModelDataReadUnsignedShort(&pos);
+			numTransIndices = XModelDataReadUnsignedShort(&pos).value;
 			if (!numTransIndices)
 			{
 				deltaPart->trans = 0;
@@ -286,7 +286,7 @@ XAnimParts *XAnimLoadFile(const char *name, void *(*Alloc)(int))
 			bFlipQuat = ( 1 << (m & 7) ) & quatBits[m >> 3];
 			bSimpleQuat = ( 1 << (m & 7) ) & simpleQuatBits[m >> 3];
 			part = &parts->parts[m];
-			numQuatIndices = XModelDataReadUnsignedShort(&pos);
+			numQuatIndices = XModelDataReadUnsignedShort(&pos).value;
 			if (!numQuatIndices)
 			{
 				part->quat = 0;
@@ -368,8 +368,8 @@ XAnimParts *XAnimLoadFile(const char *name, void *(*Alloc)(int))
 						for (i = 1; i < numQuatIndices; ++i)
 						{
 							sQ = &(*part->quat->u.frames.u.frames2)[2 * i];
-							temp2 = &(*part->quat->u.frames.u.frames2)[2 * i] - 2;
-							temp = sQ[0] * temp2[0] + sQ[1] * temp2[1];
+							short *temp2 = sQ - 2;
+							int temp = sQ[0] * temp2[0] + sQ[1] * temp2[1];
 							if (temp < 0)
 							{
 								sQ[0] = -sQ[0];
@@ -403,8 +403,8 @@ XAnimParts *XAnimLoadFile(const char *name, void *(*Alloc)(int))
 						for (i = 1; i < numQuatIndices; ++i)
 						{
 							sQ = &(*part->quat->u.frames.u.frames)[4 * i];
-							temp2 = &(*part->quat->u.frames.u.frames)[4 * i] - 4;
-							temp = (sQ[2] * temp2[2] + sQ[3] * temp2[3]) + (sQ[0] * temp2[0] + sQ[1] * temp2[1]);
+							short *temp2 = sQ - 4;
+							int temp = (sQ[2] * temp2[2] + sQ[3] * temp2[3]) + (sQ[0] * temp2[0] + sQ[1] * temp2[1]);
 							if (temp < 0)
 							{
 								sQ[0] = -sQ[0];
@@ -417,7 +417,7 @@ XAnimParts *XAnimLoadFile(const char *name, void *(*Alloc)(int))
 					part->quat->size = numQuatIndices - 1;
 				}
 			}
-			numTransIndices = XModelDataReadUnsignedShort(&pos);
+			numTransIndices = XModelDataReadUnsignedShort(&pos).value;
 			if (!numTransIndices)
 			{
 				part->trans = 0;
@@ -468,7 +468,7 @@ XAnimParts *XAnimLoadFile(const char *name, void *(*Alloc)(int))
 			}
 		}
 		XAnimLoadNotifyInfo(name, &pos, parts, Alloc);
-		FS_FreeFile(buf);
+		FS_FreeFileInl(buf);
 		return parts;
 	}
 }
