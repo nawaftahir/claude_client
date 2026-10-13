@@ -1,5 +1,5 @@
 # reorder.py file name1 name2 ...: move top-level function definitions into the given order,
-# placed where the first of them (in file order) sits. A function's chunk takes its leading // lines.
+# placed where the first of them (in file order) sits. A function's chunk takes its leading // or /* */ lines.
 import re,sys
 p=sys.argv[1]; names=sys.argv[2:]
 L=open(p).read().split('\n')
@@ -12,6 +12,9 @@ def chunk(n):
     assert len(hit)==1,(n,hit)
     s=hit[0]
     while s and L[s-1].startswith('//'): s-=1
+    if s and L[s-1].rstrip()=='*/':
+        while not L[s-1].startswith('/*'): s-=1
+        s-=1
     e=next(i for i in range(hit[0],len(L)) if L[i]=='}')+1
     if e<len(L) and L[e]=='': e+=1
     return s,e

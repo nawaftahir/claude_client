@@ -41,335 +41,6 @@ int CM_BoxSightTrace( int oldHitNum, const vec3_t start, const vec3_t end, const
 
 /*
 ==================
-CM_TraceSphereThroughSphere
-==================
-*/
-qboolean CM_TraceSphereThroughSphere( traceWork_t *tw, const vec3_t vStart, const vec3_t vEnd,
-                                      const vec3_t vStationary, float radius, trace_t *trace )
-{
-	vec3_t vDelta;
-	float fA;
-	float fB;
-	float fC;
-	float fDiscriminant;
-	float fRadiusSqrd;
-	float fEntry;
-	vec_t fDeltaLen;
-	vec3_t vNormal;
-	VectorSubtract(vStart, vStationary, vDelta);
-	fRadiusSqrd = Square(radius + tw->radius);
-	fC = DotProduct(vDelta, vDelta) - fRadiusSqrd;
-	if ( fC <= 0 )
-	{
-		trace->fraction = 0;
-		trace->startsolid = 1;
-		Vec3NormalizeTo(vDelta, trace->normal);
-		trace->contents = tw->threadInfo.box_brush->contents;
-		VectorSubtract(vEnd, vStationary, vDelta);
-		if ( VectorLengthSquared(vDelta) <= fRadiusSqrd )
-		{
-			trace->allsolid = 1;
-		}
-		return qfalse;
-	}
-	fB = DotProduct(tw->delta, vDelta);
-	if ( fB >= 0 )
-	{
-		return qtrue;
-	}
-	fA = tw->deltaLenSq;
-	assert(fA > 0.0f);
-	fDiscriminant = Square(fB) - fA * fC;
-	if ( fDiscriminant < 0 )
-	{
-		return qtrue;
-	}
-	fDeltaLen = Vec3NormalizeTo(vDelta, vNormal) * (float)SURFACE_CLIP_EPSILON;
-	fEntry = (-fB - I_sqrt(fDiscriminant)) / fA + fDeltaLen / fB;
-	if ( fEntry < trace->fraction )
-	{
-		trace->fraction = I_fmax(fEntry, 0);
-		assert(trace->fraction >= 0 && trace->fraction <= 1.0f);
-		VectorCopy(vNormal, trace->normal);
-		trace->contents = tw->threadInfo.box_brush->contents;
-		return qfalse;
-	}
-	return qtrue;
-}
-
-/*
-==================
-CM_Trace
-==================
-*/
-void CM_Trace( trace_t *results, const vec3_t start, const vec3_t end,
-               const vec3_t mins, const vec3_t maxs,
-               clipHandle_t model, int brushmask )
-{
-	int i;
-	traceWork_t tw;
-	vec3_t offset;
-	cmodel_t    *cmod;
-	vec4_t _start, _end;
-	assert(cm.numNodes);
-	assert(mins);
-	assert(maxs);
-	assert(!IS_NAN((end)[0]) && !IS_NAN((end)[1]) && !IS_NAN((end)[2]));
-	cmod = CM_ClipHandleToModel( model );
-	// set basic parms
-	tw.contents = brushmask;
-	// adjust so that mins and maxs are always symetric, which
-	// avoids some complications with plane expanding of rotated
-	// bmodels
-	for ( i = 0 ; i < 3 ; i++ )
-	{
-		assert(maxs[i] >= mins[i]);
-		offset[i] = (mins[i] + maxs[i]) * 0.5f;
-		tw.size[i] = maxs[i] - offset[i];
-		tw.extents.start[i] = start[i] + offset[i];
-		tw.extents.end[i] = end[i] + offset[i];
-		tw.midpoint[i] = (tw.extents.start[i] + tw.extents.end[i]) * 0.5f;
-		tw.delta[i] = tw.extents.end[i] - tw.extents.start[i];
-		tw.halfDelta[i] = tw.delta[i] * 0.5f;
-		tw.halfDeltaAbs[i] = I_fabs(tw.halfDelta[i]);
-	}
-	CM_CalcTraceEntents(&tw.extents);
-	tw.deltaLenSq = VectorLengthSquared(tw.delta);
-	tw.deltaLen = I_sqrt(tw.deltaLenSq);
-	// selects through a float temp: a conditional expression, not an if/else
-	tw.radius = tw.size[0] > tw.size[2] ? tw.size[2] : tw.size[0];
-	tw.offsetZ = tw.size[2] - tw.radius;
-	// calculate bounds
-	for ( i = 0; i < 2; i++ )
-	{
-		if ( tw.extents.start[i] < tw.extents.end[i] )
-		{
-			tw.bounds[0][i] = tw.extents.start[i] - tw.radius;
-			tw.bounds[1][i] = tw.extents.end[i] + tw.radius;
-		}
-		else
-		{
-			tw.bounds[0][i] = tw.extents.end[i] - tw.radius;
-			tw.bounds[1][i] = tw.extents.start[i] + tw.radius;
-		}
-	}
-	assert(tw.offsetZ >= 0);
-	if ( tw.extents.start[2] < tw.extents.end[2] )
-	{
-		tw.bounds[0][2] = tw.extents.start[2] - tw.offsetZ - tw.radius;
-		tw.bounds[1][2] = tw.extents.end[2] + tw.offsetZ + tw.radius;
-	}
-	else
-	{
-		tw.bounds[0][2] = tw.extents.end[2] - tw.offsetZ - tw.radius;
-		tw.bounds[1][2] = tw.extents.start[2] + tw.offsetZ + tw.radius;
-	}
-	CM_SetAxialCullOnly(&tw);
-	CM_GetTrackThreadInfo(&tw.threadInfo);
-	//
-	// check for position test special case
-	//
-	if ( VectorCompare(start, end) )
-	{
-		tw.isPoint = 0;
-		if ( model )
-		{
-			if ( model == CAPSULE_MODEL_HANDLE )
-			{
-				if ( (tw.threadInfo.box_brush->contents & tw.contents) )
-				{
-					CM_TestCapsuleInCapsule(&tw, results);
-					assert(!IS_NAN(results->fraction));
-				}
-			}
-			else
-			{
-				if ( !results->allsolid )
-				{
-					CM_TestInLeaf(&tw, &cmod->leaf, results);
-					assert(!IS_NAN(results->fraction));
-				}
-			}
-		}
-		else
-		{
-			CM_PositionTest(&tw, results);
-		}
-	}
-	else
-	{
-		assert(tw.size[0] >= 0);
-		assert(tw.size[1] >= 0);
-		assert(tw.size[2] >= 0);
-		tw.isPoint = tw.size[0] + tw.size[1] + tw.size[2] == 0;
-		assert(tw.offsetZ >= 0);
-		tw.radiusOffset[0] = tw.radius;
-		tw.radiusOffset[1] = tw.radius;
-		tw.radiusOffset[2] = tw.radius + tw.offsetZ;
-		if ( model )
-		{
-			if ( model == CAPSULE_MODEL_HANDLE )
-			{
-				if ( (tw.threadInfo.box_brush->contents & tw.contents) )
-				{
-					CM_TraceCapsuleThroughCapsule(&tw, results);
-				}
-			}
-			else
-			{
-				CM_TraceThroughLeaf(&tw, &cmod->leaf, results);
-			}
-		}
-		else
-		{
-			VectorCopy(tw.extents.start, _start);
-			_start[3] = 0.0;
-			VectorCopy(tw.extents.end, _end);
-			_end[3] = results->fraction;
-			CM_TraceThroughTree(&tw, 0, _start, _end, results);
-		}
-	}
-}
-/*
-==================
-CM_BoxTrace
-==================
-*/
-void CM_BoxTrace( trace_t *results, const vec3_t start, const vec3_t end,
-                  const vec3_t mins, const vec3_t maxs,
-                  clipHandle_t model, int brushmask )
-{
-	memset(results, 0, sizeof(trace_t));
-	results->fraction = 1.0;
-	CM_Trace(results, start, end, mins, maxs, model, brushmask);
-}
-/*
-==================
-CM_TransformedBoxTrace
-Handles offseting and rotation of the end points for moving and
-rotating entities
-==================
-*/
-void CM_TransformedBoxTrace( trace_t *results, const vec3_t start, const vec3_t end,
-                             const vec3_t mins, const vec3_t maxs,
-                             clipHandle_t model, int brushmask,
-                             const vec3_t origin, const vec3_t angles )
-{
-	vec3_t start_l, end_l;
-	qboolean rotated;
-	vec3_t offset;
-	vec3_t symetricSize[2];
-	vec3_t matrix[3], transpose[3];
-	int i;
-	// the frame keeps two dead float copies of symetricSize[1]
-	float symetricSizeX;
-	float symetricSizeZ;
-	assert(mins);
-	assert(maxs);
-	// adjust so that mins and maxs are always symetric, which
-	// avoids some complications with plane expanding of rotated
-	// bmodels
-	for ( i = 0 ; i < 3 ; i++ )
-	{
-		offset[i] = ( mins[i] + maxs[i] ) * 0.5f;
-		symetricSize[0][i] = mins[i] - offset[i];
-		symetricSize[1][i] = maxs[i] - offset[i];
-		start_l[i] = start[i] + offset[i];
-		end_l[i] = end[i] + offset[i];
-	}
-	// subtract origin offset
-	VectorSubtract( start_l, origin, start_l );
-	VectorSubtract( end_l, origin, end_l );
-	// rotate start and end into the models frame of reference
-	rotated = ( angles[0] || angles[1] || angles[2] );
-	symetricSizeX = symetricSize[1][0];
-	symetricSizeZ = symetricSize[1][2];
-	if ( rotated )
-	{
-		// rotation on trace line (start-end) instead of rotating the bmodel
-		// NOTE: This is still incorrect for bounding boxes because the actual bounding
-		//		 box that is swept through the model is not rotated. We cannot rotate
-		//		 the bounding box or the bmodel because that would make all the brush
-		//		 bevels invalid.
-		//		 However this is correct for capsules since a capsule itself is rotated too.
-		CreateRotationMatrix( angles, matrix );
-		RotatePoint( start_l, matrix );
-		RotatePoint( end_l, matrix );
-	}
-	float oldFraction = results->fraction;
-	// sweep the box through the model
-	CM_Trace( results, start_l, end_l, symetricSize[0], symetricSize[1], model, brushmask );
-	// if the bmodel was rotated and there was a collision
-	if ( rotated )
-	{
-		if ( results->fraction < oldFraction )
-		{
-			// rotation of bmodel collision plane
-			TransposeMatrix( matrix, transpose );
-			RotatePoint( results->normal, transpose );
-		}
-	}
-}
-/*
-==================
-CM_TransformedBoxTraceExternal
-==================
-*/
-void CM_TransformedBoxTraceExternal( trace_t *results, const vec3_t start, const vec3_t end,
-                                     const vec3_t mins, const vec3_t maxs,
-                                     clipHandle_t model, int brushmask,
-                                     const vec3_t origin, const vec3_t angles )
-{
-	memset(results, 0, sizeof(trace_t));
-	results->fraction = 1.0;
-	CM_TransformedBoxTrace(results, start, end, mins, maxs, model, brushmask, origin, angles);
-}
-
-/*
-==================
-CM_SightTraceSphereThroughSphere
-==================
-*/
-qboolean CM_SightTraceSphereThroughSphere( traceWork_t *tw, const vec3_t vStart, const vec3_t vEnd,
-        const vec3_t vStationary, float radius, trace_t *trace )
-{
-	vec3_t vDelta;
-	float fA;
-	float fB;
-	float fC;
-	float fDiscriminant;
-	float fRadiusSqrd;
-	float fEntry;
-	float fEpsilon;
-	vec_t fDeltaLen;
-	vec3_t vNormal;
-	VectorSubtract(vStart, vStationary, vDelta);
-	fRadiusSqrd = Square(radius + tw->radius);
-	fC = DotProduct(vDelta, vDelta) - fRadiusSqrd;
-	if ( fC <= 0 )
-	{
-		return qfalse;
-	}
-	fB = DotProduct(tw->delta, vDelta);
-	if ( fB >= 0 )
-	{
-		return qtrue;
-	}
-	fA = tw->deltaLenSq;
-	fDiscriminant = Square(fB) - fA * fC;
-	if ( fDiscriminant < 0 )
-	{
-		return qtrue;
-	}
-	fEpsilon = fB * (float)SURFACE_CLIP_EPSILON;
-	fDeltaLen = Vec3NormalizeTo(vDelta, vNormal);
-	fEpsilon = fEpsilon / fDeltaLen;
-	fEntry = (-fB - I_sqrt(fDiscriminant)) / fA + fEpsilon;
-	return fEntry >= trace->fraction;
-}
-
-/*
-==================
 CM_GetTrackThreadInfo
 ==================
 */
@@ -1267,6 +938,64 @@ void CM_TraceThroughLeaf( traceWork_t *tw, cLeaf_t *leaf, trace_t *trace )
 
 /*
 ==================
+CM_TraceSphereThroughSphere
+==================
+*/
+qboolean CM_TraceSphereThroughSphere( traceWork_t *tw, const vec3_t vStart, const vec3_t vEnd,
+                                      const vec3_t vStationary, float radius, trace_t *trace )
+{
+	vec3_t vDelta;
+	float fA;
+	float fB;
+	float fC;
+	float fDiscriminant;
+	float fRadiusSqrd;
+	float fEntry;
+	vec_t fDeltaLen;
+	vec3_t vNormal;
+	VectorSubtract(vStart, vStationary, vDelta);
+	fRadiusSqrd = Square(radius + tw->radius);
+	fC = DotProduct(vDelta, vDelta) - fRadiusSqrd;
+	if ( fC <= 0 )
+	{
+		trace->fraction = 0;
+		trace->startsolid = 1;
+		Vec3NormalizeTo(vDelta, trace->normal);
+		trace->contents = tw->threadInfo.box_brush->contents;
+		VectorSubtract(vEnd, vStationary, vDelta);
+		if ( VectorLengthSquared(vDelta) <= fRadiusSqrd )
+		{
+			trace->allsolid = 1;
+		}
+		return qfalse;
+	}
+	fB = DotProduct(tw->delta, vDelta);
+	if ( fB >= 0 )
+	{
+		return qtrue;
+	}
+	fA = tw->deltaLenSq;
+	assert(fA > 0.0f);
+	fDiscriminant = Square(fB) - fA * fC;
+	if ( fDiscriminant < 0 )
+	{
+		return qtrue;
+	}
+	fDeltaLen = Vec3NormalizeTo(vDelta, vNormal) * (float)SURFACE_CLIP_EPSILON;
+	fEntry = (-fB - I_sqrt(fDiscriminant)) / fA + fDeltaLen / fB;
+	if ( fEntry < trace->fraction )
+	{
+		trace->fraction = I_fmax(fEntry, 0);
+		assert(trace->fraction >= 0 && trace->fraction <= 1.0f);
+		VectorCopy(vNormal, trace->normal);
+		trace->contents = tw->threadInfo.box_brush->contents;
+		return qfalse;
+	}
+	return qtrue;
+}
+
+/*
+==================
 CM_TraceCylinderThroughCylinder
 ==================
 */
@@ -1611,6 +1340,234 @@ void CM_SetAxialCullOnly( traceWork_t *tw )
 
 /*
 ==================
+CM_Trace
+==================
+*/
+void CM_Trace( trace_t *results, const vec3_t start, const vec3_t end,
+               const vec3_t mins, const vec3_t maxs,
+               clipHandle_t model, int brushmask )
+{
+	int i;
+	traceWork_t tw;
+	vec3_t offset;
+	cmodel_t    *cmod;
+	vec4_t _start, _end;
+	assert(cm.numNodes);
+	assert(mins);
+	assert(maxs);
+	assert(!IS_NAN((end)[0]) && !IS_NAN((end)[1]) && !IS_NAN((end)[2]));
+	cmod = CM_ClipHandleToModel( model );
+	// set basic parms
+	tw.contents = brushmask;
+	// adjust so that mins and maxs are always symetric, which
+	// avoids some complications with plane expanding of rotated
+	// bmodels
+	for ( i = 0 ; i < 3 ; i++ )
+	{
+		assert(maxs[i] >= mins[i]);
+		offset[i] = (mins[i] + maxs[i]) * 0.5f;
+		tw.size[i] = maxs[i] - offset[i];
+		tw.extents.start[i] = start[i] + offset[i];
+		tw.extents.end[i] = end[i] + offset[i];
+		tw.midpoint[i] = (tw.extents.start[i] + tw.extents.end[i]) * 0.5f;
+		tw.delta[i] = tw.extents.end[i] - tw.extents.start[i];
+		tw.halfDelta[i] = tw.delta[i] * 0.5f;
+		tw.halfDeltaAbs[i] = I_fabs(tw.halfDelta[i]);
+	}
+	CM_CalcTraceEntents(&tw.extents);
+	tw.deltaLenSq = VectorLengthSquared(tw.delta);
+	tw.deltaLen = I_sqrt(tw.deltaLenSq);
+	// selects through a float temp: a conditional expression, not an if/else
+	tw.radius = tw.size[0] > tw.size[2] ? tw.size[2] : tw.size[0];
+	tw.offsetZ = tw.size[2] - tw.radius;
+	// calculate bounds
+	for ( i = 0; i < 2; i++ )
+	{
+		if ( tw.extents.start[i] < tw.extents.end[i] )
+		{
+			tw.bounds[0][i] = tw.extents.start[i] - tw.radius;
+			tw.bounds[1][i] = tw.extents.end[i] + tw.radius;
+		}
+		else
+		{
+			tw.bounds[0][i] = tw.extents.end[i] - tw.radius;
+			tw.bounds[1][i] = tw.extents.start[i] + tw.radius;
+		}
+	}
+	assert(tw.offsetZ >= 0);
+	if ( tw.extents.start[2] < tw.extents.end[2] )
+	{
+		tw.bounds[0][2] = tw.extents.start[2] - tw.offsetZ - tw.radius;
+		tw.bounds[1][2] = tw.extents.end[2] + tw.offsetZ + tw.radius;
+	}
+	else
+	{
+		tw.bounds[0][2] = tw.extents.end[2] - tw.offsetZ - tw.radius;
+		tw.bounds[1][2] = tw.extents.start[2] + tw.offsetZ + tw.radius;
+	}
+	CM_SetAxialCullOnly(&tw);
+	CM_GetTrackThreadInfo(&tw.threadInfo);
+	//
+	// check for position test special case
+	//
+	if ( VectorCompare(start, end) )
+	{
+		tw.isPoint = 0;
+		if ( model )
+		{
+			if ( model == CAPSULE_MODEL_HANDLE )
+			{
+				if ( (tw.threadInfo.box_brush->contents & tw.contents) )
+				{
+					CM_TestCapsuleInCapsule(&tw, results);
+					assert(!IS_NAN(results->fraction));
+				}
+			}
+			else
+			{
+				if ( !results->allsolid )
+				{
+					CM_TestInLeaf(&tw, &cmod->leaf, results);
+					assert(!IS_NAN(results->fraction));
+				}
+			}
+		}
+		else
+		{
+			CM_PositionTest(&tw, results);
+		}
+	}
+	else
+	{
+		assert(tw.size[0] >= 0);
+		assert(tw.size[1] >= 0);
+		assert(tw.size[2] >= 0);
+		tw.isPoint = tw.size[0] + tw.size[1] + tw.size[2] == 0;
+		assert(tw.offsetZ >= 0);
+		tw.radiusOffset[0] = tw.radius;
+		tw.radiusOffset[1] = tw.radius;
+		tw.radiusOffset[2] = tw.radius + tw.offsetZ;
+		if ( model )
+		{
+			if ( model == CAPSULE_MODEL_HANDLE )
+			{
+				if ( (tw.threadInfo.box_brush->contents & tw.contents) )
+				{
+					CM_TraceCapsuleThroughCapsule(&tw, results);
+				}
+			}
+			else
+			{
+				CM_TraceThroughLeaf(&tw, &cmod->leaf, results);
+			}
+		}
+		else
+		{
+			VectorCopy(tw.extents.start, _start);
+			_start[3] = 0.0;
+			VectorCopy(tw.extents.end, _end);
+			_end[3] = results->fraction;
+			CM_TraceThroughTree(&tw, 0, _start, _end, results);
+		}
+	}
+}
+/*
+==================
+CM_BoxTrace
+==================
+*/
+void CM_BoxTrace( trace_t *results, const vec3_t start, const vec3_t end,
+                  const vec3_t mins, const vec3_t maxs,
+                  clipHandle_t model, int brushmask )
+{
+	memset(results, 0, sizeof(trace_t));
+	results->fraction = 1.0;
+	CM_Trace(results, start, end, mins, maxs, model, brushmask);
+}
+/*
+==================
+CM_TransformedBoxTrace
+Handles offseting and rotation of the end points for moving and
+rotating entities
+==================
+*/
+void CM_TransformedBoxTrace( trace_t *results, const vec3_t start, const vec3_t end,
+                             const vec3_t mins, const vec3_t maxs,
+                             clipHandle_t model, int brushmask,
+                             const vec3_t origin, const vec3_t angles )
+{
+	vec3_t start_l, end_l;
+	qboolean rotated;
+	vec3_t offset;
+	vec3_t symetricSize[2];
+	vec3_t matrix[3], transpose[3];
+	int i;
+	// the frame keeps two dead float copies of symetricSize[1]
+	float symetricSizeX;
+	float symetricSizeZ;
+	assert(mins);
+	assert(maxs);
+	// adjust so that mins and maxs are always symetric, which
+	// avoids some complications with plane expanding of rotated
+	// bmodels
+	for ( i = 0 ; i < 3 ; i++ )
+	{
+		offset[i] = ( mins[i] + maxs[i] ) * 0.5f;
+		symetricSize[0][i] = mins[i] - offset[i];
+		symetricSize[1][i] = maxs[i] - offset[i];
+		start_l[i] = start[i] + offset[i];
+		end_l[i] = end[i] + offset[i];
+	}
+	// subtract origin offset
+	VectorSubtract( start_l, origin, start_l );
+	VectorSubtract( end_l, origin, end_l );
+	// rotate start and end into the models frame of reference
+	rotated = ( angles[0] || angles[1] || angles[2] );
+	symetricSizeX = symetricSize[1][0];
+	symetricSizeZ = symetricSize[1][2];
+	if ( rotated )
+	{
+		// rotation on trace line (start-end) instead of rotating the bmodel
+		// NOTE: This is still incorrect for bounding boxes because the actual bounding
+		//		 box that is swept through the model is not rotated. We cannot rotate
+		//		 the bounding box or the bmodel because that would make all the brush
+		//		 bevels invalid.
+		//		 However this is correct for capsules since a capsule itself is rotated too.
+		CreateRotationMatrix( angles, matrix );
+		RotatePoint( start_l, matrix );
+		RotatePoint( end_l, matrix );
+	}
+	float oldFraction = results->fraction;
+	// sweep the box through the model
+	CM_Trace( results, start_l, end_l, symetricSize[0], symetricSize[1], model, brushmask );
+	// if the bmodel was rotated and there was a collision
+	if ( rotated )
+	{
+		if ( results->fraction < oldFraction )
+		{
+			// rotation of bmodel collision plane
+			TransposeMatrix( matrix, transpose );
+			RotatePoint( results->normal, transpose );
+		}
+	}
+}
+/*
+==================
+CM_TransformedBoxTraceExternal
+==================
+*/
+void CM_TransformedBoxTraceExternal( trace_t *results, const vec3_t start, const vec3_t end,
+                                     const vec3_t mins, const vec3_t maxs,
+                                     clipHandle_t model, int brushmask,
+                                     const vec3_t origin, const vec3_t angles )
+{
+	memset(results, 0, sizeof(trace_t));
+	results->fraction = 1.0;
+	CM_TransformedBoxTrace(results, start, end, mins, maxs, model, brushmask, origin, angles);
+}
+
+/*
+==================
 CM_SightTraceThroughBrush
 ==================
 */
@@ -1937,6 +1894,49 @@ int CM_SightTraceThroughLeaf( traceWork_t *tw, cLeaf_t *leaf, trace_t *trace )
 	}
 
 	return 0;
+}
+
+/*
+==================
+CM_SightTraceSphereThroughSphere
+==================
+*/
+qboolean CM_SightTraceSphereThroughSphere( traceWork_t *tw, const vec3_t vStart, const vec3_t vEnd,
+        const vec3_t vStationary, float radius, trace_t *trace )
+{
+	vec3_t vDelta;
+	float fA;
+	float fB;
+	float fC;
+	float fDiscriminant;
+	float fRadiusSqrd;
+	float fEntry;
+	float fEpsilon;
+	vec_t fDeltaLen;
+	vec3_t vNormal;
+	VectorSubtract(vStart, vStationary, vDelta);
+	fRadiusSqrd = Square(radius + tw->radius);
+	fC = DotProduct(vDelta, vDelta) - fRadiusSqrd;
+	if ( fC <= 0 )
+	{
+		return qfalse;
+	}
+	fB = DotProduct(tw->delta, vDelta);
+	if ( fB >= 0 )
+	{
+		return qtrue;
+	}
+	fA = tw->deltaLenSq;
+	fDiscriminant = Square(fB) - fA * fC;
+	if ( fDiscriminant < 0 )
+	{
+		return qtrue;
+	}
+	fEpsilon = fB * (float)SURFACE_CLIP_EPSILON;
+	fDeltaLen = Vec3NormalizeTo(vDelta, vNormal);
+	fEpsilon = fEpsilon / fDeltaLen;
+	fEntry = (-fB - I_sqrt(fDiscriminant)) / fA + fEpsilon;
+	return fEntry >= trace->fraction;
 }
 
 /*
@@ -2366,7 +2366,6 @@ int CM_BoxSightTrace( int oldHitNum, const vec3_t start, const vec3_t end, const
 	return hitNum;
 }
 
-
 /*
 ==================
 CM_TransformedBoxSightTrace
@@ -2430,3 +2429,4 @@ int CM_TransformedBoxSightTrace( int hitNum, const vec3_t start, const vec3_t en
 
 	return CM_BoxSightTrace( hitNum, start_l, end_l, symetricSize[0], symetricSize[1], model, brushmask );
 }
+
