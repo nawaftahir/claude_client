@@ -725,7 +725,7 @@ void SV_DirectConnect( netadr_t from )
 
 		if ( svs.challenges[i].firstPing == 0 )
 		{
-			ping = svs.time - svs.challenges[i].pingTime;
+			{ ping = svs.time; ping = ping - svs.challenges[i].pingTime; }
 			svs.challenges[i].firstPing = ping;
 		}
 		else

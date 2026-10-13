@@ -3962,8 +3962,8 @@ void VectorRotate( const vec3_t vIn, const vec3_t vRotation, vec3_t out )
 	{
 		if ( vRotation[i] != 0 )
 		{
-			dAngle = vRotation[i] * M_PI / 180.0;
-			SinCos(dAngle, &s, &c);
+			;
+			SinCos((vRotation[i] * M_PI / 180.0), &s, &c);
 			vWork[nIndex[i][0]] = va[nIndex[i][0]] * c - va[nIndex[i][1]] * s;
 			vWork[nIndex[i][1]] = va[nIndex[i][0]] * s + va[nIndex[i][1]] * c;
 		}

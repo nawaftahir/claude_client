@@ -677,12 +677,12 @@ void CG_EntityEvent(centity_t *cent, int event)
             int deltaTime = cg->time - cg->stepTime;
             float oldStep;
             if (deltaTime < 100) {
-                oldStep = (float)(100 - deltaTime) * cg->stepChange; oldStep = oldStep / 100.0f;
+                { oldStep = (float)(100 - deltaTime); oldStep = oldStep * (cg->stepChange); } oldStep = oldStep / 100.0f;
                 oldStep *= 0.9f;
             } else {
                 oldStep = 0.0f;
             }
-            cg->stepChange = (float)(eventParm - 128) + oldStep;
+            { cg->stepChange = (float)(eventParm - 128); cg->stepChange = cg->stepChange + oldStep; }
             if (cg->stepChange > 24.0f)
                 cg->stepChange = 24.0f;
             else if (cg->stepChange < -16.0f)
