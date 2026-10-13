@@ -432,58 +432,9 @@ void UI_DrawConnectScreen(void);
 
 extern char *Com_ParseOnLine(const char **data_p);
 
-// retail 0x52e710, unreferenced; name unknown (String_Parse with String_Alloc)
-int String_ParseAlloc_52e710(const char **p, const char **out)
-{
-    const char *token;
-    const char *translated;
-
-    token = Com_ParseOnLine(p);
-    if (!token || !token[0])
-        return 0;
-    if (token[0] == '@') {
-        translated = SEH_StringEd_GetString(token + 1);
-        if (translated) {
-            *out = String_Alloc(translated);
-            return 1;
-        }
-        if (Dvar_GetBool("loc_warnings")) {
-            if (Dvar_GetBool("loc_warningsAsErrors"))
-                Com_Error(ERR_LOCALIZATION, "Could not translate menu string reference %s", token);
-            else
-                Com_Printf("^3WARNING: Could not translate menu string reference %s\n", token);
-        }
-    }
-    *out = String_Alloc(token);
-    return 1;
-}
-
-Bool UI_GetOpenOrCloseMenuOnDvarArgs(const char **args, const char *cmd,
-                                     char *dvarName, char *testValue, char *menuName)
-{
-    if (!String_Parse(args, dvarName, 0x400)) {
-        Com_Printf("%s: invalid dvar name.\n", cmd);
-        return 0;
-    }
-    if (!String_Parse(args, testValue, 0x400)) {
-        Com_Printf("%s: invalid test value.\n", cmd);
-        return 0;
-    }
-    if (!String_Parse(args, menuName, 0x400)) {
-        Com_Printf("%s: invalid menu name.\n", cmd);
-        return 0;
-    }
-    return 1;
-}
-
-void diag_drawtext(const char *text, void *font, float x, float y, float scale)
-{
-    (void)text;
-    (void)font;
-    (void)x;
-    (void)y;
-    (void)scale;
-}
+extern itemDef_t *Menu_FindItemByName(menuDef_t *menu, const char *p);
+extern void Window_AddDynamicFlags(Window *w, const int newFlags);
+extern void Window_RemoveDynamicFlags(Window *w, const int newFlags);
 
 void UI_RegisterDvars(void)
 {
@@ -585,6 +536,15 @@ int UI_TextHeight(FontHandle font, float scale)
 {
     float actualScale = CL_NormalizedTextScale(font, scale);
     return (int)((float)CL_TextHeight(font) * actualScale);
+}
+
+void diag_drawtext(const char *text, void *font, float x, float y, float scale)
+{
+    (void)text;
+    (void)font;
+    (void)x;
+    (void)y;
+    (void)scale;
 }
 
 void UI_DrawText(const char *text, int maxChars, FontHandle font, float x, float y, int horzAlign, int vertAlign, float scale, const vec_t *color, int style)
@@ -883,12 +843,6 @@ static void UI_DrawMapPreview(const rectDef_t *rect, const vec_t *color, int net
                      color, material);
 }
 
-// retail 0x52c6d0; cinematic half gone, CoD1 shape (SUPPORTED)
-static void UI_DrawMapCinematic(const rectDef_t *rect, const vec_t *color, int net)
-{
-    UI_DrawMapPreview(rect, color, net);
-}
-
 static void UI_DrawNetMapPreview(rectDef_t *rect, float scale, vec_t *color)
 {
     if (sharedUiInfo.serverStatus.currentServerPreview > 0) {
@@ -1111,30 +1065,6 @@ void UI_SetMap(const char *mapname, const char *gametype)
     }
 }
 
-Bool UI_DrawRecordLevel(rectDef_t *rect)
-{
-    float voiceLevel;
-    const vec_t *white;
-
-    voiceLevel = Voice_GetVoiceLevel();
-
-    if (voiceLevel > 0.0) {
-        UI_FillRect(rect->x + 2.0f, rect->y + 2.0f, voiceLevel * rect->w - 4.0f, rect->h - 4.0f, 0, 0, (const vec_t *)((void *)&colorWhite));
-    }
-
-    white = (const vec_t *)((void *)&colorWhite);
-
-    UI_FillRect(rect->x, rect->y, rect->w, 1.0f, 0, 0, white);
-
-    UI_FillRect(rect->x, rect->h + rect->y - 1.0f, rect->w, 1.0f, 0, 0, white);
-
-    UI_FillRect(rect->x, rect->y + 1.0f, 1.0f, rect->h - 2.0f, 0, 0, white);
-
-    UI_FillRect(rect->x + rect->w - 1.0f, rect->y + 1.0f, 1.0f, rect->h - 2.0f, 0, 0, white);
-
-    return 1;
-}
-
 static void UI_DrawLocalTalking(rectDef_t *rect, vec_t *color)
 {
     if ((sv_voice)->current.enabled && (cl_voice)->current.enabled && IsTalking())
@@ -1195,6 +1125,12 @@ static void UI_DrawTalkerNum(int num, rectDef_t *rect, FontHandle font, vec_t *c
     textHeight = (int)(CL_TextHeight(font) * actualScale);
     UI_DrawHandlePic(rect->x, rect->y, rect->w, rect->h, rect->horzAlign, rect->vertAlign, color, material);
     UI_DrawText(sharedUiInfo.playerNames[index], 32, font, rect->x + rect->w + 2.0f, (rect->h - (float)textHeight) * 0.5f + (float)textHeight + rect->y, rect->horzAlign, rect->vertAlign, scale, color, textStyle);
+}
+
+// retail 0x52c6d0; cinematic half gone, CoD1 shape (SUPPORTED)
+static void UI_DrawMapCinematic(const rectDef_t *rect, const vec_t *color, int net)
+{
+    UI_DrawMapPreview(rect, color, net);
 }
 
 void UI_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAlign, float text_x, float text_y, int ownerDraw, int ownerDrawFlags, int align, float special, FontHandle font, float scale, vec_t *color, MaterialHandle material, int textStyle)
@@ -1285,24 +1221,6 @@ qboolean UI_OwnerDrawVisible(int flags)
     }
 
     return visible;
-}
-
-static int UI_ServersQsortCompare(const void *arg1, const void *arg2)
-{
-    return LAN_CompareServers(
-        ui_netSource->current.integer,
-        sharedUiInfo.serverStatus.sortKey,
-        sharedUiInfo.serverStatus.sortDir,
-        *(const int *)arg1, *(const int *)arg2);
-}
-
-// retail 0x52da60, unreferenced; Q3 UI_ServersSort (SUPPORTED)
-void UI_ServersSort(int column, qboolean force)
-{
-    if (!force && sharedUiInfo.serverStatus.sortKey == column)
-        return;
-    sharedUiInfo.serverStatus.sortKey = column;
-    qsort(sharedUiInfo.serverStatus.displayServers, sharedUiInfo.serverStatus.numDisplayServers, 4, UI_ServersQsortCompare);
 }
 
 static qboolean UI_GameType_HandleKey(int flags, float *special, int key, qboolean resetMap)
@@ -1453,6 +1371,24 @@ qboolean UI_OwnerDrawHandleKey(int ownerDraw, int flags, float *special, int key
         break;
     }
     return 0;
+}
+
+static int UI_ServersQsortCompare(const void *arg1, const void *arg2)
+{
+    return LAN_CompareServers(
+        ui_netSource->current.integer,
+        sharedUiInfo.serverStatus.sortKey,
+        sharedUiInfo.serverStatus.sortDir,
+        *(const int *)arg1, *(const int *)arg2);
+}
+
+// retail 0x52da60, unreferenced; Q3 UI_ServersSort (SUPPORTED)
+void UI_ServersSort(int column, qboolean force)
+{
+    if (!force && sharedUiInfo.serverStatus.sortKey == column)
+        return;
+    sharedUiInfo.serverStatus.sortKey = column;
+    qsort(sharedUiInfo.serverStatus.displayServers, sharedUiInfo.serverStatus.numDisplayServers, 4, UI_ServersQsortCompare);
 }
 
 static void UI_LoadMods(void)
@@ -1638,8 +1574,6 @@ static void UI_LoadMovies(void)
     }
 }
 
-extern itemDef_t *Menu_FindItemByName(menuDef_t *menu, const char *p);
-
 // retail 0x52e120, unreferenced; name unknown
 void UI_SetItemBackground_52e120(const char *itemName, const char *materialName)
 {
@@ -1649,9 +1583,6 @@ void UI_SetItemBackground_52e120(const char *itemName, const char *materialName)
     if (item)
         item->window.background = CL_RegisterMaterialNoMip(materialName, 3);
 }
-
-extern void Window_AddDynamicFlags(Window *w, const int newFlags);
-extern void Window_RemoveDynamicFlags(Window *w, const int newFlags);
 
 // retail 0x52e160, unreferenced; name unknown
 void UI_ShowItemByName_52e160(const char *itemName, qboolean show)
@@ -1665,17 +1596,6 @@ void UI_ShowItemByName_52e160(const char *itemName, qboolean show)
         else
             Window_RemoveDynamicFlags(&item->window, 4);
     }
-}
-
-// retail 0x532250, unreferenced; Kisak UI_GetTopActiveMenuName (SUPPORTED)
-const char *UI_GetTopActiveMenuName(void)
-{
-    int topMenuStackIndex;
-
-    topMenuStackIndex = uiInfo->uiDC.openMenuCount - 1;
-    if (topMenuStackIndex < 0 || topMenuStackIndex >= uiInfo->uiDC.menuCount)
-        return NULL;
-    return uiInfo->uiDC.menuStack[topMenuStackIndex]->window.name;
 }
 
 qboolean UI_CheckExecKey(int key)
@@ -1787,6 +1707,50 @@ static void UI_UpdateServerCount(void)
             UI_BuildServerDisplayList(1);
         }
     }
+}
+
+// retail 0x52e710, unreferenced; name unknown (String_Parse with String_Alloc)
+int String_ParseAlloc_52e710(const char **p, const char **out)
+{
+    const char *token;
+    const char *translated;
+
+    token = Com_ParseOnLine(p);
+    if (!token || !token[0])
+        return 0;
+    if (token[0] == '@') {
+        translated = SEH_StringEd_GetString(token + 1);
+        if (translated) {
+            *out = String_Alloc(translated);
+            return 1;
+        }
+        if (Dvar_GetBool("loc_warnings")) {
+            if (Dvar_GetBool("loc_warningsAsErrors"))
+                Com_Error(ERR_LOCALIZATION, "Could not translate menu string reference %s", token);
+            else
+                Com_Printf("^3WARNING: Could not translate menu string reference %s\n", token);
+        }
+    }
+    *out = String_Alloc(token);
+    return 1;
+}
+
+Bool UI_GetOpenOrCloseMenuOnDvarArgs(const char **args, const char *cmd,
+                                     char *dvarName, char *testValue, char *menuName)
+{
+    if (!String_Parse(args, dvarName, 0x400)) {
+        Com_Printf("%s: invalid dvar name.\n", cmd);
+        return 0;
+    }
+    if (!String_Parse(args, testValue, 0x400)) {
+        Com_Printf("%s: invalid test value.\n", cmd);
+        return 0;
+    }
+    if (!String_Parse(args, menuName, 0x400)) {
+        Com_Printf("%s: invalid menu name.\n", cmd);
+        return 0;
+    }
+    return 1;
 }
 
 static bool UI_DvarValueTest(const char *cmd, const char *dvarName, const char *testValue, bool wantMatch)
@@ -2269,6 +2233,14 @@ static void UI_BinaryInsertServer(int serverIndex)
     UI_InsertServerAtPosition(serverIndex, offset);
 }
 
+// retail 0x530040; name unknown
+static void UI_ClearDisplayedServers(void)
+{
+    sharedUiInfo.serverStatus.numDisplayServers = 0;
+    sharedUiInfo.serverStatus.numPlayersOnServers = 0;
+    sharedUiInfo.serverStatus.serverCount = LAN_GetServerCount((ui_netSource)->current.integer);
+}
+
 static void __attribute_regparm__(0) UI_BuildServerDisplayList(qboolean force)
 {
     char info_buf[0x400];
@@ -2393,14 +2365,6 @@ static void __attribute_regparm__(0) UI_BuildServerDisplayList(qboolean force)
     }
 
     sharedUiInfo.serverStatus.refreshtime = uiInfo->uiDC.realTime;
-}
-
-// retail 0x530040; name unknown
-static void UI_ClearDisplayedServers(void)
-{
-    sharedUiInfo.serverStatus.numDisplayServers = 0;
-    sharedUiInfo.serverStatus.numPlayersOnServers = 0;
-    sharedUiInfo.serverStatus.serverCount = LAN_GetServerCount((ui_netSource)->current.integer);
 }
 
 static void UI_AddServerStatusDvarRows(serverStatusInfo_t *info)
@@ -2731,6 +2695,14 @@ static int UI_ListIndexForMap(int map)
     return 0;
 }
 
+// retail 0x5310d0, unreferenced; name unknown
+void UI_RefreshServerPings_5310d0(void)
+{
+    LAN_ResetPings((ui_netSource)->current.integer);
+    sharedUiInfo.serverStatus.refreshActive = 1;
+    sharedUiInfo.serverStatus.refreshtime = uiInfo->uiDC.realTime + 1000;
+}
+
 const char *UI_FeederItemText(float feederID, int index, int column, MaterialHandle *handle)
 {
     static int lastColumn = -1;
@@ -2934,6 +2906,384 @@ void UI_FeederSelection(float feederID, int index)
     }
 }
 
+void UI_Pause(qboolean b)
+{
+    if (b) {
+        Dvar_SetIntByName("cl_paused", 1);
+        Key_SetCatcher(8);
+    } else {
+        Key_SetCatcher(Key_GetCatcher() & ~8);
+        Key_ClearStates();
+        Dvar_SetIntByName("cl_paused", 0);
+    }
+}
+
+void UI_OpenMenu_f(void)
+{
+    Menus_OpenByName(&uiInfo->uiDC, Cmd_Args(1));
+}
+
+void UI_CloseMenu_f(void)
+{
+    Menus_CloseByName(&uiInfo->uiDC, Cmd_Args(1));
+}
+
+void UI_KeyEvent(int key, qboolean down)
+{
+    menuDef_t *menu;
+
+    if (Menu_Count(&uiInfo->uiDC) <= 0)
+        return;
+
+    menu = Menu_GetFocused(&uiInfo->uiDC);
+    if (menu) {
+        if (Dvar_GetBool("cl_bypassMouseInput"))
+            bypassKeyClear = 1;
+
+        if (key == 0x1b && down && !Menus_AnyFullScreenVisible(&uiInfo->uiDC) && menu->onESC == 0) {
+
+            Menus_CloseAll(&uiInfo->uiDC);
+        } else {
+            Menu_HandleKey(&uiInfo->uiDC, menu, key, down);
+        }
+
+        if (Menu_GetFocused(&uiInfo->uiDC))
+            return;
+    }
+
+    if (!(Key_GetCatcher() & 8))
+        return;
+
+    Key_SetCatcher(Key_GetCatcher() & ~8);
+    if (!bypassKeyClear)
+        Key_ClearStates();
+    bypassKeyClear = 0;
+    Dvar_SetIntByName("cl_paused", 0);
+}
+
+void UI_MouseEvent(int dx, int dy)
+{
+    int *cursorX = &uiInfo->uiDC.cursorx;
+    int *cursorY = &uiInfo->uiDC.cursory;
+
+    *cursorX += dx;
+    if (*cursorX < 0)
+        *cursorX = 0;
+    else if (*cursorX > 640)
+        *cursorX = 640;
+
+    *cursorY += dy;
+    if (*cursorY < 0)
+        *cursorY = 0;
+    else if (*cursorY > 480)
+        *cursorY = 480;
+
+    if (Menu_Count(&uiInfo->uiDC) > 0) {
+        Display_MouseMove(&uiInfo->uiDC, 0, *cursorX, *cursorY);
+    }
+}
+
+uiMenuCommand_t UI_GetActiveMenu(void)
+{
+    return uiInfo->currentMenuType;
+}
+
+// retail 0x532250, unreferenced; Kisak UI_GetTopActiveMenuName (SUPPORTED)
+const char *UI_GetTopActiveMenuName(void)
+{
+    int topMenuStackIndex;
+
+    topMenuStackIndex = uiInfo->uiDC.openMenuCount - 1;
+    if (topMenuStackIndex < 0 || topMenuStackIndex >= uiInfo->uiDC.menuCount)
+        return NULL;
+    return uiInfo->uiDC.menuStack[topMenuStackIndex]->window.name;
+}
+
+qboolean UI_IsFullscreen(void)
+{
+    return Menus_AnyFullScreenVisible(&uiInfo->uiDC);
+}
+
+static void __attribute_regparm__(3) UI_ReadableSize(char *buf, int bufsize, int value)
+{
+    if (value > 1024 * 1024 * 1024) {
+        Com_sprintf(buf, bufsize, "%d", value / (1024 * 1024 * 1024));
+        Com_sprintf(buf + strlen(buf), bufsize - strlen(buf), ".%02d %s",
+                    (value % (1024 * 1024 * 1024)) * 100 / (1024 * 1024 * 1024), UI_SafeTranslateString("EXE_GIGABYTE"));
+    } else if (value > 1024 * 1024) {
+        Com_sprintf(buf, bufsize, "%d", value / (1024 * 1024));
+        Com_sprintf(buf + strlen(buf), bufsize - strlen(buf), ".%02d %s",
+                    (value % (1024 * 1024)) * 100 / (1024 * 1024), UI_SafeTranslateString("EXE_MEGABYTE"));
+    } else if (value > 1024) {
+        Com_sprintf(buf, bufsize, "%d %s", value / 1024, UI_SafeTranslateString("EXE_KILOBYTE"));
+    } else {
+        Com_sprintf(buf, bufsize, "%d %s", value, UI_SafeTranslateString("EXE_BYTES"));
+    }
+}
+
+static void UI_PrintTime(char *buf, int bufsize, int time)
+{
+    if (time > 3600) {
+        Com_sprintf(buf, bufsize, "%d %s %d %s", time / 3600, UI_SafeTranslateString("EXE_HOURS"),
+                    (time % 3600) / 60, UI_SafeTranslateString("EXE_MINUTES"));
+    } else if (time > 60) {
+        Com_sprintf(buf, bufsize, "%d %s %d %s", time / 60, UI_SafeTranslateString("EXE_MINUTES"),
+                    time % 60, UI_SafeTranslateString("EXE_SECONDS"));
+    } else {
+        Com_sprintf(buf, bufsize, "%d %s", time, UI_SafeTranslateString("EXE_SECONDS"));
+    }
+}
+
+static void Text_PaintCenter(FontHandle font, const char *text, float x, float y, float scale, const vec_t *color)
+{
+    float actualScale = CL_NormalizedTextScale(font, scale);
+    int len = (int)((float)CL_TextWidth(text, 0, font) * actualScale);
+    UI_DrawText(text, 0x7fffffff, font, x - (float)(len / 2), y, 0, 0, scale, color, 6);
+}
+
+float UI_GetBlurRadius(void)
+{
+    return uiInfo->uiDC.blurRadiusOut;
+}
+
+static void UI_StopServerRefresh(void)
+{
+    int count;
+
+    if (!sharedUiInfo.serverStatus.refreshActive)
+        return;
+    sharedUiInfo.serverStatus.refreshActive = 0;
+    Com_Printf("%d servers listed in browser with %d players.\n",
+               sharedUiInfo.serverStatus.numDisplayServers, sharedUiInfo.serverStatus.numPlayersOnServers);
+    count = LAN_GetServerCount(ui_netSource->current.integer) - sharedUiInfo.serverStatus.numDisplayServers;
+    if (count > 0)
+        Com_Printf("%d servers not listed (filtered out by game browser settings)\n", count);
+}
+
+static void UI_DoServerRefresh(void)
+{
+    int wait;
+
+    wait = 0;
+    if (!sharedUiInfo.serverStatus.refreshActive)
+        return;
+
+    if (ui_netSource->current.integer != 2) {
+        if (ui_netSource->current.integer == 0) {
+            if (!LAN_GetServerCount(ui_netSource->current.integer))
+                wait = 1;
+        } else if (LAN_WaitServerResponse(ui_netSource->current.integer)) {
+            wait = 1;
+        }
+    }
+
+    if (uiInfo->uiDC.realTime < sharedUiInfo.serverStatus.refreshtime) {
+        if (wait)
+            return;
+    }
+
+    UI_UpdateServerCount();
+
+    if (LAN_UpdateDirtyPings(ui_netSource->current.integer)) {
+        sharedUiInfo.serverStatus.refreshtime = uiInfo->uiDC.realTime + 1000;
+    } else if (!wait) {
+        UI_BuildServerDisplayList(2);
+        UI_StopServerRefresh();
+    }
+
+    UI_BuildServerDisplayList(0);
+}
+
+static void UI_StartServerRefresh(qboolean full)
+{
+    qtime_t q;
+    char dvarName[0x18];
+    const char *ptr;
+
+    Com_RealTime(&q);
+    snprintf(dvarName, sizeof(dvarName), "ui_lastServerRefresh_%i", (ui_netSource)->current.integer);
+    Dvar_SetStringByName(dvarName,
+                         va("%s %i, %i   %i:%02i",
+                            UI_SafeTranslateString(MonthAbbrev[q.tm_mon]),
+                            q.tm_mday,
+                            q.tm_year + 1900,
+                            q.tm_hour,
+                            q.tm_min));
+
+    if (!full) {
+        LAN_ResetPings((ui_netSource)->current.integer);
+        sharedUiInfo.serverStatus.refreshActive = 1;
+        sharedUiInfo.serverStatus.refreshtime = uiInfo->uiDC.realTime + 1000;
+        return;
+    }
+
+    sharedUiInfo.serverStatus.refreshActive = 1;
+    sharedUiInfo.serverStatus.nextDisplayRefresh = uiInfo->uiDC.realTime + 1000;
+    UI_ClearDisplayedServers();
+    LAN_MarkServerDirty((ui_netSource)->current.integer, -1, 1);
+    LAN_ResetPings((ui_netSource)->current.integer);
+
+    if ((ui_netSource)->current.integer == 0) {
+        Cbuf_ExecuteText(0, "localservers\n");
+        sharedUiInfo.serverStatus.refreshtime = uiInfo->uiDC.realTime + 1000;
+        return;
+    }
+
+    sharedUiInfo.serverStatus.refreshtime = uiInfo->uiDC.realTime + 5000;
+
+    if ((ui_netSource)->current.integer == 1) {
+        ptr = Dvar_GetVariantString("debug_protocol");
+        if (strlen(ptr))
+            Cbuf_ExecuteText(0, va("globalservers %d %s full empty\n", 0, ptr));
+        else
+            Cbuf_ExecuteText(0, va("globalservers %d %d full empty\n", 0, 0x73));
+    }
+}
+
+const char *UI_SafeTranslateString(const char *reference)
+{
+    const char *translated;
+
+    // 0x15-prefixed strings are already localized
+    if (reference[0] == 0x15) {
+        reference++;
+    } else {
+        translated = SEH_StringEd_GetString(reference);
+        if (translated)
+            return translated;
+    }
+
+    if ((loc_warnings)->current.enabled) {
+        if ((loc_warningsAsErrors)->current.enabled) {
+            Com_Error(ERR_LOCALIZATION, "Could not translate string \"%s\"", reference);
+        } else {
+            Com_Printf("^3WARNING: Could not translate string \"%s\"\n", reference);
+        }
+
+        strcpy(errorString, "^1UNLOCALIZED(^7");
+        I_strncat(errorString, 0x400, reference);
+        I_strncat(errorString, 0x400, "^1)^7");
+        return errorString;
+    }
+
+    strcpy(errorString, reference);
+    return errorString;
+}
+
+qboolean UI_AnyFullScreenMenuVisible(void)
+{
+    return Menus_AnyFullScreenVisible(&uiInfo->uiDC);
+}
+
+const char *UI_ReplaceConversionString(const char *sourceString, const char *replaceString)
+{
+    int convArgs[10];
+    memset(convArgs, 0, sizeof(convArgs));
+    convArgs[0] = 1;
+    convArgs[1] = (int)replaceString;
+    return UI_ReplaceConversions(sourceString, (ConversionArguments *)convArgs);
+}
+
+const char *UI_ReplaceConversionInt(const char *sourceString, int replaceInt)
+{
+    char tempString[32];
+    int convArgs[10];
+    memset(convArgs, 0, sizeof(convArgs));
+    sprintf(tempString, "%d", replaceInt);
+    convArgs[0] = 1;
+    convArgs[1] = (int)tempString;
+    return UI_ReplaceConversions(sourceString, (ConversionArguments *)convArgs);
+}
+
+const char *UI_ReplaceConversions(const char *sourceString, ConversionArguments *arguments)
+{
+    char outputString[0x400];
+    int sourceStringLength;
+    int index;
+    int outputStringCounter;
+    int argIndex;
+    int argLen;
+    int j;
+
+    if (!strstr(sourceString, "&&"))
+        return sourceString;
+
+    sourceStringLength = strlen(sourceString);
+    memset(outputString, 0, 0x400);
+    outputStringCounter = 0;
+
+    for (index = 0; index < sourceStringLength; ) {
+        if (!strncmp(&sourceString[index], "&&", 2) && isdigit(sourceString[index + 2])) {
+            argIndex = sourceString[index + 2] - '1';
+            argLen = strlen(arguments->args[argIndex]);
+            for (j = 0; j < argLen; j++) {
+                outputString[outputStringCounter] = arguments->args[argIndex][j];
+                outputStringCounter++;
+            }
+            index += 3;
+        } else {
+            outputString[outputStringCounter] = sourceString[index];
+            outputStringCounter++;
+            index++;
+        }
+    }
+
+    return va(outputString);
+}
+
+__forceinline void UI_CloseAllInl(void)
+{
+    Menus_CloseAll(&uiInfo->uiDC);
+}
+
+void UI_CloseAll(void)
+{
+    UI_CloseAllInl();
+}
+
+void UI_CloseFocusedMenu(void)
+{
+    if (Menu_Count(&uiInfo->uiDC) <= 0)
+        return;
+
+    if (!Menu_GetFocused(&uiInfo->uiDC)) {
+        if (Key_GetCatcher() & 8) {
+            Key_SetCatcher(Key_GetCatcher() & ~8);
+        }
+        return;
+    }
+
+    if (!Menus_AnyFullScreenVisible(&uiInfo->uiDC)) {
+        Menus_CloseAll(&uiInfo->uiDC);
+    }
+}
+
+Bool UI_DrawRecordLevel(rectDef_t *rect)
+{
+    float voiceLevel;
+    const vec_t *white;
+
+    voiceLevel = Voice_GetVoiceLevel();
+
+    if (voiceLevel > 0.0) {
+        UI_FillRect(rect->x + 2.0f, rect->y + 2.0f, voiceLevel * rect->w - 4.0f, rect->h - 4.0f, 0, 0, (const vec_t *)((void *)&colorWhite));
+    }
+
+    white = (const vec_t *)((void *)&colorWhite);
+
+    UI_FillRect(rect->x, rect->y, rect->w, 1.0f, 0, 0, white);
+
+    UI_FillRect(rect->x, rect->h + rect->y - 1.0f, rect->w, 1.0f, 0, 0, white);
+
+    UI_FillRect(rect->x, rect->y + 1.0f, 1.0f, rect->h - 2.0f, 0, 0, white);
+
+    UI_FillRect(rect->x + rect->w - 1.0f, rect->y + 1.0f, 1.0f, rect->h - 2.0f, 0, 0, white);
+
+    return 1;
+}
+
+
+
 static void UI_GetGameTypesList(void)
 {
     char szGameTypeList[0x1000];
@@ -2986,28 +3336,6 @@ static void UI_GetGameTypesList(void)
 
     if (!sharedUiInfo.numGameTypes)
         Com_Error(ERR_FATAL, "\x15No game type scripts found in maps/mp/gametypes folder");
-}
-
-void UI_Pause(qboolean b)
-{
-    if (b) {
-        Dvar_SetIntByName("cl_paused", 1);
-        Key_SetCatcher(8);
-    } else {
-        Key_SetCatcher(Key_GetCatcher() & ~8);
-        Key_ClearStates();
-        Dvar_SetIntByName("cl_paused", 0);
-    }
-}
-
-void UI_OpenMenu_f(void)
-{
-    Menus_OpenByName(&uiInfo->uiDC, Cmd_Args(1));
-}
-
-void UI_CloseMenu_f(void)
-{
-    Menus_CloseByName(&uiInfo->uiDC, Cmd_Args(1));
 }
 
 void UI_Init(void)
@@ -3095,66 +3423,6 @@ void UI_Init(void)
     UI_ConsoleMode_Init(uiInfo);
     UI_Gamepad_RegisterMenus(uiInfo);
 #    endif
-}
-
-void UI_KeyEvent(int key, qboolean down)
-{
-    menuDef_t *menu;
-
-    if (Menu_Count(&uiInfo->uiDC) <= 0)
-        return;
-
-    menu = Menu_GetFocused(&uiInfo->uiDC);
-    if (menu) {
-        if (Dvar_GetBool("cl_bypassMouseInput"))
-            bypassKeyClear = 1;
-
-        if (key == 0x1b && down && !Menus_AnyFullScreenVisible(&uiInfo->uiDC) && menu->onESC == 0) {
-
-            Menus_CloseAll(&uiInfo->uiDC);
-        } else {
-            Menu_HandleKey(&uiInfo->uiDC, menu, key, down);
-        }
-
-        if (Menu_GetFocused(&uiInfo->uiDC))
-            return;
-    }
-
-    if (!(Key_GetCatcher() & 8))
-        return;
-
-    Key_SetCatcher(Key_GetCatcher() & ~8);
-    if (!bypassKeyClear)
-        Key_ClearStates();
-    bypassKeyClear = 0;
-    Dvar_SetIntByName("cl_paused", 0);
-}
-
-void UI_MouseEvent(int dx, int dy)
-{
-    int *cursorX = &uiInfo->uiDC.cursorx;
-    int *cursorY = &uiInfo->uiDC.cursory;
-
-    *cursorX += dx;
-    if (*cursorX < 0)
-        *cursorX = 0;
-    else if (*cursorX > 640)
-        *cursorX = 640;
-
-    *cursorY += dy;
-    if (*cursorY < 0)
-        *cursorY = 0;
-    else if (*cursorY > 480)
-        *cursorY = 480;
-
-    if (Menu_Count(&uiInfo->uiDC) > 0) {
-        Display_MouseMove(&uiInfo->uiDC, 0, *cursorX, *cursorY);
-    }
-}
-
-uiMenuCommand_t UI_GetActiveMenu(void)
-{
-    return uiInfo->currentMenuType;
 }
 
 qboolean UI_SetActiveMenu(int menu)
@@ -3250,48 +3518,6 @@ qboolean UI_SetActiveMenu(int menu)
     }
 
     return 0;
-}
-
-qboolean UI_IsFullscreen(void)
-{
-    return Menus_AnyFullScreenVisible(&uiInfo->uiDC);
-}
-
-static void __attribute_regparm__(3) UI_ReadableSize(char *buf, int bufsize, int value)
-{
-    if (value > 1024 * 1024 * 1024) {
-        Com_sprintf(buf, bufsize, "%d", value / (1024 * 1024 * 1024));
-        Com_sprintf(buf + strlen(buf), bufsize - strlen(buf), ".%02d %s",
-                    (value % (1024 * 1024 * 1024)) * 100 / (1024 * 1024 * 1024), UI_SafeTranslateString("EXE_GIGABYTE"));
-    } else if (value > 1024 * 1024) {
-        Com_sprintf(buf, bufsize, "%d", value / (1024 * 1024));
-        Com_sprintf(buf + strlen(buf), bufsize - strlen(buf), ".%02d %s",
-                    (value % (1024 * 1024)) * 100 / (1024 * 1024), UI_SafeTranslateString("EXE_MEGABYTE"));
-    } else if (value > 1024) {
-        Com_sprintf(buf, bufsize, "%d %s", value / 1024, UI_SafeTranslateString("EXE_KILOBYTE"));
-    } else {
-        Com_sprintf(buf, bufsize, "%d %s", value, UI_SafeTranslateString("EXE_BYTES"));
-    }
-}
-
-static void UI_PrintTime(char *buf, int bufsize, int time)
-{
-    if (time > 3600) {
-        Com_sprintf(buf, bufsize, "%d %s %d %s", time / 3600, UI_SafeTranslateString("EXE_HOURS"),
-                    (time % 3600) / 60, UI_SafeTranslateString("EXE_MINUTES"));
-    } else if (time > 60) {
-        Com_sprintf(buf, bufsize, "%d %s %d %s", time / 60, UI_SafeTranslateString("EXE_MINUTES"),
-                    time % 60, UI_SafeTranslateString("EXE_SECONDS"));
-    } else {
-        Com_sprintf(buf, bufsize, "%d %s", time, UI_SafeTranslateString("EXE_SECONDS"));
-    }
-}
-
-static void Text_PaintCenter(FontHandle font, const char *text, float x, float y, float scale, const vec_t *color)
-{
-    float actualScale = CL_NormalizedTextScale(font, scale);
-    int len = (int)((float)CL_TextWidth(text, 0, font) * actualScale);
-    UI_DrawText(text, 0x7fffffff, font, x - (float)(len / 2), y, 0, 0, scale, color, 6);
 }
 
 static void UI_DisplayDownloadInfo(const char *downloadName, float centerPoint, float yStart, FontHandle font, float scale)
@@ -3486,231 +3712,6 @@ void UI_DrawConnectScreen(void)
 
     if (s && I_stricmp(cstate.servername, "localhost"))
         Text_PaintCenter(font, s, 320.0f, 145.0f, 0.5f, colorWhite);
-}
-
-float UI_GetBlurRadius(void)
-{
-    return uiInfo->uiDC.blurRadiusOut;
-}
-
-qboolean UI_AnyFullScreenMenuVisible(void)
-{
-    return Menus_AnyFullScreenVisible(&uiInfo->uiDC);
-}
-
-static void UI_StopServerRefresh(void)
-{
-    int count;
-
-    if (!sharedUiInfo.serverStatus.refreshActive)
-        return;
-    sharedUiInfo.serverStatus.refreshActive = 0;
-    Com_Printf("%d servers listed in browser with %d players.\n",
-               sharedUiInfo.serverStatus.numDisplayServers, sharedUiInfo.serverStatus.numPlayersOnServers);
-    count = LAN_GetServerCount(ui_netSource->current.integer) - sharedUiInfo.serverStatus.numDisplayServers;
-    if (count > 0)
-        Com_Printf("%d servers not listed (filtered out by game browser settings)\n", count);
-}
-
-static void UI_DoServerRefresh(void)
-{
-    int wait;
-
-    wait = 0;
-    if (!sharedUiInfo.serverStatus.refreshActive)
-        return;
-
-    if (ui_netSource->current.integer != 2) {
-        if (ui_netSource->current.integer == 0) {
-            if (!LAN_GetServerCount(ui_netSource->current.integer))
-                wait = 1;
-        } else if (LAN_WaitServerResponse(ui_netSource->current.integer)) {
-            wait = 1;
-        }
-    }
-
-    if (uiInfo->uiDC.realTime < sharedUiInfo.serverStatus.refreshtime) {
-        if (wait)
-            return;
-    }
-
-    UI_UpdateServerCount();
-
-    if (LAN_UpdateDirtyPings(ui_netSource->current.integer)) {
-        sharedUiInfo.serverStatus.refreshtime = uiInfo->uiDC.realTime + 1000;
-    } else if (!wait) {
-        UI_BuildServerDisplayList(2);
-        UI_StopServerRefresh();
-    }
-
-    UI_BuildServerDisplayList(0);
-}
-
-// retail 0x5310d0, unreferenced; name unknown
-void UI_RefreshServerPings_5310d0(void)
-{
-    LAN_ResetPings((ui_netSource)->current.integer);
-    sharedUiInfo.serverStatus.refreshActive = 1;
-    sharedUiInfo.serverStatus.refreshtime = uiInfo->uiDC.realTime + 1000;
-}
-
-static void UI_StartServerRefresh(qboolean full)
-{
-    qtime_t q;
-    char dvarName[0x18];
-    const char *ptr;
-
-    Com_RealTime(&q);
-    snprintf(dvarName, sizeof(dvarName), "ui_lastServerRefresh_%i", (ui_netSource)->current.integer);
-    Dvar_SetStringByName(dvarName,
-                         va("%s %i, %i   %i:%02i",
-                            UI_SafeTranslateString(MonthAbbrev[q.tm_mon]),
-                            q.tm_mday,
-                            q.tm_year + 1900,
-                            q.tm_hour,
-                            q.tm_min));
-
-    if (!full) {
-        LAN_ResetPings((ui_netSource)->current.integer);
-        sharedUiInfo.serverStatus.refreshActive = 1;
-        sharedUiInfo.serverStatus.refreshtime = uiInfo->uiDC.realTime + 1000;
-        return;
-    }
-
-    sharedUiInfo.serverStatus.refreshActive = 1;
-    sharedUiInfo.serverStatus.nextDisplayRefresh = uiInfo->uiDC.realTime + 1000;
-    UI_ClearDisplayedServers();
-    LAN_MarkServerDirty((ui_netSource)->current.integer, -1, 1);
-    LAN_ResetPings((ui_netSource)->current.integer);
-
-    if ((ui_netSource)->current.integer == 0) {
-        Cbuf_ExecuteText(0, "localservers\n");
-        sharedUiInfo.serverStatus.refreshtime = uiInfo->uiDC.realTime + 1000;
-        return;
-    }
-
-    sharedUiInfo.serverStatus.refreshtime = uiInfo->uiDC.realTime + 5000;
-
-    if ((ui_netSource)->current.integer == 1) {
-        ptr = Dvar_GetVariantString("debug_protocol");
-        if (strlen(ptr))
-            Cbuf_ExecuteText(0, va("globalservers %d %s full empty\n", 0, ptr));
-        else
-            Cbuf_ExecuteText(0, va("globalservers %d %d full empty\n", 0, 0x73));
-    }
-}
-
-const char *UI_SafeTranslateString(const char *reference)
-{
-    const char *translated;
-
-    // 0x15-prefixed strings are already localized
-    if (reference[0] == 0x15) {
-        reference++;
-    } else {
-        translated = SEH_StringEd_GetString(reference);
-        if (translated)
-            return translated;
-    }
-
-    if ((loc_warnings)->current.enabled) {
-        if ((loc_warningsAsErrors)->current.enabled) {
-            Com_Error(ERR_LOCALIZATION, "Could not translate string \"%s\"", reference);
-        } else {
-            Com_Printf("^3WARNING: Could not translate string \"%s\"\n", reference);
-        }
-
-        strcpy(errorString, "^1UNLOCALIZED(^7");
-        I_strncat(errorString, 0x400, reference);
-        I_strncat(errorString, 0x400, "^1)^7");
-        return errorString;
-    }
-
-    strcpy(errorString, reference);
-    return errorString;
-}
-
-const char *UI_ReplaceConversionString(const char *sourceString, const char *replaceString)
-{
-    int convArgs[10];
-    memset(convArgs, 0, sizeof(convArgs));
-    convArgs[0] = 1;
-    convArgs[1] = (int)replaceString;
-    return UI_ReplaceConversions(sourceString, (ConversionArguments *)convArgs);
-}
-
-const char *UI_ReplaceConversionInt(const char *sourceString, int replaceInt)
-{
-    char tempString[32];
-    int convArgs[10];
-    memset(convArgs, 0, sizeof(convArgs));
-    sprintf(tempString, "%d", replaceInt);
-    convArgs[0] = 1;
-    convArgs[1] = (int)tempString;
-    return UI_ReplaceConversions(sourceString, (ConversionArguments *)convArgs);
-}
-
-const char *UI_ReplaceConversions(const char *sourceString, ConversionArguments *arguments)
-{
-    char outputString[0x400];
-    int sourceStringLength;
-    int index;
-    int outputStringCounter;
-    int argIndex;
-    int argLen;
-    int j;
-
-    if (!strstr(sourceString, "&&"))
-        return sourceString;
-
-    sourceStringLength = strlen(sourceString);
-    memset(outputString, 0, 0x400);
-    outputStringCounter = 0;
-
-    for (index = 0; index < sourceStringLength; ) {
-        if (!strncmp(&sourceString[index], "&&", 2) && isdigit(sourceString[index + 2])) {
-            argIndex = sourceString[index + 2] - '1';
-            argLen = strlen(arguments->args[argIndex]);
-            for (j = 0; j < argLen; j++) {
-                outputString[outputStringCounter] = arguments->args[argIndex][j];
-                outputStringCounter++;
-            }
-            index += 3;
-        } else {
-            outputString[outputStringCounter] = sourceString[index];
-            outputStringCounter++;
-            index++;
-        }
-    }
-
-    return va(outputString);
-}
-
-__forceinline void UI_CloseAllInl(void)
-{
-    Menus_CloseAll(&uiInfo->uiDC);
-}
-
-void UI_CloseAll(void)
-{
-    UI_CloseAllInl();
-}
-
-void UI_CloseFocusedMenu(void)
-{
-    if (Menu_Count(&uiInfo->uiDC) <= 0)
-        return;
-
-    if (!Menu_GetFocused(&uiInfo->uiDC)) {
-        if (Key_GetCatcher() & 8) {
-            Key_SetCatcher(Key_GetCatcher() & ~8);
-        }
-        return;
-    }
-
-    if (!Menus_AnyFullScreenVisible(&uiInfo->uiDC)) {
-        Menus_CloseAll(&uiInfo->uiDC);
-    }
 }
 
 

@@ -31,42 +31,6 @@ void CL_ShutdownRef( void );
 LONG WINAPI MainWndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam );
 
 /*
-==================
-Sys_GetSemaphoreFileName
-==================
-*/
-void Sys_GetSemaphoreFileName( void )
-{
-	char modulePath[MAX_PATH];
-	char *moduleName;
-	char *i;
-
-	GetModuleFileNameA( NULL, modulePath, MAX_PATH );
-	modulePath[MAX_PATH - 1] = 0;
-	moduleName = modulePath;
-
-	for ( i = modulePath; *i; i++ )
-	{
-		if ( *i == '\\' || *i == ':' )
-			moduleName = i + 1;
-		else if ( *i == '.' )
-			*i = 0;
-	}
-
-	sprintf( sys_processSemaphoreFile, "__%s", moduleName );
-}
-
-/*
-==================
-Sys_NormalExit
-==================
-*/
-void Sys_NormalExit( void )
-{
-	DeleteFileA( sys_processSemaphoreFile );
-}
-
-/*
 ========================================================================
 
 HARDWARE INFO
@@ -114,6 +78,60 @@ static HMODULE hGfxDll;
 
 /*
 ==================
+Sys_ShouldUpdateForConfigChange
+==================
+*/
+
+void Sys_ArchiveInfo( int checksum );
+
+/*
+==================
+Sys_ShouldUpdateForInfoChange
+==================
+*/
+
+/*
+==================
+Sys_ArchiveInfo
+==================
+*/
+
+WinVars_t g_wv;
+
+static void Sys_ShutdownEvents( void );
+
+/*
+========================================================================
+
+EVENT LOOP
+
+========================================================================
+*/
+
+#define MAX_QUED_EVENTS 256
+#define MASK_QUED_EVENTS ( MAX_QUED_EVENTS - 1 )
+
+static sysEvent_t eventQue[MAX_QUED_EVENTS];
+static int eventHead, eventTail;
+static byte sys_packetReceived[MAX_MSGLEN];
+
+char *Sys_ConsoleInput( void );
+
+/*
+==================
+Sys_Print
+==================
+*/
+
+/*
+==================
+Sys_NoFreeFilesError
+==================
+*/
+
+
+/*
+==================
 Sys_LoadRenderer
 ==================
 */
@@ -138,12 +156,6 @@ GetRefAPI_t Sys_LoadRenderer( void )
 	return getRefAPI;
 }
 
-// name unknown
-void Sys_UnableToLoadDllError_4628d0( void )
-{
-	Com_Error( ERR_FATAL, "%s\n", Win_LocalizeRef( "WIN_UNABLE_LOAD_DLL_BODY" ) );
-}
-
 /*
 ==================
 Sys_UnloadRenderer
@@ -160,15 +172,12 @@ void Sys_UnloadRenderer( void )
 
 /*
 ==================
-Sys_ShouldUpdateForConfigChange
+Sys_GetInfo
 ==================
 */
-bool Sys_ShouldUpdateForConfigChange( void )
+void Sys_GetInfo( SysInfo *info )
 {
-	if ( MessageBoxA( NULL, Win_LocalizeRef( "WIN_CONFIGURE_UPDATED_BODY" ), Win_LocalizeRef( "WIN_CONFIGURE_UPDATED_TITLE" ), MB_YESNO | MB_ICONINFORMATION ) == IDYES )
-		return true;
-
-	return false;
+	*info = sys_info;
 }
 
 /*
@@ -184,6 +193,13 @@ void Sys_RegisterInfoDvars( void )
 	sys_configSum = Dvar_RegisterInt( "sys_configSum", 0, INT_MIN, INT_MAX, DVAR_ARCHIVE | DVAR_INIT | DVAR_CHANGEABLE_RESET );
 }
 
+bool Sys_ShouldUpdateForConfigChange( void )
+{
+	if ( MessageBoxA( NULL, Win_LocalizeRef( "WIN_CONFIGURE_UPDATED_BODY" ), Win_LocalizeRef( "WIN_CONFIGURE_UPDATED_TITLE" ), MB_YESNO | MB_ICONINFORMATION ) == IDYES )
+		return true;
+
+	return false;
+}
 /*
 ==================
 Sys_HasConfigureChecksumChanged
@@ -226,23 +242,6 @@ void Sys_FindInfo( void )
 	_controlfp( _MCW_EM, _MCW_EM );
 }
 
-/*
-==================
-Sys_GetInfo
-==================
-*/
-void Sys_GetInfo( SysInfo *info )
-{
-	*info = sys_info;
-}
-
-void Sys_ArchiveInfo( int checksum );
-
-/*
-==================
-Sys_ShouldUpdateForInfoChange
-==================
-*/
 bool Sys_ShouldUpdateForInfoChange( void )
 {
 	Sys_ArchiveInfo( 0 );
@@ -251,7 +250,6 @@ bool Sys_ShouldUpdateForInfoChange( void )
 
 	return false;
 }
-
 /*
 ==================
 Sys_HasInfoChanged
@@ -275,20 +273,6 @@ bool Sys_HasInfoChanged( void )
 	}
 
 	return false;
-}
-
-/*
-==================
-Sys_ArchiveInfo
-==================
-*/
-__declspec(noinline) void Sys_ArchiveInfo( int checksum )
-{
-	Sys_RegisterInfoDvars();
-	Dvar_SetFloat( sys_cpuGHz, sys_info.cpuGHz );
-	Dvar_SetInt( sys_sysMB, sys_info.sysMB );
-	Dvar_SetString( sys_gpu, sys_info.gpuDescription );
-	Dvar_SetInt( sys_configSum, checksum );
 }
 
 // Original name unknown.
@@ -363,204 +347,14 @@ unsigned int Sys_FunctionChecksum( const unsigned char *func )
 	return Com_BlockChecksum( (void *)code, len + 2 );
 }
 
-WinVars_t g_wv;
-
-static void Sys_ShutdownEvents( void );
-
-/*
-==================
-Sys_Quit
-==================
-*/
-void Sys_Quit( void )
+// Retail keeps this as a separate call from Sys_Error (0x4627b0); name unknown.
+static void Sys_ErrorShutdown( void )
 {
+	Sys_DestroySplashWindow();
 	timeEndPeriod( 1 );
 	IN_Shutdown();
-	Key_Shutdown();
-	Sys_DestroyConsole();
-	Sys_NormalExit();
-	Win_ShutdownLocalization();
-	RefreshQuitOnErrorCondition();
-	Dvar_Shutdown();
-	Cmd_Shutdown();
-	Con_Shutdown();
-	Com_ShutdownEvents();
-	Sys_ShutdownEvents();
-
-	exit( 0 );
-}
-
-/*
-========================================================================
-
-EVENT LOOP
-
-========================================================================
-*/
-
-#define MAX_QUED_EVENTS 256
-#define MASK_QUED_EVENTS ( MAX_QUED_EVENTS - 1 )
-
-static sysEvent_t eventQue[MAX_QUED_EVENTS];
-static int eventHead, eventTail;
-static byte sys_packetReceived[MAX_MSGLEN];
-
-char *Sys_ConsoleInput( void );
-
-/*
-================
-Sys_QueEvent
-
-A time of 0 will get the current time
-Ptr should either be null, or point to a block of data that can
-be freed by the game later.
-================
-*/
-void Sys_QueEvent( int time, sysEventType_t type, int value, int value2, int ptrLength, void *ptr )
-{
-	sysEvent_t *ev;
-
-	ev = &eventQue[eventHead & MASK_QUED_EVENTS];
-
-	if ( eventHead - eventTail >= MAX_QUED_EVENTS )
-	{
-		Com_Printf( "Sys_QueEvent: overflow\n" );
-		// we are discarding an event, but don't leak memory
-		if ( ev->evPtr )
-		{
-			Z_Free( ev->evPtr );
-		}
-		eventTail++;
-	}
-
-	eventHead++;
-
-	if ( time == 0 )
-	{
-		time = Sys_Milliseconds();
-	}
-
-	ev->evTime = time;
-	ev->evType = type;
-	ev->evValue = value;
-	ev->evValue2 = value2;
-	ev->evPtrLength = ptrLength;
-	ev->evPtr = ptr;
-}
-
-/*
-================
-Sys_ShutdownEvents
-================
-*/
-static void Sys_ShutdownEvents( void )
-{
-	sysEvent_t *ev;
-
-	while ( eventHead > eventTail )
-	{
-		ev = &eventQue[eventTail++ & MASK_QUED_EVENTS];
-
-		if ( ev->evPtr )
-		{
-			Z_Free( ev->evPtr );
-		}
-	}
-}
-
-/*
-================
-Sys_GetEvent
-================
-*/
-sysEvent_t Sys_GetEvent( void )
-{
-	MSG msg;
-	sysEvent_t ev;
-	char *s;
-	msg_t netmsg;
-	netadr_t adr;
-
-	// return if we have data
-	if ( eventHead > eventTail )
-	{
-		eventTail++;
-		return eventQue[( eventTail - 1 ) & MASK_QUED_EVENTS];
-	}
-
-	// pump the message loop
-	while ( PeekMessage( &msg, NULL, 0, 0, PM_NOREMOVE ) )
-	{
-		if ( !GetMessage( &msg, NULL, 0, 0 ) )
-		{
-			_controlfp( _PC_24, _MCW_PC );
-			_controlfp( _MCW_EM, _MCW_EM );
-			Com_Quit_f();
-		}
-
-		// save the msg time, because wndprocs don't have access to the timestamp
-		g_wv.sysMsgTime = msg.time;
-
-		TranslateMessage( &msg );
-		DispatchMessage( &msg );
-	}
-
-	_controlfp( _PC_24, _MCW_PC );
-	_controlfp( _MCW_EM, _MCW_EM );
-
-	// check for console commands
-	s = Sys_ConsoleInput();
-	if ( s )
-	{
-		char *b;
-		int len;
-
-		len = strlen( s ) + 1;
-		b = (char *)Z_Malloc( len );
-		Q_strncpyz( b, s, len - 1 );
-		Sys_QueEvent( 0, SE_CONSOLE, 0, 0, len, b );
-	}
-
-	// check for network packets
-	MSG_Init( &netmsg, sys_packetReceived, sizeof( sys_packetReceived ) );
-	if ( Sys_GetPacket( &adr, &netmsg ) )
-	{
-		netadr_t *buf;
-		int len;
-
-		// copy out to a seperate buffer for qeueing
-		len = sizeof( netadr_t ) + netmsg.cursize - netmsg.readcount;
-		buf = (netadr_t *)Z_Malloc( len );
-		*buf = adr;
-		memcpy( buf + 1, &netmsg.data[netmsg.readcount], netmsg.cursize - netmsg.readcount );
-		Sys_QueEvent( 0, SE_PACKET, 0, 0, len, buf );
-	}
-
-	// return if we have data
-	if ( eventHead > eventTail )
-	{
-		eventTail++;
-		return eventQue[( eventTail - 1 ) & MASK_QUED_EVENTS];
-	}
-
-	// create an empty event to return
-	memset( &ev, 0, sizeof( ev ) );
-	ev.evTime = Sys_Milliseconds();
-
-	return ev;
-}
-
-/*
-=================
-Sys_In_Restart_f
-
-Restart the input subsystem
-=================
-*/
-void Sys_In_Restart_f( void )
-{
-	IN_Shutdown();
-	IN_Init();
+	CL_ShutdownHunkUsers();
+	CL_ShutdownRef();
 }
 
 /*
@@ -585,6 +379,12 @@ void Sys_OutOfMemErrorInternal( const char *filename, int line )
 	Com_Printf( "Out of memory: filename '%s', line %d\n", filename, line );
 	MessageBoxA( NULL, Win_LocalizeRef( "WIN_OUT_OF_MEM_BODY" ), Win_LocalizeRef( "WIN_OUT_OF_MEM_TITLE" ), MB_ICONERROR );
 	exit( -1 );
+}
+
+// name unknown
+void Sys_UnableToLoadDllError_4628d0( void )
+{
+	Com_Error( ERR_FATAL, "%s\n", Win_LocalizeRef( "WIN_UNABLE_LOAD_DLL_BODY" ) );
 }
 
 /*
@@ -637,16 +437,6 @@ void Sys_OpenURL( const char *url, qboolean doexit )
 		Cbuf_AddText( "quit\n" );
 }
 
-// Retail keeps this as a separate call from Sys_Error (0x4627b0); name unknown.
-static void Sys_ErrorShutdown( void )
-{
-	Sys_DestroySplashWindow();
-	timeEndPeriod( 1 );
-	IN_Shutdown();
-	CL_ShutdownHunkUsers();
-	CL_ShutdownRef();
-}
-
 /*
 ==================
 Sys_Error
@@ -685,12 +475,25 @@ void Sys_Error( const char *error, ... )
 
 /*
 ==================
-Sys_Print
+Sys_Quit
 ==================
 */
-void Sys_Print( const char *msg )
+void Sys_Quit( void )
 {
-	Conbuf_AppendText( msg );
+	timeEndPeriod( 1 );
+	IN_Shutdown();
+	Key_Shutdown();
+	Sys_DestroyConsole();
+	Sys_NormalExit();
+	Win_ShutdownLocalization();
+	RefreshQuitOnErrorCondition();
+	Dvar_Shutdown();
+	Cmd_Shutdown();
+	Con_Shutdown();
+	Com_ShutdownEvents();
+	Sys_ShutdownEvents();
+
+	exit( 0 );
 }
 
 /*
@@ -815,6 +618,67 @@ qboolean Sys_SetClipboardData( const char *text )
 }
 
 /*
+================
+Sys_QueEvent
+
+A time of 0 will get the current time
+Ptr should either be null, or point to a block of data that can
+be freed by the game later.
+================
+*/
+void Sys_QueEvent( int time, sysEventType_t type, int value, int value2, int ptrLength, void *ptr )
+{
+	sysEvent_t *ev;
+
+	ev = &eventQue[eventHead & MASK_QUED_EVENTS];
+
+	if ( eventHead - eventTail >= MAX_QUED_EVENTS )
+	{
+		Com_Printf( "Sys_QueEvent: overflow\n" );
+		// we are discarding an event, but don't leak memory
+		if ( ev->evPtr )
+		{
+			Z_Free( ev->evPtr );
+		}
+		eventTail++;
+	}
+
+	eventHead++;
+
+	if ( time == 0 )
+	{
+		time = Sys_Milliseconds();
+	}
+
+	ev->evTime = time;
+	ev->evType = type;
+	ev->evValue = value;
+	ev->evValue2 = value2;
+	ev->evPtrLength = ptrLength;
+	ev->evPtr = ptr;
+}
+
+/*
+================
+Sys_ShutdownEvents
+================
+*/
+static void Sys_ShutdownEvents( void )
+{
+	sysEvent_t *ev;
+
+	while ( eventHead > eventTail )
+	{
+		ev = &eventQue[eventTail++ & MASK_QUED_EVENTS];
+
+		if ( ev->evPtr )
+		{
+			Z_Free( ev->evPtr );
+		}
+	}
+}
+
+/*
 ==================
 Sys_LoadingKeepAlive
 
@@ -838,6 +702,101 @@ void Sys_LoadingKeepAlive( void )
 
 	_controlfp( _PC_24, _MCW_PC );
 	_controlfp( _MCW_EM, _MCW_EM );
+}
+
+/*
+================
+Sys_GetEvent
+================
+*/
+sysEvent_t Sys_GetEvent( void )
+{
+	MSG msg;
+	sysEvent_t ev;
+	char *s;
+	msg_t netmsg;
+	netadr_t adr;
+
+	// return if we have data
+	if ( eventHead > eventTail )
+	{
+		eventTail++;
+		return eventQue[( eventTail - 1 ) & MASK_QUED_EVENTS];
+	}
+
+	// pump the message loop
+	while ( PeekMessage( &msg, NULL, 0, 0, PM_NOREMOVE ) )
+	{
+		if ( !GetMessage( &msg, NULL, 0, 0 ) )
+		{
+			_controlfp( _PC_24, _MCW_PC );
+			_controlfp( _MCW_EM, _MCW_EM );
+			Com_Quit_f();
+		}
+
+		// save the msg time, because wndprocs don't have access to the timestamp
+		g_wv.sysMsgTime = msg.time;
+
+		TranslateMessage( &msg );
+		DispatchMessage( &msg );
+	}
+
+	_controlfp( _PC_24, _MCW_PC );
+	_controlfp( _MCW_EM, _MCW_EM );
+
+	// check for console commands
+	s = Sys_ConsoleInput();
+	if ( s )
+	{
+		char *b;
+		int len;
+
+		len = strlen( s ) + 1;
+		b = (char *)Z_Malloc( len );
+		Q_strncpyz( b, s, len - 1 );
+		Sys_QueEvent( 0, SE_CONSOLE, 0, 0, len, b );
+	}
+
+	// check for network packets
+	MSG_Init( &netmsg, sys_packetReceived, sizeof( sys_packetReceived ) );
+	if ( Sys_GetPacket( &adr, &netmsg ) )
+	{
+		netadr_t *buf;
+		int len;
+
+		// copy out to a seperate buffer for qeueing
+		len = sizeof( netadr_t ) + netmsg.cursize - netmsg.readcount;
+		buf = (netadr_t *)Z_Malloc( len );
+		*buf = adr;
+		memcpy( buf + 1, &netmsg.data[netmsg.readcount], netmsg.cursize - netmsg.readcount );
+		Sys_QueEvent( 0, SE_PACKET, 0, 0, len, buf );
+	}
+
+	// return if we have data
+	if ( eventHead > eventTail )
+	{
+		eventTail++;
+		return eventQue[( eventTail - 1 ) & MASK_QUED_EVENTS];
+	}
+
+	// create an empty event to return
+	memset( &ev, 0, sizeof( ev ) );
+	ev.evTime = Sys_Milliseconds();
+
+	return ev;
+}
+
+/*
+=================
+Sys_In_Restart_f
+
+Restart the input subsystem
+=================
+*/
+void Sys_In_Restart_f( void )
+{
+	IN_Shutdown();
+	IN_Init();
 }
 
 /*
@@ -886,17 +845,6 @@ void Sys_Init( void )
 	Com_Printf( "\n" );
 
 	IN_Init();
-}
-
-/*
-==================
-Sys_NoFreeFilesError
-==================
-*/
-static void Sys_NoFreeFilesError( void )
-{
-	MessageBoxA( NULL, Win_LocalizeRef( "WIN_DISK_FULL_BODY" ), Win_LocalizeRef( "WIN_DISK_FULL_TITLE" ), MB_ICONERROR );
-	exit( -1 );
 }
 
 /*
@@ -953,6 +901,37 @@ static qboolean Sys_IsGameProcess( DWORD id )
 	return isGame;
 }
 
+/*
+==================
+Sys_GetSemaphoreFileName
+==================
+*/
+void Sys_GetSemaphoreFileName( void )
+{
+	char modulePath[MAX_PATH];
+	char *moduleName;
+	char *i;
+
+	GetModuleFileNameA( NULL, modulePath, MAX_PATH );
+	modulePath[MAX_PATH - 1] = 0;
+	moduleName = modulePath;
+
+	for ( i = modulePath; *i; i++ )
+	{
+		if ( *i == '\\' || *i == ':' )
+			moduleName = i + 1;
+		else if ( *i == '.' )
+			*i = 0;
+	}
+
+	sprintf( sys_processSemaphoreFile, "__%s", moduleName );
+}
+
+static void Sys_NoFreeFilesError( void )
+{
+	MessageBoxA( NULL, Win_LocalizeRef( "WIN_DISK_FULL_BODY" ), Win_LocalizeRef( "WIN_DISK_FULL_TITLE" ), MB_ICONERROR );
+	exit( -1 );
+}
 /*
 ==================
 Sys_CheckCrashOrRerun
@@ -1015,6 +994,16 @@ static qboolean Sys_CheckCrashOrRerun( void )
 
 /*
 ==================
+Sys_NormalExit
+==================
+*/
+void Sys_NormalExit( void )
+{
+	DeleteFileA( sys_processSemaphoreFile );
+}
+
+/*
+==================
 Win_RegisterClass
 ==================
 */
@@ -1048,6 +1037,18 @@ static void PrintWorkingDir( void )
 	Com_Printf( "Working directory: %s\n", cwd );
 }
 
+__declspec(noinline) void Sys_ArchiveInfo( int checksum )
+{
+	Sys_RegisterInfoDvars();
+	Dvar_SetFloat( sys_cpuGHz, sys_info.cpuGHz );
+	Dvar_SetInt( sys_sysMB, sys_info.sysMB );
+	Dvar_SetString( sys_gpu, sys_info.gpuDescription );
+	Dvar_SetInt( sys_configSum, checksum );
+}
+void Sys_Print( const char *msg )
+{
+	Conbuf_AppendText( msg );
+}
 /*
 ==================
 WinMain

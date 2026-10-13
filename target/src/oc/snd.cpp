@@ -346,53 +346,8 @@ COD2_ASSERT_FIELD(snd_save_stream_t, volume, 0xc);
 COD2_ASSERT_FIELD(snd_save_stream_t, pan, 0x10);
 COD2_ASSERT_FIELD(snd_save_stream_t, org, 0x14);
 
-static __attribute_regparm__(2)
-    Bool SND_RestoreStreamChannel(int channel, MemoryFile *memFile)
-{
-    const snd_alias_t *pAlias0;
-    const snd_alias_t *pAlias1;
-    snd_channel_info_t chaninfo;
-    snd_save_stream_t info;
-    int rate;
-    int type;
-    pAlias0 = SND_RestoreSoundAlias(memFile);
-    if (!pAlias0)
-        return 0;
-    pAlias1 = SND_RestoreSoundAlias(memFile);
-    SND_RestoreChanInfo(&chaninfo, memFile);
-    MemFile_ReadData(memFile, sizeof(info), &info);
-    type = (pAlias0->flags & 0x60) >> 5;
-    if (type != 2 && type != 3)
-        return 1;
-    type = (pAlias1->flags & 0x60) >> 5;
-    if (type != 2 && type != 3)
-        return 1;
-    if (!SND_ValidateSoundAliasBlend(pAlias0, pAlias1, 0))
-        return 1;
-    if (channel < 0) {
-        SND_StartAliasStream(pAlias0, pAlias1, chaninfo.lerp, chaninfo.entnum, info.org, info.basevolume, 1.0f, 0, info.fraction, 0, &channel, (snd_alias_system_t)(1));
-    } else {
-        if (!*(unsigned char *)((char *)snd_enableStream + 8))
-            return 1;
-        SND_StartAliasStreamOnChannel(pAlias0, pAlias1, chaninfo.lerp, chaninfo.entnum, info.org, info.basevolume, 1.0f, 0, info.fraction, chaninfo.startDelay, chaninfo.master, channel, (snd_alias_system_t)(1));
-    }
-    if (channel < 0)
-        return 1;
-    if (SND_IsStreamChannelFree(channel))
-        return 1;
-    SND_SetStreamChannelFromSaveInfo(channel, &info);
-    rate = I_fround((float)info.rate * g_snd.chaninfo[channel].pitch * g_snd.timescale);
-    SND_SetStreamChannelPlaybackRate(channel, rate);
-    g_snd.chaninfo[channel].offset[0] = chaninfo.offset[0];
-    g_snd.chaninfo[channel].offset[1] = chaninfo.offset[1];
-    g_snd.chaninfo[channel].offset[2] = chaninfo.offset[2];
-    return 1;
-}
-
-static inline float I_fsel(const float x, const float y, const float z)
-{
-    return x >= 0.0f ? y : z;
-}
+extern "C" void *Z_MallocInternal( int size );
+extern "C" void Com_Memcpy( void *dest, const void *src, int count );
 
 inline void MemFile_WriteByte(MemoryFile *memFile, unsigned char value)
 {
@@ -456,11 +411,6 @@ inline void MemFile_ReadVec3(MemoryFile *memFile, float *value)
     value[0] = MemFile_ReadFloat(memFile);
     value[1] = MemFile_ReadFloat(memFile);
     value[2] = MemFile_ReadFloat(memFile);
-}
-
-int SND_GetListenerIndexNearestToOrigin(const vec_t *origin)
-{
-    return 0;
 }
 
 static bool SND_ValidateEnvEffectsPriorityValue(const char *priorityName, int *priority)
@@ -557,14 +507,6 @@ void SND_DeactivateEnvironmentEffects_f(void)
         return;
     }
     SND_DeactivateEnvironmentEffects(priority, fademsec);
-}
-
-void SND_ErrorCleanup(void)
-{
-    if (g_snd.restore.buffer) {
-        Z_FreeInternal((void *)g_snd.restore.buffer);
-        g_snd.restore.buffer = 0;
-    }
 }
 
 static __declspec(noinline) Bool SND_AnyActiveListeners(void)
@@ -706,6 +648,29 @@ void SND_SetChannelInfo(int index, int entnum, const snd_alias_t *pAlias0, const
     g_snd.chaninfo[index].system = system;
 }
 
+// retail 0x44ab00, unreferenced (inlined in SND_FindReplaceableChannel); name unknown
+int SND_CompareChannels_44ab00(int i, int best, int entnum)
+{
+    int diff;
+
+    if (g_snd.chaninfo[i].entnum != g_snd.chaninfo[best].entnum) {
+        if (g_snd.chaninfo[i].entnum == entnum)
+            return -1;
+        if (g_snd.chaninfo[best].entnum == entnum)
+            return 1;
+    }
+    diff = g_snd.chaninfo[i].entchannel - g_snd.chaninfo[best].entchannel;
+    if (!diff)
+        diff = g_snd.chaninfo[i].endtime - g_snd.chaninfo[best].endtime;
+    return diff;
+}
+
+// retail 0x44ab50, unreferenced; name unknown
+Bool SND_ChannelEntchannelAtMost_44ab50(int index, int entchannel)
+{
+    return g_snd.chaninfo[index].entchannel <= entchannel;
+}
+
 // Original name unknown (KisakCOD: SND_FindReplaceableChannel).
 static int SND_FindReplaceableChannel(int entnum, int entchannel, int first, int count)
 {
@@ -745,6 +710,107 @@ static int SND_FindReplaceableChannel(int entnum, int entchannel, int first, int
     }
 
     return best;
+}
+
+int SND_FindFree2DChannel(int entnum, int entchannel)
+{
+    int i;
+    int best;
+
+    for (i = 0; i < g_snd.max_2D_channels; i++) {
+        if (SND_Is2DChannelFree(i + 45))
+            return i + 45;
+    }
+
+    best = SND_FindReplaceableChannel(entnum, entchannel, 45, g_snd.max_2D_channels);
+
+    if (best >= 0)
+        SND_Stop2DChannel(best);
+
+    return best;
+}
+
+int SND_FindFree3DChannel(int entnum, int entchannel)
+{
+    int i;
+    int best;
+
+    for (i = 0; i < g_snd.max_3D_channels; i++) {
+        if (SND_Is3DChannelFree(i))
+            return i;
+    }
+
+    best = SND_FindReplaceableChannel(entnum, entchannel, 0, g_snd.max_3D_channels);
+
+    if (best >= 0)
+        SND_Stop3DChannel(best);
+
+    return best;
+}
+
+// Original name unknown (KisakCOD: SND_FindFreeStreamChannel).
+static int SND_FindFreeStreamChannel(void)
+{
+    int i;
+
+    for (i = 3; i < g_snd.max_stream_channels; i++) {
+        if (SND_IsStreamChannelFree(i + 32))
+            return i + 32;
+    }
+
+    return -1;
+}
+
+static void SND_StopEntityChannel(int entnum, int entchannel)
+{
+    int i;
+
+    for (i = 0; i < g_snd.max_3D_channels; i++) {
+        if (g_snd.chaninfo[i].entnum == entnum && g_snd.chaninfo[i].entchannel == entchannel && !SND_Is3DChannelFree(i))
+            SND_Stop3DChannel(i);
+    }
+    for (i = 32; i < 32 + g_snd.max_stream_channels; i++) {
+        if (g_snd.chaninfo[i].entnum == entnum && g_snd.chaninfo[i].entchannel == entchannel && !SND_IsStreamChannelFree(i))
+            SND_StopStreamChannel(i);
+    }
+    for (i = 45; i < 45 + g_snd.max_2D_channels; i++) {
+        if (g_snd.chaninfo[i].entnum == entnum && g_snd.chaninfo[i].entchannel == entchannel && !SND_Is2DChannelFree(i))
+            SND_Stop2DChannel(i);
+    }
+}
+
+static int SND_StartAliasSample(const snd_alias_t *pAlias0, const snd_alias_t *pAlias1, float lerp, int entnum, const vec_t *org, float volume, float pitch, int timeshift, Bool treatAsMaster, int *pChannel, snd_alias_system_t system)
+{
+    int flags;
+
+    if (!Com_GetSoundFileMem(pAlias0)) {
+        Com_DPrintf("Tried to play sound '%s' from alias '%s', but it was not successfully loaded.\n",
+                    Com_GetSoundFileName(pAlias0), pAlias0->pszAliasName);
+        if (pChannel)
+            *pChannel = -1;
+        return 0;
+    }
+
+    flags = pAlias0->flags;
+    switch ((flags & 0x780) >> 7) {
+    default:
+        if (!snd_enable3D->current.enabled)
+            return 0;
+        if (!SND_AnyActiveListeners()) {
+            Com_Error(ERR_DROP, "attempted to play spatialized alias '%s' while there is no active listener. Most likely this means you tried to play a spatialized sound while not in a level.\n", pAlias0->pszAliasName);
+            return 0;
+        }
+        return SND_StartAlias3DSample(pAlias0, pAlias1, lerp, entnum, org, volume, pitch, timeshift, 0.0f, pAlias0->startDelay, treatAsMaster || (flags & 2), pChannel, system);
+    case 1:
+    case 2:
+    case 7:
+    case 8:
+    case 9:
+    case 10:
+        if (!snd_enable2D->current.enabled)
+            return 0;
+        return SND_StartAlias2DSample(pAlias0, pAlias1, lerp, entnum, volume, pitch, timeshift, 0.0f, pAlias0->startDelay, treatAsMaster || (flags & 2), pChannel, system);
+    }
 }
 
 static __attribute_regparm__(3) int SND_StartAliasStream(const snd_alias_t *pAlias0, const snd_alias_t *pAlias1, float lerp, int entnum, const vec_t *org, float volume, float pitch, int timeshift, float fraction, Bool treatAsMaster, int *pChannel, snd_alias_system_t system)
@@ -800,170 +866,6 @@ static __attribute_regparm__(3) int SND_StartAliasStream(const snd_alias_t *pAli
     }
 
     return SND_StartAliasStreamOnChannel(pAlias0, pAlias1, lerp, entnum, org, volume, pitch, timeshift, fraction, pAlias0->startDelay, treatAsMaster || (pAlias0->flags & 2), channel, system);
-}
-
-static __attribute_regparm__(2) void SND_SaveChanInfo(snd_channel_info_t *chaninfo, MemoryFile *memFile)
-{
-    MemFile_WriteShort(memFile, (short)chaninfo->entnum);
-    MemFile_WriteByte(memFile, (unsigned char)chaninfo->entchannel);
-    MemFile_WriteByte(memFile, chaninfo->master);
-    MemFile_WriteInt(memFile, chaninfo->startDelay);
-    MemFile_WriteFloat(memFile, chaninfo->basevolume);
-    MemFile_WriteFloat(memFile, chaninfo->lerp);
-    MemFile_WriteVec3(memFile, chaninfo->offset);
-}
-
-int SND_FindFree2DChannel(int entnum, int entchannel)
-{
-    int i;
-    int best;
-
-    for (i = 0; i < g_snd.max_2D_channels; i++) {
-        if (SND_Is2DChannelFree(i + 45))
-            return i + 45;
-    }
-
-    best = SND_FindReplaceableChannel(entnum, entchannel, 45, g_snd.max_2D_channels);
-
-    if (best >= 0)
-        SND_Stop2DChannel(best);
-
-    return best;
-}
-
-int SND_FindFree3DChannel(int entnum, int entchannel)
-{
-    int i;
-    int best;
-
-    for (i = 0; i < g_snd.max_3D_channels; i++) {
-        if (SND_Is3DChannelFree(i))
-            return i;
-    }
-
-    best = SND_FindReplaceableChannel(entnum, entchannel, 0, g_snd.max_3D_channels);
-
-    if (best >= 0)
-        SND_Stop3DChannel(best);
-
-    return best;
-}
-
-static __attribute_regparm__(2) void SND_RestoreChanInfo(snd_channel_info_t *chaninfo, MemoryFile *memFile)
-{
-    memset(chaninfo, 0, sizeof(snd_channel_info_t));
-
-    chaninfo->entnum = MemFile_ReadShort(memFile);
-    chaninfo->entchannel = MemFile_ReadByte(memFile);
-    chaninfo->master = MemFile_ReadByte(memFile) != 0;
-    chaninfo->startDelay = MemFile_ReadInt(memFile);
-    chaninfo->basevolume = MemFile_ReadFloat(memFile);
-    chaninfo->lerp = MemFile_ReadFloat(memFile);
-    MemFile_ReadVec3(memFile, chaninfo->offset);
-}
-
-// retail 0x44c030, unreferenced; name unknown
-void SND_UpdatePause_44c030(void)
-{
-    Bool paused;
-
-    paused = (*(int *)((char *)cl_paused + 8) != 0);
-    if (paused != g_snd.paused) {
-        if (paused)
-            SND_PauseSounds();
-        else
-            SND_UnpauseSounds();
-    }
-}
-
-static __attribute_regparm__(3) void SND_StartBackground(int track, const snd_alias_t *pAlias, int fadetime, snd_alias_system_t system)
-{
-    int channel;
-    int type;
-    float volume;
-    float pitch;
-    Bool newPaused;
-
-    newPaused = (*(int *)((char *)cl_paused + 8) != 0);
-    if (newPaused != g_snd.paused) {
-        if (newPaused)
-            SND_PauseSounds();
-        else
-            SND_UnpauseSounds();
-    }
-
-    switch ((pAlias->flags & 0x780) >> 7) {
-    case 1:
-    case 2:
-    case 7:
-    case 8:
-    case 9:
-    case 10:
-        break;
-    default:
-        Com_Error(ERR_DROP, "\025alias %s sound %s played as an ambient / music track uses a 3D channel type; should probably be channel 'local'\n", pAlias->pszAliasName, Com_GetSoundFileName(pAlias));
-        break;
-    }
-
-    type = (pAlias->flags & 0x60) >> 5;
-    if (type != 2 && type != 3) {
-        Com_Error(ERR_DROP, "\025alias %s sound %s played as an ambient / music track is not streamed; type must be 'streamed'\n", pAlias->pszAliasName, Com_GetSoundFileName(pAlias));
-    }
-
-    volume = pAlias->fVolMin + (pAlias->fVolMax - pAlias->fVolMin) * randomf();
-
-    pitch = pAlias->fPitchMin + (pAlias->fPitchMax - pAlias->fPitchMin) * randomf();
-
-    channel = track + 32;
-
-    if (!SND_IsStreamChannelFree(channel))
-        SND_StopStreamChannel(channel);
-
-    g_snd.chaninfo[channel].basevolume = volume;
-    g_snd.background[track].goalvolume = volume;
-
-    if (fadetime > 0) {
-        g_snd.background[track].goalrate = g_snd.chaninfo[channel].basevolume / (float)fadetime;
-        g_snd.chaninfo[channel].basevolume = 0.0f;
-    } else {
-        g_snd.background[track].goalrate = 0.0f;
-    }
-
-    if (!*(unsigned char *)((char *)snd_enableStream + 8))
-        return;
-
-    SND_StartAliasStreamOnChannel(pAlias, pAlias, 0.0f, 0x400, (vec_t *)&g_snd.listeners[0].orient.origin, g_snd.chaninfo[channel].basevolume, pitch, 0, 0.0f, pAlias->startDelay, ((unsigned int)pAlias->flags >> 1) & 1, channel, system);
-}
-
-// Original name unknown (KisakCOD: SND_FindFreeStreamChannel).
-static int SND_FindFreeStreamChannel(void)
-{
-    int i;
-
-    for (i = 3; i < g_snd.max_stream_channels; i++) {
-        if (SND_IsStreamChannelFree(i + 32))
-            return i + 32;
-    }
-
-    return -1;
-}
-
-static void SND_StopEntityChannel(int entnum, int entchannel)
-{
-    int i;
-
-    for (i = 0; i < g_snd.max_3D_channels; i++) {
-        if (g_snd.chaninfo[i].entnum == entnum && g_snd.chaninfo[i].entchannel == entchannel && !SND_Is3DChannelFree(i))
-            SND_Stop3DChannel(i);
-    }
-    for (i = 32; i < 32 + g_snd.max_stream_channels; i++) {
-        if (g_snd.chaninfo[i].entnum == entnum && g_snd.chaninfo[i].entchannel == entchannel && !SND_IsStreamChannelFree(i))
-            SND_StopStreamChannel(i);
-    }
-    for (i = 45; i < 45 + g_snd.max_2D_channels; i++) {
-        if (g_snd.chaninfo[i].entnum == entnum && g_snd.chaninfo[i].entchannel == entchannel && !SND_Is2DChannelFree(i))
-            SND_Stop2DChannel(i);
-    }
 }
 
 static Bool SND_ContinueLoopingSound(const snd_alias_t *pAlias0, const snd_alias_t *pAlias1, float lerp, int entnum, const vec_t *org, int *pChannel)
@@ -1059,40 +961,6 @@ static void SND_ChoosePitchAndVolume(const snd_alias_t *pAlias0, const snd_alias
     *pitch = pitchMin + randomf() * (pitchMax - pitchMin);
 }
 
-static int SND_StartAliasSample(const snd_alias_t *pAlias0, const snd_alias_t *pAlias1, float lerp, int entnum, const vec_t *org, float volume, float pitch, int timeshift, Bool treatAsMaster, int *pChannel, snd_alias_system_t system)
-{
-    int flags;
-
-    if (!Com_GetSoundFileMem(pAlias0)) {
-        Com_DPrintf("Tried to play sound '%s' from alias '%s', but it was not successfully loaded.\n",
-                    Com_GetSoundFileName(pAlias0), pAlias0->pszAliasName);
-        if (pChannel)
-            *pChannel = -1;
-        return 0;
-    }
-
-    flags = pAlias0->flags;
-    switch ((flags & 0x780) >> 7) {
-    default:
-        if (!snd_enable3D->current.enabled)
-            return 0;
-        if (!SND_AnyActiveListeners()) {
-            Com_Error(ERR_DROP, "attempted to play spatialized alias '%s' while there is no active listener. Most likely this means you tried to play a spatialized sound while not in a level.\n", pAlias0->pszAliasName);
-            return 0;
-        }
-        return SND_StartAlias3DSample(pAlias0, pAlias1, lerp, entnum, org, volume, pitch, timeshift, 0.0f, pAlias0->startDelay, treatAsMaster || (flags & 2), pChannel, system);
-    case 1:
-    case 2:
-    case 7:
-    case 8:
-    case 9:
-    case 10:
-        if (!snd_enable2D->current.enabled)
-            return 0;
-        return SND_StartAlias2DSample(pAlias0, pAlias1, lerp, entnum, volume, pitch, timeshift, 0.0f, pAlias0->startDelay, treatAsMaster || (flags & 2), pChannel, system);
-    }
-}
-
 static __attribute_regparm__(3) int SND_PlaySoundAlias_Internal(const snd_alias_t *pAlias0, const snd_alias_t *pAlias1, float lerp, int entnum, const vec_t *org, int *pChannel, int timeshift, Bool treatAsMaster, snd_alias_system_t system)
 {
     const snd_alias_t *secondaryAlias;
@@ -1179,6 +1047,19 @@ int SND_PlayBlendedSoundAliases(const snd_alias_t *pAlias0, const snd_alias_t *p
     return SND_PlaySoundAlias_Internal(pAlias0, pAlias1, fLerp, entnum, org, NULL, timeshift, 0, system);
 }
 
+int SND_PlayLocalSoundAlias(snd_alias_list_t *aliasList, snd_alias_system_t system)
+{
+    const snd_alias_t *pAlias;
+
+    if (aliasList) {
+        pAlias = Com_PickSoundAliasFromList(aliasList);
+        if (pAlias)
+            return SND_PlaySoundAlias_Internal(pAlias, pAlias, 0.0f, g_snd.listeners[0].entnum, g_snd.listeners[0].orient.origin, NULL, 0, 0, system);
+    }
+
+    return 0;
+}
+
 int SND_PlayLocalSoundAliasByName(const char *aliasname, snd_alias_system_t system)
 {
     const snd_alias_t *pAlias;
@@ -1192,17 +1073,22 @@ int SND_PlayLocalSoundAliasByName(const char *aliasname, snd_alias_system_t syst
     return 0;
 }
 
-int SND_PlayLocalSoundAlias(snd_alias_list_t *aliasList, snd_alias_system_t system)
+// retail 0x44bc50, unreferenced; KisakCOD SND_SetPauseSettings (SUPPORTED)
+void SND_SetPauseSettings(const Bool *pauseSettings)
 {
-    const snd_alias_t *pAlias;
+    int i;
 
-    if (aliasList) {
-        pAlias = Com_PickSoundAliasFromList(aliasList);
-        if (pAlias)
-            return SND_PlaySoundAlias_Internal(pAlias, pAlias, 0.0f, g_snd.listeners[0].entnum, g_snd.listeners[0].orient.origin, NULL, 0, 0, system);
-    }
+    for (i = 0; i < 11; i++)
+        g_snd.pauseSettings[i] = pauseSettings[i];
+}
 
-    return 0;
+// retail 0x44bc80, unreferenced; KisakCOD SND_ResetPauseSettingsToDefaults (SUPPORTED)
+void SND_ResetPauseSettingsToDefaults(void)
+{
+    int i;
+
+    for (i = 0; i < 11; i++)
+        g_snd.pauseSettings[i] = g_snd.defaultPauseSettings[i];
 }
 
 static void SND_PauseSounds(void)
@@ -1282,6 +1168,79 @@ static void SND_UnpauseSounds(void)
     g_snd.pausetime = 0;
 }
 
+// retail 0x44c030, unreferenced; name unknown
+void SND_UpdatePause_44c030(void)
+{
+    Bool paused;
+
+    paused = (*(int *)((char *)cl_paused + 8) != 0);
+    if (paused != g_snd.paused) {
+        if (paused)
+            SND_PauseSounds();
+        else
+            SND_UnpauseSounds();
+    }
+}
+
+static __attribute_regparm__(3) void SND_StartBackground(int track, const snd_alias_t *pAlias, int fadetime, snd_alias_system_t system)
+{
+    int channel;
+    int type;
+    float volume;
+    float pitch;
+    Bool newPaused;
+
+    newPaused = (*(int *)((char *)cl_paused + 8) != 0);
+    if (newPaused != g_snd.paused) {
+        if (newPaused)
+            SND_PauseSounds();
+        else
+            SND_UnpauseSounds();
+    }
+
+    switch ((pAlias->flags & 0x780) >> 7) {
+    case 1:
+    case 2:
+    case 7:
+    case 8:
+    case 9:
+    case 10:
+        break;
+    default:
+        Com_Error(ERR_DROP, "\025alias %s sound %s played as an ambient / music track uses a 3D channel type; should probably be channel 'local'\n", pAlias->pszAliasName, Com_GetSoundFileName(pAlias));
+        break;
+    }
+
+    type = (pAlias->flags & 0x60) >> 5;
+    if (type != 2 && type != 3) {
+        Com_Error(ERR_DROP, "\025alias %s sound %s played as an ambient / music track is not streamed; type must be 'streamed'\n", pAlias->pszAliasName, Com_GetSoundFileName(pAlias));
+    }
+
+    volume = pAlias->fVolMin + (pAlias->fVolMax - pAlias->fVolMin) * randomf();
+
+    pitch = pAlias->fPitchMin + (pAlias->fPitchMax - pAlias->fPitchMin) * randomf();
+
+    channel = track + 32;
+
+    if (!SND_IsStreamChannelFree(channel))
+        SND_StopStreamChannel(channel);
+
+    g_snd.chaninfo[channel].basevolume = volume;
+    g_snd.background[track].goalvolume = volume;
+
+    if (fadetime > 0) {
+        g_snd.background[track].goalrate = g_snd.chaninfo[channel].basevolume / (float)fadetime;
+        g_snd.chaninfo[channel].basevolume = 0.0f;
+    } else {
+        g_snd.background[track].goalrate = 0.0f;
+    }
+
+    if (!*(unsigned char *)((char *)snd_enableStream + 8))
+        return;
+
+    SND_StartAliasStreamOnChannel(pAlias, pAlias, 0.0f, 0x400, (vec_t *)&g_snd.listeners[0].orient.origin, g_snd.chaninfo[channel].basevolume, pitch, 0, 0.0f, pAlias->startDelay, ((unsigned int)pAlias->flags >> 1) & 1, channel, system);
+}
+
 static void SND_StopBackground(int track, int fadetime)
 {
     if (SND_IsStreamChannelFree(track + 32))
@@ -1298,11 +1257,6 @@ static void SND_StopBackground(int track, int fadetime)
     }
 }
 
-void SND_StopMusic(int fadetime)
-{
-    SND_StopBackground(0, fadetime);
-}
-
 void SND_PlayMusicAlias(const snd_alias_t *pAlias, snd_alias_system_t system)
 {
     if (!g_snd.Initialized2d)
@@ -1313,6 +1267,11 @@ void SND_PlayMusicAlias(const snd_alias_t *pAlias, snd_alias_system_t system)
         return;
 
     SND_StartBackground(0, pAlias, 0, system);
+}
+
+void SND_StopMusic(int fadetime)
+{
+    SND_StopBackground(0, fadetime);
 }
 
 void SND_PlayAmbientAlias(const snd_alias_t *pAlias, int fadetime, snd_alias_system_t system)
@@ -1530,6 +1489,17 @@ static void SND_UpdateVolumes(int frametime)
 
     Dvar_ClearModified((dvar_t *)snd_volume);
     g_snd.volume = g_snd.mastervol.volume * *(float *)((char *)snd_volume + 8) * 0.75f;
+}
+
+// retail 0x44cdf0, unreferenced; name unknown
+int SND_IsStreamChannelPlaying_44cdf0(int index)
+{
+    return !SND_IsStreamChannelFree(index) && !g_snd.chaninfo[index].startDelay;
+}
+
+static inline float I_fsel(const float x, const float y, const float z)
+{
+    return x >= 0.0f ? y : z;
 }
 
 static void SND_UpdateSlaveLerp(int frametime)
@@ -1901,79 +1871,6 @@ void SND_Init(void)
     Voice_Init();
 }
 
-// retail 0x44ab00, unreferenced (inlined in SND_FindReplaceableChannel); name unknown
-int SND_CompareChannels_44ab00(int i, int best, int entnum)
-{
-    int diff;
-
-    if (g_snd.chaninfo[i].entnum != g_snd.chaninfo[best].entnum) {
-        if (g_snd.chaninfo[i].entnum == entnum)
-            return -1;
-        if (g_snd.chaninfo[best].entnum == entnum)
-            return 1;
-    }
-    diff = g_snd.chaninfo[i].entchannel - g_snd.chaninfo[best].entchannel;
-    if (!diff)
-        diff = g_snd.chaninfo[i].endtime - g_snd.chaninfo[best].endtime;
-    return diff;
-}
-
-// retail 0x44bc50, unreferenced; KisakCOD SND_SetPauseSettings (SUPPORTED)
-void SND_SetPauseSettings(const Bool *pauseSettings)
-{
-    int i;
-
-    for (i = 0; i < 11; i++)
-        g_snd.pauseSettings[i] = pauseSettings[i];
-}
-
-// retail 0x44bc80, unreferenced; KisakCOD SND_ResetPauseSettingsToDefaults (SUPPORTED)
-void SND_ResetPauseSettingsToDefaults(void)
-{
-    int i;
-
-    for (i = 0; i < 11; i++)
-        g_snd.pauseSettings[i] = g_snd.defaultPauseSettings[i];
-}
-
-// retail 0x44ab50, unreferenced; name unknown
-Bool SND_ChannelEntchannelAtMost_44ab50(int index, int entchannel)
-{
-    return g_snd.chaninfo[index].entchannel <= entchannel;
-}
-
-// retail 0x44cd50, unreferenced; name unknown (busy and not delayed)
-int SND_Is2DChannelPlaying_44cd50(int index)
-{
-    return !SND_Is2DChannelFree(index) && !g_snd.chaninfo[index].startDelay;
-}
-
-// retail 0x44cda0, unreferenced; name unknown
-int SND_Is3DChannelPlaying_44cda0(int index)
-{
-    return !SND_Is3DChannelFree(index) && !g_snd.chaninfo[index].startDelay;
-}
-
-// retail 0x44cdf0, unreferenced; name unknown
-int SND_IsStreamChannelPlaying_44cdf0(int index)
-{
-    return !SND_IsStreamChannelFree(index) && !g_snd.chaninfo[index].startDelay;
-}
-
-extern "C" void *Z_MallocInternal( int size );
-extern "C" void Com_Memcpy( void *dest, const void *src, int count );
-
-// retail 0x44f360, unreferenced; CoD4 SND_RestoreEventually (SUPPORTED)
-void SND_RestoreEventually(int size, const void *data)
-{
-    SND_StopSounds(SND_KEEP_MUSIC_AND_AMBIENT);
-    if (g_snd.restore.buffer)
-        Z_FreeInternal((void *)g_snd.restore.buffer);
-    g_snd.restore.size = size;
-    g_snd.restore.buffer = (byte *)Z_MallocInternal(size);
-    Com_Memcpy((void *)g_snd.restore.buffer, data, size);
-}
-
 void SND_Shutdown(void)
 {
     Voice_Shutdown();
@@ -1996,6 +1893,30 @@ void SND_ShutdownChannels(void)
 {
     SND_StopSounds( (snd_stopsounds_arg_t)(0));
     memset(g_snd.chaninfo, 0, sizeof(g_snd.chaninfo));
+}
+
+static __attribute_regparm__(2) void SND_SaveChanInfo(snd_channel_info_t *chaninfo, MemoryFile *memFile)
+{
+    MemFile_WriteShort(memFile, (short)chaninfo->entnum);
+    MemFile_WriteByte(memFile, (unsigned char)chaninfo->entchannel);
+    MemFile_WriteByte(memFile, chaninfo->master);
+    MemFile_WriteInt(memFile, chaninfo->startDelay);
+    MemFile_WriteFloat(memFile, chaninfo->basevolume);
+    MemFile_WriteFloat(memFile, chaninfo->lerp);
+    MemFile_WriteVec3(memFile, chaninfo->offset);
+}
+
+static __attribute_regparm__(2) void SND_RestoreChanInfo(snd_channel_info_t *chaninfo, MemoryFile *memFile)
+{
+    memset(chaninfo, 0, sizeof(snd_channel_info_t));
+
+    chaninfo->entnum = MemFile_ReadShort(memFile);
+    chaninfo->entchannel = MemFile_ReadByte(memFile);
+    chaninfo->master = MemFile_ReadByte(memFile) != 0;
+    chaninfo->startDelay = MemFile_ReadInt(memFile);
+    chaninfo->basevolume = MemFile_ReadFloat(memFile);
+    chaninfo->lerp = MemFile_ReadFloat(memFile);
+    MemFile_ReadVec3(memFile, chaninfo->offset);
 }
 
 static void SND_SaveSoundAlias(const snd_alias_t *alias, MemoryFile *memFile)
@@ -2170,6 +2091,49 @@ static void SND_SaveStreamChannel(int chanIndex, MemoryFile *memFile)
     MemFile_WriteData(memFile, sizeof(info), &info);
 }
 
+static __attribute_regparm__(2)
+    Bool SND_RestoreStreamChannel(int channel, MemoryFile *memFile)
+{
+    const snd_alias_t *pAlias0;
+    const snd_alias_t *pAlias1;
+    snd_channel_info_t chaninfo;
+    snd_save_stream_t info;
+    int rate;
+    int type;
+    pAlias0 = SND_RestoreSoundAlias(memFile);
+    if (!pAlias0)
+        return 0;
+    pAlias1 = SND_RestoreSoundAlias(memFile);
+    SND_RestoreChanInfo(&chaninfo, memFile);
+    MemFile_ReadData(memFile, sizeof(info), &info);
+    type = (pAlias0->flags & 0x60) >> 5;
+    if (type != 2 && type != 3)
+        return 1;
+    type = (pAlias1->flags & 0x60) >> 5;
+    if (type != 2 && type != 3)
+        return 1;
+    if (!SND_ValidateSoundAliasBlend(pAlias0, pAlias1, 0))
+        return 1;
+    if (channel < 0) {
+        SND_StartAliasStream(pAlias0, pAlias1, chaninfo.lerp, chaninfo.entnum, info.org, info.basevolume, 1.0f, 0, info.fraction, 0, &channel, (snd_alias_system_t)(1));
+    } else {
+        if (!*(unsigned char *)((char *)snd_enableStream + 8))
+            return 1;
+        SND_StartAliasStreamOnChannel(pAlias0, pAlias1, chaninfo.lerp, chaninfo.entnum, info.org, info.basevolume, 1.0f, 0, info.fraction, chaninfo.startDelay, chaninfo.master, channel, (snd_alias_system_t)(1));
+    }
+    if (channel < 0)
+        return 1;
+    if (SND_IsStreamChannelFree(channel))
+        return 1;
+    SND_SetStreamChannelFromSaveInfo(channel, &info);
+    rate = I_fround((float)info.rate * g_snd.chaninfo[channel].pitch * g_snd.timescale);
+    SND_SetStreamChannelPlaybackRate(channel, rate);
+    g_snd.chaninfo[channel].offset[0] = chaninfo.offset[0];
+    g_snd.chaninfo[channel].offset[1] = chaninfo.offset[1];
+    g_snd.chaninfo[channel].offset[2] = chaninfo.offset[2];
+    return 1;
+}
+
 void SND_Save(MemoryFile *memFile)
 {
     int i;
@@ -2246,6 +2210,17 @@ void SND_Restore(MemoryFile *memFile)
 
     while (SND_RestoreStreamChannel(-1, memFile))
         ;
+}
+
+// retail 0x44f360, unreferenced; CoD4 SND_RestoreEventually (SUPPORTED)
+void SND_RestoreEventually(int size, const void *data)
+{
+    SND_StopSounds(SND_KEEP_MUSIC_AND_AMBIENT);
+    if (g_snd.restore.buffer)
+        Z_FreeInternal((void *)g_snd.restore.buffer);
+    g_snd.restore.size = size;
+    g_snd.restore.buffer = (byte *)Z_MallocInternal(size);
+    Com_Memcpy((void *)g_snd.restore.buffer, data, size);
 }
 
 static int SND_Get2DChannelOverlay(snd_overlay_info_t *info, int maxcount)
@@ -2388,4 +2363,30 @@ int SND_GetSoundOverlay(snd_overlay_type_t type, snd_overlay_info_t *info, int m
         return 0;
     }
 }
+
+int SND_GetListenerIndexNearestToOrigin(const vec_t *origin)
+{
+    return 0;
+}
+
+void SND_ErrorCleanup(void)
+{
+    if (g_snd.restore.buffer) {
+        Z_FreeInternal((void *)g_snd.restore.buffer);
+        g_snd.restore.buffer = 0;
+    }
+}
+
+// retail 0x44cd50, unreferenced; name unknown (busy and not delayed)
+int SND_Is2DChannelPlaying_44cd50(int index)
+{
+    return !SND_Is2DChannelFree(index) && !g_snd.chaninfo[index].startDelay;
+}
+
+// retail 0x44cda0, unreferenced; name unknown
+int SND_Is3DChannelPlaying_44cda0(int index)
+{
+    return !SND_Is3DChannelFree(index) && !g_snd.chaninfo[index].startDelay;
+}
+
 

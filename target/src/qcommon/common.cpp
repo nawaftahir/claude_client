@@ -128,6 +128,187 @@ void Field_CompleteCommand( field_t *field )
 {
 }
 
+
+// Leading members only; the full layouts live in oc/headers/common_types.h.
+struct refexport_t
+{
+	void (*Shutdown)( int );
+	void *unused0[61];
+	void (*ResetImageAllocations)( void );
+	void *unused1[39];
+	void (*SyncRenderThread)( void );
+	void (*AbortRenderCommands)( void );
+};
+struct clientStatic_t
+{
+	qboolean quit;
+	qboolean hunkUsersStarted;
+	char servername[256];
+	qboolean rendererStarted;
+	qboolean soundStarted;
+	qboolean uiStarted;
+	char unused0[2919008];
+	int whiteMaterial;
+	int consoleMaterial;
+	int consoleFont;
+};
+struct clientConnection_t
+{
+	char unused0[264100];
+	qboolean demorecording;
+	qboolean demoplaying;
+	int unused1[3];
+	fileHandle_t demofile;
+};
+extern clientConnection_t clientConnections[1];
+#define clc clientConnections[0]
+extern refexport_t re;
+extern clientStatic_t cls;
+extern unsigned char updateScreenCalled;
+
+/*
+=============
+Com_ShutdownInternal
+=============
+*/
+void CL_ShutdownCGame( void );
+qboolean CL_ShutdownUI( void );
+void FS_FCloseFile( fileHandle_t f );
+
+
+// errors that end a session without a drop dialog
+const char *noticeErrors[] =
+{
+	"EXE_SERVER_DISCONNECTED",
+	"EXE_DISCONNECTED",
+	"EXE_SERVERISFULL",
+	"XBOXLIVE_SIGNEDOUTOFLIVE",
+	"XBOXLIVE_CANTJOINSESSION",
+	"XBOXLIVE_MPNOTALLOWED",
+	"XBOXLIVE_MUSTLOGIN",
+	""
+};
+
+/*
+=================
+Com_SetErrorMessage
+=================
+*/
+const char *SEH_LocalizeTextMessage( const char *pszInputBuffer, const char *pszMessageType, msgLocErrType_t errType );
+
+static int com_unreferenced5;
+
+
+qboolean UI_SetActiveMenu( int menu );
+void SND_ErrorCleanup( void );
+void CL_FlushDebugData( qboolean fromServer );
+void CL_ConsoleFixPosition( void );
+qboolean UI_AnyFullScreenMenuVisible( void );
+void SEH_UpdateLanguageInfo( void );
+
+
+static int com_numConsoleLines;
+static char *com_consoleLines[MAX_CONSOLE_LINES];
+
+#define CDKEY_REGISTRY_PATH "SOFTWARE\\Activision\\Call of Duty 2"
+
+char cl_cdkey[34] = "                                ";
+char cl_cdkeychecksum[5] = "    ";
+
+qboolean CL_CDKeyValidate( const char *key, const char *checksum );
+
+
+
+extern const dvar_t *com_statmon;
+
+
+
+void Com_CheckSetRecommended( void );
+
+/*
+================
+Com_WriteConfigToFile
+================
+*/
+extern void Key_WriteBindings( fileHandle_t f );
+
+
+extern const dvar_t *com_playerProfile;
+
+/*
+==================
+Com_UpdateStatMonWarnings
+==================
+*/
+extern int com_fileAccessed;
+extern void StatMon_Warning( int type, int duration, const char *materialName );
+
+
+
+
+/*
+================
+Com_CloseLogfiles
+================
+*/
+
+
+
+
+
+
+
+
+extern dvar_t *loc_language;
+
+/*
+========================================================================
+
+AUTOCONFIGURE
+
+Picks CPU/GPU dvar presets from configure_mp.csv based on measured hardware,
+and re-runs the pick whenever the hardware or the csv itself changes.
+
+========================================================================
+*/
+
+struct SysInfo
+{
+	double cpuGHz;
+	int sysMB;
+	bool SSE;
+	char gpuDescription[512];
+};
+
+extern void Sys_GetInfo( SysInfo *info );
+extern bool Sys_HasConfigureChecksumChanged( int checksum );
+extern bool Sys_HasInfoChanged( void );
+extern void Sys_ArchiveInfo( int checksum );
+extern dvar_t *Dvar_SetFromStringByNameFromSource( const char *dvarName, const char *string, DvarSetSource source );
+extern bool Dvar_AnyLatchedValues( void );
+
+/*
+==================
+Com_GpuStringCompare
+==================
+*/
+
+/*
+==================
+Com_SkipConfigureBlankLines
+==================
+*/
+
+/*
+==================
+Com_HasConfigureChecksumChanged
+==================
+*/
+// retail calls FS_FreeFile here
+#pragma inline_depth(0)
+#pragma inline_depth()
+
+
 /*
 ================
 Com_BeginRedirect
@@ -160,7 +341,6 @@ void Com_EndRedirect( void )
 	rd_buffersize = 0;
 	rd_flush = NULL;
 }
-
 
 /*
 ===================
@@ -290,52 +470,6 @@ void Com_DPrintf( const char *fmt, ... )
 	Com_Printf( "%s", msg );
 }
 
-// Leading members only; the full layouts live in oc/headers/common_types.h.
-struct refexport_t
-{
-	void (*Shutdown)( int );
-	void *unused0[61];
-	void (*ResetImageAllocations)( void );
-	void *unused1[39];
-	void (*SyncRenderThread)( void );
-	void (*AbortRenderCommands)( void );
-};
-struct clientStatic_t
-{
-	qboolean quit;
-	qboolean hunkUsersStarted;
-	char servername[256];
-	qboolean rendererStarted;
-	qboolean soundStarted;
-	qboolean uiStarted;
-	char unused0[2919008];
-	int whiteMaterial;
-	int consoleMaterial;
-	int consoleFont;
-};
-struct clientConnection_t
-{
-	char unused0[264100];
-	qboolean demorecording;
-	qboolean demoplaying;
-	int unused1[3];
-	fileHandle_t demofile;
-};
-extern clientConnection_t clientConnections[1];
-#define clc clientConnections[0]
-extern refexport_t re;
-extern clientStatic_t cls;
-extern unsigned char updateScreenCalled;
-
-/*
-=============
-Com_ShutdownInternal
-=============
-*/
-void CL_ShutdownCGame( void );
-qboolean CL_ShutdownUI( void );
-void FS_FCloseFile( fileHandle_t f );
-
 static void Com_ShutdownInternal( const char *finalmsg )
 {
 #ifndef DEDICATED
@@ -401,20 +535,6 @@ void Com_SetTimeScale( float timescale )
 	com_codeTimeScale = timescale;
 }
 
-
-// errors that end a session without a drop dialog
-const char *noticeErrors[] =
-{
-	"EXE_SERVER_DISCONNECTED",
-	"EXE_DISCONNECTED",
-	"EXE_SERVERISFULL",
-	"XBOXLIVE_SIGNEDOUTOFLIVE",
-	"XBOXLIVE_CANTJOINSESSION",
-	"XBOXLIVE_MPNOTALLOWED",
-	"XBOXLIVE_MUSTLOGIN",
-	""
-};
-
 bool Com_IsNoticeError( const char *msg )
 {
 	int i;
@@ -427,13 +547,6 @@ bool Com_IsNoticeError( const char *msg )
 
 	return false;
 }
-
-/*
-=================
-Com_SetErrorMessage
-=================
-*/
-const char *SEH_LocalizeTextMessage( const char *pszInputBuffer, const char *pszMessageType, msgLocErrType_t errType );
 
 void Com_SetErrorMessage( const char *errorMessage )
 {
@@ -472,16 +585,6 @@ void Com_SetErrorMessage( const char *errorMessage )
 		Dvar_SetString(ui_errorMessage, errorMessage);
 	}
 }
-
-static int com_unreferenced5;
-
-
-qboolean UI_SetActiveMenu( int menu );
-void SND_ErrorCleanup( void );
-void CL_FlushDebugData( qboolean fromServer );
-void CL_ConsoleFixPosition( void );
-qboolean UI_AnyFullScreenMenuVisible( void );
-void SEH_UpdateLanguageInfo( void );
 
 /*
 ================
@@ -647,7 +750,6 @@ void Com_Error( errorParm_t code, const char *fmt, ... )
 	longjmp(*(jmp_buf *)Sys_GetValue(THREAD_VALUE_COM_ERROR), -1);
 }
 
-
 void Com_ErrorAbort( void )
 {
 	int errorEntered;
@@ -686,9 +788,6 @@ void Com_Quit_f()
 
 	Sys_Quit();
 }
-
-static int com_numConsoleLines;
-static char *com_consoleLines[MAX_CONSOLE_LINES];
 
 /*
 ==================
@@ -752,88 +851,6 @@ Com_ForceSafeMode
 void Com_ForceSafeMode()
 {
 	com_safemode = qtrue;
-}
-
-#define CDKEY_REGISTRY_PATH "SOFTWARE\\Activision\\Call of Duty 2"
-
-char cl_cdkey[34] = "                                ";
-char cl_cdkeychecksum[5] = "    ";
-
-qboolean CL_CDKeyValidate( const char *key, const char *checksum );
-
-// retail 0x4317f0; name unknown
-static void Com_ClearCDKey( void )
-{
-	strcpy( cl_cdkey, "                " );
-}
-
-/*
-=================
-Com_ReadCDKey
-=================
-*/
-void Com_ReadCDKey( void )
-{
-	HKEY hKey;
-	DWORD size;
-	DWORD type;
-	char buffer[21];
-
-	if ( RegOpenKeyA( HKEY_LOCAL_MACHINE, CDKEY_REGISTRY_PATH, &hKey ) != ERROR_SUCCESS )
-	{
-		strcpy( cl_cdkey, "                " );
-		return;
-	}
-
-	type = REG_SZ;
-	size = sizeof( buffer );
-	if ( RegQueryValueExA( hKey, "codkey", NULL, &type, (LPBYTE)buffer, &size ) != ERROR_SUCCESS )
-	{
-		RegCloseKey( hKey );
-		strcpy( cl_cdkey, "                " );
-		return;
-	}
-
-	RegCloseKey( hKey );
-	if ( size == sizeof( buffer ) )
-	{
-		memcpy( cl_cdkey, buffer, 16 );
-		cl_cdkey[16] = 0;
-		memcpy( cl_cdkeychecksum, buffer + 16, 4 );
-		cl_cdkeychecksum[4] = 0;
-		if ( CL_CDKeyValidate( cl_cdkey, cl_cdkeychecksum ) )
-			return;
-	}
-	Com_ClearCDKey();
-}
-
-/*
-=================
-Com_WriteCDKey
-
-Stores a valid key and its checksum in the registry; an invalid key is blanked.
-=================
-*/
-void Com_WriteCDKey( void )
-{
-	HKEY hKey;
-	char buffer[21];
-
-	if ( !CL_CDKeyValidate( cl_cdkey, cl_cdkeychecksum ) )
-	{
-		strcpy( cl_cdkey, "                " );
-		return;
-	}
-
-	if ( RegCreateKeyA( HKEY_LOCAL_MACHINE, CDKEY_REGISTRY_PATH, &hKey ) != ERROR_SUCCESS )
-		return;
-
-	memcpy( buffer, cl_cdkey, 16 );
-	memcpy( buffer + 16, cl_cdkeychecksum, 4 );
-	buffer[20] = 0;
-
-	RegSetValueExA( hKey, "codkey", 0, REG_SZ, (const BYTE *)buffer, sizeof( buffer ) );
-	RegCloseKey( hKey );
 }
 
 /*
@@ -1016,7 +1033,6 @@ void Com_PushEvent( sysEvent_t *event )
 	*ev = *event;
 	com_pushedEventsHead++;
 }
-
 
 void Com_ShutdownEvents( void )
 {
@@ -1286,6 +1302,487 @@ static void Com_Crash_f( void )
 	* ( int * ) 0 = 0x12345678;
 }
 
+// retail 0x4317f0; name unknown
+static void Com_ClearCDKey( void )
+{
+	strcpy( cl_cdkey, "                " );
+}
+
+/*
+=================
+Com_ReadCDKey
+=================
+*/
+void Com_ReadCDKey( void )
+{
+	HKEY hKey;
+	DWORD size;
+	DWORD type;
+	char buffer[21];
+
+	if ( RegOpenKeyA( HKEY_LOCAL_MACHINE, CDKEY_REGISTRY_PATH, &hKey ) != ERROR_SUCCESS )
+	{
+		strcpy( cl_cdkey, "                " );
+		return;
+	}
+
+	type = REG_SZ;
+	size = sizeof( buffer );
+	if ( RegQueryValueExA( hKey, "codkey", NULL, &type, (LPBYTE)buffer, &size ) != ERROR_SUCCESS )
+	{
+		RegCloseKey( hKey );
+		strcpy( cl_cdkey, "                " );
+		return;
+	}
+
+	RegCloseKey( hKey );
+	if ( size == sizeof( buffer ) )
+	{
+		memcpy( cl_cdkey, buffer, 16 );
+		cl_cdkey[16] = 0;
+		memcpy( cl_cdkeychecksum, buffer + 16, 4 );
+		cl_cdkeychecksum[4] = 0;
+		if ( CL_CDKeyValidate( cl_cdkey, cl_cdkeychecksum ) )
+			return;
+	}
+	Com_ClearCDKey();
+}
+
+/*
+=================
+Com_WriteCDKey
+
+Stores a valid key and its checksum in the registry; an invalid key is blanked.
+=================
+*/
+void Com_WriteCDKey( void )
+{
+	HKEY hKey;
+	char buffer[21];
+
+	if ( !CL_CDKeyValidate( cl_cdkey, cl_cdkeychecksum ) )
+	{
+		strcpy( cl_cdkey, "                " );
+		return;
+	}
+
+	if ( RegCreateKeyA( HKEY_LOCAL_MACHINE, CDKEY_REGISTRY_PATH, &hKey ) != ERROR_SUCCESS )
+		return;
+
+	memcpy( buffer, cl_cdkey, 16 );
+	memcpy( buffer + 16, cl_cdkeychecksum, 4 );
+	buffer[20] = 0;
+
+	RegSetValueExA( hKey, "codkey", 0, REG_SZ, (const BYTE *)buffer, sizeof( buffer ) );
+	RegCloseKey( hKey );
+}
+
+/*
+==================
+Com_SetRecommended
+==================
+*/
+// retail 0x431a50, unreferenced; name unknown
+int Com_ConfigureChecksum_431a50( const char *buffer, int size )
+{
+	int checksum;
+	int i;
+
+	checksum = 0;
+	for ( i = 0; i < size; i++ )
+		checksum = checksum * 0x7a69 + buffer[i];
+
+	return ( checksum & 0xfffffff ) + 1;
+}
+
+static bool Com_HasConfigureChecksumChanged( void )
+{
+	void *csv;
+	int filesize;
+	int checksum;
+	int i;
+
+	filesize = FS_ReadFile( "configure_mp.csv", &csv );
+	if ( filesize < 0 )
+		Com_Error( ERR_FATAL, "EXE_ERR_NOT_FOUND" "\x15" "configure_mp.csv" );
+
+	checksum = 0;
+	for ( i = 0; i < filesize; i++ )
+		checksum = checksum * 0x7a69 + ( (char *)csv )[i];
+
+	FS_FreeFile( csv );
+	checksum &= 0xfffffff;
+
+	return Sys_HasConfigureChecksumChanged( checksum + 1 );
+}
+
+static int Com_GpuStringCompare( const char *wild, const char *s )
+{
+	for ( ;; )
+	{
+		char c = *wild++;
+
+		if ( c == '*' )
+		{
+			if ( *wild == 0 )
+				return 0;
+
+			if ( *s == 0 )
+				continue;
+
+			if ( Com_GpuStringCompare( wild - 1, s + 1 ) == 0 )
+				return 0;
+		}
+		else
+		{
+			char sc = *s;
+
+			if ( c == ' ' )
+			{
+				if ( sc != 0 && !isdigit( sc ) && Com_GpuStringCompare( wild - 1, s + 1 ) == 0 )
+					return 0;
+				continue;
+			}
+
+			s++;
+
+			if ( c != sc && c != '?' )
+			{
+				int a = tolower( sc );
+				int d = tolower( c ) - a;
+
+				if ( d != 0 )
+					return ( d >= 0 ) * 2 - 1;
+			}
+
+			if ( c == 0 )
+				return 0;
+		}
+	}
+}
+/*
+==================
+Com_MatchGpuTemplate
+==================
+*/
+static bool Com_MatchGpuTemplate( const char *find, const char *gpuDescription )
+{
+	char wildcard[0x400];
+	int len;
+	const char *p;
+
+	wildcard[0] = '*';
+	len = 1;
+
+	if ( *find )
+	{
+		for ( p = find; *p; p++ )
+		{
+			if ( isspace(*p) )
+			{
+				if ( wildcard[len - 1] == ' ' )
+					continue;
+
+				wildcard[len] = ' ';
+			}
+			else
+			{
+				wildcard[len] = *p;
+			}
+
+			len++;
+
+			if ( len == 0x3ff )
+				Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: \"find\" string is too long\n" );
+		}
+	}
+
+	if ( wildcard[len - 1] != '*' )
+		wildcard[len++] = '*';
+
+	wildcard[len] = 0;
+
+	return Com_GpuStringCompare( wildcard, gpuDescription ) == 0;
+}
+
+/*
+==================
+Com_GetConfigureDvarNames
+==================
+*/
+static int Com_GetConfigureDvarNames( const char **text, char *dvarNames )
+{
+	int dvarCount = 0;
+
+	for ( ;; )
+	{
+		const char *token = Com_ParseOnLine( text );
+
+		if ( !*text )
+			Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: unexpected end-of-file" );
+		if ( !*token )
+			return dvarCount;
+
+		if ( strlen( token ) > 0x1f )
+			Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: dvar name \"%s\" longer than %i\n", token, 0x1f );
+		if ( dvarCount >= 0x40 )
+			Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: more than %i dvars\n", 0x40 );
+
+		I_strncpyz( dvarNames + dvarCount * 0x20, token, 0x20 );
+		dvarCount++;
+	}
+}
+
+/*
+==================
+Com_GetConfigureDvarValues
+==================
+*/
+static void Com_GetConfigureDvarValues( int dvarCount, const char **text, char *dvarValues )
+{
+	int dvarIndex;
+
+	for ( dvarIndex = 0; dvarIndex < dvarCount; dvarIndex++ )
+	{
+		const char *token = Com_ParseOnLine( text );
+
+		if ( !*text )
+			Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: unexpected end-of-file" );
+		if ( !*token )
+			Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: missing entry in dvar value column %i\n", dvarIndex );
+		if ( strlen( token ) > 0x1f )
+			Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: entry '%s' in dvar value column %i is longer than %i\n", token, dvarIndex, 0x1f );
+
+		if ( dvarValues )
+			I_strncpyz( &dvarValues[0x20 * dvarIndex], token, 0x20 );
+	}
+
+	{
+		const char *token = Com_ParseOnLine( text );
+		if ( *token )
+			Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: extra dvar value column(s): value = %s\n", token );
+	}
+}
+
+/*
+==================
+Com_SetConfigureDvars
+==================
+*/
+static void Com_SetConfigureDvars( int dvarCount, const char *dvarNames, const char *dvarValues )
+{
+	int dvarIndex;
+
+	for ( dvarIndex = 0; dvarIndex < dvarCount; dvarIndex++ )
+	{
+		const char *name = dvarNames + dvarIndex * 0x20;
+		const char *value = dvarValues + dvarIndex * 0x20;
+
+		Dvar_SetFromStringByNameFromSource( name, value, DVAR_SOURCE_EXTERNAL );
+
+		Dvar_AddFlags( Dvar_FindVar( name ), DVAR_ARCHIVE );
+	}
+}
+
+/*
+==================
+Com_ParseCpuConfig
+==================
+*/
+static bool Com_ParseCpuConfig( const SysInfo *info, const char **text )
+{
+	char dvarNames[0x40 * 0x20];
+	char dvarValues[0x40 * 0x20];
+	SysInfo row;
+	SysInfo best;
+	int dvarCount;
+	bool foundCpuMatch;
+	bool isBest;
+	const char *token;
+
+	best.cpuGHz = -1.0;
+	dvarCount = 0;
+	best.sysMB = 0;
+	foundCpuMatch = false;
+
+	for ( ;; )
+	{
+		token = Com_Parse( text );
+		if ( !text )
+			break;
+
+		if ( !*token || *token == '#' )
+		{
+			Com_SkipRestOfLine( text );
+			continue;
+		}
+
+		if ( !stricmp( token, "gpu" ) )
+		{
+			Com_UngetToken();
+			break;
+		}
+
+		if ( !dvarCount )
+		{
+			if ( stricmp( token, "cpu ghz" ) )
+				Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: \"cpu ghz\" should be the first column\n" );
+			token = Com_ParseOnLine( text );
+			if ( stricmp( token, "sys mb" ) )
+				Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: \"sys mb\" should be the second column\n" );
+			dvarCount = Com_GetConfigureDvarNames( text, dvarNames );
+			continue;
+		}
+
+		row.cpuGHz = atof( token );
+		if ( row.cpuGHz < 0.0 )
+			Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: cpu ghz %g not allowed to be less than 0\n", row.cpuGHz );
+
+		row.sysMB = atoi( Com_ParseOnLine( text ) );
+		if ( row.sysMB < 0x80 )
+			Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: sys mb %i not allowed to be less than 128\n", row.sysMB );
+
+		isBest = false;
+		if ( info->cpuGHz >= row.cpuGHz && info->sysMB >= row.sysMB )
+		{
+			if ( best.cpuGHz < row.cpuGHz || ( best.cpuGHz == row.cpuGHz && best.sysMB < row.sysMB ) )
+			{
+				isBest = true;
+				best = row;
+				foundCpuMatch = true;
+			}
+		}
+		Com_GetConfigureDvarValues( dvarCount, text, isBest ? dvarValues : NULL );
+	}
+
+	if ( !foundCpuMatch )
+		return false;
+
+	Com_Printf( "configure_mp.csv: using CPU configuration %.0f GHz %i MB\n", best.cpuGHz, best.sysMB );
+	Cbuf_AddText( "exec configure_mp.cfg" );
+	Cbuf_Execute();
+	Com_SetConfigureDvars( dvarCount, dvarNames, dvarValues );
+
+	return true;
+}
+
+/*
+==================
+Com_ParseGpuConfig
+==================
+*/
+static bool Com_ParseGpuConfig( const char **text, const SysInfo *info )
+{
+	char dvarNames[0x40 * 0x20];
+	char dvarValues[0x40 * 0x20];
+	int dvarCount;
+	bool foundGpuMatch;
+	const char *token;
+
+	token = Com_Parse( text );
+	if ( stricmp( token, "gpu" ) )
+	{
+		Com_UngetToken();
+		return false;
+	}
+
+	dvarCount = Com_GetConfigureDvarNames( text, dvarNames );
+	foundGpuMatch = false;
+
+	for ( ;; )
+	{
+		token = Com_Parse( text );
+		if ( !*text )
+			break;
+
+		if ( !*token || *token == '#' )
+		{
+			Com_SkipRestOfLine( text );
+			continue;
+		}
+
+		if ( !foundGpuMatch && Com_MatchGpuTemplate( token, info->gpuDescription ) )
+		{
+			Com_Printf( "configure_mp.csv: using GPU configuration \"%s\"\n", token );
+			Com_GetConfigureDvarValues( dvarCount, text, dvarValues );
+			Com_SetConfigureDvars( dvarCount, dvarNames, dvarValues );
+			foundGpuMatch = true;
+		}
+		else
+		{
+			Com_GetConfigureDvarValues( dvarCount, text, NULL );
+		}
+	}
+
+	return foundGpuMatch;
+}
+
+void Com_SetRecommended( qboolean restart )
+{
+	SysInfo info;
+	void *csv;
+	int filesize;
+	const char *text;
+	int checksum;
+	int i;
+
+	Com_Printf( "========= autoconfigure\n" );
+
+	Sys_GetInfo( &info );
+	// startup code can leave MMX state live, which corrupts the first x87 op
+	info.cpuGHz *= 1.02;
+	if ( info.sysMB >= 0x80 )
+		info.sysMB += 8;
+	else
+		info.sysMB = 0x80;
+
+	filesize = FS_ReadFile( "configure_mp.csv", &csv );
+	if ( filesize < 0 )
+		Com_Error( ERR_FATAL, "EXE_ERR_NOT_FOUND" "\x15" "configure_mp.csv" );
+
+	text = (const char *)csv;
+	Com_BeginParseSession( "configure_mp.csv" );
+	Com_SetCSV( qtrue );
+
+	if ( !Com_ParseCpuConfig( &info, &text ) )
+	{
+		Sys_GetInfo( &info );
+		Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: " "\x14" "EXE_ERR_COULDNT_CONFIGURE" "\x15" " %.0f GHz %i MB\n", info.cpuGHz, info.sysMB );
+	}
+
+	if ( !Com_ParseGpuConfig( &text, &info ) )
+		Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: " "\x14" "EXE_ERR_COULDNT_CONFIGURE" "\x15" " \"%s\"\n", info.gpuDescription );
+
+	Com_EndParseSessionInl();
+
+	checksum = 0;
+	for ( i = 0; i < filesize; i++ )
+		checksum = checksum * 0x7a69 + ( (char *)csv )[i];
+
+	FS_FreeFile( csv );
+	checksum &= 0xfffffff;
+	Sys_ArchiveInfo( checksum + 1 );
+
+	if ( restart && Dvar_AnyLatchedValues() )
+		Cbuf_AddText( "snd_restart\n" );
+}
+
+/*
+==================
+Com_CheckSetRecommended
+==================
+*/
+void Com_CheckSetRecommended( void )
+{
+	if ( !com_recommendedSet->current.boolean || Com_HasConfigureChecksumChanged() )
+	{
+		Com_SetRecommended( qfalse );
+		Dvar_SetBool( com_recommendedSet, qtrue );
+	}
+
+	if ( Sys_HasInfoChanged() )
+		Com_SetRecommended( qfalse );
+}
 
 void Com_SetScriptSettings( void )
 {
@@ -1314,8 +1811,6 @@ void COM_PlayIntroMovies()
 	Dvar_SetString(nextmap, "cinematic IW_logo; set nextmap cinematic cod_intro");
 	Dvar_SetBool(com_introPlayed, true);
 }
-
-extern const dvar_t *com_statmon;
 
 void Com_InitDvars()
 {
@@ -1392,14 +1887,6 @@ void Com_ExecStartupConfigs( const char *configFile )
 
 	Cbuf_Execute();
 }
-
-
-void Com_StartupConfigs( void )
-{
-	Com_InitPlayerProfiles();
-}
-
-void Com_CheckSetRecommended( void );
 
 static void Com_Init_Try_Block_Function( char *commandLine )
 {
@@ -1519,13 +2006,6 @@ void Com_Init( char* commandLine )
 	}
 }
 
-/*
-================
-Com_WriteConfigToFile
-================
-*/
-extern void Key_WriteBindings( fileHandle_t f );
-
 void Com_WriteConfigToFile( const char *filename )
 {
 	fileHandle_t f = FS_FOpenFileWrite(filename);
@@ -1543,7 +2023,6 @@ void Com_WriteConfigToFile( const char *filename )
 	FS_FCloseFile(f);
 }
 
-
 void Com_WriteDefaultsToFile( const char *filename )
 {
 	fileHandle_t f;
@@ -1560,8 +2039,6 @@ void Com_WriteDefaultsToFile( const char *filename )
 	Dvar_WriteDefaults(f);
 	FS_FCloseFile(f);
 }
-
-extern const dvar_t *com_playerProfile;
 
 /*
 ===============
@@ -1718,11 +2195,28 @@ int Com_ModifyMsec( int msec )
 
 /*
 ==================
-Com_UpdateStatMonWarnings
+Com_DedicatedModified
 ==================
 */
-extern int com_fileAccessed;
-extern void StatMon_Warning( int type, int duration, const char *materialName );
+void Com_DedicatedModified()
+{
+	if ( com_dedicated->flags & DVAR_ROM )
+		return;
+
+	if ( com_dedicated->latched.integer == com_dedicated->current.integer )
+		return;
+
+	com_dedicated = Dvar_RegisterInt("dedicated", 0, 0, 2, DVAR_LATCH | DVAR_CHANGEABLE_RESET);
+
+	if ( com_dedicated->current.integer )
+		Dvar_RegisterInt("dedicated", 0, 0, 2, DVAR_ROM | DVAR_CHANGEABLE_RESET);
+
+	Dvar_ClearModified( com_dedicated );
+	CL_Shutdown();
+	Sys_ShowConsole( 1, qtrue );
+	Sys_NormalExit();
+	SV_AddDedicatedCommands();
+}
 
 static void Com_UpdateStatMonWarnings()
 {
@@ -1761,31 +2255,6 @@ static void Com_ViewLogModified()
 		Sys_ShowConsole( com_viewlog->current.integer, qfalse );
 
 	Dvar_ClearModified( com_viewlog );
-}
-
-/*
-==================
-Com_DedicatedModified
-==================
-*/
-void Com_DedicatedModified()
-{
-	if ( com_dedicated->flags & DVAR_ROM )
-		return;
-
-	if ( com_dedicated->latched.integer == com_dedicated->current.integer )
-		return;
-
-	com_dedicated = Dvar_RegisterInt("dedicated", 0, 0, 2, DVAR_LATCH | DVAR_CHANGEABLE_RESET);
-
-	if ( com_dedicated->current.integer )
-		Dvar_RegisterInt("dedicated", 0, 0, 2, DVAR_ROM | DVAR_CHANGEABLE_RESET);
-
-	Dvar_ClearModified( com_dedicated );
-	CL_Shutdown();
-	Sys_ShowConsole( 1, qtrue );
-	Sys_NormalExit();
-	SV_AddDedicatedCommands();
 }
 
 /*
@@ -1847,7 +2316,6 @@ done:
 	Com_UpdateStatMonWarnings();
 }
 
-
 // empty in the dedicated build
 // retail 0x433820
 // retail 0x433800, unreferenced (inlined at its callers); name unknown
@@ -1885,12 +2353,6 @@ void Com_ResetFrametime()
 	com_lastFrameTime = Sys_MilliSeconds();
 }
 
-
-// empty in the dedicated build
-void Com_CheckSyncFrame( void )
-{
-}
-
 void Com_Frame( void )
 {
 	_controlfp( _PC_24, _MCW_PC );
@@ -1910,20 +2372,6 @@ void Com_Frame( void )
 }
 
 /*
-================
-Com_CloseLogfiles
-================
-*/
-void Com_CloseLogfiles()
-{
-	if ( logfile )
-	{
-		FS_FCloseFile(logfile);
-		logfile = 0;
-	}
-}
-
-/*
 ===============
 Com_Close
 ===============
@@ -1938,7 +2386,6 @@ void Com_Close()
 	Hunk_Clear();
 	Scr_Shutdown();
 }
-
 
 void Field_Clear( field_t *edit )
 {
@@ -1973,18 +2420,15 @@ void Com_Restart()
 	Com_InitDObj();
 }
 
-
 void *MT_AllocAnimTree( int numBytes )
 {
 	return MT_Alloc(numBytes, 5);
 }
 
-
 XAnimTree_s *Com_XAnimCreateSmallTree( XAnim_s *anims )
 {
 	return XAnimCreateTree(anims, MT_AllocAnimTree);
 }
-
 
 void Com_XAnimFreeSmallTree( XAnimTree_s *animtree )
 {
@@ -2001,7 +2445,6 @@ void Com_SetWeaponInfoMemory( int iSource )
 	iWeaponInfoSource = iSource;
 }
 
-
 void Com_FreeWeaponInfoMemory( int iSource )
 {
 	if ( iSource != iWeaponInfoSource )
@@ -2010,7 +2453,6 @@ void Com_FreeWeaponInfoMemory( int iSource )
 	iWeaponInfoSource = 0;
 	BG_ShutdownWeaponDefFiles();
 }
-
 
 int Com_AddToString( const char *add, char *msg, int len, int maxlen, int mayAddQuotes )
 {
@@ -2050,9 +2492,6 @@ int Com_AddToString( const char *add, char *msg, int len, int maxlen, int mayAdd
 	return len;
 }
 
-
-extern dvar_t *loc_language;
-
 char Com_GetDecimalDelimiter( void )
 {
 	int lang;
@@ -2062,465 +2501,6 @@ char Com_GetDecimalDelimiter( void )
 		return ',';
 	else
 		return '.';
-}
-
-/*
-========================================================================
-
-AUTOCONFIGURE
-
-Picks CPU/GPU dvar presets from configure_mp.csv based on measured hardware,
-and re-runs the pick whenever the hardware or the csv itself changes.
-
-========================================================================
-*/
-
-struct SysInfo
-{
-	double cpuGHz;
-	int sysMB;
-	bool SSE;
-	char gpuDescription[512];
-};
-
-extern void Sys_GetInfo( SysInfo *info );
-extern bool Sys_HasConfigureChecksumChanged( int checksum );
-extern bool Sys_HasInfoChanged( void );
-extern void Sys_ArchiveInfo( int checksum );
-extern dvar_t *Dvar_SetFromStringByNameFromSource( const char *dvarName, const char *string, DvarSetSource source );
-extern bool Dvar_AnyLatchedValues( void );
-
-/*
-==================
-Com_GpuStringCompare
-==================
-*/
-static int Com_GpuStringCompare( const char *wild, const char *s )
-{
-	for ( ;; )
-	{
-		char c = *wild++;
-
-		if ( c == '*' )
-		{
-			if ( *wild == 0 )
-				return 0;
-
-			if ( *s == 0 )
-				continue;
-
-			if ( Com_GpuStringCompare( wild - 1, s + 1 ) == 0 )
-				return 0;
-		}
-		else
-		{
-			char sc = *s;
-
-			if ( c == ' ' )
-			{
-				if ( sc != 0 && !isdigit( sc ) && Com_GpuStringCompare( wild - 1, s + 1 ) == 0 )
-					return 0;
-				continue;
-			}
-
-			s++;
-
-			if ( c != sc && c != '?' )
-			{
-				int a = tolower( sc );
-				int d = tolower( c ) - a;
-
-				if ( d != 0 )
-					return ( d >= 0 ) * 2 - 1;
-			}
-
-			if ( c == 0 )
-				return 0;
-		}
-	}
-}
-
-/*
-==================
-Com_MatchGpuTemplate
-==================
-*/
-static bool Com_MatchGpuTemplate( const char *find, const char *gpuDescription )
-{
-	char wildcard[0x400];
-	int len;
-	const char *p;
-
-	wildcard[0] = '*';
-	len = 1;
-
-	if ( *find )
-	{
-		for ( p = find; *p; p++ )
-		{
-			if ( isspace(*p) )
-			{
-				if ( wildcard[len - 1] == ' ' )
-					continue;
-
-				wildcard[len] = ' ';
-			}
-			else
-			{
-				wildcard[len] = *p;
-			}
-
-			len++;
-
-			if ( len == 0x3ff )
-				Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: \"find\" string is too long\n" );
-		}
-	}
-
-	if ( wildcard[len - 1] != '*' )
-		wildcard[len++] = '*';
-
-	wildcard[len] = 0;
-
-	return Com_GpuStringCompare( wildcard, gpuDescription ) == 0;
-}
-
-/*
-==================
-Com_GetConfigureDvarNames
-==================
-*/
-static int Com_GetConfigureDvarNames( const char **text, char *dvarNames )
-{
-	int dvarCount = 0;
-
-	for ( ;; )
-	{
-		const char *token = Com_ParseOnLine( text );
-
-		if ( !*text )
-			Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: unexpected end-of-file" );
-		if ( !*token )
-			return dvarCount;
-
-		if ( strlen( token ) > 0x1f )
-			Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: dvar name \"%s\" longer than %i\n", token, 0x1f );
-		if ( dvarCount >= 0x40 )
-			Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: more than %i dvars\n", 0x40 );
-
-		I_strncpyz( dvarNames + dvarCount * 0x20, token, 0x20 );
-		dvarCount++;
-	}
-}
-
-/*
-==================
-Com_GetConfigureDvarValues
-==================
-*/
-static void Com_GetConfigureDvarValues( int dvarCount, const char **text, char *dvarValues )
-{
-	int dvarIndex;
-
-	for ( dvarIndex = 0; dvarIndex < dvarCount; dvarIndex++ )
-	{
-		const char *token = Com_ParseOnLine( text );
-
-		if ( !*text )
-			Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: unexpected end-of-file" );
-		if ( !*token )
-			Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: missing entry in dvar value column %i\n", dvarIndex );
-		if ( strlen( token ) > 0x1f )
-			Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: entry '%s' in dvar value column %i is longer than %i\n", token, dvarIndex, 0x1f );
-
-		if ( dvarValues )
-			I_strncpyz( &dvarValues[0x20 * dvarIndex], token, 0x20 );
-	}
-
-	{
-		const char *token = Com_ParseOnLine( text );
-		if ( *token )
-			Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: extra dvar value column(s): value = %s\n", token );
-	}
-}
-
-/*
-==================
-Com_SetConfigureDvars
-==================
-*/
-static void Com_SetConfigureDvars( int dvarCount, const char *dvarNames, const char *dvarValues )
-{
-	int dvarIndex;
-
-	for ( dvarIndex = 0; dvarIndex < dvarCount; dvarIndex++ )
-	{
-		const char *name = dvarNames + dvarIndex * 0x20;
-		const char *value = dvarValues + dvarIndex * 0x20;
-
-		Dvar_SetFromStringByNameFromSource( name, value, DVAR_SOURCE_EXTERNAL );
-
-		Dvar_AddFlags( Dvar_FindVar( name ), DVAR_ARCHIVE );
-	}
-}
-
-/*
-==================
-Com_SkipConfigureBlankLines
-==================
-*/
-static void Com_SkipConfigureBlankLines( const char **text )
-{
-	while ( *text && **text && ( **text == '\r' || **text == '\n' ) )
-		Com_SkipRestOfLine( text );
-}
-
-/*
-==================
-Com_ParseCpuConfig
-==================
-*/
-static bool Com_ParseCpuConfig( const SysInfo *info, const char **text )
-{
-	char dvarNames[0x40 * 0x20];
-	char dvarValues[0x40 * 0x20];
-	SysInfo row;
-	SysInfo best;
-	int dvarCount;
-	bool foundCpuMatch;
-	bool isBest;
-	const char *token;
-
-	best.cpuGHz = -1.0;
-	dvarCount = 0;
-	best.sysMB = 0;
-	foundCpuMatch = false;
-
-	for ( ;; )
-	{
-		token = Com_Parse( text );
-		if ( !text )
-			break;
-
-		if ( !*token || *token == '#' )
-		{
-			Com_SkipRestOfLine( text );
-			continue;
-		}
-
-		if ( !stricmp( token, "gpu" ) )
-		{
-			Com_UngetToken();
-			break;
-		}
-
-		if ( !dvarCount )
-		{
-			if ( stricmp( token, "cpu ghz" ) )
-				Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: \"cpu ghz\" should be the first column\n" );
-			token = Com_ParseOnLine( text );
-			if ( stricmp( token, "sys mb" ) )
-				Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: \"sys mb\" should be the second column\n" );
-			dvarCount = Com_GetConfigureDvarNames( text, dvarNames );
-			continue;
-		}
-
-		row.cpuGHz = atof( token );
-		if ( row.cpuGHz < 0.0 )
-			Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: cpu ghz %g not allowed to be less than 0\n", row.cpuGHz );
-
-		row.sysMB = atoi( Com_ParseOnLine( text ) );
-		if ( row.sysMB < 0x80 )
-			Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: sys mb %i not allowed to be less than 128\n", row.sysMB );
-
-		isBest = false;
-		if ( info->cpuGHz >= row.cpuGHz && info->sysMB >= row.sysMB )
-		{
-			if ( best.cpuGHz < row.cpuGHz || ( best.cpuGHz == row.cpuGHz && best.sysMB < row.sysMB ) )
-			{
-				isBest = true;
-				best = row;
-				foundCpuMatch = true;
-			}
-		}
-		Com_GetConfigureDvarValues( dvarCount, text, isBest ? dvarValues : NULL );
-	}
-
-	if ( !foundCpuMatch )
-		return false;
-
-	Com_Printf( "configure_mp.csv: using CPU configuration %.0f GHz %i MB\n", best.cpuGHz, best.sysMB );
-	Cbuf_AddText( "exec configure_mp.cfg" );
-	Cbuf_Execute();
-	Com_SetConfigureDvars( dvarCount, dvarNames, dvarValues );
-
-	return true;
-}
-
-/*
-==================
-Com_ParseGpuConfig
-==================
-*/
-static bool Com_ParseGpuConfig( const char **text, const SysInfo *info )
-{
-	char dvarNames[0x40 * 0x20];
-	char dvarValues[0x40 * 0x20];
-	int dvarCount;
-	bool foundGpuMatch;
-	const char *token;
-
-	token = Com_Parse( text );
-	if ( stricmp( token, "gpu" ) )
-	{
-		Com_UngetToken();
-		return false;
-	}
-
-	dvarCount = Com_GetConfigureDvarNames( text, dvarNames );
-	foundGpuMatch = false;
-
-	for ( ;; )
-	{
-		token = Com_Parse( text );
-		if ( !*text )
-			break;
-
-		if ( !*token || *token == '#' )
-		{
-			Com_SkipRestOfLine( text );
-			continue;
-		}
-
-		if ( !foundGpuMatch && Com_MatchGpuTemplate( token, info->gpuDescription ) )
-		{
-			Com_Printf( "configure_mp.csv: using GPU configuration \"%s\"\n", token );
-			Com_GetConfigureDvarValues( dvarCount, text, dvarValues );
-			Com_SetConfigureDvars( dvarCount, dvarNames, dvarValues );
-			foundGpuMatch = true;
-		}
-		else
-		{
-			Com_GetConfigureDvarValues( dvarCount, text, NULL );
-		}
-	}
-
-	return foundGpuMatch;
-}
-
-/*
-==================
-Com_SetRecommended
-==================
-*/
-// retail 0x431a50, unreferenced; name unknown
-int Com_ConfigureChecksum_431a50( const char *buffer, int size )
-{
-	int checksum;
-	int i;
-
-	checksum = 0;
-	for ( i = 0; i < size; i++ )
-		checksum = checksum * 0x7a69 + buffer[i];
-
-	return ( checksum & 0xfffffff ) + 1;
-}
-
-void Com_SetRecommended( qboolean restart )
-{
-	SysInfo info;
-	void *csv;
-	int filesize;
-	const char *text;
-	int checksum;
-	int i;
-
-	Com_Printf( "========= autoconfigure\n" );
-
-	Sys_GetInfo( &info );
-	// startup code can leave MMX state live, which corrupts the first x87 op
-	info.cpuGHz *= 1.02;
-	if ( info.sysMB >= 0x80 )
-		info.sysMB += 8;
-	else
-		info.sysMB = 0x80;
-
-	filesize = FS_ReadFile( "configure_mp.csv", &csv );
-	if ( filesize < 0 )
-		Com_Error( ERR_FATAL, "EXE_ERR_NOT_FOUND" "\x15" "configure_mp.csv" );
-
-	text = (const char *)csv;
-	Com_BeginParseSession( "configure_mp.csv" );
-	Com_SetCSV( qtrue );
-
-	if ( !Com_ParseCpuConfig( &info, &text ) )
-	{
-		Sys_GetInfo( &info );
-		Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: " "\x14" "EXE_ERR_COULDNT_CONFIGURE" "\x15" " %.0f GHz %i MB\n", info.cpuGHz, info.sysMB );
-	}
-
-	if ( !Com_ParseGpuConfig( &text, &info ) )
-		Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: " "\x14" "EXE_ERR_COULDNT_CONFIGURE" "\x15" " \"%s\"\n", info.gpuDescription );
-
-	Com_EndParseSessionInl();
-
-	checksum = 0;
-	for ( i = 0; i < filesize; i++ )
-		checksum = checksum * 0x7a69 + ( (char *)csv )[i];
-
-	FS_FreeFile( csv );
-	checksum &= 0xfffffff;
-	Sys_ArchiveInfo( checksum + 1 );
-
-	if ( restart && Dvar_AnyLatchedValues() )
-		Cbuf_AddText( "snd_restart\n" );
-}
-
-/*
-==================
-Com_HasConfigureChecksumChanged
-==================
-*/
-// retail calls FS_FreeFile here
-#pragma inline_depth(0)
-static bool Com_HasConfigureChecksumChanged( void )
-{
-	void *csv;
-	int filesize;
-	int checksum;
-	int i;
-
-	filesize = FS_ReadFile( "configure_mp.csv", &csv );
-	if ( filesize < 0 )
-		Com_Error( ERR_FATAL, "EXE_ERR_NOT_FOUND" "\x15" "configure_mp.csv" );
-
-	checksum = 0;
-	for ( i = 0; i < filesize; i++ )
-		checksum = checksum * 0x7a69 + ( (char *)csv )[i];
-
-	FS_FreeFile( csv );
-	checksum &= 0xfffffff;
-
-	return Sys_HasConfigureChecksumChanged( checksum + 1 );
-}
-
-#pragma inline_depth()
-
-/*
-==================
-Com_CheckSetRecommended
-==================
-*/
-void Com_CheckSetRecommended( void )
-{
-	if ( !com_recommendedSet->current.boolean || Com_HasConfigureChecksumChanged() )
-	{
-		Com_SetRecommended( qfalse );
-		Dvar_SetBool( com_recommendedSet, qtrue );
-	}
-
-	if ( Sys_HasInfoChanged() )
-		Com_SetRecommended( qfalse );
 }
 
 /*
@@ -2551,4 +2531,25 @@ void Com_LocalizedFloatToString( float f, char *buffer, unsigned int maxlen, uns
 	}
 }
 
+void Com_StartupConfigs( void )
+{
+	Com_InitPlayerProfiles();
+}
+// empty in the dedicated build
+void Com_CheckSyncFrame( void )
+{
+}
+void Com_CloseLogfiles()
+{
+	if ( logfile )
+	{
+		FS_FCloseFile(logfile);
+		logfile = 0;
+	}
+}
+static void Com_SkipConfigureBlankLines( const char **text )
+{
+	while ( *text && **text && ( **text == '\r' || **text == '\n' ) )
+		Com_SkipRestOfLine( text );
+}
 
