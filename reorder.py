@@ -16,6 +16,7 @@ def chunk(n):
     if s and L[s-1].rstrip()=='*/':
         while not L[s-1].startswith('/*'): s-=1
         s-=1
+    if '{' in L[hit[0]] and L[hit[0]].rstrip().endswith('}'): return s,hit[0]+1  # one-line function
     e=next(i for i in range(hit[0],len(L)) if L[i]=='}')+1
     if e<len(L) and L[e]=='': e+=1
     return s,e
@@ -24,5 +25,13 @@ for a,b in zip(cs,cs[1:]): assert a[1]<=b[0],(a,b)
 body={n:L[s:e] for s,e,n in cs}
 at=cs[0][0]
 for s,e,n in reversed(cs): del L[s:e]
+# hoist single-line externs, prototypes and #defines left between the moved functions to the insertion point
+end=cs[-1][1]-sum(e-s for s,e,n in cs)
+decl=re.compile(r'(extern\s.*;|[A-Za-z][^=]*\)\s*;|#define\s[^\\]*)\s*$')
+hoist=[i for i in range(at,end) if decl.match(L[i])]
+hl=[L[i] for i in hoist]
+for i in reversed(hoist): del L[i]
+L[at:at]=hl+([''] if hl else [])
+at+=len(hl)+bool(hl)
 L[at:at]=[x for n in names for x in body[n]]
 open(p,'w').write('\n'.join(L))
