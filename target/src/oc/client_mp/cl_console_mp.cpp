@@ -209,25 +209,22 @@ void Con_DrawConsole(void);
 void Con_Init(void);
 void CL_DeathMessagePrint(const char *attackerName, const vec_t *attackerColor, const char *victimName, const vec_t *victimColor, const char *iconShader, float iconWidth, float iconHeight, const vec_t *iconColor, bool horzFlipIcon);
 
-// retail 0x404fc0, unreferenced; name unknown
-int ConDrawInput_TextHeight_404fc0(FontHandle font)
-{
-    return re.TextHeight(font);
-}
 
-static int ConDrawInput_TextWidth(const char *text)
-{
-    return re.TextWidth(text, 0, cls.consoleFont);
-}
 
-static float I_fsel(const float x, const float y, const float z)
-{
-    return x >= 0.0f ? y : z;
-}
 
-static float I_fclamp(const float val, const float min, const float max)
+
+
+
+// retail 0x4036a0, unreferenced; name unknown
+void CL_InitHudMsgIconMaterials_4036a0(void)
 {
-    return I_fsel(min - val, min, I_fsel(val - max, max, val));
+    registeredIconMaterialCount = 0;
+    CL_RegisterHudMsgIconMaterial("killiconcrush");
+    CL_RegisterHudMsgIconMaterial("killicondied");
+    CL_RegisterHudMsgIconMaterial("killiconfalling");
+    CL_RegisterHudMsgIconMaterial("killiconheadshot");
+    CL_RegisterHudMsgIconMaterial("killiconmelee");
+    CL_RegisterHudMsgIconMaterial("killiconsuicide");
 }
 
 void Con_Shutdown(void)
@@ -251,18 +248,6 @@ void CL_RegisterHudMsgIconMaterial(const char *name)
     registeredIconMaterialCount++;
 }
 
-// retail 0x4036a0, unreferenced; name unknown
-void CL_InitHudMsgIconMaterials_4036a0(void)
-{
-    registeredIconMaterialCount = 0;
-    CL_RegisterHudMsgIconMaterial("killiconcrush");
-    CL_RegisterHudMsgIconMaterial("killicondied");
-    CL_RegisterHudMsgIconMaterial("killiconfalling");
-    CL_RegisterHudMsgIconMaterial("killiconheadshot");
-    CL_RegisterHudMsgIconMaterial("killiconmelee");
-    CL_RegisterHudMsgIconMaterial("killiconsuicide");
-}
-
 const char *CL_GetHudMsgIconMaterialName(int index)
 {
     return hudMsgIconMaterials[(unsigned char)index];
@@ -278,12 +263,6 @@ static unsigned char CL_FindHudMsgIconMaterialIndex(const char *iconShader)
     }
 
     return 0;
-}
-
-static void CL_AddConsoleChar(int ch, unsigned char colorIdx)
-{
-    con.textBuffer[(con.currentLine % con.totallines) * con.linewidth + con.lineOffset] = (colorIdx << 8) | ch;
-    con.lineOffset++;
 }
 
 void Con_ToggleConsole_f(void)
@@ -343,11 +322,6 @@ static void Con_ChatModeTeam_f(void)
     chatField->charHeight = 10.0f;
     chatField->fixedSize = 0;
     clients->keyCatchers ^= 0x10;
-}
-
-void Con_Bottom(void)
-{
-    con.display = con.currentLine;
 }
 
 static void Con_Clear_f(void)
@@ -414,14 +388,6 @@ static inline void MsgWnd_Clear(MessageWindow *wnd)
     int byteSize = wnd->count * 164;
     memset(wnd->lines, 0, byteSize);
     wnd->current_line = 0;
-}
-
-static inline void Con_WriteChar(int colorIdx, int ch)
-{
-    int row = con.currentLine % con.totallines;
-    int offset = row * con.linewidth + con.lineOffset;
-    con.textBuffer[offset] = (short)((colorIdx << 8) | ch);
-    con.lineOffset++;
 }
 
 void Con_ClearNotify(void)
@@ -518,14 +484,6 @@ void Con_CheckResize(void)
 
     con.currentLine = con.totallines - 1;
     con.display = con.currentLine;
-}
-
-static inline void Con_ClearAllMessageWindows(void)
-{
-    MsgWnd_Clear(&con.messageBuffer->gamemsg);
-    MsgWnd_Clear(&con.messageBuffer->boldgamemsg);
-    MsgWnd_Clear(&con.messageBuffer->minicon);
-    MsgWnd_Clear(&con.messageBuffer->subtitle);
 }
 
 // Name from CoD4; original CoD2 name unknown.
@@ -843,6 +801,20 @@ void CL_ConsoleFixPosition(void)
     con.display = con.currentLine - 1;
 }
 
+static void CL_AddConsoleChar(int ch, unsigned char colorIdx)
+{
+    con.textBuffer[(con.currentLine % con.totallines) * con.linewidth + con.lineOffset] = (colorIdx << 8) | ch;
+    con.lineOffset++;
+}
+
+static float I_fsel(const float x, const float y, const float z)
+{
+    return x >= 0.0f ? y : z;
+}
+static float I_fclamp(const float val, const float min, const float max)
+{
+    return I_fsel(min - val, min, I_fsel(val - max, max, val));
+}
 static void CL_AddConsoleInfoColor(int iFirstInfo, const vec_t *vColor)
 {
     con.textBuffer[(con.currentLine % con.totallines) * con.linewidth + con.lineOffset] = (iFirstInfo << 8) | (int)I_fclamp((float)(int)(vColor[0] * 255.0f), 0.0f, 255.0f);
@@ -976,11 +948,15 @@ Bool Con_AnySpaceAfterCommand(void)
     return 0;
 }
 
-static void Con_ClearMessageWindow(MessageWindow *wnd)
+// retail 0x404fc0, unreferenced; name unknown
+int ConDrawInput_TextHeight_404fc0(FontHandle font)
 {
-    if (!wnd)
-        return;
-    MsgWnd_Clear(wnd);
+    return re.TextHeight(font);
+}
+
+static int ConDrawInput_TextWidth(const char *text)
+{
+    return re.TextWidth(text, 0, cls.consoleFont);
 }
 
 static void ConDrawInput_Text(const char *str, const vec_t *color)
@@ -1504,11 +1480,6 @@ void Con_DrawSay(int y)
     Field_Draw((field_t *)chatField, x, y, 1, 1);
 }
 
-void Con_ToggleConsoleOutput(void)
-{
-    con.outputVisible = (con.outputVisible == 0) ? 1 : 0;
-}
-
 void Con_DrawNotify(int xPos, int yPos, float alpha, msgwnd_mode_t mode)
 {
     Con_DrawMessageWindow(&con.messageBuffer->gamemsg, xPos, yPos, 12, 1, 3, alpha, 1.0f, mode);
@@ -1528,6 +1499,11 @@ void Con_DrawMiniConsole(int xPos, int yPos, float alpha)
 void Con_DrawSubtitles(int xPos, int yPos, int charHeight, float alpha, msgwnd_mode_t mode)
 {
     Con_DrawMessageWindow(&con.messageBuffer->subtitle, xPos, yPos, charHeight, 1, 1, alpha, 1.0f, mode);
+}
+
+void Con_ToggleConsoleOutput(void)
+{
+    con.outputVisible = (con.outputVisible == 0) ? 1 : 0;
 }
 
 static void Con_DrawOutputScrollBar(float x, float y, float width, float height)
@@ -1634,9 +1610,9 @@ void Con_Top(void)
         con.display = con.currentLine - con.totallines + 1;
 }
 
-Bool Con_IsActive(void)
+void Con_Bottom(void)
 {
-    return clients[0].keyCatchers & 1;
+    con.display = con.currentLine;
 }
 
 void Con_Close(void)
@@ -1653,6 +1629,31 @@ void Con_Close(void)
     clients[0].keyCatchers &= ~1;
 }
 
+Bool Con_IsActive(void)
+{
+    return clients[0].keyCatchers & 1;
+}
+
+static inline void Con_WriteChar(int colorIdx, int ch)
+{
+    int row = con.currentLine % con.totallines;
+    int offset = row * con.linewidth + con.lineOffset;
+    con.textBuffer[offset] = (short)((colorIdx << 8) | ch);
+    con.lineOffset++;
+}
+static inline void Con_ClearAllMessageWindows(void)
+{
+    MsgWnd_Clear(&con.messageBuffer->gamemsg);
+    MsgWnd_Clear(&con.messageBuffer->boldgamemsg);
+    MsgWnd_Clear(&con.messageBuffer->minicon);
+    MsgWnd_Clear(&con.messageBuffer->subtitle);
+}
+static void Con_ClearMessageWindow(MessageWindow *wnd)
+{
+    if (!wnd)
+        return;
+    MsgWnd_Clear(wnd);
+}
 
 static const vec4_t con_versionColor = { 1.0f, 1.0f, 0.0f, 1.0f };
 

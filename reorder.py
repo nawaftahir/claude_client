@@ -28,7 +28,7 @@ def chunk(n):
         while not L[s-1].startswith('/*'): s-=1
         s-=1
     if '{' in L[hit[0]] and L[hit[0]].rstrip().endswith('}'): return s,hit[0]+1  # one-line function
-    e=next(i for i in range(hit[0],len(L)) if L[i]=='}')+1
+    e=next(i for i in range(hit[0],len(L)) if L[i]=='}' or L[i].startswith('} //'))+1
     if e<len(L) and L[e]=='': e+=1
     return s,e
 cs=sorted((chunk(n)+(n,) for n in names))
@@ -47,7 +47,7 @@ if '-a' in sys.argv:  # hoist every top-level line that is not part of a leftove
         if l.startswith('//') or (l.startswith('/*') and l.rstrip().endswith('*/')): pend.append(i);i+=1;continue
         isdef=bool(re.match(r'[A-Za-z_].*\(',l)) and not l.rstrip().endswith(';') and not l.startswith(('#','typedef','struct','enum','extern'))
         if isdef:
-            j=next(k for k in range(i,end) if L[k]=='}' or (k==i and '{' in l and l.rstrip().endswith('}')))
+            j=next(k for k in range(i,end) if L[k]=='}' or L[k].startswith('} //') or (k==i and '{' in l and l.rstrip().endswith('}')))
             pend=[];i=j+1;continue
         hoist+=pend+[i];pend=[];i+=1
     hoist+=pend

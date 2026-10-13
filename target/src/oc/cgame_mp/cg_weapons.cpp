@@ -207,44 +207,81 @@ void CG_RegisterItemVisuals(int itemNum);
 void CG_CycleWeap(qboolean next, qboolean checkAmmo);
 static void StartWeaponAnim(int weaponNum, struct XAnimTree_s *tree, int activeAnim);
 
-void CG_HoldBreathInit(void)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// kisak name; retail 0x4cd480
+static __declspec(noinline) void StartWeaponAnim(int weaponNum, struct XAnimTree_s *tree, int activeAnim)
 {
-    cg->holdBreathTime = -1;
-    cg->holdBreathInTime = 0;
-    cg->holdBreathDelay = 0;
-    cg->holdBreathFrac = 0.0f;
+    int i;
+    weaponInfo_t *weapInfo;
+
+    weapInfo = &cg_weaponsArray[weaponNum];
+    for (i = 0; i < 20; i++) {
+        if (activeAnim == i + 1)
+            XAnimSetGoalWeight(tree, i + 1, 1.0f, 0.0f, weapInfo->viewModelAnimRates[i + 1], 0, 1, 1);
+        else
+            XAnimSetGoalWeight(tree, i + 1, 0.0f, 0.0f, weapInfo->viewModelAnimRates[i + 1], 0, 0, 0);
+    }
+}
+static void CG_PlayADSAnim(int animIndex, XAnimTree *pAnimTree)
+{
+    if (animIndex == 0x15) {
+
+        XAnimSetGoalWeight(pAnimTree, 0x15, 1.0f, 0.5f, 0.0f, 0, 1, 0);
+        XAnimSetGoalWeight(pAnimTree, 0x16, 0.0f, 0.5f, 0.0f, 0, 0, 0);
+    } else {
+
+        XAnimSetGoalWeight(pAnimTree, 0x15, 0.0f, 0.5f, 0.0f, 0, 0, 0);
+        XAnimSetGoalWeight(pAnimTree, 0x16, 1.0f, 0.5f, 0.0f, 0, 1, 0);
+    }
+
+    XAnimSetTime(pAnimTree, 0x15, cg->predictedPlayerState.fWeaponPosFrac);
+    XAnimSetTime(pAnimTree, 0x16, 1.0f - cg->predictedPlayerState.fWeaponPosFrac);
 }
 
-// com_math.h
-inline float I_fsel(const float x, const float y, const float z)
+static void CG_PlayViewWeaponNotetrackSounds(void)
 {
-    return x >= 0.0f ? y : z;
-}
+    XAnimNotify *notifyList;
+    weaponInfo_t *weapInfo;
+    snd_alias_list_t *aliasList;
+    int weaponIndex;
+    int notifyCount;
+    int i;
 
-inline float I_fmax(const float x, const float y)
-{
-    return I_fsel(x - y, x, y);
-}
+    aliasList = 0;
+    weaponIndex = BG_GetViewmodelWeaponIndex(&cg->predictedPlayerState);
+    if (!weaponIndex)
+        return;
 
-inline float I_fmin(const float x, const float y)
-{
-    return I_fsel(y - x, x, y);
-}
+    weapInfo = &cg_weaponsArray[weaponIndex];
+    notifyCount = DObjGetClientNotifyList(&notifyList);
+    for (i = 0; i < notifyCount; i++) {
+        if (!stricmp(notifyList[i].name, "noteTrackSoundA"))
+            aliasList = weapInfo->noteTrackSound[0];
+        else if (!stricmp(notifyList[i].name, "noteTrackSoundB"))
+            aliasList = weapInfo->noteTrackSound[1];
+        else if (!stricmp(notifyList[i].name, "noteTrackSoundC"))
+            aliasList = weapInfo->noteTrackSound[2];
+        else if (!stricmp(notifyList[i].name, "noteTrackSoundD"))
+            aliasList = weapInfo->noteTrackSound[3];
 
-inline void VectorScale(const vec3_t v, const float s, vec3_t o)
-{
-    o[0] = s * v[0];
-    o[1] = s * v[1];
-    o[2] = s * v[2];
+        if (aliasList)
+            CG_PlayClientSoundAlias(aliasList);
+    }
 }
-
-inline void VectorMA(const vec3_t v, const float s, const vec3_t b, vec3_t o)
-{
-    o[0] = v[0] + s * b[0];
-    o[1] = v[1] + s * b[1];
-    o[2] = v[2] + s * b[2];
-}
-
 
 void CG_WeaponRunXModelAnims(playerState_t *ps, weaponInfo_t *weapInfo)
 {
@@ -337,56 +374,9 @@ static void CG_ResetViewWeaponAnimTrees(playerState_t *ps)
     }
 }
 
-static void CG_PlayADSAnim(int animIndex, XAnimTree *pAnimTree)
-{
-    if (animIndex == 0x15) {
-
-        XAnimSetGoalWeight(pAnimTree, 0x15, 1.0f, 0.5f, 0.0f, 0, 1, 0);
-        XAnimSetGoalWeight(pAnimTree, 0x16, 0.0f, 0.5f, 0.0f, 0, 0, 0);
-    } else {
-
-        XAnimSetGoalWeight(pAnimTree, 0x15, 0.0f, 0.5f, 0.0f, 0, 0, 0);
-        XAnimSetGoalWeight(pAnimTree, 0x16, 1.0f, 0.5f, 0.0f, 0, 1, 0);
-    }
-
-    XAnimSetTime(pAnimTree, 0x15, cg->predictedPlayerState.fWeaponPosFrac);
-    XAnimSetTime(pAnimTree, 0x16, 1.0f - cg->predictedPlayerState.fWeaponPosFrac);
-}
-
 int CG_WeaponDObjHandle(int weaponNum)
 {
     return weaponNum + 0x400;
-}
-
-static void CG_PlayViewWeaponNotetrackSounds(void)
-{
-    XAnimNotify *notifyList;
-    weaponInfo_t *weapInfo;
-    snd_alias_list_t *aliasList;
-    int weaponIndex;
-    int notifyCount;
-    int i;
-
-    aliasList = 0;
-    weaponIndex = BG_GetViewmodelWeaponIndex(&cg->predictedPlayerState);
-    if (!weaponIndex)
-        return;
-
-    weapInfo = &cg_weaponsArray[weaponIndex];
-    notifyCount = DObjGetClientNotifyList(&notifyList);
-    for (i = 0; i < notifyCount; i++) {
-        if (!stricmp(notifyList[i].name, "noteTrackSoundA"))
-            aliasList = weapInfo->noteTrackSound[0];
-        else if (!stricmp(notifyList[i].name, "noteTrackSoundB"))
-            aliasList = weapInfo->noteTrackSound[1];
-        else if (!stricmp(notifyList[i].name, "noteTrackSoundC"))
-            aliasList = weapInfo->noteTrackSound[2];
-        else if (!stricmp(notifyList[i].name, "noteTrackSoundD"))
-            aliasList = weapInfo->noteTrackSound[3];
-
-        if (aliasList)
-            CG_PlayClientSoundAlias(aliasList);
-    }
 }
 
 void CG_Weapons_SetToDefault(int weaponNum, DObjModel_s *dobjModels)
@@ -746,128 +736,6 @@ void CG_UpdateHandViewmodels(const char *handModel)
     }
 }
 
-// inlined com_math vector helpers: retail evaluates through their pointer params
-static __forceinline void Vec3CopyInl(const vec_t *a, vec_t *out)
-{
-    out[0] = a[0];
-    out[1] = a[1];
-    out[2] = a[2];
-}
-
-static __forceinline void Vec3SubInl(const vec_t *a, const vec_t *b, vec_t *out)
-{
-    out[0] = a[0] - b[0];
-    out[1] = a[1] - b[1];
-    out[2] = a[2] - b[2];
-}
-
-static __forceinline void Vec3ScaleInl(const vec_t *v, float scale, vec_t *out)
-{
-    out[0] = v[0] * scale;
-    out[1] = v[1] * scale;
-    out[2] = v[2] * scale;
-}
-
-static __forceinline float Vec3DotInl(const vec_t *a, const vec_t *b)
-{
-    return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
-}
-
-void CG_SpawnTracer(vec_t *pstart, vec_t *pend)
-{
-    vec3_t start;
-    vec3_t end;
-    vec3_t dir;
-    float dist;
-    int time;
-    int jitter;
-    localEntity_t *le;
-
-    Vec3CopyInl(pstart, start);
-    end[0] = pend[0];
-    end[1] = pend[1];
-    end[2] = pend[2];
-
-    Vec3SubInl(end, start, dir);
-
-    dist = Vec3Normalize(dir);
-    le = CG_AllocLocalEntity();
-    le->leType = LE_MOVING_TRACER;
-    le->tracerClipDist = dist;
-
-    jitter = 0;
-    if (cg->frametime)
-        jitter = (rand() % cg->frametime) / 2;
-    time = cg->time - jitter;
-
-    le->endTime = time - (int)(dist / cg_tracerSpeed->current.value * -1000.0f);
-    le->pos.trType = TR_LINEAR;
-    le->pos.trTime = time;
-
-    Vec3CopyInl(start, le->pos.trBase);
-    Vec3ScaleInl(dir, cg_tracerSpeed->current.value, le->pos.trDelta);
-}
-
-void CG_WhizbySound(vec_t *vStart, vec_t *vEnd)
-{
-    vec3_t viewDelta;
-    vec3_t delta;
-    vec3_t dir;
-    vec3_t projPos;
-    float dist;
-    float viewDist;
-
-    Vec3SubInl(vEnd, vStart, delta);
-    Vec3NormalizeTo(delta, dir);
-    dist = Vec3DotInl(dir, delta);
-    Vec3SubInl(cg->refdef.vieworg, vStart, viewDelta);
-    viewDist = Vec3DotInl(viewDelta, dir);
-    if (viewDist < 64.0f)
-        return;
-    if (viewDist - -64.0f > dist)
-        return;
-    projPos[0] = viewDist * dir[0] + vStart[0];
-    projPos[1] = viewDist * dir[1] + vStart[1];
-    projPos[2] = viewDist * dir[2] + vStart[2];
-    Vec3SubInl(projPos, cg->refdef.vieworg, delta);
-    if (sqrtf(delta[2] * delta[2] + (delta[1] * delta[1] + delta[0] * delta[0])) > 140.0f)
-        return;
-    projPos[0] = projPos[0] - dir[0] * 16.0f;
-    projPos[1] = projPos[1] - dir[1] * 16.0f;
-    projPos[2] = projPos[2] - dir[2] * 16.0f;
-    CG_PlaySoundAlias(0x3fe, projPos, cgs->media.bulletWhizby);
-}
-
-// retail 0x4d1850, name unknown: tracer + whizby for a bullet hit
-static void CG_BulletHitTracer(int sourceEntityNum, vec_t *position, unsigned int flashTag)
-{
-    vec3_t muzzle;
-
-    if (cg_tracerChance->current.value <= 0.0f)
-        return;
-    if (!CG_CalcMuzzlePoint(sourceEntityNum, muzzle, flashTag))
-        return;
-    if (!((cg->nextSnap->ps.pm_flags & 0xc00000) && sourceEntityNum == cg->nextSnap->ps.clientNum)
-        && (float)rand() < cg_tracerChance->current.value * 32768.0f)
-        CG_SpawnTracer(muzzle, position);
-    CG_WhizbySound(muzzle, position);
-}
-
-void CG_BulletHitClientEvent(int sourceEntityNum, vec_t *position, int surfType, int event)
-{
-    snd_alias_list_t *alias;
-
-    if (event == 0xb9)
-        alias = cgs->media.bulletHitSmallSound[surfType];
-    else if (event == 0xb7)
-        alias = cgs->media.bulletHitLargeSound[surfType];
-    else
-        alias = cgs->media.shotgunHitSound[surfType];
-
-    CG_PlaySoundAlias(0x3fe, position, alias);
-    CG_BulletHitTracer(sourceEntityNum, position, *s_barrelTags[0]);
-}
-
 void CG_RegisterItemVisuals(int itemNum)
 {
     itemInfo_t *itemInfo;
@@ -920,13 +788,6 @@ void CG_RegisterItems(void)
     }
 }
 
-inline void VectorCopy(const vec3_t a, vec3_t b)
-{
-    b[0] = a[0];
-    b[1] = a[1];
-    b[2] = a[2];
-}
-
 void CalculateWeaponPosition_Sway(void)
 {
     WeaponDef *weapDef;
@@ -961,6 +822,19 @@ void CalculateWeaponPosition_SwayMovement(float *origin)
     origin[2] = cg->swayOffset[2] + origin[2];
 }
 
+// com_math.h
+inline float I_fsel(const float x, const float y, const float z)
+{
+    return x >= 0.0f ? y : z;
+}
+inline float I_fmax(const float x, const float y)
+{
+    return I_fsel(x - y, x, y);
+}
+inline float I_fmin(const float x, const float y)
+{
+    return I_fsel(y - x, x, y);
+}
 void CalculateWeaponPosition_BasePosition_movement(float *origin)
 {
     WeaponDef *weapDef;
@@ -1098,6 +972,18 @@ void CalculateWeaponPosition_BasePosition(float *origin)
     origin[2] = vGunOfs[2] + origin[2];
 }
 
+inline void VectorCopy(const vec3_t a, vec3_t b)
+{
+    b[0] = a[0];
+    b[1] = a[1];
+    b[2] = a[2];
+}
+inline void VectorMA(const vec3_t v, const float s, const vec3_t b, vec3_t o)
+{
+    o[0] = v[0] + s * b[0];
+    o[1] = v[1] + s * b[1];
+    o[2] = v[2] + s * b[2];
+}
 void CalculateWeaponPosition_ToWorldPosition(float *origin)
 {
     vec3_t vOffset;
@@ -1196,6 +1082,14 @@ static void WeaponFlash(int dobjHandle, int weaponNum, int bViewFlash, const vec
         return;
 
     FX_PlayEntityEffect( (EffectTemplate *)(fx), origin, 0, (const FxBoltInfo *)(bolt));
+}
+
+void CG_HoldBreathInit(void)
+{
+    cg->holdBreathTime = -1;
+    cg->holdBreathInTime = 0;
+    cg->holdBreathDelay = 0;
+    cg->holdBreathFrac = 0.0f;
 }
 
 static void CG_SetHoldBreathChannelVolumes(float frac)
@@ -1410,7 +1304,6 @@ void CG_UpdateViewWeaponAnim(playerState_t *ps)
 
     CG_PlayViewWeaponNotetrackSounds();
 }
-
 void CG_AddViewWeapon(playerState_t *ps)
 {
     int drawGun;
@@ -1513,43 +1406,6 @@ void CG_AddViewWeapon(playerState_t *ps)
         cg->gunYOfs = 0.0f;
         cg->gunZOfs = 0.0f;
     }
-}
-
-void CG_BulletHitEvent(int sourceEntityNum, vec_t *position, vec_t *normal, vec_t *reflected, int surfType, int event)
-{
-    snd_alias_list_t *alias;
-    // table rows: 23 surface types each
-    const FxEffectDef *fxNormal;
-    const FxEffectDef *fxReflect;
-
-    if (event == 0xb6) {
-        alias = cgs->media.bulletHitSmallSound[surfType];
-        fxNormal = cgs->media.fx->table[surfType];
-        fxReflect = cgs->media.fx->table[1 * 23 + surfType];
-    } else if (event == 0xb7) {
-        alias = cgs->media.bulletHitLargeSound[surfType];
-        fxNormal = cgs->media.fx->table[2 * 23 + surfType];
-        fxReflect = cgs->media.fx->table[3 * 23 + surfType];
-    } else {
-        alias = cgs->media.shotgunHitSound[surfType];
-        fxNormal = cgs->media.fx->table[4 * 23 + surfType];
-        fxReflect = cgs->media.fx->table[5 * 23 + surfType];
-    }
-
-    if (!cg_blood->current.enabled && surfType == 7) {
-        fxNormal = cgs->media.fxNoBloodFleshHit;
-        fxReflect = 0;
-    }
-
-    CG_PlaySoundAlias(0x3fe, position, alias);
-
-    if (fxNormal)
-        FX_PlayEffect((EffectTemplate *)fxNormal, position, normal);
-
-    if (fxReflect)
-        FX_PlayEffect((EffectTemplate *)fxReflect, position, reflected);
-
-    CG_BulletHitTracer(sourceEntityNum, position, *s_barrelTags[0]);
 }
 
 static qboolean CG_WeaponSelectable(int weapon)
@@ -1873,21 +1729,6 @@ void CG_CycleWeap(qboolean next, qboolean checkAmmo)
         CG_SelectWeaponIndex(0);
 }
 
-// kisak name; retail 0x4cd480
-static __declspec(noinline) void StartWeaponAnim(int weaponNum, struct XAnimTree_s *tree, int activeAnim)
-{
-    int i;
-    weaponInfo_t *weapInfo;
-
-    weapInfo = &cg_weaponsArray[weaponNum];
-    for (i = 0; i < 20; i++) {
-        if (activeAnim == i + 1)
-            XAnimSetGoalWeight(tree, i + 1, 1.0f, 0.0f, weapInfo->viewModelAnimRates[i + 1], 0, 1, 1);
-        else
-            XAnimSetGoalWeight(tree, i + 1, 0.0f, 0.0f, weapInfo->viewModelAnimRates[i + 1], 0, 0, 0);
-    }
-}
-
 void CG_EjectWeaponBrass(entityState_t *ent, int event)
 {
     byte *entBytes;
@@ -1944,13 +1785,6 @@ void CG_EjectWeaponBrass(entityState_t *ent, int event)
         if (bolt[1] >= 0)
             FX_PlayEntityEffect( (EffectTemplate *)(effect), ejectBrassCasingOrigin, 0, (const FxBoltInfo *)(bolt));
     }
-}
-
-static __forceinline qboolean CG_IsLocalClientEntity(cg_t *cg, entityState_t *ent)
-{
-    snapshot_t *snap = cg->nextSnap;
-
-    return (snap->ps.pm_flags & 0xc00000) && ent->number == snap->ps.clientNum;
 }
 
 void CG_FireWeapon(centity_t *cent, int event, int barrel)
@@ -2019,6 +1853,94 @@ void CG_FireWeapon(centity_t *cent, int event, int barrel)
         CG_EjectWeaponBrass(ent, event);
 }
 
+static __forceinline void Vec3SubInl(const vec_t *a, const vec_t *b, vec_t *out)
+{
+    out[0] = a[0] - b[0];
+    out[1] = a[1] - b[1];
+    out[2] = a[2] - b[2];
+}
+static __forceinline float Vec3DotInl(const vec_t *a, const vec_t *b)
+{
+    return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+}
+void CG_WhizbySound(vec_t *vStart, vec_t *vEnd)
+{
+    vec3_t viewDelta;
+    vec3_t delta;
+    vec3_t dir;
+    vec3_t projPos;
+    float dist;
+    float viewDist;
+
+    Vec3SubInl(vEnd, vStart, delta);
+    Vec3NormalizeTo(delta, dir);
+    dist = Vec3DotInl(dir, delta);
+    Vec3SubInl(cg->refdef.vieworg, vStart, viewDelta);
+    viewDist = Vec3DotInl(viewDelta, dir);
+    if (viewDist < 64.0f)
+        return;
+    if (viewDist - -64.0f > dist)
+        return;
+    projPos[0] = viewDist * dir[0] + vStart[0];
+    projPos[1] = viewDist * dir[1] + vStart[1];
+    projPos[2] = viewDist * dir[2] + vStart[2];
+    Vec3SubInl(projPos, cg->refdef.vieworg, delta);
+    if (sqrtf(delta[2] * delta[2] + (delta[1] * delta[1] + delta[0] * delta[0])) > 140.0f)
+        return;
+    projPos[0] = projPos[0] - dir[0] * 16.0f;
+    projPos[1] = projPos[1] - dir[1] * 16.0f;
+    projPos[2] = projPos[2] - dir[2] * 16.0f;
+    CG_PlaySoundAlias(0x3fe, projPos, cgs->media.bulletWhizby);
+}
+
+// inlined com_math vector helpers: retail evaluates through their pointer params
+static __forceinline void Vec3CopyInl(const vec_t *a, vec_t *out)
+{
+    out[0] = a[0];
+    out[1] = a[1];
+    out[2] = a[2];
+}
+static __forceinline void Vec3ScaleInl(const vec_t *v, float scale, vec_t *out)
+{
+    out[0] = v[0] * scale;
+    out[1] = v[1] * scale;
+    out[2] = v[2] * scale;
+}
+void CG_SpawnTracer(vec_t *pstart, vec_t *pend)
+{
+    vec3_t start;
+    vec3_t end;
+    vec3_t dir;
+    float dist;
+    int time;
+    int jitter;
+    localEntity_t *le;
+
+    Vec3CopyInl(pstart, start);
+    end[0] = pend[0];
+    end[1] = pend[1];
+    end[2] = pend[2];
+
+    Vec3SubInl(end, start, dir);
+
+    dist = Vec3Normalize(dir);
+    le = CG_AllocLocalEntity();
+    le->leType = LE_MOVING_TRACER;
+    le->tracerClipDist = dist;
+
+    jitter = 0;
+    if (cg->frametime)
+        jitter = (rand() % cg->frametime) / 2;
+    time = cg->time - jitter;
+
+    le->endTime = time - (int)(dist / cg_tracerSpeed->current.value * -1000.0f);
+    le->pos.trType = TR_LINEAR;
+    le->pos.trTime = time;
+
+    Vec3CopyInl(start, le->pos.trBase);
+    Vec3ScaleInl(dir, cg_tracerSpeed->current.value, le->pos.trDelta);
+}
+
 // retail 0x4d1340; Kisak name (SUPPORTED)
 static float CalcTracerFinalScale(float tracerScaleDistRange, float dist, float tracerScale)
 {
@@ -2061,6 +1983,12 @@ static void ScaleTracer(const float *start, const float *finish, float *startWid
     }
 }
 
+inline void VectorScale(const vec3_t v, const float s, vec3_t o)
+{
+    o[0] = s * v[0];
+    o[1] = s * v[1];
+    o[2] = s * v[2];
+}
 // Q3 CG_Tracer shape
 void CG_DrawTracer(vec_t *start, vec_t *finish)
 {
@@ -2122,6 +2050,117 @@ void CG_DrawTracer(vec_t *start, vec_t *finish)
     CL_AddPolyToScene(cgs->media.tracerMaterial, 0x1f, 4, verts);
 }
 
+static qboolean __attribute_regparm__(3) CG_CalcMuzzlePoint(int entityNum, vec_t *muzzle, unsigned int flashTag)
+{
+    snapshot_t *snap;
+    centity_t *cent;
+    void *dobj;
+    int entFlags;
+
+    snap = cg->nextSnap;
+
+    if ((snap->ps.pm_flags & 0xc00000) && entityNum == snap->ps.clientNum) {
+        muzzle[0] = cg->refdef.vieworg[0];
+        muzzle[1] = cg->refdef.vieworg[1];
+        muzzle[2] = cg->refdef.vieworg[2];
+        return 1;
+    }
+
+    cent = &cg_entities[entityNum];
+    dobj = Com_GetClientDObj(cent->nextState.number, cent->localClientNum);
+    if (!dobj)
+        return 0;
+
+    if (CG_DObjGetWorldTagPos(cent, (struct DObj_s *)dobj, flashTag, muzzle))
+        return 1;
+
+    muzzle[0] = cent->nextState.pos.trBase[0];
+    muzzle[1] = cent->nextState.pos.trBase[1];
+    muzzle[2] = cent->nextState.pos.trBase[2];
+
+    if (entityNum >= 64)
+        return 1;
+
+    Com_DPrintf("No %s in CG_CalcMuzzlePoint on entity %d.\n", SL_ConvertToString(flashTag), entityNum);
+
+    entFlags = cent->nextState.eFlags;
+    if (entFlags & 8)
+        muzzle[2] += 11.0f;
+    else if (entFlags & 4)
+        muzzle[2] += 40.0f;
+    else
+        muzzle[2] += 60.0f;
+
+    return 1;
+}
+
+// retail 0x4d1850, name unknown: tracer + whizby for a bullet hit
+static void CG_BulletHitTracer(int sourceEntityNum, vec_t *position, unsigned int flashTag)
+{
+    vec3_t muzzle;
+
+    if (cg_tracerChance->current.value <= 0.0f)
+        return;
+    if (!CG_CalcMuzzlePoint(sourceEntityNum, muzzle, flashTag))
+        return;
+    if (!((cg->nextSnap->ps.pm_flags & 0xc00000) && sourceEntityNum == cg->nextSnap->ps.clientNum)
+        && (float)rand() < cg_tracerChance->current.value * 32768.0f)
+        CG_SpawnTracer(muzzle, position);
+    CG_WhizbySound(muzzle, position);
+}
+
+void CG_BulletHitEvent(int sourceEntityNum, vec_t *position, vec_t *normal, vec_t *reflected, int surfType, int event)
+{
+    snd_alias_list_t *alias;
+    // table rows: 23 surface types each
+    const FxEffectDef *fxNormal;
+    const FxEffectDef *fxReflect;
+
+    if (event == 0xb6) {
+        alias = cgs->media.bulletHitSmallSound[surfType];
+        fxNormal = cgs->media.fx->table[surfType];
+        fxReflect = cgs->media.fx->table[1 * 23 + surfType];
+    } else if (event == 0xb7) {
+        alias = cgs->media.bulletHitLargeSound[surfType];
+        fxNormal = cgs->media.fx->table[2 * 23 + surfType];
+        fxReflect = cgs->media.fx->table[3 * 23 + surfType];
+    } else {
+        alias = cgs->media.shotgunHitSound[surfType];
+        fxNormal = cgs->media.fx->table[4 * 23 + surfType];
+        fxReflect = cgs->media.fx->table[5 * 23 + surfType];
+    }
+
+    if (!cg_blood->current.enabled && surfType == 7) {
+        fxNormal = cgs->media.fxNoBloodFleshHit;
+        fxReflect = 0;
+    }
+
+    CG_PlaySoundAlias(0x3fe, position, alias);
+
+    if (fxNormal)
+        FX_PlayEffect((EffectTemplate *)fxNormal, position, normal);
+
+    if (fxReflect)
+        FX_PlayEffect((EffectTemplate *)fxReflect, position, reflected);
+
+    CG_BulletHitTracer(sourceEntityNum, position, *s_barrelTags[0]);
+}
+
+void CG_BulletHitClientEvent(int sourceEntityNum, vec_t *position, int surfType, int event)
+{
+    snd_alias_list_t *alias;
+
+    if (event == 0xb9)
+        alias = cgs->media.bulletHitSmallSound[surfType];
+    else if (event == 0xb7)
+        alias = cgs->media.bulletHitLargeSound[surfType];
+    else
+        alias = cgs->media.shotgunHitSound[surfType];
+
+    CG_PlaySoundAlias(0x3fe, position, alias);
+    CG_BulletHitTracer(sourceEntityNum, position, *s_barrelTags[0]);
+}
+
 // Name from CoD4; original CoD2 name unknown.
 static void ParseWeaponDefFiles(const char **ppszFiles, int iNumFiles)
 {
@@ -2180,48 +2219,10 @@ void CG_SelectWeaponIndex(int weaponIndex)
         CL_SetADS(0);
 }
 
-static qboolean __attribute_regparm__(3) CG_CalcMuzzlePoint(int entityNum, vec_t *muzzle, unsigned int flashTag)
+static __forceinline qboolean CG_IsLocalClientEntity(cg_t *cg, entityState_t *ent)
 {
-    snapshot_t *snap;
-    centity_t *cent;
-    void *dobj;
-    int entFlags;
+    snapshot_t *snap = cg->nextSnap;
 
-    snap = cg->nextSnap;
-
-    if ((snap->ps.pm_flags & 0xc00000) && entityNum == snap->ps.clientNum) {
-        muzzle[0] = cg->refdef.vieworg[0];
-        muzzle[1] = cg->refdef.vieworg[1];
-        muzzle[2] = cg->refdef.vieworg[2];
-        return 1;
-    }
-
-    cent = &cg_entities[entityNum];
-    dobj = Com_GetClientDObj(cent->nextState.number, cent->localClientNum);
-    if (!dobj)
-        return 0;
-
-    if (CG_DObjGetWorldTagPos(cent, (struct DObj_s *)dobj, flashTag, muzzle))
-        return 1;
-
-    muzzle[0] = cent->nextState.pos.trBase[0];
-    muzzle[1] = cent->nextState.pos.trBase[1];
-    muzzle[2] = cent->nextState.pos.trBase[2];
-
-    if (entityNum >= 64)
-        return 1;
-
-    Com_DPrintf("No %s in CG_CalcMuzzlePoint on entity %d.\n", SL_ConvertToString(flashTag), entityNum);
-
-    entFlags = cent->nextState.eFlags;
-    if (entFlags & 8)
-        muzzle[2] += 11.0f;
-    else if (entFlags & 4)
-        muzzle[2] += 40.0f;
-    else
-        muzzle[2] += 60.0f;
-
-    return 1;
+    return (snap->ps.pm_flags & 0xc00000) && ent->number == snap->ps.clientNum;
 }
-
 

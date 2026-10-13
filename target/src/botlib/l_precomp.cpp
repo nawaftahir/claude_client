@@ -113,208 +113,6 @@ void PC_UnreadToken(source_t *source, token_t *token);
 // Returns:					-
 // Changes Globals:		-
 //============================================================================
-int PC_ExpandBuiltinDefine(source_t *source, token_t *deftoken, define_t *define,
-										token_t **firsttoken, token_t **lasttoken)
-{
-	token_t *token;
-	time_t t;
-	char *curtime;
-	token = PC_CopyToken(deftoken);
-	switch(define->builtin)
-	{
-		case BUILTIN_LINE:
-		{
-			sprintf(token->string, "%d", deftoken->line);
-			token->intvalue = deftoken->line;
-			token->floatvalue = deftoken->line;
-			token->type = TT_NUMBER;
-			token->subtype = TT_DECIMAL | TT_INTEGER;
-			*firsttoken = token;
-			*lasttoken = token;
-			break;
-		} //end case
-		case BUILTIN_FILE:
-		{
-			strcpy(token->string, source->scriptstack->filename);
-			token->type = TT_NAME;
-			token->subtype = strlen(token->string);
-			*firsttoken = token;
-			*lasttoken = token;
-			break;
-		} //end case
-		case BUILTIN_DATE:
-		{
-			t = time(NULL);
-			curtime = ctime(&t);
-			strcpy(token->string, "\"");
-			strncat(token->string, curtime+4, 7);
-			strncat(token->string+7, curtime+20, 4);
-			strcat(token->string, "\"");
-			free(curtime);
-			token->type = TT_NAME;
-			token->subtype = strlen(token->string);
-			*firsttoken = token;
-			*lasttoken = token;
-			break;
-		} //end case
-		case BUILTIN_TIME:
-		{
-			t = time(NULL);
-			curtime = ctime(&t);
-			strcpy(token->string, "\"");
-			strncat(token->string, curtime+11, 8);
-			strcat(token->string, "\"");
-			free(curtime);
-			token->type = TT_NAME;
-			token->subtype = strlen(token->string);
-			*firsttoken = token;
-			*lasttoken = token;
-			break;
-		} //end case
-		case BUILTIN_STDC:
-		default:
-		{
-			*firsttoken = NULL;
-			*lasttoken = NULL;
-			break;
-		} //end case
-	} //end switch
-	return qtrue;
-} //end of the function PC_ExpandBuiltinDefine
-//============================================================================
-//
-// Parameter:				-
-// Returns:					-
-// Changes Globals:		-
-//============================================================================
-int PC_ExpandDefine(source_t *source, token_t *deftoken, define_t *define,
-										token_t **firsttoken, token_t **lasttoken)
-{
-	token_t *parms[MAX_DEFINEPARMS], *dt, *pt, *t;
-	token_t *t1, *t2, *first, *last, *nextpt, token;
-	int parmnum, i;
-	//if it is a builtin define
-	if (define->builtin)
-	{
-		return PC_ExpandBuiltinDefine(source, deftoken, define, firsttoken, lasttoken);
-	} //end if
-	//if the define has parameters
-	if (define->numparms)
-	{
-		if (!PC_ReadDefineParms(source, define, parms, MAX_DEFINEPARMS)) return qfalse;
-	} //end if
-	//empty list at first
-	first = NULL;
-	last = NULL;
-	//create a list with tokens of the expanded define
-	for (dt = define->tokens; dt; dt = dt->next)
-	{
-		parmnum = -1;
-		//if the token is a name, it could be a define parameter
-		if (dt->type == TT_NAME)
-		{
-			parmnum = PC_FindDefineParm(define, dt->string);
-		} //end if
-		//if it is a define parameter
-		if (parmnum >= 0)
-		{
-			for (pt = parms[parmnum]; pt; pt = pt->next)
-			{
-				t = PC_CopyToken(pt);
-				//add the token to the list
-				t->next = NULL;
-				if (last) last->next = t;
-				else first = t;
-				last = t;
-			} //end for
-		} //end if
-		else
-		{
-			//if stringizing operator
-			if (dt->string[0] == '#' && dt->string[1] == '\0')
-			{
-				//the stringizing operator must be followed by a define parameter
-				if (dt->next) parmnum = PC_FindDefineParm(define, dt->next->string);
-				else parmnum = -1;
-				//
-				if (parmnum >= 0)
-				{
-					//step over the stringizing operator
-					dt = dt->next;
-					//stringize the define parameter tokens
-					if (!PC_StringizeTokens(parms[parmnum], &token))
-					{
-						SourceError(source, "can't stringize tokens");
-						return qfalse;
-					} //end if
-					t = PC_CopyToken(&token);
-				} //end if
-				else
-				{
-					SourceWarning(source, "stringizing operator without define parameter");
-					continue;
-				} //end if
-			} //end if
-			else
-			{
-				t = PC_CopyToken(dt);
-			} //end else
-			//add the token to the list
-			t->next = NULL;
-			if (last) last->next = t;
-			else first = t;
-			last = t;
-		} //end else
-	} //end for
-	//check for the merging operator
-	for (t = first; t; )
-	{
-		if (t->next)
-		{
-			//if the merging operator
-			if (t->next->string[0] == '#' && t->next->string[1] == '#')
-			{
-				t1 = t;
-				t2 = t->next->next;
-				if (t2)
-				{
-					if (!PC_MergeTokens(t1, t2))
-					{
-						SourceError(source, "can't merge %s with %s", t1->string, t2->string);
-						return qfalse;
-					} //end if
-					PC_FreeToken(t1->next);
-					t1->next = t2->next;
-					if (t2 == last) last = t1;
-					PC_FreeToken(t2);
-					continue;
-				} //end if
-			} //end if
-		} //end if
-		t = t->next;
-	} //end for
-	//store the first and last token of the list
-	*firsttoken = first;
-	*lasttoken = last;
-	//free all the parameter tokens
-	for (i = 0; i < define->numparms; i++)
-	{
-		for (pt = parms[i]; pt; pt = nextpt)
-		{
-			nextpt = pt->next;
-			PC_FreeToken(pt);
-		} //end for
-	} //end for
-	//
-	return qtrue;
-} //end of the function PC_ExpandDefine
-
-//============================================================================
-//
-// Parameter:				-
-// Returns:					-
-// Changes Globals:		-
-//============================================================================
 typedef struct operator_s
 {
 	int op;
@@ -355,605 +153,6 @@ typedef struct value_s
 	else												\
 		op = &operator_heap[numoperators++];
 #define FreeOperator(op)
-int PC_EvaluateTokens(source_t *source, token_t *tokens, signed long int *intvalue,
-																	double *floatvalue, int integer)
-{
-	operator_t *o, *firstoperator, *lastoperator;
-	value_t *v, *firstvalue, *lastvalue, *v1, *v2;
-	token_t *t;
-	int brace = 0;
-	int parentheses = 0;
-	int error = 0;
-	int lastwasvalue = 0;
-	int negativevalue = 0;
-	int questmarkintvalue = 0;
-	double questmarkfloatvalue = 0;
-	int gotquestmarkvalue = qfalse;
-	int lastoperatortype = 0;
-	//
-	operator_t operator_heap[MAX_OPERATORS];
-	int numoperators = 0;
-	value_t value_heap[MAX_VALUES];
-	int numvalues = 0;
-	firstoperator = lastoperator = NULL;
-	firstvalue = lastvalue = NULL;
-	if (intvalue) *intvalue = 0;
-	if (floatvalue) *floatvalue = 0;
-	for (t = tokens; t; t = t->next)
-	{
-		switch(t->type)
-		{
-			case TT_NAME:
-			{
-				if (lastwasvalue || negativevalue)
-				{
-					SourceError(source, "syntax error in #if/#elif");
-					error = 1;
-					break;
-				} //end if
-				if (strcmp(t->string, "defined"))
-				{
-					SourceError(source, "undefined name %s in #if/#elif", t->string);
-					error = 1;
-					break;
-				} //end if
-				t = t->next;
-				if (!strcmp(t->string, "("))
-				{
-					brace = qtrue;
-					t = t->next;
-				} //end if
-				if (!t || t->type != TT_NAME)
-				{
-					SourceError(source, "defined without name in #if/#elif");
-					error = 1;
-					break;
-				} //end if
-				//v = (value_t *) GetClearedMemory(sizeof(value_t));
-				AllocValue(v);
-				if (PC_FindHashedDefine(source->definehash, t->string))
-				{
-					v->intvalue = 1;
-					v->floatvalue = 1;
-				} //end if
-				else
-				{
-					v->intvalue = 0;
-					v->floatvalue = 0;
-				} //end else
-				v->parentheses = parentheses;
-				v->next = NULL;
-				v->prev = lastvalue;
-				if (lastvalue) lastvalue->next = v;
-				else firstvalue = v;
-				lastvalue = v;
-				if (brace)
-				{
-					t = t->next;
-					if (!t || strcmp(t->string, ")"))
-					{
-						SourceError(source, "defined without ) in #if/#elif");
-						error = 1;
-						break;
-					} //end if
-				} //end if
-				brace = qfalse;
-				// defined() creates a value
-				lastwasvalue = 1;
-				break;
-			} //end case
-			case TT_NUMBER:
-			{
-				if (lastwasvalue)
-				{
-					SourceError(source, "syntax error in #if/#elif");
-					error = 1;
-					break;
-				} //end if
-				//v = (value_t *) GetClearedMemory(sizeof(value_t));
-				AllocValue(v);
-				if (negativevalue)
-				{
-					v->intvalue = - (signed int) t->intvalue;
-					v->floatvalue = - t->floatvalue;
-				} //end if
-				else
-				{
-					v->intvalue = t->intvalue;
-					v->floatvalue = t->floatvalue;
-				} //end else
-				v->parentheses = parentheses;
-				v->next = NULL;
-				v->prev = lastvalue;
-				if (lastvalue) lastvalue->next = v;
-				else firstvalue = v;
-				lastvalue = v;
-				//last token was a value
-				lastwasvalue = 1;
-				//
-				negativevalue = 0;
-				break;
-			} //end case
-			case TT_PUNCTUATION:
-			{
-				if (negativevalue)
-				{
-					SourceError(source, "misplaced minus sign in #if/#elif");
-					error = 1;
-					break;
-				} //end if
-				if (t->subtype == P_PARENTHESESOPEN)
-				{
-					parentheses++;
-					break;
-				} //end if
-				else if (t->subtype == P_PARENTHESESCLOSE)
-				{
-					parentheses--;
-					if (parentheses < 0)
-					{
-						SourceError(source, "too many ) in #if/#elsif");
-						error = 1;
-					} //end if
-					break;
-				} //end else if
-				//check for invalid operators on floating point values
-				if (!integer)
-				{
-					if (t->subtype == P_BIN_NOT || t->subtype == P_MOD ||
-						t->subtype == P_RSHIFT || t->subtype == P_LSHIFT ||
-						t->subtype == P_BIN_AND || t->subtype == P_BIN_OR ||
-						t->subtype == P_BIN_XOR)
-					{
-						SourceError(source, "illigal operator %s on floating point operands\n", t->string);
-						error = 1;
-						break;
-					} //end if
-				} //end if
-				switch(t->subtype)
-				{
-					case P_LOGIC_NOT:
-					case P_BIN_NOT:
-					{
-						if (lastwasvalue)
-						{
-							SourceError(source, "! or ~ after value in #if/#elif");
-							error = 1;
-							break;
-						} //end if
-						break;
-					} //end case
-					case P_INC:
-					case P_DEC:
-					{
-						SourceError(source, "++ or -- used in #if/#elif");
-						break;
-					} //end case
-					case P_SUB:
-					{
-						if (!lastwasvalue)
-						{
-							negativevalue = 1;
-							break;
-						} //end if
-					} //end case
-					case P_MUL:
-					case P_DIV:
-					case P_MOD:
-					case P_ADD:
-					case P_LOGIC_AND:
-					case P_LOGIC_OR:
-					case P_LOGIC_GEQ:
-					case P_LOGIC_LEQ:
-					case P_LOGIC_EQ:
-					case P_LOGIC_UNEQ:
-					case P_LOGIC_GREATER:
-					case P_LOGIC_LESS:
-					case P_RSHIFT:
-					case P_LSHIFT:
-					case P_BIN_AND:
-					case P_BIN_OR:
-					case P_BIN_XOR:
-					case P_COLON:
-					case P_QUESTIONMARK:
-					{
-						if (!lastwasvalue)
-						{
-							SourceError(source, "operator %s after operator in #if/#elif", t->string);
-							error = 1;
-							break;
-						} //end if
-						break;
-					} //end case
-					default:
-					{
-						SourceError(source, "invalid operator %s in #if/#elif", t->string);
-						error = 1;
-						break;
-					} //end default
-				} //end switch
-				if (!error && !negativevalue)
-				{
-					//o = (operator_t *) GetClearedMemory(sizeof(operator_t));
-					AllocOperator(o);
-					o->op = t->subtype;
-					o->priority = PC_OperatorPriority(t->subtype);
-					o->parentheses = parentheses;
-					o->next = NULL;
-					o->prev = lastoperator;
-					if (lastoperator) lastoperator->next = o;
-					else firstoperator = o;
-					lastoperator = o;
-					lastwasvalue = 0;
-				} //end if
-				break;
-			} //end case
-			default:
-			{
-				SourceError(source, "unknown %s in #if/#elif", t->string);
-				error = 1;
-				break;
-			} //end default
-		} //end switch
-		if (error) break;
-	} //end for
-	if (!error)
-	{
-		if (!lastwasvalue)
-		{
-			SourceError(source, "trailing operator in #if/#elif");
-			error = 1;
-		} //end if
-		else if (parentheses)
-		{
-			SourceError(source, "too many ( in #if/#elif");
-			error = 1;
-		} //end else if
-	} //end if
-	//
-	gotquestmarkvalue = qfalse;
-	questmarkintvalue = 0;
-	questmarkfloatvalue = 0;
-	//while there are operators
-	while(!error && firstoperator)
-	{
-		v = firstvalue;
-		for (o = firstoperator; o->next; o = o->next)
-		{
-			//if the current operator is nested deeper in parentheses
-			//than the next operator
-			if (o->parentheses > o->next->parentheses) break;
-			//if the current and next operator are nested equally deep in parentheses
-			if (o->parentheses == o->next->parentheses)
-			{
-				//if the priority of the current operator is equal or higher
-				//than the priority of the next operator
-				if (o->priority >= o->next->priority) break;
-			} //end if
-			//if the arity of the operator isn't equal to 1
-			if (o->op != P_LOGIC_NOT
-					&& o->op != P_BIN_NOT) v = v->next;
-			//if there's no value or no next value
-			if (!v)
-			{
-				SourceError(source, "mising values in #if/#elif");
-				error = 1;
-				break;
-			} //end if
-		} //end for
-		if (error) break;
-		v1 = v;
-		v2 = v->next;
-		switch(o->op)
-		{
-			case P_LOGIC_NOT:		v1->intvalue = !v1->intvalue;
-									v1->floatvalue = !v1->floatvalue; break;
-			case P_BIN_NOT:			v1->intvalue = ~v1->intvalue;
-									break;
-			case P_MUL:				v1->intvalue *= v2->intvalue;
-									v1->floatvalue *= v2->floatvalue; break;
-			case P_DIV:				if (!v2->intvalue || !v2->floatvalue)
-									{
-										SourceError(source, "divide by zero in #if/#elif\n");
-										error = 1;
-										break;
-									}
-									v1->intvalue /= v2->intvalue;
-									v1->floatvalue /= v2->floatvalue; break;
-			case P_MOD:				if (!v2->intvalue)
-									{
-										SourceError(source, "divide by zero in #if/#elif\n");
-										error = 1;
-										break;
-									}
-									v1->intvalue %= v2->intvalue; break;
-			case P_ADD:				v1->intvalue += v2->intvalue;
-									v1->floatvalue += v2->floatvalue; break;
-			case P_SUB:				v1->intvalue -= v2->intvalue;
-									v1->floatvalue -= v2->floatvalue; break;
-			case P_LOGIC_AND:		v1->intvalue = v1->intvalue && v2->intvalue;
-									v1->floatvalue = v1->floatvalue && v2->floatvalue; break;
-			case P_LOGIC_OR:		v1->intvalue = v1->intvalue || v2->intvalue;
-									v1->floatvalue = v1->floatvalue || v2->floatvalue; break;
-			case P_LOGIC_GEQ:		v1->intvalue = v1->intvalue >= v2->intvalue;
-									v1->floatvalue = v1->floatvalue >= v2->floatvalue; break;
-			case P_LOGIC_LEQ:		v1->intvalue = v1->intvalue <= v2->intvalue;
-									v1->floatvalue = v1->floatvalue <= v2->floatvalue; break;
-			case P_LOGIC_EQ:		v1->intvalue = v1->intvalue == v2->intvalue;
-									v1->floatvalue = v1->floatvalue == v2->floatvalue; break;
-			case P_LOGIC_UNEQ:		v1->intvalue = v1->intvalue != v2->intvalue;
-									v1->floatvalue = v1->floatvalue != v2->floatvalue; break;
-			case P_LOGIC_GREATER:	v1->intvalue = v1->intvalue > v2->intvalue;
-									v1->floatvalue = v1->floatvalue > v2->floatvalue; break;
-			case P_LOGIC_LESS:		v1->intvalue = v1->intvalue < v2->intvalue;
-									v1->floatvalue = v1->floatvalue < v2->floatvalue; break;
-			case P_RSHIFT:			v1->intvalue >>= v2->intvalue;
-									break;
-			case P_LSHIFT:			v1->intvalue <<= v2->intvalue;
-									break;
-			case P_BIN_AND:			v1->intvalue &= v2->intvalue;
-									break;
-			case P_BIN_OR:			v1->intvalue |= v2->intvalue;
-									break;
-			case P_BIN_XOR:			v1->intvalue ^= v2->intvalue;
-									break;
-			case P_COLON:
-			{
-				if (!gotquestmarkvalue)
-				{
-					SourceError(source, ": without ? in #if/#elif");
-					error = 1;
-					break;
-				} //end if
-				if (integer)
-				{
-					if (!questmarkintvalue) v1->intvalue = v2->intvalue;
-				} //end if
-				else
-				{
-					if (!questmarkfloatvalue) v1->floatvalue = v2->floatvalue;
-				} //end else
-				gotquestmarkvalue = qfalse;
-				break;
-			} //end case
-			case P_QUESTIONMARK:
-			{
-				if (gotquestmarkvalue)
-				{
-					SourceError(source, "? after ? in #if/#elif");
-					error = 1;
-					break;
-				} //end if
-				questmarkintvalue = v1->intvalue;
-				questmarkfloatvalue = v1->floatvalue;
-				gotquestmarkvalue = qtrue;
-				break;
-			} //end if
-		} //end switch
-		if (error) break;
-		lastoperatortype = o->op;
-		//if not an operator with arity 1
-		if (o->op != P_LOGIC_NOT
-				&& o->op != P_BIN_NOT)
-		{
-			//remove the second value if not question mark operator
-			if (o->op != P_QUESTIONMARK) v = v->next;
-			//
-			if (v->prev) v->prev->next = v->next;
-			else firstvalue = v->next;
-			if (v->next) v->next->prev = v->prev;
-			else lastvalue = v->prev;
-			//FreeMemory(v);
-			FreeValue(v);
-		} //end if
-		//remove the operator
-		if (o->prev) o->prev->next = o->next;
-		else firstoperator = o->next;
-		if (o->next) o->next->prev = o->prev;
-		else lastoperator = o->prev;
-		//FreeMemory(o);
-		FreeOperator(o);
-	} //end while
-	if (firstvalue)
-	{
-		if (intvalue) *intvalue = firstvalue->intvalue;
-		if (floatvalue) *floatvalue = firstvalue->floatvalue;
-	} //end if
-	for (o = firstoperator; o; o = lastoperator)
-	{
-		lastoperator = o->next;
-		//FreeMemory(o);
-		FreeOperator(o);
-	} //end for
-	for (v = firstvalue; v; v = lastvalue)
-	{
-		lastvalue = v->next;
-		//FreeMemory(v);
-		FreeValue(v);
-	} //end for
-	if (!error) return qtrue;
-	if (intvalue) *intvalue = 0;
-	if (floatvalue) *floatvalue = 0;
-	return qfalse;
-} //end of the function PC_EvaluateTokens
-//============================================================================
-//
-// Parameter:				-
-// Returns:					-
-// Changes Globals:		-
-//============================================================================
-int PC_Evaluate(source_t *source, signed long int *intvalue,
-												double *floatvalue, int integer)
-{
-	token_t token, *firsttoken, *lasttoken;
-	token_t *t, *nexttoken;
-	define_t *define;
-	int defined = qfalse;
-	if (intvalue) *intvalue = 0;
-	if (floatvalue) *floatvalue = 0;
-	//
-	if (!PC_ReadLine(source, &token))
-	{
-		SourceError(source, "no value after #if/#elif");
-		return qfalse;
-	} //end if
-	firsttoken = NULL;
-	lasttoken = NULL;
-	do
-	{
-		//if the token is a name
-		if (token.type == TT_NAME)
-		{
-			if (defined)
-			{
-				defined = qfalse;
-				t = PC_CopyToken(&token);
-				t->next = NULL;
-				if (lasttoken) lasttoken->next = t;
-				else firsttoken = t;
-				lasttoken = t;
-			} //end if
-			else if (!strcmp(token.string, "defined"))
-			{
-				defined = qtrue;
-				t = PC_CopyToken(&token);
-				t->next = NULL;
-				if (lasttoken) lasttoken->next = t;
-				else firsttoken = t;
-				lasttoken = t;
-			} //end if
-			else
-			{
-				//then it must be a define
-				define = PC_FindHashedDefine(source->definehash, token.string);
-				if (!define)
-				{
-					SourceError(source, "can't evaluate %s, not defined", token.string);
-					return qfalse;
-				} //end if
-				if (!PC_ExpandDefineIntoSource(source, &token, define)) return qfalse;
-			} //end else
-		} //end if
-		//if the token is a number or a punctuation
-		else if (token.type == TT_NUMBER || token.type == TT_PUNCTUATION)
-		{
-			t = PC_CopyToken(&token);
-			t->next = NULL;
-			if (lasttoken) lasttoken->next = t;
-			else firsttoken = t;
-			lasttoken = t;
-		} //end else
-		else //can't evaluate the token
-		{
-			SourceError(source, "can't evaluate %s", token.string);
-			return qfalse;
-		} //end else
-	} while(PC_ReadLine(source, &token));
-	//
-	if (!PC_EvaluateTokens(source, firsttoken, intvalue, floatvalue, integer)) return qfalse;
-	//
-	for (t = firsttoken; t; t = nexttoken)
-	{
-		nexttoken = t->next;
-		PC_FreeToken(t);
-	} //end for
-	//
-	return qtrue;
-} //end of the function PC_Evaluate
-//============================================================================
-//
-// Parameter:				-
-// Returns:					-
-// Changes Globals:		-
-//============================================================================
-int PC_DollarEvaluate(source_t *source, signed long int *intvalue,
-												double *floatvalue, int integer)
-{
-	int indent, defined = qfalse;
-	token_t token, *firsttoken, *lasttoken;
-	token_t *t, *nexttoken;
-	define_t *define;
-	if (intvalue) *intvalue = 0;
-	if (floatvalue) *floatvalue = 0;
-	//
-	if (!PC_ReadSourceToken(source, &token))
-	{
-		SourceError(source, "no leading ( after $evalint/$evalfloat");
-		return qfalse;
-	} //end if
-	if (!PC_ReadSourceToken(source, &token))
-	{
-		SourceError(source, "nothing to evaluate");
-		return qfalse;
-	} //end if
-	indent = 1;
-	firsttoken = NULL;
-	lasttoken = NULL;
-	do
-	{
-		//if the token is a name
-		if (token.type == TT_NAME)
-		{
-			if (defined)
-			{
-				defined = qfalse;
-				t = PC_CopyToken(&token);
-				t->next = NULL;
-				if (lasttoken) lasttoken->next = t;
-				else firsttoken = t;
-				lasttoken = t;
-			} //end if
-			else if (!strcmp(token.string, "defined"))
-			{
-				defined = qtrue;
-				t = PC_CopyToken(&token);
-				t->next = NULL;
-				if (lasttoken) lasttoken->next = t;
-				else firsttoken = t;
-				lasttoken = t;
-			} //end if
-			else
-			{
-				//then it must be a define
-				define = PC_FindHashedDefine(source->definehash, token.string);
-				if (!define)
-				{
-					SourceError(source, "can't evaluate %s, not defined", token.string);
-					return qfalse;
-				} //end if
-				if (!PC_ExpandDefineIntoSource(source, &token, define)) return qfalse;
-			} //end else
-		} //end if
-		//if the token is a number or a punctuation
-		else if (token.type == TT_NUMBER || token.type == TT_PUNCTUATION)
-		{
-			if (*token.string == '(') indent++;
-			else if (*token.string == ')') indent--;
-			if (indent <= 0) break;
-			t = PC_CopyToken(&token);
-			t->next = NULL;
-			if (lasttoken) lasttoken->next = t;
-			else firsttoken = t;
-			lasttoken = t;
-		} //end else
-		else //can't evaluate the token
-		{
-			SourceError(source, "can't evaluate %s", token.string);
-			return qfalse;
-		} //end else
-	} while(PC_ReadSourceToken(source, &token));
-	//
-	if (!PC_EvaluateTokens(source, firsttoken, intvalue, floatvalue, integer)) return qfalse;
-	//
-	for (t = firsttoken; t; t = nexttoken)
-	{
-		nexttoken = t->next;
-		PC_FreeToken(t);
-	} //end for
-	//
-	return qtrue;
-} //end of the function PC_DollarEvaluate
-
 //============================================================================
 //
 // Parameter:				-
@@ -1001,39 +200,9 @@ static directive_t dollardirectives[20] =
 #define MAX_SOURCEFILES		64
 static source_t *sourceFiles[MAX_SOURCEFILES];
 
-//============================================================================
-//
-// Parameter:				-
-// Returns:					-
-// Changes Globals:		-
-//============================================================================
-void SourceError(source_t *source, char *str, ...)
-{
-	char text[1024];
-	va_list ap;
 
-	va_start(ap, str);
-	vsprintf(text, str, ap);
-	va_end(ap);
-	Com_Printf("^1Error: file %s, line %d: %s\n", source->scriptstack->filename, source->scriptstack->line, text);
-} //end of the function SourceError
 
-//===========================================================================
-//
-// Parameter:				-
-// Returns:					-
-// Changes Globals:		-
-//===========================================================================
-void SourceWarning(source_t *source, char *str, ...)
-{
-	char text[1024];
-	va_list ap;
 
-	va_start(ap, str);
-	vsprintf(text, str, ap);
-	va_end(ap);
-	Com_Printf("^3Warning: file %s, line %d: %s\n", source->scriptstack->filename, source->scriptstack->line, text);
-} //end of the function ScriptWarning
 
 //============================================================================
 //
@@ -1501,6 +670,208 @@ void PC_AddBuiltinDefines(source_t *source)
 		PC_AddDefineToHash(define, source->definehash);
 	} //end for
 } //end of the function PC_AddBuiltinDefines
+
+//============================================================================
+//
+// Parameter:				-
+// Returns:					-
+// Changes Globals:		-
+//============================================================================
+int PC_ExpandBuiltinDefine(source_t *source, token_t *deftoken, define_t *define,
+										token_t **firsttoken, token_t **lasttoken)
+{
+	token_t *token;
+	time_t t;
+	char *curtime;
+	token = PC_CopyToken(deftoken);
+	switch(define->builtin)
+	{
+		case BUILTIN_LINE:
+		{
+			sprintf(token->string, "%d", deftoken->line);
+			token->intvalue = deftoken->line;
+			token->floatvalue = deftoken->line;
+			token->type = TT_NUMBER;
+			token->subtype = TT_DECIMAL | TT_INTEGER;
+			*firsttoken = token;
+			*lasttoken = token;
+			break;
+		} //end case
+		case BUILTIN_FILE:
+		{
+			strcpy(token->string, source->scriptstack->filename);
+			token->type = TT_NAME;
+			token->subtype = strlen(token->string);
+			*firsttoken = token;
+			*lasttoken = token;
+			break;
+		} //end case
+		case BUILTIN_DATE:
+		{
+			t = time(NULL);
+			curtime = ctime(&t);
+			strcpy(token->string, "\"");
+			strncat(token->string, curtime+4, 7);
+			strncat(token->string+7, curtime+20, 4);
+			strcat(token->string, "\"");
+			free(curtime);
+			token->type = TT_NAME;
+			token->subtype = strlen(token->string);
+			*firsttoken = token;
+			*lasttoken = token;
+			break;
+		} //end case
+		case BUILTIN_TIME:
+		{
+			t = time(NULL);
+			curtime = ctime(&t);
+			strcpy(token->string, "\"");
+			strncat(token->string, curtime+11, 8);
+			strcat(token->string, "\"");
+			free(curtime);
+			token->type = TT_NAME;
+			token->subtype = strlen(token->string);
+			*firsttoken = token;
+			*lasttoken = token;
+			break;
+		} //end case
+		case BUILTIN_STDC:
+		default:
+		{
+			*firsttoken = NULL;
+			*lasttoken = NULL;
+			break;
+		} //end case
+	} //end switch
+	return qtrue;
+} //end of the function PC_ExpandBuiltinDefine
+//============================================================================
+//
+// Parameter:				-
+// Returns:					-
+// Changes Globals:		-
+//============================================================================
+int PC_ExpandDefine(source_t *source, token_t *deftoken, define_t *define,
+										token_t **firsttoken, token_t **lasttoken)
+{
+	token_t *parms[MAX_DEFINEPARMS], *dt, *pt, *t;
+	token_t *t1, *t2, *first, *last, *nextpt, token;
+	int parmnum, i;
+	//if it is a builtin define
+	if (define->builtin)
+	{
+		return PC_ExpandBuiltinDefine(source, deftoken, define, firsttoken, lasttoken);
+	} //end if
+	//if the define has parameters
+	if (define->numparms)
+	{
+		if (!PC_ReadDefineParms(source, define, parms, MAX_DEFINEPARMS)) return qfalse;
+	} //end if
+	//empty list at first
+	first = NULL;
+	last = NULL;
+	//create a list with tokens of the expanded define
+	for (dt = define->tokens; dt; dt = dt->next)
+	{
+		parmnum = -1;
+		//if the token is a name, it could be a define parameter
+		if (dt->type == TT_NAME)
+		{
+			parmnum = PC_FindDefineParm(define, dt->string);
+		} //end if
+		//if it is a define parameter
+		if (parmnum >= 0)
+		{
+			for (pt = parms[parmnum]; pt; pt = pt->next)
+			{
+				t = PC_CopyToken(pt);
+				//add the token to the list
+				t->next = NULL;
+				if (last) last->next = t;
+				else first = t;
+				last = t;
+			} //end for
+		} //end if
+		else
+		{
+			//if stringizing operator
+			if (dt->string[0] == '#' && dt->string[1] == '\0')
+			{
+				//the stringizing operator must be followed by a define parameter
+				if (dt->next) parmnum = PC_FindDefineParm(define, dt->next->string);
+				else parmnum = -1;
+				//
+				if (parmnum >= 0)
+				{
+					//step over the stringizing operator
+					dt = dt->next;
+					//stringize the define parameter tokens
+					if (!PC_StringizeTokens(parms[parmnum], &token))
+					{
+						SourceError(source, "can't stringize tokens");
+						return qfalse;
+					} //end if
+					t = PC_CopyToken(&token);
+				} //end if
+				else
+				{
+					SourceWarning(source, "stringizing operator without define parameter");
+					continue;
+				} //end if
+			} //end if
+			else
+			{
+				t = PC_CopyToken(dt);
+			} //end else
+			//add the token to the list
+			t->next = NULL;
+			if (last) last->next = t;
+			else first = t;
+			last = t;
+		} //end else
+	} //end for
+	//check for the merging operator
+	for (t = first; t; )
+	{
+		if (t->next)
+		{
+			//if the merging operator
+			if (t->next->string[0] == '#' && t->next->string[1] == '#')
+			{
+				t1 = t;
+				t2 = t->next->next;
+				if (t2)
+				{
+					if (!PC_MergeTokens(t1, t2))
+					{
+						SourceError(source, "can't merge %s with %s", t1->string, t2->string);
+						return qfalse;
+					} //end if
+					PC_FreeToken(t1->next);
+					t1->next = t2->next;
+					if (t2 == last) last = t1;
+					PC_FreeToken(t2);
+					continue;
+				} //end if
+			} //end if
+		} //end if
+		t = t->next;
+	} //end for
+	//store the first and last token of the list
+	*firsttoken = first;
+	*lasttoken = last;
+	//free all the parameter tokens
+	for (i = 0; i < define->numparms; i++)
+	{
+		for (pt = parms[i]; pt; pt = nextpt)
+		{
+			nextpt = pt->next;
+			PC_FreeToken(pt);
+		} //end for
+	} //end for
+	//
+	return qtrue;
+} //end of the function PC_ExpandDefine
 
 //============================================================================
 //
@@ -2183,6 +1554,605 @@ int PC_OperatorPriority(int op)
 	return qfalse;
 } //end of the function PC_OperatorPriority
 
+int PC_EvaluateTokens(source_t *source, token_t *tokens, signed long int *intvalue,
+																	double *floatvalue, int integer)
+{
+	operator_t *o, *firstoperator, *lastoperator;
+	value_t *v, *firstvalue, *lastvalue, *v1, *v2;
+	token_t *t;
+	int brace = 0;
+	int parentheses = 0;
+	int error = 0;
+	int lastwasvalue = 0;
+	int negativevalue = 0;
+	int questmarkintvalue = 0;
+	double questmarkfloatvalue = 0;
+	int gotquestmarkvalue = qfalse;
+	int lastoperatortype = 0;
+	//
+	operator_t operator_heap[MAX_OPERATORS];
+	int numoperators = 0;
+	value_t value_heap[MAX_VALUES];
+	int numvalues = 0;
+	firstoperator = lastoperator = NULL;
+	firstvalue = lastvalue = NULL;
+	if (intvalue) *intvalue = 0;
+	if (floatvalue) *floatvalue = 0;
+	for (t = tokens; t; t = t->next)
+	{
+		switch(t->type)
+		{
+			case TT_NAME:
+			{
+				if (lastwasvalue || negativevalue)
+				{
+					SourceError(source, "syntax error in #if/#elif");
+					error = 1;
+					break;
+				} //end if
+				if (strcmp(t->string, "defined"))
+				{
+					SourceError(source, "undefined name %s in #if/#elif", t->string);
+					error = 1;
+					break;
+				} //end if
+				t = t->next;
+				if (!strcmp(t->string, "("))
+				{
+					brace = qtrue;
+					t = t->next;
+				} //end if
+				if (!t || t->type != TT_NAME)
+				{
+					SourceError(source, "defined without name in #if/#elif");
+					error = 1;
+					break;
+				} //end if
+				//v = (value_t *) GetClearedMemory(sizeof(value_t));
+				AllocValue(v);
+				if (PC_FindHashedDefine(source->definehash, t->string))
+				{
+					v->intvalue = 1;
+					v->floatvalue = 1;
+				} //end if
+				else
+				{
+					v->intvalue = 0;
+					v->floatvalue = 0;
+				} //end else
+				v->parentheses = parentheses;
+				v->next = NULL;
+				v->prev = lastvalue;
+				if (lastvalue) lastvalue->next = v;
+				else firstvalue = v;
+				lastvalue = v;
+				if (brace)
+				{
+					t = t->next;
+					if (!t || strcmp(t->string, ")"))
+					{
+						SourceError(source, "defined without ) in #if/#elif");
+						error = 1;
+						break;
+					} //end if
+				} //end if
+				brace = qfalse;
+				// defined() creates a value
+				lastwasvalue = 1;
+				break;
+			} //end case
+			case TT_NUMBER:
+			{
+				if (lastwasvalue)
+				{
+					SourceError(source, "syntax error in #if/#elif");
+					error = 1;
+					break;
+				} //end if
+				//v = (value_t *) GetClearedMemory(sizeof(value_t));
+				AllocValue(v);
+				if (negativevalue)
+				{
+					v->intvalue = - (signed int) t->intvalue;
+					v->floatvalue = - t->floatvalue;
+				} //end if
+				else
+				{
+					v->intvalue = t->intvalue;
+					v->floatvalue = t->floatvalue;
+				} //end else
+				v->parentheses = parentheses;
+				v->next = NULL;
+				v->prev = lastvalue;
+				if (lastvalue) lastvalue->next = v;
+				else firstvalue = v;
+				lastvalue = v;
+				//last token was a value
+				lastwasvalue = 1;
+				//
+				negativevalue = 0;
+				break;
+			} //end case
+			case TT_PUNCTUATION:
+			{
+				if (negativevalue)
+				{
+					SourceError(source, "misplaced minus sign in #if/#elif");
+					error = 1;
+					break;
+				} //end if
+				if (t->subtype == P_PARENTHESESOPEN)
+				{
+					parentheses++;
+					break;
+				} //end if
+				else if (t->subtype == P_PARENTHESESCLOSE)
+				{
+					parentheses--;
+					if (parentheses < 0)
+					{
+						SourceError(source, "too many ) in #if/#elsif");
+						error = 1;
+					} //end if
+					break;
+				} //end else if
+				//check for invalid operators on floating point values
+				if (!integer)
+				{
+					if (t->subtype == P_BIN_NOT || t->subtype == P_MOD ||
+						t->subtype == P_RSHIFT || t->subtype == P_LSHIFT ||
+						t->subtype == P_BIN_AND || t->subtype == P_BIN_OR ||
+						t->subtype == P_BIN_XOR)
+					{
+						SourceError(source, "illigal operator %s on floating point operands\n", t->string);
+						error = 1;
+						break;
+					} //end if
+				} //end if
+				switch(t->subtype)
+				{
+					case P_LOGIC_NOT:
+					case P_BIN_NOT:
+					{
+						if (lastwasvalue)
+						{
+							SourceError(source, "! or ~ after value in #if/#elif");
+							error = 1;
+							break;
+						} //end if
+						break;
+					} //end case
+					case P_INC:
+					case P_DEC:
+					{
+						SourceError(source, "++ or -- used in #if/#elif");
+						break;
+					} //end case
+					case P_SUB:
+					{
+						if (!lastwasvalue)
+						{
+							negativevalue = 1;
+							break;
+						} //end if
+					} //end case
+					case P_MUL:
+					case P_DIV:
+					case P_MOD:
+					case P_ADD:
+					case P_LOGIC_AND:
+					case P_LOGIC_OR:
+					case P_LOGIC_GEQ:
+					case P_LOGIC_LEQ:
+					case P_LOGIC_EQ:
+					case P_LOGIC_UNEQ:
+					case P_LOGIC_GREATER:
+					case P_LOGIC_LESS:
+					case P_RSHIFT:
+					case P_LSHIFT:
+					case P_BIN_AND:
+					case P_BIN_OR:
+					case P_BIN_XOR:
+					case P_COLON:
+					case P_QUESTIONMARK:
+					{
+						if (!lastwasvalue)
+						{
+							SourceError(source, "operator %s after operator in #if/#elif", t->string);
+							error = 1;
+							break;
+						} //end if
+						break;
+					} //end case
+					default:
+					{
+						SourceError(source, "invalid operator %s in #if/#elif", t->string);
+						error = 1;
+						break;
+					} //end default
+				} //end switch
+				if (!error && !negativevalue)
+				{
+					//o = (operator_t *) GetClearedMemory(sizeof(operator_t));
+					AllocOperator(o);
+					o->op = t->subtype;
+					o->priority = PC_OperatorPriority(t->subtype);
+					o->parentheses = parentheses;
+					o->next = NULL;
+					o->prev = lastoperator;
+					if (lastoperator) lastoperator->next = o;
+					else firstoperator = o;
+					lastoperator = o;
+					lastwasvalue = 0;
+				} //end if
+				break;
+			} //end case
+			default:
+			{
+				SourceError(source, "unknown %s in #if/#elif", t->string);
+				error = 1;
+				break;
+			} //end default
+		} //end switch
+		if (error) break;
+	} //end for
+	if (!error)
+	{
+		if (!lastwasvalue)
+		{
+			SourceError(source, "trailing operator in #if/#elif");
+			error = 1;
+		} //end if
+		else if (parentheses)
+		{
+			SourceError(source, "too many ( in #if/#elif");
+			error = 1;
+		} //end else if
+	} //end if
+	//
+	gotquestmarkvalue = qfalse;
+	questmarkintvalue = 0;
+	questmarkfloatvalue = 0;
+	//while there are operators
+	while(!error && firstoperator)
+	{
+		v = firstvalue;
+		for (o = firstoperator; o->next; o = o->next)
+		{
+			//if the current operator is nested deeper in parentheses
+			//than the next operator
+			if (o->parentheses > o->next->parentheses) break;
+			//if the current and next operator are nested equally deep in parentheses
+			if (o->parentheses == o->next->parentheses)
+			{
+				//if the priority of the current operator is equal or higher
+				//than the priority of the next operator
+				if (o->priority >= o->next->priority) break;
+			} //end if
+			//if the arity of the operator isn't equal to 1
+			if (o->op != P_LOGIC_NOT
+					&& o->op != P_BIN_NOT) v = v->next;
+			//if there's no value or no next value
+			if (!v)
+			{
+				SourceError(source, "mising values in #if/#elif");
+				error = 1;
+				break;
+			} //end if
+		} //end for
+		if (error) break;
+		v1 = v;
+		v2 = v->next;
+		switch(o->op)
+		{
+			case P_LOGIC_NOT:		v1->intvalue = !v1->intvalue;
+									v1->floatvalue = !v1->floatvalue; break;
+			case P_BIN_NOT:			v1->intvalue = ~v1->intvalue;
+									break;
+			case P_MUL:				v1->intvalue *= v2->intvalue;
+									v1->floatvalue *= v2->floatvalue; break;
+			case P_DIV:				if (!v2->intvalue || !v2->floatvalue)
+									{
+										SourceError(source, "divide by zero in #if/#elif\n");
+										error = 1;
+										break;
+									}
+									v1->intvalue /= v2->intvalue;
+									v1->floatvalue /= v2->floatvalue; break;
+			case P_MOD:				if (!v2->intvalue)
+									{
+										SourceError(source, "divide by zero in #if/#elif\n");
+										error = 1;
+										break;
+									}
+									v1->intvalue %= v2->intvalue; break;
+			case P_ADD:				v1->intvalue += v2->intvalue;
+									v1->floatvalue += v2->floatvalue; break;
+			case P_SUB:				v1->intvalue -= v2->intvalue;
+									v1->floatvalue -= v2->floatvalue; break;
+			case P_LOGIC_AND:		v1->intvalue = v1->intvalue && v2->intvalue;
+									v1->floatvalue = v1->floatvalue && v2->floatvalue; break;
+			case P_LOGIC_OR:		v1->intvalue = v1->intvalue || v2->intvalue;
+									v1->floatvalue = v1->floatvalue || v2->floatvalue; break;
+			case P_LOGIC_GEQ:		v1->intvalue = v1->intvalue >= v2->intvalue;
+									v1->floatvalue = v1->floatvalue >= v2->floatvalue; break;
+			case P_LOGIC_LEQ:		v1->intvalue = v1->intvalue <= v2->intvalue;
+									v1->floatvalue = v1->floatvalue <= v2->floatvalue; break;
+			case P_LOGIC_EQ:		v1->intvalue = v1->intvalue == v2->intvalue;
+									v1->floatvalue = v1->floatvalue == v2->floatvalue; break;
+			case P_LOGIC_UNEQ:		v1->intvalue = v1->intvalue != v2->intvalue;
+									v1->floatvalue = v1->floatvalue != v2->floatvalue; break;
+			case P_LOGIC_GREATER:	v1->intvalue = v1->intvalue > v2->intvalue;
+									v1->floatvalue = v1->floatvalue > v2->floatvalue; break;
+			case P_LOGIC_LESS:		v1->intvalue = v1->intvalue < v2->intvalue;
+									v1->floatvalue = v1->floatvalue < v2->floatvalue; break;
+			case P_RSHIFT:			v1->intvalue >>= v2->intvalue;
+									break;
+			case P_LSHIFT:			v1->intvalue <<= v2->intvalue;
+									break;
+			case P_BIN_AND:			v1->intvalue &= v2->intvalue;
+									break;
+			case P_BIN_OR:			v1->intvalue |= v2->intvalue;
+									break;
+			case P_BIN_XOR:			v1->intvalue ^= v2->intvalue;
+									break;
+			case P_COLON:
+			{
+				if (!gotquestmarkvalue)
+				{
+					SourceError(source, ": without ? in #if/#elif");
+					error = 1;
+					break;
+				} //end if
+				if (integer)
+				{
+					if (!questmarkintvalue) v1->intvalue = v2->intvalue;
+				} //end if
+				else
+				{
+					if (!questmarkfloatvalue) v1->floatvalue = v2->floatvalue;
+				} //end else
+				gotquestmarkvalue = qfalse;
+				break;
+			} //end case
+			case P_QUESTIONMARK:
+			{
+				if (gotquestmarkvalue)
+				{
+					SourceError(source, "? after ? in #if/#elif");
+					error = 1;
+					break;
+				} //end if
+				questmarkintvalue = v1->intvalue;
+				questmarkfloatvalue = v1->floatvalue;
+				gotquestmarkvalue = qtrue;
+				break;
+			} //end if
+		} //end switch
+		if (error) break;
+		lastoperatortype = o->op;
+		//if not an operator with arity 1
+		if (o->op != P_LOGIC_NOT
+				&& o->op != P_BIN_NOT)
+		{
+			//remove the second value if not question mark operator
+			if (o->op != P_QUESTIONMARK) v = v->next;
+			//
+			if (v->prev) v->prev->next = v->next;
+			else firstvalue = v->next;
+			if (v->next) v->next->prev = v->prev;
+			else lastvalue = v->prev;
+			//FreeMemory(v);
+			FreeValue(v);
+		} //end if
+		//remove the operator
+		if (o->prev) o->prev->next = o->next;
+		else firstoperator = o->next;
+		if (o->next) o->next->prev = o->prev;
+		else lastoperator = o->prev;
+		//FreeMemory(o);
+		FreeOperator(o);
+	} //end while
+	if (firstvalue)
+	{
+		if (intvalue) *intvalue = firstvalue->intvalue;
+		if (floatvalue) *floatvalue = firstvalue->floatvalue;
+	} //end if
+	for (o = firstoperator; o; o = lastoperator)
+	{
+		lastoperator = o->next;
+		//FreeMemory(o);
+		FreeOperator(o);
+	} //end for
+	for (v = firstvalue; v; v = lastvalue)
+	{
+		lastvalue = v->next;
+		//FreeMemory(v);
+		FreeValue(v);
+	} //end for
+	if (!error) return qtrue;
+	if (intvalue) *intvalue = 0;
+	if (floatvalue) *floatvalue = 0;
+	return qfalse;
+} //end of the function PC_EvaluateTokens
+//============================================================================
+//
+// Parameter:				-
+// Returns:					-
+// Changes Globals:		-
+//============================================================================
+int PC_Evaluate(source_t *source, signed long int *intvalue,
+												double *floatvalue, int integer)
+{
+	token_t token, *firsttoken, *lasttoken;
+	token_t *t, *nexttoken;
+	define_t *define;
+	int defined = qfalse;
+	if (intvalue) *intvalue = 0;
+	if (floatvalue) *floatvalue = 0;
+	//
+	if (!PC_ReadLine(source, &token))
+	{
+		SourceError(source, "no value after #if/#elif");
+		return qfalse;
+	} //end if
+	firsttoken = NULL;
+	lasttoken = NULL;
+	do
+	{
+		//if the token is a name
+		if (token.type == TT_NAME)
+		{
+			if (defined)
+			{
+				defined = qfalse;
+				t = PC_CopyToken(&token);
+				t->next = NULL;
+				if (lasttoken) lasttoken->next = t;
+				else firsttoken = t;
+				lasttoken = t;
+			} //end if
+			else if (!strcmp(token.string, "defined"))
+			{
+				defined = qtrue;
+				t = PC_CopyToken(&token);
+				t->next = NULL;
+				if (lasttoken) lasttoken->next = t;
+				else firsttoken = t;
+				lasttoken = t;
+			} //end if
+			else
+			{
+				//then it must be a define
+				define = PC_FindHashedDefine(source->definehash, token.string);
+				if (!define)
+				{
+					SourceError(source, "can't evaluate %s, not defined", token.string);
+					return qfalse;
+				} //end if
+				if (!PC_ExpandDefineIntoSource(source, &token, define)) return qfalse;
+			} //end else
+		} //end if
+		//if the token is a number or a punctuation
+		else if (token.type == TT_NUMBER || token.type == TT_PUNCTUATION)
+		{
+			t = PC_CopyToken(&token);
+			t->next = NULL;
+			if (lasttoken) lasttoken->next = t;
+			else firsttoken = t;
+			lasttoken = t;
+		} //end else
+		else //can't evaluate the token
+		{
+			SourceError(source, "can't evaluate %s", token.string);
+			return qfalse;
+		} //end else
+	} while(PC_ReadLine(source, &token));
+	//
+	if (!PC_EvaluateTokens(source, firsttoken, intvalue, floatvalue, integer)) return qfalse;
+	//
+	for (t = firsttoken; t; t = nexttoken)
+	{
+		nexttoken = t->next;
+		PC_FreeToken(t);
+	} //end for
+	//
+	return qtrue;
+} //end of the function PC_Evaluate
+//============================================================================
+//
+// Parameter:				-
+// Returns:					-
+// Changes Globals:		-
+//============================================================================
+int PC_DollarEvaluate(source_t *source, signed long int *intvalue,
+												double *floatvalue, int integer)
+{
+	int indent, defined = qfalse;
+	token_t token, *firsttoken, *lasttoken;
+	token_t *t, *nexttoken;
+	define_t *define;
+	if (intvalue) *intvalue = 0;
+	if (floatvalue) *floatvalue = 0;
+	//
+	if (!PC_ReadSourceToken(source, &token))
+	{
+		SourceError(source, "no leading ( after $evalint/$evalfloat");
+		return qfalse;
+	} //end if
+	if (!PC_ReadSourceToken(source, &token))
+	{
+		SourceError(source, "nothing to evaluate");
+		return qfalse;
+	} //end if
+	indent = 1;
+	firsttoken = NULL;
+	lasttoken = NULL;
+	do
+	{
+		//if the token is a name
+		if (token.type == TT_NAME)
+		{
+			if (defined)
+			{
+				defined = qfalse;
+				t = PC_CopyToken(&token);
+				t->next = NULL;
+				if (lasttoken) lasttoken->next = t;
+				else firsttoken = t;
+				lasttoken = t;
+			} //end if
+			else if (!strcmp(token.string, "defined"))
+			{
+				defined = qtrue;
+				t = PC_CopyToken(&token);
+				t->next = NULL;
+				if (lasttoken) lasttoken->next = t;
+				else firsttoken = t;
+				lasttoken = t;
+			} //end if
+			else
+			{
+				//then it must be a define
+				define = PC_FindHashedDefine(source->definehash, token.string);
+				if (!define)
+				{
+					SourceError(source, "can't evaluate %s, not defined", token.string);
+					return qfalse;
+				} //end if
+				if (!PC_ExpandDefineIntoSource(source, &token, define)) return qfalse;
+			} //end else
+		} //end if
+		//if the token is a number or a punctuation
+		else if (token.type == TT_NUMBER || token.type == TT_PUNCTUATION)
+		{
+			if (*token.string == '(') indent++;
+			else if (*token.string == ')') indent--;
+			if (indent <= 0) break;
+			t = PC_CopyToken(&token);
+			t->next = NULL;
+			if (lasttoken) lasttoken->next = t;
+			else firsttoken = t;
+			lasttoken = t;
+		} //end else
+		else //can't evaluate the token
+		{
+			SourceError(source, "can't evaluate %s", token.string);
+			return qfalse;
+		} //end else
+	} while(PC_ReadSourceToken(source, &token));
+	//
+	if (!PC_EvaluateTokens(source, firsttoken, intvalue, floatvalue, integer)) return qfalse;
+	//
+	for (t = firsttoken; t; t = nexttoken)
+	{
+		nexttoken = t->next;
+		PC_FreeToken(t);
+	} //end for
+	//
+	return qtrue;
+} //end of the function PC_DollarEvaluate
+
 //============================================================================
 //
 // Parameter:				-
@@ -2703,17 +2673,6 @@ void PC_UnreadLastToken(source_t *source)
 // Returns:					-
 // Changes Globals:		-
 //============================================================================
-void PC_UnreadToken(source_t *source, token_t *token)
-{
-	PC_UnreadSourceToken(source, token);
-} //end of the function PC_UnreadToken
-
-//============================================================================
-//
-// Parameter:				-
-// Returns:					-
-// Changes Globals:		-
-//============================================================================
 void PC_SetIncludePath(source_t *source, char *path)
 {
 	strncpy(source->includepath, path, MAX_PATH);
@@ -2983,6 +2942,48 @@ void PC_CheckOpenSourceHandles(void)
 	} //end for
 } //end of the function PC_CheckOpenSourceHandles
 
+//============================================================================
+//
+// Parameter:				-
+// Returns:					-
+// Changes Globals:		-
+//============================================================================
+void SourceError(source_t *source, char *str, ...)
+{
+	char text[1024];
+	va_list ap;
+
+	va_start(ap, str);
+	vsprintf(text, str, ap);
+	va_end(ap);
+	Com_Printf("^1Error: file %s, line %d: %s\n", source->scriptstack->filename, source->scriptstack->line, text);
+} //end of the function SourceError
+//===========================================================================
+//
+// Parameter:				-
+// Returns:					-
+// Changes Globals:		-
+//===========================================================================
+void SourceWarning(source_t *source, char *str, ...)
+{
+	char text[1024];
+	va_list ap;
+
+	va_start(ap, str);
+	vsprintf(text, str, ap);
+	va_end(ap);
+	Com_Printf("^3Warning: file %s, line %d: %s\n", source->scriptstack->filename, source->scriptstack->line, text);
+} //end of the function ScriptWarning
+//============================================================================
+//
+// Parameter:				-
+// Returns:					-
+// Changes Globals:		-
+//============================================================================
+void PC_UnreadToken(source_t *source, token_t *token)
+{
+	PC_UnreadSourceToken(source, token);
+} //end of the function PC_UnreadToken
 
 // Unreferenced storage; original declarations unknown (sized from the layout).
 static int unusedStorage[2];
