@@ -771,7 +771,7 @@ static void CG_PlayLoopedFx(centity_t *cent)
                 float scale;
 
                 ByteToDir(s1->eventParm, up);
-                dot = (up[1] * forward[1] + up[2] * forward[2]) + up[0] * forward[0];
+                dot = (up[2] * forward[2] + up[1] * forward[1]) + up[0] * forward[0];
                 scale = -dot;
                 up[0] = scale * forward[0] + up[0];
                 up[1] = scale * forward[1] + up[1];

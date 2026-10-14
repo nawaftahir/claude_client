@@ -2,8 +2,10 @@
 """Decl-order sweep: move one local declaration of the fn's leading decl block to the front or back.
 Decl order steers MSVC 7.1 register/reload order (SV_Netchan_PrintProfileStats matched by moving one int to the end).
 Initializers must be side-effect free. Line count unchanged. usage: declsw.py <scored.txt> [max_diff] [rounds]"""
-import re
+import os, re
 import cachesw
+
+NESTED = bool(os.environ.get('DECLSW_NESTED'))  # decl runs that open inner blocks instead of the leading one
 
 DECL = re.compile(r'^\s*(?:(?:const|unsigned|signed|static|struct|volatile)\s+)*[A-Za-z_]\w*[\s\*]+\**[A-Za-z_]\w*\s*(?:\[[^\]]*\]\s*)*'
                   r'(?:,\s*\**[A-Za-z_]\w*\s*(?:\[[^\]]*\]\s*)*)*(?:=\s*[^;(]+)?;\s*(?://.*)?$')
@@ -14,8 +16,17 @@ def block(L, a, b):
     while j < b and DECL.match(L[j]) and not KW.match(L[j]): j += 1
     return st, j
 
+def blocks(L, a, b):
+    if not NESTED: return [block(L, a, b)]
+    return [r for r in (block(L, i + 2, b) for i in range(a - 1, b) if L[i].rstrip().endswith('{')) if r[1] - r[0] >= 2]
+
 def cands(L, a, b):
-    st, en = block(L, a, b)
+    out = []
+    for st, en in blocks(L, a, b):
+        out += moves(L, st, en)
+    return out
+
+def moves(L, st, en):
     d = L[st:en]
     out = []
     for i in range(len(d)):
@@ -35,6 +46,9 @@ if __name__ == '__main__':
         assert len(c) == 6, len(c)
         assert c[0][2] == {2: '\tint t = 0;', 3: '\tchar buf[32], *p;', 4: '\tconst float *v;', 5: '\tint i;'}, c[0][2]
         assert not DECL.match('\tx = foo(1);') and not DECL.match('\tint t = foo();') and KW.match('\treturn a;')
+        NESTED = True
+        L = ['\tint i;', '\tif ( x ) {', '\t\tfloat a;', '\t\tfloat b;', '\t\tfoo();', '\t}']
+        assert blocks(L, 1, 6) == [(2, 4)], blocks(L, 1, 6)
         print('ok')
     else:
         cachesw.main(cands, 'declsw')

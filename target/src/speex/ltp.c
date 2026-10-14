@@ -224,7 +224,8 @@ void open_loop_nbest_pitch(spx_sig_t *sw, int start, int end, int len, int *pitc
 #else
    for (i=start;i<=end;i++)
    {
-      float g = corr[i-start]/(1+energy[i-start]);
+      int k = i-start;
+      float g = corr[k]/(1+energy[k]);
       if (g>16)
          g = 16;
       else if (g<-16)
