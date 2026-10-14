@@ -962,7 +962,7 @@ static int FS_FOpenFileRead_Internal(const char *filename, int *file, qboolean u
 			iwdFile = iwd->hashTable[hash];
 
 			// case and separator insensitive comparisons
-			while (1)
+			do
 			{
 				if (!FS_FilenameCompare(iwdFile->name, src))
 				{
@@ -1031,12 +1031,8 @@ static int FS_FOpenFileRead_Internal(const char *filename, int *file, qboolean u
 				}
 
 				iwdFile = iwdFile->next;
-
-				if (!iwdFile)
-				{
-					goto nextSearchPath2;
-				}
 			}
+			while (iwdFile);
 		}
 		else
 		{
