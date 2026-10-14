@@ -1408,7 +1408,7 @@ void CG_DrawMantleHint(const rectDef_t *rect, struct Font_s *font, float fontsca
 
     UI_DrawHandlePic(
         x + length,
-        rect->y - rect->h * 0.5f,
+        -(rect->h * 0.5f) + rect->y,
         rect->w,
         rect->h,
         rect->horzAlign,
