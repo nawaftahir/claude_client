@@ -473,7 +473,7 @@ void CG_DrawRotatedPicPhysical(float x, float y, float width, float height, floa
     scale[1][1] = c * halfH;
     for (i = 0; i < 4; i++) {
         verts[i][0] = center[0] + scale[0][0] * sign[i][0] - scale[0][1] * sign[i][1];
-        verts[i][1] = scale[1][0] * sign[i][0] + scale[1][1] * sign[i][1]; verts[i][1] = verts[i][1] + center[1];
+        verts[i][1] = scale[1][0] * sign[i][0] + scale[1][1] * sign[i][1] + center[1];
     }
 
     CL_DrawQuadPic(verts, color, material);
@@ -487,7 +487,7 @@ void CG_DrawRotatedQuadPic(float x, float y, vec2_t *verts, float angle, const v
 
     FastSinCos((angle * 0.017453292f), &s, &c);
     for (i = 0; i < 4; i++) {
-        xy[i][0] = c * verts[i][0] + x; xy[i][0] = xy[i][0] - s * verts[i][1];
+        xy[i][0] = c * verts[i][0] + x - s * verts[i][1];
         xy[i][1] = s * verts[i][0] + c * verts[i][1] + y;
     }
 

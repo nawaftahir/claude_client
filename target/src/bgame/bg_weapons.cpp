@@ -3136,15 +3136,36 @@ void PM_Weapon_CheckForChangeWeapon( pmove_t *pm )
 		return;
 	}
 
-	if ( Mantle_IsWeaponInactive(ps)
-	        || (ps->pm_flags & PMF_LADDER)
-	        || (ps->pm_flags & PMF_DISABLEWEAPON) )
+	if ( Mantle_IsWeaponInactive(ps) )
 	{
-		if ( ps->weapon )
+		if ( !ps->weapon )
 		{
-			PM_BeginWeaponChange(ps, WP_NONE);
+			return;
 		}
 
+		PM_BeginWeaponChange(ps, WP_NONE);
+		return;
+	}
+
+	if ( ps->pm_flags & PMF_LADDER )
+	{
+		if ( !ps->weapon )
+		{
+			return;
+		}
+
+		PM_BeginWeaponChange(ps, WP_NONE);
+		return;
+	}
+
+	if ( ps->pm_flags & PMF_DISABLEWEAPON )
+	{
+		if ( !ps->weapon )
+		{
+			return;
+		}
+
+		PM_BeginWeaponChange(ps, WP_NONE);
 		return;
 	}
 

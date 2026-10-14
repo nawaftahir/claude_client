@@ -1223,7 +1223,9 @@ bool FX_GetBoneOrientation( const FxBoltInfo *bolt, orientation_t *orient )
 	}
 
 	obj = Com_GetClientDObj(bolt->dobjHandle, 0);
-	if ( !obj || bolt->boneIndex >= DObjNumBones(obj) )
+	if ( !obj )
+		return false;
+	if ( bolt->boneIndex >= DObjNumBones(obj) )
 		return false;
 
 	CG_DObjCalcBoneGeneric(bolt->dobjHandle, 0, bolt->boneIndex);
