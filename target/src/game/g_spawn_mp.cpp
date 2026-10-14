@@ -444,22 +444,18 @@ void G_CallSpawn(void)
 	}
 
 	// check normal spawn functions
-	for ( s = spawns ; ; s++ )
+	for ( s = spawns ; s->name ; s++ )
 	{
-		if ( !s->name )
-		{
-			break;
-		}
-
 		if ( !strcmp(s->name, classname) )
 		{
-			if ( s->spawn != G_FreeEntity )
+			if ( s->spawn == G_FreeEntity )
 			{
-				ent = G_Spawn();
-				G_ParseEntityFields(ent);
-				s->spawn(ent);
+				return;
 			}
 
+			ent = G_Spawn();
+			G_ParseEntityFields(ent);
+			s->spawn(ent);
 			return;
 		}
 	}
