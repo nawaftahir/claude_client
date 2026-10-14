@@ -1150,7 +1150,7 @@ static void ConDrawInput_DetailedDvarMatch(const char *str)
     ConDrawInput_DrawText(str, 24, con_inputDvarMatchColor);
     conDrawInputGlob.x += 200.0f;
     ConDrawInput_DrawText(Dvar_DisplayableValue(dvar), 40, con_inputDvarValueColor);
-    conDrawInputGlob.y += conDrawInputGlob.fontHeight;
+    conDrawInputGlob.y = conDrawInputGlob.y + conDrawInputGlob.fontHeight;
     conDrawInputGlob.x = conDrawInputGlob.leftX;
     if (hasLatchedValue) {
         ConDrawInput_Text("  latched value", con_inputDvarInactiveValueColor);

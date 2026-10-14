@@ -4274,7 +4274,7 @@ void Item_Paint(displayContextDef_t *dc, itemDef_t *item)
             if (newRect.x == target[0]) {
                 done++;
             } else if (newRect.x < target[0]) {
-                newRect.x += step[0];
+                newRect.x = newRect.x + step[0];
                 if (newRect.x > target[0]) {
                     newRect.x = target[0];
                     done++;

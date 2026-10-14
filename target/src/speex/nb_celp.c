@@ -1356,7 +1356,7 @@ int nb_decode(void *state, SpeexBits *bits, void *vout)
       for (i=0;i<st->lpcSize;i++)
          lsp_dist += fabs((st->old_qlsp[i] - st->qlsp[i]));
       lsp_dist /= LSP_SCALING;
-      fact = .6*exp(-.2*lsp_dist);
+      fact = (.6*exp(-.2*lsp_dist));
       for (i=0;i<2*st->lpcSize;i++)
          st->mem_sp[i] = (spx_mem_t)(st->mem_sp[i]*fact);
    }
@@ -1396,7 +1396,7 @@ int nb_decode(void *state, SpeexBits *bits, void *vout)
    {
       int quant;
       quant = speex_bits_unpack_unsigned(bits, 4);
-      ol_pitch_coef=GAIN_SCALING*0.066667*quant;
+      ol_pitch_coef=(GAIN_SCALING*0.066667*quant);
    }
    
    /* Get global excitation gain */

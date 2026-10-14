@@ -1120,7 +1120,7 @@ void CG_DrawPlayerCompassBack(const rectDef_t *rect, MaterialHandle material, ve
     int displayStartTime;
     float alpha;
 
-    duration = I_fround(1000.0f * hud_fade_compass->current.value);
+    duration = I_fround((1000.0f * hud_fade_compass->current.value));
     displayStartTime = cg->compassFadeTime;
     alpha = CG_FadeHudMenu(hud_fade_compass, displayStartTime, duration);
     color[3] = alpha;

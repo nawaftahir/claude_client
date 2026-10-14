@@ -3261,7 +3261,7 @@ void AxisToSignedAngles( const vec3_t axis[3], vec3_t angles )
 	temp = fCos * right[0] - fSin * right[1];
 	right[1] = fSin * right[0] + fCos * right[1];
 
-	a = -angles[PITCH] * 0.017453292519943295f;
+	a = (-angles[PITCH] * 0.017453292519943295f);
 	FastSinCos(a, &fSin, &fCos);
 
 	right[0] = fSin * right[2] + fCos * temp;

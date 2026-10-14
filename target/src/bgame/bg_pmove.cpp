@@ -3189,7 +3189,7 @@ void PM_Accelerate( playerState_t *ps, const pml_t *pml, vec3_t wishdir, float w
 	}
 	else
 	{
-		VectorScale(wishdir, wishspeed, wishVelocity);
+		wishVelocity[0] = wishdir[0] * wishspeed; wishVelocity[1] = wishdir[1] * wishspeed; wishVelocity[2] = wishdir[2] * wishspeed;
 		VectorSubtract(wishVelocity, ps->velocity, pushDir);
 		control = Vec3Normalize(pushDir);
 		canPush = accel * pml->frametime * wishspeed;

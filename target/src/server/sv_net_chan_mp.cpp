@@ -179,7 +179,6 @@ SV_Netchan_PrintProfileStats
 void SV_Netchan_PrintProfileStats( int bPrintToConsole )
 {
 	int i;
-	int iTotalBPSRecieved = 0;
 	int iTotalPacketsSent = 0;
 	int iTotalBPSSent = 0;
 	int iTotalFragmentsSent = 0;
@@ -195,6 +194,7 @@ void SV_Netchan_PrintProfileStats( int bPrintToConsole )
 	client_t *cl;
 	char szClientName[32];
 	char szLine[1024];
+	int iTotalBPSRecieved = 0;
 
 	if ( !svs.clients )
 	{
