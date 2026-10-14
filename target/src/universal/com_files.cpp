@@ -878,7 +878,7 @@ static int FS_FOpenFileRead_Internal(const char *filename, int *file, qboolean u
 		// just wants to see if file is there
 		for (i = fs_searchpaths; i; i = i->next)
 		{
-			if (!FS_UseSearchPath(i))
+			if (!FS_UseSearchPath(i) || (i->localized && i->language != SEH_GetCurrentLanguage()))
 			{
 				continue;
 			}
@@ -945,7 +945,7 @@ static int FS_FOpenFileRead_Internal(const char *filename, int *file, qboolean u
 
 	for (i = fs_searchpaths; i; i = i->next)
 	{
-		if (!FS_UseSearchPath(i))
+		if (!FS_UseSearchPath(i) || (i->localized && i->language != SEH_GetCurrentLanguage()))
 		{
 			continue;
 		}
@@ -1009,11 +1009,8 @@ static int FS_FOpenFileRead_Internal(const char *filename, int *file, qboolean u
 					// set the file position in the zip file (also sets the current file info)
 					unzSetCurrentFileInfoPosition(iwd->handle, iwdFile->pos);
 
-					// copy the file info into the unzip structure
-					if (dest != iwd->handle)
-					{
-						Com_Memcpy(dest, iwd->handle, sizeof(unz_s));
-					}
+					// copy the file info into the unzip structure (retail has no dest==src guard)
+					Com_Memcpy(dest, iwd->handle, sizeof(unz_s));
 
 					// we copy this back into the structure
 					*(FILE **)dest = stream;
