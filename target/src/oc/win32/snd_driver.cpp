@@ -168,7 +168,7 @@ void SND_SetStreamChannelVolumePan(int index, float volume, float pan);
 void SND_UpdateStreamChannel(int i, int frametime);
 void SND_Update2DChannel(int i, int frametime);
 void SND_Set2DChannelVolumePan(int index, float volume, float pan);
-MssSound *SND_LoadFromBuffer(void *buffer, const char *realname, const void *unused);
+MssSound *SND_LoadFromBuffer(void *buffer, const char *realname, MssSound *sound);
 void SND_LoadSoundFile(SoundFile *soundFile);
 int SND_StartAlias2DSample(const snd_alias_t *pAlias0, const snd_alias_t *pAlias1, float lerp, int entnum, float volume, float pitch, int timeshift, float fraction, int startDelay, Bool master, int *pChannel, snd_alias_system_t system);
 int SND_StartAlias3DSample(const snd_alias_t *pAlias0, const snd_alias_t *pAlias1, float lerp, int entnum, const vec_t *org, float volume, float pitch, int timeshift, float fraction, int startDelay, Bool master, int *pChannel, snd_alias_system_t system);
@@ -1252,14 +1252,13 @@ void SND_RawSamples(int samples, int rate, int width, int s_channels, const byte
     }
 }
 
-// Original name unknown (KisakCOD calls it SND_LoadFromBuffer). The third
-// parameter is pushed by every caller but never read in 1.0; its type is unknown.
-MssSound *SND_LoadFromBuffer(void *buffer, const char *realname, const void *unused)
+/* Original name unknown (KisakCOD: SND_LoadFromBuffer). sound is overwritten
+   on every path, but callers still pass it in 1.0. */
+MssSound *SND_LoadFromBuffer(void *buffer, const char *realname, MssSound *sound)
 {
     AILMIXINFO mixinfo;
     int datasize, totalSize;
     unsigned int rate, samples;
-    MssSound *sound;
     int targetBits, targetChannels;
     int procFormat;
 

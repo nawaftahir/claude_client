@@ -1213,6 +1213,7 @@ bool FX_GetBoneOrientation( const FxBoltInfo *bolt, orientation_t *orient )
 	vec3_t end;
 	DObj_s *obj;
 	DObjAnimMat *boneMtx;
+	DObjAnimMat *mats;
 
 	CG_GetDObjOrientation(bolt->dobjHandle, dobjAxis);
 	if ( bolt->boneIndex < 0 )
@@ -1229,11 +1230,11 @@ bool FX_GetBoneOrientation( const FxBoltInfo *bolt, orientation_t *orient )
 		return false;
 
 	CG_DObjCalcBoneGeneric(bolt->dobjHandle, 0, bolt->boneIndex);
-	boneMtx = DObjGetRotTransArray(obj);
-	if ( !boneMtx )
+	mats = DObjGetRotTransArray(obj);
+	if ( !mats )
 		return false;
 
-	boneMtx += bolt->boneIndex;
+	boneMtx = mats + bolt->boneIndex;
 	ConvertQuatToMat(boneMtx, boneAxis);
 	MatrixMultiply(boneAxis, dobjAxis, orient->axis);
 	MatrixTransformVector43(boneMtx->trans, dobjAxis, orient->origin);

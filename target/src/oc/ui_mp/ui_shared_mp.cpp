@@ -3652,7 +3652,6 @@ void Item_Text_AutoWrapped_Paint(itemDef_t *item, const char *textPtr, vec_t *co
     int height, len, textWidth, newLine, newLineWidth;
     float y;
     FontHandle font;
-    float targetWidth;
     int iTargetLineWidth;
     rectDef_t newRect;
     rectDef_t *textRect;
@@ -3662,10 +3661,9 @@ void Item_Text_AutoWrapped_Paint(itemDef_t *item, const char *textPtr, vec_t *co
     height = UI_TextHeight(font, item->textscale);
     textWidth = UI_TextWidth(textPtr, 0, font, item->textscale);
     if (item->window.rect[0].w != 0.0f && (float)textWidth > item->window.rect[0].w)
-        targetWidth = (float)textWidth / (float)(int)ceil((double)(textWidth / item->window.rect[0].w));
+        iTargetLineWidth = (int)((float)textWidth / (float)(int)ceil((double)(textWidth / item->window.rect[0].w)));
     else
-        targetWidth = item->window.rect[0].w;
-    iTargetLineWidth = (int)targetWidth;
+        iTargetLineWidth = (int)item->window.rect[0].w;
     y = item->textaligny;
     len = 0;
     buff[0] = '\0';

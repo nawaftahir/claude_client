@@ -635,9 +635,9 @@ float CG_DrawTeamOfClientScore(const float *color, float y, int team, float list
     CG_DrawScoreboard_GetTeamColor(team, teamColor);
     teamColor[3] = color[3];
     highlight = 0;
-    for (i = 0; i < cg->numScores; i++)
+    score = cg->scores;
+    for (i = 0; i < cg->numScores; i++, score++)
     {
-        score = &cg->scores[i];
         if (cg->bgs.clientinfo[score->client].infoValid && score->team == team)
         {
             y = CG_DrawClientScore(teamColor, y, score, listWidth, highlight, drawLine, *numDrawn);

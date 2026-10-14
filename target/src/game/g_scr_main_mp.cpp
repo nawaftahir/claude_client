@@ -6361,9 +6361,9 @@ void Scr_ToLower()
 
 	s = Scr_GetString(0);
 
-	for ( i = 0; i < MAX_STRING_CHARS; i++ )
+	for ( i = 0; i < MAX_STRING_CHARS; i++, s++ )
 	{
-		c = tolower(*s++);
+		c = tolower(*s);
 		tempString[i] = c;
 
 		if ( !c )

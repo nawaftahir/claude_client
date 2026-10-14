@@ -98,6 +98,7 @@ void SV_Shutdown( const char *finalmsg );
 void CL_InitLoad( const char *mapname, const char *gametype );
 void CL_MapLoading( const char *mapname );
 void CL_StartHunkUsers( void );
+void CL_StartLoading( const char *mapname, const char *gametype );
 void UI_LoadIngameMenus( void );
 
 void SV_SetConfigstring( int index, const char *val )
@@ -769,11 +770,7 @@ void SV_SpawnServer( char *server )
 	Com_sprintf(mapname, sizeof(mapname), "maps/mp/%s.%s", server, GetBspExtension());
 	SV_SetExpectedHunkUsage(mapname);
 
-	if ( legacyHacks->cl_running )
-	{
-		CL_StartHunkUsers();
-		SCR_UpdateScreen();
-	}
+	CL_StartLoading(server, sv.gametype);
 
 	UI_LoadIngameMenus();
 

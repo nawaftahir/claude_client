@@ -100,12 +100,12 @@ void CL_Netchan_Decode(byte *data, int size)
         beforeTrace[i] = data[i];
     }
 #endif
-    for (i = 0; i < size; i++) {
+    for (i = 0; i < size; i++, data++) {
         if (!string[index])
             index = 0;
         key ^= string[index] << (i & 1);
         index++;
-        *data++ ^= key;
+        *data ^= key;
     }
 
 #if defined(COD2_X64) || defined(_M_X64) || defined(__x86_64__)

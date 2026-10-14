@@ -1292,10 +1292,7 @@ void CG_UpdateViewWeaponAnim(playerState_t *ps)
 
     DObjUpdateClientInfo(weapInfo->viewModelDObj, (float)cg->frametime * 0.0010000000474974513f);
 
-    partBits[0] = -1;
-    partBits[1] = -1;
-    partBits[2] = -1;
-    partBits[3] = -1;
+    memset(partBits, 0xFF, sizeof(partBits));
 
     if (!CL_DObjCreateSkelForBones(weapInfo->viewModelDObj, partBits, 0)) {
         DObjCalcAnim(weapInfo->viewModelDObj, partBits);

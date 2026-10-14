@@ -262,10 +262,8 @@ qboolean Sys_DirectoryHasContents( const char *dir )
 
 	do
 	{
-		if ( !( findinfo.attrib & _A_SUBDIR ) )
-			return qtrue;
-
-		if ( I_stricmp( findinfo.name, "." ) && I_stricmp( findinfo.name, ".." ) && I_stricmp( findinfo.name, "CVS" ) )
+		if ( !( findinfo.attrib & _A_SUBDIR )
+			|| I_stricmp( findinfo.name, "." ) && I_stricmp( findinfo.name, ".." ) && I_stricmp( findinfo.name, "CVS" ) )
 			return qtrue;
 	}
 	while ( _findnext( findhandle, &findinfo ) != -1 );

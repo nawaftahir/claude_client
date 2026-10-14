@@ -1534,7 +1534,10 @@ static void Con_DrawOutputText(float x, float y, float height)
         if (con.currentLine - lineIndex >= con.totallines)
             continue;
         y -= 16.0f;
-        SCR_DrawConsoleString((int)x, (int)y, &con.textBuffer[(lineIndex % con.totallines) * con.linewidth], con.linewidth, color);
+        {
+            const short *line = &con.textBuffer[(lineIndex % con.totallines) * con.linewidth];
+            SCR_DrawConsoleString((int)x, (int)y, line, con.linewidth, color);
+        }
     }
 }
 

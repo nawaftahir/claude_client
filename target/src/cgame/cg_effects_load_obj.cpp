@@ -91,7 +91,16 @@ static const char *CG_ParseImpactEffects( const char *filename, const char *buf,
 			return va("effect filename '%s' in third column of file '%s' is longer than %i characters", token, filename, 63);
 		effectName = (char *)Hunk_AllocateTempMemoryInternal(len + 1);
 		szEffectFile[iEffectType * SURF_TYPECOUNT + iSurfaceType] = effectName;
-		strcpy(effectName, token);
+		{
+			const char *src = token;
+			char *dst = effectName;
+			char c;
+			do
+			{
+				c = *src++;
+				*dst++ = c;
+			} while ( c );
+		}
 		Com_SkipRestOfLine(&buf);
 	}
 }

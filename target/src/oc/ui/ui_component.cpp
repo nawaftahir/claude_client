@@ -772,8 +772,6 @@ UI_Component *UI_VerticalDivider::GetCompAtLocation(float *point)
 
 void UI_VerticalDivider::Draw(float x, float y, float width, float height, float compX, float compY)
 {
-    float topHeight;
-
     this->size[0] = width;
     this->size[1] = height;
     this->posY = (float)(int)(this->posY / UI_Component_g.charHeight) * UI_Component_g.charHeight;
@@ -788,27 +786,23 @@ void UI_VerticalDivider::Draw(float x, float y, float width, float height, float
             this->bottomComp->Draw(x, y, width, height, 0.0f, 0.0f);
         return;
     }
-    if (this->bottomComp)
+    if (!this->bottomComp)
+        goto drawFull;
+    if (this->posY <= compY)
     {
-        if (this->posY <= compY)
-        {
-            this->bottomComp->Draw(x, y, width, height, 0.0f, 0.0f);
-            return;
-        }
-        ;
-        if ((this->posY - compY) >= height)
-        {
-            DrawTop(x, y, width, height);
-        }
-        else
-        {
-            this->bottomComp->Draw(x, y + this->posY, width, height - (this->posY - compY), 0.0f, 0.0f);
-            DrawTop(x, y, width, (this->posY - compY));
-        }
+        this->bottomComp->Draw(x, y, width, height, 0.0f, 0.0f);
+        return;
+    }
+    compY = this->posY - compY;
+    if (compY >= height)
+    {
+drawFull:
+        DrawTop(x, y, width, height);
     }
     else
     {
-        DrawTop(x, y, width, height);
+        this->bottomComp->Draw(x, y + this->posY, width, height - compY, 0.0f, 0.0f);
+        DrawTop(x, y, width, compY);
     }
 }
 

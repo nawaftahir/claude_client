@@ -1324,7 +1324,7 @@ void CG_DrawHoldBreathHint(const rectDef_t *rect, struct Font_s *font, float fon
     char binding[256];
     const char *text;
     int textWidth;
-    int textOffset;
+    float x;
 
     if (!cg_drawBreathHint->current.enabled) {
         return;
@@ -1353,13 +1353,13 @@ void CG_DrawHoldBreathHint(const rectDef_t *rect, struct Font_s *font, float fon
 
     text = UI_ReplaceConversionString(UI_SafeTranslateString("PLATFORM_HOLD_BREATH"), binding);
     textWidth = UI_TextWidth(text, 0, font, fontscale);
-    textOffset = I_fround(textWidth * 0.5f);
+    x = rect->x - (float)I_fround(textWidth * 0.5f);
 
     UI_DrawText(
         text,
         0x7fffffff,
         font,
-        rect->x - (float)textOffset,
+        x,
         rect->y,
         rect->horzAlign,
         rect->vertAlign,
