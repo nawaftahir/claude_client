@@ -936,10 +936,7 @@ void CG_DObjCalcPose(const centity_t *cent, const struct DObj_s *obj, int *partB
 {
     int completePartBits[4];
 
-    completePartBits[0] = partBits[0];
-    completePartBits[1] = partBits[1];
-    completePartBits[2] = partBits[2];
-    completePartBits[3] = partBits[3];
+    memcpy(completePartBits, partBits, sizeof(completePartBits));
 
     DObjCompleteHierarchyBits((DObj_s *)obj, completePartBits);
     if (CL_DObjCreateSkelForBones(obj, completePartBits, cent->localClientNum))

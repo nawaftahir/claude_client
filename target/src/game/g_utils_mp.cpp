@@ -378,6 +378,13 @@ void G_SetModel( gentity_t *ent, const char *modelName )
 	ent->model = modelIndex;
 }
 
+static __forceinline const char *G_ModelNameInl( int index )
+{
+	const char *cs = sv.configstrings[CS_MODELS + index];
+
+	return cs ? cs : "";
+}
+
 /*
 ====================
 G_OverrideModel
@@ -386,7 +393,7 @@ G_OverrideModel
 void G_OverrideModel( int modelIndex, const char *defaultModelName )
 {
 	assert(modelIndex);
-	const char *modelName = G_ModelName(modelIndex);
+	const char *modelName = G_ModelNameInl(modelIndex);
 	assert(modelName[0]);
 	XModel *model = SV_XModelGet(defaultModelName);
 

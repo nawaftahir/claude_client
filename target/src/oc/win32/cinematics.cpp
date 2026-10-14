@@ -1392,20 +1392,25 @@ static void ROQ_DrawLetterBox(int x, int y, int w, int h, const float *color)
 {
     float barSize;
     int barTop;
-    unsigned int barBottom;
-    refexport_t *re;
+    int barBottom;
+    float pos[2];
+    float size[2];
 
     barSize = ((float)cls.vidConfig.height * (1.0f / 480.0f)) * 105.0f;
     barTop = FastFloor(barSize);
     barBottom = FastCeil(barSize);
 
-    re = (refexport_t *)(void *)((void *)&::re);
-    ((void (*)(float, float, float, float, float, float, float, float, const vec_t *, int))re->DrawStretchPic)(
-        (float)x, (float)y, (float)w, (float)barTop,
-        0.0f, 0.0f, 0.0f, 0.0f, color, (int)cls.whiteMaterial);
-    ((void (*)(float, float, float, float, float, float, float, float, const vec_t *, int))re->DrawStretchPic)(
-        (float)x, (float)(y + h - barBottom), (float)w, (float)barBottom,
-        0.0f, 0.0f, 0.0f, 0.0f, color, (int)cls.whiteMaterial);
+    pos[0] = (float)x;
+    pos[1] = (float)y;
+    size[0] = (float)w;
+    size[1] = (float)barTop;
+    ROQ_DrawRect_4afbc0(pos, size, color);
+
+    pos[0] = (float)x;
+    pos[1] = (float)(y + h - barBottom);
+    size[0] = (float)w;
+    size[1] = (float)barBottom;
+    ROQ_DrawRect_4afbc0(pos, size, color);
 }
 
 void ROQ_DrawCinematicFromHandle(int handle)

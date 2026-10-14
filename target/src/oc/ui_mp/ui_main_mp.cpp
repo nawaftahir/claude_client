@@ -132,7 +132,7 @@ static void UI_REGPARM1 UI_BuildServerStatus(int force);
 void UI_Refresh(void);
 void UI_RunMenuScript(const char **args);
 int UI_FeederCount(float feederID);
-static void Text_PaintCenter(FontHandle font, const char *text, float x, float y, float scale, const vec_t *color);
+static void Text_PaintCenter(float x, float y, FontHandle font, float scale, const vec_t *color, const char *text);
 static void UI_DisplayDownloadInfo(const char *downloadName, float centerPoint, float yStart, FontHandle font, float scale);
 void UI_DrawConnectScreen(void);
 
@@ -233,7 +233,7 @@ extern qboolean Menus_AnyFullScreenVisible(displayContextDef_t *dc);
 extern void LAN_SaveServersToCache(void);
 extern void Menus_CloseByName(displayContextDef_t *dc, const char *p);
 extern char *Cmd_Args(int startIndex);
-static void Text_PaintCenter(FontHandle font, const char *text, float x, float y, float scale, const vec_t *color);
+static void Text_PaintCenter(float x, float y, FontHandle font, float scale, const vec_t *color, const char *text);
 const char *UI_ReplaceConversionInt(const char *sourceString, int replaceInt);
 extern Bool IsTalking(void);
 extern MaterialHandle CL_RegisterMaterialNoMip(const char *name, int imageTrack);   /* was int -> truncated MaterialHandle on x64 */
@@ -3034,7 +3034,7 @@ static void UI_PrintTime(char *buf, int bufsize, int time)
     }
 }
 
-static void Text_PaintCenter(FontHandle font, const char *text, float x, float y, float scale, const vec_t *color)
+static void Text_PaintCenter(float x, float y, FontHandle font, float scale, const vec_t *color, const char *text)
 {
     float actualScale = CL_NormalizedTextScale(font, scale);
     int len = (int)((float)CL_TextWidth(text, 0, font) * actualScale);
@@ -3305,7 +3305,9 @@ static void UI_GetGameTypesList(void)
     for (i = 0; i < iNumGameTypeScripts; i++) {
         int iLen = strlen(pszFileName);
 
-        if (pszFileName[0] != '_') {
+        if (pszFileName[0] == '_') {
+            pszFileName += iLen + 1;
+        } else {
             char *pszExt = pszFileName + iLen - 4;
 
             if (!I_stricmp(pszExt, ".gsc"))
@@ -3330,8 +3332,8 @@ static void UI_GetGameTypesList(void)
 
             sharedUiInfo.numGameTypes++;
             sharedUiInfo.numJoinGameTypes++;
+            pszFileName += iLen + 1;
         }
-        pszFileName += iLen + 1;
     }
 
     if (!sharedUiInfo.numGameTypes)
@@ -3494,20 +3496,20 @@ qboolean UI_SetActiveMenu(int menu)
         if (pFocus && uiInfo->currentMenuType != UIMENU_SCRIPT_POPUP && uiInfo->currentMenuType != UIMENU_SCRIPT_POPUP_NO_MOUSE)
             return 0;
         newMenu = legacyHacks->ui_newScriptMenu;
-        if (pFocus && !I_stricmp(pFocus->window.name, newMenu))
-            return 1;
-        uiInfo->currentMenuType = UIMENU_SCRIPT_POPUP;
-        if (menu == UIMENU_SCRIPT_POPUP_NO_MOUSE) {
-            uiInfo->uiDC.cursorx = 0x27f;
-            uiInfo->uiDC.cursory = 0x1df;
+        if (!pFocus || I_stricmp(pFocus->window.name, newMenu)) {
+            uiInfo->currentMenuType = UIMENU_SCRIPT_POPUP;
+            if (menu == UIMENU_SCRIPT_POPUP_NO_MOUSE) {
+                uiInfo->uiDC.cursorx = 0x27f;
+                uiInfo->uiDC.cursory = 0x1df;
+            }
+            Key_SetCatcher(8);
+            Menus_CloseAll(&uiInfo->uiDC);
+            strcpy(legacyHacks->ui_scriptMenu, newMenu);
+            legacyHacks->ui_scriptMenuIndex = legacyHacks->ui_newScriptMenuIndex;
+            legacyHacks->ui_newScriptMenu[0] = 0;
+            legacyHacks->ui_newScriptMenuIndex = -1;
+            Menus_OpenByName(&uiInfo->uiDC, legacyHacks->ui_scriptMenu);
         }
-        Key_SetCatcher(8);
-        Menus_CloseAll(&uiInfo->uiDC);
-        strcpy(legacyHacks->ui_scriptMenu, newMenu);
-        legacyHacks->ui_scriptMenuIndex = legacyHacks->ui_newScriptMenuIndex;
-        legacyHacks->ui_newScriptMenu[0] = 0;
-        legacyHacks->ui_newScriptMenuIndex = -1;
-        Menus_OpenByName(&uiInfo->uiDC, legacyHacks->ui_scriptMenu);
         return 1;
 
     case UIMENU_PLAYER_PROFILE:
@@ -3590,9 +3592,9 @@ static void UI_DisplayDownloadInfo(const char *downloadName, float centerPoint, 
         if (downloadCount < 0x1000 || !downloadTime) {
 
             text = UI_SafeTranslateString("EXE_ESTIMATING");
-            Text_PaintCenter(font, text, centerPoint, yStart + 235.0f, scale, ltGrey);
+            Text_PaintCenter(centerPoint, yStart + 235.0f, font, scale, ltGrey, text);
             text = va("(%s %s %s %s)", dlSizeBuf, UI_SafeTranslateString("EXE_OF"), totalSizeBuf, UI_SafeTranslateString("EXE_COPIED"));
-            Text_PaintCenter(font, text, centerPoint, yStart + 340.0f, scale, ltGrey);
+            Text_PaintCenter(centerPoint, yStart + 340.0f, font, scale, ltGrey, text);
         } else {
 
             if ((uiInfo->uiDC.realTime - downloadTime) / 1000)
@@ -3620,16 +3622,16 @@ static void UI_DisplayDownloadInfo(const char *downloadName, float centerPoint, 
                 UI_PrintTime(dlTimeBuf, 64, sum / 80);
                 UI_DrawText(dlTimeBuf, 0x7fffffff, font, 264.0f, yStart + 235.0f, 0, 0, scale, ltGrey, 3);
                 text = va("(%s %s %s %s)", dlSizeBuf, UI_SafeTranslateString("EXE_OF"), totalSizeBuf, UI_SafeTranslateString("EXE_COPIED"));
-                Text_PaintCenter(font, text, centerPoint, yStart + 320.0f, scale, ltGrey);
+                Text_PaintCenter(centerPoint, yStart + 320.0f, font, scale, ltGrey, text);
             } else {
 
                 text = UI_SafeTranslateString("EXE_ESTIMATING");
-                Text_PaintCenter(font, text, centerPoint, yStart + 235.0f, scale, ltGrey);
+                Text_PaintCenter(centerPoint, yStart + 235.0f, font, scale, ltGrey, text);
                 if (downloadSize)
                     text = va("(%s %s %s %s)", dlSizeBuf, UI_SafeTranslateString("EXE_OF"), totalSizeBuf, UI_SafeTranslateString("EXE_COPIED"));
                 else
                     text = va("(%s %s)", dlSizeBuf, UI_SafeTranslateString("EXE_COPIED"));
-                Text_PaintCenter(font, text, centerPoint, yStart + 320.0f, scale, ltGrey);
+                Text_PaintCenter(centerPoint, yStart + 320.0f, font, scale, ltGrey, text);
             }
 
             if (xferRate) {
@@ -3661,12 +3663,12 @@ void UI_DrawConnectScreen(void)
             strcpy(text, UI_ReplaceConversionString(UI_SafeTranslateString("EXE_DOWNLOADINGUPDATE"), Dvar_GetString("cl_updateversion")));
         else
             strcpy(text, UI_ReplaceConversionString(UI_SafeTranslateString("EXE_CONNECTINGTO"), cstate.servername));
-        Text_PaintCenter(font, text, 320.0f, 55.0f, 0.5f, colorWhite);
+        Text_PaintCenter(320.0f, 55.0f, font, 0.5f, colorWhite, text);
         displayed = 1;
     } else if (g_mapname[0]) {
         s = UI_SafeTranslateString(UI_GetGameTypeDisplayName(g_gametype));
-        Text_PaintCenter(font, s, 320.0f, 89.0f, 0.5f, colorWhite);
-        Text_PaintCenter(font, UI_GetMapDisplayName(g_mapname), 320.0f, 119.0f, 0.5f, colorWhite);
+        Text_PaintCenter(320.0f, 89.0f, font, 0.5f, colorWhite, s);
+        Text_PaintCenter(320.0f, 119.0f, font, 0.5f, colorWhite, UI_GetMapDisplayName(g_mapname));
         displayed = 1;
     }
 
@@ -3683,7 +3685,7 @@ void UI_DrawConnectScreen(void)
                 neednewline = 1;
             if (index >= 58 || i == len - 1 || (neednewline && s[i] == ' ')) {
                 ps[index + 1] = 0;
-                Text_PaintCenter(font, ps, 320.0f, (float)yPrint, 0.5f, colorYellow);
+                Text_PaintCenter(320.0f, (float)yPrint, font, 0.5f, colorYellow, ps);
                 neednewline = 0;
                 yPrint += 22;
                 index = -1;
@@ -3711,7 +3713,7 @@ void UI_DrawConnectScreen(void)
     }
 
     if (s && I_stricmp(cstate.servername, "localhost"))
-        Text_PaintCenter(font, s, 320.0f, 145.0f, 0.5f, colorWhite);
+        Text_PaintCenter(320.0f, 145.0f, font, 0.5f, colorWhite, s);
 }
 
 

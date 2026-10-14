@@ -733,21 +733,15 @@ void CG_EntityEvent(centity_t *cent, int event)
 
         case 0x98:
             if (isFirstPerson && cg_weaponsArray[es->weapon].reloadStartSoundPlayer)
-            {
                 CG_PlayEntitySoundAlias(es->number, cg_weaponsArray[es->weapon].reloadStartSoundPlayer);
-                break;
-            }
-            if (cg_weaponsArray[es->weapon].reloadStartSound)
+            else if (cg_weaponsArray[es->weapon].reloadStartSound)
                 CG_PlayEntitySoundAlias(es->number, cg_weaponsArray[es->weapon].reloadStartSound);
             break;
 
         case 0x99:
             if (isFirstPerson && cg_weaponsArray[es->weapon].reloadEndSoundPlayer)
-            {
                 CG_PlayEntitySoundAlias(es->number, cg_weaponsArray[es->weapon].reloadEndSoundPlayer);
-                break;
-            }
-            if (cg_weaponsArray[es->weapon].reloadEndSound)
+            else if (cg_weaponsArray[es->weapon].reloadEndSound)
                 CG_PlayEntitySoundAlias(es->number, cg_weaponsArray[es->weapon].reloadEndSound);
             break;
 

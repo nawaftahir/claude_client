@@ -1143,11 +1143,11 @@ void CG_DrawPlayerCompassBack(const rectDef_t *rect, MaterialHandle material, ve
         material);
 }
 
-// retail 0x4bf300, unreferenced twin of CompassIconSize; name unknown
+// retail 0x4bf300 (16.0f PINNED), inlined in CG_DrawPlayerCompassPointers; name unknown
 void CompassIconSize_4bf300(float *w, float *h)
 {
-    *w = cg_hudCompassSize->current.value * 10.0f;
-    *h = cg_hudCompassSize->current.value * 10.0f;
+    *w = cg_hudCompassSize->current.value * 16.0f;
+    *h = cg_hudCompassSize->current.value * 16.0f;
 }
 
 static void CG_UpdateCursorHints(void)

@@ -98,7 +98,18 @@ void Window_RemoveDynamicFlags(Window *w, const int newFlags)
     w->dynamicFlags[0] = flags;
 }
 
-int Item_CanFocus_5409b0(const itemDef_t *item);
+// Retail inlines this into Menu_HasItemLeft/Right.
+static __forceinline int Item_CanFocusInl(const itemDef_t *item)
+{
+    if (!item || (item->window.staticFlags & 0x100000) || !Window_IsVisible((Window *)&item->window))
+        return 0;
+    if ((item->dvarFlags & 3) && !Item_EnableShowViaDvar(item, 1))
+        return 0;
+    if ((item->dvarFlags & 0xc) && !Item_EnableShowViaDvar(item, 4))
+        return 0;
+    return 1;
+}
+
 
 extern uiInfo_t *uiInfo;
 
@@ -115,19 +126,23 @@ qboolean UI_CursorInRect_540670(int x, int y, int w, int h)
 bool Menu_HasItemLeft_5407e0(menuDef_t *menu)
 {
     const itemDef_t *cur;
+    const itemDef_t *item;
     float y;
     int i;
+    int cursorItem;
 
-    if (menu->cursorItem[0] < 0 || menu->cursorItem[0] >= menu->itemCount)
+    cursorItem = menu->cursorItem[0];
+    if (cursorItem < 0 || cursorItem >= menu->itemCount)
         return 0;
-    cur = menu->items[menu->cursorItem[0]];
+    cur = menu->items[cursorItem];
     y = cur->window.rect[0].h * 0.5f + cur->window.rect[0].y;
-    for (i = menu->cursorItem[0] - 1; i >= 0; i--) {
-        if (!Item_CanFocus_5409b0(menu->items[i]))
+    for (i = cursorItem - 1; i >= 0; i--) {
+        if (!Item_CanFocusInl(menu->items[i]))
             continue;
-        if (y > menu->items[i]->window.rect[0].y
-            && menu->items[i]->window.rect[0].h + menu->items[i]->window.rect[0].y > y
-            && menu->items[i]->window.rect[0].x < cur->window.rect[0].x)
+        item = menu->items[i];
+        if (y > item->window.rect[0].y
+            && item->window.rect[0].h + item->window.rect[0].y > y
+            && item->window.rect[0].x < cur->window.rect[0].x)
             return 1;
         return 0;
     }
@@ -138,19 +153,23 @@ bool Menu_HasItemLeft_5407e0(menuDef_t *menu)
 bool Menu_HasItemRight_5408c0(menuDef_t *menu)
 {
     const itemDef_t *cur;
+    const itemDef_t *item;
     float y;
     int i;
+    int cursorItem;
 
-    if (menu->cursorItem[0] < 0 || menu->cursorItem[0] >= menu->itemCount)
+    cursorItem = menu->cursorItem[0];
+    if (cursorItem < 0 || cursorItem >= menu->itemCount)
         return 0;
-    cur = menu->items[menu->cursorItem[0]];
+    cur = menu->items[cursorItem];
     y = cur->window.rect[0].h * 0.5f + cur->window.rect[0].y;
-    for (i = menu->cursorItem[0] + 1; i < menu->itemCount; i++) {
-        if (!Item_CanFocus_5409b0(menu->items[i]))
+    for (i = cursorItem + 1; i < menu->itemCount; i++) {
+        if (!Item_CanFocusInl(menu->items[i]))
             continue;
-        if (y > menu->items[i]->window.rect[0].y
-            && menu->items[i]->window.rect[0].h + menu->items[i]->window.rect[0].y > y
-            && menu->items[i]->window.rect[0].x > cur->window.rect[0].x)
+        item = menu->items[i];
+        if (y > item->window.rect[0].y
+            && item->window.rect[0].h + item->window.rect[0].y > y
+            && item->window.rect[0].x > cur->window.rect[0].x)
             return 1;
         return 0;
     }
@@ -160,13 +179,7 @@ bool Menu_HasItemRight_5408c0(menuDef_t *menu)
 // retail 0x5409b0, unreferenced, name unknown (Item_SetFocus checks)
 int Item_CanFocus_5409b0(const itemDef_t *item)
 {
-    if (!item || (item->window.staticFlags & 0x100000) || !Window_IsVisible((Window *)&item->window))
-        return 0;
-    if ((item->dvarFlags & 3) && !Item_EnableShowViaDvar(item, 1))
-        return 0;
-    if ((item->dvarFlags & 0xc) && !Item_EnableShowViaDvar(item, 4))
-        return 0;
-    return 1;
+    return Item_CanFocusInl(item);
 }
 
 qboolean Item_EnableShowViaDvar(const itemDef_t *item, int flag)
@@ -274,6 +287,7 @@ void Window_AddDynamicFlags(Window *w, const int newFlags)
 void Item_SetScreenCoords(itemDef_t *item, float x, float y, int horzAlign, int vertAlign)
 {
     rectDef_t newRect;
+    const rectDef_t *textRect;
 
     if (item == NULL)
         return;
@@ -298,10 +312,11 @@ void Item_SetScreenCoords(itemDef_t *item, float x, float y, int horzAlign, int 
     }
     item->window.rect[0] = newRect;
 
-    newRect = item->textRect[0];
+    textRect = &item->textRect[0];
+    newRect = *textRect;
     newRect.w = 0;
     newRect.h = 0;
-    item->textRect[0] = newRect;
+    Item_SetTextRect(item, &newRect);
 }
 
 void Menu_UpdatePosition(menuDef_t *menu)

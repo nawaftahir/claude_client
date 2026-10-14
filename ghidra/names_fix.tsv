@@ -20,7 +20,6 @@
 0	Sys_Error	drop
 0	Scr_GetNextCodepos	drop
 0	DObjGetCreateParms	drop
-0	CL_ServersResponsePacket	drop
 0	CL_ServerStatus_f	drop
 0	SND_Is3DChannelFree	drop
 0	CG_DrawStringExt	drop

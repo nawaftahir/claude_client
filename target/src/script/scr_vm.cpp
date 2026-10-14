@@ -4794,10 +4794,9 @@ next:
 			do
 			{
 				newSize++;
-				currentValue--;
-				assert(currentValue->type != VAR_CODEPOS);
+				assert(currentValue[-1].type != VAR_CODEPOS);
 			}
-			while ( currentValue->type != VAR_PRECODEPOS );
+			while ( (currentValue--)[-1].type != VAR_PRECODEPOS );
 			assert(newSize >= 0 && newSize < (1 << 16));
 
 			len = STACKBUF_BUFFER_SIZE; len = len * size;

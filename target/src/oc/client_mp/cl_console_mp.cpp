@@ -1510,9 +1510,11 @@ static void Con_DrawOutputScrollBar(float x, float y, float width, float height)
 {
     float frac;
 
-    ConDraw_Box(x + width - 10.0f, y, 10.0f, height, con_outputBarColor->current.vector);
+    x = x + width - 10.0f;
+    ConDraw_Box(x, y, 10.0f, height, con_outputBarColor->current.vector);
     frac = 1.0f - (float)(con.currentLine - con.display) / (con.totallines - 1);
-    ConDraw_Box(x + width - 10.0f, (y + height - 10.0f - y) * frac + y, 10.0f, 10.0f, con_outputSliderColor->current.vector);
+    y = (y + height - 10.0f - y) * frac + y;
+    ConDraw_Box(x, y, 10.0f, 10.0f, con_outputSliderColor->current.vector);
 }
 
 static void Con_DrawOutputText(float x, float y, float height)

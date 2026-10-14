@@ -323,7 +323,8 @@ void CL_SortGlobalServers(void)
     qsort(cls->globalServers, count, sizeof(serverInfo_t), CL_CompareAdrSigned);
 }
 
-static __declspec(noinline) void CL_InitServerInfo(serverInfo_t *server, netadr_t adr)
+// Retail inlines this in CL_ServersResponsePacket only.
+static __forceinline void CL_InitServerInfoInl(serverInfo_t *server, netadr_t adr)
 {
     server->adr = adr;
     server->clients = 0;
@@ -339,6 +340,11 @@ static __declspec(noinline) void CL_InitServerInfo(serverInfo_t *server, netadr_
     server->allowAnonymous = 0;
     server->dirty = 1;
     server->requestCount = 0;
+}
+
+static __declspec(noinline) void CL_InitServerInfo(serverInfo_t *server, netadr_t adr)
+{
+    CL_InitServerInfoInl(server, adr);
 }
 
 // Original name unknown.
@@ -558,7 +564,7 @@ ping_t *CL_GetFreePing(void)
                     // still waiting for response
                     continue;
                 }
-            } else {
+            } else if (pingptr->time < 500) {
                 // results have not been queried
                 continue;
             }
@@ -924,7 +930,6 @@ void CL_SetServerInfoByAddress(netadr_t from, const char *info, int ping)
     int i;
     int low;
     int high;
-    int mid;
     int compare;
 
     Com_PumpMessageLoop();
@@ -938,15 +943,14 @@ void CL_SetServerInfoByAddress(netadr_t from, const char *info, int ping)
     low = 0;
     high = cls.numglobalservers;
     while (low < high) {
-        mid = (low + high) / 2;
-        compare = NET_CompareAdrSigned(&from, &cls.globalServers[mid].adr);
+        i = (high + low) / 2;
+        compare = NET_CompareAdrSigned(&from, &cls.globalServers[i].adr);
         if (compare < 0) {
-            high = mid;
+            high = i;
         } else if (compare > 0) {
-            low = mid + 1;
+            low = i + 1;
         } else {
             // back up to the first matching entry
-            i = mid;
             do {
                 i--;
             } while (i >= 0 && !NET_CompareAdrSigned(&from, &cls.globalServers[i].adr));
@@ -1056,7 +1060,7 @@ void CL_ServersResponsePacket(netadr_t from, msg_t *msg)
         if (!CL_RefreshKnownGlobalServer(adr)) {
             server = &cls.globalServers[count];
             count++;
-            CL_InitServerInfo(server, adr);
+            CL_InitServerInfoInl(server, adr);
         }
     }
 

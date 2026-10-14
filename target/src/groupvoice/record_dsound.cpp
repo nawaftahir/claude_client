@@ -186,14 +186,14 @@ HRESULT DSOUNDRecord_Start( dsound_sample_t *pRecSample )
 	pRecSample->dwBufferSize = dscbd.dwBufferBytes;
 	pRecSample->dwCaptureOffset = 0;
 	hr = pRecSample->DSCB->Start(DSCBSTART_LOOPING);
-	if ( FAILED(hr) )
+	if ( SUCCEEDED(hr) )
 	{
-		Com_Printf("error: Unable to Read to Buffer\n");
-		return -1;
+		g_current_sample = pRecSample;
+		g_currently_recording = true;
+		return hr;
 	}
-	g_current_sample = pRecSample;
-	g_currently_recording = true;
-	return hr;
+	Com_Printf("error: Unable to Read to Buffer\n");
+	return -1;
 }
 
 HRESULT DSOUNDRecord_Stop( dsound_sample_t *pRecSample )

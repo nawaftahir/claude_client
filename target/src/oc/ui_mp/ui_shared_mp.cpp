@@ -3801,6 +3801,7 @@ itemDef_t *Menu_SetNextCursorItem(displayContextDef_t *dc, menuDef_t *menu)
 {
     qboolean wrapped;
     int oldCursor;
+    itemDef_t *item;
 
     wrapped = 0;
     oldCursor = menu->cursorItem[0];
@@ -3816,9 +3817,10 @@ itemDef_t *Menu_SetNextCursorItem(displayContextDef_t *dc, menuDef_t *menu)
             wrapped = 1;
             menu->cursorItem[0] = 0;
         }
-        if (Item_SetFocus(dc, menu->items[menu->cursorItem[0]], (float)dc->cursorx, (float)dc->cursory)) {
-            Menu_HandleMouseMove(dc, menu, menu->items[menu->cursorItem[0]]->window.rect[0].x + 1.0f,
-                                 menu->items[menu->cursorItem[0]]->window.rect[0].y + 1.0f);
+        item = menu->items[menu->cursorItem[0]];
+        if (Item_SetFocus(dc, item, (float)dc->cursorx, (float)dc->cursory)) {
+            item = menu->items[menu->cursorItem[0]];
+            Menu_HandleMouseMove(dc, menu, item->window.rect[0].x + 1.0f, item->window.rect[0].y + 1.0f);
             return menu->items[menu->cursorItem[0]];
         }
     }

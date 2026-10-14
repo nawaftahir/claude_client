@@ -104,45 +104,48 @@ void FxHelper::AdjustTime( int intime )
 void FxHelper::WarpTime( int intime )
 {
 	int frameTime;
-	const int maxFrameTime = 200;
 
-	if ( fx_freeze->current.boolean || !time )
+	if ( fx_freeze->current.boolean )
 	{
 		mFrameTime = 0;
+		time = intime;
+		mSeed = intime;
+		return;
 	}
-	else
+	if ( !time )
 	{
-		mOldTime = mTime;
-		frameTime = intime - mTime;
-		if ( frameTime < 0 )
-		{
-			mTime = intime;
-			time = intime;
-			mSeed = time;
-			return;
-		}
-		else
-		{
-			mFrameTime = 0;
-			while ( frameTime > maxFrameTime )
-			{
-				mFrameTime = maxFrameTime;
-				FX_AddScheduledEffects();
-				FX_UpdateAllNonBolt();
-				FX_UpdateAllBolt();
-				mOldTime = mTime;
-				mTime += mFrameTime;
-				frameTime -= maxFrameTime;
-			}
-			mFrameTime = frameTime;
-			FX_AddScheduledEffects();
-			FX_UpdateAllNonBolt();
-			FX_UpdateAllBolt();
-			mTime += mFrameTime;
-		}
+		mFrameTime = 0;
+		time = intime;
+		mSeed = intime;
+		return;
 	}
+	mOldTime = mTime;
+	frameTime = intime - mTime;
+	if ( frameTime < 0 )
+	{
+		mTime = intime;
+		time = intime;
+		mSeed = intime;
+		return;
+	}
+	mFrameTime = 0;
+	while ( frameTime > 200 )
+	{
+		mFrameTime = 200;
+		FX_AddScheduledEffects();
+		FX_UpdateAllNonBolt();
+		FX_UpdateAllBolt();
+		mOldTime = mTime;
+		mTime += mFrameTime;
+		frameTime -= 200;
+	}
+	mFrameTime = frameTime;
+	FX_AddScheduledEffects();
+	FX_UpdateAllNonBolt();
+	FX_UpdateAllBolt();
+	mTime += mFrameTime;
 	time = intime;
-	mSeed = time;
+	mSeed = intime;
 }
 
 void FxHelper::CalcFrustumPlanes( const refdef_t *refdef, float zfar )

@@ -211,7 +211,7 @@ void Sys_CreateConsole(HINSTANCE hInstance)
 
     s_wcd.hWnd = CreateWindowEx(0, SYSCON_CLASS, SYSCON_TITLE, DEDSTYLE,
                                 (swidth - 600) / 2, (sheight - 450) / 2,
-                                s_wcd.windowWidth, s_wcd.windowHeight,
+                                rect.right - rect.left + 1, rect.bottom - rect.top + 1,
                                 NULL, NULL, hInstance, NULL);
 
     _controlfp(_PC_24, _MCW_PC);

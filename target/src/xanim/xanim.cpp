@@ -1684,14 +1684,19 @@ void XAnimCalc(const DObj_s *obj, unsigned int entry, float weightScale, DObjAni
 		if ( !obj->animToModel[entry] )
 		{
 			modelCounters[entry + 1] = *modelCounters;
-			obj->animToModel[entry] = XAnimSetModel(animEntry, obj->models, obj->numModels);
 		}
-		else if ( modelCounters[entry + 1] != *modelCounters )
+		else
 		{
+			if ( modelCounters[entry + 1] == *modelCounters )
+				goto modelSet;
+
 			modelCounters[entry + 1] = *modelCounters;
 			SL_RemoveRefToStringOfLen(obj->animToModel[entry], animEntry->u.parts->boneCount + 16);
-			obj->animToModel[entry] = XAnimSetModel(animEntry, obj->models, obj->numModels);
 		}
+
+		obj->animToModel[entry] = XAnimSetModel(animEntry, obj->models, obj->numModels);
+
+modelSet:
 
 		animToModel = (XAnimToXModel *)SL_ConvertToString(obj->animToModel[entry]);
 

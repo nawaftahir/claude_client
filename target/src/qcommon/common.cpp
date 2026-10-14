@@ -1418,47 +1418,37 @@ static bool Com_HasConfigureChecksumChanged( void )
 
 static int Com_GpuStringCompare( const char *wild, const char *s )
 {
-	for ( ;; )
+	char charWild;
+	char charRef;
+	int delta;
+
+	do
 	{
-		char c = *wild++;
-
-		if ( c == '*' )
+		charWild = *wild++;
+		if ( charWild == '*' )
 		{
-			if ( *wild == 0 )
+			if ( !*wild )
 				return 0;
-
-			if ( *s == 0 )
-				continue;
-
-			if ( Com_GpuStringCompare( wild - 1, s + 1 ) == 0 )
+			if ( *s && !Com_GpuStringCompare( wild - 1, s + 1 ) )
+				return 0;
+		}
+		else if ( charWild == ' ' )
+		{
+			if ( *s && !isdigit( *s ) && !Com_GpuStringCompare( wild - 1, s + 1 ) )
 				return 0;
 		}
 		else
 		{
-			char sc = *s;
-
-			if ( c == ' ' )
+			charRef = *s++;
+			if ( charWild != charRef && charWild != '?' )
 			{
-				if ( sc != 0 && !isdigit( sc ) && Com_GpuStringCompare( wild - 1, s + 1 ) == 0 )
-					return 0;
-				continue;
+				delta = tolower( charWild ) - tolower( charRef );
+				if ( delta )
+					return delta >= 0 ? 1 : -1;
 			}
-
-			s++;
-
-			if ( c != sc && c != '?' )
-			{
-				int a = tolower( sc );
-				int d = tolower( c ) - a;
-
-				if ( d != 0 )
-					return ( d >= 0 ) * 2 - 1;
-			}
-
-			if ( c == 0 )
-				return 0;
 		}
-	}
+	} while ( charWild );
+	return 0;
 }
 /*
 ==================

@@ -11,13 +11,9 @@ typedef struct ipFilter_s
 
 #define MAX_IPFILTERS   1024
 
-typedef struct ipFilterList_s
-{
-	ipFilter_t ipFilters[MAX_IPFILTERS];
-	int numIPFilters;
-} ipFilterList_t;
-
-static ipFilterList_t ipFilters;
+// separate globals as Q3; retail numIPFilters 0x17cc478, ipFilters 0x17cc480
+static ipFilter_t ipFilters[MAX_IPFILTERS];
+static int numIPFilters;
 
 
 void UpdateIPBans( void );
@@ -86,14 +82,14 @@ void UpdateIPBans( void )
 	char iplist_final[1024];
 
 	*iplist_final = 0;
-	for ( i = 0 ; i < ipFilters.numIPFilters ; i++ )
+	for ( i = 0 ; i < numIPFilters ; i++ )
 	{
-		if ( ipFilters.ipFilters[i].compare == 0xffffffff )
+		if ( ipFilters[i].compare == 0xffffffff )
 		{
 			continue;
 		}
 
-		*(unsigned *)b = ipFilters.ipFilters[i].compare;
+		*(unsigned *)b = ipFilters[i].compare;
 		Com_sprintf( iplist_final + strlen( iplist_final ), sizeof( iplist_final ) - strlen( iplist_final ),
 		             "%i.%i.%i.%i ", b[0], b[1], b[2], b[3] );
 	}
@@ -110,27 +106,27 @@ void AddIP( const char *str )
 {
 	int i;
 
-	for ( i = 0; i < ipFilters.numIPFilters; i++ )
+	for ( i = 0; i < numIPFilters; i++ )
 	{
-		if (  ipFilters.ipFilters[i].compare == 0xffffffff )
+		if (  ipFilters[i].compare == 0xffffffff )
 		{
 			break;      // free spot
 		}
 	}
 
-	if ( i == ipFilters.numIPFilters )
+	if ( i == numIPFilters )
 	{
-		if ( ipFilters.numIPFilters == MAX_IPFILTERS )
+		if ( numIPFilters == MAX_IPFILTERS )
 		{
 			Com_Printf( "IP filter list is full\n" );
 			return;
 		}
-		ipFilters.numIPFilters++;
+		numIPFilters++;
 	}
 
-	if ( !StringToFilter( str, &ipFilters.ipFilters[i] ) )
+	if ( !StringToFilter( str, &ipFilters[i] ) )
 	{
-		ipFilters.ipFilters[i].compare = 0xffffffffu;
+		ipFilters[i].compare = 0xffffffffu;
 	}
 
 	UpdateIPBans();
@@ -147,7 +143,7 @@ void G_ProcessIPBans( void )
 	// parse a local copy, not the live dvar string
 	char str[1024];
 
-	ipFilters.numIPFilters = 0;
+	numIPFilters = 0;
 
 	Q_strncpyz( str, g_banIPs->current.string, sizeof( str ) );
 
@@ -212,12 +208,12 @@ void Svcmd_RemoveIP_f( void )
 		return;
 	}
 
-	for ( i = 0 ; i < ipFilters.numIPFilters ; i++ )
+	for ( i = 0 ; i < numIPFilters ; i++ )
 	{
-		if ( ipFilters.ipFilters[i].mask == f.mask   &&
-		        ipFilters.ipFilters[i].compare == f.compare )
+		if ( ipFilters[i].mask == f.mask   &&
+		        ipFilters[i].compare == f.compare )
 		{
-			ipFilters.ipFilters[i].compare = 0xffffffffu;
+			ipFilters[i].compare = 0xffffffffu;
 			Com_Printf( "Removed.\n" );
 
 			UpdateIPBans();

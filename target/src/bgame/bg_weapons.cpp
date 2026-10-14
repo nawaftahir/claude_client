@@ -4446,7 +4446,7 @@ BG_GetBobCycle
 */
 float BG_GetBobCycle(const playerState_t *ps)
 {
-	return (float)(ps->bobCycle & 255) / 255.0f * (M_PI * 2) + M_PI * 2;
+	return ((float)(ps->bobCycle & 255) / 255.0f * (M_PI * 2)) + M_PI * 2;
 }
 
 /*

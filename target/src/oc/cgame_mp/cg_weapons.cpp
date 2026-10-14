@@ -1860,6 +1860,10 @@ static __forceinline float Vec3DotInl(const vec_t *a, const vec_t *b)
 {
     return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 }
+static __forceinline float Vec3LengthInl(const vec_t *v)
+{
+    return sqrtf(v[2] * v[2] + (v[1] * v[1] + v[0] * v[0]));
+}
 void CG_WhizbySound(vec_t *vStart, vec_t *vEnd)
 {
     vec3_t viewDelta;
@@ -1882,7 +1886,7 @@ void CG_WhizbySound(vec_t *vStart, vec_t *vEnd)
     projPos[1] = viewDist * dir[1] + vStart[1];
     projPos[2] = viewDist * dir[2] + vStart[2];
     Vec3SubInl(projPos, cg->refdef.vieworg, delta);
-    if (sqrtf(delta[2] * delta[2] + (delta[1] * delta[1] + delta[0] * delta[0])) > 140.0f)
+    if (Vec3LengthInl(delta) > 140.0f)
         return;
     projPos[0] = projPos[0] - dir[0] * 16.0f;
     projPos[1] = projPos[1] - dir[1] * 16.0f;

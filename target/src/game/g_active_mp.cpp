@@ -1,6 +1,7 @@
 #define SCE_CONST const
 #include "../qcommon/qcommon.h"
 #include "g_shared.h"
+#include "../server/server.h"
 
 
 
@@ -1400,6 +1401,13 @@ void G_PlayerController( gentity_t *self, int *partBits )
 	BG_Player_DoControllers(Com_GetServerDObj(self->s.number), &self->s, partBits, ci, level.frameTime);
 }
 
+static __forceinline const char *G_ModelNameInl( int index )
+{
+	const char *cs = sv.configstrings[CS_MODELS + index];
+
+	return cs ? cs : "";
+}
+
 /*
 ==================
 G_UpdateClientInfo
@@ -1421,7 +1429,7 @@ qboolean G_UpdateClientInfo( gentity_t *ent )
 	ci = &level_bgs.clientinfo[clientNum];
 	bChanged = qfalse;
 
-	modelName = G_ModelName(ent->model);
+	modelName = G_ModelNameInl(ent->model);
 	client->sess.cs.modelindex = ent->model;
 
 	if ( strcmp(ci->model, modelName) )
@@ -1442,7 +1450,7 @@ qboolean G_UpdateClientInfo( gentity_t *ent )
 		}
 		else
 		{
-			modelName = G_ModelName(ent->attachModelNames[i]);
+			modelName = G_ModelNameInl(ent->attachModelNames[i]);
 			client->sess.cs.attachModelIndex[i] = ent->attachModelNames[i];
 
 			if ( strcmp(ci->attachModelNames[i], modelName) )

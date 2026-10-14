@@ -61,13 +61,11 @@ localEntity_t *CG_AllocLocalEntity(void)
 
     if (!cg_freeLocalEntities) {
 
-        le = cg_activeLocalEntities->prev;
-        CG_FreeLocalEntity(le);
+        CG_FreeLocalEntity(cg_activeLocalEntities->prev);
     }
 
     le = cg_freeLocalEntities;
-
-    cg_freeLocalEntities = le->next;
+    cg_freeLocalEntities = cg_freeLocalEntities->next;
 
     memset(le, 0, sizeof(localEntity_t));
 
@@ -84,13 +82,17 @@ void CG_AddMovingTracer(localEntity_t *le)
     vec3_t start;
     vec3_t end;
     vec3_t dir;
+    vec3_t delta;
     float dist;
 
     BG_EvaluateTrajectory(&le->pos, cg->time, start);
 
     Vec3NormalizeTo(le->pos.trDelta, dir);
 
-    dist = le->tracerClipDist - ((start[0] - le->pos.trBase[0]) * dir[0] + (start[1] - le->pos.trBase[1]) * dir[1] + (start[2] - le->pos.trBase[2]) * dir[2]);
+    delta[0] = start[0] - le->pos.trBase[0];
+    delta[1] = start[1] - le->pos.trBase[1];
+    delta[2] = start[2] - le->pos.trBase[2];
+    dist = le->tracerClipDist - (delta[0] * dir[0] + delta[1] * dir[1] + delta[2] * dir[2]);
     if (!(dist < cg_tracerLength->current.value)) {
         dist = cg_tracerLength->current.value;
     }

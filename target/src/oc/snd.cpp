@@ -681,32 +681,16 @@ static int SND_FindReplaceableChannel(int entnum, int entchannel, int first, int
     best = -1;
 
     for (i = first; i < first + count; i++) {
-        if (g_snd.chaninfo[i].entchannel > entchannel)
+        if (!SND_ChannelEntchannelAtMost_44ab50(i, entchannel))
             continue;
 
-        if (best < 0) {
-            best = i;
-            continue;
-        }
-
-        if (g_snd.chaninfo[i].entnum != g_snd.chaninfo[best].entnum) {
-            if (g_snd.chaninfo[i].entnum == entnum) {
-                best = i;
-                continue;
-            }
-            if (g_snd.chaninfo[best].entnum == entnum)
+        if (best >= 0) {
+            diff = SND_CompareChannels_44ab00(i, best, entnum);
+            if (!diff || diff >= 0)
                 continue;
         }
 
-        diff = g_snd.chaninfo[i].entchannel - g_snd.chaninfo[best].entchannel;
-        if (!diff) {
-            diff = g_snd.chaninfo[i].endtime - g_snd.chaninfo[best].endtime;
-            if (!diff)
-                continue;
-        }
-
-        if (diff < 0)
-            best = i;
+        best = i;
     }
 
     return best;
@@ -792,8 +776,7 @@ static int SND_StartAliasSample(const snd_alias_t *pAlias0, const snd_alias_t *p
     }
 
     flags = pAlias0->flags;
-    switch ((flags & 0x780) >> 7) {
-    default:
+    if (SND_IsAliasChannel3D((flags & 0x780) >> 7)) {
         if (!snd_enable3D->current.enabled)
             return 0;
         if (!SND_AnyActiveListeners()) {
@@ -801,12 +784,7 @@ static int SND_StartAliasSample(const snd_alias_t *pAlias0, const snd_alias_t *p
             return 0;
         }
         return SND_StartAlias3DSample(pAlias0, pAlias1, lerp, entnum, org, volume, pitch, timeshift, 0.0f, pAlias0->startDelay, treatAsMaster || (flags & 2), pChannel, system);
-    case 1:
-    case 2:
-    case 7:
-    case 8:
-    case 9:
-    case 10:
+    } else {
         if (!snd_enable2D->current.enabled)
             return 0;
         return SND_StartAlias2DSample(pAlias0, pAlias1, lerp, entnum, volume, pitch, timeshift, 0.0f, pAlias0->startDelay, treatAsMaster || (flags & 2), pChannel, system);

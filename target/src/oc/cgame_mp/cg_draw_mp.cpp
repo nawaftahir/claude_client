@@ -1315,7 +1315,6 @@ static void CG_DrawDamageDirectionIndicators(void)
 {
     float centerY;
     float centerX;
-    float zoom;
     float halfWidth;
     float height;
     float radius;
@@ -1330,7 +1329,7 @@ static void CG_DrawDamageDirectionIndicators(void)
     if (!cg->nextSnap)
         return;
 
-    if (CG_GetWeapReticleZoom(&zoom))
+    if (CG_GetWeapReticleZoom(&angle))
     {
         if (!cg_hudDamageIconInScope->current.enabled)
             return;
@@ -2104,6 +2103,7 @@ static void CG_DrawVote(void)
         UI_DrawText(s, 0x7fffffff, font, 8.0f, 200.0f, 0, 0, 0.20833333f, colorYellow, 3);
         s = va("%s:%i, %s:%i", UI_SafeTranslateString("CGAME_YES"), cgs->voteYes,
                UI_SafeTranslateString("CGAME_NO"), cgs->voteNo);
+        UI_DrawText(s, 0x7fffffff, font, 8.0f, 210.0f, 0, 0, 0.20833333f, colorYellow, 3);
     }
     else
     {
@@ -2111,8 +2111,8 @@ static void CG_DrawVote(void)
         UI_DrawText(s, 0x7fffffff, font, 8.0f, 200.0f, 0, 0, 0.20833333f, colorYellow, 3);
         s = va("%s(%s):%i, %s(%s):%i", UI_SafeTranslateString("CGAME_YES"), szVoteYes, cgs->voteYes,
                UI_SafeTranslateString("CGAME_NO"), szVoteNo, cgs->voteNo);
+        UI_DrawText(s, 0x7fffffff, font, 8.0f, 210.0f, 0, 0, 0.20833333f, colorYellow, 3);
     }
-    UI_DrawText(s, 0x7fffffff, font, 8.0f, 210.0f, 0, 0, 0.20833333f, colorYellow, 3);
 }
 
 static void CG_DrawIntermission(void)

@@ -353,6 +353,7 @@ void CG_DrawCompassFriendlies(rectDef_t *rect, MaterialHandle material, vec_t *c
 
 extern qboolean CG_ServerMaterialName(int index, char *materialName, int maxLen);
 extern MaterialHandle CL_RegisterMaterialNoMip(const char *name, int imageTrack);
+extern void CompassIconSize_4bf300(float *w, float *h);
 
 void CG_DrawPlayerCompassPointers(const rectDef_t *rect, vec_t *color)
 {
@@ -366,12 +367,12 @@ void CG_DrawPlayerCompassPointers(const rectDef_t *rect, vec_t *color)
     float yaw;
     float dist;
     float radius;
-    float frac;
     float s;
     float c;
     float x;
     float y;
     float w;
+    float h;
     vec4_t drawColor;
     MaterialHandle material;
     char materialName[64];
@@ -382,7 +383,7 @@ void CG_DrawPlayerCompassPointers(const rectDef_t *rect, vec_t *color)
 
     CG_UpdateCompPointerOrientation();
 
-    centerX = rect->w * cg_hudCompassSize->current.value * 0.5f; centerX = centerX + rect->x;
+    centerX = rect->w * cg_hudCompassSize->current.value * 0.5f + rect->x;
     centerY = (cg_hudCompassSize->current.value * 0.5f) * rect->h - (cg_hudCompassSize->current.value - 1.0f) * rect->h + rect->y;
 
     if (!cg->bgs.clientinfo[cg->nextSnap->ps.clientNum].infoValid)
@@ -419,10 +420,10 @@ void CG_DrawPlayerCompassPointers(const rectDef_t *rect, vec_t *color)
         }
         else
         {
-            frac = 0.0f;
+            float lerp = 0.0f;
             if (cg_hudObjectiveMaxRange->current.value - cg_hudCompassMaxRange->current.value != 0.0f)
-                frac = (dist - cg_hudCompassMaxRange->current.value) / (cg_hudObjectiveMaxRange->current.value - cg_hudCompassMaxRange->current.value);
-            drawColor[3] = 1.0f - (1.0f - cg_hudObjectiveMinAlpha->current.value) * frac;
+                lerp = (dist - cg_hudCompassMaxRange->current.value) / (cg_hudObjectiveMaxRange->current.value - cg_hudCompassMaxRange->current.value);
+            drawColor[3] = 1.0f - (1.0f - cg_hudObjectiveMinAlpha->current.value) * lerp;
         }
 
         if (dist <= cg_hudCompassMinRange->current.value)
@@ -435,15 +436,15 @@ void CG_DrawPlayerCompassPointers(const rectDef_t *rect, vec_t *color)
         }
         else
         {
-            frac = 0.0f;
+            float frac = 0.0f;
             if (cg_hudCompassMaxRange->current.value - cg_hudCompassMinRange->current.value != 0.0f)
                 frac = (cg_hudCompassMaxRange->current.value - dist) / (cg_hudCompassMaxRange->current.value - cg_hudCompassMinRange->current.value);
             radius = 1.0f - (1.0f - cg_hudCompassMinRadius->current.value) * frac;
         }
-        radius = cg_hudCompassSize->current.value * radius * 43.75;
+        CG_ApplyCompassPointerRadiusScale(&radius);
 
         FastSinCos((yaw * 0.017453292f), &s, &c);
-        w = cg_hudCompassSize->current.value * 16.0f;
+        CompassIconSize_4bf300(&w, &h);
         x = centerX - w * 0.5f - s * radius;
         y = centerY - w * 0.5f - c * radius;
 
@@ -455,6 +456,6 @@ void CG_DrawPlayerCompassPointers(const rectDef_t *rect, vec_t *color)
         if (fadeAlpha < drawColor[3])
             drawColor[3] = fadeAlpha;
 
-        UI_DrawHandlePic(x, y, w, w, rect->horzAlign, rect->vertAlign, drawColor, material);
+        UI_DrawHandlePic(x, y, w, h, rect->horzAlign, rect->vertAlign, drawColor, material);
     }
 }

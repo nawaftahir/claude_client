@@ -496,19 +496,22 @@ void CG_DrawRotatedQuadPic(float x, float y, vec2_t *verts, float angle, const v
 int CG_DrawDevString(float x, float y, const char *s, const vec_t *color, int align, FontHandle font, int style)
 {
     int height;
+    float fStep;
+    int textWidth;
 
     if ((align & 3) != 1)
-        x = (float)CL_TextWidth(s, 0, font);
+        CL_TextWidth(s, 0, font);
 
     height = CL_TextHeight(font);
+    fStep = (float)height;
     if ((align & 0xc) != 8) {
         if ((align & 0xc) == 0xc)
-            y += height * 0.5f;
-        else
-            y += height;
+            fStep *= 0.5f;
+        y += fStep;
     }
 
-    CL_DrawText(s, 0x7fffffff, font, -(float)CL_TextWidth(s, 0, font), y, 3, 1, 1.0f, 1.0f, color, style);
+    textWidth = CL_TextWidth(s, 0, font);
+    CL_DrawText(s, 0x7fffffff, font, -(float)textWidth, y, 3, 1, 1.0f, 1.0f, color, style);
     return height;
 }
 int CG_DrawBigDevString(float x, float y, const char *s, float alpha, int align)
