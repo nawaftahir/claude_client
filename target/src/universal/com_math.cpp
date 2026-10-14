@@ -1227,8 +1227,8 @@ void RotatePointAroundVector( vec3_t dst, const vec3_t dir, const vec3_t point, 
 	memset(zrot, 0, sizeof(zrot));
 	zrot[0][0] = zrot[1][1] = zrot[2][2] = 1.0f;
 
-	;
-	FastSinCos((degrees * 0.017453292519943295f), &zrot[0][1], &zrot[0][0]);
+	rad = (degrees * 0.017453292519943295f);
+	FastSinCos(rad, &zrot[0][1], &zrot[0][0]);
 	zrot[1][0] = -zrot[0][1];
 	zrot[1][1] = zrot[0][0];
 
@@ -4043,7 +4043,7 @@ float flrand( float min, float max )
 
 	holdrand = 214013 * holdrand + 2531011;
 	result = (float)(holdrand >> 17);
-	result = (max - min) * result / 32768.0f + min;
+	result = ((max - min) * result) / 32768.0f + min;
 	return result;
 }
 
