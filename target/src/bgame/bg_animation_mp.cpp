@@ -2983,6 +2983,47 @@ int BG_AnimationIndexForString( const char *string )
 
 	return -1;  // shutup compiler
 }
+// Retail inlines this compare only at the "sound" site
+static __forceinline int BG_StricmpSoundInl( const char *s0, const char *s1 )
+{
+	int c0;
+	int c1;
+	int n;
+
+	n = 0x7FFFFFFF;
+	do
+	{
+		c0 = *s0++;
+		c1 = *s1++;
+
+		if ( !n-- )
+		{
+			return 0;
+		}
+
+		if ( c0 != c1 )
+		{
+			if ( c0 >= 'a' && c0 <= 'z' )
+			{
+				c0 -= 'a' - 'A';
+			}
+
+			if ( c1 >= 'a' && c1 <= 'z' )
+			{
+				c1 -= 'a' - 'A';
+			}
+
+			if ( c0 != c1 )
+			{
+				return c0 < c1 ? -1 : 1;
+			}
+		}
+	}
+	while ( c0 );
+
+	return 0;
+}
+
 void BG_ParseCommands( const char **input, animScriptItem_t *scriptItem, animScriptData_t *scriptData )
 {
 	char    *token;
@@ -3094,7 +3135,7 @@ void BG_ParseCommands( const char **input, animScriptItem_t *scriptItem, animScr
 					{
 						// read the duration
 						bCommandFound = qtrue;
-						token = Com_ParseOnLine( input );
+						token = Com_ParseOnLineInl( input );
 						if ( !token || !token[0] )
 						{
 							BG_AnimParseError( "BG_ParseCommands: expected duration value" );
@@ -3159,7 +3200,7 @@ void BG_ParseCommands( const char **input, animScriptItem_t *scriptItem, animScr
 				break;
 			}
 
-			if ( !Q_stricmp( token, "sound" ) )
+			if ( !BG_StricmpSoundInl( token, "sound" ) )
 			{
 				token = Com_ParseOnLine( input );
 				if ( !token || !token[0] )
