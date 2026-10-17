@@ -1548,7 +1548,7 @@ const char *Con_GetVersionString(void)
     return va("Build %s %s", getBuildNumber(), "win-x86");
 }
 
-static void Con_DrawOutputVersion(float x, float y, float height)
+static void Con_DrawOutputVersion(float x, float y, float width, float height)
 {
     const char *version;
 
@@ -1567,13 +1567,13 @@ void Con_DrawOuputWindow(void)
     width = con.screenMax[0] - con.screenMin[0];
     y = con.screenMin[1] + 32.0f;
     height = con.screenMax[1] - con.screenMin[1] - 32.0f;
-    ConDraw_Box(x, y, width, height, con_outputWindowColor->current.vector);
+    ConDraw_Box(con.screenMin[0], y, width, height, con_outputWindowColor->current.vector);
 
-    y += 6.0f;
     x += 6.0f;
+    y += 6.0f;
     width -= 12.0f;
     height -= 12.0f;
-    Con_DrawOutputVersion(x, y, height);
+    Con_DrawOutputVersion(x, y, width, height);
     Con_DrawOutputScrollBar(x, y, width, height);
     Con_DrawOutputText(x, y, height - 28.0f);
 }

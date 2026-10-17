@@ -488,9 +488,7 @@ void CG_MapRestart(qboolean savepersist)
 
     memset(cg->viewDamage, 0, sizeof(cg->viewDamage));
 
-    cg->fWeapSelectFrac[0] = 0.0f;
-    cg->fWeapSelectFrac[1] = 0.0f;
-    cg->fWeapSelectFrac[2] = 0.0f;
+    memset(cg->fWeapSelectFrac, 0, sizeof(cg->fWeapSelectFrac));
     cg->iWeapSelectLastDrawTime = 0;
 
     Dvar_SetBool((dvar_t *)cg_thirdPerson, false);

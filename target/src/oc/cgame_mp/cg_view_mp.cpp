@@ -256,7 +256,10 @@ static void CG_KickAngles(void)
 
     weapIndex = BG_GetViewmodelWeaponIndex(&cg->predictedPlayerState);
     weapDef = BG_GetWeaponDef(weapIndex);
-    for (t = cg->frametime; t > 0; t -= 5) {
+    t = cg->frametime;
+    if (cg->frametime <= 0)
+        return;
+    do {
         ft = (float)(t > 5 ? 5 : t) * 0.001f;
         for (i = 0; i < 3; i++) {
             if (cg->kickAVel[i] == 0.0f && cg->kickAngles[i] == 0.0f)
@@ -289,7 +292,8 @@ static void CG_KickAngles(void)
                 cg->kickAVel[i] = 0.0f;
             }
         }
-    }
+        t -= 5;
+    } while (t > 0);
 }
 
 static void CG_OffsetFirstPersonView(void)
@@ -445,13 +449,14 @@ static void CG_CalcCubemapViewValues(void)
 {
     cg->refdef.x = 0;
     cg->refdef.y = 0;
-    cg->refdef.width = cg->cubemapSize; cg->refdef.width = cg->refdef.width + 2;
-    cg->refdef.height = cg->refdef.width;
+    cg->refdef.width = cg->cubemapSize + 2;
+    cg->refdef.height = cg->cubemapSize + 2;
     cg->refdef.fov_x = (float)(atan2((double)(cg->cubemapSize + 2), (double)cg->cubemapSize) * 114.59155902616465);
     cg->refdef.fov_y = cg->refdef.fov_x;
     cg->refdef.vieworg[0] = cg->predictedPlayerState.origin[0];
     cg->refdef.vieworg[1] = cg->predictedPlayerState.origin[1];
-    cg->refdef.vieworg[2] = cg->predictedPlayerState.viewHeightCurrent + cg->predictedPlayerState.origin[2];
+    cg->refdef.vieworg[2] = cg->predictedPlayerState.origin[2];
+    cg->refdef.vieworg[2] = cg->refdef.vieworg[2] + cg->predictedPlayerState.viewHeightCurrent;
 
     switch (cg->cubemapShot) {
     case 1:
