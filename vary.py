@@ -74,6 +74,26 @@ def comm(line):
     vs.discard(line)
     return sorted(vs)
 
+LIT = re.compile(r'(?<![\w.])(\d+\.\d*(?:e-?\d+)?)(f?)(?![\w.])')
+
+def lit1(line):
+    """Flip the f suffix of ONE float literal (auto flips them all at once)."""
+    if line.lstrip().startswith(('//', '#')): return []
+    return [line[:m.start()] + m.group(1) + ('' if m.group(2) else 'f') + line[m.end():] for m in LIT.finditer(line)]
+
+def rcomp(line):
+    """x op= e  ->  x = e op x (commutative ops), and x = x op e -> x = e op x."""
+    m = re.match(r'^(\s*)([\w.\[\]>-]+(?:->\w+)?)\s*([+*|&^])=\s*(.+?);\s*$', line)
+    if m:
+        i, x, op, e = m.groups()
+        e = e if re.fullmatch(PRIM, e) else '(' + e + ')'
+        return ['%s%s = %s %s %s;' % (i, x, e, op, x)]
+    m = re.match(r'^(\s*)([\w.\[\]>-]+)\s*=\s*\2\s*([+*])\s*(' + PRIM + r');\s*$', line)
+    if m:
+        i, x, op, e = m.groups()
+        return ['%s%s = %s %s %s;' % (i, x, e, op, x)]
+    return []
+
 TYPES = [('unsigned int', 'int'), ('unsigned short', 'short'), ('unsigned char', 'char')]
 DECL = re.compile(r'^(\s*)(unsigned int|unsigned short|unsigned char|unsigned|int|short|char)(\s+\w+\s*(?:=[^;]*)?(?:,\s*\w+\s*(?:=[^;]*)?)*;\s*)$')
 

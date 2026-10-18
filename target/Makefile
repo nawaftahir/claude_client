@@ -1,14 +1,14 @@
 # CoD2MP_s.exe 1.0, built with Visual C++ .NET 2003 (cl 13.10.3077, /GL + link /LTCG).
 #
-#   make            build/CoD2MP_s.exe (inside the cod2-msvc71-build image)
+#   make            build/CoD2MP_s.exe (inside the cod2-msvc71-vs2003 image, see ../toolchain)
 #   make measure    functions matching the original client (needs ../../cod2engineold/binaries)
 
-IMAGE  := cod2-msvc71-build
+IMAGE  := cod2-msvc71-vs2003
 OUT    := build/CoD2MP_s.exe
 REL    := build/release/CoD2MP_s.exe
 ANCHOR ?= ../../cod2engineold/binaries/windows/1.0/CoD2MP_s.exe
-# retail links the DirectX 9.0c SDK d3d9.lib (Rich: Implib 7.10.4035)
-DXSDK  ?= ../../sdk/dec2004
+# retail Direct3DCreate9 import hint is 9 = Summer/Oct 2004 d3d9.lib (dec2004 gives 10)
+DXSDK  ?= ../../sdk/sum2004
 
 ifndef IN_IMAGE
 

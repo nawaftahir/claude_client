@@ -222,6 +222,110 @@ void Scr_EmitAnimation( char *pos, unsigned int animName, unsigned int sourcePos
 	Scr_EmitAnimationInternal(pos, animName, scrAnimPub.animTreeNames, sourcePos);
 }
 
+extern scrVarGlob_t scrVarGlob;
+extern scrMemTreeGlob_t scrMemTreeGlob;
+void MT_FreeIndex( unsigned int nodeNum, int numBytes );
+unsigned int FindVariableIndexHash( unsigned int parentId, unsigned int name );
+unsigned int GetNewVariableIndexInternal3( unsigned int parentId, unsigned int name, unsigned int index );
+
+// retail inlines these at the first AnimTreeParseInternal sites only
+static __forceinline bool Scr_IsIdentifierInl( const char *token )
+{
+	while ( token[0] )
+	{
+		if ( !isalnum(token[0]) && token[0] != '_' )
+		{
+			return false;
+		}
+
+		token++;
+	}
+
+	return true;
+}
+
+static __forceinline unsigned int GetVariableInl( unsigned int parentId, unsigned int name )
+{
+	VariableValueInternal *entry;
+	VariableValueInternal *siblingEntry;
+	unsigned short siblingId;
+	VariableValueInternal *siblingValue;
+	VariableValueInternal *parentValue;
+	unsigned int hash;
+	unsigned int index;
+
+	hash = ( name + parentId ) % ( VARIABLELIST_CHILD_SIZE - 1 ) + 1;
+	index = FindVariableIndexInternal(name, hash);
+
+	if ( !index )
+	{
+		index = GetNewVariableIndexInternal3(parentId, name, hash);
+		parentValue = &scrVarGlob.variableList[parentId];
+		siblingId = parentValue->nextSibling;
+		siblingValue = &scrVarGlob.variableList[siblingId];
+		entry = &scrVarGlob.variableList[index];
+		siblingEntry = &scrVarGlob.variableList[entry->hash.id];
+		siblingEntry->nextSibling = siblingId;
+		siblingValue->hash.u.prevSibling = index;
+		entry->hash.u.prevSibling = parentValue->v.next;
+		parentValue->nextSibling = index;
+	}
+
+	return scrVarGlob.variableList[index].hash.id;
+}
+
+static __forceinline void RemoveRefToValueInl( int type, VariableUnion u )
+{
+	switch ( type )
+	{
+	case VAR_POINTER:
+		RemoveRefToObject(u.pointerValue);
+		break;
+
+	case VAR_STRING:
+	case VAR_ISTRING:
+		SL_RemoveRefToString(u.stringValue);
+		break;
+
+	case VAR_VECTOR:
+		if ( *((byte *)u.vectorValue - 1) )
+		{
+			break;
+		}
+
+		if ( *((unsigned short *)((byte *)u.vectorValue - 4)) )
+		{
+			(*((unsigned short *)((byte *)u.vectorValue - 4)))--;
+			break;
+		}
+
+		MT_FreeIndex( (MemoryNode *)((byte *)u.vectorValue - 4) - scrMemTreeGlob.nodes, 16 );
+		break;
+	}
+}
+
+static __forceinline void FreeValueInl( unsigned int id )
+{
+	VariableValueInternal *entryValue = &scrVarGlob.variableList[id];
+
+	RemoveRefToValueInl(entryValue->w.type & VAR_MASK, entryValue->u.u);
+	FreeVariable(id);
+}
+
+static __forceinline void RemoveVariableInl( unsigned int parentId, unsigned int name )
+{
+	VariableValueInternal *entryValue;
+	unsigned int index;
+	unsigned int id;
+
+	index = FindVariableIndexHash(parentId, name);
+	entryValue = &scrVarGlob.variableList[index];
+	id = entryValue->hash.id;
+
+	MakeVariableExternal(entryValue, &scrVarGlob.variableList[parentId]);
+	FreeValueInl(id);
+}
+
 /*
 ============
 AnimTreeParseInternal
@@ -237,7 +341,6 @@ bool AnimTreeParseInternal( unsigned int parentNode, unsigned int names, bool bI
 	int flags;
 	bool bResolve;
 	bool result;
-	bool bRemove;
 
 	tempValue.type = VAR_INTEGER;
 	animName = 0;
@@ -247,115 +350,93 @@ bool AnimTreeParseInternal( unsigned int parentNode, unsigned int names, bool bI
 
 	while ( 1 )
 	{
-		while ( 1 )
+		token = Com_Parse(&scrAnimGlob.pos);
+
+		if ( !scrAnimGlob.pos )
 		{
-			while ( 1 )
+			result = true;
+			break;
+		}
+
+		if ( Scr_IsIdentifierInl(token) )
+		{
+			if ( bResolve )
 			{
-				token = Com_Parse(&scrAnimGlob.pos);
-
-				if ( !scrAnimGlob.pos )
-				{
-					result = true;
-					goto done;
-				}
-
-				if ( Scr_IsIdentifier(token) )
-				{
-					if ( bResolve )
-					{
-						RemoveVariable(parentNode, animName);
-					}
-
-					animName = SL_GetLowercaseString_(token, 2, 4);
-
-					if ( FindVariable(parentNode, animName) )
-					{
-						AnimTreeCompileError("duplicate animation");
-					}
-
-					animId = GetVariable(parentNode, animName);
-					bRemove = false;
-
-					if ( !bComplete && !FindVariable(names, animName) && !scrAnimGlob.bAnimCheck )
-					{
-						bRemove = true;
-					}
-
-					bResolve = bRemove;
-					flags = 0;
-					token = Com_ParseOnLine(&scrAnimGlob.pos);
-
-					if ( !token[0] )
-					{
-						continue;
-					}
-
-					if ( Scr_IsIdentifier(token) )
-					{
-						AnimTreeCompileError("FIXME: aliases not yet implemented");
-					}
-
-					if ( token[0] != ':' || token[1] )
-					{
-						AnimTreeCompileError("bad token");
-					}
-
-					flags = GetAnimTreeParseProperties();
-					token = Com_Parse(&scrAnimGlob.pos);
-
-					if ( token[0] != '{' || token[1] )
-					{
-						AnimTreeCompileError("properties cannot be applied to primitive animations");
-					}
-				}
-				else
-				{
-					break;
-				}
-
-				break;
+				RemoveVariableInl(parentNode, animName);
 			}
 
-			if ( token[0] == '{' )
+			animName = SL_GetLowercaseString_(token, 2, 4);
+
+			if ( FindVariable(parentNode, animName) )
 			{
-				if ( token[1] )
-				{
-					AnimTreeCompileError("bad token");
-				}
+				AnimTreeCompileError("duplicate animation");
+			}
 
-				if ( Com_ParseOnLine(&scrAnimGlob.pos)[0] )
-				{
-					AnimTreeCompileError("token not allowed after '{'");
-				}
+			animId = GetVariableInl(parentNode, animName);
+			bResolve = !bComplete && !FindVariable(names, animName) && !scrAnimGlob.bAnimCheck;
+			flags = 0;
+			token = Com_ParseOnLine(&scrAnimGlob.pos);
 
-				if ( !animId )
-				{
-					AnimTreeCompileError("no animation specified for this block");
-				}
+			if ( !token[0] )
+			{
+				continue;
+			}
 
-				childNode = GetArray(animId);
-				if ( AnimTreeParseInternal(childNode, names, !bResolve, flags & ANIM_FLAG_LOOPSYNC, bComplete || ( ( flags & ANIM_FLAG_COMPLETE ) && !bResolve )) )
-				{
-					AnimTreeCompileError("unexpected end of file");
-				}
+			if ( Scr_IsIdentifierInl(token) )
+			{
+				AnimTreeCompileError("FIXME: aliases not yet implemented");
+			}
 
-				if ( GetArraySize(childNode) )
-				{
-					tempValue.u.intValue = flags;
-					SetVariableValue(GetArrayVariable(childNode, 0), &tempValue);
-				}
-				else
-				{
-					RemoveVariable(parentNode, animName);
-				}
+			if ( token[0] != ':' || token[1] )
+			{
+				AnimTreeCompileError("bad token");
+			}
 
-				animId = 0;
-				bResolve = false;
+			flags = GetAnimTreeParseProperties();
+			token = Com_Parse(&scrAnimGlob.pos);
+
+			if ( token[0] != '{' || token[1] )
+			{
+				AnimTreeCompileError("properties cannot be applied to primitive animations");
+			}
+		}
+
+		if ( token[0] == '{' )
+		{
+			if ( token[1] )
+			{
+				AnimTreeCompileError("bad token");
+			}
+
+			if ( Com_ParseOnLine(&scrAnimGlob.pos)[0] )
+			{
+				AnimTreeCompileError("token not allowed after '{'");
+			}
+
+			if ( !animId )
+			{
+				AnimTreeCompileError("no animation specified for this block");
+			}
+
+			childNode = GetArray(animId);
+			if ( AnimTreeParseInternal(childNode, names, !bResolve, flags & ANIM_FLAG_LOOPSYNC, bComplete || ( ( flags & ANIM_FLAG_COMPLETE ) && !bResolve )) )
+			{
+				AnimTreeCompileError("unexpected end of file");
+			}
+
+			if ( GetArraySize(childNode) )
+			{
+				tempValue.u.intValue = flags;
+				SetVariableValue(GetArrayVariable(childNode, 0), &tempValue);
 			}
 			else
 			{
-				break;
+				RemoveVariable(parentNode, animName);
 			}
+
+			animId = 0;
+			bResolve = false;
+			continue;
 		}
 
 		if ( token[0] == '}' )
@@ -377,7 +458,6 @@ bool AnimTreeParseInternal( unsigned int parentNode, unsigned int names, bool bI
 		AnimTreeCompileError("bad token");
 	}
 
-done:
 	if ( bResolve )
 	{
 		RemoveVariable(parentNode, animName);

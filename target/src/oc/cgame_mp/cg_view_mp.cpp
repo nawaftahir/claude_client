@@ -639,6 +639,16 @@ static void CG_ApplyViewAnimation(void)
     AxisToAngles(cg->refdef.viewaxis, cg->refdefViewAngles);
 }
 
+static __forceinline float BG_GetSpeedInl(void)
+{
+    if (cg->predictedPlayerState.pm_flags & 0x20) { // PMF_LADDER
+        if (cg->time - cg->predictedPlayerState.jumpTime < 500)
+            return 0.0f;
+        return cg->predictedPlayerState.velocity[2];
+    }
+    return sqrtf(cg->predictedPlayerState.velocity[0] * cg->predictedPlayerState.velocity[0] + cg->predictedPlayerState.velocity[1] * cg->predictedPlayerState.velocity[1]);
+}
+
 static void CG_CalcViewValues(void)
 {
     int size;
@@ -674,7 +684,7 @@ static void CG_CalcViewValues(void)
     }
 
     cg->fBobCycle = BG_GetBobCycle(&cg->predictedPlayerState);
-    cg->xyspeed = BG_GetSpeed(&cg->predictedPlayerState, cg->time);
+    cg->xyspeed = BG_GetSpeedInl();
 
     cg->refdef.vieworg[0] = cg->predictedPlayerState.origin[0];
     cg->refdef.vieworg[1] = cg->predictedPlayerState.origin[1];

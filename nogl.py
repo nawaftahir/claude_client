@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Inputs for ltcgsim.py: every TU compiled non-/GL /Ob0 /Gy (call graph) plus /E (declaration order).
-usage (from target/): nogl.py <outdir> [--i-only]   (runs in cod2-msvc71-build, ~80 s per pass)"""
+usage (from target/): nogl.py <outdir> [--i-only]   (runs in cod2-msvc71-vs2003, ~80 s per pass)"""
 import os, re, subprocess, sys
 out = os.path.abspath(sys.argv[1])
 CF = r'/nologo /O2 /Ob0 /Gy /MT /DNDEBUG /DWIN32 /FI.\compat\msvc71.h /I.\compat\include /I.\universal /I. /I.\qcommon /I.\game /I.\server /I.\bgame /I.\script /I.\xanim /I.\stringed /I.\speex /I.\speex\speex'
@@ -20,4 +20,4 @@ for l in open('src/tus.txt'):
     cmds.append("rm -f %s.i; wine /opt/msvc710/Vc7/bin/cl.exe /E %s %s %s > %s.i 2>/dev/null" % (o, fl, rest, src, o))
 open(out + '/cmds.txt', 'w').write('\n'.join(cmds) + '\n')
 subprocess.run(['docker', 'run', '--rm', '-v', os.path.abspath('src') + ':/w/src', '-v', out + ':/out', '-w', '/w/src',
-                'cod2-msvc71-build', 'sh', '-c', 'xargs -P $(nproc) -d "\\n" -I CMD sh -c "CMD" < /out/cmds.txt; chown -R %d:%d /out' % (os.getuid(), os.getgid())])
+                'cod2-msvc71-vs2003', 'sh', '-c', 'xargs -P $(nproc) -d "\\n" -I CMD sh -c "CMD" < /out/cmds.txt; chown -R %d:%d /out' % (os.getuid(), os.getgid())])

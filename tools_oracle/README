@@ -1,5 +1,5 @@
 c2.dll LTCG oracle (10-07). patch.py writes cave.s (built at 0x10865d50) into a copy of c2.dll from
-cod2-msvc71-build (c2y.dll) and hooks: F = compile start, X = callee referenced, D/E = call-graph DFS
+cod2-msvc71-vs2003 (c2y.dll) and hooks: F = compile start, X = callee referenced, D/E = call-graph DFS
 enter/leave, C = recursive arc (cut edge). diag2.sh (vc dir holding c2y.dll + run.sh) -> build/ord.txt.
 Link output == normal link except PE timestamp.
 dfs.py ord.txt roots|cuts|path NAME|kids NAME ; cuts.py ord.txt [name] (F/X based).

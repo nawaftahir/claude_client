@@ -1560,20 +1560,21 @@ void CG_WeaponSlot_f(void)
 static qboolean CG_SelectFirstWeaponInSlot(qboolean next, qboolean checkAmmo)
 {
     int slot;
+    int start;
     int step;
 
     if (next)
     {
         step = 1;
-        slot = 1;
+        start = 1;
     }
     else
     {
         step = -1;
-        slot = 2;
+        start = 2;
     }
 
-    for (; slot >= 1 && slot < 3; slot += step)
+    for (slot = start; slot >= 1 && slot < 3; slot += step)
     {
         if (!cg->predictedPlayerState.weaponslots[slot])
             continue;
@@ -1795,20 +1796,19 @@ void CG_FireWeapon(centity_t *cent, int event, int barrel)
     qboolean localTurret;
     struct DObj_s *viewModel;
     struct DObj_s *obj;
-    int hasTag;
 
     ent = &cent->nextState;
-    if (!ent->weapon)
+    if (!cent->nextState.weapon)
         return;
 
-    if (ent->weapon > BG_GetNumWeapons()) {
+    if (cent->nextState.weapon > BG_GetNumWeapons()) {
         Com_Error(ERR_DROP, "\x15"
                      "CG_FireWeapon: ent->weapon > BG_GetNumWeapons()");
         return;
     }
 
-    cent->bMuzzleFlash = 1;
     weapInfo = &cg_weaponsArray[ent->weapon];
+    cent->bMuzzleFlash = 1;
 
     if (CG_IsLocalClientEntity(cg, ent))
         BG_WeaponFireRecoil(&cg->predictedPlayerState, cg->vGunSpeed, cg->kickAVel);
@@ -1833,13 +1833,13 @@ void CG_FireWeapon(centity_t *cent, int event, int barrel)
     if (fireSound) {
         if (CG_IsLocalClientEntity(cg, ent)) {
             viewModel = weapInfo->viewModelDObj;
-            hasTag = viewModel && CG_DObjGetViewModelTagPos(viewModel, scr_const.tag_flash, origin);
+            if (!viewModel || !CG_DObjGetViewModelTagPos(viewModel, scr_const.tag_flash, origin))
+                BG_EvaluateTrajectory(&ent->pos, cg->time, origin);
         } else {
             obj = (DObj_s *)(Com_GetClientDObj(ent->number, cent->localClientNum));
-            hasTag = obj && CG_DObjGetWorldTagPos(cent, obj, scr_const.tag_flash, origin);
+            if (!obj || !CG_DObjGetWorldTagPos(cent, obj, scr_const.tag_flash, origin))
+                BG_EvaluateTrajectory(&ent->pos, cg->time, origin);
         }
-        if (!hasTag)
-            BG_EvaluateTrajectory(&ent->pos, cg->time, origin);
         duration = CG_PlaySoundAlias(ent->number, origin, fireSound);
         if (cent->nextState.eType == 1)
             CG_CompassAddWeaponPingInfo(cent, origin, duration);

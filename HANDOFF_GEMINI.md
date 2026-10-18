@@ -33,3 +33,8 @@ Goal: byte-match more functions of the CoD2 1.0 MP client in real C/C++. Claude 
 
 ## Measured baseline for comparison
 Claude Opus agents, 45-min box, same slots: 2-6 bytes per 1k tokens on these leftovers (10-15 round: ~400k tokens, +1,452 B, 3 full matches). Report your token use so we can compare.
+
+## Round 2 (2026-10-18)
+- Round 1 merged: CG_CalcViewValues + Scr_PrintPrevCodePos MATCH, main now 1,270,032 B (90.16%). s4 is rebased onto it; do not re-run `rebase.sh`.
+- Skip every function already listed in `dev/lab/gemini_s4.md`.
+- Deliver to `dev/lab/gemini_s4_r2.patch` and `dev/lab/gemini_s4_r2.md`. Report your token use.

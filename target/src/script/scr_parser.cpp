@@ -922,11 +922,7 @@ void Scr_PrintPrevCodePos( print_msg_type_t channel, const char *codePos, unsign
 	{
 		Com_PrintMessage(channel, "<frozen thread>\n");
 	}
-	else if ( codePos == &g_EndPos )
-	{
-		Com_PrintMessage(channel, "<removed thread>\n");
-	}
-	else
+	else if ( codePos != &g_EndPos )
 	{
 		if ( !scrVarPub.developer )
 		{
@@ -944,6 +940,11 @@ void Scr_PrintPrevCodePos( print_msg_type_t channel, const char *codePos, unsign
 		}
 
 		Com_PrintMessage( channel, va("%s\n\n", codePos) );
+		return;
+	}
+	else
+	{
+		Com_PrintMessage(channel, "<removed thread>\n");
 	}
 }
 

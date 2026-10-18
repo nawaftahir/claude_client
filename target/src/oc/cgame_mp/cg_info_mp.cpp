@@ -93,7 +93,7 @@ void CG_DrawInformation(qboolean serverLoading)
     }
     I_strncpyz(string, mapname, sizeof(string));
     for (s = string; *s; s++)
-        *s = tolower(*s);
+        *s = toupper(*s);
 
     UI_DrawMapLevelshot();
 

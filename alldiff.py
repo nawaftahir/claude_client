@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Diff-line count for every unmatched fn with a named client address. usage: alldiff.py (run in target/; needs build/cmp.json from make measure)"""
+"""Diff-line count for every unmatched fn with a named client address. usage: alldiff.py (run in target/; needs build/exp.json from mym.sh)"""
 import difflib, re, json, sys, pefile, capstone
 md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
 def section(path):
@@ -28,7 +28,7 @@ def norm(code, start, lim):
         if ins.address - start >= lim - 1: break
     return out
 res = []
-for x in json.load(open(sys.argv[1] if len(sys.argv)>1 else 'build/cmp.json')):
+for x in json.load(open(sys.argv[1] if len(sys.argv)>1 else 'build/exp.json')):
     if x.get('hits') or x['name'] not in nxt: continue
     ca = names.get(plain(x['name']))
     if ca is None: continue

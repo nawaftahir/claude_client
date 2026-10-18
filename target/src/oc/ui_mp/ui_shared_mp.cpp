@@ -4014,7 +4014,7 @@ static __declspec(noinline) qboolean Item_ListBox_HandleKey(displayContextDef_t 
                 if (listPtr->cursorPos[0] >= listPtr->startPos[0] + viewmax)
                     listPtr->startPos[0] = listPtr->cursorPos[0] - viewmax + 1;
                 item->cursorPos[0] = listPtr->cursorPos[0];
-                UI_FeederSelection(item->special, item->cursorPos[0]);
+                UI_FeederSelection(item->special, listPtr->cursorPos[0]);
             } else {
                 listPtr->startPos[0]--;
                 if (listPtr->startPos[0] < 0)
