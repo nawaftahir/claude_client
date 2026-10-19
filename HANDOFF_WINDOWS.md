@@ -1,13 +1,19 @@
-# Handoff: client recon, Windows session (10-18)
+# Handoff: client recon (state 10-19)
 
 Target: `CoD2MP_s.exe` 1.0. End goal: every function real C/C++, whole exe
-SHA-256 identical to retail, runs like retail. 91% (1,281,902 B of 1,408,683 B
-`.text`) is only a checkpoint.
+SHA-256 identical to retail, runs like retail. % of `.text` is only the meter.
 
 ## State
 
-- Main = this repo, `target/`. Measured **1,273,258 B = 90.386%** (`lab/mym.sh`,
-  RATCHET OK, accepted as `target/build/good.json`). Checkpoint needs +8,644 B.
+- Main = this repo, `target/`. Measured **1,282,075 B = 91.01%** of 1,408,683 B
+  (`lab/mym.sh`, RATCHET OK, accepted as `target/build/good.json`), commit 6000f97.
+  Next checkpoint 92% = 1,295,989 B (+13,914).
+- 119 unmatched fns left (~68 KB); every one has 5+ logged attempts. Whole-file
+  SHA distance (last `shameter.py`): 7.8% same-offset bytes, 574 layout drift
+  points (`drift.py`); 5 of 6,588 matched fns sit at their retail address.
+- 10-19 paid levers (in the skill): separate early returns, element pointer
+  read at each use, biased IV = `p = &base[i]`, struct copy through a pointer +
+  field re-set, `x += w; x -= c;` split, explicit `return v;` closing an arm.
 - Toolchain fixed today: image `cod2-msvc71-vs2003`, genuine VS2003 compiler +
   its own Platform SDK under Wine 5. A clean build reproduces 1,273,258 exactly,
   and all 286 import hints equal retail. Read `toolchain/README.md`.
@@ -45,6 +51,13 @@ the old `cod2-msvc71-build` image (Wine 8 hangs, wrong SDK).
 
 ## Open leads
 
+- `CG_DrawCompassFriendlies` 0x4d4af0 (2,976 B, ~40 lines with stack offsets
+  normalised by `lab/s6/norm.py`): retail shares one &s/&c FastSinCos slot pair
+  across both loops (ours one pair per loop) = the 8-byte frame gap 0xa4/0xac.
+- Layout for SHA: `lab/layout_helpers_inline.patch` (one copy per header helper)
+  is ratchet OK but flips ties Pickup_Weapon/SP_worldspawn (-1,517 on the meter).
+- CRT `__CIsin/__CIcos/__CIacos` are code-identical; they jump into shared CRT
+  code placed differently = link-order work, not source.
 - `Com_ProcessSoundAliasFileLocalization` 0x42f8e0: pure regalloc. f's first
   live piece has gain -2 in c2's colour pass (rejected at 0x10782a5e), so esi
   goes to the CSE'd `"soundaliases/temp.csv"` literal. Untested: `if (f == 0)` /
