@@ -1661,6 +1661,18 @@ static void Con_ClearMessageWindow(MessageWindow *wnd)
     MsgWnd_Clear(wnd);
 }
 
+extern const vec4_t g_color_table[8];
+const vec4_t g_color_table[8] = {
+    { 0.0f, 0.0f, 0.0f, 1.0f },
+    { 1.0f, 0.0f, 0.0f, 1.0f },
+    { 0.0f, 1.0f, 0.0f, 1.0f },
+    { 1.0f, 1.0f, 0.0f, 1.0f },
+    { 0.0f, 0.0f, 1.0f, 1.0f },
+    { 0.0f, 1.0f, 1.0f, 1.0f },
+    { 1.0f, 0.0f, 1.0f, 1.0f },
+    { 1.0f, 1.0f, 1.0f, 1.0f }
+};
+
 static const vec4_t con_versionColor = { 1.0f, 1.0f, 0.0f, 1.0f };
 
 static const vec4_t con_inputDvarMatchColor = { 1.0f, 1.0f, 0.8f, 1.0f };

@@ -319,7 +319,7 @@ qboolean CL_GetUserCmd(int cmdNumber, usercmd_t *ucmd)
     int currentCmd = cl->cmdNumber;
 
     if (cmdNumber > currentCmd) {
-        Com_Error(ERR_DROP, "CL_GetUserCmd: %i >= %i", cmdNumber, currentCmd);
+        Com_Error(ERR_DROP, "\025CL_GetUserCmd: %i >= %i", cmdNumber, currentCmd);
         currentCmd = cl->cmdNumber;
     }
 
@@ -352,7 +352,7 @@ qboolean CL_GetSnapshot(int snapshotNumber, snapshot_t *snapshot)
     int i;
 
     if (snapshotNumber > cl->snap.messageNum) {
-        Com_Error(ERR_DROP, "CL_GetSnapshot: snapshotNumber > cl->snapshot.messageNum");
+        Com_Error(ERR_DROP, "\025CL_GetSnapshot: snapshotNumber > cl->snapshot.messageNum");
     }
 
     if (cl->snap.messageNum - snapshotNumber >= 0x20) {
@@ -497,7 +497,7 @@ qboolean CL_GetServerCommand(int serverCommandNumber)
         if (clui->demoplaying) {
             return 0;
         }
-        Com_Printf("CL_GetServerCommand: a]command was lost\n");
+        Com_Printf("===== CL_GetServerCommand =====\n");
         Com_Printf("serverCommandNumber: %d\n", serverCommandNumber & 0x7f);
         {
             int j;
@@ -506,12 +506,12 @@ qboolean CL_GetServerCommand(int serverCommandNumber)
                 Com_Printf("cmd %5d: %s\n", j, clui2->serverCommands[j & 0x7f]);
             }
         }
-        Com_Error(ERR_DROP, "CL_GetServerCommand: too many missed");
+        Com_Error(ERR_DROP, "\025CL_GetServerCommand: \024EXE_ERR_RELIABLE_CYCLED_OUT");
     }
 
     clui = CLUI_STATE;
     if (serverCommandNumber > clui->serverCommandSequence) {
-        Com_Error(ERR_DROP, "CL_GetServerCommand: requested beyond last");
+        Com_Error(ERR_DROP, "\025CL_GetServerCommand: \024EXE_ERR_NOT_RECEIVED");
     }
 
     s = clui->serverCommands[serverCommandNumber & 0x7f];
@@ -534,7 +534,7 @@ restart:
             const char *msg = UI_ReplaceConversionString(base, reason);
             Com_Error(ERR_SERVERDISCONNECT, msg);
         } else {
-            Com_Error(ERR_SERVERDISCONNECT, "EXE_DISCONNECTED");
+            Com_Error(ERR_SERVERDISCONNECT, "EXE_SERVER_DISCONNECTED");
         }
 
     case 'x':
@@ -550,7 +550,7 @@ restart:
         {
             const char *arg2 = Cmd_Argv(2);
             if (strlen(bigConfigString) + strlen(arg2) >= 0x2000) {
-                Com_Error(ERR_DROP, "BCS overflow");
+                Com_Error(ERR_DROP, "\025bcs exceeded BIG_INFO_STRING");
             }
             strcat(bigConfigString, arg2);
         }
@@ -560,7 +560,7 @@ restart:
         {
             const char *arg2 = Cmd_Argv(2);
             if (strlen(bigConfigString) + strlen(arg2) + 1 >= 0x2000) {
-                Com_Error(ERR_DROP, "BCS overflow");
+                Com_Error(ERR_DROP, "\025bcs exceeded BIG_INFO_STRING");
             }
             strcat(bigConfigString, arg2);
         }
@@ -1073,7 +1073,7 @@ void CL_UpdateLevelHunkUsage(void)
 
         token = Com_Parse(&buftrav);
         if (!token || *token == '\0') {
-            Com_Error(ERR_DROP, "CL_UpdateLevelHunkUsage: bad hunkusage.dat");
+            Com_Error(ERR_DROP, "EXE_ERR_HUNGUSAGE_CORRUPT");
             continue;
         }
 
@@ -1101,7 +1101,7 @@ write_new:
 
     len = FS_FOpenFileByMode("hunkusage.dat", &handle, FS_APPEND);
     if (!handle) {
-        Com_Error(ERR_DROP, "CL_UpdateLevelHunkUsage: cannot open for append");
+        Com_Error(ERR_DROP, "EXE_ERR_HUNKUSAGE_CANT_WRITE");
     }
 
     {
@@ -1377,7 +1377,7 @@ void CL_SetCGameTime(void)
     }
 
     if (!cl->snap.valid)
-        Com_Error(ERR_DROP, "CL_SetCGameTime: no snapshot");
+        Com_Error(ERR_DROP, "\025CL_SetCGameTime: !cl->snap.valid");
 
     if (sv_paused->current.integer && cl_paused->current.integer && com_sv_running->current.enabled)
         return;
@@ -1386,7 +1386,7 @@ void CL_SetCGameTime(void)
         if (!I_stricmp(cls.servername, "localhost"))
             CL_FirstSnapshot();
         else
-            Com_Error(ERR_DROP, "cl.snap.serverTime < cl.oldFrameServerTime");
+            Com_Error(ERR_DROP, "\025cl->snap.serverTime < cl->oldFrameServerTime");
     }
     cl->oldFrameServerTime = cl->snap.serverTime;
 
@@ -1503,13 +1503,3 @@ void CL_UpdateColor(void)
 }
 
 
-static const vec4_t g_color_table[8] = {
-    { 0.0f, 0.0f, 0.0f, 1.0f },
-    { 1.0f, 0.0f, 0.0f, 1.0f },
-    { 0.0f, 1.0f, 0.0f, 1.0f },
-    { 1.0f, 1.0f, 0.0f, 1.0f },
-    { 0.0f, 0.0f, 1.0f, 1.0f },
-    { 0.0f, 1.0f, 1.0f, 1.0f },
-    { 1.0f, 0.0f, 1.0f, 1.0f },
-    { 1.0f, 1.0f, 1.0f, 1.0f }
-};
