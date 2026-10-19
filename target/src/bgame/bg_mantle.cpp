@@ -143,22 +143,10 @@ Mantle_GetOverLength
 */
 int Mantle_GetOverLength( const MantleState *mstate )
 {
-	int animIndex;
-	int length;
-	int result;
-
 	if ( !(mstate->flags & 1) )
-	{
-		result = 0;
-	}
-	else
-	{
-		animIndex = s_mantleTrans[mstate->transIndex].overAnimIndex;
-		length = XAnimGetLengthMsec(s_mantleAnims, animIndex);
-		result = length;
-	}
+		return 0;
 
-	return result;
+	return XAnimGetLengthMsec(s_mantleAnims, s_mantleTrans[mstate->transIndex].overAnimIndex);
 }
 
 /*

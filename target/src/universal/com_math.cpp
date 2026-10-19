@@ -3254,17 +3254,17 @@ void AxisToSignedAngles( const vec3_t axis[3], vec3_t angles )
 	vectoanglessigned(axis[0], angles);
 	VectorCopy(axis[1], right);
 
-	a = (-angles[YAW]) * 0.017453292519943295f;
+	a = ((-angles[YAW]) * 0.017453292519943295f);
 	FastSinCos(a, &fSin, &fCos);
 
 	temp = fCos * right[0] - fSin * right[1];
 	right[1] = fSin * right[0] + fCos * right[1];
 
-	a = (-angles[PITCH]) * 0.017453292519943295f;
+	a = ((-angles[PITCH]) * 0.017453292519943295f);
 	FastSinCos(a, &fSin, &fCos);
 
-	right[0] = fSin * right[2] + fCos * temp;
-	right[2] = fCos * right[2] - fSin * temp;
+	right[0] = (fSin * right[2]) + (fCos * temp);
+	right[2] = (fCos * right[2]) - (fSin * temp);
 
 	pitch = vectosignedpitch(right);
 

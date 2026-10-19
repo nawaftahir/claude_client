@@ -75,7 +75,7 @@ void CG_DrawCompassFriendlies(rectDef_t *rect, MaterialHandle material, vec_t *c
 // retail 0x4d4a60
 void CG_ApplyCompassPointerRadiusScale(float *radiusScale)
 {
-    *radiusScale = cg_hudCompassSize->current.value * *radiusScale * 43.75;
+    *radiusScale = (float)((double)cg_hudCompassSize->current.value * *radiusScale * 43.75);
 }
 
 void CG_CompassAddWeaponPingInfo(centity_t *cent, const vec_t *origin, int msec)
@@ -382,7 +382,7 @@ void CG_DrawPlayerCompassPointers(const rectDef_t *rect, vec_t *color)
 
     CG_UpdateCompPointerOrientation();
 
-    centerX = rect->w * cg_hudCompassSize->current.value * 0.5f + rect->x;
+    centerX = (rect->w * cg_hudCompassSize->current.value * 0.5f) + rect->x;
     centerY = (cg_hudCompassSize->current.value * 0.5f) * rect->h - (cg_hudCompassSize->current.value - 1.0f) * rect->h + rect->y;
 
     if (!cg->bgs.clientinfo[cg->nextSnap->ps.clientNum].infoValid)

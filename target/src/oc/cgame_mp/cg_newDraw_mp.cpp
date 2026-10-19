@@ -665,12 +665,14 @@ static void CG_DrawPlayerStance(const rectDef_t *rect, vec_t *color, struct Font
     if (cg->proneBlockedEndTime > cg->time) {
         int width;
         float halfWidth;
+        float deltaTime;
         float pulseDegrees;
 
         proneStr = UI_SafeTranslateString("CGAME_PRONE_BLOCKED");
         width = UI_TextWidth(proneStr, 0, font, scale);
         halfWidth = (float)width * 0.5f;
-        pulseDegrees = 540.0f * ((float)(cg->proneBlockedEndTime - cg->time) / 1500.0f);
+        deltaTime = (float)(cg->proneBlockedEndTime - cg->time);
+        pulseDegrees = 540.0f * (deltaTime / 1500.0f);
         drawColor[3] = (float)fabs(sin(pulseDegrees * 0.017453292f));
 
         UI_DrawText(
@@ -691,7 +693,7 @@ static void CG_DrawPlayerStance(const rectDef_t *rect, vec_t *color, struct Font
         int commandIndex;
         int numHintLines;
         float height;
-        float hintY;
+        float hintY = 0.0f;
         const char *string;
         const char *binding;
         const char *hintLineCmds[3];

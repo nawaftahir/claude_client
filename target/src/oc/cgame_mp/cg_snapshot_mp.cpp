@@ -536,7 +536,7 @@ void CG_ProcessSnapshots(void)
             if (!snap)
                 break;
 
-            if ((snap->snapFlags ^ cg->nextSnap->snapFlags) & 4) {
+            if ((snap->snapFlags ^ cgArray[0].nextSnap->snapFlags) & 4) {
                 CG_SetInitialSnapshot(snap);
                 CG_SetNextSnap(snap);
                 CG_TransitionSnapshot();

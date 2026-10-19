@@ -171,11 +171,14 @@ void LAN_SaveServersToCache(void)
     FS_Write(&version, sizeof(version), fileOut);
 
     for (i = cls.numglobalservers - 1; i >= 0; i--) {
-        if (cls.globalServers[i].requestCount >= 3
-            || (i && !NET_CompareAdrSigned(&cls.globalServers[i].adr, &cls.globalServers[i - 1].adr))) {
-            cls.numglobalservers--;
-            memcpy(&cls.globalServers[i], &cls.globalServers[cls.numglobalservers], sizeof(serverInfo_t));
+        if (cls.globalServers[i].requestCount < 3) {
+            if (!i)
+                break;
+            if (NET_CompareAdrSigned(&cls.globalServers[i].adr, &cls.globalServers[i - 1].adr))
+                continue;
         }
+        cls.numglobalservers--;
+        memcpy(&cls.globalServers[i], &cls.globalServers[cls.numglobalservers], sizeof(serverInfo_t));
     }
     CL_SortGlobalServers();
 

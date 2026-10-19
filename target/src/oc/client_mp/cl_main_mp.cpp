@@ -3303,12 +3303,28 @@ bool CL_IsLocalClientInGame(void)
     return clc.state == CA_ACTIVE;
 }
 
-void CL_MapLoading(const char *mapname)
+// retail inlines Dvar_SetString (dvar.cpp) here
+static __forceinline void Dvar_SetStringFromSourceInl(dvar_t *dvar, const char *string, DvarSetSource source)
 {
-    dvar_t *dvar;
     DvarValue newValue;
     char stringCopy[1024];
 
+    if (dvar->type == DVAR_TYPE_STRING) {
+        I_strncpyz(stringCopy, string, sizeof(stringCopy));
+        newValue.string = stringCopy;
+    } else {
+        newValue.integer = Dvar_StringToEnum(&dvar->domain, string);
+    }
+    Dvar_SetVariant(dvar, newValue, source);
+}
+
+static __forceinline void Dvar_SetStringInl(dvar_t *dvar, const char *value)
+{
+    Dvar_SetStringFromSourceInl(dvar, value, DVAR_SOURCE_INTERNAL);
+}
+
+void CL_MapLoading(const char *mapname)
+{
     if (!((LegacyHacks *)::legacyHacks)->cl_running)
         return;
     g_waitingForServer = 0;
@@ -3325,15 +3341,7 @@ void CL_MapLoading(const char *mapname)
         I_strncpyz(((LegacyHacks *)::legacyHacks)->cl_serverloadmap, mapname, 0x40);
         ((LegacyHacks *)::legacyHacks)->cl_serverloadwaiting = 0;
     } else {
-        // Dvar_SetString inlined
-        dvar = (dvar_t *)nextmap;
-        if (dvar->type == DVAR_TYPE_STRING) {
-            I_strncpyz(stringCopy, "", sizeof(stringCopy));
-            newValue.string = stringCopy;
-        } else {
-            newValue.integer = Dvar_StringToEnum(&dvar->domain, "");
-        }
-        Dvar_SetVariant(dvar, newValue, DVAR_SOURCE_INTERNAL);
+        Dvar_SetStringInl((dvar_t *)nextmap, "");
         I_strncpyz(cls.servername, (const char *)"localhost", sizeof(cls.servername));
         CL_Disconnect();
         UI_CloseAllInl();

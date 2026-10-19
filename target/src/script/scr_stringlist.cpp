@@ -706,7 +706,9 @@ SL_RemoveRefToString
 */
 void SL_RemoveRefToString( unsigned int stringValue )
 {
-	SL_RemoveRefToStringOfLen( stringValue, SL_GetRefStringLen( GetRefString( stringValue ) ) + 1 );
+	RefString *refStr = GetRefString( stringValue );
+
+	SL_RemoveRefToStringOfLen( stringValue, SL_GetRefStringLen( refStr ) + 1 );
 }
 
 /*

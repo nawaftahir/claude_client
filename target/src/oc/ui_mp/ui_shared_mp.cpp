@@ -3432,8 +3432,11 @@ void Menu_Paint(displayContextDef_t *dc, menuDef_t *menu, qboolean forcePaint)
     if (menu->soundName)
         UI_PlayLocalSoundAliasByName(menu->soundName);
 
-    if (menu->blurRadius != 0.0f)
-        dc->blurRadiusOut = sqrt(menu->blurRadius * menu->blurRadius + dc->blurRadiusOut * dc->blurRadiusOut);
+    if (menu->blurRadius != 0.0f) {
+        float menuBlur = menu->blurRadius;
+        float outBlur = dc->blurRadiusOut;
+        dc->blurRadiusOut = sqrt(menuBlur * menuBlur + outBlur * outBlur);
+    }
 
     if (forcePaint) {
         Window_AddDynamicFlags(&menu->window, 0x4000);
@@ -3743,7 +3746,8 @@ void Window_Paint(displayContextDef_t *dc, float (*w_param)[4][32], float fadeAm
         if (w->background) {
             flags = w->dynamicFlags[0];
             Fade(&flags, &w->backColor[3], fadeClamp, &w->nextTime, (int)fadeCycle, 1, fadeAmount, fadeInAmount, dc);
-            Window_SetDynamicFlags((Window *)w, flags);
+            int *dynamicFlags = &w->dynamicFlags[0];
+            *dynamicFlags = flags;
             UI_DrawHandlePic(fillRect.x, fillRect.y, fillRect.w, fillRect.h, w->rect[0].horzAlign, w->rect[0].vertAlign, w->backColor, w->background);
         } else {
             UI_FillRect(fillRect.x, fillRect.y, fillRect.w, fillRect.h, w->rect[0].horzAlign, w->rect[0].vertAlign, w->backColor);
@@ -3871,7 +3875,8 @@ void Item_OwnerDraw_Paint(displayContextDef_t *dc, itemDef_t *item)
     Fade(&flags, &item->window.foreColor[3], parent->fadeClamp, &item->window.nextTime, parent->fadeCycle, 1, parent->fadeAmount, parent->fadeInAmount, dc);
     Window_SetDynamicFlags(&item->window, flags);
 
-    memcpy(color, item->window.foreColor, sizeof(vec4_t));
+    float *foreColor = &item->window.foreColor[0];
+    memcpy(color, foreColor, sizeof(vec4_t));
 
     if (Window_HasFocus(&item->window)) {
         lowLight[0] = parent->focusColor[0] * 0.8f;
@@ -3963,7 +3968,8 @@ qboolean Item_SetFocus(displayContextDef_t *dc, itemDef_t *item, float x, float 
                 Item_RunScript(dc, oldFocus, oldFocus->onFocus);
         }
     } else {
-        Window_AddDynamicFlags(&item->window, 2);
+        int *dynamicFlags = &item->window.dynamicFlags[0];
+        *dynamicFlags |= 2;
         if (item->onFocus)
             Item_RunScript(dc, item, item->onFocus);
         if (item->focusSound)
@@ -4013,7 +4019,8 @@ static __declspec(noinline) qboolean Item_ListBox_HandleKey(displayContextDef_t 
                     listPtr->startPos[0] = listPtr->cursorPos[0];
                 if (listPtr->cursorPos[0] >= listPtr->startPos[0] + viewmax)
                     listPtr->startPos[0] = listPtr->cursorPos[0] - viewmax + 1;
-                item->cursorPos[0] = listPtr->cursorPos[0];
+                int *cursorPos = &item->cursorPos[0];
+                *cursorPos = listPtr->cursorPos[0];
                 UI_FeederSelection(item->special, listPtr->cursorPos[0]);
             } else {
                 listPtr->startPos[0]--;
@@ -4031,8 +4038,9 @@ static __declspec(noinline) qboolean Item_ListBox_HandleKey(displayContextDef_t 
                     listPtr->cursorPos[0] = count - 1;
                 if (listPtr->cursorPos[0] >= listPtr->startPos[0] + viewmax)
                     listPtr->startPos[0] = listPtr->cursorPos[0] - viewmax + 1;
-                item->cursorPos[0] = listPtr->cursorPos[0];
-                UI_FeederSelection(item->special, item->cursorPos[0]);
+                int *cursorPos = &item->cursorPos[0];
+                *cursorPos = listPtr->cursorPos[0];
+                UI_FeederSelection(item->special, *cursorPos);
             } else {
                 listPtr->startPos[0]++;
                 if (listPtr->startPos[0] >= count)
@@ -4172,8 +4180,9 @@ static __declspec(noinline) qboolean Item_ListBox_HandleKey(displayContextDef_t 
                 listPtr->cursorPos[0] = 0;
             if (listPtr->cursorPos[0] >= listPtr->startPos[0] + viewmax)
                 listPtr->startPos[0] = listPtr->cursorPos[0] - viewmax + 1;
-            item->cursorPos[0] = listPtr->cursorPos[0];
-            UI_FeederSelection(item->special, item->cursorPos[0]);
+            int *cursorPos = &item->cursorPos[0];
+            *cursorPos = listPtr->cursorPos[0];
+            UI_FeederSelection(item->special, *cursorPos);
         } else {
             listPtr->startPos[0] += viewmax;
             if (listPtr->startPos[0] > max)
@@ -4252,7 +4261,7 @@ void Item_Paint(displayContextDef_t *dc, itemDef_t *item)
             newRect = *r;
             newRect.x = rx * c - ry * s + item->window.rectEffects0[0].x; newRect.x = newRect.x - w;
             newRect.y = rx * s + ry * c + item->window.rectEffects0[0].y - h;
-            Window_SetRectClient(&item->window, &newRect);
+            *r = newRect;
             Item_UpdatePosition((itemDef_t *)item);
 
         }

@@ -4037,13 +4037,8 @@ footstep:
 	PM_FootstepEvent(pm, pml, old, ps->bobCycle, footstep);
 }
 // rain - take a tracemask as well - we can't use anything out of pm
-__declspec(noinline) float AngleDeltaNI( float angle1, float angle2 )
-{
-	return AngleDelta(angle1, angle2);
-}
 void PM_UpdateViewAngles( playerState_t *ps, float msec, usercmd_t *cmd, byte handler )
 {
-	int pmFlags;
 	short temp;
 	int i;
 	float delta;
@@ -4130,15 +4125,13 @@ void PM_UpdateViewAngles( playerState_t *ps, float msec, usercmd_t *cmd, byte ha
 		return;
 	}
 
-	pmFlags = ps->pm_flags;
-
-	if ( pmFlags & PMF_MANTLE )
+	if ( ps->pm_flags & PMF_MANTLE )
 	{
 		Mantle_CapView(ps);
 		return;
 	}
 
-	if ( pmFlags & PMF_LADDER && ps->groundEntityNum == ENTITYNUM_NONE && bg_ladder_yawcap->current.decimal != 0 )
+	if ( ps->pm_flags & PMF_LADDER && ps->groundEntityNum == ENTITYNUM_NONE && bg_ladder_yawcap->current.decimal != 0 )
 	{
 		ladderFacing = vectoyaw(ps->vLadderVec) + 180;
 		delta = AngleDelta(ladderFacing, ps->viewangles[YAW]);
@@ -4152,14 +4145,14 @@ void PM_UpdateViewAngles( playerState_t *ps, float msec, usercmd_t *cmd, byte ha
 
 			ps->delta_angles[YAW] += ANGLE2SHORT(delta);
 
-			if ( delta <= 0 )
-				ps->viewangles[YAW] = AngleNormalize360Accurate(ladderFacing + bg_ladder_yawcap->current.decimal);
-			else
+			if ( delta > 0 )
 				ps->viewangles[YAW] = AngleNormalize360Accurate(ladderFacing - bg_ladder_yawcap->current.decimal);
+			else
+				ps->viewangles[YAW] = AngleNormalize360Accurate(ladderFacing + bg_ladder_yawcap->current.decimal);
 		}
 	}
 
-	if ( pmFlags & PMF_PRONE )
+	if ( ps->pm_flags & PMF_PRONE && !(ps->eFlags & EF_TURRET_ACTIVE) )
 	{
 		proneBlocked = qfalse;
 
@@ -4301,7 +4294,7 @@ void PM_UpdateViewAngles( playerState_t *ps, float msec, usercmd_t *cmd, byte ha
 
 			if ( I_fabs(deltaYaw1) <= 1 )
 			{
-				deltaYaw2 = AngleDeltaNI(newViewYaw, ps->viewangles[YAW]);
+				deltaYaw2 = AngleDelta(newViewYaw, ps->viewangles[YAW]);
 
 				if ( deltaYaw1 * deltaYaw2 > 0 )
 				{

@@ -1,17 +1,19 @@
 # Handoff: client recon (state 10-19)
 
+> **Latest state (10-19 evening): 1,287,448 B = 91.39%, uncommitted = lab/wip_gap23.patch. Read `../lab/HANDOFF_1019.md` first; the State section below is older.**
+
 Target: `CoD2MP_s.exe` 1.0. End goal: every function real C/C++, whole exe
 SHA-256 identical to retail, runs like retail. % of `.text` is only the meter.
 
 ## State
 
-- Main = this repo, `target/`. Measured **1,282,075 B = 91.01%** of 1,408,683 B
-  (`lab/mym.sh`, RATCHET OK, accepted as `target/build/good.json`), commit 6000f97.
-  Next checkpoint 92% = 1,295,989 B (+13,914).
-- 119 unmatched fns left (~68 KB); every one has 5+ logged attempts. Whole-file
+- Main = this repo, `target/`. Measured **1,296,031 B = 92.00%** of 1,408,683 B
+  (RATCHET OK, `target/build/good.json`), committed 10-19.
+  Next checkpoint 93% = 1,310,076 B (+14,045).
+- ~95 unmatched fns left (~55 KB); every one has 5+ logged attempts. Whole-file
   SHA distance (last `shameter.py`): 7.8% same-offset bytes, 574 layout drift
   points (`drift.py`); 5 of 6,588 matched fns sit at their retail address.
-- 10-19 paid levers (in the skill): separate early returns, element pointer
+- 10-19 PAID CLASSES (skill catalogue top): x87 operand-role rule (dead `float x = 0.0f;` init, `(double)` product cast under /Op); field pointer `int *f = &s->field[0];` keeps store/load source order; whole-fn server text for shared bg code; float overload `atan2((float)a,(float)b)`. Older 10-19 levers: separate early returns, element pointer
   read at each use, biased IV = `p = &base[i]`, struct copy through a pointer +
   field re-set, `x += w; x -= c;` split, explicit `return v;` closing an arm.
 - Toolchain fixed today: image `cod2-msvc71-vs2003`, genuine VS2003 compiler +

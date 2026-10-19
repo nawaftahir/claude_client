@@ -230,6 +230,7 @@ static void CG_OffsetThirdPersonView(void)
     if (focusDist < 1.0f)
         focusDist = 1.0f;
     cg->refdefViewAngles[0] = (float)atan2(focusPoint[2], focusDist) * -57.295776f;
+    forward[0] = 0.0f; // dead store, compiled away; retail x87 operand order needs it
 }
 
 static void CG_StepOffset(void)
@@ -451,7 +452,7 @@ static void CG_CalcCubemapViewValues(void)
     cg->refdef.y = 0;
     cg->refdef.width = cg->cubemapSize + 2;
     cg->refdef.height = cg->cubemapSize + 2;
-    cg->refdef.fov_x = (float)(atan2((double)(cg->cubemapSize + 2), (double)cg->cubemapSize) * 114.59155902616465);
+    cg->refdef.fov_x = (float)(atan2((float)(cg->cubemapSize + 2), (float)cg->cubemapSize) * 114.59155902616465);
     cg->refdef.fov_y = cg->refdef.fov_x;
     cg->refdef.vieworg[0] = cg->predictedPlayerState.origin[0];
     cg->refdef.vieworg[1] = cg->predictedPlayerState.origin[1];

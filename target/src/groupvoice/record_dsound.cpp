@@ -26,6 +26,7 @@ void DSOUNDRecord_UpdateSample( dsound_sample_t *pRecSample )
 	DWORD dwTotalLen;
 	DWORD dwCapturePos;
 	DWORD dwReadPos;
+	unsigned int *dwCaptureOffset;
 	audioSample_t audioSample;
 
 	if ( !g_recording_initialized )
@@ -39,7 +40,8 @@ void DSOUNDRecord_UpdateSample( dsound_sample_t *pRecSample )
 	lLockSize -= lLockSize % 4;
 	if ( !lLockSize )
 		return;
-	hr = pRecSample->DSCB->Lock(pRecSample->dwCaptureOffset, lLockSize, &pLock1, &dwLockLen1, &pLock2, &dwLockLen2, 0);
+	dwCaptureOffset = &pRecSample->dwCaptureOffset;
+	hr = pRecSample->DSCB->Lock(*dwCaptureOffset, lLockSize, &pLock1, &dwLockLen1, &pLock2, &dwLockLen2, 0);
 	if ( FAILED(hr) )
 	{
 		switch ( hr )

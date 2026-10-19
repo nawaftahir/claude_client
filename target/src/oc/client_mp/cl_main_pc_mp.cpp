@@ -1003,6 +1003,7 @@ void CL_ServersResponsePacket(netadr_t from, msg_t *msg)
     byte *buffend;
     netadr_t adr;
     serverInfo_t *server;
+    serverAddress_t *addr;
 
     Com_PumpMessageLoop();
     Com_Printf("CL_ServersResponsePacket\n");
@@ -1051,11 +1052,12 @@ void CL_ServersResponsePacket(netadr_t from, msg_t *msg)
     count = cls.numglobalservers;
     for (i = 0; i < numservers && count < MAX_GLOBALSERVERS; i++) {
         adr.type = NA_IP;
-        adr.ip[0] = addresses[i].ip[0];
-        adr.ip[2] = addresses[i].ip[2];
-        adr.ip[1] = addresses[i].ip[1];
-        adr.ip[3] = addresses[i].ip[3];
-        adr.port = addresses[i].port;
+        addr = &addresses[i];
+        adr.ip[0] = addr->ip[0];
+        adr.ip[1] = addr->ip[1];
+        adr.ip[2] = addr->ip[2];
+        adr.ip[3] = addr->ip[3];
+        adr.port = addr->port;
 
         if (!CL_RefreshKnownGlobalServer(adr)) {
             server = &cls.globalServers[count];
