@@ -7,3 +7,6 @@ Continue the CoD2MP_s.exe 1.0 client recon in dev/claude_client (92.00% = 1,296,
 - Apply the 10-19 levers (skill fix-pattern catalogue) to every fn with that diff shape.
 - Commit at every whole +1% (next 93% = 1,310,076 B), `git -c user.name=Nawaf`, no Co-Authored-By,
   then `cp target/build/cmp.json target/build/cmp_base.json`. Report % and SHA distance (shameter.py).
+- Every wave = code agents + ONE Sonnet layout agent in its own slot (dev/CLAUDE.md "Client track rules").
+  Next layout lead: retail has 2 boxVerts copies (writable .data + const cg_ents_mp .rdata), ours one (+296 shift).
+- Each update to the owner: .text %, whole-file same-offset % (shameter.py), tokens spent vs bytes gained.
