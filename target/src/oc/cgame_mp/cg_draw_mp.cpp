@@ -955,10 +955,12 @@ static void CG_CalcCrosshairColor(float alpha, float *color)
     color[3] = alpha * cg_crosshairAlpha->current.value;
 }
 
+extern refexport_t re;
+
 void CG_DrawTurretCrossHair(void)
 {
     int weapIndex;
-    MaterialHandle material;
+    weaponInfo_s *weapInfo;
     WeaponDef *weapDef;
     vec4_t color;
     float size;
@@ -973,8 +975,8 @@ void CG_DrawTurretCrossHair(void)
     weapIndex = cg_entities[cg->predictedPlayerState.viewlocked_entNum].nextState.weapon;
     if (!weapIndex)
         return;
-    material = cg_weaponsArray[weapIndex].hReticleCenter;
-    if (!material)
+    weapInfo = &cg_weaponsArray[weapIndex];
+    if (!weapInfo->hReticleCenter)
         return;
     if (cg_crosshairAlpha->current.value < 0.01f)
         return;
@@ -982,12 +984,13 @@ void CG_DrawTurretCrossHair(void)
     CG_CalcCrosshairColor(1.0f, color);
     weapDef = (WeaponDef *)BG_GetWeaponDef(weapIndex);
     size = (float)weapDef->iReticleCenterSize;
-    w = size;
     h = size;
-    x = size * -0.5f;
-    y = x;
+    w = size;
+    y = size * -0.5f;
+    x = y;
     CalcScreenPlacement(&x, &y, &w, &h, 2, 2);
-    CL_DrawStretchPicPhysical(x, y, w, h, 0.0f, 0.0f, 1.0f, 1.0f, color, material);
+    // retail inlines CL_DrawStretchPicPhysical here
+    re.DrawStretchPic(x, y, w, h, 0.0f, 0.0f, 1.0f, 1.0f, color, weapInfo->hReticleCenter);
 }
 
 // retail 0x4c2c40, unreferenced; name unknown
@@ -1263,8 +1266,8 @@ void CG_DrawCrosshairNames(void)
         return;
     I_CleanStr(name);
 
-    x = (float)cg_drawCrosshairNamesPosX->current.integer;
     y = (float)(cg_drawCrosshairNamesPosY->current.integer + 16);
+    x = (float)cg_drawCrosshairNamesPosX->current.integer;
     if (cg->crosshairClientNum == cg->identifyClientNum) {
         textColor[1] = (float)cg->identifyClientHealth * 0.01f;
         if (textColor[1] > 1.0f)

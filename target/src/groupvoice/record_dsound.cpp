@@ -57,11 +57,11 @@ void DSOUNDRecord_UpdateSample( dsound_sample_t *pRecSample )
 	}
 	audioSample.stereo = g_sound_channels > 1;
 	iChannels = audioSample.stereo ? 2 : 1;
-	dwTotalLen = dwLockLen1 + dwLockLen2;
-	audioSample.bytesPerSample = 2;
 	audioSample.frequency = g_sound_recordFrequency;
+	audioSample.bytesPerSample = 2;
 	audioSample.sampleOffset = 0;
 	audioSample.channels = g_sound_channels;
+	dwTotalLen = dwLockLen1 + dwLockLen2;
 	if ( pLock1 )
 	{
 		audioSample.lengthInSamples = dwLockLen1 / (2 * iChannels);

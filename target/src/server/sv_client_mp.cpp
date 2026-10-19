@@ -644,7 +644,6 @@ void SV_DirectConnect( netadr_t from )
 	int i;
 	int guid;
 	client_t    *cl, *newcl;
-	challenge_t *chal;
 	gentity_t *ent;
 	int clientNum;
 	int version;
@@ -655,8 +654,6 @@ void SV_DirectConnect( netadr_t from )
 	const char *denied;
 	int count;
 	int ping;
-	char valid1;
-	char valid2;
 
 	Com_DPrintf("SV_DirectConnect()\n");
 	Q_strncpyz( userinfo, SV_Cmd_Argv( 1 ), sizeof( userinfo ) );
@@ -678,18 +675,8 @@ void SV_DirectConnect( netadr_t from )
 	// quick reject
 	for ( i = 0,cl = svs.clients ; i < sv_maxclients->current.integer ; i++,cl++ )
 	{
-		valid1 = 0;
-
-		if ( NET_CompareBaseAdr( from, cl->netchan.remoteAddress ) )
-		{
-			if ( cl->netchan.qport == qport
-			     || from.port == cl->netchan.remoteAddress.port )
-			{
-				valid1 = 1;
-			}
-		}
-
-		if ( valid1 )
+		if ( NET_CompareBaseAdr( from, cl->netchan.remoteAddress )
+		     && ( cl->netchan.qport == qport || from.port == cl->netchan.remoteAddress.port ) )
 		{
 			if ( ( svs.time - cl->lastConnectTime )
 			        < ( sv_reconnectlimit->current.integer * 1000 ) )
@@ -704,33 +691,30 @@ void SV_DirectConnect( netadr_t from )
 	guid = 0;
 
 	// see if the challenge is valid (local clients don't need to challenge)
-	if ( !NET_IsLocalAddress( from ) )
+	if ( from.type != NA_LOOPBACK && from.type != NA_BOT )
 	{
 		for ( i = 0 ; i < MAX_CHALLENGES ; i++ )
 		{
-			if ( NET_CompareAdr( from, svs.challenges[i].adr ) )
+			if ( NET_CompareAdr( from, svs.challenges[i].adr ) && challenge == svs.challenges[i].challenge )
 			{
-				if ( challenge == svs.challenges[i].challenge )
-				{
-					break;
-				}
+				guid = svs.challenges[i].guid;
+				break;
 			}
 		}
-		guid = svs.challenges[i].guid;
 		if ( i == MAX_CHALLENGES )
 		{
 			NET_OutOfBandPrint( NS_SERVER, from, "error\nEXE_BAD_CHALLENGE" );
 			return;
 		}
 
-		if ( svs.challenges[i].firstPing == 0 )
+		if ( svs.challenges[i].firstPing )
 		{
-			{ ping = svs.time; ping = ping - svs.challenges[i].pingTime; }
-			svs.challenges[i].firstPing = ping;
+			ping = svs.challenges[i].firstPing;
 		}
 		else
 		{
-			ping = svs.challenges[i].firstPing;
+			ping = svs.time - svs.challenges[i].pingTime;
+			svs.challenges[i].firstPing = ping;
 		}
 
 		Com_Printf( "Client %i connecting with %i challenge ping from %s\n", i, ping, NET_AdrToString(from) );
@@ -758,23 +742,8 @@ void SV_DirectConnect( netadr_t from )
 	// if there is already a slot for this ip, reuse it
 	for ( i = 0,cl = svs.clients ; i < sv_maxclients->current.integer ; i++,cl++ )
 	{
-		if ( !cl->state )
-		{
-			continue;
-		}
-
-		valid2 = 0;
-
-		if ( NET_CompareBaseAdr( from, cl->netchan.remoteAddress ) )
-		{
-			if ( cl->netchan.qport == qport
-			     || from.port == cl->netchan.remoteAddress.port )
-			{
-				valid2 = 1;
-			}
-		}
-
-		if ( valid2 )
+		if ( cl->state && NET_CompareBaseAdr( from, cl->netchan.remoteAddress )
+		     && ( cl->netchan.qport == qport || from.port == cl->netchan.remoteAddress.port ) )
 		{
 			Com_Printf( "%s:reconnect\n", NET_AdrToString( from ) );
 

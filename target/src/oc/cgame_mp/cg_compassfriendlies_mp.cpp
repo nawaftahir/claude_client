@@ -147,9 +147,15 @@ void CG_DrawCompassFriendlies(rectDef_t *rect, MaterialHandle material, vec_t *c
     int num;
     int eFlags;
     centity_t *cent;
+    compassactor_t *actor;
     vec2_t delta;
     float fadeTime;
     vec4_t fadedColor;
+    float yaw, dist, radius, s, c, x, y, w, h;
+    float angle;
+    int flash;
+    MaterialHandle pingMat;
+    vec4_t actorColor;
 
     const dvar_t *fadeDvar = hud_fade_compass;
     int duration = I_fround(fadeDvar->current.value * 1000.0f);
@@ -167,7 +173,7 @@ void CG_DrawCompassFriendlies(rectDef_t *rect, MaterialHandle material, vec_t *c
 
     CG_UpdateCompPointerOrientation();
 
-    { centerX = rect->x; centerX = centerX + rect->w * cg_hudCompassSize->current.value * 0.5f; }
+    centerX = rect->x + rect->w * cg_hudCompassSize->current.value * 0.5f;
     centerY = rect->y + rect->h - cg_hudCompassSize->current.value * rect->h * 0.5f;
 
     fadedColor[0] = color[0];
@@ -209,8 +215,9 @@ void CG_DrawCompassFriendlies(rectDef_t *rect, MaterialHandle material, vec_t *c
             delta[1] = (float)(((cg->nextSnap->ps.iCompassFriendInfo >> 15) & 0x1ff) * 4 - 1020);
             if (delta[0] != 1024.0f && delta[0] != -1020.0f && delta[1] != 1024.0f && delta[1] != -1020.0f)
             {
-                cg->compassActors[num].vLastPos[0] = cg->refdef.vieworg[0]; cg->compassActors[num].vLastPos[0] = cg->compassActors[num].vLastPos[0] + delta[0];
-                cg->compassActors[num].vLastPos[1] = cg->refdef.vieworg[1] + delta[1];
+                float playerY = cg->refdef.vieworg[1];
+                cg->compassActors[num].vLastPos[0] = cg->refdef.vieworg[0] + delta[0];
+                cg->compassActors[num].vLastPos[1] = playerY + delta[1];
             }
             else
             {
@@ -228,18 +235,14 @@ void CG_DrawCompassFriendlies(rectDef_t *rect, MaterialHandle material, vec_t *c
         if (compassFadeOutAlpha < fadedColor[3])
             fadedColor[3] = compassFadeOutAlpha;
 
-        for (i = 0; i < COMPASS_ACTOR_COUNT; i++)
+        for (i = 0, actor = cg->compassActors; i < COMPASS_ACTOR_COUNT; i++, actor++)
         {
-            if (cg->compassActors[i].iLastUpdate > cg->time)
-                cg->compassActors[i].iLastUpdate = 0;
-            if (cg->compassActors[i].iLastUpdate < cg->time - 800)
+            if (actor->iLastUpdate > cg->time)
+                actor->iLastUpdate = 0;
+            if (actor->iLastUpdate < cg->time - 800)
                 continue;
             if (cg->nextSnap->ps.clientNum == i)
                 continue;
-            float yaw, dist, radius, s, c, x, y, w, h, angle;
-            int flash;
-            MaterialHandle pingMat;
-            vec4_t actorColor;
 
             if (I_fabs(cg->compassActors[i].vLastPos[0]) <= 1.0f && I_fabs(cg->compassActors[i].vLastPos[1]) <= 1.0f)
             {
@@ -271,23 +274,23 @@ void CG_DrawCompassFriendlies(rectDef_t *rect, MaterialHandle material, vec_t *c
             CompassDistToRadius(dist, &radius);
             FastSinCos(yaw * 0.017453292f, &s, &c);
             CompassIconSize(&w, &h);
-            x = centerX - w * 0.5f; x = x - s * radius;
+            x = centerX - w * 0.5f - s * radius;
             y = centerY - h * 0.5f - c * radius;
             angle = AngleNormalize360(cg->refdefViewAngles[1] - cg->compassActors[i].fLastYaw);
 
-            if (cg->compassActors[i].pingTime > cg->time)
-                flash = (cg->compassActors[i].pingTime - cg->time) % 500 >= 250;
+            if (actor->pingTime > cg->time)
+                flash = (actor->pingTime - cg->time) % 500 >= 250;
             else
                 flash = 0;
 
             ;
             pingMat = NULL;
-            if ((float)cg->compassActors[i].beginFadeTime + (cg_hudCompassSoundPingFadeTime->current.value * 1000.0f) >= (float)cg->time)
+            if ((float)actor->beginFadeTime + (cg_hudCompassSoundPingFadeTime->current.value * 1000.0f) >= (float)cg->time)
             {
-                if (cg->compassActors[i].beginFadeTime >= cg->time)
+                if (actor->beginFadeTime >= cg->time)
                     fadedColor[3] = 1.0f;
                 else
-                    fadedColor[3] = 1.0f - (float)(cg->time - cg->compassActors[i].beginFadeTime) / (cg_hudCompassSoundPingFadeTime->current.value * 1000.0f);
+                    fadedColor[3] = 1.0f - (float)(cg->time - actor->beginFadeTime) / (cg_hudCompassSoundPingFadeTime->current.value * 1000.0f);
                 pingMat = cgs->media.compassping_friendlyfiring;
             }
 
@@ -314,18 +317,17 @@ void CG_DrawCompassFriendlies(rectDef_t *rect, MaterialHandle material, vec_t *c
         }
     }
 
-    for (i = 0; i < COMPASS_ACTOR_COUNT; i++)
+    for (i = 0, actor = cg->compassActors; i < COMPASS_ACTOR_COUNT; i++, actor++)
     {
-        if (!cg->compassActors[i].enemy)
+        if (!actor->enemy)
             continue;
-        if (cg_hudCompassSoundPingFadeTime->current.value * 1000.0f + (float)cg->compassActors[i].beginFadeTime < (float)cg->time)
+        if (cg_hudCompassSoundPingFadeTime->current.value * 1000.0f + (float)actor->beginFadeTime < (float)cg->time)
             continue;
-        if (!cg->compassActors[i].beginFadeTime)
+        if (!actor->beginFadeTime)
             continue;
 
-        float yaw, dist, radius, s, c, x, y, w, h;
-        delta[0] = cg->compassActors[i].vLastPos[0] - cg->refdef.vieworg[0];
-        delta[1] = cg->compassActors[i].vLastPos[1] - cg->refdef.vieworg[1];
+        delta[0] = actor->vLastPos[0] - cg->refdef.vieworg[0];
+        delta[1] = actor->vLastPos[1] - cg->refdef.vieworg[1];
         yaw = AngleNormalize360(vectoyaw(delta) - cg->compPointerYaw);
         dist = Vec2Length(delta);
         if (dist > cg_hudCompassMaxRange->current.value)
@@ -337,13 +339,10 @@ void CG_DrawCompassFriendlies(rectDef_t *rect, MaterialHandle material, vec_t *c
         x = centerX - w * 0.5f - s * radius;
         y = centerY - h * 0.5f - c * radius;
 
-        if (cg->compassActors[i].beginFadeTime >= cg->time)
+        if (actor->beginFadeTime >= cg->time)
             fadedColor[3] = 1.0f;
         else
-        {
-            fadedColor[3] = 1.0f;
-            fadedColor[3] = fadedColor[3] - (float)(cg->time - cg->compassActors[i].beginFadeTime) / (cg_hudCompassSoundPingFadeTime->current.value * 1000.0f);
-        }
+            fadedColor[3] = 1.0f - (float)(cg->time - actor->beginFadeTime) / (cg_hudCompassSoundPingFadeTime->current.value * 1000.0f);
         if (compassFadeOutAlpha < fadedColor[3])
             fadedColor[3] = compassFadeOutAlpha;
 

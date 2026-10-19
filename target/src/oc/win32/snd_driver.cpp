@@ -1252,8 +1252,8 @@ void SND_RawSamples(int samples, int rate, int width, int s_channels, const byte
     }
 }
 
-/* Original name unknown (KisakCOD: SND_LoadFromBuffer). sound is overwritten
-   on every path, but callers still pass it in 1.0. */
+/* Original name unknown (KisakCOD: SND_LoadFromBuffer). sound is never read
+   (overwritten before use), but callers still pass it in 1.0. */
 MssSound *SND_LoadFromBuffer(void *buffer, const char *realname, MssSound *sound)
 {
     AILMIXINFO mixinfo;
@@ -1264,13 +1264,16 @@ MssSound *SND_LoadFromBuffer(void *buffer, const char *realname, MssSound *sound
 
     if (!AIL_WAV_info(buffer, &mixinfo.Info)) {
         Com_Printf((const char *)"^1ERROR: Sound file '%s' is in an invalid or corrupted format\n", realname);
-        sound = NULL;
-    } else if ((totalSize = (int)mixinfo.Info.data_len + 0x24) == 0) {
+        return NULL;
+    }
+    totalSize = (int)mixinfo.Info.data_len + 0x24;
+    if (!totalSize) {
         Com_Printf((const char *)"^1ERROR: Sound file '%s' is zero length, invalid\n", realname);
-        sound = NULL;
-    } else if (mixinfo.Info.rate <= (unsigned long int)g_snd.playback_rate &&
-               ((long int)mixinfo.Info.bits <= g_snd.playback_bits || mixinfo.Info.format == 0x11) &&
-               (long int)mixinfo.Info.channels <= g_snd.playback_channels) {
+        return NULL;
+    }
+    if (mixinfo.Info.rate <= (unsigned long int)g_snd.playback_rate &&
+        ((long int)mixinfo.Info.bits <= g_snd.playback_bits || mixinfo.Info.format == 0x11) &&
+        (long int)mixinfo.Info.channels <= g_snd.playback_channels) {
 
         sound = (MssSound *)Hunk_AllocInternal(totalSize);
         Com_Memcpy(sound->data, (void *)mixinfo.Info.data_ptr, mixinfo.Info.data_len);

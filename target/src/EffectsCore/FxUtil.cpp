@@ -1888,10 +1888,9 @@ void FX_CalcOriginAndAxis( EffectPrimitive *prim, vec3_t out, const vec3_t origi
 	float sinPitch;
 	float cosPitch;
 	float len;
+	float width;
 	vec3_t dir;
 	vec3_t point;
-	float pointRadius;
-	float pointHeight;
 	vec3_t up = { 0.0f, 0.0f, 1.0f };
 	vec3_t pos;
 	const orientation_t *orient;
@@ -1925,10 +1924,10 @@ void FX_CalcOriginAndAxis( EffectPrimitive *prim, vec3_t out, const vec3_t origi
 	}
 	else if ( primTemp->mSpawnFlags & 4 )
 	{
-		pointHeight = flrand(-0.5f, 0.5f) * FxRange_GetVal(&primTemp->mHeight);
-		pointRadius = FxRange_GetVal(&primTemp->mRadius);
-		VectorScale(axis[1], pointRadius, point);
-		VectorMA(point, pointHeight, axis[0], point);
+		height = flrand(-0.5f, 0.5f) * FxRange_GetVal(&primTemp->mHeight);
+		width = FxRange_GetVal(&primTemp->mRadius);
+		VectorScale(axis[1], width, point);
+		VectorMA(point, height, axis[0], point);
 		RotatePointAroundVector(dir, axis[0], point, flrand(0.0f, 360.0f));
 		VectorAdd(pos, dir, pos);
 		if ( primTemp->mSpawnFlags & 2 )

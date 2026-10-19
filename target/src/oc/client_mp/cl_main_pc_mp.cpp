@@ -1052,8 +1052,8 @@ void CL_ServersResponsePacket(netadr_t from, msg_t *msg)
     for (i = 0; i < numservers && count < MAX_GLOBALSERVERS; i++) {
         adr.type = NA_IP;
         adr.ip[0] = addresses[i].ip[0];
-        adr.ip[1] = addresses[i].ip[1];
         adr.ip[2] = addresses[i].ip[2];
+        adr.ip[1] = addresses[i].ip[1];
         adr.ip[3] = addresses[i].ip[3];
         adr.port = addresses[i].port;
 

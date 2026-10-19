@@ -1,3 +1,4 @@
+void Scr_FreeGameVariable( int bComplete );
 #include "../qcommon/qcommon.h"
 #include "script_public.h"
 // Unreferenced storage at 0xdb00d8; original declaration unknown (sized from the layout).

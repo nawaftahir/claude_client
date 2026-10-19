@@ -3207,9 +3207,7 @@ void PM_CheckDuck( pmove_t *pm, pml_t *pml )
 	trace_t trace;
 	int iStance;
 	playerState_t *ps;
-	vec3_t vPoint;
 	float delta;
-	vec3_t vEnd;
 
 	assert(pm);
 	ps = pm->ps;
@@ -3463,6 +3461,9 @@ void PM_CheckDuck( pmove_t *pm, pml_t *pml )
 
 	if ( ps->pm_flags & PMF_PRONE && !bWasProne )
 	{
+		vec3_t vPoint;
+		vec3_t vEnd;
+
 		if ( pm->cmd.forwardmove || pm->cmd.rightmove )
 		{
 			ps->pm_flags &= ~PMF_ADS_OVERRIDE;

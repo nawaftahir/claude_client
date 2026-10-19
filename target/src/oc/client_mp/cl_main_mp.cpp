@@ -3290,6 +3290,7 @@ int Client_SendVoiceData(int bytes, char *enc_buffer)
         clients[0].voicePackets[clients[0].voicePacketCount].dataSize = bytes;
         clients[0].voicePacketCount++;
         CL_VoiceTransmit();
+        return bytes;
     }
 
     return bytes;

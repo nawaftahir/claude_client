@@ -1919,15 +1919,19 @@ void Menu_SetupKeywordHash(void)
 qboolean ItemParse_origin(const char (*item)[4], int handle)
 {
     UiRectangle newRect;
+    const UiRectangle *rectClient;
     int x, y;
 
     if (!PC_Int_Parse(handle, &x))
         return 0;
     if (!PC_Int_Parse(handle, &y))
         return 0;
-    newRect = ((Window *)item)->rectClient[0];
+    rectClient = &((Window *)item)->rectClient[0];
+    newRect = *rectClient;
     newRect.x = x + newRect.x;
     newRect.y = y + newRect.y;
+    newRect.horzAlign = rectClient->horzAlign;
+    newRect.vertAlign = rectClient->vertAlign;
     Window_SetRectClient((Window *)item, &newRect);
     return 1;
 }

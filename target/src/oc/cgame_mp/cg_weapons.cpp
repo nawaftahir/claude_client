@@ -842,6 +842,7 @@ void CalculateWeaponPosition_BasePosition_movement(float *origin)
     float frac;
     float moveRate;
     float delta;
+    float frameTime;
     vec3_t targetPos;
     int i;
 
@@ -909,50 +910,58 @@ void CalculateWeaponPosition_BasePosition_movement(float *origin)
         targetPos[1] = targetPos[1] + cg_gun_ofs_r->current.value;
         targetPos[2] = targetPos[2] + cg_gun_ofs_u->current.value;
     }
-    for (i = 0; i <= 2; i++)
-    for (i = 0; i < 3; i++)
+    i = 0;
+    do
     {
-        if (targetPos[i] != cg->playerEntity.vLastMoveOrg[i])
+        if (cg->playerEntity.vLastMoveOrg[i] != targetPos[i])
         {
-
             if (cg->predictedPlayerState.viewHeightCurrent == 11.0f)
+            {
+                frameTime = (float)cg->frametime;
                 moveRate = cg_gun_move_rate->current.value + weapDef->fPosProneMoveRate;
+            }
             else
+            {
+                frameTime = (float)cg->frametime;
                 moveRate = cg_gun_move_rate->current.value + weapDef->fPosMoveRate;
+            }
 
-            delta = (targetPos[i] - cg->playerEntity.vLastMoveOrg[i]) * moveRate * (float)cg->frametime * 0.001f;
+            delta = (targetPos[i] - cg->playerEntity.vLastMoveOrg[i]) * moveRate * frameTime * 0.001f;
 
             if (cg->playerEntity.vLastMoveOrg[i] < targetPos[i])
             {
-                if (delta < (float)cg->frametime * (0.001f * 0.1f))
-                    delta = (float)cg->frametime * (0.001f * 0.1f);
+                if (delta < frameTime * (0.001f * 0.1f))
+                    delta = frameTime * (0.001f * 0.1f);
                 cg->playerEntity.vLastMoveOrg[i] = cg->playerEntity.vLastMoveOrg[i] + delta;
                 if (cg->playerEntity.vLastMoveOrg[i] > targetPos[i])
                     cg->playerEntity.vLastMoveOrg[i] = targetPos[i];
             }
             else
             {
-                if (delta > (float)cg->frametime * (0.001f * -0.1f))
-                    delta = (float)cg->frametime * (0.001f * -0.1f);
+                if (delta > frameTime * (0.001f * -0.1f))
+                    delta = frameTime * (0.001f * -0.1f);
                 cg->playerEntity.vLastMoveOrg[i] = cg->playerEntity.vLastMoveOrg[i] + delta;
                 if (cg->playerEntity.vLastMoveOrg[i] < targetPos[i])
                     cg->playerEntity.vLastMoveOrg[i] = targetPos[i];
             }
         }
-    }
+    } while (++i < 3);
 
-    if (cg->predictedPlayerState.fWeaponPosFrac == 0.0f)
+    if (cg->predictedPlayerState.fWeaponPosFrac != 0.0f)
+    {
+        if (cg->predictedPlayerState.fWeaponPosFrac < 0.5f)
+        {
+            delta = 1.0f - (cg->predictedPlayerState.fWeaponPosFrac + cg->predictedPlayerState.fWeaponPosFrac);
+            origin[0] = cg->playerEntity.vLastMoveOrg[0] * delta + origin[0];
+            origin[1] = cg->playerEntity.vLastMoveOrg[1] * delta + origin[1];
+            origin[2] = cg->playerEntity.vLastMoveOrg[2] * delta + origin[2];
+        }
+    }
+    else
     {
         origin[0] = cg->playerEntity.vLastMoveOrg[0] + origin[0];
         origin[1] = cg->playerEntity.vLastMoveOrg[1] + origin[1];
         origin[2] = cg->playerEntity.vLastMoveOrg[2] + origin[2];
-    }
-    else if (cg->predictedPlayerState.fWeaponPosFrac < 0.5f)
-    {
-        delta = 1.0f - (cg->predictedPlayerState.fWeaponPosFrac + cg->predictedPlayerState.fWeaponPosFrac);
-        origin[0] = cg->playerEntity.vLastMoveOrg[0] * delta + origin[0];
-        origin[1] = cg->playerEntity.vLastMoveOrg[1] * delta + origin[1];
-        origin[2] = cg->playerEntity.vLastMoveOrg[2] * delta + origin[2];
     }
 }
 
@@ -1592,20 +1601,21 @@ qboolean CG_SelectFirstWeaponNotInSlot(qboolean next, qboolean checkAmmo)
 {
     WeaponDef *weapDef;
     int weapon;
+    int start;
     int step;
 
     if (next)
     {
         step = 1;
-        weapon = 1;
+        start = 1;
     }
     else
     {
-        weapon = BG_GetNumWeapons();
+        start = BG_GetNumWeapons();
         step = -1;
     }
 
-    for (; weapon >= 1 && weapon <= BG_GetNumWeapons(); weapon += step)
+    for (weapon = start; weapon >= 1 && weapon <= BG_GetNumWeapons(); weapon += step)
     {
         if (!CG_WeaponSelectable(weapon))
             continue;

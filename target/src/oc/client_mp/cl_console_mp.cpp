@@ -1510,7 +1510,8 @@ static void Con_DrawOutputScrollBar(float x, float y, float width, float height)
 {
     float frac;
 
-    x = x + width - 10.0f;
+    x += width;
+    x -= 10.0f;
     ConDraw_Box(x, y, 10.0f, height, con_outputBarColor->current.vector);
     frac = 1.0f - (float)(con.currentLine - con.display) / (con.totallines - 1);
     y = (y + height - 10.0f - y) * frac + y;

@@ -107,11 +107,7 @@ void Bullet_Fire_Extended( const gentity_t *source, gentity_t *attacker,
 		{
 			event = EV_BULLET_HIT_LARGE;
 		}
-		if ( wp->weapDef->rifleBullet )
-			event2 = EV_SHOTGUN_HIT;
-		else
-			event2 = EV_BULLET_HIT_LARGE;
-		tent = G_TempEntity(hitPos, event2);
+		tent = G_TempEntity(hitPos, wp->weapDef->rifleBullet ? EV_SHOTGUN_HIT : EV_BULLET_HIT_LARGE);
 		tent->s.eventParm  = DirToByte(tr.normal);
 		tent->s.hintString = DirToByte(reflect);
 		tent2 = tent;
@@ -124,11 +120,12 @@ void Bullet_Fire_Extended( const gentity_t *source, gentity_t *attacker,
 	}
 	if ( tr.contents & SURF_NOIMPACT )
 	{
-		VectorSubtract(end, start, reflect);
-		Vec3Normalize(reflect);
-		ndot = -DotProduct(tr.normal, reflect);
+		vec3_t dir;
+		VectorSubtract(end, start, dir);
+		Vec3Normalize(dir);
+		ndot = -DotProduct(tr.normal, dir);
 		dot = ( ndot >= 0.125f ) ? 0.25f / ndot : 0.0f;
-		VectorMA(hitPos, dot, reflect, start);
+		VectorMA(hitPos, dot, dir, start);
 		Bullet_Fire_Extended(source, attacker, start, end, spread, resursion + 1, wp, weaponEnt, gameTime);
 		return;
 	}

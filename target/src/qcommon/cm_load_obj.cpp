@@ -973,6 +973,7 @@ static void CMod_LoadPlanes( const char *base, cmvis_lump_t *l )
 	int planeIter;
 	int axisIter;
 	cplane_t *out;
+	cplane_t *plane;
 	dplane_t *in;
 	int count;
 	int size;
@@ -998,23 +999,24 @@ static void CMod_LoadPlanes( const char *base, cmvis_lump_t *l )
 
 	out = cme.planes;
 
-	for ( planeIter = 0; planeIter < count; planeIter++, in++, out++ )
+	for ( planeIter = 0; planeIter < count; in++, planeIter++ )
 	{
+		plane = &out[planeIter];
 		bits = 0;
 
 		for ( axisIter = 0; axisIter < 3; axisIter++ )
 		{
-			out->normal[axisIter] = FloatFromBits( FloatAsInt( in->normal[axisIter] ) );
+			plane->normal[axisIter] = FloatFromBits( FloatAsInt( in->normal[axisIter] ) );
 
-			if ( out->normal[axisIter] < 0 )
+			if ( plane->normal[axisIter] < 0 )
 			{
 				bits |= 1 << axisIter;
 			}
 		}
 
-		out->dist = FloatFromBits( FloatAsInt( in->dist ) );
-		out->type = PlaneTypeForNormal(out->normal);
-		out->signbits = bits;
+		plane->dist = FloatFromBits( FloatAsInt( in->dist ) );
+		plane->type = PlaneTypeForNormal(plane->normal);
+		plane->signbits = bits;
 	}
 }
 
