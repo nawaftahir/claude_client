@@ -1,4 +1,4 @@
-# Handoff: client recon (state 10-19)
+# Handoff: client recon (state 10-19 evening, WSL agent takes over; start with NEXT_SESSION.md)
 
 > **Latest state (10-19 evening): 1,287,448 B = 91.39%, uncommitted = lab/wip_gap23.patch. Read `../lab/HANDOFF_1019.md` first; the State section below is older.**
 
