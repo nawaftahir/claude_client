@@ -58,3 +58,15 @@ the client-recon skill fix-pattern catalogue (top ~12 entries = 10-19 PAID class
    SV_DirectConnect, lab/w40_s6_layout.patch). Measure layout on the RELEASE exe only.
 3. Exact offsets/padding/headers + SHA check only after .text is 100%.
 - Hidden near-misses: names_fix.tsv 'drop' rows hide fns from alldiff; check lab/gapr.py 'other' bucket.
+
+## Do not repeat (10-19 night)
+- Before targeting a fn, check build/good.json: an entry with non-empty "hits" is ALREADY matched; names_*.tsv
+  addresses can be mis-paired (CG_ResetEntity/UpdateShellShock/Sys_Error/Item_YesNo_Paint were matched).
+- Run slot rebases in the FOREGROUND (`sh rebase.sh s3 & sh rebase.sh s4 & wait`); nohup ones got SIGINT-killed.
+- Judge a partial on MAIN numbers, not a stale slot (w41 RunXModelAnims).
+- Layout numbers only from the RELEASE exe (`make release` + shameter.py): release 9.50% now.
+- Rule studies on 1-insn ties paid 0 B (w40 x2, w44); go for concrete fixes. Brief = 25-min box, 3 builds/fn.
+## Next concrete leads
+- Scr_GetNextCodepos 0x47d1b0 (real size ~0x31c): retail CALLS AddRefToValue(type,u) 0x476810, ours inlines;
+  global noinline = 196->78 but NET -2352 -> make it a call at this site only.
+- CG_DrawTracer: why retail treats CalcTracerFinalScale as clobbering eax/ecx/edx (c2 oracle 0x1077067f).
