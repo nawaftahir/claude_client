@@ -1,9 +1,10 @@
 # Next session prompt (paste this) - WSL agent takeover, 10-19
 
 Continue the CoD2MP_s.exe 1.0 client recon in ~/cod2/test/dev/claude_client.
-State: **92.00% = 1,296,031 B** of 1,408,683 B .text (RATCHET OK, `target/build/good.json`, pushed).
-Whole file same-offset ~7.86% (`shameter.py`), drift 578 points (`drift.py`).
-Next checkpoint **93% = 1,310,076 B (+14,045)**.
+State (10-19 night, final): **92.54% = 1,303,591 B** of 1,408,683 B .text, CLEAN-REBUILD verified (build/obj moved aside), RATCHET OK, accepted in `target/build/good.json`.
+UNCOMMITTED on top of the 92.00% commit 78852ab (+3b801f2 docs): `lab/wip_gap23.patch` == main `git diff -- target/src` (24 files: w38 + w39 code, w38 + w39 layout).
+Whole file same-offset **10.606%** (.rdata 33.70%, .data 77.46%, .text 2.78%; `python3 shameter.py target/build/CoD2MP_s.exe ../cod2engineold/binaries/windows/1.0/CoD2MP_s.exe`).
+Next checkpoint **93% = 1,310,076 B (+6,485)**; commit there (clean-rebuild first).
 
 Read first: `dev/CLAUDE.md` "Client track rules", HANDOFF_WINDOWS.md (state + open leads),
 the client-recon skill fix-pattern catalogue (top ~12 entries = 10-19 PAID classes), LESSONS.md tail.
@@ -16,7 +17,18 @@ the client-recon skill fix-pattern catalogue (top ~12 entries = 10-19 PAID class
 - Commit at whole +1% (`git -c user.name=Nawaf`, no Co-Authored-By), then
   `cp target/build/cmp.json target/build/cmp_base.json`.
 
-## Loop that paid 10-19 (~5 B/ktok vs ~1 for blind waves)
+## Fastest loop so far (w38, 10-19 night: +7,254 B real in one 30-min wave, ~22 B/ktok)
+0. `cd target && python3 ../alldiff.py > ~/sp/scored.txt` (~5 min, background), then `sh ../lab/classscan.sh ~/sp/scored.txt`:
+   groups near-misses by diff kind (x87-only lines vs integer/register). One Opus agent per group,
+   biggest bytes-per-diff-line first, 3-6 fns each, 45-min box. Plus one Sonnet layout agent (s6).
+1. Levers that paid in that wave (skill top): copy the reference text EXACTLY incl. redundant parens
+   (server 1.0 SHA src for bg/game/xanim, Q3, Kisak, Speex); open-coded vector math -> the reference
+   helper calls (TU-local static inline where the header is missing).
+2. Gate both patches, then if main and a fresh slot disagree, `mv target/build/obj` aside and rerun
+   `../lab/mym.sh`: incremental main was STALE once (1,297,173 vs clean 1,302,739, tie fns).
+3. Check waiting with `until grep -q ... log` only; never `pgrep -f <pattern>` inside the same command (it matches itself and never ends).
+
+## Loop that paid earlier 10-19 (~5 B/ktok vs ~1 for blind waves)
 1. Find a SHARED CAUSE first (scan diffs for one shape across fns), then send one Opus agent per cause
    with 4-5 fns that show it. Brief: `lab/w4/prompt_w18_common.txt` (tools, rules, deliverables).
 2. Slots: `nohup sh lab/rebase.sh sN > ~/sp/rbXX_sN.log 2>&1 &` (detached, ~3 min; a plain `&`
@@ -38,3 +50,11 @@ the client-recon skill fix-pattern catalogue (top ~12 entries = 10-19 PAID class
 - Big near-misses already heavily tried (check LESSONS before touching): XAnimLoadFile, sb_encode,
   nb_decode, BG_CheckProneValid, PM_Footsteps, XAnimCalc (server-text conflict, rejected), VM_Notify,
   DObjTraceline, FX_CalcOriginAndAxis.
+
+## Effort split (owner OK 10-19)
+1. Main effort: .text matching (Opus agents, aim at shared causes).
+2. Alongside: ONE Sonnet layout agent on STRUCTURE only (link/lib order, data ownership, string order);
+   a layout fix that re-rolls matched fns goes in together with their re-match (e.g. w40 libcmt order +
+   SV_DirectConnect, lab/w40_s6_layout.patch). Measure layout on the RELEASE exe only.
+3. Exact offsets/padding/headers + SHA check only after .text is 100%.
+- Hidden near-misses: names_fix.tsv 'drop' rows hide fns from alldiff; check lab/gapr.py 'other' bucket.
