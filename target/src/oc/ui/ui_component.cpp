@@ -116,7 +116,7 @@ void UI_Component_Init(void);
 int UI_Component_IsCursorHidden(void);
 
 // universal/com_math.h inlines
-static inline void Vector2Copy(const vec2_t a, vec2_t b)
+inline void Vector2Copy(const vec2_t a, vec2_t b)
 {
     b[0] = a[0];
     b[1] = a[1];
@@ -126,7 +126,7 @@ void UI_Component::Shutdown()
 {
 }
 
-static inline void Vector2Add(const vec2_t a, const vec2_t b, vec2_t c)
+inline void Vector2Add(const vec2_t a, const vec2_t b, vec2_t c)
 {
     c[0] = a[0] + b[0];
     c[1] = a[1] + b[1];

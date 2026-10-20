@@ -250,7 +250,7 @@ void SND_SetStreamChannelFromSaveInfo(int index, snd_save_stream_t *info);
 void SND_DriverPostUpdate(void);
 
 // universal/com_math.h inlines
-static inline int I_sel(const int x, const int y, const int z)
+inline int I_sel(const int x, const int y, const int z)
 {
     if (x >= 0) {
         return y;
@@ -258,7 +258,7 @@ static inline int I_sel(const int x, const int y, const int z)
     return z;
 }
 
-static inline float DotProduct(const vec3_t a, const vec3_t b)
+inline float DotProduct(const vec3_t a, const vec3_t b)
 {
     return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 }
@@ -1356,7 +1356,7 @@ int SND_GetSoundFileSize(const void *pSoundFile)
     return (int)sound->info.data_len + 0x24;
 }
 
-static inline int I_max(const int x, const int y)
+inline int I_max(const int x, const int y)
 {
     return I_sel(x - y, x, y);
 }

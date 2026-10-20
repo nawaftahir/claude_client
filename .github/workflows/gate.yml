@@ -1,6 +1,7 @@
 name: client-gate
 on:
   push:
+    branches: [wip-ci, master]
   workflow_dispatch:
 permissions:
   contents: read
@@ -36,6 +37,8 @@ jobs:
           cd target
           python3 ../cmp.py build/CoD2MP_s.exe build/CoD2MP_s.map build/anchor.exe build/exp.json > /dev/null
           python3 ../cov.py build/exp.json | grep 'unique bytes' | tee cov.txt | tee -a "$GITHUB_STEP_SUMMARY"
+          # real = matched bytes excluding the LTCG tie fns (they flip with fn counts elsewhere)
+          python3 -c "import json; t={l.split()[0] for l in open('../ci/ties.txt') if l.startswith('?')}; d=json.load(open('build/exp.json')); print(sum(e['size'] for e in d if e['hits'] and e['name'] not in t))" > real.txt
           python3 ../ci/ratchet.py ../ci/good.json build/exp.json ../ci/ties.txt | grep -v '\$L' | tail -20 | tee ratchet.txt | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Whole-file meter (release exe)
         run: |
@@ -55,8 +58,10 @@ jobs:
           pct=$(grep -o '[0-9.]*% of' cov.txt | head -1 | cut -d% -f1)
           bytes=$(grep -o 'unique bytes [0-9]*' cov.txt | grep -o '[0-9]*')
           verdict=$(grep -o 'RATCHET [A-Z]*' ratchet.txt | head -1)
-          secs=$(grep -E '^\.(text|rdata|data|rsrc)|^header|^ALL' sha.txt | sed -E 's/^(\.?[a-z]+).*same +[0-9]+ \(([0-9.]+%)\).*/\1 \2/; s/^header +same ([0-9]+\/[0-9]+)/header \1/; s/^ALL sections.* = ([0-9.]+%)/whole file \1/')
-          text=$(printf '**CoD2MP_s.exe** `%s` %s\n**.text matched: %s%%** (%s B / 1,408,683)  %s\n%s\n<%s>' "${GITHUB_SHA::7}" "$(echo "$MSG" | head -1)" "$pct" "$bytes" "$verdict" "$secs" \
+          whole=$(grep '^ALL' sha.txt | grep -o '[0-9.]*%$')
+          secs=$(grep -E '^\.(text|rdata|data|rsrc)|^header' sha.txt | sed -E 's/^(\.?[a-z]+).*same +[0-9]+ \(([0-9.]+%)\).*/\1 \2/; s/^header +same ([0-9]+\/[0-9]+)/header \1/' | paste -sd ' ' | sed 's/ \./ · ./g; s/ header/ · header/')
+          real=$(cat real.txt)
+          text=$(printf '**CoD2MP_s.exe** `%s` %s\n**Code matched: %s%%** (%s / 1,408,683 B of functions)  %s\nReal matches (excl. tie fns): %s B\n**Whole file in retail position: %s** (bytes at the same offset as retail)\nper section: %s\n<%s>' "${GITHUB_SHA::7}" "$(echo "$MSG" | head -1)" "$pct" "$bytes" "$verdict" "$real" "$whole" "$secs" \
             "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}")
           jq -n --arg c "${text:0:1990}" '{content: $c}' | curl -fsS -H 'Content-Type: application/json' -d @- "$HOOK"
       - uses: actions/upload-artifact@v4

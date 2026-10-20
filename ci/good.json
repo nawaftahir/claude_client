@@ -1580,7 +1580,7 @@
 },
 {
 "name": "?I_fmax@@YAMMM@Z",
-"obj": "cm_load_obj.obj",
+"obj": "cl_input.obj",
 "size": 31,
 "hits": [
 "0x406ba0"
@@ -4322,18 +4322,10 @@
 },
 {
 "name": "?I_sel@@YAHHHH@Z",
-"obj": "snd_driver.obj",
+"obj": "cm_load_obj.obj",
 "size": 13,
 "hits": [
 "0x4035c0"
-]
-},
-{
-"name": "?I_fmax@@YAMMM@Z",
-"obj": "cm_load_obj.obj",
-"size": 31,
-"hits": [
-"0x406ba0"
 ]
 },
 {
@@ -4354,7 +4346,7 @@
 },
 {
 "name": "?VectorScale@@YAXQBMMQAM@Z",
-"obj": "cg_predict_mp.obj",
+"obj": "cm_load_obj.obj",
 "size": 29,
 "hits": [
 "0x414900"
@@ -4362,7 +4354,7 @@
 },
 {
 "name": "?VectorLength@@YAMQBM@Z",
-"obj": "cg_predict_mp.obj",
+"obj": "cm_load_obj.obj",
 "size": 33,
 "hits": [
 "0x414920"
@@ -4636,7 +4628,7 @@
 },
 {
 "name": "?VectorAdd@@YAXQBM0QAM@Z",
-"obj": "cg_predict_mp.obj",
+"obj": "cm_mesh.obj",
 "size": 25,
 "hits": [
 "0x416f60"
@@ -4644,7 +4636,7 @@
 },
 {
 "name": "?VectorSubtract@@YAXQBM0QAM@Z",
-"obj": "cg_predict_mp.obj",
+"obj": "cm_mesh.obj",
 "size": 25,
 "hits": [
 "0x416f80"
@@ -4660,7 +4652,7 @@
 },
 {
 "name": "?DotProduct@@YAMQBM0@Z",
-"obj": "snd_driver.obj",
+"obj": "cm_mesh.obj",
 "size": 21,
 "hits": [
 "0x416fd0"
@@ -4988,7 +4980,7 @@
 },
 {
 "name": "?VectorCompare@@YA_NQBM0@Z",
-"obj": "cg_predict_mp.obj",
+"obj": "cm_trace.obj",
 "size": 52,
 "hits": [
 "0x41a020"
@@ -5319,7 +5311,7 @@
 },
 {
 "name": "?Vector2Copy@@YAXQBMQAM@Z",
-"obj": "ui_component.obj",
+"obj": "cm_world.obj",
 "size": 11,
 "hits": [
 "0x41d890"
@@ -6725,7 +6717,7 @@
 },
 {
 "name": "?Vec2Length@@YAMQBM@Z",
-"obj": "cg_compassfriendlies_mp.obj",
+"obj": "com_math.obj",
 "size": 22,
 "hits": [
 "0x4244c0"
@@ -15718,7 +15710,7 @@
 },
 {
 "name": "?Vector2Add@@YAXQBM0QAM@Z",
-"obj": "ui_component.obj",
+"obj": "sv_game_mp.obj",
 "size": 16,
 "hits": [
 "0x4540a0"
@@ -17001,22 +16993,6 @@
 "paired": 1
 },
 {
-"name": "?Vector2Copy@@YAXQBMQAM@Z",
-"obj": "ui_component.obj",
-"size": 11,
-"hits": [
-"0x41d890"
-]
-},
-{
-"name": "?Vector2Add@@YAXQBM0QAM@Z",
-"obj": "ui_component.obj",
-"size": 16,
-"hits": [
-"0x4540a0"
-]
-},
-{
 "name": "?UI_Component_InitIfStarted_45f980@@YAXXZ",
 "obj": "ui_component.obj",
 "size": 15,
@@ -17476,7 +17452,7 @@
 ]
 },
 {
-"name": "$L96823",
+"name": "$L96794",
 "obj": "module",
 "size": 6,
 "hits": []
@@ -24206,7 +24182,7 @@
 },
 {
 "name": "?Vec3LerpFrom@@YAXQBM0MQAM@Z",
-"obj": "cg_view_mp.obj",
+"obj": "xanim.obj",
 "size": 45,
 "hits": [
 "0x486040",
@@ -26330,7 +26306,7 @@
 },
 {
 "name": "?I_max@@YAHHH@Z",
-"obj": "snd_driver.obj",
+"obj": "FxPrimitives.obj",
 "size": 9,
 "hits": [
 "0x490460"
@@ -32814,7 +32790,7 @@
 ]
 },
 {
-"name": "$L119336",
+"name": "$L119284",
 "obj": "module",
 "size": 166,
 "hits": [
@@ -32822,7 +32798,7 @@
 ]
 },
 {
-"name": "$L119338",
+"name": "$L119286",
 "obj": "module",
 "size": 48,
 "hits": [
@@ -32855,7 +32831,7 @@
 ]
 },
 {
-"name": "$L132188",
+"name": "$L132118",
 "obj": "module",
 "size": 166,
 "hits": [
@@ -32863,7 +32839,7 @@
 ]
 },
 {
-"name": "$L132190",
+"name": "$L132120",
 "obj": "module",
 "size": 48,
 "hits": [
@@ -32923,7 +32899,7 @@
 ]
 },
 {
-"name": "$L104147",
+"name": "$L104101",
 "obj": "module",
 "size": 21,
 "hits": [
@@ -32939,7 +32915,7 @@
 ]
 },
 {
-"name": "$L147061",
+"name": "$L146994",
 "obj": "module",
 "size": 21,
 "hits": [
@@ -33869,22 +33845,6 @@
 ]
 },
 {
-"name": "?I_sel@@YAHHHH@Z",
-"obj": "snd_driver.obj",
-"size": 13,
-"hits": [
-"0x4035c0"
-]
-},
-{
-"name": "?DotProduct@@YAMQBM0@Z",
-"obj": "snd_driver.obj",
-"size": 21,
-"hits": [
-"0x416fd0"
-]
-},
-{
 "name": "?MSS_HunkAlloc_4b2580@@YAPAXH@Z",
 "obj": "snd_driver.obj",
 "size": 12,
@@ -34364,14 +34324,6 @@
 "0x4b4930"
 ],
 "paired": 1
-},
-{
-"name": "?I_max@@YAHHH@Z",
-"obj": "snd_driver.obj",
-"size": 9,
-"hits": [
-"0x490460"
-]
 },
 {
 "name": "?SND_Update2DChannel@@YAXHH@Z",
@@ -36143,14 +36095,6 @@
 "paired": 1
 },
 {
-"name": "?Vec2Length@@YAMQBM@Z",
-"obj": "cg_compassfriendlies_mp.obj",
-"size": 22,
-"hits": [
-"0x4244c0"
-]
-},
-{
 "name": "?CG_ApplyCompassPointerRadiusScale@@YAXPAM@Z",
 "obj": "cg_compassfriendlies_mp.obj",
 "size": 20,
@@ -37388,15 +37332,6 @@
 "size": 222,
 "hits": [
 "0x4c9a80"
-]
-},
-{
-"name": "?Vec3LerpFrom@@YAXQBM0MQAM@Z",
-"obj": "cg_view_mp.obj",
-"size": 45,
-"hits": [
-"0x486040",
-"0x490600"
 ]
 },
 {
@@ -39071,46 +39006,6 @@
 "size": 407,
 "hits": [
 "0x4d8290"
-]
-},
-{
-"name": "?VectorCompare@@YA_NQBM0@Z",
-"obj": "cg_predict_mp.obj",
-"size": 52,
-"hits": [
-"0x41a020"
-]
-},
-{
-"name": "?VectorLength@@YAMQBM@Z",
-"obj": "cg_predict_mp.obj",
-"size": 33,
-"hits": [
-"0x414920"
-]
-},
-{
-"name": "?VectorSubtract@@YAXQBM0QAM@Z",
-"obj": "cg_predict_mp.obj",
-"size": 25,
-"hits": [
-"0x416f80"
-]
-},
-{
-"name": "?VectorAdd@@YAXQBM0QAM@Z",
-"obj": "cg_predict_mp.obj",
-"size": 25,
-"hits": [
-"0x416f60"
-]
-},
-{
-"name": "?VectorScale@@YAXQBMMQAM@Z",
-"obj": "cg_predict_mp.obj",
-"size": 29,
-"hits": [
-"0x414900"
 ]
 },
 {
@@ -44474,7 +44369,9 @@
 "name": "?Scr_ParseGameTypeList@@YAXXZ",
 "obj": "g_scr_main_mp.obj",
 "size": 572,
-"hits": []
+"hits": [
+"0x5071d0"
+]
 },
 {
 "name": "?Scr_GetGameTypeNameForScript@@YAPADPBD@Z",
@@ -45493,10 +45390,8 @@
 {
 "name": "?SP_worldspawn@@YAXXZ",
 "obj": "g_spawn_mp.obj",
-"size": 458,
-"hits": [
-"0x50b360"
-]
+"size": 453,
+"hits": []
 },
 {
 "name": "?G_SpawnEntitiesFromString@@YAXXZ",
@@ -46573,9 +46468,7 @@
 "name": "?Pickup_Weapon@@YAHPAUgentity_s@@0PAHH@Z",
 "obj": "g_items_mp.obj",
 "size": 1631,
-"hits": [
-"0x517b80"
-]
+"hits": []
 },
 {
 "name": "?Pickup_Health@@YAHPAUgentity_s@@0@Z",
@@ -60531,7 +60424,7 @@
 {
 "name": "__ehhandler$?_Buynode@?$_Tree@V?$_Tmap_traits@V?$basic_string@DU?$char_traits@D@std@@V?$se_alloc@D@@@std@@V12@U?$less@V?$basic_string@DU?$char_traits@D@std@@V?$se_alloc@D@@@std@@@2@V?$se_alloc@U?$pair@$$CBV?$basic_string@DU?$char_traits@D@std@@V?$se_alloc@D@@@std@@V12@@std@@@@$0A@@std@@@std@@IAEPAU_Node@?$_Tree_nod@V?$_Tmap_traits@V?$basic_string@DU?$char_traits@D@std@@V?$se_alloc@D@@@std@@V12@U?$less@V?$basic_string@DU?$char_traits@D@std@@V?$se_alloc@D@@@std@@@2@V?$se_alloc@U?$pair@$$CBV?$basic_string@DU?$char_traits@D@std@@V?$se_alloc@D@@@std@@V12@@std@@@@$0A@@std@@@2@PAU342@00ABU?$pair@$$CBV?$basic_string@DU?$char_traits@D@std@@V?$se_alloc@D@@@std@@V12@@2@D@Z",
 "obj": "module",
-"size": 2496,
+"size": 2912,
 "hits": []
 }
 ]

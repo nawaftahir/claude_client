@@ -54,6 +54,7 @@ jobs:
           { echo "### $name"; python3 ../cov.py build/exp.json | grep -o 'unique bytes [0-9]*'
             python3 ../ci/ratchet.py ../ci/good.json build/exp.json ../ci/ties.txt | grep -v '\$L' | tail -15; } | tee result.txt >> "$GITHUB_STEP_SUMMARY"
           mkdir -p ../out && cp result.txt ../out/$name.txt && cp build/exp.json ../out/$name.json
+          cp build/CoD2MP_s.exe ../out/$name.exe && cp build/CoD2MP_s.map ../out/$name.map
       - uses: actions/upload-artifact@v4
         if: always()
         with:
