@@ -21,13 +21,18 @@ jobs:
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
           docker pull -q "$IMAGE"
+          pip install -q pefile capstone
           # private image holds the compiler, d3d9.lib, dsound.lib and the retail anchor (never in git)
+          mkdir -p target/build/lib
           docker run --rm -v "$PWD/target:/w" -w /w "$IMAGE" sh -c \
-            'mkdir -p build/lib && cp /opt/ci/lib/d3d9.lib build/lib/ && cp /opt/ci/lib/dsound.lib . && make -j$(nproc) -k IN_IMAGE=1 build/CoD2MP_s.exe; s=$?; cp /opt/ci/anchor/CoD2MP_s.exe build/anchor.exe; chmod -R a+rw build; exit $s'
+            'cp /opt/ci/anchor/CoD2MP_s.exe build/anchor.exe && cp /opt/ci/lib/d3d9.lib build/lib/ && cp /opt/ci/lib/dsound.lib . && chmod -R a+rw build'
+          # icon comes from the retail exe (host step, as in the Makefile)
+          (cd target && python3 ../rsrc.py build/anchor.exe build/cod2mp.ico)
+          docker run --rm -v "$PWD/target:/w" -w /w "$IMAGE" sh -c \
+            'make -j$(nproc) -k IN_IMAGE=1 build/CoD2MP_s.exe; s=$?; chmod -R a+rw build; exit $s'
           if grep -m5 "LNK2001\|LNK2019" target/build/link.log; then echo "unresolved externals"; exit 1; fi
       - name: Referee + ratchet
         run: |
-          pip install -q pefile capstone
           cd target
           python3 ../cmp.py build/CoD2MP_s.exe build/CoD2MP_s.map build/anchor.exe build/exp.json > /dev/null
           rm -f build/anchor.exe
