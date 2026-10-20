@@ -1069,13 +1069,13 @@ void CL_UpdateLevelHunkUsage(void)
         I_strncat(outbuf, buflen, " ");
 
         token = Com_Parse(&buftrav);
-        if (!token || *token == '\0') {
+        if (token && *token != '\0') {
+            I_strncat(outbuf, buflen, token);
+            I_strncat(outbuf, buflen, "\n");
+        } else {
             Com_Error(ERR_DROP, "EXE_ERR_HUNGUSAGE_CORRUPT");
             continue;
         }
-
-        I_strncat(outbuf, buflen, token);
-        I_strncat(outbuf, buflen, "\n");
     }
 
     handle = FS_FOpenFileWrite("hunkusage.dat");

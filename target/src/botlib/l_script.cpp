@@ -1333,3 +1333,12 @@ void FreeScript(script_t *script)
 	FreeMemory(script);
 } //end of the function FreeScript
 
+// retail 0x4413a0, empty and unreferenced; name unknown
+void Script_Stub_4413a0(void)
+{
+}
+
+// retail 0x4413b0, empty and unreferenced; name unknown
+void Script_Stub_4413b0(void)
+{
+}

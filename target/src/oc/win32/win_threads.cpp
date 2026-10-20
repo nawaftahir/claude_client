@@ -34,3 +34,14 @@ Bool Sys_ReturnFalse(void)
     return 0;
 }
 
+// retail 0x45f960, empty and unreferenced; name unknown
+Bool Sys_ReturnFalse_45f960(void)
+{
+    return 0;
+}
+
+// retail 0x45f970, empty and unreferenced; name unknown
+Bool Sys_ReturnFalse_45f970(void)
+{
+    return 0;
+}

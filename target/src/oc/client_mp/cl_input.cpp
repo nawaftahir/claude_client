@@ -1408,3 +1408,8 @@ void CL_SendCmdInternal(void)
 
     CL_WritePacket();
 }
+
+// retail 0x409180, empty and unreferenced; name unknown
+void IN_Stub_409180(void)
+{
+}

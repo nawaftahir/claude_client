@@ -589,3 +589,7 @@ void UI_LoadSoundAliases(void)
     Com_LoadSoundAliases("menu", "all_mp", (snd_alias_system_t)(0));
 }
 
+// retail 0x414400, empty and unreferenced; name unknown
+void UI_Stub_414400(void)
+{
+}

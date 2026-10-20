@@ -149,6 +149,16 @@ static void CG_DrawCursorhint(const rectDef_t *rect, struct Font_s *font, float 
 void CG_DrawMantleHint(const rectDef_t *rect, struct Font_s *font, float fontscale, int textStyle);
 const char *CG_GetTranslatedLocationString(int iLocation);
 static void __attribute_regparm__(3) CG_DrawScore(int team, const rectDef_t *rect, struct Font_s *font, float scale, vec_t *color, MaterialHandle material, int textStyle);
+// retail 0x4c0140, empty and unreferenced; name unknown
+void CG_Stub_4c0140(void)
+{
+}
+
+// retail 0x4c0150, empty and unreferenced; name unknown
+void CG_Stub_4c0150(void)
+{
+}
+
 const char *CG_GetKillerText(void);
 const char *CG_GameTypeString(void);
 int CG_KeyInterceptEvent(int key, qboolean down);
@@ -587,6 +597,17 @@ static void CG_DrawPlayerWeaponModeIcon(const rectDef_t *rect, vec_t *color)
         }
     }
 }
+
+// retail 0x4bdfa0, empty and unreferenced; name unknown
+void CG_Stub_4bdfa0(void)
+{
+}
+
+// retail 0x4bdfb0, empty and unreferenced; name unknown
+void CG_Stub_4bdfb0(void)
+{
+}
+
 
 static void CG_DrawStanceIcon(const rectDef_t *rect, vec_t *drawColor, float x, float y, float fadeAlpha)
 {
@@ -1076,6 +1097,12 @@ MaterialHandle CG_ObjectiveIconMaterial(int icon, int index)
     return cgs->media.objectiveMaterials[index];
 }
 
+// retail 0x4bf0b0, empty and unreferenced; name unknown
+void CG_ApplySplitScreenCompassScale(float *x, float *y, float *w, float *h)
+{
+
+}
+
 // retail 0x4bf0c0, unreferenced; name unknown
 void CG_CompassCalcDimensions_4bf0c0(const rectDef_t *rect, float *x, float *y, float *w, float *h)
 {
@@ -1109,11 +1136,6 @@ void CG_DrawPlayerCompass(const rectDef_t *rect, MaterialHandle material, vec_t 
     h = rect->h * cg_hudCompassSize->current.value;
     CG_UpdateCompassOrientation();
     CG_DrawRotatedPic(x, y, w, h, rect->horzAlign, rect->vertAlign, cg->compassYaw, color, material);
-}
-
-void CG_ApplySplitScreenCompassScale(float *x, float *y, float *w, float *h)
-{
-
 }
 
 void CG_DrawPlayerCompassBack(const rectDef_t *rect, MaterialHandle material, vec_t *color)

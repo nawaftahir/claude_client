@@ -1487,6 +1487,7 @@ void Key_Shutdown(void)
     }
 }
 
-
-
-
+// retail 0x40b440, empty and unreferenced; name unknown
+void Key_Stub_40b440(void)
+{
+}

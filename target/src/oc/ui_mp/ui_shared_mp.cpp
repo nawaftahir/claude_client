@@ -380,6 +380,11 @@ qboolean String_Parse(const char **p, char *out, int len)
     return 0;
 }
 
+// retail 0x533b50, empty and unreferenced; name unknown
+void UI_Stub_533b50(void)
+{
+}
+
 // retail 0x533b60
 void Fade(int *flags, float *f, float clamp, int *nextTime, int offsetTime, qboolean bFlags, float fadeAmount, float fadeInAmount, displayContextDef_t *dc)
 {
@@ -1910,6 +1915,11 @@ static void Item_StartCapture(displayContextDef_t *dc, itemDef_t *item, int key)
         }
         break;
     }
+}
+
+// retail 0x537de0, empty and unreferenced; name unknown
+void UI_Stub_537de0(void)
+{
 }
 
 qboolean Item_Slider_HandleKey(displayContextDef_t *dc, itemDef_t *item, int key, qboolean down)

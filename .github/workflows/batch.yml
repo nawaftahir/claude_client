@@ -47,16 +47,26 @@ jobs:
           if grep -m5 "LNK2001\|LNK2019" target/build/link.log; then echo "unresolved externals"; exit 1; fi
       - name: Referee
         run: |
+          docker run --rm -v "$PWD/target:/w" -w /w "$IMAGE" sh -c \
+            'make -j$(nproc) -k IN_IMAGE=1 build/release/CoD2MP_s.exe > build/rel.txt 2>&1; chmod -R a+rw build' || true
           cd target
           python3 ../cmp.py build/CoD2MP_s.exe build/CoD2MP_s.map build/anchor.exe build/exp.json > /dev/null
+          [ -f build/release/CoD2MP_s.exe ] && python3 ../shameter.py build/release/CoD2MP_s.exe build/anchor.exe | tail -7 > sha.txt || echo "no release exe" > sha.txt
           rm -f build/anchor.exe
           name=$(basename "${{ matrix.patch }}" .patch)
           { echo "### $name"; python3 ../cov.py build/exp.json | grep -o 'unique bytes [0-9]*'
-            python3 ../ci/ratchet.py ../ci/good.json build/exp.json ../ci/ties.txt | grep -v '\$L' | tail -15; } | tee result.txt >> "$GITHUB_STEP_SUMMARY"
-          mkdir -p ../out && cp result.txt ../out/$name.txt && cp build/exp.json ../out/$name.json
-          cp build/CoD2MP_s.exe ../out/$name.exe && cp build/CoD2MP_s.map ../out/$name.map
+            python3 ../ci/ratchet.py ../ci/good.json build/exp.json ../ci/ties.txt | grep -v '\$L' | tail -15; cat sha.txt; } | tee result.txt >> "$GITHUB_STEP_SUMMARY"
+          mkdir -p ../out ../bin && cp result.txt ../out/$name.txt
+          cp build/CoD2MP_s.exe ../bin/$name.exe && cp build/CoD2MP_s.map ../bin/$name.map
+      # small result files and the heavy binaries go in separate artifacts (download binaries only when needed)
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: res-${{ strategy.job-index }}
           path: out/
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bin-${{ strategy.job-index }}
+          path: bin/
+          retention-days: 2

@@ -265,6 +265,11 @@ static unsigned char CL_FindHudMsgIconMaterialIndex(const char *iconShader)
     return 0;
 }
 
+// retail 0x403810, empty and unreferenced; name unknown
+void Con_Stub_403810(void)
+{
+}
+
 void Con_ToggleConsole_f(void)
 {
     char *field;
@@ -1684,3 +1689,8 @@ static const vec4_t con_inputDvarValueColor = { 1.0f, 1.0f, 1.0f, 1.0f };
 static const vec4_t con_inputDvarInfoColor = { 0.8f, 0.8f, 1.0f, 1.0f };
 
 static const vec4_t con_inputDvarInactiveValueColor = { 0.8f, 0.8f, 0.8f, 1.0f };
+
+// retail 0x406be0, empty and unreferenced; name unknown
+void Con_Stub_406be0(void)
+{
+}

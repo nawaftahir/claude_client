@@ -2515,3 +2515,7 @@ void MSG_initHuffman()
 	MSG_initHuffmanInternal();
 }
 
+// retail 0x445890, empty and unreferenced; name unknown
+void MSG_Stub_445890(void)
+{
+}

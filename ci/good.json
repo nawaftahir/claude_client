@@ -16608,7 +16608,9 @@
 "name": "?SV_Netchan_PrintProfileStats@@YAXH@Z",
 "obj": "sv_net_chan_mp.obj",
 "size": 2061,
-"hits": []
+"hits": [
+"0x45a0f0"
+]
 },
 {
 "name": "?lerp@@YAMMMM@Z",
@@ -17452,7 +17454,7 @@
 ]
 },
 {
-"name": "$L96794",
+"name": "$L96827",
 "obj": "module",
 "size": 6,
 "hits": []
@@ -25392,7 +25394,9 @@
 "name": "?XAnimLoadFile@@YAPAUXAnimParts_s@@PBDP6APAXH@Z@Z",
 "obj": "xanim_load.obj",
 "size": 4053,
-"hits": []
+"hits": [
+"0x48bec0"
+]
 },
 {
 "name": "?AxisTransformVector@@YAXQBMQAY02$$CBMQAM@Z",
@@ -32790,7 +32794,7 @@
 ]
 },
 {
-"name": "$L119284",
+"name": "$L119347",
 "obj": "module",
 "size": 166,
 "hits": [
@@ -32798,7 +32802,7 @@
 ]
 },
 {
-"name": "$L119286",
+"name": "$L119349",
 "obj": "module",
 "size": 48,
 "hits": [
@@ -32831,7 +32835,7 @@
 ]
 },
 {
-"name": "$L132118",
+"name": "$L132181",
 "obj": "module",
 "size": 166,
 "hits": [
@@ -32839,7 +32843,7 @@
 ]
 },
 {
-"name": "$L132120",
+"name": "$L132183",
 "obj": "module",
 "size": 48,
 "hits": [
@@ -32899,7 +32903,7 @@
 ]
 },
 {
-"name": "$L104101",
+"name": "$L104164",
 "obj": "module",
 "size": 21,
 "hits": [
@@ -32915,7 +32919,7 @@
 ]
 },
 {
-"name": "$L146994",
+"name": "$L147057",
 "obj": "module",
 "size": 21,
 "hits": [
@@ -34781,7 +34785,9 @@
 "name": "?DSound_UpdateSample@@YAHPAUdsound_sample_t@@PADI@Z",
 "obj": "play_dsound.obj",
 "size": 500,
-"hits": []
+"hits": [
+"0x4b6a10"
+]
 },
 {
 "name": "?DSound_AdjustSamplePlayback@@YAXPAUdsound_sample_t@@H@Z",
@@ -45390,8 +45396,10 @@
 {
 "name": "?SP_worldspawn@@YAXXZ",
 "obj": "g_spawn_mp.obj",
-"size": 453,
-"hits": []
+"size": 458,
+"hits": [
+"0x50b360"
+]
 },
 {
 "name": "?G_SpawnEntitiesFromString@@YAXXZ",
@@ -60424,7 +60432,13 @@
 {
 "name": "__ehhandler$?_Buynode@?$_Tree@V?$_Tmap_traits@V?$basic_string@DU?$char_traits@D@std@@V?$se_alloc@D@@@std@@V12@U?$less@V?$basic_string@DU?$char_traits@D@std@@V?$se_alloc@D@@@std@@@2@V?$se_alloc@U?$pair@$$CBV?$basic_string@DU?$char_traits@D@std@@V?$se_alloc@D@@@std@@V12@@std@@@@$0A@@std@@@std@@IAEPAU_Node@?$_Tree_nod@V?$_Tmap_traits@V?$basic_string@DU?$char_traits@D@std@@V?$se_alloc@D@@@std@@V12@U?$less@V?$basic_string@DU?$char_traits@D@std@@V?$se_alloc@D@@@std@@@2@V?$se_alloc@U?$pair@$$CBV?$basic_string@DU?$char_traits@D@std@@V?$se_alloc@D@@@std@@V12@@std@@@@$0A@@std@@@2@PAU342@00ABU?$pair@$$CBV?$basic_string@DU?$char_traits@D@std@@V?$se_alloc@D@@@std@@V12@@2@D@Z",
 "obj": "module",
-"size": 2912,
+"size": 10,
+"hits": []
+},
+{
+"name": "_$E1",
+"obj": "cg_localents_mp.obj",
+"size": 2560,
 "hits": []
 }
 ]

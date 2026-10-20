@@ -1,3 +1,5 @@
+#pragma section(".CRT$XCU", read, write)
+#pragma section(".CRT$XCA", read, write)
 #include "common_types.h"
 #include "imports.h"
 #include "headers/PC/cgame_mp/cg_local.h"
@@ -5,7 +7,8 @@ localEntity_t cg_eachClientLocalEntities[1][128];
 localEntity_t cg_eachClientActiveLocalEntities[1];
 localEntity_t *cg_localEntities = cg_eachClientLocalEntities[0];
 localEntity_t *cg_activeLocalEntities = cg_eachClientActiveLocalEntities;
-localEntity_t *cg_freeLocalEntities = NULL;
+localEntity_t *cg_eachClientFreeLocalEntities[1];
+localEntity_t *cg_freeLocalEntities = cg_eachClientFreeLocalEntities[0];
 /* dvar globals */
 extern const dvar_t *cg_tracerLength;
 
@@ -15,15 +18,12 @@ extern void CG_DrawTracer(vec_t *start, vec_t *finish);
 extern void Com_Error(errorParm_t code, const char *fmt, ...);
 
 extern localEntity_t cg_eachClientActiveLocalEntities[1];
-extern localEntity_t *cg_eachClientFreeLocalEntities[1];
 extern localEntity_t *cg_localEntities;
 extern localEntity_t *cg_activeLocalEntities;
 extern localEntity_t *cg_freeLocalEntities;
 
 void CG_InitLocalEntities(void);
 void CG_AddMovingTracer(localEntity_t *le);
-static void __static_initialization_and_destruction_0(int initialize, int priority);
-static void GLOBAL__I_cg_eachClientActiveLocalEntities(void);
 localEntity_t *CG_AllocLocalEntity(void);
 void CG_AddLocalEntities(void);
 
@@ -102,17 +102,6 @@ void CG_AddMovingTracer(localEntity_t *le)
     end[2] = start[2] + dist * dir[2];
 
     CG_DrawTracer(start, end);
-}
-
-static void __static_initialization_and_destruction_0(int initialize, int priority)
-{
-    if (priority == 0xffff && initialize == 1)
-        cg_freeLocalEntities = cg_eachClientFreeLocalEntities[0];
-}
-
-static void GLOBAL__I_cg_eachClientActiveLocalEntities(void)
-{
-    __static_initialization_and_destruction_0(1, 0xffff);
 }
 
 void CG_AddLocalEntities(void)

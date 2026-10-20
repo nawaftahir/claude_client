@@ -1364,3 +1364,7 @@ int CM_PointSightTraceToEntities( sightpointtrace_t *clip )
 	return hitNum;
 }
 
+// retail 0x41f2c0, empty and unreferenced; name unknown
+void CM_Stub_41f2c0(void)
+{
+}
