@@ -1,0 +1,11 @@
+--- a/target/src/oc/cgame_mp/cg_predict_mp.cpp
++++ b/target/src/oc/cgame_mp/cg_predict_mp.cpp
+@@ -180,7 +180,7 @@
+     c[2] = a[2] + b[2];
+ }
+ 
+-static inline void VectorScale(const vec3_t v, const float s, vec3_t o)
++inline void VectorScale(const vec3_t v, const float s, vec3_t o)
+ {
+     o[0] = s * v[0];
+     o[1] = s * v[1];

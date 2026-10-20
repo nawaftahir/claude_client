@@ -1,0 +1,11 @@
+--- a/target/src/oc/cgame_mp/cg_predict_mp.cpp
++++ b/target/src/oc/cgame_mp/cg_predict_mp.cpp
+@@ -173,7 +173,7 @@
+     c[2] = a[2] - b[2];
+ }
+ 
+-static inline void VectorAdd(const vec3_t a, const vec3_t b, vec3_t c)
++inline void VectorAdd(const vec3_t a, const vec3_t b, vec3_t c)
+ {
+     c[0] = a[0] + b[0];
+     c[1] = a[1] + b[1];

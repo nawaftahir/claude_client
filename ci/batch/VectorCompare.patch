@@ -1,0 +1,11 @@
+--- a/target/src/oc/cgame_mp/cg_predict_mp.cpp
++++ b/target/src/oc/cgame_mp/cg_predict_mp.cpp
+@@ -156,7 +156,7 @@
+     }
+ }
+ 
+-static inline bool VectorCompare(const vec3_t v1, const vec3_t v2)
++inline bool VectorCompare(const vec3_t v1, const vec3_t v2)
+ {
+     return v1[0] == v2[0] && v1[1] == v2[1] && v1[2] == v2[2];
+ }

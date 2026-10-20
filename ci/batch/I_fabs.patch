@@ -1,0 +1,11 @@
+--- a/target/src/oc/cgame_mp/cg_compassfriendlies_mp.cpp
++++ b/target/src/oc/cgame_mp/cg_compassfriendlies_mp.cpp
+@@ -33,7 +33,7 @@
+ }
+ 
+ // universal/com_math.h inlines
+-static inline float I_fabs(const float value)
++inline float I_fabs(const float value)
+ {
+     return fabs(value);
+ }

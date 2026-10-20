@@ -1,0 +1,11 @@
+--- a/target/src/oc/ui/ui_component.cpp
++++ b/target/src/oc/ui/ui_component.cpp
+@@ -126,7 +126,7 @@
+ {
+ }
+ 
+-static inline void Vector2Add(const vec2_t a, const vec2_t b, vec2_t c)
++inline void Vector2Add(const vec2_t a, const vec2_t b, vec2_t c)
+ {
+     c[0] = a[0] + b[0];
+     c[1] = a[1] + b[1];

@@ -1,0 +1,11 @@
+--- a/target/src/oc/win32/snd_driver.cpp
++++ b/target/src/oc/win32/snd_driver.cpp
+@@ -1356,7 +1356,7 @@
+     return (int)sound->info.data_len + 0x24;
+ }
+ 
+-static inline int I_max(const int x, const int y)
++inline int I_max(const int x, const int y)
+ {
+     return I_sel(x - y, x, y);
+ }
