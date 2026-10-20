@@ -35,9 +35,30 @@ jobs:
         run: |
           cd target
           python3 ../cmp.py build/CoD2MP_s.exe build/CoD2MP_s.map build/anchor.exe build/exp.json > /dev/null
+          python3 ../cov.py build/exp.json | grep 'unique bytes' | tee cov.txt | tee -a "$GITHUB_STEP_SUMMARY"
+          python3 ../ci/ratchet.py ../ci/good.json build/exp.json ../ci/ties.txt | grep -v '\$L' | tail -20 | tee ratchet.txt | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Whole-file meter (release exe)
+        run: |
+          docker run --rm -v "$PWD/target:/w" -w /w "$IMAGE" sh -c \
+            'make -j$(nproc) -k IN_IMAGE=1 build/release/CoD2MP_s.exe > build/rel.txt 2>&1; s=$?; chmod -R a+rw build; exit $s'
+          cd target
+          python3 ../shameter.py build/release/CoD2MP_s.exe build/anchor.exe | tail -7 | tee sha.txt | tee -a "$GITHUB_STEP_SUMMARY"
           rm -f build/anchor.exe
-          python3 ../cov.py build/exp.json | grep 'unique bytes' | tee -a "$GITHUB_STEP_SUMMARY"
-          python3 ../ci/ratchet.py ../ci/good.json build/exp.json ../ci/ties.txt | tail -20 | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Discord
+        if: always()
+        env:
+          HOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          MSG: ${{ github.event.head_commit.message }}
+        run: |
+          [ -n "$HOOK" ] || exit 0
+          cd target
+          pct=$(grep -o '[0-9.]*% of' cov.txt | head -1 | cut -d% -f1)
+          bytes=$(grep -o 'unique bytes [0-9]*' cov.txt | grep -o '[0-9]*')
+          verdict=$(grep -o 'RATCHET [A-Z]*' ratchet.txt | head -1)
+          secs=$(grep -E '^\.(text|rdata|data|rsrc)|^header|^ALL' sha.txt | sed -E 's/^(\.?[a-z]+).*same +[0-9]+ \(([0-9.]+%)\).*/\1 \2/; s/^header +same ([0-9]+\/[0-9]+)/header \1/; s/^ALL sections.* = ([0-9.]+%)/whole file \1/')
+          text=$(printf '**CoD2MP_s.exe** `%s` %s\n**.text matched: %s%%** (%s B / 1,408,683)  %s\n%s\n<%s>' "${GITHUB_SHA::7}" "$(echo "$MSG" | head -1)" "$pct" "$bytes" "$verdict" "$secs" \
+            "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}")
+          jq -n --arg c "${text:0:1990}" '{content: $c}' | curl -fsS -H 'Content-Type: application/json' -d @- "$HOOK"
       - uses: actions/upload-artifact@v4
         if: always()
         with:

@@ -273,7 +273,7 @@ static inline int float_seconds_to_ms(float val)
     return I_fround(val * 1000.0f);
 }
 
-static inline void FastSinCos(const float value, float *pSin, float *pCos)
+inline void FastSinCos(const float value, float *pSin, float *pCos)
 {
     __asm
     {

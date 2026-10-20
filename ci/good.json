@@ -1161,7 +1161,7 @@
 },
 {
 "name": "?I_fsel@@YAMMMM@Z",
-"obj": "ui_shared_mp.obj",
+"obj": "cl_console_mp.obj",
 "size": 27,
 "hits": [
 "0x4035a0"
@@ -1169,7 +1169,7 @@
 },
 {
 "name": "?I_fclamp@@YAMMMM@Z",
-"obj": "ui_shared_mp.obj",
+"obj": "cl_console_mp.obj",
 "size": 59,
 "hits": [
 "0x4035e0"
@@ -1579,14 +1579,6 @@
 "paired": 1
 },
 {
-"name": "?I_fsel@@YAMMMM@Z",
-"obj": "ui_shared_mp.obj",
-"size": 27,
-"hits": [
-"0x4035a0"
-]
-},
-{
 "name": "?I_fmax@@YAMMM@Z",
 "obj": "cm_load_obj.obj",
 "size": 31,
@@ -1596,7 +1588,7 @@
 },
 {
 "name": "?I_fmin@@YAMMM@Z",
-"obj": "record.obj",
+"obj": "cl_input.obj",
 "size": 31,
 "hits": [
 "0x406bc0"
@@ -3574,7 +3566,7 @@
 },
 {
 "name": "?VectorCopy@@YAXQBMQAM@Z",
-"obj": "cg_event_mp.obj",
+"obj": "cl_main_mp.obj",
 "size": 17,
 "hits": [
 "0x4011e0",
@@ -4311,14 +4303,6 @@
 "paired": 1
 },
 {
-"name": "?I_fsel@@YAMMMM@Z",
-"obj": "ui_shared_mp.obj",
-"size": 27,
-"hits": [
-"0x4035a0"
-]
-},
-{
 "name": "?I_fabs@@YAMM@Z",
 "obj": "cg_compassfriendlies_mp.obj",
 "size": 7,
@@ -4329,7 +4313,7 @@
 },
 {
 "name": "?I_sqrt@@YAMM@Z",
-"obj": "cg_compassfriendlies_mp.obj",
+"obj": "cm_load_obj.obj",
 "size": 7,
 "hits": [
 "0x406b90"
@@ -4350,14 +4334,6 @@
 "size": 31,
 "hits": [
 "0x406ba0"
-]
-},
-{
-"name": "?I_fmin@@YAMMM@Z",
-"obj": "record.obj",
-"size": 31,
-"hits": [
-"0x406bc0"
 ]
 },
 {
@@ -4996,7 +4972,7 @@
 },
 {
 "name": "?VectorClear@@YAXQAM@Z",
-"obj": "cg_snapshot_mp.obj",
+"obj": "cm_trace.obj",
 "size": 11,
 "hits": [
 "0x412fe0"
@@ -6715,16 +6691,8 @@
 ]
 },
 {
-"name": "?I_fclamp@@YAMMMM@Z",
-"obj": "ui_shared_mp.obj",
-"size": 59,
-"hits": [
-"0x4035e0"
-]
-},
-{
 "name": "?FastSinCos@@YAXMPAM0@Z",
-"obj": "ui_shared_mp.obj",
+"obj": "com_math.obj",
 "size": 23,
 "hits": [
 "0x424470",
@@ -14908,14 +14876,6 @@
 ]
 },
 {
-"name": "?I_fsel@@YAMMMM@Z",
-"obj": "ui_shared_mp.obj",
-"size": 27,
-"hits": [
-"0x4035a0"
-]
-},
-{
 "name": "?SND_UpdateSlaveLerp@@YAXH@Z",
 "obj": "snd.obj",
 "size": 451,
@@ -16656,9 +16616,7 @@
 "name": "?SV_Netchan_PrintProfileStats@@YAXH@Z",
 "obj": "sv_net_chan_mp.obj",
 "size": 2061,
-"hits": [
-"0x45a0f0"
-]
+"hits": []
 },
 {
 "name": "?lerp@@YAMMMM@Z",
@@ -17518,7 +17476,7 @@
 ]
 },
 {
-"name": "$L96876",
+"name": "$L96823",
 "obj": "module",
 "size": 6,
 "hits": []
@@ -32856,7 +32814,7 @@
 ]
 },
 {
-"name": "$L119473",
+"name": "$L119336",
 "obj": "module",
 "size": 166,
 "hits": [
@@ -32864,7 +32822,7 @@
 ]
 },
 {
-"name": "$L119475",
+"name": "$L119338",
 "obj": "module",
 "size": 48,
 "hits": [
@@ -32897,7 +32855,7 @@
 ]
 },
 {
-"name": "$L132325",
+"name": "$L132188",
 "obj": "module",
 "size": 166,
 "hits": [
@@ -32905,7 +32863,7 @@
 ]
 },
 {
-"name": "$L132327",
+"name": "$L132190",
 "obj": "module",
 "size": 48,
 "hits": [
@@ -32965,7 +32923,7 @@
 ]
 },
 {
-"name": "$L104238",
+"name": "$L104147",
 "obj": "module",
 "size": 21,
 "hits": [
@@ -32981,7 +32939,7 @@
 ]
 },
 {
-"name": "$L147198",
+"name": "$L147061",
 "obj": "module",
 "size": 21,
 "hits": [
@@ -34424,15 +34382,6 @@
 ]
 },
 {
-"name": "?I_sqrt@@YAMM@Z",
-"obj": "cg_compassfriendlies_mp.obj",
-"size": 7,
-"hits": [
-"0x406b90"
-],
-"paired": 1
-},
-{
 "name": "?SND_Update3DChannel@@YAXHH@Z",
 "obj": "snd_driver.obj",
 "size": 493,
@@ -34880,9 +34829,7 @@
 "name": "?DSound_UpdateSample@@YAHPAUdsound_sample_t@@PADI@Z",
 "obj": "play_dsound.obj",
 "size": 500,
-"hits": [
-"0x4b6a10"
-]
+"hits": []
 },
 {
 "name": "?DSound_AdjustSamplePlayback@@YAXPAUdsound_sample_t@@H@Z",
@@ -35009,22 +34956,6 @@
 "hits": [
 "0x4b7370",
 "0x4b7640"
-]
-},
-{
-"name": "?I_fsel@@YAMMMM@Z",
-"obj": "ui_shared_mp.obj",
-"size": 27,
-"hits": [
-"0x4035a0"
-]
-},
-{
-"name": "?I_fmin@@YAMMM@Z",
-"obj": "record.obj",
-"size": 31,
-"hits": [
-"0x406bc0"
 ]
 },
 {
@@ -35569,15 +35500,6 @@
 "size": 2005,
 "hits": [
 "0x4bb4e0"
-]
-},
-{
-"name": "?FastSinCos@@YAXMPAM0@Z",
-"obj": "ui_shared_mp.obj",
-"size": 23,
-"hits": [
-"0x424470",
-"0x42a865"
 ]
 },
 {
@@ -36212,15 +36134,6 @@
 "hits": []
 },
 {
-"name": "?I_sqrt@@YAMM@Z",
-"obj": "cg_compassfriendlies_mp.obj",
-"size": 7,
-"hits": [
-"0x406b90"
-],
-"paired": 1
-},
-{
 "name": "?I_fabs@@YAMM@Z",
 "obj": "cg_compassfriendlies_mp.obj",
 "size": 7,
@@ -36235,27 +36148,6 @@
 "size": 22,
 "hits": [
 "0x4244c0"
-]
-},
-{
-"name": "?VectorCopy@@YAXQBMQAM@Z",
-"obj": "cg_event_mp.obj",
-"size": 17,
-"hits": [
-"0x4011e0",
-"0x486e76",
-"0x486ebc",
-"0x48f980",
-"0x4904c6"
-]
-},
-{
-"name": "?FastSinCos@@YAXMPAM0@Z",
-"obj": "ui_shared_mp.obj",
-"size": 23,
-"hits": [
-"0x424470",
-"0x42a865"
 ]
 },
 {
@@ -36939,15 +36831,6 @@
 "hits": [
 "0x403620",
 "0x4615c0"
-]
-},
-{
-"name": "?FastSinCos@@YAXMPAM0@Z",
-"obj": "ui_shared_mp.obj",
-"size": 23,
-"hits": [
-"0x424470",
-"0x42a865"
 ]
 },
 {
@@ -37829,15 +37712,6 @@
 "obj": "cg_shellshock.obj",
 "size": 47,
 "hits": []
-},
-{
-"name": "?FastSinCos@@YAXMPAM0@Z",
-"obj": "ui_shared_mp.obj",
-"size": 23,
-"hits": [
-"0x424470",
-"0x42a865"
-]
 },
 {
 "name": "?CubicInterpolate@@YAMMMMMM@Z",
@@ -39200,15 +39074,6 @@
 ]
 },
 {
-"name": "?FastSinCos@@YAXMPAM0@Z",
-"obj": "ui_shared_mp.obj",
-"size": 23,
-"hits": [
-"0x424470",
-"0x42a865"
-]
-},
-{
 "name": "?VectorCompare@@YA_NQBM0@Z",
 "obj": "cg_predict_mp.obj",
 "size": 52,
@@ -39246,14 +39111,6 @@
 "size": 29,
 "hits": [
 "0x414900"
-]
-},
-{
-"name": "?VectorClear@@YAXQAM@Z",
-"obj": "cg_snapshot_mp.obj",
-"size": 11,
-"hits": [
-"0x412fe0"
 ]
 },
 {
@@ -39326,26 +39183,6 @@
 "size": 115,
 "hits": [
 "0x4d8210"
-]
-},
-{
-"name": "?VectorClear@@YAXQAM@Z",
-"obj": "cg_snapshot_mp.obj",
-"size": 11,
-"hits": [
-"0x412fe0"
-]
-},
-{
-"name": "?VectorCopy@@YAXQBMQAM@Z",
-"obj": "cg_event_mp.obj",
-"size": 17,
-"hits": [
-"0x4011e0",
-"0x486e76",
-"0x486ebc",
-"0x48f980",
-"0x4904c6"
 ]
 },
 {
@@ -39442,18 +39279,6 @@
 "size": 63,
 "hits": [
 "0x4d9e90"
-]
-},
-{
-"name": "?VectorCopy@@YAXQBMQAM@Z",
-"obj": "cg_event_mp.obj",
-"size": 17,
-"hits": [
-"0x4011e0",
-"0x486e76",
-"0x486ebc",
-"0x48f980",
-"0x4904c6"
 ]
 },
 {
@@ -44649,9 +44474,7 @@
 "name": "?Scr_ParseGameTypeList@@YAXXZ",
 "obj": "g_scr_main_mp.obj",
 "size": 572,
-"hits": [
-"0x5071d0"
-]
+"hits": []
 },
 {
 "name": "?Scr_GetGameTypeNameForScript@@YAPADPBD@Z",
@@ -46750,7 +46573,9 @@
 "name": "?Pickup_Weapon@@YAHPAUgentity_s@@0PAHH@Z",
 "obj": "g_items_mp.obj",
 "size": 1631,
-"hits": []
+"hits": [
+"0x517b80"
+]
 },
 {
 "name": "?Pickup_Health@@YAHPAUgentity_s@@0@Z",
@@ -50351,15 +50176,6 @@
 ]
 },
 {
-"name": "?FastSinCos@@YAXMPAM0@Z",
-"obj": "ui_shared_mp.obj",
-"size": 23,
-"hits": [
-"0x424470",
-"0x42a865"
-]
-},
-{
 "name": "?Window_Getter_533860@@YAHPAUWindow@@@Z",
 "obj": "ui_shared_mp.obj",
 "size": 7,
@@ -50419,22 +50235,6 @@
 "size": 13,
 "hits": [
 "0x5338d0"
-]
-},
-{
-"name": "?I_fsel@@YAMMMM@Z",
-"obj": "ui_shared_mp.obj",
-"size": 27,
-"hits": [
-"0x4035a0"
-]
-},
-{
-"name": "?I_fclamp@@YAMMMM@Z",
-"obj": "ui_shared_mp.obj",
-"size": 59,
-"hits": [
-"0x4035e0"
 ]
 },
 {
@@ -60731,7 +60531,7 @@
 {
 "name": "__ehhandler$?_Buynode@?$_Tree@V?$_Tmap_traits@V?$basic_string@DU?$char_traits@D@std@@V?$se_alloc@D@@@std@@V12@U?$less@V?$basic_string@DU?$char_traits@D@std@@V?$se_alloc@D@@@std@@@2@V?$se_alloc@U?$pair@$$CBV?$basic_string@DU?$char_traits@D@std@@V?$se_alloc@D@@@std@@V12@@std@@@@$0A@@std@@@std@@IAEPAU_Node@?$_Tree_nod@V?$_Tmap_traits@V?$basic_string@DU?$char_traits@D@std@@V?$se_alloc@D@@@std@@V12@U?$less@V?$basic_string@DU?$char_traits@D@std@@V?$se_alloc@D@@@std@@@2@V?$se_alloc@U?$pair@$$CBV?$basic_string@DU?$char_traits@D@std@@V?$se_alloc@D@@@std@@V12@@std@@@@$0A@@std@@@2@PAU342@00ABU?$pair@$$CBV?$basic_string@DU?$char_traits@D@std@@V?$se_alloc@D@@@std@@V12@@2@D@Z",
 "obj": "module",
-"size": 1792,
+"size": 2496,
 "hits": []
 }
 ]

@@ -125,14 +125,14 @@ void CG_SetNextSnap(snapshot_t *snap);
 void CG_SetInitialSnapshot(snapshot_t *snap);
 void CG_ProcessSnapshots(void);
 
-static inline void VectorClear(vec3_t v)
+inline void VectorClear(vec3_t v)
 {
     v[0] = 0;
     v[1] = 0;
     v[2] = 0;
 }
 
-static inline void VectorCopy(const vec3_t a, vec3_t b)
+inline void VectorCopy(const vec3_t a, vec3_t b)
 {
     b[0] = a[0];
     b[1] = a[1];

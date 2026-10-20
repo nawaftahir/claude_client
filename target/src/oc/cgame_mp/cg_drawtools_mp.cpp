@@ -55,7 +55,7 @@ void CG_DrawRotatedPicPhysical(float x, float y, float width, float height, floa
 void CG_DrawRotatedPic(float x, float y, float width, float height, int horzAlign, int vertAlign, float angle, const vec_t *color, MaterialHandle material);
 void CG_DrawRotatedQuadPic(float x, float y, vec2_t *verts, float angle, const vec_t *color, MaterialHandle material);
 
-static inline void FastSinCos(const float value, float *pSin, float *pCos)
+inline void FastSinCos(const float value, float *pSin, float *pCos)
 {
     __asm
     {

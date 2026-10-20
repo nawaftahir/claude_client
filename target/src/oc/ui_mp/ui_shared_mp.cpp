@@ -109,7 +109,7 @@ extern struct multiDef_s *Item_GetMultiDef(itemDef_t *item);
 extern void Item_SetCursorPos(itemDef_t *item, int cursorPos);
 extern void Item_SetScreenCoords(itemDef_t *item, float x, float y, int horzAlign, int vertAlign);
 
-static inline void FastSinCos(const float value, float *pSin, float *pCos)
+inline void FastSinCos(const float value, float *pSin, float *pCos)
 {
     __asm
     {
@@ -300,12 +300,12 @@ static itemDef_t *g_bindItem;
 static qboolean debugMode;
 static int lastListBoxClickTime;
 
-static float I_fsel(const float x, const float y, const float z)
+inline float I_fsel(const float x, const float y, const float z)
 {
     return x >= 0.0f ? y : z;
 }
 
-static float I_fclamp(const float val, const float min, const float max)
+inline float I_fclamp(const float val, const float min, const float max)
 {
     return I_fsel(min - val, min, I_fsel(val - max, max, val));
 }

@@ -27,7 +27,7 @@ extern vec_t Vec2Normalize( vec3_t v );
 
 #define COMPASS_ACTOR_COUNT 64
 
-static inline float I_sqrt(const float value)
+inline float I_sqrt(const float value)
 {
     return sqrt(value);
 }
@@ -43,14 +43,14 @@ static inline vec_t Vec2Length(const vec2_t v)
     return I_sqrt(v[0] * v[0] + v[1] * v[1]);
 }
 
-static inline void VectorCopy(const vec3_t a, vec3_t b)
+inline void VectorCopy(const vec3_t a, vec3_t b)
 {
     b[0] = a[0];
     b[1] = a[1];
     b[2] = a[2];
 }
 
-static inline void FastSinCos(const float value, float *pSin, float *pCos)
+inline void FastSinCos(const float value, float *pSin, float *pCos)
 {
     __asm
     {

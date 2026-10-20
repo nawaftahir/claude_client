@@ -1,7 +1,0 @@
---- a/target/src/universal/q_shared.cpp	2026-10-20 16:58:19.000000000 +0500
-+++ b/target/src/universal/q_shared.cpp	2026-10-20 17:02:20.938800426 +0500
-@@ -1,3 +1,4 @@
-+// ci batch test
- #include "../qcommon/qcommon.h"
- 
- const vec4_t colorBlack    = { 0.0f, 0.0f, 0.0f, 1.0f };

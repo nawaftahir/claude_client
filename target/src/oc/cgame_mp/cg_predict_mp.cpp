@@ -139,7 +139,7 @@ static void CG_InterpolatePlayerState(qboolean grabAngles)
                           (next->ps.fWeaponPosFrac - prev->ps.fWeaponPosFrac) * f;
 }
 
-static inline void FastSinCos(const float value, float *pSin, float *pCos)
+inline void FastSinCos(const float value, float *pSin, float *pCos)
 {
     __asm
     {
@@ -187,7 +187,7 @@ static inline void VectorScale(const vec3_t v, const float s, vec3_t o)
     o[2] = s * v[2];
 }
 
-static inline void VectorClear(vec3_t v)
+inline void VectorClear(vec3_t v)
 {
     v[0] = 0;
     v[1] = 0;

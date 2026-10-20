@@ -1487,7 +1487,7 @@ int SND_IsStreamChannelPlaying_44cdf0(int index)
     return !SND_IsStreamChannelFree(index) && !g_snd.chaninfo[index].startDelay;
 }
 
-static inline float I_fsel(const float x, const float y, const float z)
+inline float I_fsel(const float x, const float y, const float z)
 {
     return x >= 0.0f ? y : z;
 }

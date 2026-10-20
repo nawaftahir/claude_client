@@ -217,7 +217,7 @@ void CG_Draw2D(void);
 bool CG_GetWeapReticleZoom(float *pfZoom);
 void CG_DrawTurretCrossHair(void);
 static inline int CG_RoundFPS(float value);
-static inline void FastSinCos(const float value, float *pSin, float *pCos);
+inline void FastSinCos(const float value, float *pSin, float *pCos);
 
 extern int Com_sprintf(char *dest, size_t size, const char *format, ...);
 
@@ -2371,7 +2371,7 @@ static inline int CG_RoundFPS(float value)
     return I_fround(value);
 #endif
 }
-static inline void FastSinCos(const float value, float *pSin, float *pCos)
+inline void FastSinCos(const float value, float *pSin, float *pCos)
 {
     __asm
     {

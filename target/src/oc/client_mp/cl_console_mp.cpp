@@ -807,11 +807,11 @@ static void CL_AddConsoleChar(int ch, unsigned char colorIdx)
     con.lineOffset++;
 }
 
-static float I_fsel(const float x, const float y, const float z)
+inline float I_fsel(const float x, const float y, const float z)
 {
     return x >= 0.0f ? y : z;
 }
-static float I_fclamp(const float val, const float min, const float max)
+inline float I_fclamp(const float val, const float min, const float max)
 {
     return I_fsel(min - val, min, I_fsel(val - max, max, val));
 }

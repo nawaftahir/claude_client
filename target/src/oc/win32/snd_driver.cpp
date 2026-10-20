@@ -1390,7 +1390,7 @@ void SND_Update2DChannel(int i, int frametime)
     }
 }
 
-static inline float I_sqrt(const float value)
+inline float I_sqrt(const float value)
 {
     return sqrt(value);
 }
