@@ -87,9 +87,10 @@ static int previous;
 static struct trStatistics_t rendererStats;
 static int fps_previousTimes[32];
 static int fps_index;
-static vec4_t colorWhiteFaded;
-static vec4_t colorGreenFaded;
-static vec4_t colorRedFaded;
+static const float cg_unk_55de60 = 620.0f;
+static const vec4_t colorWhiteFaded = { 1.0f, 1.0f, 1.0f, 0.75f };
+static const vec4_t colorGreenFaded = { 0.0f, 1.0f, 0.0f, 0.75f };
+static const vec4_t colorRedFaded = { 0.75f, 0.25f, 0.0f, 0.75f };
 
 extern const vec_t colorWhite[4];
 extern void UI_DrawHandlePic(float x, float y, float w, float h, int horzAlign, int vertAlign, const vec_t *color, MaterialHandle material);
@@ -313,7 +314,7 @@ void CG_DrawScriptUsage(void)
 
 static float CG_DrawSnapshot(float y)
 {
-    return y + (float)CG_DrawBigDevStringColor(620.0f, y,
+    return y + (float)CG_DrawBigDevStringColor(cg_unk_55de60, y,
         va("time:%i snap:%i cmd:%i", cg->nextSnap->serverTime, cg->latestSnapshotNum, cgs->serverCommandSequence),
         colorWhite, 6);
 }
@@ -386,37 +387,37 @@ static float CG_DrawFPS(float y)
             s = va("%ifps(%i-%i,%i)", fpsAvg, fpsMin, fpsMax, fpsVar);
         }
 
-        y += (float)CG_DrawBigDevStringColor(620.0f, y, s, colorWhiteFaded, 6);
+        y += (float)CG_DrawBigDevStringColor(cg_unk_55de60, y, s, colorWhiteFaded, 6);
 
         if (cg_drawFPS->current.integer > 1) {
             if (!stricmp(Dvar_GetString("gfx_driver"), "ogl"))
-                return y + (float)CG_DrawSmallDevStringColor(620.0f, y, "use d3d for stats", colorWhiteFaded, 6);
+                return y + (float)CG_DrawSmallDevStringColor(cg_unk_55de60, y, "use d3d for stats", colorWhiteFaded, 6);
 
             CL_TrackStatistics(&rendererStats);
-            y += (float)CG_DrawSmallDevStringColor(620.0f, y, "scene", colorGreenFaded, 6);
+            y += (float)CG_DrawSmallDevStringColor(cg_unk_55de60, y, "scene", colorGreenFaded, 6);
 
-            CG_DrawSmallDevStringColor(620.0f, y, va("view tris          "), colorWhiteFaded, 6);
-            y += (float)CG_DrawSmallDevStringColor(620.0f, y, va("%i", rendererStats.c_viewIndexes / 3), colorWhiteFaded, 6);
+            CG_DrawSmallDevStringColor(cg_unk_55de60, y, va("view tris          "), colorWhiteFaded, 6);
+            y += (float)CG_DrawSmallDevStringColor(cg_unk_55de60, y, va("%i", rendererStats.c_viewIndexes / 3), colorWhiteFaded, 6);
 
             if (rendererStats.c_shadowIndexes) {
-                CG_DrawSmallDevStringColor(620.0f, y, va("shadow tris          "), colorWhiteFaded, 6);
-                y += (float)CG_DrawSmallDevStringColor(620.0f, y, va("%i", rendererStats.c_shadowIndexes / 3), colorWhiteFaded, 6);
+                CG_DrawSmallDevStringColor(cg_unk_55de60, y, va("shadow tris          "), colorWhiteFaded, 6);
+                y += (float)CG_DrawSmallDevStringColor(cg_unk_55de60, y, va("%i", rendererStats.c_shadowIndexes / 3), colorWhiteFaded, 6);
             }
 
-            CG_DrawSmallDevStringColor(620.0f, y, va("raw geo tris          "), colorWhiteFaded, 6);
-            y += (float)CG_DrawSmallDevStringColor(620.0f, y, va("%i", rendererStats.c_indexes / 3), colorWhiteFaded, 6);
+            CG_DrawSmallDevStringColor(cg_unk_55de60, y, va("raw geo tris          "), colorWhiteFaded, 6);
+            y += (float)CG_DrawSmallDevStringColor(cg_unk_55de60, y, va("%i", rendererStats.c_indexes / 3), colorWhiteFaded, 6);
 
-            CG_DrawSmallDevStringColor(620.0f, y, va("raw fx tris          "), colorWhiteFaded, 6);
-            y += (float)CG_DrawSmallDevStringColor(620.0f, y, va("%i", rendererStats.c_fxIndexes / 3), colorWhiteFaded, 6);
+            CG_DrawSmallDevStringColor(cg_unk_55de60, y, va("raw fx tris          "), colorWhiteFaded, 6);
+            y += (float)CG_DrawSmallDevStringColor(cg_unk_55de60, y, va("%i", rendererStats.c_fxIndexes / 3), colorWhiteFaded, 6);
 
-            CG_DrawSmallDevStringColor(620.0f, y, va("prim          "), colorWhiteFaded, 6);
-            y += (float)CG_DrawSmallDevStringColor(620.0f, y, va("%i", rendererStats.c_batches), colorWhiteFaded, 6);
+            CG_DrawSmallDevStringColor(cg_unk_55de60, y, va("prim          "), colorWhiteFaded, 6);
+            y += (float)CG_DrawSmallDevStringColor(cg_unk_55de60, y, va("%i", rendererStats.c_batches), colorWhiteFaded, 6);
 
-            y += (float)CG_DrawSmallDevStringColor(620.0f, y, "level", colorGreenFaded, 6);
+            y += (float)CG_DrawSmallDevStringColor(cg_unk_55de60, y, "level", colorGreenFaded, 6);
 
-            CG_DrawSmallDevStringColor(620.0f, y, va("tex      "), colorWhiteFaded, 6);
+            CG_DrawSmallDevStringColor(cg_unk_55de60, y, va("tex      "), colorWhiteFaded, 6);
             y += (float)CG_DrawSmallDevStringColor(
-                620.0f, y, va("%d", rendererStats.c_imageUsage.total / (1024 * 1024)), colorWhiteFaded, 6);
+                cg_unk_55de60, y, va("%d", rendererStats.c_imageUsage.total / (1024 * 1024)), colorWhiteFaded, 6);
 
             if (rendererStats.c_imageUsage.minspec <= 48 * 1024 * 1024) {
                 color = colorWhiteFaded;
@@ -426,13 +427,13 @@ static float CG_DrawFPS(float y)
                 s = va("min pc tex (%g)      ", 48.0);
             }
 
-            CG_DrawSmallDevStringColor(620.0f, y, s, color, 6);
+            CG_DrawSmallDevStringColor(cg_unk_55de60, y, s, color, 6);
             y += (float)CG_DrawSmallDevStringColor(
-                620.0f, y, va("%d", rendererStats.c_imageUsage.minspec / (1024 * 1024)), color, 6);
+                cg_unk_55de60, y, va("%d", rendererStats.c_imageUsage.minspec / (1024 * 1024)), color, 6);
 
-            CG_DrawSmallDevStringColor(620.0f, y, va("lightmap      "), colorWhiteFaded, 6);
+            CG_DrawSmallDevStringColor(cg_unk_55de60, y, va("lightmap      "), colorWhiteFaded, 6);
             y += (float)CG_DrawSmallDevStringColor(
-                620.0f, y, va("%d", rendererStats.c_imageUsage.lightmap / (1024 * 1024)), colorWhiteFaded, 6);
+                cg_unk_55de60, y, va("%d", rendererStats.c_imageUsage.lightmap / (1024 * 1024)), colorWhiteFaded, 6);
         }
     }
 

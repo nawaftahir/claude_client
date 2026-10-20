@@ -11908,9 +11908,7 @@
 "name": "?PC_EvaluateTokens@@YAHPAUsource_s@@PAUtoken_s@@PAJPANH@Z",
 "obj": "l_precomp.obj",
 "size": 2587,
-"hits": [
-"0x43d8e0"
-]
+"hits": []
 },
 {
 "name": "?PC_Evaluate@@YAHPAUsource_s@@PAJPANH@Z",
@@ -17454,7 +17452,7 @@
 ]
 },
 {
-"name": "$L96827",
+"name": "$L96829",
 "obj": "module",
 "size": 6,
 "hits": []
@@ -32794,7 +32792,7 @@
 ]
 },
 {
-"name": "$L119347",
+"name": "$L119334",
 "obj": "module",
 "size": 166,
 "hits": [
@@ -32802,7 +32800,7 @@
 ]
 },
 {
-"name": "$L119349",
+"name": "$L119336",
 "obj": "module",
 "size": 48,
 "hits": [
@@ -32835,7 +32833,7 @@
 ]
 },
 {
-"name": "$L132181",
+"name": "$L132168",
 "obj": "module",
 "size": 166,
 "hits": [
@@ -32843,7 +32841,7 @@
 ]
 },
 {
-"name": "$L132183",
+"name": "$L132170",
 "obj": "module",
 "size": 48,
 "hits": [
@@ -32903,7 +32901,7 @@
 ]
 },
 {
-"name": "$L104164",
+"name": "$L104166",
 "obj": "module",
 "size": 21,
 "hits": [
@@ -32919,7 +32917,7 @@
 ]
 },
 {
-"name": "$L147057",
+"name": "$L147044",
 "obj": "module",
 "size": 21,
 "hits": [
@@ -45396,10 +45394,8 @@
 {
 "name": "?SP_worldspawn@@YAXXZ",
 "obj": "g_spawn_mp.obj",
-"size": 458,
-"hits": [
-"0x50b360"
-]
+"size": 453,
+"hits": []
 },
 {
 "name": "?G_SpawnEntitiesFromString@@YAXXZ",

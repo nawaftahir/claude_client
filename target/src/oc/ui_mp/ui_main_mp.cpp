@@ -41,9 +41,7 @@ extern const vec4_t colorWhite;
 extern const vec4_t colorYellow;
 extern clientActive_t clients[1];
 extern cg_t cgArray[1];
-/* see cg_local.h: `cg` is a const pointer to the real object, so `cg->field` folds
- * into a single absolute access. */
-static cg_t * const cg = &cgArray[0];
+extern cg_t * const cg;
 extern LegacyHacks *legacyHacks;
 extern LegacyHacks legacyHacksData;
 

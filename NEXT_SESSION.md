@@ -89,3 +89,10 @@ the client-recon skill fix-pattern catalogue (top ~12 entries = 10-19 PAID class
   and scheduling ties on identical IR. Next code attack = hook c2's block-local pass (probe lab/w4/pq/pr.sh), not respelling.
 - Layout: .data 48 KB band -16 = XCU section merge (see LESSONS w61Y). Whole file 9.59% (release).
 - CI: lab/cibatch.sh (status polling), lab/cipatch.sh, lab/sweep_ci.sh; batch artifacts res-* (small) / bin-* (exe+map).
+
+## State 10-21 early morning
+- Gauge 1,308,148 (92.86%; tie fns PC_EvaluateTokens/SP_worldspawn off); real excl ties 1,304,546. Commit at 93.08% (7b76f73) stands.
+- Release layout: whole 12.64% (was 9.45%), .rdata 45.8% (18.7%), .data 92.1% (69.6%). Behaviour bugs fixed: FPS/stats text colours, voice_current_scaler.
+- Overnight CI sweeps (~1,000 mechanical variants: dead inits, dead locals, statement swaps) = 0 code matches.
+- Open layout: cl_console .rdata contribution 16-aligned (retail 4) - bisect its constants; small .rdata drift from 0x17380 spread over many TUs; dead scaffolding data at .data tail should be deleted.
+- Open code: per-fn compiler mechanisms (see LESSONS 10-20/10-21); only targeted leads, no blind agent waves.

@@ -142,7 +142,9 @@ static void *imp_sv_paused;
 static void *imp_theFxHelper;
 keywordHash_t *itemParseKeywordHash[512];
 LegacyHacks legacyHacksData;
+#pragma data_seg(".data$zzz")
 LegacyHacks *legacyHacks = &legacyHacksData;
+#pragma data_seg()
 
 static byte *net_profile_dvar;
 short int partial_audio_buffer[640];
@@ -152,6 +154,6 @@ static const void *speex_nb_mode_ptr;
 static int *speex_quality_ptr;
 static const void *speex_uwb_mode_ptr;
 static const void *speex_wb_mode_ptr;
-float voice_current_scaler;
+float voice_current_scaler = 1.0f;
 byte *voice_maxframe_ptr;
 static byte *voice_scale_ptr;

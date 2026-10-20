@@ -59,19 +59,6 @@ const float vbr_nb_thresh[9][11]={
 };
 
 
-const float vbr_hb_thresh[5][11]={
-   {-1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0}, /* silence */
-   {-1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0}, /*  2 kbps */
-   {11.0, 11.0,  9.5,  8.5,  7.5,  6.0,  5.0,  3.9,  3.0,  2.0,  1.0}, /*  6 kbps */
-   {11.0, 11.0, 11.0, 11.0, 11.0,  9.5,  8.7,  7.8,  7.0,  6.5,  4.0}, /* 10 kbps */
-   {11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0, 11.0,  9.8,  7.5,  5.5}  /* 18 kbps */ 
-};
-
-const float vbr_uhb_thresh[2][11]={
-   {-1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0}, /* silence */
-   { 3.9,  2.5,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0, -1.0}  /*  2 kbps */
-};
-
 /*
   This function should analyse the signal and decide how critical the
   coding error will be perceptually. The following factors should be

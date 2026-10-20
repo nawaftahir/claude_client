@@ -8,18 +8,6 @@ void G_CalcMuzzlePoints( gentity_t *ent, weaponParms *wp );
 
 #define MAX_BULLET_RESURSIONS 12
 
-// melee trace pattern: centre, then the four corners
-extern const vec2_t traceOffsets[];
-
-static const vec2_t traceOffsets[] =
-{
-	{ 0.000000, 0.000000},
-	{ 1.000000, 1.000000},
-	{ 1.000000, -1.000000},
-	{ -1.000000, 1.000000},
-	{ -1.000000, -1.000000},
-};
-
 int G_GetWeaponIndexForName( const char *name );
 void G_SetEquippedOffHand( int clientNum, int offHandIndex );
 
@@ -156,6 +144,14 @@ void Bullet_Fire_Extended( const gentity_t *source, gentity_t *attacker,
 
 bool Melee_Trace( gentity_t *ent, weaponParms *wp, int damage, float range, float width, float height, trace_t *traceResult, vec3_t hitOrigin )
 {
+	static const vec2_t traceOffsets[] =
+	{
+		{ 0.0f, 0.0f},
+		{ 1.0f, 1.0f},
+		{ 1.0f, -1.0f},
+		{ -1.0f, 1.0f},
+		{ -1.0f, -1.0f},
+	};
 	vec3_t endPos;
 	int traceIndex;
 	int numTraces;

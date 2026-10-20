@@ -1680,15 +1680,29 @@ const vec4_t g_color_table[8] = {
 
 static const vec4_t con_versionColor = { 1.0f, 1.0f, 0.0f, 1.0f };
 
-static const vec4_t con_inputDvarMatchColor = { 1.0f, 1.0f, 0.8f, 1.0f };
+/* unreferenced in retail code; unnamed (retail .rdata 0x55c048) */
+extern const float con_unk_55c048;
+const float con_unk_55c048 = 4.0f;
 
 static const vec4_t con_inputCommandMatchColor = { 0.8f, 0.8f, 1.0f, 1.0f };
 
+static const vec4_t con_inputDvarMatchColor = { 1.0f, 1.0f, 0.8f, 1.0f };
+
 static const vec4_t con_inputDvarValueColor = { 1.0f, 1.0f, 1.0f, 1.0f };
 
-static const vec4_t con_inputDvarInfoColor = { 0.8f, 0.8f, 1.0f, 1.0f };
-
 static const vec4_t con_inputDvarInactiveValueColor = { 0.8f, 0.8f, 0.8f, 1.0f };
+
+/* unreferenced in retail code; unnamed (retail .rdata 0x55c09c) */
+extern const float con_unk_55c09c[4];
+const float con_unk_55c09c[4] = { 6.0f, 32.0f, 6.0f, 10.0f };
+
+extern clientConnection_t clientConnections[1];
+extern clientActive_t * const cl;
+clientActive_t * const cl = &clients[0];
+extern clientConnection_t * const clc;
+clientConnection_t * const clc = &clientConnections[0];
+
+static const vec4_t con_inputDvarInfoColor = { 0.8f, 0.8f, 1.0f, 1.0f };
 
 // retail 0x406be0, empty and unreferenced; name unknown
 void Con_Stub_406be0(void)
