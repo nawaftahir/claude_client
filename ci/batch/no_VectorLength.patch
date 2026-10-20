@@ -1,0 +1,11 @@
+--- a/target/src/oc/cgame_mp/cg_predict_mp.cpp
++++ b/target/src/oc/cgame_mp/cg_predict_mp.cpp
+@@ -161,7 +161,7 @@
+     return v1[0] == v2[0] && v1[1] == v2[1] && v1[2] == v2[2];
+ }
+ 
++static inline vec_t VectorLength(const vec3_t v)
+-inline vec_t VectorLength(const vec3_t v)
+ {
+     return sqrtf(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+ }

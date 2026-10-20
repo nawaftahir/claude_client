@@ -1,0 +1,11 @@
+--- a/target/src/oc/ui/ui_component.cpp
++++ b/target/src/oc/ui/ui_component.cpp
+@@ -116,7 +116,7 @@
+ int UI_Component_IsCursorHidden(void);
+ 
+ // universal/com_math.h inlines
++static inline void Vector2Copy(const vec2_t a, vec2_t b)
+-inline void Vector2Copy(const vec2_t a, vec2_t b)
+ {
+     b[0] = a[0];
+     b[1] = a[1];

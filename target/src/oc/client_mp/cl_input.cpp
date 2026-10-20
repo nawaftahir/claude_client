@@ -181,7 +181,7 @@ inline float I_fsel(const float x, const float y, const float z)
     return x >= 0.0f ? y : z;
 }
 
-static float I_fmax(const float x, const float y)
+inline float I_fmax(const float x, const float y)
 {
     return I_fsel(x - y, x, y);
 }

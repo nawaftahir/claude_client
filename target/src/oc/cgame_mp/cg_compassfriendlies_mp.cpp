@@ -38,7 +38,7 @@ static inline float I_fabs(const float value)
     return fabs(value);
 }
 
-static inline vec_t Vec2Length(const vec2_t v)
+inline vec_t Vec2Length(const vec2_t v)
 {
     return I_sqrt(v[0] * v[0] + v[1] * v[1]);
 }

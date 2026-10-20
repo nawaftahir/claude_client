@@ -1,0 +1,11 @@
+--- a/target/src/oc/cgame_mp/cg_compassfriendlies_mp.cpp
++++ b/target/src/oc/cgame_mp/cg_compassfriendlies_mp.cpp
+@@ -38,7 +38,7 @@
+     return fabs(value);
+ }
+ 
++static inline vec_t Vec2Length(const vec2_t v)
+-inline vec_t Vec2Length(const vec2_t v)
+ {
+     return I_sqrt(v[0] * v[0] + v[1] * v[1]);
+ }

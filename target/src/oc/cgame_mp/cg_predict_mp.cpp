@@ -156,31 +156,31 @@ inline void FastSinCos(const float value, float *pSin, float *pCos)
     }
 }
 
-static inline bool VectorCompare(const vec3_t v1, const vec3_t v2)
+inline bool VectorCompare(const vec3_t v1, const vec3_t v2)
 {
     return v1[0] == v2[0] && v1[1] == v2[1] && v1[2] == v2[2];
 }
 
-static inline vec_t VectorLength(const vec3_t v)
+inline vec_t VectorLength(const vec3_t v)
 {
     return sqrtf(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
 }
 
-static inline void VectorSubtract(const vec3_t a, const vec3_t b, vec3_t c)
+inline void VectorSubtract(const vec3_t a, const vec3_t b, vec3_t c)
 {
     c[0] = a[0] - b[0];
     c[1] = a[1] - b[1];
     c[2] = a[2] - b[2];
 }
 
-static inline void VectorAdd(const vec3_t a, const vec3_t b, vec3_t c)
+inline void VectorAdd(const vec3_t a, const vec3_t b, vec3_t c)
 {
     c[0] = a[0] + b[0];
     c[1] = a[1] + b[1];
     c[2] = a[2] + b[2];
 }
 
-static inline void VectorScale(const vec3_t v, const float s, vec3_t o)
+inline void VectorScale(const vec3_t v, const float s, vec3_t o)
 {
     o[0] = s * v[0];
     o[1] = s * v[1];
