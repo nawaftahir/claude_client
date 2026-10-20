@@ -1,10 +1,10 @@
-# Next session prompt (paste this) - WSL session, state 10-20 06:30
+# Next session prompt (paste this) - WSL session, state 10-20 evening, see HANDOFF_WINDOWS.md top
 
 Continue the CoD2MP_s.exe 1.0 client recon in ~/cod2/test/dev/claude_client.
-State: **92.73% = 1,306,197 B** of 1,408,683 B .text, RATCHET OK, accepted in `target/build/good.json` (10-19 22:19).
-UNCOMMITTED on top of the 92.00% commit 78852ab: `lab/wip_gap23.patch` == main `git diff -- target/src` (39 files: w38-w43 code + w38/w42 layout incl. libcmt retail order).
-Whole file same-offset **9.50% on the RELEASE exe** (`cd target; make release; python3 ../shameter.py build/release/CoD2MP_s.exe ../../cod2engineold/binaries/windows/1.0/CoD2MP_s.exe`; .rdata 29.01%, .data 65.18%; the non-release exe reads ~1-2 points high, do not use it).
-Next checkpoint **93% = 1,310,076 B (+3,879)**; commit there (clean-rebuild first). Owner week goal: 100% + SHA (memory project_week_goal_100); full agents allowed.
+State: **92.70% = 1,305,793 B** of 1,408,683 B .text, RATCHET OK, accepted in `target/build/good.json` (10-20).
+UNCOMMITTED on top of the 92.00% commit 78852ab: `lab/wip_gap23.patch` == main `git diff -- target/src` (w38-w47 code + layout incl. libcmt retail order, w46/w47 .data/.rdata ownership).
+Whole file same-offset **9.629% on the RELEASE exe** (`cd target; make release; python3 ../shameter.py build/release/CoD2MP_s.exe ../../cod2engineold/binaries/windows/1.0/CoD2MP_s.exe`; .data 68.00%; the non-release exe reads ~1-2 points high, do not use it).
+Next checkpoint **93% = 1,310,076 B (+4,283)**; commit there (clean-rebuild first). Owner week goal: 100% + SHA (memory project_week_goal_100); full agents allowed.
 
 Read first: `dev/CLAUDE.md` "Client track rules", HANDOFF_WINDOWS.md (state + open leads),
 the client-recon skill fix-pattern catalogue (top ~12 entries = 10-19 PAID classes), LESSONS.md tail.
@@ -67,6 +67,15 @@ the client-recon skill fix-pattern catalogue (top ~12 entries = 10-19 PAID class
 - Layout numbers only from the RELEASE exe (`make release` + shameter.py): release 9.50% now.
 - Rule studies on 1-insn ties paid 0 B (w40 x2, w44); go for concrete fixes. Brief = 25-min box, 3 builds/fn.
 ## Next concrete leads
+- **sb_encode 0x4de1d0 (3,713 B = the checkpoint alone):** exact Speex 1.1.9 text (lsp `M_PI*((float)(i+1))` + `floor(st->vbr_quality)` float overload) = 6 lines (KEPT in main, upstream text); only residue = w_sig window loop operand role (retail fld st->high[i], fmul st->window[i]). w48: deleting the last stmt `st->first=0;` alone flips it = whole-fn IL decides; next attack = compile order of the inlined speex_encoder_ctl (x7)/speex_encode_native/speex_move (raw vs compiled bodies), real builds only. See LESSONS 10-20 + lab/w4/re_re_w48_s3.md.
+- 10-20 cost lesson: w46+w47 ~950k agent tok = +198 B. Hunt a lead yourself first (server-text / upstream-text diffs: /tmp-style srvdiff of near-misses vs lnxded-1.0 src, vendor diffs), then ONE agent on it.
 - Scr_GetNextCodepos 0x47d1b0 (real size ~0x31c): retail CALLS AddRefToValue(type,u) 0x476810, ours inlines;
   global noinline = 196->78 but NET -2352 -> make it a call at this site only.
 - CG_DrawTracer: why retail treats CalcTracerFinalScale as clobbering eax/ecx/edx (c2 oracle 0x1077067f).
+
+## CI (10-20, working)
+- Private image ghcr.io/nawaftahir/cod2-client-ci:1 (compiler + d3d9.lib + dsound.lib + retail anchor; Actions access granted to claude_client). Never put those files in git.
+- gate.yml (branch wip-ci): full build + cmp/cov/ratchet vs ci/good.json; matches local exactly (1,307,050). ~3 min clean.
+- batch.yml (dispatch on a branch): builds every ci/batch/*.patch in parallel (max 20), per-patch NET + ratchet in the run summary/artifacts. Verified: comment patch NET 0, AddRefToValue noinline -2352 = local.
+  Use: commit patches (git diff format, a/target/... paths) to ci/batch/ on a branch based on wip-ci, push, `gh workflow run batch.yml --ref <branch>`, `gh run download <id>`.
+- Keep ci/good.json in sync with main's target/build/good.json when the baseline moves.
