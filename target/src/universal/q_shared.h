@@ -378,7 +378,6 @@ static __forceinline char *Com_ParseInl( const char **data_p )
 // forceinline body lives in q_parse.cpp
 char *Com_ParseOnLineInl( const char **data_p );
 void Com_SkipRestOfLineInl( const char **data );
-void Com_EndParseSessionInl( void );
 void Com_ParseReturnToMark( const char *( *text ), com_parse_mark_t *mark );
 int Com_Compress( char *data_p );
 void Com_ParseSetMark( const char *( *text ), com_parse_mark_t *mark );
@@ -395,7 +394,7 @@ static inline short LittleShort( short l )
 	return l;
 }
 
-static inline int LittleLong( int l )   /* little-endian host: identity; one copy per TU */
+__inline int LittleLong( int l )   /* little-endian host: identity */
 {
 	return l;
 }

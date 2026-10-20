@@ -11,8 +11,8 @@
 #endif
 #define WIN32 1
 #define M_PI 3.14159265358979323846
-#define strcasecmp _stricmp
-#define strncasecmp _strnicmp
+#define strcasecmp strcmpi
+#define strncasecmp strnicmp
 #define snprintf _snprintf
 #define vsnprintf _vsnprintf
 #define __sigsetjmp(b, m) setjmp(b)

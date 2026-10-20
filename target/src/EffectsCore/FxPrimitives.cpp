@@ -49,6 +49,7 @@ struct FxRange
 {
 	float min;
 	float max;
+	float GetVal() const;
 };
 
 struct FxChannel
@@ -888,7 +889,6 @@ XModel *XModelPrecache( const char *name, void *( *Alloc )( int size ), void *( 
 bool FX_GetBoneOrientation( const FxBoltInfo *bolt, orientation_t *orient );
 int FX_GetCluster( const vec3_t origin );
 void FX_SetSortGroup( Effect *effect );
-float FxRange_GetVal( const FxRange *range );
 float flrand( float min, float max );
 float Vec3Normalize( vec3_t v );
 float Vec3DistanceSq( const vec3_t p1, const vec3_t p2 );
@@ -1231,7 +1231,7 @@ void Particle::SetAxis( const vec3_t *ax )
 void FxChannelInstance_Create( const FxChannel *master, FxChannelInstance *createe )
 {
 	FxCurveIterator_Create( &createe->curveIterator, master->curve );
-	createe->scale = FxRange_GetVal( &master->scaleRange );
+	createe->scale = master->scaleRange.GetVal();
 }
 
 void Particle::CreateChannelInstances( const PrimitiveTemplate *primTemp )

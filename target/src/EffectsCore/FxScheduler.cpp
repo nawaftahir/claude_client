@@ -35,6 +35,7 @@ struct FxRange
 {
 	float min;
 	float max;
+	float GetVal() const;
 };
 
 struct FxChannel
@@ -570,7 +571,6 @@ FxEffectDef *FX_ParseEffect( class GenericParser2 *parser, const char *name );
 void FX_CleanTemplate( FxEffectDef *fx );
 bool FX_GetBoneOrientation( const FxBoltInfo *bolt, orientation_t *orient );
 void FxChannelInstance_Create( const FxChannel *master, FxChannelInstance *createe );
-float FxRange_GetVal( const FxRange *range );
 float flrand( float min, float max );
 float Vec3DistanceSq( const vec3_t p1, const vec3_t p2 );
 void AxisCopy( const vec3_t in[3], vec3_t out[3] );
@@ -777,7 +777,7 @@ void FxScheduler::PlayEffect( const FxEffectDef *fx, const vec3_t origin, const 
 			continue;
 		if ( ( primTemp->mSpawnFlags & 0x400 ) && theFxHelper->CullSpherePreviousFrame( origin, primTemp->spawnFrustumCullRadius ) )
 			continue;
-		spawnCount = (int)( FxRange_GetVal( &primTemp->mSpawnCount ) + 0.5f );
+		spawnCount = (int)( primTemp->mSpawnCount.GetVal() + 0.5f );
 		if ( !spawnCount )
 			continue;
 		if ( primTemp->mSpawnFlags & 0x200 )
@@ -788,7 +788,7 @@ void FxScheduler::PlayEffect( const FxEffectDef *fx, const vec3_t origin, const 
 			if ( primTemp->mSpawnFlags & 0x200 )
 				delay = (int)( index * spacing );
 			else
-				delay = (int)FxRange_GetVal( &primTemp->mSpawnDelay );
+				delay = (int)primTemp->mSpawnDelay.GetVal();
 			if ( delay < 1 )
 			{
 				CreateEffect( fx, primTemp, bolt, or_.origin, or_.axis, -delay, index );
@@ -913,7 +913,7 @@ void FxScheduler::CreateDecalEffect( const PrimitiveTemplate *primTemp, const ve
 	vec4_t color;
 	float size;
 
-	rotation = FxRange_GetVal( &primTemp->mRotation );
+	rotation = primTemp->mRotation.GetVal();
 	GetDecalColor( primTemp, color );
 	color[3] = GetDecalAlpha( primTemp );
 	size = GetDecalSize( primTemp );

@@ -208,7 +208,7 @@ static void CG_TellTarget_f(void)
         return;
 
     Cmd_ArgsBuffer(message, 128);
-    Com_sprintf(command, 128, "tell %i \"%s\"", clientNum, message);
+    Com_sprintf(command, 128, "tell %i \"\025%s\"", clientNum, message);
     CL_AddReliableCommand(command);
 }
 

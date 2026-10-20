@@ -266,32 +266,9 @@ extern void *s_cmdList;
 
 int g_cginit_loading = 0;
 
-static const dvar_t *CL_DvarFromImport(void *importPtr)
-{
-    return importPtr ? *(const dvar_t **)importPtr : NULL;
-}
-
 const char *CL_GetConfigString(int index)
 {
     return clients[0].gameState.stringData + clients[0].gameState.stringOffsets[index];
-}
-
-static qboolean CL_DvarCurrentBool(void *importPtr)
-{
-    const dvar_t *dvar = CL_DvarFromImport(importPtr);
-    return dvar && dvar->current.enabled;
-}
-
-static int CL_DvarCurrentInt(void *importPtr)
-{
-    const dvar_t *dvar = CL_DvarFromImport(importPtr);
-    return dvar ? dvar->current.integer : 0;
-}
-
-static const char *CL_DvarCurrentString(void *importPtr)
-{
-    const dvar_t *dvar = CL_DvarFromImport(importPtr);
-    return dvar ? dvar->current.string : NULL;
 }
 
 static float CL_ComTimescaleValue(void)
@@ -696,6 +673,26 @@ qboolean CL_DObjCreateSkelForBones(const struct DObj_s *obj, int *partBits, int 
         Com_Printf("^3WARNING: CL_SKEL_MEMORY_SIZE exceeded - not calculating skeleton\n");
     }
     return 1;
+}
+
+/* Unreferenced retail copy of Com_SurfaceTypeFromName (0x401ec0) */
+extern infoParm_t infoParms[];
+
+int Com_SurfaceTypeFromName_401ec0(const char *name)
+{
+    int i;
+
+    if (!stricmp(name, "default")) {
+        return 0;
+    }
+
+    for (i = 0; i < 22; i++) {
+        if (!stricmp(name, infoParms[i].name)) {
+            return (unsigned char)((infoParms[i].surfaceFlags & 0x1f00000) >> 20);
+        }
+    }
+
+    return -1;
 }
 
 void CL_SubtitlePrint(const char *pszText, int iDuration, int iLineWidth)
@@ -1221,7 +1218,7 @@ void CL_AdjustTimeDelta(void)
         cl->oldServerTime = cl->snap.serverTime;
         cl->serverTime = cl->snap.serverTime;
         if ((cl_showTimeDelta)->current.enabled) {
-            Com_Printf("cl_showTimeDelta: reset\n");
+            Com_Printf("<RESET> ");
         }
         goto debug_print;
     }
@@ -1229,7 +1226,7 @@ void CL_AdjustTimeDelta(void)
     if (deltaDiff > 100) {
 
         if ((cl_showTimeDelta)->current.enabled) {
-            Com_Printf("cl_showTimeDelta: average\n");
+            Com_Printf("<FAST> ");
         }
         cl = CL_LOCAL;
         cl->serverTimeDelta = (newDelta + cl->serverTimeDelta) >> 1;

@@ -429,7 +429,7 @@ int sb_encode(void *state, void *vin, SpeexBits *bits)
          /*If we can't find all LSP's, do some damage control and use a flat filter*/
          for (i=0;i<st->lpcSize;i++)
          {
-            st->lsp[i]=M_PI*(i+1)/(st->lpcSize+1);
+            st->lsp[i]=M_PI*((float)(i+1))/(st->lpcSize+1);
          }
       }
    }
@@ -481,7 +481,7 @@ int sb_encode(void *state, void *vin, SpeexBits *bits)
          {
             int v1;
             float thresh;
-            v1=(int)floor((double)(st->vbr_quality));
+            v1=(int)floor(st->vbr_quality);
             if (v1==10)
                thresh = mode->vbr_thresh[modeid][v1];
             else

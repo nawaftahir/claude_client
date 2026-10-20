@@ -335,7 +335,7 @@ bool Sys_SendPacket( int length, const void *data, netadr_t to )
 	}
 	else
 	{
-		Com_Error( ERR_FATAL, "Sys_SendPacket: bad address type" );
+		Com_Error( ERR_FATAL, "\025Sys_SendPacket: bad address type" );
 		return true;
 	}
 

@@ -2226,8 +2226,7 @@ float SinSquaredDeg( float angle )
 	double s;
 	float r;
 
-	angle = (float)sin((double)(angle * 0.017453292f));
-	s = angle;
+	s = sin(angle * 0.017453292f);
 	r = s * s;
 	return r;
 }
@@ -2394,8 +2393,8 @@ void InfinitePerspectiveMatrix( float mtx[4][4], float fovX, float fovY, float z
 
 	memset(mtx, 0, 64);
 	k = 0.99950027f;
-	mtx[0][0] = (float)tan((double)((90.0f - fovX * 0.5f) * 0.017453292f)) * k;
-	mtx[1][1] = (float)tan((double)((90.0f - fovY * 0.5f) * 0.017453292f)) * k;
+	mtx[0][0] = tan((90.0f - fovX * 0.5f) * 0.017453292f) * k;
+	mtx[1][1] = tan((90.0f - fovY * 0.5f) * 0.017453292f) * k;
 	mtx[2][2] = k;
 	mtx[2][3] = 1.0f;
 	mtx[3][2] = -zNear * k;

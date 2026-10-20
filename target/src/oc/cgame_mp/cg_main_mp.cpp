@@ -893,7 +893,7 @@ void __attribute_regparm__(1) CG_RegisterGraphics(const char *mapname)
         if (str[0] == '\0')
             break;
         if (!CG_LoadShellShockDvars(str)) {
-            Com_Error(ERR_DROP, "couldn't register shell shock '%s' -- see console\n", str);
+            Com_Error(ERR_DROP, "\025couldn't register shell shock '%s' -- see console\n", str);
         }
         CG_SetShellShockParmsFromDvars(&cgs->shellshockParms[i]);
     }
@@ -905,7 +905,7 @@ void __attribute_regparm__(1) CG_RegisterGraphics(const char *mapname)
 
     cgs->media.fx = CG_RegisterImpactEffects(mapname);
     if (!cgs->media.fx) {
-        Com_Error(ERR_DROP, "Error reading CSV files in the fx directory to identify impact effects");
+        Com_Error(ERR_DROP, "\025Error reading CSV files in the fx directory to identify impact effects");
     }
     cgs->media.fxNoBloodFleshHit = (EffectTemplate *)(FX_RegisterEffect("fx/impacts/flesh_hit_noblood.efx"));
 

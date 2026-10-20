@@ -340,7 +340,7 @@ void MediaHandles::AddEffect( FxEffectDef *fx )
 void FX_StripExtensionLower_497d90(const char *name, char *out)
 {
 	Com_StripExtension(name, out);
-	_strlwr(out);
+	strlwr(out);
 }
 
 void MediaHandles::Shutdown()

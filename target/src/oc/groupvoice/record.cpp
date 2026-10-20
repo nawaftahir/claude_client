@@ -91,6 +91,7 @@ int Record_QueueAudioDataForEncoding(audioSample_t *sample)
     int encoded;
     int frameSize;
     int partialSamples;
+    int partialTake;
     int i;
 
     voice_current_voicelevel = 0.0f;
@@ -126,8 +127,9 @@ int Record_QueueAudioDataForEncoding(audioSample_t *sample)
     while (frameSize <= sample->lengthInSamples + samples_in_partial_audio_buffer - sample->sampleOffset) {
         partialSamples = 0;
         if (samples_in_partial_audio_buffer) {
-            partialSamples = (int)I_fmin((float)(frameSize - 4), (float)samples_in_partial_audio_buffer);
-            memcpy(audio_buffer, partial_audio_buffer, sample->bytesPerSample * partialSamples);
+            partialTake = (int)I_fmin((float)(frameSize - 4), (float)samples_in_partial_audio_buffer);
+            memcpy(audio_buffer, partial_audio_buffer, sample->bytesPerSample * partialTake);
+            partialSamples = partialTake;
             samples_in_partial_audio_buffer = 0;
         }
         memcpy(&audio_buffer[partialSamples], sample->buffer + sample->sampleOffset * sample->bytesPerSample,

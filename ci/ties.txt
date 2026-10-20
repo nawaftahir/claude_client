@@ -1,0 +1,15 @@
+# fns that flip on unrelated edits (LTCG ties); losing one does not reject a build
+# seen 10-10 flipping on dvar/UI_Init experiments with no own-source change
+?SV_ArchiveSnapshot@@YAXXZ
+?PC_EvaluateTokens@@YAHPAUsource_s@@PAUtoken_s@@PAJPANH@Z
+?SV_Netchan_PrintProfileStats@@YAXH@Z
+# 10-10 re-roll when cg_main globals moved out of globals.cpp (data layout fix); stack-slot/register ties
+?DSound_UpdateSample@@YAHPAUdsound_sample_t@@PADI@Z
+?SP_worldspawn@@YAXXZ
+# 10-10 re-roll on 3rd globals move (cinematics/win_voice/ui_main dvars); 1-insn scheduling tie
+?Pickup_Weapon@@YAHPAUgentity_s@@0PAHH@Z
+?Scr_ParseGameTypeList@@YAXXZ
+# 10-10: 1-insn mov swap after ui_shared str_ arrays -> literals (retail-pinned rdata fix)
+?Menu_HandleKey@@YAXPAUdisplayContextDef_s@@PAUmenuDef_t@@HH@Z
+UI_SetActiveMenu 0x532280: already matched; fdiff lines are jump-table words only (w17 s3)
+CG_FireWeapon 0x4d0eb0: 2 lines = lea ebp,[ebx+0xf0] one push early (prologue scheduling); structure matches since w17

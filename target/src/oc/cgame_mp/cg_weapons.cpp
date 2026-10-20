@@ -291,10 +291,10 @@ void CG_WeaponRunXModelAnims(playerState_t *ps, weaponInfo_t *weapInfo)
     int i;
     qboolean adsIn;
 
-    pAnimTree = DObjGetTree(weapInfo->viewModelDObj);
     adsIn = 0;
     weaponIndex = BG_GetViewmodelWeaponIndex(ps);
     weapDef = (WeaponDef *)BG_GetWeaponDef(weaponIndex);
+    pAnimTree = DObjGetTree(weapInfo->viewModelDObj);
 
     if (ps->weaponstate == 5 && ps->weaponTime - weapDef->iPositionReloadTransTime > 0) {
         adsIn = 0;

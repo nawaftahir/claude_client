@@ -9,7 +9,22 @@ extern void I_strncpyz(char *dest, const char *src, int destsize);
 extern void Info_SetValueForKey(char *s, const char *key, const char *value);
 extern void Com_Printf(const char *msg, ...);
 extern void Com_EndParseSession(void);
-extern void Com_EndParseSessionInl(void);
+ParseThreadInfo *Com_GetParseThreadInfo();
+void Com_Error(errorParm_t code, const char *fmt, ...);
+
+static __forceinline void Com_EndParseSessionInl(void)
+{
+    ParseThreadInfo *parse;
+
+    parse = Com_GetParseThreadInfo();
+
+    if (parse->parseInfoNum == 0)
+    {
+        Com_Error(ERR_FATAL, "\x15" "Com_EndParseSession: session underflow");
+    }
+
+    parse->parseInfoNum--;
+}
 extern char *va( const char *format, ... );
 extern void *UI_Alloc(int size, int align);
 extern int FS_GetFileList(const char *path, const char *extension, FsListBehavior behavior, char *listBuf, int bufSize);

@@ -1,3 +1,3 @@
 #include <string.h>
-#define strcasecmp _stricmp
-#define strncasecmp _strnicmp
+#define strcasecmp strcmpi
+#define strncasecmp strnicmp

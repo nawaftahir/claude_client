@@ -4430,7 +4430,6 @@ void Item_Paint(displayContextDef_t *dc, itemDef_t *item)
 
 void Menu_PaintAll(displayContextDef_t *dc)
 {
-    vec4_t v;
     int i;
     int start;
     menuDef_t *menu;
@@ -4457,10 +4456,7 @@ void Menu_PaintAll(displayContextDef_t *dc)
         Menu_Paint(dc, dc->menuStack[i], 0);
 
     if (debugMode) {
-        v[0] = 1.0f;
-        v[1] = 1.0f;
-        v[2] = 1.0f;
-        v[3] = 1.0f;
+        vec4_t v = { 1.0f, 1.0f, 1.0f, 1.0f };
         UI_DrawText(va("fps: %f", dc->FPS), 0x7fffffff, UI_GetFontHandle(0, 0.5f), 5.0f, 25.0f, 0, 0, 0.5f, v, 0);
     }
 }

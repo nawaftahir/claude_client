@@ -30,7 +30,7 @@ void CG_AddLocalEntities(void);
 static void CG_FreeLocalEntity(localEntity_t *le)
 {
     if (!le->prev) {
-        Com_Error(ERR_DROP, "CG_FreeLocalEntity: not active");
+        Com_Error(ERR_DROP, "\025CG_FreeLocalEntity: not active");
     }
 
     le->prev->next = le->next;

@@ -4324,7 +4324,7 @@ const char* Scr_GetNextCodepos( VariableValue *top, const char *pos, int opcode,
 
 	*localId = scrVmPub.function_frame->fs.localId;
 
-	while ( 2 )
+next_opcode:
 	{
 		pos++;
 
@@ -4429,6 +4429,10 @@ const char* Scr_GetNextCodepos( VariableValue *top, const char *pos, int opcode,
 
 				switch ( top->type )
 				{
+				default:
+					pos += 8 * caseCount;
+					return pos;
+
 				case 6:
 					if ( IsValidArrayIndex( top->u.intValue ) )
 					{
@@ -4444,10 +4448,6 @@ const char* Scr_GetNextCodepos( VariableValue *top, const char *pos, int opcode,
 				case 2:
 					caseValue = top->u.intValue;
 					break;
-
-				default:
-					pos += 8 * caseCount;
-					return pos;
 				}
 
 				top--;
@@ -4498,6 +4498,12 @@ const char* Scr_GetNextCodepos( VariableValue *top, const char *pos, int opcode,
 				pos++;
 				goto LABEL_44;
 
+			case 68:
+			case 75:
+				pos++;
+				Scr_ReadUnsignedShort( &pos );
+				goto LABEL_44;
+
 			case 10:
 			case 11:
 			case 22:
@@ -4517,12 +4523,6 @@ const char* Scr_GetNextCodepos( VariableValue *top, const char *pos, int opcode,
 			case 130:
 			case 131:
 			case 132:
-				Scr_ReadUnsignedShort( &pos );
-				goto LABEL_44;
-
-			case 68:
-			case 75:
-				pos++;
 				Scr_ReadUnsignedShort( &pos );
 				goto LABEL_44;
 
@@ -4576,7 +4576,7 @@ const char* Scr_GetNextCodepos( VariableValue *top, const char *pos, int opcode,
 				}
 				else
 				{
-					continue;
+					goto next_opcode;
 				}
 			}
 		}

@@ -415,9 +415,9 @@ static qboolean BG_CheckProneValid( int passEntityNum, const vec3_t vPos, float 
 		}
 		VectorSubtract(vWaistPos, vTorsoPos, vFeetPos);
 		VectorMA(vFeetPos, 6.0f, vDelta, vFeetPos);
-		vFeetPos[2] = (vFeetPos[2] + 6.0f);
+		vFeetPos[2] = vFeetPos[2] + 6.0f;
 		Vec3Normalize(vFeetPos);
-		VectorMA(vEnd, prone_feet_dist - 6.0f - 48.0f, vFeetPos, vForward);
+		VectorMA(vEnd, (prone_feet_dist - 6.0f - 48.0f), vFeetPos, vForward);
 		vForward[0] = (vPos[0] + (prone_feet_dist - 6.0f) * vDelta[0] + vForward[0]) * 0.5f;
 		vForward[1] = (vPos[1] + (prone_feet_dist - 6.0f) * vDelta[1] + vForward[1]) * 0.5f;
 		traceFunc(&trace, vEnd, vMins, vMaxs, vForward, passEntityNum, contentMask);

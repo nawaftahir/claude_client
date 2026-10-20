@@ -3160,6 +3160,21 @@ void CL_DrawTextWithCursor(const char *text, int maxChars, FontHandle font, floa
     re.DrawTextWithCursor(text, maxChars, font, x, y, xScale, yScale, color, style, cursorPos, cursor);
 }
 
+inline void VectorCopy(const vec3_t a, vec3_t b)
+{
+	b[0] = a[0];
+	b[1] = a[1];
+	b[2] = a[2];
+}
+
+inline void VectorCopy4(const vec4_t a, vec4_t b)
+{
+	b[0] = a[0];
+	b[1] = a[1];
+	b[2] = a[2];
+	b[3] = a[3];
+}
+
 void CL_AddDebugLine(const vec_t *start, const vec_t *end, const vec_t *color, qboolean depthTest, int duration, qboolean fromServer)
 {
     int lineIndex;
@@ -3183,16 +3198,9 @@ void CL_AddDebugLine(const vec_t *start, const vec_t *end, const vec_t *color, q
     }
 
     line = &cls.debug.lines[lineIndex];
-    line->start[0] = start[0];
-    line->start[1] = start[1];
-    line->start[2] = start[2];
-    line->end[0] = end[0];
-    line->end[1] = end[1];
-    line->end[2] = end[2];
-    line->color[0] = color[0];
-    line->color[1] = color[1];
-    line->color[2] = color[2];
-    line->color[3] = color[3];
+    VectorCopy(start, line->start);
+    VectorCopy(end, line->end);
+    VectorCopy4(color, line->color);
     line->depthTest = depthTest;
 
     cls.debug.lineFromServer[cls.debug.numLines] = (byte)fromServer;
@@ -3218,13 +3226,8 @@ void CL_AddDebugString(const vec_t *xyz, const vec_t *color, float scale, const 
     }
 
     string = &cls.debug.strings[cls.debug.numStrings];
-    string->xyz[0] = xyz[0];
-    string->xyz[1] = xyz[1];
-    string->xyz[2] = xyz[2];
-    string->color[0] = color[0];
-    string->color[1] = color[1];
-    string->color[2] = color[2];
-    string->color[3] = color[3];
+    VectorCopy(xyz, string->xyz);
+    VectorCopy4(color, string->color);
     string->scale = scale;
     strncpy(string->text, text, 0x5f);
     string->text[95] = '\0';

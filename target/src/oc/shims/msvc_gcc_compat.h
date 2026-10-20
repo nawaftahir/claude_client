@@ -114,8 +114,8 @@ long _InterlockedCompareExchange(long volatile *, long, long);
 #define __sync_bool_compare_and_swap(p, o, n) (_InterlockedCompareExchange((long volatile *)(p), (long)(n), (long)(o)) == (long)(o))
 
 /* BSD case-insensitive compares used without including <strings.h> */
-#define strcasecmp  _stricmp
-#define strncasecmp _strnicmp
+#define strcasecmp  strcmpi
+#define strncasecmp strnicmp
 
 /* GCC __attribute__((constructor)) functions don't run on MSVC (the attribute
  * no-ops). COD2_CONSTRUCTOR(fn){..} registers fn in the CRT's .CRT$XCU init

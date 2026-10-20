@@ -44,6 +44,7 @@ struct FxRange
 {
 	float min;
 	float max;
+	float GetVal() const;
 };
 
 struct FxChannel
@@ -2062,11 +2063,11 @@ void __stdcall FxRange_Set_49b650( FxRange *range, float min, float max )
 	range->max = max;
 }
 
-float FxRange_GetVal( const FxRange *range )
+float FxRange::GetVal() const
 {
-	if ( range->min == range->max )
-		return range->min;
-	return flrand(range->min, range->max);
+	if ( min == max )
+		return min;
+	return flrand(min, max);
 }
 
 float __stdcall FxRange_GetValPct( const FxRange *range, float pct )

@@ -9,7 +9,22 @@ extern "C" int FS_FileSeek( FILE *file, int offset, int whence );
 extern qboolean SEH_GetLanguageIndexForName(const char *name, int *langindex);
 extern void Com_BeginParseSession(const char *name);
 extern void Com_EndParseSession(void);
-extern void Com_EndParseSessionInl(void);
+ParseThreadInfo *Com_GetParseThreadInfo();
+void Com_Error(errorParm_t code, const char *fmt, ...);
+
+static __forceinline void Com_EndParseSessionInl(void)
+{
+    ParseThreadInfo *parse;
+
+    parse = Com_GetParseThreadInfo();
+
+    if (parse->parseInfoNum == 0)
+    {
+        Com_Error(ERR_FATAL, "\x15" "Com_EndParseSession: session underflow");
+    }
+
+    parse->parseInfoNum--;
+}
 extern char *Com_Parse( const char *( *data_p ) );
 extern int strcmp(const char *s1, const char *s2);
 extern char *va( const char *format, ... );
