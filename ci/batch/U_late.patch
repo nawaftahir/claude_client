@@ -1,0 +1,64 @@
+--- a/target/src/universal/memfile.cpp
++++ b/target/src/universal/memfile.cpp
+@@ -180,3 +180,12 @@
+ 	return string;
+ }
+ 
++// retail 0x441f80, empty and unreferenced; name unknown
++void MemFile_Stub_441f80(void)
++{
++}
++
++// retail 0x441f90, empty and unreferenced; name unknown
++void MemFile_Stub_441f90(void)
++{
++}
+--- a/target/src/botlib/l_script.cpp
++++ b/target/src/botlib/l_script.cpp
+@@ -1333,3 +1333,12 @@
+ 	FreeMemory(script);
+ } //end of the function FreeScript
+ 
++// retail 0x4413a0, empty and unreferenced; name unknown
++void Script_Stub_4413a0(void)
++{
++}
++
++// retail 0x4413b0, empty and unreferenced; name unknown
++void Script_Stub_4413b0(void)
++{
++}
+--- a/target/src/oc/client_mp/screen_placement_mp.cpp
++++ b/target/src/oc/client_mp/screen_placement_mp.cpp
+@@ -202,6 +202,11 @@
+ 
+ }
+ 
++// retail 0x449ed0, empty and unreferenced; name unknown
++void ScrPlace_Stub_449ed0(void)
++{
++}
++
+ __forceinline void CalcScreenPlacementInl(float *x, float *y, float *w, float *h, int horzAlign, int vertAlign)
+ {
+     float scaled;
+--- a/target/src/qcommon/msg_mp.cpp
++++ b/target/src/qcommon/msg_mp.cpp
+@@ -2515,3 +2515,7 @@
+ 	MSG_initHuffmanInternal();
+ }
+ 
++// retail 0x445890, empty and unreferenced; name unknown
++void MSG_Stub_445890(void)
++{
++}
+--- a/target/src/qcommon/cm_world.cpp
++++ b/target/src/qcommon/cm_world.cpp
+@@ -1364,3 +1364,7 @@
+ 	return hitNum;
+ }
+ 
++// retail 0x41f2c0, empty and unreferenced; name unknown
++void CM_Stub_41f2c0(void)
++{
++}

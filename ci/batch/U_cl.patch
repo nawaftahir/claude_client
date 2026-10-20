@@ -1,0 +1,71 @@
+--- a/target/src/oc/client_mp/cl_console_mp.cpp
++++ b/target/src/oc/client_mp/cl_console_mp.cpp
+@@ -266,6 +266,11 @@
+ }
+ 
+ void Con_ToggleConsole_f(void)
++// retail 0x403810, empty and unreferenced; name unknown
++void Con_Stub_403810(void)
++{
++}
++
+ {
+     char *field;
+ 
+@@ -1684,3 +1689,8 @@
+ static const vec4_t con_inputDvarInfoColor = { 0.8f, 0.8f, 1.0f, 1.0f };
+ 
+ static const vec4_t con_inputDvarInactiveValueColor = { 0.8f, 0.8f, 0.8f, 1.0f };
++
++// retail 0x406be0, empty and unreferenced; name unknown
++void Con_Stub_406be0(void)
++{
++}
+--- a/target/src/oc/client_mp/cl_scrn_mp.cpp
++++ b/target/src/oc/client_mp/cl_scrn_mp.cpp
+@@ -277,6 +277,11 @@
+     return 0.0f;
+ }
+ 
++// retail 0x413500, empty and unreferenced; name unknown
++void SCR_Stub_413500(void)
++{
++}
++
+ static void SCR_UpdateFrame(void)
+ {
+     re.BeginFrame();
+--- a/target/src/oc/client_mp/cl_input.cpp
++++ b/target/src/oc/client_mp/cl_input.cpp
+@@ -1408,3 +1408,8 @@
+ 
+     CL_WritePacket();
+ }
++
++// retail 0x409180, empty and unreferenced; name unknown
++void IN_Stub_409180(void)
++{
++}
+--- a/target/src/oc/client_mp/cl_keys_mp.cpp
++++ b/target/src/oc/client_mp/cl_keys_mp.cpp
+@@ -1487,6 +1487,7 @@
+     }
+ }
+ 
+-
+-
+-
++// retail 0x40b440, empty and unreferenced; name unknown
++void Key_Stub_40b440(void)
++{
++}
+--- a/target/src/oc/client_mp/cl_ui_mp.cpp
++++ b/target/src/oc/client_mp/cl_ui_mp.cpp
+@@ -589,3 +589,7 @@
+     Com_LoadSoundAliases("menu", "all_mp", (snd_alias_system_t)(0));
+ }
+ 
++// retail 0x414400, empty and unreferenced; name unknown
++void UI_Stub_414400(void)
++{
++}
