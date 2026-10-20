@@ -1,10 +1,10 @@
-# Next session prompt (paste this) - WSL agent takeover, 10-19
+# Next session prompt (paste this) - WSL session, state 10-20 06:30
 
 Continue the CoD2MP_s.exe 1.0 client recon in ~/cod2/test/dev/claude_client.
-State (10-19 night, final): **92.54% = 1,303,591 B** of 1,408,683 B .text, CLEAN-REBUILD verified (build/obj moved aside), RATCHET OK, accepted in `target/build/good.json`.
-UNCOMMITTED on top of the 92.00% commit 78852ab (+3b801f2 docs): `lab/wip_gap23.patch` == main `git diff -- target/src` (24 files: w38 + w39 code, w38 + w39 layout).
-Whole file same-offset **10.606%** (.rdata 33.70%, .data 77.46%, .text 2.78%; `python3 shameter.py target/build/CoD2MP_s.exe ../cod2engineold/binaries/windows/1.0/CoD2MP_s.exe`).
-Next checkpoint **93% = 1,310,076 B (+6,485)**; commit there (clean-rebuild first).
+State: **92.73% = 1,306,197 B** of 1,408,683 B .text, RATCHET OK, accepted in `target/build/good.json` (10-19 22:19).
+UNCOMMITTED on top of the 92.00% commit 78852ab: `lab/wip_gap23.patch` == main `git diff -- target/src` (39 files: w38-w43 code + w38/w42 layout incl. libcmt retail order).
+Whole file same-offset **9.50% on the RELEASE exe** (`cd target; make release; python3 ../shameter.py build/release/CoD2MP_s.exe ../../cod2engineold/binaries/windows/1.0/CoD2MP_s.exe`; .rdata 29.01%, .data 65.18%; the non-release exe reads ~1-2 points high, do not use it).
+Next checkpoint **93% = 1,310,076 B (+3,879)**; commit there (clean-rebuild first). Owner week goal: 100% + SHA (memory project_week_goal_100); full agents allowed.
 
 Read first: `dev/CLAUDE.md` "Client track rules", HANDOFF_WINDOWS.md (state + open leads),
 the client-recon skill fix-pattern catalogue (top ~12 entries = 10-19 PAID classes), LESSONS.md tail.
