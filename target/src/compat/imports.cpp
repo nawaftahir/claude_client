@@ -39,6 +39,8 @@ void Dvar_ClearFlagsFromAll(int flags);
 char *XModelGetBasePoseOffset(const XModel *model, unsigned int offset);
 void DB_EnumXAssets(XAssetType type, void (*func)(XAssetHeader, void *), void *inData, bool includeOverride);
 void FX_UpdateAndDraw();
+/* Dead pointers (keep the callees address-taken); parked at the end of .data */
+#pragma data_seg(".data$zzz")
 static void *imp_CM_BoxTrace = (void *)CM_BoxTrace;
 static void *imp_CM_SaveLump = (void *)CM_SaveLump;
 static void *imp_Cbuf_ExecuteText = (void *)Cbuf_ExecuteText;
@@ -156,3 +158,4 @@ static void *imp_Dvar_UnregisterSystem = (void *)Dvar_ClearFlagsFromAll;
 static void *imp_Com_GetBsp = (void *)Com_GetBspHeader;
 static void *imp_DB_EnumXAssets = (void *)DB_EnumXAssets;
 static void *imp_FX_UpdateAndDraw = (void *)FX_UpdateAndDraw;
+#pragma data_seg()

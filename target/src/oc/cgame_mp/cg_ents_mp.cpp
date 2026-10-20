@@ -11,7 +11,6 @@ extern scr_const_t scr_const;
 
 /* File-scope alias: bound where no local can shadow `scr_const`, so uses below
    always reach the global even inside functions that declare their own `scr_const`. */
-static scr_const_t * const scr_const_g = &scr_const;
 extern void DObjUpdateClientInfo(struct DObj_s *obj, float timescale);
 extern void* MT_Alloc(int numBytes, int type);
 extern WeaponDef * BG_GetWeaponDef(int iWeapon);
@@ -338,7 +337,7 @@ static void CG_mg42_DoControllers(const centity_t *cent, int *partBits)
         angles[2] = 0.0f;
     }
 
-    scr = (const scr_const_t *)scr_const_g;
+    scr = &scr_const;
     DObjSetControlTagAngles(obj, partBits, scr->tag_aim, angles);
 
     DObjSetControlTagAngles(obj, partBits, scr->tag_aim_animated, angles);

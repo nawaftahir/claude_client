@@ -56,8 +56,8 @@ extern short unsigned int vq4[65536];
 extern short unsigned int vq8[262144];
 extern struct cinematics_t cin;
 extern cin_cache cinTable[16];
-__attribute__((used)) int CL_handle = -1;
 __attribute__((used, section(".data.currentHandle"), aligned(4))) int currentHandle = -1;
+__attribute__((used)) int CL_handle = -1;
 __attribute__((used, section(".data.currentHandle"), aligned(4))) static int currentHandle_pad[6];
 ;
 

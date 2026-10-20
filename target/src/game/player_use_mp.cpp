@@ -12,8 +12,6 @@ void Player_SetTurretDropHint( gentity_t *ent );
 void Player_UpdateCursorHints( gentity_t *ent );
 void Player_UpdateLookAtEntity( gentity_t *ent );
 
-extern const vec3_t useRadius;
-static const vec3_t useRadius = { 192.0f, 192.0f, 96.0f };
 
 /*
 ===============
@@ -239,6 +237,7 @@ int Player_GetUseList( gentity_t *ent, useList_t *useList )
 	int itemEntCount;
 	float dot;
 
+	static const vec3_t useRadius = { 192.0f, 192.0f, 96.0f };
 	maxDist = 256.0f; // never read
 	itemEntCount = 0;
 

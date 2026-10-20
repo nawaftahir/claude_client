@@ -11,6 +11,7 @@
 #include "../game/g_shared.h"
 #include "../qcommon/netchan.h"
 void G_LogPrintf( const char *fmt, ... );
+#pragma data_seg(".data$zzz")
 void *spike_addr_taken[] = {
 	(void *)va, (void *)Com_sprintf, (void *)Com_DPrintf, (void *)Com_Error, (void *)Com_Printf,
 	(void *)FS_Printf, (void *)G_LogPrintf, (void *)SV_SendServerCommand, (void *)Sys_Error,
@@ -22,3 +23,4 @@ void *spike_addr_taken[] = {
 	(void *)Hunk_AllocateTempMemoryInternal, (void *)Netchan_Transmit, (void *)SV_EntityContact,
 	(void *)VectorInverse, (void *)XModelBad, (void *)XModelGetLodForDist,
 };
+#pragma data_seg()

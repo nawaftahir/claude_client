@@ -13,7 +13,7 @@ struct FxImpactTable
 	FxEffectDef **table;
 };
 
-static const char *g_TypeName[IMPACT_TYPECOUNT] =
+static const char *const g_TypeName[IMPACT_TYPECOUNT] =
 {
 	"bullet_small_normal",
 	"bullet_small_reflect",
@@ -151,7 +151,7 @@ static void CG_RegisterImpactEffectsForDir( const char *dir, char **szEffectFile
 		buf[len] = 0;
 		Com_BeginParseSession(filename);
 		Com_SetCSV(qtrue);
-		pszErrorMsg = CG_ParseImpactEffects(filename, buf, IMPACT_TYPECOUNT, g_TypeName, szEffectFile);
+		pszErrorMsg = CG_ParseImpactEffects(filename, buf, IMPACT_TYPECOUNT, (const char **)g_TypeName, szEffectFile);
 		Com_EndParseSessionInl();
 		Hunk_ClearTempMemoryHighInternal();
 		if ( pszErrorMsg )

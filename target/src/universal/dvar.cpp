@@ -8,8 +8,7 @@ int dvar_modifiedFlags;
 static dvar_t dvarPool[MAX_DVARS];
 int dvarCount;
 
-static const char *s_dvarOffString = "off";
-static const char *s_dvarOnString = "on";
+static const char *s_dvarShared[4] = { 0, "off", "on", 0 };
 
 // Original contents unknown; unreferenced.
 static unsigned char unusedTable[152] =
@@ -144,10 +143,10 @@ static const char *Dvar_InternString(const char *string)
 	else if ( *string == 'o' )
 	{
 		if ( length == 3 && string[1] == 'f' && string[2] == 'f' && !string[3] )
-			return s_dvarOffString;
+			return s_dvarShared[1];
 
 		if ( length == 2 && string[1] == 'n' && !string[2] )
-			return s_dvarOnString;
+			return s_dvarShared[2];
 	}
 
 	return CopyString(string);
@@ -161,7 +160,7 @@ static void Dvar_FreeInternString(const char *string)
 	if ( !string[1] && *string >= '0' && *string <= '9' )
 		return;
 
-	if ( string == s_dvarOffString || string == s_dvarOnString )
+	if ( string == s_dvarShared[1] || string == s_dvarShared[2] )
 		return;
 
 	Z_Free((void *)string);
