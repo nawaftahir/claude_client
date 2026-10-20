@@ -79,3 +79,13 @@ the client-recon skill fix-pattern catalogue (top ~12 entries = 10-19 PAID class
 - batch.yml (dispatch on a branch): builds every ci/batch/*.patch in parallel (max 20), per-patch NET + ratchet in the run summary/artifacts. Verified: comment patch NET 0, AddRefToValue noinline -2352 = local.
   Use: commit patches (git diff format, a/target/... paths) to ci/batch/ on a branch based on wip-ci, push, `gh workflow run batch.yml --ref <branch>`, `gh run download <id>`.
 - Keep ci/good.json in sync with main's target/build/good.json when the baseline moves.
+
+## State 10-20 night
+- Gauge 1,308,199 B = 92.87% (RATCHET OK, uncommitted; 93% = 1,310,076). All LTCG tie fns ON except Scr_ParseGameTypeList.
+- Structure landed today: libcmt order, helper dedup (one copy each), 13 early-TU retail empty stubs + cg_newDraw/ui_shared stubs,
+  LittleLong __inline. Later-TU stubs (scr_parser, FxCurve, record_dsound, cl_main, win_configure...) flip SV_DirectConnect:
+  they need a compensating count fix elsewhere (tie model, lab/w4/re_re_w53_ties.md + re_re_w54_tuset.md).
+- Code: 6 Opus agents on CI = 0 B. Remaining residues = per-block register pressure (imul dest: XAnimLoadFile, SND_RawSamples)
+  and scheduling ties on identical IR. Next code attack = hook c2's block-local pass (probe lab/w4/pq/pr.sh), not respelling.
+- Layout: .data 48 KB band -16 = XCU section merge (see LESSONS w61Y). Whole file 9.59% (release).
+- CI: lab/cibatch.sh (status polling), lab/cipatch.sh, lab/sweep_ci.sh; batch artifacts res-* (small) / bin-* (exe+map).
