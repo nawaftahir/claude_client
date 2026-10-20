@@ -74,7 +74,21 @@ extern vec_t Vec3Normalize( vec3_t v );
 extern void CG_Player(centity_t *cent);
 extern void CG_Corpse(centity_t *cent);
 
-extern const int boxVerts[24][3];
+extern const int boxVerts[24][3] =
+{
+	{ 0, 0, 0 }, { 1, 0, 0 },
+	{ 0, 0, 0 }, { 0, 1, 0 },
+	{ 1, 1, 0 }, { 1, 0, 0 },
+	{ 1, 1, 0 }, { 0, 1, 0 },
+	{ 0, 0, 1 }, { 1, 0, 1 },
+	{ 0, 0, 1 }, { 0, 1, 1 },
+	{ 1, 1, 1 }, { 1, 0, 1 },
+	{ 1, 1, 1 }, { 0, 1, 1 },
+	{ 0, 0, 0 }, { 0, 0, 1 },
+	{ 1, 0, 0 }, { 1, 0, 1 },
+	{ 0, 1, 0 }, { 0, 1, 1 },
+	{ 1, 1, 0 }, { 1, 1, 1 },
+};
 
 COD2_ASSERT_FIELD(cg_t, rumbleScale, 0x2c5a0);
 
@@ -700,6 +714,76 @@ qboolean CG_DObjGetViewModelTagPos(struct DObj_s *obj, unsigned int tagName, vec
     }
 
     MatrixTransformVector43(mat[boneIndex].trans, ent_axis, pos);
+    return 1;
+}
+
+extern void DObjGetBoneInfo(const DObj_s *obj, XBoneInfo **boneInfo);
+extern void TransformVectorByAnimMat(const float *in, const DObjAnimMat *mat, float *out);
+
+// retail 0x4c6e30; name unknown. The 12 edges of a bone's bounds box, in model space
+qboolean CG_DObjGetLocalBoneBox_4c6e30(const centity_t *cent, struct DObj_s *obj, unsigned int tagName, vec3_t *verts)
+{
+    XBoneInfo *boneInfoArray[128];
+    XBoneInfo *boneInfo;
+    DObjAnimMat *mat;
+    vec3_t org;
+    const int *vert;
+    vec3_t *out;
+    int boneIndex;
+    int edge;
+
+    boneIndex = DObjGetBoneIndex(obj, tagName);
+    if (boneIndex < 0)
+        return 0;
+
+    DObjGetBoneInfo(obj, boneInfoArray);
+    mat = DObjGetRotTransArray(obj);
+    if (!mat)
+        return 0;
+
+    mat += boneIndex;
+    boneInfo = boneInfoArray[boneIndex];
+    vert = boxVerts[0];
+    out = verts;
+
+    for (edge = 0; edge < 12; edge++)
+    {
+        org[0] = boneInfo->bounds[vert[0]][0];
+        org[1] = boneInfo->bounds[vert[1]][1];
+        org[2] = boneInfo->bounds[vert[2]][2];
+        TransformVectorByAnimMat(org, mat, *out++);
+        vert += 3;
+
+        org[0] = boneInfo->bounds[vert[0]][0];
+        org[1] = boneInfo->bounds[vert[1]][1];
+        org[2] = boneInfo->bounds[vert[2]][2];
+        TransformVectorByAnimMat(org, mat, *out++);
+        vert += 3;
+    }
+    return 1;
+}
+
+// retail 0x4c6f30, unreferenced; name unknown. The same box in world space
+qboolean CG_DObjGetWorldBoneBox_4c6f30(const centity_t *cent, struct DObj_s *obj, unsigned int tagName, vec3_t *verts)
+{
+    vec3_t ent_axis[4];
+    vec3_t tmp;
+    int i;
+
+    if (!CG_DObjGetLocalBoneBox_4c6e30(cent, obj, tagName, verts))
+        return 0;
+
+    AnglesToAxis(cent->lerpAngles, ent_axis);
+    ent_axis[3][0] = cent->lerpOrigin[0];
+    ent_axis[3][1] = cent->lerpOrigin[1];
+    ent_axis[3][2] = cent->lerpOrigin[2];
+    for (i = 0; i < 24; i++)
+    {
+        MatrixTransformVector43(verts[i], ent_axis, tmp);
+        verts[i][0] = tmp[0];
+        verts[i][1] = tmp[1];
+        verts[i][2] = tmp[2];
+    }
     return 1;
 }
 

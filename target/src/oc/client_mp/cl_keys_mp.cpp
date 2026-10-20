@@ -1134,14 +1134,6 @@ int Key_GetKey(const char *binding)
     return -1;
 }
 
-void CL_InitKeyCommands(void)
-{
-    Cmd_AddCommand("bind", Key_Bind_f);
-    Cmd_AddCommand("unbind", Key_Unbind_f);
-    Cmd_AddCommand("unbindall", Key_Unbindall_f);
-    Cmd_AddCommand("bindlist", Key_Bindlist_f);
-}
-
 void Key_Unbind_f(void)
 {
     int keynum;
@@ -1261,6 +1253,14 @@ void Key_Bindlist_f(void)
             Com_Printf("%s \"%s\"\n", Key_KeynumToString(keynum, 0), keys[keynum].binding);
         }
     }
+}
+
+void CL_InitKeyCommands(void)
+{
+    Cmd_AddCommand("bind", Key_Bind_f);
+    Cmd_AddCommand("unbind", Key_Unbind_f);
+    Cmd_AddCommand("unbindall", Key_Unbindall_f);
+    Cmd_AddCommand("bindlist", Key_Bindlist_f);
 }
 
 // retail 0x40acf0
@@ -1487,6 +1487,7 @@ void Key_Shutdown(void)
     }
 }
 
-
-
-
+// retail 0x40b440, empty and unreferenced; name unknown
+void Key_Stub_40b440(void)
+{
+}

@@ -97,6 +97,7 @@ XAnimParts *XAnimLoadFile(const char *name, void *(*Alloc)(int))
 	vec3_t vTrans;
 	int n;
 	int i;
+		int unusedLocal = 0; // dead local, compiled away; retail register choice in the quat loop needs it
 	short *sQ;
 	char *simpleQuatBits;
 	bool bFlipQuat;

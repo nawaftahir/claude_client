@@ -77,21 +77,6 @@ static void SV_DoneDownload_f( client_t *cl );
 static void SV_RetransmitDownload_f( client_t *cl );
 static void SV_MutePlayer_f( client_t *cl );
 static void SV_UnmutePlayer_f( client_t *cl );
-static ucmd_t ucmds[] =
-{
-	{"userinfo",     SV_UpdateUserinfo_f,     },
-	{"disconnect",   SV_Disconnect_f,         },
-	{"cp",           SV_VerifyIwds_f,         },
-	{"vdr",          SV_ResetPureClient_f,    },
-	{"download",     SV_BeginDownload_f,      },
-	{"nextdl",       SV_NextDownload_f,       },
-	{"stopdl",       SV_StopDownload_f,       },
-	{"donedl",       SV_DoneDownload_f,       },
-	{"retransdl",    SV_RetransmitDownload_f, },
-	{"muteplayer",   SV_MutePlayer_f,         },
-	{"unmuteplayer", SV_UnmutePlayer_f,       },
-	{NULL, NULL}
-};
 
 /*
 =================
@@ -1715,6 +1700,22 @@ float SV_FX_GetVisibility( const vec3_t start, const vec3_t end )
 	return FX_GetVisibility( start, end );
 }
 
+static ucmd_t ucmds[] =
+{
+	{"userinfo",     SV_UpdateUserinfo_f,     },
+	{"disconnect",   SV_Disconnect_f,         },
+	{"cp",           SV_VerifyIwds_f,         },
+	{"vdr",          SV_ResetPureClient_f,    },
+	{"download",     SV_BeginDownload_f,      },
+	{"nextdl",       SV_NextDownload_f,       },
+	{"stopdl",       SV_StopDownload_f,       },
+	{"donedl",       SV_DoneDownload_f,       },
+	{"retransdl",    SV_RetransmitDownload_f, },
+	{"muteplayer",   SV_MutePlayer_f,         },
+	{"unmuteplayer", SV_UnmutePlayer_f,       },
+	{NULL, NULL}
+};
+
 void SV_ExecuteClientCommand( client_t *cl, const char *s, qboolean clientOK )
 {
 	ucmd_t *u;
@@ -2141,13 +2142,3 @@ nextclient:
 }
 
 
-// Original name unknown; unreferenced.
-static int unusedTable[72] =
-{
-	0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0,
-	1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0,
-	0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1,
-	1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1,
-	0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 1,
-	0, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1
-};

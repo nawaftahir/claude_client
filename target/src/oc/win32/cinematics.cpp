@@ -173,7 +173,7 @@ static int CIN_findHandle(void)
             return i;
         }
     }
-    Com_Error(ERR_DROP, "CIN_findHandle: none free");
+    Com_Error(ERR_DROP, "\025CIN_HandleForVideo: none free");
     return 0;
 }
 

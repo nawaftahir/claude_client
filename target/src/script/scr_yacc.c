@@ -3036,7 +3036,7 @@ int yy_try_NUL_trans( int yy_current_state )
 yyinput
 ==============
 */
-int yyinput()
+static int yyinput()
 {
 	int c;
 

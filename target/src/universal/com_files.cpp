@@ -2493,7 +2493,7 @@ static void FS_AddGameDirectoryInternal(const char *path, const char *dir, int b
 				if (i->language != iLanguage)
 				{
 					Com_Printf(
-					    "WARNING: game folder %s/%s re-added as localized folder with different language\n",
+					    "WARNING: game golder %s/%s re-added as localized folder with different language\n",
 					    path, szGameFolder);
 				}
 			}

@@ -202,6 +202,11 @@ void CalcSplitScreenTextOffset(FontHandle font, float *y)
 
 }
 
+// retail 0x449ed0, empty and unreferenced; name unknown
+void ScrPlace_Stub_449ed0(void)
+{
+}
+
 __forceinline void CalcScreenPlacementInl(float *x, float *y, float *w, float *h, int horzAlign, int vertAlign)
 {
     float scaled;

@@ -180,6 +180,14 @@ void Sys_GetInfo( SysInfo *info )
 	*info = sys_info;
 }
 
+bool Sys_ShouldUpdateForConfigChange( void )
+{
+	if ( MessageBoxA( NULL, Win_LocalizeRef( "WIN_CONFIGURE_UPDATED_BODY" ), Win_LocalizeRef( "WIN_CONFIGURE_UPDATED_TITLE" ), MB_YESNO | MB_ICONINFORMATION ) == IDYES )
+		return true;
+
+	return false;
+}
+
 /*
 ==================
 Sys_RegisterInfoDvars
@@ -193,13 +201,6 @@ void Sys_RegisterInfoDvars( void )
 	sys_configSum = Dvar_RegisterInt( "sys_configSum", 0, INT_MIN, INT_MAX, DVAR_ARCHIVE | DVAR_INIT | DVAR_CHANGEABLE_RESET );
 }
 
-bool Sys_ShouldUpdateForConfigChange( void )
-{
-	if ( MessageBoxA( NULL, Win_LocalizeRef( "WIN_CONFIGURE_UPDATED_BODY" ), Win_LocalizeRef( "WIN_CONFIGURE_UPDATED_TITLE" ), MB_YESNO | MB_ICONINFORMATION ) == IDYES )
-		return true;
-
-	return false;
-}
 /*
 ==================
 Sys_HasConfigureChecksumChanged

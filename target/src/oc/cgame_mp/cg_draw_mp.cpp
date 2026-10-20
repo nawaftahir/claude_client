@@ -217,7 +217,7 @@ void CG_Draw2D(void);
 bool CG_GetWeapReticleZoom(float *pfZoom);
 void CG_DrawTurretCrossHair(void);
 static inline int CG_RoundFPS(float value);
-static inline void FastSinCos(const float value, float *pSin, float *pCos);
+inline void FastSinCos(const float value, float *pSin, float *pCos);
 
 extern int Com_sprintf(char *dest, size_t size, const char *format, ...);
 
@@ -566,13 +566,6 @@ void CG_DrawDisconnect(void)
     }
 }
 
-// retail inlines CL_DrawStretchPic here (placement folded) and calls the Physical
-static __forceinline void CL_DrawStretchPicInl(float x, float y, float w, float h, int horzAlign, int vertAlign, float s1, float t1, float s2, float t2, const vec_t *color, MaterialHandle material)
-{
-    CalcScreenPlacementInl(&x, &y, &w, &h, horzAlign, vertAlign);
-    CL_DrawStretchPicPhysical(x, y, w, h, s1, t1, s2, t2, color, material);
-}
-
 static void CG_DrawLagometer(void)
 {
     int a;
@@ -610,14 +603,14 @@ static void CG_DrawLagometer(void)
             {
                 if (v > range)
                     v = range;
-                CL_DrawStretchPicInl(ax + aw - a, mid - v, 1.0f, v, 3, 3, 0.0f, 0.0f, 0.0f, 0.0f, colorYellow, cgs->media.whiteMaterial);
+                CL_DrawStretchPic(ax + aw - a, mid - v, 1.0f, v, 3, 3, 0.0f, 0.0f, 0.0f, 0.0f, colorYellow, cgs->media.whiteMaterial);
             }
             else if (v < 0.0f)
             {
                 v = -v;
                 if (v > range)
                     v = range;
-                CL_DrawStretchPicInl(ax + aw - a, mid, 1.0f, v, 3, 3, 0.0f, 0.0f, 0.0f, 0.0f, colorBlue, cgs->media.whiteMaterial);
+                CL_DrawStretchPic(ax + aw - a, mid, 1.0f, v, 3, 3, 0.0f, 0.0f, 0.0f, 0.0f, colorBlue, cgs->media.whiteMaterial);
             }
         }
 
@@ -638,11 +631,11 @@ static void CG_DrawLagometer(void)
                 v = v * vscale;
                 if (v > range)
                     v = range;
-                CL_DrawStretchPicInl(ax + aw - a, ay + ah - v, 1.0f, v, 3, 3, 0.0f, 0.0f, 0.0f, 0.0f, color, cgs->media.whiteMaterial);
+                CL_DrawStretchPic(ax + aw - a, ay + ah - v, 1.0f, v, 3, 3, 0.0f, 0.0f, 0.0f, 0.0f, color, cgs->media.whiteMaterial);
             }
             else if (v < 0.0f)
             {
-                CL_DrawStretchPicInl(ax + aw - a, ay + ah - range, 1.0f, range, 3, 3, 0.0f, 0.0f, 0.0f, 0.0f, colorRed, cgs->media.whiteMaterial);
+                CL_DrawStretchPic(ax + aw - a, ay + ah - range, 1.0f, range, 3, 3, 0.0f, 0.0f, 0.0f, 0.0f, colorRed, cgs->media.whiteMaterial);
             }
         }
 
@@ -1667,11 +1660,10 @@ void CG_CheckHudStanceDisplay(void)
 {
     menuDef_t *menu;
 
-    if ((cg->nextSnap->ps.eFlags & 8) && (cg->nextSnap->ps.eFlags & 0x100)
-        || (cg->nextSnap->ps.eFlags & 4) && (cg->nextSnap->ps.eFlags & 0x200))
-    {
+    if ((cg->nextSnap->ps.eFlags & 8) && (cg->nextSnap->ps.eFlags & 0x100))
         CG_MenuShowNotify(3);
-    }
+    else if ((cg->nextSnap->ps.eFlags & 4) && (cg->nextSnap->ps.eFlags & 0x200))
+        CG_MenuShowNotify(3);
     if (hud_fade_stance->current.value != 0.0f
         && cg->stanceFadeTime
         && (float)(cg->time - cg->stanceFadeTime) > hud_fade_stance->current.value * 1000.0f)
@@ -2379,7 +2371,7 @@ static inline int CG_RoundFPS(float value)
     return I_fround(value);
 #endif
 }
-static inline void FastSinCos(const float value, float *pSin, float *pCos)
+inline void FastSinCos(const float value, float *pSin, float *pCos)
 {
     __asm
     {

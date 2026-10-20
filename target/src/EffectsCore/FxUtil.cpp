@@ -76,6 +76,7 @@ struct FxRange
 {
 	float min;
 	float max;
+	float GetVal() const;
 };
 
 struct FxChannel
@@ -1018,7 +1019,6 @@ extern FxScheduler *theFxScheduler;
 extern FxScheduler *theFxSchedulers[1];
 extern volatile int fx_camera_valid;
 int Net_LocalClientNum() throw();
-float FxRange_GetVal( const FxRange *range );
 float flrand( float min, float max );
 int irand( int min, int max );
 void Rand_Init( int seed );
@@ -1898,9 +1898,9 @@ void FX_CalcOriginAndAxis( EffectPrimitive *prim, vec3_t out, const vec3_t origi
 
 	primTemp = prim->primTemp;
 	if ( primTemp->mSpawnFlags & 0x40 )
-		VectorSet(pos, FxRange_GetVal(&primTemp->mOrigin1X), FxRange_GetVal(&primTemp->mOrigin1Y), FxRange_GetVal(&primTemp->mOrigin1Z));
+		VectorSet(pos, primTemp->mOrigin1X.GetVal(), primTemp->mOrigin1Y.GetVal(), primTemp->mOrigin1Z.GetVal());
 	else
-		AxisTransformComponents(axis, FxRange_GetVal(&primTemp->mOrigin1X), FxRange_GetVal(&primTemp->mOrigin1Y), FxRange_GetVal(&primTemp->mOrigin1Z), pos);
+		AxisTransformComponents(axis, primTemp->mOrigin1X.GetVal(), primTemp->mOrigin1Y.GetVal(), primTemp->mOrigin1Z.GetVal(), pos);
 	VectorAdd(pos, origin, pos);
 	if ( primTemp->mSpawnFlags & 1 )
 	{
@@ -1908,8 +1908,8 @@ void FX_CalcOriginAndAxis( EffectPrimitive *prim, vec3_t out, const vec3_t origi
 		FastSinCos(yaw, &sinYaw, &cosYaw);
 		pitch = flrand(0.0f, 180.0f) * 0.017453292f;
 		FastSinCos(pitch, &sinPitch, &cosPitch);
-		radius = FxRange_GetVal(&primTemp->mRadius);
-		height = FxRange_GetVal(&primTemp->mHeight);
+		radius = primTemp->mRadius.GetVal();
+		height = primTemp->mHeight.GetVal();
 		radius *= sinPitch; VectorSet(dir, radius * sinYaw, radius * cosYaw, height * cosPitch);
 		VectorAdd(pos, dir, pos);
 		if ( primTemp->mSpawnFlags & 2 )
@@ -1924,8 +1924,8 @@ void FX_CalcOriginAndAxis( EffectPrimitive *prim, vec3_t out, const vec3_t origi
 	}
 	else if ( primTemp->mSpawnFlags & 4 )
 	{
-		height = flrand(-0.5f, 0.5f) * FxRange_GetVal(&primTemp->mHeight);
-		width = FxRange_GetVal(&primTemp->mRadius);
+		height = flrand(-0.5f, 0.5f) * primTemp->mHeight.GetVal();
+		width = primTemp->mRadius.GetVal();
 		VectorScale(axis[1], width, point);
 		VectorMA(point, height, axis[0], point);
 		RotatePointAroundVector(dir, axis[0], point, flrand(0.0f, 360.0f));
@@ -1969,12 +1969,12 @@ void FX_CalcImpactOrigin( const PrimitiveTemplate *primTemp, const vec3_t origin
 		{
 			if ( ( primTemp->mSpawnFlags & 0x80 ) != 0 )
 			{
-				VectorSet(out, FxRange_GetVal(&primTemp->mOrigin2X), FxRange_GetVal(&primTemp->mOrigin2Y), FxRange_GetVal(&primTemp->mOrigin2Z));
+				VectorSet(out, primTemp->mOrigin2X.GetVal(), primTemp->mOrigin2Y.GetVal(), primTemp->mOrigin2Z.GetVal());
 				VectorAdd(out, end, end);
 			}
 			else
 			{
-				AxisTransformComponents(axis, FxRange_GetVal(&primTemp->mOrigin2X), FxRange_GetVal(&primTemp->mOrigin2Y), FxRange_GetVal(&primTemp->mOrigin2Z), delta);
+				AxisTransformComponents(axis, primTemp->mOrigin2X.GetVal(), primTemp->mOrigin2Y.GetVal(), primTemp->mOrigin2Z.GetVal(), delta);
 				VectorAdd(end, delta, end);
 			}
 		}
@@ -1986,9 +1986,9 @@ void FX_CalcImpactOrigin( const PrimitiveTemplate *primTemp, const vec3_t origin
 	else
 	{
 		if ( ( primTemp->mSpawnFlags & 0x80 ) != 0 )
-			VectorSet(out, FxRange_GetVal(&primTemp->mOrigin2X), FxRange_GetVal(&primTemp->mOrigin2Y), FxRange_GetVal(&primTemp->mOrigin2Z));
+			VectorSet(out, primTemp->mOrigin2X.GetVal(), primTemp->mOrigin2Y.GetVal(), primTemp->mOrigin2Z.GetVal());
 		else
-			AxisTransformComponents(axis, FxRange_GetVal(&primTemp->mOrigin2X), FxRange_GetVal(&primTemp->mOrigin2Y), FxRange_GetVal(&primTemp->mOrigin2Z), out);
+			AxisTransformComponents(axis, primTemp->mOrigin2X.GetVal(), primTemp->mOrigin2Y.GetVal(), primTemp->mOrigin2Z.GetVal(), out);
 		VectorAdd(out, offset, out);
 	}
 }
@@ -2028,7 +2028,7 @@ bool FX_AddPrimitive( EffectPrimitive *prim, Effect *fx, const vec3_t origin )
 		effectBlockSightCount++;
 	*slot = fx;
 	fx->SetFlags(primTemp->mAttributeFlags);
-	fx->SetTimeStartEnd(theFxHelper->mTime, theFxHelper->mTime + (int)FxRange_GetVal(&primTemp->mLife));
+	fx->SetTimeStartEnd(theFxHelper->mTime, theFxHelper->mTime + (int)primTemp->mLife.GetVal());
 	fx->SetFx(prim->fx);
 	fx->SetPrimIndex(primTemp->mParentPrimIndex);
 	fx->SetGroupFlags(primTemp->mGroupFlags);
@@ -2118,13 +2118,13 @@ void FX_InitParticle( EffectPrimitive *prim, Particle *particle, vec3_t newOrigi
 		particle->SetRandomVelocityWeights(flrand(0.0f, 1.0f), flrand(0.0f, 1.0f), flrand(0.0f, 1.0f));
 	if ( primTemp->mAttributeFlags & 0x100000 )
 		particle->SetRandomVelocity2Weights(flrand(0.0f, 1.0f), flrand(0.0f, 1.0f), flrand(0.0f, 1.0f));
-	particle->SetGravity(FxRange_GetVal(&primTemp->mGravity));
-	particle->SetWindModifier(FxRange_GetVal(&primTemp->mWindModifier));
+	particle->SetGravity(primTemp->mGravity.GetVal());
+	particle->SetWindModifier(primTemp->mWindModifier.GetVal());
 	FX_CalcOriginAndAxis(prim, newOrigin, origin, axis);
 	particle->SetAxis(axis);
 	particle->SetNonUniformScale(primTemp->mNonUniformScale);
-	particle->SetElasticity(FxRange_GetVal(&primTemp->mElasticity));
-	particle->SetRotation(FxRange_GetVal(&primTemp->mRotation));
+	particle->SetElasticity(primTemp->mElasticity.GetVal());
+	particle->SetRotation(primTemp->mRotation.GetVal());
 }
 
 // Original name unknown.
@@ -2295,14 +2295,14 @@ void FX_AddEmitter( EffectPrimitive *prim, vec3_t axis[3], const vec3_t origin, 
 	FX_InitParticle(prim, emitter, newOrigin, origin, axis, indexInBatch);
 	primTemp = prim->primTemp;
 	FX_ApplyLateStart(primTemp, emitter, newOrigin, lateTime);
-	VectorSet(angles, FxRange_GetVal(&primTemp->mAngle1), FxRange_GetVal(&primTemp->mAngle2), FxRange_GetVal(&primTemp->mAngle3));
+	VectorSet(angles, primTemp->mAngle1.GetVal(), primTemp->mAngle2.GetVal(), primTemp->mAngle3.GetVal());
 	vectoangles(axis[0], axisAngles);
 	VectorAdd(angles, axisAngles, angles);
-	VectorSet(angleDelta, FxRange_GetVal(&primTemp->mAngle1Delta), FxRange_GetVal(&primTemp->mAngle2Delta), FxRange_GetVal(&primTemp->mAngle3Delta));
+	VectorSet(angleDelta, primTemp->mAngle1Delta.GetVal(), primTemp->mAngle2Delta.GetVal(), primTemp->mAngle3Delta.GetVal());
 	model = primTemp->mMediaHandles.GetHandle();
 	emitFx = primTemp->mEmitterFxHandles.GetEffect();
-	emitDistBase = FxRange_GetVal(&primTemp->mDensity);
-	emitDistRand = FxRange_GetVal(&primTemp->mVariance);
+	emitDistBase = primTemp->mDensity.GetVal();
+	emitDistRand = primTemp->mVariance.GetVal();
 	if ( prim->boltFrame.IsValid() )
 	{
 		orient = prim->boltFrame.Get()->GetOrientation();
@@ -2356,7 +2356,7 @@ void FX_AddCameraShake( EffectPrimitive *prim, vec3_t axis[3], const vec3_t orig
 
 	FX_CalcOriginAndAxis(prim, newOrigin, origin, axis);
 	primTemp = prim->primTemp;
-	theFxHelper->CameraShake(newOrigin, FxRange_GetVal(&primTemp->mElasticity), (int)FxRange_GetVal(&primTemp->mRadius), (int)FxRange_GetVal(&primTemp->mLife));
+	theFxHelper->CameraShake(newOrigin, primTemp->mElasticity.GetVal(), (int)primTemp->mRadius.GetVal(), (int)primTemp->mLife.GetVal());
 }
 
 void FX_AddLight( EffectPrimitive *prim, vec3_t axis[3], const vec3_t origin, int lateTime, int indexInBatch )

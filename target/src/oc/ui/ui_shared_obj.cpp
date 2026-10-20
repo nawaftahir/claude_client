@@ -102,13 +102,27 @@ void FS_FCloseFile(fileHandle_t h);
 int Com_Compress(char *data_p);
 void Com_BeginParseSession(const char *filename);
 void Com_EndParseSession(void);
-void Com_EndParseSessionInl(void);
 char *Com_Parse( const char *( *data_p ) );
 int I_stricmp(const char *s1, const char *s2);
 bool I_isupper( int c );
 bool I_islower( int c );
 void Com_Printf(const char *fmt, ...);
 void Com_Error(errorParm_t code, const char *fmt, ...);
+ParseThreadInfo *Com_GetParseThreadInfo();
+
+static __forceinline void Com_EndParseSessionInl(void)
+{
+    ParseThreadInfo *parse;
+
+    parse = Com_GetParseThreadInfo();
+
+    if (parse->parseInfoNum == 0)
+    {
+        Com_Error(ERR_FATAL, "\x15" "Com_EndParseSession: session underflow");
+    }
+
+    parse->parseInfoNum--;
+}
 void Menu_SetCursorItem(menuDef_t *menu, int cursorItem);
 static bool Menu_New(int handle, int imageTrack);
 qboolean Item_Parse(int handle, const char (*item)[4]);
@@ -1710,7 +1724,7 @@ MenuList *UI_LoadMenu(const char *menuFile, int imageTrack)
     if (!UI_ParseMenuInternal(menuFile, imageTrack)) {
         Com_Printf("^3WARNING: menu file not found: %s\n", menuFile);
         if (!UI_ParseMenuInternal("ui/default.menu", imageTrack))
-            Com_Error(ERR_DROP, "default menu file not found");
+            Com_Error(ERR_DROP, "\025default.menu file not found. This is a default menu that you should have.\n");
     }
 
     return &g_load.menuList;

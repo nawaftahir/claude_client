@@ -123,7 +123,7 @@ void CG_AddMarks(void)
 void CG_FreeMarkPoly(MarkPoly *le)
 {
     if (!le->prevMark)
-        Com_Error(ERR_DROP, "CG_FreeLocalEntity: not active");
+        Com_Error(ERR_DROP, "\025CG_FreeLocalEntity: not active");
     le->prevMark->nextMark = le->nextMark;
     le->nextMark->prevMark = le->prevMark;
     le->nextMark = cg_freeMarkPolys;

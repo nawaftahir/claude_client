@@ -265,6 +265,11 @@ static unsigned char CL_FindHudMsgIconMaterialIndex(const char *iconShader)
     return 0;
 }
 
+// retail 0x403810, empty and unreferenced; name unknown
+void Con_Stub_403810(void)
+{
+}
+
 void Con_ToggleConsole_f(void)
 {
     char *field;
@@ -807,11 +812,11 @@ static void CL_AddConsoleChar(int ch, unsigned char colorIdx)
     con.lineOffset++;
 }
 
-static float I_fsel(const float x, const float y, const float z)
+inline float I_fsel(const float x, const float y, const float z)
 {
     return x >= 0.0f ? y : z;
 }
-static float I_fclamp(const float val, const float min, const float max)
+inline float I_fclamp(const float val, const float min, const float max)
 {
     return I_fsel(min - val, min, I_fsel(val - max, max, val));
 }
@@ -1684,3 +1689,8 @@ static const vec4_t con_inputDvarValueColor = { 1.0f, 1.0f, 1.0f, 1.0f };
 static const vec4_t con_inputDvarInfoColor = { 0.8f, 0.8f, 1.0f, 1.0f };
 
 static const vec4_t con_inputDvarInactiveValueColor = { 0.8f, 0.8f, 0.8f, 1.0f };
+
+// retail 0x406be0, empty and unreferenced; name unknown
+void Con_Stub_406be0(void)
+{
+}

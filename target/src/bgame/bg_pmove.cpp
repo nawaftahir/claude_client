@@ -3506,11 +3506,9 @@ void PM_FootstepEvent( pmove_t *pm, pml_t *pml, int iOldBobCycle, int iNewBobCyc
 	playerState_t *ps;
 	int iSurfaceType;
 	int iClipMask;
-	int iClientNum;
 	float fTraceDist;
 	vec3_t mins;
 	vec3_t maxs;
-	vec3_t vEnd;
 	trace_t trace;
 
 	ps = pm->ps;
@@ -3524,6 +3522,8 @@ void PM_FootstepEvent( pmove_t *pm, pml_t *pml, int iOldBobCycle, int iNewBobCyc
 			{
 				if ( ps->pm_flags & PMF_LADDER )
 				{
+					vec3_t vEnd;
+
 					VectorCopy(pm->mins, mins);
 
 					mins[0] = mins[0] + 6.0f;
@@ -3545,12 +3545,11 @@ void PM_FootstepEvent( pmove_t *pm, pml_t *pml, int iOldBobCycle, int iNewBobCyc
 					assert(maxs[2] >= mins[2]);
 
 					iClipMask = pm->tracemask & ~( CONTENTS_BODY | CONTENTS_PLAYERCLIP );
-					iClientNum = ps->clientNum;
 					fTraceDist = -31.0f;
 
 					VectorMA(ps->origin, fTraceDist, ps->vLadderVec, vEnd);
 
-					PM_playerTrace(pm, &trace, ps->origin, mins, maxs, vEnd, iClientNum, iClipMask);
+					PM_playerTrace(pm, &trace, ps->origin, mins, maxs, vEnd, ps->clientNum, iClipMask);
 					iSurfaceType = (byte)( ( trace.surfaceFlags & ( 0x1f << SURF_START_BIT ) ) >> SURF_START_BIT );
 
 					if ( trace.fraction == 1.0f || !iSurfaceType )
@@ -3885,9 +3884,9 @@ void PM_Footsteps( pmove_t *pm, pml_t *pml )
 	if ( iStance == PM_EFF_STANCE_PRONE )
 	{
 		if ( walking )
-			bobmove = pm->xyspeed / scale * 0.23999999f;
+			bobmove = ( pm->xyspeed / scale ) * 0.23999999f;
 		else
-			bobmove = pm->xyspeed / scale * 0.25f;
+			bobmove = ( pm->xyspeed / scale ) * 0.25f;
 
 		if ( ps->pm_flags & PMF_BACKWARDS_RUN )
 			animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_WALKPRONEBK, qtrue);
@@ -3897,9 +3896,9 @@ void PM_Footsteps( pmove_t *pm, pml_t *pml )
 	else if ( iStance == PM_EFF_STANCE_CROUCH )
 	{
 		if ( walking )
-			bobmove = pm->xyspeed / scale * 0.315f;
+			bobmove = ( pm->xyspeed / scale ) * 0.315f;
 		else
-			bobmove = pm->xyspeed / scale * 0.34f;
+			bobmove = ( pm->xyspeed / scale ) * 0.34f;
 
 		if ( ps->pm_flags & PMF_BACKWARDS_RUN )
 		{
@@ -3956,7 +3955,7 @@ void PM_Footsteps( pmove_t *pm, pml_t *pml )
 	{
 		if ( walking )
 		{
-			bobmove = pm->xyspeed / scale * 0.32499999f;
+			bobmove = ( pm->xyspeed / scale ) * 0.32499999f;
 
 			if ( ps->damageTimer > stumble_end_time )
 				animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_STUMBLE_WALK_BACKWARD, qtrue);
@@ -3965,7 +3964,7 @@ void PM_Footsteps( pmove_t *pm, pml_t *pml )
 		}
 		else
 		{
-			bobmove = pm->xyspeed / scale * 0.36000001f;
+			bobmove = ( pm->xyspeed / scale ) * 0.36000001f;
 
 			if ( ps->damageTimer > stumble_end_time )
 				animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_STUMBLE_BACKWARD, qtrue);
@@ -3975,7 +3974,7 @@ void PM_Footsteps( pmove_t *pm, pml_t *pml )
 	}
 	else if ( walking )
 	{
-		bobmove = pm->xyspeed / scale * 0.30500001f;
+		bobmove = ( pm->xyspeed / scale ) * 0.30500001f;
 
 		if ( ps->damageTimer > stumble_end_time )
 			animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_STUMBLE_WALK_FORWARD, qtrue);
@@ -3984,7 +3983,7 @@ void PM_Footsteps( pmove_t *pm, pml_t *pml )
 	}
 	else
 	{
-		bobmove = pm->xyspeed / scale * 0.33500001f;
+		bobmove = ( pm->xyspeed / scale ) * 0.33500001f;
 
 		if ( ps->damageTimer > stumble_end_time )
 			animResult = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_STUMBLE_FORWARD, qtrue);

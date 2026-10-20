@@ -277,6 +277,11 @@ float CL_GetMenuBlurRadius(void)
     return 0.0f;
 }
 
+// retail 0x413500, empty and unreferenced; name unknown
+void SCR_Stub_413500(void)
+{
+}
+
 static void SCR_UpdateFrame(void)
 {
     re.BeginFrame();

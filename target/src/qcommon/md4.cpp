@@ -98,6 +98,11 @@ static void MD4Transform( UINT4 [4], const unsigned char [64] );
 static void Encode( unsigned char *, UINT4 *, unsigned int );
 static void Decode( UINT4 *, const unsigned char *, unsigned int );
 
+// Storage size from the layout; only the engineState_t members are referenced.
+struct engineState_t;
+static char engineStateStorage[0x700];
+engineState_t *engineState = (engineState_t *)engineStateStorage;
+
 static unsigned char PADDING[64] = {
 	0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };

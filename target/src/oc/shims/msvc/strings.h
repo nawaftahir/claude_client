@@ -6,7 +6,7 @@
 #define COD2_MSVC_STRINGS_H
 #ifdef _WIN32
 #include <string.h>
-#define strcasecmp  _stricmp
-#define strncasecmp _strnicmp
+#define strcasecmp  strcmpi
+#define strncasecmp strnicmp
 #endif
 #endif

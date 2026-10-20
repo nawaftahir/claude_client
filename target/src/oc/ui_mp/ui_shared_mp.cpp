@@ -109,7 +109,7 @@ extern struct multiDef_s *Item_GetMultiDef(itemDef_t *item);
 extern void Item_SetCursorPos(itemDef_t *item, int cursorPos);
 extern void Item_SetScreenCoords(itemDef_t *item, float x, float y, int horzAlign, int vertAlign);
 
-static inline void FastSinCos(const float value, float *pSin, float *pCos)
+inline void FastSinCos(const float value, float *pSin, float *pCos)
 {
     __asm
     {
@@ -300,12 +300,12 @@ static itemDef_t *g_bindItem;
 static qboolean debugMode;
 static int lastListBoxClickTime;
 
-static float I_fsel(const float x, const float y, const float z)
+inline float I_fsel(const float x, const float y, const float z)
 {
     return x >= 0.0f ? y : z;
 }
 
-static float I_fclamp(const float val, const float min, const float max)
+inline float I_fclamp(const float val, const float min, const float max)
 {
     return I_fsel(min - val, min, I_fsel(val - max, max, val));
 }
@@ -378,6 +378,11 @@ qboolean String_Parse(const char **p, char *out, int len)
         return 1;
     }
     return 0;
+}
+
+// retail 0x533b50, empty and unreferenced; name unknown
+void UI_Stub_533b50(void)
+{
 }
 
 // retail 0x533b60
@@ -1910,6 +1915,11 @@ static void Item_StartCapture(displayContextDef_t *dc, itemDef_t *item, int key)
         }
         break;
     }
+}
+
+// retail 0x537de0, empty and unreferenced; name unknown
+void UI_Stub_537de0(void)
+{
 }
 
 qboolean Item_Slider_HandleKey(displayContextDef_t *dc, itemDef_t *item, int key, qboolean down)
@@ -4430,7 +4440,6 @@ void Item_Paint(displayContextDef_t *dc, itemDef_t *item)
 
 void Menu_PaintAll(displayContextDef_t *dc)
 {
-    vec4_t v;
     int i;
     int start;
     menuDef_t *menu;
@@ -4457,10 +4466,7 @@ void Menu_PaintAll(displayContextDef_t *dc)
         Menu_Paint(dc, dc->menuStack[i], 0);
 
     if (debugMode) {
-        v[0] = 1.0f;
-        v[1] = 1.0f;
-        v[2] = 1.0f;
-        v[3] = 1.0f;
+        vec4_t v = { 1.0f, 1.0f, 1.0f, 1.0f };
         UI_DrawText(va("fps: %f", dc->FPS), 0x7fffffff, UI_GetFontHandle(0, 0.5f), 5.0f, 25.0f, 0, 0, 0.5f, v, 0);
     }
 }

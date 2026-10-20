@@ -785,7 +785,7 @@ void CG_InitView(void)
     FX_AdjustTime(cg->time);
 }
 
-static inline void Vec3LerpFrom(const vec3_t from, const vec3_t to, float frac, vec3_t out)
+inline void Vec3LerpFrom(const vec3_t from, const vec3_t to, float frac, vec3_t out)
 {
     out[0] = from[0] + (to[0] - from[0]) * frac;
     out[1] = from[1] + (to[1] - from[1]) * frac;

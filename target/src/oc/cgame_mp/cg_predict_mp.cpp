@@ -139,7 +139,7 @@ static void CG_InterpolatePlayerState(qboolean grabAngles)
                           (next->ps.fWeaponPosFrac - prev->ps.fWeaponPosFrac) * f;
 }
 
-static inline void FastSinCos(const float value, float *pSin, float *pCos)
+inline void FastSinCos(const float value, float *pSin, float *pCos)
 {
     __asm
     {
@@ -156,14 +156,42 @@ static inline void FastSinCos(const float value, float *pSin, float *pCos)
     }
 }
 
-static inline bool VectorCompare(const vec3_t v1, const vec3_t v2)
+inline bool VectorCompare(const vec3_t v1, const vec3_t v2)
 {
     return v1[0] == v2[0] && v1[1] == v2[1] && v1[2] == v2[2];
 }
 
-static inline vec_t VectorLength(const vec3_t v)
+inline vec_t VectorLength(const vec3_t v)
 {
     return sqrtf(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+}
+
+inline void VectorSubtract(const vec3_t a, const vec3_t b, vec3_t c)
+{
+    c[0] = a[0] - b[0];
+    c[1] = a[1] - b[1];
+    c[2] = a[2] - b[2];
+}
+
+inline void VectorAdd(const vec3_t a, const vec3_t b, vec3_t c)
+{
+    c[0] = a[0] + b[0];
+    c[1] = a[1] + b[1];
+    c[2] = a[2] + b[2];
+}
+
+inline void VectorScale(const vec3_t v, const float s, vec3_t o)
+{
+    o[0] = s * v[0];
+    o[1] = s * v[1];
+    o[2] = s * v[2];
+}
+
+inline void VectorClear(vec3_t v)
+{
+    v[0] = 0;
+    v[1] = 0;
+    v[2] = 0;
 }
 
 static void CG_TouchItem(centity_t *cent)
@@ -293,9 +321,7 @@ static void CG_PredictPlayerState_Internal(void)
                         Com_Printf("prediction error\n");
                 }
 
-                delta[0] = oldPlayerState->origin[0] - adjusted[0];
-                delta[1] = oldPlayerState->origin[1] - adjusted[1];
-                delta[2] = oldPlayerState->origin[2] - adjusted[2];
+                VectorSubtract(oldPlayerState->origin, adjusted, delta);
                 len = VectorLength(delta);
                 if (len > 0.1f) {
                     if (cg_showmiss->current.integer)
@@ -307,18 +333,12 @@ static void CG_PredictPlayerState_Internal(void)
                             f = 0.0f;
                         if (f > 0.0f && cg_showmiss->current.integer)
                             Com_Printf("Double prediction decay: %f\n", f);
-                        cg->predictedError[0] *= f;
-                        cg->predictedError[1] *= f;
-                        cg->predictedError[2] *= f;
+                        VectorScale(cg->predictedError, f, cg->predictedError);
                     } else {
-                        cg->predictedError[0] = 0.0f;
-                        cg->predictedError[1] = 0.0f;
-                        cg->predictedError[2] = 0.0f;
+                        VectorClear(cg->predictedError);
                     }
 
-                    cg->predictedError[0] += delta[0];
-                    cg->predictedError[1] += delta[1];
-                    cg->predictedError[2] += delta[2];
+                    VectorAdd(delta, cg->predictedError, cg->predictedError);
                     cg->predictedErrorTime = cg->oldTime;
                 }
             }

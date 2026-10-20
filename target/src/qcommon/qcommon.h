@@ -647,3 +647,17 @@ XModel* CM_XModelPrecache(const char *name);
 #include <time.h>
 #include <sys/time.h>
 #include <ctype.h>
+
+static __forceinline void Com_EndParseSessionInl( void )
+{
+	ParseThreadInfo *parse;
+
+	parse = Com_GetParseThreadInfo();
+
+	if ( parse->parseInfoNum == 0 )
+	{
+		Com_Error( ERR_FATAL, "\x15" "Com_EndParseSession: session underflow" );
+	}
+
+	parse->parseInfoNum--;
+}

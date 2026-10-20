@@ -180,3 +180,12 @@ const char *MemFile_ReadCString( MemoryFile *memFile )
 	return string;
 }
 
+// retail 0x441f80, empty and unreferenced; name unknown
+void MemFile_Stub_441f80(void)
+{
+}
+
+// retail 0x441f90, empty and unreferenced; name unknown
+void MemFile_Stub_441f90(void)
+{
+}

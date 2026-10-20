@@ -312,7 +312,7 @@ void Sys_SendPacket(int length, const void *data, netadr_t to)
     int err;
 
     if (to.type != NA_BROADCAST && to.type != NA_IP) {
-        Com_Error(0, "Sys_SendPacket: bad address type");
+        Com_Error(0, "\025Sys_SendPacket: bad address type");
         return;
     }
 

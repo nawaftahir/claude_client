@@ -159,6 +159,38 @@ typedef struct value_s
 // Returns:					-
 // Changes Globals:		-
 //============================================================================
+void SourceError(source_t *source, char *str, ...)
+{
+	char text[1024];
+	va_list ap;
+
+	va_start(ap, str);
+	vsprintf(text, str, ap);
+	va_end(ap);
+	Com_Printf("^1Error: file %s, line %d: %s\n", source->scriptstack->filename, source->scriptstack->line, text);
+} //end of the function SourceError
+//===========================================================================
+//
+// Parameter:				-
+// Returns:					-
+// Changes Globals:		-
+//===========================================================================
+void SourceWarning(source_t *source, char *str, ...)
+{
+	char text[1024];
+	va_list ap;
+
+	va_start(ap, str);
+	vsprintf(text, str, ap);
+	va_end(ap);
+	Com_Printf("^3Warning: file %s, line %d: %s\n", source->scriptstack->filename, source->scriptstack->line, text);
+} //end of the function ScriptWarning
+//============================================================================
+//
+// Parameter:				-
+// Returns:					-
+// Changes Globals:		-
+//============================================================================
 directive_t directives[20] =
 {
 	{"if", PC_Directive_if},
@@ -2942,38 +2974,6 @@ void PC_CheckOpenSourceHandles(void)
 	} //end for
 } //end of the function PC_CheckOpenSourceHandles
 
-//============================================================================
-//
-// Parameter:				-
-// Returns:					-
-// Changes Globals:		-
-//============================================================================
-void SourceError(source_t *source, char *str, ...)
-{
-	char text[1024];
-	va_list ap;
-
-	va_start(ap, str);
-	vsprintf(text, str, ap);
-	va_end(ap);
-	Com_Printf("^1Error: file %s, line %d: %s\n", source->scriptstack->filename, source->scriptstack->line, text);
-} //end of the function SourceError
-//===========================================================================
-//
-// Parameter:				-
-// Returns:					-
-// Changes Globals:		-
-//===========================================================================
-void SourceWarning(source_t *source, char *str, ...)
-{
-	char text[1024];
-	va_list ap;
-
-	va_start(ap, str);
-	vsprintf(text, str, ap);
-	va_end(ap);
-	Com_Printf("^3Warning: file %s, line %d: %s\n", source->scriptstack->filename, source->scriptstack->line, text);
-} //end of the function ScriptWarning
 //============================================================================
 //
 // Parameter:				-

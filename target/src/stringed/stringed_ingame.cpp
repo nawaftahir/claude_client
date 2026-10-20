@@ -148,7 +148,7 @@ void CStringEdPackage::SetupNewFileParse( LPCSTR psFileName )
 	char sString[ iSE_MAX_FILENAME_LENGTH ];
 
 	strcpy(sString, Filename_WithoutPath( Filename_WithoutExt( psFileName ) ));
-	_strupr(sString);
+	strupr(sString);
 
 	m_strCurrentFileRef_ParseOnly = sString;	// eg "OBJECTIVES"
 }

@@ -5113,7 +5113,6 @@ void BG_CalculateWeaponPosition_Sway( const playerState_t *ps, vec3_t swayViewAn
 	float swayVertScale;
 	float fWeaponPosFrac;
 	float dt;
-	float scale;
 	int weapon;
 
 	assert(ps);
@@ -5158,13 +5157,10 @@ void BG_CalculateWeaponPosition_Sway( const playerState_t *ps, vec3_t swayViewAn
 	swayHorizScale *= ssSwayScale;
 	swayVertScale *= ssSwayScale;
 
-	deltaAngles[0] = AngleSubtract(ps->viewangles[0], swayViewAngles[0]);
-	deltaAngles[1] = AngleSubtract(ps->viewangles[1], swayViewAngles[1]);
+	AnglesSubtract(ps->viewangles, swayViewAngles, deltaAngles);
 
 	assert(dt);
-	scale = 1.0f / (dt * 60.0f);
-	deltaAngles[0] *= scale;
-	deltaAngles[1] *= scale;
+	VectorScale(deltaAngles, 1.0f / (dt * 60.0f), deltaAngles);
 
 	deltaAngles[0] = I_fclamp(deltaAngles[0], -swayMaxAngle, swayMaxAngle);
 	deltaAngles[1] = I_fclamp(deltaAngles[1], -swayMaxAngle, swayMaxAngle);
