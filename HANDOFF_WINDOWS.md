@@ -1,15 +1,31 @@
-# Handoff: client recon (state 10-19 evening, WSL agent takes over; start with NEXT_SESSION.md)
+# Handoff: client recon (state 10-19 night; Windows session picks up here, then NEXT_SESSION.md)
 
-> **Latest state (10-19 evening): 1,287,448 B = 91.39%, uncommitted = lab/wip_gap23.patch. Read `../lab/HANDOFF_1019.md` first; the State section below is older.**
+## Pick up here (Windows, 10-19 night)
+- Main `claude_client/` = **1,303,591 B = 92.54%**, clean-rebuild verified, RATCHET OK. Same-offset 10.606%.
+  UNCOMMITTED: `lab/wip_gap23.patch` == `git diff -- target/src`. Do not commit below 93% (1,310,076, +6,485); never `git checkout` src.
+- Run git/builds through `wsl.exe -d Ubuntu -- bash <script>`; agent brief template for Windows tools: `lab/w4/prompt_w18_common.txt`.
+  Linux-side briefs from tonight (copy + edit wave/slot/targets): `~/sp/p39_s3.txt`, `p39_s4.txt` (code), `p39_s6.txt` (layout).
+- Slots s3/s4/s6 are synced to 1,302,739-era main; resync before use: `nohup sh lab/rebase.sh sN > ~/sp/rbXX_sN.log 2>&1 &`.
+- Fastest loop (w38, ~22 B/ktok): rescore `python3 ../alldiff.py > ~/sp/scored.txt`, group with `sh lab/classscan.sh ~/sp/scored.txt`, one Opus agent per shared cause, one Sonnet layout agent; gate with `sh lab/gate_w18.sh <abs patch>`; if main and a fresh slot disagree, move `target/build/obj` aside and rebuild (incremental main went stale once).
+- Agents: check `grep -c "unresolved external" build/oclink.log` == 0 before trusting smeasure (a /FORCE link fooled the w39 layout agent).
+- Tonight's wins (10-19 night, +7,560 B from 92.00%): BG_CheckProneValid, PM_Footsteps, CG_PredictPlayerState_Internal, BG_CalculateWeaponPosition_Sway, SND_SetChannelInfo, PM_FootstepEvent, CL_AddDebugLine, CL_AddDebugString, FX_AddCameraShake; layout 8.24 -> 10.61%.
+- Levers (skill top): exact reference text incl. redundant parens; reference helper-call form for vector math; block-local vec3_t; exact header `inline` names (no new symbols); Mac `_this` = C++ method (FxRange::GetVal/SetRange).
+- Best next leads:
+  - nb_decode 0x4e2b50 (3,239 B, 10 lines): vocoder loop 0x4e34c0, `innov` base/index order [eax+ecx-4] never moved (lab/w4/re_re_w38_s4.md).
+  - XAnimLoadFile 0x48bec0 (4,053 B, 4 lines): `imul edx,edi` operand order; decl order dead.
+  - CG_CalcCrosshairPosition (gunYaw stack copy), CG_CheckHudStanceDisplay (one more stanceFadeTime read), FX_AddFxToScene, CG_DrawAdsOverlay, FX_RandomizeRoll, CG_DrawLagometer/CG_DrawDevString (shared CalcScreenPlacementInl).
+  - Layout: libcmt member order (retail pulls stricmp/strnicmp/strlwr/strupr late) unblocks retail fn 0x401ec0, the 0x401f20 copy of Com_SurfaceTypeToName (needs its real source with the real infoParm_t type) and the <RESET>/<FAST> + default.menu strings.
 
 Target: `CoD2MP_s.exe` 1.0. End goal: every function real C/C++, whole exe
 SHA-256 identical to retail, runs like retail. % of `.text` is only the meter.
 
 ## State
 
-- Main = this repo, `target/`. Measured **1,296,031 B = 92.00%** of 1,408,683 B
-  (RATCHET OK, `target/build/good.json`), committed 10-19.
-  Next checkpoint 93% = 1,310,076 B (+14,045).
+- Main = this repo, `target/`. Measured **1,306,197 B = 92.73%** of 1,408,683 B (RATCHET OK,
+  `target/build/good.json` 10-19 22:19), UNCOMMITTED (39 src files; backup `lab/wip_gap23.patch`).
+  Last commit 92.00%. Next checkpoint 93% = 1,310,076 B (+3,879). Release whole-file same-offset 9.50%
+  (`make release` + shameter.py), libcmt member order = retail since w42.
+- Start with NEXT_SESSION.md (state, effort split, do-not-repeat list, next leads).
 - ~95 unmatched fns left (~55 KB); every one has 5+ logged attempts. Whole-file
   SHA distance (last `shameter.py`): 7.8% same-offset bytes, 574 layout drift
   points (`drift.py`); 5 of 6,588 matched fns sit at their retail address.
