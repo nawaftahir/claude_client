@@ -15,3 +15,9 @@ UI_SetActiveMenu 0x532280: already matched; fdiff lines are jump-table words onl
 CG_FireWeapon 0x4d0eb0: 2 lines = lea ebp,[ebx+0xf0] one push early (prologue scheduling); structure matches since w17
 # 10-21 symbol-count tie (LESSONS 10-09 "GScr_CloseFile new tie-set member"; flips with fn counts, w78CC)
 ?GScr_CloseFile@@YAXXZ
+# count ties (10-21): flip with the non-static fn count before them; lab/w4/cnt_sweep.tsv, sdc_period.tsv; return when the fn set matches retail
+?SV_DirectConnect@@YAXUnetadr_t@@@Z
+?SV_SetConfigstring@@YAXHPBD@Z
+_yylex
+?Netchan_Process@@YAHPAUnetchan_t@@PAUmsg_t@@@Z
+?Com_Meminfo_f@@YAXXZ
