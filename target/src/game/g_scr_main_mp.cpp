@@ -5266,6 +5266,30 @@ void GScr_ClientPrint()
 	SV_GameSendServerCommand(v3 - g_entities, SV_CMD_CAN_IGNORE, va("%c \"%s\"", 101, v2));
 }
 
+void GScr_KickPlayer()
+{
+	int v1;
+
+	if ( Scr_GetNumParam() <= 0 )
+	{
+		return;
+	}
+
+	v1 = Scr_GetInt(0);
+	Cbuf_ExecuteText(EXEC_APPEND, va("tempBanClient %i\n", v1));
+}
+void GScr_BanPlayer()
+{
+	int v1;
+
+	if ( Scr_GetNumParam() <= 0 )
+	{
+		return;
+	}
+
+	v1 = Scr_GetInt(0);
+	Cbuf_ExecuteText(EXEC_APPEND, va("banClient %i\n", v1));
+}
 /*
 ===============
 GScr_OpenFile
@@ -6379,30 +6403,6 @@ void Scr_ToLower()
 void Scr_PrecacheRumble()
 {
 	;
-}
-void GScr_KickPlayer()
-{
-	int v1;
-
-	if ( Scr_GetNumParam() <= 0 )
-	{
-		return;
-	}
-
-	v1 = Scr_GetInt(0);
-	Cbuf_ExecuteText(EXEC_APPEND, va("tempBanClient %i\n", v1));
-}
-void GScr_BanPlayer()
-{
-	int v1;
-
-	if ( Scr_GetNumParam() <= 0 )
-	{
-		return;
-	}
-
-	v1 = Scr_GetInt(0);
-	Cbuf_ExecuteText(EXEC_APPEND, va("banClient %i\n", v1));
 }
 void Scr_PlayRumbleOnPos()
 {

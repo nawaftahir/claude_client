@@ -50,31 +50,6 @@ qboolean CG_ConsoleCommand(void);
 qboolean CG_IsConsoleCommandName(const char *cmd);
 void CG_InitConsoleCommands(void);
 
-// order and entries from retail 0x55ddb8; "mr" is forwarded to the server
-static const consoleCommand_t commandsList[] = {
-    { "viewpos", CG_Viewpos_f },
-    { "+scores", CG_ScoresDown_f },
-    { "-scores", CG_ScoresUp_f },
-    { "sizeup", CG_SizeUp_f },
-    { "sizedown", CG_SizeDown_f },
-    { "weapnext", CG_NextWeapon_f },
-    { "weapprev", CG_PrevWeapon_f },
-    { "weaponslot", CG_WeaponSlot_f },
-    { "tcmd", CG_TargetCommand_f },
-    { "fxSetTestPosition", CG_FxSetTestPosition },
-    { "fxTest", CG_FxTest },
-    { "fxRestart", CG_FxRestart },
-    { "cg_shellshock", CG_ShellShock_f },
-    { "cg_shellshock_load", CG_ShellShock_Load_f },
-    { "cg_shellshock_save", CG_ShellShock_Save_f },
-    { "tell_target", CG_TellTarget_f },
-    { "mp_QuickMessage", CG_QuickMessage_f },
-    { "VoiceChat", CG_VoiceChat_f },
-    { "VoiceTeamChat", CG_TeamVoiceChat_f },
-    { "mr", NULL },
-    { NULL, NULL }
-};
-
 void CG_TargetCommand_f(void)
 {
     unsigned int targetNum;
@@ -261,6 +236,31 @@ static void CG_TeamVoiceChat_f(void)
     Cmd_ArgvBuffer(1, chatCmd, 64);
     Cbuf_AddText(va("cmd vsay_team %s\n", chatCmd));
 }
+
+// order and entries from retail 0x55ddb8; "mr" is forwarded to the server
+static const consoleCommand_t commandsList[] = {
+    { "viewpos", CG_Viewpos_f },
+    { "+scores", CG_ScoresDown_f },
+    { "-scores", CG_ScoresUp_f },
+    { "sizeup", CG_SizeUp_f },
+    { "sizedown", CG_SizeDown_f },
+    { "weapnext", CG_NextWeapon_f },
+    { "weapprev", CG_PrevWeapon_f },
+    { "weaponslot", CG_WeaponSlot_f },
+    { "tcmd", CG_TargetCommand_f },
+    { "fxSetTestPosition", CG_FxSetTestPosition },
+    { "fxTest", CG_FxTest },
+    { "fxRestart", CG_FxRestart },
+    { "cg_shellshock", CG_ShellShock_f },
+    { "cg_shellshock_load", CG_ShellShock_Load_f },
+    { "cg_shellshock_save", CG_ShellShock_Save_f },
+    { "tell_target", CG_TellTarget_f },
+    { "mp_QuickMessage", CG_QuickMessage_f },
+    { "VoiceChat", CG_VoiceChat_f },
+    { "VoiceTeamChat", CG_TeamVoiceChat_f },
+    { "mr", NULL },
+    { NULL, NULL }
+};
 
 qboolean CG_ConsoleCommand(void)
 {
