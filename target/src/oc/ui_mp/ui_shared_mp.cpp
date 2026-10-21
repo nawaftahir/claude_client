@@ -4029,9 +4029,10 @@ static __declspec(noinline) qboolean Item_ListBox_HandleKey(displayContextDef_t 
                     listPtr->startPos[0] = listPtr->cursorPos[0];
                 if (listPtr->cursorPos[0] >= listPtr->startPos[0] + viewmax)
                     listPtr->startPos[0] = listPtr->cursorPos[0] - viewmax + 1;
+                int pos = listPtr->cursorPos[0];
                 int *cursorPos = &item->cursorPos[0];
-                *cursorPos = listPtr->cursorPos[0];
-                UI_FeederSelection(item->special, listPtr->cursorPos[0]);
+                *cursorPos = pos;
+                UI_FeederSelection(item->special, pos);
             } else {
                 listPtr->startPos[0]--;
                 if (listPtr->startPos[0] < 0)
@@ -4127,7 +4128,8 @@ static __declspec(noinline) qboolean Item_ListBox_HandleKey(displayContextDef_t 
             if (item->cursorPos[0] != listPtr->cursorPos[0]) {
                 if (item->cursorPos[0] < 0)
                     item->cursorPos[0] = listPtr->cursorPos[0];
-                if (listPtr->cursorPos[0] < UI_FeederCount(item->special))
+                int pos = listPtr->cursorPos[0];
+                if (pos < UI_FeederCount(item->special))
                     item->cursorPos[0] = listPtr->cursorPos[0];
                 UI_FeederSelection(item->special, item->cursorPos[0]);
             }

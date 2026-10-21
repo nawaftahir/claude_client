@@ -1984,10 +1984,14 @@ void CG_StartShakeCamera(float scale, int duration, const vec_t *src, float radi
 
     for (i = 0; i < 4; ++i) {
         shake = &cg->cameraShake[i];
-        if (shake->time > cg->time)
-            goto store;
-        if ((float)shake->time + shake->length <= (float)cg->time)
-            goto store;
+        if (shake->time > cg->time) {
+            cg->cameraShake[i] = temp;
+            return;
+        }
+        if ((float)shake->time + shake->length <= (float)cg->time) {
+            cg->cameraShake[i] = temp;
+            return;
+        }
     }
 
     bestIndex = i;
@@ -2000,11 +2004,7 @@ void CG_StartShakeCamera(float scale, int duration, const vec_t *src, float radi
     }
     if (bestIndex == 4)
         return;
-    i = bestIndex;
-
-store:
-    shake = &cg->cameraShake[i];
-    *shake = temp;
+    cg->cameraShake[bestIndex] = temp;
 }
 
 void CG_ShakeCamera(void)
