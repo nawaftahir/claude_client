@@ -856,6 +856,13 @@ void CL_IssueDelayedDrawing(int marker)
 {
     RE->IssueDelayedDrawing(marker);
 }
+void CL_SetFullScreenViewport(void)
+{
+    clientStatic_t *cls = CLS;
+
+    RE->SetViewport(0, 0, cls->vidConfig.width, cls->vidConfig.height);
+    SetScreenScaling(1.0f, 1.0f, 0, 0, cls->vidConfig.width, cls->vidConfig.height);
+}
 
 void CL_SetViewport(int x, int y, int width, int height)
 {
@@ -867,13 +874,6 @@ void CL_SaveScreen(void)
     RE->SaveScreen();
 }
 
-void CL_SetFullScreenViewport(void)
-{
-    clientStatic_t *cls = CLS;
-
-    RE->SetViewport(0, 0, cls->vidConfig.width, cls->vidConfig.height);
-    SetScreenScaling(1.0f, 1.0f, 0, 0, cls->vidConfig.width, cls->vidConfig.height);
-}
 
 void CL_BlendSavedScreen(int fadeMsec)
 {

@@ -130,3 +130,13 @@ the client-recon skill fix-pattern catalogue (top ~12 entries = 10-19 PAID class
 - Fast tools: /home/nawaf/mlw/ora/nogl2.sh (no-/GL compile, 20 s/batch), tiny/ltc.sh (small LTCG DLL in seconds),
   bf/ (mechanical variant generator: single edits paid 0).
 - Next: structure group (18 KB) with per-fn deep agents + the new tools; scheduler still unfound (not in c2 IL passes).
+
+## State 10-22 (paused by owner at the 18% whole-file checkpoint)
+- Code gauge ~1.32 MB (~94%); whole file 18.08% (.text 3.40%, .rdata 86.15%, .data 94.12%, .rsrc 99.96%). Checklist + log:
+  dev/WHOLEFILE.md. Plan: dev/PLAN_NEXT.md (corrected: TU order already right; walk drift from .text start).
+- Rules added 10-21: no dummy/placeholder functions ever (Ly3_Tie* reverted); count ties listed in lab/ties.txt
+  (SV_DirectConnect, SV_SetConfigstring, _yylex, Netchan_Process, Com_Meminfo_f) so real structural fixes can land.
+- .rdata/.data layout is near its limit; the rest needs .text: (1) drift walk from 0x401000 (next: Con_Init 320 vs 336,
+  I_sqrt missing at 0x406b90, I_fmin 32 vs 48); (2) shrink .text ~5.4 KB so .data/.rsrc/pointers realign at once.
+- Tools: /home/nawaf/dwalk.py N, x_drift2.py (exact-address count), t_run.sh / t_g.sh (line mover + local release + gate),
+  lv.sh (20 s local release loop), x_ly2t.py / x_rdr.py (.rdata shifts), r2_ord2.py. Do NOT use mv_fn.py (breaks on '{' literals).

@@ -1425,7 +1425,7 @@ static __forceinline void CL_KeyEventBody(int key, const qboolean down, const un
     }
 }
 
-void CL_KeyEvent(int key, const qboolean down, const unsigned int time)
+__declspec(noinline) void CL_KeyEvent(int key, const qboolean down, const unsigned int time)
 {
     CL_KeyEventBody(key, down, time);
 }

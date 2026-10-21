@@ -595,6 +595,22 @@ void IN_LeanRight_Up(void)
 {
     IN_KeyUp(&kb[24]);
 }
+void IN_Prone_Down(void)
+{
+    IN_KeyDown(&kb[25]);
+    if (kb[25].active || kb[11].active )
+        legacyHacks->cl_stanceTemp = 1;
+    else
+        legacyHacks->cl_stanceTemp = 0;
+}
+void IN_Prone_Up(void)
+{
+    IN_KeyUp(&kb[25]);
+    if (kb[25].active || kb[11].active )
+        legacyHacks->cl_stanceTemp = 1;
+    else
+        legacyHacks->cl_stanceTemp = 0;
+}
 
 void IN_Stance_Down(void)
 {
@@ -1194,6 +1210,19 @@ void CL_WritePacket(void)
     while (::clc.netchan.unsentFragments)
         CL_Netchan_TransmitNextFragment(&::clc.netchan);
 }
+void CL_SendCmdInternal(void)
+{
+    CL_CreateNewCommands();
+
+    if (!CL_ReadyToSendPacket()) {
+        if (cl_showSend->current.enabled) {
+            Com_Printf((const char *)". ");
+        }
+        return;
+    }
+
+    CL_WritePacket();
+}
 
 void CL_SendCmd(void)
 {
@@ -1379,35 +1408,6 @@ void IN_ClearFirstKey_409170(void)
     kb[0].down[0] = 0;
 }
 
-void IN_Prone_Down(void)
-{
-    IN_KeyDown(&kb[25]);
-    if (kb[25].active || kb[11].active )
-        legacyHacks->cl_stanceTemp = 1;
-    else
-        legacyHacks->cl_stanceTemp = 0;
-}
-void IN_Prone_Up(void)
-{
-    IN_KeyUp(&kb[25]);
-    if (kb[25].active || kb[11].active )
-        legacyHacks->cl_stanceTemp = 1;
-    else
-        legacyHacks->cl_stanceTemp = 0;
-}
-void CL_SendCmdInternal(void)
-{
-    CL_CreateNewCommands();
-
-    if (!CL_ReadyToSendPacket()) {
-        if (cl_showSend->current.enabled) {
-            Com_Printf((const char *)". ");
-        }
-        return;
-    }
-
-    CL_WritePacket();
-}
 
 // retail 0x409180, empty and unreferenced; name unknown
 void IN_Stub_409180(void)
