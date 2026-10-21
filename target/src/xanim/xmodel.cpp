@@ -32,16 +32,6 @@ inline void AxisTransposeTransformVector(const vec3_t in, const vec3_t mat[3], v
 	out[2] = in[0] * mat[2][0] + in[1] * mat[2][1] + in[2] * mat[2][2];
 }
 
-XModelSurfs *SetDefaultSurface()
-{
-	XModelSurfs *surface;
-
-	surface = &xmodelDefaults.surface;
-	surface->surf = NULL;
-
-	return surface;
-}
-
 qboolean XModelBad(XModel *model)
 {
 	return model->bad;
@@ -115,6 +105,16 @@ XModelParts *SetDefaultModelPart()
 	names[0] = 0;
 
 	return parts;
+}
+
+XModelSurfs *SetDefaultSurface()
+{
+	XModelSurfs *surface;
+
+	surface = &xmodelDefaults.surface;
+	surface->surf = NULL;
+
+	return surface;
 }
 
 void SetDefaultModel(XModel *model)

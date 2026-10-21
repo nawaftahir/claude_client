@@ -1925,6 +1925,20 @@ void CL_UpdateInGameState(void)
     }
 }
 
+int Client_SendVoiceData(int bytes, char *enc_buffer)
+{
+    if (bytes > 0) {
+        memcpy(clients[0].voicePackets[clients[0].voicePacketCount].data, enc_buffer, bytes);
+        clients[0].voicePackets[clients[0].voicePacketCount].dataSize = bytes;
+        clients[0].voicePacketCount++;
+        CL_VoiceTransmit();
+        return bytes;
+    }
+
+    return bytes;
+}
+
+
 void CL_VoiceTransmit(void)
 {
     if (clients[0].voicePacketCount > 0) {
@@ -3277,20 +3291,6 @@ static void CL_BuildMd5StrFromCDKey(char *md5Str)
 #    endif
 }
 #endif
-
-
-int Client_SendVoiceData(int bytes, char *enc_buffer)
-{
-    if (bytes > 0) {
-        memcpy(clients[0].voicePackets[clients[0].voicePacketCount].data, enc_buffer, bytes);
-        clients[0].voicePackets[clients[0].voicePacketCount].dataSize = bytes;
-        clients[0].voicePacketCount++;
-        CL_VoiceTransmit();
-        return bytes;
-    }
-
-    return bytes;
-}
 
 
 // retail 0x40e820, unreferenced; Kisak cl_main_mp name

@@ -1145,183 +1145,6 @@ void InvMatrixTransformVectorQuatTrans(const float *in, const DObjAnimMat *mat, 
 	out[2] = temp[0] * axis[2][0] + temp[1] * axis[2][1] + temp[2] * axis[2][2];
 }
 
-void DObjGeomTraceline(DObj_s *obj, float *localStart, float *localEnd, int contentmask, DObjTrace_s *results)
-{
-	trace_t trace;
-	XModel *model;
-	XModelParts_s *parts;
-	DObjAnimMat *pose;
-	int i;
-	unsigned short *name;
-	int partIndex;
-	XBoneHierarchy *hierarchy;
-
-	results->partName = 0;
-	results->partGroup = 0;
-	trace.fraction = results->fraction;
-	trace.surfaceFlags = 0;
-	VectorClear(trace.normal);
-
-	pose = DObjGetRotTransArray(obj);
-
-	if ( pose )
-	{
-		for ( i = 0; i < obj->numModels; ++i )
-		{
-			model = obj->models[i];
-			parts = model->parts;
-			hierarchy = parts->hierarchy;
-			name = hierarchy->names;
-			partIndex = XModelTraceLine(model, &trace, pose, localStart, localEnd, contentmask);
-
-			if ( partIndex >= 0 )
-				results->partName = name[partIndex];
-
-			pose += parts->numBones;
-		}
-	}
-
-	results->fraction = trace.fraction;
-	results->surfaceflags = trace.surfaceFlags;
-
-	VectorCopy(trace.normal, results->normal);
-}
-
-int DObjGetModelLodForDist(const DObj_s *obj, int modelIndex, float dist)
-{
-	return XModelGetLodForDist(obj->models[modelIndex], dist);
-}
-
-float DObjGetMaxLodOutDist(const DObj_s *obj)
-{
-	int i;
-	float dist;
-	float maxDist;
-
-	maxDist = 0;
-
-	for ( i = 0; i < obj->numModels; ++i )
-	{
-		dist = XModelGetLodOutDist(obj->models[i]);
-
-		if ( maxDist < dist )
-			maxDist = dist;
-	}
-
-	return maxDist;
-}
-
-int DObjHasContents(DObj_s *obj, int contentmask)
-{
-	int i;
-
-	for ( i = 0; i < obj->numModels; ++i )
-	{
-		if ( (contentmask & XModelGetContents(obj->models[i])) != 0 )
-			return 1;
-	}
-
-	return 0;
-}
-
-void DObjSetLocalTagInternal( const DObj_s *obj, const float *trans, const float *angles, int boneIndex )
-{
-	DObjAnimMat *rotTrans;
-	float unused;
-	vec2_t yaw;
-	vec2_t roll;
-	vec2_t pitch;
-	vec4_t tempQuat;
-
-	rotTrans = DObjGetRotTransArray(obj);
-
-	if ( !rotTrans )
-		return;
-
-	rotTrans += boneIndex;
-
-	if ( angles )
-	{
-		FastSinCos(angles[1] * 0.0087266462f, &yaw[0], &yaw[1]);
-		FastSinCos(angles[0] * 0.0087266462f, &pitch[0], &pitch[1]);
-		FastSinCos(angles[2] * 0.0087266462f, &roll[0], &roll[1]);
-
-		tempQuat[0] = -pitch[0] * yaw[0];
-		tempQuat[1] = pitch[0] * yaw[1];
-		tempQuat[2] = pitch[1] * yaw[0];
-		tempQuat[3] = pitch[1] * yaw[1];
-
-		rotTrans->quat[0] = roll[0] * tempQuat[3] + roll[1] * tempQuat[0];
-		rotTrans->quat[1] = roll[1] * tempQuat[1] + roll[0] * tempQuat[2];
-		rotTrans->quat[2] = -roll[0] * tempQuat[1] + roll[1] * tempQuat[2];
-		rotTrans->quat[3] = roll[1] * tempQuat[3] - roll[0] * tempQuat[0];
-	}
-	else
-	{
-		Vector4Set(rotTrans->quat, 0, 0, 0, 1);
-	}
-
-	rotTrans->transWeight = 0;
-	VectorCopy(trans, rotTrans->trans);
-}
-
-qboolean DObjSetControlTagAngles(const DObj_s *obj, int *partBits, unsigned int boneIndex, float *angles)
-{
-	int index;
-
-	index = DObjGetBoneIndex(obj, boneIndex);
-
-	if ( index < 0 )
-		return false;
-
-	if ( !DObjSetControlRotTransIndex(obj, partBits, index) )
-		return false;
-
-	DObjSetLocalTagInternal(obj, vec3_origin, angles, index);
-	return true;
-}
-
-qboolean DObjSetLocalTag(const DObj_s *obj, int *partBits, unsigned int boneIndex, const float *trans, const float *angles)
-{
-	int index;
-
-	index = DObjGetBoneIndex(obj, boneIndex);
-
-	if ( index < 0 )
-	{
-		return false;
-	}
-
-	if ( !DObjSetRotTransIndex(obj, partBits, index) )
-	{
-		return false;
-	}
-
-	DObjSetLocalTagInternal(obj, trans, angles, index);
-	return true;
-}
-
-qboolean DObjSetLocalBoneIndex(const DObj_s *obj, int *partBits, int boneIndex, const float *trans, const float *angles)
-{
-	if ( !DObjSetRotTransIndex(obj, partBits, boneIndex) )
-		return false;
-
-	DObjSetLocalTagInternal(obj, trans, angles, boneIndex);
-	return true;
-}
-
-// retail 0x485fc0, ri.DObjSetModel
-void DObjSetModel(DObj_s *obj, XModel *model)
-{
-	obj->skel = &model->parts->skel;
-	obj->numBones = (byte)model->parts->numBones;
-	obj->models[0] = model;
-}
-
-XAnimTree_s* DObjGetTree(const DObj_s *obj)
-{
-	return obj->tree;
-}
 void DObjTraceline(DObj_s *obj, float *start, float *end, unsigned char *priorityMap, DObjTrace_s *trace)
 {
 	vec3_t delta;
@@ -1594,6 +1417,183 @@ out:
 		ConvertQuatToMat(hitBoneMatrix, axis);
 		VectorScale(axis[traceHitT], hitSign, trace->normal);
 	}
+}
+void DObjGeomTraceline(DObj_s *obj, float *localStart, float *localEnd, int contentmask, DObjTrace_s *results)
+{
+	trace_t trace;
+	XModel *model;
+	XModelParts_s *parts;
+	DObjAnimMat *pose;
+	int i;
+	unsigned short *name;
+	int partIndex;
+	XBoneHierarchy *hierarchy;
+
+	results->partName = 0;
+	results->partGroup = 0;
+	trace.fraction = results->fraction;
+	trace.surfaceFlags = 0;
+	VectorClear(trace.normal);
+
+	pose = DObjGetRotTransArray(obj);
+
+	if ( pose )
+	{
+		for ( i = 0; i < obj->numModels; ++i )
+		{
+			model = obj->models[i];
+			parts = model->parts;
+			hierarchy = parts->hierarchy;
+			name = hierarchy->names;
+			partIndex = XModelTraceLine(model, &trace, pose, localStart, localEnd, contentmask);
+
+			if ( partIndex >= 0 )
+				results->partName = name[partIndex];
+
+			pose += parts->numBones;
+		}
+	}
+
+	results->fraction = trace.fraction;
+	results->surfaceflags = trace.surfaceFlags;
+
+	VectorCopy(trace.normal, results->normal);
+}
+
+int DObjGetModelLodForDist(const DObj_s *obj, int modelIndex, float dist)
+{
+	return XModelGetLodForDist(obj->models[modelIndex], dist);
+}
+
+float DObjGetMaxLodOutDist(const DObj_s *obj)
+{
+	int i;
+	float dist;
+	float maxDist;
+
+	maxDist = 0;
+
+	for ( i = 0; i < obj->numModels; ++i )
+	{
+		dist = XModelGetLodOutDist(obj->models[i]);
+
+		if ( maxDist < dist )
+			maxDist = dist;
+	}
+
+	return maxDist;
+}
+
+int DObjHasContents(DObj_s *obj, int contentmask)
+{
+	int i;
+
+	for ( i = 0; i < obj->numModels; ++i )
+	{
+		if ( (contentmask & XModelGetContents(obj->models[i])) != 0 )
+			return 1;
+	}
+
+	return 0;
+}
+
+void DObjSetLocalTagInternal( const DObj_s *obj, const float *trans, const float *angles, int boneIndex )
+{
+	DObjAnimMat *rotTrans;
+	float unused;
+	vec2_t yaw;
+	vec2_t roll;
+	vec2_t pitch;
+	vec4_t tempQuat;
+
+	rotTrans = DObjGetRotTransArray(obj);
+
+	if ( !rotTrans )
+		return;
+
+	rotTrans += boneIndex;
+
+	if ( angles )
+	{
+		FastSinCos(angles[1] * 0.0087266462f, &yaw[0], &yaw[1]);
+		FastSinCos(angles[0] * 0.0087266462f, &pitch[0], &pitch[1]);
+		FastSinCos(angles[2] * 0.0087266462f, &roll[0], &roll[1]);
+
+		tempQuat[0] = -pitch[0] * yaw[0];
+		tempQuat[1] = pitch[0] * yaw[1];
+		tempQuat[2] = pitch[1] * yaw[0];
+		tempQuat[3] = pitch[1] * yaw[1];
+
+		rotTrans->quat[0] = roll[0] * tempQuat[3] + roll[1] * tempQuat[0];
+		rotTrans->quat[1] = roll[1] * tempQuat[1] + roll[0] * tempQuat[2];
+		rotTrans->quat[2] = -roll[0] * tempQuat[1] + roll[1] * tempQuat[2];
+		rotTrans->quat[3] = roll[1] * tempQuat[3] - roll[0] * tempQuat[0];
+	}
+	else
+	{
+		Vector4Set(rotTrans->quat, 0, 0, 0, 1);
+	}
+
+	rotTrans->transWeight = 0;
+	VectorCopy(trans, rotTrans->trans);
+}
+
+qboolean DObjSetControlTagAngles(const DObj_s *obj, int *partBits, unsigned int boneIndex, float *angles)
+{
+	int index;
+
+	index = DObjGetBoneIndex(obj, boneIndex);
+
+	if ( index < 0 )
+		return false;
+
+	if ( !DObjSetControlRotTransIndex(obj, partBits, index) )
+		return false;
+
+	DObjSetLocalTagInternal(obj, vec3_origin, angles, index);
+	return true;
+}
+
+qboolean DObjSetLocalTag(const DObj_s *obj, int *partBits, unsigned int boneIndex, const float *trans, const float *angles)
+{
+	int index;
+
+	index = DObjGetBoneIndex(obj, boneIndex);
+
+	if ( index < 0 )
+	{
+		return false;
+	}
+
+	if ( !DObjSetRotTransIndex(obj, partBits, index) )
+	{
+		return false;
+	}
+
+	DObjSetLocalTagInternal(obj, trans, angles, index);
+	return true;
+}
+
+qboolean DObjSetLocalBoneIndex(const DObj_s *obj, int *partBits, int boneIndex, const float *trans, const float *angles)
+{
+	if ( !DObjSetRotTransIndex(obj, partBits, boneIndex) )
+		return false;
+
+	DObjSetLocalTagInternal(obj, trans, angles, boneIndex);
+	return true;
+}
+
+// retail 0x485fc0, ri.DObjSetModel
+void DObjSetModel(DObj_s *obj, XModel *model)
+{
+	obj->skel = &model->parts->skel;
+	obj->numBones = (byte)model->parts->numBones;
+	obj->models[0] = model;
+}
+
+XAnimTree_s* DObjGetTree(const DObj_s *obj)
+{
+	return obj->tree;
 }
 void DObjInitFromModel( DObj *obj, XModel *model )
 {

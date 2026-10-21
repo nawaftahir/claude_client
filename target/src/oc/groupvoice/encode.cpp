@@ -107,6 +107,11 @@ Bool Encode_Shutdown(void)
     return 1;
 }
 
+int Encode_GetFrameSize(void)
+{
+    return g_frame_size;
+}
+
 int Encode_Sample(short *buffer_in, char *buffer_out, int maxLength)
 {
     int quality;
@@ -136,10 +141,5 @@ bool Encode_SetBandwidth_4b67f0(int bandwidthEnum)
         return 1;
     Encode_Shutdown();
     return Encode_Init(bandwidthEnum);
-}
-
-int Encode_GetFrameSize(void)
-{
-    return g_frame_size;
 }
 

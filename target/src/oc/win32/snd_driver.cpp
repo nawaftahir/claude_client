@@ -1037,6 +1037,20 @@ void SND_SetStreamChannelPlaybackRate(int index, int rate)
     AIL_set_stream_playback_rate(milesGlob.handle_stream[index - 0x20], rate);
 }
 
+void SND_Update2DChannelReverb(int index)
+{
+    const snd_alias_t *pAlias = g_snd.chaninfo[index].pAlias0;
+    float reverbLevel;
+
+    if (pAlias == NULL) {
+        reverbLevel = g_snd.effect->wetlevel;
+    } else if (((dvar_t *)snd_enableReverb)->current.enabled != 0 && !(pAlias->flags & 0x10)) {
+        reverbLevel = g_snd.effect->wetlevel;
+    } else {
+        reverbLevel = 0;
+    }
+    AIL_set_sample_reverb_levels(milesGlob.handle_2D[index - 45], 1.0f, reverbLevel);
+}
 void SND_Update3DChannelReverb(int index)
 {
     const snd_alias_t *pAlias = g_snd.chaninfo[index].pAlias0;
@@ -1570,18 +1584,4 @@ int SND_GetStreamChannelLength(int index)
     long int *lenp = &length;
     AIL_stream_ms_position(milesGlob.handle_stream[index - 0x20], lenp, NULL);
     return (int)length;
-}
-void SND_Update2DChannelReverb(int index)
-{
-    const snd_alias_t *pAlias = g_snd.chaninfo[index].pAlias0;
-    float reverbLevel;
-
-    if (pAlias == NULL) {
-        reverbLevel = g_snd.effect->wetlevel;
-    } else if (((dvar_t *)snd_enableReverb)->current.enabled != 0 && !(pAlias->flags & 0x10)) {
-        reverbLevel = g_snd.effect->wetlevel;
-    } else {
-        reverbLevel = 0;
-    }
-    AIL_set_sample_reverb_levels(milesGlob.handle_2D[index - 45], 1.0f, reverbLevel);
 }

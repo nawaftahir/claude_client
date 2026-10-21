@@ -818,11 +818,6 @@ void Scr_AddEntity( gentity_t *ent )
 GScr_SetDynamicEntityField
 ===============
 */
-void GScr_SetDynamicEntityField( gentity_t *ent, unsigned int index )
-{
-	Scr_SetDynamicEntityField(ent->s.number, CLASS_NUM_ENTITY, index);
-}
-
 /*
 ===============
 Scr_GetEntity
@@ -1067,6 +1062,11 @@ void Scr_GetEntArray()
 		Scr_AddEntity(ent);
 		Scr_AddArray();
 	}
+}
+
+void GScr_SetDynamicEntityField( gentity_t *ent, unsigned int index )
+{
+	Scr_SetDynamicEntityField(ent->s.number, CLASS_NUM_ENTITY, index);
 }
 
 /*QUAKED worldspawn (0 0 0) ? NO_GT_WOLF NO_GT_STOPWATCH NO_GT_CHECKPOINT NO_LMS

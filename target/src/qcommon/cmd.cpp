@@ -70,11 +70,6 @@ void Cmd_Init( void );
 Cmd_Argc
 ============
 */
-int Cmd_Argc( void )
-{
-	return cmd_argc;
-}
-
 // unreferenced; original name unknown
 void Cmd_EmptyStub( void )
 {
@@ -369,6 +364,11 @@ void Cmd_Echo_f( void )
 		Com_Printf( "^3%s ", Cmd_Argv( i ) );
 
 	Com_Printf( "\n" );
+}
+
+int Cmd_Argc( void )
+{
+	return cmd_argc;
 }
 
 int SV_Cmd_Argc( void )

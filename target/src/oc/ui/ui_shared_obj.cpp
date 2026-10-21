@@ -540,6 +540,18 @@ void Item_InitControls(const char (*item)[4])
     ListBox_SetEndPos(listPtr, 0);
 }
 
+qboolean MenuParse_visible(const char (*item)[4], int handle)
+{
+    int visible;
+
+    if (!PC_Int_Parse(handle, &visible))
+        return 0;
+
+    if (visible)
+        ((itemDef_t *)item)->window.dynamicFlags[0] |= 4;
+
+    return 1;
+}
 qboolean MenuParse_fullscreen(const char (*item)[4], int handle)
 {
     if (!PC_Int_Parse(handle, (int *)&((menuDef_t *)item)->fullScreen))
@@ -1857,18 +1869,6 @@ qboolean MenuParse_borderSize(const char (*item)[4], int handle)
 {
     if (!PC_Float_Parse(handle, (float *)&((itemDef_t *)item)->window.borderSize))
         return 0;
-    return 1;
-}
-qboolean MenuParse_visible(const char (*item)[4], int handle)
-{
-    int visible;
-
-    if (!PC_Int_Parse(handle, &visible))
-        return 0;
-
-    if (visible)
-        ((itemDef_t *)item)->window.dynamicFlags[0] |= 4;
-
     return 1;
 }
 qboolean MenuParse_border(const char (*item)[4], int handle)

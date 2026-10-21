@@ -37,11 +37,6 @@ void XAnimCalcParts_unsigned_short_( const XAnimParts_s *parts, const unsigned c
 
 static byte xanimUnusedFlag;
 
-int XAnimGetNumChildren(const XAnim_s *anim, unsigned int animIndex)
-{
-	return anim->entries[animIndex].numAnims;
-}
-
 static inline float ShortLerpAsVec(short from, short to, float frac)
 {
 	return (float)from + (float)(to - from) * frac;
@@ -2175,6 +2170,11 @@ bool XAnimHasFinished( const XAnimTree_s *tree, unsigned int animIndex )
 	return state->time < state->oldTime || state->time == 1.0f || state->cycleCount > state->oldCycleCount;
 }
 
+int XAnimGetNumChildren(const XAnim_s *anim, unsigned int animIndex)
+{
+	return anim->entries[animIndex].numAnims;
+}
+
 unsigned int XAnimGetChildAt(const XAnim_s *anim, unsigned int animIndex, unsigned int childIndex)
 {
 	return childIndex + anim->entries[animIndex].u.animParent.children;
@@ -3183,18 +3183,6 @@ void XAnimSetAnimRate(XAnimTree_s *tree, unsigned int animIndex, float rate)
 	XAnimSetAnimRateInternal(tree, animIndex, rate);
 }
 
-bool XAnimIsLooped(const XAnim_s *anim, unsigned int animIndex)
-{
-	const XAnimEntry *entry;
-
-	entry = &anim->entries[animIndex];
-
-	if ( entry->numAnims )
-		return entry->u.animParent.flags & 1;
-
-	return entry->u.parts->bLoop;
-}
-
 bool XAnimNotetrackExists(const XAnim_s *anims, unsigned int animIndex, unsigned int name)
 {
 	const XAnimEntry *entry;
@@ -3817,6 +3805,18 @@ void XAnim_GetTimeIndex_unsigned_short_(const XAnimTime *animTime, const unsigne
 	*keyFrameLerpFrac = (animTime->frameFrac - (float)indices[index])
 	                    / (float)(indices[index + 1] - indices[index]);
 	*keyFrameIndex = index;
+}
+
+bool XAnimIsLooped(const XAnim_s *anim, unsigned int animIndex)
+{
+	const XAnimEntry *entry;
+
+	entry = &anim->entries[animIndex];
+
+	if ( entry->numAnims )
+		return entry->u.animParent.flags & 1;
+
+	return entry->u.parts->bLoop;
 }
 
 void XAnim_GetTimeIndexCompressed_unsigned_short_(XAnimTime *animTime, const unsigned short *indices, int tableSize, int *keyFrameIndex, float *keyFrameLerpFrac)

@@ -360,6 +360,57 @@ void BG_AnimParseError( const char *msg, ... )
 	}
 }
 
+int BG_AnimationIndexForString( const char *string )
+{
+	if ( !g_pLoadAnims )
+	{
+		int i;
+		int hash;
+		animation_t *anim;
+
+		hash = BG_StringHashValue( string );
+
+		for ( i = 0, anim = globalScriptData->animations; i < globalScriptData->numAnimations; i++, anim++ )
+		{
+			if ( ( hash == anim->nameHash ) && !Q_stricmp( string, anim->name ) )
+			{
+				// found a match
+				return i;
+			}
+		}
+
+		// no match found
+		BG_AnimParseError( "BG_AnimationIndexForString: unknown player animation '%s'", string );
+	}
+	else
+	{
+		int i;
+		int hash;
+		loadAnim_t *loadAnim;
+
+		hash = BG_StringHashValue( string );
+
+		for ( i = 0, loadAnim = g_pLoadAnims; i < *g_piNumLoadAnims; i++, loadAnim++ )
+		{
+			if ( ( hash == loadAnim->nameHash ) && !Q_stricmp( string, loadAnim->name ) )
+			{
+				// found a match
+				return i;
+			}
+		}
+
+		loadAnim = &g_pLoadAnims[*g_piNumLoadAnims];
+		Scr_FindAnim(DEFAULT_ANIM_TREE_NAME, string, &loadAnim->anim, bgs->anim_user);
+
+		strcpy(loadAnim->name, string);
+		loadAnim->nameHash = hash;
+
+		*g_piNumLoadAnims = *g_piNumLoadAnims + 1;
+		return *g_piNumLoadAnims - 1;
+	}
+
+	return -1;  // shutup compiler
+}
 /*
 =================
 BG_AnimationForString
@@ -2932,57 +2983,6 @@ void BG_LoadAnim()
 	BG_FinalizePlayerAnims();
 }
 
-int BG_AnimationIndexForString( const char *string )
-{
-	if ( !g_pLoadAnims )
-	{
-		int i;
-		int hash;
-		animation_t *anim;
-
-		hash = BG_StringHashValue( string );
-
-		for ( i = 0, anim = globalScriptData->animations; i < globalScriptData->numAnimations; i++, anim++ )
-		{
-			if ( ( hash == anim->nameHash ) && !Q_stricmp( string, anim->name ) )
-			{
-				// found a match
-				return i;
-			}
-		}
-
-		// no match found
-		BG_AnimParseError( "BG_AnimationIndexForString: unknown player animation '%s'", string );
-	}
-	else
-	{
-		int i;
-		int hash;
-		loadAnim_t *loadAnim;
-
-		hash = BG_StringHashValue( string );
-
-		for ( i = 0, loadAnim = g_pLoadAnims; i < *g_piNumLoadAnims; i++, loadAnim++ )
-		{
-			if ( ( hash == loadAnim->nameHash ) && !Q_stricmp( string, loadAnim->name ) )
-			{
-				// found a match
-				return i;
-			}
-		}
-
-		loadAnim = &g_pLoadAnims[*g_piNumLoadAnims];
-		Scr_FindAnim(DEFAULT_ANIM_TREE_NAME, string, &loadAnim->anim, bgs->anim_user);
-
-		strcpy(loadAnim->name, string);
-		loadAnim->nameHash = hash;
-
-		*g_piNumLoadAnims = *g_piNumLoadAnims + 1;
-		return *g_piNumLoadAnims - 1;
-	}
-
-	return -1;  // shutup compiler
-}
 // Retail inlines this compare only at the "sound" site
 static __forceinline int BG_StricmpSoundInl( const char *s0, const char *s1 )
 {

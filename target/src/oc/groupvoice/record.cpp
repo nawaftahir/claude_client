@@ -63,12 +63,6 @@ int Record_DestroySample(recordingSample_t *sample)
     return DSOUNDRecord_DestroySample(sample);
 }
 
-void Record_Shutdown(void)
-{
-    Encode_Shutdown();
-    DSOUNDRecord_Shutdown();
-}
-
 void Record_Frame(void)
 {
     DSOUNDRecord_Frame();
@@ -147,6 +141,12 @@ int Record_QueueAudioDataForEncoding(audioSample_t *sample)
     }
 
     return g.bytesEncoded;
+}
+
+void Record_Shutdown(void)
+{
+    Encode_Shutdown();
+    DSOUNDRecord_Shutdown();
 }
 
 int Record_AudioCallback(audioSample_t *sample)

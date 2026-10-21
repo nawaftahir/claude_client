@@ -180,73 +180,6 @@ BG_GetFirstAvailableOffhand
 BG_CalculateWeaponPosition_GunRecoil_SingleAngle
 ===============
 */
-qboolean BG_CalculateWeaponPosition_GunRecoil_SingleAngle( float *fOffset, float *speed, float fTimeStep,
-        float fOfsCap, float fGunKickAccel, float fGunKickSpeedMax, float fGunKickSpeedDecay, float fGunKickStaticDecay )
-{
-	qboolean bCanStop;
-	bCanStop = qfalse;
-	if ( I_fabs(*fOffset) < 0.25f && I_fabs(*speed) < 1.0f )
-	{
-		*fOffset = 0;
-		*speed = 0;
-		bCanStop = 1;
-	}
-	else
-	{
-	*fOffset = *fOffset + *speed * fTimeStep;
-	if ( *fOffset > fOfsCap )
-	{
-		*fOffset = fOfsCap;
-		if ( *speed > 0 )
-		{
-			*speed = 0;
-		}
-	}
-	else if ( *fOffset < -fOfsCap )
-	{
-		*fOffset = -fOfsCap;
-		if ( *speed < 0 )
-		{
-			*speed = 0;
-		}
-	}
-	if ( *fOffset > 0 )
-	{
-		*speed = *speed - fGunKickAccel * fTimeStep;
-	}
-	else if ( *fOffset < 0 )
-	{
-		*speed = *speed + fGunKickAccel * fTimeStep;
-	}
-	*speed = *speed - *speed * fGunKickSpeedDecay * fTimeStep;
-	if ( *speed > 0 )
-	{
-		*speed = *speed - fGunKickStaticDecay * fTimeStep;
-		if ( *speed < 0 )
-		{
-			*speed = 0;
-		}
-	}
-	else
-	{
-		*speed = *speed + fGunKickStaticDecay * fTimeStep;
-		if ( *speed > 0 )
-		{
-			*speed = 0;
-		}
-	}
-	if ( *speed > fGunKickSpeedMax )
-	{
-		*speed = fGunKickSpeedMax;
-	}
-	else if ( *speed < -fGunKickSpeedMax )
-	{
-		*speed = -fGunKickSpeedMax;
-	}
-	}
-	return bCanStop;
-}
-
 /*
 ===============
 BG_ShutdownWeaponDefFiles
@@ -4799,6 +4732,73 @@ void BG_CalculateWeaponPosition_DamageKick(weaponState_t *ws, vec3_t angles)
 			angles[2] += fRatio * ws->v_dmg_roll * 0.5f;
 		}
 	}
+}
+
+qboolean BG_CalculateWeaponPosition_GunRecoil_SingleAngle( float *fOffset, float *speed, float fTimeStep,
+        float fOfsCap, float fGunKickAccel, float fGunKickSpeedMax, float fGunKickSpeedDecay, float fGunKickStaticDecay )
+{
+	qboolean bCanStop;
+	bCanStop = qfalse;
+	if ( I_fabs(*fOffset) < 0.25f && I_fabs(*speed) < 1.0f )
+	{
+		*fOffset = 0;
+		*speed = 0;
+		bCanStop = 1;
+	}
+	else
+	{
+	*fOffset = *fOffset + *speed * fTimeStep;
+	if ( *fOffset > fOfsCap )
+	{
+		*fOffset = fOfsCap;
+		if ( *speed > 0 )
+		{
+			*speed = 0;
+		}
+	}
+	else if ( *fOffset < -fOfsCap )
+	{
+		*fOffset = -fOfsCap;
+		if ( *speed < 0 )
+		{
+			*speed = 0;
+		}
+	}
+	if ( *fOffset > 0 )
+	{
+		*speed = *speed - fGunKickAccel * fTimeStep;
+	}
+	else if ( *fOffset < 0 )
+	{
+		*speed = *speed + fGunKickAccel * fTimeStep;
+	}
+	*speed = *speed - *speed * fGunKickSpeedDecay * fTimeStep;
+	if ( *speed > 0 )
+	{
+		*speed = *speed - fGunKickStaticDecay * fTimeStep;
+		if ( *speed < 0 )
+		{
+			*speed = 0;
+		}
+	}
+	else
+	{
+		*speed = *speed + fGunKickStaticDecay * fTimeStep;
+		if ( *speed > 0 )
+		{
+			*speed = 0;
+		}
+	}
+	if ( *speed > fGunKickSpeedMax )
+	{
+		*speed = fGunKickSpeedMax;
+	}
+	else if ( *speed < -fGunKickSpeedMax )
+	{
+		*speed = -fGunKickSpeedMax;
+	}
+	}
+	return bCanStop;
 }
 
 /*

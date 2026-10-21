@@ -1528,11 +1528,6 @@ const char *CG_GetKillerText(void)
     return s;
 }
 
-const char *CG_GameTypeString(void)
-{
-    return cgs->gametype;
-}
-
 static void CG_DrawKiller(const rectDef_t *rect, struct Font_s *font, float scale, vec_t *color, int textStyle)
 {
     const char *s;
@@ -1551,6 +1546,11 @@ static void CG_DrawPlaceScore(int team, const rectDef_t *rect, struct Font_s *fo
     if (cgs->teamScores[team] != -9999)
         UI_DrawText(va("%2i", cgs->teamScores[team]), 0x7fffffff, font, rect->x, rect->y,
                     rect->horzAlign, rect->vertAlign, scale, color, textStyle);
+}
+
+const char *CG_GameTypeString(void)
+{
+    return cgs->gametype;
 }
 
 static void CG_DrawGameType(const rectDef_t *rect, struct Font_s *font, float scale, vec_t *color, int textStyle)

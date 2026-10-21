@@ -253,6 +253,26 @@ void CG_DrawOffHandName(rectDef_s *rect, struct Font_s *font, float scale, vec_t
                 scale, drawColor, textStyle);
 }
 
+void CG_SwitchOffHandCmd(void)
+{
+    int currentWeapon;
+    void *weapDef;
+    int newWeapon;
+
+    currentWeapon = cg->equippedOffHand;
+
+    if (currentWeapon == 0)
+        return;
+
+    weapDef = BG_GetWeaponDef(currentWeapon);
+    newWeapon = BG_GetFirstAvailableOffhand( (const playerState_t *)((void *)&cg->predictedPlayerState), ((WeaponDef *)weapDef)->offhandClass);
+
+    if (newWeapon == 0)
+        return;
+
+    CG_SetEquippedOffHand(newWeapon);
+}
+
 void CG_PrepOffHand(entityState_t *ent, int event, int eventParam)
 {
     weaponInfo_s *wi;
@@ -312,25 +332,5 @@ void CG_SetEquippedOffHand(int offHandIndex)
 {
     cg->equippedOffHand = offHandIndex;
     CG_MenuShowNotify(4);
-}
-
-void CG_SwitchOffHandCmd(void)
-{
-    int currentWeapon;
-    void *weapDef;
-    int newWeapon;
-
-    currentWeapon = cg->equippedOffHand;
-
-    if (currentWeapon == 0)
-        return;
-
-    weapDef = BG_GetWeaponDef(currentWeapon);
-    newWeapon = BG_GetFirstAvailableOffhand( (const playerState_t *)((void *)&cg->predictedPlayerState), ((WeaponDef *)weapDef)->offhandClass);
-
-    if (newWeapon == 0)
-        return;
-
-    CG_SetEquippedOffHand(newWeapon);
 }
 

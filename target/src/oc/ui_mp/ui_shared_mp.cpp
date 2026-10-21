@@ -1320,6 +1320,45 @@ int Item_ListBox_OverLB(itemDef_t *item, float x, float y)
     return 0;
 }
 
+void Item_ListBox_MouseEnter(itemDef_t *item, float x, float y)
+{
+    rectDef_t r;
+    listBoxDef_s *listPtr;
+
+    listPtr = Item_GetListBoxDef(item);
+    if (!listPtr)
+        return;
+    Window_RemoveDynamicFlags(&item->window, 0x1f00);
+    item->window.dynamicFlags[0] |= Item_ListBox_OverLB(item, x, y);
+    r.horzAlign = item->window.rect[0].horzAlign;
+    r.vertAlign = item->window.rect[0].vertAlign;
+    if (Window_IsHorizontal(&item->window)) {
+        if (!(item->window.dynamicFlags[0] & 0x1f00)) {
+            if (listPtr->elementStyle == 1) {
+                r.x = item->window.rect[0].x;
+                r.y = item->window.rect[0].y;
+                r.h = item->window.rect[0].h - 16.0f;
+                r.w = item->window.rect[0].w - listPtr->drawPadding;
+                if (Rect_ContainsPoint(&r, x, y)) {
+                    listPtr->cursorPos[0] = (int)((x - r.x) / listPtr->elementWidth) + listPtr->startPos[0];
+                    if (listPtr->cursorPos[0] >= listPtr->endPos[0])
+                        listPtr->cursorPos[0] = listPtr->endPos[0];
+                }
+            }
+        }
+    } else if (!(item->window.dynamicFlags[0] & 0x1f00)) {
+        r.x = item->window.rect[0].x;
+        r.y = item->window.rect[0].y;
+        r.w = item->window.rect[0].w - 16.0f;
+        r.h = item->window.rect[0].h - listPtr->drawPadding;
+        if (Rect_ContainsPoint(&r, x, y)) {
+            listPtr->cursorPos[0] = (int)((y - 2.0f - r.y) / listPtr->elementHeight) + listPtr->startPos[0];
+            if (listPtr->cursorPos[0] > listPtr->endPos[0])
+                listPtr->cursorPos[0] = listPtr->endPos[0];
+        }
+    }
+}
+
 void Item_MouseEnter(displayContextDef_t *dc, itemDef_t *item, float x, float y)
 {
     rectDef_t r;
@@ -4203,45 +4242,6 @@ static __declspec(noinline) qboolean Item_ListBox_HandleKey(displayContextDef_t 
         return 1;
     }
     return 0;
-}
-
-void Item_ListBox_MouseEnter(itemDef_t *item, float x, float y)
-{
-    rectDef_t r;
-    listBoxDef_s *listPtr;
-
-    listPtr = Item_GetListBoxDef(item);
-    if (!listPtr)
-        return;
-    Window_RemoveDynamicFlags(&item->window, 0x1f00);
-    item->window.dynamicFlags[0] |= Item_ListBox_OverLB(item, x, y);
-    r.horzAlign = item->window.rect[0].horzAlign;
-    r.vertAlign = item->window.rect[0].vertAlign;
-    if (Window_IsHorizontal(&item->window)) {
-        if (!(item->window.dynamicFlags[0] & 0x1f00)) {
-            if (listPtr->elementStyle == 1) {
-                r.x = item->window.rect[0].x;
-                r.y = item->window.rect[0].y;
-                r.h = item->window.rect[0].h - 16.0f;
-                r.w = item->window.rect[0].w - listPtr->drawPadding;
-                if (Rect_ContainsPoint(&r, x, y)) {
-                    listPtr->cursorPos[0] = (int)((x - r.x) / listPtr->elementWidth) + listPtr->startPos[0];
-                    if (listPtr->cursorPos[0] >= listPtr->endPos[0])
-                        listPtr->cursorPos[0] = listPtr->endPos[0];
-                }
-            }
-        }
-    } else if (!(item->window.dynamicFlags[0] & 0x1f00)) {
-        r.x = item->window.rect[0].x;
-        r.y = item->window.rect[0].y;
-        r.w = item->window.rect[0].w - 16.0f;
-        r.h = item->window.rect[0].h - listPtr->drawPadding;
-        if (Rect_ContainsPoint(&r, x, y)) {
-            listPtr->cursorPos[0] = (int)((y - 2.0f - r.y) / listPtr->elementHeight) + listPtr->startPos[0];
-            if (listPtr->cursorPos[0] > listPtr->endPos[0])
-                listPtr->cursorPos[0] = listPtr->endPos[0];
-        }
-    }
 }
 
 void Item_Paint(displayContextDef_t *dc, itemDef_t *item)

@@ -29,29 +29,6 @@ void Com_AbortDObj();
 Com_SafeClientDObjFree
 ==================
 */
-void Com_SafeClientDObjFree( int handle )
-{
-	int index;
-
-	assert(((unsigned)handle < ((((1<<10) + 512)) + 1)));
-	assert(((unsigned)handle < (sizeof( clientObjMap ) / (sizeof( clientObjMap[0] ) * (sizeof( clientObjMap ) != 4 || sizeof( clientObjMap[0] ) <= 4)))));
-
-	index = clientObjMap[handle];
-
-	if ( !index )
-	{
-		return;
-	}
-
-	clientObjMap[handle] = 0;
-	assert((unsigned)index < ARRAY_COUNT( objAlloced ));
-
-	objAlloced[index] = false;
-	objFreeCount++;
-
-	DObjFree(&objBuf[index]);
-}
-
 DObj* Com_GetClientDObj( int handle, int localClientNum )
 {
 	handle += 1152 * localClientNum;
@@ -218,5 +195,28 @@ Com_AbortDObj
 void Com_AbortDObj()
 {
 	g_bDObjInited = qfalse;
+}
+
+void Com_SafeClientDObjFree( int handle )
+{
+	int index;
+
+	assert(((unsigned)handle < ((((1<<10) + 512)) + 1)));
+	assert(((unsigned)handle < (sizeof( clientObjMap ) / (sizeof( clientObjMap[0] ) * (sizeof( clientObjMap ) != 4 || sizeof( clientObjMap[0] ) <= 4)))));
+
+	index = clientObjMap[handle];
+
+	if ( !index )
+	{
+		return;
+	}
+
+	clientObjMap[handle] = 0;
+	assert((unsigned)index < ARRAY_COUNT( objAlloced ));
+
+	objAlloced[index] = false;
+	objFreeCount++;
+
+	DObjFree(&objBuf[index]);
 }
 

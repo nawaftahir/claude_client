@@ -3257,6 +3257,37 @@ void GScr_atan()
 	*(float *)&v3 = *(float *)&v3 * DEGINRAD;
 	Scr_AddFloat(*(float *)&v3);
 }
+void GScr_asin()
+{
+	float v4;
+	int v3;
+
+	v4 = Scr_GetFloat(0);
+
+	if ( v4 < -1.0f || v4 > 1.0f )
+	{
+		Scr_Error(va("%g out of range", v4));
+	}
+
+	*(float *)&v3 = asin(v4);
+	*(float *)&v3 = *(float *)&v3 * DEGINRAD;
+	Scr_AddFloat(*(float *)&v3);
+}
+void GScr_acos()
+{
+	float v4;
+
+	v4 = Scr_GetFloat(0);
+
+	if ( v4 < -1.0f || v4 > 1.0f )
+	{
+		Scr_Error(va("%g out of range", v4));
+	}
+
+	v4 = acos(v4);
+	v4 = v4 * DEGINRAD;
+	Scr_AddFloat(v4);
+}
 
 /*
 ===============
@@ -3510,6 +3541,29 @@ void Scr_GetSubStr()
 	Scr_AddString(tempString);
 }
 
+void Scr_ToLower()
+{
+	char tempString[MAX_STRING_CHARS];
+	const char *s;
+	int i;
+	char c;
+
+	s = Scr_GetString(0);
+
+	for ( i = 0; i < MAX_STRING_CHARS; i++, s++ )
+	{
+		c = tolower(*s);
+		tempString[i] = c;
+
+		if ( !c )
+		{
+			Scr_AddString(tempString);
+			return;
+		}
+	}
+
+	Scr_Error("string too long");
+}
 /*
 ===============
 Scr_StrTok
@@ -5251,21 +5305,6 @@ void GScr_SetVoteNoCount()
 GScr_ClientPrint
 ===============
 */
-void GScr_ClientPrint()
-{
-	gentity_t *v3;
-	const char *v2;
-
-	if ( Scr_GetNumParam() <= 0 )
-	{
-		return;
-	}
-
-	v3 = Scr_GetEntity(0);
-	v2 = Scr_GetString(1);
-	SV_GameSendServerCommand(v3 - g_entities, SV_CMD_CAN_IGNORE, va("%c \"%s\"", 101, v2));
-}
-
 void GScr_KickPlayer()
 {
 	int v1;
@@ -5290,6 +5329,21 @@ void GScr_BanPlayer()
 	v1 = Scr_GetInt(0);
 	Cbuf_ExecuteText(EXEC_APPEND, va("banClient %i\n", v1));
 }
+void GScr_ClientPrint()
+{
+	gentity_t *v3;
+	const char *v2;
+
+	if ( Scr_GetNumParam() <= 0 )
+	{
+		return;
+	}
+
+	v3 = Scr_GetEntity(0);
+	v2 = Scr_GetString(1);
+	SV_GameSendServerCommand(v3 - g_entities, SV_CMD_CAN_IGNORE, va("%c \"%s\"", 101, v2));
+}
+
 /*
 ===============
 GScr_OpenFile
@@ -6345,60 +6399,6 @@ void ScrCmd_PlayLoopRumble( scr_entref_t entref )
 void ScrCmd_StopRumble( scr_entref_t entref )
 {
 	;
-}
-void GScr_asin()
-{
-	float v4;
-	int v3;
-
-	v4 = Scr_GetFloat(0);
-
-	if ( v4 < -1.0f || v4 > 1.0f )
-	{
-		Scr_Error(va("%g out of range", v4));
-	}
-
-	*(float *)&v3 = asin(v4);
-	*(float *)&v3 = *(float *)&v3 * DEGINRAD;
-	Scr_AddFloat(*(float *)&v3);
-}
-void GScr_acos()
-{
-	float v4;
-
-	v4 = Scr_GetFloat(0);
-
-	if ( v4 < -1.0f || v4 > 1.0f )
-	{
-		Scr_Error(va("%g out of range", v4));
-	}
-
-	v4 = acos(v4);
-	v4 = v4 * DEGINRAD;
-	Scr_AddFloat(v4);
-}
-void Scr_ToLower()
-{
-	char tempString[MAX_STRING_CHARS];
-	const char *s;
-	int i;
-	char c;
-
-	s = Scr_GetString(0);
-
-	for ( i = 0; i < MAX_STRING_CHARS; i++, s++ )
-	{
-		c = tolower(*s);
-		tempString[i] = c;
-
-		if ( !c )
-		{
-			Scr_AddString(tempString);
-			return;
-		}
-	}
-
-	Scr_Error("string too long");
 }
 void Scr_PrecacheRumble()
 {

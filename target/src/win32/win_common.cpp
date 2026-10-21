@@ -66,11 +66,6 @@ char *Sys_Cwd( void )
 	return cwd;
 }
 
-const char *Sys_DefaultCDPath( void )
-{
-	return "";
-}
-
 const char *Sys_DefaultHomePath( void )
 {
 	return NULL;
@@ -79,6 +74,11 @@ const char *Sys_DefaultHomePath( void )
 char *Sys_DefaultInstallPath( void )
 {
 	return Sys_Cwd();
+}
+
+const char *Sys_DefaultCDPath( void )
+{
+	return "";
 }
 
 static void Sys_ListFilteredFiles( const char *basedir, const char *subdirs, const char *filter, char **list, int *numfiles )

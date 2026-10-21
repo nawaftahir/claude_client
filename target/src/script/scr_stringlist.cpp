@@ -57,18 +57,6 @@ int I_strlen( const char *s );
 SL_Restart
 ==============
 */
-void SL_Restart()
-{
-	if ( scrStringGlob.inited )
-	{
-		SL_Clear();
-	}
-	else
-	{
-		SL_Init();
-	}
-}
-
 /*
 ==============
 GetRefString
@@ -220,6 +208,18 @@ void SL_Init()
 
 	scrStringGlob.hashTable[0].prev = prev;
 	scrStringGlob.inited = true;
+}
+
+void SL_Restart()
+{
+	if ( scrStringGlob.inited )
+	{
+		SL_Clear();
+	}
+	else
+	{
+		SL_Init();
+	}
 }
 
 /*

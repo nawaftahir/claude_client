@@ -1050,26 +1050,6 @@ static void ConDrawInput_IncrMatchCounter(const char *str)
         conDrawInputGlob.hasExactMatch = 1;
 }
 
-static void ConDrawInput_DvarMatch(const char *str)
-{
-    clientStatic_t *cls_;
-    const char *value;
-
-    if (I_strnicmp(str, conDrawInputGlob.inputText, conDrawInputGlob.inputTextLen) != 0)
-        return;
-
-    cls_ = &cls;
-
-    re.DrawText(str, 0x18, cls_->consoleFont, conDrawInputGlob.x, conDrawInputGlob.y + conDrawInputGlob.fontHeight, 1.0f, 1.0f, con_inputDvarMatchColor, 0);
-    conDrawInputGlob.x += 200.0f;
-
-    value = Dvar_GetVariantString(str);
-    re.DrawText(value, 0x28, cls_->consoleFont, conDrawInputGlob.x, conDrawInputGlob.y + conDrawInputGlob.fontHeight, 1.0f, 1.0f, con_inputDvarValueColor, 0);
-
-    conDrawInputGlob.y += conDrawInputGlob.fontHeight;
-    conDrawInputGlob.x = conDrawInputGlob.leftX;
-}
-
 static int ConDrawInput_CompareStrings(const void *e0, const void *e1)
 {
     return I_stricmp(*(const char **)e0, *(const char **)e1);
@@ -1183,6 +1163,26 @@ static void ConDrawInput_DetailedDvarMatch(const char *str)
     conDrawInputGlob.x = conDrawInputGlob.leftX;
     if (dvar->type == DVAR_TYPE_ENUM && Cmd_Argc() == 2)
         ConDrawInput_AutoCompleteArg(dvar->domain.enumeration.strings, dvar->domain.enumeration.stringCount);
+}
+
+static void ConDrawInput_DvarMatch(const char *str)
+{
+    clientStatic_t *cls_;
+    const char *value;
+
+    if (I_strnicmp(str, conDrawInputGlob.inputText, conDrawInputGlob.inputTextLen) != 0)
+        return;
+
+    cls_ = &cls;
+
+    re.DrawText(str, 0x18, cls_->consoleFont, conDrawInputGlob.x, conDrawInputGlob.y + conDrawInputGlob.fontHeight, 1.0f, 1.0f, con_inputDvarMatchColor, 0);
+    conDrawInputGlob.x += 200.0f;
+
+    value = Dvar_GetVariantString(str);
+    re.DrawText(value, 0x28, cls_->consoleFont, conDrawInputGlob.x, conDrawInputGlob.y + conDrawInputGlob.fontHeight, 1.0f, 1.0f, con_inputDvarValueColor, 0);
+
+    conDrawInputGlob.y += conDrawInputGlob.fontHeight;
+    conDrawInputGlob.x = conDrawInputGlob.leftX;
 }
 
 static void ConDrawInput_DetailedCmdMatch(const char *str)

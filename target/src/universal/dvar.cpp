@@ -1681,17 +1681,6 @@ void Dvar_SetVec2ByName(const char *dvarName, float x, float y)
 		Dvar_RegisterString(dvarName, va("%g %g", x, y), DVAR_EXTERNAL);
 }
 
-void Dvar_SetVec3ByName(const char *dvarName, float x, float y, float z)
-{
-	dvar_t *dvar;
-
-	dvar = Dvar_FindVar(dvarName);
-	if ( dvar )
-		Dvar_SetVec3(dvar, x, y, z);
-	else
-		Dvar_RegisterString(dvarName, va("%g %g %g", x, y, z), DVAR_EXTERNAL);
-}
-
 void Dvar_SetVec4ByName(const char *dvarName, float x, float y, float z, float w)
 {
 	dvar_t *dvar;
@@ -1956,5 +1945,16 @@ nextLine:
 	}
 
 	return qfalse;
+}
+
+void Dvar_SetVec3ByName(const char *dvarName, float x, float y, float z)
+{
+	dvar_t *dvar;
+
+	dvar = Dvar_FindVar(dvarName);
+	if ( dvar )
+		Dvar_SetVec3(dvar, x, y, z);
+	else
+		Dvar_RegisterString(dvarName, va("%g %g %g", x, y, z), DVAR_EXTERNAL);
 }
 

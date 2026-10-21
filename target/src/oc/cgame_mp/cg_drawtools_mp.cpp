@@ -181,12 +181,55 @@ void CG_HorizontalPercentBar(float x, float y, float width, float height, float 
     CG_FilledBar(x, y, width, height, color, NULL, bgcolor, percent, BAR_BG);
 }
 
+void CG_DrawRotatedPicPhysical(float x, float y, float width, float height, float angle, const vec_t *color, MaterialHandle material)
+{
+    static const float sign[4][2] = { { -1.0f, -1.0f }, { 1.0f, -1.0f }, { 1.0f, 1.0f }, { -1.0f, 1.0f } };
+    float c;
+    float s;
+    float halfW;
+    float halfH;
+    float center[2];
+    float scale[2][2];
+    vec2_t verts[4];
+    int i;
+
+    FastSinCos((angle * 0.017453292f), &s, &c);
+    halfW = width * 0.5f;
+    halfH = height * 0.5f;
+    center[0] = x + halfW;
+    center[1] = halfH + y;
+    scale[0][0] = c * halfW;
+    scale[0][1] = s * halfW;
+    scale[1][0] = s * halfH;
+    scale[1][1] = c * halfH;
+    for (i = 0; i < 4; i++) {
+        verts[i][0] = center[0] + scale[0][0] * sign[i][0] - scale[0][1] * sign[i][1];
+        verts[i][1] = scale[1][0] * sign[i][0] + scale[1][1] * sign[i][1] + center[1];
+    }
+
+    CL_DrawQuadPic(verts, color, material);
+}
 void CG_DrawRotatedPic(float x, float y, float width, float height, int horzAlign, int vertAlign, float angle, const vec_t *color, MaterialHandle material)
 {
     CalcScreenPlacement(&x, &y, &width, &height, horzAlign, vertAlign);
     CG_DrawRotatedPicPhysical(x, y, width, height, angle, color, material);
 }
 
+void CG_DrawRotatedQuadPic(float x, float y, vec2_t *verts, float angle, const vec_t *color, MaterialHandle material)
+{
+    float c;
+    float s;
+    vec2_t xy[4];
+    int i;
+
+    FastSinCos((angle * 0.017453292f), &s, &c);
+    for (i = 0; i < 4; i++) {
+        xy[i][0] = c * verts[i][0] + x - s * verts[i][1];
+        xy[i][1] = s * verts[i][0] + c * verts[i][1] + y;
+    }
+
+    CL_DrawQuadPic(xy, color, material);
+}
 void CG_DrawStringExt(float x, float y, const char *string, const vec_t *setColor, qboolean forceColor, qboolean shadow, float charHeight, qboolean adjust)
 {
     float baselineY = y + charHeight * 0.8f;
@@ -202,6 +245,49 @@ void CG_DrawStringExt(float x, float y, const char *string, const vec_t *setColo
     UI_DrawText(string, 0x7fffffff, font, x, baselineY, 1, 1, fontScale, setColor, style);
 }
 
+int CG_DrawDevString(float x, float y, const char *s, const vec_t *color, int align, FontHandle font, int style)
+{
+    int height;
+    float fStep;
+    int textWidth;
+
+    if ((align & 3) != 1)
+        CL_TextWidth(s, 0, font);
+
+    height = CL_TextHeight(font);
+    fStep = (float)height;
+    if ((align & 0xc) != 8) {
+        if ((align & 0xc) == 0xc)
+            fStep *= 0.5f;
+        y += fStep;
+    }
+
+    textWidth = CL_TextWidth(s, 0, font);
+    {
+        float dx = -(float)textWidth;
+        float dy = y;
+        float sx = 1.0f;
+        float sy = 1.0f;
+        CalcSplitScreenTextOffset(font, &dy);
+        CalcScreenPlacementInl(&dx, &dy, &sx, &sy, 3, 1);
+        re.DrawText(s, 0x7fffffff, font, dx, dy, sx, sy, color, style);
+    }
+    return height;
+}
+int CG_DrawBigDevStringColor(float x, float y, const char *s, const vec_t *color, int align)
+{
+    return CG_DrawDevString(x, y, s, color, align, cgs->media.bigDevFont, 0);
+}
+int CG_DrawSmallDevString(float x, float y, const char *s, float alpha, int align)
+{
+    vec4_t c;
+    c[0] = 1.0f;
+    c[1] = 1.0f;
+    c[2] = 1.0f;
+    c[3] = alpha;
+
+    return CG_DrawDevString(x, y, s, c, align, cgs->media.smallDevFont, 0);
+}
 // Original name unknown.
 byte CG_IsFullViewport(void)
 {
@@ -453,78 +539,6 @@ void CG_UpdateCompPointerOrientation(void)
     cg->compPointerYaw = AngleNormalize360(fDiff + cg->refdefViewAngles[1]);
 }
 
-void CG_DrawRotatedPicPhysical(float x, float y, float width, float height, float angle, const vec_t *color, MaterialHandle material)
-{
-    static const float sign[4][2] = { { -1.0f, -1.0f }, { 1.0f, -1.0f }, { 1.0f, 1.0f }, { -1.0f, 1.0f } };
-    float c;
-    float s;
-    float halfW;
-    float halfH;
-    float center[2];
-    float scale[2][2];
-    vec2_t verts[4];
-    int i;
-
-    FastSinCos((angle * 0.017453292f), &s, &c);
-    halfW = width * 0.5f;
-    halfH = height * 0.5f;
-    center[0] = x + halfW;
-    center[1] = halfH + y;
-    scale[0][0] = c * halfW;
-    scale[0][1] = s * halfW;
-    scale[1][0] = s * halfH;
-    scale[1][1] = c * halfH;
-    for (i = 0; i < 4; i++) {
-        verts[i][0] = center[0] + scale[0][0] * sign[i][0] - scale[0][1] * sign[i][1];
-        verts[i][1] = scale[1][0] * sign[i][0] + scale[1][1] * sign[i][1] + center[1];
-    }
-
-    CL_DrawQuadPic(verts, color, material);
-}
-void CG_DrawRotatedQuadPic(float x, float y, vec2_t *verts, float angle, const vec_t *color, MaterialHandle material)
-{
-    float c;
-    float s;
-    vec2_t xy[4];
-    int i;
-
-    FastSinCos((angle * 0.017453292f), &s, &c);
-    for (i = 0; i < 4; i++) {
-        xy[i][0] = c * verts[i][0] + x - s * verts[i][1];
-        xy[i][1] = s * verts[i][0] + c * verts[i][1] + y;
-    }
-
-    CL_DrawQuadPic(xy, color, material);
-}
-int CG_DrawDevString(float x, float y, const char *s, const vec_t *color, int align, FontHandle font, int style)
-{
-    int height;
-    float fStep;
-    int textWidth;
-
-    if ((align & 3) != 1)
-        CL_TextWidth(s, 0, font);
-
-    height = CL_TextHeight(font);
-    fStep = (float)height;
-    if ((align & 0xc) != 8) {
-        if ((align & 0xc) == 0xc)
-            fStep *= 0.5f;
-        y += fStep;
-    }
-
-    textWidth = CL_TextWidth(s, 0, font);
-    {
-        float dx = -(float)textWidth;
-        float dy = y;
-        float sx = 1.0f;
-        float sy = 1.0f;
-        CalcSplitScreenTextOffset(font, &dy);
-        CalcScreenPlacementInl(&dx, &dy, &sx, &sy, 3, 1);
-        re.DrawText(s, 0x7fffffff, font, dx, dy, sx, sy, color, style);
-    }
-    return height;
-}
 int CG_DrawBigDevString(float x, float y, const char *s, float alpha, int align)
 {
     vec4_t c;
@@ -534,20 +548,6 @@ int CG_DrawBigDevString(float x, float y, const char *s, float alpha, int align)
     c[3] = alpha;
 
     return CG_DrawDevString(x, y, s, c, align, cgs->media.bigDevFont, 0);
-}
-int CG_DrawBigDevStringColor(float x, float y, const char *s, const vec_t *color, int align)
-{
-    return CG_DrawDevString(x, y, s, color, align, cgs->media.bigDevFont, 0);
-}
-int CG_DrawSmallDevString(float x, float y, const char *s, float alpha, int align)
-{
-    vec4_t c;
-    c[0] = 1.0f;
-    c[1] = 1.0f;
-    c[2] = 1.0f;
-    c[3] = alpha;
-
-    return CG_DrawDevString(x, y, s, c, align, cgs->media.smallDevFont, 0);
 }
 int CG_DrawSmallDevStringColor(float x, float y, const char *s, const vec_t *color, int align)
 {

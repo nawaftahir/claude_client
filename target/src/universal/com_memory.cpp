@@ -47,17 +47,6 @@ static void *Z_MallocRaw( int size )
 	return malloc( size );
 }
 
-void *Z_TryMallocInternal( int size )
-{
-	void *buf;
-
-	buf = Z_MallocRaw( size );
-	if ( buf )
-		Com_Memset( buf, 0, size );
-
-	return buf;
-}
-
 void *Z_MallocInternal( int size )
 {
 	void *buf;
@@ -693,5 +682,16 @@ void *LargeLocal::GetBuf()
 void LargeLocalReset( void )
 {
 	g_largeLocalPos = 0;
+}
+
+void *Z_TryMallocInternal( int size )
+{
+	void *buf;
+
+	buf = Z_MallocRaw( size );
+	if ( buf )
+		Com_Memset( buf, 0, size );
+
+	return buf;
 }
 

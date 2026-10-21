@@ -70,11 +70,6 @@ void CG_CompassAddWeaponPingInfo(centity_t *cent, const vec_t *origin, int msec)
 void CG_DrawCompassFriendlies(rectDef_t *rect, MaterialHandle material, vec_t *color);
 
 // retail 0x4d4a60
-void CG_ApplyCompassPointerRadiusScale(float *radiusScale)
-{
-    *radiusScale = (float)((double)cg_hudCompassSize->current.value * *radiusScale * 43.75);
-}
-
 void CG_CompassAddWeaponPingInfo(centity_t *cent, const vec_t *origin, int msec)
 {
     int eType = cent->nextState.eType;
@@ -112,6 +107,11 @@ void CG_CompassAddWeaponPingInfo(centity_t *cent, const vec_t *origin, int msec)
 
     cg->compassActors[entClientNum].vLastPos[0] = origin[0];
     cg->compassActors[entClientNum].vLastPos[1] = origin[1];
+}
+
+void CG_ApplyCompassPointerRadiusScale(float *radiusScale)
+{
+    *radiusScale = (float)((double)cg_hudCompassSize->current.value * *radiusScale * 43.75);
 }
 
 // retail 0x4d4a80, name unknown

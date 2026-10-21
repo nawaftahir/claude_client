@@ -973,26 +973,6 @@ void NET_Config( qboolean enableNetworking )
 NET_Init
 ====================
 */
-void NET_Init( void )
-{
-	int r;
-
-	r = WSAStartup( MAKEWORD( 1, 1 ), &winsockdata );
-	if ( r )
-	{
-		Com_Printf( "WARNING: Winsock initialization failed, returned %d\n", r );
-		return;
-	}
-
-	winsockInitialized = qtrue;
-	Com_Printf( "Winsock Initialized\n" );
-
-	// this is really just to get the dvars registered
-	NET_GetDvars();
-
-	NET_Config( qtrue );
-}
-
 /*
 ====================
 NET_Shutdown
@@ -1013,11 +993,6 @@ void NET_Shutdown( void )
 NET_Sleep
 ====================
 */
-void NET_Sleep( int msec )
-{
-	Sleep( msec );
-}
-
 /*
 ====================
 NET_Restart
@@ -1027,3 +1002,28 @@ void NET_Restart( void )
 {
 	NET_Config( networkingEnabled );
 }
+void NET_Init( void )
+{
+	int r;
+
+	r = WSAStartup( MAKEWORD( 1, 1 ), &winsockdata );
+	if ( r )
+	{
+		Com_Printf( "WARNING: Winsock initialization failed, returned %d\n", r );
+		return;
+	}
+
+	winsockInitialized = qtrue;
+	Com_Printf( "Winsock Initialized\n" );
+
+	// this is really just to get the dvars registered
+	NET_GetDvars();
+
+	NET_Config( qtrue );
+}
+
+void NET_Sleep( int msec )
+{
+	Sleep( msec );
+}
+
