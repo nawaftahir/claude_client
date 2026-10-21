@@ -126,7 +126,9 @@ int mixerGetRecordSource( char *source )
 	DWORD items;
 	int i;
 	int j;
+	MMRESULT err;
 
+	controls = NULL;
 	if ( waveInGetNumDevs() < 1 )
 		return 0;
 	if ( mixerGetNumDevs() < 1 )
@@ -149,7 +151,8 @@ int mixerGetRecordSource( char *source )
 	lineControls.cbmxctrl = sizeof( MIXERCONTROLA );
 	lineControls.pamxctrl = controls;
 
-	if ( !mixerGetLineControlsA( (HMIXEROBJ)hMixer, &lineControls, MIXER_GETLINECONTROLSF_ALL ) )
+	err = mixerGetLineControlsA( (HMIXEROBJ)hMixer, &lineControls, MIXER_GETLINECONTROLSF_ALL );
+	if ( !err )
 	{
 		for ( i = 0; i < (int)line.cControls; i++ )
 		{
@@ -170,13 +173,15 @@ int mixerGetRecordSource( char *source )
 			details.cMultipleItems = items;
 			details.cbDetails = sizeof( MIXERCONTROLDETAILS_LISTTEXTA );
 			details.paDetails = listText;
-			if ( mixerGetControlDetailsA( (HMIXEROBJ)hMixer, &details, MIXER_GETCONTROLDETAILSF_LISTTEXT ) )
+			err = mixerGetControlDetailsA( (HMIXEROBJ)hMixer, &details, MIXER_GETCONTROLDETAILSF_LISTTEXT );
+			if ( err )
 				continue;
 
 			selected = (MIXERCONTROLDETAILS_BOOLEAN *)calloc( items * channels * sizeof( MIXERCONTROLDETAILS_BOOLEAN ), 1 );
 			details.cbDetails = sizeof( MIXERCONTROLDETAILS_BOOLEAN );
 			details.paDetails = selected;
-			if ( mixerGetControlDetailsA( (HMIXEROBJ)hMixer, &details, MIXER_GETCONTROLDETAILSF_VALUE ) )
+			err = mixerGetControlDetailsA( (HMIXEROBJ)hMixer, &details, MIXER_GETCONTROLDETAILSF_VALUE );
+			if ( err )
 				continue;
 
 			for ( j = 0; j < (int)items; j++ )
@@ -191,7 +196,8 @@ int mixerGetRecordSource( char *source )
 				free( listText );
 			if ( selected )
 				free( selected );
-			return 1;
+			if ( !err )
+				return 1;
 		}
 	}
 

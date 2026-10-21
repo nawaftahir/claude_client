@@ -689,16 +689,6 @@ unsigned int LowerCase( unsigned int stringValue )
 	return SL_ConvertToLowercase(stringValue, g_parse_user, 13);
 }
 
-/*
-==============
-TransferRefToParseUser
-==============
-*/
-void TransferRefToParseUser( unsigned int stringValue )
-{
-	SL_TransferRefToUser(stringValue, g_parse_user);
-}
-
 /* -*-C-*-  Note some compilers choke on comments on `#line' lines.  */
 
 /* This file comes from bison-1.28.  */

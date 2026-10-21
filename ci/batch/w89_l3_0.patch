@@ -1,0 +1,10 @@
+--- a/target/src/oc/client_mp/cl_main_pc_mp.cpp
++++ b/target/src/oc/client_mp/cl_main_pc_mp.cpp
+@@ -98,6 +98,7 @@
+ void CL_MutePlayer(int clientIndex);
+ Bool CL_IsPlayerMuted(int clientIndex);
+ void CL_ClearMutedList(void);
++// l3 control
+ void CL_GlobalServers_f(void);
+ void CL_ServersResponsePacket(netadr_t from, msg_t *msg);
+ void CL_Ping_f(void);

@@ -923,7 +923,7 @@ void CL_ClearMutedList(void)
 // retail calls NET_CompareAdr at the favorites loop only
 static __declspec(noinline) qboolean NET_CompareAdrNI(netadr_t a, netadr_t b)
 {
-    return NET_CompareAdr(a, b);
+    return NET_CompareAdrSigned(&a, &b) == 0;
 }
 void CL_SetServerInfoByAddress(netadr_t from, const char *info, int ping)
 {

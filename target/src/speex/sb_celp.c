@@ -374,7 +374,7 @@ int sb_encode(void *state, void *vin, SpeexBits *bits)
       /* Encode the narrowband part*/
       speex_encode_native(st->st_low, low, bits);
 
-      for (i=0;i<st->frame_size;i++)
+      for (i=0;i<((SBEncState*)state)->frame_size;i++)
          st->x0d[i] = SHL(low[i],SIG_SHIFT);
    }
    /* High-band buffering / sync with low band */

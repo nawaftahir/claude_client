@@ -917,6 +917,12 @@
 ]
 },
 {
+"name": "?CL_DrawText@@YAXPBDHPAUFont_s@@MMHHMMPBMH@Z",
+"obj": "cl_console_mp.obj",
+"size": 460,
+"hits": []
+},
+{
 "name": "?CL_InitHudMsgIconMaterials_4036a0@@YAXXZ",
 "obj": "cl_console_mp.obj",
 "size": 74,
@@ -3548,12 +3554,6 @@
 "0x40d800",
 "0x4b59f0"
 ]
-},
-{
-"name": "?CL_DrawText@@YAXPBDHPAUFont_s@@MMHHMMPBMH@Z",
-"obj": "cl_main_mp.obj",
-"size": 460,
-"hits": []
 },
 {
 "name": "?CL_DrawTextWithCursor@@YAXPBDHPAUFont_s@@MMHHMMPBMHHD@Z",
@@ -7569,7 +7569,7 @@
 },
 {
 "name": "?AngleNormalize360@@YAMM@Z",
-"obj": "cg_compassfriendlies_mp.obj",
+"obj": "com_math.obj",
 "size": 43,
 "hits": [
 "0x428170",
@@ -9175,12 +9175,6 @@
 ]
 },
 {
-"name": "?Com_EndParseSessionInl@@YAXXZ",
-"obj": "ui_gameinfo_mp.obj",
-"size": 31,
-"hits": []
-},
-{
 "name": "?Com_BeginRedirect@@YAXPADHP6AX0@Z@Z",
 "obj": "common.obj",
 "size": 33,
@@ -9964,12 +9958,6 @@
 "0x434140",
 "0x4aa940"
 ]
-},
-{
-"name": "?Com_EndParseSessionInl@@YAXXZ",
-"obj": "ui_gameinfo_mp.obj",
-"size": 31,
-"hits": []
 },
 {
 "name": "?Dvar_SetInAutoExec@@YAX_N@Z",
@@ -11908,7 +11896,9 @@
 "name": "?PC_EvaluateTokens@@YAHPAUsource_s@@PAUtoken_s@@PAJPANH@Z",
 "obj": "l_precomp.obj",
 "size": 2587,
-"hits": []
+"hits": [
+"0x43d8e0"
+]
 },
 {
 "name": "?PC_Evaluate@@YAHPAUsource_s@@PAJPANH@Z",
@@ -13333,12 +13323,6 @@
 ]
 },
 {
-"name": "?Com_EndParseSessionInl@@YAXXZ",
-"obj": "ui_gameinfo_mp.obj",
-"size": 31,
-"hits": []
-},
-{
 "name": "?Com_GetParseThreadInfo@@YAPAUParseThreadInfo@@XZ",
 "obj": "q_parse.obj",
 "size": 6,
@@ -14210,7 +14194,7 @@
 {
 "name": "?FloatSwap@@YAMM@Z",
 "obj": "q_shared.obj",
-"size": 40,
+"size": 39,
 "hits": []
 },
 {
@@ -17452,7 +17436,7 @@
 ]
 },
 {
-"name": "$L96829",
+"name": "$L96805",
 "obj": "module",
 "size": 6,
 "hits": []
@@ -18320,12 +18304,6 @@
 "hits": [
 "0x465e30"
 ]
-},
-{
-"name": "?Com_EndParseSessionInl@@YAXXZ",
-"obj": "ui_gameinfo_mp.obj",
-"size": 31,
-"hits": []
 },
 {
 "name": "?Scr_CreateAnimationTree@@YAHIIPAUXAnim_s@@IPBDIIH@Z",
@@ -20961,7 +20939,9 @@
 "name": "_SL_GetStringOfLen",
 "obj": "scr_stringlist.obj",
 "size": 863,
-"hits": []
+"hits": [
+"0x474560"
+]
 },
 {
 "name": "_SL_GetString_",
@@ -21210,12 +21190,6 @@
 "hits": [
 "0x4752a0"
 ]
-},
-{
-"name": "?Com_EndParseSessionInl@@YAXXZ",
-"obj": "ui_gameinfo_mp.obj",
-"size": 31,
-"hits": []
 },
 {
 "name": "?IsObjectValue@@YA_NPAUVariableValueInternal@@@Z",
@@ -23490,12 +23464,6 @@
 "paired": 1
 },
 {
-"name": "_TransferRefToParseUser",
-"obj": "scr_yacc.obj",
-"size": 43,
-"hits": []
-},
-{
 "name": "___yy_memcpy",
 "obj": "scr_yacc.obj",
 "size": 27,
@@ -24155,8 +24123,10 @@
 {
 "name": "?DObjTraceline@@YAXPAUDObj_s@@PAM1PAEPAUDObjTrace_s@@@Z",
 "obj": "dobj.obj",
-"size": 1791,
-"hits": []
+"size": 1815,
+"hits": [
+"0x485370"
+]
 },
 {
 "name": "?DObjInitFromModel@@YAXPAUDObj_s@@PAUXModel@@@Z",
@@ -25609,6 +25579,54 @@
 ]
 },
 {
+"name": "?XModelLoadSurface@@YAPAUXModelSurfs_s@@PAUXModel@@PBDP6APAXH@ZF1@Z",
+"obj": "xmodel_load_obj.obj",
+"size": 111,
+"hits": [
+"0x48ec30"
+]
+},
+{
+"name": "?XModelLoadSurfaces@@YA_NPAUXModel@@P6APAXH@Z@Z",
+"obj": "xmodel_load_obj.obj",
+"size": 75,
+"hits": [
+"0x48eca0"
+]
+},
+{
+"name": "?XModelLoad@@YAPAUXModel@@PBDP6APAXH@Z1@Z",
+"obj": "xmodel_load_obj.obj",
+"size": 70,
+"hits": [
+"0x48ecf0"
+]
+},
+{
+"name": "?XModelGetStaticBounds@@YAHPBUXModel@@PAY02MPAM2@Z",
+"obj": "xmodel_load_obj.obj",
+"size": 351,
+"hits": [
+"0x48ed40"
+]
+},
+{
+"name": "?XModelReadSurfaces@@YAXPAUXModel@@PAPAUXSurface_s@@PAHPAPBEP6APAXH@ZH@Z",
+"obj": "r_xsurface_load_obj.obj",
+"size": 52,
+"hits": [
+"0x48eaa0"
+]
+},
+{
+"name": "?XModelReadSurface@@YAPAUXModelSurfs_s@@PAUXModel@@PBDP6APAXH@ZF1@Z",
+"obj": "r_xsurface_load_obj.obj",
+"size": 336,
+"hits": [
+"0x48eae0"
+]
+},
+{
 "name": "?Vec3Avg@@YAXQBM0QAM@Z",
 "obj": "xmodel_load.obj",
 "size": 43,
@@ -25721,54 +25739,6 @@
 "0x4200e0",
 "0x47fac0",
 "0x48ea90"
-]
-},
-{
-"name": "?XModelReadSurfaces@@YAXPAUXModel@@PAPAUXSurface_s@@PAHPAPBEP6APAXH@ZH@Z",
-"obj": "r_xsurface_load_obj.obj",
-"size": 52,
-"hits": [
-"0x48eaa0"
-]
-},
-{
-"name": "?XModelReadSurface@@YAPAUXModelSurfs_s@@PAUXModel@@PBDP6APAXH@ZF1@Z",
-"obj": "r_xsurface_load_obj.obj",
-"size": 336,
-"hits": [
-"0x48eae0"
-]
-},
-{
-"name": "?XModelLoadSurface@@YAPAUXModelSurfs_s@@PAUXModel@@PBDP6APAXH@ZF1@Z",
-"obj": "xmodel_load_obj.obj",
-"size": 111,
-"hits": [
-"0x48ec30"
-]
-},
-{
-"name": "?XModelLoadSurfaces@@YA_NPAUXModel@@P6APAXH@Z@Z",
-"obj": "xmodel_load_obj.obj",
-"size": 75,
-"hits": [
-"0x48eca0"
-]
-},
-{
-"name": "?XModelLoad@@YAPAUXModel@@PBDP6APAXH@Z1@Z",
-"obj": "xmodel_load_obj.obj",
-"size": 70,
-"hits": [
-"0x48ecf0"
-]
-},
-{
-"name": "?XModelGetStaticBounds@@YAHPBUXModel@@PAY02MPAM2@Z",
-"obj": "xmodel_load_obj.obj",
-"size": 351,
-"hits": [
-"0x48ed40"
 ]
 },
 {
@@ -32792,7 +32762,7 @@
 ]
 },
 {
-"name": "$L119334",
+"name": "$L119203",
 "obj": "module",
 "size": 166,
 "hits": [
@@ -32800,7 +32770,7 @@
 ]
 },
 {
-"name": "$L119336",
+"name": "$L119205",
 "obj": "module",
 "size": 48,
 "hits": [
@@ -32833,7 +32803,7 @@
 ]
 },
 {
-"name": "$L132168",
+"name": "$L132015",
 "obj": "module",
 "size": 166,
 "hits": [
@@ -32841,7 +32811,7 @@
 ]
 },
 {
-"name": "$L132170",
+"name": "$L132017",
 "obj": "module",
 "size": 48,
 "hits": [
@@ -32901,7 +32871,7 @@
 ]
 },
 {
-"name": "$L104166",
+"name": "$L104255",
 "obj": "module",
 "size": 21,
 "hits": [
@@ -32917,7 +32887,7 @@
 ]
 },
 {
-"name": "$L147044",
+"name": "$L146977",
 "obj": "module",
 "size": 21,
 "hits": [
@@ -33757,8 +33727,11 @@
 {
 "name": "?NET_CompareAdrNI@@YAHUnetadr_t@@0@Z",
 "obj": "cl_main_pc_mp.obj",
-"size": 103,
-"hits": []
+"size": 19,
+"hits": [
+"0x4467f0",
+"0x4468b0"
+]
 },
 {
 "name": "?CL_SetServerInfoByAddress@@YAXUnetadr_t@@PBDH@Z",
@@ -34599,7 +34572,9 @@
 "name": "?mixerGetRecordSource@@YAHPAD@Z",
 "obj": "mixer.obj",
 "size": 612,
-"hits": []
+"hits": [
+"0x4b5dc0"
+]
 },
 {
 "name": "?mixerSetRecordSource@@YAHPBD@Z",
@@ -34783,9 +34758,7 @@
 "name": "?DSound_UpdateSample@@YAHPAUdsound_sample_t@@PADI@Z",
 "obj": "play_dsound.obj",
 "size": 500,
-"hits": [
-"0x4b6a10"
-]
+"hits": []
 },
 {
 "name": "?DSound_AdjustSamplePlayback@@YAXPAUdsound_sample_t@@H@Z",
@@ -34918,7 +34891,9 @@
 "name": "?Record_QueueAudioDataForEncoding@@YAHPAUaudioSample_t@@@Z",
 "obj": "record.obj",
 "size": 654,
-"hits": []
+"hits": [
+"0x4b7030"
+]
 },
 {
 "name": "?Record_Init@@YAHHPBX@Z",
@@ -35437,12 +35412,6 @@
 ]
 },
 {
-"name": "?CG_IsConsoleCommandName@@YAHPBD@Z",
-"obj": "cg_consolecmds_mp.obj",
-"size": 69,
-"hits": []
-},
-{
 "name": "?CG_ConsoleCommand@@YAHXZ",
 "obj": "cg_consolecmds_mp.obj",
 "size": 135,
@@ -35645,12 +35614,6 @@
 "hits": [
 "0x4bccf0"
 ]
-},
-{
-"name": "?G_DebugCircle@@YAXPBMM0HHH@Z",
-"obj": "g_debug_mp.obj",
-"size": 117,
-"hits": []
 },
 {
 "name": "?G_DebugCircleEx@@YAXPBMM00HH@Z",
@@ -35888,7 +35851,9 @@
 "name": "?CG_DrawPlayerCompass@@YAXPBUrectDef_s@@PAUMaterial@@PAM@Z",
 "obj": "cg_newDraw_mp.obj",
 "size": 258,
-"hits": []
+"hits": [
+"0x4bf100"
+]
 },
 {
 "name": "?CG_DrawPlayerCompassBack@@YAXPBUrectDef_s@@PAUMaterial@@PAM@Z",
@@ -36084,12 +36049,6 @@
 ]
 },
 {
-"name": "?AngleNormalize360@@YAMM@Z",
-"obj": "cg_compassfriendlies_mp.obj",
-"size": 35,
-"hits": []
-},
-{
 "name": "?I_fabs@@YAMM@Z",
 "obj": "cg_compassfriendlies_mp.obj",
 "size": 7,
@@ -36135,7 +36094,7 @@
 {
 "name": "?CG_DrawCompassFriendlies@@YAXPAUrectDef_s@@PAUMaterial@@PAM@Z",
 "obj": "cg_compassfriendlies_mp.obj",
-"size": 2976,
+"size": 2967,
 "hits": []
 },
 {
@@ -36237,7 +36196,7 @@
 {
 "name": "?CG_DrawLagometer@@YAXXZ",
 "obj": "cg_draw_mp.obj",
-"size": 949,
+"size": 929,
 "hits": []
 },
 {
@@ -36681,7 +36640,9 @@
 "name": "?CG_StartShakeCamera@@YAXMHPBMM@Z",
 "obj": "cg_draw_mp.obj",
 "size": 275,
-"hits": []
+"hits": [
+"0x4c4fb0"
+]
 },
 {
 "name": "?CG_ShakeCamera@@YAXXZ",
@@ -37647,12 +37608,6 @@
 ]
 },
 {
-"name": "?float_seconds_to_ms@@YAHM@Z",
-"obj": "cg_shellshock.obj",
-"size": 47,
-"hits": []
-},
-{
 "name": "?CubicInterpolate@@YAMMMMMM@Z",
 "obj": "cg_shellshock.obj",
 "size": 57,
@@ -37801,8 +37756,10 @@
 {
 "name": "?CG_DrawInformation@@YAXH@Z",
 "obj": "cg_info_mp.obj",
-"size": 862,
-"hits": []
+"size": 865,
+"hits": [
+"0x4cd110"
+]
 },
 {
 "name": "?StartWeaponAnim@@YAXHPAUXAnimTree_s@@H@Z",
@@ -37830,7 +37787,9 @@
 "name": "?CG_WeaponRunXModelAnims@@YAXPAUplayerState_s@@PAUweaponInfo_s@@@Z",
 "obj": "cg_weapons.obj",
 "size": 764,
-"hits": []
+"hits": [
+"0x4cd750"
+]
 },
 {
 "name": "?CG_ResetViewWeaponAnimTrees@@YAXPAUplayerState_s@@@Z",
@@ -37997,7 +37956,7 @@
 {
 "name": "?CG_AddPlayerWeapon@@YAXPAUGfxEntity@@PAUplayerState_s@@PAUcentity_s@@H@Z",
 "obj": "cg_weapons.obj",
-"size": 752,
+"size": 758,
 "hits": []
 },
 {
@@ -38169,7 +38128,7 @@
 {
 "name": "?ScaleTracer@@YAXPBM0PAM1@Z",
 "obj": "cg_weapons.obj",
-"size": 222,
+"size": 241,
 "hits": []
 },
 {
@@ -38233,12 +38192,6 @@
 "hits": [
 "0x4d1bf0"
 ]
-},
-{
-"name": "?CG_IsLocalClientEntity@@YAHPAUcg_t@@PAUentityState_s@@@Z",
-"obj": "cg_weapons.obj",
-"size": 35,
-"hits": []
 },
 {
 "name": "?CG_OffhandRegisterDvars@@YAXXZ",
@@ -38354,12 +38307,6 @@
 ]
 },
 {
-"name": "?Com_EndParseSessionInl@@YAXXZ",
-"obj": "ui_gameinfo_mp.obj",
-"size": 31,
-"hits": []
-},
-{
 "name": "?CG_RegisterImpactEffectsForType@@YAHPAPADPBDPAPAUFxEffectDef@@@Z",
 "obj": "cg_effects_load_obj.obj",
 "size": 153,
@@ -38428,7 +38375,9 @@
 "name": "?CG_AddMovingTracer@@YAXPAUlocalEntity_s@@@Z",
 "obj": "cg_localents_mp.obj",
 "size": 184,
-"hits": []
+"hits": [
+"0x4d2a80"
+]
 },
 {
 "name": "?CG_AddLocalEntities@@YAXXZ",
@@ -39195,12 +39144,6 @@
 ]
 },
 {
-"name": "?CG_IsLocalEntity@@YA_NPBUentityState_s@@@Z",
-"obj": "cg_event_mp.obj",
-"size": 34,
-"hits": []
-},
-{
 "name": "?CG_ItemPickup@@YAXH@Z",
 "obj": "cg_event_mp.obj",
 "size": 72,
@@ -39750,7 +39693,9 @@
 "name": "?sb_encode@@YAHPAX0PAUSpeexBits@@@Z",
 "obj": "sb_celp.obj",
 "size": 3713,
-"hits": []
+"hits": [
+"0x4de1d0"
+]
 },
 {
 "name": "?sb_decoder_init@@YAPAXPBUSpeexMode@@@Z",
@@ -41424,12 +41369,6 @@
 "hits": [
 "0x4f0ae0"
 ]
-},
-{
-"name": "?Com_EndParseSessionInl@@YAXXZ",
-"obj": "ui_gameinfo_mp.obj",
-"size": 31,
-"hits": []
 },
 {
 "name": "?BG_StringHashValue@@YAJPBD@Z",
@@ -44373,9 +44312,7 @@
 "name": "?Scr_ParseGameTypeList@@YAXXZ",
 "obj": "g_scr_main_mp.obj",
 "size": 572,
-"hits": [
-"0x5071d0"
-]
+"hits": []
 },
 {
 "name": "?Scr_GetGameTypeNameForScript@@YAPADPBD@Z",
@@ -45394,8 +45331,10 @@
 {
 "name": "?SP_worldspawn@@YAXXZ",
 "obj": "g_spawn_mp.obj",
-"size": 453,
-"hits": []
+"size": 458,
+"hits": [
+"0x50b360"
+]
 },
 {
 "name": "?G_SpawnEntitiesFromString@@YAXXZ",
@@ -46124,12 +46063,6 @@
 ]
 },
 {
-"name": "?Com_EndParseSessionInl@@YAXXZ",
-"obj": "ui_gameinfo_mp.obj",
-"size": 31,
-"hits": []
-},
-{
 "name": "?BG_GetWeaponTypeName@@YAPBDH@Z",
 "obj": "bg_weapons_load_obj.obj",
 "size": 8,
@@ -46472,7 +46405,9 @@
 "name": "?Pickup_Weapon@@YAHPAUgentity_s@@0PAHH@Z",
 "obj": "g_items_mp.obj",
 "size": 1631,
-"hits": []
+"hits": [
+"0x517b80"
+]
 },
 {
 "name": "?Pickup_Health@@YAHPAUgentity_s@@0@Z",
@@ -49018,12 +48953,6 @@
 ]
 },
 {
-"name": "?Com_EndParseSessionInl@@YAXXZ",
-"obj": "ui_gameinfo_mp.obj",
-"size": 31,
-"hits": []
-},
-{
 "name": "?G_ParseAIWeaponAccurayGraphFile@@YA_NPBD0PAY01MPAH@Z",
 "obj": "g_weapon_load_obj.obj",
 "size": 440,
@@ -50061,8 +49990,10 @@
 {
 "name": "?UI_DisplayDownloadInfo@@YAXPBDMMPAUFont_s@@M@Z",
 "obj": "ui_main_mp.obj",
-"size": 1459,
-"hits": []
+"size": 1473,
+"hits": [
+"0x532830"
+]
 },
 {
 "name": "?UI_DrawConnectScreen@@YAXXZ",
@@ -51357,8 +51288,10 @@
 {
 "name": "?Item_ListBox_HandleKey@@YAHPAUdisplayContextDef_s@@PAUitemDef_s@@HHH@Z",
 "obj": "ui_shared_mp.obj",
-"size": 1430,
-"hits": []
+"size": 1439,
+"hits": [
+"0x536760"
+]
 },
 {
 "name": "?Item_ListBox_MouseEnter@@YAXPAUitemDef_s@@MM@Z",
@@ -60434,7 +60367,7 @@
 {
 "name": "_$E1",
 "obj": "cg_localents_mp.obj",
-"size": 2560,
+"size": 3280,
 "hits": []
 }
 ]

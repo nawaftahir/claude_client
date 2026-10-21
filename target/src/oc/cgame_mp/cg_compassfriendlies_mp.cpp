@@ -19,10 +19,7 @@ extern void UI_DrawHandlePic(float x, float y, float w, float h, int horzAlign, 
 extern void CG_DrawRotatedPic(float x, float y, float width, float height, int horzAlign, int vertAlign, float angle, const vec_t *color, MaterialHandle material);
 
 extern float vectoyaw( const vec3_t vec );
-static __forceinline float AngleNormalize360( float angle )
-{
-    return ( 360.0f / 65536 ) * ( (int)( angle * ( 65536 / 360.0f ) ) & 65535 );
-}
+extern float AngleNormalize360( float angle );
 extern vec_t Vec2Normalize( vec3_t v );
 
 #define COMPASS_ACTOR_COUNT 64
@@ -151,11 +148,6 @@ void CG_DrawCompassFriendlies(rectDef_t *rect, MaterialHandle material, vec_t *c
     vec2_t delta;
     float fadeTime;
     vec4_t fadedColor;
-    float yaw, dist, radius, s, c, x, y, w, h;
-    float angle;
-    int flash;
-    MaterialHandle pingMat;
-    vec4_t actorColor;
 
     const dvar_t *fadeDvar = hud_fade_compass;
     int duration = I_fround(fadeDvar->current.value * 1000.0f);
@@ -237,6 +229,12 @@ void CG_DrawCompassFriendlies(rectDef_t *rect, MaterialHandle material, vec_t *c
 
         for (i = 0, actor = cg->compassActors; i < COMPASS_ACTOR_COUNT; i++, actor++)
         {
+            float yaw, dist, radius, s, c, x, y, w, h;
+            float angle;
+            int flash;
+            MaterialHandle pingMat;
+            vec4_t actorColor;
+
             if (actor->iLastUpdate > cg->time)
                 actor->iLastUpdate = 0;
             if (actor->iLastUpdate < cg->time - 800)
@@ -319,6 +317,8 @@ void CG_DrawCompassFriendlies(rectDef_t *rect, MaterialHandle material, vec_t *c
 
     for (i = 0, actor = cg->compassActors; i < COMPASS_ACTOR_COUNT; i++, actor++)
     {
+        float yaw, dist, radius, s, c, x, y, w, h;
+
         if (!actor->enemy)
             continue;
         if (cg_hudCompassSoundPingFadeTime->current.value * 1000.0f + (float)actor->beginFadeTime < (float)cg->time)

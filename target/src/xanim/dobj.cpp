@@ -1396,27 +1396,16 @@ void DObjTraceline(DObj_s *obj, float *start, float *end, unsigned char *priorit
 	hitSign = 0.0f;
 	hitBoneMatrix = 0;
 	solidHitFrac = trace->fraction;
-	modelIter = 0;
-start:
-	if ( modelIter >= obj->numModels )
-		goto done;
-
+	for ( modelIter = 0; modelIter < obj->numModels; ++modelIter )
 	{
 		model = obj->models[modelIter];
 		parts = model->parts;
 		hierarchy = parts->hierarchy;
-		;
+		name = hierarchy->names;
 		numBones = parts->numBones;
 		ignoreCollision = obj->ignoreCollision & (1 << modelIter);
-		localBoneIndex = 0;
-
-		while ( 1 )
+		for ( localBoneIndex = 0; localBoneIndex < numBones; ++localBoneIndex, ++boneMatrix, ++globalBoneIndex )
 		{
-			if ( localBoneIndex >= numBones )
-			{
-				break;
-			}
-
 			classification = parts->partClassification[localBoneIndex];
 			currentPriority = priorityMap[classification];
 
@@ -1450,14 +1439,14 @@ start:
 			classificationArray[globalBoneIndex] = classification;
 
 			if ( ignoreCollision )
-				goto out;
+				continue;
 
 			boneInfo = &model->boneInfo[localBoneIndex];
 
 			if ( boneInfo->radiusSquared == 0.0f )
-				goto out;
+				continue;
 			if ( lowestPriority > currentPriority )
-				goto out;
+				continue;
 
 			{
 				MatrixTransformVectorQuatTrans(boneInfo->offset, boneMatrix, center);
@@ -1485,10 +1474,10 @@ start:
 				diff2 = boneInfo->radiusSquared - d2;
 
 				if ( diff2 <= 0.0f )
-					goto out;
+					continue;
 				if ( lowestPriority == currentPriority
 				        && (float)(sphereFraction - sqrtf(diff2 * invL2)) >= trace->fraction )
-					goto out;
+					continue;
 
 				{
 					InvMatrixTransformVectorQuatTrans(start, boneMatrix, localStart);
@@ -1556,12 +1545,12 @@ start:
 					if ( bStartSolid )
 					{
 						if ( bEndSolid == 0 )
-							goto out;
+							continue;
 						if ( Dot2Product(delta, start) > 0.0f )
-							goto out;
+							continue;
 
 						trace->fraction = 0.0f;
-						trace->partName = hierarchy->names[localBoneIndex];
+						trace->partName = name[localBoneIndex];
 						trace->partGroup = classification;
 
 						if ( delta[0] != 0.0f || delta[1] != 0.0f )
@@ -1580,7 +1569,7 @@ start:
 						if ( lowestPriority == currentPriority )
 						{
 							if ( enterFrac >= trace->fraction )
-								goto out;
+								continue;
 						}
 						else
 						{
@@ -1588,7 +1577,7 @@ start:
 						}
 
 						trace->fraction = enterFrac;
-						trace->partName = hierarchy->names[localBoneIndex];
+						trace->partName = name[localBoneIndex];
 						trace->partGroup = classification;
 						traceHitT = hitT;
 						hitBoneMatrix = boneMatrix;
@@ -1596,16 +1585,10 @@ start:
 				}
 			}
 out:
-			++localBoneIndex;
-			++boneMatrix;
-			++globalBoneIndex;
+			;
 		}
-
-		++modelIter;
-		goto start;
 	}
 
-done:
 	if ( hitBoneMatrix )
 	{
 		ConvertQuatToMat(hitBoneMatrix, axis);

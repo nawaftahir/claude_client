@@ -87,9 +87,8 @@ inline float I_fmin(const float x, const float y)
 int Record_QueueAudioDataForEncoding(audioSample_t *sample)
 {
     short audio_buffer[4096];
-    int bytesEncoded;
+    struct { int bytesEncoded; int frameSize; } g;
     int encoded;
-    int frameSize;
     int partialSamples;
     int partialTake;
     int i;
@@ -111,11 +110,11 @@ int Record_QueueAudioDataForEncoding(audioSample_t *sample)
         return 0;
     }
 
-    frameSize = Encode_GetFrameSize();
+    g.frameSize = Encode_GetFrameSize();
     sample->sampleOffset = 0;
-    bytesEncoded = 0;
-    if (frameSize <= 0) {
-        Com_Printf("Invalid encode frame size of %i\n", frameSize);
+    g.bytesEncoded = 0;
+    if (g.frameSize <= 0) {
+        Com_Printf("Invalid encode frame size of %i\n", g.frameSize);
         return 0;
     }
 
@@ -124,19 +123,19 @@ int Record_QueueAudioDataForEncoding(audioSample_t *sample)
         return 0;
     }
 
-    while (frameSize <= sample->lengthInSamples + samples_in_partial_audio_buffer - sample->sampleOffset) {
+    while (g.frameSize <= sample->lengthInSamples + samples_in_partial_audio_buffer - sample->sampleOffset) {
         partialSamples = 0;
         if (samples_in_partial_audio_buffer) {
-            partialTake = (int)I_fmin((float)(frameSize - 4), (float)samples_in_partial_audio_buffer);
+            partialTake = (int)I_fmin((float)(g.frameSize - 4), (float)samples_in_partial_audio_buffer);
             memcpy(audio_buffer, partial_audio_buffer, sample->bytesPerSample * partialTake);
             partialSamples = partialTake;
             samples_in_partial_audio_buffer = 0;
         }
         memcpy(&audio_buffer[partialSamples], sample->buffer + sample->sampleOffset * sample->bytesPerSample,
-               (frameSize - partialSamples) * sample->bytesPerSample);
-        sample->sampleOffset += frameSize - partialSamples;
+               (g.frameSize - partialSamples) * sample->bytesPerSample);
+        sample->sampleOffset += g.frameSize - partialSamples;
         encoded = Encode_Sample(audio_buffer, enc_buffer + enc_buffer_pos, 4096 - enc_buffer_pos);
-        bytesEncoded += encoded;
+        g.bytesEncoded += encoded;
         Client_SendVoiceData(encoded, enc_buffer + enc_buffer_pos);
     }
 
@@ -147,7 +146,7 @@ int Record_QueueAudioDataForEncoding(audioSample_t *sample)
         samples_in_partial_audio_buffer += sample->lengthInSamples - sample->sampleOffset;
     }
 
-    return bytesEncoded;
+    return g.bytesEncoded;
 }
 
 int Record_AudioCallback(audioSample_t *sample)

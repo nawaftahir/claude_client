@@ -604,14 +604,24 @@ static void CG_DrawLagometer(void)
             {
                 if (v > range)
                     v = range;
-                CL_DrawStretchPic(ax + aw - a, mid - v, 1.0f, v, 3, 3, 0.0f, 0.0f, 0.0f, 0.0f, colorYellow, cgs->media.whiteMaterial);
+                float h = v;
+                float w = 1.0f;
+                float y = mid - v;
+                float x = ax + aw - a;
+                CalcScreenPlacementInl(&x, &y, &w, &h, 3, 3);
+                CL_DrawStretchPicPhysical(x, y, w, h, 0.0f, 0.0f, 0.0f, 0.0f, colorYellow, cgs->media.whiteMaterial);
             }
             else if (v < 0.0f)
             {
                 v = -v;
                 if (v > range)
                     v = range;
-                CL_DrawStretchPic(ax + aw - a, mid, 1.0f, v, 3, 3, 0.0f, 0.0f, 0.0f, 0.0f, colorBlue, cgs->media.whiteMaterial);
+                float h = v;
+                float w = 1.0f;
+                float y = mid;
+                float x = ax + aw - a;
+                CalcScreenPlacementInl(&x, &y, &w, &h, 3, 3);
+                CL_DrawStretchPicPhysical(x, y, w, h, 0.0f, 0.0f, 0.0f, 0.0f, colorBlue, cgs->media.whiteMaterial);
             }
         }
 
@@ -632,11 +642,21 @@ static void CG_DrawLagometer(void)
                 v = v * vscale;
                 if (v > range)
                     v = range;
-                CL_DrawStretchPic(ax + aw - a, ay + ah - v, 1.0f, v, 3, 3, 0.0f, 0.0f, 0.0f, 0.0f, color, cgs->media.whiteMaterial);
+                float h = v;
+                float w = 1.0f;
+                float y = ay + ah - v;
+                float x = ax + aw - a;
+                CalcScreenPlacementInl(&x, &y, &w, &h, 3, 3);
+                CL_DrawStretchPicPhysical(x, y, w, h, 0.0f, 0.0f, 0.0f, 0.0f, color, cgs->media.whiteMaterial);
             }
             else if (v < 0.0f)
             {
-                CL_DrawStretchPic(ax + aw - a, ay + ah - range, 1.0f, range, 3, 3, 0.0f, 0.0f, 0.0f, 0.0f, colorRed, cgs->media.whiteMaterial);
+                float h = range;
+                float w = 1.0f;
+                float y = ay + ah - range;
+                float x = ax + aw - a;
+                CalcScreenPlacementInl(&x, &y, &w, &h, 3, 3);
+                CL_DrawStretchPicPhysical(x, y, w, h, 0.0f, 0.0f, 0.0f, 0.0f, colorRed, cgs->media.whiteMaterial);
             }
         }
 
@@ -1984,10 +2004,14 @@ void CG_StartShakeCamera(float scale, int duration, const vec_t *src, float radi
 
     for (i = 0; i < 4; ++i) {
         shake = &cg->cameraShake[i];
-        if (shake->time > cg->time)
-            goto store;
-        if ((float)shake->time + shake->length <= (float)cg->time)
-            goto store;
+        if (shake->time > cg->time) {
+            cg->cameraShake[i] = temp;
+            return;
+        }
+        if ((float)shake->time + shake->length <= (float)cg->time) {
+            cg->cameraShake[i] = temp;
+            return;
+        }
     }
 
     bestIndex = i;
@@ -2000,11 +2024,7 @@ void CG_StartShakeCamera(float scale, int duration, const vec_t *src, float radi
     }
     if (bestIndex == 4)
         return;
-    i = bestIndex;
-
-store:
-    shake = &cg->cameraShake[i];
-    *shake = temp;
+    cg->cameraShake[bestIndex] = temp;
 }
 
 void CG_ShakeCamera(void)

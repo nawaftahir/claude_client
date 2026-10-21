@@ -201,7 +201,7 @@ void CG_UpdateViewWeaponAnim(playerState_t *ps);
 
 static void CG_PlayADSAnim(int animIndex, XAnimTree *pAnimTree);
 void CG_SelectWeaponIndex(int weaponIndex);
-static __forceinline qboolean CG_IsLocalClientEntity(cg_t *cg, entityState_t *ent);
+#define CG_IsLocalClientEntity(cgp, ent) (((cgp)->nextSnap->ps.pm_flags & 0xc00000) && (ent)->number == (cgp)->nextSnap->ps.clientNum)
 void CG_RegisterWeapon(int weaponNum);
 void CG_RegisterItemVisuals(int itemNum);
 void CG_CycleWeap(qboolean next, qboolean checkAmmo);
@@ -291,10 +291,10 @@ void CG_WeaponRunXModelAnims(playerState_t *ps, weaponInfo_t *weapInfo)
     int i;
     qboolean adsIn;
 
+    pAnimTree = DObjGetTree(weapInfo->viewModelDObj);
     adsIn = 0;
     weaponIndex = BG_GetViewmodelWeaponIndex(ps);
     weapDef = (WeaponDef *)BG_GetWeaponDef(weaponIndex);
-    pAnimTree = DObjGetTree(weapInfo->viewModelDObj);
 
     if (ps->weaponstate == 5 && ps->weaponTime - weapDef->iPositionReloadTransTime > 0) {
         adsIn = 0;
@@ -304,10 +304,10 @@ void CG_WeaponRunXModelAnims(playerState_t *ps, weaponInfo_t *weapInfo)
     if (ps->pm_flags & 0x10)
         adsIn = 0;
     if (weapDef->bADSPositionInfo) {
-        int adsAnim = 0x15;
-        if (!adsIn)
-            adsAnim = 0x16;
-        CG_PlayADSAnim(adsAnim, pAnimTree);
+        if (adsIn)
+            CG_PlayADSAnim(0x15, pAnimTree);
+        else
+            CG_PlayADSAnim(0x16, pAnimTree);
     }
 
     if (ps->weapAnim == weapInfo->iPrevAnim)
@@ -1186,7 +1186,7 @@ void CG_AddPlayerWeapon(GfxEntity *parent, playerState_t *ps, centity_t *cent, q
     if (ent->eFlags & 0x300)
         return;
 
-    ;
+    weapInfo = &cg_weaponsArray[weaponNum];
 
     if (bViewModel) {
         if (bDrawGun) {
@@ -1195,12 +1195,12 @@ void CG_AddPlayerWeapon(GfxEntity *parent, playerState_t *ps, centity_t *cent, q
             GfxEntity *skinEnt;
 
             memset(&gun, 0, sizeof(gun));
-            gun.reType = RT_DOBJ;
-            gun.renderFxFlags = 0x8c;
             gun.materialRGBA[0] = 0xff;
             gun.materialRGBA[1] = 0xff;
             gun.materialRGBA[2] = 0xff;
             gun.materialRGBA[3] = 0xff;
+            gun.reType = RT_DOBJ;
+            gun.renderFxFlags = 0x8c;
 
             gun.lighting.origin[0] = ps->origin[0];
             gun.lighting.origin[1] = ps->origin[1];
@@ -1242,9 +1242,9 @@ void CG_AddPlayerWeapon(GfxEntity *parent, playerState_t *ps, centity_t *cent, q
         {
             int boneIndex;
 
-            boneIndex = DObjGetBoneIndex((&cg_weaponsArray[weaponNum])->viewModelDObj, scr_const.tag_brass);
+            boneIndex = DObjGetBoneIndex(weapInfo->viewModelDObj, scr_const.tag_brass);
             if (boneIndex > -1) {
-                DObjAnimMat *rotTransArray = DObjGetRotTransArray((&cg_weaponsArray[weaponNum])->viewModelDObj);
+                DObjAnimMat *rotTransArray = DObjGetRotTransArray(weapInfo->viewModelDObj);
                 if (rotTransArray) {
                     vec3_t entAxis[4];
 
@@ -1968,6 +1968,8 @@ static float CalcTracerFinalScale(float tracerScaleDistRange, float dist, float 
     return tracerScale;
 }
 
+static float (*const calcScale)(float, float, float) = CalcTracerFinalScale;
+
 // retail 0x4d1390; Kisak name (SUPPORTED)
 static void ScaleTracer(const float *start, const float *finish, float *startWidth, float *finishWidth)
 {
@@ -1988,9 +1990,9 @@ static void ScaleTracer(const float *start, const float *finish, float *startWid
             finishDist = finishDist - tracerScaleMinDist;
         }
         if (startDist > 0.0f)
-            *startWidth = CalcTracerFinalScale(tracerScaleDistRange, startDist, tracerScale) * *startWidth;
+            *startWidth = calcScale(tracerScaleDistRange, startDist, tracerScale) * *startWidth;
         if (finishDist > 0.0f)
-            *finishWidth = CalcTracerFinalScale(tracerScaleDistRange, finishDist, tracerScale) * *finishWidth;
+            *finishWidth = calcScale(tracerScaleDistRange, finishDist, tracerScale) * *finishWidth;
     }
 }
 
@@ -2230,10 +2232,4 @@ void CG_SelectWeaponIndex(int weaponIndex)
         CL_SetADS(0);
 }
 
-static __forceinline qboolean CG_IsLocalClientEntity(cg_t *cg, entityState_t *ent)
-{
-    snapshot_t *snap = cg->nextSnap;
-
-    return (snap->ps.pm_flags & 0xc00000) && ent->number == snap->ps.clientNum;
-}
 
