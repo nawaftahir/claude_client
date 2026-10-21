@@ -396,13 +396,8 @@ unsigned int SL_GetStringOfLen( const char *str, unsigned int user, unsigned int
 		newIndex = entry->status_next & HASH_NEXT_MASK;
 		newEntry = &scrStringGlob.hashTable[newIndex];
 
-		while ( 1 )
+		while ( newEntry != entry )
 		{
-			if ( newEntry == entry )
-			{
-				break;
-			}
-
 			refStr = GetRefString(newEntry->prev);
 
 			if ( refStr->byteLen == lenByte && !memcmp(refStr->str, str, len) )

@@ -1,0 +1,18 @@
+--- a/target/src/oc/cgame_mp/cg_weapons.cpp
++++ b/target/src/oc/cgame_mp/cg_weapons.cpp
+@@ -1953,6 +1953,7 @@
+ }
+ 
+ // retail 0x4d1340; Kisak name (SUPPORTED)
++#pragma optimize("w", off)
+ static float CalcTracerFinalScale(float tracerScaleDistRange, float dist, float tracerScale)
+ {
+     float scale;
+@@ -1967,6 +1968,7 @@
+     }
+     return tracerScale;
+ }
++#pragma optimize("w", on)
+ 
+ // retail 0x4d1390; Kisak name (SUPPORTED)
+ static void ScaleTracer(const float *start, const float *finish, float *startWidth, float *finishWidth)

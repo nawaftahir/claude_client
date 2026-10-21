@@ -17452,7 +17452,7 @@
 ]
 },
 {
-"name": "$L96829",
+"name": "$L96833",
 "obj": "module",
 "size": 6,
 "hits": []
@@ -20961,7 +20961,9 @@
 "name": "_SL_GetStringOfLen",
 "obj": "scr_stringlist.obj",
 "size": 863,
-"hits": []
+"hits": [
+"0x474560"
+]
 },
 {
 "name": "_SL_GetString_",
@@ -24155,8 +24157,10 @@
 {
 "name": "?DObjTraceline@@YAXPAUDObj_s@@PAM1PAEPAUDObjTrace_s@@@Z",
 "obj": "dobj.obj",
-"size": 1791,
-"hits": []
+"size": 1815,
+"hits": [
+"0x485370"
+]
 },
 {
 "name": "?DObjInitFromModel@@YAXPAUDObj_s@@PAUXModel@@@Z",
@@ -32792,7 +32796,7 @@
 ]
 },
 {
-"name": "$L119334",
+"name": "$L119338",
 "obj": "module",
 "size": 166,
 "hits": [
@@ -32800,7 +32804,7 @@
 ]
 },
 {
-"name": "$L119336",
+"name": "$L119340",
 "obj": "module",
 "size": 48,
 "hits": [
@@ -32833,7 +32837,7 @@
 ]
 },
 {
-"name": "$L132168",
+"name": "$L132172",
 "obj": "module",
 "size": 166,
 "hits": [
@@ -32841,7 +32845,7 @@
 ]
 },
 {
-"name": "$L132170",
+"name": "$L132174",
 "obj": "module",
 "size": 48,
 "hits": [
@@ -32901,7 +32905,7 @@
 ]
 },
 {
-"name": "$L104166",
+"name": "$L104170",
 "obj": "module",
 "size": 21,
 "hits": [
@@ -32917,7 +32921,7 @@
 ]
 },
 {
-"name": "$L147044",
+"name": "$L147048",
 "obj": "module",
 "size": 21,
 "hits": [
@@ -34599,7 +34603,9 @@
 "name": "?mixerGetRecordSource@@YAHPAD@Z",
 "obj": "mixer.obj",
 "size": 612,
-"hits": []
+"hits": [
+"0x4b5dc0"
+]
 },
 {
 "name": "?mixerSetRecordSource@@YAHPBD@Z",
@@ -36135,7 +36141,7 @@
 {
 "name": "?CG_DrawCompassFriendlies@@YAXPAUrectDef_s@@PAUMaterial@@PAM@Z",
 "obj": "cg_compassfriendlies_mp.obj",
-"size": 2976,
+"size": 2967,
 "hits": []
 },
 {
@@ -36681,7 +36687,9 @@
 "name": "?CG_StartShakeCamera@@YAXMHPBMM@Z",
 "obj": "cg_draw_mp.obj",
 "size": 275,
-"hits": []
+"hits": [
+"0x4c4fb0"
+]
 },
 {
 "name": "?CG_ShakeCamera@@YAXXZ",
@@ -37801,8 +37809,10 @@
 {
 "name": "?CG_DrawInformation@@YAXH@Z",
 "obj": "cg_info_mp.obj",
-"size": 862,
-"hits": []
+"size": 865,
+"hits": [
+"0x4cd110"
+]
 },
 {
 "name": "?StartWeaponAnim@@YAXHPAUXAnimTree_s@@H@Z",
@@ -37997,7 +38007,7 @@
 {
 "name": "?CG_AddPlayerWeapon@@YAXPAUGfxEntity@@PAUplayerState_s@@PAUcentity_s@@H@Z",
 "obj": "cg_weapons.obj",
-"size": 752,
+"size": 754,
 "hits": []
 },
 {
@@ -51357,8 +51367,10 @@
 {
 "name": "?Item_ListBox_HandleKey@@YAHPAUdisplayContextDef_s@@PAUitemDef_s@@HHH@Z",
 "obj": "ui_shared_mp.obj",
-"size": 1430,
-"hits": []
+"size": 1439,
+"hits": [
+"0x536760"
+]
 },
 {
 "name": "?Item_ListBox_MouseEnter@@YAXPAUitemDef_s@@MM@Z",
@@ -60434,7 +60446,7 @@
 {
 "name": "_$E1",
 "obj": "cg_localents_mp.obj",
-"size": 2560,
+"size": 2496,
 "hits": []
 }
 ]

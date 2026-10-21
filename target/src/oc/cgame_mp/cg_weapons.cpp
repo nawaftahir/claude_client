@@ -1186,7 +1186,7 @@ void CG_AddPlayerWeapon(GfxEntity *parent, playerState_t *ps, centity_t *cent, q
     if (ent->eFlags & 0x300)
         return;
 
-    ;
+    weapInfo = &cg_weaponsArray[weaponNum];
 
     if (bViewModel) {
         if (bDrawGun) {
@@ -1242,9 +1242,9 @@ void CG_AddPlayerWeapon(GfxEntity *parent, playerState_t *ps, centity_t *cent, q
         {
             int boneIndex;
 
-            boneIndex = DObjGetBoneIndex((&cg_weaponsArray[weaponNum])->viewModelDObj, scr_const.tag_brass);
+            boneIndex = DObjGetBoneIndex(weapInfo->viewModelDObj, scr_const.tag_brass);
             if (boneIndex > -1) {
-                DObjAnimMat *rotTransArray = DObjGetRotTransArray((&cg_weaponsArray[weaponNum])->viewModelDObj);
+                DObjAnimMat *rotTransArray = DObjGetRotTransArray(weapInfo->viewModelDObj);
                 if (rotTransArray) {
                     vec3_t entAxis[4];
 
