@@ -96,3 +96,12 @@ the client-recon skill fix-pattern catalogue (top ~12 entries = 10-19 PAID class
 - Overnight CI sweeps (~1,000 mechanical variants: dead inits, dead locals, statement swaps) = 0 code matches.
 - Open layout: cl_console .rdata contribution 16-aligned (retail 4) - bisect its constants; small .rdata drift from 0x17380 spread over many TUs; dead scaffolding data at .data tail should be deleted.
 - Open code: per-fn compiler mechanisms (see LESSONS 10-20/10-21); only targeted leads, no blind agent waves.
+
+## State 10-21 09:30 (paused by owner)
+- Gauge 1,314,017 B = 93.28% (commit after 0e0279f). Today: DObjTraceline, Item_ListBox_HandleKey, CG_DrawInformation,
+  SL_GetStringOfLen, CG_StartShakeCamera, mixerGetRecordSource matched; nb_decode 12->8, compass 32->26, CG_AddPlayerWeapon 128->95.
+- PAID rules today (skill + deep_brief.txt): named local before a call; goto chains -> for/continue; while(1)-break -> while(cond);
+  goto-store tails -> duplicated store+return; extra arm copy adds a const use; err result local + early NULL init (mixer);
+  check call targets (toupper/tolower bug).
+- Method that paid: ONE deep agent per function, probe/oracle first (lab/w4/deep_brief.txt). Waves/sweeps paid 0.
+- Fast relink tools: /home/nawaf/mlw/go.sh (oc/), /home/nawaf/mlw/go_gvo.sh (game/), /home/nawaf/dtl/go.sh, /home/nawaf/gto/go.sh.
