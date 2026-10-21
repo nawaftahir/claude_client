@@ -1,7 +1,7 @@
 # c2.dll register-allocation probe (10-18, first pass)
 
-Status: the logging path works (one LTCG link, ~14 s, filtered to one fn). The allocator decision
-point is NOT found yet; the dump shows color.c candidate nodes when they are freed. The field meanings
+Status (10-21): the colour choice is found (0x107833f2, see round 5) and logged by cave_rd.s + cpick.py.
+Older notes below: the dump showed color.c candidate nodes when they are freed. The field meanings
 below are HYPOTHESIS unless tagged PINNED.
 
 ## Run it
@@ -37,6 +37,221 @@ The N line now also dumps 24 dwords of the object and 16 dwords of `[obj+0x28]`.
   constants; +0x1c is a small per-fn index. The "no const-0 node" reading below is void.
 - c2 hidden options table (name, var, flags) at 0x10866xxx: `-db#` -> 0x108a9570 (no code reads it),
   `-NoLUR` -> 0x108a953c (read at 0x1070a4b0, 0x1070a7f3).
+
+## Round 5 (10-21, ora): the colour choice is FOUND
+
+PINNED (disasm + Ghidra decompile of c2.dll, confirmed by the probe log against our asm):
+
+- Driver 0x107821a7: `for (cls = 6; cls >= 0; cls--)` over worklists 0x10882158[cls] (cls 0 first runs
+  0x1078448d, then the same body). Per class: 0x107844a4, 0x10782473, 0x10782978, 0x1078482f build the
+  sorted worklist; the pop loop at 0x10782a4d calls, per accepted node (n16 > 0):
+  0x1078368e (walk the node's tuples, build its free-register set) -> **0x107833f2 (pick the register)**
+  -> 0x107831f7 (update neighbours).
+- **0x107833f2(edx = neighbour set, node, cls)** = the decision:
+  1. `cost[0..0x4a] = 0` (array 0x10880680, indexed by c2 register id).
+  2. For each neighbour node in the set with n16 > 0: `cost[r] += cnt` for each (reg r, cnt) pair on the
+     neighbour's affinity list (node +0x38, pair = {next, reg object (+0x1c = reg id), count}) when r is in
+     the neighbour's free set; if the neighbour has exactly ONE free reg r: `cost[r] += 100 * n16(neighbour)`.
+  3. For the node's own affinity list: `cost[r] -= cnt` (copies/moves to r make r cheaper).
+  4. Scan the class order table 0x1086917c[cls] (cls 0 = 0x108691a0 = ids 1,2,3,7,8,4,6), keep the first
+     reg in the node's free set (node +0x20 bitvector), replace only on STRICTLY lower cost
+     (0x10783499 `cmp cost[r], best; jl`). **Ties go to the earlier reg in the table.**
+  5. node +0x10 = 0x108a97a4 + id * 0x60 (the register object).
+- c2 GPR ids = Intel number + 1: 1 eax, 2 ecx, 3 edx, 4 ebx, 6 ebp, 7 esi, 8 edi (6/7/8/3 PINNED from
+  G_GetPlayerViewOrigin: _origin -> 7 = `[esi]`, _client -> 8 = `[edi+..]`, bg_bobMax -> 6 = `mov ebp,ds:..`).
+  Class-0 try order: **eax, ecx, edx, esi, edi, ebx, ebp**. Bits 0x40/0x80/0x100 tested in 0x1078368e =
+  ebp/esi/edi (callee-saved). Other classes: 1 = ids 31..36, 5 = 58..65, 6 = 66..73 (x87/byte, unchecked).
+- Free set excludes eax/ecx/edx for a node live across a call (seen on every call-spanning local).
+- CORRECTION to round 4: worklist insertion 0x10784bba..0x10784bd2 advances while `new.n3 < cur.n3` or
+  (`==` and `new.n17 < cur.n17`), so equal n3 pops the LARGER n17 first (not ascending). Split pieces
+  copy n17 from their parent (0x1078b499..9f, 0x1078bf4d..53).
+
+Probe: `cave_rd.s` (F + P + new C hook 0x107834a8, N dropped to fit the 688-B cave), patched by
+`patch_ra.py` (hooks caveC if present) into lab/s6/target/build/vc/c2rd.dll; driver /home/nawaf/mlw/ora/rd.sh
+TAG RA_FN (links claude_client/target objs; log ora/out/TAG.txt); `cpick.py TAG.txt` prints, in pop order,
+each node, its n3/n16/n17, the free regs with their cost, and the pick (`*`). C line = node id, pick, best
+cost, free mask (first 32 ids), cost[1..8], name.
+
+### Validation: CG_DrawCursorhint 0x4bf920 (100 lines; retail fadeColor=ebx, text=edi, fontscale=ebx)
+
+Ours (pop order): rect -> ebp | **fontscale piece (kind05 val=21, n3 48, n17 204) -> edi (free edi:0 ebx:0)**
+| **text (n3 48, n17 116) -> ebx (only ebx left)** | font -> esi | ... | fadeColor -> edi (only edi left).
+So the whole edi/ebx rotation is ONE tie: text and the fontscale piece have equal priority n3 = 48 and
+the larger n17 pops first. If text pops first it takes edi (edi before ebx in the order table), the
+fontscale piece gets ebx, and fadeColor (interferes with text, not with the piece) gets ebx = retail.
+HYPOTHESIS: retail has text.n3 > fontscale-piece.n3 (weight differs by >= 1) or text.n17 > 204.
+The cost array is all 0 for these (no affinity), so the register choice itself is not the lever; the
+pop ORDER (n3, then n17) is.
+
+Diagnostic tried: inverting the n17 compare at both insertion sites (0x10784bc0 jae->jbe, 0x10782b54
+jb->ja, global) ICEs (main.c 148) in ui_shared_mp, so a global flip breaks another invariant. Next time arm
+it per fn (test CUR in a cave) to check that the flipped order alone gives retail's CG_DrawCursorhint.
+
+NOT register ties (PINNED, fdiff 10-21): G_GetPlayerViewOrigin (`push` placed after fstp), CG_FireWeapon
+(`lea ebp,[ebx+0xf0]` between pushes), Item_ListBox_MouseEnter (one `mov edx,[esi+0x14]` moved) are
+same-register instruction ORDER diffs = the scheduler, not color.c. G_GetPlayerViewOrigin's 7 colour
+picks are all cost-0 first-in-order picks.
+
+Next:
+1. Find what sets n17 at node creation (writers above copy it; the original source is not found) and which
+   source shape changes text's n3/n17 vs the fontscale piece. n3 = base + use weight (round 2), so any
+   one-unit weight change on either node flips this tie.
+2. Run `cpick.py` on the other register-rotation fns (CG_DrawAdsOverlay, Com_ProcessSoundAliasFileLocalization,
+   XAnimLoadFile, mixer/Record fns); expect each rotation to be one equal-n3 pair.
+
+## Round 12 (10-21, ora): whole-client triage (lab/w4/tri.tsv)
+
+- `RA_FN='*'` now arms every fn (cave_rd.s caveF): ONE LTCG link (~13 s, 24 MB raw, 6,655 fns) gives all
+  colour picks; `split_all.py all.txt outdir names...` + `ties.py` per fn.
+- `tools_oracle/tri.py all_scored.txt` (run in target/) classifies each unmatched fn statically: B = same
+  instruction multiset (order only), A = equal after consistent register renaming, A+B = same mnemonics,
+  C = different; then refined by hand with the pick logs (fix_tri.py classes in tri.tsv).
+- Result over the 60 unmatched named fns (38,3 KB): pop-order register ties (A) = only CG_DrawCursorhint
+  (fixed by dt3, residue is operand order) and Window_Paint (lock-step pieces, parked). The other
+  register-looking residues are NOT colour pop order: operand commutation from IL numbering (C-num:
+  nb_decode, CG_WhizbySound, CG_DrawPlayerCompass, FX_RandomizeRoll), stack-slot layout (D-slot:
+  FX_CalcOriginAndAxis, DSound_UpdateSample), short temps picked by the local code generator, not color.c
+  nodes (D-local: FX_AddFxToScene `lea` temp, Menu_SetNextCursorItem, CG_DrawCrosshairNames).
+
+## Round 11 (10-21, ora): Window_Paint under the formula
+
+PINNED (winedbg watch on the three picked nodes h 0x0679200c, y 0x0679212c, w 0x06791e14 (+0xc), mk5.sh /
+wv.py): w, y and h receive the SAME n3 update in every region (0x1078292d adds 10/17/24/30, 0x10783a80
+subtracts), in lock-step, ending at 30 each. No region references one of the three without the others,
+so the formula cannot separate them; the order is decided by n17 alone (82 w < 83 y < 84 h, the reverse
+of the struct-copy def order h, y, w, x). Only a change in that def order (or a region touching one field
+alone) can flip it; the 4 copy spellings and field-wise init (rounds 6-7) do not. Parked.
+
+CursorHint residue after dt3 (36 lines, `rect->h + scale` fadd order + one push schedule): const-dropping
+casts `((rectDef_t *)rect)->h` at one/both sites and `((rectDef_t *)rect)->w` = 36, unchanged (go.sh de1-4).
+
+## Round 10 (10-21, ora): n3 writer FOUND (winedbg watchpoint)
+
+Method (works, reuse it): heap addresses are identical with and without the debugger, so take the node
+address from a probe run ([esp+0x20] at caveC, or P-line dword 2 = node+8 self pointer), then run the LTCG
+link under winedbg with c2dbg.dll (cave_rd.s + `int3` right after `mov CUR,1`, build /home/nawaf/mlw/ora/
+build_dbg.sh) and a command file `cont; watch *ADDR; (cont; x /1d ADDR; info reg) x N` (mk3.sh). Driver
+/home/nawaf/mlw/ora/dbg.sh CMD RA_FN (DLL=c2dbg.dll; TERM must be set; the debuggee's stderr is lost, so
+probe lines do not appear under winedbg). CursorHint: text node 0x067a4708, fontscale piece 0x067a4828.
+
+PINNED n3 (node +0x0c) for these nodes is built in 0x107828e4..0x10782933 / 0x10783a31..0x10783a7b, per
+region (block): walk the region's candidate list (+0x14 next), count the candidates with flag 0x10
+(referenced here) -> `edx = count * [esp+0x24]` (region weight); then each flagged candidate gets
+`n3 += [node+0x18] * edx` (its reference units in the region; then +0x18 = 0, flag cleared) and each
+unflagged one gets `n3 -= edx` (0x10783a72..7b, skipped when esi == 2).
+- text: +2 +2 +2 +2 (edx 1: the four `text =` defs, 2 units each) +4 +4 (edx 2: the `text && *text`
+  tests) +32 (edx 8, 4 units = 2 uses in the draw block) = 48.
+- fontscale piece: one event, +48 (edx 8, 6 units = its 3 uses in the same draw block).
+- Units look like 2 per reference (HYPOTHESIS, matches both nodes). edx 8 in the draw block = number of
+  referenced candidates there x region weight.
+- So the tie is 4 x 8 + 16 (text) vs 6 x 8 (fontscale). One-point flips: one more text reference or one
+  fewer fontscale reference in the draw block (+-16), or a different count of referenced candidates in a
+  region where only one of them is referenced. Retail's code is identical apart from registers, so the
+  difference must be IR-level (a reference that is optimised out later, or a candidate count).
+- APPLIED (fast relink + cpick, CI): in the `cursorHintIcon == 3` arm, split the call into a local
+  `str = UI_SafeTranslateString("PLATFORM_PICKUPHEALTH"); text = UI_ReplaceConversionString(str, binding);`.
+  That def region now has 2 referenced candidates (edx 2): text n3 48 -> 50, pops before the fontscale
+  piece, takes edi; fontscale piece ebx, fadeColor ebx = retail's whole edi/ebx rotation. fdiff 100 -> 36
+  (rest = the known `rect->h + scale` fadd order and one push schedule). CI ora1 (lab/ora/ora_dt3.patch vs
+  comment control ora_ctl.patch): both 1,322,134, NET 0, RATCHET OK (fn not yet byte-matched, so no bytes).
+- Dead (pick unchanged, 100): `if (cursorHintString >= 0) text = ...; else goto`, `if (!text) goto; if (*text)`,
+  `float fs = fontscale` copy.
+
+## Round 9 (10-21, ora): n3 writer hunt (not found yet)
+
+- wc.py (writes to [r+0xc] with a [r+0x40]/[r+0x44] access of the same base within 10 insns, whole .text)
+  finds ONLY the four round-6 weight sites (0x10711011, 0x10711256, 0x10711790, 0x10711b46). None of them
+  fires for rect/text/fontscale/fadeColor (CursorHint), so those nodes get n3 by a write with no nearby
+  n16 access: a copy, a struct copy, or a computed store elsewhere.
+- wc2.py 10780000 10790000 lists the 19 other `[r+0xc]` writes in color.c; untested candidates:
+  0x1078292a / 0x10783a56 / 0x10783a7d (`ebx += [eax+0x18] * edx; [eax+0xc] = ebx`, then `-= edx`) and
+  0x1078afa6 (`[esi+0xc] = [edi+0x40]`). The 688-B cave is full; the next probe needs a second cave (or
+  winedbg `watch` on the deterministic node address from the P line, e.g. text 0x068c8dcc in rd.sh dch).
+- Data for a formula fit (n3/n16 at pop): CursorHint rect 175/34, text 48/16, fontscale piece 48/4,
+  font 24/2, temps 14/6 13/6 13/6, cg_cursorHints 9/2, fadeColor -6/8, hintIcon -12/2; Window_Paint
+  w_param 494/170, pieces 48/6 30/6; SND temps 56/14 48/14 42/16 41/14 35/16 28/8 26/8 24/6. No single
+  n16 multiple fits (HYPOTHESIS: n3 = savings over the live range minus a span/boundary cost).
+- Window_Paint pieces: object vals h=24, w=387, y=389 (x not logged) vs def order h, y, w, x at the struct
+  copy: def order is not object creation order. Not resolved.
+
+## Round 8 (10-21, ora): breadth check, which swap fns are pop-order ties
+
+PINNED (fdiff vs retail + cpick/pops on our build; rdv2.sh = rdv.sh with RUN=run2.sh for non-oc TUs):
+- XAnimCalc 0x4888a0: main 191 lines = structure (dObj/count kept in different places, not a swap).
+  With w87_ac (lab/w87_ac.patch, fresh third-loop var) 15 lines: one `[ebp+4]` load + movsx placed two
+  insns earlier, with edx/eax temp names swapped = scheduling of one load pair, no named-var pop tie.
+- UI_DisplayDownloadInfo 0x532830 (105 lines, 418 vs 415 insns): ours keeps the idiv result in ebx (retail:
+  memory [esp+0x10], reloaded into ecx) and ours has an extra `mov ecx,esi; call; mov ebx,[esp+0x20]`
+  block before a jmp (retail jump-threads it). Register-vs-memory + structure, not a pop-order tie.
+- SND_RestoreStreamChannel 0x44eb60 (169 lines, 253 vs 250): retail pAlias0 in memory [esp+0x14] then
+  edi, pAlias1 in ebx; ours gives pAlias1 ebx (only free reg, cost 2601) and pAlias0 pieces edi/eax/ecx in a
+  second worklist (fl 2c, n3 26/16/14). The pieces are split differently (insn count differs), so it is
+  splitting/weights, not an equal-n3 tie.
+- VM_Notify 0x47e200 (62 lines, 444 vs 438): one temp edx vs eax (`lea r,[eax+eax*4]`) plus 6 insns of
+  structure; not a named-var tie.
+- So of the swap list only CG_DrawCursorhint and Window_Paint are pure equal-n3 pop-order ties (round 7).
+
+## Round 7 (10-21, ora): where n17 is born
+
+PINNED (w44.py scan of every `mov [r+0x44], r2` + probe hook W at 0x1077fadc, cave_rd.s):
+- 0x1077fa92..fae3 walks the fn's IL tuples in order with a counter ([esp+0x1c], `inc` per tuple at
+  0x1077fa99). For each operand with kind byte 1 and [op+0x1c] == 0x108a92e4 (not yet bound), it binds
+  op+0x1c = node (node = table[[op+0x10]]) and writes **node.n17 = tuple counter**. Rewritten on every such
+  operand, so **n17 = IL position of the node's LAST bound reference in the walk** (defs: opcode 1 = assign,
+  618 = load, 99 = store, 18 = ?). Split pieces then copy n17 from the parent (round 5).
+- CG_DrawCursorhint: text (id 12) bound at tuples 104, 107, 112, 116 (its four `text =` defs, opcode 1);
+  fontscale piece (id 16) at 204 (opcode 618, the param load before UI_TextWidth). Every text def comes
+  before that load, so text can never get n17 > 204 by def placement; the lever is the fontscale load
+  position (< 116) or the n3 values (both 48, origin still unknown).
+- Window_Paint: fillRect pieces are defined by the struct copy at tuples 9, 11, 13, 15 (ids 14 h, 27 y,
+  25 w, 23 x) and reloaded after the debug UI_DrawRect join at 81..84 in REVERSE order (x, w, y, h). The
+  same reverse store/reload pattern shows at 85..105 (stores 3,10,40,5,7 opcode 99, loads 7,5,10,3).
+  So n17(w) = 82 < n17(y) = 83 follows from the struct-copy def order (h, y, w, x). Retail needs the copy to
+  define w before y.
+- Dead (identical pick and 42 lines): `fillRect = w->rect[0]`, memcpy, init at the declaration. Field-wise
+  init (round 6) breaks the struct pieces (258+ lines).
+- Next: find what orders the struct-copy defs h, y, w, x (not field order; piece object vals h=24,
+  w=387, y=389 suggest creation order of the scalar pieces), and the n3 origin for the CursorHint pair.
+
+## Round 6 (10-21, ora): what moves n3/n17 (CG_DrawCursorhint)
+
+Tools: /home/nawaf/mlw/ora/rdv.sh (go.sh + c2rd.dll + RA_FN: per variant var/<v>.diff and ora/out/<v>.pick),
+`ties.py log` (marks N3TIE = equal n3 with the previous pop, ORDER = several free regs at the lowest cost).
+cave_rd.s now also logs A/S lines: priority add 0x10711b36 / subtract 0x10711780 (node esi, amount
+eax*ebp, ebp = block weight); acc.py sums them per node. (The 0x10711249 / 0x10710ffb pair of round 2 and
+these two are the only 4 code sites writing node +0x40 and +0x0c together, scan pair.py.)
+
+PINNED (probe, 8 builds):
+- None of the 4 weight sites fires for the text (id 12) or fontscale-piece (id 16) nodes, so these two
+  priorities are not the per-use weights of round 2. (CORRECTED round 7: 0x1078ac92 restores a different
+  struct, its "+0x40/+0x44" are pointers; it is not the n16/n17 record.)
+- No effect on (n3, n17) of text / fontscale piece (all still 48/116 and 48/204, fdiff 100):
+  local decl order (scale first/last, text first/last), `float fs = fontscale` copy (object id 21 -> 22,
+  n17 unchanged = n17 is NOT the object id), `if (!text || !*text) goto draw_icon;`, `if (text) if (*text)`.
+- CG_DrawAdsOverlay 0x4c26e0: no N3TIE pick at all = its residue is scheduling (as w86 said), not colour.
+- Com_ProcessSoundAliasFileLocalization: the f problem is weight (n16 <= 0, round 4); its three N3TIE picks
+  (temp val=691, len, buffer) are not the diff.
+- Window_Paint 0x533bd0: the w/h/y restore (retail edi=w, esi=h, ebx=y; ours ebx/esi/edi) = three kind04
+  fillRect pieces with EQUAL n3 30 popped by n17 84 (h) -> esi, 83 (y) -> edi, 82 (w) -> ebx. Retail
+  order h, w, y needs n17(w) > n17(y). Field-wise fillRect init in 4 orders (xywh/xwyh/hwyx/yxwh): code
+  258-262 lines (main 42), pieces no longer coloured = dead form; the struct copy must stay.
+- Per-fn tie table (stock build, ties.py):
+
+| fn | colour diff? | deciding tie (ours) | flip needed |
+|---|---|---|---|
+| CG_DrawCursorhint | yes edi/ebx | text vs fontscale piece, n3 48 = 48, n17 116 < 204 | text first (n3 +1 or n17 > 204) |
+| Window_Paint | yes w/y | fillRect w vs y pieces, n3 30, n17 82 < 83 | n17(w) > n17(y) |
+| SND_RestoreStreamChannel | yes ebx/edi | no N3TIE among pAlias picks; `_name` N3TIE (n3 24) only | not a pop tie: cost/free-set (unread) |
+| UI_DisplayDownloadInfo | ebx at join | width/downloadSize n3 48 tie, text 32/28 ties | unmapped to retail regs |
+| XAnimCalc | partly fixed by w87_ac | refStr n3 94, bufferIndex 72, parts 45 ties | unmapped |
+| VM_Notify | edx vs eax temp (+6 insns other) | many N3TIEs (parentValue/kind04 320, selfNameId 224 ...) | unmapped |
+| CG_DrawAdsOverlay | no | none | scheduling, not colour |
+| Com_ProcessSoundAliasFileLocalization | f in memory | weight n16 <= 0 (round 4) | not a tie |
+| FX_CalcOriginAndAxis | not probed | stack-slot shift, not register (LESSONS ad) | - |
+
+- OPEN: where n17 is born. It is not the object id, not decl order; split pieces inherit it; consecutive
+  values for fillRect pieces (82..84) say it is a creation counter. Next: hook node allocation 0x1077c10f's
+  callers / the record at 0x1078ac92 to log who sets [rec+0x10], then map it to IL order.
 
 ## Round 4 (10-18): the allocation queue, Com_ProcessSoundAliasFileLocalization
 

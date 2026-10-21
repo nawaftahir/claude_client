@@ -17,6 +17,18 @@ if 'caveN' in sym:
     jmp(0x84d3b, sym['caveN'], 6)
 if 'caveP' in sym:
     jmp(0x82a5e, sym['caveP'], 5)
+if 'caveC' in sym:
+    jmp(0x834a8, sym['caveC'], 7)
+if 'caveE' in sym:
+    jmp(0xba622, sym['caveE'], 5)
+if 'caveO' in sym:
+    jmp(0x5d7a0, sym['caveO'], 5)
+if 'caveM' in sym:  # unverified for output identity; fired 0 times in the ConfigString clone
+    jmp(0x160d14, sym['caveM'], 8)
+if 'caveT' in sym:
+    jmp(0x7fa92, sym['caveT'], 7)
+if 'caveW' in sym:
+    jmp(0x7fadc, sym['caveW'], 7)
 for k, site in enumerate([0x107ef8f7, 0x108166c1, 0x10816735, 0x1083d73d, 0x1083dc83]):
     if 'caveW%d' % k in sym:
         jmp(site - 0x10700000, sym['caveW%d' % k], 7)

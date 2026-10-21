@@ -105,3 +105,28 @@ the client-recon skill fix-pattern catalogue (top ~12 entries = 10-19 PAID class
   check call targets (toupper/tolower bug).
 - Method that paid: ONE deep agent per function, probe/oracle first (lab/w4/deep_brief.txt). Waves/sweeps paid 0.
 - Fast relink tools: /home/nawaf/mlw/go.sh (oc/), /home/nawaf/mlw/go_gvo.sh (game/), /home/nawaf/dtl/go.sh, /home/nawaf/gto/go.sh.
+
+## State 10-21 13:50 (uncommitted on top of 59a4f32; full diff in lab/wip_gap23.patch)
+- Gauge 1,322,134 B = 93.85%. Whole-file ~12.74%. Plan + log: dev/PLAN_10-21.md.
+- Matched today: Record_QueueAudioDataForEncoding (anon struct of int locals = slot order), ScaleTracer (const fn ptr),
+  sb_encode +3,713 (ONE no-op cast `((SBEncState*)state)->frame_size` renumbers whole-fn IL -> commutation order).
+- Structure kept: qcommon.h Com_EndParseSessionInl non-static (+2,545), lyx_all (dead fns), names_fix rows, CL_DrawText body
+  -> cl_console static inline (w87_pr), AngleNormalize360 dup removed.
+- PROVEN: 59 of 61 unmatched fns do not move with fn count (lab/w4/cnt_sweep.tsv); residue is per-fn. Cast scan only moved
+  commutation (sb_encode); register ties did not move in ~200 valid builds. SV_DirectConnect is a count tie that blocks
+  fn removals (keep D in {0,1,3}, lab/w4/sdc_period.tsv).
+- Unfinished (WSL overloaded, load 103): ~150 cast variants never built: /home/nawaf/wpc_names.txt, mlw/var/cr*, crr*, k3_*,
+  k4*. Re-run at <=4 concurrent builds before calling them dead. BoneBox lines 779-783 untested.
+- Parked patches: lab/w87_ac.patch (XAnimCalc 93->6, not server text), lab/w87_tum.patch (compass fn move, NET 0).
+- Next real lever: the regalloc oracle (tools_oracle/REGALLOC.md) for the register ties; cast scan only for commutation.
+
+## State 10-21 evening (uncommitted; lab/wip_gap23.patch)
+- Gauge 1,322,392 B = 93.87%. Added since 13:50: CG_DrawPlayerCompass +258 (test stored color[3] not local alpha),
+  CursorHint register swap fixed via priority formula (100 -> 36 lines, ora_dt3), CL_DrawText body -> cl_console static inline.
+- COMPILER RE (tools_oracle/REGALLOC.md rounds 5-12, SCHED.md, C1.md): register pick + priority formula PINNED
+  (n3 per region, ties -> larger n17 = IL pos of last ref; lever split f(g(x))); probes output-identical to stock.
+  Triage lab/w4/tri.tsv: register ties only 2 fns; scheduling 11 fns 5.4 KB; x87 operand order 4 KB (decided by
+  earlier IL in the fn, not expression spelling; PARKED: needs IL-numbering RE); structure 34 fns 18 KB.
+- Fast tools: /home/nawaf/mlw/ora/nogl2.sh (no-/GL compile, 20 s/batch), tiny/ltc.sh (small LTCG DLL in seconds),
+  bf/ (mechanical variant generator: single edits paid 0).
+- Next: structure group (18 KB) with per-fn deep agents + the new tools; scheduler still unfound (not in c2 IL passes).

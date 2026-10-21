@@ -317,15 +317,7 @@ static void CG_Obituary(entityState_t *ent)
         CL_DeathMessagePrint(attackerName, attackerColor, targetName, victimColor, iconShader, iconWidth, 1.4f, iconColor, iconHorzFlip);
 }
 
-static __forceinline bool CG_IsLocalEntity(const entityState_t *ent)
-{
-    const snapshot_t *snap = cg->nextSnap;
-
-    if ((snap->ps.pm_flags & 0xc00000) && ent->number == snap->ps.clientNum)
-        return true;
-
-    return false;
-}
+#define CG_IsLocalEntity(ent) (((cg->nextSnap->ps.pm_flags & 0xc00000) && (ent)->number == cg->nextSnap->ps.clientNum) ? true : false)
 
 void CG_ItemPickup(int itemNum)
 {

@@ -262,21 +262,6 @@ static void CG_TeamVoiceChat_f(void)
     Cbuf_AddText(va("cmd vsay_team %s\n", chatCmd));
 }
 
-qboolean CG_IsConsoleCommandName(const char *cmd)
-{
-    int i;
-
-    if (!cmd)
-        return 0;
-
-    for (i = 0; commandsList[i].cmd; i++) {
-        if (!I_stricmp(cmd, commandsList[i].cmd))
-            return 1;
-    }
-
-    return 0;
-}
-
 qboolean CG_ConsoleCommand(void)
 {
     const char *cmd;

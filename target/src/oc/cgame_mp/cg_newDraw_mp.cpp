@@ -1126,7 +1126,7 @@ void CG_DrawPlayerCompass(const rectDef_t *rect, MaterialHandle material, vec_t 
     displayStartTime = cg->compassFadeTime;
     alpha = CG_FadeHudMenu(hud_fade_compass, displayStartTime, duration);
     color[3] = alpha;
-    if (alpha == 0.0f) {
+    if (color[3] == 0.0f) {
         return;
     }
 
@@ -1315,8 +1315,10 @@ static void CG_DrawCursorhint(const rectDef_t *rect, struct Font_s *font, float 
     }
     else if (cg->cursorHintIcon == 3)
     {
+        const char *str;
         GetKeyBindingLocalizedString("+activate", binding);
-        text = UI_ReplaceConversionString(UI_SafeTranslateString("PLATFORM_PICKUPHEALTH"), binding);
+        str = UI_SafeTranslateString("PLATFORM_PICKUPHEALTH");
+        text = UI_ReplaceConversionString(str, binding);
     }
     else
     {

@@ -70,7 +70,6 @@ extern void CalcScreenY(float *y, int align);
 extern FontHandle UI_GetFontHandle(int fontEnum, float scale);
 extern const char *SEH_SafeTranslateString(const char *str);
 extern char *va( const char *format, ... );
-extern void CL_DrawText(const char *text, int maxChars, struct Font_s *font, float x, float y, int horzAlign, int vertAlign, float xScale, float yScale, const float *color, int style);
 extern void Field_Draw(field_t *edit, int x, int y, int horzAlign, int vertAlign);
 extern void CL_LookupColor(unsigned char c, float *color);
 extern void SCR_DrawSmallStringExt(int x, int y, const char *str, const float *color);
@@ -88,6 +87,14 @@ extern void FS_FreeFileList(char **list, int count);
 extern int strnicmp(const char *s1, const char *s2, size_t n);
 extern void *__DefaultRuneLocale;
 extern refexport_t re;
+extern void CalcSplitScreenTextOffset(struct Font_s *font, float *y);
+extern void CalcScreenPlacementInl(float *x, float *y, float *w, float *h, int horzAlign, int vertAlign);
+static inline void CL_DrawText(const char *text, int maxChars, struct Font_s *font, float x, float y, int horzAlign, int vertAlign, float xScale, float yScale, const float *color, int style)
+{
+    CalcSplitScreenTextOffset(font, &y);
+    CalcScreenPlacementInl(&x, &y, &xScale, &yScale, horzAlign, vertAlign);
+    re.DrawText(text, maxChars, font, x, y, xScale, yScale, color, style);
+}
 extern clientStatic_t cls;
 
 static struct ConDrawInputGlob conDrawInputGlob;

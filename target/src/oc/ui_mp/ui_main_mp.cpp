@@ -3623,8 +3623,7 @@ static void UI_DisplayDownloadInfo(const char *downloadName, float centerPoint, 
                 Text_PaintCenter(centerPoint, yStart + 320.0f, font, scale, ltGrey, text);
             } else {
 
-                text = UI_SafeTranslateString("EXE_ESTIMATING");
-                Text_PaintCenter(centerPoint, yStart + 235.0f, font, scale, ltGrey, text);
+                Text_PaintCenter(centerPoint, yStart + 235.0f, font, scale, ltGrey, UI_SafeTranslateString("EXE_ESTIMATING"));
                 if (downloadSize)
                     text = va("(%s %s %s %s)", dlSizeBuf, UI_SafeTranslateString("EXE_OF"), totalSizeBuf, UI_SafeTranslateString("EXE_COPIED"));
                 else

@@ -48,24 +48,6 @@ void G_DebugBox( const float *origin, const float *mins, const float *maxs, floa
 	}
 }
 
-void G_DebugCircle( const float *center, float radius, const float *color, int depthTest, int onGround, int duration )
-{
-	vec3_t normal;
-	vec3_t viewOrigin;
-
-	if ( onGround )
-	{
-		VectorSet(normal, 0.0f, 0.0f, 1.0f);
-	}
-	else
-	{
-		VectorCopy(level.clients->ps.origin, viewOrigin);
-		viewOrigin[2] += level.clients->ps.viewHeightCurrent;
-		VectorSubtract(center, viewOrigin, normal);
-	}
-	G_DebugCircleEx(center, radius, normal, color, depthTest, duration);
-}
-
 void G_DebugCircleEx( const float *center, float radius, const float *dir, const float *color, int depthTest, int duration )
 {
 	vec3_t verts[16];

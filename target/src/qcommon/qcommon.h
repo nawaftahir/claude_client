@@ -648,7 +648,7 @@ XModel* CM_XModelPrecache(const char *name);
 #include <sys/time.h>
 #include <ctype.h>
 
-static __forceinline void Com_EndParseSessionInl( void )
+__forceinline void Com_EndParseSessionInl( void )
 {
 	ParseThreadInfo *parse;
 
