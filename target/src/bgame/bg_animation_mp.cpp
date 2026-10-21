@@ -233,16 +233,6 @@ static uint16_t* controller_names[] =
 	&scr_const.pelvis
 };
 
-static animStringItem_t animParseModesStr[] =
-{
-	{"defines", -1},
-	{"animations", -1},
-	{"canned_animations", -1},
-	{"statechanges", -1},
-	{"events", -1},
-
-	{NULL, -1},
-};
 
 
 
@@ -909,6 +899,250 @@ qboolean BG_ParseConditions( const char **text_pp, animScriptItem_t *scriptItem 
 
 	return qtrue;
 }
+static __forceinline int BG_StricmpSoundInl( const char *s0, const char *s1 )
+{
+	int c0;
+	int c1;
+	int n;
+
+	n = 0x7FFFFFFF;
+	do
+	{
+		c0 = *s0++;
+		c1 = *s1++;
+
+		if ( !n-- )
+		{
+			return 0;
+		}
+
+		if ( c0 != c1 )
+		{
+			if ( c0 >= 'a' && c0 <= 'z' )
+			{
+				c0 -= 'a' - 'A';
+			}
+
+			if ( c1 >= 'a' && c1 <= 'z' )
+			{
+				c1 -= 'a' - 'A';
+			}
+
+			if ( c0 != c1 )
+			{
+				return c0 < c1 ? -1 : 1;
+			}
+		}
+	}
+	while ( c0 );
+
+	return 0;
+}
+void BG_ParseCommands( const char **input, animScriptItem_t *scriptItem, animScriptData_t *scriptData )
+{
+	char    *token;
+	// TTimo gcc: might be used uninitialized
+	animScriptCommand_t *command = NULL;
+	int partIndex = 0;
+	int i;
+	qboolean bCommandFound;
+
+	while ( 1 )
+	{
+		// parse the body part
+		token = partIndex < 1 ? Com_Parse(input) : Com_ParseOnLine(input);
+		if ( !token || !*token )
+		{
+			break;
+		}
+		if ( !Q_stricmp( token, "}" ) )
+		{
+			// unget the bracket and get out of here
+			*input -= strlen( token );
+			break;
+		}
+
+		// new command?
+		if ( partIndex == 0 )
+		{
+			// have we exceeded the maximum number of commands?
+			if ( scriptItem->numCommands >= MAX_ANIMSCRIPT_ANIMCOMMANDS )
+			{
+				BG_AnimParseError( "BG_ParseCommands: exceeded maximum number of animations (%i)", MAX_ANIMSCRIPT_ANIMCOMMANDS );
+			}
+			command = &scriptItem->commands[scriptItem->numCommands++];
+			memset( command, 0, sizeof( command ) );
+		}
+
+		command->bodyPart[partIndex] = BG_IndexForString( token, animBodyPartsStr, qtrue );
+		if ( command->bodyPart[partIndex] > 0 )
+		{
+			// parse the animation
+			token = Com_ParseOnLine( input );
+			if ( !token || !token[0] )
+			{
+				BG_AnimParseError( "BG_ParseCommands: expected animation" );
+			}
+			command->animIndex[partIndex] = BG_AnimationIndexForString( token );
+			command->animDuration[partIndex] = scriptData->animations[command->animIndex[partIndex]].duration;
+			if ( !g_pLoadAnims )
+			{
+				// if this is a locomotion, set the movetype of the animation so we can reverse engineer the movetype from the animation, on the client
+				if ( parseMovetype != ANIM_MT_UNUSED && command->bodyPart[partIndex] != ANIM_BP_TORSO )
+				{
+					scriptData->animations[command->animIndex[partIndex]].movetype |= ( 1LL << parseMovetype );
+
+					// if this is a mantle event, then this is a mantle animation
+					if ( (parseMovetype == ANIM_MT_CLIMBUP || parseMovetype == ANIM_MT_CLIMBDOWN)
+					        && scriptData->animations[command->animIndex[partIndex]].moveSpeed != 0 )
+					{
+						scriptData->animations[command->animIndex[partIndex]].flags |= 2;
+					}
+
+					for ( i = 0; i < scriptItem->numConditions; i++ )
+					{
+						if ( scriptItem->conditions[i].index == ANIM_COND_STRAFING )
+						{
+							if ( scriptItem->conditions[i].value[0] == 1 )
+							{
+								scriptData->animations[command->animIndex[partIndex]].flags |= 0x10;
+							}
+							else if ( scriptItem->conditions[i].value[0] == 2 )
+							{
+								scriptData->animations[command->animIndex[partIndex]].flags |= 0x20;
+							}
+							break;
+						}
+					}
+				}
+
+				if ( parseEvent == ANIM_ET_FIREWEAPON )
+				{
+					scriptData->animations[command->animIndex[partIndex]].flags |= 8;
+					scriptData->animations[command->animIndex[partIndex]].initialLerp = 30;
+				}
+				else if ( parseEvent == ANIM_ET_DEATH )
+				{
+					scriptData->animations[command->animIndex[partIndex]].moveSpeed = 0;
+					scriptData->animations[command->animIndex[partIndex]].flags |= 0x40;
+				}
+				else if ( parseEvent == ANIM_ET_RELOAD )
+				{
+					scriptData->animations[command->animIndex[partIndex]].moveSpeed = 0;
+				}
+				else
+				{
+					if ( parseMovetype >= ANIM_MT_MANTLE_UP_57 && parseMovetype <= ANIM_MT_MANTLE_OVER_LOW )
+					{
+						scriptData->animations[command->animIndex[partIndex]].moveSpeed = 0;
+					}
+				}
+			}
+			do
+			{
+				// check for a duration for this animation instance
+				bCommandFound = qfalse;
+				token = Com_ParseOnLine( input );
+				if ( token && token[0] )
+				{
+					if ( !Q_stricmp( token, "duration" ) )
+					{
+						// read the duration
+						bCommandFound = qtrue;
+						token = Com_ParseOnLineInl( input );
+						if ( !token || !token[0] )
+						{
+							BG_AnimParseError( "BG_ParseCommands: expected duration value" );
+						}
+						command->animDuration[partIndex] = atoi( token );
+					}
+					else if ( !Q_stricmp( token, "turretanim" ) )
+					{
+						// read the turretanim
+						bCommandFound = qtrue;
+						if ( !g_pLoadAnims )
+						{
+							scriptData->animations[command->animIndex[partIndex]].flags |= 4;
+						}
+						if ( command->bodyPart[partIndex] != ANIM_BP_BOTH )
+						{
+							BG_AnimParseError("BG_ParseCommands: Turret animations can only be played on the 'both' body part");
+						}
+					}
+					else if ( !Q_stricmp( token, "blendtime" ) )
+					{
+						// read the blendtime
+						bCommandFound = qtrue;
+						token = Com_ParseOnLine( input );
+						if ( !token || !token[0] )
+						{
+							BG_AnimParseError("BG_ParseCommands: expected blendtime value");
+						}
+						if ( !g_pLoadAnims )
+						{
+							scriptData->animations[command->animIndex[partIndex]].initialLerp = atoi( token );
+						}
+					}
+					else
+					{
+						Com_UngetToken( );  // unget the token
+					}
+				}
+				else
+				{
+					Com_UngetToken( );
+				}
+			}
+			while ( bCommandFound );
+			if ( command->bodyPart[partIndex] != ANIM_BP_BOTH && partIndex++ < 1 )
+			{
+				continue;   // allow parsing of another bodypart
+			}
+		}
+		else
+		{
+			// unget the token
+			*input -= strlen( token );
+		}
+
+		// parse optional parameters (sounds, etc)
+		for ( ;; )
+		{
+			token = Com_ParseOnLine( input );
+			if ( !token || !token[0] )
+			{
+				break;
+			}
+
+			if ( !BG_StricmpSoundInl( token, "sound" ) )
+			{
+				token = Com_ParseOnLine( input );
+				if ( !token || !token[0] )
+				{
+					BG_AnimParseError( "BG_ParseCommands: expected sound" );
+				}
+				// NOTE: only sound script are supported at this stage
+				if ( strstr( token, ".wav" ) )
+				{
+					BG_AnimParseError( "BG_ParseCommands: wav files not supported, only sound scripts" );    // RF mod
+				}
+				// ydnar: this was crashing because soundIndex wasn't initialized
+				// FIXME: find the reason
+				// Gordon: hmmm, soundindex is setup on both client and server :/
+				//	cgs.animScriptData.soundIndex = CG_SoundScriptPrecache;
+				//	level.animScriptData.soundIndex = G_SoundIndex;
+				command->soundAlias = globalScriptData->soundAlias( token );
+			}
+			else
+			{
+				// unknown??
+				BG_AnimParseError( "BG_ParseCommands: unknown parameter '%s'", token );
+			}
+		}
+
+		partIndex = 0;
+	}
+}
 
 /*
 =================
@@ -916,6 +1150,17 @@ BG_AnimParseAnimScript
   Parse the animation script for this model, converting it into run-time structures
 =================
 */
+static animStringItem_t animParseModesStr[] =
+{
+	{"defines", -1},
+	{"animations", -1},
+	{"canned_animations", -1},
+	{"statechanges", -1},
+	{"events", -1},
+
+	{NULL, -1},
+};
+
 void BG_AnimParseAnimScript( animScriptData_t *scriptData, loadAnim_t *pLoadAnims, int *piNumAnims )
 {
 #define MAX_INDENT_LEVELS   3
@@ -2984,248 +3229,4 @@ void BG_LoadAnim()
 }
 
 // Retail inlines this compare only at the "sound" site
-static __forceinline int BG_StricmpSoundInl( const char *s0, const char *s1 )
-{
-	int c0;
-	int c1;
-	int n;
 
-	n = 0x7FFFFFFF;
-	do
-	{
-		c0 = *s0++;
-		c1 = *s1++;
-
-		if ( !n-- )
-		{
-			return 0;
-		}
-
-		if ( c0 != c1 )
-		{
-			if ( c0 >= 'a' && c0 <= 'z' )
-			{
-				c0 -= 'a' - 'A';
-			}
-
-			if ( c1 >= 'a' && c1 <= 'z' )
-			{
-				c1 -= 'a' - 'A';
-			}
-
-			if ( c0 != c1 )
-			{
-				return c0 < c1 ? -1 : 1;
-			}
-		}
-	}
-	while ( c0 );
-
-	return 0;
-}
-
-void BG_ParseCommands( const char **input, animScriptItem_t *scriptItem, animScriptData_t *scriptData )
-{
-	char    *token;
-	// TTimo gcc: might be used uninitialized
-	animScriptCommand_t *command = NULL;
-	int partIndex = 0;
-	int i;
-	qboolean bCommandFound;
-
-	while ( 1 )
-	{
-		// parse the body part
-		token = partIndex < 1 ? Com_Parse(input) : Com_ParseOnLine(input);
-		if ( !token || !*token )
-		{
-			break;
-		}
-		if ( !Q_stricmp( token, "}" ) )
-		{
-			// unget the bracket and get out of here
-			*input -= strlen( token );
-			break;
-		}
-
-		// new command?
-		if ( partIndex == 0 )
-		{
-			// have we exceeded the maximum number of commands?
-			if ( scriptItem->numCommands >= MAX_ANIMSCRIPT_ANIMCOMMANDS )
-			{
-				BG_AnimParseError( "BG_ParseCommands: exceeded maximum number of animations (%i)", MAX_ANIMSCRIPT_ANIMCOMMANDS );
-			}
-			command = &scriptItem->commands[scriptItem->numCommands++];
-			memset( command, 0, sizeof( command ) );
-		}
-
-		command->bodyPart[partIndex] = BG_IndexForString( token, animBodyPartsStr, qtrue );
-		if ( command->bodyPart[partIndex] > 0 )
-		{
-			// parse the animation
-			token = Com_ParseOnLine( input );
-			if ( !token || !token[0] )
-			{
-				BG_AnimParseError( "BG_ParseCommands: expected animation" );
-			}
-			command->animIndex[partIndex] = BG_AnimationIndexForString( token );
-			command->animDuration[partIndex] = scriptData->animations[command->animIndex[partIndex]].duration;
-			if ( !g_pLoadAnims )
-			{
-				// if this is a locomotion, set the movetype of the animation so we can reverse engineer the movetype from the animation, on the client
-				if ( parseMovetype != ANIM_MT_UNUSED && command->bodyPart[partIndex] != ANIM_BP_TORSO )
-				{
-					scriptData->animations[command->animIndex[partIndex]].movetype |= ( 1LL << parseMovetype );
-
-					// if this is a mantle event, then this is a mantle animation
-					if ( (parseMovetype == ANIM_MT_CLIMBUP || parseMovetype == ANIM_MT_CLIMBDOWN)
-					        && scriptData->animations[command->animIndex[partIndex]].moveSpeed != 0 )
-					{
-						scriptData->animations[command->animIndex[partIndex]].flags |= 2;
-					}
-
-					for ( i = 0; i < scriptItem->numConditions; i++ )
-					{
-						if ( scriptItem->conditions[i].index == ANIM_COND_STRAFING )
-						{
-							if ( scriptItem->conditions[i].value[0] == 1 )
-							{
-								scriptData->animations[command->animIndex[partIndex]].flags |= 0x10;
-							}
-							else if ( scriptItem->conditions[i].value[0] == 2 )
-							{
-								scriptData->animations[command->animIndex[partIndex]].flags |= 0x20;
-							}
-							break;
-						}
-					}
-				}
-
-				if ( parseEvent == ANIM_ET_FIREWEAPON )
-				{
-					scriptData->animations[command->animIndex[partIndex]].flags |= 8;
-					scriptData->animations[command->animIndex[partIndex]].initialLerp = 30;
-				}
-				else if ( parseEvent == ANIM_ET_DEATH )
-				{
-					scriptData->animations[command->animIndex[partIndex]].moveSpeed = 0;
-					scriptData->animations[command->animIndex[partIndex]].flags |= 0x40;
-				}
-				else if ( parseEvent == ANIM_ET_RELOAD )
-				{
-					scriptData->animations[command->animIndex[partIndex]].moveSpeed = 0;
-				}
-				else
-				{
-					if ( parseMovetype >= ANIM_MT_MANTLE_UP_57 && parseMovetype <= ANIM_MT_MANTLE_OVER_LOW )
-					{
-						scriptData->animations[command->animIndex[partIndex]].moveSpeed = 0;
-					}
-				}
-			}
-			do
-			{
-				// check for a duration for this animation instance
-				bCommandFound = qfalse;
-				token = Com_ParseOnLine( input );
-				if ( token && token[0] )
-				{
-					if ( !Q_stricmp( token, "duration" ) )
-					{
-						// read the duration
-						bCommandFound = qtrue;
-						token = Com_ParseOnLineInl( input );
-						if ( !token || !token[0] )
-						{
-							BG_AnimParseError( "BG_ParseCommands: expected duration value" );
-						}
-						command->animDuration[partIndex] = atoi( token );
-					}
-					else if ( !Q_stricmp( token, "turretanim" ) )
-					{
-						// read the turretanim
-						bCommandFound = qtrue;
-						if ( !g_pLoadAnims )
-						{
-							scriptData->animations[command->animIndex[partIndex]].flags |= 4;
-						}
-						if ( command->bodyPart[partIndex] != ANIM_BP_BOTH )
-						{
-							BG_AnimParseError("BG_ParseCommands: Turret animations can only be played on the 'both' body part");
-						}
-					}
-					else if ( !Q_stricmp( token, "blendtime" ) )
-					{
-						// read the blendtime
-						bCommandFound = qtrue;
-						token = Com_ParseOnLine( input );
-						if ( !token || !token[0] )
-						{
-							BG_AnimParseError("BG_ParseCommands: expected blendtime value");
-						}
-						if ( !g_pLoadAnims )
-						{
-							scriptData->animations[command->animIndex[partIndex]].initialLerp = atoi( token );
-						}
-					}
-					else
-					{
-						Com_UngetToken( );  // unget the token
-					}
-				}
-				else
-				{
-					Com_UngetToken( );
-				}
-			}
-			while ( bCommandFound );
-			if ( command->bodyPart[partIndex] != ANIM_BP_BOTH && partIndex++ < 1 )
-			{
-				continue;   // allow parsing of another bodypart
-			}
-		}
-		else
-		{
-			// unget the token
-			*input -= strlen( token );
-		}
-
-		// parse optional parameters (sounds, etc)
-		for ( ;; )
-		{
-			token = Com_ParseOnLine( input );
-			if ( !token || !token[0] )
-			{
-				break;
-			}
-
-			if ( !BG_StricmpSoundInl( token, "sound" ) )
-			{
-				token = Com_ParseOnLine( input );
-				if ( !token || !token[0] )
-				{
-					BG_AnimParseError( "BG_ParseCommands: expected sound" );
-				}
-				// NOTE: only sound script are supported at this stage
-				if ( strstr( token, ".wav" ) )
-				{
-					BG_AnimParseError( "BG_ParseCommands: wav files not supported, only sound scripts" );    // RF mod
-				}
-				// ydnar: this was crashing because soundIndex wasn't initialized
-				// FIXME: find the reason
-				// Gordon: hmmm, soundindex is setup on both client and server :/
-				//	cgs.animScriptData.soundIndex = CG_SoundScriptPrecache;
-				//	level.animScriptData.soundIndex = G_SoundIndex;
-				command->soundAlias = globalScriptData->soundAlias( token );
-			}
-			else
-			{
-				// unknown??
-				BG_AnimParseError( "BG_ParseCommands: unknown parameter '%s'", token );
-			}
-		}
-
-		partIndex = 0;
-	}
-}

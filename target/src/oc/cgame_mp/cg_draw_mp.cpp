@@ -1638,6 +1638,7 @@ void CG_CheckHudHealthDisplay(void)
             && (float)(cg->time - cg->healthFadeTime) > hud_fade_healthbar->current.value * 1000.0f)
         {
             menu = Menus_FindByName(&cgDC, "Health");
+            const char *mpName = "Health_mp";
             if (menu)
                 Window_RemoveDynamicFlags((Window *)menu, 4);
             cg->healthFadeTime = 0;
@@ -1656,6 +1657,7 @@ void CG_CheckHudAmmoDisplay(void)
         && (float)(cg->time - cg->ammoFadeTime) > hud_fade_ammodisplay->current.value * 1000.0f)
     {
         menu = Menus_FindByName(&cgDC, "weaponinfo");
+            const char *mpName = "weaponinfo_mp";
         if (menu)
             Window_RemoveDynamicFlags((Window *)menu, 4);
         cg->ammoFadeTime = 0;
@@ -1690,6 +1692,7 @@ void CG_CheckHudStanceDisplay(void)
         && (float)(cg->time - cg->stanceFadeTime) > hud_fade_stance->current.value * 1000.0f)
     {
         menu = Menus_FindByName(&cgDC, "stance");
+            const char *mpName = "stance_mp";
         if (menu)
             Window_RemoveDynamicFlags((Window *)menu, 4);
         cg->stanceFadeTime = 0;
@@ -1705,6 +1708,7 @@ void CG_CheckHudOffHandDisplay(void)
         && (float)(cg->time - cg->offhandFadeTime) > hud_fade_offhand->current.value * 1000.0f)
     {
         menu = Menus_FindByName(&cgDC, "offhandinfo");
+            const char *mpName = "offhandinfo_mp";
         if (menu)
             Window_RemoveDynamicFlags((Window *)menu, 4);
         cg->offhandFadeTime = 0;

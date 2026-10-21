@@ -117,6 +117,11 @@ int Record_QueueAudioDataForEncoding(audioSample_t *sample)
         return 0;
     }
 
+    if (sample->sampleOffset < 0) {
+        Com_Printf("Invalid sample offset of %i\n", sample->sampleOffset);
+        return 0;
+    }
+
     while (g.frameSize <= sample->lengthInSamples + samples_in_partial_audio_buffer - sample->sampleOffset) {
         partialSamples = 0;
         if (samples_in_partial_audio_buffer) {

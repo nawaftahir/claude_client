@@ -514,4 +514,4 @@ static const game_client_field_t g_client_fields[] =
 
 /* retail 0x561aa0: 16 B of dead data before the console strings (two pointers, owner unknown); zeros keep the size */
 extern const char * const g_unk_after_fields[4];
-const char * const g_unk_after_fields[4] = { "EXE_ALL", "", 0, 0 };
+const char * const g_unk_after_fields[4] = { 0, 0, 0, 0 };

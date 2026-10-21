@@ -2,6 +2,16 @@
 #include "g_shared.h"
 #include "../script/script_public.h"
 
+/*
+==============
+Scr_ReadOnlyField
+==============
+*/
+void Scr_ReadOnlyField( gentity_t *self, int offset )
+{
+	Scr_Error("Tried to set a read only entity field");
+}
+
 static const game_entity_field_t g_entity_fields[] =
 {
 	{ "classname", FOFS( classname ), F_STRING, Scr_ReadOnlyField },
@@ -150,15 +160,6 @@ qboolean G_SpawnVector( const char *key, const char *defaultString, float *out )
 	return present;
 }
 
-/*
-==============
-Scr_ReadOnlyField
-==============
-*/
-void Scr_ReadOnlyField( gentity_t *self, int offset )
-{
-	Scr_Error("Tried to set a read only entity field");
-}
 
 /*
 ==============

@@ -5,22 +5,6 @@
 #define Y 1
 #define Z 2
 
-static const scr_method_t scriptent_methods[] =
-{
-	{ "moveto", ScriptEntCmd_MoveTo, qfalse, },
-	{ "movex", ScriptEntCmd_MoveX, qfalse, },
-	{ "movey", ScriptEntCmd_MoveY, qfalse, },
-	{ "movez", ScriptEntCmd_MoveZ, qfalse, },
-	{ "movegravity", ScriptEntCmd_GravityMove, qfalse, },
-	{ "rotateto", ScriptEntCmd_RotateTo, qfalse, },
-	{ "rotatepitch", ScriptEntCmd_RotatePitch, qfalse, },
-	{ "rotateyaw", ScriptEntCmd_RotateYaw, qfalse, },
-	{ "rotateroll", ScriptEntCmd_RotateRoll, qfalse, },
-	{ "rotatevelocity", ScriptEntCmd_RotateVelocity, qfalse, },
-	{ "solid", ScriptEntCmd_Solid, qfalse, },
-	{ "notsolid", ScriptEntCmd_NotSolid, qfalse, },
-};
-
 void ScriptEntCmd_NotSolid( scr_entref_t entref );
 void (*ScriptEnt_GetMethod( const char **pName ))( scr_entref_t );
 
@@ -911,6 +895,22 @@ void ScriptEntCmd_NotSolid( scr_entref_t entref )
 ScriptEnt_GetMethod
 ===============
 */
+static const scr_method_t scriptent_methods[] =
+{
+	{ "moveto", ScriptEntCmd_MoveTo, qfalse, },
+	{ "movex", ScriptEntCmd_MoveX, qfalse, },
+	{ "movey", ScriptEntCmd_MoveY, qfalse, },
+	{ "movez", ScriptEntCmd_MoveZ, qfalse, },
+	{ "movegravity", ScriptEntCmd_GravityMove, qfalse, },
+	{ "rotateto", ScriptEntCmd_RotateTo, qfalse, },
+	{ "rotatepitch", ScriptEntCmd_RotatePitch, qfalse, },
+	{ "rotateyaw", ScriptEntCmd_RotateYaw, qfalse, },
+	{ "rotateroll", ScriptEntCmd_RotateRoll, qfalse, },
+	{ "rotatevelocity", ScriptEntCmd_RotateVelocity, qfalse, },
+	{ "solid", ScriptEntCmd_Solid, qfalse, },
+	{ "notsolid", ScriptEntCmd_NotSolid, qfalse, },
+};
+
 void (*ScriptEnt_GetMethod( const char **pName ))( scr_entref_t )
 {
 	int i;

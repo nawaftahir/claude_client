@@ -60,18 +60,18 @@ int DSound_UpdateSample( dsound_sample_t *sample, char *data, unsigned int data_
 	{
 		switch ( hr )
 		{
-		case DSERR_BUFFERLOST:
-			Com_Printf("DSERR_BUFFERLOST\n");
-			break;
-		case DSERR_PRIOLEVELNEEDED:
-			Com_Printf("DSERR_PRIOLEVELNEEDED\n");
-			break;
 		case DSERR_INVALIDPARAM:
 			Com_Printf("DSERR_INVALIDPARAM\n");
 			Com_Printf(" Offset : %i, length: %i\n", sample->currentOffset, bytesToUpload);
 			break;
 		case DSERR_INVALIDCALL:
 			Com_Printf("DSERR_INVALIDCALL\n");
+			break;
+		case DSERR_BUFFERLOST:
+			Com_Printf("DSERR_BUFFERLOST\n");
+			break;
+		case DSERR_PRIOLEVELNEEDED:
+			Com_Printf("DSERR_PRIOLEVELNEEDED\n");
 			break;
 		}
 		Com_Printf("Error trying to lock sample!\n");

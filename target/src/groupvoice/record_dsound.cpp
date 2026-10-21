@@ -162,20 +162,20 @@ HRESULT DSOUNDRecord_Start( dsound_sample_t *pRecSample )
 		{
 			switch ( hr )
 			{
+			case DSERR_INVALIDPARAM:
+				Com_Printf("INVALIDPARAM\n");
+				break;
 			case DSERR_BADFORMAT:
 				Com_Printf("BADFORMAT\n");
 				break;
 			case DSERR_GENERIC:
 				Com_Printf("GENERIC\n");
 				break;
-			case DSERR_OUTOFMEMORY:
-				Com_Printf("OUTOFMEMORY \n");
-				break;
-			case DSERR_INVALIDPARAM:
-				Com_Printf("INVALIDPARAM\n");
-				break;
 			case DSERR_NODRIVER:
 				Com_Printf("NODRIVER \n");
+				break;
+			case DSERR_OUTOFMEMORY:
+				Com_Printf("OUTOFMEMORY \n");
 				break;
 			case DSERR_UNINITIALIZED:
 				Com_Printf("UNINITIALIZED \n");

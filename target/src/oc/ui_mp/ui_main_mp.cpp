@@ -2328,6 +2328,32 @@ static void __attribute_regparm__(0) UI_BuildServerDisplayList(qboolean force)
     sharedUiInfo.serverStatus.refreshtime = uiInfo->uiDC.realTime;
 }
 
+static serverStatusDvar_t serverStatusDvars[23] = {
+    { "sv_hostname", "@EXE_SV_INFO_SERVERNAME", (sscType_t)0x0 },
+    { "address", "@EXE_SV_INFO_ADDRESS", (sscType_t)0x0 },
+    { "pswrd", "@EXE_SV_INFO_PASSWORD", (sscType_t)0x1 },
+    { "gamename", "@EXE_SV_INFO_GAMENAME", (sscType_t)0x0 },
+    { "g_gametype", "@EXE_SV_INFO_GAMETYPE", (sscType_t)0x0 },
+    { "sv_pure", "@EXE_SV_INFO_PURE", (sscType_t)0x1 },
+    { "mapname", "@EXE_SV_INFO_MAP", (sscType_t)0x0 },
+    { "shortversion", "@EXE_SV_INFO_VERSION", (sscType_t)0x0 },
+    { "protocol", "@EXE_SV_INFO_PROTOCOL", (sscType_t)0x0 },
+    { "sv_maxping", "@EXE_SV_INFO_MAXPING", (sscType_t)0x0 },
+    { "sv_minping", "@EXE_SV_INFO_MINPING", (sscType_t)0x0 },
+    { "sv_maxrate", "@EXE_SV_INFO_MAXRATE", (sscType_t)0x0 },
+    { "sv_floodprotect", "@EXE_SV_INFO_FLOODPROTECT", (sscType_t)0x1 },
+    { "sv_allowanonymous", "@EXE_SV_INFO_ALLOWANON", (sscType_t)0x0 },
+    { "sv_maxclients", "@EXE_SV_INFO_MAXCLIENTS", (sscType_t)0x0 },
+    { "sv_privateclients", "@EXE_SV_INFO_PRIVATECLIENTS", (sscType_t)0x0 },
+    { "scr_friendlyFire", "@EXE_SV_INFO_FRIENDLY_FIRE", (sscType_t)0x0 },
+    { "fs_game", "@EXE_SV_INFO_MOD", (sscType_t)0x0 },
+    { "mod", "@MENU_MODS", (sscType_t)0x1 },
+    { "scr_killcam", "@EXE_SV_INFO_KILLCAM", (sscType_t)0x1 },
+    { "g_antilag", "@EXE_SV_INFO_ANTILAG", (sscType_t)0x1 },
+    { "sv_voice", "@EXE_SV_INFO_VOICE", (sscType_t)0x1 },
+    { 0, 0, (sscType_t)0x0 }
+};
+
 static void UI_AddServerStatusDvarRows(serverStatusInfo_t *info)
 {
     int i, j, index;
@@ -2921,6 +2947,92 @@ static void UI_GetGameTypesList(void)
 
     if (!sharedUiInfo.numGameTypes)
         Com_Error(ERR_FATAL, "\x15No game type scripts found in maps/mp/gametypes folder");
+}
+void UI_Init(void)
+{
+    int width, height;
+    MenuList *menuList;
+    int netGameTypeIdx;
+    float mPitch;
+
+    *(int *)uiInfo = 0;
+    g_ingameMenusLoaded = 0;
+
+    UI_LoadSoundAliases();
+
+    UI_RegisterDvars();
+
+    legacyHacksData.ui_newScriptMenu[0] = 0;
+    legacyHacksData.ui_newScriptMenuIndex = -1;
+    legacyHacksData.ui_scriptMenu[0] = 0;
+    legacyHacksData.ui_scriptMenuIndex = -1;
+    legacyHacksData.ui_scriptMenuAllowResponse = 1;
+    legacyHacksData.ui_waitingScriptMenu[0] = 0;
+    legacyHacksData.ui_waitingScriptMenuIndex = -1;
+    legacyHacksData.ui_waitingScriptMenuNoMouse = 0;
+
+    String_Init();
+    Menu_Setup(&uiInfo->uiDC);
+
+    CL_GetScreenDimensions(&uiInfo->uiDC.screenWidth, &uiInfo->uiDC.screenHeight, (float *)((int *)&uiInfo->uiDC.screenAspect));
+
+    width = uiInfo->uiDC.screenWidth;
+    height = uiInfo->uiDC.screenHeight;
+
+    if (width * 480 > height * 640) {
+
+        uiInfo->uiDC.bias = ((float)width + (float)height * -1.3333333730697632f) * 0.5f;
+    } else {
+        *(int *)uiInfo = 0;
+    }
+
+    Sys_Milliseconds();
+    UI_GetGameTypesList();
+
+    ui_netGameType = (const dvar_t *)(Dvar_RegisterInt("ui_netGametype", 0, 0, sharedUiInfo.numGameTypes - 1, 0x1001));
+
+    UI_LoadArenas();
+
+    menuList = UI_LoadMenus("ui_mp/menus.txt", 3);
+    UI_AddMenuList(&uiInfo->uiDC, menuList);
+
+    if (g_mapname[0] != '\0') {
+        UI_MapLoadInfo(va("maps/mp/%s.csv", g_mapname));
+    }
+
+    UI_AssetCache();
+    Menus_CloseAll(&uiInfo->uiDC);
+
+    sharedUiInfo.serverHardwareIconList[0] = CL_RegisterMaterialNoMip("server_hardware_unknown", 3);
+    sharedUiInfo.serverHardwareIconList[1] = CL_RegisterMaterialNoMip("server_hardware_linux_dedicated", 3);
+    sharedUiInfo.serverHardwareIconList[2] = CL_RegisterMaterialNoMip("server_hardware_win_dedicated", 3);
+    sharedUiInfo.serverHardwareIconList[3] = CL_RegisterMaterialNoMip("server_hardware_mac_dedicated", 3);
+    sharedUiInfo.serverHardwareIconList[5] = CL_RegisterMaterialNoMip("server_hardware_win_listen", 3);
+    sharedUiInfo.serverHardwareIconList[6] = CL_RegisterMaterialNoMip("server_hardware_mac_listen", 3);
+
+    LAN_LoadCachedServers();
+
+    if (sharedUiInfo.serverStatus.sortKey != 9) {
+        sharedUiInfo.serverStatus.sortKey = 9;
+        qsort(sharedUiInfo.serverStatus.displayServers, sharedUiInfo.serverStatus.numDisplayServers, 4, UI_ServersQsortCompare);
+    }
+
+    mPitch = Dvar_GetFloat("m_pitch");
+    Dvar_SetBoolByName("ui_mousePitch", mPitch < 0.0f ? 1 : 0);
+
+    sharedUiInfo.serverStatus.currentServerCinematic = -1;
+    sharedUiInfo.previewMovie = -1;
+
+    netGameTypeIdx = (ui_netGameType)->current.integer;
+    Dvar_SetString((dvar_t *)ui_netGameTypeName, sharedUiInfo.gameTypes[netGameTypeIdx].gameType);
+
+    Dvar_RegisterBool("ui_multiplayer", 1, 0x1040);
+
+#    if COD2_FEATURE_GAMEPAD
+
+    UI_ConsoleMode_Init(uiInfo);
+    UI_Gamepad_RegisterMenus(uiInfo);
+#    endif
 }
 
 void UI_Pause(qboolean b)
@@ -3627,116 +3739,4 @@ void UI_CloseFocusedMenu(void)
     }
 }
 
-void UI_Init(void)
-{
-    int width, height;
-    MenuList *menuList;
-    int netGameTypeIdx;
-    float mPitch;
-
-    *(int *)uiInfo = 0;
-    g_ingameMenusLoaded = 0;
-
-    UI_LoadSoundAliases();
-
-    UI_RegisterDvars();
-
-    legacyHacksData.ui_newScriptMenu[0] = 0;
-    legacyHacksData.ui_newScriptMenuIndex = -1;
-    legacyHacksData.ui_scriptMenu[0] = 0;
-    legacyHacksData.ui_scriptMenuIndex = -1;
-    legacyHacksData.ui_scriptMenuAllowResponse = 1;
-    legacyHacksData.ui_waitingScriptMenu[0] = 0;
-    legacyHacksData.ui_waitingScriptMenuIndex = -1;
-    legacyHacksData.ui_waitingScriptMenuNoMouse = 0;
-
-    String_Init();
-    Menu_Setup(&uiInfo->uiDC);
-
-    CL_GetScreenDimensions(&uiInfo->uiDC.screenWidth, &uiInfo->uiDC.screenHeight, (float *)((int *)&uiInfo->uiDC.screenAspect));
-
-    width = uiInfo->uiDC.screenWidth;
-    height = uiInfo->uiDC.screenHeight;
-
-    if (width * 480 > height * 640) {
-
-        uiInfo->uiDC.bias = ((float)width + (float)height * -1.3333333730697632f) * 0.5f;
-    } else {
-        *(int *)uiInfo = 0;
-    }
-
-    Sys_Milliseconds();
-    UI_GetGameTypesList();
-
-    ui_netGameType = (const dvar_t *)(Dvar_RegisterInt("ui_netGametype", 0, 0, sharedUiInfo.numGameTypes - 1, 0x1001));
-
-    UI_LoadArenas();
-
-    menuList = UI_LoadMenus("ui_mp/menus.txt", 3);
-    UI_AddMenuList(&uiInfo->uiDC, menuList);
-
-    if (g_mapname[0] != '\0') {
-        UI_MapLoadInfo(va("maps/mp/%s.csv", g_mapname));
-    }
-
-    UI_AssetCache();
-    Menus_CloseAll(&uiInfo->uiDC);
-
-    sharedUiInfo.serverHardwareIconList[0] = CL_RegisterMaterialNoMip("server_hardware_unknown", 3);
-    sharedUiInfo.serverHardwareIconList[1] = CL_RegisterMaterialNoMip("server_hardware_linux_dedicated", 3);
-    sharedUiInfo.serverHardwareIconList[2] = CL_RegisterMaterialNoMip("server_hardware_win_dedicated", 3);
-    sharedUiInfo.serverHardwareIconList[3] = CL_RegisterMaterialNoMip("server_hardware_mac_dedicated", 3);
-    sharedUiInfo.serverHardwareIconList[5] = CL_RegisterMaterialNoMip("server_hardware_win_listen", 3);
-    sharedUiInfo.serverHardwareIconList[6] = CL_RegisterMaterialNoMip("server_hardware_mac_listen", 3);
-
-    LAN_LoadCachedServers();
-
-    if (sharedUiInfo.serverStatus.sortKey != 9) {
-        sharedUiInfo.serverStatus.sortKey = 9;
-        qsort(sharedUiInfo.serverStatus.displayServers, sharedUiInfo.serverStatus.numDisplayServers, 4, UI_ServersQsortCompare);
-    }
-
-    mPitch = Dvar_GetFloat("m_pitch");
-    Dvar_SetBoolByName("ui_mousePitch", mPitch < 0.0f ? 1 : 0);
-
-    sharedUiInfo.serverStatus.currentServerCinematic = -1;
-    sharedUiInfo.previewMovie = -1;
-
-    netGameTypeIdx = (ui_netGameType)->current.integer;
-    Dvar_SetString((dvar_t *)ui_netGameTypeName, sharedUiInfo.gameTypes[netGameTypeIdx].gameType);
-
-    Dvar_RegisterBool("ui_multiplayer", 1, 0x1040);
-
-#    if COD2_FEATURE_GAMEPAD
-
-    UI_ConsoleMode_Init(uiInfo);
-    UI_Gamepad_RegisterMenus(uiInfo);
-#    endif
-}
-
-static serverStatusDvar_t serverStatusDvars[23] = {
-    { "sv_hostname", "@EXE_SV_INFO_SERVERNAME", (sscType_t)0x0 },
-    { "address", "@EXE_SV_INFO_ADDRESS", (sscType_t)0x0 },
-    { "pswrd", "@EXE_SV_INFO_PASSWORD", (sscType_t)0x1 },
-    { "gamename", "@EXE_SV_INFO_GAMENAME", (sscType_t)0x0 },
-    { "g_gametype", "@EXE_SV_INFO_GAMETYPE", (sscType_t)0x0 },
-    { "sv_pure", "@EXE_SV_INFO_PURE", (sscType_t)0x1 },
-    { "mapname", "@EXE_SV_INFO_MAP", (sscType_t)0x0 },
-    { "shortversion", "@EXE_SV_INFO_VERSION", (sscType_t)0x0 },
-    { "protocol", "@EXE_SV_INFO_PROTOCOL", (sscType_t)0x0 },
-    { "sv_maxping", "@EXE_SV_INFO_MAXPING", (sscType_t)0x0 },
-    { "sv_minping", "@EXE_SV_INFO_MINPING", (sscType_t)0x0 },
-    { "sv_maxrate", "@EXE_SV_INFO_MAXRATE", (sscType_t)0x0 },
-    { "sv_floodprotect", "@EXE_SV_INFO_FLOODPROTECT", (sscType_t)0x1 },
-    { "sv_allowanonymous", "@EXE_SV_INFO_ALLOWANON", (sscType_t)0x0 },
-    { "sv_maxclients", "@EXE_SV_INFO_MAXCLIENTS", (sscType_t)0x0 },
-    { "sv_privateclients", "@EXE_SV_INFO_PRIVATECLIENTS", (sscType_t)0x0 },
-    { "scr_friendlyFire", "@EXE_SV_INFO_FRIENDLY_FIRE", (sscType_t)0x0 },
-    { "fs_game", "@EXE_SV_INFO_MOD", (sscType_t)0x0 },
-    { "mod", "@MENU_MODS", (sscType_t)0x1 },
-    { "scr_killcam", "@EXE_SV_INFO_KILLCAM", (sscType_t)0x1 },
-    { "g_antilag", "@EXE_SV_INFO_ANTILAG", (sscType_t)0x1 },
-    { "sv_voice", "@EXE_SV_INFO_VOICE", (sscType_t)0x1 },
-    { 0, 0, (sscType_t)0x0 }
-};
 

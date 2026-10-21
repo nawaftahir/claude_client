@@ -1345,6 +1345,7 @@ draw_icon:
 
 void CG_DrawHoldBreathHint(const rectDef_t *rect, struct Font_s *font, float fontscale, int textStyle)
 {
+    static const float color[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
     playerState_t *ps;
     WeaponDef *weaponDef;
     char binding[256];
@@ -1396,6 +1397,7 @@ void CG_DrawHoldBreathHint(const rectDef_t *rect, struct Font_s *font, float fon
 
 void CG_DrawMantleHint(const rectDef_t *rect, struct Font_s *font, float fontscale, int textStyle)
 {
+    static const float color[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
     char binding[0x100];
     const char *text;
     float length;
