@@ -102,7 +102,7 @@ extern unsigned int Scr_GetNumScriptThreads(void);
 extern int Scr_GetStringUsage(void);
 extern int Sys_Milliseconds(void);
 extern int CL_GetCurrentCmdNumber(void);
-extern int CL_GetKeyCatchers(void);
+extern int CL_GetKeyCatchers_411460(void);
 extern qboolean CL_GetUserCmd(int cmdNumber, usercmd_t *ucmd);
 extern Bool CL_IsRenderingSplitScreen(void);
 extern void CL_SetUserCmdAimValues(vec_t *kickAngles);
