@@ -21,3 +21,5 @@ CG_FireWeapon 0x4d0eb0: 2 lines = lea ebp,[ebx+0xf0] one push early (prologue sc
 _yylex
 ?Netchan_Process@@YAHPAUnetchan_t@@PAUmsg_t@@@Z
 ?Com_Meminfo_f@@YAXXZ
+# 10-22 count tie: lost at k=16,17 in both cnt_sweep series with no own-code change (lab/w4/cnt_sweep.tsv)
+?CG_DrawPlayerStance@@YAXPBUrectDef_s@@PAMPAUFont_s@@MH@Z

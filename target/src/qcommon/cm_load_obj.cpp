@@ -358,7 +358,7 @@ static float CMod_GetPartitionScore(uint16_t *leafBrushes, int numLeafBrushes, i
 		}
 	}
 
-	minCount = I_min(leftBrushCount, rightBrushCount);
+	minCount = (rightBrushCount - leftBrushCount) >= 0 ? leftBrushCount : rightBrushCount;
 
 	*dist = (min + max) * 0.5f;
 
