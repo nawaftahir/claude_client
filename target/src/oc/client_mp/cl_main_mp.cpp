@@ -447,16 +447,9 @@ void CL_BeginDownload(const char *localName, const char *remoteName);
 void CL_NextDownload(void);
 void CL_InitDownloads(void);
 static void CL_SendPureChecksums(void);
-
-void CL_SwitchToLocalClient(int clientNum)
-{
-
-}
-
-Bool CL_GetLocalClientActive(int clientNum)
-{
-    return 1;
-}
+inline void VectorCopy(const vec3_t a, vec3_t b);
+inline void VectorCopy4(const vec4_t a, vec4_t b);
+static __forceinline void Dvar_SetStringInl(dvar_t *dvar, const char *value);
 
 extern int Cmd_Argc(void);
 extern const char *Cmd_Argv( int arg );
@@ -618,9 +611,29 @@ void CL_SetFPUControl_40b460(void)
     _controlfp(_MCW_EM, _MCW_EM);
 }
 
+void CL_SwitchToLocalClient(int clientNum)
+{
+}
+
+// retail 0x40b4a0, empty and unreferenced; name unknown
+void CL_Stub_40b4a0(void)
+{
+}
+
+Bool CL_GetLocalClientActive(int clientNum)
+{
+    return 1;
+}
+
 int CL_GetLocalClientActiveCount(void)
 {
     return 1;
+}
+
+// retail 0x40b4d0, unreferenced; name unknown
+int CL_Zero_40b4d0(void)
+{
+    return 0;
 }
 
 // retail 0x40b4e0, unreferenced; name unknown
@@ -685,6 +698,16 @@ Bool CL_AnyLocalClientChallenging(void)
             return 1;
     }
     return 0;
+}
+Bool CL_IsRenderingSplitScreen(void)
+{
+    return 0;
+}
+
+// retail 0x40b610, unreferenced; name unknown
+Bool CL_True_40b610(void)
+{
+    return 1;
 }
 
 // retail 0x40b620, unreferenced; name unknown
@@ -1013,6 +1036,40 @@ void CL_ShutdownDemo(void)
     conn->demofile = 0;
     conn->demoplaying = 0;
     conn->demorecording = 0;
+}
+void CL_MapLoading(const char *mapname)
+{
+    if (!((LegacyHacks *)::legacyHacks)->cl_running)
+        return;
+    g_waitingForServer = 0;
+    Con_Close();
+    clients->keyCatchers = 0;
+    clients->displayHUDWithKeycatchUI = 0;
+
+    if (::clc.state >= CA_CONNECTED && I_stricmp(cls.servername, (const char *)"localhost") == 0) {
+        memset(cls.updateInfoString, 0, sizeof(cls.updateInfoString));
+        ::clc.state = CA_CONNECTED;
+        memset(::clc.serverMessage, 0, sizeof(::clc.serverMessage));
+        memset(&clients->gameState, 0, sizeof(clients->gameState));
+        ::clc.lastPacketSentTime = -9999;
+        I_strncpyz(((LegacyHacks *)::legacyHacks)->cl_serverloadmap, mapname, 0x40);
+        ((LegacyHacks *)::legacyHacks)->cl_serverloadwaiting = 0;
+    } else {
+        Dvar_SetStringInl((dvar_t *)nextmap, "");
+        I_strncpyz(cls.servername, (const char *)"localhost", sizeof(cls.servername));
+        CL_Disconnect();
+        UI_CloseAllInl();
+
+        ::clc.state = CA_CHALLENGING;
+        ::clc.connectTime = -3000;
+        ::clc.qport = ::qport;
+        NET_StringToAdr(cls.servername, &::clc.serverAddress);
+        CL_CheckForResend();
+        I_strncpyz(((LegacyHacks *)::legacyHacks)->cl_serverloadmap, mapname, 0x40);
+        ((LegacyHacks *)::legacyHacks)->cl_serverloadwaiting = 0;
+    }
+
+    SND_FadeAllSounds(0.0f, 0.0f);
 }
 
 int CL_GetSkelTimeStamp(int localClientNum)
@@ -1664,6 +1721,10 @@ void CL_VoicePacket(msg_t *msg)
         Voice_IncomingVoiceData(voicePacket.talker, voicePacket.data, voicePacket.dataSize);
     }
 }
+Bool CL_IsPlayerTalking(int clientIndex)
+{
+    return Voice_IsClientTalking(clientIndex);
+}
 
 Bool CL_ConnectionlessPacket(netadr_t from, msg_t *msg, int time)
 {
@@ -1925,18 +1986,6 @@ void CL_UpdateInGameState(void)
     }
 }
 
-int Client_SendVoiceData(int bytes, char *enc_buffer)
-{
-    if (bytes > 0) {
-        memcpy(clients[0].voicePackets[clients[0].voicePacketCount].data, enc_buffer, bytes);
-        clients[0].voicePackets[clients[0].voicePacketCount].dataSize = bytes;
-        clients[0].voicePacketCount++;
-        CL_VoiceTransmit();
-        return bytes;
-    }
-
-    return bytes;
-}
 
 
 void CL_VoiceTransmit(void)
@@ -1948,6 +1997,18 @@ void CL_VoiceTransmit(void)
             clients[0].voicePacketLastTransmit = clients[0].serverTime;
         }
     }
+}
+int Client_SendVoiceData(int bytes, char *enc_buffer)
+{
+    if (bytes > 0) {
+        memcpy(clients[0].voicePackets[clients[0].voicePacketCount].data, enc_buffer, bytes);
+        clients[0].voicePackets[clients[0].voicePacketCount].dataSize = bytes;
+        clients[0].voicePacketCount++;
+        CL_VoiceTransmit();
+        return bytes;
+    }
+
+    return bytes;
 }
 
 bool Voice_SendVoiceData(void)
@@ -2021,6 +2082,10 @@ void CL_Frame(void)
     CL_UpdateInGameState();
     CL_SetCGameTime();
     CL_SendCmd();
+}
+bool CL_IsLocalClientInGame(void)
+{
+    return clc.state == CA_ACTIVE;
 }
 
 void CL_SetRecommended_f(void)
@@ -2928,6 +2993,10 @@ qboolean CL_UpdateDirtyPings_f(int source)
 
     return status;
 }
+void CL_ShowIP_f(void)
+{
+    Sys_ShowIP();
+}
 
 const char *CL_GetServerIPAddress(void)
 {
@@ -2957,6 +3026,65 @@ void CL_SetupForNewServerMap(const char *pszMapName, const char *pszGametype)
 
     UI_SetMap(pszMapName, pszGametype);
     SCR_UpdateScreenInternal();
+}
+void CL_AddDebugString(const vec_t *xyz, const vec_t *color, float scale, const char *text, qboolean fromServer)
+{
+    trDebugString_t *string;
+
+    if (!cls.rendererStarted)
+        return;
+
+    cls.debug.maxStrings = 0x100;
+    if (cls.debug.numStrings + 1 > cls.debug.maxStrings)
+        return;
+
+    if (!cls.debug.strings) {
+        cls.debug.strings = (trDebugString_t *)(Z_MallocInternal(0x8000));
+        cls.debug.stringFromServer = (byte *)(Z_MallocInternal(cls.debug.maxStrings));
+        cls.debug.numStrings = 0;
+    }
+
+    string = &cls.debug.strings[cls.debug.numStrings];
+    VectorCopy(xyz, string->xyz);
+    VectorCopy4(color, string->color);
+    string->scale = scale;
+    strncpy(string->text, text, 0x5f);
+    string->text[95] = '\0';
+
+    cls.debug.stringFromServer[cls.debug.numStrings] = (byte)fromServer;
+    cls.debug.numStrings++;
+}
+void CL_AddDebugLine(const vec_t *start, const vec_t *end, const vec_t *color, qboolean depthTest, int duration, qboolean fromServer)
+{
+    int lineIndex;
+    trDebugLine_t *line;
+
+    if (!cls.rendererStarted)
+        return;
+
+    cls.debug.maxLines = 0x1000;
+    lineIndex = cls.debug.numLines;
+
+    if (lineIndex + 1 > cls.debug.maxLines)
+        return;
+
+    if (!cls.debug.lines) {
+        cls.debug.lines = (trDebugLine_t *)(Z_MallocInternal(0x2c000));
+        cls.debug.lineFromServer = (byte *)(Z_MallocInternal(cls.debug.maxLines));
+        cls.debug.lineDuration = (int *)(Z_MallocInternal(cls.debug.maxLines * sizeof(*cls.debug.lineDuration)));
+        lineIndex = 0;
+        cls.debug.numLines = lineIndex;
+    }
+
+    line = &cls.debug.lines[lineIndex];
+    VectorCopy(start, line->start);
+    VectorCopy(end, line->end);
+    VectorCopy4(color, line->color);
+    line->depthTest = depthTest;
+
+    cls.debug.lineFromServer[cls.debug.numLines] = (byte)fromServer;
+    cls.debug.lineDuration[cls.debug.numLines] = duration;
+    cls.debug.numLines++;
 }
 
 void CL_FlushDebugData(qboolean fromServer)
@@ -3073,9 +3201,21 @@ void CL_DrawTextPhysical(const char *text, int maxChars, FontHandle font, float 
 {
     re.DrawText(text, maxChars, font, x, y, xScale, yScale, color, style);
 }
+void CL_DrawText(const char *text, int maxChars, FontHandle font, float x, float y, int horzAlign, int vertAlign, float xScale, float yScale, const vec_t *color, int style)
+{
+    CalcSplitScreenTextOffset(font, &y);
+    CalcScreenPlacement(&x, &y, &xScale, &yScale, horzAlign, vertAlign);
+    re.DrawText(text, maxChars, font, x, y, xScale, yScale, color, style);
+}
 
 void CL_DrawTextPhysicalWithCursor(const char *text, int maxChars, FontHandle font, float x, float y, float xScale, float yScale, const vec_t *color, int style, int cursorPos, int cursor)
 {
+    re.DrawTextWithCursor(text, maxChars, font, x, y, xScale, yScale, color, style, cursorPos, cursor);
+}
+void CL_DrawTextWithCursor(const char *text, int maxChars, FontHandle font, float x, float y, int horzAlign, int vertAlign, float xScale, float yScale, const vec_t *color, int style, int cursorPos, char cursor)
+{
+    CalcSplitScreenTextOffset(font, &y);
+    CalcScreenPlacement(&x, &y, &xScale, &yScale, horzAlign, vertAlign);
     re.DrawTextWithCursor(text, maxChars, font, x, y, xScale, yScale, color, style, cursorPos, cursor);
 }
 
@@ -3101,27 +3241,6 @@ MaterialHandle CL_RegisterMaterial_411490(const char *name, int baseImageFlags, 
     return re.RegisterMaterial(name, baseImageFlags, imageTrack);
 }
 
-Bool CL_IsRenderingSplitScreen(void)
-{
-    return 0;
-}
-
-// retail 0x40b620, unreferenced; CoD4 name (SUPPORTED)
-void CL_SetLocalClientConnectionState(connstate_t connstate)
-{
-    ::clc.state = connstate;
-}
-
-// retail 0x40b630, unreferenced; CoD4 name (SUPPORTED)
-connstate_t CL_GetLocalClientConnectionState(void)
-{
-    return ::clc.state;
-}
-
-Bool CL_IsPlayerTalking(int clientIndex)
-{
-    return Voice_IsClientTalking(clientIndex);
-}
 
 #ifdef COD2_GFX_DLL
 
@@ -3155,100 +3274,10 @@ refexport_t *CL_LoadRendererDll(int apiVersion, refimport_t *ri_in)
 // Engine functions handed to the renderer through refimport_t.
 enum XAssetType;
 
-void CL_ShowIP_f(void)
-{
-    Sys_ShowIP();
-}
 
-void CL_DrawText(const char *text, int maxChars, FontHandle font, float x, float y, int horzAlign, int vertAlign, float xScale, float yScale, const vec_t *color, int style)
-{
-    CalcSplitScreenTextOffset(font, &y);
-    CalcScreenPlacement(&x, &y, &xScale, &yScale, horzAlign, vertAlign);
-    re.DrawText(text, maxChars, font, x, y, xScale, yScale, color, style);
-}
 
-void CL_DrawTextWithCursor(const char *text, int maxChars, FontHandle font, float x, float y, int horzAlign, int vertAlign, float xScale, float yScale, const vec_t *color, int style, int cursorPos, char cursor)
-{
-    CalcSplitScreenTextOffset(font, &y);
-    CalcScreenPlacement(&x, &y, &xScale, &yScale, horzAlign, vertAlign);
-    re.DrawTextWithCursor(text, maxChars, font, x, y, xScale, yScale, color, style, cursorPos, cursor);
-}
 
-inline void VectorCopy(const vec3_t a, vec3_t b)
-{
-	b[0] = a[0];
-	b[1] = a[1];
-	b[2] = a[2];
-}
 
-inline void VectorCopy4(const vec4_t a, vec4_t b)
-{
-	b[0] = a[0];
-	b[1] = a[1];
-	b[2] = a[2];
-	b[3] = a[3];
-}
-
-void CL_AddDebugLine(const vec_t *start, const vec_t *end, const vec_t *color, qboolean depthTest, int duration, qboolean fromServer)
-{
-    int lineIndex;
-    trDebugLine_t *line;
-
-    if (!cls.rendererStarted)
-        return;
-
-    cls.debug.maxLines = 0x1000;
-    lineIndex = cls.debug.numLines;
-
-    if (lineIndex + 1 > cls.debug.maxLines)
-        return;
-
-    if (!cls.debug.lines) {
-        cls.debug.lines = (trDebugLine_t *)(Z_MallocInternal(0x2c000));
-        cls.debug.lineFromServer = (byte *)(Z_MallocInternal(cls.debug.maxLines));
-        cls.debug.lineDuration = (int *)(Z_MallocInternal(cls.debug.maxLines * sizeof(*cls.debug.lineDuration)));
-        lineIndex = 0;
-        cls.debug.numLines = lineIndex;
-    }
-
-    line = &cls.debug.lines[lineIndex];
-    VectorCopy(start, line->start);
-    VectorCopy(end, line->end);
-    VectorCopy4(color, line->color);
-    line->depthTest = depthTest;
-
-    cls.debug.lineFromServer[cls.debug.numLines] = (byte)fromServer;
-    cls.debug.lineDuration[cls.debug.numLines] = duration;
-    cls.debug.numLines++;
-}
-
-void CL_AddDebugString(const vec_t *xyz, const vec_t *color, float scale, const char *text, qboolean fromServer)
-{
-    trDebugString_t *string;
-
-    if (!cls.rendererStarted)
-        return;
-
-    cls.debug.maxStrings = 0x100;
-    if (cls.debug.numStrings + 1 > cls.debug.maxStrings)
-        return;
-
-    if (!cls.debug.strings) {
-        cls.debug.strings = (trDebugString_t *)(Z_MallocInternal(0x8000));
-        cls.debug.stringFromServer = (byte *)(Z_MallocInternal(cls.debug.maxStrings));
-        cls.debug.numStrings = 0;
-    }
-
-    string = &cls.debug.strings[cls.debug.numStrings];
-    VectorCopy(xyz, string->xyz);
-    VectorCopy4(color, string->color);
-    string->scale = scale;
-    strncpy(string->text, text, 0x5f);
-    string->text[95] = '\0';
-
-    cls.debug.stringFromServer[cls.debug.numStrings] = (byte)fromServer;
-    cls.debug.numStrings++;
-}
 
 #if COD2_IS_PATCH_13
 
@@ -3301,12 +3330,9 @@ static void CL_BuildMd5StrFromCDKey(char *md5Str)
 
 
 // retail 0x40e820, unreferenced; Kisak cl_main_mp name
-bool CL_IsLocalClientInGame(void)
-{
-    return clc.state == CA_ACTIVE;
-}
 
 // retail inlines Dvar_SetString (dvar.cpp) here
+
 static __forceinline void Dvar_SetStringFromSourceInl(dvar_t *dvar, const char *string, DvarSetSource source)
 {
     DvarValue newValue;
@@ -3326,37 +3352,17 @@ static __forceinline void Dvar_SetStringInl(dvar_t *dvar, const char *value)
     Dvar_SetStringFromSourceInl(dvar, value, DVAR_SOURCE_INTERNAL);
 }
 
-void CL_MapLoading(const char *mapname)
+inline void VectorCopy(const vec3_t a, vec3_t b)
 {
-    if (!((LegacyHacks *)::legacyHacks)->cl_running)
-        return;
-    g_waitingForServer = 0;
-    Con_Close();
-    clients->keyCatchers = 0;
-    clients->displayHUDWithKeycatchUI = 0;
+	b[0] = a[0];
+	b[1] = a[1];
+	b[2] = a[2];
+}
 
-    if (::clc.state >= CA_CONNECTED && I_stricmp(cls.servername, (const char *)"localhost") == 0) {
-        memset(cls.updateInfoString, 0, sizeof(cls.updateInfoString));
-        ::clc.state = CA_CONNECTED;
-        memset(::clc.serverMessage, 0, sizeof(::clc.serverMessage));
-        memset(&clients->gameState, 0, sizeof(clients->gameState));
-        ::clc.lastPacketSentTime = -9999;
-        I_strncpyz(((LegacyHacks *)::legacyHacks)->cl_serverloadmap, mapname, 0x40);
-        ((LegacyHacks *)::legacyHacks)->cl_serverloadwaiting = 0;
-    } else {
-        Dvar_SetStringInl((dvar_t *)nextmap, "");
-        I_strncpyz(cls.servername, (const char *)"localhost", sizeof(cls.servername));
-        CL_Disconnect();
-        UI_CloseAllInl();
-
-        ::clc.state = CA_CHALLENGING;
-        ::clc.connectTime = -3000;
-        ::clc.qport = ::qport;
-        NET_StringToAdr(cls.servername, &::clc.serverAddress);
-        CL_CheckForResend();
-        I_strncpyz(((LegacyHacks *)::legacyHacks)->cl_serverloadmap, mapname, 0x40);
-        ((LegacyHacks *)::legacyHacks)->cl_serverloadwaiting = 0;
-    }
-
-    SND_FadeAllSounds(0.0f, 0.0f);
+inline void VectorCopy4(const vec4_t a, vec4_t b)
+{
+	b[0] = a[0];
+	b[1] = a[1];
+	b[2] = a[2];
+	b[3] = a[3];
 }
