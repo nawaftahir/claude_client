@@ -3160,6 +3160,13 @@ void CL_ShowIP_f(void)
     Sys_ShowIP();
 }
 
+void CL_DrawText(const char *text, int maxChars, FontHandle font, float x, float y, int horzAlign, int vertAlign, float xScale, float yScale, const vec_t *color, int style)
+{
+    CalcSplitScreenTextOffset(font, &y);
+    CalcScreenPlacement(&x, &y, &xScale, &yScale, horzAlign, vertAlign);
+    re.DrawText(text, maxChars, font, x, y, xScale, yScale, color, style);
+}
+
 void CL_DrawTextWithCursor(const char *text, int maxChars, FontHandle font, float x, float y, int horzAlign, int vertAlign, float xScale, float yScale, const vec_t *color, int style, int cursorPos, char cursor)
 {
     CalcSplitScreenTextOffset(font, &y);

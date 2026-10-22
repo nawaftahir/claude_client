@@ -181,6 +181,10 @@ inline float I_fsel(const float x, const float y, const float z)
     return x >= 0.0f ? y : z;
 }
 
+inline float I_sqrt(const float value)
+{
+    return sqrt(value);
+}
 inline float I_fmax(const float x, const float y)
 {
     return I_fsel(x - y, x, y);
@@ -203,6 +207,11 @@ inline float I_fmin(const float x, const float y)
 
 
 
+
+// retail 0x406be0, empty and unreferenced; name unknown
+void Con_Stub_406be0(void)
+{
+}
 
 void IN_MLookDown(void)
 {
@@ -909,7 +918,7 @@ void CL_MouseMove(usercmd_t *cmd)
     if (frame_msec <= 0)
         return;
 
-    rate = sqrt(mx * mx + my * my) / (float)frame_msec;
+    rate = I_sqrt(mx * mx + my * my) / (float)frame_msec;
     accelSensitivity = rate * cl_mouseAccel->current.value + cl_sensitivity->current.value;
     accelSensitivity *= clients->cgameSensitivity;
 

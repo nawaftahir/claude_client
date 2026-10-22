@@ -26,6 +26,49 @@ float g_console_char_height = 16.0f;
 extern float ceilf(float x);
 extern float floorf(float x);
 
+inline float I_fsel(const float x, const float y, const float z)
+{
+    return x >= 0.0f ? y : z;
+}
+inline float I_fclamp(const float val, const float min, const float max)
+{
+    return I_fsel(min - val, min, I_fsel(val - max, max, val));
+}
+
+
+// unreferenced com_math.h helper copies retail keeps in this file (names unknown, retail addresses)
+int CL_I_sel_4035c0(const int x, const int y, const int z)
+{
+    return x >= 0 ? y : z;
+}
+
+int CL_I_min_4035d0(const int x, const int y)
+{
+    return CL_I_sel_4035c0(y - x, x, y);
+}
+
+void CL_Vector2Set_403650(vec2_t v, const float x, const float y)
+{
+    v[0] = x;
+    v[1] = y;
+}
+
+void CL_VectorScale4_403660(const vec4_t v, const float s, vec4_t o)
+{
+    o[0] = s * v[0];
+    o[1] = s * v[1];
+    o[2] = s * v[2];
+    o[3] = s * v[3];
+}
+
+int CL_I_strlen_403690(const char *s)
+{
+    const char *p = s;
+    while (*p++)
+        ;
+    return p - s - 1;
+}
+
 
 extern void Field_Clear(field_t *field);
 extern bool Dvar_GetBool(const char *dvarName);
@@ -89,12 +132,7 @@ extern void *__DefaultRuneLocale;
 extern refexport_t re;
 extern void CalcSplitScreenTextOffset(struct Font_s *font, float *y);
 extern void CalcScreenPlacementInl(float *x, float *y, float *w, float *h, int horzAlign, int vertAlign);
-static inline void CL_DrawText(const char *text, int maxChars, struct Font_s *font, float x, float y, int horzAlign, int vertAlign, float xScale, float yScale, const float *color, int style)
-{
-    CalcSplitScreenTextOffset(font, &y);
-    CalcScreenPlacementInl(&x, &y, &xScale, &yScale, horzAlign, vertAlign);
-    re.DrawText(text, maxChars, font, x, y, xScale, yScale, color, style);
-}
+extern void CL_DrawText(const char *text, int maxChars, struct Font_s *font, float x, float y, int horzAlign, int vertAlign, float xScale, float yScale, const float *color, int style);
 extern clientStatic_t cls;
 
 static struct ConDrawInputGlob conDrawInputGlob;
@@ -443,10 +481,10 @@ void Con_CheckResize(void)
     CalcScreenX(&con.screenMax[0], 3);
     CalcScreenY(&con.screenMax[1], 3);
 
-    con.screenMin[0] = floor(con.screenMin[0]);
-    con.screenMin[1] = floor(con.screenMin[1]);
-    con.screenMax[0] = floor(con.screenMax[0]);
-    con.screenMax[1] = floor(con.screenMax[1]);
+    con.screenMin[0] = floorf(con.screenMin[0]);
+    con.screenMin[1] = floorf(con.screenMin[1]);
+    con.screenMax[0] = floorf(con.screenMax[0]);
+    con.screenMax[1] = floorf(con.screenMax[1]);
 
     width = (int)(con.screenMax[0] - con.screenMin[0]);
     if (width < 640)
@@ -545,6 +583,12 @@ void Con_Init(void)
     CL_RegisterHudMsgIconMaterial("killiconheadshot");
     CL_RegisterHudMsgIconMaterial("killiconmelee");
     CL_RegisterHudMsgIconMaterial("killiconsuicide");
+}
+
+// retail 0x4040a0, unreferenced tail-call thunk; name unknown
+void Con_Shutdown_4040a0(void)
+{
+    Con_Shutdown();
 }
 
 static void Con_CopyCurrentConsoleLineText(short *text)
@@ -819,14 +863,6 @@ static void CL_AddConsoleChar(int ch, unsigned char colorIdx)
     con.lineOffset++;
 }
 
-inline float I_fsel(const float x, const float y, const float z)
-{
-    return x >= 0.0f ? y : z;
-}
-inline float I_fclamp(const float val, const float min, const float max)
-{
-    return I_fsel(min - val, min, I_fsel(val - max, max, val));
-}
 static void CL_AddConsoleInfoColor(int iFirstInfo, const vec_t *vColor)
 {
     con.textBuffer[(con.currentLine % con.totallines) * con.linewidth + con.lineOffset] = (iFirstInfo << 8) | (int)I_fclamp((float)(int)(vColor[0] * 255.0f), 0.0f, 255.0f);
@@ -1049,6 +1085,25 @@ static void ConDrawInput_IncrMatchCounter(const char *str)
     if (str[conDrawInputGlob.inputTextLen] == '\0')
         conDrawInputGlob.hasExactMatch = 1;
 }
+static void ConDrawInput_DvarMatch(const char *str)
+{
+    clientStatic_t *cls_;
+    const char *value;
+
+    if (I_strnicmp(str, conDrawInputGlob.inputText, conDrawInputGlob.inputTextLen) != 0)
+        return;
+
+    cls_ = &cls;
+
+    re.DrawText(str, 0x18, cls_->consoleFont, conDrawInputGlob.x, conDrawInputGlob.y + conDrawInputGlob.fontHeight, 1.0f, 1.0f, con_inputDvarMatchColor, 0);
+    conDrawInputGlob.x += 200.0f;
+
+    value = Dvar_GetVariantString(str);
+    re.DrawText(value, 0x28, cls_->consoleFont, conDrawInputGlob.x, conDrawInputGlob.y + conDrawInputGlob.fontHeight, 1.0f, 1.0f, con_inputDvarValueColor, 0);
+
+    conDrawInputGlob.y += conDrawInputGlob.fontHeight;
+    conDrawInputGlob.x = conDrawInputGlob.leftX;
+}
 
 static int ConDrawInput_CompareStrings(const void *e0, const void *e1)
 {
@@ -1165,25 +1220,6 @@ static void ConDrawInput_DetailedDvarMatch(const char *str)
         ConDrawInput_AutoCompleteArg(dvar->domain.enumeration.strings, dvar->domain.enumeration.stringCount);
 }
 
-static void ConDrawInput_DvarMatch(const char *str)
-{
-    clientStatic_t *cls_;
-    const char *value;
-
-    if (I_strnicmp(str, conDrawInputGlob.inputText, conDrawInputGlob.inputTextLen) != 0)
-        return;
-
-    cls_ = &cls;
-
-    re.DrawText(str, 0x18, cls_->consoleFont, conDrawInputGlob.x, conDrawInputGlob.y + conDrawInputGlob.fontHeight, 1.0f, 1.0f, con_inputDvarMatchColor, 0);
-    conDrawInputGlob.x += 200.0f;
-
-    value = Dvar_GetVariantString(str);
-    re.DrawText(value, 0x28, cls_->consoleFont, conDrawInputGlob.x, conDrawInputGlob.y + conDrawInputGlob.fontHeight, 1.0f, 1.0f, con_inputDvarValueColor, 0);
-
-    conDrawInputGlob.y += conDrawInputGlob.fontHeight;
-    conDrawInputGlob.x = conDrawInputGlob.leftX;
-}
 
 static void ConDrawInput_DetailedCmdMatch(const char *str)
 {
@@ -1483,10 +1519,17 @@ void Con_DrawSay(int y)
     x = (int)hudSayPosition->current.vector[0];
 
     fontHeight = re.TextHeight(font);
-    CL_DrawText(string, 0x7fffffff, font, (float)x,
-                (float)y + (float)fontHeight * normalizedScale,
-                1, 1, normalizedScale, normalizedScale,
-                (const float *)((void *)&colorWhite), 3);
+    {
+        float textX, textScaleX, textScaleY;
+        float textY = (float)y + (float)fontHeight * normalizedScale;
+
+        CalcSplitScreenTextOffset(font, &textY);
+        textX = (float)x;
+        textScaleX = normalizedScale;
+        textScaleY = normalizedScale;
+        CalcScreenPlacementInl(&textX, &textY, &textScaleX, &textScaleY, 1, 1);
+        re.DrawText(string, 0x7fffffff, font, textX, textY, textScaleX, textScaleY, (const float *)((void *)&colorWhite), 3);
+    }
 
     x += (int)((float)re.TextWidth(string, 0, font) * normalizedScale);
     Field_Draw((field_t *)chatField, x, y, 1, 1);
@@ -1712,6 +1755,3 @@ clientConnection_t * const clc = &clientConnections[0];
 static const vec4_t con_inputDvarInfoColor = { 0.8f, 0.8f, 1.0f, 1.0f };
 
 // retail 0x406be0, empty and unreferenced; name unknown
-void Con_Stub_406be0(void)
-{
-}
