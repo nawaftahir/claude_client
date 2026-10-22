@@ -9,7 +9,7 @@
 int I_strlen(const char *s);
 
 int com_fileAccessed = 0;
-static int fs_loadStack;
+int fs_loadStack;
 char fs_gamedir[MAX_OSPATH];
 
 dvar_t *fs_debug;
@@ -1500,7 +1500,7 @@ void FS_ResetFiles()
 	fs_loadStack = 0;
 }
 
-void FS_FreeFile(void* buffer)
+__declspec(noinline) void FS_FreeFile(void* buffer)
 {
 	FS_CheckFileSystemStarted();
 	--fs_loadStack;

@@ -235,7 +235,7 @@ void CM_SaveLump( int lumpType, const void *data, int len, int *checksum )
 	{
 		ofs = FS_ReadFile(cm.name, &buf);
 		*checksum = Com_BlockChecksum(buf, ofs);
-		FS_FreeFile(buf);
+		FS_FREE_FILE_INLINE(buf);
 	}
 }
 

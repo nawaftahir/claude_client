@@ -468,7 +468,7 @@ XAnimParts *XAnimLoadFile(const char *name, void *(*Alloc)(int))
 			}
 		}
 		XAnimLoadNotifyInfo(name, &pos, parts, Alloc);
-		FS_FreeFile(buf);
+		FS_FREE_FILE_INLINE(buf);
 		return parts;
 	}
 }

@@ -238,6 +238,14 @@ extern int fs_fakeChkSum;
 
 void FS_BuildOSPath( const char *base, const char *game, const char *qpath, char *ospath );
 void FS_CheckFileSystemStarted( void );
+extern int fs_loadStack;
+// FS_FreeFile as retail inlines it at a few sites
+#define FS_FREE_FILE_INLINE(buffer) \
+	{ \
+		FS_CheckFileSystemStarted(); \
+		--fs_loadStack; \
+		Hunk_FreeTempMemory(buffer); \
+	}
 void FS_CopyFile( char *fromOSPath, char *toOSPath );
 int FS_CreatePath( char *OSPath );
 extern "C" size_t FS_FileRead( void *ptr, size_t size, size_t nmemb, FILE *stream );

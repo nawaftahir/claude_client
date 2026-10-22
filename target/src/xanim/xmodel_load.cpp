@@ -458,7 +458,7 @@ XModel *XModelLoadFile(const char *name, void *(*Alloc)(int), void *(*AllocColl)
 	}
 
 	model->boneInfo = boneInfo;
-	FS_FreeFile(buf);
+	FS_FREE_FILE_INLINE(buf);
 	VectorCopy(config.mins, model->mins);
 	VectorCopy(config.maxs, model->maxs);
 	model->collLod = config.collLod;
