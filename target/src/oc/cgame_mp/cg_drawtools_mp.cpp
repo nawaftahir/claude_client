@@ -274,10 +274,6 @@ int CG_DrawDevString(float x, float y, const char *s, const vec_t *color, int al
     }
     return height;
 }
-int CG_DrawBigDevStringColor(float x, float y, const char *s, const vec_t *color, int align)
-{
-    return CG_DrawDevString(x, y, s, color, align, cgs->media.bigDevFont, 0);
-}
 int CG_DrawSmallDevString(float x, float y, const char *s, float alpha, int align)
 {
     vec4_t c;
@@ -287,6 +283,10 @@ int CG_DrawSmallDevString(float x, float y, const char *s, float alpha, int alig
     c[3] = alpha;
 
     return CG_DrawDevString(x, y, s, c, align, cgs->media.smallDevFont, 0);
+}
+int CG_DrawBigDevStringColor(float x, float y, const char *s, const vec_t *color, int align)
+{
+    return CG_DrawDevString(x, y, s, color, align, cgs->media.bigDevFont, 0);
 }
 // Original name unknown.
 byte CG_IsFullViewport(void)
