@@ -190,7 +190,7 @@ extern void CL_InitInput(void);
 extern void CL_ShutdownInput(void);
 extern void CL_RconInit(void);
 extern void CL_ClearMutedList(void);
-extern void CL_SetADS(int);
+extern void IN_LeaveADS(void);
 extern void CL_SetCGameTime(void);
 extern qboolean CG_IsConsoleCommandName(const char *cmd);
 extern void CL_SendCmd(void);
@@ -600,7 +600,7 @@ extern void CalcScreenPlacement(float *x, float *y, float *xScale, float *yScale
 extern void Com_ClientDObjClearAllSkel(void);
 extern void CL_ClearMutedList(void);
 extern void Cbuf_Execute(void);
-extern void CL_SetADS(int ads);
+extern void IN_LeaveADS(void);
 extern LegacyHacks *legacyHacks;
 
 // retail 0x40b460, unreferenced; name unknown
@@ -2683,7 +2683,7 @@ void CL_Init(void)
     Cbuf_Execute();
 
     *(int *)((byte *)::legacyHacks + 4) = 1;
-    CL_SetADS(0);
+    IN_LeaveADS();
 
     Com_Printf("----- Client Initialization Complete -----\n");
 }

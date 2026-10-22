@@ -248,7 +248,7 @@ extern dvar_t *Dvar_RegisterFloat(const char *dvarName, float value, float min, 
 extern dvar_t *Dvar_RegisterEnum(const char *dvarName, const char **valueList, int defaultIndex, unsigned short flags);
 extern dvar_t *Dvar_RegisterColor(const char *dvarName, float r, float g, float b, float a, unsigned short flags);
 extern dvar_t *Dvar_RegisterVec2(const char *dvarName, float x, float y, float min, float max, unsigned short flags);
-extern void CL_SetADS(int ads);
+extern void IN_LeaveADS(void);
 extern void CG_OffhandRegisterDvars(void);
 extern void BG_RegisterDvars(void);
 extern void CG_ParseServerinfo(void);
@@ -694,7 +694,7 @@ static void CG_RegisterDvars(void)
     cg_weaponrightbone = Dvar_RegisterString("cg_weaponrightbone", "tag_weapon_right", 0x1000);
     ((cgs_t *)cgs)->localServer = com_sv_running->current.enabled;
     ((LegacyHacks *)::legacyHacks)->cl_stance = 0;
-    CL_SetADS(0);
+    IN_LeaveADS();
     (*(unsigned char *)&((cg_t *)cg)->objectiveText[0]) = 0;
     CG_OffhandRegisterDvars();
     BG_RegisterDvars();
@@ -1441,7 +1441,7 @@ void CG_Init(int serverMessageNum, int serverCommandSequence, int clientNum)
         g_ambientStarted = 1;
     }
 
-    CL_SetADS(0);
+    IN_LeaveADS();
     CG_InitVote();
     bgs = 0;
 #    undef cgBase

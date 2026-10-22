@@ -1292,12 +1292,6 @@ debug_print:
     }
 }
 
-void CL_SetADS(int ads)
-{
-    clientActive_t *cl = CL_LOCAL;
-    cl->usingAds = (unsigned char)ads;
-}
-
 void CL_FirstSnapshot(void)
 {
     clientActive_t *cl = CL_LOCAL;
@@ -1431,6 +1425,13 @@ void CL_SetCGameTime(void)
         if (clc.state != CA_ACTIVE)
             return;
     }
+}
+
+// retail 0x403170, no callers
+void CL_SetADS(int ads)
+{
+    clientActive_t *cl = CL_LOCAL;
+    cl->usingAds = (unsigned char)ads;
 }
 
 void CL_DrawString(int x, int y, const char *pszString, qboolean bShadow, int iCharHeight)

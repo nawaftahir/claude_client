@@ -73,7 +73,7 @@ extern const char *SEH_LocalizeTextMessage(const char *msg, const char *context,
 extern const char *CG_Argv(int arg);
 extern int BG_GetWeaponSlotForName(const char *pszSlotName);
 extern void CG_MenuShowNotify(int menuToShow);
-extern void CL_SetADS(int ads);
+extern void IN_LeaveADS(void);
 extern int atoi(const char *nptr);
 extern int BG_GetWeaponIndexForName( const char *name, int (*regWeap)(int) );
 extern qboolean CG_DObjGetWorldTagPos(const centity_t *cent, struct DObj_s *obj, unsigned int tagName, vec_t *pos);
@@ -2229,7 +2229,7 @@ void CG_SelectWeaponIndex(int weaponIndex)
     CG_MenuShowNotify(1);
 
     if (!keepAds)
-        CL_SetADS(0);
+        IN_LeaveADS();
 }
 
 

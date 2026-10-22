@@ -47,7 +47,7 @@ extern void CL_DeathMessagePrint(const char *attackerName, const float *attacker
                                  const char *iconShader, float iconWidth, float iconHeight,
                                  const float *iconColor, bool iconHorzFlip);
 extern void CG_DrawScoreboard_GetTeamColor(int team, vec_t *color);
-extern void CL_SetADS(int val);
+extern void IN_LeaveADS(void);
 extern void CG_CalcEntityLerpPositions(centity_t *cent);
 extern void CG_CheckOpenWaitingScriptMenu(void);
 extern void ByteToDir(const int b, vec3_t dir);
@@ -778,7 +778,7 @@ void CG_EntityEvent(centity_t *cent, int event)
             if (es->number != *(int *)(snap + SNAP_PS_CLIENTNUM))
                 break;
 
-            CL_SetADS(0);
+            IN_LeaveADS();
             break;
         }
 

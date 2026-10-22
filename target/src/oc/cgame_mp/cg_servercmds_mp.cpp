@@ -53,7 +53,7 @@ extern void FX_FreeActive(void);
 extern void SND_StopSounds(snd_stopsounds_arg_t mode);
 extern void CG_StartAmbient(void);
 extern void Dvar_SetBool(dvar_t *dvar, bool value);
-extern void CL_SetADS(int value);
+extern void IN_LeaveADS(void);
 extern void CL_CloseAllMenus(void);
 extern void CG_ScoresUp_f(void);
 extern void CL_SyncTimes(void);
@@ -496,7 +496,7 @@ void CG_MapRestart(qboolean savepersist)
     cgui = CGUI_PTR;
     *(int *)(cgui + 8) = 0;
 
-    CL_SetADS(0);
+    IN_LeaveADS();
 
     if (!savepersist) {
         cgui = CGUI_PTR;
