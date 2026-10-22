@@ -1,0 +1,75 @@
+name: client-gate
+on:
+  push:
+    branches: [wip-ci, master]
+  workflow_dispatch:
+permissions:
+  contents: read
+  packages: read
+env:
+  IMAGE: ghcr.io/${{ github.repository_owner }}/cod2-client-ci:1
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: target/build/obj
+          # exact-commit cache only: a fallback restore lands objects newer than the checked-out sources, so make skips changed files
+          key: obj-${{ github.sha }}
+      - name: Build
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+          docker pull -q "$IMAGE"
+          pip install -q pefile capstone
+          # private image holds the compiler, d3d9.lib, dsound.lib and the retail anchor (never in git)
+          mkdir -p target/build/lib
+          docker run --rm -v "$PWD/target:/w" -w /w "$IMAGE" sh -c \
+            'cp /opt/ci/anchor/CoD2MP_s.exe build/anchor.exe && cp /opt/ci/lib/d3d9.lib build/lib/ && cp /opt/ci/lib/dsound.lib . && chmod -R a+rw build'
+          # icon comes from the retail exe (host step, as in the Makefile)
+          (cd target && python3 ../rsrc.py build/anchor.exe build/cod2mp.ico)
+          docker run --rm -v "$PWD/target:/w" -w /w "$IMAGE" sh -c \
+            'make -j$(nproc) -k IN_IMAGE=1 build/CoD2MP_s.exe; s=$?; chmod -R a+rw build; exit $s'
+          if grep -m5 "LNK2001\|LNK2019" target/build/link.log; then echo "unresolved externals"; exit 1; fi
+      - name: Referee + ratchet
+        run: |
+          cd target
+          python3 ../cmp.py build/CoD2MP_s.exe build/CoD2MP_s.map build/anchor.exe build/exp.json > /dev/null
+          python3 ../cov.py build/exp.json | grep 'unique bytes' | tee cov.txt | tee -a "$GITHUB_STEP_SUMMARY"
+          # real = matched bytes excluding the LTCG tie fns (they flip with fn counts elsewhere)
+          python3 -c "import json; t={l.split()[0] for l in open('../ci/ties.txt') if l.startswith('?')}; d=json.load(open('build/exp.json')); print(sum(e['size'] for e in d if e['hits'] and e['name'] not in t))" > real.txt
+          python3 ../ci/ratchet.py ../ci/good.json build/exp.json ../ci/ties.txt | grep -v '\$L' | tail -20 | tee ratchet.txt | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Whole-file meter (release exe)
+        run: |
+          docker run --rm -v "$PWD/target:/w" -w /w "$IMAGE" sh -c \
+            'make -j$(nproc) -k IN_IMAGE=1 build/release/CoD2MP_s.exe > build/rel.txt 2>&1; s=$?; chmod -R a+rw build; exit $s'
+          cd target
+          python3 ../shameter.py build/release/CoD2MP_s.exe build/anchor.exe | tail -7 | tee sha.txt | tee -a "$GITHUB_STEP_SUMMARY"
+          rm -f build/anchor.exe
+      - name: Discord
+        if: always()
+        env:
+          HOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          MSG: ${{ github.event.head_commit.message }}
+        run: |
+          [ -n "$HOOK" ] || exit 0
+          cd target
+          pct=$(grep -o '[0-9.]*% of' cov.txt | head -1 | cut -d% -f1)
+          bytes=$(grep -o 'unique bytes [0-9]*' cov.txt | grep -o '[0-9]*')
+          verdict=$(grep -o 'RATCHET [A-Z]*' ratchet.txt | head -1)
+          whole=$(grep '^ALL' sha.txt | grep -o '[0-9.]*%$')
+          secs=$(grep -E '^\.(text|rdata|data|rsrc)|^header' sha.txt | sed -E 's/^(\.?[a-z]+).*same +[0-9]+ \(([0-9.]+%)\).*/\1 \2/; s/^header +same ([0-9]+\/[0-9]+)/header \1/' | paste -sd ' ' | sed 's/ \./ · ./g; s/ header/ · header/')
+          real=$(cat real.txt)
+          text=$(printf '**CoD2MP_s.exe** `%s` %s\n**Code matched: %s%%** (%s / 1,408,683 B of functions)  %s\nReal matches (excl. tie fns): %s B\n**Whole file in retail position: %s** (bytes at the same offset as retail)\nper section: %s\n<%s>' "${GITHUB_SHA::7}" "$(echo "$MSG" | head -1)" "$pct" "$bytes" "$verdict" "$real" "$whole" "$secs" \
+            "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}")
+          jq -n --arg c "${text:0:1990}" '{content: $c}' | curl -fsS -H 'Content-Type: application/json' -d @- "$HOOK"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: build
+          path: |
+            target/build/CoD2MP_s.exe
+            target/build/CoD2MP_s.map
+            target/build/exp.json
+            target/build/link.log
