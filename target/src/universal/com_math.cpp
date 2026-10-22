@@ -2800,8 +2800,10 @@ ClearBounds2D
 */
 void ClearBounds2D( vec2_t mins, vec2_t maxs )
 {
-	Vector2Set(mins, 131072.0f, 131072.0f);
-	Vector2Set(maxs, -131072.0f, -131072.0f);
+	mins[0] = 131072.0f;
+	mins[1] = 131072.0f;
+	maxs[0] = -131072.0f;
+	maxs[1] = -131072.0f;
 }
 
 /*
