@@ -266,30 +266,6 @@ extern void *s_cmdList;
 
 int g_cginit_loading = 0;
 
-// unreferenced vector helpers retail keeps first in this file (names unknown, retail addresses)
-void CL_VectorCopy_4011e0(const vec3_t a, vec3_t b)
-{
-    b[0] = a[0];
-    b[1] = a[1];
-    b[2] = a[2];
-}
-
-void CL_Vector4Set_401200(vec4_t v, const float x, const float y, const float z, const float w)
-{
-    v[0] = x;
-    v[1] = y;
-    v[2] = z;
-    v[3] = w;
-}
-
-void CL_VectorCopy4_401220(const vec4_t a, vec4_t b)
-{
-    b[0] = a[0];
-    b[1] = a[1];
-    b[2] = a[2];
-    b[3] = a[3];
-}
-
 // retail 0x401240, unreferenced; Q3 CL_GetGameState (SUPPORTED)
 void CL_GetGameState(gameState_t *gs)
 {
@@ -414,9 +390,7 @@ void CL_SetUserCmdAimValues(vec_t *kickAngles)
 {
     clientActive_t *cl = CL_LOCAL;
     vec_t *dst = cl->cgameKickAngles;
-    dst[0] = kickAngles[0];
-    dst[1] = kickAngles[1];
-    dst[2] = kickAngles[2];
+    VectorCopy(kickAngles, dst);
 }
 
 void CL_SetUserCmdInShellshock(qboolean shocked)
@@ -1026,9 +1000,7 @@ void CL_SetViewAngles_4025e0(const vec_t *angles)
 {
     clientActive_t *cl = CL_LOCAL;
     vec_t *dst = cl->viewangles;
-    dst[0] = angles[0];
-    dst[1] = angles[1];
-    dst[2] = angles[2];
+    VectorCopy(angles, dst);
 }
 
 void CL_SyncTimes(void)
@@ -1459,31 +1431,19 @@ void CL_LookupColor(unsigned char c, vec_t *color)
     index = ColorIndex(c);
     if (index < 8) {
         src = g_color_table[index];
-        color[0] = src[0];
-        color[1] = src[1];
-        color[2] = src[2];
-        color[3] = src[3];
+        VectorCopy4(src, color);
         return;
     }
 
     switch (c) {
     case '8':
-        color[0] = CL_LOCAL->color_allies[0];
-        color[1] = CL_LOCAL->color_allies[1];
-        color[2] = CL_LOCAL->color_allies[2];
-        color[3] = CL_LOCAL->color_allies[3];
+        VectorCopy4(CL_LOCAL->color_allies, color);
         break;
     case '9':
-        color[0] = CL_LOCAL->color_axis[0];
-        color[1] = CL_LOCAL->color_axis[1];
-        color[2] = CL_LOCAL->color_axis[2];
-        color[3] = CL_LOCAL->color_axis[3];
+        VectorCopy4(CL_LOCAL->color_axis, color);
         break;
     default:
-        color[0] = 1.0f;
-        color[1] = 1.0f;
-        color[2] = 1.0f;
-        color[3] = 1.0f;
+        Vector4Set(color, 1.0f, 1.0f, 1.0f, 1.0f);
         break;
     }
 }

@@ -166,21 +166,7 @@ Material *FxArchive::ReadMaterial()
 	return FX_RegisterMaterial( materialName );
 }
 
-void FxArchive::ArchiveMaterial( Material **material )
-{
-	if ( isReading )
-		*material = ReadMaterial();
-	else
-		WriteMaterial( *material );
-}
 
-void FxArchive::ArchiveModel( XModel **model )
-{
-	if ( isReading )
-		*model = ReadModel();
-	else
-		WriteModel( *model );
-}
 
 XModel *FxArchive::ReadModel()
 {
@@ -412,6 +398,20 @@ void FxArchive::ArchiveEffect( const FxEffectDef **fx )
 		*fx = ReadEffect();
 	else
 		WriteEffect( *fx );
+}
+void FxArchive::ArchiveModel( XModel **model )
+{
+	if ( isReading )
+		*model = ReadModel();
+	else
+		WriteModel( *model );
+}
+void FxArchive::ArchiveMaterial( Material **material )
+{
+	if ( isReading )
+		*material = ReadMaterial();
+	else
+		WriteMaterial( *material );
 }
 
 void FxArchive::ArchiveChannelInstance( FxChannelInstance *channelInstance )

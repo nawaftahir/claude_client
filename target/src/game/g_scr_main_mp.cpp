@@ -3243,20 +3243,6 @@ void GScr_tan()
 
 	Scr_AddFloat( sinT / cosT );
 }
-
-/*
-===============
-GScr_atan
-===============
-*/
-void GScr_atan()
-{
-	int v3;
-
-	*(float *)&v3 = atan(Scr_GetFloat(0));
-	*(float *)&v3 = *(float *)&v3 * DEGINRAD;
-	Scr_AddFloat(*(float *)&v3);
-}
 void GScr_asin()
 {
 	float v4;
@@ -3270,6 +3256,20 @@ void GScr_asin()
 	}
 
 	*(float *)&v3 = asin(v4);
+	*(float *)&v3 = *(float *)&v3 * DEGINRAD;
+	Scr_AddFloat(*(float *)&v3);
+}
+
+/*
+===============
+GScr_atan
+===============
+*/
+void GScr_atan()
+{
+	int v3;
+
+	*(float *)&v3 = atan(Scr_GetFloat(0));
 	*(float *)&v3 = *(float *)&v3 * DEGINRAD;
 	Scr_AddFloat(*(float *)&v3);
 }
@@ -6306,6 +6306,13 @@ void Scr_StartupGameType()
 	handle = Scr_ExecThread( g_scr_data.gametype.startupgametype, 0 );
 	Scr_FreeThread( handle );
 }
+void Scr_PlayerConnect( gentity_t *self )
+{
+	unsigned short threadId;
+
+	threadId = Scr_ExecEntThread( self, g_scr_data.gametype.playerconnect, 0 );
+	Scr_FreeThread( threadId );
+}
 
 /*
 ===============
@@ -6442,13 +6449,6 @@ qboolean Scr_IsValidGameType( const char *pszGameType )
 	}
 
 	return valid;
-}
-void Scr_PlayerConnect( gentity_t *self )
-{
-	unsigned short threadId;
-
-	threadId = Scr_ExecEntThread( self, g_scr_data.gametype.playerconnect, 0 );
-	Scr_FreeThread( threadId );
 }
 void Scr_PlayerDisconnect( gentity_t *self )
 {

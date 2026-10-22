@@ -1103,24 +1103,10 @@ inline int FxArchive::GetUsedSize()
 }
 
 // Original name unknown.
-static inline void FX_SwapBolt( int i, int j )
-{
-	Effect *temp;
-
-	temp = effectListBolt[i];
-	effectListBolt[i] = effectListBolt[j];
-	effectListBolt[j] = temp;
-}
+static inline void FX_SwapBolt( int i, int j );
 
 // Original name unknown.
-static inline void FX_SwapNonBolt( int i, int j )
-{
-	Effect *temp;
-
-	temp = effectListNonBolt[i];
-	effectListNonBolt[i] = effectListNonBolt[j];
-	effectListNonBolt[j] = temp;
-}
+static inline void FX_SwapNonBolt( int i, int j );
 
 int FX_GetCluster( const vec3_t origin )
 {
@@ -1274,6 +1260,22 @@ int FX_Init( bool rendererExists )
 	theFxSchedulers[Net_LocalClientNum()] = theFxScheduler;
 	theFxHelper->Init();
 	return 1;
+}
+static inline void FX_SwapNonBolt( int i, int j )
+{
+	Effect *temp;
+
+	temp = effectListNonBolt[i];
+	effectListNonBolt[i] = effectListNonBolt[j];
+	effectListNonBolt[j] = temp;
+}
+static inline void FX_SwapBolt( int i, int j )
+{
+	Effect *temp;
+
+	temp = effectListBolt[i];
+	effectListBolt[i] = effectListBolt[j];
+	effectListBolt[j] = temp;
 }
 
 // Original name unknown.

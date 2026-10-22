@@ -271,6 +271,20 @@ static inline unsigned int Scr_GetLocalVar( const char *pos )
 {
 	return Scr_GetLocalVarAtIndex( *(unsigned char *)pos );
 }
+static inline short Scr_ReadShort( const char **pos )
+{
+	short value = *(reinterpret_cast<const short *>(*pos));
+	*pos += sizeof(short);
+
+	return value;
+}
+static inline int Scr_ReadInt( const char **pos )
+{
+	int value = *(reinterpret_cast<const int *>(*pos));
+	*pos += sizeof(int);
+
+	return value;
+}
 
 /*
 ==============
@@ -3972,6 +3986,10 @@ unsigned int Scr_GetConstStringIncludeNull( unsigned int index )
 
 	return Scr_GetConstString(index);
 }
+const char* Scr_GetStringIncludeNull( unsigned int index )
+{
+	return SL_ConvertToString( Scr_GetConstString( index ) );
+}
 
 /*
 ==============
@@ -4827,20 +4845,6 @@ int Scr_IsSystemActive( bool unused )
 {
 	return scrVarPub.timeArrayId != 0;
 }
-static inline short Scr_ReadShort( const char **pos )
-{
-	short value = *(reinterpret_cast<const short *>(*pos));
-	*pos += sizeof(short);
-
-	return value;
-}
-static inline int Scr_ReadInt( const char **pos )
-{
-	int value = *(reinterpret_cast<const int *>(*pos));
-	*pos += sizeof(int);
-
-	return value;
-}
 static inline unsigned short Scr_ReadUnsignedShort( const char **pos )
 {
 	return (unsigned short)Scr_ReadShort(pos);
@@ -4864,10 +4868,6 @@ void VM_Shutdown()
 unsigned int Scr_GetNumScriptThreads()
 {
 	return 0;
-}
-const char* Scr_GetStringIncludeNull( unsigned int index )
-{
-	return SL_ConvertToString( Scr_GetConstString( index ) );
 }
 const char* Scr_GetIString( unsigned int index )
 {

@@ -597,6 +597,35 @@ void SND_SetHWND(HWND hwnd)
     if (g_snd.Initialized2d)
         AIL_set_DirectSound_HWND( (void *)(milesGlob.driver_2D), hwnd);
 }
+void SND_Stop2DChannel(int index)
+{
+    AIL_end_sample(milesGlob.handle_2D[index - 45]);
+    g_snd.chaninfo[index].paused = 0;
+    g_snd.chaninfo[index].startDelay = 0;
+}
+void SND_Pause2DChannel(int index)
+{
+    snd_local_t *sndGlob;
+    snd_channel_info_t *chaninfo;
+    AIL_stop_sample(milesGlob.handle_2D[index - 45]);
+    sndGlob = &g_snd;
+    chaninfo = &sndGlob->chaninfo[index];
+    chaninfo->paused = 1;
+}
+void SND_Unpause2DChannel(int index, int timeshift)
+{
+    if (g_snd.chaninfo[index].startDelay == 0) {
+        AIL_resume_sample(milesGlob.handle_2D[index - 45]);
+    }
+    g_snd.chaninfo[index].endtime += timeshift;
+    g_snd.chaninfo[index].paused = 0;
+}
+Bool SND_Is2DChannelFree(int index)
+{
+    if (!g_snd.chaninfo[index].paused && !g_snd.chaninfo[index].startDelay)
+        return AIL_sample_status(milesGlob.handle_2D[index - 45]) == 2 ? 1 : 0;
+    return 0;
+}
 
 void SND_StopStreamChannel(int index)
 {
@@ -1051,6 +1080,13 @@ void SND_Update2DChannelReverb(int index)
     }
     AIL_set_sample_reverb_levels(milesGlob.handle_2D[index - 45], 1.0f, reverbLevel);
 }
+int SND_Get2DChannelLength(int index)
+{
+    long int length;
+    long int *lenp = &length;
+    AIL_sample_ms_position(milesGlob.handle_2D[index - 45], lenp, NULL);
+    return (int)length;
+}
 void SND_Update3DChannelReverb(int index)
 {
     const snd_alias_t *pAlias = g_snd.chaninfo[index].pAlias0;
@@ -1499,35 +1535,6 @@ static void MSS_SpatializeStream(float *volume, float *pan)
 {
 
 }
-void SND_Stop2DChannel(int index)
-{
-    AIL_end_sample(milesGlob.handle_2D[index - 45]);
-    g_snd.chaninfo[index].paused = 0;
-    g_snd.chaninfo[index].startDelay = 0;
-}
-void SND_Pause2DChannel(int index)
-{
-    snd_local_t *sndGlob;
-    snd_channel_info_t *chaninfo;
-    AIL_stop_sample(milesGlob.handle_2D[index - 45]);
-    sndGlob = &g_snd;
-    chaninfo = &sndGlob->chaninfo[index];
-    chaninfo->paused = 1;
-}
-void SND_Unpause2DChannel(int index, int timeshift)
-{
-    if (g_snd.chaninfo[index].startDelay == 0) {
-        AIL_resume_sample(milesGlob.handle_2D[index - 45]);
-    }
-    g_snd.chaninfo[index].endtime += timeshift;
-    g_snd.chaninfo[index].paused = 0;
-}
-Bool SND_Is2DChannelFree(int index)
-{
-    if (!g_snd.chaninfo[index].paused && !g_snd.chaninfo[index].startDelay)
-        return AIL_sample_status(milesGlob.handle_2D[index - 45]) == 2 ? 1 : 0;
-    return 0;
-}
 void SND_Stop3DChannel(int index)
 {
     AIL_end_3D_sample(milesGlob.handle_3D[index]);
@@ -1570,13 +1577,6 @@ void SND_UpdateStreamChannelReverb(int index)
         reverbLevel = 0;
     }
     AIL_set_stream_reverb_levels(milesGlob.handle_stream[index - 0x20], 1.0f, reverbLevel);
-}
-int SND_Get2DChannelLength(int index)
-{
-    long int length;
-    long int *lenp = &length;
-    AIL_sample_ms_position(milesGlob.handle_2D[index - 45], lenp, NULL);
-    return (int)length;
 }
 int SND_GetStreamChannelLength(int index)
 {

@@ -1480,6 +1480,10 @@ static void SND_UpdateVolumes(int frametime)
     Dvar_ClearModified((dvar_t *)snd_volume);
     g_snd.volume = g_snd.mastervol.volume * *(float *)((char *)snd_volume + 8) * 0.75f;
 }
+int SND_Is2DChannelPlaying_44cd50(int index)
+{
+    return !SND_Is2DChannelFree(index) && !g_snd.chaninfo[index].startDelay;
+}
 
 // retail 0x44cdf0, unreferenced; name unknown
 int SND_IsStreamChannelPlaying_44cdf0(int index)
@@ -2368,10 +2372,6 @@ void SND_ErrorCleanup(void)
 }
 
 // retail 0x44cd50, unreferenced; name unknown (busy and not delayed)
-int SND_Is2DChannelPlaying_44cd50(int index)
-{
-    return !SND_Is2DChannelFree(index) && !g_snd.chaninfo[index].startDelay;
-}
 
 // retail 0x44cda0, unreferenced; name unknown
 int SND_Is3DChannelPlaying_44cda0(int index)

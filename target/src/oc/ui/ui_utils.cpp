@@ -102,6 +102,10 @@ void Window_SetStaticFlags(Window *w, const int flags)
 {
     w->staticFlags = flags;
 }
+void Menu_SetCursorItem(menuDef_t *menu, int cursorItem)
+{
+    menu->cursorItem[0] = cursorItem;
+}
 
 // Retail inlines this into Menu_HasItemLeft/Right.
 static __forceinline int Item_CanFocusInl(const itemDef_t *item)
@@ -126,11 +130,11 @@ qboolean UI_CursorInRect_540670(int x, int y, int w, int h)
         return 0;
     return 1;
 }
-
 void Window_SetOffsetTime(Window *w, int offsetTime)
 {
     w->offsetTime[0] = offsetTime;
 }
+
 
 // retail 0x5407e0, unreferenced, name unknown: item to the left of the cursor item
 bool Menu_HasItemLeft_5407e0(menuDef_t *menu)
@@ -411,10 +415,6 @@ static long hashForString(const char *str)
     return hash & 2047;
 }
 
-void Menu_SetCursorItem(menuDef_t *menu, int cursorItem)
-{
-    menu->cursorItem[0] = cursorItem;
-}
 
 void *UI_Alloc(int size, int alignment)
 {

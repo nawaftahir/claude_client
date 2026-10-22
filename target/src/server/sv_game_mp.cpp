@@ -559,29 +559,7 @@ SV_DObjCreateSkelForBone
 SV_DObjCreateSkelForBones
 ===============
 */
-int SV_DObjCreateSkelForBones( gentity_t *ent, int *partBits )
-{
-	DObj *obj;
-	int size;
-	DSkel_t *buf;
-	int result;
-
-	obj = Com_GetServerDObj(ent->s.number);
-
-	if ( DObjSkelExists(obj, sv.skelTimeStamp) )
-	{
-		result = DObjSkelAreBonesUpToDate(obj, partBits);
-	}
-	else
-	{
-		size = DObjGetAllocSkelSize(obj);
-		buf = (DSkel_t *)SV_AllocSkelMemory(size);
-		DObjCreateSkel(obj, buf, sv.skelTimeStamp);
-		result = 0;
-	}
-
-	return result;
-}
+int SV_DObjCreateSkelForBones( gentity_t *ent, int *partBits );
 
 int SV_DObjCreateSkelForBone( gentity_t *ent, int boneIndex )
 {
@@ -595,6 +573,29 @@ int SV_DObjCreateSkelForBone( gentity_t *ent, int boneIndex )
 	if ( DObjSkelExists(obj, sv.skelTimeStamp) )
 	{
 		result = DObjSkelIsBoneUpToDate(obj, boneIndex);
+	}
+	else
+	{
+		size = DObjGetAllocSkelSize(obj);
+		buf = (DSkel_t *)SV_AllocSkelMemory(size);
+		DObjCreateSkel(obj, buf, sv.skelTimeStamp);
+		result = 0;
+	}
+
+	return result;
+}
+int SV_DObjCreateSkelForBones( gentity_t *ent, int *partBits )
+{
+	DObj *obj;
+	int size;
+	DSkel_t *buf;
+	int result;
+
+	obj = Com_GetServerDObj(ent->s.number);
+
+	if ( DObjSkelExists(obj, sv.skelTimeStamp) )
+	{
+		result = DObjSkelAreBonesUpToDate(obj, partBits);
 	}
 	else
 	{

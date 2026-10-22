@@ -447,8 +447,6 @@ void CL_BeginDownload(const char *localName, const char *remoteName);
 void CL_NextDownload(void);
 void CL_InitDownloads(void);
 static void CL_SendPureChecksums(void);
-extern void CL_VectorCopy_4011e0(const vec3_t a, vec3_t b);
-extern void CL_VectorCopy4_401220(const vec4_t a, vec4_t b);
 
 extern int Cmd_Argc(void);
 extern const char *Cmd_Argv( int arg );
@@ -3050,8 +3048,8 @@ void CL_AddDebugString(const vec_t *xyz, const vec_t *color, float scale, const 
     }
 
     string = &cls.debug.strings[cls.debug.numStrings];
-    CL_VectorCopy_4011e0(xyz, string->xyz);
-    CL_VectorCopy4_401220(color, string->color);
+    VectorCopy(xyz, string->xyz);
+    VectorCopy4(color, string->color);
     string->scale = scale;
     strncpy(string->text, text, 0x5f);
     string->text[95] = '\0';
@@ -3082,9 +3080,9 @@ void CL_AddDebugLine(const vec_t *start, const vec_t *end, const vec_t *color, q
     }
 
     line = &cls.debug.lines[lineIndex];
-    CL_VectorCopy_4011e0(start, line->start);
-    CL_VectorCopy_4011e0(end, line->end);
-    CL_VectorCopy4_401220(color, line->color);
+    VectorCopy(start, line->start);
+    VectorCopy(end, line->end);
+    VectorCopy4(color, line->color);
     line->depthTest = depthTest;
 
     cls.debug.lineFromServer[cls.debug.numLines] = (byte)fromServer;

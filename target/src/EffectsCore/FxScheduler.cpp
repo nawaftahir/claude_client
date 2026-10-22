@@ -656,6 +656,10 @@ void FxScheduler::Clean( bool bRemoveTemplates, const FxEffectDef *fxToPreserve 
 	if ( bRemoveTemplates )
 		FX_FreeTemplates( fxToPreserve );
 }
+static void FX_PrintInvalidEffect()
+{
+	FX_Print( "FxScheduler::PlayEffect called with invalid effect\n" );
+}
 
 // Original name unknown.
 void FxScheduler::PlayEffect( const FxEffectDef *fx, const vec3_t origin )
@@ -718,10 +722,6 @@ static bool FX_IsInSpawnRange( const PrimitiveTemplate *primTemp, const vec3_t o
 	return true;
 }
 
-static void FX_PrintInvalidEffect()
-{
-	FX_Print( "FxScheduler::PlayEffect called with invalid effect\n" );
-}
 
 void FxScheduler::PlayEffect( const FxEffectDef *fx, const vec3_t origin, const vec3_t axis[3], const FxBoltInfo *bolt )
 {

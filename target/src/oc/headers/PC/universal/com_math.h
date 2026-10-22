@@ -486,4 +486,28 @@ static inline int FastFloor(const float x)
 
     return result;
 }
+
+// same helpers as universal/com_math.h (one shared body per program)
+inline void VectorCopy(const vec3_t a, vec3_t b)
+{
+    b[0] = a[0];
+    b[1] = a[1];
+    b[2] = a[2];
+}
+
+inline void Vector4Set(vec4_t v, const float x, const float y, const float z, const float w)
+{
+    v[0] = x;
+    v[1] = y;
+    v[2] = z;
+    v[3] = w;
+}
+
+inline void VectorCopy4(const vec4_t a, vec4_t b)
+{
+    b[0] = a[0];
+    b[1] = a[1];
+    b[2] = a[2];
+    b[3] = a[3];
+}
 #endif

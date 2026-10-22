@@ -56,15 +56,7 @@ qboolean Sys_RemoveDirTree( const char *dir )
 	return _rmdir( dir ) != -1;
 }
 
-char *Sys_Cwd( void )
-{
-	static char cwd[MAX_OSPATH];
-
-	_getcwd( cwd, sizeof( cwd ) - 1 );
-	cwd[MAX_OSPATH - 1] = 0;
-
-	return cwd;
-}
+char *Sys_Cwd( void );
 
 const char *Sys_DefaultHomePath( void )
 {
@@ -79,6 +71,15 @@ char *Sys_DefaultInstallPath( void )
 const char *Sys_DefaultCDPath( void )
 {
 	return "";
+}
+char *Sys_Cwd( void )
+{
+	static char cwd[MAX_OSPATH];
+
+	_getcwd( cwd, sizeof( cwd ) - 1 );
+	cwd[MAX_OSPATH - 1] = 0;
+
+	return cwd;
 }
 
 static void Sys_ListFilteredFiles( const char *basedir, const char *subdirs, const char *filter, char **list, int *numfiles )

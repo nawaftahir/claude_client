@@ -20,8 +20,6 @@ static __declspec(noinline) void XModelReadSurfaces(XModel *model, XSurface **ou
 	for ( i = 0; i < numsurfs; ++i )
 		out[i] = re.XModelReadSurface(model, partBits, pos, Alloc);
 }
-
-// retail 0x48eae0
 XModelSurfs *XModelReadSurface(XModel *model, const char *name, void *(*Alloc)(int), short numsurfs, const char *modelName)
 {
 	XModelSurfs *surfs;
@@ -81,3 +79,5 @@ XModelSurfs *XModelReadSurface(XModel *model, const char *name, void *(*Alloc)(i
 	FS_FreeFile(buf);
 	return surfs;
 }
+
+// retail 0x48eae0

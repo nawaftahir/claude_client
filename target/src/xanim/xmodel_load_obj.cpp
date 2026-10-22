@@ -32,7 +32,6 @@ XModelSurfs *XModelLoadSurface(XModel *model, const char *name, void *(*Alloc)(i
 	XModelSurfsSetData(name, surfs, Alloc);
 	return surfs;
 }
-
 bool XModelLoadSurfaces(XModel *model, void *(*Alloc)(int))
 {
 	int i;
@@ -53,7 +52,6 @@ bool XModelLoadSurfaces(XModel *model, void *(*Alloc)(int))
 
 	return true;
 }
-
 XModel *XModelLoad(const char *name, void *(*Alloc)(int), void *(*AllocColl)(int))
 {
 	XModel *model;
@@ -76,7 +74,6 @@ XModel *XModelLoad(const char *name, void *(*Alloc)(int), void *(*AllocColl)(int
 
 	return model;
 }
-
 qboolean XModelGetStaticBounds(const XModel *model, float (*axis)[3], float *mins, float *maxs)
 {
 	XModelCollSurf *surf;
@@ -124,3 +121,6 @@ qboolean XModelGetStaticBounds(const XModel *model, float (*axis)[3], float *min
 
 	return result;
 }
+
+
+

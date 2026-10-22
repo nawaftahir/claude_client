@@ -406,6 +406,89 @@ void Fade(int *flags, float *f, float clamp, int *nextTime, int offsetTime, qboo
         }
     }
 }
+void Window_Paint(displayContextDef_t *dc, float (*w_param)[4][32], float fadeAmount, float fadeInAmount, float fadeClamp, float fadeCycle)
+{
+    windowDef_t *w = (windowDef_t *)w_param;
+    rectDef_t fillRect;
+    float color[4];
+    int flags;
+
+    fillRect = *(rectDef_t *)&w->rect[0];
+
+    if (debugMode) {
+        color[0] = color[1] = color[2] = color[3] = 1.0f;
+        UI_DrawRect(w->rect[0].x, w->rect[0].y, w->rect[0].w, w->rect[0].h, w->rect[0].horzAlign, w->rect[0].vertAlign, 1.0f, color);
+    }
+
+    if (!w->style && !w->border)
+        return;
+
+    if (w->border) {
+        fillRect.x += w->borderSize;
+        fillRect.y += w->borderSize;
+        fillRect.w -= w->borderSize + 1.0f;
+        fillRect.h -= w->borderSize + 1.0f;
+    }
+
+    switch (w->style) {
+    case 1:
+        if (w->background) {
+            flags = w->dynamicFlags[0];
+            Fade(&flags, &w->backColor[3], fadeClamp, &w->nextTime, (int)fadeCycle, 1, fadeAmount, fadeInAmount, dc);
+            int *dynamicFlags = &w->dynamicFlags[0];
+            *dynamicFlags = flags;
+            UI_DrawHandlePic(fillRect.x, fillRect.y, fillRect.w, fillRect.h, w->rect[0].horzAlign, w->rect[0].vertAlign, w->backColor, w->background);
+        } else {
+            UI_FillRect(fillRect.x, fillRect.y, fillRect.w, fillRect.h, w->rect[0].horzAlign, w->rect[0].vertAlign, w->backColor);
+        }
+        break;
+    case 3:
+        UI_DrawHandlePic(fillRect.x, fillRect.y, fillRect.w, fillRect.h, w->rect[0].horzAlign, w->rect[0].vertAlign,
+                         (w->dynamicFlags[0] & 0x10000) ? w->foreColor : NULL, w->background);
+        break;
+    case 7:
+        UI_DrawLoadBar(fillRect.x, fillRect.y, fillRect.w, fillRect.h, w->rect[0].horzAlign, w->rect[0].vertAlign,
+                       (w->dynamicFlags[0] & 0x10000) ? w->foreColor : NULL, w->background);
+        break;
+    case 5:
+        if (w->cinematic == -1) {
+            w->cinematic = CIN_PlayCinematic(w->cinematicName, (int)fillRect.x, (int)fillRect.y, (int)fillRect.w, (int)fillRect.h, 10);
+            if (w->cinematic == -1)
+                w->cinematic = -2;
+        }
+        if (w->cinematic >= 0) {
+            CIN_RunCinematic(w->cinematic);
+            CIN_SetExtents(w->cinematic, (int)fillRect.x, (int)fillRect.y, (int)fillRect.w, (int)fillRect.h);
+            CIN_DrawCinematic(w->cinematic);
+        }
+        break;
+    case 6:
+        if (w->background)
+            UI_DrawHandlePic(fillRect.x, fillRect.y, fillRect.w, fillRect.h, w->rect[0].horzAlign, w->rect[0].vertAlign,
+                             (w->dynamicFlags[0] & 0x10000) ? w->foreColor : NULL, w->background);
+        break;
+    }
+
+    if (w->border == 1) {
+        if (w->style == 4) {
+            if (w->borderColor[0] > 0.0f) {
+                color[0] = 1.0f;
+                color[1] = color[2] = 0.5f;
+            } else {
+                color[2] = 1.0f;
+                color[0] = color[1] = 0.5f;
+            }
+            color[3] = 1.0f;
+            UI_DrawRect(w->rect[0].x, w->rect[0].y, w->rect[0].w, w->rect[0].h, w->rect[0].horzAlign, w->rect[0].vertAlign, w->borderSize, color);
+        } else {
+            UI_DrawRect(w->rect[0].x, w->rect[0].y, w->rect[0].w, w->rect[0].h, w->rect[0].horzAlign, w->rect[0].vertAlign, w->borderSize, w->borderColor);
+        }
+    } else if (w->border == 2) {
+        UI_DrawTopBottom(w->rect[0].x, w->rect[0].y, w->rect[0].w, w->rect[0].h, w->rect[0].horzAlign, w->rect[0].vertAlign, w->borderSize, w->borderColor);
+    } else if (w->border == 3) {
+        UI_DrawSides(w->rect[0].x, w->rect[0].y, w->rect[0].w, w->rect[0].h, w->rect[0].horzAlign, w->rect[0].vertAlign, w->borderSize, w->borderColor);
+    }
+}
 
 // retail 0x5340d0
 void Item_UpdatePosition(itemDef_t *item)
@@ -656,6 +739,16 @@ void Menu_FadeItemByName(menuDef_t *menu, const char *p, qboolean fadeOut)
         }
     }
 }
+qboolean Menus_MenuIsInStack_5348c0(displayContextDef_t *dc, menuDef_t *menu)
+{
+    int i;
+
+    for (i = dc->openMenuCount - 1; i >= 0; i--) {
+        if (dc->menuStack[i] == menu)
+            return 1;
+    }
+    return 0;
+}
 
 int Menus_RemoveFromStack(displayContextDef_t *dc, menuDef_t *menu)
 {
@@ -739,6 +832,22 @@ void Menus_CloseAll(displayContextDef_t *dc)
 
     for (i = 0; i < dc->menuCount; i++)
         Menus_Close(dc, dc->Menus[i]);
+}
+void Script_Show(displayContextDef_t *dc, itemDef_t *item, const char **args)
+{
+    char name[1024];
+    (void)dc;
+    if (String_Parse(args, name, 1024)) {
+        Menu_ShowItemByName(item->parent, name, 1);
+    }
+}
+void Script_Hide(displayContextDef_t *dc, itemDef_t *item, const char **args)
+{
+    char name[1024];
+    (void)dc;
+    if (String_Parse(args, name, 1024)) {
+        Menu_ShowItemByName(item->parent, name, 0);
+    }
 }
 
 void Script_Open(displayContextDef_t *dc, itemDef_t *item, const char **args)
@@ -1182,6 +1291,70 @@ void Item_RunScript(displayContextDef_t *dc, itemDef_t *item, const char *s)
             UI_RunMenuScript(&p);
     }
 }
+qboolean Item_SetFocus(displayContextDef_t *dc, itemDef_t *item, float x, float y)
+{
+    rectDef_t r;
+    const rectDef_t *textRect;
+    itemDef_t *oldFocus;
+    menuDef_t *parent;
+    menuDef_t *focusedMenu;
+    snd_alias_list_t *sfx;
+    int i;
+    int playSound;
+
+    playSound = 0;
+    sfx = sharedUiInfo.assets.itemFocusSound;
+    if (!item || (item->window.staticFlags & 0x100000) || !Window_IsVisible(&item->window))
+        return 0;
+    if (Window_HasFocus(&item->window))
+        return 1;
+    parent = item->parent;
+    if (parent && !Window_HasFocus(&parent->window)) {
+        focusedMenu = Menu_GetFocused(dc);
+        if (focusedMenu && Rect_ContainsPoint(&focusedMenu->window.rect[0], x, y)
+            && Rect_ContainsPoint(&parent->window.rect[0], x, y))
+            return 0;
+    }
+    if ((item->dvarFlags & 3) && !Item_EnableShowViaDvar(item, 1))
+        return 0;
+    if ((item->dvarFlags & 0xc) && !Item_EnableShowViaDvar(item, 4))
+        return 0;
+    oldFocus = Menu_ClearFocus(dc, item->parent);
+    if (item->type == 0) {
+        textRect = &item->textRect[0];
+        r = *textRect;
+        r.y -= r.h;
+        r.horzAlign = textRect->horzAlign;
+        r.vertAlign = textRect->vertAlign;
+        if (Rect_ContainsPoint(&r, x, y)) {
+            Window_AddDynamicFlags(&item->window, 2);
+            if (item->focusSound)
+                sfx = item->focusSound;
+            playSound = 1;
+        } else if (oldFocus) {
+            Window_AddDynamicFlags(&oldFocus->window, 2);
+            if (oldFocus->onFocus)
+                Item_RunScript(dc, oldFocus, oldFocus->onFocus);
+        }
+    } else {
+        int *dynamicFlags = &item->window.dynamicFlags[0];
+        *dynamicFlags |= 2;
+        if (item->onFocus)
+            Item_RunScript(dc, item, item->onFocus);
+        if (item->focusSound)
+            sfx = item->focusSound;
+        playSound = 1;
+    }
+    if (playSound && sfx)
+        UI_PlayLocalSoundAlias(sfx);
+    for (i = 0; i < parent->itemCount; i++) {
+        if (parent->items[i] == item) {
+            parent->cursorItem[0] = i;
+            return 1;
+        }
+    }
+    return 1;
+}
 
 // retail 0x535e10
 int Item_ListBox_MaxScroll(itemDef_t *item)
@@ -1479,6 +1652,212 @@ static void Item_SetMouseOver(itemDef_t *item, qboolean focus)
 static qboolean Item_OwnerDraw_HandleKey(itemDef_t *item, int key)
 {
     return UI_OwnerDrawHandleKey(item->window.ownerDraw, item->window.ownerDrawFlags, &item->special, key);
+}
+static __declspec(noinline) qboolean Item_ListBox_HandleKey(displayContextDef_t *dc, itemDef_t *item, int key, qboolean down, qboolean force)
+{
+    listBoxDef_s *listPtr;
+    int count;
+    int max;
+    int viewmax;
+    int inRect;
+    int flags;
+
+    listPtr = Item_GetListBoxDef(item);
+    if (!listPtr)
+        return 0;
+    count = UI_FeederCount(item->special);
+    inRect = Rect_ContainsPoint(&item->window.rect[0], (float)dc->cursorx, (float)dc->cursory);
+    flags = item->window.dynamicFlags[0];
+    if (!force && (!inRect || !(flags & 2)))
+        return 0;
+
+    UI_OverrideCursorPos(item);
+    max = Item_ListBox_MaxScroll(item);
+    if (Window_IsHorizontal(&item->window)) {
+        viewmax = (int)(item->window.rect[0].w / listPtr->elementWidth);
+        if (key == 156 || key == 185) {
+            if (!listPtr->notselectable) {
+                listPtr->cursorPos[0]--;
+                if (listPtr->cursorPos[0] < 0)
+                    listPtr->cursorPos[0] = 0;
+                if (listPtr->cursorPos[0] < listPtr->startPos[0])
+                    listPtr->startPos[0] = listPtr->cursorPos[0];
+                if (listPtr->cursorPos[0] >= listPtr->startPos[0] + viewmax)
+                    listPtr->startPos[0] = listPtr->cursorPos[0] - viewmax + 1;
+                int pos = listPtr->cursorPos[0];
+                int *cursorPos = &item->cursorPos[0];
+                *cursorPos = pos;
+                UI_FeederSelection(item->special, pos);
+            } else {
+                listPtr->startPos[0]--;
+                if (listPtr->startPos[0] < 0)
+                    listPtr->startPos[0] = 0;
+            }
+            return 1;
+        }
+        if (key == 157 || key == 187) {
+            if (!listPtr->notselectable) {
+                listPtr->cursorPos[0]++;
+                if (listPtr->cursorPos[0] < listPtr->startPos[0])
+                    listPtr->startPos[0] = listPtr->cursorPos[0];
+                if (listPtr->cursorPos[0] >= count)
+                    listPtr->cursorPos[0] = count - 1;
+                if (listPtr->cursorPos[0] >= listPtr->startPos[0] + viewmax)
+                    listPtr->startPos[0] = listPtr->cursorPos[0] - viewmax + 1;
+                int *cursorPos = &item->cursorPos[0];
+                *cursorPos = listPtr->cursorPos[0];
+                UI_FeederSelection(item->special, *cursorPos);
+            } else {
+                listPtr->startPos[0]++;
+                if (listPtr->startPos[0] >= count)
+                    listPtr->startPos[0] = count - 1;
+            }
+            return 1;
+        }
+    } else {
+        viewmax = (int)(item->window.rect[0].h / listPtr->elementHeight);
+        if (key == 154 || key == 183 || key == 206) {
+            if (!listPtr->notselectable) {
+                item->cursorPos[0]--;
+                if (item->cursorPos[0] < 0)
+                    item->cursorPos[0] = 0;
+                if (item->cursorPos[0] < listPtr->startPos[0])
+                    listPtr->startPos[0] = item->cursorPos[0];
+                if (item->cursorPos[0] >= listPtr->startPos[0] + viewmax)
+                    listPtr->startPos[0] = item->cursorPos[0] - viewmax + 1;
+                UI_FeederSelection(item->special, item->cursorPos[0]);
+            } else {
+                listPtr->startPos[0]--;
+                if (listPtr->startPos[0] < 0)
+                    listPtr->startPos[0] = 0;
+            }
+            return 1;
+        }
+        if (key == 155 || key == 189 || key == 205) {
+            if (!listPtr->notselectable) {
+                item->cursorPos[0]++;
+                if (item->cursorPos[0] < listPtr->startPos[0])
+                    listPtr->startPos[0] = item->cursorPos[0];
+                if (item->cursorPos[0] >= count)
+                    item->cursorPos[0] = count - 1;
+                if (item->cursorPos[0] < 0)
+                    item->cursorPos[0] = 0;
+                if (item->cursorPos[0] >= listPtr->startPos[0] + viewmax)
+                    listPtr->startPos[0] = item->cursorPos[0] - viewmax + 1;
+                UI_FeederSelection(item->special, item->cursorPos[0]);
+            } else {
+                listPtr->startPos[0]++;
+                if (listPtr->startPos[0] > max)
+                    listPtr->startPos[0] = max;
+            }
+            return 1;
+        }
+    }
+    // mouse hit
+    if (key == 200 || key == 201) {
+        if (flags & 0x100) {
+            listPtr->startPos[0]--;
+            if (listPtr->startPos[0] < 0)
+                listPtr->startPos[0] = 0;
+        } else if (flags & 0x200) {
+            listPtr->startPos[0]++;
+            if (listPtr->startPos[0] > max)
+                listPtr->startPos[0] = max;
+        } else if (flags & 0x800) {
+            listPtr->startPos[0] -= viewmax;
+            if (listPtr->startPos[0] < 0)
+                listPtr->startPos[0] = 0;
+        } else if (flags & 0x1000) {
+            listPtr->startPos[0] += viewmax;
+            if (listPtr->startPos[0] > max)
+                listPtr->startPos[0] = max;
+        } else if (!(flags & 0x400)) {
+            if (item->special == 18.0f) {
+                UI_OverrideCursorPos(item);
+                UI_FeederSelection(item->special, item->cursorPos[0]);
+            }
+            if (dc->realTime < lastListBoxClickTime && listPtr->doubleClick
+                && item->cursorPos[0] == listPtr->cursorPos[0] && ListBox_HasValidCursorPos(listPtr))
+                Item_RunScript(dc, item, listPtr->doubleClick);
+            lastListBoxClickTime = dc->realTime + 300;
+            if (item->cursorPos[0] != listPtr->cursorPos[0]) {
+                if (item->cursorPos[0] < 0)
+                    item->cursorPos[0] = listPtr->cursorPos[0];
+                int pos = listPtr->cursorPos[0];
+                if (pos < UI_FeederCount(item->special))
+                    item->cursorPos[0] = listPtr->cursorPos[0];
+                UI_FeederSelection(item->special, item->cursorPos[0]);
+            }
+        }
+        return 1;
+    }
+    if (key == 165 || key == 182) {
+        if (!listPtr->notselectable) {
+            item->cursorPos[0] = 0;
+            listPtr->cursorPos[0] = 0;
+            listPtr->startPos[0] = 0;
+            UI_FeederSelection(item->special, item->cursorPos[0]);
+        } else {
+            listPtr->startPos[0] = 0;
+        }
+        return 1;
+    }
+    if (key == 166 || key == 188) {
+        if (!listPtr->notselectable) {
+            item->cursorPos[0] = count - 1;
+            listPtr->cursorPos[0] = count - 1;
+            if (item->cursorPos[0] >= listPtr->startPos[0] + viewmax)
+                listPtr->startPos[0] = item->cursorPos[0] - viewmax + 1;
+            if (item->cursorPos[0] < 0) {
+                item->cursorPos[0] = 0;
+                listPtr->cursorPos[0] = 0;
+            }
+            UI_FeederSelection(item->special, item->cursorPos[0]);
+        } else {
+            listPtr->startPos[0] = max;
+        }
+        return 1;
+    }
+    if (key == 164 || key == 184) {
+        if (!listPtr->notselectable) {
+            listPtr->cursorPos[0] -= viewmax;
+            if (listPtr->cursorPos[0] < 0)
+                listPtr->cursorPos[0] = 0;
+            if (listPtr->cursorPos[0] < listPtr->startPos[0])
+                listPtr->startPos[0] = listPtr->cursorPos[0];
+            if (listPtr->cursorPos[0] >= listPtr->startPos[0] + viewmax)
+                listPtr->startPos[0] = listPtr->cursorPos[0] - viewmax + 1;
+            item->cursorPos[0] = listPtr->cursorPos[0];
+            UI_FeederSelection(item->special, item->cursorPos[0]);
+        } else {
+            listPtr->startPos[0] -= viewmax;
+            if (listPtr->startPos[0] < 0)
+                listPtr->startPos[0] = 0;
+        }
+        return 1;
+    }
+    if (key == 163 || key == 190) {
+        if (!listPtr->notselectable) {
+            listPtr->cursorPos[0] += viewmax;
+            if (listPtr->cursorPos[0] < listPtr->startPos[0])
+                listPtr->startPos[0] = listPtr->cursorPos[0];
+            if (listPtr->cursorPos[0] >= count)
+                listPtr->cursorPos[0] = count - 1;
+            if (listPtr->cursorPos[0] < 0)
+                listPtr->cursorPos[0] = 0;
+            if (listPtr->cursorPos[0] >= listPtr->startPos[0] + viewmax)
+                listPtr->startPos[0] = listPtr->cursorPos[0] - viewmax + 1;
+            int *cursorPos = &item->cursorPos[0];
+            *cursorPos = listPtr->cursorPos[0];
+            UI_FeederSelection(item->special, *cursorPos);
+        } else {
+            listPtr->startPos[0] += viewmax;
+            if (listPtr->startPos[0] > max)
+                listPtr->startPos[0] = max;
+        }
+        return 1;
+    }
+    return 0;
 }
 
 static int Item_ContainsMouse(displayContextDef_t *dc, itemDef_t *item)
@@ -2503,6 +2882,74 @@ void Item_TextColor(displayContextDef_t *dc, itemDef_t *item, vec4_t *newColor)
             memcpy(newColor, parent->disableColor, sizeof(vec4_t));
     }
 }
+void Item_Text_AutoWrapped_Paint(itemDef_t *item, const char *textPtr, vec_t *color)
+{
+    const char *p;
+    const char *newLinePtr;
+    char buff[1024];
+    int height, len, textWidth, newLine, newLineWidth;
+    float y;
+    FontHandle font;
+    int iTargetLineWidth;
+    rectDef_t newRect;
+    rectDef_t *textRect;
+
+    newLinePtr = NULL;
+    font = UI_GetFontHandle(item->fontEnum, item->textscale);
+    height = UI_TextHeight(font, item->textscale);
+    textWidth = UI_TextWidth(textPtr, 0, font, item->textscale);
+    if (item->window.rect[0].w != 0.0f && (float)textWidth > item->window.rect[0].w)
+        iTargetLineWidth = (int)((float)textWidth / (float)(int)ceil((double)(textWidth / item->window.rect[0].w)));
+    else
+        iTargetLineWidth = (int)item->window.rect[0].w;
+    y = item->textaligny;
+    len = 0;
+    buff[0] = '\0';
+    newLine = 0;
+    newLineWidth = 0;
+    p = textPtr;
+    while (p)
+    {
+        if (*p == ' ' || *p == '\t' || *p == '\n' || *p == '\0')
+        {
+            newLine = len;
+            newLinePtr = p + 1;
+            newLineWidth = textWidth;
+        }
+        textWidth = UI_TextWidth(buff, 0, font, item->textscale);
+        if ((newLine && textWidth > item->window.rect[0].w) || *p == '\n' || *p == '\0' || (*p == ' ' && textWidth > iTargetLineWidth))
+        {
+            if (len)
+            {
+                newRect = item->textRect[0];
+                if (item->textalignment == 1)
+                    newRect.x = item->textalignx - (float)(newLineWidth / 2);
+                else if (item->textalignment == 2)
+                    newRect.x = item->textalignx - (float)newLineWidth;
+                else
+                    newRect.x = item->textalignx;
+                newRect.y = y;
+                ToWindowCoords(&newRect.x, &newRect.y, &item->window);
+                textRect = &item->textRect[0];
+                *textRect = newRect;
+                buff[newLine] = '\0';
+                UI_DrawText(buff, 0x7fffffff, font, textRect->x, textRect->y, item->window.rect[0].horzAlign, item->window.rect[0].vertAlign, item->textscale, color, item->textStyle);
+            }
+            if (*p == '\0')
+                break;
+            y += height + 5;
+            p = newLinePtr;
+            len = 0;
+            newLine = 0;
+            newLineWidth = 0;
+            continue;
+        }
+        buff[len++] = *p++;
+        if (buff[len - 1] == '\r')
+            buff[len - 1] = ' ';
+        buff[len] = '\0';
+    }
+}
 
 void Item_Text_Wrapped_Paint(itemDef_t *item, const char *textPtr, vec_t *color)
 {
@@ -3422,6 +3869,262 @@ void Item_ListBox_Paint(displayContextDef_t *dc, itemDef_t *item)
         y += (((listBoxDef_s*)(listPtr))->elementHeight);
     }
 }
+void Item_OwnerDraw_Paint(displayContextDef_t *dc, itemDef_t *item)
+{
+    vec4_t color;
+    vec4_t lowLight;
+    menuDef_t *parent;
+    int flags;
+
+    if (!item)
+        return;
+
+    parent = item->parent;
+    flags = item->window.dynamicFlags[0];
+    Fade(&flags, &item->window.foreColor[3], parent->fadeClamp, &item->window.nextTime, parent->fadeCycle, 1, parent->fadeAmount, parent->fadeInAmount, dc);
+    Window_SetDynamicFlags(&item->window, flags);
+
+    float *foreColor = &item->window.foreColor[0];
+    memcpy(color, foreColor, sizeof(vec4_t));
+
+    if (Window_HasFocus(&item->window)) {
+        lowLight[0] = parent->focusColor[0] * 0.8f;
+        lowLight[1] = parent->focusColor[1] * 0.8f;
+        lowLight[2] = parent->focusColor[2] * 0.8f;
+        lowLight[3] = parent->focusColor[3] * 0.8f;
+        LerpColor(parent->focusColor, lowLight, color, (sin((float)(dc->realTime / 75)) + 1.0f) * 0.5f);
+    } else if (item->textStyle == 1 && !((dc->realTime / 256) & 1)) {
+        lowLight[0] = item->window.foreColor[0] * 0.8f;
+        lowLight[1] = item->window.foreColor[1] * 0.8f;
+        lowLight[2] = item->window.foreColor[2] * 0.8f;
+        lowLight[3] = item->window.foreColor[3] * 0.8f;
+        LerpColor(item->window.foreColor, lowLight, color, (sin((float)(dc->realTime / 75)) + 1.0f) * 0.5f);
+    }
+
+    if ((item->dvarFlags & 3) && !Item_EnableShowViaDvar(item, 1))
+        memcpy(color, parent->disableColor, sizeof(vec4_t));
+
+    if (item->text) {
+        Item_Text_Paint(dc, item);
+        if (item->text[0]) {
+            UI_OwnerDraw(item->textRect[0].x + item->textRect[0].w + 8.0f, item->window.rect[0].y,
+                         item->window.rect[0].w, item->window.rect[0].h,
+                         item->window.rect[0].horzAlign, item->window.rect[0].vertAlign,
+                         0.0f, item->textaligny, item->window.ownerDraw, item->window.ownerDrawFlags,
+                         item->alignment, item->special, UI_GetFontHandle(item->fontEnum, item->textscale),
+                         item->textscale, color, item->window.background, item->textStyle);
+        } else {
+            UI_OwnerDraw(item->textRect[0].x + item->textRect[0].w, item->window.rect[0].y,
+                         item->window.rect[0].w, item->window.rect[0].h,
+                         item->window.rect[0].horzAlign, item->window.rect[0].vertAlign,
+                         0.0f, item->textaligny, item->window.ownerDraw, item->window.ownerDrawFlags,
+                         item->alignment, item->special, UI_GetFontHandle(item->fontEnum, item->textscale),
+                         item->textscale, color, item->window.background, item->textStyle);
+        }
+    } else {
+        UI_OwnerDraw(item->window.rect[0].x, item->window.rect[0].y,
+                     item->window.rect[0].w, item->window.rect[0].h,
+                     item->window.rect[0].horzAlign, item->window.rect[0].vertAlign,
+                     item->textalignx, item->textaligny, item->window.ownerDraw, item->window.ownerDrawFlags,
+                     item->alignment, item->special, UI_GetFontHandle(item->fontEnum, item->textscale),
+                     item->textscale, color, item->window.background, item->textStyle);
+    }
+}
+void Item_Paint(displayContextDef_t *dc, itemDef_t *item)
+{
+    byte *it = (byte *)item;
+    menuDef_t *parent;
+
+    parent = item->parent;
+
+    if (item->window.dynamicFlags[0] & 0x2000) {
+        if (dc->realTime > item->window.nextTime) {
+            rectDef_t newRect;
+            float rx;
+            float ry;
+            float w;
+            float h;
+            float s;
+            float c;
+            rectDef_t *r;
+
+            item->window.nextTime = dc->realTime + item->window.offsetTime[0];
+            r = &item->window.rectClient[0];
+            w = r->w * 0.5f;
+            h = r->h; h = h * 0.5f;
+            rx = r->x + w; rx = rx - item->window.rectEffects0[0].x;
+            ry = r->y + h - item->window.rectEffects0[0].y;
+            float ang = 0.05235988f;
+            FastSinCos(ang, &s, &c);
+            newRect = *r;
+            newRect.x = rx * c - ry * s + item->window.rectEffects0[0].x; newRect.x = newRect.x - w;
+            newRect.y = rx * s + ry * c + item->window.rectEffects0[0].y - h;
+            *r = newRect;
+            Item_UpdatePosition((itemDef_t *)item);
+
+        }
+    }
+
+    if (item->window.dynamicFlags[0] & 0x80) {
+        rectDef_t newRect;
+        int dcTime = dc->realTime;
+        if (dcTime > ((itemDef_t *)it)->window.nextTime) {
+
+            ((itemDef_t *)it)->window.nextTime = dcTime + ((itemDef_t *)it)->window.offsetTime[0];
+
+            float *target = (float *)(((char *)it + offsetof(itemDef_t, window.rectEffects0[0].x)));
+            float *step = (float *)(((char *)it + offsetof(itemDef_t, window.rectEffects1[0].x)));
+            int done = 0;
+
+            newRect = (*(rectDef_t *)&((itemDef_t *)it)->window.rectClient[0].x);
+
+            if (newRect.x == target[0]) {
+                done++;
+            } else if (newRect.x < target[0]) {
+                newRect.x = newRect.x + step[0];
+                if (newRect.x > target[0]) {
+                    newRect.x = target[0];
+                    done++;
+                }
+            } else {
+                newRect.x -= step[0];
+                if (newRect.x < target[0]) {
+                    newRect.x = target[0];
+                    done++;
+                }
+            }
+
+            if (newRect.y == target[1]) {
+                done++;
+            } else if (newRect.y < target[1]) {
+                newRect.y += step[1];
+                if (newRect.y > target[1]) {
+                    newRect.y = target[1];
+                    done++;
+                }
+            } else {
+                newRect.y -= step[1];
+                if (newRect.y < target[1]) {
+                    newRect.y = target[1];
+                    done++;
+                }
+            }
+
+            if (newRect.w == target[2]) {
+                done++;
+            } else if (newRect.w < target[2]) {
+                newRect.w += step[2];
+                if (newRect.w > target[2]) {
+                    newRect.w = target[2];
+                    done++;
+                }
+            } else {
+                newRect.w -= step[2];
+                if (newRect.w < target[2]) {
+                    newRect.w = target[2];
+                    done++;
+                }
+            }
+
+            if (newRect.h == target[3]) {
+                done++;
+            } else if (newRect.h < target[3]) {
+                newRect.h += step[3];
+                if (newRect.h > target[3]) {
+                    newRect.h = target[3];
+                    done++;
+                }
+            } else {
+                newRect.h -= step[3];
+                if (newRect.h < target[3]) {
+                    newRect.h = target[3];
+                    done++;
+                }
+            }
+
+            Window_SetRectClient( (Window *)(item), &newRect);
+
+            Item_UpdatePosition((itemDef_t *)item);
+
+            if (done == 4) {
+                Window_RemoveDynamicFlags((Window *)item, 0x80);
+            }
+        }
+    }
+
+    if (item->window.ownerDrawFlags) {
+        if (!UI_OwnerDrawVisible(item->window.ownerDrawFlags))
+            Window_RemoveDynamicFlags(&item->window, 6);
+        else
+            Window_AddDynamicFlags(&item->window, 4);
+    }
+
+    if ((item->dvarFlags & 0xc) && !Item_EnableShowViaDvar(item, 4)) {
+        if (Window_HasFocus(&item->window)) {
+            Menu_HandleKey(dc, parent, 0x9b, 1);
+            Menu_HandleKey(dc, parent, 0x9b, 0);
+        }
+        return;
+    }
+
+    if (!Window_IsVisible(&item->window))
+        return;
+
+    if (item->window.style == 6)
+        item->window.background = CL_RegisterMaterialNoMip(Dvar_GetString(item->dvar), item->imageTrack);
+
+    Window_Paint(dc, (float (*)[4][32])item, parent->fadeAmount, parent->fadeInAmount, parent->fadeClamp, (float)parent->fadeCycle);
+
+    if (debugMode) {
+        rectDef_t *r;
+        vec4_t color;
+
+        r = Item_CorrectedTextRect(item);
+        color[1] = color[3] = 1.0f;
+        color[0] = color[2] = 0.0f;
+        UI_DrawRect(r->x, r->y, r->w, r->h, r->horzAlign, r->vertAlign, 1.0f, color);
+    }
+
+    if (item->window.style == 6)
+        return;
+
+    switch (item->type) {
+    case 8:
+        Item_OwnerDraw_Paint(dc, item);
+        break;
+    case 0:
+    case 1:
+        Item_Text_Paint(dc, item);
+        break;
+    case 4:
+    case 9:
+    case 16:
+    case 17:
+    case 18:
+        Item_TextField_Paint(dc, item);
+        break;
+    case 6:
+        Item_ListBox_Paint(dc, item);
+        break;
+    case 11:
+        Item_YesNo_Paint(dc, item);
+        break;
+    case 12:
+        Item_Multi_Paint(dc, item);
+        break;
+    case 13:
+        Item_Enum_Paint(dc, item);
+        break;
+    case 14:
+        Item_Bind_Paint(dc, item);
+        break;
+    case 10:
+        Item_Slider_Paint(dc, item);
+        break;
+    default:
+        break;
+    }
+}
 
 // retail 0x53bf60, unreferenced; Q3 Menu_GetFocusedItem (SUPPORTED)
 itemDef_t *Menu_GetFocusedItem(menuDef_t *menu)
@@ -3631,23 +4334,7 @@ void diag_item_paint_draw(void *item)
 
 
 
-void Script_Show(displayContextDef_t *dc, itemDef_t *item, const char **args)
-{
-    char name[1024];
-    (void)dc;
-    if (String_Parse(args, name, 1024)) {
-        Menu_ShowItemByName(item->parent, name, 1);
-    }
-}
 
-void Script_Hide(displayContextDef_t *dc, itemDef_t *item, const char **args)
-{
-    char name[1024];
-    (void)dc;
-    if (String_Parse(args, name, 1024)) {
-        Menu_ShowItemByName(item->parent, name, 0);
-    }
-}
 
 void Script_FadeIn(displayContextDef_t *dc, itemDef_t *item, const char **args)
 {
@@ -3691,16 +4378,6 @@ bool Window_IsVisible(Window *w)
 }
 
 // retail 0x5348c0, unreferenced twin of Menus_MenuIsInStack; name unknown
-qboolean Menus_MenuIsInStack_5348c0(displayContextDef_t *dc, menuDef_t *menu)
-{
-    int i;
-
-    for (i = dc->openMenuCount - 1; i >= 0; i--) {
-        if (dc->menuStack[i] == menu)
-            return 1;
-    }
-    return 0;
-}
 
 static qboolean Menus_MenuIsInStack(displayContextDef_t *dc, menuDef_t *menu)
 {
@@ -3714,159 +4391,8 @@ static qboolean Menus_MenuIsInStack(displayContextDef_t *dc, menuDef_t *menu)
 }
 
 
-void Item_Text_AutoWrapped_Paint(itemDef_t *item, const char *textPtr, vec_t *color)
-{
-    const char *p;
-    const char *newLinePtr;
-    char buff[1024];
-    int height, len, textWidth, newLine, newLineWidth;
-    float y;
-    FontHandle font;
-    int iTargetLineWidth;
-    rectDef_t newRect;
-    rectDef_t *textRect;
-
-    newLinePtr = NULL;
-    font = UI_GetFontHandle(item->fontEnum, item->textscale);
-    height = UI_TextHeight(font, item->textscale);
-    textWidth = UI_TextWidth(textPtr, 0, font, item->textscale);
-    if (item->window.rect[0].w != 0.0f && (float)textWidth > item->window.rect[0].w)
-        iTargetLineWidth = (int)((float)textWidth / (float)(int)ceil((double)(textWidth / item->window.rect[0].w)));
-    else
-        iTargetLineWidth = (int)item->window.rect[0].w;
-    y = item->textaligny;
-    len = 0;
-    buff[0] = '\0';
-    newLine = 0;
-    newLineWidth = 0;
-    p = textPtr;
-    while (p)
-    {
-        if (*p == ' ' || *p == '\t' || *p == '\n' || *p == '\0')
-        {
-            newLine = len;
-            newLinePtr = p + 1;
-            newLineWidth = textWidth;
-        }
-        textWidth = UI_TextWidth(buff, 0, font, item->textscale);
-        if ((newLine && textWidth > item->window.rect[0].w) || *p == '\n' || *p == '\0' || (*p == ' ' && textWidth > iTargetLineWidth))
-        {
-            if (len)
-            {
-                newRect = item->textRect[0];
-                if (item->textalignment == 1)
-                    newRect.x = item->textalignx - (float)(newLineWidth / 2);
-                else if (item->textalignment == 2)
-                    newRect.x = item->textalignx - (float)newLineWidth;
-                else
-                    newRect.x = item->textalignx;
-                newRect.y = y;
-                ToWindowCoords(&newRect.x, &newRect.y, &item->window);
-                textRect = &item->textRect[0];
-                *textRect = newRect;
-                buff[newLine] = '\0';
-                UI_DrawText(buff, 0x7fffffff, font, textRect->x, textRect->y, item->window.rect[0].horzAlign, item->window.rect[0].vertAlign, item->textscale, color, item->textStyle);
-            }
-            if (*p == '\0')
-                break;
-            y += height + 5;
-            p = newLinePtr;
-            len = 0;
-            newLine = 0;
-            newLineWidth = 0;
-            continue;
-        }
-        buff[len++] = *p++;
-        if (buff[len - 1] == '\r')
-            buff[len - 1] = ' ';
-        buff[len] = '\0';
-    }
-}
 
 // retail 0x533bd0
-void Window_Paint(displayContextDef_t *dc, float (*w_param)[4][32], float fadeAmount, float fadeInAmount, float fadeClamp, float fadeCycle)
-{
-    windowDef_t *w = (windowDef_t *)w_param;
-    rectDef_t fillRect;
-    float color[4];
-    int flags;
-
-    fillRect = *(rectDef_t *)&w->rect[0];
-
-    if (debugMode) {
-        color[0] = color[1] = color[2] = color[3] = 1.0f;
-        UI_DrawRect(w->rect[0].x, w->rect[0].y, w->rect[0].w, w->rect[0].h, w->rect[0].horzAlign, w->rect[0].vertAlign, 1.0f, color);
-    }
-
-    if (!w->style && !w->border)
-        return;
-
-    if (w->border) {
-        fillRect.x += w->borderSize;
-        fillRect.y += w->borderSize;
-        fillRect.w -= w->borderSize + 1.0f;
-        fillRect.h -= w->borderSize + 1.0f;
-    }
-
-    switch (w->style) {
-    case 1:
-        if (w->background) {
-            flags = w->dynamicFlags[0];
-            Fade(&flags, &w->backColor[3], fadeClamp, &w->nextTime, (int)fadeCycle, 1, fadeAmount, fadeInAmount, dc);
-            int *dynamicFlags = &w->dynamicFlags[0];
-            *dynamicFlags = flags;
-            UI_DrawHandlePic(fillRect.x, fillRect.y, fillRect.w, fillRect.h, w->rect[0].horzAlign, w->rect[0].vertAlign, w->backColor, w->background);
-        } else {
-            UI_FillRect(fillRect.x, fillRect.y, fillRect.w, fillRect.h, w->rect[0].horzAlign, w->rect[0].vertAlign, w->backColor);
-        }
-        break;
-    case 3:
-        UI_DrawHandlePic(fillRect.x, fillRect.y, fillRect.w, fillRect.h, w->rect[0].horzAlign, w->rect[0].vertAlign,
-                         (w->dynamicFlags[0] & 0x10000) ? w->foreColor : NULL, w->background);
-        break;
-    case 7:
-        UI_DrawLoadBar(fillRect.x, fillRect.y, fillRect.w, fillRect.h, w->rect[0].horzAlign, w->rect[0].vertAlign,
-                       (w->dynamicFlags[0] & 0x10000) ? w->foreColor : NULL, w->background);
-        break;
-    case 5:
-        if (w->cinematic == -1) {
-            w->cinematic = CIN_PlayCinematic(w->cinematicName, (int)fillRect.x, (int)fillRect.y, (int)fillRect.w, (int)fillRect.h, 10);
-            if (w->cinematic == -1)
-                w->cinematic = -2;
-        }
-        if (w->cinematic >= 0) {
-            CIN_RunCinematic(w->cinematic);
-            CIN_SetExtents(w->cinematic, (int)fillRect.x, (int)fillRect.y, (int)fillRect.w, (int)fillRect.h);
-            CIN_DrawCinematic(w->cinematic);
-        }
-        break;
-    case 6:
-        if (w->background)
-            UI_DrawHandlePic(fillRect.x, fillRect.y, fillRect.w, fillRect.h, w->rect[0].horzAlign, w->rect[0].vertAlign,
-                             (w->dynamicFlags[0] & 0x10000) ? w->foreColor : NULL, w->background);
-        break;
-    }
-
-    if (w->border == 1) {
-        if (w->style == 4) {
-            if (w->borderColor[0] > 0.0f) {
-                color[0] = 1.0f;
-                color[1] = color[2] = 0.5f;
-            } else {
-                color[2] = 1.0f;
-                color[0] = color[1] = 0.5f;
-            }
-            color[3] = 1.0f;
-            UI_DrawRect(w->rect[0].x, w->rect[0].y, w->rect[0].w, w->rect[0].h, w->rect[0].horzAlign, w->rect[0].vertAlign, w->borderSize, color);
-        } else {
-            UI_DrawRect(w->rect[0].x, w->rect[0].y, w->rect[0].w, w->rect[0].h, w->rect[0].horzAlign, w->rect[0].vertAlign, w->borderSize, w->borderColor);
-        }
-    } else if (w->border == 2) {
-        UI_DrawTopBottom(w->rect[0].x, w->rect[0].y, w->rect[0].w, w->rect[0].h, w->rect[0].horzAlign, w->rect[0].vertAlign, w->borderSize, w->borderColor);
-    } else if (w->border == 3) {
-        UI_DrawSides(w->rect[0].x, w->rect[0].y, w->rect[0].w, w->rect[0].h, w->rect[0].horzAlign, w->rect[0].vertAlign, w->borderSize, w->borderColor);
-    }
-}
 
 itemDef_t *Menu_SetNextCursorItem(displayContextDef_t *dc, menuDef_t *menu)
 {
@@ -3927,536 +4453,10 @@ static const char *UI_TraceScriptItemParentName(itemDef_t *item)
 }
 #endif
 
-void Item_OwnerDraw_Paint(displayContextDef_t *dc, itemDef_t *item)
-{
-    vec4_t color;
-    vec4_t lowLight;
-    menuDef_t *parent;
-    int flags;
 
-    if (!item)
-        return;
-
-    parent = item->parent;
-    flags = item->window.dynamicFlags[0];
-    Fade(&flags, &item->window.foreColor[3], parent->fadeClamp, &item->window.nextTime, parent->fadeCycle, 1, parent->fadeAmount, parent->fadeInAmount, dc);
-    Window_SetDynamicFlags(&item->window, flags);
-
-    float *foreColor = &item->window.foreColor[0];
-    memcpy(color, foreColor, sizeof(vec4_t));
-
-    if (Window_HasFocus(&item->window)) {
-        lowLight[0] = parent->focusColor[0] * 0.8f;
-        lowLight[1] = parent->focusColor[1] * 0.8f;
-        lowLight[2] = parent->focusColor[2] * 0.8f;
-        lowLight[3] = parent->focusColor[3] * 0.8f;
-        LerpColor(parent->focusColor, lowLight, color, (sin((float)(dc->realTime / 75)) + 1.0f) * 0.5f);
-    } else if (item->textStyle == 1 && !((dc->realTime / 256) & 1)) {
-        lowLight[0] = item->window.foreColor[0] * 0.8f;
-        lowLight[1] = item->window.foreColor[1] * 0.8f;
-        lowLight[2] = item->window.foreColor[2] * 0.8f;
-        lowLight[3] = item->window.foreColor[3] * 0.8f;
-        LerpColor(item->window.foreColor, lowLight, color, (sin((float)(dc->realTime / 75)) + 1.0f) * 0.5f);
-    }
-
-    if ((item->dvarFlags & 3) && !Item_EnableShowViaDvar(item, 1))
-        memcpy(color, parent->disableColor, sizeof(vec4_t));
-
-    if (item->text) {
-        Item_Text_Paint(dc, item);
-        if (item->text[0]) {
-            UI_OwnerDraw(item->textRect[0].x + item->textRect[0].w + 8.0f, item->window.rect[0].y,
-                         item->window.rect[0].w, item->window.rect[0].h,
-                         item->window.rect[0].horzAlign, item->window.rect[0].vertAlign,
-                         0.0f, item->textaligny, item->window.ownerDraw, item->window.ownerDrawFlags,
-                         item->alignment, item->special, UI_GetFontHandle(item->fontEnum, item->textscale),
-                         item->textscale, color, item->window.background, item->textStyle);
-        } else {
-            UI_OwnerDraw(item->textRect[0].x + item->textRect[0].w, item->window.rect[0].y,
-                         item->window.rect[0].w, item->window.rect[0].h,
-                         item->window.rect[0].horzAlign, item->window.rect[0].vertAlign,
-                         0.0f, item->textaligny, item->window.ownerDraw, item->window.ownerDrawFlags,
-                         item->alignment, item->special, UI_GetFontHandle(item->fontEnum, item->textscale),
-                         item->textscale, color, item->window.background, item->textStyle);
-        }
-    } else {
-        UI_OwnerDraw(item->window.rect[0].x, item->window.rect[0].y,
-                     item->window.rect[0].w, item->window.rect[0].h,
-                     item->window.rect[0].horzAlign, item->window.rect[0].vertAlign,
-                     item->textalignx, item->textaligny, item->window.ownerDraw, item->window.ownerDrawFlags,
-                     item->alignment, item->special, UI_GetFontHandle(item->fontEnum, item->textscale),
-                     item->textscale, color, item->window.background, item->textStyle);
-    }
-}
-
-qboolean Item_SetFocus(displayContextDef_t *dc, itemDef_t *item, float x, float y)
-{
-    rectDef_t r;
-    const rectDef_t *textRect;
-    itemDef_t *oldFocus;
-    menuDef_t *parent;
-    menuDef_t *focusedMenu;
-    snd_alias_list_t *sfx;
-    int i;
-    int playSound;
-
-    playSound = 0;
-    sfx = sharedUiInfo.assets.itemFocusSound;
-    if (!item || (item->window.staticFlags & 0x100000) || !Window_IsVisible(&item->window))
-        return 0;
-    if (Window_HasFocus(&item->window))
-        return 1;
-    parent = item->parent;
-    if (parent && !Window_HasFocus(&parent->window)) {
-        focusedMenu = Menu_GetFocused(dc);
-        if (focusedMenu && Rect_ContainsPoint(&focusedMenu->window.rect[0], x, y)
-            && Rect_ContainsPoint(&parent->window.rect[0], x, y))
-            return 0;
-    }
-    if ((item->dvarFlags & 3) && !Item_EnableShowViaDvar(item, 1))
-        return 0;
-    if ((item->dvarFlags & 0xc) && !Item_EnableShowViaDvar(item, 4))
-        return 0;
-    oldFocus = Menu_ClearFocus(dc, item->parent);
-    if (item->type == 0) {
-        textRect = &item->textRect[0];
-        r = *textRect;
-        r.y -= r.h;
-        r.horzAlign = textRect->horzAlign;
-        r.vertAlign = textRect->vertAlign;
-        if (Rect_ContainsPoint(&r, x, y)) {
-            Window_AddDynamicFlags(&item->window, 2);
-            if (item->focusSound)
-                sfx = item->focusSound;
-            playSound = 1;
-        } else if (oldFocus) {
-            Window_AddDynamicFlags(&oldFocus->window, 2);
-            if (oldFocus->onFocus)
-                Item_RunScript(dc, oldFocus, oldFocus->onFocus);
-        }
-    } else {
-        int *dynamicFlags = &item->window.dynamicFlags[0];
-        *dynamicFlags |= 2;
-        if (item->onFocus)
-            Item_RunScript(dc, item, item->onFocus);
-        if (item->focusSound)
-            sfx = item->focusSound;
-        playSound = 1;
-    }
-    if (playSound && sfx)
-        UI_PlayLocalSoundAlias(sfx);
-    for (i = 0; i < parent->itemCount; i++) {
-        if (parent->items[i] == item) {
-            parent->cursorItem[0] = i;
-            return 1;
-        }
-    }
-    return 1;
-}
 
 // retail 0x536760
-static __declspec(noinline) qboolean Item_ListBox_HandleKey(displayContextDef_t *dc, itemDef_t *item, int key, qboolean down, qboolean force)
-{
-    listBoxDef_s *listPtr;
-    int count;
-    int max;
-    int viewmax;
-    int inRect;
-    int flags;
 
-    listPtr = Item_GetListBoxDef(item);
-    if (!listPtr)
-        return 0;
-    count = UI_FeederCount(item->special);
-    inRect = Rect_ContainsPoint(&item->window.rect[0], (float)dc->cursorx, (float)dc->cursory);
-    flags = item->window.dynamicFlags[0];
-    if (!force && (!inRect || !(flags & 2)))
-        return 0;
-
-    UI_OverrideCursorPos(item);
-    max = Item_ListBox_MaxScroll(item);
-    if (Window_IsHorizontal(&item->window)) {
-        viewmax = (int)(item->window.rect[0].w / listPtr->elementWidth);
-        if (key == 156 || key == 185) {
-            if (!listPtr->notselectable) {
-                listPtr->cursorPos[0]--;
-                if (listPtr->cursorPos[0] < 0)
-                    listPtr->cursorPos[0] = 0;
-                if (listPtr->cursorPos[0] < listPtr->startPos[0])
-                    listPtr->startPos[0] = listPtr->cursorPos[0];
-                if (listPtr->cursorPos[0] >= listPtr->startPos[0] + viewmax)
-                    listPtr->startPos[0] = listPtr->cursorPos[0] - viewmax + 1;
-                int pos = listPtr->cursorPos[0];
-                int *cursorPos = &item->cursorPos[0];
-                *cursorPos = pos;
-                UI_FeederSelection(item->special, pos);
-            } else {
-                listPtr->startPos[0]--;
-                if (listPtr->startPos[0] < 0)
-                    listPtr->startPos[0] = 0;
-            }
-            return 1;
-        }
-        if (key == 157 || key == 187) {
-            if (!listPtr->notselectable) {
-                listPtr->cursorPos[0]++;
-                if (listPtr->cursorPos[0] < listPtr->startPos[0])
-                    listPtr->startPos[0] = listPtr->cursorPos[0];
-                if (listPtr->cursorPos[0] >= count)
-                    listPtr->cursorPos[0] = count - 1;
-                if (listPtr->cursorPos[0] >= listPtr->startPos[0] + viewmax)
-                    listPtr->startPos[0] = listPtr->cursorPos[0] - viewmax + 1;
-                int *cursorPos = &item->cursorPos[0];
-                *cursorPos = listPtr->cursorPos[0];
-                UI_FeederSelection(item->special, *cursorPos);
-            } else {
-                listPtr->startPos[0]++;
-                if (listPtr->startPos[0] >= count)
-                    listPtr->startPos[0] = count - 1;
-            }
-            return 1;
-        }
-    } else {
-        viewmax = (int)(item->window.rect[0].h / listPtr->elementHeight);
-        if (key == 154 || key == 183 || key == 206) {
-            if (!listPtr->notselectable) {
-                item->cursorPos[0]--;
-                if (item->cursorPos[0] < 0)
-                    item->cursorPos[0] = 0;
-                if (item->cursorPos[0] < listPtr->startPos[0])
-                    listPtr->startPos[0] = item->cursorPos[0];
-                if (item->cursorPos[0] >= listPtr->startPos[0] + viewmax)
-                    listPtr->startPos[0] = item->cursorPos[0] - viewmax + 1;
-                UI_FeederSelection(item->special, item->cursorPos[0]);
-            } else {
-                listPtr->startPos[0]--;
-                if (listPtr->startPos[0] < 0)
-                    listPtr->startPos[0] = 0;
-            }
-            return 1;
-        }
-        if (key == 155 || key == 189 || key == 205) {
-            if (!listPtr->notselectable) {
-                item->cursorPos[0]++;
-                if (item->cursorPos[0] < listPtr->startPos[0])
-                    listPtr->startPos[0] = item->cursorPos[0];
-                if (item->cursorPos[0] >= count)
-                    item->cursorPos[0] = count - 1;
-                if (item->cursorPos[0] < 0)
-                    item->cursorPos[0] = 0;
-                if (item->cursorPos[0] >= listPtr->startPos[0] + viewmax)
-                    listPtr->startPos[0] = item->cursorPos[0] - viewmax + 1;
-                UI_FeederSelection(item->special, item->cursorPos[0]);
-            } else {
-                listPtr->startPos[0]++;
-                if (listPtr->startPos[0] > max)
-                    listPtr->startPos[0] = max;
-            }
-            return 1;
-        }
-    }
-    // mouse hit
-    if (key == 200 || key == 201) {
-        if (flags & 0x100) {
-            listPtr->startPos[0]--;
-            if (listPtr->startPos[0] < 0)
-                listPtr->startPos[0] = 0;
-        } else if (flags & 0x200) {
-            listPtr->startPos[0]++;
-            if (listPtr->startPos[0] > max)
-                listPtr->startPos[0] = max;
-        } else if (flags & 0x800) {
-            listPtr->startPos[0] -= viewmax;
-            if (listPtr->startPos[0] < 0)
-                listPtr->startPos[0] = 0;
-        } else if (flags & 0x1000) {
-            listPtr->startPos[0] += viewmax;
-            if (listPtr->startPos[0] > max)
-                listPtr->startPos[0] = max;
-        } else if (!(flags & 0x400)) {
-            if (item->special == 18.0f) {
-                UI_OverrideCursorPos(item);
-                UI_FeederSelection(item->special, item->cursorPos[0]);
-            }
-            if (dc->realTime < lastListBoxClickTime && listPtr->doubleClick
-                && item->cursorPos[0] == listPtr->cursorPos[0] && ListBox_HasValidCursorPos(listPtr))
-                Item_RunScript(dc, item, listPtr->doubleClick);
-            lastListBoxClickTime = dc->realTime + 300;
-            if (item->cursorPos[0] != listPtr->cursorPos[0]) {
-                if (item->cursorPos[0] < 0)
-                    item->cursorPos[0] = listPtr->cursorPos[0];
-                int pos = listPtr->cursorPos[0];
-                if (pos < UI_FeederCount(item->special))
-                    item->cursorPos[0] = listPtr->cursorPos[0];
-                UI_FeederSelection(item->special, item->cursorPos[0]);
-            }
-        }
-        return 1;
-    }
-    if (key == 165 || key == 182) {
-        if (!listPtr->notselectable) {
-            item->cursorPos[0] = 0;
-            listPtr->cursorPos[0] = 0;
-            listPtr->startPos[0] = 0;
-            UI_FeederSelection(item->special, item->cursorPos[0]);
-        } else {
-            listPtr->startPos[0] = 0;
-        }
-        return 1;
-    }
-    if (key == 166 || key == 188) {
-        if (!listPtr->notselectable) {
-            item->cursorPos[0] = count - 1;
-            listPtr->cursorPos[0] = count - 1;
-            if (item->cursorPos[0] >= listPtr->startPos[0] + viewmax)
-                listPtr->startPos[0] = item->cursorPos[0] - viewmax + 1;
-            if (item->cursorPos[0] < 0) {
-                item->cursorPos[0] = 0;
-                listPtr->cursorPos[0] = 0;
-            }
-            UI_FeederSelection(item->special, item->cursorPos[0]);
-        } else {
-            listPtr->startPos[0] = max;
-        }
-        return 1;
-    }
-    if (key == 164 || key == 184) {
-        if (!listPtr->notselectable) {
-            listPtr->cursorPos[0] -= viewmax;
-            if (listPtr->cursorPos[0] < 0)
-                listPtr->cursorPos[0] = 0;
-            if (listPtr->cursorPos[0] < listPtr->startPos[0])
-                listPtr->startPos[0] = listPtr->cursorPos[0];
-            if (listPtr->cursorPos[0] >= listPtr->startPos[0] + viewmax)
-                listPtr->startPos[0] = listPtr->cursorPos[0] - viewmax + 1;
-            item->cursorPos[0] = listPtr->cursorPos[0];
-            UI_FeederSelection(item->special, item->cursorPos[0]);
-        } else {
-            listPtr->startPos[0] -= viewmax;
-            if (listPtr->startPos[0] < 0)
-                listPtr->startPos[0] = 0;
-        }
-        return 1;
-    }
-    if (key == 163 || key == 190) {
-        if (!listPtr->notselectable) {
-            listPtr->cursorPos[0] += viewmax;
-            if (listPtr->cursorPos[0] < listPtr->startPos[0])
-                listPtr->startPos[0] = listPtr->cursorPos[0];
-            if (listPtr->cursorPos[0] >= count)
-                listPtr->cursorPos[0] = count - 1;
-            if (listPtr->cursorPos[0] < 0)
-                listPtr->cursorPos[0] = 0;
-            if (listPtr->cursorPos[0] >= listPtr->startPos[0] + viewmax)
-                listPtr->startPos[0] = listPtr->cursorPos[0] - viewmax + 1;
-            int *cursorPos = &item->cursorPos[0];
-            *cursorPos = listPtr->cursorPos[0];
-            UI_FeederSelection(item->special, *cursorPos);
-        } else {
-            listPtr->startPos[0] += viewmax;
-            if (listPtr->startPos[0] > max)
-                listPtr->startPos[0] = max;
-        }
-        return 1;
-    }
-    return 0;
-}
-
-void Item_Paint(displayContextDef_t *dc, itemDef_t *item)
-{
-    byte *it = (byte *)item;
-    menuDef_t *parent;
-
-    parent = item->parent;
-
-    if (item->window.dynamicFlags[0] & 0x2000) {
-        if (dc->realTime > item->window.nextTime) {
-            rectDef_t newRect;
-            float rx;
-            float ry;
-            float w;
-            float h;
-            float s;
-            float c;
-            rectDef_t *r;
-
-            item->window.nextTime = dc->realTime + item->window.offsetTime[0];
-            r = &item->window.rectClient[0];
-            w = r->w * 0.5f;
-            h = r->h; h = h * 0.5f;
-            rx = r->x + w; rx = rx - item->window.rectEffects0[0].x;
-            ry = r->y + h - item->window.rectEffects0[0].y;
-            float ang = 0.05235988f;
-            FastSinCos(ang, &s, &c);
-            newRect = *r;
-            newRect.x = rx * c - ry * s + item->window.rectEffects0[0].x; newRect.x = newRect.x - w;
-            newRect.y = rx * s + ry * c + item->window.rectEffects0[0].y - h;
-            *r = newRect;
-            Item_UpdatePosition((itemDef_t *)item);
-
-        }
-    }
-
-    if (item->window.dynamicFlags[0] & 0x80) {
-        rectDef_t newRect;
-        int dcTime = dc->realTime;
-        if (dcTime > ((itemDef_t *)it)->window.nextTime) {
-
-            ((itemDef_t *)it)->window.nextTime = dcTime + ((itemDef_t *)it)->window.offsetTime[0];
-
-            float *target = (float *)(((char *)it + offsetof(itemDef_t, window.rectEffects0[0].x)));
-            float *step = (float *)(((char *)it + offsetof(itemDef_t, window.rectEffects1[0].x)));
-            int done = 0;
-
-            newRect = (*(rectDef_t *)&((itemDef_t *)it)->window.rectClient[0].x);
-
-            if (newRect.x == target[0]) {
-                done++;
-            } else if (newRect.x < target[0]) {
-                newRect.x = newRect.x + step[0];
-                if (newRect.x > target[0]) {
-                    newRect.x = target[0];
-                    done++;
-                }
-            } else {
-                newRect.x -= step[0];
-                if (newRect.x < target[0]) {
-                    newRect.x = target[0];
-                    done++;
-                }
-            }
-
-            if (newRect.y == target[1]) {
-                done++;
-            } else if (newRect.y < target[1]) {
-                newRect.y += step[1];
-                if (newRect.y > target[1]) {
-                    newRect.y = target[1];
-                    done++;
-                }
-            } else {
-                newRect.y -= step[1];
-                if (newRect.y < target[1]) {
-                    newRect.y = target[1];
-                    done++;
-                }
-            }
-
-            if (newRect.w == target[2]) {
-                done++;
-            } else if (newRect.w < target[2]) {
-                newRect.w += step[2];
-                if (newRect.w > target[2]) {
-                    newRect.w = target[2];
-                    done++;
-                }
-            } else {
-                newRect.w -= step[2];
-                if (newRect.w < target[2]) {
-                    newRect.w = target[2];
-                    done++;
-                }
-            }
-
-            if (newRect.h == target[3]) {
-                done++;
-            } else if (newRect.h < target[3]) {
-                newRect.h += step[3];
-                if (newRect.h > target[3]) {
-                    newRect.h = target[3];
-                    done++;
-                }
-            } else {
-                newRect.h -= step[3];
-                if (newRect.h < target[3]) {
-                    newRect.h = target[3];
-                    done++;
-                }
-            }
-
-            Window_SetRectClient( (Window *)(item), &newRect);
-
-            Item_UpdatePosition((itemDef_t *)item);
-
-            if (done == 4) {
-                Window_RemoveDynamicFlags((Window *)item, 0x80);
-            }
-        }
-    }
-
-    if (item->window.ownerDrawFlags) {
-        if (!UI_OwnerDrawVisible(item->window.ownerDrawFlags))
-            Window_RemoveDynamicFlags(&item->window, 6);
-        else
-            Window_AddDynamicFlags(&item->window, 4);
-    }
-
-    if ((item->dvarFlags & 0xc) && !Item_EnableShowViaDvar(item, 4)) {
-        if (Window_HasFocus(&item->window)) {
-            Menu_HandleKey(dc, parent, 0x9b, 1);
-            Menu_HandleKey(dc, parent, 0x9b, 0);
-        }
-        return;
-    }
-
-    if (!Window_IsVisible(&item->window))
-        return;
-
-    if (item->window.style == 6)
-        item->window.background = CL_RegisterMaterialNoMip(Dvar_GetString(item->dvar), item->imageTrack);
-
-    Window_Paint(dc, (float (*)[4][32])item, parent->fadeAmount, parent->fadeInAmount, parent->fadeClamp, (float)parent->fadeCycle);
-
-    if (debugMode) {
-        rectDef_t *r;
-        vec4_t color;
-
-        r = Item_CorrectedTextRect(item);
-        color[1] = color[3] = 1.0f;
-        color[0] = color[2] = 0.0f;
-        UI_DrawRect(r->x, r->y, r->w, r->h, r->horzAlign, r->vertAlign, 1.0f, color);
-    }
-
-    if (item->window.style == 6)
-        return;
-
-    switch (item->type) {
-    case 8:
-        Item_OwnerDraw_Paint(dc, item);
-        break;
-    case 0:
-    case 1:
-        Item_Text_Paint(dc, item);
-        break;
-    case 4:
-    case 9:
-    case 16:
-    case 17:
-    case 18:
-        Item_TextField_Paint(dc, item);
-        break;
-    case 6:
-        Item_ListBox_Paint(dc, item);
-        break;
-    case 11:
-        Item_YesNo_Paint(dc, item);
-        break;
-    case 12:
-        Item_Multi_Paint(dc, item);
-        break;
-    case 13:
-        Item_Enum_Paint(dc, item);
-        break;
-    case 14:
-        Item_Bind_Paint(dc, item);
-        break;
-    case 10:
-        Item_Slider_Paint(dc, item);
-        break;
-    default:
-        break;
-    }
-}
 int Menu_Count(displayContextDef_t *dc)
 {
     return dc->menuCount;

@@ -146,12 +146,6 @@ void CG_CheckEvents(centity_t *cent);
 void CG_EntityEvent(centity_t *cent, int event);
 void CG_CheckEvents(centity_t *cent);
 
-inline void VectorCopy(const vec3_t a, vec3_t b)
-{
-    b[0] = a[0];
-    b[1] = a[1];
-    b[2] = a[2];
-}
 
 static char **CG_EventNames(void)
 {

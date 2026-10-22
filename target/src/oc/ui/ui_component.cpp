@@ -224,13 +224,13 @@ void UI_Component::GetCursorPos(int *x, int *y)
     *y = (int)UI_Component_g.cursorPos[1];
     UI_Component_g.hideCursor = 0;
 }
-
 void UI_Component::Init()
 {
     this->size[0] = 0.0f;
     this->size[1] = 0.0f;
     this->selectionParent = NULL;
 }
+
 
 UI_Component *UI_Component::GetCompAtLocation(float *point)
 {
@@ -294,7 +294,6 @@ void UI_ScrollPane::CheckMouseScroll(int index, float *thumbPos, float *thumbSiz
         this->mouseWasDown[index] = 1;
     }
 }
-
 void UI_ScrollPane::Draw(float x, float y, float width, float height, float compX, float compY)
 {
     int selectedLine;
@@ -422,6 +421,7 @@ void UI_ScrollPane::Draw(float x, float y, float width, float height, float comp
         CheckMouseScroll(0, thumbPos, thumbSize, thumbMaxSize);
     }
 }
+
 
 void UI_ScrollPane::SetPos()
 {

@@ -981,12 +981,6 @@ void CalculateWeaponPosition_BasePosition(float *origin)
     origin[2] = vGunOfs[2] + origin[2];
 }
 
-inline void VectorCopy(const vec3_t a, vec3_t b)
-{
-    b[0] = a[0];
-    b[1] = a[1];
-    b[2] = a[2];
-}
 inline void VectorMA(const vec3_t v, const float s, const vec3_t b, vec3_t o)
 {
     o[0] = v[0] + s * b[0];

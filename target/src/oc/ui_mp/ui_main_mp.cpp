@@ -2948,6 +2948,29 @@ static void UI_GetGameTypesList(void)
     if (!sharedUiInfo.numGameTypes)
         Com_Error(ERR_FATAL, "\x15No game type scripts found in maps/mp/gametypes folder");
 }
+void UI_Init(void);
+
+void UI_Pause(qboolean b)
+{
+    if (b) {
+        Dvar_SetIntByName("cl_paused", 1);
+        Key_SetCatcher(8);
+    } else {
+        Key_SetCatcher(Key_GetCatcher() & ~8);
+        Key_ClearStates();
+        Dvar_SetIntByName("cl_paused", 0);
+    }
+}
+
+void UI_OpenMenu_f(void)
+{
+    Menus_OpenByName(&uiInfo->uiDC, Cmd_Args(1));
+}
+
+void UI_CloseMenu_f(void)
+{
+    Menus_CloseByName(&uiInfo->uiDC, Cmd_Args(1));
+}
 void UI_Init(void)
 {
     int width, height;
@@ -3033,28 +3056,6 @@ void UI_Init(void)
     UI_ConsoleMode_Init(uiInfo);
     UI_Gamepad_RegisterMenus(uiInfo);
 #    endif
-}
-
-void UI_Pause(qboolean b)
-{
-    if (b) {
-        Dvar_SetIntByName("cl_paused", 1);
-        Key_SetCatcher(8);
-    } else {
-        Key_SetCatcher(Key_GetCatcher() & ~8);
-        Key_ClearStates();
-        Dvar_SetIntByName("cl_paused", 0);
-    }
-}
-
-void UI_OpenMenu_f(void)
-{
-    Menus_OpenByName(&uiInfo->uiDC, Cmd_Args(1));
-}
-
-void UI_CloseMenu_f(void)
-{
-    Menus_CloseByName(&uiInfo->uiDC, Cmd_Args(1));
 }
 
 void UI_KeyEvent(int key, qboolean down)

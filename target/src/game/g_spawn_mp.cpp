@@ -7,10 +7,7 @@
 Scr_ReadOnlyField
 ==============
 */
-void Scr_ReadOnlyField( gentity_t *self, int offset )
-{
-	Scr_Error("Tried to set a read only entity field");
-}
+void Scr_ReadOnlyField( gentity_t *self, int offset );
 
 static const game_entity_field_t g_entity_fields[] =
 {
@@ -158,6 +155,10 @@ qboolean G_SpawnVector( const char *key, const char *defaultString, float *out )
 	VectorClear( out );
 	sscanf( s, "%f %f %f", &out[0], &out[1], &out[2] );
 	return present;
+}
+void Scr_ReadOnlyField( gentity_t *self, int offset )
+{
+	Scr_Error("Tried to set a read only entity field");
 }
 
 

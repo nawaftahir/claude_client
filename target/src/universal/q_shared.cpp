@@ -353,6 +353,10 @@ bool I_islower( int c )
 {
 	return c >= 'a' && c <= 'z';
 }
+bool I_isupper( int c )
+{
+	return c >= 'A' && c <= 'Z';
+}
 
 bool I_isalpha( int c )
 {
@@ -1295,10 +1299,6 @@ float FloatNoSwap( float f )
 int FloatNoSwapAsInt( float f )
 {
 	return FloatAsInt( f );
-}
-bool I_isupper( int c )
-{
-	return c >= 'A' && c <= 'Z';
 }
 __forceinline char *I_strlwrInl( char *s )
 {

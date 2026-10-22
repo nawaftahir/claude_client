@@ -40,12 +40,6 @@ inline vec_t Vec2Length(const vec2_t v)
     return I_sqrt(v[0] * v[0] + v[1] * v[1]);
 }
 
-inline void VectorCopy(const vec3_t a, vec3_t b)
-{
-    b[0] = a[0];
-    b[1] = a[1];
-    b[2] = a[2];
-}
 
 inline void FastSinCos(const float value, float *pSin, float *pCos)
 {
@@ -108,13 +102,10 @@ void CG_CompassAddWeaponPingInfo(centity_t *cent, const vec_t *origin, int msec)
     cg->compassActors[entClientNum].vLastPos[0] = origin[0];
     cg->compassActors[entClientNum].vLastPos[1] = origin[1];
 }
-
 void CG_ApplyCompassPointerRadiusScale(float *radiusScale)
 {
     *radiusScale = (float)((double)cg_hudCompassSize->current.value * *radiusScale * 43.75);
 }
-
-// retail 0x4d4a80, name unknown
 void CompassDistToRadius(float dist, float *radius)
 {
     *radius = (dist - cg_hudCompassMinRange->current.value) / (cg_hudCompassMaxRange->current.value - cg_hudCompassMinRange->current.value);
@@ -122,6 +113,9 @@ void CompassDistToRadius(float dist, float *radius)
     *radius += cg_hudCompassMinRadius->current.value;
     CG_ApplyCompassPointerRadiusScale(radius);
 }
+
+
+// retail 0x4d4a80, name unknown
 
 // retail 0x4d4ad0, name unknown
 void CompassIconSize(float *w, float *h)

@@ -133,6 +133,14 @@ int SEH_VerifyLanguageSelection( int iLanguage )
 	}
 	return 0;
 }
+void SEH_Init_StringEd()
+{
+	SE_Init();
+}
+void SEH_Shutdown_StringEd()
+{
+	SE_ShutDown();
+}
 
 int SEH_StringEd_SetLanguageStrings( int iLanguage )
 {
@@ -341,6 +349,12 @@ const char *SEH_LocalizeTextMessage( const char *pszInputBuffer, const char *psz
 		}
 	}
 	return pszString;
+}
+int SEH_IsKoreanLeadTrail( unsigned char lead, unsigned char trail )
+{
+	if ( lead >= 0xb0 && lead <= 0xc8 && trail > 0xa0 && trail < 0xff )
+		return 1;
+	return 0;
 }
 
 unsigned char SEH_IsKoreanChar( unsigned int c ) throw()
@@ -582,17 +596,3 @@ qboolean SEH_GetLanguageIndexForName( const char *language, int *langindex )
 	return qfalse;
 }
 
-void SEH_Init_StringEd()
-{
-	SE_Init();
-}
-void SEH_Shutdown_StringEd()
-{
-	SE_ShutDown();
-}
-int SEH_IsKoreanLeadTrail( unsigned char lead, unsigned char trail )
-{
-	if ( lead >= 0xb0 && lead <= 0xc8 && trail > 0xa0 && trail < 0xff )
-		return 1;
-	return 0;
-}

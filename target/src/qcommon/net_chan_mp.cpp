@@ -85,10 +85,7 @@ qboolean NET_StringToAdr( const char *s, netadr_t *a );
 NET_CompareAdr
 ================
 */
-qboolean NET_CompareAdr( netadr_t a, netadr_t b )
-{
-	return NET_CompareAdrSigned(&a, &b) == 0;
-}
+qboolean NET_CompareAdr( netadr_t a, netadr_t b );
 
 // Local client index for the "[client %i]" traces; always 0 on a dedicated
 // server. Original name unknown: the copy is emitted at the end of this TU.
@@ -786,6 +783,10 @@ int NET_CompareBaseAdrSigned( netadr_t *a, netadr_t *b )
 
 	Com_Printf("NET_CompareBaseAdrSigned: bad address type\n");
 	return 0;
+}
+qboolean NET_CompareAdr( netadr_t a, netadr_t b )
+{
+	return NET_CompareAdrSigned(&a, &b) == 0;
 }
 
 /*
