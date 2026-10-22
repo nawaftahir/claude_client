@@ -70,11 +70,6 @@ void Cmd_Init( void );
 Cmd_Argc
 ============
 */
-// unreferenced; original name unknown
-void Cmd_EmptyStub( void )
-{
-}
-
 /*
 ============
 Cmd_Wait_f

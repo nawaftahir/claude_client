@@ -1,12 +1,8 @@
 #include "../qcommon/qcommon.h"
 
-// Two empty functions nothing in the game calls; original names unknown.
+// One empty function nothing in the game calls; original name unknown.
 
 void UnusedStubA(void)
-{
-}
-
-void UnusedStubB(void)
 {
 }
 
