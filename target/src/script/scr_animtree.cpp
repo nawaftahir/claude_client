@@ -178,87 +178,84 @@ static __forceinline bool Scr_IsIdentifierInl( const char *token )
 	return true;
 }
 
-static __forceinline unsigned int GetVariableInl( unsigned int parentId, unsigned int name )
-{
-	VariableValueInternal *entry;
-	VariableValueInternal *siblingEntry;
-	unsigned short siblingId;
-	VariableValueInternal *siblingValue;
-	VariableValueInternal *parentValue;
-	unsigned int hash;
-	unsigned int index;
-
-	hash = ( name + parentId ) % ( VARIABLELIST_CHILD_SIZE - 1 ) + 1;
-	index = FindVariableIndexInternal(name, hash);
-
-	if ( !index )
-	{
-		index = GetNewVariableIndexInternal3(parentId, name, hash);
-		parentValue = &scrVarGlob.variableList[parentId];
-		siblingId = parentValue->nextSibling;
-		siblingValue = &scrVarGlob.variableList[siblingId];
-		entry = &scrVarGlob.variableList[index];
-		siblingEntry = &scrVarGlob.variableList[entry->hash.id];
-		siblingEntry->nextSibling = siblingId;
-		siblingValue->hash.u.prevSibling = index;
-		entry->hash.u.prevSibling = parentValue->v.next;
-		parentValue->nextSibling = index;
+#define GET_VARIABLE_INLINE(res, a_parentId, a_name) \
+	{ \
+			unsigned int parentId_GV = (a_parentId); \
+			unsigned int name_GV = (a_name); \
+		VariableValueInternal *entry_GV; \
+		VariableValueInternal *siblingEntry_GV; \
+		unsigned short siblingId_GV; \
+		VariableValueInternal *siblingValue_GV; \
+		VariableValueInternal *parentValue_GV; \
+		unsigned int hash_GV; \
+		unsigned int index_GV; \
+		hash_GV = ( name_GV + parentId_GV ) % ( VARIABLELIST_CHILD_SIZE - 1 ) + 1; \
+		index_GV = FindVariableIndexInternal(name_GV, hash_GV); \
+		if ( !index_GV ) \
+		{ \
+			index_GV = GetNewVariableIndexInternal3(parentId_GV, name_GV, hash_GV); \
+			parentValue_GV = &scrVarGlob.variableList[parentId_GV]; \
+			siblingId_GV = parentValue_GV->nextSibling; \
+			siblingValue_GV = &scrVarGlob.variableList[siblingId_GV]; \
+			entry_GV = &scrVarGlob.variableList[index_GV]; \
+			siblingEntry_GV = &scrVarGlob.variableList[entry_GV->hash.id]; \
+			siblingEntry_GV->nextSibling = siblingId_GV; \
+			siblingValue_GV->hash.u.prevSibling = index_GV; \
+			entry_GV->hash.u.prevSibling = parentValue_GV->v.next; \
+			parentValue_GV->nextSibling = index_GV; \
+		} \
+		res = scrVarGlob.variableList[index_GV].hash.id; \
 	}
 
-	return scrVarGlob.variableList[index].hash.id;
-}
-
-static __forceinline void RemoveRefToValueInl( int type, VariableUnion u )
-{
-	switch ( type )
-	{
-	case VAR_POINTER:
-		RemoveRefToObject(u.pointerValue);
-		break;
-
-	case VAR_STRING:
-	case VAR_ISTRING:
-		SL_RemoveRefToString(u.stringValue);
-		break;
-
-	case VAR_VECTOR:
-		if ( *((byte *)u.vectorValue - 1) )
-		{
-			break;
-		}
-
-		if ( *((unsigned short *)((byte *)u.vectorValue - 4)) )
-		{
-			(*((unsigned short *)((byte *)u.vectorValue - 4)))--;
-			break;
-		}
-
-		MT_FreeIndex( (MemoryNode *)((byte *)u.vectorValue - 4) - scrMemTreeGlob.nodes, 16 );
-		break;
+#define REMOVE_REF_TO_VALUE_INLINE(a_type, a_u) \
+	{ \
+			int type_RRTV = (a_type); \
+			VariableUnion u_RRTV = (a_u); \
+		switch ( type_RRTV ) \
+		{ \
+		case VAR_POINTER: \
+			RemoveRefToObject(u_RRTV.pointerValue); \
+			break; \
+		case VAR_STRING: \
+		case VAR_ISTRING: \
+			SL_RemoveRefToString(u_RRTV.stringValue); \
+			break; \
+		case VAR_VECTOR: \
+			if ( *((byte *)u_RRTV.vectorValue - 1) ) \
+			{ \
+				break; \
+			} \
+			if ( *((unsigned short *)((byte *)u_RRTV.vectorValue - 4)) ) \
+			{ \
+				(*((unsigned short *)((byte *)u_RRTV.vectorValue - 4)))--; \
+				break; \
+			} \
+			MT_FreeIndex( (MemoryNode *)((byte *)u_RRTV.vectorValue - 4) - scrMemTreeGlob.nodes, 16 ); \
+			break; \
+		} \
 	}
-}
 
-static __forceinline void FreeValueInl( unsigned int id )
-{
-	VariableValueInternal *entryValue = &scrVarGlob.variableList[id];
+#define FREE_VALUE_INLINE(a_id) \
+	{ \
+			unsigned int id_FV = (a_id); \
+		VariableValueInternal *entryValue_FV = &scrVarGlob.variableList[id_FV]; \
+		REMOVE_REF_TO_VALUE_INLINE(entryValue_FV->w.type & VAR_MASK, entryValue_FV->u.u); \
+		FreeVariable(id_FV); \
+	}
 
-	RemoveRefToValueInl(entryValue->w.type & VAR_MASK, entryValue->u.u);
-	FreeVariable(id);
-}
-
-static __forceinline void RemoveVariableInl( unsigned int parentId, unsigned int name )
-{
-	VariableValueInternal *entryValue;
-	unsigned int index;
-	unsigned int id;
-
-	index = FindVariableIndexHash(parentId, name);
-	entryValue = &scrVarGlob.variableList[index];
-	id = entryValue->hash.id;
-
-	MakeVariableExternal(entryValue, &scrVarGlob.variableList[parentId]);
-	FreeValueInl(id);
-}
+#define REMOVE_VARIABLE_INLINE(a_parentId, a_name) \
+	{ \
+			unsigned int parentId_RV = (a_parentId); \
+			unsigned int name_RV = (a_name); \
+		VariableValueInternal *entryValue_RV; \
+		unsigned int index_RV; \
+		unsigned int id_RV; \
+		index_RV = FindVariableIndexHash(parentId_RV, name_RV); \
+		entryValue_RV = &scrVarGlob.variableList[index_RV]; \
+		id_RV = entryValue_RV->hash.id; \
+		MakeVariableExternal(entryValue_RV, &scrVarGlob.variableList[parentId_RV]); \
+		FREE_VALUE_INLINE(id_RV); \
+	}
 
 /*
 ============
@@ -296,7 +293,7 @@ bool AnimTreeParseInternal( unsigned int parentNode, unsigned int names, bool bI
 		{
 			if ( bResolve )
 			{
-				RemoveVariableInl(parentNode, animName);
+				REMOVE_VARIABLE_INLINE(parentNode, animName);
 			}
 
 			animName = SL_GetLowercaseString_(token, 2, 4);
@@ -306,7 +303,9 @@ bool AnimTreeParseInternal( unsigned int parentNode, unsigned int names, bool bI
 				AnimTreeCompileError("duplicate animation");
 			}
 
-			animId = GetVariableInl(parentNode, animName);
+			unsigned int inl_gv1;
+			GET_VARIABLE_INLINE(inl_gv1, parentNode, animName);
+			animId = inl_gv1;
 			bResolve = !bComplete && !FindVariable(names, animName) && !scrAnimGlob.bAnimCheck;
 			flags = 0;
 			token = Com_ParseOnLine(&scrAnimGlob.pos);

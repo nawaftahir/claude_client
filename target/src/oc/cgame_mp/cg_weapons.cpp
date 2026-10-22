@@ -1850,20 +1850,17 @@ void CG_FireWeapon(centity_t *cent, int event, int barrel)
         CG_EjectWeaponBrass(ent, event);
 }
 
-static __forceinline void Vec3SubInl(const vec_t *a, const vec_t *b, vec_t *out)
-{
-    out[0] = a[0] - b[0];
-    out[1] = a[1] - b[1];
-    out[2] = a[2] - b[2];
-}
-static __forceinline float Vec3DotInl(const vec_t *a, const vec_t *b)
-{
-    return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
-}
-static __forceinline float Vec3LengthInl(const vec_t *v)
-{
-    return sqrtf(v[2] * v[2] + (v[1] * v[1] + v[0] * v[0]));
-}
+#define VEC3_SUB_INLINE(a_a, a_b, a_out) \
+	{ \
+			const vec_t * a_VS = (a_a); \
+			const vec_t * b_VS = (a_b); \
+			vec_t * out_VS = (a_out); \
+			    out_VS[0] = a_VS[0] - b_VS[0]; \
+			    out_VS[1] = a_VS[1] - b_VS[1]; \
+			    out_VS[2] = a_VS[2] - b_VS[2]; \
+	}
+#define VEC3_DOT_INLINE(a, b) ((a)[0] * (b)[0] + (a)[1] * (b)[1] + (a)[2] * (b)[2])
+#define VEC3_LENGTH_INLINE(v) (sqrtf((v)[2] * (v)[2] + ((v)[1] * (v)[1] + (v)[0] * (v)[0])))
 void CG_WhizbySound(vec_t *vStart, vec_t *vEnd)
 {
     vec3_t viewDelta;
@@ -1873,11 +1870,11 @@ void CG_WhizbySound(vec_t *vStart, vec_t *vEnd)
     float dist;
     float viewDist;
 
-    Vec3SubInl(vEnd, vStart, delta);
+    VEC3_SUB_INLINE(vEnd, vStart, delta);
     Vec3NormalizeTo(delta, dir);
-    dist = Vec3DotInl(dir, delta);
-    Vec3SubInl(cg->refdef.vieworg, vStart, viewDelta);
-    viewDist = Vec3DotInl(viewDelta, dir);
+    dist = VEC3_DOT_INLINE(dir, delta);
+    VEC3_SUB_INLINE(cg->refdef.vieworg, vStart, viewDelta);
+    viewDist = VEC3_DOT_INLINE(viewDelta, dir);
     if (viewDist < 64.0f)
         return;
     if (viewDist - -64.0f > dist)
@@ -1885,8 +1882,8 @@ void CG_WhizbySound(vec_t *vStart, vec_t *vEnd)
     projPos[0] = viewDist * dir[0] + vStart[0];
     projPos[1] = viewDist * dir[1] + vStart[1];
     projPos[2] = viewDist * dir[2] + vStart[2];
-    Vec3SubInl(projPos, cg->refdef.vieworg, delta);
-    if (Vec3LengthInl(delta) > 140.0f)
+    VEC3_SUB_INLINE(projPos, cg->refdef.vieworg, delta);
+    if (VEC3_LENGTH_INLINE(delta) > 140.0f)
         return;
     projPos[0] = projPos[0] - dir[0] * 16.0f;
     projPos[1] = projPos[1] - dir[1] * 16.0f;
@@ -1922,7 +1919,7 @@ void CG_SpawnTracer(vec_t *pstart, vec_t *pend)
     end[1] = pend[1];
     end[2] = pend[2];
 
-    Vec3SubInl(end, start, dir);
+    VEC3_SUB_INLINE(end, start, dir);
 
     dist = Vec3Normalize(dir);
     le = CG_AllocLocalEntity();

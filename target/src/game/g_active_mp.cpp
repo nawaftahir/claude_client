@@ -1400,12 +1400,12 @@ void G_PlayerController( gentity_t *self, int *partBits )
 	BG_Player_DoControllers(Com_GetServerDObj(self->s.number), &self->s, partBits, ci, level.frameTime);
 }
 
-static __forceinline const char *G_ModelNameInl( int index )
-{
-	const char *cs = sv.configstrings[CS_MODELS + index];
-
-	return cs ? cs : "";
-}
+#define G_MODEL_NAME_INLINE(res, a_index) \
+	{ \
+			int index_GMN = (a_index); \
+		const char *cs_GMN = sv.configstrings[CS_MODELS + index_GMN]; \
+		res = cs_GMN ? cs_GMN : ""; \
+	}
 
 /*
 ==================
@@ -1428,7 +1428,9 @@ qboolean G_UpdateClientInfo( gentity_t *ent )
 	ci = &level_bgs.clientinfo[clientNum];
 	bChanged = qfalse;
 
-	modelName = G_ModelNameInl(ent->model);
+	const char * inl_gmn1;
+	G_MODEL_NAME_INLINE(inl_gmn1, ent->model);
+	modelName = inl_gmn1;
 	client->sess.cs.modelindex = ent->model;
 
 	if ( strcmp(ci->model, modelName) )
@@ -1449,7 +1451,9 @@ qboolean G_UpdateClientInfo( gentity_t *ent )
 		}
 		else
 		{
-			modelName = G_ModelNameInl(ent->attachModelNames[i]);
+			const char * inl_gmn2;
+			G_MODEL_NAME_INLINE(inl_gmn2, ent->attachModelNames[i]);
+			modelName = inl_gmn2;
 			client->sess.cs.attachModelIndex[i] = ent->attachModelNames[i];
 
 			if ( strcmp(ci->attachModelNames[i], modelName) )

@@ -107,17 +107,18 @@ void Menu_SetCursorItem(menuDef_t *menu, int cursorItem)
     menu->cursorItem[0] = cursorItem;
 }
 
-// Retail inlines this into Menu_HasItemLeft/Right.
-static __forceinline int Item_CanFocusInl(const itemDef_t *item)
-{
-    if (!item || (item->window.staticFlags & 0x100000) || !Window_IsVisible((Window *)&item->window))
-        return 0;
-    if ((item->dvarFlags & 3) && !Item_EnableShowViaDvar(item, 1))
-        return 0;
-    if ((item->dvarFlags & 0xc) && !Item_EnableShowViaDvar(item, 4))
-        return 0;
-    return 1;
-}
+#define ITEM_CAN_FOCUS_INLINE(res, a_item, lbl_ICF) \
+	{ \
+			const itemDef_t * item_ICF = (a_item); \
+			    if (!item_ICF || (item_ICF->window.staticFlags & 0x100000) || !Window_IsVisible((Window *)&item_ICF->window)) \
+			        { res = 0; goto lbl_ICF; } \
+			    if ((item_ICF->dvarFlags & 3) && !Item_EnableShowViaDvar(item_ICF, 1)) \
+			        { res = 0; goto lbl_ICF; } \
+			    if ((item_ICF->dvarFlags & 0xc) && !Item_EnableShowViaDvar(item_ICF, 4)) \
+			        { res = 0; goto lbl_ICF; } \
+			    { res = 1; goto lbl_ICF; } \
+			lbl_ICF: ; \
+	}
 
 
 extern uiInfo_t *uiInfo;
@@ -151,7 +152,9 @@ bool Menu_HasItemLeft_5407e0(menuDef_t *menu)
     cur = menu->items[cursorItem];
     y = cur->window.rect[0].h * 0.5f + cur->window.rect[0].y;
     for (i = cursorItem - 1; i >= 0; i--) {
-        if (!Item_CanFocusInl(menu->items[i]))
+        int inl_icf1;
+        ITEM_CAN_FOCUS_INLINE(inl_icf1, menu->items[i], lbl_ICF_1);
+        if (!inl_icf1)
             continue;
         item = menu->items[i];
         if (y > item->window.rect[0].y
@@ -178,7 +181,9 @@ bool Menu_HasItemRight_5408c0(menuDef_t *menu)
     cur = menu->items[cursorItem];
     y = cur->window.rect[0].h * 0.5f + cur->window.rect[0].y;
     for (i = cursorItem + 1; i < menu->itemCount; i++) {
-        if (!Item_CanFocusInl(menu->items[i]))
+        int inl_icf2;
+        ITEM_CAN_FOCUS_INLINE(inl_icf2, menu->items[i], lbl_ICF_2);
+        if (!inl_icf2)
             continue;
         item = menu->items[i];
         if (y > item->window.rect[0].y
@@ -193,7 +198,9 @@ bool Menu_HasItemRight_5408c0(menuDef_t *menu)
 // retail 0x5409b0, unreferenced, name unknown (Item_SetFocus checks)
 int Item_CanFocus_5409b0(const itemDef_t *item)
 {
-    return Item_CanFocusInl(item);
+    int inl_icf3;
+    ITEM_CAN_FOCUS_INLINE(inl_icf3, item, lbl_ICF_3);
+    return inl_icf3;
 }
 
 qboolean Item_EnableShowViaDvar(const itemDef_t *item, int flag)

@@ -1877,6 +1877,12 @@ void Com_ExecStartupConfigs( const char *configFile )
 	Cbuf_Execute();
 }
 
+// retail 0x4329c0, unreferenced; name unknown
+void Com_Stub_4329c0( void )
+{
+	Com_InitPlayerProfiles();
+}
+
 static void Com_Init_Try_Block_Function( char *commandLine )
 {
 	char *src;
@@ -2340,6 +2346,11 @@ Com_ResetFrametime
 void Com_ResetFrametime()
 {
 	com_lastFrameTime = Sys_MilliSeconds();
+}
+
+// retail 0x433960, unreferenced empty function; name unknown
+void Com_Stub_433960( void )
+{
 }
 
 void Com_Frame( void )

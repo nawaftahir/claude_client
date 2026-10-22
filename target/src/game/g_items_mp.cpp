@@ -1051,44 +1051,42 @@ gentity_t *Drop_Weapon( gentity_t *ent, int iWeaponIndex, unsigned int tag )
 	return itemEnt;
 }
 
-static __forceinline void AngleVectorsInl( const vec3_t angles, vec3_t forward, vec3_t right, vec3_t up )
-{
-	float angle;
-	float sr, sp, sy, cr, cp, cy;
-
-	angle = angles[YAW] * (float)( M_PI * 2 / 360 );
-	FastSinCos( angle, &sy, &cy );
-
-	angle = angles[PITCH] * (float)( M_PI * 2 / 360 );
-	FastSinCos( angle, &sp, &cp );
-
-	if ( forward )
-	{
-		forward[0] = cp * cy;
-		forward[1] = cp * sy;
-		forward[2] = -sp;
+#define ANGLE_VECTORS_INLINE(a_angles, a_forward, a_right, a_up) \
+	{ \
+			const float * angles_AV = (a_angles); \
+			float * forward_AV = (a_forward); \
+			float * right_AV = (a_right); \
+			float * up_AV = (a_up); \
+		float angle_AV; \
+		float sr_AV, sp_AV, sy_AV, cr_AV, cp_AV, cy_AV; \
+		angle_AV = angles_AV[YAW] * (float)( M_PI * 2 / 360 ); \
+		FastSinCos( angle_AV, &sy_AV, &cy_AV ); \
+		angle_AV = angles_AV[PITCH] * (float)( M_PI * 2 / 360 ); \
+		FastSinCos( angle_AV, &sp_AV, &cp_AV ); \
+		if ( forward_AV ) \
+		{ \
+			forward_AV[0] = cp_AV * cy_AV; \
+			forward_AV[1] = cp_AV * sy_AV; \
+			forward_AV[2] = -sp_AV; \
+		} \
+		if ( right_AV || up_AV ) \
+		{ \
+			angle_AV = angles_AV[ROLL] * (float)( M_PI * 2 / 360 ); \
+			FastSinCos( angle_AV, &sr_AV, &cr_AV ); \
+			if ( right_AV ) \
+			{ \
+				right_AV[0] = -1 * sr_AV * sp_AV * cy_AV + -1 * cr_AV * -sy_AV; \
+				right_AV[1] = -1 * sr_AV * sp_AV * sy_AV + -1 * cr_AV * cy_AV; \
+				right_AV[2] = -1 * sr_AV * cp_AV; \
+			} \
+			if ( up_AV ) \
+			{ \
+				up_AV[0] = cr_AV * sp_AV * cy_AV + -sr_AV * -sy_AV; \
+				up_AV[1] = cr_AV * sp_AV * sy_AV + -sr_AV * cy_AV; \
+				up_AV[2] = cr_AV * cp_AV; \
+			} \
+		} \
 	}
-
-	if ( right || up )
-	{
-		angle = angles[ROLL] * (float)( M_PI * 2 / 360 );
-		FastSinCos( angle, &sr, &cr );
-
-		if ( right )
-		{
-			right[0] = -1 * sr * sp * cy + -1 * cr * -sy;
-			right[1] = -1 * sr * sp * sy + -1 * cr * cy;
-			right[2] = -1 * sr * cp;
-		}
-
-		if ( up )
-		{
-			up[0] = cr * sp * cy + -sr * -sy;
-			up[1] = cr * sp * sy + -sr * cy;
-			up[2] = cr * cp;
-		}
-	}
-}
 
 /*
 ================
@@ -1165,7 +1163,7 @@ void FinishSpawningItem( gentity_t *ent )
 		if ( tr.fraction < 1.0f )
 		{
 			VectorCopy(tr.normal, vAxis[2]);
-			AngleVectorsInl(ent->r.currentAngles, vAxis[0], NULL, NULL);
+			ANGLE_VECTORS_INLINE(ent->r.currentAngles, vAxis[0], NULL, NULL);
 
 			Vec3Cross(vAxis[2], vAxis[0], vAxis[1]);
 			Vec3Cross(vAxis[1], vAxis[2], vAxis[0]);
