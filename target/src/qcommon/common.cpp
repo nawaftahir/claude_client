@@ -123,10 +123,6 @@ void Com_CloseLogfiles();
 void Com_Close();
 void Com_Restart();
 
-// tab completion is not built into the dedicated server
-void Field_CompleteCommand( field_t *field )
-{
-}
 
 
 // Leading members only; the full layouts live in oc/headers/common_types.h.
@@ -1063,6 +1059,8 @@ sysEvent_t Com_GetEvent( void )
 	return Sys_GetEvent();
 }
 
+// retail calls CL_KeyEvent from the event loops
+#pragma inline_depth(0)
 int Com_EventLoop( void )
 {
 	sysEvent_t	ev;
@@ -1193,6 +1191,7 @@ int Debug_EventLoop( void )
 		processed = 1;
 	}
 }
+#pragma inline_depth()
 
 /*
 ================

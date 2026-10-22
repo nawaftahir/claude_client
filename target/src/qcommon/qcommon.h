@@ -166,7 +166,6 @@ typedef struct
 } field_t;
 
 void Field_Clear( field_t *edit );
-void Field_CompleteCommand( field_t *field );
 
 typedef struct
 {
