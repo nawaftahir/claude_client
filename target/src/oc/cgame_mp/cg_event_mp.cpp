@@ -47,7 +47,7 @@ extern void CL_DeathMessagePrint(const char *attackerName, const float *attacker
                                  const char *iconShader, float iconWidth, float iconHeight,
                                  const float *iconColor, bool iconHorzFlip);
 extern void CG_DrawScoreboard_GetTeamColor(int team, vec_t *color);
-extern void CL_SetADS(int val);
+extern void IN_LeaveADS(void);
 extern void CG_CalcEntityLerpPositions(centity_t *cent);
 extern void CG_CheckOpenWaitingScriptMenu(void);
 extern void ByteToDir(const int b, vec3_t dir);
@@ -317,15 +317,7 @@ static void CG_Obituary(entityState_t *ent)
         CL_DeathMessagePrint(attackerName, attackerColor, targetName, victimColor, iconShader, iconWidth, 1.4f, iconColor, iconHorzFlip);
 }
 
-static __forceinline bool CG_IsLocalEntity(const entityState_t *ent)
-{
-    const snapshot_t *snap = cg->nextSnap;
-
-    if ((snap->ps.pm_flags & 0xc00000) && ent->number == snap->ps.clientNum)
-        return true;
-
-    return false;
-}
+#define CG_IsLocalEntity(ent) (((cg->nextSnap->ps.pm_flags & 0xc00000) && (ent)->number == cg->nextSnap->ps.clientNum) ? true : false)
 
 void CG_ItemPickup(int itemNum)
 {
@@ -786,7 +778,7 @@ void CG_EntityEvent(centity_t *cent, int event)
             if (es->number != *(int *)(snap + SNAP_PS_CLIENTNUM))
                 break;
 
-            CL_SetADS(0);
+            IN_LeaveADS();
             break;
         }
 

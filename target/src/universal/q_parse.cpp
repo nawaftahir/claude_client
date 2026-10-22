@@ -58,6 +58,20 @@ void Com_BeginParseSession( const char *filename )
 	I_strncpyz( pi->parseFile, filename, sizeof( pi->parseFile ) );
 }
 
+__forceinline void Com_EndParseSessionInl( void )
+{
+	ParseThreadInfo *parse;
+
+	parse = Com_GetParseThreadInfo();
+
+	if ( parse->parseInfoNum == 0 )
+	{
+		Com_Error( ERR_FATAL, "\x15" "Com_EndParseSession: session underflow" );
+	}
+
+	parse->parseInfoNum--;
+}
+
 // retail calls it from 7 sites only, inlines elsewhere
 __declspec(noinline) void Com_EndParseSession( void )
 {
@@ -1019,4 +1033,5 @@ void Com_Parse3DMatrix( const char **buf_p, int z, int y, int x, float *m )
 
 	Com_MatchToken( buf_p, ")", qfalse );
 }
+
 

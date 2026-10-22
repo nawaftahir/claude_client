@@ -92,33 +92,6 @@ void CG_InitMarkPolys(void)
     }
 }
 
-void CG_AddMarks(void)
-{
-    MarkPoly *markPoly;
-
-    if (!CG_MARKS_DVAR->current.enabled)
-        return;
-
-    markPoly = cg->activeMarkPolys.nextMark;
-
-    if (markPoly == &cg->activeMarkPolys)
-        return;
-
-    do {
-
-        if (!theFxHelper->CullSphere(markPoly->origin, markPoly->radius,
-                                     theFxHelper->mCamera.numPlanes)) {
-
-            markPoly->lastFrameDrawn = cg->clientFrame;
-
-            CL_AddPolyToScene(markPoly->mtlHandle, markPoly->lmapIndex,
-                              markPoly->vertCount, markPoly->verts);
-        }
-
-        markPoly = markPoly->nextMark;
-    } while (markPoly != &cg->activeMarkPolys);
-}
-
 // retail 0x4c7f70; Q3 cg_marks.c, keeps Q3's error string
 void CG_FreeMarkPoly(MarkPoly *le)
 {
@@ -219,5 +192,32 @@ void CG_ImpactMark(MaterialHandle markMaterial, const vec_t *origin, const vec_t
             memcpy(mark->verts, &markVerts[mf->firstPoint], mf->pointCount * sizeof(GfxWorldVertex));
         }
     }
+}
+
+void CG_AddMarks(void)
+{
+    MarkPoly *markPoly;
+
+    if (!CG_MARKS_DVAR->current.enabled)
+        return;
+
+    markPoly = cg->activeMarkPolys.nextMark;
+
+    if (markPoly == &cg->activeMarkPolys)
+        return;
+
+    do {
+
+        if (!theFxHelper->CullSphere(markPoly->origin, markPoly->radius,
+                                     theFxHelper->mCamera.numPlanes)) {
+
+            markPoly->lastFrameDrawn = cg->clientFrame;
+
+            CL_AddPolyToScene(markPoly->mtlHandle, markPoly->lmapIndex,
+                              markPoly->vertCount, markPoly->verts);
+        }
+
+        markPoly = markPoly->nextMark;
+    } while (markPoly != &cg->activeMarkPolys);
 }
 

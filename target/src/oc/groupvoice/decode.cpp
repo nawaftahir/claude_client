@@ -78,6 +78,15 @@ void Decode_Shutdown(void)
     g_decoder = 0;
 }
 
+// retail 0x4b6510, unreferenced; name unknown
+Bool Decode_SetBandwidth_4b6510(int bandwidthEnum)
+{
+    if (bandwidthEnum == g_current_decode_bandwidth_setting)
+        return 1;
+    Decode_Shutdown();
+    return Decode_Init(bandwidthEnum);
+}
+
 int Decode_Sample(char *buffer, int maxLength, short *out, int frame_size)
 {
     float output[4096];
@@ -97,15 +106,6 @@ int Decode_Sample(char *buffer, int maxLength, short *out, int frame_size)
     return count;
 }
 
-
-// retail 0x4b6510, unreferenced; name unknown
-Bool Decode_SetBandwidth_4b6510(int bandwidthEnum)
-{
-    if (bandwidthEnum == g_current_decode_bandwidth_setting)
-        return 1;
-    Decode_Shutdown();
-    return Decode_Init(bandwidthEnum);
-}
 
 // retail 0x4b65d0, unreferenced; name unknown
 int Decode_GetFrameSize_4b65d0(void *state)

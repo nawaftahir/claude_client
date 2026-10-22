@@ -4,6 +4,27 @@
 
 game_hudelem_t g_hudelems[MAX_HUDELEMS_TOTAL];
 
+
+static const game_hudelem_field_t g_hudelem_fields[] =
+{
+	{ "x", HEOFS( elem.x ), F_FLOAT, 0, 0, NULL, NULL },
+	{ "y", HEOFS( elem.y ), F_FLOAT, 0, 0, NULL, NULL },
+	{ "z", HEOFS( elem.z ), F_FLOAT, 0, 0, NULL, NULL },
+	{ "fontscale", HEOFS( elem.fontScale ), F_FLOAT, -1, 0, HudElem_SetFontScale, NULL },
+	{ "font", HEOFS( elem.font ), F_INT, -1, 0, HudElem_SetFont, HudElem_GetFont },
+	{ "alignx", HEOFS( elem.alignOrg ), F_INT, 3, 2, HudElem_SetAlignX, HudElem_GetAlignX },
+	{ "aligny", HEOFS( elem.alignOrg ), F_INT, 3, 0, HudElem_SetAlignY, HudElem_GetAlignY },
+	{ "horzalign", HEOFS( elem.alignScreen ), F_INT, 7, 3, HudElem_SetHorzAlign, HudElem_GetHorzAlign },
+	{ "vertalign", HEOFS( elem.alignScreen ), F_INT, 7, 0, HudElem_SetVertAlign, HudElem_GetVertAlign },
+	{ "color", HEOFS( elem.color ), F_INT, -1, 0, HudElem_SetColor, HudElem_GetColor },
+	{ "alpha", HEOFS( elem.color ), F_INT, -1, 0, HudElem_SetAlpha, HudElem_GetAlpha },
+	{ "label", HEOFS( elem.label ), F_INT, -1, 0, HudElem_SetLocalizedString, NULL },
+	{ "sort", HEOFS( elem.sort ), F_FLOAT, 0, 0, NULL, NULL },
+	{ "foreground", HEOFS( elem.foreground ), F_INT, -1, 0, HudElem_SetBoolean, NULL },
+	{ "archived", HEOFS( archived ), F_INT, -1, 0, HudElem_SetBoolean, NULL },
+	{ NULL, 0, F_INT, 0, 0, NULL, NULL }
+};
+
 static const char *g_he_font[] = { "default", "bigfixed", "smallfixed" };
 static const char *g_he_alignx[] = { "left", "center", "right" };
 static const char *g_he_aligny[] = { "top", "middle", "bottom" };
@@ -30,48 +51,6 @@ static const char *g_he_vertalign[] =
 	"noscale",
 	"alignto480",
 	"center_safearea"
-};
-
-static const game_hudelem_field_t g_hudelem_fields[] =
-{
-	{ "x", HEOFS( elem.x ), F_FLOAT, 0, 0, NULL, NULL },
-	{ "y", HEOFS( elem.y ), F_FLOAT, 0, 0, NULL, NULL },
-	{ "z", HEOFS( elem.z ), F_FLOAT, 0, 0, NULL, NULL },
-	{ "fontscale", HEOFS( elem.fontScale ), F_FLOAT, -1, 0, HudElem_SetFontScale, NULL },
-	{ "font", HEOFS( elem.font ), F_INT, -1, 0, HudElem_SetFont, HudElem_GetFont },
-	{ "alignx", HEOFS( elem.alignOrg ), F_INT, 3, 2, HudElem_SetAlignX, HudElem_GetAlignX },
-	{ "aligny", HEOFS( elem.alignOrg ), F_INT, 3, 0, HudElem_SetAlignY, HudElem_GetAlignY },
-	{ "horzalign", HEOFS( elem.alignScreen ), F_INT, 7, 3, HudElem_SetHorzAlign, HudElem_GetHorzAlign },
-	{ "vertalign", HEOFS( elem.alignScreen ), F_INT, 7, 0, HudElem_SetVertAlign, HudElem_GetVertAlign },
-	{ "color", HEOFS( elem.color ), F_INT, -1, 0, HudElem_SetColor, HudElem_GetColor },
-	{ "alpha", HEOFS( elem.color ), F_INT, -1, 0, HudElem_SetAlpha, HudElem_GetAlpha },
-	{ "label", HEOFS( elem.label ), F_INT, -1, 0, HudElem_SetLocalizedString, NULL },
-	{ "sort", HEOFS( elem.sort ), F_FLOAT, 0, 0, NULL, NULL },
-	{ "foreground", HEOFS( elem.foreground ), F_INT, -1, 0, HudElem_SetBoolean, NULL },
-	{ "archived", HEOFS( archived ), F_INT, -1, 0, HudElem_SetBoolean, NULL },
-	{ NULL, 0, F_INT, 0, 0, NULL, NULL }
-};
-
-static const scr_method_t g_he_methods[] =
-{
-	{"settext", HECmd_SetText, 0 },
-	{"setplayernamestring", HECmd_SetPlayerNameString, 0 },
-	{"setmapnamestring", HECmd_SetMapNameString, 0 },
-	{"setgametypestring", HECmd_SetGameTypeString, 0 },
-	{"setshader", HECmd_SetShader, 0 },
-	{"settimer", HECmd_SetTimer, 0 },
-	{"settimerup", HECmd_SetTimerUp, 0 },
-	{"settenthstimer", HECmd_SetTenthsTimer, 0 },
-	{"settenthstimerup", HECmd_SetTenthsTimerUp, 0 },
-	{"setclock", HECmd_SetClock, 0 },
-	{"setclockup", HECmd_SetClockUp, 0 },
-	{"setvalue", HECmd_SetValue, 0 },
-	{"setwaypoint", HECmd_SetWaypoint, 0 },
-	{"fadeovertime", HECmd_FadeOverTime, 0 },
-	{"scaleovertime", HECmd_ScaleOverTime, 0 },
-	{"moveovertime", HECmd_MoveOverTime, 0 },
-	{"reset", HECmd_Reset, 0 },
-	{"destroy", HECmd_Destroy, 0 }
 };
 
 void (*HudElem_GetMethod( const char **pName ))( scr_entref_t );
@@ -1202,6 +1181,28 @@ void HECmd_Destroy( scr_entref_t entref )
 HudElem_GetMethod
 ============
 */
+static const scr_method_t g_he_methods[] =
+{
+	{"settext", HECmd_SetText, 0 },
+	{"setplayernamestring", HECmd_SetPlayerNameString, 0 },
+	{"setmapnamestring", HECmd_SetMapNameString, 0 },
+	{"setgametypestring", HECmd_SetGameTypeString, 0 },
+	{"setshader", HECmd_SetShader, 0 },
+	{"settimer", HECmd_SetTimer, 0 },
+	{"settimerup", HECmd_SetTimerUp, 0 },
+	{"settenthstimer", HECmd_SetTenthsTimer, 0 },
+	{"settenthstimerup", HECmd_SetTenthsTimerUp, 0 },
+	{"setclock", HECmd_SetClock, 0 },
+	{"setclockup", HECmd_SetClockUp, 0 },
+	{"setvalue", HECmd_SetValue, 0 },
+	{"setwaypoint", HECmd_SetWaypoint, 0 },
+	{"fadeovertime", HECmd_FadeOverTime, 0 },
+	{"scaleovertime", HECmd_ScaleOverTime, 0 },
+	{"moveovertime", HECmd_MoveOverTime, 0 },
+	{"reset", HECmd_Reset, 0 },
+	{"destroy", HECmd_Destroy, 0 }
+};
+
 void (*HudElem_GetMethod( const char **pName ))( scr_entref_t )
 {
 	int i;

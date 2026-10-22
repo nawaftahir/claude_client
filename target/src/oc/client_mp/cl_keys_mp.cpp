@@ -1425,10 +1425,12 @@ static __forceinline void CL_KeyEventBody(int key, const qboolean down, const un
     }
 }
 
+#pragma inline_depth(0)
 void CL_KeyEvent(int key, const qboolean down, const unsigned int time)
 {
     CL_KeyEventBody(key, down, time);
 }
+#pragma inline_depth()
 
 void CL_CharEvent(int key)
 {
@@ -1490,4 +1492,10 @@ void Key_Shutdown(void)
 // retail 0x40b440, empty and unreferenced; name unknown
 void Key_Stub_40b440(void)
 {
+}
+
+// retail 0x40b450, unreferenced; name unknown
+int Key_Zero_40b450(void)
+{
+    return 0;
 }

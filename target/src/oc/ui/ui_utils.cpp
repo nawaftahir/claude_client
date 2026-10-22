@@ -81,9 +81,9 @@ void Window_SetDynamicFlags(Window *w, const int flags)
     w->dynamicFlags[0] = flags;
 }
 
-void Menu_SetCursorItem(menuDef_t *menu, int cursorItem)
+void Window_AddDynamicFlags(Window *w, const int newFlags)
 {
-    menu->cursorItem[0] = cursorItem;
+    w->dynamicFlags[0] |= newFlags;
 }
 
 void Window_RemoveDynamicFlags(Window *w, const int newFlags)
@@ -96,6 +96,11 @@ void Window_RemoveDynamicFlags(Window *w, const int newFlags)
 
     flags &= ~mask;
     w->dynamicFlags[0] = flags;
+}
+
+void Window_SetStaticFlags(Window *w, const int flags)
+{
+    w->staticFlags = flags;
 }
 
 // Retail inlines this into Menu_HasItemLeft/Right.
@@ -120,6 +125,11 @@ qboolean UI_CursorInRect_540670(int x, int y, int w, int h)
         || uiInfo->uiDC.cursorx > x + w || uiInfo->uiDC.cursory > y + h)
         return 0;
     return 1;
+}
+
+void Window_SetOffsetTime(Window *w, int offsetTime)
+{
+    w->offsetTime[0] = offsetTime;
 }
 
 // retail 0x5407e0, unreferenced, name unknown: item to the left of the cursor item
@@ -279,11 +289,6 @@ Bool ListBox_HasValidCursorPos(const listBoxDef_t *listBox)
     return listBox->cursorPos[0] >= listBox->startPos[0];
 }
 
-void Window_AddDynamicFlags(Window *w, const int newFlags)
-{
-    w->dynamicFlags[0] |= newFlags;
-}
-
 void Item_SetScreenCoords(itemDef_t *item, float x, float y, int horzAlign, int vertAlign)
 {
     rectDef_t newRect;
@@ -367,11 +372,6 @@ listBoxDef_t *Item_GetListBoxDef(itemDef_t *item)
     return NULL;
 }
 
-multiDef_t *Item_GetMultiDef(itemDef_t *item)
-{
-    return item->typeData.multi;
-}
-
 editFieldDef_t *Item_GetEditFieldDef(itemDef_t *item)
 {
 
@@ -392,6 +392,11 @@ editFieldDef_t *Item_GetEditFieldDef(itemDef_t *item)
     return NULL;
 }
 
+multiDef_t *Item_GetMultiDef(itemDef_t *item)
+{
+    return item->typeData.multi;
+}
+
 static long hashForString(const char *str)
 {
     int i;
@@ -406,9 +411,9 @@ static long hashForString(const char *str)
     return hash & 2047;
 }
 
-void Window_SetStaticFlags(Window *w, const int flags)
+void Menu_SetCursorItem(menuDef_t *menu, int cursorItem)
 {
-    w->staticFlags = flags;
+    menu->cursorItem[0] = cursorItem;
 }
 
 void *UI_Alloc(int size, int alignment)
@@ -491,11 +496,6 @@ qboolean Float_Parse(const char **p, float *f)
 
     *f = (float)atof(token);
     return 1;
-}
-
-void Window_SetOffsetTime(Window *w, int offsetTime)
-{
-    w->offsetTime[0] = offsetTime;
 }
 
 void Window_SetRect(Window *w, const UiRectangle *rect)

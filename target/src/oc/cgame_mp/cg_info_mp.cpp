@@ -83,17 +83,17 @@ void CG_DrawInformation(qboolean serverLoading)
     info = CL_GetConfigString(0);
     if (serverLoading)
     {
-        mapname = legacyHacks->cl_serverloadmap;
+        I_strncpyz(string, legacyHacks->cl_serverloadmap, sizeof(string));
     }
     else
     {
         mapname = Info_ValueForKey(info, "mapname");
         if (!mapname[0])
             mapname = Dvar_GetString("mapname");
+        I_strncpyz(string, mapname, sizeof(string));
     }
-    I_strncpyz(string, mapname, sizeof(string));
     for (s = string; *s; s++)
-        *s = toupper(*s);
+        *s = tolower(*s);
 
     UI_DrawMapLevelshot();
 

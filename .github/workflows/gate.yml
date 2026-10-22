@@ -16,8 +16,8 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: target/build/obj
+          # exact-commit cache only: a fallback restore lands objects newer than the checked-out sources, so make skips changed files
           key: obj-${{ github.sha }}
-          restore-keys: obj-
       - name: Build
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin

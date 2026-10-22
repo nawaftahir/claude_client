@@ -956,6 +956,44 @@ void Script_SetFocusByDvar(displayContextDef_t *dc, itemDef_t *item, const char 
     }
 }
 
+void Script_Show(displayContextDef_t *dc, itemDef_t *item, const char **args);
+void Script_Hide(displayContextDef_t *dc, itemDef_t *item, const char **args);
+void Script_FadeIn(displayContextDef_t *dc, itemDef_t *item, const char **args);
+void Script_FadeOut(displayContextDef_t *dc, itemDef_t *item, const char **args);
+void Script_GetAutoUpdate(displayContextDef_t *dc, itemDef_t *item, const char **args);
+static commandDef_t commandList[29] = {
+    { "fadein", (void (*)())&Script_FadeIn },
+    { "fadeout", (void (*)())&Script_FadeOut },
+    { "show", (void (*)())&Script_Show },
+    { "hide", (void (*)())&Script_Hide },
+    { "setcolor", (void (*)())&Script_SetColor },
+    { "open", (void (*)())&Script_Open },
+    { "openforgametype", (void (*)())&Script_OpenForGameType },
+    { "closeforgametype", (void (*)())&Script_CloseForGameType },
+    { "close", (void (*)())&Script_Close },
+    { "ingameopen", (void (*)())&Script_InGameOpen },
+    { "ingameclose", (void (*)())&Script_InGameClose },
+    { "setbackground", (void (*)())&Script_SetBackground },
+    { "setitemcolor", (void (*)())&Script_SetItemColor },
+    { "setfocus", (void (*)())&Script_SetFocus },
+    { "setfocusbydvar", (void (*)())&Script_SetFocusByDvar },
+    { "transition", (void (*)())&Script_Transition },
+    { "setdvar", (void (*)())&Script_SetDvar },
+    { "exec", (void (*)())&Script_Exec },
+    { "execnow", (void (*)())&Script_ExecNow },
+    { "execOnDvarStringValue", (void (*)())&Script_ExecOnDvarStringValue },
+    { "execOnDvarIntValue", (void (*)())&Script_ExecOnDvarIntValue },
+    { "execOnDvarFloatValue", (void (*)())&Script_ExecOnDvarFloatValue },
+    { "execNowOnDvarStringValue", (void (*)())&Script_ExecNowOnDvarStringValue },
+    { "execNowOnDvarIntValue", (void (*)())&Script_ExecNowOnDvarIntValue },
+    { "execNowOnDvarFloatValue", (void (*)())&Script_ExecNowOnDvarFloatValue },
+    { "play", (void (*)())&Script_Play },
+    { "orbit", (void (*)())&Script_Orbit },
+    { "getautoupdate", (void (*)())&Script_GetAutoUpdate },
+    { "scriptmenuresponse", (void (*)())&Script_ScriptMenuResponse }
+};
+static int scriptCommandCount = sizeof(commandList) / sizeof(commandDef_t);
+
 void Script_SetDvar(displayContextDef_t *dc, itemDef_t *item, const char **args)
 {
     (void)dc;
@@ -1318,6 +1356,45 @@ int Item_ListBox_OverLB(itemDef_t *item, float x, float y)
             return 0x1000;
     }
     return 0;
+}
+
+void Item_ListBox_MouseEnter(itemDef_t *item, float x, float y)
+{
+    rectDef_t r;
+    listBoxDef_s *listPtr;
+
+    listPtr = Item_GetListBoxDef(item);
+    if (!listPtr)
+        return;
+    Window_RemoveDynamicFlags(&item->window, 0x1f00);
+    item->window.dynamicFlags[0] |= Item_ListBox_OverLB(item, x, y);
+    r.horzAlign = item->window.rect[0].horzAlign;
+    r.vertAlign = item->window.rect[0].vertAlign;
+    if (Window_IsHorizontal(&item->window)) {
+        if (!(item->window.dynamicFlags[0] & 0x1f00)) {
+            if (listPtr->elementStyle == 1) {
+                r.x = item->window.rect[0].x;
+                r.y = item->window.rect[0].y;
+                r.h = item->window.rect[0].h - 16.0f;
+                r.w = item->window.rect[0].w - listPtr->drawPadding;
+                if (Rect_ContainsPoint(&r, x, y)) {
+                    listPtr->cursorPos[0] = (int)((x - r.x) / listPtr->elementWidth) + listPtr->startPos[0];
+                    if (listPtr->cursorPos[0] >= listPtr->endPos[0])
+                        listPtr->cursorPos[0] = listPtr->endPos[0];
+                }
+            }
+        }
+    } else if (!(item->window.dynamicFlags[0] & 0x1f00)) {
+        r.x = item->window.rect[0].x;
+        r.y = item->window.rect[0].y;
+        r.w = item->window.rect[0].w - 16.0f;
+        r.h = item->window.rect[0].h - listPtr->drawPadding;
+        if (Rect_ContainsPoint(&r, x, y)) {
+            listPtr->cursorPos[0] = (int)((y - 2.0f - r.y) / listPtr->elementHeight) + listPtr->startPos[0];
+            if (listPtr->cursorPos[0] > listPtr->endPos[0])
+                listPtr->cursorPos[0] = listPtr->endPos[0];
+        }
+    }
 }
 
 void Item_MouseEnter(displayContextDef_t *dc, itemDef_t *item, float x, float y)
@@ -2763,6 +2840,65 @@ void Controls_GetConfig(void)
     }
 }
 
+static bind_t g_bindings[56] = {
+    { (char *)"+scores", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+speed", 0xc9, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+forward", 0x77, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+back", 0x73, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+moveleft", 0x2c, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+moveright", 0x2e, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+moveup", 0x20, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+movedown", 0x63, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+left", 0x9c, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+right", 0x9d, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+strafe", 0x9e, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+lookup", 0xa3, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+lookdown", 0xa2, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+mlook", 0x2f, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"centerview", 0xa6, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+attack", 0x9f, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"weapprev", 0xcd, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"weapnext", 0xce, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+frag", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+smoke", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"scoresUp", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"scoresDown", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"chatmodepublic", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"chatmodeteam", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+activate", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+reload", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"help", 0xa7, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+leanleft", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+leanright", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+usereload", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"vote yes", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"vote no", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"mp_QuickMessage", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"weaponslot primary", 0x31, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"weaponslot primaryb", 0x32, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+binoculars", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+breath_binoculars", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+melee", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+holdbreath", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+melee_breath", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+prone", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+stance", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"lowerstance", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"raisestance", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"togglecrouch", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"toggleprone", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"goprone", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"gocrouch", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+gostand", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"toggleads", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"leaveads", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"+talk", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"togglemenu", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"screenshot", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"screenshotJPEG", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
+    { (char *)"openScriptMenu ingame changeweapon", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff }
+};
+
 void Controls_SetConfig(qboolean restart)
 {
     int i;
@@ -3470,90 +3606,11 @@ void Menu_Paint(displayContextDef_t *dc, menuDef_t *menu, qboolean forcePaint)
     }
 }
 
-int Menu_Count(displayContextDef_t *dc)
-{
-    return dc->menuCount;
-}
 
-qboolean Display_MouseMove(displayContextDef_t *dc, void *p, int x, int y)
-{
-    int i;
-    menuDef_t *menu;
-    UiRectangle r;
 
-    menu = (menuDef_t *)p;
-    if (!menu) {
-        menu = Menu_GetFocused(dc);
-        if (menu && (menu->window.staticFlags & 0x1000000)) {
-            Menu_HandleMouseMove(dc, menu, (float)x, (float)y);
-            return 1;
-        }
-        for (i = dc->openMenuCount - 1; i >= 0; i--) {
-            if (Menu_HandleMouseMove(dc, dc->menuStack[i], (float)x, (float)y))
-                break;
-        }
-    } else {
-        r = menu->window.rect[0];
-        r.x += (float)x;
-        r.y += (float)y;
-        Window_SetRect(&menu->window, &r);
-        Menu_UpdatePosition(menu);
-    }
-    return 1;
-}
-
-static qboolean Menu_OverActiveItem(menuDef_t *menu, float x, float y)
-{
-    int i;
-    itemDef_t *overItem;
-
-    if (menu && (menu->window.dynamicFlags[0] & 0x4004)) {
-        if (Rect_ContainsPoint(&menu->window.rect[0], x, y)) {
-            for (i = 0; i < menu->itemCount; i++) {
-                if (!(menu->items[i]->window.dynamicFlags[0] & 0x4004))
-                    continue;
-                if (menu->items[i]->window.staticFlags & 0x100000)
-                    continue;
-                if (Rect_ContainsPoint(&menu->items[i]->window.rect[0], x, y)) {
-                    overItem = menu->items[i];
-                    if (overItem->type == 0 && overItem->text) {
-                        if (Rect_ContainsPoint(Item_CorrectedTextRect(overItem), x, y))
-                            return 1;
-                        continue;
-                    }
-                    return 1;
-                }
-            }
-        }
-    }
-    return 0;
-}
 
 // retail 0x53cdd0, unreferenced; Kisak UI_AddMenu (SUPPORTED)
-void UI_AddMenu(displayContextDef_t *dc, menuDef_t *menu)
-{
-    if (dc->menuCount >= 128)
-        Com_Error(ERR_DROP, "UI_AddMenu: Maximum number of menus %d exceeded.", 128);
-    dc->Menus[dc->menuCount] = menu;
-    dc->menuCount++;
-}
 
-void UI_AddMenuList(displayContextDef_t *dc, MenuList *menuList)
-{
-    int i;
-
-    /* was raw x86 offsets: menus ptr @+4 read as 4-byte (truncated), Menus[] stride *4 */
-    if (!menuList)
-        return;
-
-    for (i = 0; i < menuList->menuCount; i++) {
-        menuDef_t *menu = menuList->menus[i];
-        if (dc->menuCount >= 128)
-            Com_Error(ERR_DROP, "UI_AddMenu: Maximum number of menus %d exceeded.", 128);
-        dc->Menus[dc->menuCount] = menu;
-        dc->menuCount++;
-    }
-}
 
 
 #if COD2_TRACE
@@ -4029,9 +4086,10 @@ static __declspec(noinline) qboolean Item_ListBox_HandleKey(displayContextDef_t 
                     listPtr->startPos[0] = listPtr->cursorPos[0];
                 if (listPtr->cursorPos[0] >= listPtr->startPos[0] + viewmax)
                     listPtr->startPos[0] = listPtr->cursorPos[0] - viewmax + 1;
+                int pos = listPtr->cursorPos[0];
                 int *cursorPos = &item->cursorPos[0];
-                *cursorPos = listPtr->cursorPos[0];
-                UI_FeederSelection(item->special, listPtr->cursorPos[0]);
+                *cursorPos = pos;
+                UI_FeederSelection(item->special, pos);
             } else {
                 listPtr->startPos[0]--;
                 if (listPtr->startPos[0] < 0)
@@ -4127,7 +4185,8 @@ static __declspec(noinline) qboolean Item_ListBox_HandleKey(displayContextDef_t 
             if (item->cursorPos[0] != listPtr->cursorPos[0]) {
                 if (item->cursorPos[0] < 0)
                     item->cursorPos[0] = listPtr->cursorPos[0];
-                if (listPtr->cursorPos[0] < UI_FeederCount(item->special))
+                int pos = listPtr->cursorPos[0];
+                if (pos < UI_FeederCount(item->special))
                     item->cursorPos[0] = listPtr->cursorPos[0];
                 UI_FeederSelection(item->special, item->cursorPos[0]);
             }
@@ -4201,45 +4260,6 @@ static __declspec(noinline) qboolean Item_ListBox_HandleKey(displayContextDef_t 
         return 1;
     }
     return 0;
-}
-
-void Item_ListBox_MouseEnter(itemDef_t *item, float x, float y)
-{
-    rectDef_t r;
-    listBoxDef_s *listPtr;
-
-    listPtr = Item_GetListBoxDef(item);
-    if (!listPtr)
-        return;
-    Window_RemoveDynamicFlags(&item->window, 0x1f00);
-    item->window.dynamicFlags[0] |= Item_ListBox_OverLB(item, x, y);
-    r.horzAlign = item->window.rect[0].horzAlign;
-    r.vertAlign = item->window.rect[0].vertAlign;
-    if (Window_IsHorizontal(&item->window)) {
-        if (!(item->window.dynamicFlags[0] & 0x1f00)) {
-            if (listPtr->elementStyle == 1) {
-                r.x = item->window.rect[0].x;
-                r.y = item->window.rect[0].y;
-                r.h = item->window.rect[0].h - 16.0f;
-                r.w = item->window.rect[0].w - listPtr->drawPadding;
-                if (Rect_ContainsPoint(&r, x, y)) {
-                    listPtr->cursorPos[0] = (int)((x - r.x) / listPtr->elementWidth) + listPtr->startPos[0];
-                    if (listPtr->cursorPos[0] >= listPtr->endPos[0])
-                        listPtr->cursorPos[0] = listPtr->endPos[0];
-                }
-            }
-        }
-    } else if (!(item->window.dynamicFlags[0] & 0x1f00)) {
-        r.x = item->window.rect[0].x;
-        r.y = item->window.rect[0].y;
-        r.w = item->window.rect[0].w - 16.0f;
-        r.h = item->window.rect[0].h - listPtr->drawPadding;
-        if (Rect_ContainsPoint(&r, x, y)) {
-            listPtr->cursorPos[0] = (int)((y - 2.0f - r.y) / listPtr->elementHeight) + listPtr->startPos[0];
-            if (listPtr->cursorPos[0] > listPtr->endPos[0])
-                listPtr->cursorPos[0] = listPtr->endPos[0];
-        }
-    }
 }
 
 void Item_Paint(displayContextDef_t *dc, itemDef_t *item)
@@ -4437,6 +4457,10 @@ void Item_Paint(displayContextDef_t *dc, itemDef_t *item)
         break;
     }
 }
+int Menu_Count(displayContextDef_t *dc)
+{
+    return dc->menuCount;
+}
 
 void Menu_PaintAll(displayContextDef_t *dc)
 {
@@ -4470,97 +4494,82 @@ void Menu_PaintAll(displayContextDef_t *dc)
         UI_DrawText(va("fps: %f", dc->FPS), 0x7fffffff, UI_GetFontHandle(0, 0.5f), 5.0f, 25.0f, 0, 0, 0.5f, v, 0);
     }
 }
+qboolean Display_MouseMove(displayContextDef_t *dc, void *p, int x, int y)
+{
+    int i;
+    menuDef_t *menu;
+    UiRectangle r;
 
-static commandDef_t commandList[29] = {
-    { "fadein", (void (*)())&Script_FadeIn },
-    { "fadeout", (void (*)())&Script_FadeOut },
-    { "show", (void (*)())&Script_Show },
-    { "hide", (void (*)())&Script_Hide },
-    { "setcolor", (void (*)())&Script_SetColor },
-    { "open", (void (*)())&Script_Open },
-    { "openforgametype", (void (*)())&Script_OpenForGameType },
-    { "closeforgametype", (void (*)())&Script_CloseForGameType },
-    { "close", (void (*)())&Script_Close },
-    { "ingameopen", (void (*)())&Script_InGameOpen },
-    { "ingameclose", (void (*)())&Script_InGameClose },
-    { "setbackground", (void (*)())&Script_SetBackground },
-    { "setitemcolor", (void (*)())&Script_SetItemColor },
-    { "setfocus", (void (*)())&Script_SetFocus },
-    { "setfocusbydvar", (void (*)())&Script_SetFocusByDvar },
-    { "transition", (void (*)())&Script_Transition },
-    { "setdvar", (void (*)())&Script_SetDvar },
-    { "exec", (void (*)())&Script_Exec },
-    { "execnow", (void (*)())&Script_ExecNow },
-    { "execOnDvarStringValue", (void (*)())&Script_ExecOnDvarStringValue },
-    { "execOnDvarIntValue", (void (*)())&Script_ExecOnDvarIntValue },
-    { "execOnDvarFloatValue", (void (*)())&Script_ExecOnDvarFloatValue },
-    { "execNowOnDvarStringValue", (void (*)())&Script_ExecNowOnDvarStringValue },
-    { "execNowOnDvarIntValue", (void (*)())&Script_ExecNowOnDvarIntValue },
-    { "execNowOnDvarFloatValue", (void (*)())&Script_ExecNowOnDvarFloatValue },
-    { "play", (void (*)())&Script_Play },
-    { "orbit", (void (*)())&Script_Orbit },
-    { "getautoupdate", (void (*)())&Script_GetAutoUpdate },
-    { "scriptmenuresponse", (void (*)())&Script_ScriptMenuResponse }
-};
-static int scriptCommandCount = sizeof(commandList) / sizeof(commandDef_t);
-static bind_t g_bindings[56] = {
-    { (char *)"+scores", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)"+speed", 0xc9, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)"+forward", 0x77, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)"+back", 0x73, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)"+moveleft", 0x2c, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)"+moveright", 0x2e, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)"+moveup", 0x20, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)"+movedown", 0x63, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)"+left", 0x9c, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)"+right", 0x9d, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)"+strafe", 0x9e, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)"+lookup", 0xa3, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)"+lookdown", 0xa2, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)"+mlook", 0x2f, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)"centerview", 0xa6, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)"+attack", 0x9f, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)"weapprev", 0xcd, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)"weapnext", 0xce, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)"+frag", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)"+smoke", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)"scoresUp", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)"scoresDown", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)"chatmodepublic", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)"chatmodeteam", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)"+activate", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)"+reload", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)"help", 0xa7, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)"+leanleft", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)"+leanright", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)"+usereload", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)"vote yes", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)"vote no", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)"mp_QuickMessage", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)"weaponslot primary", 0x31, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)"weaponslot primaryb", 0x32, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)"+binoculars", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)"+breath_binoculars", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)"+melee", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)"+holdbreath", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)"+melee_breath", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)"+prone", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)"+stance", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)"lowerstance", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)"raisestance", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)"togglecrouch", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)"toggleprone", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)"goprone", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)"gocrouch", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)"+gostand", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)"toggleads", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)"leaveads", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)"+talk", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)"togglemenu", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)"screenshot", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)"screenshotJPEG", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },
-    { (char *)"openScriptMenu ingame changeweapon", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff }
-};
+    menu = (menuDef_t *)p;
+    if (!menu) {
+        menu = Menu_GetFocused(dc);
+        if (menu && (menu->window.staticFlags & 0x1000000)) {
+            Menu_HandleMouseMove(dc, menu, (float)x, (float)y);
+            return 1;
+        }
+        for (i = dc->openMenuCount - 1; i >= 0; i--) {
+            if (Menu_HandleMouseMove(dc, dc->menuStack[i], (float)x, (float)y))
+                break;
+        }
+    } else {
+        r = menu->window.rect[0];
+        r.x += (float)x;
+        r.y += (float)y;
+        Window_SetRect(&menu->window, &r);
+        Menu_UpdatePosition(menu);
+    }
+    return 1;
+}
+static qboolean Menu_OverActiveItem(menuDef_t *menu, float x, float y)
+{
+    int i;
+    itemDef_t *overItem;
+
+    if (menu && (menu->window.dynamicFlags[0] & 0x4004)) {
+        if (Rect_ContainsPoint(&menu->window.rect[0], x, y)) {
+            for (i = 0; i < menu->itemCount; i++) {
+                if (!(menu->items[i]->window.dynamicFlags[0] & 0x4004))
+                    continue;
+                if (menu->items[i]->window.staticFlags & 0x100000)
+                    continue;
+                if (Rect_ContainsPoint(&menu->items[i]->window.rect[0], x, y)) {
+                    overItem = menu->items[i];
+                    if (overItem->type == 0 && overItem->text) {
+                        if (Rect_ContainsPoint(Item_CorrectedTextRect(overItem), x, y))
+                            return 1;
+                        continue;
+                    }
+                    return 1;
+                }
+            }
+        }
+    }
+    return 0;
+}
+void UI_AddMenu(displayContextDef_t *dc, menuDef_t *menu)
+{
+    if (dc->menuCount >= 128)
+        Com_Error(ERR_DROP, "UI_AddMenu: Maximum number of menus %d exceeded.", 128);
+    dc->Menus[dc->menuCount] = menu;
+    dc->menuCount++;
+}
+void UI_AddMenuList(displayContextDef_t *dc, MenuList *menuList)
+{
+    int i;
+
+    /* was raw x86 offsets: menus ptr @+4 read as 4-byte (truncated), Menus[] stride *4 */
+    if (!menuList)
+        return;
+
+    for (i = 0; i < menuList->menuCount; i++) {
+        menuDef_t *menu = menuList->menus[i];
+        if (dc->menuCount >= 128)
+            Com_Error(ERR_DROP, "UI_AddMenu: Maximum number of menus %d exceeded.", 128);
+        dc->Menus[dc->menuCount] = menu;
+        dc->menuCount++;
+    }
+}
+
 
 const unsigned char border[96] = {
     0x10, 0x00, 0x00, 0x00, 0x11, 0x00, 0x00, 0x00, 0x12, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,

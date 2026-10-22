@@ -634,69 +634,6 @@ void UI_UpdateTime(int realtime)
     uiInfo->uiDC.FPS = (float)(4000 / sum);
 }
 
-void UI_Refresh(void)
-{
-#if COD2_TRACE
-    static int refreshTraceCount;
-    static int fileTraceCount;
-#endif
-
-    if (Menu_Count(&uiInfo->uiDC) <= 0)
-        return;
-
-#if COD2_TRACE
-    if (fileTraceCount < 40) {
-        FILE *f = fopen("x64_ui_trace.txt", fileTraceCount ? "a" : "w");
-        if (f) {
-            int i;
-            fprintf(f, "ui[%d] active=%d menuCount=%d openCount=%d keyCatchers=0x%x\n",
-                    fileTraceCount, uiInfo->currentMenuType, uiInfo->uiDC.menuCount,
-                    uiInfo->uiDC.openMenuCount, (clients)->keyCatchers);
-            for (i = 0; i < uiInfo->uiDC.openMenuCount && i < 16; i++) {
-                menuDef_t *menu = uiInfo->uiDC.menuStack[i];
-                fprintf(f, "  stack[%d]=%s flags=0x%x full=%d\n",
-                        i,
-                        menu && menu->window.name ? menu->window.name : "<null>",
-                        menu ? menu->window.dynamicFlags[0] : 0,
-                        menu ? menu->fullScreen : 0);
-            }
-            fclose(f);
-        }
-        fileTraceCount++;
-    }
-
-    if (refreshTraceCount < 80 && (uiInfo->currentMenuType || uiInfo->uiDC.openMenuCount > 0)) {
-        int i;
-        if (getenv("MTRACE"))
-            Com_Printf("[menu-trace] UI_Refresh active=%d menuCount=%d openCount=%d",
-                       uiInfo->currentMenuType, uiInfo->uiDC.menuCount, uiInfo->uiDC.openMenuCount);
-        for (i = 0; i < uiInfo->uiDC.openMenuCount && i < 16; ++i) {
-            menuDef_t *menu = uiInfo->uiDC.menuStack[i];
-            Com_Printf(" stack[%d]=%s", i, menu && menu->window.name ? menu->window.name : "<null>");
-        }
-        Com_Printf("\n");
-        ++refreshTraceCount;
-    }
-#endif
-
-    Menu_PaintAll(&uiInfo->uiDC);
-    UI_DoServerRefresh();
-    UI_BuildServerStatus(0);
-    UI_BuildFindPlayerList();
-
-#if COD2_FEATURE_GAMEPAD
-
-    UI_ConsoleMode_DrawGlyphs(uiInfo);
-    if (UI_ConsoleMode_SuppressCursor())
-        return;
-#endif
-
-    UI_DrawHandlePic((float)(uiInfo->uiDC.cursorx - 16),
-                     (float)(uiInfo->uiDC.cursory - 16),
-                     32.0f, 32.0f, 4, 4, 0,
-                     sharedUiInfo.assets.cursor);
-}
-
 void UI_Shutdown(void)
 {
     Menus_CloseAll(&uiInfo->uiDC);
@@ -839,6 +776,11 @@ static void UI_DrawMapPreview(const rectDef_t *rect, const vec_t *color, int net
     UI_DrawHandlePic(rect->x, rect->y, rect->w, rect->h,
                      rect->horzAlign, rect->vertAlign,
                      color, material);
+}
+
+static void UI_DrawMapCinematic(const rectDef_t *rect, const vec_t *color, int net)
+{
+    UI_DrawMapPreview(rect, color, net);
 }
 
 static void UI_DrawNetMapPreview(rectDef_t *rect, float scale, vec_t *color)
@@ -1063,6 +1005,32 @@ void UI_SetMap(const char *mapname, const char *gametype)
     }
 }
 
+Bool UI_DrawRecordLevel(rectDef_t *rect)
+{
+    float voiceLevel;
+    const vec_t *white;
+
+    voiceLevel = Voice_GetVoiceLevel();
+
+    if (voiceLevel > 0.0) {
+        UI_FillRect(rect->x + 2.0f, rect->y + 2.0f, (voiceLevel * rect->w) - 4.0f, rect->h - 4.0f, 0, 0, (const vec_t *)((void *)&colorWhite));
+    }
+
+    white = (const vec_t *)((void *)&colorWhite);
+
+    UI_FillRect(rect->x, rect->y, rect->w, 1.0f, 0, 0, white);
+
+    UI_FillRect(rect->x, rect->h + rect->y - 1.0f, rect->w, 1.0f, 0, 0, white);
+
+    UI_FillRect(rect->x, rect->y + 1.0f, 1.0f, rect->h - 2.0f, 0, 0, white);
+
+    UI_FillRect(rect->x + rect->w - 1.0f, rect->y + 1.0f, 1.0f, rect->h - 2.0f, 0, 0, white);
+
+    return 1;
+}
+
+
+
 static void UI_DrawLocalTalking(rectDef_t *rect, vec_t *color)
 {
     if ((sv_voice)->current.enabled && (cl_voice)->current.enabled && IsTalking())
@@ -1126,11 +1094,6 @@ static void UI_DrawTalkerNum(int num, rectDef_t *rect, FontHandle font, vec_t *c
 }
 
 // retail 0x52c6d0; cinematic half gone, CoD1 shape (SUPPORTED)
-static void UI_DrawMapCinematic(const rectDef_t *rect, const vec_t *color, int net)
-{
-    UI_DrawMapPreview(rect, color, net);
-}
-
 void UI_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAlign, float text_x, float text_y, int ownerDraw, int ownerDrawFlags, int align, float special, FontHandle font, float scale, vec_t *color, MaterialHandle material, int textStyle)
 {
     rectDef_t rect;
@@ -2365,6 +2328,32 @@ static void __attribute_regparm__(0) UI_BuildServerDisplayList(qboolean force)
     sharedUiInfo.serverStatus.refreshtime = uiInfo->uiDC.realTime;
 }
 
+static serverStatusDvar_t serverStatusDvars[23] = {
+    { "sv_hostname", "@EXE_SV_INFO_SERVERNAME", (sscType_t)0x0 },
+    { "address", "@EXE_SV_INFO_ADDRESS", (sscType_t)0x0 },
+    { "pswrd", "@EXE_SV_INFO_PASSWORD", (sscType_t)0x1 },
+    { "gamename", "@EXE_SV_INFO_GAMENAME", (sscType_t)0x0 },
+    { "g_gametype", "@EXE_SV_INFO_GAMETYPE", (sscType_t)0x0 },
+    { "sv_pure", "@EXE_SV_INFO_PURE", (sscType_t)0x1 },
+    { "mapname", "@EXE_SV_INFO_MAP", (sscType_t)0x0 },
+    { "shortversion", "@EXE_SV_INFO_VERSION", (sscType_t)0x0 },
+    { "protocol", "@EXE_SV_INFO_PROTOCOL", (sscType_t)0x0 },
+    { "sv_maxping", "@EXE_SV_INFO_MAXPING", (sscType_t)0x0 },
+    { "sv_minping", "@EXE_SV_INFO_MINPING", (sscType_t)0x0 },
+    { "sv_maxrate", "@EXE_SV_INFO_MAXRATE", (sscType_t)0x0 },
+    { "sv_floodprotect", "@EXE_SV_INFO_FLOODPROTECT", (sscType_t)0x1 },
+    { "sv_allowanonymous", "@EXE_SV_INFO_ALLOWANON", (sscType_t)0x0 },
+    { "sv_maxclients", "@EXE_SV_INFO_MAXCLIENTS", (sscType_t)0x0 },
+    { "sv_privateclients", "@EXE_SV_INFO_PRIVATECLIENTS", (sscType_t)0x0 },
+    { "scr_friendlyFire", "@EXE_SV_INFO_FRIENDLY_FIRE", (sscType_t)0x0 },
+    { "fs_game", "@EXE_SV_INFO_MOD", (sscType_t)0x0 },
+    { "mod", "@MENU_MODS", (sscType_t)0x1 },
+    { "scr_killcam", "@EXE_SV_INFO_KILLCAM", (sscType_t)0x1 },
+    { "g_antilag", "@EXE_SV_INFO_ANTILAG", (sscType_t)0x1 },
+    { "sv_voice", "@EXE_SV_INFO_VOICE", (sscType_t)0x1 },
+    { 0, 0, (sscType_t)0x0 }
+};
+
 static void UI_AddServerStatusDvarRows(serverStatusInfo_t *info)
 {
     int i, j, index;
@@ -2904,6 +2893,148 @@ void UI_FeederSelection(float feederID, int index)
     }
 }
 
+static void UI_GetGameTypesList(void)
+{
+    char szGameTypeList[0x1000];
+    int iNumGameTypeScripts;
+    int i;
+    char *pszFileName;
+    const char *pBuffParse;
+
+    sharedUiInfo.numGameTypes = 0;
+    sharedUiInfo.numJoinGameTypes = 0;
+
+    sharedUiInfo.joinGameTypes[sharedUiInfo.numJoinGameTypes].gameType = String_Alloc("All");
+    sharedUiInfo.joinGameTypes[sharedUiInfo.numJoinGameTypes].gameTypeName = "";
+    sharedUiInfo.numJoinGameTypes++;
+
+    iNumGameTypeScripts = FS_GetFileList("maps/mp/gametypes", "gsc", FS_LIST_PURE_ONLY, szGameTypeList, 0x1000);
+
+    pszFileName = szGameTypeList;
+    for (i = 0; i < iNumGameTypeScripts; i++) {
+        int iLen = strlen(pszFileName);
+
+        if (pszFileName[0] == '_') {
+            pszFileName += iLen + 1;
+        } else {
+            char *pszExt = pszFileName + iLen - 4;
+
+            if (!I_stricmp(pszExt, ".gsc"))
+                *pszExt = '\0';
+
+            if (sharedUiInfo.numGameTypes == 32 || sharedUiInfo.numJoinGameTypes == 32) {
+                Com_Printf("Too many game type scripts found! Only loading the first %i\n", 31);
+                break;
+            }
+
+            sharedUiInfo.gameTypes[sharedUiInfo.numGameTypes].gameType = String_Alloc(pszFileName);
+            sharedUiInfo.joinGameTypes[sharedUiInfo.numJoinGameTypes].gameType = sharedUiInfo.gameTypes[sharedUiInfo.numGameTypes].gameType;
+
+            pBuffParse = GetMenuBuffer(va("maps/mp/gametypes/%s.txt", pszFileName));
+            if (!pBuffParse) {
+                sharedUiInfo.gameTypes[sharedUiInfo.numGameTypes].gameTypeName = sharedUiInfo.gameTypes[sharedUiInfo.numGameTypes].gameType;
+                sharedUiInfo.joinGameTypes[sharedUiInfo.numJoinGameTypes].gameTypeName = sharedUiInfo.gameTypes[sharedUiInfo.numGameTypes].gameTypeName;
+            } else {
+                sharedUiInfo.gameTypes[sharedUiInfo.numGameTypes].gameTypeName = String_Alloc(Com_Parse(&pBuffParse));
+                sharedUiInfo.joinGameTypes[sharedUiInfo.numJoinGameTypes].gameTypeName = sharedUiInfo.gameTypes[sharedUiInfo.numGameTypes].gameTypeName;
+            }
+
+            sharedUiInfo.numGameTypes++;
+            sharedUiInfo.numJoinGameTypes++;
+            pszFileName += iLen + 1;
+        }
+    }
+
+    if (!sharedUiInfo.numGameTypes)
+        Com_Error(ERR_FATAL, "\x15No game type scripts found in maps/mp/gametypes folder");
+}
+void UI_Init(void)
+{
+    int width, height;
+    MenuList *menuList;
+    int netGameTypeIdx;
+    float mPitch;
+
+    *(int *)uiInfo = 0;
+    g_ingameMenusLoaded = 0;
+
+    UI_LoadSoundAliases();
+
+    UI_RegisterDvars();
+
+    legacyHacksData.ui_newScriptMenu[0] = 0;
+    legacyHacksData.ui_newScriptMenuIndex = -1;
+    legacyHacksData.ui_scriptMenu[0] = 0;
+    legacyHacksData.ui_scriptMenuIndex = -1;
+    legacyHacksData.ui_scriptMenuAllowResponse = 1;
+    legacyHacksData.ui_waitingScriptMenu[0] = 0;
+    legacyHacksData.ui_waitingScriptMenuIndex = -1;
+    legacyHacksData.ui_waitingScriptMenuNoMouse = 0;
+
+    String_Init();
+    Menu_Setup(&uiInfo->uiDC);
+
+    CL_GetScreenDimensions(&uiInfo->uiDC.screenWidth, &uiInfo->uiDC.screenHeight, (float *)((int *)&uiInfo->uiDC.screenAspect));
+
+    width = uiInfo->uiDC.screenWidth;
+    height = uiInfo->uiDC.screenHeight;
+
+    if (width * 480 > height * 640) {
+
+        uiInfo->uiDC.bias = ((float)width + (float)height * -1.3333333730697632f) * 0.5f;
+    } else {
+        *(int *)uiInfo = 0;
+    }
+
+    Sys_Milliseconds();
+    UI_GetGameTypesList();
+
+    ui_netGameType = (const dvar_t *)(Dvar_RegisterInt("ui_netGametype", 0, 0, sharedUiInfo.numGameTypes - 1, 0x1001));
+
+    UI_LoadArenas();
+
+    menuList = UI_LoadMenus("ui_mp/menus.txt", 3);
+    UI_AddMenuList(&uiInfo->uiDC, menuList);
+
+    if (g_mapname[0] != '\0') {
+        UI_MapLoadInfo(va("maps/mp/%s.csv", g_mapname));
+    }
+
+    UI_AssetCache();
+    Menus_CloseAll(&uiInfo->uiDC);
+
+    sharedUiInfo.serverHardwareIconList[0] = CL_RegisterMaterialNoMip("server_hardware_unknown", 3);
+    sharedUiInfo.serverHardwareIconList[1] = CL_RegisterMaterialNoMip("server_hardware_linux_dedicated", 3);
+    sharedUiInfo.serverHardwareIconList[2] = CL_RegisterMaterialNoMip("server_hardware_win_dedicated", 3);
+    sharedUiInfo.serverHardwareIconList[3] = CL_RegisterMaterialNoMip("server_hardware_mac_dedicated", 3);
+    sharedUiInfo.serverHardwareIconList[5] = CL_RegisterMaterialNoMip("server_hardware_win_listen", 3);
+    sharedUiInfo.serverHardwareIconList[6] = CL_RegisterMaterialNoMip("server_hardware_mac_listen", 3);
+
+    LAN_LoadCachedServers();
+
+    if (sharedUiInfo.serverStatus.sortKey != 9) {
+        sharedUiInfo.serverStatus.sortKey = 9;
+        qsort(sharedUiInfo.serverStatus.displayServers, sharedUiInfo.serverStatus.numDisplayServers, 4, UI_ServersQsortCompare);
+    }
+
+    mPitch = Dvar_GetFloat("m_pitch");
+    Dvar_SetBoolByName("ui_mousePitch", mPitch < 0.0f ? 1 : 0);
+
+    sharedUiInfo.serverStatus.currentServerCinematic = -1;
+    sharedUiInfo.previewMovie = -1;
+
+    netGameTypeIdx = (ui_netGameType)->current.integer;
+    Dvar_SetString((dvar_t *)ui_netGameTypeName, sharedUiInfo.gameTypes[netGameTypeIdx].gameType);
+
+    Dvar_RegisterBool("ui_multiplayer", 1, 0x1040);
+
+#    if COD2_FEATURE_GAMEPAD
+
+    UI_ConsoleMode_Init(uiInfo);
+    UI_Gamepad_RegisterMenus(uiInfo);
+#    endif
+}
+
 void UI_Pause(qboolean b)
 {
     if (b) {
@@ -2997,6 +3128,101 @@ const char *UI_GetTopActiveMenuName(void)
     return uiInfo->uiDC.menuStack[topMenuStackIndex]->window.name;
 }
 
+qboolean UI_SetActiveMenu(int menu)
+{
+    menuDef_t *pFocus;
+    const char *errorMsg;
+    const char *newMenu;
+
+    if (Menu_Count(&uiInfo->uiDC) <= 0)
+        return 0;
+
+    if (menu != UIMENU_SCRIPT_POPUP && menu != UIMENU_SCRIPT_POPUP_NO_MOUSE)
+        uiInfo->currentMenuType = (uiMenuCommand_t)(menu);
+
+    switch (menu) {
+    case UIMENU_NONE:
+        Key_SetCatcher(Key_GetCatcher() & ~8);
+        Dvar_SetIntByName("cl_paused", 0);
+        Menus_CloseAll(&uiInfo->uiDC);
+        return 1;
+
+    case UIMENU_MAIN:
+        Key_SetCatcher(8);
+        Menus_OpenByName(&uiInfo->uiDC, "main");
+        errorMsg = Dvar_GetString("com_errorMessage");
+        if (strlen(errorMsg) && I_stricmp(errorMsg, ";"))
+            Menus_OpenByName(&uiInfo->uiDC, "error_popmenu");
+        SND_FadeAllSounds(1.0f, 1000);
+        return 1;
+
+    case UIMENU_TEAM:
+        Key_SetCatcher(8);
+        Menus_OpenByName(&uiInfo->uiDC, "team");
+        return 1;
+
+    case UIMENU_NEED_CD:
+        Key_SetCatcher(8);
+        Menus_OpenByName(&uiInfo->uiDC, "needcd");
+        return 1;
+
+    case UIMENU_BAD_CD_KEY:
+        Key_SetCatcher(8);
+        Menus_OpenByName(&uiInfo->uiDC, "badcd");
+        return 1;
+
+    case UIMENU_INGAME:
+        Key_SetCatcher(8);
+        Menus_CloseAll(&uiInfo->uiDC);
+        if (!Menus_OpenByName(&uiInfo->uiDC, cg->scriptMainMenu))
+            Menus_OpenByName(&uiInfo->uiDC, "main");
+        return 1;
+
+    case UIMENU_WM_QUICKMESSAGE:
+        uiInfo->uiDC.cursorx = 0x27f;
+        uiInfo->uiDC.cursory = 0x1df;
+        Key_SetCatcher(8);
+        clients->displayHUDWithKeycatchUI = 1;
+        Menus_CloseAll(&uiInfo->uiDC);
+        Menus_OpenByName(&uiInfo->uiDC, "quickmessage");
+        return 1;
+
+    case UIMENU_WM_AUTOUPDATE:
+        Menus_OpenByName(&uiInfo->uiDC, "autoupdate");
+        return 1;
+
+    case UIMENU_SCRIPT_POPUP:
+    case UIMENU_SCRIPT_POPUP_NO_MOUSE:
+        pFocus = Menu_GetFocused(&uiInfo->uiDC);
+        if (pFocus && uiInfo->currentMenuType != UIMENU_SCRIPT_POPUP && uiInfo->currentMenuType != UIMENU_SCRIPT_POPUP_NO_MOUSE)
+            return 0;
+        newMenu = legacyHacks->ui_newScriptMenu;
+        if (!pFocus || I_stricmp(pFocus->window.name, newMenu)) {
+            uiInfo->currentMenuType = UIMENU_SCRIPT_POPUP;
+            if (menu == UIMENU_SCRIPT_POPUP_NO_MOUSE) {
+                uiInfo->uiDC.cursorx = 0x27f;
+                uiInfo->uiDC.cursory = 0x1df;
+            }
+            Key_SetCatcher(8);
+            Menus_CloseAll(&uiInfo->uiDC);
+            strcpy(legacyHacks->ui_scriptMenu, newMenu);
+            legacyHacks->ui_scriptMenuIndex = legacyHacks->ui_newScriptMenuIndex;
+            legacyHacks->ui_newScriptMenu[0] = 0;
+            legacyHacks->ui_newScriptMenuIndex = -1;
+            Menus_OpenByName(&uiInfo->uiDC, legacyHacks->ui_scriptMenu);
+        }
+        return 1;
+
+    case UIMENU_PLAYER_PROFILE:
+        Key_SetCatcher(8);
+        Menus_OpenByName(&uiInfo->uiDC, "player_profile");
+        SND_FadeAllSounds(1.0f, 1000);
+        return 1;
+    }
+
+    return 0;
+}
+
 qboolean UI_IsFullscreen(void)
 {
     return Menus_AnyFullScreenVisible(&uiInfo->uiDC);
@@ -3037,6 +3263,263 @@ static void Text_PaintCenter(float x, float y, FontHandle font, float scale, con
     float actualScale = CL_NormalizedTextScale(font, scale);
     int len = (int)((float)CL_TextWidth(text, 0, font) * actualScale);
     UI_DrawText(text, 0x7fffffff, font, x - (float)(len / 2), y, 0, 0, scale, color, 6);
+}
+
+static void UI_DisplayDownloadInfo(const char *downloadName, float centerPoint, float yStart, FontHandle font, float scale)
+{
+    static char dlText[] = "EXE_DOWNLOADING";
+    static char etaText[] = "EXE_EST_TIME_LEFT";
+    static char xferText[] = "EXE_TRANS_RATE";
+    static int tleEstimates[80] = { 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60 };
+    static int tleIndex;
+    LegacyHacks *legacyBase = legacyHacks;
+    int downloadSize = legacyBase->cl_downloadSize;
+    int downloadCount = legacyBase->cl_downloadCount;
+    int downloadTime = legacyBase->cl_downloadTime;
+    vec_t color[4];
+    float y1, y2, y3;
+    int xferRate = 0;
+    char dlSizeBuf[64];
+    char totalSizeBuf[64];
+    char xferRateBuf[64];
+    char dlTimeBuf[64];
+    const char *text;
+
+    {
+        const vec_t *cBlack = (const vec_t *)((void *)&colorBlack);
+        color[0] = cBlack[0];
+        color[1] = cBlack[1];
+        color[2] = cBlack[2];
+    }
+    color[3] = 0.2f;
+
+    y1 = yStart + 184.0f;
+    UI_FillRect(0, y1, 640.0f, 85.0f, 0, 0, color);
+    y2 = yStart + 185.0f;
+    UI_FillRect(0, y2, 640.0f, 83.0f, 0, 0, color);
+    y3 = yStart + 186.0f;
+    UI_FillRect(0, y3, 640.0f, 81.0f, 0, 0, color);
+
+    if (downloadSize > 0) {
+
+        const vec_t *cRed = (const vec_t *)((void *)&colorRed);
+        int width;
+        color[0] = cRed[0];
+        color[1] = cRed[1];
+        color[2] = cRed[2];
+        color[3] = 0.15f;
+
+        width = (int)((float)downloadCount / (float)downloadSize * 640.0f);
+        UI_FillRect(0, y1, (float)(width + 2), 85.0f, 0, 0, color);
+        UI_FillRect(0, y2, (float)(width + 1), 83.0f, 0, 0, color);
+        UI_FillRect(0, y3, (float)width, 81.0f, 0, 0, color);
+    }
+
+    {
+        const vec_t *ltGrey = (const vec_t *)((void *)&colorLtGrey);
+
+        UI_DrawText(UI_SafeTranslateString(dlText), 64, font, 24.0f, yStart + 210.0f, 0, 0, scale, ltGrey, 3);
+        UI_DrawText(UI_SafeTranslateString(etaText), 64, font, 24.0f, yStart + 235.0f, 0, 0, scale, ltGrey, 3);
+        UI_DrawText(UI_SafeTranslateString(xferText), 64, font, 24.0f, yStart + 260.0f, 0, 0, scale, ltGrey, 3);
+
+        if (downloadSize > 0)
+            text = va("%s (%d%%)", downloadName, downloadCount * 100 / downloadSize);
+        else
+            text = downloadName;
+
+        UI_DrawText(text, 0x7fffffff, font, 192.0f, yStart + 210.0f, 0, 0, scale, ltGrey, 3);
+
+        UI_ReadableSize(dlSizeBuf, 64, downloadCount);
+        UI_ReadableSize(totalSizeBuf, 64, downloadSize);
+
+        if (downloadCount < 0x1000 || !downloadTime) {
+
+            text = UI_SafeTranslateString("EXE_ESTIMATING");
+            Text_PaintCenter(centerPoint, yStart + 235.0f, font, scale, ltGrey, text);
+            text = va("(%s %s %s %s)", dlSizeBuf, UI_SafeTranslateString("EXE_OF"), totalSizeBuf, UI_SafeTranslateString("EXE_COPIED"));
+            Text_PaintCenter(centerPoint, yStart + 340.0f, font, scale, ltGrey, text);
+        } else {
+
+            if ((uiInfo->uiDC.realTime - downloadTime) / 1000)
+                xferRate = downloadCount / ((uiInfo->uiDC.realTime - downloadTime) / 1000);
+            else
+                xferRate = 0;
+
+            UI_ReadableSize(xferRateBuf, 64, xferRate);
+
+            if (downloadSize && xferRate) {
+                int n = downloadSize / xferRate;
+                int sum = 0;
+                int ti;
+
+                n = n - (((downloadCount / 1024) * n) / (downloadSize / 1024));
+
+                tleEstimates[tleIndex] = n;
+                tleIndex++;
+                if (tleIndex >= 80)
+                    tleIndex = 0;
+
+                for (ti = 0; ti < 80; ti++)
+                    sum += tleEstimates[ti];
+
+                UI_PrintTime(dlTimeBuf, 64, sum / 80);
+                UI_DrawText(dlTimeBuf, 0x7fffffff, font, 264.0f, yStart + 235.0f, 0, 0, scale, ltGrey, 3);
+                text = va("(%s %s %s %s)", dlSizeBuf, UI_SafeTranslateString("EXE_OF"), totalSizeBuf, UI_SafeTranslateString("EXE_COPIED"));
+                Text_PaintCenter(centerPoint, yStart + 320.0f, font, scale, ltGrey, text);
+            } else {
+
+                Text_PaintCenter(centerPoint, yStart + 235.0f, font, scale, ltGrey, UI_SafeTranslateString("EXE_ESTIMATING"));
+                if (downloadSize)
+                    text = va("(%s %s %s %s)", dlSizeBuf, UI_SafeTranslateString("EXE_OF"), totalSizeBuf, UI_SafeTranslateString("EXE_COPIED"));
+                else
+                    text = va("(%s %s)", dlSizeBuf, UI_SafeTranslateString("EXE_COPIED"));
+                Text_PaintCenter(centerPoint, yStart + 320.0f, font, scale, ltGrey, text);
+            }
+
+            if (xferRate) {
+                UI_DrawText(va("%s/%s", xferRateBuf, UI_SafeTranslateString("EXE_SECONDS")), 0x7fffffff, font, 200.0f, yStart + 260.0f, 0, 0, scale, ltGrey, 3);
+            }
+        }
+    }
+}
+
+void UI_DrawConnectScreen(void)
+{
+    uiClientState_t cstate;
+    char text[256];
+    char ps[60];
+    FontHandle font;
+    int displayed;
+    int i, len, index, yPrint;
+    int neednewline;
+    const char *s;
+
+    displayed = 0;
+    CG_DrawInformation(legacyHacks->cl_serverloadmap[0] || legacyHacks->cl_serverloadgametype[0] ? 1 : 0);
+    font = UI_GetFontHandle(0, 0.5f);
+
+    GetClientState(&cstate);
+
+    if (!I_stricmp(cstate.servername, "Auto-Updater")) {
+        if (legacyHacks->cl_downloadName[0])
+            strcpy(text, UI_ReplaceConversionString(UI_SafeTranslateString("EXE_DOWNLOADINGUPDATE"), Dvar_GetString("cl_updateversion")));
+        else
+            strcpy(text, UI_ReplaceConversionString(UI_SafeTranslateString("EXE_CONNECTINGTO"), cstate.servername));
+        Text_PaintCenter(320.0f, 55.0f, font, 0.5f, colorWhite, text);
+        displayed = 1;
+    } else if (g_mapname[0]) {
+        s = UI_SafeTranslateString(UI_GetGameTypeDisplayName(g_gametype));
+        Text_PaintCenter(320.0f, 89.0f, font, 0.5f, colorWhite, s);
+        Text_PaintCenter(320.0f, 119.0f, font, 0.5f, colorWhite, UI_GetMapDisplayName(g_mapname));
+        displayed = 1;
+    }
+
+    // server messages (full, bad version, ...) wrapped into lines
+    if (cstate.connState < CA_CONNECTED) {
+        neednewline = 0;
+        index = 0;
+        yPrint = 299;
+        s = UI_SafeTranslateString(cstate.messageString);
+        len = strlen(s);
+        for (i = 0; i < len; i++, index++) {
+            ps[index] = s[i];
+            if (index > 40 && i > 0)
+                neednewline = 1;
+            if (index >= 58 || i == len - 1 || (neednewline && s[i] == ' ')) {
+                ps[index + 1] = 0;
+                Text_PaintCenter(320.0f, (float)yPrint, font, 0.5f, colorYellow, ps);
+                neednewline = 0;
+                yPrint += 22;
+                index = -1;
+            }
+        }
+    }
+
+    switch (cstate.connState) {
+    case CA_CONNECTING:
+        if (displayed)
+            return;
+        s = UI_ReplaceConversionInt(UI_SafeTranslateString("EXE_AWAITINGCONNECTION"), cstate.connectPacketCount);
+        break;
+    case CA_CHALLENGING:
+        if (displayed)
+            return;
+        s = UI_ReplaceConversionInt(UI_SafeTranslateString("EXE_AWAITINGCHALLENGE"), cstate.connectPacketCount);
+        break;
+    case CA_CONNECTED:
+        if (legacyHacks->cl_downloadName[0])
+            UI_DisplayDownloadInfo(legacyHacks->cl_downloadName, 320.0f, 89.0f, font, 0.5f);
+        return;
+    default:
+        return;
+    }
+
+    if (s && I_stricmp(cstate.servername, "localhost"))
+        Text_PaintCenter(320.0f, 145.0f, font, 0.5f, colorWhite, s);
+}
+
+
+void UI_Refresh(void)
+{
+#if COD2_TRACE
+    static int refreshTraceCount;
+    static int fileTraceCount;
+#endif
+
+    if (Menu_Count(&uiInfo->uiDC) <= 0)
+        return;
+
+#if COD2_TRACE
+    if (fileTraceCount < 40) {
+        FILE *f = fopen("x64_ui_trace.txt", fileTraceCount ? "a" : "w");
+        if (f) {
+            int i;
+            fprintf(f, "ui[%d] active=%d menuCount=%d openCount=%d keyCatchers=0x%x\n",
+                    fileTraceCount, uiInfo->currentMenuType, uiInfo->uiDC.menuCount,
+                    uiInfo->uiDC.openMenuCount, (clients)->keyCatchers);
+            for (i = 0; i < uiInfo->uiDC.openMenuCount && i < 16; i++) {
+                menuDef_t *menu = uiInfo->uiDC.menuStack[i];
+                fprintf(f, "  stack[%d]=%s flags=0x%x full=%d\n",
+                        i,
+                        menu && menu->window.name ? menu->window.name : "<null>",
+                        menu ? menu->window.dynamicFlags[0] : 0,
+                        menu ? menu->fullScreen : 0);
+            }
+            fclose(f);
+        }
+        fileTraceCount++;
+    }
+
+    if (refreshTraceCount < 80 && (uiInfo->currentMenuType || uiInfo->uiDC.openMenuCount > 0)) {
+        int i;
+        if (getenv("MTRACE"))
+            Com_Printf("[menu-trace] UI_Refresh active=%d menuCount=%d openCount=%d",
+                       uiInfo->currentMenuType, uiInfo->uiDC.menuCount, uiInfo->uiDC.openMenuCount);
+        for (i = 0; i < uiInfo->uiDC.openMenuCount && i < 16; ++i) {
+            menuDef_t *menu = uiInfo->uiDC.menuStack[i];
+            Com_Printf(" stack[%d]=%s", i, menu && menu->window.name ? menu->window.name : "<null>");
+        }
+        Com_Printf("\n");
+        ++refreshTraceCount;
+    }
+#endif
+
+    Menu_PaintAll(&uiInfo->uiDC);
+    UI_DoServerRefresh();
+    UI_BuildServerStatus(0);
+    UI_BuildFindPlayerList();
+
+#if COD2_FEATURE_GAMEPAD
+
+    UI_ConsoleMode_DrawGlyphs(uiInfo);
+    if (UI_ConsoleMode_SuppressCursor())
+        return;
+#endif
+
+    UI_DrawHandlePic((float)(uiInfo->uiDC.cursorx - 16),
+                     (float)(uiInfo->uiDC.cursory - 16),
+                     32.0f, 32.0f, 4, 4, 0,
+                     sharedUiInfo.assets.cursor);
 }
 
 float UI_GetBlurRadius(void)
@@ -3256,488 +3739,4 @@ void UI_CloseFocusedMenu(void)
     }
 }
 
-Bool UI_DrawRecordLevel(rectDef_t *rect)
-{
-    float voiceLevel;
-    const vec_t *white;
-
-    voiceLevel = Voice_GetVoiceLevel();
-
-    if (voiceLevel > 0.0) {
-        UI_FillRect(rect->x + 2.0f, rect->y + 2.0f, (voiceLevel * rect->w) - 4.0f, rect->h - 4.0f, 0, 0, (const vec_t *)((void *)&colorWhite));
-    }
-
-    white = (const vec_t *)((void *)&colorWhite);
-
-    UI_FillRect(rect->x, rect->y, rect->w, 1.0f, 0, 0, white);
-
-    UI_FillRect(rect->x, rect->h + rect->y - 1.0f, rect->w, 1.0f, 0, 0, white);
-
-    UI_FillRect(rect->x, rect->y + 1.0f, 1.0f, rect->h - 2.0f, 0, 0, white);
-
-    UI_FillRect(rect->x + rect->w - 1.0f, rect->y + 1.0f, 1.0f, rect->h - 2.0f, 0, 0, white);
-
-    return 1;
-}
-
-
-
-static void UI_GetGameTypesList(void)
-{
-    char szGameTypeList[0x1000];
-    int iNumGameTypeScripts;
-    int i;
-    char *pszFileName;
-    const char *pBuffParse;
-
-    sharedUiInfo.numGameTypes = 0;
-    sharedUiInfo.numJoinGameTypes = 0;
-
-    sharedUiInfo.joinGameTypes[sharedUiInfo.numJoinGameTypes].gameType = String_Alloc("All");
-    sharedUiInfo.joinGameTypes[sharedUiInfo.numJoinGameTypes].gameTypeName = "";
-    sharedUiInfo.numJoinGameTypes++;
-
-    iNumGameTypeScripts = FS_GetFileList("maps/mp/gametypes", "gsc", FS_LIST_PURE_ONLY, szGameTypeList, 0x1000);
-
-    pszFileName = szGameTypeList;
-    for (i = 0; i < iNumGameTypeScripts; i++) {
-        int iLen = strlen(pszFileName);
-
-        if (pszFileName[0] == '_') {
-            pszFileName += iLen + 1;
-        } else {
-            char *pszExt = pszFileName + iLen - 4;
-
-            if (!I_stricmp(pszExt, ".gsc"))
-                *pszExt = '\0';
-
-            if (sharedUiInfo.numGameTypes == 32 || sharedUiInfo.numJoinGameTypes == 32) {
-                Com_Printf("Too many game type scripts found! Only loading the first %i\n", 31);
-                break;
-            }
-
-            sharedUiInfo.gameTypes[sharedUiInfo.numGameTypes].gameType = String_Alloc(pszFileName);
-            sharedUiInfo.joinGameTypes[sharedUiInfo.numJoinGameTypes].gameType = sharedUiInfo.gameTypes[sharedUiInfo.numGameTypes].gameType;
-
-            pBuffParse = GetMenuBuffer(va("maps/mp/gametypes/%s.txt", pszFileName));
-            if (!pBuffParse) {
-                sharedUiInfo.gameTypes[sharedUiInfo.numGameTypes].gameTypeName = sharedUiInfo.gameTypes[sharedUiInfo.numGameTypes].gameType;
-                sharedUiInfo.joinGameTypes[sharedUiInfo.numJoinGameTypes].gameTypeName = sharedUiInfo.gameTypes[sharedUiInfo.numGameTypes].gameTypeName;
-            } else {
-                sharedUiInfo.gameTypes[sharedUiInfo.numGameTypes].gameTypeName = String_Alloc(Com_Parse(&pBuffParse));
-                sharedUiInfo.joinGameTypes[sharedUiInfo.numJoinGameTypes].gameTypeName = sharedUiInfo.gameTypes[sharedUiInfo.numGameTypes].gameTypeName;
-            }
-
-            sharedUiInfo.numGameTypes++;
-            sharedUiInfo.numJoinGameTypes++;
-            pszFileName += iLen + 1;
-        }
-    }
-
-    if (!sharedUiInfo.numGameTypes)
-        Com_Error(ERR_FATAL, "\x15No game type scripts found in maps/mp/gametypes folder");
-}
-
-void UI_Init(void)
-{
-    int width, height;
-    MenuList *menuList;
-    int netGameTypeIdx;
-    float mPitch;
-
-    *(int *)uiInfo = 0;
-    g_ingameMenusLoaded = 0;
-
-    UI_LoadSoundAliases();
-
-    UI_RegisterDvars();
-
-    legacyHacksData.ui_newScriptMenu[0] = 0;
-    legacyHacksData.ui_newScriptMenuIndex = -1;
-    legacyHacksData.ui_scriptMenu[0] = 0;
-    legacyHacksData.ui_scriptMenuIndex = -1;
-    legacyHacksData.ui_scriptMenuAllowResponse = 1;
-    legacyHacksData.ui_waitingScriptMenu[0] = 0;
-    legacyHacksData.ui_waitingScriptMenuIndex = -1;
-    legacyHacksData.ui_waitingScriptMenuNoMouse = 0;
-
-    String_Init();
-    Menu_Setup(&uiInfo->uiDC);
-
-    CL_GetScreenDimensions(&uiInfo->uiDC.screenWidth, &uiInfo->uiDC.screenHeight, (float *)((int *)&uiInfo->uiDC.screenAspect));
-
-    width = uiInfo->uiDC.screenWidth;
-    height = uiInfo->uiDC.screenHeight;
-
-    if (width * 480 > height * 640) {
-
-        uiInfo->uiDC.bias = ((float)width + (float)height * -1.3333333730697632f) * 0.5f;
-    } else {
-        *(int *)uiInfo = 0;
-    }
-
-    Sys_Milliseconds();
-    UI_GetGameTypesList();
-
-    ui_netGameType = (const dvar_t *)(Dvar_RegisterInt("ui_netGametype", 0, 0, sharedUiInfo.numGameTypes - 1, 0x1001));
-
-    UI_LoadArenas();
-
-    menuList = UI_LoadMenus("ui_mp/menus.txt", 3);
-    UI_AddMenuList(&uiInfo->uiDC, menuList);
-
-    if (g_mapname[0] != '\0') {
-        UI_MapLoadInfo(va("maps/mp/%s.csv", g_mapname));
-    }
-
-    UI_AssetCache();
-    Menus_CloseAll(&uiInfo->uiDC);
-
-    sharedUiInfo.serverHardwareIconList[0] = CL_RegisterMaterialNoMip("server_hardware_unknown", 3);
-    sharedUiInfo.serverHardwareIconList[1] = CL_RegisterMaterialNoMip("server_hardware_linux_dedicated", 3);
-    sharedUiInfo.serverHardwareIconList[2] = CL_RegisterMaterialNoMip("server_hardware_win_dedicated", 3);
-    sharedUiInfo.serverHardwareIconList[3] = CL_RegisterMaterialNoMip("server_hardware_mac_dedicated", 3);
-    sharedUiInfo.serverHardwareIconList[5] = CL_RegisterMaterialNoMip("server_hardware_win_listen", 3);
-    sharedUiInfo.serverHardwareIconList[6] = CL_RegisterMaterialNoMip("server_hardware_mac_listen", 3);
-
-    LAN_LoadCachedServers();
-
-    if (sharedUiInfo.serverStatus.sortKey != 9) {
-        sharedUiInfo.serverStatus.sortKey = 9;
-        qsort(sharedUiInfo.serverStatus.displayServers, sharedUiInfo.serverStatus.numDisplayServers, 4, UI_ServersQsortCompare);
-    }
-
-    mPitch = Dvar_GetFloat("m_pitch");
-    Dvar_SetBoolByName("ui_mousePitch", mPitch < 0.0f ? 1 : 0);
-
-    sharedUiInfo.serverStatus.currentServerCinematic = -1;
-    sharedUiInfo.previewMovie = -1;
-
-    netGameTypeIdx = (ui_netGameType)->current.integer;
-    Dvar_SetString((dvar_t *)ui_netGameTypeName, sharedUiInfo.gameTypes[netGameTypeIdx].gameType);
-
-    Dvar_RegisterBool("ui_multiplayer", 1, 0x1040);
-
-#    if COD2_FEATURE_GAMEPAD
-
-    UI_ConsoleMode_Init(uiInfo);
-    UI_Gamepad_RegisterMenus(uiInfo);
-#    endif
-}
-
-qboolean UI_SetActiveMenu(int menu)
-{
-    menuDef_t *pFocus;
-    const char *errorMsg;
-    const char *newMenu;
-
-    if (Menu_Count(&uiInfo->uiDC) <= 0)
-        return 0;
-
-    if (menu != UIMENU_SCRIPT_POPUP && menu != UIMENU_SCRIPT_POPUP_NO_MOUSE)
-        uiInfo->currentMenuType = (uiMenuCommand_t)(menu);
-
-    switch (menu) {
-    case UIMENU_NONE:
-        Key_SetCatcher(Key_GetCatcher() & ~8);
-        Dvar_SetIntByName("cl_paused", 0);
-        Menus_CloseAll(&uiInfo->uiDC);
-        return 1;
-
-    case UIMENU_MAIN:
-        Key_SetCatcher(8);
-        Menus_OpenByName(&uiInfo->uiDC, "main");
-        errorMsg = Dvar_GetString("com_errorMessage");
-        if (strlen(errorMsg) && I_stricmp(errorMsg, ";"))
-            Menus_OpenByName(&uiInfo->uiDC, "error_popmenu");
-        SND_FadeAllSounds(1.0f, 1000);
-        return 1;
-
-    case UIMENU_TEAM:
-        Key_SetCatcher(8);
-        Menus_OpenByName(&uiInfo->uiDC, "team");
-        return 1;
-
-    case UIMENU_NEED_CD:
-        Key_SetCatcher(8);
-        Menus_OpenByName(&uiInfo->uiDC, "needcd");
-        return 1;
-
-    case UIMENU_BAD_CD_KEY:
-        Key_SetCatcher(8);
-        Menus_OpenByName(&uiInfo->uiDC, "badcd");
-        return 1;
-
-    case UIMENU_INGAME:
-        Key_SetCatcher(8);
-        Menus_CloseAll(&uiInfo->uiDC);
-        if (!Menus_OpenByName(&uiInfo->uiDC, cg->scriptMainMenu))
-            Menus_OpenByName(&uiInfo->uiDC, "main");
-        return 1;
-
-    case UIMENU_WM_QUICKMESSAGE:
-        uiInfo->uiDC.cursorx = 0x27f;
-        uiInfo->uiDC.cursory = 0x1df;
-        Key_SetCatcher(8);
-        clients->displayHUDWithKeycatchUI = 1;
-        Menus_CloseAll(&uiInfo->uiDC);
-        Menus_OpenByName(&uiInfo->uiDC, "quickmessage");
-        return 1;
-
-    case UIMENU_WM_AUTOUPDATE:
-        Menus_OpenByName(&uiInfo->uiDC, "autoupdate");
-        return 1;
-
-    case UIMENU_SCRIPT_POPUP:
-    case UIMENU_SCRIPT_POPUP_NO_MOUSE:
-        pFocus = Menu_GetFocused(&uiInfo->uiDC);
-        if (pFocus && uiInfo->currentMenuType != UIMENU_SCRIPT_POPUP && uiInfo->currentMenuType != UIMENU_SCRIPT_POPUP_NO_MOUSE)
-            return 0;
-        newMenu = legacyHacks->ui_newScriptMenu;
-        if (!pFocus || I_stricmp(pFocus->window.name, newMenu)) {
-            uiInfo->currentMenuType = UIMENU_SCRIPT_POPUP;
-            if (menu == UIMENU_SCRIPT_POPUP_NO_MOUSE) {
-                uiInfo->uiDC.cursorx = 0x27f;
-                uiInfo->uiDC.cursory = 0x1df;
-            }
-            Key_SetCatcher(8);
-            Menus_CloseAll(&uiInfo->uiDC);
-            strcpy(legacyHacks->ui_scriptMenu, newMenu);
-            legacyHacks->ui_scriptMenuIndex = legacyHacks->ui_newScriptMenuIndex;
-            legacyHacks->ui_newScriptMenu[0] = 0;
-            legacyHacks->ui_newScriptMenuIndex = -1;
-            Menus_OpenByName(&uiInfo->uiDC, legacyHacks->ui_scriptMenu);
-        }
-        return 1;
-
-    case UIMENU_PLAYER_PROFILE:
-        Key_SetCatcher(8);
-        Menus_OpenByName(&uiInfo->uiDC, "player_profile");
-        SND_FadeAllSounds(1.0f, 1000);
-        return 1;
-    }
-
-    return 0;
-}
-
-static void UI_DisplayDownloadInfo(const char *downloadName, float centerPoint, float yStart, FontHandle font, float scale)
-{
-    static char dlText[] = "EXE_DOWNLOADING";
-    static char etaText[] = "EXE_EST_TIME_LEFT";
-    static char xferText[] = "EXE_TRANS_RATE";
-    static int tleEstimates[80] = { 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60 };
-    static int tleIndex;
-    LegacyHacks *legacyBase = legacyHacks;
-    int downloadSize = legacyBase->cl_downloadSize;
-    int downloadCount = legacyBase->cl_downloadCount;
-    int downloadTime = legacyBase->cl_downloadTime;
-    vec_t color[4];
-    float y1, y2, y3;
-    int xferRate = 0;
-    char dlSizeBuf[64];
-    char totalSizeBuf[64];
-    char xferRateBuf[64];
-    char dlTimeBuf[64];
-    const char *text;
-
-    {
-        const vec_t *cBlack = (const vec_t *)((void *)&colorBlack);
-        color[0] = cBlack[0];
-        color[1] = cBlack[1];
-        color[2] = cBlack[2];
-    }
-    color[3] = 0.2f;
-
-    y1 = yStart + 184.0f;
-    UI_FillRect(0, y1, 640.0f, 85.0f, 0, 0, color);
-    y2 = yStart + 185.0f;
-    UI_FillRect(0, y2, 640.0f, 83.0f, 0, 0, color);
-    y3 = yStart + 186.0f;
-    UI_FillRect(0, y3, 640.0f, 81.0f, 0, 0, color);
-
-    if (downloadSize > 0) {
-
-        const vec_t *cRed = (const vec_t *)((void *)&colorRed);
-        int width;
-        color[0] = cRed[0];
-        color[1] = cRed[1];
-        color[2] = cRed[2];
-        color[3] = 0.15f;
-
-        width = (int)((float)downloadCount / (float)downloadSize * 640.0f);
-        UI_FillRect(0, y1, (float)(width + 2), 85.0f, 0, 0, color);
-        UI_FillRect(0, y2, (float)(width + 1), 83.0f, 0, 0, color);
-        UI_FillRect(0, y3, (float)width, 81.0f, 0, 0, color);
-    }
-
-    {
-        const vec_t *ltGrey = (const vec_t *)((void *)&colorLtGrey);
-
-        UI_DrawText(UI_SafeTranslateString(dlText), 64, font, 24.0f, yStart + 210.0f, 0, 0, scale, ltGrey, 3);
-        UI_DrawText(UI_SafeTranslateString(etaText), 64, font, 24.0f, yStart + 235.0f, 0, 0, scale, ltGrey, 3);
-        UI_DrawText(UI_SafeTranslateString(xferText), 64, font, 24.0f, yStart + 260.0f, 0, 0, scale, ltGrey, 3);
-
-        if (downloadSize > 0)
-            text = va("%s (%d%%)", downloadName, downloadCount * 100 / downloadSize);
-        else
-            text = downloadName;
-
-        UI_DrawText(text, 0x7fffffff, font, 192.0f, yStart + 210.0f, 0, 0, scale, ltGrey, 3);
-
-        UI_ReadableSize(dlSizeBuf, 64, downloadCount);
-        UI_ReadableSize(totalSizeBuf, 64, downloadSize);
-
-        if (downloadCount < 0x1000 || !downloadTime) {
-
-            text = UI_SafeTranslateString("EXE_ESTIMATING");
-            Text_PaintCenter(centerPoint, yStart + 235.0f, font, scale, ltGrey, text);
-            text = va("(%s %s %s %s)", dlSizeBuf, UI_SafeTranslateString("EXE_OF"), totalSizeBuf, UI_SafeTranslateString("EXE_COPIED"));
-            Text_PaintCenter(centerPoint, yStart + 340.0f, font, scale, ltGrey, text);
-        } else {
-
-            if ((uiInfo->uiDC.realTime - downloadTime) / 1000)
-                xferRate = downloadCount / ((uiInfo->uiDC.realTime - downloadTime) / 1000);
-            else
-                xferRate = 0;
-
-            UI_ReadableSize(xferRateBuf, 64, xferRate);
-
-            if (downloadSize && xferRate) {
-                int n = downloadSize / xferRate;
-                int sum = 0;
-                int ti;
-
-                n = n - (((downloadCount / 1024) * n) / (downloadSize / 1024));
-
-                tleEstimates[tleIndex] = n;
-                tleIndex++;
-                if (tleIndex >= 80)
-                    tleIndex = 0;
-
-                for (ti = 0; ti < 80; ti++)
-                    sum += tleEstimates[ti];
-
-                UI_PrintTime(dlTimeBuf, 64, sum / 80);
-                UI_DrawText(dlTimeBuf, 0x7fffffff, font, 264.0f, yStart + 235.0f, 0, 0, scale, ltGrey, 3);
-                text = va("(%s %s %s %s)", dlSizeBuf, UI_SafeTranslateString("EXE_OF"), totalSizeBuf, UI_SafeTranslateString("EXE_COPIED"));
-                Text_PaintCenter(centerPoint, yStart + 320.0f, font, scale, ltGrey, text);
-            } else {
-
-                text = UI_SafeTranslateString("EXE_ESTIMATING");
-                Text_PaintCenter(centerPoint, yStart + 235.0f, font, scale, ltGrey, text);
-                if (downloadSize)
-                    text = va("(%s %s %s %s)", dlSizeBuf, UI_SafeTranslateString("EXE_OF"), totalSizeBuf, UI_SafeTranslateString("EXE_COPIED"));
-                else
-                    text = va("(%s %s)", dlSizeBuf, UI_SafeTranslateString("EXE_COPIED"));
-                Text_PaintCenter(centerPoint, yStart + 320.0f, font, scale, ltGrey, text);
-            }
-
-            if (xferRate) {
-                UI_DrawText(va("%s/%s", xferRateBuf, UI_SafeTranslateString("EXE_SECONDS")), 0x7fffffff, font, 200.0f, yStart + 260.0f, 0, 0, scale, ltGrey, 3);
-            }
-        }
-    }
-}
-
-void UI_DrawConnectScreen(void)
-{
-    uiClientState_t cstate;
-    char text[256];
-    char ps[60];
-    FontHandle font;
-    int displayed;
-    int i, len, index, yPrint;
-    int neednewline;
-    const char *s;
-
-    displayed = 0;
-    CG_DrawInformation(legacyHacks->cl_serverloadmap[0] || legacyHacks->cl_serverloadgametype[0] ? 1 : 0);
-    font = UI_GetFontHandle(0, 0.5f);
-
-    GetClientState(&cstate);
-
-    if (!I_stricmp(cstate.servername, "Auto-Updater")) {
-        if (legacyHacks->cl_downloadName[0])
-            strcpy(text, UI_ReplaceConversionString(UI_SafeTranslateString("EXE_DOWNLOADINGUPDATE"), Dvar_GetString("cl_updateversion")));
-        else
-            strcpy(text, UI_ReplaceConversionString(UI_SafeTranslateString("EXE_CONNECTINGTO"), cstate.servername));
-        Text_PaintCenter(320.0f, 55.0f, font, 0.5f, colorWhite, text);
-        displayed = 1;
-    } else if (g_mapname[0]) {
-        s = UI_SafeTranslateString(UI_GetGameTypeDisplayName(g_gametype));
-        Text_PaintCenter(320.0f, 89.0f, font, 0.5f, colorWhite, s);
-        Text_PaintCenter(320.0f, 119.0f, font, 0.5f, colorWhite, UI_GetMapDisplayName(g_mapname));
-        displayed = 1;
-    }
-
-    // server messages (full, bad version, ...) wrapped into lines
-    if (cstate.connState < CA_CONNECTED) {
-        neednewline = 0;
-        index = 0;
-        yPrint = 299;
-        s = UI_SafeTranslateString(cstate.messageString);
-        len = strlen(s);
-        for (i = 0; i < len; i++, index++) {
-            ps[index] = s[i];
-            if (index > 40 && i > 0)
-                neednewline = 1;
-            if (index >= 58 || i == len - 1 || (neednewline && s[i] == ' ')) {
-                ps[index + 1] = 0;
-                Text_PaintCenter(320.0f, (float)yPrint, font, 0.5f, colorYellow, ps);
-                neednewline = 0;
-                yPrint += 22;
-                index = -1;
-            }
-        }
-    }
-
-    switch (cstate.connState) {
-    case CA_CONNECTING:
-        if (displayed)
-            return;
-        s = UI_ReplaceConversionInt(UI_SafeTranslateString("EXE_AWAITINGCONNECTION"), cstate.connectPacketCount);
-        break;
-    case CA_CHALLENGING:
-        if (displayed)
-            return;
-        s = UI_ReplaceConversionInt(UI_SafeTranslateString("EXE_AWAITINGCHALLENGE"), cstate.connectPacketCount);
-        break;
-    case CA_CONNECTED:
-        if (legacyHacks->cl_downloadName[0])
-            UI_DisplayDownloadInfo(legacyHacks->cl_downloadName, 320.0f, 89.0f, font, 0.5f);
-        return;
-    default:
-        return;
-    }
-
-    if (s && I_stricmp(cstate.servername, "localhost"))
-        Text_PaintCenter(320.0f, 145.0f, font, 0.5f, colorWhite, s);
-}
-
-
-static serverStatusDvar_t serverStatusDvars[23] = {
-    { "sv_hostname", "@EXE_SV_INFO_SERVERNAME", (sscType_t)0x0 },
-    { "address", "@EXE_SV_INFO_ADDRESS", (sscType_t)0x0 },
-    { "pswrd", "@EXE_SV_INFO_PASSWORD", (sscType_t)0x1 },
-    { "gamename", "@EXE_SV_INFO_GAMENAME", (sscType_t)0x0 },
-    { "g_gametype", "@EXE_SV_INFO_GAMETYPE", (sscType_t)0x0 },
-    { "sv_pure", "@EXE_SV_INFO_PURE", (sscType_t)0x1 },
-    { "mapname", "@EXE_SV_INFO_MAP", (sscType_t)0x0 },
-    { "shortversion", "@EXE_SV_INFO_VERSION", (sscType_t)0x0 },
-    { "protocol", "@EXE_SV_INFO_PROTOCOL", (sscType_t)0x0 },
-    { "sv_maxping", "@EXE_SV_INFO_MAXPING", (sscType_t)0x0 },
-    { "sv_minping", "@EXE_SV_INFO_MINPING", (sscType_t)0x0 },
-    { "sv_maxrate", "@EXE_SV_INFO_MAXRATE", (sscType_t)0x0 },
-    { "sv_floodprotect", "@EXE_SV_INFO_FLOODPROTECT", (sscType_t)0x1 },
-    { "sv_allowanonymous", "@EXE_SV_INFO_ALLOWANON", (sscType_t)0x0 },
-    { "sv_maxclients", "@EXE_SV_INFO_MAXCLIENTS", (sscType_t)0x0 },
-    { "sv_privateclients", "@EXE_SV_INFO_PRIVATECLIENTS", (sscType_t)0x0 },
-    { "scr_friendlyFire", "@EXE_SV_INFO_FRIENDLY_FIRE", (sscType_t)0x0 },
-    { "fs_game", "@EXE_SV_INFO_MOD", (sscType_t)0x0 },
-    { "mod", "@MENU_MODS", (sscType_t)0x1 },
-    { "scr_killcam", "@EXE_SV_INFO_KILLCAM", (sscType_t)0x1 },
-    { "g_antilag", "@EXE_SV_INFO_ANTILAG", (sscType_t)0x1 },
-    { "sv_voice", "@EXE_SV_INFO_VOICE", (sscType_t)0x1 },
-    { 0, 0, (sscType_t)0x0 }
-};
 

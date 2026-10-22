@@ -1,0 +1,7 @@
+--- a/target/src/qcommon/cm_trace.cpp
++++ b/target/src/qcommon/cm_trace.cpp
+@@ -2430,3 +2430,4 @@
+ 	return CM_BoxSightTrace( hitNum, start_l, end_l, symetricSize[0], symetricSize[1], model, brushmask );
+ }
+ 
++// sz1 control

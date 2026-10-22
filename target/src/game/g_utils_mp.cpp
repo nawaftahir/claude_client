@@ -770,31 +770,6 @@ void G_CalcTagParentRelAxis( gentity_t *ent, float parentAxis[4][3] )
 	MatrixMultiply43(tagInfo->parentInvAxis, invParentAxis, parentAxis);
 }
 
-void G_CalcTagAxis( gentity_t *ent, qboolean bAnglesOnly )
-{
-	tagInfo_s *tagInfo;
-	float axis[4][3];
-	float parentAxis[4][3];
-	float invParentAxis[4][3];
-	G_CalcTagParentAxis(ent, parentAxis);
-	AnglesToAxis(ent->r.currentAngles, axis);
-
-	tagInfo = ent->tagInfo;
-	assert(tagInfo);
-
-	if ( bAnglesOnly )
-	{
-		MatrixTranspose(parentAxis, invParentAxis);
-		MatrixMultiply(axis, invParentAxis, tagInfo->axis);
-	}
-	else
-	{
-		MatrixInverseOrthogonal43(parentAxis, invParentAxis);
-		VectorCopy(ent->r.currentOrigin, axis[3]);
-		MatrixMultiply43(axis, invParentAxis, tagInfo->axis);
-	}
-}
-
 /*
 =================
 G_SetFixedLink
@@ -1710,6 +1685,31 @@ void G_SetAngle( gentity_t *ent, const vec3_t angle )
 	VectorCopy( angle, ent->r.currentAngles );
 
 //	VectorCopy (ent->s.angles, ent->s.apos.trDelta );
+}
+
+void G_CalcTagAxis( gentity_t *ent, qboolean bAnglesOnly )
+{
+	tagInfo_s *tagInfo;
+	float axis[4][3];
+	float parentAxis[4][3];
+	float invParentAxis[4][3];
+	G_CalcTagParentAxis(ent, parentAxis);
+	AnglesToAxis(ent->r.currentAngles, axis);
+
+	tagInfo = ent->tagInfo;
+	assert(tagInfo);
+
+	if ( bAnglesOnly )
+	{
+		MatrixTranspose(parentAxis, invParentAxis);
+		MatrixMultiply(axis, invParentAxis, tagInfo->axis);
+	}
+	else
+	{
+		MatrixInverseOrthogonal43(parentAxis, invParentAxis);
+		VectorCopy(ent->r.currentOrigin, axis[3]);
+		MatrixMultiply43(axis, invParentAxis, tagInfo->axis);
+	}
 }
 
 /*

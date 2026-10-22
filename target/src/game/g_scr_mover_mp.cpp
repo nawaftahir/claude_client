@@ -5,22 +5,6 @@
 #define Y 1
 #define Z 2
 
-static const scr_method_t scriptent_methods[] =
-{
-	{ "moveto", ScriptEntCmd_MoveTo, qfalse, },
-	{ "movex", ScriptEntCmd_MoveX, qfalse, },
-	{ "movey", ScriptEntCmd_MoveY, qfalse, },
-	{ "movez", ScriptEntCmd_MoveZ, qfalse, },
-	{ "movegravity", ScriptEntCmd_GravityMove, qfalse, },
-	{ "rotateto", ScriptEntCmd_RotateTo, qfalse, },
-	{ "rotatepitch", ScriptEntCmd_RotatePitch, qfalse, },
-	{ "rotateyaw", ScriptEntCmd_RotateYaw, qfalse, },
-	{ "rotateroll", ScriptEntCmd_RotateRoll, qfalse, },
-	{ "rotatevelocity", ScriptEntCmd_RotateVelocity, qfalse, },
-	{ "solid", ScriptEntCmd_Solid, qfalse, },
-	{ "notsolid", ScriptEntCmd_NotSolid, qfalse, },
-};
-
 void ScriptEntCmd_NotSolid( scr_entref_t entref );
 void (*ScriptEnt_GetMethod( const char **pName ))( scr_entref_t );
 
@@ -80,6 +64,57 @@ qboolean ScriptMover_UpdateMove( trajectory_t *pTr, vec3_t vCurrPos, float fSpee
 	}
 
 	return qfalse;
+}
+
+void Reached_ScriptMover( gentity_t *pEnt )
+{
+	qboolean bMoveFinished;
+
+	if ( pEnt->s.pos.trType != TR_STATIONARY && pEnt->s.pos.trTime + pEnt->s.pos.trDuration <= level.time )
+	{
+		bMoveFinished = ScriptMover_UpdateMove(
+		                    &pEnt->s.pos,
+		                    pEnt->r.currentOrigin,
+		                    pEnt->mover.speed,
+		                    pEnt->mover.midTime,
+		                    pEnt->mover.decelTime,
+		                    pEnt->mover.pos1,
+		                    pEnt->mover.pos2,
+		                    pEnt->mover.pos3);
+
+		BG_EvaluateTrajectory(&pEnt->s.pos, level.time, pEnt->r.currentOrigin);
+		SV_LinkEntity(pEnt);
+
+		if ( bMoveFinished )
+		{
+			Scr_Notify(pEnt, scr_const.movedone, 0);
+		}
+	}
+
+	if ( pEnt->s.apos.trType != TR_STATIONARY && pEnt->s.apos.trTime + pEnt->s.apos.trDuration <= level.time )
+	{
+		bMoveFinished = ScriptMover_UpdateMove(
+		                    &pEnt->s.apos,
+		                    pEnt->r.currentAngles,
+		                    pEnt->mover.aSpeed,
+		                    pEnt->mover.aMidTime,
+		                    pEnt->mover.aDecelTime,
+		                    pEnt->mover.apos1,
+		                    pEnt->mover.apos2,
+		                    pEnt->mover.apos3);
+
+		BG_EvaluateTrajectory(&pEnt->s.apos, level.time, pEnt->r.currentAngles);
+		SV_LinkEntity(pEnt);
+
+		if ( bMoveFinished )
+		{
+			pEnt->r.currentAngles[0] = AngleNormalize180(pEnt->r.currentAngles[0]);
+			pEnt->r.currentAngles[1] = AngleNormalize360(pEnt->r.currentAngles[1]);
+			pEnt->r.currentAngles[2] = AngleNormalize180(pEnt->r.currentAngles[2]);
+
+			Scr_Notify(pEnt, scr_const.rotatedone, 0);
+		}
+	}
 }
 
 void Reached_ScriptMover( gentity_t *pEnt );
@@ -258,57 +293,6 @@ void ScriptMover_SetupMoveSpeed( trajectory_t *pTr, const float *vSpeed, float f
 Reached_ScriptMover
 ===============
 */
-void Reached_ScriptMover( gentity_t *pEnt )
-{
-	qboolean bMoveFinished;
-
-	if ( pEnt->s.pos.trType != TR_STATIONARY && pEnt->s.pos.trTime + pEnt->s.pos.trDuration <= level.time )
-	{
-		bMoveFinished = ScriptMover_UpdateMove(
-		                    &pEnt->s.pos,
-		                    pEnt->r.currentOrigin,
-		                    pEnt->mover.speed,
-		                    pEnt->mover.midTime,
-		                    pEnt->mover.decelTime,
-		                    pEnt->mover.pos1,
-		                    pEnt->mover.pos2,
-		                    pEnt->mover.pos3);
-
-		BG_EvaluateTrajectory(&pEnt->s.pos, level.time, pEnt->r.currentOrigin);
-		SV_LinkEntity(pEnt);
-
-		if ( bMoveFinished )
-		{
-			Scr_Notify(pEnt, scr_const.movedone, 0);
-		}
-	}
-
-	if ( pEnt->s.apos.trType != TR_STATIONARY && pEnt->s.apos.trTime + pEnt->s.apos.trDuration <= level.time )
-	{
-		bMoveFinished = ScriptMover_UpdateMove(
-		                    &pEnt->s.apos,
-		                    pEnt->r.currentAngles,
-		                    pEnt->mover.aSpeed,
-		                    pEnt->mover.aMidTime,
-		                    pEnt->mover.aDecelTime,
-		                    pEnt->mover.apos1,
-		                    pEnt->mover.apos2,
-		                    pEnt->mover.apos3);
-
-		BG_EvaluateTrajectory(&pEnt->s.apos, level.time, pEnt->r.currentAngles);
-		SV_LinkEntity(pEnt);
-
-		if ( bMoveFinished )
-		{
-			pEnt->r.currentAngles[0] = AngleNormalize180(pEnt->r.currentAngles[0]);
-			pEnt->r.currentAngles[1] = AngleNormalize360(pEnt->r.currentAngles[1]);
-			pEnt->r.currentAngles[2] = AngleNormalize180(pEnt->r.currentAngles[2]);
-
-			Scr_Notify(pEnt, scr_const.rotatedone, 0);
-		}
-	}
-}
-
 /*
 ===============
 ScriptMover_Move
@@ -556,6 +540,36 @@ void ScriptEntCmdGetCommandTimes( float *pfTotalTime, float *pfAccelTime, float 
 	}
 }
 
+void ScriptEntCmd_RotateVelocity( scr_entref_t entref )
+{
+	float fTotalTime;
+	float fAccelTime;
+	float fDecelTime;
+	vec3_t vSpeed;
+	gentity_t *pSelf;
+
+	if ( entref.classnum == CLASS_NUM_ENTITY )
+	{
+		assert(entref.entnum < MAX_GENTITIES);
+		pSelf = &g_entities[entref.entnum];
+
+		if ( pSelf->classname != scr_const.script_brushmodel && pSelf->classname != scr_const.script_model && pSelf->classname != scr_const.script_origin )
+		{
+			Scr_ObjectError(va("entity %i is not a script_brushmodel, script_model, or script_origin", entref.entnum));
+		}
+	}
+	else
+	{
+		Scr_ObjectError("not an entity");
+		pSelf = NULL;
+	}
+
+	Scr_GetVector(0, vSpeed);
+
+	ScriptEntCmdGetCommandTimes(&fTotalTime, &fAccelTime, &fDecelTime);
+	ScriptMover_RotateSpeed(pSelf, vSpeed, fTotalTime, fAccelTime, fDecelTime);
+}
+
 /*
 ===============
 ScriptEntCmd_MoveTo
@@ -790,36 +804,6 @@ void ScriptEntCmd_RotateRoll( scr_entref_t entref )
 ScriptEntCmd_RotateVelocity
 ===============
 */
-void ScriptEntCmd_RotateVelocity( scr_entref_t entref )
-{
-	float fTotalTime;
-	float fAccelTime;
-	float fDecelTime;
-	vec3_t vSpeed;
-	gentity_t *pSelf;
-
-	if ( entref.classnum == CLASS_NUM_ENTITY )
-	{
-		assert(entref.entnum < MAX_GENTITIES);
-		pSelf = &g_entities[entref.entnum];
-
-		if ( pSelf->classname != scr_const.script_brushmodel && pSelf->classname != scr_const.script_model && pSelf->classname != scr_const.script_origin )
-		{
-			Scr_ObjectError(va("entity %i is not a script_brushmodel, script_model, or script_origin", entref.entnum));
-		}
-	}
-	else
-	{
-		Scr_ObjectError("not an entity");
-		pSelf = NULL;
-	}
-
-	Scr_GetVector(0, vSpeed);
-
-	ScriptEntCmdGetCommandTimes(&fTotalTime, &fAccelTime, &fDecelTime);
-	ScriptMover_RotateSpeed(pSelf, vSpeed, fTotalTime, fAccelTime, fDecelTime);
-}
-
 /*
 ===============
 ScriptEntCmd_Solid
@@ -911,6 +895,22 @@ void ScriptEntCmd_NotSolid( scr_entref_t entref )
 ScriptEnt_GetMethod
 ===============
 */
+static const scr_method_t scriptent_methods[] =
+{
+	{ "moveto", ScriptEntCmd_MoveTo, qfalse, },
+	{ "movex", ScriptEntCmd_MoveX, qfalse, },
+	{ "movey", ScriptEntCmd_MoveY, qfalse, },
+	{ "movez", ScriptEntCmd_MoveZ, qfalse, },
+	{ "movegravity", ScriptEntCmd_GravityMove, qfalse, },
+	{ "rotateto", ScriptEntCmd_RotateTo, qfalse, },
+	{ "rotatepitch", ScriptEntCmd_RotatePitch, qfalse, },
+	{ "rotateyaw", ScriptEntCmd_RotateYaw, qfalse, },
+	{ "rotateroll", ScriptEntCmd_RotateRoll, qfalse, },
+	{ "rotatevelocity", ScriptEntCmd_RotateVelocity, qfalse, },
+	{ "solid", ScriptEntCmd_Solid, qfalse, },
+	{ "notsolid", ScriptEntCmd_NotSolid, qfalse, },
+};
+
 void (*ScriptEnt_GetMethod( const char **pName ))( scr_entref_t )
 {
 	int i;

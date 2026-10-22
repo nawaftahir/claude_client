@@ -255,38 +255,7 @@ outta:
 
 enum e_prefetch { PRE_READ, PRE_WRITE, PRE_READ_WRITE };
 
-// Retail 0x42c330 retains this helper as well as the inlined memory-copy loop.
-__forceinline void Com_Prefetch( const void *src, int count, e_prefetch type )
-{
-	switch (type)
-	{
-	case PRE_WRITE:
-		break;
-	case PRE_READ:
-	case PRE_READ_WRITE:
-	__asm
-	{
-			mov		ebx, src
-			mov		ecx, count
-			cmp		ecx, 4096					// clamp to 4kB
-			jle		skipClamp
-			mov		ecx, 4096
-skipClamp:
-			add		ecx, 0x1f
-			shr		ecx, 5						// number of cache lines
-			jz		skip
-			jmp		loopie
-			align	16
-loopie:
-			test	byte ptr [ebx], al
-			add		ebx, 32
-			dec		ecx
-			jnz		loopie
-skip:
-	}
-		break;
-	}
-}
+__forceinline void Com_Prefetch( const void *src, int count, e_prefetch type );
 
 // optimized memory copy routine that handles all alignment cases and block sizes efficiently
 void Com_Memcpy( void *dest, const void *src, int count )
@@ -487,5 +456,38 @@ qboolean Com_Memcmp( const void *src0, const void *src1, const unsigned int coun
 	}
 
 	return qtrue;
+}
+
+// Retail 0x42c330 retains this helper as well as the inlined memory-copy loop.
+__forceinline void Com_Prefetch( const void *src, int count, e_prefetch type )
+{
+	switch (type)
+	{
+	case PRE_WRITE:
+		break;
+	case PRE_READ:
+	case PRE_READ_WRITE:
+	__asm
+	{
+			mov		ebx, src
+			mov		ecx, count
+			cmp		ecx, 4096					// clamp to 4kB
+			jle		skipClamp
+			mov		ecx, 4096
+skipClamp:
+			add		ecx, 0x1f
+			shr		ecx, 5						// number of cache lines
+			jz		skip
+			jmp		loopie
+			align	16
+loopie:
+			test	byte ptr [ebx], al
+			add		ebx, 32
+			dec		ecx
+			jnz		loopie
+skip:
+	}
+		break;
+	}
 }
 

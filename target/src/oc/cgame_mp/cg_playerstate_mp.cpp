@@ -11,7 +11,7 @@ extern void *imp_cg_hudDamageIconTime;
 extern void AngleVectors( const vec3_t angles, vec3_t forward, vec3_t right, vec3_t up );
 extern float AngleNormalize360( float angle );
 extern float randomf(void);
-extern void CL_SetADS(int ads);
+extern void IN_LeaveADS(void);
 extern void CG_SetEquippedOffHand(int offHandIndex);
 extern void CG_HoldBreathInit(void);
 extern void CG_ResetLowHealthOverlay(void);
@@ -165,7 +165,7 @@ void CG_Respawn(void)
         CG_INT(uiBase, 8) = 0;
     }
 
-    CL_SetADS(0);
+    IN_LeaveADS();
 
     CG_SetEquippedOffHand(CG_INT(cg, CG_OFF_25C94));
 

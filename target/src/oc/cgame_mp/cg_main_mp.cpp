@@ -248,7 +248,7 @@ extern dvar_t *Dvar_RegisterFloat(const char *dvarName, float value, float min, 
 extern dvar_t *Dvar_RegisterEnum(const char *dvarName, const char **valueList, int defaultIndex, unsigned short flags);
 extern dvar_t *Dvar_RegisterColor(const char *dvarName, float r, float g, float b, float a, unsigned short flags);
 extern dvar_t *Dvar_RegisterVec2(const char *dvarName, float x, float y, float min, float max, unsigned short flags);
-extern void CL_SetADS(int ads);
+extern void IN_LeaveADS(void);
 extern void CG_OffhandRegisterDvars(void);
 extern void BG_RegisterDvars(void);
 extern void CG_ParseServerinfo(void);
@@ -694,7 +694,7 @@ static void CG_RegisterDvars(void)
     cg_weaponrightbone = Dvar_RegisterString("cg_weaponrightbone", "tag_weapon_right", 0x1000);
     ((cgs_t *)cgs)->localServer = com_sv_running->current.enabled;
     ((LegacyHacks *)::legacyHacks)->cl_stance = 0;
-    CL_SetADS(0);
+    IN_LeaveADS();
     (*(unsigned char *)&((cg_t *)cg)->objectiveText[0]) = 0;
     CG_OffhandRegisterDvars();
     BG_RegisterDvars();
@@ -1282,6 +1282,24 @@ static void CG_InitXAnimTrees(void)
         cgs->corpseinfo[i].pXAnimTree = XAnimCreateTree(anims, (Alloc_t)Hunk_AllocXAnimClient);
 }
 
+static void CG_FreeAnimTreeInstances(void)
+{
+    int i;
+
+    for (i = 0; i < 64; ++i) {
+        if (cg->bgs.clientinfo[i].pXAnimTree) {
+            XAnimFreeTree(cg->bgs.clientinfo[i].pXAnimTree, 0);
+            cg->bgs.clientinfo[i].pXAnimTree = NULL;
+        }
+    }
+    for (i = 0; i < 8; ++i) {
+        if (cgs->corpseinfo[i].pXAnimTree) {
+            XAnimFreeTree(cgs->corpseinfo[i].pXAnimTree, 0);
+            cgs->corpseinfo[i].pXAnimTree = NULL;
+        }
+    }
+}
+
 // retail 0x4ba930 (Kisak name)
 void CG_InitEntities(void)
 {
@@ -1423,7 +1441,7 @@ void CG_Init(int serverMessageNum, int serverCommandSequence, int clientNum)
         g_ambientStarted = 1;
     }
 
-    CL_SetADS(0);
+    IN_LeaveADS();
     CG_InitVote();
     bgs = 0;
 #    undef cgBase
@@ -1448,24 +1466,6 @@ void CG_FreeWeapons(void)
 }
 
 // retail 0x4ba8c0
-static void CG_FreeAnimTreeInstances(void)
-{
-    int i;
-
-    for (i = 0; i < 64; ++i) {
-        if (cg->bgs.clientinfo[i].pXAnimTree) {
-            XAnimFreeTree(cg->bgs.clientinfo[i].pXAnimTree, 0);
-            cg->bgs.clientinfo[i].pXAnimTree = NULL;
-        }
-    }
-    for (i = 0; i < 8; ++i) {
-        if (cgs->corpseinfo[i].pXAnimTree) {
-            XAnimFreeTree(cgs->corpseinfo[i].pXAnimTree, 0);
-            cgs->corpseinfo[i].pXAnimTree = NULL;
-        }
-    }
-}
-
 void CG_Shutdown(void)
 {
 

@@ -1,0 +1,176 @@
+--- a/target/src/oc/client_mp/cl_main_mp.cpp
++++ b/target/src/oc/client_mp/cl_main_mp.cpp
+@@ -447,8 +447,8 @@
+ void CL_NextDownload(void);
+ void CL_InitDownloads(void);
+ static void CL_SendPureChecksums(void);
+-inline void VectorCopy(const vec3_t a, vec3_t b);
+-inline void VectorCopy4(const vec4_t a, vec4_t b);
++extern void CL_VectorCopy_4011e0(const vec3_t a, vec3_t b);
++extern void CL_VectorCopy4_401220(const vec4_t a, vec4_t b);
+ 
+ extern int Cmd_Argc(void);
+ extern const char *Cmd_Argv( int arg );
+@@ -1054,7 +1054,18 @@
+         I_strncpyz(((LegacyHacks *)::legacyHacks)->cl_serverloadmap, mapname, 0x40);
+         ((LegacyHacks *)::legacyHacks)->cl_serverloadwaiting = 0;
+     } else {
+-        Dvar_SetString((dvar_t *)nextmap, "");
++        {
++            dvar_t *dv = (dvar_t *)nextmap;
++            DvarValue nv;
++            char stringCopy[1024];
++            if (dv->type == DVAR_TYPE_STRING) {
++                I_strncpyz(stringCopy, "", sizeof(stringCopy));
++                nv.string = stringCopy;
++            } else {
++                nv.integer = Dvar_StringToEnum(&dv->domain, "");
++            }
++            Dvar_SetVariant(dv, nv, DVAR_SOURCE_INTERNAL);
++        }
+         I_strncpyz(cls.servername, (const char *)"localhost", sizeof(cls.servername));
+         CL_Disconnect();
+         UI_CloseAllInl();
+@@ -3039,8 +3050,8 @@
+     }
+ 
+     string = &cls.debug.strings[cls.debug.numStrings];
+-    VectorCopy(xyz, string->xyz);
+-    VectorCopy4(color, string->color);
++    CL_VectorCopy_4011e0(xyz, string->xyz);
++    CL_VectorCopy4_401220(color, string->color);
+     string->scale = scale;
+     strncpy(string->text, text, 0x5f);
+     string->text[95] = '\0';
+@@ -3071,9 +3082,9 @@
+     }
+ 
+     line = &cls.debug.lines[lineIndex];
+-    VectorCopy(start, line->start);
+-    VectorCopy(end, line->end);
+-    VectorCopy4(color, line->color);
++    CL_VectorCopy_4011e0(start, line->start);
++    CL_VectorCopy_4011e0(end, line->end);
++    CL_VectorCopy4_401220(color, line->color);
+     line->depthTest = depthTest;
+ 
+     cls.debug.lineFromServer[cls.debug.numLines] = (byte)fromServer;
+@@ -3171,6 +3182,12 @@
+         shutdownDebug();
+ }
+ 
++// retail 0x411360, unreferenced
++void CL_AbortRenderCommands_411360(void)
++{
++    re.AbortRenderCommands();
++}
++
+ void CL_SyncGpu(void)
+ {
+     re.SyncGpu();
+@@ -3327,17 +3344,3 @@
+ 
+ // retail inlines Dvar_SetString (dvar.cpp) here
+ 
+-inline void VectorCopy(const vec3_t a, vec3_t b)
+-{
+-	b[0] = a[0];
+-	b[1] = a[1];
+-	b[2] = a[2];
+-}
+-
+-inline void VectorCopy4(const vec4_t a, vec4_t b)
+-{
+-	b[0] = a[0];
+-	b[1] = a[1];
+-	b[2] = a[2];
+-	b[3] = a[3];
+-}
+--- a/target/src/oc/client_mp/cl_keys_mp.cpp
++++ b/target/src/oc/client_mp/cl_keys_mp.cpp
+@@ -1264,7 +1264,7 @@
+ }
+ 
+ // retail 0x40acf0
+-static __forceinline void CL_KeyEventBody(int key, const qboolean down, const unsigned int time)
++__forceinline void CL_KeyEvent(int key, const qboolean down, const unsigned int time)
+ {
+     char *kb;
+     char cmd[1024];
+@@ -1425,12 +1425,6 @@
+     }
+ }
+ 
+-#pragma inline_depth(0)
+-void CL_KeyEvent(int key, const qboolean down, const unsigned int time)
+-{
+-    CL_KeyEventBody(key, down, time);
+-}
+-#pragma inline_depth()
+ 
+ void CL_CharEvent(int key)
+ {
+@@ -1467,7 +1461,7 @@
+ 
+     for (i = 0; i < 256; i++) {
+         if (keys[i].down) {
+-            CL_KeyEventBody(i, 0, 0);
++            CL_KeyEvent(i, 0, 0);
+         }
+         keys[i].down = 0;
+         keys[i].repeats = 0;
+--- a/target/src/qcommon/cm_load.cpp
++++ b/target/src/qcommon/cm_load.cpp
+@@ -122,7 +122,7 @@
+ 
+ 	for ( i = 0; i < numLumps; i++ )
+ 	{
+-		block[i] = LittleLong(block[i]);
++		block[i] = block[i];
+ 	}
+ }
+ 
+@@ -162,7 +162,7 @@
+ 
+ 	header = *(BspHeader *)buf;
+ 
+-	switch ( LittleLong(header.version) )
++	switch ( header.version )
+ 	{
+ 	case BSP_VERSION:
+ 	case BSP_VERSION_ALT:
+@@ -281,8 +281,8 @@
+ 
+ 	cmod = CM_ClipHandleToModel( model );
+ 
+-	VectorCopy( cmod->mins, mins );
+-	VectorCopy( cmod->maxs, maxs );
++	mins[0] = cmod->mins[0]; mins[1] = cmod->mins[1]; mins[2] = cmod->mins[2];
++	maxs[0] = cmod->maxs[0]; maxs[1] = cmod->maxs[1]; maxs[2] = cmod->maxs[2];
+ }
+ 
+ void *CM_Hunk_Alloc( int size, const char *name, int type )
+--- a/target/src/qcommon/cm_load_obj.cpp
++++ b/target/src/qcommon/cm_load_obj.cpp
+@@ -523,8 +523,8 @@
+ 			numLeafBrushesChild++;
+ 		}
+ 
+-		VectorCopy(mins, childMins);
+-		VectorCopy(maxs, childMaxs);
++		childMins[0] = mins[0]; childMins[1] = mins[1]; childMins[2] = mins[2];
++		childMaxs[0] = maxs[0]; childMaxs[1] = maxs[1]; childMaxs[2] = maxs[2];
+ 
+ 		if ( !side )
+ 		{
+@@ -595,8 +595,8 @@
+ 		}
+ 	}
+ 
+-	VectorCopy(mins, leaf->mins);
+-	VectorCopy(maxs, leaf->maxs);
++	leaf->mins[0] = mins[0]; leaf->mins[1] = mins[1]; leaf->mins[2] = mins[2];
++	leaf->maxs[0] = maxs[0]; leaf->maxs[1] = maxs[1]; leaf->maxs[2] = maxs[2];
+ 
+ 	for ( j = 0; j < 3; j++ )
+ 	{

@@ -49,7 +49,7 @@ static const dvar_t *hud_healthOverlay_phaseEnd_pulseDuration;
 typedef void (*MemoryFileArchiveProc)(MemoryFile *memFile, int size, void *data);
 
 extern char *va( const char *format, ... );
-extern int CL_GetKeyCatchers(void);
+extern int CL_GetKeyCatchers_411460(void);
 extern Bool CL_GetDisplayHUDWithKeycatchUI(void);
 extern const char *CL_GetConfigString(int index);
 extern void CL_DrawStretchPic(float x, float y, float w, float h, int horzAlign, int vertAlign, float s1, float t1, float s2, float t2, const vec_t *color, MaterialHandle material);
@@ -260,7 +260,7 @@ void CG_AntiBurnInHUD_RegisterDvars(void)
 
 Bool CG_AreHudMenusHidden(void)
 {
-    return ((CL_GetKeyCatchers() & 8) && !CL_GetDisplayHUDWithKeycatchUI()) || !cg->drawHud ? 1 : 0;
+    return ((CL_GetKeyCatchers_411460() & 8) && !CL_GetDisplayHUDWithKeycatchUI()) || !cg->drawHud ? 1 : 0;
 }
 
 float CG_FadeHudMenu(const dvar_t *fadeDvar, int displayStartTime, int duration)
@@ -1126,7 +1126,7 @@ void CG_DrawPlayerCompass(const rectDef_t *rect, MaterialHandle material, vec_t 
     displayStartTime = cg->compassFadeTime;
     alpha = CG_FadeHudMenu(hud_fade_compass, displayStartTime, duration);
     color[3] = alpha;
-    if (alpha == 0.0f) {
+    if (color[3] == 0.0f) {
         return;
     }
 
@@ -1315,8 +1315,10 @@ static void CG_DrawCursorhint(const rectDef_t *rect, struct Font_s *font, float 
     }
     else if (cg->cursorHintIcon == 3)
     {
+        const char *str;
         GetKeyBindingLocalizedString("+activate", binding);
-        text = UI_ReplaceConversionString(UI_SafeTranslateString("PLATFORM_PICKUPHEALTH"), binding);
+        str = UI_SafeTranslateString("PLATFORM_PICKUPHEALTH");
+        text = UI_ReplaceConversionString(str, binding);
     }
     else
     {
@@ -1343,6 +1345,7 @@ draw_icon:
 
 void CG_DrawHoldBreathHint(const rectDef_t *rect, struct Font_s *font, float fontscale, int textStyle)
 {
+    static const float color[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
     playerState_t *ps;
     WeaponDef *weaponDef;
     char binding[256];
@@ -1394,6 +1397,7 @@ void CG_DrawHoldBreathHint(const rectDef_t *rect, struct Font_s *font, float fon
 
 void CG_DrawMantleHint(const rectDef_t *rect, struct Font_s *font, float fontscale, int textStyle)
 {
+    static const float color[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
     char binding[0x100];
     const char *text;
     float length;
@@ -1526,11 +1530,6 @@ const char *CG_GetKillerText(void)
     return s;
 }
 
-const char *CG_GameTypeString(void)
-{
-    return cgs->gametype;
-}
-
 static void CG_DrawKiller(const rectDef_t *rect, struct Font_s *font, float scale, vec_t *color, int textStyle)
 {
     const char *s;
@@ -1549,6 +1548,11 @@ static void CG_DrawPlaceScore(int team, const rectDef_t *rect, struct Font_s *fo
     if (cgs->teamScores[team] != -9999)
         UI_DrawText(va("%2i", cgs->teamScores[team]), 0x7fffffff, font, rect->x, rect->y,
                     rect->horzAlign, rect->vertAlign, scale, color, textStyle);
+}
+
+const char *CG_GameTypeString(void)
+{
+    return cgs->gametype;
 }
 
 static void CG_DrawGameType(const rectDef_t *rect, struct Font_s *font, float scale, vec_t *color, int textStyle)

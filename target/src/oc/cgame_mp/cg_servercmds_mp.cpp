@@ -53,7 +53,7 @@ extern void FX_FreeActive(void);
 extern void SND_StopSounds(snd_stopsounds_arg_t mode);
 extern void CG_StartAmbient(void);
 extern void Dvar_SetBool(dvar_t *dvar, bool value);
-extern void CL_SetADS(int value);
+extern void IN_LeaveADS(void);
 extern void CL_CloseAllMenus(void);
 extern void CG_ScoresUp_f(void);
 extern void CL_SyncTimes(void);
@@ -496,7 +496,7 @@ void CG_MapRestart(qboolean savepersist)
     cgui = CGUI_PTR;
     *(int *)(cgui + 8) = 0;
 
-    CL_SetADS(0);
+    IN_LeaveADS();
 
     if (!savepersist) {
         cgui = CGUI_PTR;
@@ -526,37 +526,37 @@ static void CG_OpenScriptMenu(void)
     noMouseControl = 1;
     menuIndex = atoi(CG_Argv(1));
 
-    if (menuIndex >= 0 && menuIndex < 32) {
-        pszMenu = CL_GetConfigString(menuIndex + 0x4de);
-        if (!*pszMenu) {
-            Com_Printf("Server tried to open a non-loaded script menu index: %i\n", menuIndex);
-            Cbuf_AddText(va("cmd mr %i bad\n", menuIndex));
-            return;
-        }
-
-        if (Cmd_Argc() <= 2 || !CG_Argv(2) || !*CG_Argv(2))
-            noMouseControl = 0;
-
-        I_strncpyz(legacyHacks->ui_newScriptMenu, pszMenu, sizeof(legacyHacks->ui_newScriptMenu));
-        legacyHacks->ui_newScriptMenuIndex = menuIndex;
-
-        if (!CL_Popup(noMouseControl ? "UIMENU_SCRIPT_POPUP_NO_MOUSE" : "UIMENU_SCRIPT_POPUP")) {
-            legacyHacks->ui_newScriptMenu[0] = 0;
-            legacyHacks->ui_newScriptMenuIndex = -1;
-            if (legacyHacks->ui_waitingScriptMenu[0]) {
-                if (!I_stricmp(pszMenu, legacyHacks->ui_waitingScriptMenu))
-                    return;
-                Cbuf_AddText(va("cmd mr %i noop\n", legacyHacks->ui_waitingScriptMenuIndex));
-            }
-            I_strncpyz(legacyHacks->ui_waitingScriptMenu, pszMenu, sizeof(legacyHacks->ui_waitingScriptMenu));
-            legacyHacks->ui_waitingScriptMenuIndex = menuIndex;
-            legacyHacks->ui_waitingScriptMenuNoMouse = noMouseControl;
-        }
+    if (menuIndex < 0 || menuIndex >= 32) {
+        Com_Printf("Server tried to open a bad script menu index: %i\n", menuIndex);
+        Cbuf_AddText(va("cmd mr %i bad\n", menuIndex));
         return;
     }
 
-    Com_Printf("Server tried to open a bad script menu index: %i\n", menuIndex);
-    Cbuf_AddText(va("cmd mr %i bad\n", menuIndex));
+    pszMenu = CL_GetConfigString(menuIndex + 0x4de);
+    if (!*pszMenu) {
+        Com_Printf("Server tried to open a non-loaded script menu index: %i\n", menuIndex);
+        Cbuf_AddText(va("cmd mr %i bad\n", menuIndex));
+        return;
+    }
+
+    if (Cmd_Argc() <= 2 || !CG_Argv(2) || !*CG_Argv(2))
+        noMouseControl = 0;
+
+    I_strncpyz(legacyHacks->ui_newScriptMenu, pszMenu, sizeof(legacyHacks->ui_newScriptMenu));
+    legacyHacks->ui_newScriptMenuIndex = menuIndex;
+
+    if (!CL_Popup(noMouseControl ? "UIMENU_SCRIPT_POPUP_NO_MOUSE" : "UIMENU_SCRIPT_POPUP")) {
+        legacyHacks->ui_newScriptMenu[0] = 0;
+        legacyHacks->ui_newScriptMenuIndex = -1;
+        if (legacyHacks->ui_waitingScriptMenu[0]) {
+            if (!I_stricmp(pszMenu, legacyHacks->ui_waitingScriptMenu))
+                return;
+            Cbuf_AddText(va("cmd mr %i noop\n", legacyHacks->ui_waitingScriptMenuIndex));
+        }
+        I_strncpyz(legacyHacks->ui_waitingScriptMenu, pszMenu, sizeof(legacyHacks->ui_waitingScriptMenu));
+        legacyHacks->ui_waitingScriptMenuIndex = menuIndex;
+        legacyHacks->ui_waitingScriptMenuNoMouse = noMouseControl;
+    }
 }
 
 void CG_CheckOpenWaitingScriptMenu(void)

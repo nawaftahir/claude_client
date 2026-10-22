@@ -53,9 +53,9 @@ void CL_PlayCinematic_f(void)
 
 void SCR_DrawCinematic(void)
 {
-    ROQ_DrawCinematic();
+    if (CL_handle >= 0 && CL_handle < 16)
+        ROQ_DrawCinematicFromHandle(CL_handle);
 }
-
 void SCR_RunCinematic(void)
 {
     if (CL_handle >= 0 && CL_handle < 16)
@@ -75,6 +75,7 @@ void CIN_UploadCinematic(int handle)
 {
     ROQ_UploadCinematicFromHandle(handle);
 }
+
 
 void CIN_CloseAllVideos(void)
 {

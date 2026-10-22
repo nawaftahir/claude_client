@@ -268,10 +268,7 @@ static inline const dvar_t *dvar_get_ptr(const dvar_t *dvar)
     return dvar;
 }
 
-static inline int float_seconds_to_ms(float val)
-{
-    return I_fround(val * 1000.0f);
-}
+#define float_seconds_to_ms(val) I_fround((val) * 1000.0f)
 
 inline void FastSinCos(const float value, float *pSin, float *pCos)
 {

@@ -430,6 +430,12 @@ unsigned int SEH_JapaneseCharToIndex( unsigned int c )
 	return 0;
 }
 
+int SEH_IsChineseLeadTrail( unsigned char lead, unsigned char trail )
+{
+	if ( lead >= 0xa1 && lead <= 0xf7 && trail > 0xa0 && trail < 0xff )
+		return 1;
+	return 0;
+}
 unsigned char SEH_IsChineseChar( unsigned int c ) throw()
 {
 	return SEH_IsChineseLeadTrail(c >> 8, c);
@@ -583,12 +589,6 @@ void SEH_Init_StringEd()
 void SEH_Shutdown_StringEd()
 {
 	SE_ShutDown();
-}
-int SEH_IsChineseLeadTrail( unsigned char lead, unsigned char trail )
-{
-	if ( lead >= 0xa1 && lead <= 0xf7 && trail > 0xa0 && trail < 0xff )
-		return 1;
-	return 0;
 }
 int SEH_IsKoreanLeadTrail( unsigned char lead, unsigned char trail )
 {

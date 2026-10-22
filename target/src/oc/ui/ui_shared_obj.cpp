@@ -540,6 +540,18 @@ void Item_InitControls(const char (*item)[4])
     ListBox_SetEndPos(listPtr, 0);
 }
 
+qboolean MenuParse_visible(const char (*item)[4], int handle)
+{
+    int visible;
+
+    if (!PC_Int_Parse(handle, &visible))
+        return 0;
+
+    if (visible)
+        ((itemDef_t *)item)->window.dynamicFlags[0] |= 4;
+
+    return 1;
+}
 qboolean MenuParse_fullscreen(const char (*item)[4], int handle)
 {
     if (!PC_Int_Parse(handle, (int *)&((menuDef_t *)item)->fullScreen))
@@ -776,6 +788,50 @@ qboolean MenuParse_blurWorld(const char (*item)[4], int handle)
 
     return 1;
 }
+
+qboolean MenuParse_name(menuDef_t *menu, int handle);
+qboolean MenuParse_border(const char (*item)[4], int handle);
+qboolean MenuParse_borderSize(const char (*item)[4], int handle);
+qboolean MenuParse_forecolor(const char (*item)[4], int handle);
+qboolean MenuParse_outlinecolor(const char (*item)[4], int handle);
+qboolean MenuParse_ownerdrawFlag(const char (*item)[4], int handle);
+qboolean MenuParse_cinematic(menuDef_t *menu, int handle);
+qboolean MenuParse_legacySplitScreenScale(const char (*item)[4], int handle);
+static keywordHash_t menuParseKeywords[] = {
+    { (char *)"name", (qboolean(*)())&MenuParse_name, 0x0 },
+    { (char *)"fullscreen", (qboolean(*)())&MenuParse_fullscreen, 0x0 },
+    { (char *)"rect", (qboolean(*)())&MenuParse_rect, 0x0 },
+    { (char *)"style", (qboolean(*)())&MenuParse_style, 0x0 },
+    { (char *)"visible", (qboolean(*)())&MenuParse_visible, 0x0 },
+    { (char *)"onOpen", (qboolean(*)())&MenuParse_onOpen, 0x0 },
+    { (char *)"onClose", (qboolean(*)())&MenuParse_onClose, 0x0 },
+    { (char *)"onESC", (qboolean(*)())&MenuParse_onESC, 0x0 },
+    { (char *)"border", (qboolean(*)())&MenuParse_border, 0x0 },
+    { (char *)"borderSize", (qboolean(*)())&MenuParse_borderSize, 0x0 },
+    { (char *)"backcolor", (qboolean(*)())&MenuParse_backcolor, 0x0 },
+    { (char *)"forecolor", (qboolean(*)())&MenuParse_forecolor, 0x0 },
+    { (char *)"bordercolor", (qboolean(*)())&MenuParse_bordercolor, 0x0 },
+    { (char *)"focuscolor", (qboolean(*)())&MenuParse_focuscolor, 0x0 },
+    { (char *)"disablecolor", (qboolean(*)())&MenuParse_disablecolor, 0x0 },
+    { (char *)"outlinecolor", (qboolean(*)())&MenuParse_outlinecolor, 0x0 },
+    { (char *)"background", (qboolean(*)())&MenuParse_background, 0x0 },
+    { (char *)"ownerdraw", (qboolean(*)())&MenuParse_ownerdraw, 0x0 },
+    { (char *)"ownerdrawFlag", (qboolean(*)())&MenuParse_ownerdrawFlag, 0x0 },
+    { (char *)"outOfBoundsClick", (qboolean(*)())&MenuParse_outOfBounds, 0x0 },
+    { (char *)"soundLoop", (qboolean(*)())&MenuParse_soundLoop, 0x0 },
+    { (char *)"itemDef", (qboolean(*)())&MenuParse_itemDef, 0x0 },
+    { (char *)"cinematic", (qboolean(*)())&MenuParse_cinematic, 0x0 },
+    { (char *)"popup", (qboolean(*)())&MenuParse_popup, 0x0 },
+    { (char *)"fadeClamp", (qboolean(*)())&MenuParse_fadeClamp, 0x0 },
+    { (char *)"fadeCycle", (qboolean(*)())&MenuParse_fadeCycle, 0x0 },
+    { (char *)"fadeAmount", (qboolean(*)())&MenuParse_fadeAmount, 0x0 },
+    { (char *)"fadeInAmount", (qboolean(*)())&MenuParse_fadeInAmount, 0x0 },
+    { (char *)"execKey", (qboolean(*)())&MenuParse_execKey, 0x0 },
+    { (char *)"execKeyInt", (qboolean(*)())&MenuParse_execKeyInt, 0x0 },
+    { (char *)"blurWorld", (qboolean(*)())&MenuParse_blurWorld, 0x0 },
+    { (char *)"legacySplitScreenScale", (qboolean(*)())&MenuParse_legacySplitScreenScale, 0x0 },
+    { 0, 0, 0x0 }
+};
 
 qboolean MenuParse_legacySplitScreenScale(const char (*item)[4], int handle)
 {
@@ -1382,6 +1438,93 @@ qboolean ItemParse_dvarEnumList(const char (*item)[4], int handle)
     return PC_String_Parse(handle, (const char **)&itemDef->typeData.data);
 }
 
+qboolean ItemParse_name(itemDef_t *item, int handle);
+qboolean ItemParse_origin(const char (*item)[4], int handle);
+qboolean ItemParse_feeder(const char (*item)[4], int handle);
+qboolean ItemParse_border(const char (*item)[4], int handle);
+qboolean ItemParse_bordersize(const char (*item)[4], int handle);
+qboolean ItemParse_visible(const char (*item)[4], int handle);
+qboolean ItemParse_forecolor(const char (*item)[4], int handle);
+qboolean ItemParse_outlinecolor(const char (*item)[4], int handle);
+qboolean ItemParse_special(const char (*item)[4], int handle);
+qboolean ItemParse_ownerdrawFlag(const char (*item)[4], int handle);
+qboolean ItemParse_enableDvar(const char (*item)[4], int handle);
+qboolean ItemParse_disableDvar(const char (*item)[4], int handle);
+qboolean ItemParse_showDvar(const char (*item)[4], int handle);
+qboolean ItemParse_hideDvar(const char (*item)[4], int handle);
+qboolean ItemParse_focusDvar(const char (*item)[4], int handle);
+qboolean ItemParse_cinematic(itemDef_t *item, int handle);
+qboolean ItemParse_execKey(const char (*item)[4], int handle);
+qboolean ItemParse_execKeyInt(const char (*item)[4], int handle);
+static keywordHash_t itemParseKeywords[] = {
+    { (char *)"name", (qboolean(*)())&ItemParse_name, 0x0 },
+    { (char *)"text", (qboolean(*)())&ItemParse_text, 0x0 },
+    { (char *)"textfile", (qboolean(*)())&ItemParse_textfile, 0x0 },
+    { (char *)"textsavegame", (qboolean(*)())&ItemParse_textsavegame, 0x0 },
+    { (char *)"group", (qboolean(*)())&ItemParse_group, 0x0 },
+    { (char *)"rect", (qboolean(*)())&ItemParse_rect, 0x0 },
+    { (char *)"origin", (qboolean(*)())&ItemParse_origin, 0x0 },
+    { (char *)"style", (qboolean(*)())&ItemParse_style, 0x0 },
+    { (char *)"decoration", (qboolean(*)())&ItemParse_decoration, 0x0 },
+    { (char *)"notselectable", (qboolean(*)())&ItemParse_notselectable, 0x0 },
+    { (char *)"noscrollbars", (qboolean(*)())&ItemParse_noScrollBars, 0x0 },
+    { (char *)"wrapped", (qboolean(*)())&ItemParse_wrapped, 0x0 },
+    { (char *)"autowrapped", (qboolean(*)())&ItemParse_autowrapped, 0x0 },
+    { (char *)"horizontalscroll", (qboolean(*)())&ItemParse_horizontalscroll, 0x0 },
+    { (char *)"type", (qboolean(*)())&ItemParse_type, 0x0 },
+    { (char *)"elementwidth", (qboolean(*)())&ItemParse_elementwidth, 0x0 },
+    { (char *)"elementheight", (qboolean(*)())&ItemParse_elementheight, 0x0 },
+    { (char *)"feeder", (qboolean(*)())&ItemParse_feeder, 0x0 },
+    { (char *)"elementtype", (qboolean(*)())&ItemParse_elementtype, 0x0 },
+    { (char *)"columns", (qboolean(*)())&ItemParse_columns, 0x0 },
+    { (char *)"border", (qboolean(*)())&ItemParse_border, 0x0 },
+    { (char *)"bordersize", (qboolean(*)())&ItemParse_bordersize, 0x0 },
+    { (char *)"visible", (qboolean(*)())&ItemParse_visible, 0x0 },
+    { (char *)"ownerdraw", (qboolean(*)())&ItemParse_ownerdraw, 0x0 },
+    { (char *)"align", (qboolean(*)())&ItemParse_align, 0x0 },
+    { (char *)"textalign", (qboolean(*)())&ItemParse_textalign, 0x0 },
+    { (char *)"textalignx", (qboolean(*)())&ItemParse_textalignx, 0x0 },
+    { (char *)"textaligny", (qboolean(*)())&ItemParse_textaligny, 0x0 },
+    { (char *)"textscale", (qboolean(*)())&ItemParse_textscale, 0x0 },
+    { (char *)"textstyle", (qboolean(*)())&ItemParse_textstyle, 0x0 },
+    { (char *)"textfont", (qboolean(*)())&ItemParse_textfont, 0x0 },
+    { (char *)"backcolor", (qboolean(*)())&ItemParse_backcolor, 0x0 },
+    { (char *)"forecolor", (qboolean(*)())&ItemParse_forecolor, 0x0 },
+    { (char *)"bordercolor", (qboolean(*)())&ItemParse_bordercolor, 0x0 },
+    { (char *)"outlinecolor", (qboolean(*)())&ItemParse_outlinecolor, 0x0 },
+    { (char *)"background", (qboolean(*)())&ItemParse_background, 0x0 },
+    { (char *)"onFocus", (qboolean(*)())&ItemParse_onFocus, 0x0 },
+    { (char *)"leaveFocus", (qboolean(*)())&ItemParse_leaveFocus, 0x0 },
+    { (char *)"mouseEnter", (qboolean(*)())&ItemParse_mouseEnter, 0x0 },
+    { (char *)"mouseExit", (qboolean(*)())&ItemParse_mouseExit, 0x0 },
+    { (char *)"mouseEnterText", (qboolean(*)())&ItemParse_mouseEnterText, 0x0 },
+    { (char *)"mouseExitText", (qboolean(*)())&ItemParse_mouseExitText, 0x0 },
+    { (char *)"action", (qboolean(*)())&ItemParse_action, 0x0 },
+    { (char *)"accept", (qboolean(*)())&ItemParse_accept, 0x0 },
+    { (char *)"special", (qboolean(*)())&ItemParse_special, 0x0 },
+    { (char *)"dvar", (qboolean(*)())&ItemParse_dvar, 0x0 },
+    { (char *)"maxChars", (qboolean(*)())&ItemParse_maxChars, 0x0 },
+    { (char *)"maxCharsGotoNext", (qboolean(*)())&Item_Parse_maxCharsGotoNext, 0x0 },
+    { (char *)"maxPaintChars", (qboolean(*)())&ItemParse_maxPaintChars, 0x0 },
+    { (char *)"focusSound", (qboolean(*)())&ItemParse_focusSound, 0x0 },
+    { (char *)"dvarFloat", (qboolean(*)())&ItemParse_dvarFloat, 0x0 },
+    { (char *)"dvarStrList", (qboolean(*)())&ItemParse_dvarStrList, 0x0 },
+    { (char *)"dvarFloatList", (qboolean(*)())&ItemParse_dvarFloatList, 0x0 },
+    { (char *)"dvarEnumList", (qboolean(*)())&ItemParse_dvarEnumList, 0x0 },
+    { (char *)"ownerdrawFlag", (qboolean(*)())&ItemParse_ownerdrawFlag, 0x0 },
+    { (char *)"enableDvar", (qboolean(*)())&ItemParse_enableDvar, 0x0 },
+    { (char *)"dvarTest", (qboolean(*)())&ItemParse_dvarTest, 0x0 },
+    { (char *)"disableDvar", (qboolean(*)())&ItemParse_disableDvar, 0x0 },
+    { (char *)"showDvar", (qboolean(*)())&ItemParse_showDvar, 0x0 },
+    { (char *)"hideDvar", (qboolean(*)())&ItemParse_hideDvar, 0x0 },
+    { (char *)"focusDvar", (qboolean(*)())&ItemParse_focusDvar, 0x0 },
+    { (char *)"cinematic", (qboolean(*)())&ItemParse_cinematic, 0x0 },
+    { (char *)"doubleclick", (qboolean(*)())&ItemParse_doubleClick, 0x0 },
+    { (char *)"execKey", (qboolean(*)())&ItemParse_execKey, 0x0 },
+    { (char *)"execKeyInt", (qboolean(*)())&ItemParse_execKeyInt, 0x0 },
+    { 0, 0, 0x0 }
+};
+
 qboolean ItemParse_enableDvar(const char (*item)[4], int handle)
 {
     if (PC_Script_Parse(handle, (const char **)&((itemDef_t *)item)->enableDvar)) {
@@ -1859,18 +2002,6 @@ qboolean MenuParse_borderSize(const char (*item)[4], int handle)
         return 0;
     return 1;
 }
-qboolean MenuParse_visible(const char (*item)[4], int handle)
-{
-    int visible;
-
-    if (!PC_Int_Parse(handle, &visible))
-        return 0;
-
-    if (visible)
-        ((itemDef_t *)item)->window.dynamicFlags[0] |= 4;
-
-    return 1;
-}
 qboolean MenuParse_border(const char (*item)[4], int handle)
 {
     if (!PC_Int_Parse(handle, (int *)&((itemDef_t *)item)->window.border))
@@ -2025,107 +2156,4 @@ qboolean MenuParse_name(menuDef_t *menu, int handle)
     menu->window.name = String_Alloc(token.string);
     return 1;
 }
-static keywordHash_t menuParseKeywords[] = {
-    { (char *)"name", (qboolean(*)())&MenuParse_name, 0x0 },
-    { (char *)"fullscreen", (qboolean(*)())&MenuParse_fullscreen, 0x0 },
-    { (char *)"rect", (qboolean(*)())&MenuParse_rect, 0x0 },
-    { (char *)"style", (qboolean(*)())&MenuParse_style, 0x0 },
-    { (char *)"visible", (qboolean(*)())&MenuParse_visible, 0x0 },
-    { (char *)"onOpen", (qboolean(*)())&MenuParse_onOpen, 0x0 },
-    { (char *)"onClose", (qboolean(*)())&MenuParse_onClose, 0x0 },
-    { (char *)"onESC", (qboolean(*)())&MenuParse_onESC, 0x0 },
-    { (char *)"border", (qboolean(*)())&MenuParse_border, 0x0 },
-    { (char *)"borderSize", (qboolean(*)())&MenuParse_borderSize, 0x0 },
-    { (char *)"backcolor", (qboolean(*)())&MenuParse_backcolor, 0x0 },
-    { (char *)"forecolor", (qboolean(*)())&MenuParse_forecolor, 0x0 },
-    { (char *)"bordercolor", (qboolean(*)())&MenuParse_bordercolor, 0x0 },
-    { (char *)"focuscolor", (qboolean(*)())&MenuParse_focuscolor, 0x0 },
-    { (char *)"disablecolor", (qboolean(*)())&MenuParse_disablecolor, 0x0 },
-    { (char *)"outlinecolor", (qboolean(*)())&MenuParse_outlinecolor, 0x0 },
-    { (char *)"background", (qboolean(*)())&MenuParse_background, 0x0 },
-    { (char *)"ownerdraw", (qboolean(*)())&MenuParse_ownerdraw, 0x0 },
-    { (char *)"ownerdrawFlag", (qboolean(*)())&MenuParse_ownerdrawFlag, 0x0 },
-    { (char *)"outOfBoundsClick", (qboolean(*)())&MenuParse_outOfBounds, 0x0 },
-    { (char *)"soundLoop", (qboolean(*)())&MenuParse_soundLoop, 0x0 },
-    { (char *)"itemDef", (qboolean(*)())&MenuParse_itemDef, 0x0 },
-    { (char *)"cinematic", (qboolean(*)())&MenuParse_cinematic, 0x0 },
-    { (char *)"popup", (qboolean(*)())&MenuParse_popup, 0x0 },
-    { (char *)"fadeClamp", (qboolean(*)())&MenuParse_fadeClamp, 0x0 },
-    { (char *)"fadeCycle", (qboolean(*)())&MenuParse_fadeCycle, 0x0 },
-    { (char *)"fadeAmount", (qboolean(*)())&MenuParse_fadeAmount, 0x0 },
-    { (char *)"fadeInAmount", (qboolean(*)())&MenuParse_fadeInAmount, 0x0 },
-    { (char *)"execKey", (qboolean(*)())&MenuParse_execKey, 0x0 },
-    { (char *)"execKeyInt", (qboolean(*)())&MenuParse_execKeyInt, 0x0 },
-    { (char *)"blurWorld", (qboolean(*)())&MenuParse_blurWorld, 0x0 },
-    { (char *)"legacySplitScreenScale", (qboolean(*)())&MenuParse_legacySplitScreenScale, 0x0 },
-    { 0, 0, 0x0 }
-};
-static keywordHash_t itemParseKeywords[] = {
-    { (char *)"name", (qboolean(*)())&ItemParse_name, 0x0 },
-    { (char *)"text", (qboolean(*)())&ItemParse_text, 0x0 },
-    { (char *)"textfile", (qboolean(*)())&ItemParse_textfile, 0x0 },
-    { (char *)"textsavegame", (qboolean(*)())&ItemParse_textsavegame, 0x0 },
-    { (char *)"group", (qboolean(*)())&ItemParse_group, 0x0 },
-    { (char *)"rect", (qboolean(*)())&ItemParse_rect, 0x0 },
-    { (char *)"origin", (qboolean(*)())&ItemParse_origin, 0x0 },
-    { (char *)"style", (qboolean(*)())&ItemParse_style, 0x0 },
-    { (char *)"decoration", (qboolean(*)())&ItemParse_decoration, 0x0 },
-    { (char *)"notselectable", (qboolean(*)())&ItemParse_notselectable, 0x0 },
-    { (char *)"noscrollbars", (qboolean(*)())&ItemParse_noScrollBars, 0x0 },
-    { (char *)"wrapped", (qboolean(*)())&ItemParse_wrapped, 0x0 },
-    { (char *)"autowrapped", (qboolean(*)())&ItemParse_autowrapped, 0x0 },
-    { (char *)"horizontalscroll", (qboolean(*)())&ItemParse_horizontalscroll, 0x0 },
-    { (char *)"type", (qboolean(*)())&ItemParse_type, 0x0 },
-    { (char *)"elementwidth", (qboolean(*)())&ItemParse_elementwidth, 0x0 },
-    { (char *)"elementheight", (qboolean(*)())&ItemParse_elementheight, 0x0 },
-    { (char *)"feeder", (qboolean(*)())&ItemParse_feeder, 0x0 },
-    { (char *)"elementtype", (qboolean(*)())&ItemParse_elementtype, 0x0 },
-    { (char *)"columns", (qboolean(*)())&ItemParse_columns, 0x0 },
-    { (char *)"border", (qboolean(*)())&ItemParse_border, 0x0 },
-    { (char *)"bordersize", (qboolean(*)())&ItemParse_bordersize, 0x0 },
-    { (char *)"visible", (qboolean(*)())&ItemParse_visible, 0x0 },
-    { (char *)"ownerdraw", (qboolean(*)())&ItemParse_ownerdraw, 0x0 },
-    { (char *)"align", (qboolean(*)())&ItemParse_align, 0x0 },
-    { (char *)"textalign", (qboolean(*)())&ItemParse_textalign, 0x0 },
-    { (char *)"textalignx", (qboolean(*)())&ItemParse_textalignx, 0x0 },
-    { (char *)"textaligny", (qboolean(*)())&ItemParse_textaligny, 0x0 },
-    { (char *)"textscale", (qboolean(*)())&ItemParse_textscale, 0x0 },
-    { (char *)"textstyle", (qboolean(*)())&ItemParse_textstyle, 0x0 },
-    { (char *)"textfont", (qboolean(*)())&ItemParse_textfont, 0x0 },
-    { (char *)"backcolor", (qboolean(*)())&ItemParse_backcolor, 0x0 },
-    { (char *)"forecolor", (qboolean(*)())&ItemParse_forecolor, 0x0 },
-    { (char *)"bordercolor", (qboolean(*)())&ItemParse_bordercolor, 0x0 },
-    { (char *)"outlinecolor", (qboolean(*)())&ItemParse_outlinecolor, 0x0 },
-    { (char *)"background", (qboolean(*)())&ItemParse_background, 0x0 },
-    { (char *)"onFocus", (qboolean(*)())&ItemParse_onFocus, 0x0 },
-    { (char *)"leaveFocus", (qboolean(*)())&ItemParse_leaveFocus, 0x0 },
-    { (char *)"mouseEnter", (qboolean(*)())&ItemParse_mouseEnter, 0x0 },
-    { (char *)"mouseExit", (qboolean(*)())&ItemParse_mouseExit, 0x0 },
-    { (char *)"mouseEnterText", (qboolean(*)())&ItemParse_mouseEnterText, 0x0 },
-    { (char *)"mouseExitText", (qboolean(*)())&ItemParse_mouseExitText, 0x0 },
-    { (char *)"action", (qboolean(*)())&ItemParse_action, 0x0 },
-    { (char *)"accept", (qboolean(*)())&ItemParse_accept, 0x0 },
-    { (char *)"special", (qboolean(*)())&ItemParse_special, 0x0 },
-    { (char *)"dvar", (qboolean(*)())&ItemParse_dvar, 0x0 },
-    { (char *)"maxChars", (qboolean(*)())&ItemParse_maxChars, 0x0 },
-    { (char *)"maxCharsGotoNext", (qboolean(*)())&Item_Parse_maxCharsGotoNext, 0x0 },
-    { (char *)"maxPaintChars", (qboolean(*)())&ItemParse_maxPaintChars, 0x0 },
-    { (char *)"focusSound", (qboolean(*)())&ItemParse_focusSound, 0x0 },
-    { (char *)"dvarFloat", (qboolean(*)())&ItemParse_dvarFloat, 0x0 },
-    { (char *)"dvarStrList", (qboolean(*)())&ItemParse_dvarStrList, 0x0 },
-    { (char *)"dvarFloatList", (qboolean(*)())&ItemParse_dvarFloatList, 0x0 },
-    { (char *)"dvarEnumList", (qboolean(*)())&ItemParse_dvarEnumList, 0x0 },
-    { (char *)"ownerdrawFlag", (qboolean(*)())&ItemParse_ownerdrawFlag, 0x0 },
-    { (char *)"enableDvar", (qboolean(*)())&ItemParse_enableDvar, 0x0 },
-    { (char *)"dvarTest", (qboolean(*)())&ItemParse_dvarTest, 0x0 },
-    { (char *)"disableDvar", (qboolean(*)())&ItemParse_disableDvar, 0x0 },
-    { (char *)"showDvar", (qboolean(*)())&ItemParse_showDvar, 0x0 },
-    { (char *)"hideDvar", (qboolean(*)())&ItemParse_hideDvar, 0x0 },
-    { (char *)"focusDvar", (qboolean(*)())&ItemParse_focusDvar, 0x0 },
-    { (char *)"cinematic", (qboolean(*)())&ItemParse_cinematic, 0x0 },
-    { (char *)"doubleclick", (qboolean(*)())&ItemParse_doubleClick, 0x0 },
-    { (char *)"execKey", (qboolean(*)())&ItemParse_execKey, 0x0 },
-    { (char *)"execKeyInt", (qboolean(*)())&ItemParse_execKeyInt, 0x0 },
-    { 0, 0, 0x0 }
-};
 

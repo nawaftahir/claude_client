@@ -30,118 +30,6 @@ int G_GetWeaponIndexForName( const char *name );
 void G_SelectWeaponIndex( int clientnum, int iWeaponIndex );
 void G_SetEquippedOffHand( int clientNum, int offHandIndex );
 
-void Bullet_Fire_Extended( const gentity_t *source, gentity_t *attacker,
-                           vec3_t start, vec3_t end, float spread, int resursion,
-                           const weaponParms *wp, const gentity_t *weaponEnt, int gameTime )
-{
-	trace_t tr;
-	gentity_t *tent;
-	gentity_t *traceEnt;
-	vec3_t dist;
-	float distLen;
-	int damage, dflags = 0, mod;
-	vec3_t hitPos;
-	int event;
-	vec3_t reflect;
-	float dot, ndot;
-	register byte *priorityMap;
-	register int event2;
-	register gentity_t *tent2;
-	register int surfType;
-	int surfFlags;
-	if ( resursion > MAX_BULLET_RESURSIONS )
-	{
-		Com_DPrintf("Bullet_Fire_Extended: Too many resursions, bullet aborted\n");
-		return;
-	}
-	if ( wp->weapDef->rifleBullet )
-	{
-		mod = MOD_RIFLE_BULLET;
-		dflags = DAMAGE_PASSTHRU;
-	}
-	else
-	{
-		mod = MOD_PISTOL_BULLET;
-	}
-	if ( wp->weapDef->armorPiercing )
-	{
-		dflags |= DAMAGE_NO_ARMOR;
-	}
-	if ( wp->weapDef->rifleBullet )
-		priorityMap = riflePriorityMap;
-	else
-		priorityMap = bulletPriorityMap;
-	G_LocationalTrace(&tr, start, end, source->s.number, MASK_SHOT, priorityMap);
-	Vec3Lerp(start, end, tr.fraction, hitPos);
-	G_CheckHitTriggerDamage(attacker, start, hitPos, wp->weapDef->damage, mod);
-	traceEnt = &g_entities[tr.entityNum];
-	VectorSubtract(end, start, reflect);
-	Vec3Normalize(reflect);
-	dot = DotProduct(reflect, tr.normal) * -2.0f;
-	VectorMA(reflect, dot, tr.normal, reflect);
-	// send bullet impact
-	if ( !( tr.surfaceFlags & SURF_SKY ) && !traceEnt->client && tr.fraction < 1.0f )
-	{
-		// legacy?
-		if ( wp->weapDef->weaponClass == WEAPCLASS_SPREAD )
-		{
-			event = EV_BULLET_HIT_SMALL;
-		}
-		else if ( wp->weapDef->rifleBullet )
-		{
-			event = EV_SHOTGUN_HIT;
-		}
-		else
-		{
-			event = EV_BULLET_HIT_LARGE;
-		}
-		tent = G_TempEntity(hitPos, wp->weapDef->rifleBullet ? EV_SHOTGUN_HIT : EV_BULLET_HIT_LARGE);
-		tent->s.eventParm  = DirToByte(tr.normal);
-		tent->s.hintString = DirToByte(reflect);
-		tent2 = tent;
-		surfFlags = tr.surfaceFlags;
-		if ( traceEnt->s.eType == ET_PLAYER_CORPSE )
-			surfFlags = SURF_TYPE_FLESH << 20;
-		surfType = (byte)((surfFlags & 0x1F00000) >> 20);
-		tent2->s.surfType = surfType;
-		tent->s.otherEntityNum = weaponEnt->s.number;
-	}
-	if ( tr.contents & SURF_NOIMPACT )
-	{
-		vec3_t dir;
-		VectorSubtract(end, start, dir);
-		Vec3Normalize(dir);
-		ndot = -DotProduct(tr.normal, dir);
-		dot = ( ndot >= 0.125f ) ? 0.25f / ndot : 0.0f;
-		VectorMA(hitPos, dot, dir, start);
-		Bullet_Fire_Extended(source, attacker, start, end, spread, resursion + 1, wp, weaponEnt, gameTime);
-		return;
-	}
-	if ( traceEnt->takedamage )
-	{
-		if ( traceEnt != attacker )
-		{
-			VectorSubtract( start, hitPos, dist );
-			distLen = VectorLength(dist);
-			damage = Bullet_GetDamage( wp, distLen ) * spread;
-			G_Damage( traceEnt, attacker, attacker, wp->forward, hitPos, damage, dflags, mod, tr.partGroup, level.time - gameTime );
-			if ( traceEnt->client )
-			{
-				// allow bullets to "pass through" func_explosives if they break by taking another simultanious shot
-				if ( dflags & DAMAGE_PASSTHRU )
-				{
-					if ( Dvar_GetInt("scr_friendlyfire") || !OnSameTeam(traceEnt, attacker) )
-					{
-						// start new bullet at position this hit the bmodel and continue to the end position (ignoring shot-through bmodel in next trace)
-						// spread = 0 as this is an extension of an already spread shot
-						Bullet_Fire_Extended( traceEnt, attacker, hitPos, end, spread * 0.5, resursion + 1, wp, weaponEnt, gameTime );
-					}
-				}
-			}
-		}
-	}
-}
-
 bool Melee_Trace( gentity_t *ent, weaponParms *wp, int damage, float range, float width, float height, trace_t *traceResult, vec3_t hitOrigin )
 {
 	static const vec2_t traceOffsets[] =
@@ -409,6 +297,118 @@ void G_AntiLag_RestoreClientPos( AntilagClientStore *antilagStore )
 			SV_UnlinkEntity(&g_entities[client]);
 			memcpy(g_entities[client].r.currentOrigin, antilagStore->realClientPositions[client], sizeof(g_entities[client].r.currentOrigin));
 			SV_LinkEntity(&g_entities[client]);
+		}
+	}
+}
+
+void Bullet_Fire_Extended( const gentity_t *source, gentity_t *attacker,
+                           vec3_t start, vec3_t end, float spread, int resursion,
+                           const weaponParms *wp, const gentity_t *weaponEnt, int gameTime )
+{
+	trace_t tr;
+	gentity_t *tent;
+	gentity_t *traceEnt;
+	vec3_t dist;
+	float distLen;
+	int damage, dflags = 0, mod;
+	vec3_t hitPos;
+	int event;
+	vec3_t reflect;
+	float dot, ndot;
+	register byte *priorityMap;
+	register int event2;
+	register gentity_t *tent2;
+	register int surfType;
+	int surfFlags;
+	if ( resursion > MAX_BULLET_RESURSIONS )
+	{
+		Com_DPrintf("Bullet_Fire_Extended: Too many resursions, bullet aborted\n");
+		return;
+	}
+	if ( wp->weapDef->rifleBullet )
+	{
+		mod = MOD_RIFLE_BULLET;
+		dflags = DAMAGE_PASSTHRU;
+	}
+	else
+	{
+		mod = MOD_PISTOL_BULLET;
+	}
+	if ( wp->weapDef->armorPiercing )
+	{
+		dflags |= DAMAGE_NO_ARMOR;
+	}
+	if ( wp->weapDef->rifleBullet )
+		priorityMap = riflePriorityMap;
+	else
+		priorityMap = bulletPriorityMap;
+	G_LocationalTrace(&tr, start, end, source->s.number, MASK_SHOT, priorityMap);
+	Vec3Lerp(start, end, tr.fraction, hitPos);
+	G_CheckHitTriggerDamage(attacker, start, hitPos, wp->weapDef->damage, mod);
+	traceEnt = &g_entities[tr.entityNum];
+	VectorSubtract(end, start, reflect);
+	Vec3Normalize(reflect);
+	dot = DotProduct(reflect, tr.normal) * -2.0f;
+	VectorMA(reflect, dot, tr.normal, reflect);
+	// send bullet impact
+	if ( !( tr.surfaceFlags & SURF_SKY ) && !traceEnt->client && tr.fraction < 1.0f )
+	{
+		// legacy?
+		if ( wp->weapDef->weaponClass == WEAPCLASS_SPREAD )
+		{
+			event = EV_BULLET_HIT_SMALL;
+		}
+		else if ( wp->weapDef->rifleBullet )
+		{
+			event = EV_SHOTGUN_HIT;
+		}
+		else
+		{
+			event = EV_BULLET_HIT_LARGE;
+		}
+		tent = G_TempEntity(hitPos, wp->weapDef->rifleBullet ? EV_SHOTGUN_HIT : EV_BULLET_HIT_LARGE);
+		tent->s.eventParm  = DirToByte(tr.normal);
+		tent->s.hintString = DirToByte(reflect);
+		tent2 = tent;
+		surfFlags = tr.surfaceFlags;
+		if ( traceEnt->s.eType == ET_PLAYER_CORPSE )
+			surfFlags = SURF_TYPE_FLESH << 20;
+		surfType = (byte)((surfFlags & 0x1F00000) >> 20);
+		tent2->s.surfType = surfType;
+		tent->s.otherEntityNum = weaponEnt->s.number;
+	}
+	if ( tr.contents & SURF_NOIMPACT )
+	{
+		vec3_t dir;
+		VectorSubtract(end, start, dir);
+		Vec3Normalize(dir);
+		ndot = -DotProduct(tr.normal, dir);
+		dot = ( ndot >= 0.125f ) ? 0.25f / ndot : 0.0f;
+		VectorMA(hitPos, dot, dir, start);
+		Bullet_Fire_Extended(source, attacker, start, end, spread, resursion + 1, wp, weaponEnt, gameTime);
+		return;
+	}
+	if ( traceEnt->takedamage )
+	{
+		if ( traceEnt != attacker )
+		{
+			VectorSubtract( start, hitPos, dist );
+			distLen = VectorLength(dist);
+			damage = Bullet_GetDamage( wp, distLen ) * spread;
+			G_Damage( traceEnt, attacker, attacker, wp->forward, hitPos, damage, dflags, mod, tr.partGroup, level.time - gameTime );
+			if ( traceEnt->client )
+			{
+				// allow bullets to "pass through" func_explosives if they break by taking another simultanious shot
+				if ( dflags & DAMAGE_PASSTHRU )
+				{
+					if ( Dvar_GetInt("scr_friendlyfire") || !OnSameTeam(traceEnt, attacker) )
+					{
+						// start new bullet at position this hit the bmodel and continue to the end position (ignoring shot-through bmodel in next trace)
+						// spread = 0 as this is an extension of an already spread shot
+						Bullet_Fire_Extended( traceEnt, attacker, hitPos, end, spread * 0.5, resursion + 1, wp, weaponEnt, gameTime );
+					}
+				}
+			}
 		}
 	}
 }

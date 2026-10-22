@@ -57,18 +57,6 @@ int I_strlen( const char *s );
 SL_Restart
 ==============
 */
-void SL_Restart()
-{
-	if ( scrStringGlob.inited )
-	{
-		SL_Clear();
-	}
-	else
-	{
-		SL_Init();
-	}
-}
-
 /*
 ==============
 GetRefString
@@ -220,6 +208,18 @@ void SL_Init()
 
 	scrStringGlob.hashTable[0].prev = prev;
 	scrStringGlob.inited = true;
+}
+
+void SL_Restart()
+{
+	if ( scrStringGlob.inited )
+	{
+		SL_Clear();
+	}
+	else
+	{
+		SL_Init();
+	}
 }
 
 /*
@@ -396,13 +396,8 @@ unsigned int SL_GetStringOfLen( const char *str, unsigned int user, unsigned int
 		newIndex = entry->status_next & HASH_NEXT_MASK;
 		newEntry = &scrStringGlob.hashTable[newIndex];
 
-		while ( 1 )
+		while ( newEntry != entry )
 		{
-			if ( newEntry == entry )
-			{
-				break;
-			}
-
 			refStr = GetRefString(newEntry->prev);
 
 			if ( refStr->byteLen == lenByte && !memcmp(refStr->str, str, len) )
