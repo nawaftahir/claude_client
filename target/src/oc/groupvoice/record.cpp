@@ -68,11 +68,6 @@ void Record_Frame(void)
     DSOUNDRecord_Frame();
 }
 
-inline float I_fsel(const float x, const float y, const float z)
-{
-    return x >= 0.0f ? y : z;
-}
-
 inline float I_fmin(const float x, const float y)
 {
     return I_fsel(y - x, x, y);

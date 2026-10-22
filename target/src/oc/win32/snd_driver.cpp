@@ -250,14 +250,6 @@ void SND_SetStreamChannelFromSaveInfo(int index, snd_save_stream_t *info);
 void SND_DriverPostUpdate(void);
 
 // universal/com_math.h inlines
-inline int I_sel(const int x, const int y, const int z)
-{
-    if (x >= 0) {
-        return y;
-    }
-    return z;
-}
-
 inline float DotProduct(const vec3_t a, const vec3_t b)
 {
     return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];

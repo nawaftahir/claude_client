@@ -300,16 +300,6 @@ static itemDef_t *g_bindItem;
 static qboolean debugMode;
 static int lastListBoxClickTime;
 
-inline float I_fsel(const float x, const float y, const float z)
-{
-    return x >= 0.0f ? y : z;
-}
-
-inline float I_fclamp(const float val, const float min, const float max)
-{
-    return I_fsel(min - val, min, I_fsel(val - max, max, val));
-}
-
 static void Item_TextField_BeginEdit(itemDef_t *item);
 
 static bool Window_HasFocus(Window *w)

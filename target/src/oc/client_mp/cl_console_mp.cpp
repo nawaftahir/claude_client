@@ -26,47 +26,10 @@ float g_console_char_height = 16.0f;
 extern float ceilf(float x);
 extern float floorf(float x);
 
-inline float I_fsel(const float x, const float y, const float z)
-{
-    return x >= 0.0f ? y : z;
-}
-int CL_I_sel_4035c0(const int x, const int y, const int z)
-{
-    return x >= 0 ? y : z;
-}
 
-int CL_I_min_4035d0(const int x, const int y)
-{
-    return CL_I_sel_4035c0(y - x, x, y);
-}
-
-inline float I_fclamp(const float val, const float min, const float max)
-{
-    return I_fsel(min - val, min, I_fsel(val - max, max, val));
-}
-
-
-// com_math.h I_fround; retail 0x403620 emits it after I_fclamp
-int CL_I_fround_403620(const float x)
-{
-    const double bias = 1.0 / (1 << 30);
-    int result;
-
-    __asm fld x
-    __asm fadd bias
-    __asm fistp result
-
-    return result;
-}
 
 
 // unreferenced com_math.h helper copies retail keeps in this file (names unknown, retail addresses)
-void CL_Vector2Set_403650(vec2_t v, const float x, const float y)
-{
-    v[0] = x;
-    v[1] = y;
-}
-
 void CL_VectorScale4_403660(const vec4_t v, const float s, vec4_t o)
 {
     o[0] = s * v[0];
@@ -485,10 +448,8 @@ void Con_CheckResize(void)
     LargeLocal largeLocal(0x20000);
     tbuf = (short *)largeLocal.GetBuf();
 
-    con.screenMin[0] = 4.0f;
-    con.screenMin[1] = 4.0f;
-    con.screenMax[0] = -4.0f;
-    con.screenMax[1] = -4.0f;
+    Vector2Set(con.screenMin, 4.0f, 4.0f);
+    Vector2Set(con.screenMax, -4.0f, -4.0f);
 
     CalcScreenX(&con.screenMin[0], 1);
     CalcScreenY(&con.screenMin[1], 1);
@@ -735,7 +696,7 @@ static int CL_ConsolePrint_AddLine(print_msg_type_t type, const char *txt, int d
     if (type == PMSG_CONSOLE || type == PMSG_LOGFILE)
         maxLinewidth = con.linewidth;
     else
-        maxLinewidth = con.linewidth - 78 < 0 ? con.linewidth : 78;
+        maxLinewidth = I_min(78, con.linewidth);
 
     if (linewidth <= 0 || linewidth > maxLinewidth)
         linewidth = maxLinewidth;
@@ -823,13 +784,13 @@ void CL_ConsolePrint(print_msg_type_t type, const char *txt, int duration, int l
     if (!duration) {
         switch (type) {
         case PMSG_CONSOLE:
-            duration = CL_I_fround_403620(con_minicontime->current.value * 1000.0f);
+            duration = I_fround(con_minicontime->current.value * 1000.0f);
             break;
         case PMSG_GAME:
-            duration = CL_I_fround_403620(con_gamemessagetime->current.value * 1000.0f);
+            duration = I_fround(con_gamemessagetime->current.value * 1000.0f);
             break;
         case PMSG_BOLDGAME:
-            duration = CL_I_fround_403620(con_boldgamemessagetime->current.value * 1000.0f);
+            duration = I_fround(con_boldgamemessagetime->current.value * 1000.0f);
             break;
         case PMSG_SUBTITLE:
             duration = 5000;
@@ -924,7 +885,7 @@ void CL_DeathMessagePrint(const char *attackerName, const vec_t *attackerColor, 
     if (!con.initialized)
         Con_OneTimeInit();
 
-    duration = CL_I_fround_403620(con_gamemessagetime->current.value * 1000.0f);
+    duration = I_fround(con_gamemessagetime->current.value * 1000.0f);
     if (duration < 0)
         duration = 0;
 
@@ -1382,7 +1343,7 @@ static void Con_DrawMessageWindowOldToNew(MessageWindow *msgwnd, int x, int y, i
 
         elapsed = clients[0].serverTime - line->startTime;
         if (elapsed < msgwnd->scrolltime)
-            y += CL_I_fround_403620((1.0f - (float)elapsed / msgwnd->scrolltime) * lineHeight);
+            y += I_fround((1.0f - (float)elapsed / msgwnd->scrolltime) * lineHeight);
     }
 
     for (lineIndex = msgwnd->current_line + msgwnd->count - 1; lineIndex >= msgwnd->current_line; lineIndex--) {
@@ -1461,9 +1422,9 @@ static void Con_DrawMessageWindow(MessageWindow *msgwnd, int x, int y, int charH
             scroll = msgwnd->scrolltime - (clients[0].serverTime - line->endTime);
             if (scroll > 0) {
                 if (up)
-                    v -= CL_I_fround_403620((float)scroll / msgwnd->scrolltime * charHeight);
+                    v -= I_fround((float)scroll / msgwnd->scrolltime * charHeight);
                 else
-                    v += CL_I_fround_403620((float)scroll / msgwnd->scrolltime * charHeight);
+                    v += I_fround((float)scroll / msgwnd->scrolltime * charHeight);
             }
             continue;
         }

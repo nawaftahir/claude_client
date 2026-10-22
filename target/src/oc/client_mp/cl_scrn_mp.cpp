@@ -364,9 +364,7 @@ void CL_CubemapShot_f(void)
     }
 
     isLightingShot = 0;
-    rgb[0] = 0.0f;
-    rgb[1] = 0.0f;
-    rgb[2] = 0.0f;
+    VectorClear(rgb);
     n0 = 1.0f;
     n1 = 1.333f;
     if (Cmd_Argc() == 7) {

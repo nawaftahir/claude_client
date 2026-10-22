@@ -187,12 +187,6 @@ inline void VectorScale(const vec3_t v, const float s, vec3_t o)
     o[2] = s * v[2];
 }
 
-inline void VectorClear(vec3_t v)
-{
-    v[0] = 0;
-    v[1] = 0;
-    v[2] = 0;
-}
 
 static void CG_TouchItem(centity_t *cent)
 {

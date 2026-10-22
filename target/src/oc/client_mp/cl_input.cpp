@@ -176,11 +176,6 @@ void CL_SendCmd(void);
 
 void CL_WritePacket(void);
 
-inline float I_fsel(const float x, const float y, const float z)
-{
-    return x >= 0.0f ? y : z;
-}
-
 inline float I_sqrt(const float value)
 {
     return sqrt(value);

@@ -447,6 +447,26 @@ struct weaponParms {
     vec3_t gunForward;
     WeaponDef *weapDef;
 };
+inline float I_fsel(const float x, const float y, const float z)
+{
+    return x >= 0.0f ? y : z;
+}
+
+inline int I_sel(const int x, const int y, const int z)
+{
+    return x >= 0 ? y : z;
+}
+
+inline int I_min(const int x, const int y)
+{
+    return I_sel(y - x, x, y);
+}
+
+inline float I_fclamp(const float val, const float min, const float max)
+{
+    return I_fsel(min - val, min, I_fsel(val - max, max, val));
+}
+
 inline int I_fround(const float x)
 {
     // fistp rounds to nearest; the bias sends exact halves up
@@ -488,6 +508,19 @@ static inline int FastFloor(const float x)
 }
 
 // same helpers as universal/com_math.h (one shared body per program)
+inline void Vector2Set(vec2_t v, const float x, const float y)
+{
+    v[0] = x;
+    v[1] = y;
+}
+
+inline void VectorClear(vec3_t v)
+{
+    v[0] = 0;
+    v[1] = 0;
+    v[2] = 0;
+}
+
 inline void VectorCopy(const vec3_t a, vec3_t b)
 {
     b[0] = a[0];

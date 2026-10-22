@@ -125,12 +125,6 @@ void CG_SetNextSnap(snapshot_t *snap);
 void CG_SetInitialSnapshot(snapshot_t *snap);
 void CG_ProcessSnapshots(void);
 
-inline void VectorClear(vec3_t v)
-{
-    v[0] = 0;
-    v[1] = 0;
-    v[2] = 0;
-}
 
 
 static char *CG_EntityPtr(int entNum)

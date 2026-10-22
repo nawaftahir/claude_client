@@ -39,18 +39,6 @@ void CG_AddMarks(void);
 void CG_ImpactMark(MaterialHandle markMaterial, const vec_t *origin, const vec_t *dir, float orientation, const vec_t *color, float radius);
 
 // universal/com_math.h inlines
-inline int I_sel(const int x, const int y, const int z)
-{
-    if (x >= 0)
-        return y;
-    return z;
-}
-
-inline int I_min(const int x, const int y)
-{
-    return I_sel(y - x, x, y);
-}
-
 inline int I_max(const int x, const int y)
 {
     return I_sel(x - y, x, y);
