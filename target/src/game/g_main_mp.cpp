@@ -166,11 +166,6 @@ extern void CL_AddDebugString( const float *xyz, const float *color, float scale
 G_AddDebugString
 =============
 */
-void G_AddDebugString( const vec3_t xyz, const vec4_t color, float scale, const char *pszText )
-{
-	CL_AddDebugString( xyz, color, scale, pszText, qtrue );
-}
-
 /*
 =================
 G_RegisterDvars
@@ -1383,5 +1378,10 @@ G_SightTrace
 void G_SightTrace( int *hitNum, const vec3_t start, const vec3_t end, int passEntityNum, int contentmask )
 {
 	SV_SightTrace( hitNum, start, vec3_origin, vec3_origin, end, passEntityNum, ENTITYNUM_NONE, contentmask );
+}
+
+void G_AddDebugString( const vec3_t xyz, const vec4_t color, float scale, const char *pszText )
+{
+	CL_AddDebugString( xyz, color, scale, pszText, qtrue );
 }
 

@@ -123,72 +123,6 @@ static punctuation_t default_punctuations[] =
 // Returns:					-
 // Changes Globals:		-
 //============================================================================
-void NumberValue(char *string, int subtype, unsigned long int *intvalue,
-															long double *floatvalue)
-{
-	unsigned long int dotfound = 0;
-	*intvalue = 0;
-	*floatvalue = 0;
-	//floating point number
-	if (subtype & TT_FLOAT)
-	{
-		while(*string)
-		{
-			if (*string == '.')
-			{
-				if (dotfound) return;
-				dotfound = 10;
-				string++;
-			} //end if
-			if (dotfound)
-			{
-				*floatvalue = *floatvalue + (long double) (*string - '0') /
-																	(long double) dotfound;
-				dotfound *= 10;
-			} //end if
-			else
-			{
-				*floatvalue = *floatvalue * 10.0 + (long double) (*string - '0');
-			} //end else
-			string++;
-		} //end while
-		*intvalue = (unsigned long) *floatvalue;
-	} //end if
-	else if (subtype & TT_DECIMAL)
-	{
-		while(*string) *intvalue = *intvalue * 10 + (*string++ - '0');
-		*floatvalue = *intvalue;
-	} //end else if
-	else if (subtype & TT_HEX)
-	{
-		//step over the leading 0x or 0X
-		string += 2;
-		while(*string)
-		{
-			*intvalue <<= 4;
-			if (*string >= 'a' && *string <= 'f') *intvalue += *string - 'a' + 10;
-			else if (*string >= 'A' && *string <= 'F') *intvalue += *string - 'A' + 10;
-			else *intvalue += *string - '0';
-			string++;
-		} //end while
-		*floatvalue = *intvalue;
-	} //end else if
-	else if (subtype & TT_OCTAL)
-	{
-		//step over the first zero
-		string += 1;
-		while(*string) *intvalue = (*intvalue << 3) + (*string++ - '0');
-		*floatvalue = *intvalue;
-	} //end else if
-	else if (subtype & TT_BINARY)
-	{
-		//step over the leading 0b or 0B
-		string += 2;
-		while(*string) *intvalue = (*intvalue << 1) + (*string++ - '0');
-		*floatvalue = *intvalue;
-	} //end else if
-} //end of the function NumberValue
-
 //===========================================================================
 //
 // Parameter:				-
@@ -566,6 +500,72 @@ int PS_ReadName(script_t *script, token_t *token)
 	token->subtype = len;
 	return 1;
 } //end of the function PS_ReadName
+
+void NumberValue(char *string, int subtype, unsigned long int *intvalue,
+															long double *floatvalue)
+{
+	unsigned long int dotfound = 0;
+	*intvalue = 0;
+	*floatvalue = 0;
+	//floating point number
+	if (subtype & TT_FLOAT)
+	{
+		while(*string)
+		{
+			if (*string == '.')
+			{
+				if (dotfound) return;
+				dotfound = 10;
+				string++;
+			} //end if
+			if (dotfound)
+			{
+				*floatvalue = *floatvalue + (long double) (*string - '0') /
+																	(long double) dotfound;
+				dotfound *= 10;
+			} //end if
+			else
+			{
+				*floatvalue = *floatvalue * 10.0 + (long double) (*string - '0');
+			} //end else
+			string++;
+		} //end while
+		*intvalue = (unsigned long) *floatvalue;
+	} //end if
+	else if (subtype & TT_DECIMAL)
+	{
+		while(*string) *intvalue = *intvalue * 10 + (*string++ - '0');
+		*floatvalue = *intvalue;
+	} //end else if
+	else if (subtype & TT_HEX)
+	{
+		//step over the leading 0x or 0X
+		string += 2;
+		while(*string)
+		{
+			*intvalue <<= 4;
+			if (*string >= 'a' && *string <= 'f') *intvalue += *string - 'a' + 10;
+			else if (*string >= 'A' && *string <= 'F') *intvalue += *string - 'A' + 10;
+			else *intvalue += *string - '0';
+			string++;
+		} //end while
+		*floatvalue = *intvalue;
+	} //end else if
+	else if (subtype & TT_OCTAL)
+	{
+		//step over the first zero
+		string += 1;
+		while(*string) *intvalue = (*intvalue << 3) + (*string++ - '0');
+		*floatvalue = *intvalue;
+	} //end else if
+	else if (subtype & TT_BINARY)
+	{
+		//step over the leading 0b or 0B
+		string += 2;
+		while(*string) *intvalue = (*intvalue << 1) + (*string++ - '0');
+		*floatvalue = *intvalue;
+	} //end else if
+} //end of the function NumberValue
 
 //============================================================================
 //

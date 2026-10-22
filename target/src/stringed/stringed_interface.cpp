@@ -3,11 +3,6 @@
 
 static int giFilesFound;
 
-void SE_FreeFileDataAfterLoad( unsigned char *psLoadedFile )
-{
-	FS_FreeFile(psLoadedFile);
-}
-
 unsigned char *SE_LoadFileData( const char *psFileName )
 {
 	unsigned char *pbReturn;
@@ -15,6 +10,11 @@ unsigned char *SE_LoadFileData( const char *psFileName )
 
 	iTotalBytesLoaded = FS_ReadFile(psFileName, (void **)&pbReturn);
 	return iTotalBytesLoaded <= 0 ? NULL : pbReturn;
+}
+
+void SE_FreeFileDataAfterLoad( unsigned char *psLoadedFile )
+{
+	FS_FreeFile(psLoadedFile);
 }
 
 static void SE_R_ListFiles( const char *psExtension, const char *psDir, se_string &strResults )

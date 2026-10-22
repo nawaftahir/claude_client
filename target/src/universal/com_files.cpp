@@ -87,11 +87,6 @@ void Com_ReadCDKey( void );
 FS_Remove
 ==============
 */
-void FS_Remove( const char *osPath )
-{
-	remove(osPath);
-}
-
 qboolean FS_Initialized()
 {
 	return fs_searchpaths != NULL;
@@ -405,6 +400,11 @@ void FS_CopyFile(char *fromOSPath, char *toOSPath)
 
 	FS_FileClose(f);
 	free(buf);
+}
+
+void FS_Remove( const char *osPath )
+{
+	remove(osPath);
 }
 
 /*
@@ -2181,34 +2181,6 @@ static int FS_PathCmp(const char* s1, const char* s2)
 	return 0;       // strings are equal
 }
 
-void FS_SortFileList( char **filelist, int numfiles )
-{
-	int i, j, k, numsortedfiles;
-	char **sortedlist;
-
-	sortedlist = (char **)Z_Malloc( 4 * numfiles + 4 );
-	sortedlist[0] = NULL;
-	numsortedfiles = 0;
-	for ( i = 0; i < numfiles; i++ )
-	{
-		for ( j = 0; j < numsortedfiles; j++ )
-		{
-			if ( FS_PathCmp( filelist[i], sortedlist[j] ) < 0 )
-			{
-				break;
-			}
-		}
-		for ( k = numsortedfiles; k > j; k-- )
-		{
-			sortedlist[k] = sortedlist[k - 1];
-		}
-		sortedlist[j] = filelist[i];
-		numsortedfiles++;
-	}
-	Com_Memcpy( filelist, sortedlist, numfiles * sizeof( *filelist ) );
-	Z_Free( sortedlist );
-}
-
 static void FS_DisplayPath(int bLanguageCull)
 {
 	searchpath_t* s;
@@ -2919,5 +2891,33 @@ const char *GetBspExtension()
 		return va("%sbsp", string);
 
 	return va("d3dbsp");
+}
+
+void FS_SortFileList( char **filelist, int numfiles )
+{
+	int i, j, k, numsortedfiles;
+	char **sortedlist;
+
+	sortedlist = (char **)Z_Malloc( 4 * numfiles + 4 );
+	sortedlist[0] = NULL;
+	numsortedfiles = 0;
+	for ( i = 0; i < numfiles; i++ )
+	{
+		for ( j = 0; j < numsortedfiles; j++ )
+		{
+			if ( FS_PathCmp( filelist[i], sortedlist[j] ) < 0 )
+			{
+				break;
+			}
+		}
+		for ( k = numsortedfiles; k > j; k-- )
+		{
+			sortedlist[k] = sortedlist[k - 1];
+		}
+		sortedlist[j] = filelist[i];
+		numsortedfiles++;
+	}
+	Com_Memcpy( filelist, sortedlist, numfiles * sizeof( *filelist ) );
+	Z_Free( sortedlist );
 }
 

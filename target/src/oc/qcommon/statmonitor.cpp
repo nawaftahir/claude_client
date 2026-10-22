@@ -32,15 +32,15 @@ void StatMon_Warning(int type, int duration, const char *materialName)
 		statCount = type + 1;
 }
 
-void StatMon_GetStatsArray(const statmonitor_t **array, int *count)
-{
-	*array = stats;
-	*count = statCount;
-}
-
 void StatMon_Reset(void)
 {
 	memset(stats, 0, sizeof(stats));
 	statCount = 0;
+}
+
+void StatMon_GetStatsArray(const statmonitor_t **array, int *count)
+{
+	*array = stats;
+	*count = statCount;
 }
 

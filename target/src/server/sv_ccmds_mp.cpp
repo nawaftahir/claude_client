@@ -182,7 +182,7 @@ static void SV_Map_f( void )
 	I_strlwr(mapname);
 
 	expanded = va("maps/mp/%s.%s", mapname, GetBspExtension());
-	if ( FS_ReadFileInl(expanded, NULL) == -1 )
+	if ( FS_ReadFile(expanded, NULL) == -1 )
 	{
 		Com_Printf("Can't find map %s\n", expanded);
 		return;

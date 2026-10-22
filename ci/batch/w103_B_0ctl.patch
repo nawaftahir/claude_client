@@ -1,0 +1,7 @@
+--- a/target/src/universal/dvar.cpp
++++ b/target/src/universal/dvar.cpp
+@@ -1958,3 +1958,4 @@
+ 		Dvar_RegisterString(dvarName, va("%g %g %g", x, y, z), DVAR_EXTERNAL);
+ }
+ 
++// c

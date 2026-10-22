@@ -29,8 +29,8 @@ jobs:
       - uses: actions/cache/restore@v4
         with:
           path: target/build/obj
+          # exact-commit cache only: a fallback restore lands objects newer than the checked-out sources, so make skips changed files
           key: obj-${{ github.sha }}
-          restore-keys: obj-
       - name: Apply
         run: git apply "${{ matrix.patch }}"
       - name: Build

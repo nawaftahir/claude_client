@@ -276,6 +276,14 @@ bool Sys_HasInfoChanged( void )
 	return false;
 }
 
+__declspec(noinline) void Sys_ArchiveInfo( int checksum )
+{
+	Sys_RegisterInfoDvars();
+	Dvar_SetFloat( sys_cpuGHz, sys_info.cpuGHz );
+	Dvar_SetInt( sys_sysMB, sys_info.sysMB );
+	Dvar_SetString( sys_gpu, sys_info.gpuDescription );
+	Dvar_SetInt( sys_configSum, checksum );
+}
 // Original name unknown.
 qboolean Sys_FunctionsMatch( const unsigned char *func1, const unsigned char *func2 )
 {
@@ -848,6 +856,12 @@ void Sys_Init( void )
 	IN_Init();
 }
 
+static void Sys_NoFreeFilesError( void )
+{
+	MessageBoxA( NULL, Win_LocalizeRef( "WIN_DISK_FULL_BODY" ), Win_LocalizeRef( "WIN_DISK_FULL_TITLE" ), MB_ICONERROR );
+	exit( -1 );
+}
+
 /*
 ==================
 Sys_IsGameProcess
@@ -928,11 +942,6 @@ void Sys_GetSemaphoreFileName( void )
 	sprintf( sys_processSemaphoreFile, "__%s", moduleName );
 }
 
-static void Sys_NoFreeFilesError( void )
-{
-	MessageBoxA( NULL, Win_LocalizeRef( "WIN_DISK_FULL_BODY" ), Win_LocalizeRef( "WIN_DISK_FULL_TITLE" ), MB_ICONERROR );
-	exit( -1 );
-}
 /*
 ==================
 Sys_CheckCrashOrRerun
@@ -1038,14 +1047,6 @@ static void PrintWorkingDir( void )
 	Com_Printf( "Working directory: %s\n", cwd );
 }
 
-__declspec(noinline) void Sys_ArchiveInfo( int checksum )
-{
-	Sys_RegisterInfoDvars();
-	Dvar_SetFloat( sys_cpuGHz, sys_info.cpuGHz );
-	Dvar_SetInt( sys_sysMB, sys_info.sysMB );
-	Dvar_SetString( sys_gpu, sys_info.gpuDescription );
-	Dvar_SetInt( sys_configSum, checksum );
-}
 void Sys_Print( const char *msg )
 {
 	Conbuf_AppendText( msg );

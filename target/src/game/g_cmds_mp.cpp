@@ -32,17 +32,6 @@ void Cmd_EntityCount_f( gentity_t *ent );
 void Cmd_PrintEntities_f( void );
 void ClientCommand( int clientNum );
 
-static const char *gc_orders[] =
-{
-	"GAME_GC_HOLDYOURPOSITION",
-	"GAME_GC_HOLDTHISPOSITION",
-	"GAME_GC_COMEHERE",
-	"GAME_GC_COVERME",
-	"GAME_GC_GUARDLOCATION",
-	"GAME_GC_SEARCHDESTROY",
-	"GAME_GC_REPORT"
-};
-
 /*
 ==================
 DeathmatchScoreboardMessage
@@ -1092,6 +1081,17 @@ void Cmd_Tell_f( gentity_s *ent )
 Cmd_GameCommand_f
 ==================
 */
+static const char *gc_orders[] =
+{
+	"GAME_GC_HOLDYOURPOSITION",
+	"GAME_GC_HOLDTHISPOSITION",
+	"GAME_GC_COMEHERE",
+	"GAME_GC_COVERME",
+	"GAME_GC_GUARDLOCATION",
+	"GAME_GC_SEARCHDESTROY",
+	"GAME_GC_REPORT"
+};
+
 void Cmd_GameCommand_f( gentity_t *ent )
 {
 	int		player;

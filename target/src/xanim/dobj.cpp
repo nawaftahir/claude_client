@@ -1145,6 +1145,279 @@ void InvMatrixTransformVectorQuatTrans(const float *in, const DObjAnimMat *mat, 
 	out[2] = temp[0] * axis[2][0] + temp[1] * axis[2][1] + temp[2] * axis[2][2];
 }
 
+void DObjTraceline(DObj_s *obj, float *start, float *end, unsigned char *priorityMap, DObjTrace_s *trace)
+{
+	vec3_t delta;
+	float invL2;
+	XModel *model;
+	XModelParts_s *parts;
+	float d2;
+	int numBones;
+	DObjAnimMat *boneMatrix;
+	DObjAnimMat *hitBoneMatrix;
+	float axis[3][3];
+	vec3_t center;
+	vec3_t startOffset;
+	vec3_t enfOffset;
+	float sphereFraction;
+	vec3_t offset;
+	float diff2;
+	vec3_t localStart;
+	vec3_t localEnd;
+	float enterFrac;
+	float fraction;
+	float solidHitFrac;
+	float dist1;
+	float dist2;
+	float dist;
+	int i;
+	float *bounds;
+	char bStartSolid;
+	char bEndSolid;
+	float sign;
+	int localBoneIndex;
+	float hitSign;
+	int hitT;
+	int traceHitT;
+	int globalBoneIndex;
+	DSkel_t *skel;
+	int modelIter;
+	unsigned int lowestPriority;
+	unsigned int currentPriority;
+	unsigned short *name;
+	const unsigned char *pos;
+	XBoneInfo *boneInfo;
+	int ignoreCollision;
+	unsigned char parentIndex;
+	XBoneHierarchy *hierarchy;
+	unsigned short classification;
+	float deltaLengthSq;
+	unsigned short classificationArray[128];
+
+	trace->surfaceflags = 0;
+	trace->partName = 0;
+	trace->partGroup = 0;
+	VectorClear(trace->normal);
+	VectorSubtract(end, start, delta);
+	deltaLengthSq = VectorLengthSquared(delta);
+
+	if ( deltaLengthSq == 0.0f )
+		return;
+
+	boneMatrix = DObjGetRotTransArray(obj);
+
+	if ( !boneMatrix )
+		return;
+
+	invL2 = 1.0f / deltaLengthSq;
+	lowestPriority = 2;
+	skel = obj->skel;
+	pos = (const unsigned char *)(SL_ConvertToString(obj->duplicateParts) + 16);
+	globalBoneIndex = 0;
+	hitT = -1;
+	traceHitT = -1;
+	hitSign = 0.0f;
+	hitBoneMatrix = 0;
+	solidHitFrac = trace->fraction;
+	for ( modelIter = 0; modelIter < obj->numModels; ++modelIter )
+	{
+		model = obj->models[modelIter];
+		parts = model->parts;
+		hierarchy = parts->hierarchy;
+		name = hierarchy->names;
+		numBones = parts->numBones;
+		ignoreCollision = obj->ignoreCollision & (1 << modelIter);
+		for ( localBoneIndex = 0; localBoneIndex < numBones; ++localBoneIndex, ++boneMatrix, ++globalBoneIndex )
+		{
+			classification = parts->partClassification[localBoneIndex];
+			currentPriority = priorityMap[classification];
+
+			if ( globalBoneIndex == *pos - 1 )
+			{
+				pos += 2;
+
+				if ( currentPriority == 1 )
+				{
+					classification = classificationArray[*(pos - 1) - 1];
+					currentPriority = priorityMap[classification];
+				}
+			}
+			else if ( currentPriority == 1 )
+			{
+				if ( localBoneIndex < parts->numRootBones )
+				{
+					parentIndex = obj->modelParents[modelIter];
+
+					classification = parentIndex != 0xFF ? classificationArray[parentIndex] : 0;
+				}
+				else
+				{
+					classification = classificationArray[globalBoneIndex
+					                                     - hierarchy->parentList[localBoneIndex - parts->numRootBones]];
+				}
+
+				currentPriority = priorityMap[classification];
+			}
+
+			classificationArray[globalBoneIndex] = classification;
+
+			if ( ignoreCollision )
+				continue;
+
+			boneInfo = &model->boneInfo[localBoneIndex];
+
+			if ( boneInfo->radiusSquared == 0.0f )
+				continue;
+			if ( lowestPriority > currentPriority )
+				continue;
+
+			{
+				MatrixTransformVectorQuatTrans(boneInfo->offset, boneMatrix, center);
+				VectorSubtract(start, center, startOffset);
+				sphereFraction = -DotProduct(startOffset, delta) * invL2;
+
+				if ( sphereFraction < 1.0f )
+				{
+					if ( sphereFraction > 0.0f )
+					{
+						VectorMA(startOffset, sphereFraction, delta, offset);
+						d2 = VectorLengthSquared(offset);
+					}
+					else
+					{
+						d2 = VectorLengthSquared(startOffset);
+					}
+				}
+				else
+				{
+					VectorSubtract(end, center, enfOffset);
+					d2 = VectorLengthSquared(enfOffset);
+				}
+
+				diff2 = boneInfo->radiusSquared - d2;
+
+				if ( diff2 <= 0.0f )
+					continue;
+				if ( lowestPriority == currentPriority
+				        && (float)(sphereFraction - sqrtf(diff2 * invL2)) >= trace->fraction )
+					continue;
+
+				{
+					InvMatrixTransformVectorQuatTrans(start, boneMatrix, localStart);
+					InvMatrixTransformVectorQuatTrans(end, boneMatrix, localEnd);
+					enterFrac = 0.0f;
+
+					if ( lowestPriority == currentPriority )
+						fraction = trace->fraction;
+					else
+						fraction = solidHitFrac;
+
+					bStartSolid = 1;
+					bEndSolid = 1;
+					sign = -1.0;
+
+					for ( bounds = boneInfo->bounds[0]; ; bounds += 3 )
+					{
+						for ( i = 0; i < 3; ++i )
+						{
+							dist1 = (localStart[i] - bounds[i]) * sign;
+							dist2 = (localEnd[i] - bounds[i]) * sign;
+
+							if ( dist1 > 0.0f )
+							{
+								if ( dist2 > 0.0f )
+									goto out;
+
+								bStartSolid = 0;
+								dist = dist1 - dist2;
+
+								if ( dist1 > enterFrac * dist )
+								{
+									enterFrac = dist1 / dist;
+									if ( enterFrac >= fraction )
+										goto out;
+
+									hitSign = sign;
+									hitT = i;
+								}
+							}
+							else
+							{
+								if ( dist2 > 0.0f )
+								{
+									bEndSolid = 0;
+									dist = dist1 - dist2;
+
+									if ( dist1 > fraction * dist )
+									{
+										fraction = dist1 / dist;
+
+										if ( enterFrac >= fraction )
+											goto out;
+									}
+								}
+							}
+						}
+
+						if ( sign == 1.0f )
+							break;
+
+						sign = 1.0;
+					}
+
+					if ( bStartSolid )
+					{
+						if ( bEndSolid == 0 )
+							continue;
+						if ( Dot2Product(delta, start) > 0.0f )
+							continue;
+
+						trace->fraction = 0.0f;
+						trace->partName = name[localBoneIndex];
+						trace->partGroup = classification;
+
+						if ( delta[0] != 0.0f || delta[1] != 0.0f )
+						{
+							Vector2Copy(start, trace->normal);
+							Vec2Normalize(trace->normal);
+						}
+						else
+						{
+							trace->normal[2] = -I_sgn(delta[2]);
+						}
+						return;
+					}
+					else
+					{
+						if ( lowestPriority == currentPriority )
+						{
+							if ( enterFrac >= trace->fraction )
+								continue;
+						}
+						else
+						{
+							lowestPriority = currentPriority;
+						}
+
+						trace->fraction = enterFrac;
+						trace->partName = name[localBoneIndex];
+						trace->partGroup = classification;
+						traceHitT = hitT;
+						hitBoneMatrix = boneMatrix;
+					}
+				}
+			}
+out:
+			;
+		}
+	}
+
+	if ( hitBoneMatrix )
+	{
+		ConvertQuatToMat(hitBoneMatrix, axis);
+		VectorScale(axis[traceHitT], hitSign, trace->normal);
+	}
+}
 void DObjGeomTraceline(DObj_s *obj, float *localStart, float *localEnd, int contentmask, DObjTrace_s *results)
 {
 	trace_t trace;
@@ -1321,296 +1594,6 @@ void DObjSetModel(DObj_s *obj, XModel *model)
 XAnimTree_s* DObjGetTree(const DObj_s *obj)
 {
 	return obj->tree;
-}
-void DObjTraceline(DObj_s *obj, float *start, float *end, unsigned char *priorityMap, DObjTrace_s *trace)
-{
-	vec3_t delta;
-	float invL2;
-	XModel *model;
-	XModelParts_s *parts;
-	float d2;
-	int numBones;
-	DObjAnimMat *boneMatrix;
-	DObjAnimMat *hitBoneMatrix;
-	float axis[3][3];
-	vec3_t center;
-	vec3_t startOffset;
-	vec3_t enfOffset;
-	float sphereFraction;
-	vec3_t offset;
-	float diff2;
-	vec3_t localStart;
-	vec3_t localEnd;
-	float enterFrac;
-	float fraction;
-	float solidHitFrac;
-	float dist1;
-	float dist2;
-	float dist;
-	int i;
-	float *bounds;
-	char bStartSolid;
-	char bEndSolid;
-	float sign;
-	int localBoneIndex;
-	float hitSign;
-	int hitT;
-	int traceHitT;
-	int globalBoneIndex;
-	DSkel_t *skel;
-	int modelIter;
-	unsigned int lowestPriority;
-	unsigned int currentPriority;
-	unsigned short *name;
-	const unsigned char *pos;
-	XBoneInfo *boneInfo;
-	int ignoreCollision;
-	unsigned char parentIndex;
-	XBoneHierarchy *hierarchy;
-	unsigned short classification;
-	float deltaLengthSq;
-	unsigned short classificationArray[128];
-
-	trace->surfaceflags = 0;
-	trace->partName = 0;
-	trace->partGroup = 0;
-	VectorClear(trace->normal);
-	VectorSubtract(end, start, delta);
-	deltaLengthSq = VectorLengthSquared(delta);
-
-	if ( deltaLengthSq == 0.0f )
-		return;
-
-	boneMatrix = DObjGetRotTransArray(obj);
-
-	if ( !boneMatrix )
-		return;
-
-	invL2 = 1.0f / deltaLengthSq;
-	lowestPriority = 2;
-	skel = obj->skel;
-	pos = (const unsigned char *)(SL_ConvertToString(obj->duplicateParts) + 16);
-	globalBoneIndex = 0;
-	hitT = -1;
-	traceHitT = -1;
-	hitSign = 0.0f;
-	hitBoneMatrix = 0;
-	solidHitFrac = trace->fraction;
-	modelIter = 0;
-start:
-	if ( modelIter >= obj->numModels )
-		goto done;
-
-	{
-		model = obj->models[modelIter];
-		parts = model->parts;
-		hierarchy = parts->hierarchy;
-		;
-		numBones = parts->numBones;
-		ignoreCollision = obj->ignoreCollision & (1 << modelIter);
-		localBoneIndex = 0;
-
-		while ( 1 )
-		{
-			if ( localBoneIndex >= numBones )
-			{
-				break;
-			}
-
-			classification = parts->partClassification[localBoneIndex];
-			currentPriority = priorityMap[classification];
-
-			if ( globalBoneIndex == *pos - 1 )
-			{
-				pos += 2;
-
-				if ( currentPriority == 1 )
-				{
-					classification = classificationArray[*(pos - 1) - 1];
-					currentPriority = priorityMap[classification];
-				}
-			}
-			else if ( currentPriority == 1 )
-			{
-				if ( localBoneIndex < parts->numRootBones )
-				{
-					parentIndex = obj->modelParents[modelIter];
-
-					classification = parentIndex != 0xFF ? classificationArray[parentIndex] : 0;
-				}
-				else
-				{
-					classification = classificationArray[globalBoneIndex
-					                                     - hierarchy->parentList[localBoneIndex - parts->numRootBones]];
-				}
-
-				currentPriority = priorityMap[classification];
-			}
-
-			classificationArray[globalBoneIndex] = classification;
-
-			if ( ignoreCollision )
-				goto out;
-
-			boneInfo = &model->boneInfo[localBoneIndex];
-
-			if ( boneInfo->radiusSquared == 0.0f )
-				goto out;
-			if ( lowestPriority > currentPriority )
-				goto out;
-
-			{
-				MatrixTransformVectorQuatTrans(boneInfo->offset, boneMatrix, center);
-				VectorSubtract(start, center, startOffset);
-				sphereFraction = -DotProduct(startOffset, delta) * invL2;
-
-				if ( sphereFraction < 1.0f )
-				{
-					if ( sphereFraction > 0.0f )
-					{
-						VectorMA(startOffset, sphereFraction, delta, offset);
-						d2 = VectorLengthSquared(offset);
-					}
-					else
-					{
-						d2 = VectorLengthSquared(startOffset);
-					}
-				}
-				else
-				{
-					VectorSubtract(end, center, enfOffset);
-					d2 = VectorLengthSquared(enfOffset);
-				}
-
-				diff2 = boneInfo->radiusSquared - d2;
-
-				if ( diff2 <= 0.0f )
-					goto out;
-				if ( lowestPriority == currentPriority
-				        && (float)(sphereFraction - sqrtf(diff2 * invL2)) >= trace->fraction )
-					goto out;
-
-				{
-					InvMatrixTransformVectorQuatTrans(start, boneMatrix, localStart);
-					InvMatrixTransformVectorQuatTrans(end, boneMatrix, localEnd);
-					enterFrac = 0.0f;
-
-					if ( lowestPriority == currentPriority )
-						fraction = trace->fraction;
-					else
-						fraction = solidHitFrac;
-
-					bStartSolid = 1;
-					bEndSolid = 1;
-					sign = -1.0;
-
-					for ( bounds = boneInfo->bounds[0]; ; bounds += 3 )
-					{
-						for ( i = 0; i < 3; ++i )
-						{
-							dist1 = (localStart[i] - bounds[i]) * sign;
-							dist2 = (localEnd[i] - bounds[i]) * sign;
-
-							if ( dist1 > 0.0f )
-							{
-								if ( dist2 > 0.0f )
-									goto out;
-
-								bStartSolid = 0;
-								dist = dist1 - dist2;
-
-								if ( dist1 > enterFrac * dist )
-								{
-									enterFrac = dist1 / dist;
-									if ( enterFrac >= fraction )
-										goto out;
-
-									hitSign = sign;
-									hitT = i;
-								}
-							}
-							else
-							{
-								if ( dist2 > 0.0f )
-								{
-									bEndSolid = 0;
-									dist = dist1 - dist2;
-
-									if ( dist1 > fraction * dist )
-									{
-										fraction = dist1 / dist;
-
-										if ( enterFrac >= fraction )
-											goto out;
-									}
-								}
-							}
-						}
-
-						if ( sign == 1.0f )
-							break;
-
-						sign = 1.0;
-					}
-
-					if ( bStartSolid )
-					{
-						if ( bEndSolid == 0 )
-							goto out;
-						if ( Dot2Product(delta, start) > 0.0f )
-							goto out;
-
-						trace->fraction = 0.0f;
-						trace->partName = hierarchy->names[localBoneIndex];
-						trace->partGroup = classification;
-
-						if ( delta[0] != 0.0f || delta[1] != 0.0f )
-						{
-							Vector2Copy(start, trace->normal);
-							Vec2Normalize(trace->normal);
-						}
-						else
-						{
-							trace->normal[2] = -I_sgn(delta[2]);
-						}
-						return;
-					}
-					else
-					{
-						if ( lowestPriority == currentPriority )
-						{
-							if ( enterFrac >= trace->fraction )
-								goto out;
-						}
-						else
-						{
-							lowestPriority = currentPriority;
-						}
-
-						trace->fraction = enterFrac;
-						trace->partName = hierarchy->names[localBoneIndex];
-						trace->partGroup = classification;
-						traceHitT = hitT;
-						hitBoneMatrix = boneMatrix;
-					}
-				}
-			}
-out:
-			++localBoneIndex;
-			++boneMatrix;
-			++globalBoneIndex;
-		}
-
-		++modelIter;
-		goto start;
-	}
-
-done:
-	if ( hitBoneMatrix )
-	{
-		ConvertQuatToMat(hitBoneMatrix, axis);
-		VectorScale(axis[traceHitT], hitSign, trace->normal);
-	}
 }
 void DObjInitFromModel( DObj *obj, XModel *model )
 {

@@ -102,7 +102,7 @@ extern unsigned int Scr_GetNumScriptThreads(void);
 extern int Scr_GetStringUsage(void);
 extern int Sys_Milliseconds(void);
 extern int CL_GetCurrentCmdNumber(void);
-extern int CL_GetKeyCatchers(void);
+extern int CL_GetKeyCatchers_411460(void);
 extern qboolean CL_GetUserCmd(int cmdNumber, usercmd_t *ucmd);
 extern Bool CL_IsRenderingSplitScreen(void);
 extern void CL_SetUserCmdAimValues(vec_t *kickAngles);
@@ -604,14 +604,24 @@ static void CG_DrawLagometer(void)
             {
                 if (v > range)
                     v = range;
-                CL_DrawStretchPic(ax + aw - a, mid - v, 1.0f, v, 3, 3, 0.0f, 0.0f, 0.0f, 0.0f, colorYellow, cgs->media.whiteMaterial);
+                float h = v;
+                float w = 1.0f;
+                float y = mid - v;
+                float x = ax + aw - a;
+                CalcScreenPlacementInl(&x, &y, &w, &h, 3, 3);
+                CL_DrawStretchPicPhysical(x, y, w, h, 0.0f, 0.0f, 0.0f, 0.0f, colorYellow, cgs->media.whiteMaterial);
             }
             else if (v < 0.0f)
             {
                 v = -v;
                 if (v > range)
                     v = range;
-                CL_DrawStretchPic(ax + aw - a, mid, 1.0f, v, 3, 3, 0.0f, 0.0f, 0.0f, 0.0f, colorBlue, cgs->media.whiteMaterial);
+                float h = v;
+                float w = 1.0f;
+                float y = mid;
+                float x = ax + aw - a;
+                CalcScreenPlacementInl(&x, &y, &w, &h, 3, 3);
+                CL_DrawStretchPicPhysical(x, y, w, h, 0.0f, 0.0f, 0.0f, 0.0f, colorBlue, cgs->media.whiteMaterial);
             }
         }
 
@@ -632,11 +642,21 @@ static void CG_DrawLagometer(void)
                 v = v * vscale;
                 if (v > range)
                     v = range;
-                CL_DrawStretchPic(ax + aw - a, ay + ah - v, 1.0f, v, 3, 3, 0.0f, 0.0f, 0.0f, 0.0f, color, cgs->media.whiteMaterial);
+                float h = v;
+                float w = 1.0f;
+                float y = ay + ah - v;
+                float x = ax + aw - a;
+                CalcScreenPlacementInl(&x, &y, &w, &h, 3, 3);
+                CL_DrawStretchPicPhysical(x, y, w, h, 0.0f, 0.0f, 0.0f, 0.0f, color, cgs->media.whiteMaterial);
             }
             else if (v < 0.0f)
             {
-                CL_DrawStretchPic(ax + aw - a, ay + ah - range, 1.0f, range, 3, 3, 0.0f, 0.0f, 0.0f, 0.0f, colorRed, cgs->media.whiteMaterial);
+                float h = range;
+                float w = 1.0f;
+                float y = ay + ah - range;
+                float x = ax + aw - a;
+                CalcScreenPlacementInl(&x, &y, &w, &h, 3, 3);
+                CL_DrawStretchPicPhysical(x, y, w, h, 0.0f, 0.0f, 0.0f, 0.0f, colorRed, cgs->media.whiteMaterial);
             }
         }
 
@@ -1618,6 +1638,7 @@ void CG_CheckHudHealthDisplay(void)
             && (float)(cg->time - cg->healthFadeTime) > hud_fade_healthbar->current.value * 1000.0f)
         {
             menu = Menus_FindByName(&cgDC, "Health");
+            const char *mpName = "Health_mp";
             if (menu)
                 Window_RemoveDynamicFlags((Window *)menu, 4);
             cg->healthFadeTime = 0;
@@ -1636,6 +1657,7 @@ void CG_CheckHudAmmoDisplay(void)
         && (float)(cg->time - cg->ammoFadeTime) > hud_fade_ammodisplay->current.value * 1000.0f)
     {
         menu = Menus_FindByName(&cgDC, "weaponinfo");
+            const char *mpName = "weaponinfo_mp";
         if (menu)
             Window_RemoveDynamicFlags((Window *)menu, 4);
         cg->ammoFadeTime = 0;
@@ -1670,6 +1692,7 @@ void CG_CheckHudStanceDisplay(void)
         && (float)(cg->time - cg->stanceFadeTime) > hud_fade_stance->current.value * 1000.0f)
     {
         menu = Menus_FindByName(&cgDC, "stance");
+            const char *mpName = "stance_mp";
         if (menu)
             Window_RemoveDynamicFlags((Window *)menu, 4);
         cg->stanceFadeTime = 0;
@@ -1685,6 +1708,7 @@ void CG_CheckHudOffHandDisplay(void)
         && (float)(cg->time - cg->offhandFadeTime) > hud_fade_offhand->current.value * 1000.0f)
     {
         menu = Menus_FindByName(&cgDC, "offhandinfo");
+            const char *mpName = "offhandinfo_mp";
         if (menu)
             Window_RemoveDynamicFlags((Window *)menu, 4);
         cg->offhandFadeTime = 0;
@@ -1984,10 +2008,14 @@ void CG_StartShakeCamera(float scale, int duration, const vec_t *src, float radi
 
     for (i = 0; i < 4; ++i) {
         shake = &cg->cameraShake[i];
-        if (shake->time > cg->time)
-            goto store;
-        if ((float)shake->time + shake->length <= (float)cg->time)
-            goto store;
+        if (shake->time > cg->time) {
+            cg->cameraShake[i] = temp;
+            return;
+        }
+        if ((float)shake->time + shake->length <= (float)cg->time) {
+            cg->cameraShake[i] = temp;
+            return;
+        }
     }
 
     bestIndex = i;
@@ -2000,11 +2028,7 @@ void CG_StartShakeCamera(float scale, int duration, const vec_t *src, float radi
     }
     if (bestIndex == 4)
         return;
-    i = bestIndex;
-
-store:
-    shake = &cg->cameraShake[i];
-    *shake = temp;
+    cg->cameraShake[bestIndex] = temp;
 }
 
 void CG_ShakeCamera(void)

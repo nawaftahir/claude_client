@@ -274,7 +274,7 @@ void CL_DrawTextPhysical(const char *text, int maxChars, FontHandle font, float 
 void CL_DrawText(const char *text, int maxChars, FontHandle font, float x, float y, int horzAlign, int vertAlign, float xScale, float yScale, const vec_t *color, int style);
 void CL_DrawTextPhysicalWithCursor(const char *text, int maxChars, FontHandle font, float x, float y, float xScale, float yScale, const vec_t *color, int style, int cursorPos, int cursor);
 void CL_DrawTextWithCursor(const char *text, int maxChars, FontHandle font, float x, float y, int horzAlign, int vertAlign, float xScale, float yScale, const vec_t *color, int style, int cursorPos, char cursor);
-int CL_GetKeyCatchers(void);
+int CL_GetKeyCatchers_411460(void);
 Bool CL_GetDisplayHUDWithKeycatchUI(void);
 FontHandle CL_RegisterFont(const char *fontName, int imageTrack);
 void CL_WriteDemoMessage(msg_t *msg, int headerBytes);

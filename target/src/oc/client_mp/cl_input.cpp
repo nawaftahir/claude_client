@@ -181,6 +181,10 @@ inline float I_fsel(const float x, const float y, const float z)
     return x >= 0.0f ? y : z;
 }
 
+inline float I_sqrt(const float value)
+{
+    return sqrt(value);
+}
 inline float I_fmax(const float x, const float y)
 {
     return I_fsel(x - y, x, y);
@@ -203,6 +207,11 @@ inline float I_fmin(const float x, const float y)
 
 
 
+
+// retail 0x406be0, empty and unreferenced; name unknown
+void Con_Stub_406be0(void)
+{
+}
 
 void IN_MLookDown(void)
 {
@@ -345,6 +354,27 @@ void IN_UpDown(void)
     }
 }
 
+void IN_UpUp(void)
+{
+    IN_KeyUp(&kb[12]);
+    IN_KeyUp(&kb[10]);
+}
+void IN_DownDown(void)
+{
+    IN_KeyDown(&kb[11]);
+    if (kb[25].active || kb[11].active )
+        legacyHacks->cl_stanceTemp = 1;
+    else
+        legacyHacks->cl_stanceTemp = 0;
+}
+void IN_DownUp(void)
+{
+    IN_KeyUp(&kb[11]);
+    if (kb[25].active || kb[11].active )
+        legacyHacks->cl_stanceTemp = 1;
+    else
+        legacyHacks->cl_stanceTemp = 0;
+}
 void IN_LeftDown(void)
 {
     IN_KeyDown(kb);
@@ -465,6 +495,16 @@ void IN_Breath_Up(void)
     IN_KeyUp(&kb[15]);
 }
 
+void IN_MeleeBreath_Down(void)
+{
+    IN_KeyDown(&kb[19]);
+    IN_KeyDown(&kb[15]);
+}
+void IN_MeleeBreath_Up(void)
+{
+    IN_KeyUp(&kb[19]);
+    IN_KeyUp(&kb[15]);
+}
 void IN_Frag_Down(void)
 {
     IN_KeyDown(&kb[16]);
@@ -495,6 +535,16 @@ void IN_Binoculars_Up(void)
     IN_KeyUp(&kb[18]);
 }
 
+void IN_BreathBinoculars_Down(void)
+{
+    IN_KeyDown(&kb[15]);
+    IN_KeyDown(&kb[18]);
+}
+void IN_BreathBinoculars_Up(void)
+{
+    IN_KeyUp(&kb[15]);
+    IN_KeyUp(&kb[18]);
+}
 void IN_Melee_Down(void)
 {
     IN_KeyDown(&kb[19]);
@@ -553,6 +603,22 @@ void IN_LeanRight_Down(void)
 void IN_LeanRight_Up(void)
 {
     IN_KeyUp(&kb[24]);
+}
+void IN_Prone_Down(void)
+{
+    IN_KeyDown(&kb[25]);
+    if (kb[25].active || kb[11].active )
+        legacyHacks->cl_stanceTemp = 1;
+    else
+        legacyHacks->cl_stanceTemp = 0;
+}
+void IN_Prone_Up(void)
+{
+    IN_KeyUp(&kb[25]);
+    if (kb[25].active || kb[11].active )
+        legacyHacks->cl_stanceTemp = 1;
+    else
+        legacyHacks->cl_stanceTemp = 0;
 }
 
 void IN_Stance_Down(void)
@@ -686,6 +752,11 @@ void IN_GoStandDown(void)
     *stance = 0;
 }
 
+void IN_GoStandUp(void)
+{
+    IN_KeyUp(&kb[12]);
+    IN_KeyUp(&kb[10]);
+}
 void IN_TalkDown(void)
 {
     IN_KeyDown(&kb[27]);
@@ -807,6 +878,15 @@ void CL_KeyMove(usercmd_t *cmd)
 #undef KB_AT
 }
 
+void CL_MouseEvent(int dx, int dy)
+{
+    if ((clients->keyCatchers & 8) && !cl_bypassMouseInput->current.enabled) {
+        UI_MouseEvent(dx, dy);
+    } else {
+        clients->mouseDx[clients->mouseIndex] += dx;
+        clients->mouseDy[clients->mouseIndex] += dy;
+    }
+}
 // retail 0x407bd0, unreferenced (CL_CmdButtons inlines it); name unknown
 void CL_CmdButton_407bd0(int *buttons, int index, int bit)
 {
@@ -838,7 +918,7 @@ void CL_MouseMove(usercmd_t *cmd)
     if (frame_msec <= 0)
         return;
 
-    rate = sqrt(mx * mx + my * my) / (float)frame_msec;
+    rate = I_sqrt(mx * mx + my * my) / (float)frame_msec;
     accelSensitivity = rate * cl_mouseAccel->current.value + cl_sensitivity->current.value;
     accelSensitivity *= clients->cgameSensitivity;
 
@@ -1139,6 +1219,19 @@ void CL_WritePacket(void)
     while (::clc.netchan.unsentFragments)
         CL_Netchan_TransmitNextFragment(&::clc.netchan);
 }
+void CL_SendCmdInternal(void)
+{
+    CL_CreateNewCommands();
+
+    if (!CL_ReadyToSendPacket()) {
+        if (cl_showSend->current.enabled) {
+            Com_Printf((const char *)". ");
+        }
+        return;
+    }
+
+    CL_WritePacket();
+}
 
 void CL_SendCmd(void)
 {
@@ -1324,90 +1417,6 @@ void IN_ClearFirstKey_409170(void)
     kb[0].down[0] = 0;
 }
 
-void IN_UpUp(void)
-{
-    IN_KeyUp(&kb[12]);
-    IN_KeyUp(&kb[10]);
-}
-void IN_MeleeBreath_Down(void)
-{
-    IN_KeyDown(&kb[19]);
-    IN_KeyDown(&kb[15]);
-}
-void IN_MeleeBreath_Up(void)
-{
-    IN_KeyUp(&kb[19]);
-    IN_KeyUp(&kb[15]);
-}
-void IN_BreathBinoculars_Down(void)
-{
-    IN_KeyDown(&kb[15]);
-    IN_KeyDown(&kb[18]);
-}
-void IN_BreathBinoculars_Up(void)
-{
-    IN_KeyUp(&kb[15]);
-    IN_KeyUp(&kb[18]);
-}
-void IN_GoStandUp(void)
-{
-    IN_KeyUp(&kb[12]);
-    IN_KeyUp(&kb[10]);
-}
-void CL_MouseEvent(int dx, int dy)
-{
-    if ((clients->keyCatchers & 8) && !cl_bypassMouseInput->current.enabled) {
-        UI_MouseEvent(dx, dy);
-    } else {
-        clients->mouseDx[clients->mouseIndex] += dx;
-        clients->mouseDy[clients->mouseIndex] += dy;
-    }
-}
-void IN_DownDown(void)
-{
-    IN_KeyDown(&kb[11]);
-    if (kb[25].active || kb[11].active )
-        legacyHacks->cl_stanceTemp = 1;
-    else
-        legacyHacks->cl_stanceTemp = 0;
-}
-void IN_DownUp(void)
-{
-    IN_KeyUp(&kb[11]);
-    if (kb[25].active || kb[11].active )
-        legacyHacks->cl_stanceTemp = 1;
-    else
-        legacyHacks->cl_stanceTemp = 0;
-}
-void IN_Prone_Down(void)
-{
-    IN_KeyDown(&kb[25]);
-    if (kb[25].active || kb[11].active )
-        legacyHacks->cl_stanceTemp = 1;
-    else
-        legacyHacks->cl_stanceTemp = 0;
-}
-void IN_Prone_Up(void)
-{
-    IN_KeyUp(&kb[25]);
-    if (kb[25].active || kb[11].active )
-        legacyHacks->cl_stanceTemp = 1;
-    else
-        legacyHacks->cl_stanceTemp = 0;
-}
-void CL_SendCmdInternal(void)
-{
-    CL_CreateNewCommands();
-
-    if (!CL_ReadyToSendPacket()) {
-        if (cl_showSend->current.enabled) {
-            Com_Printf((const char *)". ");
-        }
-        return;
-    }
-
-    CL_WritePacket();
-}
 
 // retail 0x409180, empty and unreferenced; name unknown
 void IN_Stub_409180(void)

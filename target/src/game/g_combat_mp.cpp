@@ -52,24 +52,6 @@ qboolean G_RadiusDamage( const vec3_t origin, gentity_t *inflictor, gentity_t *a
 unsigned short G_GetHitLocationString( int hitLoc );
 int G_GetHitLocationIndexFromString( unsigned short sString );
 
-const char *modNames[] =
-{
-	"MOD_UNKNOWN",
-	"MOD_PISTOL_BULLET",
-	"MOD_RIFLE_BULLET",
-	"MOD_GRENADE",
-	"MOD_GRENADE_SPLASH",
-	"MOD_PROJECTILE",
-	"MOD_PROJECTILE_SPLASH",
-	"MOD_MELEE",
-	"MOD_HEAD_SHOT",
-	"MOD_CRUSH",
-	"MOD_TELEFRAG",
-	"MOD_FALLING",
-	"MOD_SUICIDE",
-	"MOD_TRIGGER_HURT",
-	"MOD_EXPLOSIVE",
-};
 
 
 
@@ -178,6 +160,25 @@ void LookAtKiller( gentity_t *self, gentity_t *inflictor, gentity_t *attacker )
 	assert(self->client);
 	self->client->ps.stats[STAT_DEAD_YAW] = vectoyaw ( dir );
 }
+
+const char *modNames[] =
+{
+	"MOD_UNKNOWN",
+	"MOD_PISTOL_BULLET",
+	"MOD_RIFLE_BULLET",
+	"MOD_GRENADE",
+	"MOD_GRENADE_SPLASH",
+	"MOD_PROJECTILE",
+	"MOD_PROJECTILE_SPLASH",
+	"MOD_MELEE",
+	"MOD_HEAD_SHOT",
+	"MOD_CRUSH",
+	"MOD_TELEFRAG",
+	"MOD_FALLING",
+	"MOD_SUICIDE",
+	"MOD_TRIGGER_HURT",
+	"MOD_EXPLOSIVE",
+};
 
 /*
 ==================

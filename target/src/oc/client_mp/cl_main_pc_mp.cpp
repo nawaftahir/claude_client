@@ -209,6 +209,7 @@ void CL_ServerInfoPacket(netadr_t from, msg_t *msg, int time)
                 type = 0;
                 break;
             }
+            static const char *netnames[] = {"???", "ipx", "udp"};
             Info_SetValueForKey(cl_pinglist[i].info, "nettype", va("%d", type));
             CL_SetServerInfoByAddress(from, infoString, cl_pinglist[i].time);
 
@@ -376,6 +377,82 @@ static int CL_RefreshKnownGlobalServer(netadr_t adr)
         }
     }
     return 0;
+}
+void CL_ServersResponsePacket(netadr_t from, msg_t *msg)
+{
+    int i, count, numservers;
+    serverAddress_t addresses[256];
+    byte *buffptr;
+    byte *buffend;
+    netadr_t adr;
+    serverInfo_t *server;
+    serverAddress_t *addr;
+
+    Com_PumpMessageLoop();
+    Com_Printf("CL_ServersResponsePacket\n");
+
+    cls.waitglobalserverresponse = 0;
+
+    numservers = 0;
+    buffptr = msg->data;
+    buffend = buffptr + msg->cursize;
+    while (buffptr + 1 < buffend) {
+        do {
+            if (*buffptr++ == '\\')
+                break;
+        } while (buffptr < buffend);
+
+        if (buffptr >= buffend - 6)
+            break;
+
+        addresses[numservers].ip[0] = *buffptr++;
+        addresses[numservers].ip[1] = *buffptr++;
+        addresses[numservers].ip[2] = *buffptr++;
+        addresses[numservers].ip[3] = *buffptr++;
+
+        addresses[numservers].port = (*buffptr++) << 8;
+        addresses[numservers].port += *buffptr++;
+        addresses[numservers].port = BigShort(addresses[numservers].port);
+
+        if (*buffptr != '\\')
+            break;
+
+        Com_DPrintf("server: %d ip: %d.%d.%d.%d:%d\n", numservers,
+                    addresses[numservers].ip[0],
+                    addresses[numservers].ip[1],
+                    addresses[numservers].ip[2],
+                    addresses[numservers].ip[3],
+                    addresses[numservers].port);
+
+        numservers++;
+        if (numservers >= 256)
+            break;
+
+        if (buffptr[1] == 'E' && buffptr[2] == 'O' && buffptr[3] == 'T')
+            break;
+    }
+
+    count = cls.numglobalservers;
+    for (i = 0; i < numservers && count < MAX_GLOBALSERVERS; i++) {
+        adr.type = NA_IP;
+        addr = &addresses[i];
+        adr.ip[0] = addr->ip[0];
+        adr.ip[1] = addr->ip[1];
+        adr.ip[2] = addr->ip[2];
+        adr.ip[3] = addr->ip[3];
+        adr.port = addr->port;
+
+        if (!CL_RefreshKnownGlobalServer(adr)) {
+            server = &cls.globalServers[count];
+            count++;
+            CL_InitServerInfoInl(server, adr);
+        }
+    }
+
+    cls.numglobalservers = count;
+    CL_SortGlobalServers();
+
+    Com_Printf("%d servers parsed (total %d)\n", numservers, count);
 }
 
 void CL_GlobalServers_f(void)
@@ -923,7 +1000,7 @@ void CL_ClearMutedList(void)
 // retail calls NET_CompareAdr at the favorites loop only
 static __declspec(noinline) qboolean NET_CompareAdrNI(netadr_t a, netadr_t b)
 {
-    return NET_CompareAdr(a, b);
+    return NET_CompareAdrSigned(&a, &b) == 0;
 }
 void CL_SetServerInfoByAddress(netadr_t from, const char *info, int ping)
 {
@@ -994,80 +1071,4 @@ qboolean CL_CDKeyValidate(const char *key, const char *checksum)
         return 1;
 
     return 0;
-}
-void CL_ServersResponsePacket(netadr_t from, msg_t *msg)
-{
-    int i, count, numservers;
-    serverAddress_t addresses[256];
-    byte *buffptr;
-    byte *buffend;
-    netadr_t adr;
-    serverInfo_t *server;
-    serverAddress_t *addr;
-
-    Com_PumpMessageLoop();
-    Com_Printf("CL_ServersResponsePacket\n");
-
-    cls.waitglobalserverresponse = 0;
-
-    numservers = 0;
-    buffptr = msg->data;
-    buffend = buffptr + msg->cursize;
-    while (buffptr + 1 < buffend) {
-        do {
-            if (*buffptr++ == '\\')
-                break;
-        } while (buffptr < buffend);
-
-        if (buffptr >= buffend - 6)
-            break;
-
-        addresses[numservers].ip[0] = *buffptr++;
-        addresses[numservers].ip[1] = *buffptr++;
-        addresses[numservers].ip[2] = *buffptr++;
-        addresses[numservers].ip[3] = *buffptr++;
-
-        addresses[numservers].port = (*buffptr++) << 8;
-        addresses[numservers].port += *buffptr++;
-        addresses[numservers].port = BigShort(addresses[numservers].port);
-
-        if (*buffptr != '\\')
-            break;
-
-        Com_DPrintf("server: %d ip: %d.%d.%d.%d:%d\n", numservers,
-                    addresses[numservers].ip[0],
-                    addresses[numservers].ip[1],
-                    addresses[numservers].ip[2],
-                    addresses[numservers].ip[3],
-                    addresses[numservers].port);
-
-        numservers++;
-        if (numservers >= 256)
-            break;
-
-        if (buffptr[1] == 'E' && buffptr[2] == 'O' && buffptr[3] == 'T')
-            break;
-    }
-
-    count = cls.numglobalservers;
-    for (i = 0; i < numservers && count < MAX_GLOBALSERVERS; i++) {
-        adr.type = NA_IP;
-        addr = &addresses[i];
-        adr.ip[0] = addr->ip[0];
-        adr.ip[1] = addr->ip[1];
-        adr.ip[2] = addr->ip[2];
-        adr.ip[3] = addr->ip[3];
-        adr.port = addr->port;
-
-        if (!CL_RefreshKnownGlobalServer(adr)) {
-            server = &cls.globalServers[count];
-            count++;
-            CL_InitServerInfoInl(server, adr);
-        }
-    }
-
-    cls.numglobalservers = count;
-    CL_SortGlobalServers();
-
-    Com_Printf("%d servers parsed (total %d)\n", numservers, count);
 }

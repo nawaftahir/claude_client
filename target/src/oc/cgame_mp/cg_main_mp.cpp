@@ -1282,6 +1282,24 @@ static void CG_InitXAnimTrees(void)
         cgs->corpseinfo[i].pXAnimTree = XAnimCreateTree(anims, (Alloc_t)Hunk_AllocXAnimClient);
 }
 
+static void CG_FreeAnimTreeInstances(void)
+{
+    int i;
+
+    for (i = 0; i < 64; ++i) {
+        if (cg->bgs.clientinfo[i].pXAnimTree) {
+            XAnimFreeTree(cg->bgs.clientinfo[i].pXAnimTree, 0);
+            cg->bgs.clientinfo[i].pXAnimTree = NULL;
+        }
+    }
+    for (i = 0; i < 8; ++i) {
+        if (cgs->corpseinfo[i].pXAnimTree) {
+            XAnimFreeTree(cgs->corpseinfo[i].pXAnimTree, 0);
+            cgs->corpseinfo[i].pXAnimTree = NULL;
+        }
+    }
+}
+
 // retail 0x4ba930 (Kisak name)
 void CG_InitEntities(void)
 {
@@ -1448,24 +1466,6 @@ void CG_FreeWeapons(void)
 }
 
 // retail 0x4ba8c0
-static void CG_FreeAnimTreeInstances(void)
-{
-    int i;
-
-    for (i = 0; i < 64; ++i) {
-        if (cg->bgs.clientinfo[i].pXAnimTree) {
-            XAnimFreeTree(cg->bgs.clientinfo[i].pXAnimTree, 0);
-            cg->bgs.clientinfo[i].pXAnimTree = NULL;
-        }
-    }
-    for (i = 0; i < 8; ++i) {
-        if (cgs->corpseinfo[i].pXAnimTree) {
-            XAnimFreeTree(cgs->corpseinfo[i].pXAnimTree, 0);
-            cgs->corpseinfo[i].pXAnimTree = NULL;
-        }
-    }
-}
-
 void CG_Shutdown(void)
 {
 

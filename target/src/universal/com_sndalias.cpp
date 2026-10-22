@@ -428,11 +428,6 @@ void Com_SetSoundAliasRandomSeed_42cd10(int seed)
 	g_sa.randSeed = seed;
 }
 
-void Com_SetSoundAliasRandomSeed( int seed )
-{
-	g_sa.randSeed = seed;
-}
-
 static inline int Com_SoundAliasRandom()
 {
 	g_sa.randSeed = g_sa.randSeed * 214013 + 2531011;

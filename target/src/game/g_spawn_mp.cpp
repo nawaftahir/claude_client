@@ -2,6 +2,16 @@
 #include "g_shared.h"
 #include "../script/script_public.h"
 
+/*
+==============
+Scr_ReadOnlyField
+==============
+*/
+void Scr_ReadOnlyField( gentity_t *self, int offset )
+{
+	Scr_Error("Tried to set a read only entity field");
+}
+
 static const game_entity_field_t g_entity_fields[] =
 {
 	{ "classname", FOFS( classname ), F_STRING, Scr_ReadOnlyField },
@@ -150,15 +160,6 @@ qboolean G_SpawnVector( const char *key, const char *defaultString, float *out )
 	return present;
 }
 
-/*
-==============
-Scr_ReadOnlyField
-==============
-*/
-void Scr_ReadOnlyField( gentity_t *self, int offset )
-{
-	Scr_Error("Tried to set a read only entity field");
-}
 
 /*
 ==============
@@ -818,11 +819,6 @@ void Scr_AddEntity( gentity_t *ent )
 GScr_SetDynamicEntityField
 ===============
 */
-void GScr_SetDynamicEntityField( gentity_t *ent, unsigned int index )
-{
-	Scr_SetDynamicEntityField(ent->s.number, CLASS_NUM_ENTITY, index);
-}
-
 /*
 ===============
 Scr_GetEntity
@@ -1067,6 +1063,11 @@ void Scr_GetEntArray()
 		Scr_AddEntity(ent);
 		Scr_AddArray();
 	}
+}
+
+void GScr_SetDynamicEntityField( gentity_t *ent, unsigned int index )
+{
+	Scr_SetDynamicEntityField(ent->s.number, CLASS_NUM_ENTITY, index);
 }
 
 /*QUAKED worldspawn (0 0 0) ? NO_GT_WOLF NO_GT_STOPWATCH NO_GT_CHECKPOINT NO_LMS

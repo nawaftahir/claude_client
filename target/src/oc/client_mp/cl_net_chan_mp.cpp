@@ -177,11 +177,6 @@ void CL_Netchan_SendOOBPacket(int iLength, const void *pData, netadr_t to)
 }
 
 // Original name unknown.
-static void CL_Netchan_DrawProfileLine(const char *line, int y)
-{
-    CL_DrawString(0x20, y, line, 0, 0xa);
-}
-
 // retail 0x411650; Kisak name
 void CL_Netchan_UpdateProfileStats(void)
 {
@@ -194,6 +189,11 @@ void CL_Netchan_UpdateProfileStats(void)
         NetProf_UpdateStatistics(&clc.pOOBProf->send);
         NetProf_UpdateStatistics(&clc.pOOBProf->recieve);
     }
+}
+
+static void CL_Netchan_DrawProfileLine(const char *line, int y)
+{
+    CL_DrawString(0x20, y, line, 0, 0xa);
 }
 
 void CL_Netchan_PrintProfileStats(qboolean bPrintToConsole)

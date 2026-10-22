@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-extern int CL_GetKeyCatchers(void);
+extern int CL_GetKeyCatchers_411460(void);
 extern Bool CL_GetDisplayHUDWithKeycatchUI(void);
 extern float CL_NormalizedTextScale(FontHandle font, float fontScale);
 extern void CalcScreenPlacement(float *x, float *y, float *w, float *h, int horzAlign, int vertAlign);
@@ -28,7 +28,7 @@ extern float AngleNormalize360( float angle );
 
 Bool CG_AreHudElemsHidden(void)
 {
-    return !cg->drawHud || ((CL_GetKeyCatchers() & 8) && !CL_GetDisplayHUDWithKeycatchUI()) ? 1 : 0;
+    return !cg->drawHud || ((CL_GetKeyCatchers_411460() & 8) && !CL_GetDisplayHUDWithKeycatchUI()) ? 1 : 0;
 }
 
 float HudElemStringWidth(const char *string, const cg_hudelem_t *cghe)

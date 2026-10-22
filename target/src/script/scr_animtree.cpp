@@ -37,72 +37,6 @@ static const char *propertyNames[] =
 Scr_CreateAnimationTree
 ============
 */
-int Scr_CreateAnimationTree( unsigned int parentNode, unsigned int names, XAnim *anims,
-                             unsigned int childIndex, const char *parentName, unsigned int parentIndex,
-                             unsigned int filename, int treeIndex )
-{
-	register const char *childName;
-	unsigned int nodeRef;
-	unsigned int name;
-	unsigned int size;
-	unsigned int index;
-	unsigned short flags;
-	unsigned short nodeFlags;
-	size = 0;
-	for ( nodeRef = FindNextSibling(parentNode); nodeRef; nodeRef = FindNextSibling(nodeRef) )
-	{
-		name = GetVariableName(nodeRef);
-		if ( name >= SL_MAX_STRING_INDEX )
-		{
-			continue;
-		}
-		size++;
-	}
-	index = FindArrayVariable(parentNode, 0);
-	if ( index )
-	{
-		nodeFlags = GetVariableValueAddress(index)->intValue;
-	}
-	else
-	{
-		nodeFlags = 0;
-	}
-	flags = nodeFlags;
-	scrVarPub.checksum *= 31;
-	scrVarPub.checksum += parentIndex;
-	scrVarPub.checksum *= 31;
-	scrVarPub.checksum += childIndex;
-	scrVarPub.checksum *= 31;
-	scrVarPub.checksum += size;
-	scrVarPub.checksum *= 31;
-	scrVarPub.checksum += flags;
-	XAnimBlend(anims, parentIndex, parentName, childIndex, size, flags);
-	parentIndex = childIndex;
-	childIndex = size + childIndex;
-	for ( nodeRef = FindNextSibling(parentNode); nodeRef; nodeRef = FindNextSibling(nodeRef) )
-	{
-		name = GetVariableName(nodeRef);
-		if ( name >= SL_MAX_STRING_INDEX )
-		{
-			continue;
-		}
-		ConnectScriptToAnim(names, parentIndex, filename, (unsigned short)name, treeIndex);
-		if ( GetObjectType(nodeRef) == VAR_POINTER )
-		{
-			childName = SL_ConvertToString(name);
-			childIndex = Scr_CreateAnimationTree(FindObject(nodeRef), names, anims, childIndex, childName, parentIndex, filename, treeIndex);
-		}
-		else
-		{
-			scrVarPub.checksum *= 31;
-			scrVarPub.checksum += parentIndex;
-			XAnimCreate(anims, parentIndex, SL_ConvertToString(name));
-		}
-		parentIndex++;
-	}
-	return childIndex;
-}
-
 /*
 ============
 SetAnimCheck
@@ -608,6 +542,72 @@ Scr_GetAnims
 XAnim *Scr_GetAnims( int index )
 {
 	return scrAnimPub.xanim_lookup[SCR_XANIM_SERVER][index].anims;
+}
+
+int Scr_CreateAnimationTree( unsigned int parentNode, unsigned int names, XAnim *anims,
+                             unsigned int childIndex, const char *parentName, unsigned int parentIndex,
+                             unsigned int filename, int treeIndex )
+{
+	register const char *childName;
+	unsigned int nodeRef;
+	unsigned int name;
+	unsigned int size;
+	unsigned int index;
+	unsigned short flags;
+	unsigned short nodeFlags;
+	size = 0;
+	for ( nodeRef = FindNextSibling(parentNode); nodeRef; nodeRef = FindNextSibling(nodeRef) )
+	{
+		name = GetVariableName(nodeRef);
+		if ( name >= SL_MAX_STRING_INDEX )
+		{
+			continue;
+		}
+		size++;
+	}
+	index = FindArrayVariable(parentNode, 0);
+	if ( index )
+	{
+		nodeFlags = GetVariableValueAddress(index)->intValue;
+	}
+	else
+	{
+		nodeFlags = 0;
+	}
+	flags = nodeFlags;
+	scrVarPub.checksum *= 31;
+	scrVarPub.checksum += parentIndex;
+	scrVarPub.checksum *= 31;
+	scrVarPub.checksum += childIndex;
+	scrVarPub.checksum *= 31;
+	scrVarPub.checksum += size;
+	scrVarPub.checksum *= 31;
+	scrVarPub.checksum += flags;
+	XAnimBlend(anims, parentIndex, parentName, childIndex, size, flags);
+	parentIndex = childIndex;
+	childIndex = size + childIndex;
+	for ( nodeRef = FindNextSibling(parentNode); nodeRef; nodeRef = FindNextSibling(nodeRef) )
+	{
+		name = GetVariableName(nodeRef);
+		if ( name >= SL_MAX_STRING_INDEX )
+		{
+			continue;
+		}
+		ConnectScriptToAnim(names, parentIndex, filename, (unsigned short)name, treeIndex);
+		if ( GetObjectType(nodeRef) == VAR_POINTER )
+		{
+			childName = SL_ConvertToString(name);
+			childIndex = Scr_CreateAnimationTree(FindObject(nodeRef), names, anims, childIndex, childName, parentIndex, filename, treeIndex);
+		}
+		else
+		{
+			scrVarPub.checksum *= 31;
+			scrVarPub.checksum += parentIndex;
+			XAnimCreate(anims, parentIndex, SL_ConvertToString(name));
+		}
+		parentIndex++;
+	}
+	return childIndex;
 }
 
 /*

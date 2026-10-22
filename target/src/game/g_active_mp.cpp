@@ -1031,39 +1031,6 @@ void ClientThink( int clientNum )
 G_RunClient
 ==================
 */
-void G_RunClient( gentity_t *ent )
-{
-	if ( g_synchronousClients->current.boolean )
-	{
-		ent->client->sess.cmd.serverTime = level.time;
-		ClientThink_real(ent, &ent->client->sess.cmd);
-	}
-
-	if ( !ent->client->noclip )
-	{
-		if ( ent->tagInfo )
-		{
-			ent->client->ps.pm_type = ent->client->sess.sessionState == SESS_STATE_DEAD ? PM_DEAD_LINKED : PM_NORMAL_LINKED;
-
-			G_SetFixedLink(ent, FIXED_LINK_ANGLES_NONE);
-			G_SetOrigin(ent, ent->r.currentOrigin);
-			G_SetAngle(ent, ent->r.currentAngles);
-
-			ent->s.pos.trType = TR_INTERPOLATE;
-			ent->s.apos.trType = TR_INTERPOLATE;
-
-			SV_LinkEntity(ent);
-
-			VectorCopy(ent->r.currentOrigin, ent->client->ps.origin);
-		}
-		else if ( ent->client->ps.pm_type == PM_NORMAL_LINKED || ent->client->ps.pm_type == PM_DEAD_LINKED )
-		{
-			// linked types sit one above their unlinked counterparts
-			ent->client->ps.pm_type--;
-		}
-	}
-}
-
 /*
 ===============
 ClientIntermission
@@ -1685,6 +1652,39 @@ void ClientEndFrame( gentity_t *ent )
 	}
 
 	ent->client->buttonsSinceLastFrame = 0;
+}
+
+void G_RunClient( gentity_t *ent )
+{
+	if ( g_synchronousClients->current.boolean )
+	{
+		ent->client->sess.cmd.serverTime = level.time;
+		ClientThink_real(ent, &ent->client->sess.cmd);
+	}
+
+	if ( !ent->client->noclip )
+	{
+		if ( ent->tagInfo )
+		{
+			ent->client->ps.pm_type = ent->client->sess.sessionState == SESS_STATE_DEAD ? PM_DEAD_LINKED : PM_NORMAL_LINKED;
+
+			G_SetFixedLink(ent, FIXED_LINK_ANGLES_NONE);
+			G_SetOrigin(ent, ent->r.currentOrigin);
+			G_SetAngle(ent, ent->r.currentAngles);
+
+			ent->s.pos.trType = TR_INTERPOLATE;
+			ent->s.apos.trType = TR_INTERPOLATE;
+
+			SV_LinkEntity(ent);
+
+			VectorCopy(ent->r.currentOrigin, ent->client->ps.origin);
+		}
+		else if ( ent->client->ps.pm_type == PM_NORMAL_LINKED || ent->client->ps.pm_type == PM_DEAD_LINKED )
+		{
+			// linked types sit one above their unlinked counterparts
+			ent->client->ps.pm_type--;
+		}
+	}
 }
 
 /*

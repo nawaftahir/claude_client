@@ -266,14 +266,28 @@ extern void *s_cmdList;
 
 int g_cginit_loading = 0;
 
-const char *CL_GetConfigString(int index)
+// unreferenced vector helpers retail keeps first in this file (names unknown, retail addresses)
+void CL_VectorCopy_4011e0(const vec3_t a, vec3_t b)
 {
-    return clients[0].gameState.stringData + clients[0].gameState.stringOffsets[index];
+    b[0] = a[0];
+    b[1] = a[1];
+    b[2] = a[2];
 }
 
-static float CL_ComTimescaleValue(void)
+void CL_Vector4Set_401200(vec4_t v, const float x, const float y, const float z, const float w)
 {
-    return ((float)com_timescaleValue);
+    v[0] = x;
+    v[1] = y;
+    v[2] = z;
+    v[3] = w;
+}
+
+void CL_VectorCopy4_401220(const vec4_t a, vec4_t b)
+{
+    b[0] = a[0];
+    b[1] = a[1];
+    b[2] = a[2];
+    b[3] = a[3];
 }
 
 // retail 0x401240, unreferenced; Q3 CL_GetGameState (SUPPORTED)
@@ -396,6 +410,15 @@ void CL_SetUserCmdValue(int userCmdValue, int holdableValue, float sensitivitySc
     cl->cgameSensitivity = sensitivityScale;
 }
 
+void CL_SetUserCmdAimValues(vec_t *kickAngles)
+{
+    clientActive_t *cl = CL_LOCAL;
+    vec_t *dst = cl->cgameKickAngles;
+    dst[0] = kickAngles[0];
+    dst[1] = kickAngles[1];
+    dst[2] = kickAngles[2];
+}
+
 void CL_SetUserCmdInShellshock(qboolean shocked)
 {
     clientActive_t *cl = CL_LOCAL;
@@ -407,15 +430,6 @@ qboolean CL_GetUserCmdInShellshock_4014e0(void)
 {
     clientActive_t *cl = CL_LOCAL;
     return cl->cgameInShellshock;
-}
-
-void CL_SetUserCmdAimValues(vec_t *kickAngles)
-{
-    clientActive_t *cl = CL_LOCAL;
-    vec_t *dst = cl->cgameKickAngles;
-    dst[0] = kickAngles[0];
-    dst[1] = kickAngles[1];
-    dst[2] = kickAngles[2];
 }
 
 void CL_AddCgameCommand(const char *cmdName)
@@ -695,6 +709,16 @@ int Com_SurfaceTypeFromName_401ec0(const char *name)
     return -1;
 }
 
+// retail 0x401f20, unreferenced copy kept in this file; server surfaceflags.cpp body
+const char *Com_SurfaceTypeToName_401f20(int iTypeIndex)
+{
+    if (iTypeIndex > 0 && iTypeIndex < 23) {
+        return infoParms[iTypeIndex - 1].name;
+    }
+
+    return "default";
+}
+
 void CL_SubtitlePrint(const char *pszText, int iDuration, int iLineWidth)
 {
     const char *translated = SEH_StringEd_GetString(pszText);
@@ -714,12 +738,17 @@ void CL_SubtitlePrint(const char *pszText, int iDuration, int iLineWidth)
     CL_ConsolePrint((print_msg_type_t)3, translated, iDuration, iLineWidth);
 }
 
+extern void DObjCreate(struct DObjModel_s *dobjModels, unsigned int numModels, struct XAnimTree_s *tree, struct DObj_s *obj, unsigned int entnum);
+
+const char *CL_GetConfigString(int index)
+{
+    return clients[0].gameState.stringData + clients[0].gameState.stringOffsets[index];
+}
+
 snd_alias_t *CL_PickSoundAlias(const char *aliasname)
 {
     return Com_PickSoundAlias(aliasname);
 }
-
-extern void DObjCreate(struct DObjModel_s *dobjModels, unsigned int numModels, struct XAnimTree_s *tree, struct DObj_s *obj, unsigned int entnum);
 
 // retail 0x402040, unreferenced; name unknown
 void CL_DObjCreate_402040(struct DObjModel_s *dobjModels, unsigned short numModels, struct XAnimTree_s *tree, struct DObj_s *obj)
@@ -827,6 +856,13 @@ void CL_IssueDelayedDrawing(int marker)
 {
     RE->IssueDelayedDrawing(marker);
 }
+void CL_SetFullScreenViewport(void)
+{
+    clientStatic_t *cls = CLS;
+
+    RE->SetViewport(0, 0, cls->vidConfig.width, cls->vidConfig.height);
+    SetScreenScaling(1.0f, 1.0f, 0, 0, cls->vidConfig.width, cls->vidConfig.height);
+}
 
 void CL_SetViewport(int x, int y, int width, int height)
 {
@@ -838,17 +874,10 @@ void CL_SaveScreen(void)
     RE->SaveScreen();
 }
 
+
 void CL_BlendSavedScreen(int fadeMsec)
 {
     RE->BlendSavedScreen(fadeMsec);
-}
-
-void CL_SetFullScreenViewport(void)
-{
-    clientStatic_t *cls = CLS;
-
-    RE->SetViewport(0, 0, cls->vidConfig.width, cls->vidConfig.height);
-    SetScreenScaling(1.0f, 1.0f, 0, 0, cls->vidConfig.width, cls->vidConfig.height);
 }
 
 void CL_DrawStretchPicPhysical(float x, float y, float w, float h, float s1, float t1, float s2, float t2, const vec_t *color, MaterialHandle material)
@@ -857,15 +886,6 @@ void CL_DrawStretchPicPhysical(float x, float y, float w, float h, float s1, flo
     R_AddCmdDrawStretchPic(x, y, w, h, s1, t1, s2, t2, color, material);
 #else
     RE->DrawStretchPic(x, y, w, h, s1, t1, s2, t2, color, material);
-#endif
-}
-
-void CL_DrawQuadPic(vec2_t *verts, const vec_t *color, MaterialHandle material)
-{
-#if defined(COD2_X64) && !defined(COD2_GFX_DLL)
-    R_AddCmdDrawQuadPic(verts, color, material);
-#else
-    RE->DrawQuadPic(verts, color, material);
 #endif
 }
 
@@ -891,14 +911,16 @@ void CL_GetWorldBounds_402310(vec_t *mins, vec_t *maxs)
 {
     RE->GetWorldBounds(mins, maxs);
 }
-#endif
-
-void CL_SyncTimes(void)
+void CL_DrawQuadPic(vec2_t *verts, const vec_t *color, MaterialHandle material)
 {
-    clientConnection_t *clui = CLUI_STATE;
-    if (clui->state == 8)
-        CL_FirstSnapshot();
+#if defined(COD2_X64) && !defined(COD2_GFX_DLL)
+    R_AddCmdDrawQuadPic(verts, color, material);
+#else
+    RE->DrawQuadPic(verts, color, material);
+#endif
 }
+
+#endif
 
 void CL_DrawSprite(MaterialHandle material, const byte *rgbaColor, const vec_t *pos, float radius, float minScreenRadius, int renderFxFlags)
 {
@@ -1007,6 +1029,13 @@ void CL_SetViewAngles_4025e0(const vec_t *angles)
     dst[0] = angles[0];
     dst[1] = angles[1];
     dst[2] = angles[2];
+}
+
+void CL_SyncTimes(void)
+{
+    clientConnection_t *clui = CLUI_STATE;
+    if (clui->state == 8)
+        CL_FirstSnapshot();
 }
 
 void LoadWorld(const char *mapname)
@@ -1234,7 +1263,7 @@ void CL_AdjustTimeDelta(void)
     }
 
 smooth: {
-    float timescale = CL_ComTimescaleValue();
+    float timescale = (float)com_timescaleValue;
     if (timescale != 1.0f)
         goto debug_print;
 }
@@ -1267,17 +1296,6 @@ void CL_SetADS(int ads)
 {
     clientActive_t *cl = CL_LOCAL;
     cl->usingAds = (unsigned char)ads;
-}
-
-void CL_DrawString(int x, int y, const char *pszString, qboolean bShadow, int iCharHeight)
-{
-    clientActive_t *cl = CL_LOCAL;
-    float fy;
-
-    if (!cl->cgameInitialized)
-        return;
-    fy = (float)y;
-    CG_DrawStringExt((float)x, fy, pszString, 0, 0, bShadow, (float)iCharHeight, 1);
 }
 
 void CL_FirstSnapshot(void)
@@ -1415,30 +1433,21 @@ void CL_SetCGameTime(void)
     }
 }
 
+void CL_DrawString(int x, int y, const char *pszString, qboolean bShadow, int iCharHeight)
+{
+    clientActive_t *cl = CL_LOCAL;
+    float fy;
+
+    if (!cl->cgameInitialized)
+        return;
+    fy = (float)y;
+    CG_DrawStringExt((float)x, fy, pszString, 0, 0, bShadow, (float)iCharHeight, 1);
+}
+
 void CL_ArchiveClientState(MemoryFile *memFile)
 {
     CG_ArchiveState(memFile);
     RE->ArchiveFogState(memFile);
-}
-
-void CL_SetLodOrigin(const refdef_t *fd)
-{
-    RE->SetLodOrigin(fd);
-}
-
-void R_UpdateXModelBoundsDelayed(GfxEntity *ent)
-{
-    RE->UpdateXModelBoundsDelayed(ent);
-}
-
-void R_UpdateEffectsBolt(void)
-{
-    RE->UpdateEffectsBolt();
-}
-
-void R_UpdateEffectsNonBolt(void)
-{
-    RE->UpdateEffectsNonBolt();
 }
 
 void CL_LookupColor(unsigned char c, vec_t *color)
@@ -1478,7 +1487,6 @@ void CL_LookupColor(unsigned char c, vec_t *color)
     }
 }
 
-// retail 0x4032c0; name unknown
 void CL_GetTeamColor_4032c0(const char *dvarName, float *color)
 {
     Dvar_GetUnpackedColorByName(dvarName, color);
@@ -1500,3 +1508,24 @@ void CL_UpdateColor(void)
 }
 
 
+void CL_SetLodOrigin(const refdef_t *fd)
+{
+    RE->SetLodOrigin(fd);
+}
+
+void R_UpdateXModelBoundsDelayed(GfxEntity *ent)
+{
+    RE->UpdateXModelBoundsDelayed(ent);
+}
+
+void R_UpdateEffectsBolt(void)
+{
+    RE->UpdateEffectsBolt();
+}
+
+void R_UpdateEffectsNonBolt(void)
+{
+    RE->UpdateEffectsNonBolt();
+}
+
+// retail 0x4032c0; name unknown

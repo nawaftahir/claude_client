@@ -26,6 +26,63 @@ float g_console_char_height = 16.0f;
 extern float ceilf(float x);
 extern float floorf(float x);
 
+inline float I_fsel(const float x, const float y, const float z)
+{
+    return x >= 0.0f ? y : z;
+}
+int CL_I_sel_4035c0(const int x, const int y, const int z)
+{
+    return x >= 0 ? y : z;
+}
+
+int CL_I_min_4035d0(const int x, const int y)
+{
+    return CL_I_sel_4035c0(y - x, x, y);
+}
+
+inline float I_fclamp(const float val, const float min, const float max)
+{
+    return I_fsel(min - val, min, I_fsel(val - max, max, val));
+}
+
+
+// com_math.h I_fround; retail 0x403620 emits it after I_fclamp
+int CL_I_fround_403620(const float x)
+{
+    const double bias = 1.0 / (1 << 30);
+    int result;
+
+    __asm fld x
+    __asm fadd bias
+    __asm fistp result
+
+    return result;
+}
+
+
+// unreferenced com_math.h helper copies retail keeps in this file (names unknown, retail addresses)
+void CL_Vector2Set_403650(vec2_t v, const float x, const float y)
+{
+    v[0] = x;
+    v[1] = y;
+}
+
+void CL_VectorScale4_403660(const vec4_t v, const float s, vec4_t o)
+{
+    o[0] = s * v[0];
+    o[1] = s * v[1];
+    o[2] = s * v[2];
+    o[3] = s * v[3];
+}
+
+int CL_I_strlen_403690(const char *s)
+{
+    const char *p = s;
+    while (*p++)
+        ;
+    return p - s - 1;
+}
+
 
 extern void Field_Clear(field_t *field);
 extern bool Dvar_GetBool(const char *dvarName);
@@ -70,7 +127,6 @@ extern void CalcScreenY(float *y, int align);
 extern FontHandle UI_GetFontHandle(int fontEnum, float scale);
 extern const char *SEH_SafeTranslateString(const char *str);
 extern char *va( const char *format, ... );
-extern void CL_DrawText(const char *text, int maxChars, struct Font_s *font, float x, float y, int horzAlign, int vertAlign, float xScale, float yScale, const float *color, int style);
 extern void Field_Draw(field_t *edit, int x, int y, int horzAlign, int vertAlign);
 extern void CL_LookupColor(unsigned char c, float *color);
 extern void SCR_DrawSmallStringExt(int x, int y, const char *str, const float *color);
@@ -88,6 +144,9 @@ extern void FS_FreeFileList(char **list, int count);
 extern int strnicmp(const char *s1, const char *s2, size_t n);
 extern void *__DefaultRuneLocale;
 extern refexport_t re;
+extern void CalcSplitScreenTextOffset(struct Font_s *font, float *y);
+extern void CalcScreenPlacementInl(float *x, float *y, float *w, float *h, int horzAlign, int vertAlign);
+extern void CL_DrawText(const char *text, int maxChars, struct Font_s *font, float x, float y, int horzAlign, int vertAlign, float xScale, float yScale, const float *color, int style);
 extern clientStatic_t cls;
 
 static struct ConDrawInputGlob conDrawInputGlob;
@@ -436,10 +495,10 @@ void Con_CheckResize(void)
     CalcScreenX(&con.screenMax[0], 3);
     CalcScreenY(&con.screenMax[1], 3);
 
-    con.screenMin[0] = floor(con.screenMin[0]);
-    con.screenMin[1] = floor(con.screenMin[1]);
-    con.screenMax[0] = floor(con.screenMax[0]);
-    con.screenMax[1] = floor(con.screenMax[1]);
+    con.screenMin[0] = floorf(con.screenMin[0]);
+    con.screenMin[1] = floorf(con.screenMin[1]);
+    con.screenMax[0] = floorf(con.screenMax[0]);
+    con.screenMax[1] = floorf(con.screenMax[1]);
 
     width = (int)(con.screenMax[0] - con.screenMin[0]);
     if (width < 640)
@@ -538,6 +597,12 @@ void Con_Init(void)
     CL_RegisterHudMsgIconMaterial("killiconheadshot");
     CL_RegisterHudMsgIconMaterial("killiconmelee");
     CL_RegisterHudMsgIconMaterial("killiconsuicide");
+}
+
+// retail 0x4040a0, unreferenced tail-call thunk; name unknown
+void Con_Shutdown_4040a0(void)
+{
+    Con_Shutdown();
 }
 
 static void Con_CopyCurrentConsoleLineText(short *text)
@@ -758,13 +823,13 @@ void CL_ConsolePrint(print_msg_type_t type, const char *txt, int duration, int l
     if (!duration) {
         switch (type) {
         case PMSG_CONSOLE:
-            duration = I_fround(con_minicontime->current.value * 1000.0f);
+            duration = CL_I_fround_403620(con_minicontime->current.value * 1000.0f);
             break;
         case PMSG_GAME:
-            duration = I_fround(con_gamemessagetime->current.value * 1000.0f);
+            duration = CL_I_fround_403620(con_gamemessagetime->current.value * 1000.0f);
             break;
         case PMSG_BOLDGAME:
-            duration = I_fround(con_boldgamemessagetime->current.value * 1000.0f);
+            duration = CL_I_fround_403620(con_boldgamemessagetime->current.value * 1000.0f);
             break;
         case PMSG_SUBTITLE:
             duration = 5000;
@@ -812,14 +877,6 @@ static void CL_AddConsoleChar(int ch, unsigned char colorIdx)
     con.lineOffset++;
 }
 
-inline float I_fsel(const float x, const float y, const float z)
-{
-    return x >= 0.0f ? y : z;
-}
-inline float I_fclamp(const float val, const float min, const float max)
-{
-    return I_fsel(min - val, min, I_fsel(val - max, max, val));
-}
 static void CL_AddConsoleInfoColor(int iFirstInfo, const vec_t *vColor)
 {
     con.textBuffer[(con.currentLine % con.totallines) * con.linewidth + con.lineOffset] = (iFirstInfo << 8) | (int)I_fclamp((float)(int)(vColor[0] * 255.0f), 0.0f, 255.0f);
@@ -867,7 +924,7 @@ void CL_DeathMessagePrint(const char *attackerName, const vec_t *attackerColor, 
     if (!con.initialized)
         Con_OneTimeInit();
 
-    duration = I_fround(con_gamemessagetime->current.value * 1000.0f);
+    duration = CL_I_fround_403620(con_gamemessagetime->current.value * 1000.0f);
     if (duration < 0)
         duration = 0;
 
@@ -1042,7 +1099,6 @@ static void ConDrawInput_IncrMatchCounter(const char *str)
     if (str[conDrawInputGlob.inputTextLen] == '\0')
         conDrawInputGlob.hasExactMatch = 1;
 }
-
 static void ConDrawInput_DvarMatch(const char *str)
 {
     clientStatic_t *cls_;
@@ -1177,6 +1233,7 @@ static void ConDrawInput_DetailedDvarMatch(const char *str)
     if (dvar->type == DVAR_TYPE_ENUM && Cmd_Argc() == 2)
         ConDrawInput_AutoCompleteArg(dvar->domain.enumeration.strings, dvar->domain.enumeration.stringCount);
 }
+
 
 static void ConDrawInput_DetailedCmdMatch(const char *str)
 {
@@ -1325,7 +1382,7 @@ static void Con_DrawMessageWindowOldToNew(MessageWindow *msgwnd, int x, int y, i
 
         elapsed = clients[0].serverTime - line->startTime;
         if (elapsed < msgwnd->scrolltime)
-            y += I_fround((1.0f - (float)elapsed / msgwnd->scrolltime) * lineHeight);
+            y += CL_I_fround_403620((1.0f - (float)elapsed / msgwnd->scrolltime) * lineHeight);
     }
 
     for (lineIndex = msgwnd->current_line + msgwnd->count - 1; lineIndex >= msgwnd->current_line; lineIndex--) {
@@ -1404,9 +1461,9 @@ static void Con_DrawMessageWindow(MessageWindow *msgwnd, int x, int y, int charH
             scroll = msgwnd->scrolltime - (clients[0].serverTime - line->endTime);
             if (scroll > 0) {
                 if (up)
-                    v -= I_fround((float)scroll / msgwnd->scrolltime * charHeight);
+                    v -= CL_I_fround_403620((float)scroll / msgwnd->scrolltime * charHeight);
                 else
-                    v += I_fround((float)scroll / msgwnd->scrolltime * charHeight);
+                    v += CL_I_fround_403620((float)scroll / msgwnd->scrolltime * charHeight);
             }
             continue;
         }
@@ -1476,10 +1533,17 @@ void Con_DrawSay(int y)
     x = (int)hudSayPosition->current.vector[0];
 
     fontHeight = re.TextHeight(font);
-    CL_DrawText(string, 0x7fffffff, font, (float)x,
-                (float)y + (float)fontHeight * normalizedScale,
-                1, 1, normalizedScale, normalizedScale,
-                (const float *)((void *)&colorWhite), 3);
+    {
+        float textX, textScaleX, textScaleY;
+        float textY = (float)y + (float)fontHeight * normalizedScale;
+
+        CalcSplitScreenTextOffset(font, &textY);
+        textX = (float)x;
+        textScaleX = normalizedScale;
+        textScaleY = normalizedScale;
+        CalcScreenPlacementInl(&textX, &textY, &textScaleX, &textScaleY, 1, 1);
+        re.DrawText(string, 0x7fffffff, font, textX, textY, textScaleX, textScaleY, (const float *)((void *)&colorWhite), 3);
+    }
 
     x += (int)((float)re.TextWidth(string, 0, font) * normalizedScale);
     Field_Draw((field_t *)chatField, x, y, 1, 1);
@@ -1705,6 +1769,3 @@ clientConnection_t * const clc = &clientConnections[0];
 static const vec4_t con_inputDvarInfoColor = { 0.8f, 0.8f, 1.0f, 1.0f };
 
 // retail 0x406be0, empty and unreferenced; name unknown
-void Con_Stub_406be0(void)
-{
-}

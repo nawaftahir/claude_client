@@ -1,0 +1,406 @@
+--- a/target/src/oc/snd.cpp
++++ b/target/src/oc/snd.cpp
+@@ -512,6 +512,388 @@
+     }
+ }
+ 
++void SND_SetChannelInfo(int index, int entnum, const snd_alias_t *pAlias0, const snd_alias_t *pAlias1, float lerp, const vec_t *origin, float volume, float pitch, int srcChannelCount, int baserate, int total_msec, int start_msec, int startDelay, Bool master, snd_alias_system_t system);
++void SND_GetCurrent3DPosition(int entnum, const vec_t *offset, vec_t *pos_out);
++int SND_GetSoundOverlay(snd_overlay_type_t type, snd_overlay_info_t *info, int maxcount, int *cpu);
++static int SND_FindFreeStreamChannel(void);
++static __attribute_regparm__(3) void SND_StartBackground(int track, const snd_alias_t *pAlias, int fadetime, snd_alias_system_t system);
++static __attribute_regparm__(3) void SND_StartBackground(int track, const snd_alias_t *pAlias, int fadetime, snd_alias_system_t system);
++void SND_Init(void);
++static Bool SND_AnyActiveListeners(void);
++static __attribute_regparm__(3) void SND_StartBackground(int track, const snd_alias_t *pAlias, int fadetime, snd_alias_system_t system);
++int SND_PlayLocalSoundAliasByName(const char *aliasname, snd_alias_system_t system);
++int SND_PlayLocalSoundAlias(snd_alias_list_t *aliasList, snd_alias_system_t system);
++int SND_PlayBlendedSoundAliases(const snd_alias_t *pAlias0, const snd_alias_t *pAlias1, float fLerp, int entnum, const vec_t *org, int timeshift, snd_alias_system_t system);
++int SND_PlaySoundAliasAsMaster(const snd_alias_t *pAlias, int entnum, const vec_t *org, int timeshift, snd_alias_system_t system);
++int SND_PlaySoundAlias(const snd_alias_t *pAlias, int entnum, const vec_t *org, int timeshift, snd_alias_system_t system);
++int SND_FindFree2DChannel(int entnum, int entchannel);
++int SND_FindFree3DChannel(int entnum, int entchannel);
++static __attribute_regparm__(3) void SND_StartBackground(int track, const snd_alias_t *pAlias, int fadetime, snd_alias_system_t system);
++static __attribute_regparm__(3) void SND_StartBackground(int track, const snd_alias_t *pAlias, int fadetime, snd_alias_system_t system);
++void SND_PlayAmbientAlias(const snd_alias_t *pAlias, int fadetime, snd_alias_system_t system);
++void SND_PlayMusicAlias(const snd_alias_t *pAlias, snd_alias_system_t system);
++void SND_StopMusic(int fadetime);
++void SND_StopSounds(snd_stopsounds_arg_t which);
++void SND_ShutdownChannels(void);
++void SND_Shutdown(void);
++void SND_FadeAllSounds(float volume, int fadetime);
++const snd_alias_t *SND_RestoreSoundAlias(MemoryFile *memFile);
++void SND_Save(MemoryFile *memFile);
++void SND_Restore(MemoryFile *memFile);
++void SND_Update(void);
++
++int SND_GetAliasOffset(const snd_alias_t *alias);
++snd_alias_t *SND_GetAliasWithOffset(const char *name, int offset);
++int SND_Get3DChannelLength(int index);
++int SND_Get2DChannelLength(int index);
++int SND_GetStreamChannelLength(int index);
++void SND_Get3DChannelSaveInfo(int index, snd_save_3D_sample_t *info);
++void SND_Get2DChannelSaveInfo(int index, snd_save_2D_sample_t *info);
++void SND_GetStreamChannelSaveInfo(int index, snd_save_stream_t *info);
++void SND_Set2DChannelFromSaveInfo(int index, snd_save_2D_sample_t *info);
++void SND_SetStreamChannelFromSaveInfo(int index, snd_save_stream_t *info);
++int SND_StartAlias2DSample(const snd_alias_t *pAlias0, const snd_alias_t *pAlias1, float lerp, int entnum, float volume, float pitch, int timeshift, float fraction, int startDelay, Bool master, int *pChannel, snd_alias_system_t system);
++int SND_StartAlias3DSample(const snd_alias_t *pAlias0, const snd_alias_t *pAlias1, float lerp, int entnum, const vec_t *org, float volume, float pitch, int timeshift, float fraction, int startDelay, Bool master, int *pChannel, snd_alias_system_t system);
++int SND_StartAliasStreamOnChannel(const snd_alias_t *pAlias0, const snd_alias_t *pAlias1, float lerp, int entnum, const vec_t *org, float volume, float pitch, int timeshift, float fraction, int startDelay, Bool master, int index, snd_alias_system_t system);
++void *Com_GetSoundFileMem(const snd_alias_t *alias);
++float randomf(void);
++void Dvar_ClearModified(dvar_t* var);
++void SND_Update3DChannel(int index, int frametime);
++void SND_UpdateStreamChannel(int index, int frametime);
++void SND_Update2DChannel(int index, int frametime);
++void SND_Set3DChannelPlaybackRate(int index, int rate);
++void SND_SetStreamChannelPlaybackRate(int index, int rate);
++void SND_Set2DChannelPlaybackRate(int index, int rate);
++float floorf(float x);
++void Com_Error(errorParm_t level, const char *fmt, ...);
++snd_alias_t *Com_PickSoundAlias( const char *aliasName );
++snd_alias_t *Com_PickSoundAliasFromList( snd_alias_list_t *aliasList );
++int SND_GetListenerIndexNearestToOrigin(const vec_t *origin);
++void SND_SaveListeners(snd_listener *listeners);
++void SND_RestoreListeners(snd_listener *listeners);
++float SND_GetLerpedSlavePercentage(float baseSlavePercentage);
++float SND_Attenuate(SndCurve *volumeFalloffCurve, float radius, float mindist, float maxdist);
++Bool SND_IsAliasChannel3D(int channel);
++static Bool SND_AnyActiveListeners(void);
++static __attribute_regparm__(3) Bool SND_ValidateSoundAliasBlend(const snd_alias_t *pAlias0, const snd_alias_t *pAlias1, Bool bReport);
++static void SND_PauseSounds(void);
++static void SND_UnpauseSounds(void);
++void SND_SetChannelVolumes(int priority, const float *channelvolume, int fademsec);
++void SND_DeactivateChannelVolumes(int priority, int fademsec);
++void SND_UpdateLoopingSounds(void);
++Bool SND_UpdateBackgroundVolume(int track, int frametime);
++void SND_DeactivateEnvironmentEffects(int priority, int fademsec);
++void SND_SetEnvironmentEffects(int priority, const char *roomstring, float drylevel, float wetlevel, int fademsec);
++static int SND_RoomtypeFromString(const char *string);
++void SND_UpdateReverbs(void);
++void SND_ErrorCleanup(void);
++void SND_DisconnectListener(void);
++void SND_SetListener(int entnum, const vec_t *origin, vec3_t *axis);
++void SND_SetChannelInfo(int index, int entnum, const snd_alias_t *pAlias0, const snd_alias_t *pAlias1, float lerp, const vec_t *origin, float volume, float pitch, int srcChannelCount, int baserate, int total_msec, int start_msec, int startDelay, Bool master, snd_alias_system_t system);
++void SND_GetCurrent3DPosition(int entnum, const vec_t *offset, vec_t *pos_out);
++int SND_GetSoundOverlay(snd_overlay_type_t type, snd_overlay_info_t *info, int maxcount, int *cpu);
++static __attribute_regparm__(3) int SND_StartAliasStream(const snd_alias_t *pAlias0, const snd_alias_t *pAlias1, float lerp, int entnum, const vec_t *org, float volume, float pitch, int timeshift, float fraction, Bool treatAsMaster, int *pChannel, snd_alias_system_t system);
++static __attribute_regparm__(2) void SND_SaveChanInfo(snd_channel_info_t *chaninfo, MemoryFile *memFile);
++void SND_Init(void);
++static __attribute_regparm__(3) int SND_PlaySoundAlias_Internal(const snd_alias_t *pAlias0, const snd_alias_t *pAlias1, float lerp, int entnum, const vec_t *org, int *pChannel, int timeshift, Bool treatAsMaster, snd_alias_system_t system);
++int SND_PlayLocalSoundAliasByName(const char *aliasname, snd_alias_system_t system);
++int SND_PlayLocalSoundAlias(snd_alias_list_t *aliasList, snd_alias_system_t system);
++int SND_PlayBlendedSoundAliases(const snd_alias_t *pAlias0, const snd_alias_t *pAlias1, float fLerp, int entnum, const vec_t *org, int timeshift, snd_alias_system_t system);
++int SND_PlaySoundAliasAsMaster(const snd_alias_t *pAlias, int entnum, const vec_t *org, int timeshift, snd_alias_system_t system);
++int SND_PlaySoundAlias(const snd_alias_t *pAlias, int entnum, const vec_t *org, int timeshift, snd_alias_system_t system);
++int SND_FindFree2DChannel(int entnum, int entchannel);
++int SND_FindFree3DChannel(int entnum, int entchannel);
++static __attribute_regparm__(2) void SND_RestoreChanInfo(snd_channel_info_t *chaninfo, MemoryFile *memFile);
++static __attribute_regparm__(3) void SND_StartBackground(int track, const snd_alias_t *pAlias, int fadetime, snd_alias_system_t system);
++void SND_PlayAmbientAlias(const snd_alias_t *pAlias, int fadetime, snd_alias_system_t system);
++void SND_PlayMusicAlias(const snd_alias_t *pAlias, snd_alias_system_t system);
++void SND_StopMusic(int fadetime);
++void SND_StopSounds(snd_stopsounds_arg_t which);
++void SND_ShutdownChannels(void);
++void SND_Shutdown(void);
++void SND_FadeAllSounds(float volume, int fadetime);
++void SND_SetEnvironmentEffects_f(void);
++void SND_DeactivateEnvironmentEffects_f(void);
++void SND_Save(MemoryFile *memFile);
++static __attribute_regparm__(2) Bool SND_RestoreStreamChannel(int channel, MemoryFile *memFile);
++void SND_Restore(MemoryFile *memFile);
++void SND_Update(void);
++
++
++COD2_ASSERT_SIZE(snd_save_stream_t, 0x20);
++COD2_ASSERT_FIELD(snd_save_stream_t, fraction, 0x0);
++COD2_ASSERT_FIELD(snd_save_stream_t, rate, 0x4);
++COD2_ASSERT_FIELD(snd_save_stream_t, basevolume, 0x8);
++COD2_ASSERT_FIELD(snd_save_stream_t, volume, 0xc);
++COD2_ASSERT_FIELD(snd_save_stream_t, pan, 0x10);
++COD2_ASSERT_FIELD(snd_save_stream_t, org, 0x14);
++
++extern "C" void *Z_MallocInternal( int size );
++extern "C" void Com_Memcpy( void *dest, const void *src, int count );
++
++inline void MemFile_WriteByte(MemoryFile *memFile, unsigned char value)
++{
++    MemFile_WriteData(memFile, 1, &value);
++}
++
++inline void MemFile_WriteShort(MemoryFile *memFile, short value)
++{
++    MemFile_WriteData(memFile, 2, &value);
++}
++
++inline void MemFile_WriteInt(MemoryFile *memFile, int value)
++{
++    MemFile_WriteData(memFile, 4, &value);
++}
++
++inline void MemFile_WriteFloat(MemoryFile *memFile, float value)
++{
++    MemFile_WriteData(memFile, 4, &value);
++}
++
++inline void MemFile_WriteVec3(MemoryFile *memFile, const float *value)
++{
++    MemFile_WriteData(memFile, 12, value);
++}
++
++inline unsigned char MemFile_ReadByte(MemoryFile *memFile)
++{
++    unsigned char value;
++
++    MemFile_ReadData(memFile, 1, &value);
++    return value;
++}
++
++inline short MemFile_ReadShort(MemoryFile *memFile)
++{
++    short value;
++
++    MemFile_ReadData(memFile, 2, &value);
++    return value;
++}
++
++inline int MemFile_ReadInt(MemoryFile *memFile)
++{
++    int value;
++
++    MemFile_ReadData(memFile, 4, &value);
++    return value;
++}
++
++inline float MemFile_ReadFloat(MemoryFile *memFile)
++{
++    float value;
++
++    MemFile_ReadData(memFile, 4, &value);
++    return value;
++}
++
++inline void MemFile_ReadVec3(MemoryFile *memFile, float *value)
++{
++    value[0] = MemFile_ReadFloat(memFile);
++    value[1] = MemFile_ReadFloat(memFile);
++    value[2] = MemFile_ReadFloat(memFile);
++}
++
++static bool SND_ValidateEnvEffectsPriorityValue(const char *priorityName, int *priority)
++{
++    const char *priorityStrings[3];
++    int stringIndex;
++
++    priorityStrings[0] = "none";
++    priorityStrings[1] = "level";
++    priorityStrings[2] = "shellshock";
++
++    for (stringIndex = 1; stringIndex < 3; ++stringIndex) {
++        if (!stricmp(priorityName, priorityStrings[stringIndex])) {
++            *priority = stringIndex;
++            return true;
++        }
++    }
++
++    Com_Printf("invalid priority string '%s', it must be one of the following strings:\n", priorityName);
++    for (stringIndex = 1; stringIndex < 3; ++stringIndex)
++        Com_Printf("  %s\n", priorityStrings[stringIndex]);
++    return false;
++}
++
++static int SND_RoomtypeFromString(const char *string)
++{
++    int stringIndex;
++
++    for (stringIndex = 0; snd_roomStrings[stringIndex]; ++stringIndex) {
++        if (!stricmp(string, snd_roomStrings[stringIndex]))
++            return stringIndex;
++    }
++
++    Com_Printf("invalid roomtype string '%s', it must be one of the following strings:\n", string);
++    for (stringIndex = 0; snd_roomStrings[stringIndex]; ++stringIndex) {
++        if (*snd_roomStrings[stringIndex])
++            Com_Printf("  %s\n", snd_roomStrings[stringIndex]);
++    }
++    return 0;
++}
++
++void SND_SetEnvironmentEffects_f(void)
++{
++    const char *roomstring;
++    float drylevel;
++    float wetlevel;
++    int priority;
++    int fademsec;
++
++    if (Cmd_Argc() != 6) {
++        Com_Printf("USAGE: snd_setEnvironmentEffects <const char *priority> <const char *roomstring> <float drylevel> <float wetlevel> <int fademsec>\n");
++        return;
++    }
++    if (!SND_ValidateEnvEffectsPriorityValue(Cmd_Argv(1), &priority))
++        return;
++
++    roomstring = Cmd_Argv(2);
++    if (!SND_RoomtypeFromString(roomstring) && stricmp(roomstring, snd_roomStrings[0]))
++        return;
++
++    drylevel = atof(Cmd_Argv(3));
++    if (drylevel < 0.0f || drylevel > 1.0f) {
++        Com_Printf("invalid 'drylevel' %g, must be in the range of 0.0-1.0\n", drylevel);
++        return;
++    }
++    wetlevel = atof(Cmd_Argv(4));
++    if (wetlevel < 0.0f || wetlevel > 1.0f) {
++        Com_Printf("invalid 'wetlevel' %g, must be in the range of 0.0-1.0\n", wetlevel);
++        return;
++    }
++    fademsec = atoi(Cmd_Argv(5));
++    if (fademsec < 0) {
++        Com_Printf("invalid 'fademsec' %i, must be greater than or equal to zero\n", fademsec);
++        return;
++    }
++    SND_SetEnvironmentEffects(priority, roomstring, drylevel, wetlevel, fademsec);
++}
++
++void SND_DeactivateEnvironmentEffects_f(void)
++{
++    int priority;
++    int fademsec;
++
++    if (Cmd_Argc() != 3) {
++        Com_Printf("USAGE: snd_deactivateEnvironmentEffects <int priority> <int fademsec>\n");
++        return;
++    }
++    if (!SND_ValidateEnvEffectsPriorityValue(Cmd_Argv(1), &priority))
++        return;
++
++    fademsec = atoi(Cmd_Argv(2));
++    if (fademsec < 0) {
++        Com_Printf("invalid 'fademsec' %i, must be greater than or equal to zero\n", fademsec);
++        return;
++    }
++    SND_DeactivateEnvironmentEffects(priority, fademsec);
++}
++
++static __declspec(noinline) Bool SND_AnyActiveListeners(void)
++{
++    int i;
++
++    for (i = 0; i < 1; i++) {
++        if (g_snd.listeners[i].active)
++            return 1;
++    }
++    return 0;
++}
++
++void SND_DisconnectListener(void)
++{
++    memset(&g_snd.listeners[0], 0, sizeof(snd_listener));
++}
++
++void SND_SetListener(int entnum, const vec_t *origin, vec3_t *axis)
++{
++    if (!g_snd.Initialized2d) {
++        return;
++    }
++    AxisCopy(axis, g_snd.listeners[0].orient.axis);
++    g_snd.listeners[0].orient.origin[0] = origin[0];
++    g_snd.listeners[0].orient.origin[1] = origin[1];
++    g_snd.listeners[0].orient.origin[2] = origin[2];
++    g_snd.listeners[0].entnum = entnum;
++    g_snd.listeners[0].active = 1;
++}
++
++void SND_SaveListeners(snd_listener *listeners)
++{
++    *listeners = g_snd.listeners[0];
++}
++
++void SND_RestoreListeners(snd_listener *listeners)
++{
++    g_snd.listeners[0] = *listeners;
++}
++
++float SND_GetLerpedSlavePercentage(float baseSlavePercentage)
++{
++    return 1.0f - (1.0f - baseSlavePercentage) * g_snd.slaveLerp;
++}
++
++float SND_Attenuate(SndCurve *volumeFalloffCurve, float radius, float mindist, float maxdist)
++{
++    float dist = radius - mindist;
++    if (dist <= 0.0f) {
++        return 1.0f;
++    }
++    if (maxdist == mindist) {
++        return 0.0f;
++    }
++    dist = dist / (maxdist - mindist);
++    if (dist >= 1.0f) {
++        return 0.0f;
++    }
++    return Com_GetVolumeFalloffCurveValue(volumeFalloffCurve, dist);
++}
++
++void SND_GetCurrent3DPosition(int entnum, const vec_t *offset, vec_t *pos_out)
++{
++    vec3_t org;
++    vec3_t axis[3];
++    float scale;
++
++    CG_GetEntityOrientation(entnum, org, axis);
++
++    scale = offset[0];
++    org[0] += scale * axis[0][0];
++    org[1] += scale * axis[0][1];
++    org[2] += scale * axis[0][2];
++
++    scale = offset[1];
++    org[0] += scale * axis[1][0];
++    org[1] += scale * axis[1][1];
++    org[2] += scale * axis[1][2];
++
++    scale = offset[2];
++    org[0] += scale * axis[2][0];
++    org[1] += scale * axis[2][1];
++    org[2] += scale * axis[2][2];
++
++    pos_out[0] = org[0];
++    pos_out[1] = org[1];
++    pos_out[2] = org[2];
++}
++
++Bool SND_IsAliasChannel3D(int channel)
++{
++    switch (channel) {
++    case 1:
++    case 2:
++    case 7:
++    case 8:
++    case 9:
++    case 10:
++        return 0;
++    default:
++        return 1;
++    }
++}
++
+ // com_math helpers, not visible in this TU
+ static __forceinline void SND_VectorSubtract(const vec3_t a, const vec3_t b, vec3_t c)
+ {
+@@ -533,10 +915,10 @@
+ 
+     if (entnum >= 0 && entnum < 1024 && SND_IsAliasChannel3D((pAlias0->flags & 0x780) >> 7)) {
+         CG_GetEntityOrientation(entnum, org, axis);
+-        SND_VectorSubtract(origin, org, delta);
+-        g_snd.chaninfo[index].offset[0] = SND_DotProduct(delta, axis[0]);
+-        g_snd.chaninfo[index].offset[1] = SND_DotProduct(delta, axis[1]);
+-        g_snd.chaninfo[index].offset[2] = SND_DotProduct(delta, axis[2]);
++        delta[0] = origin[0] - org[0]; delta[1] = origin[1] - org[1]; delta[2] = origin[2] - org[2];
++        g_snd.chaninfo[index].offset[0] = delta[0] * axis[0][0] + delta[1] * axis[0][1] + delta[2] * axis[0][2];
++        g_snd.chaninfo[index].offset[1] = delta[0] * axis[1][0] + delta[1] * axis[1][1] + delta[2] * axis[1][2];
++        g_snd.chaninfo[index].offset[2] = delta[0] * axis[2][0] + delta[1] * axis[2][1] + delta[2] * axis[2][2];
+     } else {
+         g_snd.chaninfo[index].offset[0] = 0.0f;
+         g_snd.chaninfo[index].offset[1] = 0.0f;

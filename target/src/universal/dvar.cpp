@@ -1353,7 +1353,7 @@ dvar_t *Dvar_RegisterVec2(const char *dvarName, float x, float y, float min, flo
 	DvarLimits dvarDomain;
 	vec2_t vector;
 
-	Vector2Set(vector, x, y);
+	vector[0] = x; vector[1] = y;
 	dvarValue.vector = vector;
 	dvarDomain.decimal.min = min;
 	dvarDomain.decimal.max = max;
@@ -1379,7 +1379,7 @@ dvar_t *Dvar_RegisterVec4(const char *dvarName, float x, float y, float z, float
 	DvarLimits dvarDomain;
 	vec4_t vector;
 
-	Vector4Set(vector, x, y, z, w);
+	vector[0] = x; vector[1] = y; vector[2] = z; vector[3] = w;
 	dvarValue.vector = vector;
 	dvarDomain.decimal.min = min;
 	dvarDomain.decimal.max = max;
@@ -1478,7 +1478,7 @@ void Dvar_SetVec2FromSource(dvar_t *dvar, float x, float y, DvarSetSource source
 
 	if ( dvar->type == DVAR_TYPE_VEC4 )
 	{
-		Vector2Set(vector, x, y);
+		vector[0] = x; vector[1] = y;
 		newValue.vector = vector;
 	}
 	else
@@ -1518,7 +1518,7 @@ void Dvar_SetVec4FromSource(dvar_t *dvar, float x, float y, float z, float w, Dv
 
 	if ( dvar->type == DVAR_TYPE_VEC4 )
 	{
-		Vector4Set(vector, x, y, z, w);
+		vector[0] = x; vector[1] = y; vector[2] = z; vector[3] = w;
 		newValue.vector = vector;
 	}
 	else
@@ -1679,17 +1679,6 @@ void Dvar_SetVec2ByName(const char *dvarName, float x, float y)
 		Dvar_SetVec2(dvar, x, y);
 	else
 		Dvar_RegisterString(dvarName, va("%g %g", x, y), DVAR_EXTERNAL);
-}
-
-void Dvar_SetVec3ByName(const char *dvarName, float x, float y, float z)
-{
-	dvar_t *dvar;
-
-	dvar = Dvar_FindVar(dvarName);
-	if ( dvar )
-		Dvar_SetVec3(dvar, x, y, z);
-	else
-		Dvar_RegisterString(dvarName, va("%g %g %g", x, y, z), DVAR_EXTERNAL);
 }
 
 void Dvar_SetVec4ByName(const char *dvarName, float x, float y, float z, float w)
@@ -1956,5 +1945,16 @@ nextLine:
 	}
 
 	return qfalse;
+}
+
+void Dvar_SetVec3ByName(const char *dvarName, float x, float y, float z)
+{
+	dvar_t *dvar;
+
+	dvar = Dvar_FindVar(dvarName);
+	if ( dvar )
+		Dvar_SetVec3(dvar, x, y, z);
+	else
+		Dvar_RegisterString(dvarName, va("%g %g %g", x, y, z), DVAR_EXTERNAL);
 }
 

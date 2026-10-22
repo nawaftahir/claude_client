@@ -966,3 +966,10 @@ void CL_ParseServerMessage(msg_t *msg)
     }
 
 }
+
+void CL_VectorClear_412fe0(vec3_t v)
+{
+    v[0] = 0;
+    v[1] = 0;
+    v[2] = 0;
+}
