@@ -91,7 +91,6 @@ void XModelCalcBasePose(XModelParts *modelParts)
 }
 
 #pragma optimize("p", off)
-extern void FS_FreeFileInl(void *buffer);
 
 XModelParts *XModelPartsLoadFile(XModel *model, const char *name, void *(*Alloc)(int))
 {
@@ -459,7 +458,7 @@ XModel *XModelLoadFile(const char *name, void *(*Alloc)(int), void *(*AllocColl)
 	}
 
 	model->boneInfo = boneInfo;
-	FS_FreeFileInl(buf);
+	FS_FreeFile(buf);
 	VectorCopy(config.mins, model->mins);
 	VectorCopy(config.maxs, model->maxs);
 	model->collLod = config.collLod;

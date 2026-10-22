@@ -3,7 +3,6 @@
 
 #define XANIM_VERSION 14
 
-extern void FS_FreeFileInl(void *buffer);
 
 void ConsumeQuat(const unsigned char **pos, short *out)
 {
@@ -469,7 +468,7 @@ XAnimParts *XAnimLoadFile(const char *name, void *(*Alloc)(int))
 			}
 		}
 		XAnimLoadNotifyInfo(name, &pos, parts, Alloc);
-		FS_FreeFileInl(buf);
+		FS_FreeFile(buf);
 		return parts;
 	}
 }

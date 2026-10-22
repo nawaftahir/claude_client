@@ -27,7 +27,6 @@ void CM_InitAllThreadData();
 void CM_LoadMapData( const char *name );
 void CM_LoadMap( const char *name, int *checksum );
 void CM_Shutdown();
-extern void FS_FreeFileInl(void *buffer);
 void CM_SaveLump( int lumpType, const void *data, int len, int *checksum );
 int CM_NumInlineModels( void );
 char *CM_EntityString();
@@ -236,7 +235,7 @@ void CM_SaveLump( int lumpType, const void *data, int len, int *checksum )
 	{
 		ofs = FS_ReadFile(cm.name, &buf);
 		*checksum = Com_BlockChecksum(buf, ofs);
-		FS_FreeFileInl(buf);
+		FS_FreeFile(buf);
 	}
 }
 

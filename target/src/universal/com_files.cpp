@@ -120,16 +120,6 @@ int FS_LoadStack()
 	return fs_loadStack;
 }
 
-qboolean FS_UseSearchPath(const searchpath_t *pSearch)
-{
-	if ( pSearch->localized && fs_ignoreLocalized->current.boolean )
-	{
-		return qfalse;
-	}
-
-	return qtrue;
-}
-
 // retail 0x420150, unreferenced; name unknown (Kisak FS_UseSearchPath body)
 qboolean FS_UseSearchPathLanguage_420150(const searchpath_t *pSearch)
 {
@@ -1459,7 +1449,7 @@ int FS_SeekInternal( int f, int offset, int origin )
 	return FS_FileSeek(file, offset, _origin);
 }
 
-__forceinline int FS_ReadFileInl(const char* qpath, void** buffer)
+int FS_ReadFile(const char* qpath, void** buffer)
 {
 	fileHandle_t h;
 	char* buf;
@@ -1505,26 +1495,16 @@ __forceinline int FS_ReadFileInl(const char* qpath, void** buffer)
 	return len;
 }
 
-int FS_ReadFile(const char* qpath, void** buffer)
-{
-	return FS_ReadFileInl(qpath, buffer);
-}
-
 void FS_ResetFiles()
 {
 	fs_loadStack = 0;
 }
 
-__forceinline void FS_FreeFileInl(void* buffer)
+void FS_FreeFile(void* buffer)
 {
 	FS_CheckFileSystemStarted();
 	--fs_loadStack;
 	Hunk_FreeTempMemory(buffer);
-}
-
-__declspec(noinline) void FS_FreeFile(void* buffer)
-{
-	FS_FreeFileInl(buffer);
 }
 
 int FS_WriteFile(const char* filename, const void* buffer, int size)
@@ -2123,7 +2103,7 @@ int FS_GetFileList(const char *path, const char *extension, FsListBehavior behav
 	return fileCount;
 }
 
-__forceinline void FS_ConvertPathInl(char *s)
+void FS_ConvertPath(char *s)
 {
 	while (*s)
 	{
@@ -2133,11 +2113,6 @@ __forceinline void FS_ConvertPathInl(char *s)
 		}
 		s++;
 	}
-}
-
-__declspec(noinline) void FS_ConvertPath(char *s)
-{
-	FS_ConvertPathInl(s);
 }
 
 static int FS_PathCmp(const char* s1, const char* s2)

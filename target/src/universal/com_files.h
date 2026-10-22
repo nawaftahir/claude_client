@@ -201,8 +201,6 @@ int FS_GetFileList(const char *path, const char *extension, FsListBehavior behav
 char** FS_ListFiles(const char* path, const char* extension, FsListBehavior behavior, int* numfiles, int allocType);
 void FS_FreeFileList( char **list, int allocType );
 void FS_ConvertPath(char *s);
-void FS_ConvertPathInl(char *s);
-int FS_ReadFileInl(const char* qpath, void** buffer);
 int FS_WriteFile(const char* filename, const void* buffer, int size);
 qboolean FS_iwIwd(char *iwd, const char *base);
 const char *FS_LoadedIwdNames();
@@ -259,7 +257,8 @@ extern char fs_gamedir[];
 void FS_SortFileList( char **filelist, int numfiles );
 void FS_Startup( const char *gameName );
 int FS_TouchFile( const char *filename );
-qboolean FS_UseSearchPath( const searchpath_t *pSearch );
+// no body in retail: every use is expanded
+#define FS_UseSearchPath(pSearch) (!((pSearch)->localized && fs_ignoreLocalized->current.boolean))
 int FS_filelength( fileHandle_t f );
 int Sys_StreamedRead( void *buffer, int size, int count, fileHandle_t f );
 int FS_GetModList( char *listbuf, int bufsize );

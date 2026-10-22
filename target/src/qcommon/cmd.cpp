@@ -871,3 +871,8 @@ void Cmd_Init( void )
 	Cmd_AddCommand("wait", Cmd_Wait_f);
 }
 
+// retail 0x41fec0, unreferenced empty function; name unknown
+void Cmd_Stub_41fec0(void)
+{
+}
+

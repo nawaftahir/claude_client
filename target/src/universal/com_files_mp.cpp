@@ -556,7 +556,7 @@ static void FS_NewDir_f( void )
 
 	for ( i = 0; i < ndirs; i++ )
 	{
-		FS_ConvertPathInl(dirnames[i]);
+		FS_ConvertPath(dirnames[i]);
 		Com_Printf( "%s\n", dirnames[i] );
 	}
 

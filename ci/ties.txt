@@ -28,3 +28,7 @@ _yylex
 # 10-22 owner-approved trade (same class as CL_MapLoading): CL_KeyEvent single body; LTCG now inlines it into these until its inlining matches retail
 ?Com_EventLoop@@YAHXZ
 ?Debug_EventLoop@@YAHXZ
+# trade 10-22: plain FS_FreeFile (one body, retail slot 0x421a10, +0.26% whole); our linker inlines it here, retail calls
+?Com_SubtitleReferenceExists@@YAHPBD@Z
+?Com_SetRecommended@@YAXH@Z
+?Com_HasConfigureChecksumChanged@@YA_NXZ

@@ -229,7 +229,7 @@ static void SV_MapRestart( qboolean fast_restart )
 	{
 		G_SetSavePersist(qfalse);
 		I_strncpyz(mapname, Dvar_GetString("mapname"), sizeof(mapname));
-		FS_ConvertPathInl(mapname);
+		FS_ConvertPath(mapname);
 		SV_SpawnServer(mapname);
 		return;
 	}
