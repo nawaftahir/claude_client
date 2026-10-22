@@ -30,13 +30,6 @@ inline float I_fsel(const float x, const float y, const float z)
 {
     return x >= 0.0f ? y : z;
 }
-inline float I_fclamp(const float val, const float min, const float max)
-{
-    return I_fsel(min - val, min, I_fsel(val - max, max, val));
-}
-
-
-// unreferenced com_math.h helper copies retail keeps in this file (names unknown, retail addresses)
 int CL_I_sel_4035c0(const int x, const int y, const int z)
 {
     return x >= 0 ? y : z;
@@ -47,6 +40,13 @@ int CL_I_min_4035d0(const int x, const int y)
     return CL_I_sel_4035c0(y - x, x, y);
 }
 
+inline float I_fclamp(const float val, const float min, const float max)
+{
+    return I_fsel(min - val, min, I_fsel(val - max, max, val));
+}
+
+
+// unreferenced com_math.h helper copies retail keeps in this file (names unknown, retail addresses)
 void CL_Vector2Set_403650(vec2_t v, const float x, const float y)
 {
     v[0] = x;
