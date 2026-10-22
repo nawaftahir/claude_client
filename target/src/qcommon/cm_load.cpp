@@ -122,7 +122,7 @@ static void CM_SwapHeader( BspHeader *header, int numLumps )
 
 	for ( i = 0; i < numLumps; i++ )
 	{
-		block[i] = LittleLong(block[i]);
+		block[i] = block[i];
 	}
 }
 
@@ -162,7 +162,7 @@ void CM_SaveLump( int lumpType, const void *data, int len, int *checksum )
 
 	header = *(BspHeader *)buf;
 
-	switch ( LittleLong(header.version) )
+	switch ( header.version )
 	{
 	case BSP_VERSION:
 	case BSP_VERSION_ALT:
@@ -281,8 +281,8 @@ void CM_ModelBounds( clipHandle_t model, vec3_t mins, vec3_t maxs )
 
 	cmod = CM_ClipHandleToModel( model );
 
-	VectorCopy( cmod->mins, mins );
-	VectorCopy( cmod->maxs, maxs );
+	mins[0] = cmod->mins[0]; mins[1] = cmod->mins[1]; mins[2] = cmod->mins[2];
+	maxs[0] = cmod->maxs[0]; maxs[1] = cmod->maxs[1]; maxs[2] = cmod->maxs[2];
 }
 
 void *CM_Hunk_Alloc( int size, const char *name, int type )

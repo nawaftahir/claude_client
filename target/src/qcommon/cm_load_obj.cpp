@@ -523,8 +523,8 @@ cLeafBrushNode_s* CMod_PartionLeafBrushes_r(uint16_t *leafBrushes, int numLeafBr
 			numLeafBrushesChild++;
 		}
 
-		VectorCopy(mins, childMins);
-		VectorCopy(maxs, childMaxs);
+		childMins[0] = mins[0]; childMins[1] = mins[1]; childMins[2] = mins[2];
+		childMaxs[0] = maxs[0]; childMaxs[1] = maxs[1]; childMaxs[2] = maxs[2];
 
 		if ( !side )
 		{
@@ -595,8 +595,8 @@ static void CMod_PartionLeafBrushes(uint16_t *leafBrushes, int numLeafBrushes, c
 		}
 	}
 
-	VectorCopy(mins, leaf->mins);
-	VectorCopy(maxs, leaf->maxs);
+	leaf->mins[0] = mins[0]; leaf->mins[1] = mins[1]; leaf->mins[2] = mins[2];
+	leaf->maxs[0] = maxs[0]; leaf->maxs[1] = maxs[1]; leaf->maxs[2] = maxs[2];
 
 	for ( j = 0; j < 3; j++ )
 	{

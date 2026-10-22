@@ -25,3 +25,6 @@ _yylex
 ?CG_DrawPlayerStance@@YAXPBUrectDef_s@@PAMPAUFont_s@@MH@Z
 # 10-22 owner-approved trade: CL_MapLoading unmatched until LTCG inlines Dvar_SetString there like retail (WHOLEFILE.md top blocker)
 ?CL_MapLoading@@YAXPBD@Z
+# 10-22 owner-approved trade (same class as CL_MapLoading): CL_KeyEvent single body; LTCG now inlines it into these until its inlining matches retail
+?Com_EventLoop@@YAHXZ
+?Debug_EventLoop@@YAHXZ

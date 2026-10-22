@@ -447,8 +447,8 @@ void CL_BeginDownload(const char *localName, const char *remoteName);
 void CL_NextDownload(void);
 void CL_InitDownloads(void);
 static void CL_SendPureChecksums(void);
-inline void VectorCopy(const vec3_t a, vec3_t b);
-inline void VectorCopy4(const vec4_t a, vec4_t b);
+extern void CL_VectorCopy_4011e0(const vec3_t a, vec3_t b);
+extern void CL_VectorCopy4_401220(const vec4_t a, vec4_t b);
 
 extern int Cmd_Argc(void);
 extern const char *Cmd_Argv( int arg );
@@ -1054,7 +1054,18 @@ void CL_MapLoading(const char *mapname)
         I_strncpyz(((LegacyHacks *)::legacyHacks)->cl_serverloadmap, mapname, 0x40);
         ((LegacyHacks *)::legacyHacks)->cl_serverloadwaiting = 0;
     } else {
-        Dvar_SetString((dvar_t *)nextmap, "");
+        {
+            dvar_t *dv = (dvar_t *)nextmap;
+            DvarValue nv;
+            char stringCopy[1024];
+            if (dv->type == DVAR_TYPE_STRING) {
+                I_strncpyz(stringCopy, "", sizeof(stringCopy));
+                nv.string = stringCopy;
+            } else {
+                nv.integer = Dvar_StringToEnum(&dv->domain, "");
+            }
+            Dvar_SetVariant(dv, nv, DVAR_SOURCE_INTERNAL);
+        }
         I_strncpyz(cls.servername, (const char *)"localhost", sizeof(cls.servername));
         CL_Disconnect();
         UI_CloseAllInl();
@@ -3039,8 +3050,8 @@ void CL_AddDebugString(const vec_t *xyz, const vec_t *color, float scale, const 
     }
 
     string = &cls.debug.strings[cls.debug.numStrings];
-    VectorCopy(xyz, string->xyz);
-    VectorCopy4(color, string->color);
+    CL_VectorCopy_4011e0(xyz, string->xyz);
+    CL_VectorCopy4_401220(color, string->color);
     string->scale = scale;
     strncpy(string->text, text, 0x5f);
     string->text[95] = '\0';
@@ -3071,9 +3082,9 @@ void CL_AddDebugLine(const vec_t *start, const vec_t *end, const vec_t *color, q
     }
 
     line = &cls.debug.lines[lineIndex];
-    VectorCopy(start, line->start);
-    VectorCopy(end, line->end);
-    VectorCopy4(color, line->color);
+    CL_VectorCopy_4011e0(start, line->start);
+    CL_VectorCopy_4011e0(end, line->end);
+    CL_VectorCopy4_401220(color, line->color);
     line->depthTest = depthTest;
 
     cls.debug.lineFromServer[cls.debug.numLines] = (byte)fromServer;
@@ -3169,6 +3180,12 @@ void CL_ShutdownDebugData(void)
     shutdownDebug = re.ShutdownDebug;
     if (shutdownDebug)
         shutdownDebug();
+}
+
+// retail 0x411360, unreferenced
+void CL_AbortRenderCommands_411360(void)
+{
+    re.AbortRenderCommands();
 }
 
 void CL_SyncGpu(void)
@@ -3327,17 +3344,3 @@ static void CL_BuildMd5StrFromCDKey(char *md5Str)
 
 // retail inlines Dvar_SetString (dvar.cpp) here
 
-inline void VectorCopy(const vec3_t a, vec3_t b)
-{
-	b[0] = a[0];
-	b[1] = a[1];
-	b[2] = a[2];
-}
-
-inline void VectorCopy4(const vec4_t a, vec4_t b)
-{
-	b[0] = a[0];
-	b[1] = a[1];
-	b[2] = a[2];
-	b[3] = a[3];
-}
