@@ -1,4 +1,5 @@
 #include "common_types.h"
+extern int CL_I_fround_403620(const float x);
 #include <float.h>
 #include "imports.h"
 #include "bytematch.h"
@@ -2465,9 +2466,9 @@ void CL_PlayLogo_f(void)
     SND_FadeAllSounds(1.0f, 0);
 
     name = Cmd_Argv(1);
-    cls.logo.fadein = I_fround((float)atof(Cmd_Argv(2)) * 1000.0f);
-    cls.logo.duration = I_fround((float)atof(Cmd_Argv(3)) * 1000.0f);
-    cls.logo.fadeout = I_fround((float)atof(Cmd_Argv(4)) * 1000.0f);
+    cls.logo.fadein = CL_I_fround_403620((float)atof(Cmd_Argv(2)) * 1000.0f);
+    cls.logo.duration = CL_I_fround_403620((float)atof(Cmd_Argv(3)) * 1000.0f);
+    cls.logo.fadeout = CL_I_fround_403620((float)atof(Cmd_Argv(4)) * 1000.0f);
     cls.logo.duration += cls.logo.fadein + cls.logo.fadeout;
 
     cls.logo.material[0] = re.RegisterMaterial(va((const char *)"%s1", name), 0x30, 3);

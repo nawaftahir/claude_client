@@ -46,6 +46,20 @@ inline float I_fclamp(const float val, const float min, const float max)
 }
 
 
+// com_math.h I_fround; retail 0x403620 emits it after I_fclamp
+int CL_I_fround_403620(const float x)
+{
+    const double bias = 1.0 / (1 << 30);
+    int result;
+
+    __asm fld x
+    __asm fadd bias
+    __asm fistp result
+
+    return result;
+}
+
+
 // unreferenced com_math.h helper copies retail keeps in this file (names unknown, retail addresses)
 void CL_Vector2Set_403650(vec2_t v, const float x, const float y)
 {
@@ -809,13 +823,13 @@ void CL_ConsolePrint(print_msg_type_t type, const char *txt, int duration, int l
     if (!duration) {
         switch (type) {
         case PMSG_CONSOLE:
-            duration = I_fround(con_minicontime->current.value * 1000.0f);
+            duration = CL_I_fround_403620(con_minicontime->current.value * 1000.0f);
             break;
         case PMSG_GAME:
-            duration = I_fround(con_gamemessagetime->current.value * 1000.0f);
+            duration = CL_I_fround_403620(con_gamemessagetime->current.value * 1000.0f);
             break;
         case PMSG_BOLDGAME:
-            duration = I_fround(con_boldgamemessagetime->current.value * 1000.0f);
+            duration = CL_I_fround_403620(con_boldgamemessagetime->current.value * 1000.0f);
             break;
         case PMSG_SUBTITLE:
             duration = 5000;
@@ -910,7 +924,7 @@ void CL_DeathMessagePrint(const char *attackerName, const vec_t *attackerColor, 
     if (!con.initialized)
         Con_OneTimeInit();
 
-    duration = I_fround(con_gamemessagetime->current.value * 1000.0f);
+    duration = CL_I_fround_403620(con_gamemessagetime->current.value * 1000.0f);
     if (duration < 0)
         duration = 0;
 
@@ -1368,7 +1382,7 @@ static void Con_DrawMessageWindowOldToNew(MessageWindow *msgwnd, int x, int y, i
 
         elapsed = clients[0].serverTime - line->startTime;
         if (elapsed < msgwnd->scrolltime)
-            y += I_fround((1.0f - (float)elapsed / msgwnd->scrolltime) * lineHeight);
+            y += CL_I_fround_403620((1.0f - (float)elapsed / msgwnd->scrolltime) * lineHeight);
     }
 
     for (lineIndex = msgwnd->current_line + msgwnd->count - 1; lineIndex >= msgwnd->current_line; lineIndex--) {
@@ -1447,9 +1461,9 @@ static void Con_DrawMessageWindow(MessageWindow *msgwnd, int x, int y, int charH
             scroll = msgwnd->scrolltime - (clients[0].serverTime - line->endTime);
             if (scroll > 0) {
                 if (up)
-                    v -= I_fround((float)scroll / msgwnd->scrolltime * charHeight);
+                    v -= CL_I_fround_403620((float)scroll / msgwnd->scrolltime * charHeight);
                 else
-                    v += I_fround((float)scroll / msgwnd->scrolltime * charHeight);
+                    v += CL_I_fround_403620((float)scroll / msgwnd->scrolltime * charHeight);
             }
             continue;
         }
