@@ -23,3 +23,5 @@ _yylex
 ?Com_Meminfo_f@@YAXXZ
 # 10-22 count tie: lost at k=16,17 in both cnt_sweep series with no own-code change (lab/w4/cnt_sweep.tsv)
 ?CG_DrawPlayerStance@@YAXPBUrectDef_s@@PAMPAUFont_s@@MH@Z
+# 10-22 owner-approved trade: CL_MapLoading unmatched until LTCG inlines Dvar_SetString there like retail (WHOLEFILE.md top blocker)
+?CL_MapLoading@@YAXPBD@Z

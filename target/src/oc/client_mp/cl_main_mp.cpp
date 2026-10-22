@@ -448,7 +448,6 @@ void CL_InitDownloads(void);
 static void CL_SendPureChecksums(void);
 inline void VectorCopy(const vec3_t a, vec3_t b);
 inline void VectorCopy4(const vec4_t a, vec4_t b);
-static __forceinline void Dvar_SetStringInl(dvar_t *dvar, const char *value);
 
 extern int Cmd_Argc(void);
 extern const char *Cmd_Argv( int arg );
@@ -1054,7 +1053,7 @@ void CL_MapLoading(const char *mapname)
         I_strncpyz(((LegacyHacks *)::legacyHacks)->cl_serverloadmap, mapname, 0x40);
         ((LegacyHacks *)::legacyHacks)->cl_serverloadwaiting = 0;
     } else {
-        Dvar_SetStringInl((dvar_t *)nextmap, "");
+        Dvar_SetString((dvar_t *)nextmap, "");
         I_strncpyz(cls.servername, (const char *)"localhost", sizeof(cls.servername));
         CL_Disconnect();
         UI_CloseAllInl();
@@ -3326,25 +3325,6 @@ static void CL_BuildMd5StrFromCDKey(char *md5Str)
 // retail 0x40e820, unreferenced; Kisak cl_main_mp name
 
 // retail inlines Dvar_SetString (dvar.cpp) here
-
-static __forceinline void Dvar_SetStringFromSourceInl(dvar_t *dvar, const char *string, DvarSetSource source)
-{
-    DvarValue newValue;
-    char stringCopy[1024];
-
-    if (dvar->type == DVAR_TYPE_STRING) {
-        I_strncpyz(stringCopy, string, sizeof(stringCopy));
-        newValue.string = stringCopy;
-    } else {
-        newValue.integer = Dvar_StringToEnum(&dvar->domain, string);
-    }
-    Dvar_SetVariant(dvar, newValue, source);
-}
-
-static __forceinline void Dvar_SetStringInl(dvar_t *dvar, const char *value)
-{
-    Dvar_SetStringFromSourceInl(dvar, value, DVAR_SOURCE_INTERNAL);
-}
 
 inline void VectorCopy(const vec3_t a, vec3_t b)
 {
