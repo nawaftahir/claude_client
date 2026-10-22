@@ -850,13 +850,7 @@ TU_STATIC void VectorSubtract4(const vec4_t a, const vec4_t b, vec4_t c)
 VectorScale4
 ==============
 */
-TU_STATIC void VectorScale4(const vec4_t v, const float s, vec4_t o)
-{
-	o[0] = s * v[0];
-	o[1] = s * v[1];
-	o[2] = s * v[2];
-	o[3] = s * v[3];
-}
+#define VectorScale4(v, s, o) ((o)[0] = (s) * (v)[0], (o)[1] = (s) * (v)[1], (o)[2] = (s) * (v)[2], (o)[3] = (s) * (v)[3])
 
 /*
 ==============

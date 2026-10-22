@@ -4118,7 +4118,10 @@ void AxisToQuat( const vec3_t mat[3], vec4_t out )
 	}
 
 	invLen = 1.0f / sqrtf(bestLen);
-	VectorScale4(test[best], invLen, out);
+	{
+		const float *v = test[best];
+		VectorScale4(v, invLen, out);
+	}
 }
 
 /*

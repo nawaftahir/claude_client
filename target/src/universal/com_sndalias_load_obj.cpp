@@ -566,7 +566,7 @@ void Com_LoadVolumeModGroups( VolumeModGroup *groups )
 	data = buffer;
 	for ( i = 0; ; i++ )
 	{
-		token = Com_ParseInl(&data);
+		COM_PARSE_INLINE(token, &data);
 		if ( !*token || *token == '}' )
 		{
 			break;
@@ -578,7 +578,7 @@ void Com_LoadVolumeModGroups( VolumeModGroup *groups )
 			return;
 		}
 		strcpy(groups[i].name, token);
-		token = Com_ParseInl(&data);
+		COM_PARSE_INLINE(token, &data);
 		if ( !*token || *token == '}' )
 		{
 			Com_EndParseSession();
@@ -630,7 +630,7 @@ void Com_LoadSoundAliasFile( const char *loadspec, const char *loadspecCurGame, 
 	columnCount = 0;
 	while ( 1 )
 	{
-		token = Com_ParseInl(&data);
+		COM_PARSE_INLINE(token, &data);
 		if ( !data )
 		{
 			break;
@@ -1090,7 +1090,7 @@ bool Com_ParseVolumeFalloffCurve( const char *buffer, const char *filename, SndC
 	int knotIndex;
 
 	Com_BeginParseSession(filename);
-	token = Com_ParseInl(&buffer);
+	COM_PARSE_INLINE(token, &buffer);
 	curve->knotCount = atoi(token);
 	if ( curve->knotCount < 2 )
 	{
@@ -1106,7 +1106,7 @@ bool Com_ParseVolumeFalloffCurve( const char *buffer, const char *filename, SndC
 	}
 	for ( knotIndex = 0; ; knotIndex++ )
 	{
-		token = Com_ParseInl(&buffer);
+		COM_PARSE_INLINE(token, &buffer);
 		if ( !*token || *token == '}' )
 		{
 			break;
@@ -1124,7 +1124,7 @@ bool Com_ParseVolumeFalloffCurve( const char *buffer, const char *filename, SndC
 			Com_Printf("^1ERROR: sndcurve parse failure on file \"%s\": knot x-coord '%f' is not in the range 0-1.\n", filename, curve->knots[knotIndex][0]);
 			return false;
 		}
-		token = Com_ParseInl(&buffer);
+		COM_PARSE_INLINE(token, &buffer);
 		if ( !*token || *token == '}' )
 		{
 			break;
@@ -1272,7 +1272,7 @@ qboolean Com_SubtitleReferenceExists( const char *reference )
 	Com_BeginParseSession("soundaliases/subtitle.st");
 	for ( data = buffer; ; Com_SkipRestOfLineInl(&data) )
 	{
-		token = Com_ParseInl(&data);
+		COM_PARSE_INLINE(token, &data);
 		if ( !data )
 		{
 			break;
