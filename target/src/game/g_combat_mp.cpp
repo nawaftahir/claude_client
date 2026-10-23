@@ -134,6 +134,11 @@ void G_ParseHitLocDmgTable()
 	}
 }
 
+// unreferenced; original name unknown
+void G_NullStub()
+{
+}
+
 /*
 ==================
 LookAtKiller
@@ -741,7 +746,3 @@ int G_GetHitLocationIndexFromString( unsigned short sString )
 	return 0;
 }
 
-// unreferenced; original name unknown
-void G_NullStub()
-{
-}

@@ -548,14 +548,7 @@ int UI_TextHeight(FontHandle font, float scale)
     return (int)((float)CL_TextHeight(font) * actualScale);
 }
 
-void diag_drawtext(const char *text, void *font, float x, float y, float scale)
-{
-    (void)text;
-    (void)font;
-    (void)x;
-    (void)y;
-    (void)scale;
-}
+void diag_drawtext(const char *text, void *font, float x, float y, float scale);
 
 void UI_DrawText(const char *text, int maxChars, FontHandle font, float x, float y, int horzAlign, int vertAlign, float scale, const vec_t *color, int style)
 {
@@ -1607,6 +1600,15 @@ static void UI_LoadMovies(void)
         sharedUiInfo.movieList[i] = String_Alloc(moviename);
         moviename += len + 1;
     }
+}
+
+void diag_drawtext(const char *text, void *font, float x, float y, float scale)
+{
+    (void)text;
+    (void)font;
+    (void)x;
+    (void)y;
+    (void)scale;
 }
 
 // retail 0x52e120, unreferenced; name unknown
