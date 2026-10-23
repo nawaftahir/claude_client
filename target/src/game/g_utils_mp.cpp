@@ -99,7 +99,7 @@ void G_SetConstString( unsigned short *to, const char *from );
 G_FindConfigstringIndex
 ================
 */
-int G_FindConfigstringIndex( const char *name, int start, int max, qboolean create, const char *errormsg )
+__declspec(noinline) int G_FindConfigstringIndex( const char *name, int start, int max, qboolean create, const char *errormsg )
 {
 	int i;
 	const char *s;
@@ -168,7 +168,13 @@ int G_ShaderIndex( const char *name )
 	char s[MAX_QPATH];
 
 	strcpy(s, name);
-	I_strlwr(s);
+	{
+#define pp_s (s)
+#define PP_RETVAL( v )
+#include "../universal/q_shared_strlwr.inl"
+#undef PP_RETVAL
+#undef pp_s
+	}
 
 	return G_FindConfigstringIndex( s, CS_SHADERS, MAX_SHADERS, level.initializing, "shader" );
 }

@@ -195,9 +195,10 @@ float *CG_TeamColor(int team)
 
 inline float I_fclamp(const float val, const float min, const float max);
 
-static qboolean CG_PlayerOwnsWeapon(const int *weapons, int weaponIndex)
+// q_shared.h copy; this site keeps the one out-of-line body (retail 0x4bd0f0)
+inline bool Com_BitCheck( const int array[], int bitNum )
 {
-    return (weapons[weaponIndex >> 5] & (1 << (weaponIndex & 31))) != 0;
+	return ( array[bitNum >> 5] & ( 1 << ( bitNum & 31 ) ) ) != 0;
 }
 
 // retail 0x4bd110/0x4bd120, unreferenced; MemFile_ArchiveData from CoD4 (SUPPORTED), int form name unknown
@@ -272,7 +273,7 @@ static int CG_GetDrawWeaponIndex(void)
 
     ps = &cg->predictedPlayerState;
     weaponIndex = cg->weaponSelect;
-    if (weaponIndex >= 0 && weaponIndex < BG_GetNumWeapons() && CG_PlayerOwnsWeapon(ps->weapons, weaponIndex)) {
+    if (weaponIndex >= 0 && weaponIndex < BG_GetNumWeapons() && Com_BitCheck(ps->weapons, weaponIndex)) {
         return weaponIndex;
     }
     return ps->weapon;
