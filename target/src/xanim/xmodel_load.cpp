@@ -26,14 +26,6 @@ void XModelConsumeQuat(const unsigned char **pos, short *out)
 	out[3] = w;
 }
 
-// Retail inlines QuatMultiply here (calls it only from QuatDiffAxisLengthSq).
-static __forceinline void QuatMultiplyInl(const float *in1, const float *in2, float *out)
-{
-	out[0] = in1[0] * in2[3] + in1[3] * in2[0] + in1[2] * in2[1] - in1[1] * in2[2];
-	out[1] = in1[1] * in2[3] - in1[2] * in2[0] + in1[3] * in2[1] + in1[0] * in2[2];
-	out[2] = in1[2] * in2[3] + in1[1] * in2[0] - in1[0] * in2[1] + in1[3] * in2[2];
-	out[3] = in1[3] * in2[3] - in1[0] * in2[0] - in1[1] * in2[1] - in1[2] * in2[2];
-}
 
 // Retail XModelCalcBasePose is /Op (store-reload on every int->float convert).
 #pragma optimize("p", on)
@@ -75,7 +67,7 @@ void XModelCalcBasePose(XModelParts *modelParts)
 		tempQuat[2] = (float)quats[2] * 0.000030518509f;
 		tempQuat[3] = (float)quats[3] * 0.000030518509f;
 
-		QuatMultiplyInl(tempQuat, (quatTrans - *parentList)->quat, quatTrans->quat);
+		QuatMultiply(tempQuat, (quatTrans - *parentList)->quat, quatTrans->quat);
 		DObjCalcTransWeight(quatTrans);
 		MatrixTransformVectorQuatTrans(trans, quatTrans - *parentList, quatTrans->trans);
 

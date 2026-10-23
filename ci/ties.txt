@@ -49,3 +49,5 @@ _yylex
 ?XModelGetLodFilename@@YAPBDPBUXModel@@H@Z
 # c2_24 TextPool next field direct: +0.17% whole, this fn shifts
 ?AllocText@TextPool@@QAEPADPAD_NPAPAV1@@Z
+# vc68 real QuatMultiply inlined, no stray body: +0.76% whole, this fn regalloc shifts
+?XModelCalcBasePose@@YAXPAUXModelParts_s@@@Z
