@@ -83,3 +83,5 @@ _$E1
 ?CL_RefreshKnownGlobalServer@@YAHUnetadr_t@@@Z
 # ss CG_RoundFPS macro, no stray body: NET +92673 B; frame 8 B short, win back
 ?CG_DrawFPS@@YAMM@Z
+# st Vec3MadInl macro, no stray body: whole 60.003->60.166%, drift +48 gone; one fld/fmul pair in VectorMA site
+?CG_OffsetThirdPersonView@@YAXXZ

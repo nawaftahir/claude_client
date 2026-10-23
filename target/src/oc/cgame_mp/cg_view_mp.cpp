@@ -96,13 +96,8 @@ void CG_FxTest(void);
 float CG_GetViewFov(void);
 static void CG_CalcFov(void);
 void CG_FxSetTestPosition(void);
-// inlined com_math VectorMA: retail evaluates through the pointer params
-static __forceinline void Vec3MadInl(const vec_t *start, float scale, const vec_t *dir, vec_t *out)
-{
-    out[0] = start[0] + scale * dir[0];
-    out[1] = start[1] + scale * dir[1];
-    out[2] = start[2] + scale * dir[2];
-}
+// inlined com_math VectorMA through pointer temps; a macro so no out-of-line body is kept
+#define Vec3MadInl(start_, scale_, dir_, out_) { const vec_t *start = (start_); float scale = (scale_); const vec_t *dir = (dir_); vec_t *out = (out_); out[0] = start[0] + scale * dir[0]; out[1] = start[1] + scale * dir[1]; out[2] = start[2] + scale * dir[2]; }
 
 static void CG_OffsetThirdPersonView(void);
 static void CG_CalcViewValues(void);
