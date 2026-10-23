@@ -131,7 +131,6 @@ static int CL_CompareAdrSigned(const void *a, const void *b)
     return NET_CompareAdrSigned(&serverA->adr, &serverB->adr);
 }
 
-static __declspec(noinline) qboolean NET_CompareAdrNI(netadr_t a, netadr_t b);
 void CL_SetServerInfo(serverInfo_t *server, const char *info, int ping);
 
 void CL_SetServerInfoByAddress(netadr_t from, const char *info, int ping)
@@ -173,7 +172,7 @@ void CL_SetServerInfoByAddress(netadr_t from, const char *info, int ping)
     }
 
     for (i = 0; i < 128; i++) {
-        if (NET_CompareAdrNI(from, cls.favoriteServers[i].adr))
+        if (NET_CompareAdr(from, cls.favoriteServers[i].adr))
             CL_SetServerInfo(&cls.favoriteServers[i], info, ping);
     }
 }
@@ -1060,8 +1059,3 @@ void CL_ClearMutedList(void)
     memset(s_playerMute, 0, sizeof(s_playerMute));
 }
 
-// retail calls NET_CompareAdr at the favorites loop only
-static __declspec(noinline) qboolean NET_CompareAdrNI(netadr_t a, netadr_t b)
-{
-    return NET_CompareAdrSigned(&a, &b) == 0;
-}

@@ -1267,11 +1267,12 @@ static void CG_CreateDObj(DObjModel_s *dobjModels, unsigned short numModels, str
 static void CG_InitXAnimTrees(void)
 {
     XAnim *anims;
+    clientInfo_t *ci;
     int i;
 
     anims = (XAnim *)cg->bgs.generic_human.tree.anims;
-    for (i = 0; i < 64; i++)
-        cg->bgs.clientinfo[i].pXAnimTree = XAnimCreateTree(anims, (Alloc_t)Hunk_AllocXAnimClient);
+    for (i = 0, ci = cg->bgs.clientinfo; i < 64; i++, ci++)
+        ci->pXAnimTree = XAnimCreateTree(anims, (Alloc_t)Hunk_AllocXAnimClient);
     for (i = 0; i < 8; i++)
         cgs->corpseinfo[i].pXAnimTree = XAnimCreateTree(anims, (Alloc_t)Hunk_AllocXAnimClient);
 }

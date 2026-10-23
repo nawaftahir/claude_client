@@ -97,3 +97,5 @@ _$E1
 ?Com_Shutdown@@YAXPBD@Z
 # sz4 stricmp .inl at UI_LoadMenus: right size, +0.1% whole; regs differ (retail [esi+ebp], n in edi), win back
 ?UI_LoadMenus@@YAPAUMenuList@@PBDH@Z
+# pc pair C: real NET_CompareAdr at favorites (no local NI copy) gets inlined by LTCG, retail calls 0x4468b0; size right, +1.8% whole, win back
+?CL_SetServerInfoByAddress@@YAXUnetadr_t@@PBDH@Z
