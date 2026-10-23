@@ -248,25 +248,10 @@ extern const vec3_t vec3_origin;
 extern float randomf();
 extern float crandom();
 
-static inline float dvar_get_float(const dvar_t *dvar)
-{
-    return dvar->current.value;
-}
-
-static inline int dvar_get_int(const dvar_t *dvar)
-{
-    return dvar->current.integer;
-}
-
-static inline int dvar_get_bool(const dvar_t *dvar)
-{
-    return (int)dvar->current.enabled;
-}
-
-static inline const dvar_t *dvar_get_ptr(const dvar_t *dvar)
-{
-    return dvar;
-}
+#define dvar_get_float(dvar) ((dvar)->current.value)
+#define dvar_get_int(dvar) ((dvar)->current.integer)
+#define dvar_get_bool(dvar) ((int)(dvar)->current.enabled)
+#define dvar_get_ptr(dvar) ((const dvar_t *)(dvar))
 
 #define float_seconds_to_ms(val) I_fround((val) * 1000.0f)
 
