@@ -2,7 +2,7 @@
 #include "../script/script_public.h"
 
 extern dvar_t *com_developer;
-static XAnimInfo g_xAnimInfo[4096];
+XAnimInfo g_xAnimInfo[4096];
 static unsigned int g_end;
 static XAnimClientNotify g_notifyList[128];
 static int g_notifyListSize = 0;
@@ -3070,36 +3070,20 @@ bool XAnimIsPrimitive(XAnim_s *anim, unsigned int animIndex)
 	return anim->entries[animIndex].numAnims == 0;
 }
 
-// Retail inlines XAnimSetTime in CG_UpdateKillCam, calls it from BG_SetNewAnimation
-__forceinline void XAnimSetTimeInl(XAnimTree_s *tree, unsigned int animIndex, float time)
-{
-	uint16_t childIndex;
-	XAnimInfo *info;
-	XAnimState *state;
-	XAnimEntry *entry;
-
-	childIndex = tree->infoArray[animIndex];
-
-	if ( !childIndex )
-	{
-	}
-	else
-	{
-		entry = &tree->anims->entries[animIndex];
-		info = &g_xAnimInfo[childIndex];
-		state = &info->state;
-		state->time = time;
-		state->cycleCount = 0;
-		state->oldTime = time;
-		state->oldCycleCount = 0;
-		info->notifyIndex = -1;
-	}
-}
-
 void XAnimSetTime(XAnimTree_s *tree, unsigned int animIndex, float time)
-{
-	XAnimSetTimeInl(tree, animIndex, time);
-}
+#define st_tree tree
+#define st_index animIndex
+#define st_time time
+#define st_state state
+#define st_cycle cycleCount
+#define st_oldcycle oldCycleCount
+#include "xanim_settime.inl"
+#undef st_tree
+#undef st_index
+#undef st_time
+#undef st_state
+#undef st_cycle
+#undef st_oldcycle
 
 void XAnimSetNotifyIndex( const XAnimTree_s *tree, XAnimInfo *info, const XAnimEntry *entry )
 {

@@ -108,6 +108,14 @@ struct trace_t;
 
 extern FxHelper *theFxHelper;
 
+// Renderer exports; only the plume slot is used here.
+struct refexport_t
+{
+	void *unused0[70];
+	void (*AddPlume)( const float *origin, int score, const float *color, int duration );
+};
+extern refexport_t re;
+
 // Every pooled type is carved from 32 KB blocks of the shared effects arena.
 struct FxMemBlock
 {
@@ -822,7 +830,7 @@ void FxScheduler::PlayEffect( const FxEffectDef *fx, const vec3_t origin, const 
 		}
 	}
 	if ( numAdded && fx_count->current.boolean )
-		theFxHelper->AddPlume( or_.origin, numAdded, colorYellow, 3000 );
+		re.AddPlume( or_.origin, numAdded, colorYellow, 3000 );
 }
 
 float FxScheduler::GetEffectLength( const FxEffectDef *fx )

@@ -43,3 +43,7 @@ _yylex
 ?Scr_ShutdownSystem@@YAXEH@Z
 # trade 10-23: RemoveVariable one body, called as retail; inlined at Scr_KillThread/VM_Resume/VM_TerminateTime (+0.8% whole); LTCG inlines RemoveRefToValue here, retail calls
 ?Scr_MakeValuePrimitive@@YAHI@Z
+# c2_2 one XAnimSetTime body: +0.85% whole, this fn shifts
+?XAnimCopyAnimTreeNoNotify@@YAXPBUXAnimTree_s@@PAU1@@Z
+# c2_4 twin deleted, same body is XModelGetLodName
+?XModelGetLodFilename@@YAPBDPBUXModel@@H@Z

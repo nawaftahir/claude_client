@@ -22,7 +22,6 @@ struct FxHelper
 	void Trace(trace_t *tr, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, int skipEntNum, int flags);
 	void AddFxToScene(GfxEntity *ent, XModel *model);
 	void SetIgnorePrecacheErrors(bool ignore);
-	void AddPlume(const float *origin, int score, const float *color, int duration);
 	const char *GetMaterialName(Material *material);
 	void Archive(FxArchive *arch);
 	int GetMaterialSubimageCount(Material *material);

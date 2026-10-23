@@ -467,18 +467,6 @@ XModel *XModelLoadFile(const char *name, void *(*Alloc)(int), void *(*AllocColl)
 	return model;
 }
 
-// unreferenced
-bool XModelSkinsSupported()
-{
-	return false;
-}
-
-// unreferenced
-bool XModelCollSupported()
-{
-	return false;
-}
-
 // Renderer export slots used by the surface loader
 struct refexport_t
 {

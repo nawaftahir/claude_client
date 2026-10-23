@@ -10,11 +10,6 @@ struct XModelLodOverride
 
 static XModelLodOverride xmodelLodOverride[4];
 
-const char *XModelGetLodName(const XModel *model, int lod)
-{
-	return model->lodInfo[lod].filename;
-}
-
 const char *XModelGetName(const XModel *model)
 {
 	return model->name;

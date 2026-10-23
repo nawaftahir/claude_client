@@ -266,7 +266,7 @@ void XModelGetBounds(const XModel *model, float *mins, float *maxs)
 	VectorCopy(model->maxs, maxs);
 }
 
-const char *XModelGetLodFilename(const XModel *model, int lod)
+const char *XModelGetLodName(const XModel *model, int lod)
 {
 	return model->lodInfo[lod].filename;
 }

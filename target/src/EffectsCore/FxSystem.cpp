@@ -255,11 +255,6 @@ void FxHelper::SetIgnorePrecacheErrors( bool ignore )
 	re.SetIgnorePrecacheErrors(ignore);
 }
 
-void FxHelper::AddPlume( const float *origin, int score, const float *color, int duration )
-{
-	re.AddPlume(origin, score, color, duration);
-}
-
 const char *FxHelper::GetMaterialName( Material *material )
 {
 	return re.GetMaterialName(material);
@@ -307,5 +302,11 @@ int FxHelper::GetSeed()
 	seed = mSeed;
 	mSeed *= 0x369D035;
 	return seed;
+}
+
+// retail 0x4984c0, unreferenced
+float FxHelper_Stub_4984c0(float value)
+{
+	return I_fabs(value);
 }
 
