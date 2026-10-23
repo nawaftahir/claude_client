@@ -409,14 +409,10 @@ extern refexport_t re;
 
 void PrimitiveTemplate::Init()
 {
-	mLife.min = 1.0f;
-	mLife.max = 1.0f;
-	mSpawnCount.min = 1.0f;
-	mSpawnCount.max = 1.0f;
-	mRadius.min = 1.0f;
-	mRadius.max = 1.0f;
-	mHeight.min = 1.0f;
-	mHeight.max = 1.0f;
+	Vector2Set( &mLife.min, 1.0f, 1.0f );
+	Vector2Set( &mSpawnCount.min, 1.0f, 1.0f );
+	Vector2Set( &mRadius.min, 1.0f, 1.0f );
+	Vector2Set( &mHeight.min, 1.0f, 1.0f );
 	FxChannel_CreateDefault(&mFxChannels[FX_CHANNEL_COLOR], 3, 1.0f, 0.0f);
 	FxChannel_CreateDefault(&mFxChannels[FX_CHANNEL_COLOR_RAND], 3, 1.0f, 0.0f);
 	FxChannel_CreateDefault(&mFxChannels[FX_CHANNEL_ALPHA], 1, 1.0f, 0.0f);
@@ -441,14 +437,10 @@ void PrimitiveTemplate::Init()
 	FxChannel_CreateDefault(&mFxChannels[FX_CHANNEL_VELOCITY2_X_RAND], 1, 0.0f, 0.0f);
 	FxChannel_CreateDefault(&mFxChannels[FX_CHANNEL_VELOCITY2_Y_RAND], 1, 0.0f, 0.0f);
 	FxChannel_CreateDefault(&mFxChannels[FX_CHANNEL_VELOCITY2_Z_RAND], 1, 0.0f, 0.0f);
-	mTexCoordS.min = 1.0f;
-	mTexCoordS.max = 1.0f;
-	mTexCoordT.min = 1.0f;
-	mTexCoordT.max = 1.0f;
-	mVariance.min = 1.0f;
-	mVariance.max = 1.0f;
-	mDensity.min = 10.0f;
-	mDensity.max = 10.0f;
+	Vector2Set( &mTexCoordS.min, 1.0f, 1.0f );
+	Vector2Set( &mTexCoordT.min, 1.0f, 1.0f );
+	Vector2Set( &mVariance.min, 1.0f, 1.0f );
+	Vector2Set( &mDensity.min, 10.0f, 10.0f );
 	mSequenceStartFrameMode = START_FRAME_FIRST;
 	mSequenceFixedFrameValue = 1;
 	mSequencePlayRateMode = PLAY_RATE_LIFETIME;
@@ -488,12 +480,9 @@ void PrimitiveTemplate::InitBackCompatibleParameters( BackCompatibleParameters *
 	{
 		for ( dim = 0; dim != 3; dim++ )
 		{
-			bcp->fxChannels[channelId].start[dim].min = 1.0f;
-			bcp->fxChannels[channelId].start[dim].max = 1.0f;
-			bcp->fxChannels[channelId].end[dim].min = 1.0f;
-			bcp->fxChannels[channelId].end[dim].max = 1.0f;
-			bcp->fxChannels[channelId].parm.min = 1.0f;
-			bcp->fxChannels[channelId].parm.max = 1.0f;
+			Vector2Set( &bcp->fxChannels[channelId].start[dim].min, 1.0f, 1.0f );
+			Vector2Set( &bcp->fxChannels[channelId].end[dim].min, 1.0f, 1.0f );
+			Vector2Set( &bcp->fxChannels[channelId].parm.min, 1.0f, 1.0f );
 		}
 	}
 }
@@ -611,8 +600,7 @@ bool PrimitiveTemplate::ParseLife( const char *val )
 
 	if ( ParseFloat(val, &min, &max) )
 	{
-		mLife.min = min;
-		mLife.max = max;
+		Vector2Set( &mLife.min, min, max );
 		return true;
 	}
 	return false;
@@ -627,8 +615,7 @@ bool PrimitiveTemplate::ParseSpawnRange( const char *val )
 	{
 		if ( min > max )
 			return false;
-		mSpawnRange.min = min;
-		mSpawnRange.max = max;
+		Vector2Set( &mSpawnRange.min, min, max );
 		return true;
 	}
 	return false;
@@ -641,8 +628,7 @@ bool PrimitiveTemplate::ParseDelay( const char *val )
 
 	if ( ParseFloat(val, &min, &max) )
 	{
-		mSpawnDelay.min = min;
-		mSpawnDelay.max = max;
+		Vector2Set( &mSpawnDelay.min, min, max );
 		return true;
 	}
 	return false;
@@ -655,8 +641,7 @@ bool PrimitiveTemplate::ParseCount( const char *val )
 
 	if ( ParseFloat(val, &min, &max) )
 	{
-		mSpawnCount.min = min;
-		mSpawnCount.max = max;
+		Vector2Set( &mSpawnCount.min, min, max );
 		return true;
 	}
 	return false;
@@ -679,8 +664,7 @@ bool PrimitiveTemplate::ParseElasticity( const char *val )
 			return false;
 		if ( max > 1.0f )
 			return false;
-		mElasticity.min = min;
-		mElasticity.max = max;
+		Vector2Set( &mElasticity.min, min, max );
 		mAttributeFlags |= FX_USE_PHYSICS;
 		return true;
 	}
@@ -694,12 +678,9 @@ bool PrimitiveTemplate::ParseOrigin1( const char *val )
 
 	if ( ParseVector(val, min, max) == true )
 	{
-		mOrigin1X.min = min[0];
-		mOrigin1X.max = max[0];
-		mOrigin1Y.min = min[1];
-		mOrigin1Y.max = max[1];
-		mOrigin1Z.min = min[2];
-		mOrigin1Z.max = max[2];
+		Vector2Set( &mOrigin1X.min, min[0], max[0] );
+		Vector2Set( &mOrigin1Y.min, min[1], max[1] );
+		Vector2Set( &mOrigin1Z.min, min[2], max[2] );
 		return true;
 	}
 	return false;
@@ -712,12 +693,9 @@ bool PrimitiveTemplate::ParseOrigin2( const char *val )
 
 	if ( ParseVector(val, min, max) == true )
 	{
-		mOrigin2X.min = min[0];
-		mOrigin2X.max = max[0];
-		mOrigin2Y.min = min[1];
-		mOrigin2Y.max = max[1];
-		mOrigin2Z.min = min[2];
-		mOrigin2Z.max = max[2];
+		Vector2Set( &mOrigin2X.min, min[0], max[0] );
+		Vector2Set( &mOrigin2Y.min, min[1], max[1] );
+		Vector2Set( &mOrigin2Z.min, min[2], max[2] );
 		return true;
 	}
 	return false;
@@ -730,8 +708,7 @@ bool PrimitiveTemplate::ParseRadius( const char *val )
 
 	if ( ParseFloat(val, &min, &max) )
 	{
-		mRadius.min = min;
-		mRadius.max = max;
+		Vector2Set( &mRadius.min, min, max );
 		return true;
 	}
 	return false;
@@ -744,8 +721,7 @@ bool PrimitiveTemplate::ParseHeight( const char *val )
 
 	if ( ParseFloat(val, &min, &max) )
 	{
-		mHeight.min = min;
-		mHeight.max = max;
+		Vector2Set( &mHeight.min, min, max );
 		return true;
 	}
 	return false;
@@ -758,8 +734,7 @@ bool PrimitiveTemplate::ParseWindModifier( const char *val )
 
 	if ( ParseFloat(val, &min, &max) )
 	{
-		mWindModifier.min = min;
-		mWindModifier.max = max;
+		Vector2Set( &mWindModifier.min, min, max );
 		return true;
 	}
 	return false;
@@ -772,8 +747,7 @@ bool PrimitiveTemplate::ParseRotation( const char *val )
 
 	if ( ParseFloat(val, &min, &max) )
 	{
-		mRotation.min = min;
-		mRotation.max = max;
+		Vector2Set( &mRotation.min, min, max );
 		return true;
 	}
 	return false;
@@ -818,8 +792,7 @@ void PrimitiveTemplate::CreateBackCompatibleRotationDeltaCurve( float initialVal
 		}
 	}
 	mFxChannels[channelId].curve = FxCurve_AllocAndCreateWithKeys(keys[0], 1, keyCount);
-	mFxChannels[channelId].scaleRange.min = graphScale;
-	mFxChannels[channelId].scaleRange.max = graphScale;
+	Vector2Set( &mFxChannels[channelId].scaleRange.min, graphScale, graphScale );
 }
 
 // Original name unknown.
@@ -836,8 +809,7 @@ void PrimitiveTemplate::CreateBackCompatibleVelocityCurve( float initialValue, f
 	keys[1][0] = 1.0f;
 	keys[1][1] = keys[0][1];
 	mFxChannels[channelId].curve = FxCurve_AllocAndCreateWithKeys(keys[0], 1, keyCount);
-	mFxChannels[channelId].scaleRange.min = graphScale;
-	mFxChannels[channelId].scaleRange.max = graphScale;
+	Vector2Set( &mFxChannels[channelId].scaleRange.min, graphScale, graphScale );
 }
 
 // Original name unknown.
@@ -855,8 +827,7 @@ void PrimitiveTemplate::CreateBackCompatibleAccelerationCurve( float initialValu
 	else
 		keys[1][1] = keys[1][1] / keyScale;
 	mFxChannels[channelId].curve = FxCurve_AllocAndCreateWithKeys(keys[0], 1, keyCount);
-	mFxChannels[channelId].scaleRange.min = graphScale;
-	mFxChannels[channelId].scaleRange.max = graphScale;
+	Vector2Set( &mFxChannels[channelId].scaleRange.min, graphScale, graphScale );
 }
 
 bool PrimitiveTemplate::ParseRotationDelta( const char *val )
@@ -889,12 +860,9 @@ bool PrimitiveTemplate::ParseAngle( const char *val )
 
 	if ( ParseVector(val, min, max) == true )
 	{
-		mAngle1.min = min[0];
-		mAngle1.max = max[0];
-		mAngle2.min = min[1];
-		mAngle2.max = max[1];
-		mAngle3.min = min[2];
-		mAngle3.max = max[2];
+		Vector2Set( &mAngle1.min, min[0], max[0] );
+		Vector2Set( &mAngle2.min, min[1], max[1] );
+		Vector2Set( &mAngle3.min, min[2], max[2] );
 		return true;
 	}
 	return false;
@@ -907,12 +875,9 @@ bool PrimitiveTemplate::ParseAngleDelta( const char *val )
 
 	if ( ParseVector(val, min, max) == true )
 	{
-		mAngle1Delta.min = min[0];
-		mAngle1Delta.max = max[0];
-		mAngle2Delta.min = min[1];
-		mAngle2Delta.max = max[1];
-		mAngle3Delta.min = min[2];
-		mAngle3Delta.max = max[2];
+		Vector2Set( &mAngle1Delta.min, min[0], max[0] );
+		Vector2Set( &mAngle2Delta.min, min[1], max[1] );
+		Vector2Set( &mAngle3Delta.min, min[2], max[2] );
 		return true;
 	}
 	return false;
@@ -1069,8 +1034,7 @@ bool PrimitiveTemplate::ParseGravity( const char *val )
 
 	if ( ParseFloat(val, &min, &max) )
 	{
-		mGravity.min = min;
-		mGravity.max = max;
+		Vector2Set( &mGravity.min, min, max );
 		return true;
 	}
 	return false;
@@ -1083,8 +1047,7 @@ bool PrimitiveTemplate::ParseDensity( const char *val )
 
 	if ( ParseFloat(val, &min, &max) )
 	{
-		mDensity.min = min;
-		mDensity.max = max;
+		Vector2Set( &mDensity.min, min, max );
 		return true;
 	}
 	return false;
@@ -1097,8 +1060,7 @@ bool PrimitiveTemplate::ParseVariance( const char *val )
 
 	if ( ParseFloat(val, &min, &max) )
 	{
-		mVariance.min = min;
-		mVariance.max = max;
+		Vector2Set( &mVariance.min, min, max );
 		return true;
 	}
 	return false;
@@ -1182,8 +1144,7 @@ bool PrimitiveTemplate::ParseBackCompatibleStart3( BackCompatibleParameters *bcp
 	if ( ParseVector(val, min, max) )
 	{
 		for ( dim = 0; dim != 3; dim++ )
-			bcp->fxChannels[channelId].start[dim].min = min[dim];
-			bcp->fxChannels[channelId].start[dim].max = max[dim];
+			Vector2Set( &bcp->fxChannels[channelId].start[dim].min, min[dim], max[dim] );
 		bcp->fxChannels[channelId].used = true;
 		return true;
 	}
@@ -1200,8 +1161,7 @@ bool PrimitiveTemplate::ParseBackCompatibleEnd3( BackCompatibleParameters *bcp, 
 	if ( ParseVector(val, min, max) )
 	{
 		for ( dim = 0; dim != 3; dim++ )
-			bcp->fxChannels[channelId].end[dim].min = min[dim];
-			bcp->fxChannels[channelId].end[dim].max = max[dim];
+			Vector2Set( &bcp->fxChannels[channelId].end[dim].min, min[dim], max[dim] );
 		bcp->fxChannels[channelId].used = true;
 		return true;
 	}
@@ -1218,8 +1178,7 @@ bool PrimitiveTemplate::ParseBackCompatibleStart( BackCompatibleParameters *bcp,
 	{
 		if ( min > max )
 			Swap(min, max);
-		bcp->fxChannels[channelId].start[0].min = min;
-		bcp->fxChannels[channelId].start[0].max = max;
+		Vector2Set( &bcp->fxChannels[channelId].start[0].min, min, max );
 		bcp->fxChannels[channelId].used = true;
 		return true;
 	}
@@ -1236,8 +1195,7 @@ bool PrimitiveTemplate::ParseBackCompatibleEnd( BackCompatibleParameters *bcp, c
 	{
 		if ( min > max )
 			Swap(min, max);
-		bcp->fxChannels[channelId].end[0].min = min;
-		bcp->fxChannels[channelId].end[0].max = max;
+		Vector2Set( &bcp->fxChannels[channelId].end[0].min, min, max );
 		bcp->fxChannels[channelId].used = true;
 		return true;
 	}
@@ -1252,8 +1210,7 @@ bool PrimitiveTemplate::ParseBackCompatibleParm( BackCompatibleParameters *bcp, 
 
 	if ( ParseFloat(val, &min, &max) )
 	{
-		bcp->fxChannels[channelId].parm.min = min;
-		bcp->fxChannels[channelId].parm.max = max;
+		Vector2Set( &bcp->fxChannels[channelId].parm.min, min, max );
 		bcp->fxChannels[channelId].used = true;
 		return true;
 	}
@@ -1593,8 +1550,7 @@ void PrimitiveTemplate::ParseChannelScale( const char *val, FxChannelId channel 
 	float max;
 
 	if ( ParseFloat(val, &min, &max) )
-		mFxChannels[channel].scaleRange.min = min;
-		mFxChannels[channel].scaleRange.max = max;
+		Vector2Set( &mFxChannels[channel].scaleRange.min, min, max );
 }
 
 bool PrimitiveTemplate::ParseChannel( BackCompatibleParameters *bcp, GPGroup *grp, FxChannelId channelId )

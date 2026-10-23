@@ -13,13 +13,13 @@ static centity_t *cg_solidEntities[256];
 static int cg_numTriggerEntities;
 static centity_t *cg_triggerEntities[256];
 
-extern int CM_PointContents(const vec_t *point, unsigned int model);
-extern int CM_TransformedPointContents(const vec_t *point, unsigned int model, const vec_t *origin, const vec_t *angles);
+int CM_PointContents( const vec3_t p, clipHandle_t model );
+int CM_TransformedPointContents( const vec3_t p, clipHandle_t model, const vec3_t origin, const vec3_t angles );
 extern int CM_ContentsOfModel( clipHandle_t handle );
 extern void CM_BoxTrace(trace_t *results, const float *start, const float *end, const float *mins, const float *maxs, clipHandle_t model, int brushmask);
-extern clipHandle_t CM_TempBoxModel(const vec_t *mins, const vec_t *maxs, int contents);
-extern int CM_TransformedBoxTraceExternal(trace_t *results, const vec_t *start, const vec_t *end, const vec_t *mins, const vec_t *maxs, clipHandle_t model, int brushmask, const vec_t *origin, const vec_t *angles);
-extern float CM_RadiusOfModel(unsigned int model);
+clipHandle_t CM_TempBoxModel( const vec3_t mins, const vec3_t maxs, int contents );
+extern void CM_TransformedBoxTraceExternal(trace_t *results, const vec_t *start, const vec_t *end, const vec_t *mins, const vec_t *maxs, clipHandle_t model, int brushmask, const vec_t *origin, const vec_t *angles);
+float CM_RadiusOfModel( clipHandle_t handle );
 extern int CL_GetCurrentCmdNumber(void);
 extern qboolean CL_GetUserCmd(int cmdNumber, usercmd_t *ucmd);
 extern void PM_UpdateViewAngles(playerState_t *ps, float msec, usercmd_t *cmd, unsigned char handler);
@@ -51,7 +51,6 @@ void CG_ClearSolidList(void);
 int CG_PointContents(const vec_t *point, int passEntityNum, int contentmask);
 static void CG_InterpolatePlayerState(qboolean grabAngles);
 void CG_PredictPlayerState(void);
-static void Trace_CalcBounds(const vec_t *start, const vec_t *mins, const vec_t *maxs, float fraction, const vec_t *end, vec3_t *bounds);
 void CG_ClipMoveToEntities(const vec_t *start, const vec_t *mins, const vec_t *maxs, const vec_t *end, int skipNumber, int mask, int capsule, trace_t *tr);
 void CG_BuildSolidList(void);
 
@@ -60,6 +59,271 @@ void CG_ClearSolidList(void)
     cg_numSolidEntities = 0;
     cg_numTriggerEntities = 0;
 }
+
+void CG_BuildSolidList(void)
+{
+    int i;
+    snapshot_t *snap;
+
+    cg_numSolidEntities = 0;
+    cg_numTriggerEntities = 0;
+
+    snap = cg->nextSnap;
+
+    for (i = 0; i < snap->numEntities; i++) {
+        entityState_t *snapEnt = &snap->entities[i];
+        int entityNum = snapEnt->number;
+        centity_t *cent = &cg_entities[entityNum];
+        entityState_t *ent = &cent->nextState;
+
+        if (ent->solid == 0xffffff) {
+            if (ent->eFlags & 1)
+                continue;
+            if (CM_ContentsOfModel(ent->index.brushmodel) == 0)
+                continue;
+        }
+
+        if (ent->eType == 3) {
+            cg_triggerEntities[cg_numTriggerEntities] = cent;
+            cg_numTriggerEntities++;
+        } else if (ent->solid != 0) {
+            ((centity_t **)&cg_solidEntities)[cg_numSolidEntities] = cent;
+            cg_numSolidEntities++;
+        }
+    }
+}
+
+static void Trace_CalcBounds( const float *start, const float *mins, const float *maxs, const float *end, float fraction, vec3_t bounds[2] );
+
+
+// from universal/q_shared.h, surfaceflags.h, com_math.h (not in the oc headers)
+#define SOLID_BMODEL 0xffffff
+#define CONTENTS_SOLID 0x00000001
+#define CONTENTS_BODY 0x02000000
+#define ENTITYNUM_NONE 1023
+#define ENTITYNUM_WORLD 1022
+#define ET_PLAYER 1
+
+inline float I_fmax(const float x, const float y)
+{
+    return I_fsel(x - y, x, y);
+}
+
+inline float I_fmin(const float x, const float y)
+{
+    return I_fsel(y - x, x, y);
+}
+
+inline void Vec3Lerp(const vec3_t start, const vec3_t end, float fraction, vec3_t endpos)
+{
+    endpos[0] = start[0] + fraction * (end[0] - start[0]);
+    endpos[1] = start[1] + fraction * (end[1] - start[1]);
+    endpos[2] = start[2] + fraction * (end[2] - start[2]);
+}
+
+/*
+==================
+Trace_CalcBounds
+
+Bounds of the swept box from start to the fraction reached so far.
+==================
+*/
+static void Trace_CalcBounds( const float *start, const float *mins, const float *maxs, const float *end, float fraction, vec3_t bounds[2] )
+{
+	vec3_t hit;
+
+	Vec3Lerp( start, end, fraction, hit );
+
+	bounds[0][0] = I_fmin( start[0], hit[0] ) + mins[0];
+	bounds[0][1] = I_fmin( start[1], hit[1] ) + mins[1];
+	bounds[0][2] = I_fmin( start[2], hit[2] ) + mins[2];
+	bounds[1][0] = I_fmax( start[0], hit[0] ) + maxs[0];
+	bounds[1][1] = I_fmax( start[1], hit[1] ) + maxs[1];
+	bounds[1][2] = I_fmax( start[2], hit[2] ) + maxs[2];
+}
+
+/*
+==================
+CG_ClipMoveToEntities
+==================
+*/
+void CG_ClipMoveToEntities( const float *start, const float *mins, const float *maxs, const float *end, int skipNumber, int mask, int capsule, trace_t *tr )
+{
+	int i;
+	int x;
+	int zd;
+	int zu;
+	trace_t trace;
+	entityState_t *ent;
+	clipHandle_t cmodel;
+	vec3_t bmins;
+	vec3_t bmaxs;
+	vec3_t angles;
+	centity_t *cent;
+	int contents;
+	vec3_t bounds[2];
+	float radius;
+
+	Trace_CalcBounds( start, mins, maxs, end, tr->fraction, bounds );
+
+	for ( i = 0; i < cg_numSolidEntities; i++ )
+	{
+		cent = cg_solidEntities[i];
+		ent = &cent->nextState;
+
+		if ( ent->number == skipNumber )
+		{
+			continue;
+		}
+
+		if ( ent->solid == SOLID_BMODEL )
+		{
+			cmodel = ent->index.brushmodel;
+			contents = CM_ContentsOfModel( cmodel );
+
+			if ( !(contents & mask) )
+			{
+				continue;
+			}
+
+			radius = CM_RadiusOfModel( cmodel );
+
+			if ( cent->lerpOrigin[0] - radius >= bounds[1][0]
+			        || cent->lerpOrigin[1] - radius >= bounds[1][1]
+			        || bounds[0][0] >= cent->lerpOrigin[0] + radius
+			        || bounds[0][1] >= cent->lerpOrigin[1] + radius
+			        || cent->lerpOrigin[2] - radius >= bounds[1][2]
+			        || bounds[0][2] >= cent->lerpOrigin[2] + radius )
+			{
+				continue;
+			}
+
+			VectorCopy( cent->lerpAngles, angles );
+		}
+		else
+		{
+			switch ( ent->eType )
+			{
+			case ET_PLAYER:
+				contents = CONTENTS_BODY;
+				break;
+			default:
+				contents = CONTENTS_SOLID;
+				break;
+			}
+
+			if ( !(contents & mask) )
+			{
+				continue;
+			}
+
+			x = ent->solid & 255;
+			zd = ((ent->solid >> 8) & 255) - 1;
+			zu = ((ent->solid >> 16) & 255) - 32;
+
+			bmins[0] = bmins[1] = 1.0f - x;
+			bmaxs[0] = bmaxs[1] = x - 1.0f;
+			bmins[2] = 1.0f - zd;
+			bmaxs[2] = zu - 1.0f;
+
+			if ( cent->lerpOrigin[0] + bmins[0] >= bounds[1][0]
+			        || cent->lerpOrigin[1] + bmins[1] >= bounds[1][1]
+			        || bounds[0][0] >= cent->lerpOrigin[0] + bmaxs[0]
+			        || bounds[0][1] >= cent->lerpOrigin[1] + bmaxs[1]
+			        || cent->lerpOrigin[2] + bmins[2] >= bounds[1][2]
+			        || bounds[0][2] >= cent->lerpOrigin[2] + bmaxs[2] )
+			{
+				continue;
+			}
+
+			cmodel = CM_TempBoxModel( bmins, bmaxs, contents );
+			VectorClear( angles );
+		}
+
+		CM_TransformedBoxTraceExternal( &trace, start, end, mins, maxs, cmodel, mask, cent->lerpOrigin, angles );
+
+		if ( trace.fraction < tr->fraction )
+		{
+			trace.entityNum = ent->number;
+			*tr = trace;
+			Trace_CalcBounds( start, mins, maxs, end, trace.fraction, bounds );
+		}
+		else if ( trace.allsolid )
+		{
+			trace.entityNum = ent->number;
+			*tr = trace;
+		}
+		else if ( trace.startsolid )
+		{
+			tr->startsolid = 1;
+		}
+
+		if ( tr->allsolid )
+		{
+			return;
+		}
+	}
+}
+
+/*
+==================
+CG_Trace
+==================
+*/
+void CG_Trace( trace_t *results, const float *start, const float *mins, const float *maxs, const float *end, int skipNumber, int mask )
+{
+	CM_BoxTrace( results, start, end, mins, maxs, 0, mask );
+	results->entityNum = results->fraction != 1.0f ? ENTITYNUM_WORLD : ENTITYNUM_NONE;
+
+	if ( results->fraction != 0.0f )
+	{
+		CG_ClipMoveToEntities( start, mins, maxs, end, skipNumber, mask, 1, results );
+	}
+}
+
+/*
+==================
+CG_PointContents
+==================
+*/
+int CG_PointContents( const float *point, int passEntityNum, int contentMask )
+{
+	int i;
+	entityState_t *ent;
+	centity_t *cent;
+	clipHandle_t cmodel;
+	int contents;
+
+	contents = CM_PointContents( point, 0 );
+
+	for ( i = 0; i < cg_numSolidEntities; i++ )
+	{
+		cent = cg_solidEntities[i];
+		ent = &cent->nextState;
+
+		if ( ent->number == passEntityNum )
+		{
+			continue;
+		}
+
+		if ( ent->solid != SOLID_BMODEL )
+		{
+			continue;
+		}
+
+		cmodel = ent->index.brushmodel;
+
+		if ( !cmodel )
+		{
+			continue;
+		}
+
+		contents |= CM_TransformedPointContents( point, cmodel, cent->lerpOrigin, cent->lerpAngles );
+	}
+
+	return contents & contentMask;
+}
+
 
 #if 0  // engine source
 int CG_PointContents(const vec_t *point, int passEntityNum, int contentmask)
@@ -396,23 +660,6 @@ void CG_PredictPlayerState(void)
     memcpy(&cg->predictedPlayerEntity.currentState, &cg->predictedPlayerEntity.nextState, sizeof(entityState_t));
 }
 
-static void Trace_CalcBounds(const vec_t *start, const vec_t *mins, const vec_t *maxs, float fraction, const vec_t *end, vec3_t *bounds)
-{
-    float hit0, hit1, hit2;
-
-    hit0 = start[0] + (end[0] - start[0]) * fraction;
-    hit1 = start[1] + (end[1] - start[1]) * fraction;
-    hit2 = start[2] + (end[2] - start[2]) * fraction;
-
-    bounds[0][0] = (start[0] < hit0 ? start[0] : hit0) + mins[0];
-    bounds[0][1] = (start[1] < hit1 ? start[1] : hit1) + mins[1];
-    bounds[0][2] = (start[2] < hit2 ? start[2] : hit2) + mins[2];
-
-    bounds[1][0] = (start[0] > hit0 ? start[0] : hit0) + maxs[0];
-    bounds[1][1] = (start[1] > hit1 ? start[1] : hit1) + maxs[1];
-    bounds[1][2] = (start[2] > hit2 ? start[2] : hit2) + maxs[2];
-}
-
 #if 0  // engine source
 void CG_ClipMoveToEntities(const vec_t *start, const vec_t *mins, const vec_t *maxs, const vec_t *end, int skipNumber, int mask, int capsule, trace_t *tr)
 {
@@ -522,38 +769,6 @@ void CG_ClipMoveToEntities(const vec_t *start, const vec_t *mins, const vec_t *m
 }
 #endif
 
-void CG_BuildSolidList(void)
-{
-    int i;
-    snapshot_t *snap;
-
-    cg_numSolidEntities = 0;
-    cg_numTriggerEntities = 0;
-
-    snap = cg->nextSnap;
-
-    for (i = 0; i < snap->numEntities; i++) {
-        entityState_t *snapEnt = &snap->entities[i];
-        int entityNum = snapEnt->number;
-        centity_t *cent = &cg_entities[entityNum];
-        entityState_t *ent = &cent->nextState;
-
-        if (ent->solid == 0xffffff) {
-            if (ent->eFlags & 1)
-                continue;
-            if (CM_ContentsOfModel(ent->index.brushmodel) == 0)
-                continue;
-        }
-
-        if (ent->eType == 3) {
-            cg_triggerEntities[cg_numTriggerEntities] = cent;
-            cg_numTriggerEntities++;
-        } else if (ent->solid != 0) {
-            ((centity_t **)&cg_solidEntities)[cg_numSolidEntities] = cent;
-            cg_numSolidEntities++;
-        }
-    }
-}
 
 const unsigned char h1[256] = {
     0xc9, 0xd5, 0x16, 0x38, 0x41, 0x9e, 0xeb, 0x38, 0x10, 0xa6, 0xe7, 0xb8, 0x77, 0x4a, 0x92, 0xb9,

@@ -190,7 +190,6 @@ oc/cgame_mp/cg_compassfriendlies_mp.cpp
 oc/cgame_mp/cg_players_mp.cpp
 oc/cgame_mp/cg_hudelem_mp.cpp
 oc/cgame_mp/cg_predict_mp.cpp
-cgame/cg_predict_mp.cpp
 oc/cgame_mp/cg_snapshot_mp.cpp
 oc/client_mp/cl_gamepad.cpp
 oc/cgame_mp/cg_playerstate_mp.cpp

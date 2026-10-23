@@ -75,3 +75,5 @@ _$E1
 ?ParseAngle@PrimitiveTemplate@@QAE_NPBD@Z
 ?InitBackCompatibleParameters@PrimitiveTemplate@@QAEXPAUBackCompatibleParameters@@@Z
 ?ParseChannelScale@PrimitiveTemplate@@QAEXPBDW4FxChannelId@@@Z
+# rb9 stub reverted (whole -0.44%), revisit with the 0x4c00f0 region
+?CG_Stub_4c0160@@YAHXZ

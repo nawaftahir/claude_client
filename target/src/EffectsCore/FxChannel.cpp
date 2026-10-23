@@ -45,8 +45,7 @@ void FxChannel_CreateDefault( FxChannel *createe, int dimensions, float value1, 
 		keys[keySize + dimensionId + 1] = value2;
 	}
 	createe->curve = FxCurve_AllocAndCreateWithKeys( keys, dimensions, keyCount );
-	createe->scaleRange.min = 1.0f;
-	createe->scaleRange.max = 1.0f;
+	Vector2Set( &createe->scaleRange.min, 1.0f, 1.0f );
 }
 
 // Nothing in the game calls this; original name unknown.
@@ -180,8 +179,7 @@ void FxChannel_CreateViaMigration( const FxChannelBackwardCompatible *source, in
 	if ( scaleFactor < 1.0f )
 		scaleFactor = 1.0f;
 	halfRange = ( source->start[0].max - source->start[0].min ) / 2.0f;
-	target->scaleRange.min = scaleFactor - halfRange;
-	target->scaleRange.max = scaleFactor + halfRange;
+	Vector2Set( &target->scaleRange.min, scaleFactor - halfRange, scaleFactor + halfRange );
 	invScale = 1.0f / scaleFactor;
 	parmVal = 0.0f;
 	for ( dimensionId = 0; dimensionId != dimensions; dimensionId++ )
