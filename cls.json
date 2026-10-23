@@ -94,8 +94,8 @@
 {
 "name": "?XModelCalcBasePose@@YAXPAUXModelParts_s@@@Z",
 "obj": "xmodel_load.obj",
-"size": 541,
-"addr": "0x48da4c",
+"size": 713,
+"addr": "0x48d9a0",
 "votes": 14,
 "ratio": 0.181,
 "first": [

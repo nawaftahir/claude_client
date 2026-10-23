@@ -51,3 +51,5 @@ _yylex
 ?AllocText@TextPool@@QAEPADPAD_NPAPAV1@@Z
 # vc68 real QuatMultiply inlined, no stray body: +0.76% whole, this fn regalloc shifts
 ?XModelCalcBasePose@@YAXPAUXModelParts_s@@@Z
+# compiler-numbered static init thunk, label shifts with TU edits
+_$E1

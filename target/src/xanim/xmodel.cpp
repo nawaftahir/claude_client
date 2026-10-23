@@ -437,14 +437,27 @@ bool Com_ValidXModelName(const char *name)
 	return !strncasecmp(name, "xmodel", 6) && (name[6] == '/' || name[6] == PATH_SEP);
 }
 
-// unreferenced
-int XModelReturnZero()
+// Renderer export slots 86 and 87 (unnamed); only the two wrappers below use them
+struct refexport_t
 {
-	return 0;
+	void *unused0[86];
+	void (*unknown86)();
+	void (*unknown87)(const void *arg, int value);
+};
+extern refexport_t re;
+
+// retail 0xe23438, read only by the wrapper below; name unknown
+int xmodel_unk_e23438;
+
+// retail 0x48d8a0, unreferenced; name unknown
+void XModel_RendererSlot86()
+{
+	re.unknown86();
 }
 
-// unreferenced
-void XModelIgnoreChar(char c)
+// retail 0x48d8b0, unreferenced; name unknown
+void XModel_RendererSlot87(const void *arg)
 {
+	re.unknown87(arg, xmodel_unk_e23438);
 }
 
