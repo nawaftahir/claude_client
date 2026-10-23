@@ -83,10 +83,7 @@ Bool Voice_StopRecording(void);
 Bool Voice_StartRecording(void);
 Bool Voice_StopRecording(void);
 
-Bool Voice_IsClientTalking(int clientNum)
-{
-    return (Sys_Milliseconds() - s_clientTalkTime[clientNum]) < 300 ? 1 : 0;
-}
+Bool Voice_IsClientTalking(int clientNum);
 
 Bool Voice_Init(void)
 {
@@ -243,6 +240,10 @@ void Voice_IncomingVoiceData(unsigned char talker, unsigned char *data, int pack
             fclose(fptr);
         }
     }
+}
+Bool Voice_IsClientTalking(int clientNum)
+{
+    return (Sys_Milliseconds() - s_clientTalkTime[clientNum]) < 300 ? 1 : 0;
 }
 
 Bool Voice_StartRecording(void)

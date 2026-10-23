@@ -138,12 +138,7 @@ extern "C" void Com_Memcpy( void *dest, const void *src, int count );
     *d++ = *b; \
     a++; b++; }
 
-void ROQ_RunCinematic(void)
-{
-    if (CL_handle >= 0 && CL_handle < 16) {
-        ROQ_RunCinematicFromHandle(CL_handle);
-    }
-}
+void ROQ_RunCinematic(void);
 
 void ROQ_CloseAllVideos(void)
 {
@@ -156,14 +151,7 @@ void ROQ_CloseAllVideos(void)
     }
 }
 
-void ROQ_StopCinematic(void)
-{
-    if (CL_handle >= 0 && CL_handle < 16) {
-        ROQ_StopCinematicFromHandle(CL_handle);
-        SND_StopSounds(SND_STOP_ALL);
-        CL_handle = -1;
-    }
-}
+void ROQ_StopCinematic(void);
 
 static int CIN_findHandle(void)
 {
@@ -1111,11 +1099,7 @@ static void RoQ_init(void)
     cinTable[currentHandle].roq_flags = cin.file[14] + cin.file[15] * 256;
 }
 
-void ROQ_SetLoopingFromHandle(int handle, qboolean loop)
-{
-    if (handle < 0 || handle >= 16 || cinTable[handle].status == FMV_EOF) return;
-    cinTable[handle].looping = loop;
-}
+void ROQ_SetLoopingFromHandle(int handle, qboolean loop);
 
 static void RoQShutdown(void)
 {
@@ -1178,16 +1162,7 @@ e_status ROQ_StopCinematicFromHandle(int handle)
     return FMV_EOF;
 }
 
-void ROQ_SetExtentsFromHandle(int handle, int x, int y, int w, int h)
-{
-    if (handle >= 0 && handle < 16 && cinTable[handle].status != FMV_EOF) {
-        cinTable[handle].xpos = x;
-        cinTable[handle].ypos = y;
-        cinTable[handle].width = w;
-        cinTable[handle].height = h;
-        cinTable[handle].dirty = 1;
-    }
-}
+void ROQ_SetExtentsFromHandle(int handle, int x, int y, int w, int h);
 
 e_status ROQ_RunCinematicFromHandle(int handle)
 {
@@ -1344,6 +1319,21 @@ int ROQ_PlayCinematic(const char *arg, int x, int y, int w, int h, int systemBit
     RoQShutdown();
     return -1;
 }
+void ROQ_SetExtentsFromHandle(int handle, int x, int y, int w, int h)
+{
+    if (handle >= 0 && handle < 16 && cinTable[handle].status != FMV_EOF) {
+        cinTable[handle].xpos = x;
+        cinTable[handle].ypos = y;
+        cinTable[handle].width = w;
+        cinTable[handle].height = h;
+        cinTable[handle].dirty = 1;
+    }
+}
+void ROQ_SetLoopingFromHandle(int handle, qboolean loop)
+{
+    if (handle < 0 || handle >= 16 || cinTable[handle].status == FMV_EOF) return;
+    cinTable[handle].looping = loop;
+}
 
 // Original name unknown.
 static void ROQ_GetDrawRect(float aspect, int *x, int *y, int *w, int *h)
@@ -1441,12 +1431,7 @@ void ROQ_DrawCinematicFromHandle(int handle)
         ROQ_DrawLetterBox(x, y, w, h, clearColor);
 }
 
-void ROQ_DrawCinematic(void)
-{
-    if (CL_handle >= 0 && CL_handle < 16) {
-        ROQ_DrawCinematicFromHandle(CL_handle);
-    }
-}
+void ROQ_DrawCinematic(void);
 
 void ROQ_PlayCinematic_f(void)
 {
@@ -1490,6 +1475,26 @@ void ROQ_PlayCinematic_f(void)
         do {
             ROQ_RunCinematic();
         } while (cinTable[currentHandle].buf == NULL && cinTable[currentHandle].status == FMV_PLAY);
+    }
+}
+void ROQ_DrawCinematic(void)
+{
+    if (CL_handle >= 0 && CL_handle < 16) {
+        ROQ_DrawCinematicFromHandle(CL_handle);
+    }
+}
+void ROQ_RunCinematic(void)
+{
+    if (CL_handle >= 0 && CL_handle < 16) {
+        ROQ_RunCinematicFromHandle(CL_handle);
+    }
+}
+void ROQ_StopCinematic(void)
+{
+    if (CL_handle >= 0 && CL_handle < 16) {
+        ROQ_StopCinematicFromHandle(CL_handle);
+        SND_StopSounds(SND_STOP_ALL);
+        CL_handle = -1;
     }
 }
 

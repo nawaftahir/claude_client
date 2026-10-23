@@ -1156,6 +1156,168 @@ void CompassIconSize_4bf300(float *w, float *h)
     *h = cg_hudCompassSize->current.value * 16.0f;
 }
 
+extern const dvar_t *cg_hudCompassSize;
+extern const dvar_t *cg_hudCompassMinRange;
+extern const dvar_t *cg_hudCompassMinRadius;
+extern const dvar_t *cg_hudCompassMaxRange;
+extern const dvar_t *cg_hudObjectiveMaxRange;
+extern const dvar_t *cg_hudObjectiveMinAlpha;
+extern const dvar_t *cg_hudCompassSoundPingFadeTime;
+extern const dvar_t *hud_fade_compass;
+
+extern float CG_FadeHudMenu(const dvar_t *fadeDvar, int displayStartTime, int duration);
+extern void CG_UpdateCompPointerOrientation(void);
+extern void UI_DrawHandlePic(float x, float y, float w, float h, int horzAlign, int vertAlign, const vec_t *color, MaterialHandle hMaterial);
+extern void CG_DrawRotatedPic(float x, float y, float width, float height, int horzAlign, int vertAlign, float angle, const vec_t *color, MaterialHandle material);
+
+extern float vectoyaw( const vec3_t vec );
+extern float AngleNormalize360( float angle );
+extern vec_t Vec2Normalize( vec3_t v );
+
+#define COMPASS_ACTOR_COUNT 64
+
+inline float I_sqrt(const float value)
+{
+    return sqrt(value);
+}
+
+// universal/com_math.h inlines
+inline vec_t Vec2Length(const vec2_t v)
+{
+    return I_sqrt(v[0] * v[0] + v[1] * v[1]);
+}
+
+
+inline void FastSinCos(const float value, float *pSin, float *pCos)
+{
+    __asm
+    {
+        push eax
+        push ecx
+        fld value
+        fsincos
+        mov ecx, pCos
+        mov eax, pSin
+        fstp dword ptr [ecx]
+        fstp dword ptr [eax]
+        pop ecx
+        pop eax
+    }
+}
+
+
+void CG_ApplyCompassPointerRadiusScale(float *radiusScale);
+
+#pragma optimize("p", on)
+extern qboolean CG_ServerMaterialName(int index, char *materialName, int maxLen);
+extern MaterialHandle CL_RegisterMaterialNoMip(const char *name, int imageTrack);
+
+void CG_DrawPlayerCompassPointers(const rectDef_t *rect, vec_t *color)
+{
+    float fadeAlpha;
+    float centerX;
+    float centerY;
+    int i;
+    objective_t *obj;
+    vec3_t origin;
+    vec3_t delta;
+    float yaw;
+    float dist;
+    float radius;
+    float s;
+    float c;
+    float x;
+    float y;
+    float w;
+    float h;
+    vec4_t drawColor;
+    MaterialHandle material;
+    char materialName[64];
+
+    fadeAlpha = CG_FadeHudMenu(hud_fade_compass, cg->compassFadeTime, I_fround(hud_fade_compass->current.value * 1000.0f));
+    if (fadeAlpha == 0.0f)
+        return;
+
+    CG_UpdateCompPointerOrientation();
+
+    centerX = (rect->w * cg_hudCompassSize->current.value * 0.5f) + rect->x;
+    centerY = (cg_hudCompassSize->current.value * 0.5f) * rect->h - (cg_hudCompassSize->current.value - 1.0f) * rect->h + rect->y;
+
+    if (!cg->bgs.clientinfo[cg->nextSnap->ps.clientNum].infoValid)
+        return;
+
+    for (i = 0; i < 16; i++)
+    {
+        obj = &cg->nextSnap->ps.objective[i];
+        if (obj->state != 4)
+            continue;
+
+        if (obj->entNum != 1023)
+            VectorCopy(cg_entities[obj->entNum].lerpOrigin, origin);
+        else
+            VectorCopy(obj->origin, origin);
+        delta[0] = origin[0] - cg->refdef.vieworg[0];
+        delta[1] = origin[1] - cg->refdef.vieworg[1];
+        delta[2] = origin[2] - cg->refdef.vieworg[2];
+        yaw = AngleNormalize360(vectoyaw(delta) - cg->compPointerYaw);
+        dist = Vec2Length(delta);
+
+        drawColor[0] = color[0];
+        drawColor[1] = color[1];
+        drawColor[2] = color[2];
+        drawColor[3] = color[3];
+
+        if (dist <= cg_hudCompassMaxRange->current.value)
+        {
+            drawColor[3] = 1.0f;
+        }
+        else if (dist >= cg_hudObjectiveMaxRange->current.value)
+        {
+            drawColor[3] = cg_hudObjectiveMinAlpha->current.value;
+        }
+        else
+        {
+            float lerp = 0.0f;
+            if (cg_hudObjectiveMaxRange->current.value - cg_hudCompassMaxRange->current.value != 0.0f)
+                lerp = (dist - cg_hudCompassMaxRange->current.value) / (cg_hudObjectiveMaxRange->current.value - cg_hudCompassMaxRange->current.value);
+            drawColor[3] = 1.0f - (1.0f - cg_hudObjectiveMinAlpha->current.value) * lerp;
+        }
+
+        if (dist <= cg_hudCompassMinRange->current.value)
+        {
+            radius = cg_hudCompassMinRadius->current.value;
+        }
+        else if (dist >= cg_hudCompassMaxRange->current.value)
+        {
+            radius = 1.0f;
+        }
+        else
+        {
+            float frac = 0.0f;
+            if (cg_hudCompassMaxRange->current.value - cg_hudCompassMinRange->current.value != 0.0f)
+                frac = (cg_hudCompassMaxRange->current.value - dist) / (cg_hudCompassMaxRange->current.value - cg_hudCompassMinRange->current.value);
+            radius = 1.0f - (1.0f - cg_hudCompassMinRadius->current.value) * frac;
+        }
+        CG_ApplyCompassPointerRadiusScale(&radius);
+
+        FastSinCos((yaw * 0.017453292f), &s, &c);
+        CompassIconSize_4bf300(&w, &h);
+        x = centerX - w * 0.5f - s * radius;
+        y = centerY - w * 0.5f - c * radius;
+
+        if (obj->icon && CG_ServerMaterialName(obj->icon, materialName, 64))
+            material = CL_RegisterMaterialNoMip(materialName, 7);
+        else
+            material = cgs->media.objectiveMaterials[0];
+
+        if (fadeAlpha < drawColor[3])
+            drawColor[3] = fadeAlpha;
+
+        UI_DrawHandlePic(x, y, w, h, rect->horzAlign, rect->vertAlign, drawColor, material);
+    }
+}
+#pragma optimize("", on)
+
 static void CG_UpdateCursorHints(void)
 {
     if (!cg->renderingThirdPerson)

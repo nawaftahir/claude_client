@@ -58,15 +58,9 @@ recordingSample_t *Record_NewSample(void)
     return DSOUNDRecord_NewSample();
 }
 
-int Record_DestroySample(recordingSample_t *sample)
-{
-    return DSOUNDRecord_DestroySample(sample);
-}
+int Record_DestroySample(recordingSample_t *sample);
 
-void Record_Frame(void)
-{
-    DSOUNDRecord_Frame();
-}
+void Record_Frame(void);
 
 inline float I_fmin(const float x, const float y)
 {
@@ -142,11 +136,19 @@ int Record_QueueAudioDataForEncoding(audioSample_t *sample)
 
     return g.bytesEncoded;
 }
+int Record_DestroySample(recordingSample_t *sample)
+{
+    return DSOUNDRecord_DestroySample(sample);
+}
 
 void Record_Shutdown(void)
 {
     Encode_Shutdown();
     DSOUNDRecord_Shutdown();
+}
+void Record_Frame(void)
+{
+    DSOUNDRecord_Frame();
 }
 
 int Record_AudioCallback(audioSample_t *sample)
