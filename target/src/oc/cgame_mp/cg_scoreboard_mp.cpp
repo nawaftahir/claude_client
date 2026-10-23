@@ -24,7 +24,7 @@ extern const char *SEH_LocalizeTextMessage(const char *msg, const char *context,
 extern const char *CL_GetServerIPAddress(void);
 extern Bool CL_IsPlayerMuted(int clientIndex);
 extern Bool CL_IsPlayerTalking(int clientIndex);
-extern void CG_TranslateHudElemMessage(const char *message, const char *messageType, char *hudElemString);
+extern void CG_LocalizeHudElemString(const char *message, const char *messageType, char *hudElemString);
 extern int I_stricmp(const char *s1, const char *s2);
 extern int I_strnicmp(const char *s1, const char *s2, int n);
 extern void I_strncpyz(char *dest, const char *src, int destsize);
@@ -242,7 +242,7 @@ float CG_DrawScoreboard_Objective(const float *color, float y)
     {
         y += 4.0f;
         font = UI_GetFontHandle(0, 0.24f);
-        CG_TranslateHudElemMessage(cg->objectiveText, "scoreboard objective info", hudElemString);
+        CG_LocalizeHudElemString(cg->objectiveText, "scoreboard objective info", hudElemString);
 
         textStart = hudElemString;
         textEnd = hudElemString;

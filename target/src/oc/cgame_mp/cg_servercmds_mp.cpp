@@ -62,7 +62,7 @@ extern int stricmp(const char *s1, const char *s2);
 extern const char *SEH_LocalizeTextMessage(const char *msg, const char *context, msgLocErrType_t errType);
 extern void CG_GameMessage(const char *msg);
 extern void CG_BoldGameMessage(const char *msg);
-extern void CG_TranslateHudElemMessage(const char *message, const char *messageType, char *hudElemString);
+extern void CG_LocalizeHudElemString(const char *message, const char *messageType, char *hudElemString);
 extern Bool CG_PlaySoundOnFirstClient(void);
 extern snd_alias_t *CL_PickSoundAlias(const char *aliasname);
 extern int CG_PlayClientSoundAliasByName(const char *aliasname);
@@ -916,7 +916,7 @@ void CG_ServerCommand(void)
         CG_ParseScores();
         return;
     case 'c':
-        CG_TranslateHudElemMessage(CG_Argv(1), "announcement message", message);
+        CG_LocalizeHudElemString(CG_Argv(1), "announcement message", message);
         CG_BoldGameMessage(message);
         return;
     case 'd':
@@ -924,11 +924,11 @@ void CG_ServerCommand(void)
         return;
     case 'e':
     case 'f':
-        CG_TranslateHudElemMessage(CG_Argv(1), "game message", message);
+        CG_LocalizeHudElemString(CG_Argv(1), "game message", message);
         CG_GameMessage(message);
         return;
     case 'g':
-        CG_TranslateHudElemMessage(CG_Argv(1), "bold game message", message);
+        CG_LocalizeHudElemString(CG_Argv(1), "bold game message", message);
         CG_BoldGameMessage(message);
         return;
     case 'h':

@@ -109,7 +109,7 @@ const char *CG_Argv(int arg);
 void CG_StartAmbient(void);
 Bool CG_PlaySoundOnFirstClient(void);
 Bool CG_PlaySoundOnCurrentLocalClient(int entitynum, const vec_t *origin, const char *aliasname);
-void CG_TranslateHudElemMessage(const char *message, const char *messageType, char *hudElemString);
+void CG_LocalizeHudElemString(const char *message, const char *messageType, char *hudElemString);
 void CG_InitVote(void);
 void CG_FreeWeapons(void);
 void CG_Shutdown(void);

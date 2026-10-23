@@ -509,7 +509,6 @@ void CG_StartAmbient(void);
 Bool CG_PlaySoundOnFirstClient(void);
 Bool CG_PlaySoundOnCurrentLocalClient(int entitynum, const vec_t *origin, const char *aliasname);
 static Bool CG_ReplaceDirective(int *searchPos, int *dstLen, char *dstString);
-void CG_TranslateHudElemMessage(const char *message, const char *messageType, char *hudElemString);
 static void CG_LoadHudMenu(void);
 void CG_InitVote(void);
 static struct XModel *CG_GetXModel(const char *modelName);
@@ -1108,7 +1107,7 @@ static Bool CG_ReplaceDirective(int *searchPos, int *dstLen, char *dstString)
     return 1;
 }
 
-static void CG_LocalizeHudElemString(const char *message, const char *messageType, char *hudElemString)
+void CG_LocalizeHudElemString(const char *message, const char *messageType, char *hudElemString)
 {
     const char *localizedString;
     int searchPos;
@@ -1127,11 +1126,6 @@ static void CG_LocalizeHudElemString(const char *message, const char *messageTyp
     searchPos = 0;
     while (CG_ReplaceDirective(&searchPos, &stringLen, hudElemString)) {
     }
-}
-
-void CG_TranslateHudElemMessage(const char *message, const char *messageType, char *hudElemString)
-{
-    CG_LocalizeHudElemString(message, messageType, hudElemString);
 }
 
 void CG_SafeTranslateHudElemString(int index, char *hudElemString)

@@ -118,7 +118,7 @@ extern int UI_TextWidth(const char *text, int maxChars, FontHandle font, float s
 extern int UI_TextHeight(FontHandle font, float fontScale);
 extern void UI_DrawText(const char *text, int maxChars, FontHandle font, float x, float y, int horzAlign, int vertAlign, float scale, const vec_t *color, int style);
 extern MaterialHandle CL_RegisterMaterial(const char *name, int flags);
-extern void CG_TranslateHudElemMessage(const char *message, const char *messageType, char *hudElemString);
+extern void CG_LocalizeHudElemString(const char *message, const char *messageType, char *hudElemString);
 extern void CG_Trace(trace_t *result, const vec_t *start, const vec_t *mins, const vec_t *maxs, const vec_t *end, int skipNumber, int mask);
 extern int BG_GetViewmodelWeaponIndex(const playerState_t *ps);
 extern WeaponDef * BG_GetWeaponDef(int iWeapon);
@@ -734,7 +734,7 @@ void CG_PriorityCenterPrint(const char *str, float charWidth, int priority)
         return;
     }
 
-    CG_TranslateHudElemMessage(str, "Center Print", hudElemString);
+    CG_LocalizeHudElemString(str, "Center Print", hudElemString);
     I_strncpyz(cgArray[0].centerPrint, hudElemString, 0x100);
     cgArray[0].centerPrintPriority = priority;
 
