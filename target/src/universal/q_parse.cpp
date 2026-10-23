@@ -767,34 +767,13 @@ char *Com_Parse( const char **data_p )
 	return Com_ParseExt( data_p, qtrue );
 }
 
-__forceinline char *Com_ParseOnLineInl( const char **data_p )
+char *Com_ParseOnLine( const char **pp_data_p )
 {
-	ParseThreadInfo *parse;
-	parseInfo_t *pi;
-
-	parse = Com_GetParseThreadInfo();
-	pi = &parse->parseInfo[parse->parseInfoNum];
-
-	if ( pi->ungetToken )
-	{
-		pi->ungetToken = false;
-
-		if ( !pi->spaceDelimited )
-		{
-			return pi->token;
-		}
-
-		*data_p = pi->backup_text;
-		pi->lines = pi->backup_lines;
-	}
-
-	return Com_ParseExt( data_p, qfalse );
+#define PP_RETVAL( v ) return v
+#include "q_parse_online.inl"
+#undef PP_RETVAL
 }
 
-char *Com_ParseOnLine( const char **data_p )
-{
-	return Com_ParseOnLineInl( data_p );
-}
 
 qboolean Com_MatchToken( const char **buf_p, const char *match, qboolean warning )
 {

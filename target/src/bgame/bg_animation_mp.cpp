@@ -1049,7 +1049,14 @@ void BG_ParseCommands( const char **input, animScriptItem_t *scriptItem, animScr
 					{
 						// read the duration
 						bCommandFound = qtrue;
-						token = Com_ParseOnLineInl( input );
+						{
+#define pp_data_p (input)
+#define PP_RETVAL( v ) { token = v; goto pp_line_5; }
+#include "../universal/q_parse_online.inl"
+#undef PP_RETVAL
+#undef pp_data_p
+						}
+pp_line_5:;
 						if ( !token || !token[0] )
 						{
 							BG_AnimParseError( "BG_ParseCommands: expected duration value" );

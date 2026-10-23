@@ -669,7 +669,14 @@ void Com_LoadSoundAliasFile( const char *loadspec, const char *loadspecCurGame, 
 				}
 				if ( data && *data != '\n' )
 				{
-					token = Com_ParseOnLineInl(&data);
+					{
+#define pp_data_p (&data)
+#define PP_RETVAL( v ) { token = v; goto pp_line_1; }
+#include "q_parse_online.inl"
+#undef PP_RETVAL
+#undef pp_data_p
+					}
+pp_line_1:;
 					continue;
 				}
 				break;
@@ -701,7 +708,14 @@ pp_done_4:;
 				{
 					break;
 				}
-				token = Com_ParseOnLineInl(&data);
+				{
+#define pp_data_p (&data)
+#define PP_RETVAL( v ) { token = v; goto pp_line_2; }
+#include "q_parse_online.inl"
+#undef PP_RETVAL
+#undef pp_data_p
+				}
+pp_line_2:;
 			}
 			if ( !fieldSet[SA_NAME] || !fieldSet[SA_FILE] )
 			{
@@ -1309,7 +1323,14 @@ qboolean Com_SubtitleReferenceExists( const char *reference )
 		}
 		if ( !strcmp(token, "REFERENCE") )
 		{
-			token = Com_ParseOnLineInl(&data);
+			{
+#define pp_data_p (&data)
+#define PP_RETVAL( v ) { token = v; goto pp_line_3; }
+#include "q_parse_online.inl"
+#undef PP_RETVAL
+#undef pp_data_p
+			}
+pp_line_3:;
 			if ( !I_stricmp(reference + 9, token) )
 			{
 				found = qtrue;
