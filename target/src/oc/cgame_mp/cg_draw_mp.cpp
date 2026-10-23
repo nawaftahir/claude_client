@@ -852,6 +852,7 @@ static void __attribute_regparm__(2) CG_CalcCrosshairPosition(float *x, float *y
     vec3_t gunAng;
     vec3_t gunDir;
     float forward;
+    float halfFov;
 
     gunAng[0] = cg->gunPitch;
     gunAng[2] = cg->refdefViewAngles[2];
@@ -865,8 +866,10 @@ static void __attribute_regparm__(2) CG_CalcCrosshairPosition(float *x, float *y
         return;
     }
 
-    *x = Vec3DotCH(cg->refdef.viewaxis[1], gunDir) / (tan(cg->refdef.fov_x * 0.0087266462f) * forward) * -320.0f;
-    *y = Vec3DotCH(cg->refdef.viewaxis[2], gunDir) / (tan(cg->refdef.fov_y * 0.0087266462f) * forward) * -240.0f;
+    halfFov = cg->refdef.fov_x * 0.0087266462f;
+    *x = Vec3DotCH(gunDir, cg->refdef.viewaxis[1]) / ((float)tan((double)halfFov) * forward) * -320.0f;
+    halfFov = cg->refdef.fov_y * 0.0087266462f;
+    *y = Vec3DotCH(gunDir, cg->refdef.viewaxis[2]) / ((float)tan((double)halfFov) * forward) * -240.0f;
 }
 
 bool CG_GetWeapReticleZoom(float *pfZoom)
