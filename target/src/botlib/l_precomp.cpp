@@ -2700,6 +2700,10 @@ void PC_UnreadLastToken(source_t *source)
 {
 	PC_UnreadSourceToken(source, &source->token);
 } //end of the function PC_UnreadLastToken
+void PC_UnreadToken(source_t *source, token_t *token)
+{
+	PC_UnreadSourceToken(source, token);
+} //end of the function PC_UnreadToken
 
 //============================================================================
 //
@@ -2982,10 +2986,6 @@ void PC_CheckOpenSourceHandles(void)
 // Returns:					-
 // Changes Globals:		-
 //============================================================================
-void PC_UnreadToken(source_t *source, token_t *token)
-{
-	PC_UnreadSourceToken(source, token);
-} //end of the function PC_UnreadToken
 
 // Unreferenced storage; original declarations unknown (sized from the layout).
 static int unusedStorage[2];
