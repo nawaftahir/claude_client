@@ -65,7 +65,7 @@ token_t *freetokens;					//free tokens from the heap
 */
 
 //list with global defines added to every source loaded
-define_t *globaldefines = NULL;
+define_t *globaldefines;
 
 void SourceError(source_t *source, char *str, ...);
 void SourceWarning(source_t *source, char *str, ...);

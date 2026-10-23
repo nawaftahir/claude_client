@@ -5,7 +5,7 @@
 void FX_InitServer( void );
 void Sys_LoadingKeepAlive( void );
 
-qboolean gameInitialized = qfalse;
+qboolean gameInitialized;
 
 // the cache sits on a 128-byte boundary
 static char g_sv_skel_memory[MAX_GENTITIES * MAX_MODELS] __attribute__((aligned(128)));

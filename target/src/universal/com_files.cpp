@@ -8,7 +8,7 @@
 #undef I_strlen
 int I_strlen(const char *s);
 
-int com_fileAccessed = 0;
+int com_fileAccessed;
 int fs_loadStack;
 char fs_gamedir[MAX_OSPATH];
 
