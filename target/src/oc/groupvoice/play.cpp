@@ -46,6 +46,12 @@ bool Sound_FinishSample(dsound_sample_t *sample)
     return DSound_FinishSample(sample);
 }
 
+// retail 0x4b68c0, returns -1 and unreferenced; name unknown
+int Sound_Stub_4b68c0(void)
+{
+    return -1;
+}
+
 void Sound_Frame(void)
 {
     DSound_Frame();
