@@ -150,11 +150,6 @@ void CG_AddPacketEntities(void);
 
 static __forceinline void EntVectorCopy(const vec_t *a, vec_t *b);
 
-static clientInfo_t *CG_CorpseInfoForEntityNum(int entNum)
-{
-    return &cgs->corpseinfo[entNum - 0x40];
-}
-
 static void CG_LockLightingOrigin(centity_t *cent, GfxEntity *ent)
 {
     if (cent->nextState.eFlags & 0x400) {
@@ -934,7 +929,7 @@ void CG_CalcEntityLerpPositions(centity_t *cent)
         cent->lerpAngles[0] = 0.0f;
         ci->lerpLean = cent->nextState.leanf;
     } else if (cent->nextState.eType == 2) {
-        ci = CG_CorpseInfoForEntityNum(cent->nextState.number);
+        ci = &cgs->corpseinfo[cent->nextState.number - 0x40];
         ci->lerpMoveDir = cent->nextState.angles2[1];
         EntVectorCopy(cent->lerpAngles, ci->playerAngles);
         cent->lerpAngles[0] = 0.0f;
