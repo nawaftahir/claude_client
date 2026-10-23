@@ -913,6 +913,20 @@ static __attribute_regparm__(3) int SND_PlaySoundAlias_Internal(const snd_alias_
     return 0;
 }
 
+int SND_PlaySoundAlias(const snd_alias_t *pAlias, int entnum, const vec_t *org, int timeshift, snd_alias_system_t system)
+{
+    if (!pAlias)
+        return 0;
+    return SND_PlaySoundAlias_Internal(pAlias, pAlias, 0.0f, entnum, org, NULL, timeshift, 0, system);
+}
+
+int SND_PlaySoundAliasAsMaster(const snd_alias_t *pAlias, int entnum, const vec_t *org, int timeshift, snd_alias_system_t system)
+{
+    if (!pAlias)
+        return 0;
+    return SND_PlaySoundAlias_Internal(pAlias, pAlias, 0.0f, entnum, org, NULL, timeshift, 1, system);
+}
+
 static __attribute_regparm__(3)
     Bool SND_ValidateSoundAliasBlend(const snd_alias_t *pAlias0, const snd_alias_t *pAlias1, Bool bReport)
 {
@@ -1012,20 +1026,6 @@ static __attribute_regparm__(3)
         return 0;
     }
     return 1;
-}
-
-int SND_PlaySoundAlias(const snd_alias_t *pAlias, int entnum, const vec_t *org, int timeshift, snd_alias_system_t system)
-{
-    if (!pAlias)
-        return 0;
-    return SND_PlaySoundAlias_Internal(pAlias, pAlias, 0.0f, entnum, org, NULL, timeshift, 0, system);
-}
-
-int SND_PlaySoundAliasAsMaster(const snd_alias_t *pAlias, int entnum, const vec_t *org, int timeshift, snd_alias_system_t system)
-{
-    if (!pAlias)
-        return 0;
-    return SND_PlaySoundAlias_Internal(pAlias, pAlias, 0.0f, entnum, org, NULL, timeshift, 1, system);
 }
 
 int SND_PlayBlendedSoundAliases(const snd_alias_t *pAlias0, const snd_alias_t *pAlias1, float fLerp, int entnum, const vec_t *org, int timeshift, snd_alias_system_t system)
@@ -1483,6 +1483,10 @@ static void SND_UpdateVolumes(int frametime)
 int SND_Is2DChannelPlaying_44cd50(int index)
 {
     return !SND_Is2DChannelFree(index) && !g_snd.chaninfo[index].startDelay;
+}
+int SND_Is3DChannelPlaying_44cda0(int index)
+{
+    return !SND_Is3DChannelFree(index) && !g_snd.chaninfo[index].startDelay;
 }
 
 // retail 0x44cdf0, unreferenced; name unknown
@@ -2369,9 +2373,5 @@ void SND_ErrorCleanup(void)
 // retail 0x44cd50, unreferenced; name unknown (busy and not delayed)
 
 // retail 0x44cda0, unreferenced; name unknown
-int SND_Is3DChannelPlaying_44cda0(int index)
-{
-    return !SND_Is3DChannelFree(index) && !g_snd.chaninfo[index].startDelay;
-}
 
 
