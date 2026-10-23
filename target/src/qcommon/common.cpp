@@ -1059,8 +1059,6 @@ sysEvent_t Com_GetEvent( void )
 	return Sys_GetEvent();
 }
 
-// retail calls CL_KeyEvent from the event loops
-#pragma inline_depth(0)
 int Com_EventLoop( void )
 {
 	sysEvent_t	ev;
@@ -1146,6 +1144,7 @@ int Com_EventLoop( void )
 Debug_EventLoop
 ===================
 */
+#pragma inline_depth(0)
 int Debug_EventLoop( void )
 {
 	sysEvent_t	ev;
@@ -1877,8 +1876,7 @@ void Com_ExecStartupConfigs( const char *configFile )
 	Cbuf_Execute();
 }
 
-// retail 0x4329c0, unreferenced; name unknown
-void Com_Stub_4329c0( void )
+void Com_StartupConfigs( void )
 {
 	Com_InitPlayerProfiles();
 }
@@ -2348,8 +2346,8 @@ void Com_ResetFrametime()
 	com_lastFrameTime = Sys_MilliSeconds();
 }
 
-// retail 0x433960, unreferenced empty function; name unknown
-void Com_Stub_433960( void )
+// empty in the dedicated build
+void Com_CheckSyncFrame( void )
 {
 }
 
@@ -2368,6 +2366,15 @@ void Com_Frame( void )
 	{
 		Com_ErrorCleanup();
 		Com_StartHunkUsers();
+	}
+}
+
+void Com_CloseLogfiles()
+{
+	if ( logfile )
+	{
+		FS_FCloseFile(logfile);
+		logfile = 0;
 	}
 }
 
@@ -2531,22 +2538,6 @@ void Com_LocalizedFloatToString( float f, char *buffer, unsigned int maxlen, uns
 	}
 }
 
-void Com_StartupConfigs( void )
-{
-	Com_InitPlayerProfiles();
-}
-// empty in the dedicated build
-void Com_CheckSyncFrame( void )
-{
-}
-void Com_CloseLogfiles()
-{
-	if ( logfile )
-	{
-		FS_FCloseFile(logfile);
-		logfile = 0;
-	}
-}
 static void Com_SkipConfigureBlankLines( const char **text )
 {
 	while ( *text && **text && ( **text == '\r' || **text == '\n' ) )

@@ -434,6 +434,18 @@ extern itemDef_t *Menu_FindItemByName(menuDef_t *menu, const char *p);
 extern void Window_AddDynamicFlags(Window *w, const int newFlags);
 extern void Window_RemoveDynamicFlags(Window *w, const int newFlags);
 
+// retail 0x52b230..0x52b270, unreferenced; names unknown
+int Window_Getter_52b230(Window *w) { return w->dynamicFlags[0]; }
+int Item_Getter_52b240(itemDef_t *item) { return item->cursorPos[0]; }
+int ListBox_Getter_52b250(listBoxDef_s *listPtr) { return listPtr->cursorPos[0]; }
+int ListBox_Getter_52b260(listBoxDef_s *listPtr) { return listPtr->startPos[0]; }
+int ListBox_Getter_52b270(listBoxDef_s *listPtr) { return listPtr->endPos[0]; }
+
+bool Window_IsVisible(Window *w)
+{
+    return ((unsigned int)w->dynamicFlags[0] >> 2) & 1;
+}
+
 void UI_RegisterDvars(void)
 {
     Dvar_RegisterBool("g_allowvote", 1, 0x1001);

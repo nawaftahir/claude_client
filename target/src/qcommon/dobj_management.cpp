@@ -19,25 +19,6 @@ void Com_ShutdownDObj(void);
 
 DObj* Com_GetServerDObj( int handle );
 void Com_ServerDObjCreate( DObjModel_s *dobjModels, unsigned short numModels, XAnimTree_s *tree, int handle );
-void Com_SafeClientDObjFree( int handle );
-void Com_SafeServerDObjFree( int handle );
-void Com_ShutdownDObj(void);
-void Com_AbortDObj();
-
-/*
-==================
-Com_SafeClientDObjFree
-==================
-*/
-DObj* Com_GetClientDObj( int handle, int localClientNum )
-{
-	handle += 1152 * localClientNum;
-
-	if ( clientObjMap[handle] )
-		return &objBuf[clientObjMap[handle]];
-	else
-		return NULL;
-}
 
 /*
 ==================
@@ -160,6 +141,26 @@ void Com_SafeServerDObjFree( int handle )
 	objFreeCount++;
 
 	DObjFree(&objBuf[index]);
+}
+
+void Com_SafeClientDObjFree( int handle );
+void Com_SafeServerDObjFree( int handle );
+void Com_ShutdownDObj(void);
+void Com_AbortDObj();
+
+/*
+==================
+Com_SafeClientDObjFree
+==================
+*/
+DObj* Com_GetClientDObj( int handle, int localClientNum )
+{
+	handle += 1152 * localClientNum;
+
+	if ( clientObjMap[handle] )
+		return &objBuf[clientObjMap[handle]];
+	else
+		return NULL;
 }
 
 /*

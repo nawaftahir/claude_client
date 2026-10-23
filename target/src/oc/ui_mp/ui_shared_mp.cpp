@@ -281,6 +281,7 @@ extern int inHandleKey;
 
 // unreferenced field getters, kept by /OPT:NOREF
 int Window_Getter_533860(Window *w) { return w->offsetTime[0]; }
+UiRectangle *Window_Getter_533870(Window *w) { return &w->rectClient[0]; }
 UiRectangle *Window_Getter_533880(Window *w) { return &w->rectEffects0[0]; }
 UiRectangle *Window_Getter_533890(Window *w) { return &w->rectEffects1[0]; }
 int Window_Getter_5338a0(Window *w) { return w->staticFlags; }
@@ -4352,19 +4353,6 @@ static void Script_ConditionalExecHandler(int execWhen, Bool (*shouldExec)(const
 void Script_GetAutoUpdate(displayContextDef_t *dc, itemDef_t *item, const char **args)
 {
     CL_GetAutoUpdate();
-}
-
-UiRectangle *Window_Getter_533870(Window *w) { return &w->rectClient[0]; }
-// retail 0x52b230..0x52b270, unreferenced; names unknown
-int Window_Getter_52b230(Window *w) { return w->dynamicFlags[0]; }
-int Item_Getter_52b240(itemDef_t *item) { return item->cursorPos[0]; }
-int ListBox_Getter_52b250(listBoxDef_s *listPtr) { return listPtr->cursorPos[0]; }
-int ListBox_Getter_52b260(listBoxDef_s *listPtr) { return listPtr->startPos[0]; }
-int ListBox_Getter_52b270(listBoxDef_s *listPtr) { return listPtr->endPos[0]; }
-
-bool Window_IsVisible(Window *w)
-{
-    return ((unsigned int)w->dynamicFlags[0] >> 2) & 1;
 }
 
 // retail 0x5348c0, unreferenced twin of Menus_MenuIsInStack; name unknown
