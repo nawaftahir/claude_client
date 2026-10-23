@@ -87,3 +87,5 @@ _$E1
 ?CG_OffsetThirdPersonView@@YAXXZ
 # su BG_GetSpeedInl -> real BG_GetSpeed, no stray body: whole 60.166->60.696%; x87 CSE of velocity loads at the inlined site
 ?CG_CalcViewValues@@YAXXZ
+# su FAST_CEIL macro in g_hudelem, no FastCeil body: whole 62.378->76.322%; SetClock address-free insns identical to retail
+?HECmd_SetClock_Internal@@YAXUscr_entref_t@@HPBD@Z

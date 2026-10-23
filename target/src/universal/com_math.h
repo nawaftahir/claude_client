@@ -319,6 +319,10 @@ TU_STATIC int const FastCeil(const float x)
 	return (int)ceil(x);
 #endif
 }
+#ifndef FAST_CEIL
+// FastCeil as a macro: a helper keeps an out-of-line body under /GL
+#define FAST_CEIL(dst, x) { const double bias = 0.5 - 1.0 / (1 << 30); int result; __asm fld x __asm fadd bias __asm { fistp result } dst = result; }
+#endif
 
 /*
 ==============

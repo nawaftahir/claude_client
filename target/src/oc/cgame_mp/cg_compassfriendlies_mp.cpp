@@ -30,11 +30,6 @@ inline float I_sqrt(const float value)
 }
 
 // universal/com_math.h inlines
-static inline float I_fabs(const float value)
-{
-    return fabs(value);
-}
-
 inline vec_t Vec2Length(const vec2_t v)
 {
     return I_sqrt(v[0] * v[0] + v[1] * v[1]);
@@ -236,7 +231,7 @@ void CG_DrawCompassFriendlies(rectDef_t *rect, MaterialHandle material, vec_t *c
             if (cg->nextSnap->ps.clientNum == i)
                 continue;
 
-            if (I_fabs(cg->compassActors[i].vLastPos[0]) <= 1.0f && I_fabs(cg->compassActors[i].vLastPos[1]) <= 1.0f)
+            if (fabs(cg->compassActors[i].vLastPos[0]) <= 1.0f && fabs(cg->compassActors[i].vLastPos[1]) <= 1.0f)
             {
                 yaw = AngleNormalize360(vectoyaw(cg->compassActors[i].vLastPos) - cg->compPointerYaw);
                 dist = cg_hudCompassMaxRange->current.value;

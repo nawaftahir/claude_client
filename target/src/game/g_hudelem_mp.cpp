@@ -862,6 +862,7 @@ static void HECmd_SetTimer_Internal( scr_entref_t entref, int type, const char *
 {
 	game_hudelem_t *hud;
 	int iTime;
+	float seconds;
 
 	hud = HECmd_GetHudElem(entref);
 
@@ -870,7 +871,8 @@ static void HECmd_SetTimer_Internal( scr_entref_t entref, int type, const char *
 		Scr_Error(va("USAGE: <hudelem> %s(time_in_seconds);\n", cmdName));
 	}
 
-	iTime = FastCeil(Scr_GetFloat(0) * 1000.0f);
+	seconds = Scr_GetFloat(0) * 1000.0f;
+	FAST_CEIL(iTime, seconds);
 
 	if ( iTime <= 0 && type != HE_TYPE_TIMER_UP )
 	{
@@ -897,6 +899,7 @@ static void HECmd_SetClock_Internal( scr_entref_t entref, int type, const char *
 	int materialIndex;
 	int width;
 	int height;
+	float seconds;
 
 	hud = HECmd_GetHudElem(entref);
 	numParam = Scr_GetNumParam();
@@ -906,14 +909,16 @@ static void HECmd_SetClock_Internal( scr_entref_t entref, int type, const char *
 		Scr_Error(va("USAGE: <hudelem> %s(time_in_seconds, total_clock_time_in_seconds, shadername[, width, height]);\n", cmdName));
 	}
 
-	iTime = FastCeil(Scr_GetFloat(0) * 1000);
+	seconds = Scr_GetFloat(0) * 1000;
+	FAST_CEIL(iTime, seconds);
 
 	if ( iTime <= 0 && type != HE_TYPE_CLOCK_UP )
 	{
 		Scr_ParamError(0, va("time %g should be > 0", iTime * 0.001f));
 	}
 
-	duration = FastCeil(Scr_GetFloat(1) * 1000);
+	seconds = Scr_GetFloat(1) * 1000;
+	FAST_CEIL(duration, seconds);
 
 	if ( duration <= 0 )
 	{
