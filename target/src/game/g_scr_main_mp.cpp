@@ -409,6 +409,11 @@ Scr_PlayerDisconnect
 */
 
 
+unsigned int GScr_AllocString( const char *s )
+{
+	return Scr_AllocString(s, 1);
+}
+
 /*
 ===============
 Scr_LoadLevel
@@ -1830,6 +1835,18 @@ void ScrCmd_StopLoopSound( scr_entref_t entref )
 
 	ent->r.broadcastTime = level.time + 300;
 	ent->s.loopSound = 0;
+}
+void ScrCmd_PlayRumble( scr_entref_t entref )
+{
+	;
+}
+void ScrCmd_PlayLoopRumble( scr_entref_t entref )
+{
+	;
+}
+void ScrCmd_StopRumble( scr_entref_t entref )
+{
+	;
 }
 
 /*
@@ -3800,6 +3817,10 @@ void Scr_PrecacheString()
 		G_LocalizedStringIndex(string);
 	}
 }
+void Scr_PrecacheRumble()
+{
+	;
+}
 
 /*
 ===============
@@ -5675,6 +5696,18 @@ void GScr_SetArchive()
 {
 	SV_EnableArchivedSnapshot(Scr_GetInt(0));
 }
+void Scr_PlayRumbleOnPos()
+{
+	;
+}
+void Scr_PlayLoopRumbleOnPos()
+{
+	;
+}
+void Scr_StopAllRumbles()
+{
+	;
+}
 
 /*
 ===============
@@ -5684,6 +5717,18 @@ Scr_IsSplitscreen
 void Scr_IsSplitscreen()
 {
 	Scr_AddInt(0);
+}
+void GScr_MatchEnd()
+{
+	;
+}
+void GScr_SetPlayerTeamRank()
+{
+	;
+}
+void GScr_SendXboxLiveRanks()
+{
+	;
 }
 
 /*
@@ -6280,6 +6325,21 @@ char* Scr_GetGameTypeNameForScript( const char *pszGameTypeScript )
 
 	return NULL;
 }
+qboolean Scr_IsValidGameType( const char *pszGameType )
+{
+	int valid;
+
+	if ( Scr_GetGameTypeNameForScript(pszGameType) )
+	{
+		valid = 1;
+	}
+	else
+	{
+		valid = 0;
+	}
+
+	return valid;
+}
 
 /*
 ===============
@@ -6311,6 +6371,13 @@ void Scr_PlayerConnect( gentity_t *self )
 	unsigned short threadId;
 
 	threadId = Scr_ExecEntThread( self, g_scr_data.gametype.playerconnect, 0 );
+	Scr_FreeThread( threadId );
+}
+void Scr_PlayerDisconnect( gentity_t *self )
+{
+	unsigned short threadId;
+
+	threadId = Scr_ExecEntThread( self, g_scr_data.gametype.playerdisconnect, 0 );
 	Scr_FreeThread( threadId );
 }
 
@@ -6391,72 +6458,6 @@ void Scr_PlayerVote( gentity_t *self, const char *option )
 	Scr_Notify(self, scr_const.vote, 1);
 }
 
-unsigned int GScr_AllocString( const char *s )
-{
-	return Scr_AllocString(s, 1);
-}
-void ScrCmd_PlayRumble( scr_entref_t entref )
-{
-	;
-}
-void ScrCmd_PlayLoopRumble( scr_entref_t entref )
-{
-	;
-}
-void ScrCmd_StopRumble( scr_entref_t entref )
-{
-	;
-}
-void Scr_PrecacheRumble()
-{
-	;
-}
-void Scr_PlayRumbleOnPos()
-{
-	;
-}
-void Scr_PlayLoopRumbleOnPos()
-{
-	;
-}
-void Scr_StopAllRumbles()
-{
-	;
-}
-void GScr_MatchEnd()
-{
-	;
-}
-void GScr_SetPlayerTeamRank()
-{
-	;
-}
-void GScr_SendXboxLiveRanks()
-{
-	;
-}
-qboolean Scr_IsValidGameType( const char *pszGameType )
-{
-	int valid;
-
-	if ( Scr_GetGameTypeNameForScript(pszGameType) )
-	{
-		valid = 1;
-	}
-	else
-	{
-		valid = 0;
-	}
-
-	return valid;
-}
-void Scr_PlayerDisconnect( gentity_t *self )
-{
-	unsigned short threadId;
-
-	threadId = Scr_ExecEntThread( self, g_scr_data.gametype.playerdisconnect, 0 );
-	Scr_FreeThread( threadId );
-}
 /*
 ===============
 GScr_Stub

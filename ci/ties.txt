@@ -77,3 +77,7 @@ _$E1
 ?ParseChannelScale@PrimitiveTemplate@@QAEXPBDW4FxChannelId@@@Z
 # rb9 stub reverted (whole -0.44%), revisit with the 0x4c00f0 region
 ?CG_Stub_4c0160@@YAHXZ
+# rb13 stray BG_StricmpSoundInl body removed: +0.69% whole; win back
+?BG_ParseCommands@@YAXPAPBDPAUanimScriptItem_t@@PAUanimScriptData_s@@@Z
+# rb15 one CL_InitServerInfo body: +2.48% whole; win back
+?CL_RefreshKnownGlobalServer@@YAHUnetadr_t@@@Z

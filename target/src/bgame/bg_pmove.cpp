@@ -3643,6 +3643,11 @@ void PM_UpdatePlayerWalkingFlag( pmove_t *pm )
 PM_ClearLadderFlag
 ================
 */
+void PM_SetLadderFlag( playerState_t *ps )
+{
+	ps->pm_flags |= PMF_LADDER;
+}
+
 void PM_ClearLadderFlag( playerState_t *ps )
 {
 	if ( ps->pm_flags & PMF_LADDER )
@@ -4336,8 +4341,4 @@ float BG_GetSpeed( const playerState_t *ps, int iTime )
 }
 
 // rain - take a tracemask as well - we can't use anything out of pm
-void PM_SetLadderFlag( playerState_t *ps )
-{
-	ps->pm_flags |= PMF_LADDER;
-}
 

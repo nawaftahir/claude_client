@@ -899,45 +899,6 @@ qboolean BG_ParseConditions( const char **text_pp, animScriptItem_t *scriptItem 
 
 	return qtrue;
 }
-static __forceinline int BG_StricmpSoundInl( const char *s0, const char *s1 )
-{
-	int c0;
-	int c1;
-	int n;
-
-	n = 0x7FFFFFFF;
-	do
-	{
-		c0 = *s0++;
-		c1 = *s1++;
-
-		if ( !n-- )
-		{
-			return 0;
-		}
-
-		if ( c0 != c1 )
-		{
-			if ( c0 >= 'a' && c0 <= 'z' )
-			{
-				c0 -= 'a' - 'A';
-			}
-
-			if ( c1 >= 'a' && c1 <= 'z' )
-			{
-				c1 -= 'a' - 'A';
-			}
-
-			if ( c0 != c1 )
-			{
-				return c0 < c1 ? -1 : 1;
-			}
-		}
-	}
-	while ( c0 );
-
-	return 0;
-}
 void BG_ParseCommands( const char **input, animScriptItem_t *scriptItem, animScriptData_t *scriptData )
 {
 	char    *token;
@@ -1121,7 +1082,7 @@ pp_line_5:;
 				break;
 			}
 
-			if ( !BG_StricmpSoundInl( token, "sound" ) )
+			if ( !Q_stricmp( token, "sound" ) )
 			{
 				token = Com_ParseOnLine( input );
 				if ( !token || !token[0] )

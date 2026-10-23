@@ -667,35 +667,6 @@ void ScriptEntCmd_MoveZ( scr_entref_t entref )
 {
 	ScriptEnt_MoveAxis(entref, Z);
 }
-void ScriptEntCmd_RotateVelocity( scr_entref_t entref )
-{
-	float fTotalTime;
-	float fAccelTime;
-	float fDecelTime;
-	vec3_t vSpeed;
-	gentity_t *pSelf;
-
-	if ( entref.classnum == CLASS_NUM_ENTITY )
-	{
-		assert(entref.entnum < MAX_GENTITIES);
-		pSelf = &g_entities[entref.entnum];
-
-		if ( pSelf->classname != scr_const.script_brushmodel && pSelf->classname != scr_const.script_model && pSelf->classname != scr_const.script_origin )
-		{
-			Scr_ObjectError(va("entity %i is not a script_brushmodel, script_model, or script_origin", entref.entnum));
-		}
-	}
-	else
-	{
-		Scr_ObjectError("not an entity");
-		pSelf = NULL;
-	}
-
-	Scr_GetVector(0, vSpeed);
-
-	ScriptEntCmdGetCommandTimes(&fTotalTime, &fAccelTime, &fDecelTime);
-	ScriptMover_RotateSpeed(pSelf, vSpeed, fTotalTime, fAccelTime, fDecelTime);
-}
 
 /*
 ===============
@@ -798,6 +769,36 @@ ScriptEntCmd_RotateRoll
 void ScriptEntCmd_RotateRoll( scr_entref_t entref )
 {
 	ScriptEnt_RotateAxis(entref, ROLL);
+}
+
+void ScriptEntCmd_RotateVelocity( scr_entref_t entref )
+{
+	float fTotalTime;
+	float fAccelTime;
+	float fDecelTime;
+	vec3_t vSpeed;
+	gentity_t *pSelf;
+
+	if ( entref.classnum == CLASS_NUM_ENTITY )
+	{
+		assert(entref.entnum < MAX_GENTITIES);
+		pSelf = &g_entities[entref.entnum];
+
+		if ( pSelf->classname != scr_const.script_brushmodel && pSelf->classname != scr_const.script_model && pSelf->classname != scr_const.script_origin )
+		{
+			Scr_ObjectError(va("entity %i is not a script_brushmodel, script_model, or script_origin", entref.entnum));
+		}
+	}
+	else
+	{
+		Scr_ObjectError("not an entity");
+		pSelf = NULL;
+	}
+
+	Scr_GetVector(0, vSpeed);
+
+	ScriptEntCmdGetCommandTimes(&fTotalTime, &fAccelTime, &fDecelTime);
+	ScriptMover_RotateSpeed(pSelf, vSpeed, fTotalTime, fAccelTime, fDecelTime);
 }
 
 /*

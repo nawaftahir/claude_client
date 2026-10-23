@@ -371,8 +371,7 @@ void CL_SortGlobalServers(void)
     qsort(cls->globalServers, count, sizeof(serverInfo_t), CL_CompareAdrSigned);
 }
 
-// Retail inlines this in CL_ServersResponsePacket only.
-static __forceinline void CL_InitServerInfoInl(serverInfo_t *server, netadr_t adr)
+static void CL_InitServerInfo(serverInfo_t *server, netadr_t adr)
 {
     server->adr = adr;
     server->clients = 0;
@@ -388,11 +387,6 @@ static __forceinline void CL_InitServerInfoInl(serverInfo_t *server, netadr_t ad
     server->allowAnonymous = 0;
     server->dirty = 1;
     server->requestCount = 0;
-}
-
-static __declspec(noinline) void CL_InitServerInfo(serverInfo_t *server, netadr_t adr)
-{
-    CL_InitServerInfoInl(server, adr);
 }
 
 // Original name unknown.
@@ -492,7 +486,7 @@ void CL_ServersResponsePacket(netadr_t from, msg_t *msg)
         if (!CL_RefreshKnownGlobalServer(adr)) {
             server = &cls.globalServers[count];
             count++;
-            CL_InitServerInfoInl(server, adr);
+            CL_InitServerInfo(server, adr);
         }
     }
 

@@ -147,10 +147,6 @@ void CG_EntityEvent(centity_t *cent, int event);
 void CG_CheckEvents(centity_t *cent);
 
 
-static char **CG_EventNames(void)
-{
-    return (char **)((void *)&eventnames);
-}
 
 static void PlayProneSound(int entNum, int isFirstPerson, int soundOffset)
 {
@@ -430,7 +426,7 @@ void CG_EntityEvent(centity_t *cent, int event)
 
     if (cg_debugEvents->current.enabled != 0) {
 
-        char **eventNames = CG_EventNames();
+        char **eventNames = ((char **)eventnames);
         Com_Printf((const char *)"CG_EntityEvent:%s\n", eventNames[event]);
     }
 
@@ -611,7 +607,7 @@ void CG_EntityEvent(centity_t *cent, int event)
         case 0x8c: {
             if (clientNum != cg->predictedPlayerState.clientNum) {
 
-                char **eventNames2 = CG_EventNames();
+                char **eventNames2 = ((char **)eventnames);
                 Com_DPrintf((const char *)"Event %s just for client %i was sent to other clients\n", eventNames2[event], clientNum);
                 break;
             }
@@ -623,7 +619,7 @@ void CG_EntityEvent(centity_t *cent, int event)
 
         case 0x8d: {
             if (clientNum != cg->predictedPlayerState.clientNum) {
-                char **eventNames2 = CG_EventNames();
+                char **eventNames2 = ((char **)eventnames);
                 Com_DPrintf((const char *)"Event %s just for client %i was sent to other clients\n", eventNames2[event], clientNum);
                 break;
             }
@@ -635,7 +631,7 @@ void CG_EntityEvent(centity_t *cent, int event)
 
         case 0x8e: {
             if (clientNum != cg->predictedPlayerState.clientNum) {
-                char **eventNames2 = CG_EventNames();
+                char **eventNames2 = ((char **)eventnames);
                 Com_DPrintf((const char *)"Event %s just for client %i was sent to other clients\n", eventNames2[event], clientNum);
                 break;
             }
@@ -647,7 +643,7 @@ void CG_EntityEvent(centity_t *cent, int event)
 
         case 0x8f: {
             if (clientNum != cg->predictedPlayerState.clientNum) {
-                char **eventNames2 = CG_EventNames();
+                char **eventNames2 = ((char **)eventnames);
                 Com_DPrintf((const char *)"Event %s just for client %i was sent to other clients\n", eventNames2[event], clientNum);
                 break;
             }
@@ -1074,7 +1070,7 @@ void CG_EntityEvent(centity_t *cent, int event)
         }
 
         default:
-            Com_Error(ERR_DROP, (const char *)"\x15Unknown event: '%s'", CG_EventNames()[event]);
+            Com_Error(ERR_DROP, (const char *)"\x15Unknown event: '%s'", ((char **)eventnames)[event]);
             break;
 
         }
