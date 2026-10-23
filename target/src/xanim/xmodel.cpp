@@ -18,20 +18,6 @@ static XModelDefaults xmodelDefaults;
 static int xmodelUnusedValue;
 
 // grouping pins retail fadd order (XModelTraceLine 0x48d430)
-inline void AxisTransformVector(const vec3_t in, const vec3_t mat[3], vec3_t out)
-{
-	out[0] = in[0] * mat[0][0] + (in[1] * mat[1][0] + in[2] * mat[2][0]);
-	out[1] = in[0] * mat[0][1] + (in[1] * mat[1][1] + in[2] * mat[2][1]);
-	out[2] = in[0] * mat[0][2] + (in[1] * mat[1][2] + in[2] * mat[2][2]);
-}
-
-inline void AxisTransposeTransformVector(const vec3_t in, const vec3_t mat[3], vec3_t out)
-{
-	out[0] = in[0] * mat[0][0] + in[1] * mat[0][1] + in[2] * mat[0][2];
-	out[1] = in[0] * mat[1][0] + in[1] * mat[1][1] + in[2] * mat[1][2];
-	out[2] = in[0] * mat[2][0] + in[1] * mat[2][1] + in[2] * mat[2][2];
-}
-
 qboolean XModelBad(XModel *model)
 {
 	return model->bad;
@@ -283,6 +269,20 @@ void XModelGetBounds(const XModel *model, float *mins, float *maxs)
 const char *XModelGetLodFilename(const XModel *model, int lod)
 {
 	return model->lodInfo[lod].filename;
+}
+
+inline void AxisTransformVector(const vec3_t in, const vec3_t mat[3], vec3_t out)
+{
+	out[0] = in[0] * mat[0][0] + (in[1] * mat[1][0] + in[2] * mat[2][0]);
+	out[1] = in[0] * mat[0][1] + (in[1] * mat[1][1] + in[2] * mat[2][1]);
+	out[2] = in[0] * mat[0][2] + (in[1] * mat[1][2] + in[2] * mat[2][2]);
+}
+
+inline void AxisTransposeTransformVector(const vec3_t in, const vec3_t mat[3], vec3_t out)
+{
+	out[0] = in[0] * mat[0][0] + in[1] * mat[0][1] + in[2] * mat[0][2];
+	out[1] = in[0] * mat[1][0] + in[1] * mat[1][1] + in[2] * mat[1][2];
+	out[2] = in[0] * mat[2][0] + in[1] * mat[2][1] + in[2] * mat[2][2];
 }
 
 int XModelGetContents(const XModel *model)
