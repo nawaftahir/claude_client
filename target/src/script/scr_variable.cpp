@@ -522,11 +522,6 @@ void Scr_ShutdownVariables()
 	}
 }
 
-int Hunk_ClearTempMemoryHigh( void )
-{
-	return 0;
-}
-
 /*
 ==============
 Scr_GetNumScriptVars
@@ -536,6 +531,7 @@ unsigned int Scr_GetNumScriptVars()
 {
 	return 0;
 }
+
 
 /*
 ==============

@@ -395,6 +395,14 @@ void Scr_VM_Init()
 	scrVmPub.stack->type = VAR_CODEPOS;
 	scrVmGlob.loading = false;
 }
+void VM_Shutdown()
+{
+	if ( scrVarPub.tempVariable )
+	{
+		FreeValue(scrVarPub.tempVariable);
+		scrVarPub.tempVariable = 0;
+	}
+}
 
 /*
 ==============
@@ -3767,6 +3775,10 @@ void Scr_ShutdownSystem( unsigned char sys, int bComplete )
 	assert(!scrVarPub.freeEntList);
 	Scr_FreeObjects();
 }
+int Scr_IsSystemActive( bool unused )
+{
+	return scrVarPub.timeArrayId != 0;
+}
 
 /*
 ==============
@@ -4055,6 +4067,10 @@ unsigned int Scr_GetConstIString( unsigned int index )
 
 	Scr_Error(va("parameter %d does not exist", index + 1));
 	return 0;
+}
+const char* Scr_GetIString( unsigned int index )
+{
+	return SL_ConvertToString( Scr_GetConstIString( index ) );
 }
 
 /*
@@ -4861,19 +4877,3 @@ loop:
 	}
 }
 
-int Scr_IsSystemActive( bool unused )
-{
-	return scrVarPub.timeArrayId != 0;
-}
-void VM_Shutdown()
-{
-	if ( scrVarPub.tempVariable )
-	{
-		FreeValue(scrVarPub.tempVariable);
-		scrVarPub.tempVariable = 0;
-	}
-}
-const char* Scr_GetIString( unsigned int index )
-{
-	return SL_ConvertToString( Scr_GetConstIString( index ) );
-}
