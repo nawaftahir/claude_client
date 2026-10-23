@@ -841,11 +841,8 @@ static void CG_DrawCenterString(void)
     }
 }
 
-// inlined com_math Vec3Dot
-static __forceinline float Vec3DotCH(const vec_t *a, const vec_t *b)
-{
-    return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
-}
+// inlined com_math Vec3Dot; a macro so no out-of-line body is kept
+#define Vec3DotCH(a, b) ((a)[0] * (b)[0] + (a)[1] * (b)[1] + (a)[2] * (b)[2])
 static void __attribute_regparm__(2) CG_CalcCrosshairPosition(float *x, float *y)
 {
     vec3_t gunAng;
