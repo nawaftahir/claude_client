@@ -384,7 +384,7 @@ const char *Com_GetLastTokenPos();
 
 void CM_CalcTraceEntents(TraceExtents *extents);
 
-static inline short LittleShort( short l )
+inline short LittleShort( short l )
 {
 	return l;
 }

@@ -219,6 +219,10 @@ int LittleLongRuntime( int l )
 {
 	return _LittleLong( l );
 }
+float LittleFloat( float l )
+{
+	return _LittleFloat( l );
+}
 
 int LittleFloatAsInt( float l )
 {
@@ -1284,10 +1288,6 @@ void ScaledOrientationPlaneToLocal( const orientation_t *orient, float scale, co
 	out[3] = ( plane[3] - DotProduct( orient->origin, plane ) ) / scale;
 }
 
-float LittleFloat( float l )
-{
-	return _LittleFloat( l );
-}
 int LongNoSwap( int l )
 {
 	return l;
