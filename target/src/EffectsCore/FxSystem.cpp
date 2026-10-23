@@ -55,6 +55,14 @@ void FX_AddScheduledEffects();
 void FX_UpdateAllNonBolt();
 void FX_UpdateAllBolt();
 
+FxHelper::FxHelper()
+{
+	mTime = 0;
+	mOldTime = 0;
+	mFrameTime = 0;
+	mTimeFrozen = 0;
+}
+
 void FxHelper::Init()
 {
 	time = 0;
@@ -63,14 +71,6 @@ void FxHelper::Init()
 	mFrameTime = 0;
 	mTimeFrozen = 0;
 	mSeed = 0;
-}
-
-FxHelper::FxHelper()
-{
-	mTime = 0;
-	mOldTime = 0;
-	mFrameTime = 0;
-	mTimeFrozen = 0;
 }
 
 void FxHelper::AdjustTime( int intime )

@@ -30,60 +30,6 @@ void G_SpawnTurret( gentity_t *self, const char *weaponinfoname );
 turret_use
 ==============
 */
-void turret_use( gentity_t *self, gentity_t *owner, gentity_t *activator ) // no activator for cod2
-{
-	turretInfo_s *pTurretInfo;
-	playerState_t *ps;
-	assert(self);
-	pTurretInfo = self->pTurretInfo;
-	assert(pTurretInfo);
-	assert(owner);
-	assert(owner->client);
-	assert(owner->s.number < level.maxclients);
-	ps = &owner->client->ps;
-	assert(ps);
-	owner->active = qtrue;
-	self->active = qtrue;
-	self->r.ownerNum = owner->s.number;
-	ps->viewlocked = qtrue;
-	ps->viewlocked_entNum = self->s.number;
-	pTurretInfo->flags |= 0x800u;
-	VectorCopy(owner->r.currentOrigin, pTurretInfo->userOrigin);
-	owner->s.otherEntityNum = self->s.number;
-	self->s.otherEntityNum = owner->s.number;
-	if ( ps->pm_flags & PMF_PRONE )
-		pTurretInfo->prevStance = TURRET_STANCE_PRONE;
-	else if ( ps->pm_flags & PMF_DUCKED )
-		pTurretInfo->prevStance = TURRET_STANCE_CROUCH;
-	else
-		pTurretInfo->prevStance = TURRET_STANCE_STAND;
-	if ( pTurretInfo->stance == TURRET_STANCE_PRONE )
-	{
-		ps->eFlags |= EF_TURRET_PRONE;
-		ps->eFlags &= ~EF_TURRET_DUCK;
-	}
-	else if ( pTurretInfo->stance == TURRET_STANCE_CROUCH )
-	{
-		ps->eFlags |= EF_TURRET_DUCK;
-		ps->eFlags &= ~EF_TURRET_PRONE;
-	}
-	else
-	{
-		ps->eFlags |= EF_TURRET_ACTIVE;
-	}
-	// Compensating for the difference between the players view at the time of use and the start angles that the gun object has
-	self->s.angles2[PITCH] = AngleSubtract(ps->viewangles[PITCH], self->r.currentAngles[PITCH]);
-	self->s.angles2[PITCH] = I_fclamp(self->s.angles2[PITCH], pTurretInfo->arcmin[PITCH], pTurretInfo->arcmax[PITCH]);
-	self->s.angles2[YAW] = AngleSubtract(ps->viewangles[YAW], self->r.currentAngles[YAW]);
-	self->s.angles2[YAW] = I_fclamp(self->s.angles2[YAW], pTurretInfo->arcmin[YAW], pTurretInfo->arcmax[YAW]);
-	self->s.angles2[ROLL] = 0;
-	ps->viewAngleClampRange[PITCH] = AngleSubtract(pTurretInfo->arcmax[PITCH], pTurretInfo->arcmin[PITCH]) * 0.5f;
-	ps->viewAngleClampBase[PITCH] = self->r.currentAngles[PITCH] + pTurretInfo->arcmax[PITCH];
-	ps->viewAngleClampBase[PITCH] = AngleNormalize360Accurate(ps->viewAngleClampBase[PITCH] - ps->viewAngleClampRange[PITCH]);
-	ps->viewAngleClampRange[YAW] = AngleSubtract(pTurretInfo->arcmax[YAW], pTurretInfo->arcmin[YAW]) * 0.5f;
-	ps->viewAngleClampBase[YAW] = self->r.currentAngles[YAW] + pTurretInfo->arcmax[YAW];
-	ps->viewAngleClampBase[YAW] = AngleNormalize360Accurate(ps->viewAngleClampBase[YAW] - ps->viewAngleClampRange[YAW]);
-}
 
 /*QUAKED info_null (0 0.5 0) (-4 -4 -4) (4 4 4)
 Used as a positional target for calculations in the utilities (spotlights, etc), but removed during gameplay.
@@ -1008,6 +954,60 @@ qboolean G_IsTurretUsable( gentity_t *self, gentity_t *owner )
 	}
 
 	return qtrue;
+}
+void turret_use( gentity_t *self, gentity_t *owner, gentity_t *activator ) // no activator for cod2
+{
+	turretInfo_s *pTurretInfo;
+	playerState_t *ps;
+	assert(self);
+	pTurretInfo = self->pTurretInfo;
+	assert(pTurretInfo);
+	assert(owner);
+	assert(owner->client);
+	assert(owner->s.number < level.maxclients);
+	ps = &owner->client->ps;
+	assert(ps);
+	owner->active = qtrue;
+	self->active = qtrue;
+	self->r.ownerNum = owner->s.number;
+	ps->viewlocked = qtrue;
+	ps->viewlocked_entNum = self->s.number;
+	pTurretInfo->flags |= 0x800u;
+	VectorCopy(owner->r.currentOrigin, pTurretInfo->userOrigin);
+	owner->s.otherEntityNum = self->s.number;
+	self->s.otherEntityNum = owner->s.number;
+	if ( ps->pm_flags & PMF_PRONE )
+		pTurretInfo->prevStance = TURRET_STANCE_PRONE;
+	else if ( ps->pm_flags & PMF_DUCKED )
+		pTurretInfo->prevStance = TURRET_STANCE_CROUCH;
+	else
+		pTurretInfo->prevStance = TURRET_STANCE_STAND;
+	if ( pTurretInfo->stance == TURRET_STANCE_PRONE )
+	{
+		ps->eFlags |= EF_TURRET_PRONE;
+		ps->eFlags &= ~EF_TURRET_DUCK;
+	}
+	else if ( pTurretInfo->stance == TURRET_STANCE_CROUCH )
+	{
+		ps->eFlags |= EF_TURRET_DUCK;
+		ps->eFlags &= ~EF_TURRET_PRONE;
+	}
+	else
+	{
+		ps->eFlags |= EF_TURRET_ACTIVE;
+	}
+	// Compensating for the difference between the players view at the time of use and the start angles that the gun object has
+	self->s.angles2[PITCH] = AngleSubtract(ps->viewangles[PITCH], self->r.currentAngles[PITCH]);
+	self->s.angles2[PITCH] = I_fclamp(self->s.angles2[PITCH], pTurretInfo->arcmin[PITCH], pTurretInfo->arcmax[PITCH]);
+	self->s.angles2[YAW] = AngleSubtract(ps->viewangles[YAW], self->r.currentAngles[YAW]);
+	self->s.angles2[YAW] = I_fclamp(self->s.angles2[YAW], pTurretInfo->arcmin[YAW], pTurretInfo->arcmax[YAW]);
+	self->s.angles2[ROLL] = 0;
+	ps->viewAngleClampRange[PITCH] = AngleSubtract(pTurretInfo->arcmax[PITCH], pTurretInfo->arcmin[PITCH]) * 0.5f;
+	ps->viewAngleClampBase[PITCH] = self->r.currentAngles[PITCH] + pTurretInfo->arcmax[PITCH];
+	ps->viewAngleClampBase[PITCH] = AngleNormalize360Accurate(ps->viewAngleClampBase[PITCH] - ps->viewAngleClampRange[PITCH]);
+	ps->viewAngleClampRange[YAW] = AngleSubtract(pTurretInfo->arcmax[YAW], pTurretInfo->arcmin[YAW]) * 0.5f;
+	ps->viewAngleClampBase[YAW] = self->r.currentAngles[YAW] + pTurretInfo->arcmax[YAW];
+	ps->viewAngleClampBase[YAW] = AngleNormalize360Accurate(ps->viewAngleClampBase[YAW] - ps->viewAngleClampRange[YAW]);
 }
 
 /*

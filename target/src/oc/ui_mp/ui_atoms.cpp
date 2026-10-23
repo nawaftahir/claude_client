@@ -105,3 +105,23 @@ void UI_FillRect(float x, float y, float width, float height, int horzAlign, int
     }
 }
 
+extern uiInfo_t *uiInfo;
+
+// retail 0x540670, unreferenced; name unknown: cursor inside rect
+qboolean UI_CursorInRect_540670(int x, int y, int w, int h)
+{
+    if (uiInfo->uiDC.cursorx < x || uiInfo->uiDC.cursory < y
+        || uiInfo->uiDC.cursorx > x + w || uiInfo->uiDC.cursory > y + h)
+        return 0;
+    return 1;
+}
+void Window_SetOffsetTime(Window *w, int offsetTime)
+{
+    w->offsetTime[0] = offsetTime;
+}
+
+void Window_SetRect(Window *w, const UiRectangle *rect)
+{
+    w->rect[0] = *rect;
+}
+

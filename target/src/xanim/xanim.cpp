@@ -21,6 +21,26 @@ void XAnim_CalcPosDeltaDuring_unsigned_char_(XAnimDeltaPart *animDelta, const fl
 void XAnim_GetTimeIndexCompressed_unsigned_short_(XAnimTime *animTime, const unsigned short *indices, int tableSize, int *keyFrameIndex, float *keyFrameLerpFrac);
 void XAnim_CalcRotDeltaDuring_unsigned_short_(XAnimDeltaPart *animDelta, const float time, int numFrames, float *rotDelta);
 void XAnim_CalcPosDeltaDuring_unsigned_short_(XAnimDeltaPart *animDelta, const float time, int numFrames, float *posDelta);
+void XAnim_CalcRotDeltaDuring_unsigned_char_(XAnimDeltaPart *animDelta, const float time, int numFrames, float *rotDelta);
+void XAnim_CalcPosDeltaDuring_unsigned_char_(XAnimDeltaPart *animDelta, const float time, int numFrames, float *posDelta);
+void XAnim_CalcRotDeltaDuring_unsigned_short_(XAnimDeltaPart *animDelta, const float time, int numFrames, float *rotDelta);
+void XAnim_CalcPosDeltaDuring_unsigned_short_(XAnimDeltaPart *animDelta, const float time, int numFrames, float *posDelta);
+void XAnimCalcParts_unsigned_char_( const XAnimParts_s *parts, const unsigned char *animToModel, float time, float weightScale, DObjAnimMat *rotTransArray, int *ignorePartBits );
+void XAnimCalcParts_unsigned_short_( const XAnimParts_s *parts, const unsigned char *animToModel, float time, float weightScale, DObjAnimMat *rotTransArray, int *ignorePartBits );
+void XAnim_CalcRotDeltaDuringInternal_unsigned_char_(XAnimDeltaPartQuat *quat, const float time, int numFrames, float *rotDelta);
+void XAnim_CalcPosDeltaDuringInternal_unsigned_char_(XAnimDeltaPartTrans *trans, const float time, int numFrames, float *posDelta);
+void XAnim_CalcRotDeltaDuringInternal_unsigned_short_(XAnimDeltaPartQuat *quat, const float time, int numFrames, float *rotDelta);
+void XAnim_CalcPosDeltaDuringInternal_unsigned_short_(XAnimDeltaPartTrans *trans, const float time, int numFrames, float *posDelta);
+void XAnim_CalcSimpleRotDuring_unsigned_char_(XAnimTime *animTime, const XAnimPartQuat *quat, float scale, float *rotDelta);
+void XAnim_CalcRotDuring_unsigned_char_(XAnimTime *animTime, const XAnimPartQuat *quat, float scale, float *rotDelta);
+void XAnim_CalcPosDuring_unsigned_char_(XAnimTime *animTime, const XAnimPartTrans *trans, float scale, float *posDelta);
+void XAnim_CalcSimpleRotDuring_unsigned_short_(XAnimTime *animTime, const XAnimPartQuat *quat, float scale, float *rotDelta);
+void XAnim_CalcRotDuring_unsigned_short_(XAnimTime *animTime, const XAnimPartQuat *quat, float scale, float *rotDelta);
+void XAnim_CalcPosDuring_unsigned_short_(XAnimTime *animTime, const XAnimPartTrans *trans, float scale, float *posDelta);
+void XAnim_GetTimeIndexCompressed_unsigned_char(XAnimTime *animTime, const unsigned char *indices, int tableSize, int *keyFrameIndex, float *keyFrameLerpFrac);
+void XAnim_GetTimeIndexCompressed_unsigned_short_(XAnimTime *animTime, const unsigned short *indices, int tableSize, int *keyFrameIndex, float *keyFrameLerpFrac);
+void XAnim_GetTimeIndex_unsigned_char_(const XAnimTime *animTime, const unsigned char *indices, int tableSize, int *keyFrameIndex, float *keyFrameLerpFrac);
+void XAnim_GetTimeIndex_unsigned_short_(const XAnimTime *animTime, const unsigned short *indices, int tableSize, int *keyFrameIndex, float *keyFrameLerpFrac);
 void XAnimProcessServerNotify(const XAnimTree_s *tree, XAnimInfo *info, const XAnimEntry *entry, float dtime);
 const char* XAnimGetAnimDebugName(const XAnim_s *anims, unsigned int animIndex);
 XAnimInfo* XAnimGetInfo(XAnimTree_s *tree, unsigned int infoIndex);
@@ -3183,6 +3203,18 @@ void XAnimSetAnimRate(XAnimTree_s *tree, unsigned int animIndex, float rate)
 	XAnimSetAnimRateInternal(tree, animIndex, rate);
 }
 
+bool XAnimIsLooped(const XAnim_s *anim, unsigned int animIndex)
+{
+	const XAnimEntry *entry;
+
+	entry = &anim->entries[animIndex];
+
+	if ( entry->numAnims )
+		return entry->u.animParent.flags & 1;
+
+	return entry->u.parts->bLoop;
+}
+
 bool XAnimNotetrackExists(const XAnim_s *anims, unsigned int animIndex, unsigned int name)
 {
 	const XAnimEntry *entry;
@@ -3317,6 +3349,250 @@ XAnimInfo *XAnimGetInfoByIndex( unsigned int index )
 	return &g_xAnimInfo[index];
 }
 
+void XAnim_CalcRotDeltaDuring_unsigned_char_(XAnimDeltaPart *animDelta, const float time, int numFrames, float *rotDelta)
+{
+	if ( animDelta->quat )
+	{
+		XAnim_CalcRotDeltaDuringInternal_unsigned_char_(animDelta->quat, time, numFrames, rotDelta);
+	}
+	else
+	{
+		rotDelta[0] = 0.0;
+		rotDelta[1] = 32767.0;
+	}
+}
+
+void XAnim_CalcPosDeltaDuring_unsigned_char_(XAnimDeltaPart *animDelta, const float time, int numFrames, float *posDelta)
+{
+	if ( animDelta->trans )
+		XAnim_CalcPosDeltaDuringInternal_unsigned_char_(animDelta->trans, time, numFrames, posDelta);
+	else
+		VectorClear(posDelta);
+}
+
+void XAnim_CalcRotDeltaDuring_unsigned_short_(XAnimDeltaPart *animDelta, const float time, int numFrames, float *rotDelta)
+{
+	if ( animDelta->quat )
+	{
+		XAnim_CalcRotDeltaDuringInternal_unsigned_short_(animDelta->quat, time, numFrames, rotDelta);
+	}
+	else
+	{
+		rotDelta[0] = 0.0;
+		rotDelta[1] = 32767.0;
+	}
+}
+
+void XAnim_CalcPosDeltaDuring_unsigned_short_(XAnimDeltaPart *animDelta, const float time, int numFrames, float *posDelta)
+{
+	if ( animDelta->trans )
+		XAnim_CalcPosDeltaDuringInternal_unsigned_short_(animDelta->trans, time, numFrames, posDelta);
+	else
+		VectorClear(posDelta);
+}
+
+void XAnimCalcParts_unsigned_char_( const XAnimParts_s *parts, const unsigned char *animToModel, float time, float weightScale, DObjAnimMat *rotTransArray, int *ignorePartBits )
+{
+	DObjAnimMat *totalRotTrans;
+	int i;
+	XAnimPart *childPart;
+	float scale;
+	int animPartIndex;
+	int boneCount;
+	int numframes;
+	char *simpleQuatBits;
+	XAnimTime animTime;
+
+	numframes = parts->numframes;
+	XAnim_SetTime(time, numframes, &animTime);
+	scale = weightScale * 0.000030518509f;
+	simpleQuatBits = parts->simpleQuatBits;
+	boneCount = parts->boneCount;
+
+	for ( i = 0; i < boneCount; ++i )
+	{
+		animPartIndex = animToModel[i];
+
+		if ( ( 1 << (animPartIndex & 0x1F) ) & ignorePartBits[animPartIndex >> 5] )
+			continue;
+
+		totalRotTrans = &rotTransArray[animPartIndex];
+		childPart = &parts->parts[i];
+
+		if ( ( 1 << (i & 7) ) & simpleQuatBits[i >> 3] )
+		{
+			if ( childPart->quat )
+				XAnim_CalcSimpleRotDuring_unsigned_char_(&animTime, childPart->quat, scale, &totalRotTrans->quat[2]);
+			else
+				totalRotTrans->quat[3] = totalRotTrans->quat[3] + weightScale;
+		}
+		else
+		{
+			XAnim_CalcRotDuring_unsigned_char_(&animTime, childPart->quat, scale, totalRotTrans->quat);
+		}
+
+		if ( childPart->trans )
+			XAnim_CalcPosDuring_unsigned_char_(&animTime, childPart->trans, weightScale, totalRotTrans->trans);
+
+		totalRotTrans->transWeight = totalRotTrans->transWeight + weightScale;
+	}
+}
+
+void XAnimCalcParts_unsigned_short_( const XAnimParts_s *parts, const unsigned char *animToModel, float time, float weightScale, DObjAnimMat *rotTransArray, int *ignorePartBits )
+{
+	DObjAnimMat *totalRotTrans;
+	int i;
+	XAnimPart *childPart;
+	float scale;
+	int animPartIndex;
+	int boneCount;
+	int numframes;
+	char *simpleQuatBits;
+	XAnimTime animTime;
+
+	numframes = parts->numframes;
+	XAnim_SetTime(time, numframes, &animTime);
+	scale = weightScale * 0.000030518509f;
+	simpleQuatBits = parts->simpleQuatBits;
+	boneCount = parts->boneCount;
+
+	for ( i = 0; i < boneCount; ++i )
+	{
+		animPartIndex = animToModel[i];
+
+		if ( ( 1 << (animPartIndex & 0x1F) ) & ignorePartBits[animPartIndex >> 5] )
+			continue;
+
+		totalRotTrans = &rotTransArray[animPartIndex];
+		childPart = &parts->parts[i];
+
+		if ( ( 1 << (i & 7) ) & simpleQuatBits[i >> 3] )
+		{
+			if ( childPart->quat )
+				XAnim_CalcSimpleRotDuring_unsigned_short_(&animTime, childPart->quat, scale, &totalRotTrans->quat[2]);
+			else
+				totalRotTrans->quat[3] = totalRotTrans->quat[3] + weightScale;
+		}
+		else
+		{
+			XAnim_CalcRotDuring_unsigned_short_(&animTime, childPart->quat, scale, totalRotTrans->quat);
+		}
+
+		if ( childPart->trans )
+			XAnim_CalcPosDuring_unsigned_short_(&animTime, childPart->trans, weightScale, totalRotTrans->trans);
+
+		totalRotTrans->transWeight = totalRotTrans->transWeight + weightScale;
+	}
+}
+
+void XAnim_CalcRotDeltaDuringInternal_unsigned_char_(XAnimDeltaPartQuat *quat, const float time, int numFrames, float *rotDelta)
+{
+	XAnimTime animTime;
+	int keyFrameIndex;
+	float keyFrameLerpFrac;
+
+	if ( !quat->size )
+	{
+		Short2CopyAsVec2(quat->u.frame0, rotDelta);
+	}
+	else
+	{
+		XAnim_SetTime(time, numFrames, &animTime);
+		XAnim_GetTimeIndexCompressed_unsigned_char(
+		    &animTime,
+		    quat->u.frames.indices._1,
+		    quat->size,
+		    &keyFrameIndex,
+		    &keyFrameLerpFrac);
+		Short2LerpAsVec2(
+		    quat->u.frames.frames[keyFrameIndex],
+		    quat->u.frames.frames[keyFrameIndex + 1],
+		    keyFrameLerpFrac,
+		    rotDelta);
+	}
+}
+
+void XAnim_CalcPosDeltaDuringInternal_unsigned_char_(XAnimDeltaPartTrans *trans, const float time, int numFrames, float *posDelta)
+{
+	XAnimTime animTime;
+	int keyFrameIndex;
+	float keyFrameLerpFrac;
+
+	if ( !trans->size )
+	{
+		VectorCopy(trans->u.frame0, posDelta);
+	}
+	else
+	{
+		XAnim_SetTime(time, numFrames, &animTime);
+		XAnim_GetTimeIndexCompressed_unsigned_char(
+		    &animTime,
+		    trans->u.frames.indices._1,
+		    trans->size,
+		    &keyFrameIndex,
+		    &keyFrameLerpFrac);
+		Vec3LerpFrom(
+		    trans->u.frames.frames[keyFrameIndex],
+		    trans->u.frames.frames[keyFrameIndex + 1],
+		    keyFrameLerpFrac,
+		    posDelta);
+	}
+}
+
+void XAnim_CalcRotDeltaDuringInternal_unsigned_short_(XAnimDeltaPartQuat *quat, const float time, int numFrames, float *rotDelta)
+{
+	XAnimTime animTime;
+	int keyFrameIndex;
+	float keyFrameLerpFrac;
+
+	if ( !quat->size )
+	{
+		Short2CopyAsVec2(quat->u.frame0, rotDelta);
+	}
+	else
+	{
+		XAnim_SetTime(time, numFrames, &animTime);
+		XAnim_GetTimeIndexCompressed_unsigned_short_(
+		    &animTime,
+		    quat->u.frames.indices._2,
+		    quat->size,
+		    &keyFrameIndex,
+		    &keyFrameLerpFrac);
+		Short2LerpAsVec2(
+		    quat->u.frames.frames[keyFrameIndex],
+		    quat->u.frames.frames[keyFrameIndex + 1],
+		    keyFrameLerpFrac,
+		    rotDelta);
+	}
+}
+
+void XAnim_CalcPosDeltaDuringInternal_unsigned_short_(XAnimDeltaPartTrans *trans, const float time, int numFrames, float *posDelta)
+{
+	XAnimTime animTime;
+	int keyFrameIndex;
+	float keyFrameLerpFrac;
+
+	if ( !trans->size )
+	{
+		VectorCopy(trans->u.frame0, posDelta);
+	}
+	else
+	{
+		XAnim_SetTime(time, numFrames, &animTime);
+		XAnim_GetTimeIndexCompressed_unsigned_short_(
+		    &animTime,
+		    trans->u.frames.indices._2,
+		    trans->size,
+		    &keyFrameIndex,
+		    &keyFrameLerpFrac);
+		Vec3LerpFrom(
+		    trans->u.frames.frames[keyFrameIndex],
+		    trans->u.frames.frames[keyFrameIndex + 1],
+		    keyFrameLerpFrac,
+		    posDelta);
+	}
+}
+
 void XAnim_CalcSimpleRotDuring_unsigned_char_(XAnimTime *animTime, const XAnimPartQuat *quat, float scale, float *rotDelta)
 {
 	int keyFrameIndex;
@@ -3395,53 +3671,6 @@ void XAnim_CalcPosDuring_unsigned_char_(XAnimTime *animTime, const XAnimPartTran
 		    trans->u.frames.frames[keyFrameIndex + 1],
 		    keyFrameLerpFrac,
 		    posDelta);
-	}
-}
-
-void XAnimCalcParts_unsigned_char_( const XAnimParts_s *parts, const unsigned char *animToModel, float time, float weightScale, DObjAnimMat *rotTransArray, int *ignorePartBits )
-{
-	DObjAnimMat *totalRotTrans;
-	int i;
-	XAnimPart *childPart;
-	float scale;
-	int animPartIndex;
-	int boneCount;
-	int numframes;
-	char *simpleQuatBits;
-	XAnimTime animTime;
-
-	numframes = parts->numframes;
-	XAnim_SetTime(time, numframes, &animTime);
-	scale = weightScale * 0.000030518509f;
-	simpleQuatBits = parts->simpleQuatBits;
-	boneCount = parts->boneCount;
-
-	for ( i = 0; i < boneCount; ++i )
-	{
-		animPartIndex = animToModel[i];
-
-		if ( ( 1 << (animPartIndex & 0x1F) ) & ignorePartBits[animPartIndex >> 5] )
-			continue;
-
-		totalRotTrans = &rotTransArray[animPartIndex];
-		childPart = &parts->parts[i];
-
-		if ( ( 1 << (i & 7) ) & simpleQuatBits[i >> 3] )
-		{
-			if ( childPart->quat )
-				XAnim_CalcSimpleRotDuring_unsigned_char_(&animTime, childPart->quat, scale, &totalRotTrans->quat[2]);
-			else
-				totalRotTrans->quat[3] = totalRotTrans->quat[3] + weightScale;
-		}
-		else
-		{
-			XAnim_CalcRotDuring_unsigned_char_(&animTime, childPart->quat, scale, totalRotTrans->quat);
-		}
-
-		if ( childPart->trans )
-			XAnim_CalcPosDuring_unsigned_char_(&animTime, childPart->trans, weightScale, totalRotTrans->trans);
-
-		totalRotTrans->transWeight = totalRotTrans->transWeight + weightScale;
 	}
 }
 
@@ -3526,50 +3755,29 @@ void XAnim_CalcPosDuring_unsigned_short_(XAnimTime *animTime, const XAnimPartTra
 	}
 }
 
-void XAnimCalcParts_unsigned_short_( const XAnimParts_s *parts, const unsigned char *animToModel, float time, float weightScale, DObjAnimMat *rotTransArray, int *ignorePartBits )
+void XAnim_GetTimeIndexCompressed_unsigned_char(XAnimTime *animTime, const unsigned char *indices, int tableSize, int *keyFrameIndex, float *keyFrameLerpFrac)
 {
-	DObjAnimMat *totalRotTrans;
-	int i;
-	XAnimPart *childPart;
-	float scale;
-	int animPartIndex;
-	int boneCount;
-	int numframes;
-	char *simpleQuatBits;
-	XAnimTime animTime;
-
-	numframes = parts->numframes;
-	XAnim_SetTime(time, numframes, &animTime);
-	scale = weightScale * 0.000030518509f;
-	simpleQuatBits = parts->simpleQuatBits;
-	boneCount = parts->boneCount;
-
-	for ( i = 0; i < boneCount; ++i )
+	if ( tableSize < animTime->frameCount )
 	{
-		animPartIndex = animToModel[i];
+		XAnim_GetTimeIndex_unsigned_char_(animTime, indices, tableSize, keyFrameIndex, keyFrameLerpFrac);
+	}
+	else
+	{
+		*keyFrameLerpFrac = animTime->frameFrac - (float)animTime->frameIndex;
+		*keyFrameIndex = animTime->frameIndex;
+	}
+}
 
-		if ( ( 1 << (animPartIndex & 0x1F) ) & ignorePartBits[animPartIndex >> 5] )
-			continue;
-
-		totalRotTrans = &rotTransArray[animPartIndex];
-		childPart = &parts->parts[i];
-
-		if ( ( 1 << (i & 7) ) & simpleQuatBits[i >> 3] )
-		{
-			if ( childPart->quat )
-				XAnim_CalcSimpleRotDuring_unsigned_short_(&animTime, childPart->quat, scale, &totalRotTrans->quat[2]);
-			else
-				totalRotTrans->quat[3] = totalRotTrans->quat[3] + weightScale;
-		}
-		else
-		{
-			XAnim_CalcRotDuring_unsigned_short_(&animTime, childPart->quat, scale, totalRotTrans->quat);
-		}
-
-		if ( childPart->trans )
-			XAnim_CalcPosDuring_unsigned_short_(&animTime, childPart->trans, weightScale, totalRotTrans->trans);
-
-		totalRotTrans->transWeight = totalRotTrans->transWeight + weightScale;
+void XAnim_GetTimeIndexCompressed_unsigned_short_(XAnimTime *animTime, const unsigned short *indices, int tableSize, int *keyFrameIndex, float *keyFrameLerpFrac)
+{
+	if ( tableSize < animTime->frameCount )
+	{
+		XAnim_GetTimeIndex_unsigned_short_(animTime, indices, tableSize, keyFrameIndex, keyFrameLerpFrac);
+	}
+	else
+	{
+		*keyFrameLerpFrac = animTime->frameFrac - (float)animTime->frameIndex;
+		*keyFrameIndex = animTime->frameIndex;
 	}
 }
 
@@ -3646,94 +3854,6 @@ void XAnim_GetTimeIndex_unsigned_char_(const XAnimTime *animTime, const unsigned
 	*keyFrameIndex = index;
 }
 
-void XAnim_GetTimeIndexCompressed_unsigned_char(XAnimTime *animTime, const unsigned char *indices, int tableSize, int *keyFrameIndex, float *keyFrameLerpFrac)
-{
-	if ( tableSize < animTime->frameCount )
-	{
-		XAnim_GetTimeIndex_unsigned_char_(animTime, indices, tableSize, keyFrameIndex, keyFrameLerpFrac);
-	}
-	else
-	{
-		*keyFrameLerpFrac = animTime->frameFrac - (float)animTime->frameIndex;
-		*keyFrameIndex = animTime->frameIndex;
-	}
-}
-
-void XAnim_CalcRotDeltaDuringInternal_unsigned_char_(XAnimDeltaPartQuat *quat, const float time, int numFrames, float *rotDelta)
-{
-	XAnimTime animTime;
-	int keyFrameIndex;
-	float keyFrameLerpFrac;
-
-	if ( !quat->size )
-	{
-		Short2CopyAsVec2(quat->u.frame0, rotDelta);
-	}
-	else
-	{
-		XAnim_SetTime(time, numFrames, &animTime);
-		XAnim_GetTimeIndexCompressed_unsigned_char(
-		    &animTime,
-		    quat->u.frames.indices._1,
-		    quat->size,
-		    &keyFrameIndex,
-		    &keyFrameLerpFrac);
-		Short2LerpAsVec2(
-		    quat->u.frames.frames[keyFrameIndex],
-		    quat->u.frames.frames[keyFrameIndex + 1],
-		    keyFrameLerpFrac,
-		    rotDelta);
-	}
-}
-
-void XAnim_CalcRotDeltaDuring_unsigned_char_(XAnimDeltaPart *animDelta, const float time, int numFrames, float *rotDelta)
-{
-	if ( animDelta->quat )
-	{
-		XAnim_CalcRotDeltaDuringInternal_unsigned_char_(animDelta->quat, time, numFrames, rotDelta);
-	}
-	else
-	{
-		rotDelta[0] = 0.0;
-		rotDelta[1] = 32767.0;
-	}
-}
-
-void XAnim_CalcPosDeltaDuringInternal_unsigned_char_(XAnimDeltaPartTrans *trans, const float time, int numFrames, float *posDelta)
-{
-	XAnimTime animTime;
-	int keyFrameIndex;
-	float keyFrameLerpFrac;
-
-	if ( !trans->size )
-	{
-		VectorCopy(trans->u.frame0, posDelta);
-	}
-	else
-	{
-		XAnim_SetTime(time, numFrames, &animTime);
-		XAnim_GetTimeIndexCompressed_unsigned_char(
-		    &animTime,
-		    trans->u.frames.indices._1,
-		    trans->size,
-		    &keyFrameIndex,
-		    &keyFrameLerpFrac);
-		Vec3LerpFrom(
-		    trans->u.frames.frames[keyFrameIndex],
-		    trans->u.frames.frames[keyFrameIndex + 1],
-		    keyFrameLerpFrac,
-		    posDelta);
-	}
-}
-
-void XAnim_CalcPosDeltaDuring_unsigned_char_(XAnimDeltaPart *animDelta, const float time, int numFrames, float *posDelta)
-{
-	if ( animDelta->trans )
-		XAnim_CalcPosDeltaDuringInternal_unsigned_char_(animDelta->trans, time, numFrames, posDelta);
-	else
-		VectorClear(posDelta);
-}
-
 void XAnim_GetTimeIndex_unsigned_short_(const XAnimTime *animTime, const unsigned short *indices, int tableSize, int *keyFrameIndex, float *keyFrameLerpFrac)
 {
 	int low;
@@ -3806,104 +3926,3 @@ void XAnim_GetTimeIndex_unsigned_short_(const XAnimTime *animTime, const unsigne
 	                    / (float)(indices[index + 1] - indices[index]);
 	*keyFrameIndex = index;
 }
-
-bool XAnimIsLooped(const XAnim_s *anim, unsigned int animIndex)
-{
-	const XAnimEntry *entry;
-
-	entry = &anim->entries[animIndex];
-
-	if ( entry->numAnims )
-		return entry->u.animParent.flags & 1;
-
-	return entry->u.parts->bLoop;
-}
-
-void XAnim_GetTimeIndexCompressed_unsigned_short_(XAnimTime *animTime, const unsigned short *indices, int tableSize, int *keyFrameIndex, float *keyFrameLerpFrac)
-{
-	if ( tableSize < animTime->frameCount )
-	{
-		XAnim_GetTimeIndex_unsigned_short_(animTime, indices, tableSize, keyFrameIndex, keyFrameLerpFrac);
-	}
-	else
-	{
-		*keyFrameLerpFrac = animTime->frameFrac - (float)animTime->frameIndex;
-		*keyFrameIndex = animTime->frameIndex;
-	}
-}
-
-void XAnim_CalcRotDeltaDuringInternal_unsigned_short_(XAnimDeltaPartQuat *quat, const float time, int numFrames, float *rotDelta)
-{
-	XAnimTime animTime;
-	int keyFrameIndex;
-	float keyFrameLerpFrac;
-
-	if ( !quat->size )
-	{
-		Short2CopyAsVec2(quat->u.frame0, rotDelta);
-	}
-	else
-	{
-		XAnim_SetTime(time, numFrames, &animTime);
-		XAnim_GetTimeIndexCompressed_unsigned_short_(
-		    &animTime,
-		    quat->u.frames.indices._2,
-		    quat->size,
-		    &keyFrameIndex,
-		    &keyFrameLerpFrac);
-		Short2LerpAsVec2(
-		    quat->u.frames.frames[keyFrameIndex],
-		    quat->u.frames.frames[keyFrameIndex + 1],
-		    keyFrameLerpFrac,
-		    rotDelta);
-	}
-}
-
-void XAnim_CalcRotDeltaDuring_unsigned_short_(XAnimDeltaPart *animDelta, const float time, int numFrames, float *rotDelta)
-{
-	if ( animDelta->quat )
-	{
-		XAnim_CalcRotDeltaDuringInternal_unsigned_short_(animDelta->quat, time, numFrames, rotDelta);
-	}
-	else
-	{
-		rotDelta[0] = 0.0;
-		rotDelta[1] = 32767.0;
-	}
-}
-
-void XAnim_CalcPosDeltaDuringInternal_unsigned_short_(XAnimDeltaPartTrans *trans, const float time, int numFrames, float *posDelta)
-{
-	XAnimTime animTime;
-	int keyFrameIndex;
-	float keyFrameLerpFrac;
-
-	if ( !trans->size )
-	{
-		VectorCopy(trans->u.frame0, posDelta);
-	}
-	else
-	{
-		XAnim_SetTime(time, numFrames, &animTime);
-		XAnim_GetTimeIndexCompressed_unsigned_short_(
-		    &animTime,
-		    trans->u.frames.indices._2,
-		    trans->size,
-		    &keyFrameIndex,
-		    &keyFrameLerpFrac);
-		Vec3LerpFrom(
-		    trans->u.frames.frames[keyFrameIndex],
-		    trans->u.frames.frames[keyFrameIndex + 1],
-		    keyFrameLerpFrac,
-		    posDelta);
-	}
-}
-
-void XAnim_CalcPosDeltaDuring_unsigned_short_(XAnimDeltaPart *animDelta, const float time, int numFrames, float *posDelta)
-{
-	if ( animDelta->trans )
-		XAnim_CalcPosDeltaDuringInternal_unsigned_short_(animDelta->trans, time, numFrames, posDelta);
-	else
-		VectorClear(posDelta);
-}
-

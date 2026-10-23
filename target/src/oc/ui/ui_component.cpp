@@ -749,22 +749,6 @@ void UI_VerticalDivider::DrawTop(float x, float y, float width, float topHeight)
         this->posY = UI_Component_g.cursorPos[1] + UI_Component_g.charHeight;
 }
 
-bool UI_VerticalDivider::KeyEvent(float *point, int key)
-{
-    if (!keys[UIC_K_ALT].down || keys[UIC_K_CTRL].down || keys[UIC_K_SHIFT].down)
-        return 0;
-    switch (key)
-    {
-    case UIC_K_UPARROW:
-        this->posY -= UI_Component_g.charHeight;
-        return 1;
-    case UIC_K_DOWNARROW:
-        this->posY += UI_Component_g.charHeight;
-        return 1;
-    }
-    return 0;
-}
-
 void UI_VerticalDivider::Draw(float x, float y, float width, float height, float compX, float compY)
 {
     this->size[0] = width;
@@ -799,6 +783,22 @@ drawFull:
         this->bottomComp->Draw(x, y + this->posY, width, height - compY, 0.0f, 0.0f);
         DrawTop(x, y, width, compY);
     }
+}
+
+bool UI_VerticalDivider::KeyEvent(float *point, int key)
+{
+    if (!keys[UIC_K_ALT].down || keys[UIC_K_CTRL].down || keys[UIC_K_SHIFT].down)
+        return 0;
+    switch (key)
+    {
+    case UIC_K_UPARROW:
+        this->posY -= UI_Component_g.charHeight;
+        return 1;
+    case UIC_K_DOWNARROW:
+        this->posY += UI_Component_g.charHeight;
+        return 1;
+    }
+    return 0;
 }
 
 UI_Component *UI_VerticalDivider::GetCompAtLocation(float *point)

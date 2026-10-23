@@ -3259,20 +3259,6 @@ void GScr_asin()
 	*(float *)&v3 = *(float *)&v3 * DEGINRAD;
 	Scr_AddFloat(*(float *)&v3);
 }
-
-/*
-===============
-GScr_atan
-===============
-*/
-void GScr_atan()
-{
-	int v3;
-
-	*(float *)&v3 = atan(Scr_GetFloat(0));
-	*(float *)&v3 = *(float *)&v3 * DEGINRAD;
-	Scr_AddFloat(*(float *)&v3);
-}
 void GScr_acos()
 {
 	float v4;
@@ -3287,6 +3273,20 @@ void GScr_acos()
 	v4 = acos(v4);
 	v4 = v4 * DEGINRAD;
 	Scr_AddFloat(v4);
+}
+
+/*
+===============
+GScr_atan
+===============
+*/
+void GScr_atan()
+{
+	int v3;
+
+	*(float *)&v3 = atan(Scr_GetFloat(0));
+	*(float *)&v3 = *(float *)&v3 * DEGINRAD;
+	Scr_AddFloat(*(float *)&v3);
 }
 
 /*

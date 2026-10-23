@@ -645,6 +645,68 @@ void UI_UpdateTime(int realtime)
         sum = 1;
     uiInfo->uiDC.FPS = (float)(4000 / sum);
 }
+void UI_Refresh(void)
+{
+#if COD2_TRACE
+    static int refreshTraceCount;
+    static int fileTraceCount;
+#endif
+
+    if (Menu_Count(&uiInfo->uiDC) <= 0)
+        return;
+
+#if COD2_TRACE
+    if (fileTraceCount < 40) {
+        FILE *f = fopen("x64_ui_trace.txt", fileTraceCount ? "a" : "w");
+        if (f) {
+            int i;
+            fprintf(f, "ui[%d] active=%d menuCount=%d openCount=%d keyCatchers=0x%x\n",
+                    fileTraceCount, uiInfo->currentMenuType, uiInfo->uiDC.menuCount,
+                    uiInfo->uiDC.openMenuCount, (clients)->keyCatchers);
+            for (i = 0; i < uiInfo->uiDC.openMenuCount && i < 16; i++) {
+                menuDef_t *menu = uiInfo->uiDC.menuStack[i];
+                fprintf(f, "  stack[%d]=%s flags=0x%x full=%d\n",
+                        i,
+                        menu && menu->window.name ? menu->window.name : "<null>",
+                        menu ? menu->window.dynamicFlags[0] : 0,
+                        menu ? menu->fullScreen : 0);
+            }
+            fclose(f);
+        }
+        fileTraceCount++;
+    }
+
+    if (refreshTraceCount < 80 && (uiInfo->currentMenuType || uiInfo->uiDC.openMenuCount > 0)) {
+        int i;
+        if (getenv("MTRACE"))
+            Com_Printf("[menu-trace] UI_Refresh active=%d menuCount=%d openCount=%d",
+                       uiInfo->currentMenuType, uiInfo->uiDC.menuCount, uiInfo->uiDC.openMenuCount);
+        for (i = 0; i < uiInfo->uiDC.openMenuCount && i < 16; ++i) {
+            menuDef_t *menu = uiInfo->uiDC.menuStack[i];
+            Com_Printf(" stack[%d]=%s", i, menu && menu->window.name ? menu->window.name : "<null>");
+        }
+        Com_Printf("\n");
+        ++refreshTraceCount;
+    }
+#endif
+
+    Menu_PaintAll(&uiInfo->uiDC);
+    UI_DoServerRefresh();
+    UI_BuildServerStatus(0);
+    UI_BuildFindPlayerList();
+
+#if COD2_FEATURE_GAMEPAD
+
+    UI_ConsoleMode_DrawGlyphs(uiInfo);
+    if (UI_ConsoleMode_SuppressCursor())
+        return;
+#endif
+
+    UI_DrawHandlePic((float)(uiInfo->uiDC.cursorx - 16),
+                     (float)(uiInfo->uiDC.cursory - 16),
+                     32.0f, 32.0f, 4, 4, 0,
+                     sharedUiInfo.assets.cursor);
+}
 
 void UI_Shutdown(void)
 {
@@ -3472,68 +3534,6 @@ void UI_DrawConnectScreen(void)
 }
 
 
-void UI_Refresh(void)
-{
-#if COD2_TRACE
-    static int refreshTraceCount;
-    static int fileTraceCount;
-#endif
-
-    if (Menu_Count(&uiInfo->uiDC) <= 0)
-        return;
-
-#if COD2_TRACE
-    if (fileTraceCount < 40) {
-        FILE *f = fopen("x64_ui_trace.txt", fileTraceCount ? "a" : "w");
-        if (f) {
-            int i;
-            fprintf(f, "ui[%d] active=%d menuCount=%d openCount=%d keyCatchers=0x%x\n",
-                    fileTraceCount, uiInfo->currentMenuType, uiInfo->uiDC.menuCount,
-                    uiInfo->uiDC.openMenuCount, (clients)->keyCatchers);
-            for (i = 0; i < uiInfo->uiDC.openMenuCount && i < 16; i++) {
-                menuDef_t *menu = uiInfo->uiDC.menuStack[i];
-                fprintf(f, "  stack[%d]=%s flags=0x%x full=%d\n",
-                        i,
-                        menu && menu->window.name ? menu->window.name : "<null>",
-                        menu ? menu->window.dynamicFlags[0] : 0,
-                        menu ? menu->fullScreen : 0);
-            }
-            fclose(f);
-        }
-        fileTraceCount++;
-    }
-
-    if (refreshTraceCount < 80 && (uiInfo->currentMenuType || uiInfo->uiDC.openMenuCount > 0)) {
-        int i;
-        if (getenv("MTRACE"))
-            Com_Printf("[menu-trace] UI_Refresh active=%d menuCount=%d openCount=%d",
-                       uiInfo->currentMenuType, uiInfo->uiDC.menuCount, uiInfo->uiDC.openMenuCount);
-        for (i = 0; i < uiInfo->uiDC.openMenuCount && i < 16; ++i) {
-            menuDef_t *menu = uiInfo->uiDC.menuStack[i];
-            Com_Printf(" stack[%d]=%s", i, menu && menu->window.name ? menu->window.name : "<null>");
-        }
-        Com_Printf("\n");
-        ++refreshTraceCount;
-    }
-#endif
-
-    Menu_PaintAll(&uiInfo->uiDC);
-    UI_DoServerRefresh();
-    UI_BuildServerStatus(0);
-    UI_BuildFindPlayerList();
-
-#if COD2_FEATURE_GAMEPAD
-
-    UI_ConsoleMode_DrawGlyphs(uiInfo);
-    if (UI_ConsoleMode_SuppressCursor())
-        return;
-#endif
-
-    UI_DrawHandlePic((float)(uiInfo->uiDC.cursorx - 16),
-                     (float)(uiInfo->uiDC.cursory - 16),
-                     32.0f, 32.0f, 4, 4, 0,
-                     sharedUiInfo.assets.cursor);
-}
 
 float UI_GetBlurRadius(void)
 {

@@ -123,18 +123,6 @@ void Menu_SetCursorItem(menuDef_t *menu, int cursorItem)
 
 extern uiInfo_t *uiInfo;
 
-// retail 0x540670, unreferenced; name unknown: cursor inside rect
-qboolean UI_CursorInRect_540670(int x, int y, int w, int h)
-{
-    if (uiInfo->uiDC.cursorx < x || uiInfo->uiDC.cursory < y
-        || uiInfo->uiDC.cursorx > x + w || uiInfo->uiDC.cursory > y + h)
-        return 0;
-    return 1;
-}
-void Window_SetOffsetTime(Window *w, int offsetTime)
-{
-    w->offsetTime[0] = offsetTime;
-}
 
 
 // retail 0x5407e0, unreferenced, name unknown: item to the left of the cursor item
@@ -505,10 +493,6 @@ qboolean Float_Parse(const char **p, float *f)
     return 1;
 }
 
-void Window_SetRect(Window *w, const UiRectangle *rect)
-{
-    w->rect[0] = *rect;
-}
 
 qboolean Rect_Parse(const char **p, rectDef_t *r)
 {

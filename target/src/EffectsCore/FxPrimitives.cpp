@@ -372,6 +372,7 @@ public:
 	static FxBoltFrame *g_mFrameList;
 	static FxMemMgr<FxBoltFrame> s_memMgr;
 };
+FxMemMgr<FxBoltFrame> FxBoltFrame::s_memMgr;
 
 class FxBoltFramePtr
 {
@@ -512,6 +513,7 @@ public:
 
 	static FxMemMgr<Effect> s_memMgr;
 };
+FxMemMgr<Effect> Effect::s_memMgr;
 
 class Light : public Effect
 {
@@ -543,6 +545,7 @@ public:
 
 	static FxMemMgr<Light> s_memMgr;
 };
+FxMemMgr<Light> Light::s_memMgr;
 
 class Flash : public Light
 {
@@ -641,6 +644,7 @@ public:
 
 	static FxMemMgr<Particle> s_memMgr;
 };
+FxMemMgr<Particle> Particle::s_memMgr;
 
 class Cloud : public Particle
 {
@@ -673,6 +677,7 @@ public:
 
 	static FxMemMgr<Cloud> s_memMgr;
 };
+FxMemMgr<Cloud> Cloud::s_memMgr;
 
 class Line : public Particle
 {
@@ -695,6 +700,7 @@ public:
 
 	static FxMemMgr<Line> s_memMgr;
 };
+FxMemMgr<Line> Line::s_memMgr;
 
 class OrientedParticle : public Particle
 {
@@ -716,6 +722,7 @@ public:
 
 	static FxMemMgr<OrientedParticle> s_memMgr;
 };
+FxMemMgr<OrientedParticle> OrientedParticle::s_memMgr;
 
 class Tail : public Particle
 {
@@ -747,6 +754,7 @@ public:
 
 	static FxMemMgr<Tail> s_memMgr;
 };
+FxMemMgr<Tail> Tail::s_memMgr;
 
 class Cylinder : public Tail
 {
@@ -766,6 +774,7 @@ public:
 
 	static FxMemMgr<Cylinder> s_memMgr;
 };
+FxMemMgr<Cylinder> Cylinder::s_memMgr;
 
 class Emitter : public Particle
 {
@@ -804,6 +813,7 @@ public:
 
 	static FxMemMgr<Emitter> s_memMgr;
 };
+FxMemMgr<Emitter> Emitter::s_memMgr;
 
 class FxArchive
 {
@@ -904,16 +914,6 @@ void OrientationDirToWorld( const orientation_t *orient, const float *dir, float
 void OrientationDirToLocal( const orientation_t *orient, const float *dir, float *out );
 
 FxBoltFrame *FxBoltFrame::g_mFrameList = NULL;
-FxMemMgr<FxBoltFrame> FxBoltFrame::s_memMgr;
-FxMemMgr<Effect> Effect::s_memMgr;
-FxMemMgr<Light> Light::s_memMgr;
-FxMemMgr<Particle> Particle::s_memMgr;
-FxMemMgr<Line> Line::s_memMgr;
-FxMemMgr<OrientedParticle> OrientedParticle::s_memMgr;
-FxMemMgr<Tail> Tail::s_memMgr;
-FxMemMgr<Cylinder> Cylinder::s_memMgr;
-FxMemMgr<Emitter> Emitter::s_memMgr;
-FxMemMgr<Cloud> Cloud::s_memMgr;
 
 static void FX_ColorToBytes( const vec3_t rgb, unsigned char *out )
 {

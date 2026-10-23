@@ -306,6 +306,16 @@ FxEffectDef *FX_ParseEffect( GenericParser2 *parser, const char *name )
 	return fx;
 }
 
+void MediaHandles::Shutdown()
+{
+	if ( !mMediaList.elements )
+		return;
+	Z_FreeInternal(mMediaList.elements);
+	mMediaList.elements = NULL;
+	mMediaList.size = 0;
+	mMediaList.maxSize = 0;
+}
+
 void MediaHandles::AddHandle( TMediaElement item )
 {
 	TMediaElement *elements;
@@ -342,15 +352,3 @@ void FX_StripExtensionLower_497d90(const char *name, char *out)
 	Com_StripExtension(name, out);
 	strlwr(out);
 }
-
-void MediaHandles::Shutdown()
-{
-	if ( !mMediaList.elements )
-		return;
-	Z_FreeInternal(mMediaList.elements);
-	mMediaList.elements = NULL;
-	mMediaList.size = 0;
-	mMediaList.maxSize = 0;
-}
-
-
