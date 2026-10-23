@@ -1,7 +1,7 @@
 #include "common_types.h"
 #include "imports.h"
 
-extern ScreenPlacementGlob spGlob;
+ScreenPlacementGlob spGlob;
 #define SP (&spGlob)
 
 extern clientStatic_t cls;

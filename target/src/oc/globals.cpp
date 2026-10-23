@@ -149,7 +149,6 @@ LegacyHacks *legacyHacks = &legacyHacksData;
 static byte *net_profile_dvar;
 short int partial_audio_buffer[640];
 static byte *record_callback_ptr;
-ScreenPlacementGlob spGlob;
 static const void *speex_nb_mode_ptr;
 static int *speex_quality_ptr;
 static const void *speex_uwb_mode_ptr;
