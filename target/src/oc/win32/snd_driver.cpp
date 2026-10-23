@@ -36,13 +36,11 @@ extern "C" __declspec(dllimport) long unsigned int __stdcall AIL_sample_status(v
 extern "C" __declspec(dllimport) void __stdcall AIL_end_3D_sample(void *S);
 extern "C" __declspec(dllimport) void __stdcall AIL_stop_3D_sample(void *S);
 extern "C" __declspec(dllimport) void __stdcall AIL_resume_3D_sample(void *S);
-extern "C" __declspec(dllimport) long unsigned int __stdcall AIL_3D_sample_status(void *S);
 extern "C" __declspec(dllimport) void __stdcall AIL_close_stream(void *stream);
 extern "C" __declspec(dllimport) void __stdcall AIL_pause_stream(void *stream, long int onoff);
 extern "C" __declspec(dllimport) long int __stdcall AIL_stream_status(void *stream);
 extern "C" __declspec(dllimport) void __stdcall AIL_sample_volume_levels(void *S, float *left_level, float *right_level);
 extern "C" __declspec(dllimport) void __stdcall AIL_stream_volume_levels(void *S, float *left_level, float *right_level);
-extern "C" __declspec(dllimport) void __stdcall AIL_sample_ms_position(void *S, long int *total_milliseconds, long int *current_milliseconds);
 extern "C" __declspec(dllimport) void __stdcall AIL_stream_ms_position(void *S, long int *total_milliseconds, long int *current_milliseconds);
 extern "C" __declspec(dllimport) void __stdcall AIL_close_3D_provider(void *lib);
 extern "C" __declspec(dllimport) void __stdcall AIL_shutdown(void);
@@ -53,7 +51,9 @@ extern "C" __declspec(dllimport) long unsigned int __stdcall AIL_3D_sample_offse
 extern "C" __declspec(dllimport) void __stdcall AIL_3D_position(void *obj, float *X, float *Y, float *Z);
 extern Bool SND_IsAliasChannel3D(int channel);
 extern "C" __declspec(dllimport) void __stdcall AIL_release_sample_handle(void *S);
+extern "C" __declspec(dllimport) void __stdcall AIL_sample_ms_position(void *S, long int *total_milliseconds, long int *current_milliseconds);
 extern "C" __declspec(dllimport) void *__stdcall AIL_allocate_sample_handle(void *dig);
+extern "C" __declspec(dllimport) long unsigned int __stdcall AIL_3D_sample_status(void *S);
 extern "C" __declspec(dllimport) void *__stdcall AIL_allocate_3D_sample_handle(void *provider);
 extern "C" __declspec(dllimport) void __stdcall AIL_init_sample(void *S);
 extern "C" __declspec(dllimport) void __stdcall AIL_set_sample_type(void *S, int format, int flags);
