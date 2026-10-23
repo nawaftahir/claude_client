@@ -11,6 +11,16 @@ void TempMemorySetPos( char *pos );
 
 /*
 ==============
+TempMemoryReset
+==============
+*/
+void TempMemoryReset()
+{
+	currentPos = 0;
+}
+
+/*
+==============
 TempMalloc
 ==============
 */
@@ -43,16 +53,6 @@ TempMallocAlignStrict
 char *TempMallocAlignStrict( int len )
 {
 	return TempMalloc( len );
-}
-
-/*
-==============
-TempMemoryReset
-==============
-*/
-void TempMemoryReset()
-{
-	currentPos = 0;
 }
 
 /*

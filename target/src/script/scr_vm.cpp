@@ -240,18 +240,22 @@ Scr_AddInt
 */
 
 
-static __forceinline unsigned int GetVariableI2NI( unsigned int parentId, unsigned int name )
+static __forceinline unsigned __int64 Sys_Rdtsc()
 {
-	unsigned int hash = ( name + parentId ) % ( VARIABLELIST_CHILD_SIZE - 1 ) + 1;
-	unsigned int newIndex = FindVariableIndexInternal( name, hash );
-
-	if ( !newIndex )
-	{
-		newIndex = GetNewVariableIndexInternal2NI( parentId, name, hash );
-	}
-
-	return scrVarGlob.variableList[ newIndex ].hash.id;
+	__asm rdtsc
 }
+#define GET_VARIABLE_I2NI_INLINE(res, a_parentId, a_name) \
+	{ \
+		unsigned int parentId_ = (a_parentId); \
+		unsigned int name_ = (a_name); \
+		unsigned int hash_ = ( name_ + parentId_ ) % ( VARIABLELIST_CHILD_SIZE - 1 ) + 1; \
+		unsigned int newIndex_ = FindVariableIndexInternal( name_, hash_ ); \
+		if ( !newIndex_ ) \
+		{ \
+			newIndex_ = GetNewVariableIndexInternal2NI( parentId_, name_, hash_ ); \
+		} \
+		(res) = scrVarGlob.variableList[ newIndex_ ].hash.id; \
+	}
 /*
 ==============
 Scr_GetLocalVarAtIndex
@@ -536,10 +540,6 @@ unsigned int GetDummyFieldValue( void )
 	return scrVarPub.tempVariable;
 }
 
-static __forceinline unsigned __int64 Sys_Rdtsc()
-{
-	__asm rdtsc
-}
 /*
 ==============
 VM_Execute
@@ -2982,7 +2982,9 @@ next:
 		tempValue5.type = VAR_STACK;
 		tempValue5.u.stackValue = stackValue;
 
-		stackId = GetNewObjectVariable(GetArray(GetVariableI2NI(scrVarPub.timeArrayId, scrVarPub.time)), startLocalId);
+		unsigned int timeVarId;
+		GET_VARIABLE_I2NI_INLINE(timeVarId, scrVarPub.timeArrayId, scrVarPub.time);
+		stackId = GetNewObjectVariable(GetArray(timeVarId), startLocalId);
 		SetNewVariableValue(stackId, &tempValue5);
 
 		tempValue = GetVariableValueAddress(stackId);

@@ -171,3 +171,12 @@ noSSE:
 	return result;
 }
 
+// retail 0x4619d0 and 0x4619e0, unreferenced empty functions; names unknown
+void Sys_Stub_4619d0( void )
+{
+}
+
+void Sys_Stub_4619e0( void )
+{
+}
+

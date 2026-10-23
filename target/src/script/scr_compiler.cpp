@@ -6058,14 +6058,5 @@ void Scr_CompileShutdown()
 	}
 }
 
-/*
-============
-AddRefToValue
-============
-*/
-void AddRefToValue( VariableValue *value )
-{
-	AddRefToValue(value->type, value->u);
-}
 
 

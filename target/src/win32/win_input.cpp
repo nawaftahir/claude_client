@@ -262,6 +262,11 @@ void IN_Startup( void )
 	in_mouse->modified = false;
 }
 
+void IN_Shutdown( void )
+{
+	IN_DeactivateMouse();
+}
+
 /*
 ===========
 IN_Init
@@ -327,9 +332,4 @@ void IN_Frame( void )
 void IN_ClearStates( void )
 {
 	s_wmv.oldButtonState = 0;
-}
-
-void IN_Shutdown( void )
-{
-	IN_DeactivateMouse();
 }

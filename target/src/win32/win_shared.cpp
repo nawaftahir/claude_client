@@ -26,6 +26,15 @@ int Sys_MillisecondsRaw( void )
 	return timeGetTime();
 }
 
+// Q3 win_shared.c; unreferenced in this build (retail 0x465010)
+long fastftol( float f )
+{
+	static int tmp;
+	__asm fld f
+	__asm fistp tmp
+	__asm mov eax, tmp
+}
+
 /*
 ================
 Sys_SnapVector

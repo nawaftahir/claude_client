@@ -168,20 +168,20 @@ unsigned int FindVariableIndexHash( unsigned int parentId, unsigned int name );
 unsigned int GetNewVariableIndexInternal3( unsigned int parentId, unsigned int name, unsigned int index );
 
 // retail inlines these at the first AnimTreeParseInternal sites only
-static __forceinline bool Scr_IsIdentifierInl( const char *token )
-{
-	while ( token[0] )
-	{
-		if ( !isalnum(token[0]) && token[0] != '_' )
-		{
-			return false;
-		}
-
-		token++;
+#define SCR_IS_IDENTIFIER_INLINE(res, token) \
+	{ \
+		const char *p_ = (token); \
+		(res) = true; \
+		while ( p_[0] ) \
+		{ \
+			if ( !isalnum(p_[0]) && p_[0] != '_' ) \
+			{ \
+				(res) = false; \
+				break; \
+			} \
+			p_++; \
+		} \
 	}
-
-	return true;
-}
 
 #define GET_VARIABLE_INLINE(res, a_parentId, a_name) \
 	{ \
@@ -294,7 +294,10 @@ bool AnimTreeParseInternal( unsigned int parentNode, unsigned int names, bool bI
 			break;
 		}
 
-		if ( Scr_IsIdentifierInl(token) )
+		bool isIdent_;
+		SCR_IS_IDENTIFIER_INLINE(isIdent_, token);
+
+		if ( isIdent_ )
 		{
 			if ( bResolve )
 			{
@@ -320,7 +323,9 @@ bool AnimTreeParseInternal( unsigned int parentNode, unsigned int names, bool bI
 				continue;
 			}
 
-			if ( Scr_IsIdentifierInl(token) )
+			SCR_IS_IDENTIFIER_INLINE(isIdent_, token);
+
+			if ( isIdent_ )
 			{
 				AnimTreeCompileError("FIXME: aliases not yet implemented");
 			}
@@ -895,3 +900,12 @@ void Scr_FindAnim( const char *filename, const char *animName, scr_anim_s *anim,
 	SL_RemoveRefToString(name);
 }
 
+/*
+============
+AddRefToValue
+============
+*/
+void AddRefToValue( VariableValue *value )
+{
+	AddRefToValue(value->type, value->u);
+}
