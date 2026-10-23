@@ -1774,9 +1774,9 @@ modelSet:
 			XAnimCalc(obj, i + animEntry->u.animParent.children, firstWeight, calcBuffer, 1, 1, animInfo, bufferIndex);
 			XAnimCalc(obj, j + animEntry->u.animParent.children, secondWeight, calcBuffer, 0, 1, animInfo, bufferIndex);
 
-			for ( ++j; j < numAnims; ++j )
+			for ( i = j + 1; i < numAnims; ++i )
 			{
-				infoIndex = tree->infoArray[j + animEntry->u.animParent.children];
+				infoIndex = tree->infoArray[i + animEntry->u.animParent.children];
 
 				if ( !infoIndex )
 					continue;
@@ -1786,7 +1786,7 @@ modelSet:
 				if ( secondWeight == 0.0f )
 					continue;
 
-				XAnimCalc(obj, j + animEntry->u.animParent.children, secondWeight, calcBuffer, 0, 1, animInfo, bufferIndex);
+				XAnimCalc(obj, i + animEntry->u.animParent.children, secondWeight, calcBuffer, 0, 1, animInfo, bufferIndex);
 			}
 
 			if ( !bNormQuat )
@@ -1814,7 +1814,10 @@ modelSet:
 					scale = Vec4LengthSq(rotTransArray->quat);
 
 					if ( scale != 0.0f )
-						VectorScale4(rotTransArray->quat, I_rsqrt(scale) * weightScale, rotTransArray->quat);
+					{
+						scale = I_rsqrt(scale) * weightScale;
+						VectorScale4(rotTransArray->quat, scale, rotTransArray->quat);
+					}
 
 					if ( rotTransArray->transWeight != 0.0f )
 					{
