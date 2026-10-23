@@ -131,6 +131,53 @@ static int CL_CompareAdrSigned(const void *a, const void *b)
     return NET_CompareAdrSigned(&serverA->adr, &serverB->adr);
 }
 
+static __declspec(noinline) qboolean NET_CompareAdrNI(netadr_t a, netadr_t b);
+void CL_SetServerInfo(serverInfo_t *server, const char *info, int ping);
+
+void CL_SetServerInfoByAddress(netadr_t from, const char *info, int ping)
+{
+    int i;
+    int low;
+    int high;
+    int compare;
+
+    Com_PumpMessageLoop();
+
+    for (i = 0; i < 128; i++) {
+        if (NET_CompareAdr(from, cls.localServers[i].adr))
+            CL_SetServerInfo(&cls.localServers[i], info, ping);
+    }
+
+    // global servers are sorted by address
+    low = 0;
+    high = cls.numglobalservers;
+    while (low < high) {
+        i = (high + low) / 2;
+        compare = NET_CompareAdrSigned(&from, &cls.globalServers[i].adr);
+        if (compare < 0) {
+            high = i;
+        } else if (compare > 0) {
+            low = i + 1;
+        } else {
+            // back up to the first matching entry
+            do {
+                i--;
+            } while (i >= 0 && !NET_CompareAdrSigned(&from, &cls.globalServers[i].adr));
+            i++;
+            do {
+                CL_SetServerInfo(&cls.globalServers[i], info, ping);
+                i++;
+            } while (i < cls.numglobalservers && !NET_CompareAdrSigned(&from, &cls.globalServers[i].adr));
+            break;
+        }
+    }
+
+    for (i = 0; i < 128; i++) {
+        if (NET_CompareAdrNI(from, cls.favoriteServers[i].adr))
+            CL_SetServerInfo(&cls.favoriteServers[i], info, ping);
+    }
+}
+
 void CL_SetServerInfo(serverInfo_t *server, const char *info, int ping)
 {
     if (server == NULL) {
@@ -1001,49 +1048,6 @@ void CL_ClearMutedList(void)
 static __declspec(noinline) qboolean NET_CompareAdrNI(netadr_t a, netadr_t b)
 {
     return NET_CompareAdrSigned(&a, &b) == 0;
-}
-void CL_SetServerInfoByAddress(netadr_t from, const char *info, int ping)
-{
-    int i;
-    int low;
-    int high;
-    int compare;
-
-    Com_PumpMessageLoop();
-
-    for (i = 0; i < 128; i++) {
-        if (NET_CompareAdr(from, cls.localServers[i].adr))
-            CL_SetServerInfo(&cls.localServers[i], info, ping);
-    }
-
-    // global servers are sorted by address
-    low = 0;
-    high = cls.numglobalservers;
-    while (low < high) {
-        i = (high + low) / 2;
-        compare = NET_CompareAdrSigned(&from, &cls.globalServers[i].adr);
-        if (compare < 0) {
-            high = i;
-        } else if (compare > 0) {
-            low = i + 1;
-        } else {
-            // back up to the first matching entry
-            do {
-                i--;
-            } while (i >= 0 && !NET_CompareAdrSigned(&from, &cls.globalServers[i].adr));
-            i++;
-            do {
-                CL_SetServerInfo(&cls.globalServers[i], info, ping);
-                i++;
-            } while (i < cls.numglobalservers && !NET_CompareAdrSigned(&from, &cls.globalServers[i].adr));
-            break;
-        }
-    }
-
-    for (i = 0; i < 128; i++) {
-        if (NET_CompareAdrNI(from, cls.favoriteServers[i].adr))
-            CL_SetServerInfo(&cls.favoriteServers[i], info, ping);
-    }
 }
 qboolean CL_CDKeyValidate(const char *key, const char *checksum)
 {

@@ -243,10 +243,6 @@ void CG_DrawStringExt(float x, float y, const char *string, const vec_t *setColo
 
     UI_DrawText(string, 0x7fffffff, font, x, baselineY, 1, 1, fontScale, setColor, style);
 }
-int CG_DrawSmallDevStringColor(float x, float y, const char *s, const vec_t *color, int align)
-{
-    return CG_DrawDevString(x, y, s, color, align, cgs->media.smallDevFont, 0);
-}
 
 int CG_DrawDevString(float x, float y, const char *s, const vec_t *color, int align, FontHandle font, int style)
 {
@@ -300,6 +296,20 @@ int CG_DrawSmallDevString(float x, float y, const char *s, float alpha, int alig
     c[3] = alpha;
 
     return CG_DrawDevString(x, y, s, c, align, cgs->media.smallDevFont, 0);
+}
+int CG_DrawSmallDevStringColor(float x, float y, const char *s, const vec_t *color, int align)
+{
+    return CG_DrawDevString(x, y, s, color, align, cgs->media.smallDevFont, 0);
+}
+int CG_DrawBigDevString(float x, float y, const char *s, float alpha, int align)
+{
+    vec4_t c;
+    c[0] = 1.0f;
+    c[1] = 1.0f;
+    c[2] = 1.0f;
+    c[3] = alpha;
+
+    return CG_DrawDevString(x, y, s, c, align, cgs->media.bigDevFont, 0);
 }
 int CG_DrawBigDevStringColor(float x, float y, const char *s, const vec_t *color, int align)
 {
@@ -554,15 +564,4 @@ void CG_UpdateCompPointerOrientation(void)
     }
 
     cg->compPointerYaw = AngleNormalize360(fDiff + cg->refdefViewAngles[1]);
-}
-
-int CG_DrawBigDevString(float x, float y, const char *s, float alpha, int align)
-{
-    vec4_t c;
-    c[0] = 1.0f;
-    c[1] = 1.0f;
-    c[2] = 1.0f;
-    c[3] = alpha;
-
-    return CG_DrawDevString(x, y, s, c, align, cgs->media.bigDevFont, 0);
 }

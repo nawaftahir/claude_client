@@ -7,9 +7,16 @@ extern void Com_SafeClientDObjFree(int entNum);
 extern void XAnimFreeTree(XAnimTree_s *tree, void (*Free)(void *, int));
 extern void MT_Free(void *ptr, int size);
 
+void CG_SafeDObjFree(int iEntNum);
 void CGScr_LoadAnimTrees(void)
 {
     Scr_BeginLoadAnimTrees(0);
+}
+void CG_FreeClientDObjInfo(void)
+{
+    int i;
+    for (i = 0; i < 64; i++)
+        CG_SafeDObjFree(i);
 }
 
 void CG_SetDObjInfo(int iEntNum, int iEntType, struct XModel *pXModel)
@@ -38,12 +45,6 @@ void CG_SafeDObjFree(int iEntNum)
     }
 }
 
-void CG_FreeClientDObjInfo(void)
-{
-    int i;
-    for (i = 0; i < 64; i++)
-        CG_SafeDObjFree(i);
-}
 
 void CG_FreeEntityDObjInfo(void)
 {

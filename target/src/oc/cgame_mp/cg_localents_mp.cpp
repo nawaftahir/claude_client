@@ -27,19 +27,8 @@ void CG_AddMovingTracer(localEntity_t *le);
 localEntity_t *CG_AllocLocalEntity(void);
 void CG_AddLocalEntities(void);
 
-static void CG_FreeLocalEntity(localEntity_t *le)
-{
-    if (!le->prev) {
-        Com_Error(ERR_DROP, "\025CG_FreeLocalEntity: not active");
-    }
 
-    le->prev->next = le->next;
-    le->next->prev = le->prev;
-
-    le->next = cg_freeLocalEntities;
-    cg_freeLocalEntities = le;
-}
-
+static void CG_FreeLocalEntity(localEntity_t *le);
 void CG_InitLocalEntities(void)
 {
     int i;
@@ -53,6 +42,18 @@ void CG_InitLocalEntities(void)
     for (i = 0; i < 127; i++) {
         cg_localEntities[i].next = &cg_localEntities[i + 1];
     }
+}
+static void CG_FreeLocalEntity(localEntity_t *le)
+{
+    if (!le->prev) {
+        Com_Error(ERR_DROP, "\025CG_FreeLocalEntity: not active");
+    }
+
+    le->prev->next = le->next;
+    le->next->prev = le->prev;
+
+    le->next = cg_freeLocalEntities;
+    cg_freeLocalEntities = le;
 }
 
 localEntity_t *CG_AllocLocalEntity(void)

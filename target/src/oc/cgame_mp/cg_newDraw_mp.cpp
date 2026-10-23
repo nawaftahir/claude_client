@@ -149,15 +149,7 @@ static void CG_DrawCursorhint(const rectDef_t *rect, struct Font_s *font, float 
 void CG_DrawMantleHint(const rectDef_t *rect, struct Font_s *font, float fontscale, int textStyle);
 const char *CG_GetTranslatedLocationString(int iLocation);
 static void __attribute_regparm__(3) CG_DrawScore(int team, const rectDef_t *rect, struct Font_s *font, float scale, vec_t *color, MaterialHandle material, int textStyle);
-// retail 0x4c0140, empty and unreferenced; name unknown
-void CG_Stub_4c0140(void)
-{
-}
 
-// retail 0x4c0150, empty and unreferenced; name unknown
-void CG_Stub_4c0150(void)
-{
-}
 
 const char *CG_GetKillerText(void);
 const char *CG_GameTypeString(void);
@@ -1509,6 +1501,14 @@ static void CG_DrawTeamColor(const rectDef_t *rect, vec_t *color)
 {
     if (cg->bgs.clientinfo[cg->nextSnap->ps.clientNum].infoValid)
         CG_DrawTeamBackground(rect->x, rect->y, rect->w, rect->h, color[3], cg->bgs.clientinfo[cg->nextSnap->ps.clientNum].team);
+}
+// retail 0x4c0140, empty and unreferenced; name unknown
+void CG_Stub_4c0140(void)
+{
+}
+// retail 0x4c0150, empty and unreferenced; name unknown
+void CG_Stub_4c0150(void)
+{
 }
 
 const char *CG_GetKillerText(void)
