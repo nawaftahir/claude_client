@@ -426,8 +426,7 @@ static __declspec(noinline) Bool SND_AnyActiveListeners(void)
     return 0;
 }
 
-// retail 0x44a6d0, unreferenced; name unknown
-int SND_Stub_44a6d0(void)
+int SND_GetListenerIndexNearestToOrigin(const vec_t *origin)
 {
     return 0;
 }
@@ -2118,13 +2117,13 @@ static __attribute_regparm__(2)
     pAlias1 = SND_RestoreSoundAlias(memFile);
     SND_RestoreChanInfo(&chaninfo, memFile);
     MemFile_ReadData(memFile, sizeof(info), &info);
+    if (!SND_ValidateSoundAliasBlend(pAlias0, pAlias1, 0))
+        return 1;
     type = (pAlias0->flags & 0x60) >> 5;
     if (type != 2 && type != 3)
         return 1;
     type = (pAlias1->flags & 0x60) >> 5;
     if (type != 2 && type != 3)
-        return 1;
-    if (!SND_ValidateSoundAliasBlend(pAlias0, pAlias1, 0))
         return 1;
     if (channel < 0) {
         SND_StartAliasStream(pAlias0, pAlias1, chaninfo.lerp, chaninfo.entnum, info.org, info.basevolume, 1.0f, 0, info.fraction, 0, &channel, (snd_alias_system_t)(1));
@@ -2376,10 +2375,6 @@ int SND_GetSoundOverlay(snd_overlay_type_t type, snd_overlay_info_t *info, int m
     }
 }
 
-int SND_GetListenerIndexNearestToOrigin(const vec_t *origin)
-{
-    return 0;
-}
 
 
 // retail 0x44cd50, unreferenced; name unknown (busy and not delayed)
