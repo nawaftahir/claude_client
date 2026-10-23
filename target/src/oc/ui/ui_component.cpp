@@ -231,12 +231,25 @@ void UI_Component::Init()
     this->selectionParent = NULL;
 }
 
+void UI_Component::AddText(const char *text)
+{
+}
+
+UI_Component::~UI_Component()
+{
+}
+
 
 UI_Component *UI_Component::GetCompAtLocation(float *point)
 {
     if (point[0] >= 0.0f && point[0] < this->size[0] && point[1] >= 0.0f && point[1] < this->size[1])
         return this;
     return NULL;
+}
+
+void UI_LinesComponent::ClearFocus()
+{
+    this->focusOnSelectedLine = 0;
 }
 
 void UI_ScrollPane::Init()
@@ -804,18 +817,5 @@ UI_Component *UI_VerticalDivider::GetCompAtLocation(float *point)
         point[1] -= this->posY;
     }
     return this->bottomComp->GetCompAtLocation(point);
-}
-
-void UI_Component::AddText(const char *text)
-{
-}
-
-void UI_LinesComponent::ClearFocus()
-{
-    this->focusOnSelectedLine = 0;
-}
-
-UI_Component::~UI_Component()
-{
 }
 
