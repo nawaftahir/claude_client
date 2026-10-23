@@ -89,3 +89,9 @@ _$E1
 ?CG_CalcViewValues@@YAXXZ
 # su FAST_CEIL macro in g_hudelem, no FastCeil body: whole 62.378->76.322%; SetClock address-free insns identical to retail
 ?HECmd_SetClock_Internal@@YAXUscr_entref_t@@HPBD@Z
+# sw UI_Init expands retail's inlined dvar lookups (dvar_find.inl): whole 76.446->76.766%; callers lose tail-call/align until the 0x414->0x40c frame is fixed
+?Com_ShutdownInternal@@YAXPBD@Z
+?CL_StartHunkUsers@@YAXXZ
+?SV_KillServer_f@@YAXXZ
+?CL_InitUI@@YAXXZ
+?Com_Shutdown@@YAXPBD@Z

@@ -28,7 +28,7 @@ static unsigned char unusedTable[152] =
 	0x98, 0x6a, 0x7c, 0x4e, 0x76, 0x50, 0x1c, 0x2a
 };
 
-static dvar_t *dvarHashTable[FILE_HASH_SIZE];
+dvar_t *dvarHashTable[FILE_HASH_SIZE];
 static float dvarVectorPool[12];
 static unsigned int dvarVectorPoolIndex;
 static bool isDvarSystemActive;
@@ -48,7 +48,7 @@ bool Dvar_IsSystemActive()
 	return isDvarSystemActive;
 }
 
-static int generateHashValue(const char *fname)
+int generateHashValue(const char *fname)
 {
 	int i;
 	int hash;
@@ -289,7 +289,7 @@ static int Dvar_StringToInt(const char *string)
 	return atoi(string);
 }
 
-static float Dvar_StringToFloat(const char *string)
+float Dvar_StringToFloat(const char *string)
 {
 	return atof(string);
 }
@@ -804,7 +804,7 @@ void Dvar_SetVariant(dvar_t *dvar, DvarValue value, DvarSetSource source)
 	dvar->modified = true;
 }
 
-static dvar_t *Dvar_FindMalleableVar(const char *dvarName)
+dvar_t *Dvar_FindMalleableVar(const char *dvarName)
 {
 	dvar_t *dvar;
 	int hash;
@@ -1206,7 +1206,7 @@ void Dvar_ClearLatchedValue(dvar_t *dvar)
 	Dvar_SetLatchedValue(dvar, dvar->current);
 }
 
-static void Dvar_Reregister(dvar_t *dvar, const char *dvarName, unsigned char type, unsigned short flags, DvarValue resetValue, DvarLimits domain)
+void Dvar_Reregister(dvar_t *dvar, const char *dvarName, unsigned char type, unsigned short flags, DvarValue resetValue, DvarLimits domain)
 {
 	if ( (dvar->flags ^ flags) & (DVAR_CHANGEABLE_RESET | 0x2000 | DVAR_EXTERNAL) )
 	{
@@ -1231,7 +1231,7 @@ static void Dvar_Reregister(dvar_t *dvar, const char *dvarName, unsigned char ty
 		Dvar_MakeLatchedValueCurrent(dvar);
 }
 
-static dvar_t *Dvar_RegisterNew(const char *dvarName, unsigned char type, unsigned short flags, DvarValue value, DvarLimits domain)
+dvar_t *Dvar_RegisterNew(const char *dvarName, unsigned char type, unsigned short flags, DvarValue value, DvarLimits domain)
 {
 	dvar_t *dvar;
 	dvar_t **sorted;

@@ -3030,6 +3030,15 @@ void UI_CloseMenu_f(void)
 {
     Menus_CloseByName(&uiInfo->uiDC, Cmd_Args(1));
 }
+bool I_islower(int c);
+float Dvar_StringToFloat(const char *string);
+extern dvar_t *dvarHashTable[];
+int generateHashValue(const char *fname);
+dvar_t *Dvar_FindMalleableVar(const char *dvarName);
+void Dvar_Reregister(dvar_t *dvar, const char *dvarName, unsigned char type, unsigned short flags, DvarValue resetValue, DvarLimits domain);
+dvar_t *Dvar_RegisterNew(const char *dvarName, unsigned char type, unsigned short flags, DvarValue value, DvarLimits domain);
+void Dvar_SetVariant(dvar_t *dvar, DvarValue value, DvarSetSource source);
+int Dvar_StringToEnum(const DvarLimits *domain, const char *string);
 void UI_Init(void)
 {
     int width, height;
@@ -3099,16 +3108,88 @@ void UI_Init(void)
         qsort(sharedUiInfo.serverStatus.displayServers, sharedUiInfo.serverStatus.numDisplayServers, 4, UI_ServersQsortCompare);
     }
 
-    mPitch = Dvar_GetFloat("m_pitch");
-    Dvar_SetBoolByName("ui_mousePitch", mPitch < 0.0f ? 1 : 0);
+    {
+        dvar_t *dvar;
+        bool mousePitch;
 
-    sharedUiInfo.serverStatus.currentServerCinematic = -1;
-    sharedUiInfo.previewMovie = -1;
+        // Dvar_GetFloat("m_pitch")
+#define pp_name "m_pitch"
+#define pp_dvar dvar
+#define PP_LABEL ui_init_m_pitch
+#include "../../universal/dvar_find.inl"
+#undef PP_LABEL
+#undef pp_dvar
+#undef pp_name
+        if (!dvar)
+            mPitch = 0;
+        else if (dvar->type == DVAR_TYPE_FLOAT)
+            mPitch = dvar->current.value;
+        else
+            mPitch = Dvar_StringToFloat(dvar->current.string);
+        mousePitch = mPitch < 0.0f;
 
-    netGameTypeIdx = (ui_netGameType)->current.integer;
-    Dvar_SetString((dvar_t *)ui_netGameTypeName, sharedUiInfo.gameTypes[netGameTypeIdx].gameType);
+        // Dvar_SetBoolByName("ui_mousePitch", mousePitch)
+#define pp_name "ui_mousePitch"
+#define pp_dvar dvar
+#define PP_LABEL ui_init_mouse_pitch
+#include "../../universal/dvar_find.inl"
+#undef PP_LABEL
+#undef pp_dvar
+#undef pp_name
+        if (dvar) {
+            DvarValue value;
 
-    Dvar_RegisterBool("ui_multiplayer", 1, 0x1040);
+            if (dvar->type == DVAR_TYPE_BOOL)
+                value.enabled = mousePitch;
+            else
+                value.string = mousePitch ? "1" : "0";
+            Dvar_SetVariant(dvar, value, DVAR_SOURCE_INTERNAL);
+        } else {
+            Dvar_RegisterString("ui_mousePitch", mousePitch ? "1" : "0", 0x4000);
+        }
+
+        sharedUiInfo.serverStatus.currentServerCinematic = -1;
+        sharedUiInfo.previewMovie = -1;
+
+        // Dvar_SetString(ui_netGameTypeName, ...)
+        {
+            DvarValue value;
+            char stringCopy[1024];
+            const char *string;
+
+            netGameTypeIdx = (ui_netGameType)->current.integer;
+            string = sharedUiInfo.gameTypes[netGameTypeIdx].gameType;
+            dvar = (dvar_t *)ui_netGameTypeName;
+            if (dvar->type == DVAR_TYPE_STRING) {
+                I_strncpyz(stringCopy, string, sizeof(stringCopy));
+                value.string = stringCopy;
+            } else {
+                value.integer = Dvar_StringToEnum(&dvar->domain, string);
+            }
+            Dvar_SetVariant(dvar, value, DVAR_SOURCE_INTERNAL);
+        }
+
+        // Dvar_RegisterBool("ui_multiplayer", 1, 0x1040)
+        {
+        DvarValue value;
+        DvarLimits domain;
+
+        value.enabled = 1;
+        domain.integer.min = 0;
+        domain.integer.max = 0;
+#define pp_name "ui_multiplayer"
+#define pp_dvar dvar
+#define PP_LABEL ui_init_multiplayer
+#include "../../universal/dvar_find.inl"
+#undef PP_LABEL
+#undef pp_dvar
+#undef pp_name
+        if (dvar)
+            Dvar_Reregister(dvar, "ui_multiplayer", DVAR_TYPE_BOOL, 0x1040, value, domain);
+        else
+            Dvar_RegisterNew("ui_multiplayer", DVAR_TYPE_BOOL, 0x1040, value, domain);
+        }
+    }
 
 #    if COD2_FEATURE_GAMEPAD
 
