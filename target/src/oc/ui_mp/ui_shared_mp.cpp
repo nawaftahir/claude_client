@@ -765,6 +765,16 @@ void Menus_AddToStack(displayContextDef_t *dc, menuDef_t *menu)
         Com_Error(ERR_DROP, "\x15Too many menus opened");
     dc->menuStack[dc->openMenuCount++] = menu;
 }
+static qboolean Menus_MenuIsInStack(displayContextDef_t *dc, menuDef_t *menu)
+{
+    int i;
+
+    for (i = dc->openMenuCount - 1; i >= 0; i--) {
+        if (dc->menuStack[i] == menu)
+            return 1;
+    }
+    return 0;
+}
 
 menuDef_t *Menus_FindByName(displayContextDef_t *dc, const char *p)
 {
@@ -4357,16 +4367,6 @@ void Script_GetAutoUpdate(displayContextDef_t *dc, itemDef_t *item, const char *
 
 // retail 0x5348c0, unreferenced twin of Menus_MenuIsInStack; name unknown
 
-static qboolean Menus_MenuIsInStack(displayContextDef_t *dc, menuDef_t *menu)
-{
-    int i;
-
-    for (i = dc->openMenuCount - 1; i >= 0; i--) {
-        if (dc->menuStack[i] == menu)
-            return 1;
-    }
-    return 0;
-}
 
 
 
