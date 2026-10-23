@@ -850,6 +850,22 @@ void Script_Hide(displayContextDef_t *dc, itemDef_t *item, const char **args)
         Menu_ShowItemByName(item->parent, name, 0);
     }
 }
+void Script_FadeIn(displayContextDef_t *dc, itemDef_t *item, const char **args)
+{
+    char name[1024];
+    (void)dc;
+    if (String_Parse(args, name, 1024)) {
+        Menu_FadeItemByName(item->parent, name, 0);
+    }
+}
+void Script_FadeOut(displayContextDef_t *dc, itemDef_t *item, const char **args)
+{
+    char name[1024];
+    (void)dc;
+    if (String_Parse(args, name, 1024)) {
+        Menu_FadeItemByName(item->parent, name, 1);
+    }
+}
 
 void Script_Open(displayContextDef_t *dc, itemDef_t *item, const char **args)
 {
@@ -1233,6 +1249,10 @@ void Script_Play(displayContextDef_t *dc, itemDef_t *item, const char **args)
     if (String_Parse(args, val, 1024)) {
         UI_PlayLocalSoundAliasByName(val);
     }
+}
+void Script_GetAutoUpdate(displayContextDef_t *dc, itemDef_t *item, const char **args)
+{
+    CL_GetAutoUpdate();
 }
 
 void Script_ScriptMenuResponse(displayContextDef_t *dc, itemDef_t *item, const char **args)
@@ -2497,6 +2517,36 @@ itemDef_t *Menu_SetPrevCursorItem(displayContextDef_t *dc, menuDef_t *menu)
         if (Item_SetFocus(dc, menu->items[menu->cursorItem[0]], (float)dc->cursorx, (float)dc->cursory)) {
             Menu_HandleMouseMove(dc, menu, menu->items[menu->cursorItem[0]]->window.rect[0].x + 1.0f,
                                  menu->items[menu->cursorItem[0]]->window.rect[0].y + 1.0f);
+            return menu->items[menu->cursorItem[0]];
+        }
+    }
+    menu->cursorItem[0] = oldCursor;
+    return NULL;
+}
+itemDef_t *Menu_SetNextCursorItem(displayContextDef_t *dc, menuDef_t *menu)
+{
+    qboolean wrapped;
+    int oldCursor;
+    itemDef_t *item;
+
+    wrapped = 0;
+    oldCursor = menu->cursorItem[0];
+    if (menu->cursorItem[0] == -1) {
+        menu->cursorItem[0] = 0;
+        wrapped = 1;
+    }
+    while (menu->cursorItem[0] < menu->itemCount) {
+        menu->cursorItem[0]++;
+        if (menu->cursorItem[0] >= menu->itemCount) {
+            if (wrapped)
+                return menu->items[oldCursor];
+            wrapped = 1;
+            menu->cursorItem[0] = 0;
+        }
+        item = menu->items[menu->cursorItem[0]];
+        if (Item_SetFocus(dc, item, (float)dc->cursorx, (float)dc->cursory)) {
+            item = menu->items[menu->cursorItem[0]];
+            Menu_HandleMouseMove(dc, menu, item->window.rect[0].x + 1.0f, item->window.rect[0].y + 1.0f);
             return menu->items[menu->cursorItem[0]];
         }
     }
@@ -4337,33 +4387,13 @@ void diag_item_paint_draw(void *item)
 
 
 
-void Script_FadeIn(displayContextDef_t *dc, itemDef_t *item, const char **args)
-{
-    char name[1024];
-    (void)dc;
-    if (String_Parse(args, name, 1024)) {
-        Menu_FadeItemByName(item->parent, name, 0);
-    }
-}
 
-void Script_FadeOut(displayContextDef_t *dc, itemDef_t *item, const char **args)
-{
-    char name[1024];
-    (void)dc;
-    if (String_Parse(args, name, 1024)) {
-        Menu_FadeItemByName(item->parent, name, 1);
-    }
-}
 
 static void Script_ConditionalExecHandler(int execWhen, Bool (*shouldExec)(const char *, const char *), const char **args)
 {
     Script_ConditionalExecHandler_impl(execWhen, NULL, args, shouldExec);
 }
 
-void Script_GetAutoUpdate(displayContextDef_t *dc, itemDef_t *item, const char **args)
-{
-    CL_GetAutoUpdate();
-}
 
 // retail 0x5348c0, unreferenced twin of Menus_MenuIsInStack; name unknown
 
@@ -4372,36 +4402,6 @@ void Script_GetAutoUpdate(displayContextDef_t *dc, itemDef_t *item, const char *
 
 // retail 0x533bd0
 
-itemDef_t *Menu_SetNextCursorItem(displayContextDef_t *dc, menuDef_t *menu)
-{
-    qboolean wrapped;
-    int oldCursor;
-    itemDef_t *item;
-
-    wrapped = 0;
-    oldCursor = menu->cursorItem[0];
-    if (menu->cursorItem[0] == -1) {
-        menu->cursorItem[0] = 0;
-        wrapped = 1;
-    }
-    while (menu->cursorItem[0] < menu->itemCount) {
-        menu->cursorItem[0]++;
-        if (menu->cursorItem[0] >= menu->itemCount) {
-            if (wrapped)
-                return menu->items[oldCursor];
-            wrapped = 1;
-            menu->cursorItem[0] = 0;
-        }
-        item = menu->items[menu->cursorItem[0]];
-        if (Item_SetFocus(dc, item, (float)dc->cursorx, (float)dc->cursory)) {
-            item = menu->items[menu->cursorItem[0]];
-            Menu_HandleMouseMove(dc, menu, item->window.rect[0].x + 1.0f, item->window.rect[0].y + 1.0f);
-            return menu->items[menu->cursorItem[0]];
-        }
-    }
-    menu->cursorItem[0] = oldCursor;
-    return NULL;
-}
 
 #if COD2_TRACE
 static const char *UI_TraceScriptItemParentName(itemDef_t *item)
