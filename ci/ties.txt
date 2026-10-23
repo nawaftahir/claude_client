@@ -53,3 +53,25 @@ _yylex
 ?XModelCalcBasePose@@YAXPAUXModelParts_s@@@Z
 # compiler-numbered static init thunk, label shifts with TU edits
 _$E1
+# ra7 FxRange_SetRange removed (no retail body): ~+2% whole, these lost the inlined helper shape; win back
+?ParsePrimitiveInternal@PrimitiveTemplate@@QAE_NPAUBackCompatibleParam
+?Init@PrimitiveTemplate@@QAEXXZ
+?ParseAcceleration@PrimitiveTemplate@@QAE_NPBD@Z
+?ParseVelocity@PrimitiveTemplate@@QAE_NPBD@Z
+?ParsePrimitiveInternal@PrimitiveTemplate@@QAE_NPAUBackCompatibleParameters@@PAUGPGroup@@@Z
+?ParsePrimitiveInternal@PrimitiveTemplate@@QAE_NPAUBackCompatibleParameters@@PAVGPGroup@@@Z
+# ra7 FxRange_SetRange removed (no retail body): +1.3% whole; PrimitiveTemplate fns lost the inlined helper shape, win back
+?ParseChannel@PrimitiveTemplate@@QAE_NPAUBackCompatibleParameters@@PAUGPGroup@@W4FxChannelId@@@Z
+?CreateBackCompatibleRotationDeltaCurve@PrimitiveTemplate@@QAEXMMMHM@Z
+?ParseRotationDelta@PrimitiveTemplate@@QAE_NPBD@Z
+?ParseElasticity@PrimitiveTemplate@@QAE_NPBD@Z
+?CreateBackCompatibleAccelerationCurve@PrimitiveTemplate@@QAEXMMMHM@Z
+?CreateBackCompatibleVelocityCurve@PrimitiveTemplate@@QAEXMMHM@Z
+?ParseBackCompatibleStart3@PrimitiveTemplate@@QAE_NPAUBackCompatibleParameters@@PBDW4FxChannelId@@@Z
+?ParseBackCompatibleEnd3@PrimitiveTemplate@@QAE_NPAUBackCompatibleParameters@@PBDW4FxChannelId@@@Z
+?ParseOrigin2@PrimitiveTemplate@@QAE_NPBD@Z
+?ParseOrigin1@PrimitiveTemplate@@QAE_NPBD@Z
+?ParseAngleDelta@PrimitiveTemplate@@QAE_NPBD@Z
+?ParseAngle@PrimitiveTemplate@@QAE_NPBD@Z
+?InitBackCompatibleParameters@PrimitiveTemplate@@QAEXPAUBackCompatibleParameters@@@Z
+?ParseChannelScale@PrimitiveTemplate@@QAEXPBDW4FxChannelId@@@Z

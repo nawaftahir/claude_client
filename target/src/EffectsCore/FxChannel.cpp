@@ -26,7 +26,6 @@ struct FxChannelBackwardCompatible
 
 const FxCurve *FxCurve_AllocAndCreateWithKeys( const float *keyArray, int dimensionCount, int keyCount );
 const FxCurve *FxCurve_Reference( const FxCurve *curve );
-void FxRange_SetRange( FxRange *range, float min, float max );
 float __stdcall FxRange_GetValPct( const FxRange *range, float pct );
 float flrand( float min, float max );
 
@@ -46,7 +45,8 @@ void FxChannel_CreateDefault( FxChannel *createe, int dimensions, float value1, 
 		keys[keySize + dimensionId + 1] = value2;
 	}
 	createe->curve = FxCurve_AllocAndCreateWithKeys( keys, dimensions, keyCount );
-	FxRange_SetRange( &createe->scaleRange, 1.0f, 1.0f );
+	createe->scaleRange.min = 1.0f;
+	createe->scaleRange.max = 1.0f;
 }
 
 // Nothing in the game calls this; original name unknown.
@@ -180,7 +180,8 @@ void FxChannel_CreateViaMigration( const FxChannelBackwardCompatible *source, in
 	if ( scaleFactor < 1.0f )
 		scaleFactor = 1.0f;
 	halfRange = ( source->start[0].max - source->start[0].min ) / 2.0f;
-	FxRange_SetRange( &target->scaleRange, scaleFactor - halfRange, scaleFactor + halfRange );
+	target->scaleRange.min = scaleFactor - halfRange;
+	target->scaleRange.max = scaleFactor + halfRange;
 	invScale = 1.0f / scaleFactor;
 	parmVal = 0.0f;
 	for ( dimensionId = 0; dimensionId != dimensions; dimensionId++ )

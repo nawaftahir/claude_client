@@ -8,6 +8,9 @@ public:
 	TextPool( int initSize = 10240 );
 	~TextPool();
 
+	TextPool *GetNext() { return mNext; }
+	void SetNext( TextPool *which ) { mNext = which; }
+
 	void *operator new( size_t size ) { return Z_MallocInternal(size); }
 	void operator delete( void *ptr ) { Z_FreeInternal(ptr); }
 
@@ -15,14 +18,12 @@ public:
 
 private:
 	char *mPool;
-public:
 	TextPool *mNext;
-private:
 	int mSize;
 	int mUsed;
 };
 
-class GPObject
+struct GPObject
 {
 public:
 	GPObject( const char *initName );
@@ -45,7 +46,7 @@ protected:
 	GPObject *mInOrderPrevious;
 };
 
-class GPValue : public GPObject
+struct GPValue : public GPObject
 {
 public:
 	GPValue( const char *initName, const char *initValue = 0 );
@@ -63,7 +64,7 @@ private:
 	GPObject *mList;
 };
 
-class GPGroup : public GPObject
+struct GPGroup : public GPObject
 {
 public:
 	GPGroup( const char *initName = "Top Level", GPGroup *initParent = 0 );
@@ -251,8 +252,8 @@ char *TextPool::AllocText( char *text, bool addNULL, TextPool **poolPtr )
 	{
 		if ( poolPtr )
 		{
-			( *poolPtr )->mNext = new TextPool(mSize);
-			*poolPtr = ( *poolPtr )->mNext;
+			( *poolPtr )->SetNext(new TextPool(mSize));
+			*poolPtr = ( *poolPtr )->GetNext();
 			return ( *poolPtr )->AllocText(text, addNULL);
 		}
 		return 0;
@@ -271,7 +272,7 @@ void CleanTextPool( TextPool *pool )
 
 	while ( pool )
 	{
-		next = pool->mNext;
+		next = pool->GetNext();
 		delete pool;
 		pool = next;
 	}

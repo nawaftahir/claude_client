@@ -344,7 +344,6 @@ XModel *FX_XModelPrecache( const char *name );
 void FX_Print( const char *fmt, ... );
 Material *FX_RegisterMaterial( const char *name );
 XModel *FX_ModelRegister( const char *name );
-void FxRange_SetRange( FxRange *range, float min, float max );
 float __stdcall FxRange_GetValPct( const FxRange *range, float pct );
 
 extern bool g_rendererExists;
@@ -352,7 +351,6 @@ extern bool g_rendererExists;
 void FX_Print( const char *fmt, ... );
 Material *FX_RegisterMaterial( const char *name );
 XModel *FX_ModelRegister( const char *name );
-void FxRange_SetRange( FxRange *range, float min, float max );
 float __stdcall FxRange_GetValPct( const FxRange *range, float pct );
 
 extern const FxFlagEntry fxAttributeFlags[24];
@@ -411,10 +409,14 @@ extern refexport_t re;
 
 void PrimitiveTemplate::Init()
 {
-	FxRange_SetRange(&mLife, 1.0f, 1.0f);
-	FxRange_SetRange(&mSpawnCount, 1.0f, 1.0f);
-	FxRange_SetRange(&mRadius, 1.0f, 1.0f);
-	FxRange_SetRange(&mHeight, 1.0f, 1.0f);
+	mLife.min = 1.0f;
+	mLife.max = 1.0f;
+	mSpawnCount.min = 1.0f;
+	mSpawnCount.max = 1.0f;
+	mRadius.min = 1.0f;
+	mRadius.max = 1.0f;
+	mHeight.min = 1.0f;
+	mHeight.max = 1.0f;
 	FxChannel_CreateDefault(&mFxChannels[FX_CHANNEL_COLOR], 3, 1.0f, 0.0f);
 	FxChannel_CreateDefault(&mFxChannels[FX_CHANNEL_COLOR_RAND], 3, 1.0f, 0.0f);
 	FxChannel_CreateDefault(&mFxChannels[FX_CHANNEL_ALPHA], 1, 1.0f, 0.0f);
@@ -439,10 +441,14 @@ void PrimitiveTemplate::Init()
 	FxChannel_CreateDefault(&mFxChannels[FX_CHANNEL_VELOCITY2_X_RAND], 1, 0.0f, 0.0f);
 	FxChannel_CreateDefault(&mFxChannels[FX_CHANNEL_VELOCITY2_Y_RAND], 1, 0.0f, 0.0f);
 	FxChannel_CreateDefault(&mFxChannels[FX_CHANNEL_VELOCITY2_Z_RAND], 1, 0.0f, 0.0f);
-	FxRange_SetRange(&mTexCoordS, 1.0f, 1.0f);
-	FxRange_SetRange(&mTexCoordT, 1.0f, 1.0f);
-	FxRange_SetRange(&mVariance, 1.0f, 1.0f);
-	FxRange_SetRange(&mDensity, 10.0f, 10.0f);
+	mTexCoordS.min = 1.0f;
+	mTexCoordS.max = 1.0f;
+	mTexCoordT.min = 1.0f;
+	mTexCoordT.max = 1.0f;
+	mVariance.min = 1.0f;
+	mVariance.max = 1.0f;
+	mDensity.min = 10.0f;
+	mDensity.max = 10.0f;
 	mSequenceStartFrameMode = START_FRAME_FIRST;
 	mSequenceFixedFrameValue = 1;
 	mSequencePlayRateMode = PLAY_RATE_LIFETIME;
@@ -450,12 +456,6 @@ void PrimitiveTemplate::Init()
 	mSequenceLoopMode = LOOP_NONE;
 	mSequenceLoopTimes = 1;
 	spawnFrustumCullRadius = 0.0f;
-}
-
-void FxRange_SetRange( FxRange *range, float min, float max )
-{
-	range->min = min;
-	range->max = max;
 }
 
 // Original name unknown.
@@ -488,9 +488,12 @@ void PrimitiveTemplate::InitBackCompatibleParameters( BackCompatibleParameters *
 	{
 		for ( dim = 0; dim != 3; dim++ )
 		{
-			FxRange_SetRange(&bcp->fxChannels[channelId].start[dim], 1.0f, 1.0f);
-			FxRange_SetRange(&bcp->fxChannels[channelId].end[dim], 1.0f, 1.0f);
-			FxRange_SetRange(&bcp->fxChannels[channelId].parm, 1.0f, 1.0f);
+			bcp->fxChannels[channelId].start[dim].min = 1.0f;
+			bcp->fxChannels[channelId].start[dim].max = 1.0f;
+			bcp->fxChannels[channelId].end[dim].min = 1.0f;
+			bcp->fxChannels[channelId].end[dim].max = 1.0f;
+			bcp->fxChannels[channelId].parm.min = 1.0f;
+			bcp->fxChannels[channelId].parm.max = 1.0f;
 		}
 	}
 }
@@ -608,7 +611,8 @@ bool PrimitiveTemplate::ParseLife( const char *val )
 
 	if ( ParseFloat(val, &min, &max) )
 	{
-		FxRange_SetRange(&mLife, min, max);
+		mLife.min = min;
+		mLife.max = max;
 		return true;
 	}
 	return false;
@@ -623,7 +627,8 @@ bool PrimitiveTemplate::ParseSpawnRange( const char *val )
 	{
 		if ( min > max )
 			return false;
-		FxRange_SetRange(&mSpawnRange, min, max);
+		mSpawnRange.min = min;
+		mSpawnRange.max = max;
 		return true;
 	}
 	return false;
@@ -636,7 +641,8 @@ bool PrimitiveTemplate::ParseDelay( const char *val )
 
 	if ( ParseFloat(val, &min, &max) )
 	{
-		FxRange_SetRange(&mSpawnDelay, min, max);
+		mSpawnDelay.min = min;
+		mSpawnDelay.max = max;
 		return true;
 	}
 	return false;
@@ -649,7 +655,8 @@ bool PrimitiveTemplate::ParseCount( const char *val )
 
 	if ( ParseFloat(val, &min, &max) )
 	{
-		FxRange_SetRange(&mSpawnCount, min, max);
+		mSpawnCount.min = min;
+		mSpawnCount.max = max;
 		return true;
 	}
 	return false;
@@ -672,7 +679,8 @@ bool PrimitiveTemplate::ParseElasticity( const char *val )
 			return false;
 		if ( max > 1.0f )
 			return false;
-		FxRange_SetRange(&mElasticity, min, max);
+		mElasticity.min = min;
+		mElasticity.max = max;
 		mAttributeFlags |= FX_USE_PHYSICS;
 		return true;
 	}
@@ -686,9 +694,12 @@ bool PrimitiveTemplate::ParseOrigin1( const char *val )
 
 	if ( ParseVector(val, min, max) == true )
 	{
-		FxRange_SetRange(&mOrigin1X, min[0], max[0]);
-		FxRange_SetRange(&mOrigin1Y, min[1], max[1]);
-		FxRange_SetRange(&mOrigin1Z, min[2], max[2]);
+		mOrigin1X.min = min[0];
+		mOrigin1X.max = max[0];
+		mOrigin1Y.min = min[1];
+		mOrigin1Y.max = max[1];
+		mOrigin1Z.min = min[2];
+		mOrigin1Z.max = max[2];
 		return true;
 	}
 	return false;
@@ -701,9 +712,12 @@ bool PrimitiveTemplate::ParseOrigin2( const char *val )
 
 	if ( ParseVector(val, min, max) == true )
 	{
-		FxRange_SetRange(&mOrigin2X, min[0], max[0]);
-		FxRange_SetRange(&mOrigin2Y, min[1], max[1]);
-		FxRange_SetRange(&mOrigin2Z, min[2], max[2]);
+		mOrigin2X.min = min[0];
+		mOrigin2X.max = max[0];
+		mOrigin2Y.min = min[1];
+		mOrigin2Y.max = max[1];
+		mOrigin2Z.min = min[2];
+		mOrigin2Z.max = max[2];
 		return true;
 	}
 	return false;
@@ -716,7 +730,8 @@ bool PrimitiveTemplate::ParseRadius( const char *val )
 
 	if ( ParseFloat(val, &min, &max) )
 	{
-		FxRange_SetRange(&mRadius, min, max);
+		mRadius.min = min;
+		mRadius.max = max;
 		return true;
 	}
 	return false;
@@ -729,7 +744,8 @@ bool PrimitiveTemplate::ParseHeight( const char *val )
 
 	if ( ParseFloat(val, &min, &max) )
 	{
-		FxRange_SetRange(&mHeight, min, max);
+		mHeight.min = min;
+		mHeight.max = max;
 		return true;
 	}
 	return false;
@@ -742,7 +758,8 @@ bool PrimitiveTemplate::ParseWindModifier( const char *val )
 
 	if ( ParseFloat(val, &min, &max) )
 	{
-		FxRange_SetRange(&mWindModifier, min, max);
+		mWindModifier.min = min;
+		mWindModifier.max = max;
 		return true;
 	}
 	return false;
@@ -755,7 +772,8 @@ bool PrimitiveTemplate::ParseRotation( const char *val )
 
 	if ( ParseFloat(val, &min, &max) )
 	{
-		FxRange_SetRange(&mRotation, min, max);
+		mRotation.min = min;
+		mRotation.max = max;
 		return true;
 	}
 	return false;
@@ -800,7 +818,8 @@ void PrimitiveTemplate::CreateBackCompatibleRotationDeltaCurve( float initialVal
 		}
 	}
 	mFxChannels[channelId].curve = FxCurve_AllocAndCreateWithKeys(keys[0], 1, keyCount);
-	FxRange_SetRange(&mFxChannels[channelId].scaleRange, graphScale, graphScale);
+	mFxChannels[channelId].scaleRange.min = graphScale;
+	mFxChannels[channelId].scaleRange.max = graphScale;
 }
 
 // Original name unknown.
@@ -817,7 +836,8 @@ void PrimitiveTemplate::CreateBackCompatibleVelocityCurve( float initialValue, f
 	keys[1][0] = 1.0f;
 	keys[1][1] = keys[0][1];
 	mFxChannels[channelId].curve = FxCurve_AllocAndCreateWithKeys(keys[0], 1, keyCount);
-	FxRange_SetRange(&mFxChannels[channelId].scaleRange, graphScale, graphScale);
+	mFxChannels[channelId].scaleRange.min = graphScale;
+	mFxChannels[channelId].scaleRange.max = graphScale;
 }
 
 // Original name unknown.
@@ -835,7 +855,8 @@ void PrimitiveTemplate::CreateBackCompatibleAccelerationCurve( float initialValu
 	else
 		keys[1][1] = keys[1][1] / keyScale;
 	mFxChannels[channelId].curve = FxCurve_AllocAndCreateWithKeys(keys[0], 1, keyCount);
-	FxRange_SetRange(&mFxChannels[channelId].scaleRange, graphScale, graphScale);
+	mFxChannels[channelId].scaleRange.min = graphScale;
+	mFxChannels[channelId].scaleRange.max = graphScale;
 }
 
 bool PrimitiveTemplate::ParseRotationDelta( const char *val )
@@ -868,9 +889,12 @@ bool PrimitiveTemplate::ParseAngle( const char *val )
 
 	if ( ParseVector(val, min, max) == true )
 	{
-		FxRange_SetRange(&mAngle1, min[0], max[0]);
-		FxRange_SetRange(&mAngle2, min[1], max[1]);
-		FxRange_SetRange(&mAngle3, min[2], max[2]);
+		mAngle1.min = min[0];
+		mAngle1.max = max[0];
+		mAngle2.min = min[1];
+		mAngle2.max = max[1];
+		mAngle3.min = min[2];
+		mAngle3.max = max[2];
 		return true;
 	}
 	return false;
@@ -883,9 +907,12 @@ bool PrimitiveTemplate::ParseAngleDelta( const char *val )
 
 	if ( ParseVector(val, min, max) == true )
 	{
-		FxRange_SetRange(&mAngle1Delta, min[0], max[0]);
-		FxRange_SetRange(&mAngle2Delta, min[1], max[1]);
-		FxRange_SetRange(&mAngle3Delta, min[2], max[2]);
+		mAngle1Delta.min = min[0];
+		mAngle1Delta.max = max[0];
+		mAngle2Delta.min = min[1];
+		mAngle2Delta.max = max[1];
+		mAngle3Delta.min = min[2];
+		mAngle3Delta.max = max[2];
 		return true;
 	}
 	return false;
@@ -1042,7 +1069,8 @@ bool PrimitiveTemplate::ParseGravity( const char *val )
 
 	if ( ParseFloat(val, &min, &max) )
 	{
-		FxRange_SetRange(&mGravity, min, max);
+		mGravity.min = min;
+		mGravity.max = max;
 		return true;
 	}
 	return false;
@@ -1055,7 +1083,8 @@ bool PrimitiveTemplate::ParseDensity( const char *val )
 
 	if ( ParseFloat(val, &min, &max) )
 	{
-		FxRange_SetRange(&mDensity, min, max);
+		mDensity.min = min;
+		mDensity.max = max;
 		return true;
 	}
 	return false;
@@ -1068,7 +1097,8 @@ bool PrimitiveTemplate::ParseVariance( const char *val )
 
 	if ( ParseFloat(val, &min, &max) )
 	{
-		FxRange_SetRange(&mVariance, min, max);
+		mVariance.min = min;
+		mVariance.max = max;
 		return true;
 	}
 	return false;
@@ -1152,7 +1182,8 @@ bool PrimitiveTemplate::ParseBackCompatibleStart3( BackCompatibleParameters *bcp
 	if ( ParseVector(val, min, max) )
 	{
 		for ( dim = 0; dim != 3; dim++ )
-			FxRange_SetRange(&bcp->fxChannels[channelId].start[dim], min[dim], max[dim]);
+			bcp->fxChannels[channelId].start[dim].min = min[dim];
+			bcp->fxChannels[channelId].start[dim].max = max[dim];
 		bcp->fxChannels[channelId].used = true;
 		return true;
 	}
@@ -1169,7 +1200,8 @@ bool PrimitiveTemplate::ParseBackCompatibleEnd3( BackCompatibleParameters *bcp, 
 	if ( ParseVector(val, min, max) )
 	{
 		for ( dim = 0; dim != 3; dim++ )
-			FxRange_SetRange(&bcp->fxChannels[channelId].end[dim], min[dim], max[dim]);
+			bcp->fxChannels[channelId].end[dim].min = min[dim];
+			bcp->fxChannels[channelId].end[dim].max = max[dim];
 		bcp->fxChannels[channelId].used = true;
 		return true;
 	}
@@ -1186,7 +1218,8 @@ bool PrimitiveTemplate::ParseBackCompatibleStart( BackCompatibleParameters *bcp,
 	{
 		if ( min > max )
 			Swap(min, max);
-		FxRange_SetRange(&bcp->fxChannels[channelId].start[0], min, max);
+		bcp->fxChannels[channelId].start[0].min = min;
+		bcp->fxChannels[channelId].start[0].max = max;
 		bcp->fxChannels[channelId].used = true;
 		return true;
 	}
@@ -1203,7 +1236,8 @@ bool PrimitiveTemplate::ParseBackCompatibleEnd( BackCompatibleParameters *bcp, c
 	{
 		if ( min > max )
 			Swap(min, max);
-		FxRange_SetRange(&bcp->fxChannels[channelId].end[0], min, max);
+		bcp->fxChannels[channelId].end[0].min = min;
+		bcp->fxChannels[channelId].end[0].max = max;
 		bcp->fxChannels[channelId].used = true;
 		return true;
 	}
@@ -1218,7 +1252,8 @@ bool PrimitiveTemplate::ParseBackCompatibleParm( BackCompatibleParameters *bcp, 
 
 	if ( ParseFloat(val, &min, &max) )
 	{
-		FxRange_SetRange(&bcp->fxChannels[channelId].parm, min, max);
+		bcp->fxChannels[channelId].parm.min = min;
+		bcp->fxChannels[channelId].parm.max = max;
 		bcp->fxChannels[channelId].used = true;
 		return true;
 	}
@@ -1558,7 +1593,8 @@ void PrimitiveTemplate::ParseChannelScale( const char *val, FxChannelId channel 
 	float max;
 
 	if ( ParseFloat(val, &min, &max) )
-		FxRange_SetRange(&mFxChannels[channel].scaleRange, min, max);
+		mFxChannels[channel].scaleRange.min = min;
+		mFxChannels[channel].scaleRange.max = max;
 }
 
 bool PrimitiveTemplate::ParseChannel( BackCompatibleParameters *bcp, GPGroup *grp, FxChannelId channelId )
