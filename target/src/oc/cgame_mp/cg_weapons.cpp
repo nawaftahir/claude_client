@@ -1891,18 +1891,11 @@ void CG_WhizbySound(vec_t *vStart, vec_t *vEnd)
     CG_PlaySoundAlias(0x3fe, projPos, cgs->media.bulletWhizby);
 }
 
-// inlined com_math vector helpers: retail evaluates through their pointer params
-static __forceinline void Vec3CopyInl(const vec_t *a, vec_t *out)
+inline void VectorScale(const vec3_t v, const float s, vec3_t o)
 {
-    out[0] = a[0];
-    out[1] = a[1];
-    out[2] = a[2];
-}
-static __forceinline void Vec3ScaleInl(const vec_t *v, float scale, vec_t *out)
-{
-    out[0] = v[0] * scale;
-    out[1] = v[1] * scale;
-    out[2] = v[2] * scale;
+    o[0] = s * v[0];
+    o[1] = s * v[1];
+    o[2] = s * v[2];
 }
 void CG_SpawnTracer(vec_t *pstart, vec_t *pend)
 {
@@ -1914,7 +1907,7 @@ void CG_SpawnTracer(vec_t *pstart, vec_t *pend)
     int jitter;
     localEntity_t *le;
 
-    Vec3CopyInl(pstart, start);
+    VectorCopy(pstart, start);
     end[0] = pend[0];
     end[1] = pend[1];
     end[2] = pend[2];
@@ -1935,8 +1928,8 @@ void CG_SpawnTracer(vec_t *pstart, vec_t *pend)
     le->pos.trType = TR_LINEAR;
     le->pos.trTime = time;
 
-    Vec3CopyInl(start, le->pos.trBase);
-    Vec3ScaleInl(dir, cg_tracerSpeed->current.value, le->pos.trDelta);
+    VectorCopy(start, le->pos.trBase);
+    VectorScale(dir, cg_tracerSpeed->current.value, le->pos.trDelta);
 }
 
 // retail 0x4d1340; Kisak name (SUPPORTED)
@@ -1983,12 +1976,6 @@ static void ScaleTracer(const float *start, const float *finish, float *startWid
     }
 }
 
-inline void VectorScale(const vec3_t v, const float s, vec3_t o)
-{
-    o[0] = s * v[0];
-    o[1] = s * v[1];
-    o[2] = s * v[2];
-}
 // Q3 CG_Tracer shape
 void CG_DrawTracer(vec_t *start, vec_t *finish)
 {
