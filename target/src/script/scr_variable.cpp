@@ -4855,13 +4855,33 @@ restart:
 		case VAR_FUNCTION:
 		case VAR_STACK:
 		case VAR_ANIMATION:
-			RemoveVariable(parentId, name);
+			{
+				// RemoveVariable inlined; retail still calls RemoveRefToValue here
+				void (*removeRef)( int type, VariableUnion u ) = RemoveRefToValue;
+				unsigned int index = FindVariableIndexHash(parentId, name);
+				VariableValueInternal *removed = &scrVarGlob.variableList[index];
+				unsigned int removedId = removed->hash.id;
+				MakeVariableExternal(removed, &scrVarGlob.variableList[parentId]);
+				removed = &scrVarGlob.variableList[removedId];
+				removeRef(removed->w.type & VAR_MASK, removed->u.u);
+				FreeVariable(removedId);
+			}
 			goto restart;
 
 		case VAR_POINTER:
 			if ( !Scr_MakeValuePrimitive(entryValue->u.u.pointerValue) )
 			{
-				RemoveVariable(parentId, name);
+				{
+					// RemoveVariable inlined; retail still calls RemoveRefToValue here
+					void (*removeRef)( int type, VariableUnion u ) = RemoveRefToValue;
+					unsigned int index = FindVariableIndexHash(parentId, name);
+					VariableValueInternal *removed = &scrVarGlob.variableList[index];
+					unsigned int removedId = removed->hash.id;
+					MakeVariableExternal(removed, &scrVarGlob.variableList[parentId]);
+					removed = &scrVarGlob.variableList[removedId];
+					removeRef(removed->w.type & VAR_MASK, removed->u.u);
+					FreeVariable(removedId);
+				}
 				goto restart;
 			}
 			break;
