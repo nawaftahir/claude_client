@@ -72,8 +72,8 @@ pmoveHandler_t pmoveHandlers[] =
 };
 
 /* unreferenced in retail code; unnamed (retail .rdata 0x561240) */
-extern const float pm_unk_561240[12];
-const float pm_unk_561240[12] = { 0.5f, 19.0f, 12.0f, 9.0f, 1.0f, 8.0f, 16.0f, 5.0f, 0.4f, 0.0f, 0.0f, 0.0f };
+extern const float pm_unk_561240[10];
+const float pm_unk_561240[10] = { 0.5f, 19.0f, 12.0f, 9.0f, 1.0f, 8.0f, 16.0f, 5.0f, 0.4f, 0.0f };
 
 const vec3_t CorrectSolidDeltas[] =
 {

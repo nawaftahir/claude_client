@@ -222,7 +222,7 @@ static char g_gametype[64];
 static Bool g_ingameMenusLoaded;
 extern const char *MonthAbbrev[12];
 extern const char *netSources[3];
-static const serverFilter_t serverFilters[1];
+static const serverFilter_t serverFilters[1] = { { "EXE_ALL", "" } };
 static char menuBuf2[32768];
 static int ui_serverFilterType;
 extern qboolean Menus_OpenByName(displayContextDef_t *dc, const char *name);

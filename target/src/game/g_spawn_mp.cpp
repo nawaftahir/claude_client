@@ -9,6 +9,9 @@ Scr_ReadOnlyField
 */
 void Scr_ReadOnlyField( gentity_t *self, int offset );
 
+/* retail 0x561168: two unreferenced floats before the entity field table (owner unknown) */
+extern const float g_unk_561168[2];
+const float g_unk_561168[2] = { 50.0f, 0.2f };
 static const game_entity_field_t g_entity_fields[] =
 {
 	{ "classname", FOFS( classname ), F_STRING, Scr_ReadOnlyField },

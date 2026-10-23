@@ -897,6 +897,9 @@ void ScriptEntCmd_NotSolid( scr_entref_t entref )
 ScriptEnt_GetMethod
 ===============
 */
+/* retail 0x561638: unreferenced 8192.0f before the method table (owner unknown) */
+extern const float g_unk_561638[2];
+const float g_unk_561638[2] = { 8192.0f, 0.0f };
 static const scr_method_t scriptent_methods[] =
 {
 	{ "moveto", ScriptEntCmd_MoveTo, qfalse, },
