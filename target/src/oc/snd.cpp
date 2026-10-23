@@ -1899,6 +1899,13 @@ void SND_ShutdownChannels(void)
     SND_StopSounds( (snd_stopsounds_arg_t)(0));
     memset(g_snd.chaninfo, 0, sizeof(g_snd.chaninfo));
 }
+void SND_ErrorCleanup(void)
+{
+    if (g_snd.restore.buffer) {
+        Z_FreeInternal((void *)g_snd.restore.buffer);
+        g_snd.restore.buffer = 0;
+    }
+}
 
 static __attribute_regparm__(2) void SND_SaveChanInfo(snd_channel_info_t *chaninfo, MemoryFile *memFile)
 {
@@ -2374,13 +2381,6 @@ int SND_GetListenerIndexNearestToOrigin(const vec_t *origin)
     return 0;
 }
 
-void SND_ErrorCleanup(void)
-{
-    if (g_snd.restore.buffer) {
-        Z_FreeInternal((void *)g_snd.restore.buffer);
-        g_snd.restore.buffer = 0;
-    }
-}
 
 // retail 0x44cd50, unreferenced; name unknown (busy and not delayed)
 

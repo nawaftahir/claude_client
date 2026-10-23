@@ -12,6 +12,10 @@ void Sys_InitMainThread(void)
     threadId[0] = GetCurrentThreadId();
     Com_InitThreadData(0);
 }
+Bool Sys_ReturnFalse(void)
+{
+    return 0;
+}
 
 Bool Sys_IsMainThread(void)
 {
@@ -29,10 +33,6 @@ void *Sys_GetValue(int valueIndex)
 }
 
 // Original name unknown.
-Bool Sys_ReturnFalse(void)
-{
-    return 0;
-}
 
 // retail 0x45f960, empty and unreferenced; name unknown
 Bool Sys_ReturnFalse_45f960(void)
