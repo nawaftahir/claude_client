@@ -590,45 +590,47 @@ void SV_SetConfig(int start, int max, int bit)
 	}
 }
 
+static char dvarInfoString[MAX_INFO_STRING];
+
 char *Dvar_InfoString(int bit)
 {
-	static char info[MAX_INFO_STRING];
 	dvar_t *dvar;
 
-	info[0] = 0;
+	dvarInfoString[0] = 0;
 
 	for ( dvar = sortedDvars; dvar; dvar = dvar->next )
 	{
 		if ( dvar->flags & bit )
 		{
-			Info_SetValueForKey( info, dvar->name, Dvar_DisplayableValue(dvar) );
+			Info_SetValueForKey( dvarInfoString, dvar->name, Dvar_DisplayableValue(dvar) );
 		}
 	}
 
 	if ( bit & DVAR_USERINFO )
 	{
-		Info_SetValueForKey( info, "name", CL_GetUsernameForLocalClient(0) );
+		Info_SetValueForKey( dvarInfoString, "name", CL_GetUsernameForLocalClient(0) );
 	}
 
-	return info;
+	return dvarInfoString;
 }
+
+static char dvarInfoStringBig[BIG_INFO_STRING];
 
 char *Dvar_InfoString_Big(int bit)
 {
-	static char info[BIG_INFO_STRING];
 	dvar_t *dvar;
 
-	info[0] = 0;
+	dvarInfoStringBig[0] = 0;
 
 	for ( dvar = sortedDvars; dvar; dvar = dvar->next )
 	{
 		if ( dvar->flags & bit )
 		{
-			Info_SetValueForKey_Big( info, dvar->name, Dvar_DisplayableValue(dvar) );
+			Info_SetValueForKey_Big( dvarInfoStringBig, dvar->name, Dvar_DisplayableValue(dvar) );
 		}
 	}
 
-	return info;
+	return dvarInfoStringBig;
 }
 
 void Dvar_AddCommands()
