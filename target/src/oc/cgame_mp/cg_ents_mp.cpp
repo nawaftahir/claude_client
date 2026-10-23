@@ -148,7 +148,8 @@ void CG_ScriptMover(centity_t *cent);
 void CG_ProcessEntity(centity_t *cent);
 void CG_AddPacketEntities(void);
 
-static __forceinline void EntVectorCopy(const vec_t *a, vec_t *b);
+// a macro so no out-of-line body is kept
+#define EntVectorCopy(a, b) { const vec_t *src = (a); vec_t *dst = (b); dst[0] = src[0]; dst[1] = src[1]; dst[2] = src[2]; }
 
 static void CG_LockLightingOrigin(centity_t *cent, GfxEntity *ent)
 {
@@ -897,13 +898,6 @@ static void CG_InterpolateEntityPosition(centity_t *cent)
 }
 
 // com_math VectorCopy (not included here); the pointer param shapes the loads
-static __forceinline void EntVectorCopy(const vec_t *a, vec_t *b)
-{
-    b[0] = a[0];
-    b[1] = a[1];
-    b[2] = a[2];
-}
-
 void CG_CalcEntityLerpPositions(centity_t *cent)
 {
     clientInfo_t *ci;
