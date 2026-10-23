@@ -505,6 +505,11 @@ void Sys_Quit( void )
 	exit( 0 );
 }
 
+void Sys_Print( const char *msg )
+{
+	Conbuf_AppendText( msg );
+}
+
 /*
 ================
 Sys_ScanForCD
@@ -1047,10 +1052,6 @@ static void PrintWorkingDir( void )
 	Com_Printf( "Working directory: %s\n", cwd );
 }
 
-void Sys_Print( const char *msg )
-{
-	Conbuf_AppendText( msg );
-}
 /*
 ==================
 WinMain
