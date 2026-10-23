@@ -1672,6 +1672,11 @@ void CG_Stub_4c0140(void)
 void CG_Stub_4c0150(void)
 {
 }
+// retail 0x4c0160, returns 0 and unreferenced; name unknown
+int CG_Stub_4c0160(void)
+{
+    return 0;
+}
 
 const char *CG_GetKillerText(void)
 {
