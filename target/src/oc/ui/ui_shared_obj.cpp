@@ -10,7 +10,7 @@ extern keywordHash_t menuParseKeywords[33];
 
 extern char *va( const char *format, ... );
 
-extern keywordHash_t *itemParseKeywordHash[512];
+keywordHash_t *itemParseKeywordHash[512];
 static char string_00f3b9c0[4096];
 static struct
 {

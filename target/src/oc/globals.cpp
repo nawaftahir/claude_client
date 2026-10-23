@@ -137,7 +137,6 @@ static void *imp_snd_stereo;
 static void *imp_sv_disableClientConsole;
 static void *imp_sv_paused;
 static void *imp_theFxHelper;
-keywordHash_t *itemParseKeywordHash[512];
 LegacyHacks legacyHacksData;
 #pragma data_seg(".data$zzz")
 LegacyHacks *legacyHacks = &legacyHacksData;
