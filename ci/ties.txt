@@ -38,3 +38,8 @@ _yylex
 ?G_ShaderIndex@@YAHPBD@Z
 # trade 10-23: snd vector helpers expanded in place + retail return-0 stubs around SND_AnyActiveListeners (+5.9% whole); host code shape differs
 ?SND_SetChannelInfo@@YAXHHPBUsnd_alias_t@@0MPBMMMHHHHHEW4snd_alias_system_t@@@Z
+# trade 10-23: RemoveVariable called (noinline) as retail at 23 sites, inlined in Scr_KillThread (+1.6% whole); these two now differ
+?G_RunFrame@@YAXH@Z
+?Scr_ShutdownSystem@@YAXEH@Z
+# trade 10-23: RemoveVariable one body, called as retail; inlined at Scr_KillThread/VM_Resume/VM_TerminateTime (+0.8% whole); LTCG inlines RemoveRefToValue here, retail calls
+?Scr_MakeValuePrimitive@@YAHI@Z

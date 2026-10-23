@@ -19,6 +19,9 @@ XAnim *Scr_GetAnims( int index );
 void Scr_CheckAnimsDefined( unsigned int names, unsigned int filename );
 void Scr_PrecacheAnimationTree( unsigned int parentNode );
 unsigned int Scr_UsingTreeInternal( const char *filename, unsigned int *index, int user );
+extern scrVarGlob_t scrVarGlob;
+unsigned int FindVariableIndexInternal( unsigned int name, unsigned int hash );
+unsigned int GetNewVariableIndexInternal3( unsigned int parentId, unsigned int name, unsigned int index );
 void Scr_UsingTree( const char *filename, unsigned int sourcePos );
 bool Scr_LoadAnimTreeInternal( const char *filename, unsigned int parentNode, unsigned int names );
 void Scr_LoadAnimTreeAtIndex( int index, void *(*Alloc)(int), int user );
@@ -728,7 +731,17 @@ unsigned int Scr_UsingTreeInternal( const char *filename, unsigned int *index, i
 		}
 	}
 
-	names = GetArray(GetVariable(fileId, ANIMTREE_NAMES));
+	unsigned int gvi_site;
+	{
+#define pp_parentId (fileId)
+#define pp_name (ANIMTREE_NAMES)
+#define pp_result gvi_site
+#include "scr_get_variable_index.inl"
+#undef pp_result
+#undef pp_name
+#undef pp_parentId
+	}
+	names = GetArray( scrVarGlob.variableList[ gvi_site ].hash.id );
 	SL_RemoveRefToString(filenameId);
 
 	return names;

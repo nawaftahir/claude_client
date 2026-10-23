@@ -42,16 +42,13 @@ void Scr_CancelWaittill( unsigned int startLocalId );
 void Scr_TerminateWaittillThread( unsigned int localId, unsigned int startLocalId );
 unsigned int Scr_GetWaittillThreadStackId( unsigned int localId, unsigned int startLocalId );
 bool Scr_IsEndonThread( unsigned int localId );
-// retail calls RemoveVariable at the VM_Notify sites and TerminateThread out of line
-void RemoveVariableNI( unsigned int parentId, unsigned int name );
 extern scrVarGlob_t scrVarGlob;
 unsigned int GetNewVariableIndexInternal2( unsigned int parentId, unsigned int name, unsigned int index );
+unsigned int GetNewVariableIndexInternal3( unsigned int parentId, unsigned int name, unsigned int index );
+unsigned int FindVariableIndexHash( unsigned int parentId, unsigned int name );
+void MakeVariableExternal( VariableValueInternal *entry, VariableValueInternal *parentValue );
+void FreeValue( unsigned int id );
 
-// retail inlines GetVariable at the timeArrayId site but calls Internal2
-static __declspec(noinline) unsigned int GetNewVariableIndexInternal2NI( unsigned int parentId, unsigned int name, unsigned int index )
-{
-	return GetNewVariableIndexInternal2( parentId, name, index );
-}
 
 __declspec(noinline) void Scr_TerminateThread( unsigned int localId );
 void VM_Notify( unsigned int notifyListOwnerId, unsigned int stringValue, VariableValue *top );
@@ -252,7 +249,7 @@ static __forceinline unsigned __int64 Sys_Rdtsc()
 		unsigned int newIndex_ = FindVariableIndexInternal( name_, hash_ ); \
 		if ( !newIndex_ ) \
 		{ \
-			newIndex_ = GetNewVariableIndexInternal2NI( parentId_, name_, hash_ ); \
+			newIndex_ = GetNewVariableIndexInternal2( parentId_, name_, hash_ ); \
 		} \
 		(res) = scrVarGlob.variableList[ newIndex_ ].hash.id; \
 	}
@@ -2919,11 +2916,11 @@ next:
 			VM_CancelNotifyInternal(notifyListOwnerId, startLocalId, notifyListId, notifyNameListId, stringValue);
 			Scr_KillEndonThread(startLocalId);
 
-			RemoveVariableNI(selfNameId, startLocalId + SL_MAX_STRING_INDEX);
+			RemoveVariable(selfNameId, startLocalId + SL_MAX_STRING_INDEX);
 
 			if ( !GetArraySize(selfNameId) )
 			{
-				RemoveVariableNI(scrVarPub.pauseArrayId, selfId + SL_MAX_STRING_INDEX);
+				RemoveVariable(scrVarPub.pauseArrayId, selfId + SL_MAX_STRING_INDEX);
 			}
 
 			Scr_TerminateThread(selfId);
@@ -3010,17 +3007,27 @@ next:
 
 		unsigned int timeVarId;
 		GET_VARIABLE_I2NI_INLINE(timeVarId, scrVarPub.timeArrayId, scrVarPub.time);
-		stackId = GetNewObjectVariable(GetArray(timeVarId), startLocalId);
+		unsigned int gnvi_site;
+		{
+#define pp_parentId (GetArray(timeVarId))
+#define pp_name (startLocalId + SL_MAX_STRING_INDEX)
+#define pp_result gnvi_site
+#include "scr_get_new_variable_index.inl"
+#undef pp_result
+#undef pp_name
+#undef pp_parentId
+		}
+		stackId = scrVarGlob.variableList[ gnvi_site ].hash.id;
 		SetNewVariableValue(stackId, &tempValue5);
 
 		tempValue = GetVariableValueAddress(stackId);
 
 		VM_CancelNotifyInternal(notifyListOwnerId, startLocalId, notifyListId, notifyNameListId, stringValue);
-		RemoveVariableNI(selfNameId, startLocalId + SL_MAX_STRING_INDEX);
+		RemoveVariable(selfNameId, startLocalId + SL_MAX_STRING_INDEX);
 
 		if ( !GetArraySize(selfNameId) )
 		{
-			RemoveVariableNI(scrVarPub.pauseArrayId, selfId + SL_MAX_STRING_INDEX);
+			RemoveVariable(scrVarPub.pauseArrayId, selfId + SL_MAX_STRING_INDEX);
 		}
 
 		Scr_SetThreadWaitTime(startLocalId, scrVarPub.time);
@@ -3241,7 +3248,13 @@ void VM_TerminateTime( unsigned int timeId )
 
 		stackValue = GetVariableValueAddress(stackId)->stackValue;
 
-		RemoveObjectVariable(timeId, startLocalId);
+		{
+#define pp_parentId (timeId)
+#define pp_name (startLocalId + SL_MAX_STRING_INDEX)
+#include "scr_remove_variable.inl"
+#undef pp_name
+#undef pp_parentId
+		}
 		Scr_ClearWaitTime(startLocalId);
 
 		VM_TerminateStack(startLocalId, startLocalId, stackValue);
@@ -3284,7 +3297,13 @@ void VM_Resume( unsigned int timeId )
 		assert(GetObjectType( stackId ) == VAR_STACK);
 
 		stackValue = GetVariableValueAddress(stackId)->stackValue;
-		RemoveObjectVariable(timeId, startLocalId);
+		{
+#define pp_parentId (timeId)
+#define pp_name (startLocalId + SL_MAX_STRING_INDEX)
+#include "scr_remove_variable.inl"
+#undef pp_name
+#undef pp_parentId
+		}
 
 		VM_UnarchiveStack( startLocalId, &fs, stackValue );
 		RemoveRefToObject( VM_ExecuteInternal( fs ) );
