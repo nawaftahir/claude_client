@@ -2101,35 +2101,12 @@ static qboolean Load_Menu(const char **p, int imageTrack)
     }
 }
 
-// retail inlines the I_stricmp body at both compares in UI_LoadMenus
-static __forceinline int I_stricmpInl(const char *s0, const char *s1)
-{
-    int c0;
-    int c1;
-    int n = 0x7FFFFFFF;
-
-    do {
-        c0 = *s0++;
-        c1 = *s1++;
-        if (!n--)
-            return 0;
-        if (c0 != c1) {
-            if (I_islower(c0))
-                c0 -= 'a' - 'A';
-            if (I_islower(c1))
-                c1 -= 'a' - 'A';
-            if (c0 != c1)
-                return c0 < c1 ? -1 : 1;
-        }
-    } while (c0);
-
-    return 0;
-}
 
 MenuList *UI_LoadMenus(const char *menuFile, int imageTrack)
 {
     const char *p;
     const char *token;
+    int cmp;
     fileHandle_t f;
     int len;
 
@@ -2161,9 +2138,27 @@ MenuList *UI_LoadMenus(const char *menuFile, int imageTrack)
         token = Com_Parse(&p);
         if (!token || !token[0] || token[0] == '}')
             break;
-        if (!I_stricmpInl(token, "}"))
+        {
+#define pp_s0 (token)
+#define pp_s1 ("}")
+#define pp_r (cmp)
+#include "../../universal/q_shared_stricmp.inl"
+#undef pp_r
+#undef pp_s1
+#undef pp_s0
+        }
+        if (!cmp)
             break;
-        if (!I_stricmpInl(token, "loadmenu")) {
+        {
+#define pp_s0 (token)
+#define pp_s1 ("loadmenu")
+#define pp_r (cmp)
+#include "../../universal/q_shared_stricmp.inl"
+#undef pp_r
+#undef pp_s1
+#undef pp_s0
+        }
+        if (!cmp) {
             if (Load_Menu(&p, imageTrack))
                 continue;
             break;

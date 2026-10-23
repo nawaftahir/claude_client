@@ -95,3 +95,5 @@ _$E1
 ?SV_KillServer_f@@YAXXZ
 ?CL_InitUI@@YAXXZ
 ?Com_Shutdown@@YAXPBD@Z
+# sz4 stricmp .inl at UI_LoadMenus: right size, +0.1% whole; regs differ (retail [esi+ebp], n in edi), win back
+?UI_LoadMenus@@YAPAUMenuList@@PBDH@Z
