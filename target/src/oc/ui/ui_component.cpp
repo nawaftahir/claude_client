@@ -122,10 +122,6 @@ inline void Vector2Copy(const vec2_t a, vec2_t b)
     b[1] = a[1];
 }
 
-void UI_Component::Shutdown()
-{
-}
-
 inline void Vector2Add(const vec2_t a, const vec2_t b, vec2_t c)
 {
     c[0] = a[0] + b[0];
@@ -231,7 +227,7 @@ void UI_Component::Init()
     this->selectionParent = NULL;
 }
 
-void UI_Component::AddText(const char *text)
+void UI_Component::Shutdown()
 {
 }
 
@@ -247,9 +243,8 @@ UI_Component *UI_Component::GetCompAtLocation(float *point)
     return NULL;
 }
 
-void UI_LinesComponent::ClearFocus()
+void UI_Component::AddText(const char *text)
 {
-    this->focusOnSelectedLine = 0;
 }
 
 void UI_ScrollPane::Init()
@@ -733,6 +728,11 @@ void UI_LinesComponent::AddText(const char *text)
         lineIndex = atoi(text);
         SetSelectedLineFocus(lineIndex - 1, 0);
     }
+}
+
+void UI_LinesComponent::ClearFocus()
+{
+    this->focusOnSelectedLine = 0;
 }
 
 void UI_VerticalDivider::Init()
