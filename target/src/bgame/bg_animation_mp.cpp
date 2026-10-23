@@ -901,6 +901,7 @@ qboolean BG_ParseConditions( const char **text_pp, animScriptItem_t *scriptItem 
 }
 void BG_ParseCommands( const char **input, animScriptItem_t *scriptItem, animScriptData_t *scriptData )
 {
+	int soundCmp;
 	char    *token;
 	// TTimo gcc: might be used uninitialized
 	animScriptCommand_t *command = NULL;
@@ -1082,7 +1083,16 @@ pp_line_5:;
 				break;
 			}
 
-			if ( !Q_stricmp( token, "sound" ) )
+			{
+				const char *s1 = token;
+				const char *s0 = "sound";
+				int n = 0x7FFFFFFF;
+#define PP_RETVAL( v ) { soundCmp = v; goto pp_sound_cmp; }
+#include "../universal/q_shared_strnicmp.inl"
+#undef PP_RETVAL
+			}
+pp_sound_cmp:
+			if ( !soundCmp )
 			{
 				token = Com_ParseOnLine( input );
 				if ( !token || !token[0] )

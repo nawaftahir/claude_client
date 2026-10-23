@@ -402,40 +402,9 @@ void I_strncpyz( char *dest, const char *src, int destsize )
 
 int I_strnicmp( const char *s0, const char *s1, int n )
 {
-	int c0;
-	int c1;
-
-	do
-	{
-		c0 = *s0++;
-		c1 = *s1++;
-
-		if ( !n-- )
-		{
-			return 0; // strings are equal until end point
-		}
-
-		if ( c0 != c1 )
-		{
-			if ( I_islower( c0 ) )
-			{
-				c0 -= 'a' - 'A';
-			}
-
-			if ( I_islower( c1 ) )
-			{
-				c1 -= 'a' - 'A';
-			}
-
-			if ( c0 != c1 )
-			{
-				return c0 < c1 ? -1 : 1;
-			}
-		}
-	}
-	while ( c0 );
-
-	return 0; // strings are equal
+#define PP_RETVAL( v ) return v
+#include "q_shared_strnicmp.inl"
+#undef PP_RETVAL
 }
 
 int I_strncmp( const char *s0, const char *s1, int n )
