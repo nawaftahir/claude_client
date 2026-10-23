@@ -454,6 +454,11 @@ GPGroup::GPGroup( const char *initName, GPGroup *initParent ) :
 {
 }
 
+GPGroup::~GPGroup()
+{
+	Clean();
+}
+
 int GPGroup::GetNumSubGroups()
 {
 	int count;
@@ -508,11 +513,6 @@ void GPGroup::Clean()
 	mSubGroups = mInOrderSubGroups = mCurrentSubGroup = 0;
 	mParent = 0;
 	mWriteable = false;
-}
-
-GPGroup::~GPGroup()
-{
-	Clean();
 }
 
 GPGroup *GPGroup::Duplicate( TextPool **textPool, GPGroup *initParent )

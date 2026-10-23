@@ -186,7 +186,26 @@ public:
 		return item;
 	}
 
-	void Free( void *item );
+	void Free( void *item )
+	{
+		FxMemBlock *block;
+
+		block = FxMem_FreeItem( item, sizeof( T ) );
+		if ( !mHead->freeList )
+		{
+			MoveToFront( block );
+			return;
+		}
+		if ( block->freeCount < mItemsPerBlock )
+			return;
+		if ( block == mHead )
+		{
+			if ( !block->next || !block->next->freeCount )
+				return;
+			mHead = block->next;
+		}
+		FxMem_FreeBlock( block );
+	}
 
 private:
 	void MoveToFront( FxMemBlock *block );
@@ -194,28 +213,6 @@ private:
 	int mItemsPerBlock;
 	FxMemBlock *mHead;
 };
-
-template <class T>
-void FxMemMgr<T>::Free( void *item )
-{
-	FxMemBlock *block;
-
-	block = FxMem_FreeItem( item, sizeof( T ) );
-	if ( !mHead->freeList )
-	{
-		MoveToFront( block );
-		return;
-	}
-	if ( block->freeCount < mItemsPerBlock )
-		return;
-	if ( block == mHead )
-	{
-		if ( !block->next || !block->next->freeCount )
-			return;
-		mHead = block->next;
-	}
-	FxMem_FreeBlock( block );
-}
 
 template <class T>
 void FxMemMgr<T>::MoveToFront( FxMemBlock *block )

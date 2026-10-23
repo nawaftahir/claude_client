@@ -63,6 +63,8 @@ private:
 	void WriteModel( XModel *model );
 	void WriteChannelInstance( const FxChannelInstance *channelInstance );
 	void WriteData( const void *p, int byteCount );
+
+public:
 	unsigned char ReadByte()
 	{
 		unsigned char value;
