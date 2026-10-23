@@ -1267,7 +1267,7 @@ static void CG_CreateDObj(DObjModel_s *dobjModels, unsigned short numModels, str
 static void CG_InitXAnimTrees(void)
 {
     XAnim *anims;
-    unsigned int i;
+    int i;
 
     anims = (XAnim *)cg->bgs.generic_human.tree.anims;
     for (i = 0; i < 64; i++)
