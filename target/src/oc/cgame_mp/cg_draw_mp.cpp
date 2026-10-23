@@ -217,7 +217,6 @@ void CG_Draw2D(void);
 
 bool CG_GetWeapReticleZoom(float *pfZoom);
 void CG_DrawTurretCrossHair(void);
-static inline int CG_RoundFPS(float value);
 inline void FastSinCos(const float value, float *pSin, float *pCos);
 
 extern int Com_sprintf(char *dest, size_t size, const char *format, ...);
@@ -227,6 +226,9 @@ extern const vec3_t vec3_origin;
 extern int I_stricmp(const char *s1, const char *s2);
 
 
+
+// x87 round with half-way ties broken upward; a macro so no out-of-line body is kept
+#define CG_ROUND_FPS(dst, x) { float value = (x); const double roundEpsilon = 1.0 / 1073741824.0; int result; __asm fld value __asm fadd roundEpsilon __asm { fistp result } dst = result; }
 
 /* qboolean (int), not Bool: callers (cg_weapons.c, cg_predict_mp.c) declare it
  * `extern qboolean` and read full eax; a 1-byte Bool return leaves eax's upper
@@ -374,14 +376,16 @@ static float CG_DrawFPS(float y)
         if (minTime <= 0)
             minTime = 1;
 
-        fpsMin = CG_RoundFPS(1000.0f / (float)maxTime);
-        fpsMax = CG_RoundFPS(1000.0f / (float)minTime);
+        CG_ROUND_FPS(fpsMin, 1000.0f / (float)maxTime);
+        CG_ROUND_FPS(fpsMax, 1000.0f / (float)minTime);
 
         if (cg_drawFPS->current.integer > 2)
             s = va("%1.2fmspf(%i-%i)", (float)total * (1.0f / 32.0f), minTime, maxTime);
         else {
-            int fpsAvg = CG_RoundFPS(32000.0f / (float)total);
-            int fpsVar = CG_RoundFPS(variance);
+            int fpsAvg, fpsVar;
+
+            CG_ROUND_FPS(fpsAvg, 32000.0f / (float)total);
+            CG_ROUND_FPS(fpsVar, variance);
 
             s = va("%ifps(%i-%i,%i)", fpsAvg, fpsMin, fpsMax, fpsVar);
         }
@@ -2432,22 +2436,6 @@ void CG_DrawActive(void)
     CG_TileClear();
 }
 
-static inline int CG_RoundFPS(float value)
-{
-#if defined(_MSC_VER) && defined(_M_IX86)
-    int result;
-    /* Break exact half-way ties upward before x87's round-to-nearest. */
-    const double roundEpsilon = 1.0 / 1073741824.0;
-
-    __asm fld value
-    __asm fadd roundEpsilon
-    __asm fistp result
-
-    return result;
-#else
-    return I_fround(value);
-#endif
-}
 inline void FastSinCos(const float value, float *pSin, float *pCos)
 {
     __asm

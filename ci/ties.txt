@@ -81,3 +81,5 @@ _$E1
 ?BG_ParseCommands@@YAXPAPBDPAUanimScriptItem_t@@PAUanimScriptData_s@@@Z
 # rb15 one CL_InitServerInfo body: +2.48% whole; win back
 ?CL_RefreshKnownGlobalServer@@YAHUnetadr_t@@@Z
+# ss CG_RoundFPS macro, no stray body: NET +92673 B; frame 8 B short, win back
+?CG_DrawFPS@@YAMM@Z
