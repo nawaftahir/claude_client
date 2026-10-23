@@ -89,7 +89,6 @@ qboolean NET_CompareAdr( netadr_t a, netadr_t b );
 
 // Local client index for the "[client %i]" traces; always 0 on a dedicated
 // server. Original name unknown: the copy is emitted at the end of this TU.
-inline int Net_LocalClientNum();
 
 /*
 ==============
@@ -459,7 +458,7 @@ bool Netchan_TransmitNextFragment( netchan_t *chan )
 	if ( showpackets->current.boolean )
 	{
 		Com_Printf( "[client %i] %s send %4i : s=%i fragment=%i,%i\n"
-		            , Net_LocalClientNum()
+		            , 0
 		            , netsrcString[ chan->sock ]
 		            , send.cursize
 		            , chan->outgoingSequence - 1
@@ -545,7 +544,7 @@ bool Netchan_Transmit( netchan_t *chan, int length, const byte *data )
 	if ( showpackets->current.boolean )
 	{
 		Com_Printf( "[client %i] %s send %4i : s=%i ack=%i\n"
-		            , Net_LocalClientNum() + 1
+		            , 0 + 1
 		            , netsrcString[ chan->sock ]
 		            , send.cursize
 		            , chan->outgoingSequence - 1
@@ -616,7 +615,7 @@ qboolean Netchan_Process( netchan_t *chan, msg_t *msg )
 		if ( fragmented )
 		{
 			Com_Printf( "[client %i] %s recv %4i : s=%i fragment=%i,%i\n"
-			            , Net_LocalClientNum() + 1
+			            , 0 + 1
 			            , netsrcString[ chan->sock ]
 			            , msg->cursize
 			            , sequence
@@ -625,7 +624,7 @@ qboolean Netchan_Process( netchan_t *chan, msg_t *msg )
 		else
 		{
 			Com_Printf( "[client %i] %s recv %4i : s=%i\n"
-			            , Net_LocalClientNum() + 1
+			            , 0 + 1
 			            , netsrcString[ chan->sock ]
 			            , msg->cursize
 			            , sequence );
@@ -640,7 +639,7 @@ qboolean Netchan_Process( netchan_t *chan, msg_t *msg )
 		if ( showdrop->current.boolean || showpackets->current.boolean )
 		{
 			Com_Printf( "[client %i] %s:Out of order packet %i at %i\n"
-			            , Net_LocalClientNum() + 1
+			            , 0 + 1
 			            , NET_AdrToString( chan->remoteAddress )
 			            ,  sequence
 			            , chan->incomingSequence );
@@ -658,7 +657,7 @@ qboolean Netchan_Process( netchan_t *chan, msg_t *msg )
 		if ( showdrop->current.boolean || showpackets->current.boolean )
 		{
 			Com_Printf( "[client %i] %s: Dropped %i packets at %i\n"
-			            , Net_LocalClientNum() + 1
+			            , 0 + 1
 			            , NET_AdrToString( chan->remoteAddress )
 			            , chan->dropped
 			            , sequence );
@@ -945,7 +944,7 @@ bool NET_SendPacket( netsrc_t sock, int length, const void *data, netadr_t to )
 	// sequenced packets are shown in netchan, so just show oob
 	if ( showpackets->current.boolean && *(int *)data == -1 )
 	{
-		Com_Printf("[client %i] send packet %4i\n", Net_LocalClientNum(), length);
+		Com_Printf("[client %i] send packet %4i\n", 0, length);
 	}
 
 	if ( to.type == NA_LOOPBACK )
@@ -1135,7 +1134,3 @@ qboolean NET_StringToAdr( const char *s, netadr_t *a )
 	return qtrue;
 }
 
-inline int Net_LocalClientNum()
-{
-	return 0;
-}

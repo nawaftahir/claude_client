@@ -255,6 +255,10 @@ int LongSwap( int l )
 
 	return ( (int)b1 << 24 ) + ( (int)b2 << 16 ) + ( (int)b3 << 8 ) + b4;
 }
+int LongNoSwap( int l )
+{
+	return l;
+}
 
 int64_t Long64Swap( int64_t l )
 {
@@ -294,6 +298,10 @@ float FloatSwap( float f )
 
 	return dat2.f;
 }
+float FloatNoSwap( float f )
+{
+	return FloatIdentity( f );
+}
 int FloatSwapAsInt( float f )
 {
 	union
@@ -310,6 +318,10 @@ int FloatSwapAsInt( float f )
 	dat2.b[3] = dat1.b[0];
 
 	return dat2.i;
+}
+int FloatNoSwapAsInt( float f )
+{
+	return FloatAsInt( f );
 }
 
 void Swap_InitLittleEndian()
@@ -1288,18 +1300,6 @@ void ScaledOrientationPlaneToLocal( const orientation_t *orient, float scale, co
 	out[3] = ( plane[3] - DotProduct( orient->origin, plane ) ) / scale;
 }
 
-int LongNoSwap( int l )
-{
-	return l;
-}
-float FloatNoSwap( float f )
-{
-	return FloatIdentity( f );
-}
-int FloatNoSwapAsInt( float f )
-{
-	return FloatAsInt( f );
-}
 __forceinline char *I_strlwrInl( char *s )
 {
 	char *iter;

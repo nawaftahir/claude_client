@@ -1018,7 +1018,10 @@ extern FxScheduler *theFxScheduler;
 // Original name unknown.
 extern FxScheduler *theFxSchedulers[1];
 extern volatile int fx_camera_valid;
-int Net_LocalClientNum() throw();
+inline int Net_LocalClientNum()
+{
+	return 0;
+}
 float flrand( float min, float max );
 int irand( int min, int max );
 void Rand_Init( int seed );
