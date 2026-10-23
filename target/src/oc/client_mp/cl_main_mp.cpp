@@ -199,7 +199,8 @@ extern void CL_WritePacket(void);
 extern void CL_UpdateColor(void);
 extern void CL_InitCGame(void);
 extern void UI_CloseAll(void);
-extern void UI_CloseAllInl(void);
+extern void Menus_Close(displayContextDef_t *dc, menuDef_t *menu);
+extern uiInfo_t *uiInfo;
 extern void UI_DrawConnectScreen(void);
 extern void Cbuf_Execute(void);
 extern void Cbuf_ExecuteText(int, const char *);
@@ -1067,7 +1068,9 @@ void CL_MapLoading(const char *mapname)
         }
         I_strncpyz(cls.servername, (const char *)"localhost", sizeof(cls.servername));
         CL_Disconnect();
-        UI_CloseAllInl();
+        {
+#include "../ui_mp/ui_closeall.inl"
+        }
 
         ::clc.state = CA_CHALLENGING;
         ::clc.connectTime = -3000;
