@@ -637,7 +637,14 @@ void Com_LoadSoundAliasFile( const char *loadspec, const char *loadspecCurGame, 
 		}
 		if ( !*token || *token == '#' )
 		{
-			Com_SkipRestOfLineInl(&data);
+			{
+#define pp_data (&data)
+#define PP_RETURN goto pp_done_1
+#include "q_parse_skipline.inl"
+#undef PP_RETURN
+#undef pp_data
+			}
+pp_done_1:;
 			continue;
 		}
 		if ( !columnCount )
@@ -733,7 +740,14 @@ pp_done_5:;
 				Com_AddBuildSoundAlias(&alias);
 			}
 		}
-		Com_SkipRestOfLineInl(&data);
+		{
+#define pp_data (&data)
+#define PP_RETURN goto pp_done_2
+#include "q_parse_skipline.inl"
+#undef PP_RETURN
+#undef pp_data
+		}
+pp_done_2:;
 	}
 	{
 #define PP_RETURN goto pp_done_6
@@ -1314,7 +1328,7 @@ qboolean Com_SubtitleReferenceExists( const char *reference )
 		return qfalse;
 	}
 	Com_BeginParseSession("soundaliases/subtitle.st");
-	for ( data = buffer; ; Com_SkipRestOfLineInl(&data) )
+	for ( data = buffer; ; )
 	{
 		COM_PARSE_INLINE(token, &data);
 		if ( !data )
@@ -1337,6 +1351,14 @@ pp_line_3:;
 				break;
 			}
 		}
+		{
+#define pp_data (&data)
+#define PP_RETURN goto pp_done_3
+#include "q_parse_skipline.inl"
+#undef PP_RETURN
+#undef pp_data
+		}
+pp_done_3:;
 	}
 	{
 #define PP_RETURN goto pp_done_10

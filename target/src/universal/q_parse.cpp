@@ -840,40 +840,13 @@ qboolean Com_SkipBracedSection( const char **program, int maxNesting )
 	return nestingExceeded;
 }
 
-__forceinline void Com_SkipRestOfLineInl( const char **data )
+void Com_SkipRestOfLine( const char **pp_data )
 {
-	const char *p;
-	int c;
-	ParseThreadInfo *parse;
-	parseInfo_t *pi;
-
-	parse = Com_GetParseThreadInfo();
-	pi = &parse->parseInfo[parse->parseInfoNum];
-	p = *data;
-
-	if ( !p )
-	{
-		return;
-	}
-
-	while ( ( c = *p ) != 0 )
-	{
-		p++;
-
-		if ( c == '\n' )
-		{
-			pi->lines++;
-			break;
-		}
-	}
-
-	*data = p;
+#define PP_RETURN return
+#include "q_parse_skipline.inl"
+#undef PP_RETURN
 }
 
-void Com_SkipRestOfLine( const char **data )
-{
-	Com_SkipRestOfLineInl( data );
-}
 
 int Com_GetArgCountOnLine( const char **data_p )
 {
