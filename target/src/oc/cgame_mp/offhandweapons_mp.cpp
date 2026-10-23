@@ -63,20 +63,20 @@ void CG_OffhandRegisterDvars(void)
     hud_flash_period_offhand = Dvar_RegisterFloat("hud_flash_period_offhand", 0.5f, 0.0f, 30.0f, 0x1001);
 }
 
-static __forceinline int GetBestOffhandBody(int offhandClass)
-{
-    int newOffhand;
-
-    newOffhand = BG_GetFirstAvailableOffhand(&cg->predictedPlayerState, offhandClass);
-    if (!newOffhand)
-        return BG_GetFirstEquippedOffhand(&cg->predictedPlayerState, offhandClass);
-    return newOffhand;
-}
+#define GET_BEST_OFFHAND(dst, offhandClass) \
+    do { \
+        (dst) = BG_GetFirstAvailableOffhand(&cg->predictedPlayerState, offhandClass); \
+        if (!(dst)) \
+            (dst) = BG_GetFirstEquippedOffhand(&cg->predictedPlayerState, offhandClass); \
+    } while (0)
 
 // retail 0x4d1cc0, called from one site only
 static __declspec(noinline) int GetBestOffhand(int offhandClass)
 {
-    return GetBestOffhandBody(offhandClass);
+    int newOffhand;
+
+    GET_BEST_OFFHAND(newOffhand, offhandClass);
+    return newOffhand;
 }
 
 // retail 0x4d1ce0
@@ -93,8 +93,13 @@ void CG_DrawOffHandIcon(rectDef_s *rect, float scale, vec_t *color, MaterialHand
 
     if (!IsOffHandDisplayVisible())
         return;
-    if (!GetBestOffhandBody(weaponType))
-        return;
+    {
+        int best;
+
+        GET_BEST_OFFHAND(best, weaponType);
+        if (!best)
+            return;
+    }
 
     drawColor[3] = CG_FadeHudMenu(hud_fade_offhand, cg->offhandFadeTime, I_fround(hud_fade_offhand->current.value * 1000.0f));
     if (drawColor[3] == 0.0f)
@@ -156,8 +161,13 @@ void CG_DrawOffHandHighlight(rectDef_s *rect, float scale, vec_t *color, Materia
 
     if (!IsOffHandDisplayVisible())
         return;
-    if (!GetBestOffhandBody(weaponType))
-        return;
+    {
+        int best;
+
+        GET_BEST_OFFHAND(best, weaponType);
+        if (!best)
+            return;
+    }
     if (!cg->equippedOffHand)
         return;
 
@@ -190,8 +200,13 @@ void CG_DrawOffHandAmmo(rectDef_s *rect, struct Font_s *font, float scale, vec_t
 
     if (!IsOffHandDisplayVisible())
         return;
-    if (!GetBestOffhandBody(weaponType))
-        return;
+    {
+        int best;
+
+        GET_BEST_OFFHAND(best, weaponType);
+        if (!best)
+            return;
+    }
 
     drawColor[3] = CG_FadeHudMenu(hud_fade_offhand, cg->offhandFadeTime, I_fround(hud_fade_offhand->current.value * 1000.0f));
     if (drawColor[3] == 0.0f)
