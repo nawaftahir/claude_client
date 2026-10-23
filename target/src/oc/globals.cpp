@@ -3,7 +3,6 @@
 #include "imports.h"
 
 void *__DefaultRuneLocale;
-UI_Component_data_t __ZN12UI_Component1gE;
 int __mh_execute_header;
 static byte *_dvar_shellshock_fadein;
 static byte *_dvar_shellshock_fadeout;

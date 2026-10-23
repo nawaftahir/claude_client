@@ -10,7 +10,7 @@ extern clientStatic_t cls;
 extern sharedUiInfo_t sharedUiInfo;
 extern qkey_t *keys;
 
-extern UI_Component_data_t __ZN12UI_Component1gE;
+UI_Component_data_t __ZN12UI_Component1gE;
 #define UI_Component_g __ZN12UI_Component1gE
 extern refexport_t re;
 extern void *imp_com_developer;
