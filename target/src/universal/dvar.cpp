@@ -48,7 +48,7 @@ bool Dvar_IsSystemActive()
 	return isDvarSystemActive;
 }
 
-int generateHashValue(const char *fname)
+__declspec(noinline) int generateHashValue(const char *fname)
 {
 	int i;
 	int hash;

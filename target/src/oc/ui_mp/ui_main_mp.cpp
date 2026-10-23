@@ -3041,7 +3041,6 @@ void Dvar_SetVariant(dvar_t *dvar, DvarValue value, DvarSetSource source);
 int Dvar_StringToEnum(const DvarLimits *domain, const char *string);
 void UI_Init(void)
 {
-    int width, height;
     MenuList *menuList;
     int netGameTypeIdx;
     float mPitch;
@@ -3067,6 +3066,9 @@ void UI_Init(void)
 
     CL_GetScreenDimensions(&uiInfo->uiDC.screenWidth, &uiInfo->uiDC.screenHeight, (float *)((int *)&uiInfo->uiDC.screenAspect));
 
+    {
+    int width, height;
+
     width = uiInfo->uiDC.screenWidth;
     height = uiInfo->uiDC.screenHeight;
 
@@ -3075,6 +3077,7 @@ void UI_Init(void)
         uiInfo->uiDC.bias = ((float)width + (float)height * -1.3333333730697632f) * 0.5f;
     } else {
         *(int *)uiInfo = 0;
+    }
     }
 
     Sys_Milliseconds();
@@ -3121,12 +3124,15 @@ void UI_Init(void)
 #undef pp_dvar
 #undef pp_name
         if (!dvar)
-            mPitch = 0;
-        else if (dvar->type == DVAR_TYPE_FLOAT)
-            mPitch = dvar->current.value;
+            mousePitch = false;
         else
-            mPitch = Dvar_StringToFloat(dvar->current.string);
-        mousePitch = mPitch < 0.0f;
+        {
+            if (dvar->type == DVAR_TYPE_FLOAT)
+                mPitch = dvar->current.value;
+            else
+                mPitch = Dvar_StringToFloat(dvar->current.string);
+            mousePitch = mPitch < 0.0f;
+        }
 
         // Dvar_SetBoolByName("ui_mousePitch", mousePitch)
 #define pp_name "ui_mousePitch"
