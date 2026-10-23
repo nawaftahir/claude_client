@@ -85,3 +85,5 @@ _$E1
 ?CG_DrawFPS@@YAMM@Z
 # st Vec3MadInl macro, no stray body: whole 60.003->60.166%, drift +48 gone; one fld/fmul pair in VectorMA site
 ?CG_OffsetThirdPersonView@@YAXXZ
+# su BG_GetSpeedInl -> real BG_GetSpeed, no stray body: whole 60.166->60.696%; x87 CSE of velocity loads at the inlined site
+?CG_CalcViewValues@@YAXXZ
