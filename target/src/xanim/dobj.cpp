@@ -1638,10 +1638,3 @@ void DObjSetModel(DObj_s *obj, XModel *model)
 	obj->numBones = (byte)model->parts->numBones;
 	obj->models[0] = model;
 }
-
-void DObjInitFromModel( DObj *obj, XModel *model )
-{
-	obj->skel = &model->parts->skel;
-	obj->numBones = model->parts->numBones;
-	obj->models[0] = model;
-}
