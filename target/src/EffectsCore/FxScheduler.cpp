@@ -420,11 +420,6 @@ inline void FxBoltFramePtr::operator=( const FxBoltFramePtr &other )
 		mFrame = other.mFrame->AddRef();
 }
 
-inline bool FxBoltFramePtr::IsValid() const
-{
-	return mFrame != 0;
-}
-
 inline void FxBoltFramePtr::operator=( FxBoltFrame *frame )
 {
 	if ( mFrame == frame )
@@ -437,6 +432,11 @@ inline void FxBoltFramePtr::operator=( FxBoltFrame *frame )
 inline FxBoltFrame *FxBoltFramePtr::Get() const
 {
 	return mFrame;
+}
+
+inline bool FxBoltFramePtr::IsValid() const
+{
+	return mFrame != 0;
 }
 
 // One primitive of an effect about to be spawned.

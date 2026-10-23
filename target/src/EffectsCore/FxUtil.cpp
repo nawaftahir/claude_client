@@ -958,6 +958,12 @@ struct EffectPrimitive
 	const PrimitiveTemplate *primTemp;
 	FxBoltFramePtr boltFrame;
 };
+// Original name unknown.
+inline int FxArchive::GetUsedSize()
+{
+	return memFile->bytesUsed;
+}
+
 // An effect primitive whose spawn delay has not yet elapsed.
 struct ScheduledEffect
 {
@@ -1018,10 +1024,7 @@ extern FxScheduler *theFxScheduler;
 // Original name unknown.
 extern FxScheduler *theFxSchedulers[1];
 extern volatile int fx_camera_valid;
-inline int Net_LocalClientNum()
-{
-	return 0;
-}
+#define Net_LocalClientNum() 0
 float flrand( float min, float max );
 int irand( int min, int max );
 void Rand_Init( int seed );
@@ -1098,12 +1101,6 @@ void AxisCopy( const float in[3][3], float out[3][3] );
 void CL_AddDebugLine( const float *start, const float *end, const float *color, int depthTest, int duration, int fromServer );
 
 extern void StatMon_Warning( int type, int duration, const char *materialName );
-
-// Original name unknown.
-inline int FxArchive::GetUsedSize()
-{
-	return memFile->bytesUsed;
-}
 
 // Original name unknown.
 static inline void FX_SwapBolt( int i, int j );

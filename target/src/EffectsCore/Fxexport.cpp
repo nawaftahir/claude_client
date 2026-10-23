@@ -34,7 +34,7 @@ extern int privateEffectActiveCountNonBolt;
 
 DObj *Com_GetClientDObj( int handle, int localClientNum );
 int DObjGetBoneIndex( const DObj *obj, unsigned int name );
-int Net_LocalClientNum();
+#define Net_LocalClientNum() 0
 int FX_Init( bool rendererExists );
 void FX_Free( bool bRemoveTemplates );
 
