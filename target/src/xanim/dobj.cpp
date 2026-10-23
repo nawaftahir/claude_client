@@ -1157,6 +1157,11 @@ const char *DObjGetBoneName(const DObj_s *obj, int boneIndex)
 	return NULL;
 }
 
+XAnimTree_s* DObjGetTree(const DObj_s *obj)
+{
+	return obj->tree;
+}
+
 int DObjBad( const DObj *obj )
 {
 	int i;
@@ -1634,10 +1639,6 @@ void DObjSetModel(DObj_s *obj, XModel *model)
 	obj->models[0] = model;
 }
 
-XAnimTree_s* DObjGetTree(const DObj_s *obj)
-{
-	return obj->tree;
-}
 void DObjInitFromModel( DObj *obj, XModel *model )
 {
 	obj->skel = &model->parts->skel;
