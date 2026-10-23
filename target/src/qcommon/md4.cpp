@@ -100,8 +100,8 @@ static void Decode( UINT4 *, const unsigned char *, unsigned int );
 
 // Storage size from the layout; only the engineState_t members are referenced.
 struct engineState_t;
-static char engineStateStorage[0x700];
-engineState_t *engineState = (engineState_t *)engineStateStorage;
+unsigned char legacyHacksArray[0x700];
+engineState_t *engineState = (engineState_t *)legacyHacksArray;
 
 static unsigned char PADDING[64] = {
 	0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0

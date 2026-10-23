@@ -64,8 +64,6 @@ static const dvar_t **dvar_developer;
 static const dvar_t **dvar_errorDecay;
 static const dvar_t **dvar_nopredict;
 static const dvar_t **dvar_synchronous;
-char enc_buffer[4096];
-int enc_buffer_pos;
 static byte *encode_vol_ptr;
 Boolean gConsoleRunning;
 int g_disableRendering;
@@ -137,13 +135,12 @@ static void *imp_snd_stereo;
 static void *imp_sv_disableClientConsole;
 static void *imp_sv_paused;
 static void *imp_theFxHelper;
-LegacyHacks legacyHacksData;
+extern unsigned char legacyHacksArray[];
 #pragma data_seg(".data$zzz")
-LegacyHacks *legacyHacks = &legacyHacksData;
+LegacyHacks *legacyHacks = (LegacyHacks *)legacyHacksArray;
 #pragma data_seg()
 
 static byte *net_profile_dvar;
-short int partial_audio_buffer[640];
 static byte *record_callback_ptr;
 static const void *speex_nb_mode_ptr;
 static int *speex_quality_ptr;

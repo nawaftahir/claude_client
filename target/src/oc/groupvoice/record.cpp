@@ -7,9 +7,9 @@
 
 static int samples_in_partial_audio_buffer = 0x0;
 
-extern char enc_buffer[4096];
-extern int enc_buffer_pos;
-extern short int partial_audio_buffer[640];
+int enc_buffer_pos = 0;
+short int partial_audio_buffer[640];
+char enc_buffer[4096];
 extern int samples_in_partial_audio_buffer;
 
 extern long DSOUNDRecord_Start(recordingSample_t *sample);

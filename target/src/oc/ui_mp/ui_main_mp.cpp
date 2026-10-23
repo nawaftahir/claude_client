@@ -43,7 +43,7 @@ extern clientActive_t clients[1];
 extern cg_t cgArray[1];
 extern cg_t * const cg;
 extern LegacyHacks *legacyHacks;
-extern LegacyHacks legacyHacksData;
+extern unsigned char legacyHacksArray[];
 
 /* dvar globals */
 extern const dvar_t *cl_voice;
@@ -3052,14 +3052,14 @@ void UI_Init(void)
 
     UI_RegisterDvars();
 
-    legacyHacksData.ui_newScriptMenu[0] = 0;
-    legacyHacksData.ui_newScriptMenuIndex = -1;
-    legacyHacksData.ui_scriptMenu[0] = 0;
-    legacyHacksData.ui_scriptMenuIndex = -1;
-    legacyHacksData.ui_scriptMenuAllowResponse = 1;
-    legacyHacksData.ui_waitingScriptMenu[0] = 0;
-    legacyHacksData.ui_waitingScriptMenuIndex = -1;
-    legacyHacksData.ui_waitingScriptMenuNoMouse = 0;
+    ((LegacyHacks *)legacyHacksArray)->ui_newScriptMenu[0] = 0;
+    ((LegacyHacks *)legacyHacksArray)->ui_newScriptMenuIndex = -1;
+    ((LegacyHacks *)legacyHacksArray)->ui_scriptMenu[0] = 0;
+    ((LegacyHacks *)legacyHacksArray)->ui_scriptMenuIndex = -1;
+    ((LegacyHacks *)legacyHacksArray)->ui_scriptMenuAllowResponse = 1;
+    ((LegacyHacks *)legacyHacksArray)->ui_waitingScriptMenu[0] = 0;
+    ((LegacyHacks *)legacyHacksArray)->ui_waitingScriptMenuIndex = -1;
+    ((LegacyHacks *)legacyHacksArray)->ui_waitingScriptMenuNoMouse = 0;
 
     String_Init();
     Menu_Setup(&uiInfo->uiDC);
