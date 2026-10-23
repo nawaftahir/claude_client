@@ -931,16 +931,6 @@ void CG_StartAmbient(void)
     SND_PlayAmbientAlias(alias, diff, (snd_alias_system_t)(1));
 }
 
-Bool CG_PlaySoundOnFirstClient(void)
-{
-    return 1;
-}
-
-Bool CG_PlaySoundOnCurrentLocalClient(int entitynum, const vec_t *origin, const char *aliasname)
-{
-    return 1;
-}
-
 int CG_PlayClientSoundAlias(snd_alias_list_t *aliasList)
 {
     return CG_PlaySoundAlias(cgArray[0].nextSnap->ps.clientNum, cgArray[0].nextSnap->ps.origin, aliasList);
@@ -982,6 +972,16 @@ int CG_PlayEntitySoundAliasByName(int entitynum, const char *aliasname)
     msec = SND_PlaySoundAlias(alias, entitynum, origin, 0, SASYS_CGAME);
     CG_SubtitlePrint(msec, alias);
     return msec;
+}
+
+Bool CG_PlaySoundOnFirstClient(void)
+{
+    return 1;
+}
+
+Bool CG_PlaySoundOnCurrentLocalClient(int entitynum, const vec_t *origin, const char *aliasname)
+{
+    return 1;
 }
 
 static void CG_SubtitlePrint(int msec, const snd_alias_t *pAlias)
