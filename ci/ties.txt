@@ -36,3 +36,5 @@ _yylex
 ?CL_PlayLogo_f@@YAXXZ
 # trade 10-23: one I_strlwr body shared with its inlined sites (+0.87% whole); G_ShaderIndex site expansion differs
 ?G_ShaderIndex@@YAHPBD@Z
+# trade 10-23: snd vector helpers expanded in place + retail return-0 stubs around SND_AnyActiveListeners (+5.9% whole); host code shape differs
+?SND_SetChannelInfo@@YAXHHPBUsnd_alias_t@@0MPBMMMHHHHHEW4snd_alias_system_t@@@Z
