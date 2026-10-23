@@ -1942,7 +1942,12 @@ nextLine:
 		Com_SkipRestOfLine(&buffer);
 	}
 
-	Com_EndParseSessionInl();
+	{
+#define PP_RETURN goto pp_done_15
+#include "q_parse_endsession.inl"
+#undef PP_RETURN
+	}
+pp_done_15:;
 
 	if ( numRead == numDvars )
 		return qtrue;

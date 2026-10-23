@@ -647,4 +647,3 @@ XModel* CM_XModelPrecache(const char *name);
 #include <sys/time.h>
 #include <ctype.h>
 
-void Com_EndParseSessionInl( void );

@@ -58,25 +58,15 @@ void Com_BeginParseSession( const char *filename )
 	I_strncpyz( pi->parseFile, filename, sizeof( pi->parseFile ) );
 }
 
-__forceinline void Com_EndParseSessionInl( void )
-{
-	ParseThreadInfo *parse;
+extern const char *const com_endParseSessionUnderflow = "\x15" "Com_EndParseSession: session underflow";
 
-	parse = Com_GetParseThreadInfo();
-
-	if ( parse->parseInfoNum == 0 )
-	{
-		Com_Error( ERR_FATAL, "\x15" "Com_EndParseSession: session underflow" );
-	}
-
-	parse->parseInfoNum--;
-}
-
-// retail calls it from 7 sites only, inlines elsewhere
 __declspec(noinline) void Com_EndParseSession( void )
 {
-	Com_EndParseSessionInl();
+#define PP_RETURN return
+#include "q_parse_endsession.inl"
+#undef PP_RETURN
 }
+
 
 void Com_ResetParseSessions()
 {

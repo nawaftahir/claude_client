@@ -571,7 +571,12 @@ void BG_LoadPlayerAnimTypes()
 		g_playerAnimTypeNamesCount++;
 	}
 
-	Com_EndParseSessionInl();
+	{
+#define PP_RETURN goto pp_done_18
+#include "../universal/q_parse_endsession.inl"
+#undef PP_RETURN
+	}
+pp_done_18:;
 }
 
 /*

@@ -72,7 +72,12 @@ static qboolean CG_ParseRumbleGraph(RumbleGraph *graph, const char *buffer,
     token = Com_Parse(&bufPtr);
     if (I_stricmp_local(token, "RUMBLEGRAPHFILE") != 0) {
         Com_Printf("^1\"%s\" does not appear to be a rumble graph file\n", fileName);
-        Com_EndParseSessionInl();
+        {
+#define PP_RETURN goto pp_done_22
+#include "../../universal/q_parse_endsession.inl"
+#undef PP_RETURN
+        }
+pp_done_22:;
         return 0;
     }
 
@@ -93,10 +98,20 @@ static qboolean CG_ParseRumbleGraph(RumbleGraph *graph, const char *buffer,
 
     if (i >= MAX_RUMBLE_GRAPH_KNOTS) {
         Com_Printf("^3WARNING: \"%s\" has too many graph knots\n", fileName);
-        Com_EndParseSessionInl();
+        {
+#define PP_RETURN goto pp_done_23
+#include "../../universal/q_parse_endsession.inl"
+#undef PP_RETURN
+        }
+pp_done_23:;
         return 0;
     }
-    Com_EndParseSessionInl();
+    {
+#define PP_RETURN goto pp_done_24
+#include "../../universal/q_parse_endsession.inl"
+#undef PP_RETURN
+    }
+pp_done_24:;
 
     if (declaredCount != i) {
         Com_Printf("^1\"%s\" Error in parsing a rumble graph file\n", fileName);

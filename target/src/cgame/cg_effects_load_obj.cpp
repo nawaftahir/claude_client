@@ -152,7 +152,12 @@ static void CG_RegisterImpactEffectsForDir( const char *dir, char **szEffectFile
 		Com_BeginParseSession(filename);
 		Com_SetCSV(qtrue);
 		pszErrorMsg = CG_ParseImpactEffects(filename, buf, IMPACT_TYPECOUNT, (const char **)g_TypeName, szEffectFile);
-		Com_EndParseSessionInl();
+		{
+#define PP_RETURN goto pp_done_16
+#include "../universal/q_parse_endsession.inl"
+#undef PP_RETURN
+		}
+pp_done_16:;
 		Hunk_ClearTempMemoryHighInternal();
 		if ( pszErrorMsg )
 		{

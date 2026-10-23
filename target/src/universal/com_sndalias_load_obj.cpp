@@ -677,7 +677,12 @@ void Com_LoadSoundAliasFile( const char *loadspec, const char *loadspecCurGame, 
 			if ( !hasName || !hasFile )
 			{
 				Com_Printf("^1ERROR: Sound alias file %s: missing 'name' and/or 'file' columns\n", sourceFile);
-				Com_EndParseSessionInl();
+				{
+#define PP_RETURN goto pp_done_4
+#include "q_parse_endsession.inl"
+#undef PP_RETURN
+				}
+pp_done_4:;
 				return;
 			}
 		}
@@ -701,7 +706,12 @@ void Com_LoadSoundAliasFile( const char *loadspec, const char *loadspecCurGame, 
 			if ( !fieldSet[SA_NAME] || !fieldSet[SA_FILE] )
 			{
 				Com_Printf("^1ERROR: Sound alias file %s: alias entry missing name and/or file\n", sourceFile);
-				Com_EndParseSessionInl();
+				{
+#define PP_RETURN goto pp_done_5
+#include "q_parse_endsession.inl"
+#undef PP_RETURN
+				}
+pp_done_5:;
 				return;
 			}
 			if ( alias.keep && !alias.error && Com_ValidateSoundAlias(&alias) )
@@ -711,7 +721,12 @@ void Com_LoadSoundAliasFile( const char *loadspec, const char *loadspecCurGame, 
 		}
 		Com_SkipRestOfLineInl(&data);
 	}
-	Com_EndParseSessionInl();
+	{
+#define PP_RETURN goto pp_done_6
+#include "q_parse_endsession.inl"
+#undef PP_RETURN
+	}
+pp_done_6:;
 }
 
 int AliasNameCompare( snd_alias_build_t *alias0, snd_alias_build_t *alias1 )
@@ -1094,13 +1109,23 @@ bool Com_ParseVolumeFalloffCurve( const char *buffer, const char *filename, SndC
 	curve->knotCount = atoi(token);
 	if ( curve->knotCount < 2 )
 	{
-		Com_EndParseSessionInl();
+		{
+#define PP_RETURN goto pp_done_7
+#include "q_parse_endsession.inl"
+#undef PP_RETURN
+		}
+pp_done_7:;
 		Com_Printf("^1ERROR: sndcurve parse failure on file \"%s\": knot count (%d) is less than 2\n", filename, curve->knotCount);
 		return false;
 	}
 	if ( curve->knotCount > MAX_SNDCURVE_KNOTS )
 	{
-		Com_EndParseSessionInl();
+		{
+#define PP_RETURN goto pp_done_8
+#include "q_parse_endsession.inl"
+#undef PP_RETURN
+		}
+pp_done_8:;
 		Com_Printf("^1ERROR: sndcurve parse failure on file \"%s\": knot count (%d) is greater than maxKnots (%d)\n", filename, curve->knotCount, MAX_SNDCURVE_KNOTS);
 		return false;
 	}
@@ -1137,7 +1162,12 @@ bool Com_ParseVolumeFalloffCurve( const char *buffer, const char *filename, SndC
 			return false;
 		}
 	}
-	Com_EndParseSessionInl();
+	{
+#define PP_RETURN goto pp_done_9
+#include "q_parse_endsession.inl"
+#undef PP_RETURN
+	}
+pp_done_9:;
 	if ( knotIndex != curve->knotCount )
 	{
 		Com_Printf("^1ERROR: sndcurve parse failure on file \"%s\": knot count (%d) does not match knots parsed (%d).\n", filename, curve->knotCount, knotIndex);
@@ -1287,7 +1317,12 @@ qboolean Com_SubtitleReferenceExists( const char *reference )
 			}
 		}
 	}
-	Com_EndParseSessionInl();
+	{
+#define PP_RETURN goto pp_done_10
+#include "q_parse_endsession.inl"
+#undef PP_RETURN
+	}
+pp_done_10:;
 	FS_FreeFile(buffer);
 	return found;
 }
@@ -1329,14 +1364,24 @@ const char *Com_GetSubtitleStringEdReference( const char *text )
 			token = Com_ParseOnLine(&data);
 			if ( !I_stricmp(text, token) )
 			{
-				Com_EndParseSessionInl();
+				{
+#define PP_RETURN goto pp_done_11
+#include "q_parse_endsession.inl"
+#undef PP_RETURN
+				}
+pp_done_11:;
 				FS_FreeFile(buffer);
 				return com_subtitleReference;
 			}
 		}
 		Com_SkipRestOfLine(&data);
 	}
-	Com_EndParseSessionInl();
+	{
+#define PP_RETURN goto pp_done_12
+#include "q_parse_endsession.inl"
+#undef PP_RETURN
+	}
+pp_done_12:;
 	FS_FreeFile(buffer);
 	return NULL;
 }
@@ -1437,7 +1482,12 @@ skipLine:
 	{
 		Com_WriteStringEdReferenceToFile(name, subtitle, f);
 	}
-	Com_EndParseSessionInl();
+	{
+#define PP_RETURN goto pp_done_13
+#include "q_parse_endsession.inl"
+#undef PP_RETURN
+	}
+pp_done_13:;
 	FS_FreeFile(buffer);
 	token = "\r\nENDMARKER\r\n\r\n\r\n";
 	FS_Write(token, strlen(token), f);
@@ -1694,7 +1744,12 @@ void Com_ProcessSoundAliasFileLocalization( const char *sourceFile, const char *
 			Com_SkipRestOfLine(&data);
 		}
 	}
-	Com_EndParseSessionInl();
+	{
+#define PP_RETURN goto pp_done_14
+#include "q_parse_endsession.inl"
+#undef PP_RETURN
+	}
+pp_done_14:;
 	FS_FCloseFile(f);
 	FS_BuildOSPath(fs_basepath->current.string, fs_gamedir, tempFile, tempOSPath);
 	FS_BuildOSPath(fs_basepath->current.string, fs_gamedir, path, aliasOSPath);
