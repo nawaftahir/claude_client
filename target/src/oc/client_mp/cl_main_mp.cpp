@@ -26,6 +26,8 @@ const dvar_t *cl_avidemo;
 refexport_t re;
 const dvar_t *cl_nodelta;
 const dvar_t *cl_showServerCommands;
+const dvar_t *cl_connectTimeout;
+const dvar_t *cl_sensitivity;
 const dvar_t *cl_forceavidemo;
 const dvar_t *cl_timeout;
 const dvar_t *m_yaw;
