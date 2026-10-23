@@ -34,3 +34,5 @@ _yylex
 ?Com_HasConfigureChecksumChanged@@YA_NXZ
 # trade 10-23: CL_KeyEvent calls UI_SetActiveMenu through a pointer (Com_EventLoop +720 matched, .text aligned past 0x431590); CL_PlayLogo_f inlining of UI_SetActiveMenu changed
 ?CL_PlayLogo_f@@YAXXZ
+# trade 10-23: one I_strlwr body shared with its inlined sites (+0.87% whole); G_ShaderIndex site expansion differs
+?G_ShaderIndex@@YAHPBD@Z

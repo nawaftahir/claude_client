@@ -518,9 +518,11 @@ int I_stricmpwild( const char *wild, const char *s )
 	return 0;
 }
 
-__declspec(noinline) char *I_strlwr( char *s )
+__declspec(noinline) char *I_strlwr( char *pp_s )
 {
-	return I_strlwrInl( s );
+#define PP_RETVAL( v ) return v
+#include "q_shared_strlwr.inl"
+#undef PP_RETVAL
 }
 
 char *I_strupr( char *s )
@@ -1300,19 +1302,5 @@ void ScaledOrientationPlaneToLocal( const orientation_t *orient, float scale, co
 	out[3] = ( plane[3] - DotProduct( orient->origin, plane ) ) / scale;
 }
 
-__forceinline char *I_strlwrInl( char *s )
-{
-	char *iter;
-
-	for ( iter = s; *iter; iter++ )
-	{
-		if ( I_isupper( *iter ) )
-		{
-			*iter += 'a' - 'A';
-		}
-	}
-
-	return s;
-}
 // Unreferenced storage; original declarations unknown (sized from the layout).
 static int unusedStorage[2];

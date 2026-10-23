@@ -444,7 +444,6 @@ static inline int I_strnicmpInline( const char *a, const char *b, int count )
 int I_strncmp( const char *s1, const char *s2, int n );
 int I_stricmp( const char *s1, const char *s2 );
 char *I_strlwr( char *s1 );
-char *I_strlwrInl( char *s1 );
 char *I_strupr( char *s1 );
 void I_strncat( char *dest, int size, const char *src );
 
