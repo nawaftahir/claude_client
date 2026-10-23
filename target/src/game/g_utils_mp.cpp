@@ -168,13 +168,7 @@ int G_ShaderIndex( const char *name )
 	char s[MAX_QPATH];
 
 	strcpy(s, name);
-	{
-#define pp_s (s)
-#define PP_RETVAL( v )
-#include "../universal/q_shared_strlwr.inl"
-#undef PP_RETVAL
-#undef pp_s
-	}
+	I_strlwr(s);
 
 	return G_FindConfigstringIndex( s, CS_SHADERS, MAX_SHADERS, level.initializing, "shader" );
 }

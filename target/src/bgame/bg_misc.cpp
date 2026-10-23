@@ -1091,6 +1091,13 @@ fail:
 	}
 	return qfalse;
 }
+
+qboolean BG_CheckProne(int passEntityNum, const vec3_t vPos, float fSize, float fHeight, float fYaw,
+                       float *pfTorsoHeight, float *pfTorsoPitch, float *pfWaistPitch, qboolean bAlreadyProne, qboolean bOnGround,
+                       const vec3_t vGroundNormal, byte handler, int proneCheckType, float prone_feet_dist)
+{
+	return BG_CheckProneValid(passEntityNum, vPos, fSize, fHeight, fYaw, pfTorsoHeight, pfTorsoPitch, pfWaistPitch, bAlreadyProne, bOnGround, vGroundNormal, handler, proneCheckType, prone_feet_dist);
+}
 /*
 ==================
 BG_LerpHudColors
@@ -1124,10 +1131,4 @@ void BG_LerpHudColors( const hudelem_t *elem, int time, hudelem_color_t *toColor
 	}
 }
 
-qboolean BG_CheckProne(int passEntityNum, const vec3_t vPos, float fSize, float fHeight, float fYaw,
-                       float *pfTorsoHeight, float *pfTorsoPitch, float *pfWaistPitch, qboolean bAlreadyProne, qboolean bOnGround,
-                       const vec3_t vGroundNormal, byte handler, int proneCheckType, float prone_feet_dist)
-{
-	return BG_CheckProneValid(passEntityNum, vPos, fSize, fHeight, fYaw, pfTorsoHeight, pfTorsoPitch, pfWaistPitch, bAlreadyProne, bOnGround, vGroundNormal, handler, proneCheckType, prone_feet_dist);
-}
 

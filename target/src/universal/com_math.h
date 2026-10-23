@@ -293,7 +293,8 @@ FloatSign
 */
 TU_STATIC int const FloatSign(const float x)
 {
-	return -2 * FloatIsNegative(x) + 1;
+	const float f = x;
+	return -2 * (*(const int *)&f < 0) + 1;
 }
 
 /*
