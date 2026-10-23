@@ -7,7 +7,6 @@ RefString *GetRefString( const char *str );
 void SL_RemoveRefToString( unsigned int stringValue );
 void SL_RemoveRefToStringOfLen( unsigned int stringValue, unsigned int len );
 void SL_Clear();
-int I_strlen( const char *s );
 
 RefString *GetRefString( const char *str );
 RefString *GetRefString( const char *str );
@@ -50,7 +49,6 @@ void SL_TransferSystem( unsigned int from, unsigned int to );
 void SL_Clear();
 void SL_CreateCanonicalFilename( char *newFilename, const char *filename, int count );
 unsigned int Scr_CreateCanonicalFilename( const char *filename );
-int I_strlen( const char *s );
 
 /*
 ==============
@@ -1032,15 +1030,6 @@ unsigned int Scr_CreateCanonicalFilename( const char *filename )
 	return SL_GetString_(newFilename, 0, 7);
 }
 
-/*
-==============
-I_strlen
-==============
-*/
-int I_strlen( const char *s )
-{
-	return strlen(s);
-}
 
 
 // Unreferenced storage; original declarations unknown (sized from the layout).

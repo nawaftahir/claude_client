@@ -38,12 +38,9 @@ void CL_VectorScale4_403660(const vec4_t v, const float s, vec4_t o)
     o[3] = s * v[3];
 }
 
-int CL_I_strlen_403690(const char *s)
+inline int I_strlen( const char *s )
 {
-    const char *p = s;
-    while (*p++)
-        ;
-    return p - s - 1;
+    return strlen(s);
 }
 
 
@@ -1251,7 +1248,7 @@ static void Con_DrawInput(void)
     conDrawInputGlob.x = conDrawInputGlob.leftX;
 
     conDrawInputGlob.inputText = Con_TokenizeInput();
-    conDrawInputGlob.inputTextLen = strlen(conDrawInputGlob.inputText);
+    conDrawInputGlob.inputTextLen = I_strlen(conDrawInputGlob.inputText);
     if (!conDrawInputGlob.inputTextLen)
         return;
 

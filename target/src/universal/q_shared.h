@@ -470,7 +470,10 @@ char *I_CleanStr(char *string);
 // mirroring I_stricmp; it is not the libc strcmp.
 int I_strcmp( const char *s1, const char *s2 );
 #define I_strcpy strcpy
-int I_strlen( const char *s );
+inline int I_strlen( const char *s )
+{
+	return strlen(s);
+}
 
 #define Q_isprint I_isprint
 #define Q_islower I_islower
