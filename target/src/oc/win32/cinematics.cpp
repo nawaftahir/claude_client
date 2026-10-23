@@ -140,6 +140,11 @@ extern "C" void Com_Memcpy( void *dest, const void *src, int count );
 
 void ROQ_RunCinematic(void);
 
+// retail 0x4ace90, empty and unreferenced; name unknown
+void ROQ_Stub_4ace90(void)
+{
+}
+
 void ROQ_CloseAllVideos(void)
 {
     int i;
@@ -1350,7 +1355,7 @@ static void ROQ_GetDrawRect(float aspect, int *x, int *y, int *w, int *h)
     } else if (aspect > cls.vidConfig.aspectRatioWindow) {
         barSize = ((float)cls.vidConfig.height - (cls.vidConfig.aspectRatioWindow / aspect) * (float)cls.vidConfig.height) * 0.5f;
         barFloor = FastFloor(barSize);
-        barCeil = FastCeil(barSize);
+        FAST_CEIL(barCeil, barSize);
         *x = 0;
         *y = barFloor;
         *w = cls.vidConfig.width;
@@ -1358,7 +1363,7 @@ static void ROQ_GetDrawRect(float aspect, int *x, int *y, int *w, int *h)
     } else {
         barSize = ((float)cls.vidConfig.width - (aspect / cls.vidConfig.aspectRatioWindow) * (float)cls.vidConfig.width) * 0.5f;
         barFloor = FastFloor(barSize);
-        barCeil = FastCeil(barSize);
+        FAST_CEIL(barCeil, barSize);
         *x = barFloor;
         *y = 0;
         *w = cls.vidConfig.width - 2 * barCeil;
@@ -1388,7 +1393,7 @@ static void ROQ_DrawLetterBox(int x, int y, int w, int h, const float *color)
 
     barSize = ((float)cls.vidConfig.height * (1.0f / 480.0f)) * 105.0f;
     barTop = FastFloor(barSize);
-    barBottom = FastCeil(barSize);
+    FAST_CEIL(barBottom, barSize);
 
     pos[0] = (float)x;
     pos[1] = (float)y;

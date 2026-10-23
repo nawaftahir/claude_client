@@ -34,9 +34,9 @@ extern int Sound_DestroySample(dsound_sample_t *sample);
 extern int Sound_UpdateSample(dsound_sample_t *sample, char *data, unsigned int size);
 extern void Sound_Frame(void);
 extern void Record_Frame(void);
-extern int Record_Start(recordingSample_t *sample);
-extern int Record_Stop(recordingSample_t *sample);
-extern recordingSample_t *Record_NewSample(void);
+extern long DSOUNDRecord_Start(recordingSample_t *sample);
+extern long DSOUNDRecord_Stop(recordingSample_t *sample);
+extern recordingSample_t *DSOUNDRecord_NewSample(void);
 extern int Record_DestroySample(recordingSample_t *sample);
 extern int mixerGetRecordSource(char *source);
 extern int mixerSetRecordSource(const char *source);
@@ -250,8 +250,8 @@ Bool Voice_StartRecording(void)
 {
     if (recording)
         return 1;
-    currentRecordingSample = Record_NewSample();
-    Record_Start(currentRecordingSample);
+    currentRecordingSample = DSOUNDRecord_NewSample();
+    DSOUNDRecord_Start(currentRecordingSample);
     recording = 1;
     count++;
     return 1;
@@ -261,7 +261,7 @@ Bool Voice_StopRecording(void)
 {
     if (!recording)
         return 0;
-    Record_Stop(currentRecordingSample);
+    DSOUNDRecord_Stop(currentRecordingSample);
     Record_DestroySample(currentRecordingSample);
     recording = 0;
     return 1;

@@ -33,30 +33,12 @@ extern void Com_Printf(const char *msg, ...);
 extern float voice_current_voicelevel;
 extern float voice_current_scaler;
 
-int Record_Start(recordingSample_t *sample);
-int Record_Stop(recordingSample_t *sample);
-recordingSample_t * Record_NewSample(void);
 int Record_DestroySample(recordingSample_t *sample);
 void Record_Shutdown(void);
 void Record_Frame(void);
 int Record_QueueAudioDataForEncoding(audioSample_t *sample);
 int Record_AudioCallback(audioSample_t *sample);
 int Record_Init(int callInit, const void *handle);
-
-int Record_Start(recordingSample_t *sample)
-{
-    return DSOUNDRecord_Start(sample);
-}
-
-int Record_Stop(recordingSample_t *sample)
-{
-    return DSOUNDRecord_Stop(sample);
-}
-
-recordingSample_t *Record_NewSample(void)
-{
-    return DSOUNDRecord_NewSample();
-}
 
 int Record_DestroySample(recordingSample_t *sample);
 

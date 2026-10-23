@@ -479,31 +479,18 @@ inline int I_fround(const float x)
 
     return result;
 }
-static inline int FastCeil(const float x)
-{
-    // fistp rounds to nearest; 0.5 - 2^-30 sends non-integers up and keeps
-    // exact integers in place
-    const double bias = 0.5 - 1.0 / (1 << 30);
-    int result;
+/* fistp rounds to nearest; 0.5 - 2^-30 sends non-integers up (CEIL) or down
+   (FLOOR) and keeps exact integers. Macros: a helper function keeps an
+   out-of-line body under /GL, and retail has none for these sites. */
+#define FAST_CEIL(dst, x) { const double bias = 0.5 - 1.0 / (1 << 30); int result; __asm fld x __asm fadd bias __asm { fistp result } dst = result; }
+#define FAST_FLOOR(dst, x) { const double bias = 0.5 - 1.0 / (1 << 30); __asm fld x __asm fsub bias __asm fistp dst }
 
-    __asm fld x
-    __asm fadd bias
-    __asm fistp result
-
-    return result;
-}
 // Original name unknown.
 static inline int FastFloor(const float x)
 {
-    // fistp rounds to nearest; 0.5 - 2^-30 sends non-integers down and keeps
-    // exact integers in place
-    const double bias = 0.5 - 1.0 / (1 << 30);
     int result;
 
-    __asm fld x
-    __asm fsub bias
-    __asm fistp result
-
+    FAST_FLOOR(result, x);
     return result;
 }
 

@@ -727,7 +727,7 @@ static void UpdateShellShockCamera(const shellshock_parms_t *parms, int time, in
     radius = ((3.0f - scale * 2.0f) * scale * scale) * parms->view.kickRadius;
 
     t = (float)time * parms->view.kickRate;
-    base = FastFloor(t);
+    FAST_FLOOR(base, t);
     t = t - (float)base;
     perturb = cg_perturbations[(base + 61 * duration) & 0x7f];
 

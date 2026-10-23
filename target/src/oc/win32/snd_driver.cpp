@@ -1448,6 +1448,16 @@ int SND_GetSoundFileSize(const void *pSoundFile)
     return (int)sound->info.data_len + 0x24;
 }
 
+void SND_DriverPreUpdate(int frametime)
+{
+}
+
+// retail 0x4b4950, unreferenced; name unknown
+void SND_DriverPostUpdate_4b4950(void)
+{
+    SND_DriverPostUpdate();
+}
+
 inline int I_max(const int x, const int y)
 {
     return I_sel(x - y, x, y);
@@ -1570,9 +1580,6 @@ void SND_UpdateStreamChannel(int i, int frametime)
     }
 }
 
-void SND_DriverPreUpdate(int frametime)
-{
-}
 static void MSS_SpatializeStream(float *volume, float *pan)
 {
 

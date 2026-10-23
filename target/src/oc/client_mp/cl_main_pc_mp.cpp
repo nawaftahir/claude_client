@@ -363,6 +363,33 @@ void CL_Connect_f(void)
     UI_CloseAll();
     SCR_UpdateScreen();
 }
+qboolean CL_CDKeyValidate(const char *key, const char *checksum)
+{
+    unsigned int crc = 0;
+    char chs[8];
+    int i;
+
+    for (i = 0; i < 16; i++) {
+        int ch = (signed char)key[i];
+        int j;
+        crc ^= (unsigned int)ch;
+        for (j = 8; j != 0; j--) {
+            if (crc & 1) {
+                crc >>= 1;
+                crc ^= 0xa001;
+            } else {
+                crc >>= 1;
+            }
+        }
+    }
+
+    sprintf(chs, (const char *)"%04x", crc);
+
+    if (checksum == NULL || I_strnicmp(chs, checksum, 4) == 0)
+        return 1;
+
+    return 0;
+}
 
 void CL_SortGlobalServers(void)
 {
@@ -371,22 +398,13 @@ void CL_SortGlobalServers(void)
     qsort(cls->globalServers, count, sizeof(serverInfo_t), CL_CompareAdrSigned);
 }
 
-static void CL_InitServerInfo(serverInfo_t *server, netadr_t adr)
+static __declspec(noinline) void CL_InitServerInfo(serverInfo_t *server, netadr_t adr)
 {
-    server->adr = adr;
-    server->clients = 0;
-    server->hostName[0] = '\0';
-    server->mapName[0] = '\0';
-    server->maxClients = 0;
-    server->maxPing = 0;
-    server->minPing = 0;
-    server->ping = -1;
-    server->game[0] = '\0';
-    server->gameType[0] = '\0';
-    server->netType = 0;
-    server->allowAnonymous = 0;
-    server->dirty = 1;
-    server->requestCount = 0;
+#define pp_server (server)
+#define pp_adr (adr)
+#include "cl_init_server_info.inl"
+#undef pp_adr
+#undef pp_server
 }
 
 // Original name unknown.
@@ -486,7 +504,11 @@ void CL_ServersResponsePacket(netadr_t from, msg_t *msg)
         if (!CL_RefreshKnownGlobalServer(adr)) {
             server = &cls.globalServers[count];
             count++;
-            CL_InitServerInfo(server, adr);
+#define pp_server (server)
+#define pp_adr (adr)
+#include "cl_init_server_info.inl"
+#undef pp_adr
+#undef pp_server
         }
     }
 
@@ -1042,31 +1064,4 @@ void CL_ClearMutedList(void)
 static __declspec(noinline) qboolean NET_CompareAdrNI(netadr_t a, netadr_t b)
 {
     return NET_CompareAdrSigned(&a, &b) == 0;
-}
-qboolean CL_CDKeyValidate(const char *key, const char *checksum)
-{
-    unsigned int crc = 0;
-    char chs[8];
-    int i;
-
-    for (i = 0; i < 16; i++) {
-        int ch = (signed char)key[i];
-        int j;
-        crc ^= (unsigned int)ch;
-        for (j = 8; j != 0; j--) {
-            if (crc & 1) {
-                crc >>= 1;
-                crc ^= 0xa001;
-            } else {
-                crc >>= 1;
-            }
-        }
-    }
-
-    sprintf(chs, (const char *)"%04x", crc);
-
-    if (checksum == NULL || I_strnicmp(chs, checksum, 4) == 0)
-        return 1;
-
-    return 0;
 }
