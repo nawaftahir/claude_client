@@ -89,7 +89,6 @@ script/scr_parsetree.cpp
 script/scr_stringlist.cpp
 script/scr_tempmemory.cpp
 stringed/loc_dvars.cpp
-universal/com_memory_high.cpp
 universal/dedicated_dvar.cpp
 unknown/after_assertive.cpp
 unknown/after_bg_weapons_load_obj.cpp

@@ -522,6 +522,11 @@ void Scr_ShutdownVariables()
 	}
 }
 
+int Hunk_ClearTempMemoryHigh( void )
+{
+	return 0;
+}
+
 /*
 ==============
 Scr_GetNumScriptVars
@@ -3313,6 +3318,14 @@ unmatched:
 	}
 }
 
+void Scr_EvalInequality( VariableValue *value1, VariableValue *value2 )
+{
+	Scr_EvalEquality(value1, value2);
+	assert((value1->type == VAR_INTEGER) || (value1->type == VAR_UNDEFINED));
+
+	value1->u.intValue = value1->u.intValue == 0;
+}
+
 /*
 ==============
 Scr_EvalLess
@@ -3358,14 +3371,6 @@ void Scr_EvalGreaterEqual( VariableValue *value1, VariableValue *value2 )
 Scr_EvalInequality
 ==============
 */
-void Scr_EvalInequality( VariableValue *value1, VariableValue *value2 )
-{
-	Scr_EvalEquality(value1, value2);
-	assert((value1->type == VAR_INTEGER) || (value1->type == VAR_UNDEFINED));
-
-	value1->u.intValue = value1->u.intValue == 0;
-}
-
 /*
 ==============
 Scr_EvalGreater
