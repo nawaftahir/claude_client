@@ -300,6 +300,12 @@ bool DSound_FinishSample( dsound_sample_t *sample )
 	return true;
 }
 
+// retail 0x4b6f60, returns -1 and unreferenced; name unknown
+int DSound_Stub_4b6f60( void )
+{
+	return -1;
+}
+
 int DSound_Init( bool callDsoundInit, HWND handle )
 {
 	if ( dsoundplay_initialized )
