@@ -713,47 +713,5 @@ inline void DObjCalcTransWeight(DObjAnimMat *Mat)
 	}
 }
 
-inline void MatrixTransformVectorQuatTransEquals(float *inout, DObjAnimMat *in)
-{
-	float temp[2];
-	float axis[3][3];
-
-	ConvertQuatToMat(in, axis);
-
-	temp[0] =  inout[0] * axis[0][0] + inout[1] * axis[1][0] + inout[2] * axis[2][0] + in->trans[0];
-	temp[1] =  inout[0] * axis[0][1] + inout[1] * axis[1][1] + inout[2] * axis[2][1] + in->trans[1];
-
-	inout[2] = inout[0] * axis[0][2] + inout[1] * axis[1][2] + inout[2] * axis[2][2] + in->trans[2];
-	inout[0] = temp[0];
-	inout[1] = temp[1];
-}
-
-inline void QuatMultiplyReverseEquals(float *in, float *inout)
-{
-	float temp[3];
-
-	temp[0] = in[0] * inout[3] + in[3] * inout[0] + in[2] * inout[1] - in[1] * inout[2];
-	temp[1] = in[1] * inout[3] - in[2] * inout[0] + in[3] * inout[1] + in[0] * inout[2];
-	temp[2] = in[2] * inout[3] + in[1] * inout[0] - in[0] * inout[1] + in[3] * inout[2];
-
-	in[3] =   in[3] * inout[3] - in[0] * inout[0] - in[1] * inout[1] - in[2] * inout[2];
-	in[0] = temp[0];
-	in[1] = temp[1];
-	in[2] = temp[2];
-}
-
-inline void QuatMultiplyEquals(const float *in, float *inout)
-{
-	float temp[3];
-
-	temp[0] =  in[0] * inout[3] + in[3] * inout[0] + in[2] * inout[1] - in[1] * inout[2];
-	temp[1] =  in[1] * inout[3] - in[2] * inout[0] + in[3] * inout[1] + in[0] * inout[2];
-	temp[2] =  in[2] * inout[3] + in[1] * inout[0] - in[0] * inout[1] + in[3] * inout[2];
-
-	inout[3] = in[3] * inout[3] - in[0] * inout[0] - in[1] * inout[1] - in[2] * inout[2];
-	inout[0] = temp[0];
-	inout[1] = temp[1];
-	inout[2] = temp[2];
-}
 void InvMatrixTransformVectorQuatTrans(const float *in, const DObjAnimMat *mat, float *out);
 void DObjSkelClear( DObj_s *obj );
