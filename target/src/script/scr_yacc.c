@@ -63,7 +63,7 @@ static int yy_start = 0;
 static FILE *yyin = 0;
 static FILE *yyout = 0;
 static sval_u yaccResult;
-unsigned int g_out_pos;
+static unsigned int g_out_pos;
 static unsigned int g_sourcePos;
 static unsigned char g_parse_user;
 static sval_u g_dummyVal;
