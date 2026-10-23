@@ -316,6 +316,15 @@ static inline const int* Scr_ReadIntArray( const char **pos, int count )
 	return value;
 }
 
+static inline unsigned short Scr_ReadUnsignedShort( const char **pos )
+{
+	return (unsigned short)Scr_ReadShort(pos);
+}
+static inline unsigned int Scr_ReadUnsigned( const char **pos )
+{
+	return Scr_ReadInt( pos );
+}
+
 /*
 ==============
 Scr_ReadFloat
@@ -327,6 +336,11 @@ static inline float Scr_ReadFloat( const char **pos )
 	*pos += sizeof(float);
 
 	return value;
+}
+
+static inline const char* Scr_ReadCodePos( const char **pos )
+{
+	return (const char *)Scr_ReadInt( pos );
 }
 
 /*
@@ -500,6 +514,10 @@ void Scr_ErrorInternal()
 	}
 
 	Com_Error(ERR_DROP, "\x15%s", scrVarPub.error_message);
+}
+unsigned int Scr_GetNumScriptThreads()
+{
+	return 0;
 }
 
 /*
@@ -4847,18 +4865,6 @@ int Scr_IsSystemActive( bool unused )
 {
 	return scrVarPub.timeArrayId != 0;
 }
-static inline unsigned short Scr_ReadUnsignedShort( const char **pos )
-{
-	return (unsigned short)Scr_ReadShort(pos);
-}
-static inline unsigned int Scr_ReadUnsigned( const char **pos )
-{
-	return Scr_ReadInt( pos );
-}
-static inline const char* Scr_ReadCodePos( const char **pos )
-{
-	return (const char *)Scr_ReadInt( pos );
-}
 void VM_Shutdown()
 {
 	if ( scrVarPub.tempVariable )
@@ -4866,10 +4872,6 @@ void VM_Shutdown()
 		FreeValue(scrVarPub.tempVariable);
 		scrVarPub.tempVariable = 0;
 	}
-}
-unsigned int Scr_GetNumScriptThreads()
-{
-	return 0;
 }
 const char* Scr_GetIString( unsigned int index )
 {
