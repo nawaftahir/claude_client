@@ -117,7 +117,7 @@ static void __attribute_regparm__(0) UI_BuildServerDisplayList(qboolean force);
 static void UI_SelectCurrentGameType(void);
 static int UI_MapCountByGameType(void);
 static void UI_SelectFirstActiveMap(void);
-static int UI_ListIndexForMap(int map);
+static int UI_GetIndexFromSelection(int actual);
 static void UI_SetMapFeederSelection(int map);
 qboolean UI_OwnerDrawHandleKey(int ownerDraw, int flags, float *special, int key);
 const char *UI_FeederItemText(float feederID, int index, int column, MaterialHandle *handle);
@@ -2162,7 +2162,7 @@ static void UI_SelectFirstActiveMap(void)
 // retail 0x52fda0; name unknown
 static void UI_SetMapFeederSelection(int map)
 {
-    Menu_SetFeederSelection(&uiInfo->uiDC, NULL, 4, UI_ListIndexForMap(map), "createserver_maps");
+    Menu_SetFeederSelection(&uiInfo->uiDC, NULL, 4, UI_GetIndexFromSelection(map), "createserver_maps");
 }
 
 static int UI_MapCountByGameType(void)
@@ -2736,23 +2736,6 @@ static int UI_GetIndexFromSelection(int actual)
             if (i == actual)
                 return c;
             c++;
-        }
-    }
-    return 0;
-}
-
-// name unknown
-static int UI_ListIndexForMap(int map)
-{
-    int i;
-    int listIndex;
-
-    listIndex = 0;
-    for (i = 0; i < sharedUiInfo.mapCount; i++) {
-        if (sharedUiInfo.mapList[i].active) {
-            if (i == map)
-                return listIndex;
-            listIndex++;
         }
     }
     return 0;
