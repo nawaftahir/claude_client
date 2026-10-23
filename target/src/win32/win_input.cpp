@@ -170,19 +170,6 @@ void IN_ActivateMouse( qboolean force )
 	s_wmv.mouseActive = true;
 	IN_ActivateWin32Mouse();
 }
-void IN_DeactivateMouse( void )
-{
-	if ( !s_wmv.mouseInitialized )
-		return;
-
-	if ( !s_wmv.mouseActive )
-		return;
-
-	s_wmv.mouseActive = false;
-
-	IN_DeactivateWin32Mouse();
-}
-
 /*
 ===========
 IN_StartupMouse
@@ -260,6 +247,19 @@ void IN_Startup( void )
 	IN_StartupMouse();
 
 	in_mouse->modified = false;
+}
+
+void IN_DeactivateMouse( void )
+{
+	if ( !s_wmv.mouseInitialized )
+		return;
+
+	if ( !s_wmv.mouseActive )
+		return;
+
+	s_wmv.mouseActive = false;
+
+	IN_DeactivateWin32Mouse();
 }
 
 /*

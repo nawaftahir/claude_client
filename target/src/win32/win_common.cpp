@@ -58,11 +58,6 @@ qboolean Sys_RemoveDirTree( const char *dir )
 
 char *Sys_Cwd( void );
 
-const char *Sys_DefaultHomePath( void )
-{
-	return NULL;
-}
-
 char *Sys_DefaultInstallPath( void )
 {
 	return Sys_Cwd();
@@ -71,6 +66,11 @@ char *Sys_DefaultInstallPath( void )
 const char *Sys_DefaultCDPath( void )
 {
 	return "";
+}
+
+const char *Sys_DefaultHomePath( void )
+{
+	return NULL;
 }
 char *Sys_Cwd( void )
 {

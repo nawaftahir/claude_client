@@ -752,24 +752,6 @@ bool UI_VerticalDivider::KeyEvent(float *point, int key)
     return 0;
 }
 
-UI_Component *UI_VerticalDivider::GetCompAtLocation(float *point)
-{
-    if (!this->topComp)
-    {
-        if (!this->bottomComp)
-            return this;
-    }
-    else
-    {
-        if (!this->bottomComp)
-            return this->topComp->GetCompAtLocation(point);
-        if (point[1] < this->posY)
-            return this->topComp->GetCompAtLocation(point);
-        point[1] -= this->posY;
-    }
-    return this->bottomComp->GetCompAtLocation(point);
-}
-
 void UI_VerticalDivider::Draw(float x, float y, float width, float height, float compX, float compY)
 {
     this->size[0] = width;
@@ -804,6 +786,24 @@ drawFull:
         this->bottomComp->Draw(x, y + this->posY, width, height - compY, 0.0f, 0.0f);
         DrawTop(x, y, width, compY);
     }
+}
+
+UI_Component *UI_VerticalDivider::GetCompAtLocation(float *point)
+{
+    if (!this->topComp)
+    {
+        if (!this->bottomComp)
+            return this;
+    }
+    else
+    {
+        if (!this->bottomComp)
+            return this->topComp->GetCompAtLocation(point);
+        if (point[1] < this->posY)
+            return this->topComp->GetCompAtLocation(point);
+        point[1] -= this->posY;
+    }
+    return this->bottomComp->GetCompAtLocation(point);
 }
 
 void UI_Component::AddText(const char *text)
