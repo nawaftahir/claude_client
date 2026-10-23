@@ -328,6 +328,28 @@ qboolean PC_Float_Parse(int handle, float *f)
         *f = token.floatvalue;
     return 1;
 }
+qboolean PC_Int_Parse(int handle, int *i)
+{
+    pc_token_t token;
+    int negative;
+
+    if (!PC_ReadTokenHandle(handle, &token))
+        return 0;
+    negative = 0;
+    if (token.string[0] == '-') {
+        if (!PC_ReadTokenHandle(handle, &token))
+            return 0;
+        negative = 1;
+    }
+    if (token.type != 3) {
+        PC_SourceError(handle, "expected integer but found %s\n", token.string);
+        return 0;
+    }
+    *i = token.intvalue;
+    if (negative)
+        *i = -*i;
+    return 1;
+}
 
 qboolean PC_Color_Parse(int handle, float (*c)[4])
 {
@@ -541,13 +563,14 @@ void Item_InitControls(const char (*item)[4])
     ListBox_SetStartPos(listPtr, 0);
     ListBox_SetEndPos(listPtr, 0);
 }
-qboolean ItemParse_name(itemDef_t *item, int handle)
+qboolean ItemParse_name(itemDef_t *item, int handle);
+qboolean MenuParse_name(menuDef_t *menu, int handle)
 {
     pc_token_t token;
 
     if (!PC_ReadTokenHandle(handle, &token))
         return 0;
-    item->window.name = String_Alloc(token.string);
+    menu->window.name = String_Alloc(token.string);
     return 1;
 }
 
@@ -684,7 +707,8 @@ qboolean MenuParse_disablecolor(const char (*item)[4], int handle)
     }
     return 1;
 }
-qboolean ItemParse_outlinecolor(const char (*item)[4], int handle)
+qboolean ItemParse_outlinecolor(const char (*item)[4], int handle);
+qboolean MenuParse_outlinecolor(const char (*item)[4], int handle)
 {
     if (!PC_Color_Parse(handle, &((itemDef_t *)item)->window.outlineColor))
         return 0;
@@ -709,12 +733,7 @@ qboolean MenuParse_background(const char (*item)[4], int handle)
     (*(void **)&((itemDef_t *)item)->window.background) = CL_RegisterMaterialNoMip(name, ((menuDef_t *)item)->imageTrack);
     return 1;
 }
-qboolean ItemParse_cinematic(itemDef_t *item, int handle)
-{
-    if (!PC_String_Parse(handle, &item->window.cinematicName))
-        return 0;
-    return 1;
-}
+qboolean ItemParse_cinematic(itemDef_t *item, int handle);
 qboolean MenuParse_cinematic(menuDef_t *menu, int handle)
 {
     if (!PC_String_Parse(handle, &menu->window.cinematicName))
@@ -960,6 +979,15 @@ void __attribute_regparm__(2) Item_ValidateTypeData(itemDef_t *item, int handle)
         item->typeData.multi = (multiDef_t *)UI_Alloc(sizeof(multiDef_t), 4);
     }
 }
+qboolean ItemParse_name(itemDef_t *item, int handle)
+{
+    pc_token_t token;
+
+    if (!PC_ReadTokenHandle(handle, &token))
+        return 0;
+    item->window.name = String_Alloc(token.string);
+    return 1;
+}
 
 qboolean ItemParse_focusSound(const char (*item)[4], int handle)
 {
@@ -1192,6 +1220,28 @@ qboolean ItemParse_columns(const char (*item)[4], int handle)
     }
     return 1;
 }
+qboolean ItemParse_border(const char (*item)[4], int handle)
+{
+    if (!PC_Int_Parse(handle, (int *)&((itemDef_t *)item)->window.border))
+        return 0;
+    return 1;
+}
+qboolean ItemParse_bordersize(const char (*item)[4], int handle)
+{
+    if (!PC_Float_Parse(handle, (float *)&((itemDef_t *)item)->window.borderSize))
+        return 0;
+    return 1;
+}
+qboolean ItemParse_visible(const char (*item)[4], int handle)
+{
+    int visible;
+
+    if (!PC_Int_Parse(handle, &visible))
+        return 0;
+    if (visible)
+        ((itemDef_t *)item)->window.dynamicFlags[0] |= 4;
+    return 1;
+}
 
 qboolean ItemParse_ownerdraw(const char (*item)[4], int handle)
 {
@@ -1265,6 +1315,19 @@ qboolean ItemParse_backcolor(const char (*item)[4], int handle)
     }
     return 1;
 }
+qboolean ItemParse_forecolor(const char (*item)[4], int handle)
+{
+    int i;
+    float f;
+
+    for (i = 0; i < 4; i++) {
+        if (!PC_Float_Parse(handle, &f))
+            return 0;
+        ((itemDef_t *)item)->window.foreColor[i] = f;
+        ((itemDef_t *)item)->window.dynamicFlags[0] |= 0x10000;
+    }
+    return 1;
+}
 
 qboolean ItemParse_bordercolor(const char (*item)[4], int handle)
 {
@@ -1276,6 +1339,12 @@ qboolean ItemParse_bordercolor(const char (*item)[4], int handle)
             return 0;
         ((itemDef_t *)item)->window.borderColor[i] = f;
     }
+    return 1;
+}
+qboolean ItemParse_outlinecolor(const char (*item)[4], int handle)
+{
+    if (!PC_Color_Parse(handle, &((itemDef_t *)item)->window.outlineColor))
+        return 0;
     return 1;
 }
 
@@ -1295,6 +1364,12 @@ qboolean ItemParse_background(const char (*item)[4], int handle)
 #undef pp_s
     }
     (*(void **)&((itemDef_t *)item)->window.background) = CL_RegisterMaterialNoMip(name, ((itemDef_t *)item)->imageTrack);
+    return 1;
+}
+qboolean ItemParse_cinematic(itemDef_t *item, int handle)
+{
+    if (!PC_String_Parse(handle, &item->window.cinematicName))
+        return 0;
     return 1;
 }
 
@@ -1352,6 +1427,12 @@ qboolean ItemParse_action(itemDef_t *item, int handle)
 qboolean ItemParse_accept(itemDef_t *item, int handle)
 {
     return PC_Script_Parse(handle, &item->onAccept) != 0;
+}
+qboolean ItemParse_special(const char (*item)[4], int handle)
+{
+    if (!PC_Float_Parse(handle, (float *)&((itemDef_t *)item)->special))
+        return 0;
+    return 1;
 }
 
 qboolean ItemParse_dvarTest(itemDef_t *item, int handle)
@@ -1547,6 +1628,16 @@ qboolean ItemParse_dvarEnumList(const char (*item)[4], int handle)
     }
     return PC_String_Parse(handle, (const char **)&itemDef->typeData.data);
 }
+qboolean ItemParse_ownerdrawFlag(const char (*item)[4], int handle)
+{
+    int flags;
+
+    if (!PC_Int_Parse(handle, &flags))
+        return 0;
+
+    ((itemDef_t *)item)->window.ownerDrawFlags |= flags;
+    return 1;
+}
 
 qboolean ItemParse_name(itemDef_t *item, int handle);
 qboolean ItemParse_origin(const char (*item)[4], int handle);
@@ -1718,6 +1809,14 @@ qboolean ItemParse_execKeyInt(const char (*item)[4], int handle)
     handler->next = (intptr_t)itemDef->onKey;
     itemDef->onKey = handler;
     return 1;
+}
+void Item_SetupKeywordHash(void)
+{
+    int i;
+
+    memset(itemParseKeywordHash, 0, sizeof(itemParseKeywordHash));
+    for (i = 0; itemParseKeywords[i].keyword; i++)
+        KeywordHash_Add(itemParseKeywordHash, &itemParseKeywords[i]);
 }
 
 static qboolean UI_ParseAssetGlobalDef(int handle, int imageTrack)
@@ -2075,100 +2174,4 @@ MenuList *UI_LoadMenus(const char *menuFile, int imageTrack)
     return &g_load.menuList;
 }
 
-qboolean PC_Int_Parse(int handle, int *i)
-{
-    pc_token_t token;
-    int negative;
-
-    if (!PC_ReadTokenHandle(handle, &token))
-        return 0;
-    negative = 0;
-    if (token.string[0] == '-') {
-        if (!PC_ReadTokenHandle(handle, &token))
-            return 0;
-        negative = 1;
-    }
-    if (token.type != 3) {
-        PC_SourceError(handle, "expected integer but found %s\n", token.string);
-        return 0;
-    }
-    *i = token.intvalue;
-    if (negative)
-        *i = -*i;
-    return 1;
-}
-qboolean ItemParse_ownerdrawFlag(const char (*item)[4], int handle)
-{
-    int flags;
-
-    if (!PC_Int_Parse(handle, &flags))
-        return 0;
-
-    ((itemDef_t *)item)->window.ownerDrawFlags |= flags;
-    return 1;
-}
-qboolean ItemParse_bordersize(const char (*item)[4], int handle)
-{
-    if (!PC_Float_Parse(handle, (float *)&((itemDef_t *)item)->window.borderSize))
-        return 0;
-    return 1;
-}
-qboolean ItemParse_border(const char (*item)[4], int handle)
-{
-    if (!PC_Int_Parse(handle, (int *)&((itemDef_t *)item)->window.border))
-        return 0;
-    return 1;
-}
-qboolean ItemParse_visible(const char (*item)[4], int handle)
-{
-    int visible;
-
-    if (!PC_Int_Parse(handle, &visible))
-        return 0;
-    if (visible)
-        ((itemDef_t *)item)->window.dynamicFlags[0] |= 4;
-    return 1;
-}
-qboolean ItemParse_forecolor(const char (*item)[4], int handle)
-{
-    int i;
-    float f;
-
-    for (i = 0; i < 4; i++) {
-        if (!PC_Float_Parse(handle, &f))
-            return 0;
-        ((itemDef_t *)item)->window.foreColor[i] = f;
-        ((itemDef_t *)item)->window.dynamicFlags[0] |= 0x10000;
-    }
-    return 1;
-}
-qboolean ItemParse_special(const char (*item)[4], int handle)
-{
-    if (!PC_Float_Parse(handle, (float *)&((itemDef_t *)item)->special))
-        return 0;
-    return 1;
-}
-qboolean MenuParse_outlinecolor(const char (*item)[4], int handle)
-{
-    if (!PC_Color_Parse(handle, &((itemDef_t *)item)->window.outlineColor))
-        return 0;
-    return 1;
-}
-void Item_SetupKeywordHash(void)
-{
-    int i;
-
-    memset(itemParseKeywordHash, 0, sizeof(itemParseKeywordHash));
-    for (i = 0; itemParseKeywords[i].keyword; i++)
-        KeywordHash_Add(itemParseKeywordHash, &itemParseKeywords[i]);
-}
-qboolean MenuParse_name(menuDef_t *menu, int handle)
-{
-    pc_token_t token;
-
-    if (!PC_ReadTokenHandle(handle, &token))
-        return 0;
-    menu->window.name = String_Alloc(token.string);
-    return 1;
-}
 
