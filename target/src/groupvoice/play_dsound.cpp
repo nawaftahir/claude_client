@@ -9,11 +9,6 @@ int COMFORTABLE_BUFFER_AMOUNT = 0x1770;
 bool dsoundplay_initialized = false;
 LPDIRECTSOUND8 lpds = NULL;
 
-static int DSound_GetBytesLeft( dsound_sample_t *sample )
-{
-	return sample->bytesBuffered;
-}
-
 HRESULT CreateBasicBuffer( IDirectSoundBuffer **ppDsb, unsigned int sampleRate, int channels, unsigned int bufferSize )
 {
 	WAVEFORMATEX wfx;
@@ -52,7 +47,7 @@ int DSound_UpdateSample( dsound_sample_t *sample, char *data, unsigned int data_
 		return -1;
 	if ( !data_len )
 		return 0;
-	bytesToUpload = (int)I_fmin((float)(sample->dwBufferSize - DSound_GetBytesLeft(sample)), (float)data_len);
+	bytesToUpload = (int)I_fmin((float)(sample->dwBufferSize - sample->bytesBuffered), (float)data_len);
 	if ( !bytesToUpload )
 		return 0;
 	hr = sample->DSB->Lock(sample->currentOffset, bytesToUpload, &pLock1, &dwLockLen1, &pLock2, &dwLockLen2, 0);
@@ -180,7 +175,7 @@ void DSound_SampleFrame( dsound_sample_t *sample )
 	DWORD dwPlayPos;
 	DWORD dwWritePos;
 
-	bytesLeft = DSound_GetBytesLeft(sample);
+	bytesLeft = sample->bytesBuffered;
 	if ( !sample->playing )
 	{
 		if ( bytesLeft >= COMFORTABLE_BUFFER_AMOUNT )

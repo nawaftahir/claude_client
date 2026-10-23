@@ -208,6 +208,11 @@ int Voice_GetLocalVoiceData(ClientVoicePacket_t *voiceData)
     return 0;
 }
 
+// retail 0x4b58a0, empty and unreferenced; name unknown
+void Voice_Stub_4b58a0(void)
+{
+}
+
 void Voice_IncomingVoiceData(unsigned char talker, unsigned char *data, int packetDataSize)
 {
     short decodedData[4096];
