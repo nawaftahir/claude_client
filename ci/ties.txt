@@ -47,3 +47,5 @@ _yylex
 ?XAnimCopyAnimTreeNoNotify@@YAXPBUXAnimTree_s@@PAU1@@Z
 # c2_4 twin deleted, same body is XModelGetLodName
 ?XModelGetLodFilename@@YAPBDPBUXModel@@H@Z
+# c2_24 TextPool next field direct: +0.17% whole, this fn shifts
+?AllocText@TextPool@@QAEPADPAD_NPAPAV1@@Z

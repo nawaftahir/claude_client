@@ -534,6 +534,7 @@ public:
 class Flash : public Light
 {
 public:
+	Flash() {}
 	virtual ~Flash() {}
 	virtual bool Update();
 

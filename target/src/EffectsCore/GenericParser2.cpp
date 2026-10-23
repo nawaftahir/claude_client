@@ -8,8 +8,6 @@ public:
 	TextPool( int initSize = 10240 );
 	~TextPool();
 
-	TextPool *GetNext() { return mNext; }
-	void SetNext( TextPool *which ) { mNext = which; }
 	void *operator new( size_t size ) { return Z_MallocInternal(size); }
 	void operator delete( void *ptr ) { Z_FreeInternal(ptr); }
 
@@ -17,7 +15,9 @@ public:
 
 private:
 	char *mPool;
+public:
 	TextPool *mNext;
+private:
 	int mSize;
 	int mUsed;
 };
@@ -251,8 +251,8 @@ char *TextPool::AllocText( char *text, bool addNULL, TextPool **poolPtr )
 	{
 		if ( poolPtr )
 		{
-			( *poolPtr )->SetNext(new TextPool(mSize));
-			*poolPtr = ( *poolPtr )->GetNext();
+			( *poolPtr )->mNext = new TextPool(mSize);
+			*poolPtr = ( *poolPtr )->mNext;
 			return ( *poolPtr )->AllocText(text, addNULL);
 		}
 		return 0;
@@ -271,7 +271,7 @@ void CleanTextPool( TextPool *pool )
 
 	while ( pool )
 	{
-		next = pool->GetNext();
+		next = pool->mNext;
 		delete pool;
 		pool = next;
 	}
