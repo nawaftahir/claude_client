@@ -108,7 +108,6 @@ extern int strnicmp(const char *s1, const char *s2, size_t n);
 extern void *__DefaultRuneLocale;
 extern refexport_t re;
 extern void CalcSplitScreenTextOffset(struct Font_s *font, float *y);
-extern void CalcScreenPlacementInl(float *x, float *y, float *w, float *h, int horzAlign, int vertAlign);
 extern void CL_DrawText(const char *text, int maxChars, struct Font_s *font, float x, float y, int horzAlign, int vertAlign, float xScale, float yScale, const float *color, int style);
 extern clientStatic_t cls;
 
@@ -1502,7 +1501,21 @@ void Con_DrawSay(int y)
         textX = (float)x;
         textScaleX = normalizedScale;
         textScaleY = normalizedScale;
-        CalcScreenPlacementInl(&textX, &textY, &textScaleX, &textScaleY, 1, 1);
+        {
+#define sp_x (&textX)
+#define sp_y (&textY)
+#define sp_w (&textScaleX)
+#define sp_h (&textScaleY)
+#define sp_horzAlign (1)
+#define sp_vertAlign (1)
+#include "screen_placement.inl"
+#undef sp_x
+#undef sp_y
+#undef sp_w
+#undef sp_h
+#undef sp_horzAlign
+#undef sp_vertAlign
+        }
         re.DrawText(string, 0x7fffffff, font, textX, textY, textScaleX, textScaleY, (const float *)((void *)&colorWhite), 3);
     }
 

@@ -228,7 +228,6 @@ extern int I_stricmp(const char *s1, const char *s2);
 
 
 
-extern void CalcScreenPlacementInl(float *x, float *y, float *w, float *h, int horzAlign, int vertAlign);
 /* qboolean (int), not Bool: callers (cg_weapons.c, cg_predict_mp.c) declare it
  * `extern qboolean` and read full eax; a 1-byte Bool return leaves eax's upper
  * bytes dirty under MSVC -> garbage non-zero -> !CG_GetWeapReticleZoom() == 0 ->
@@ -608,7 +607,21 @@ static void CG_DrawLagometer(void)
                 float w = 1.0f;
                 float y = mid - v;
                 float x = ax + aw - a;
-                CalcScreenPlacementInl(&x, &y, &w, &h, 3, 3);
+                {
+#define sp_x (&x)
+#define sp_y (&y)
+#define sp_w (&w)
+#define sp_h (&h)
+#define sp_horzAlign (3)
+#define sp_vertAlign (3)
+#include "../client_mp/screen_placement.inl"
+#undef sp_x
+#undef sp_y
+#undef sp_w
+#undef sp_h
+#undef sp_horzAlign
+#undef sp_vertAlign
+                }
                 CL_DrawStretchPicPhysical(x, y, w, h, 0.0f, 0.0f, 0.0f, 0.0f, colorYellow, cgs->media.whiteMaterial);
             }
             else if (v < 0.0f)
@@ -620,7 +633,21 @@ static void CG_DrawLagometer(void)
                 float w = 1.0f;
                 float y = mid;
                 float x = ax + aw - a;
-                CalcScreenPlacementInl(&x, &y, &w, &h, 3, 3);
+                {
+#define sp_x (&x)
+#define sp_y (&y)
+#define sp_w (&w)
+#define sp_h (&h)
+#define sp_horzAlign (3)
+#define sp_vertAlign (3)
+#include "../client_mp/screen_placement.inl"
+#undef sp_x
+#undef sp_y
+#undef sp_w
+#undef sp_h
+#undef sp_horzAlign
+#undef sp_vertAlign
+                }
                 CL_DrawStretchPicPhysical(x, y, w, h, 0.0f, 0.0f, 0.0f, 0.0f, colorBlue, cgs->media.whiteMaterial);
             }
         }
@@ -646,7 +673,21 @@ static void CG_DrawLagometer(void)
                 float w = 1.0f;
                 float y = ay + ah - v;
                 float x = ax + aw - a;
-                CalcScreenPlacementInl(&x, &y, &w, &h, 3, 3);
+                {
+#define sp_x (&x)
+#define sp_y (&y)
+#define sp_w (&w)
+#define sp_h (&h)
+#define sp_horzAlign (3)
+#define sp_vertAlign (3)
+#include "../client_mp/screen_placement.inl"
+#undef sp_x
+#undef sp_y
+#undef sp_w
+#undef sp_h
+#undef sp_horzAlign
+#undef sp_vertAlign
+                }
                 CL_DrawStretchPicPhysical(x, y, w, h, 0.0f, 0.0f, 0.0f, 0.0f, color, cgs->media.whiteMaterial);
             }
             else if (v < 0.0f)
@@ -655,7 +696,21 @@ static void CG_DrawLagometer(void)
                 float w = 1.0f;
                 float y = ay + ah - range;
                 float x = ax + aw - a;
-                CalcScreenPlacementInl(&x, &y, &w, &h, 3, 3);
+                {
+#define sp_x (&x)
+#define sp_y (&y)
+#define sp_w (&w)
+#define sp_h (&h)
+#define sp_horzAlign (3)
+#define sp_vertAlign (3)
+#include "../client_mp/screen_placement.inl"
+#undef sp_x
+#undef sp_y
+#undef sp_w
+#undef sp_h
+#undef sp_horzAlign
+#undef sp_vertAlign
+                }
                 CL_DrawStretchPicPhysical(x, y, w, h, 0.0f, 0.0f, 0.0f, 0.0f, colorRed, cgs->media.whiteMaterial);
             }
         }

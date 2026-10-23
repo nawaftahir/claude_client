@@ -33,7 +33,6 @@ extern int CL_TextWidth(const char *text, int maxChars, FontHandle font);
 extern int CL_TextHeight(FontHandle font);
 extern void CL_DrawText(const char *text, int maxChars, FontHandle font, float x, float y, int horzAlign, int vertAlign, float xScale, float yScale, const vec_t *color, int style);
 extern void CalcSplitScreenTextOffset(FontHandle font, float *y);
-extern void CalcScreenPlacementInl(float *x, float *y, float *w, float *h, int horzAlign, int vertAlign);
 extern refexport_t re;
 extern const char *CL_GetConfigString(int index);
 extern float AngleNormalize360( float angle );
@@ -273,7 +272,21 @@ int CG_DrawDevString(float x, float y, const char *s, const vec_t *color, int al
         float sx = 1.0f;
         float sy = 1.0f;
         CalcSplitScreenTextOffset(font, &dy);
-        CalcScreenPlacementInl(&dx, &dy, &sx, &sy, 3, 1);
+        {
+#define sp_x (&dx)
+#define sp_y (&dy)
+#define sp_w (&sx)
+#define sp_h (&sy)
+#define sp_horzAlign (3)
+#define sp_vertAlign (1)
+#include "../client_mp/screen_placement.inl"
+#undef sp_x
+#undef sp_y
+#undef sp_w
+#undef sp_h
+#undef sp_horzAlign
+#undef sp_vertAlign
+        }
         re.DrawText(s, 0x7fffffff, font, dx, dy, sx, sy, color, style);
     }
     return height;
