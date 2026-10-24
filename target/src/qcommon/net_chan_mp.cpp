@@ -25,13 +25,13 @@ dvar_t      *net_profile;
 dvar_t      *net_showprofile;
 dvar_t      *net_lanauthorize;
 int qport = 0;
-static int net_iProfilingOn;
+static int net_iProfilingOn = 0;
 
 void CL_Netchan_PrintProfileStats( int bPrintToConsole );
 
 // Unreferenced: a 32-aligned .bss object of up to this size sits between
 // net_iProfilingOn and loopbacks. The binary is stripped, so only its extent is known.
-static byte net_chan_unused[0x60];
+byte net_chan_unused[0x10];
 
 // there needs to be enough loopback messages to hold a complete
 // gamestate of maximum size

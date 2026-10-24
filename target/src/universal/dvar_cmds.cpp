@@ -590,28 +590,29 @@ void SV_SetConfig(int start, int max, int bit)
 	}
 }
 
-static char dvarInfoString[MAX_INFO_STRING];
+// retail 0xb3c800; the dvar_cmds block starts 128-aligned
+static ALIGNED(128) char dvar_infoString[MAX_INFO_STRING];
 
 char *Dvar_InfoString(int bit)
 {
 	dvar_t *dvar;
 
-	dvarInfoString[0] = 0;
+	dvar_infoString[0] = 0;
 
 	for ( dvar = sortedDvars; dvar; dvar = dvar->next )
 	{
 		if ( dvar->flags & bit )
 		{
-			Info_SetValueForKey( dvarInfoString, dvar->name, Dvar_DisplayableValue(dvar) );
+			Info_SetValueForKey( dvar_infoString, dvar->name, Dvar_DisplayableValue(dvar) );
 		}
 	}
 
 	if ( bit & DVAR_USERINFO )
 	{
-		Info_SetValueForKey( dvarInfoString, "name", CL_GetUsernameForLocalClient(0) );
+		Info_SetValueForKey( dvar_infoString, "name", CL_GetUsernameForLocalClient(0) );
 	}
 
-	return dvarInfoString;
+	return dvar_infoString;
 }
 
 static char dvarInfoStringBig[BIG_INFO_STRING];

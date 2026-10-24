@@ -2988,4 +2988,4 @@ void PC_CheckOpenSourceHandles(void)
 //============================================================================
 
 // Unreferenced storage; original declarations unknown (sized from the layout).
-static int unusedStorage[2];
+int unusedStorage0; // retail 0xb4ad9c, between globaldefines and numtokens

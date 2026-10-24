@@ -5,14 +5,15 @@
 #include "../stringed/stringed_public.h"
 
 // result buffers in storage order; the unreferenced blocks keep that layout
-static char fs_unreferenced0[0x180];
-static char fs_loadedIwdChecksums[BIG_INFO_STRING];
-static char fs_loadedIwdNames[BIG_INFO_STRING];
-static char fs_loadedIwdPureChecksums[BIG_INFO_STRING];
-static char fs_referencedIwdChecksums[BIG_INFO_STRING];
-static char fs_referencedIwdPureChecksums[BIG_INFO_STRING];
-static char fs_unreferenced1[BIG_INFO_STRING];
-static char fs_referencedIwdNames[BIG_INFO_STRING];
+static char fs_loadedIwdChecksumsString[BIG_INFO_STRING];
+static char fs_loadedIwdNamesString[BIG_INFO_STRING];
+static char fs_loadedIwdPureChecksumsInfo[BIG_INFO_STRING];
+static char fs_referencedIwdChecksumsBuf[BIG_INFO_STRING];
+static char fs_referencedIwdPureChecksumsString[BIG_INFO_STRING];
+static char fs_referencedIwdNamesString[BIG_INFO_STRING];
+// Original use unknown; unreferenced (retail 0xb48c00 and 0xb4ac80).
+char fs_unreferenced0[0x80];
+char fs_unusedSmall[0x18];
 
 static char** Sys_ConcatenateFileLists( char **list0, char **list1, char **list2 );
 
@@ -766,7 +767,7 @@ const char *FS_LoadedIwdChecksums()
 {
 	searchpath_t *search;
 
-	fs_loadedIwdChecksums[0] = 0;
+	fs_loadedIwdChecksumsString[0] = 0;
 
 	for ( search = fs_searchpaths; search; search = search->next )
 	{
@@ -777,17 +778,17 @@ const char *FS_LoadedIwdChecksums()
 		if ( search->localized )
 			continue;
 
-		I_strncat( fs_loadedIwdChecksums, sizeof( fs_loadedIwdChecksums ), va( "%i ", search->iwd->checksum ) );
+		I_strncat( fs_loadedIwdChecksumsString, sizeof( fs_loadedIwdChecksumsString ), va( "%i ", search->iwd->checksum ) );
 	}
 
-	return fs_loadedIwdChecksums;
+	return fs_loadedIwdChecksumsString;
 }
 
 const char *FS_LoadedIwdNames()
 {
 	searchpath_t *search;
 
-	fs_loadedIwdNames[0] = 0;
+	fs_loadedIwdNamesString[0] = 0;
 
 	for ( search = fs_searchpaths; search; search = search->next )
 	{
@@ -798,20 +799,20 @@ const char *FS_LoadedIwdNames()
 		if ( search->localized )
 			continue;
 
-		if ( *fs_loadedIwdNames )
-			I_strncat( fs_loadedIwdNames, sizeof( fs_loadedIwdNames ), " " );
+		if ( *fs_loadedIwdNamesString )
+			I_strncat( fs_loadedIwdNamesString, sizeof( fs_loadedIwdNamesString ), " " );
 
-		I_strncat( fs_loadedIwdNames, sizeof( fs_loadedIwdNames ), search->iwd->iwdBasename );
+		I_strncat( fs_loadedIwdNamesString, sizeof( fs_loadedIwdNamesString ), search->iwd->iwdBasename );
 	}
 
-	return fs_loadedIwdNames;
+	return fs_loadedIwdNamesString;
 }
 
 const char *FS_LoadedIwdPureChecksums()
 {
 	searchpath_t *search;
 
-	fs_loadedIwdPureChecksums[0] = 0;
+	fs_loadedIwdPureChecksumsInfo[0] = 0;
 
 	for ( search = fs_searchpaths; search; search = search->next )
 	{
@@ -822,17 +823,17 @@ const char *FS_LoadedIwdPureChecksums()
 		if ( search->localized )
 			continue;
 
-		I_strncat( fs_loadedIwdPureChecksums, sizeof( fs_loadedIwdPureChecksums ), va( "%i ", search->iwd->pure_checksum ) );
+		I_strncat( fs_loadedIwdPureChecksumsInfo, sizeof( fs_loadedIwdPureChecksumsInfo ), va( "%i ", search->iwd->pure_checksum ) );
 	}
 
-	return fs_loadedIwdPureChecksums;
+	return fs_loadedIwdPureChecksumsInfo;
 }
 
 const char *FS_ReferencedIwdChecksums()
 {
 	searchpath_t *search;
 
-	fs_referencedIwdChecksums[0] = 0;
+	fs_referencedIwdChecksumsBuf[0] = 0;
 
 	for ( search = fs_searchpaths ; search ; search = search->next )
 	{
@@ -842,17 +843,17 @@ const char *FS_ReferencedIwdChecksums()
 
 		// is the element a iwd file and has it been referenced based on flag?
 		if ( search->iwd->referenced || I_strnicmp( search->iwd->iwdGamename, BASEGAME, strlen( BASEGAME ) ) )
-			I_strncat( fs_referencedIwdChecksums, sizeof( fs_referencedIwdChecksums ), va( "%i ", search->iwd->checksum ) );
+			I_strncat( fs_referencedIwdChecksumsBuf, sizeof( fs_referencedIwdChecksumsBuf ), va( "%i ", search->iwd->checksum ) );
 	}
 
-	return fs_referencedIwdChecksums;
+	return fs_referencedIwdChecksumsBuf;
 }
 
 const char *FS_ReferencedIwdNames()
 {
 	searchpath_t *search;
 
-	fs_referencedIwdNames[0] = 0;
+	fs_referencedIwdNamesString[0] = 0;
 
 	// we want to return ALL iwd's from the fs_game path
 	// and referenced one's from base
@@ -864,15 +865,15 @@ const char *FS_ReferencedIwdNames()
 
 		if ( search->iwd->referenced || I_strnicmp( search->iwd->iwdGamename, BASEGAME, strlen( BASEGAME ) ) )
 		{
-			if ( *fs_referencedIwdNames )
-				I_strncat( fs_referencedIwdNames, sizeof( fs_referencedIwdNames ), " " );
-			I_strncat( fs_referencedIwdNames, sizeof( fs_referencedIwdNames ), search->iwd->iwdGamename );
-			I_strncat( fs_referencedIwdNames, sizeof( fs_referencedIwdNames ), "/" );
-			I_strncat( fs_referencedIwdNames, sizeof( fs_referencedIwdNames ), search->iwd->iwdBasename );
+			if ( *fs_referencedIwdNamesString )
+				I_strncat( fs_referencedIwdNamesString, sizeof( fs_referencedIwdNamesString ), " " );
+			I_strncat( fs_referencedIwdNamesString, sizeof( fs_referencedIwdNamesString ), search->iwd->iwdGamename );
+			I_strncat( fs_referencedIwdNamesString, sizeof( fs_referencedIwdNamesString ), "/" );
+			I_strncat( fs_referencedIwdNamesString, sizeof( fs_referencedIwdNamesString ), search->iwd->iwdBasename );
 		}
 	}
 
-	return fs_referencedIwdNames;
+	return fs_referencedIwdNamesString;
 }
 
 const char *FS_ReferencedIwdPureChecksums()
@@ -881,16 +882,16 @@ const char *FS_ReferencedIwdPureChecksums()
 	int numIwds;
 	int checksum;
 
-	fs_referencedIwdPureChecksums[0] = 0;
+	fs_referencedIwdPureChecksumsString[0] = 0;
 
 	checksum = fs_checksumFeed;
 	numIwds = 0;
 
 	// add a delimiter between must haves and general refs
-	fs_referencedIwdPureChecksums[strlen( fs_referencedIwdPureChecksums ) + 1] = '\0';
-	fs_referencedIwdPureChecksums[strlen( fs_referencedIwdPureChecksums ) + 2] = '\0';
-	fs_referencedIwdPureChecksums[strlen( fs_referencedIwdPureChecksums )] = '@';
-	fs_referencedIwdPureChecksums[strlen( fs_referencedIwdPureChecksums )] = ' ';
+	fs_referencedIwdPureChecksumsString[strlen( fs_referencedIwdPureChecksumsString ) + 1] = '\0';
+	fs_referencedIwdPureChecksumsString[strlen( fs_referencedIwdPureChecksumsString ) + 2] = '\0';
+	fs_referencedIwdPureChecksumsString[strlen( fs_referencedIwdPureChecksumsString )] = '@';
+	fs_referencedIwdPureChecksumsString[strlen( fs_referencedIwdPureChecksumsString )] = ' ';
 
 	for ( search = fs_searchpaths; search; search = search->next )
 	{
@@ -903,7 +904,7 @@ const char *FS_ReferencedIwdPureChecksums()
 
 		if ( search->iwd->referenced )
 		{
-			I_strncat( fs_referencedIwdPureChecksums, sizeof( fs_referencedIwdPureChecksums ), va( "%i ", search->iwd->pure_checksum ) );
+			I_strncat( fs_referencedIwdPureChecksumsString, sizeof( fs_referencedIwdPureChecksumsString ), va( "%i ", search->iwd->pure_checksum ) );
 			checksum ^= search->iwd->pure_checksum;
 			++numIwds;
 		}
@@ -911,13 +912,13 @@ const char *FS_ReferencedIwdPureChecksums()
 
 	if ( fs_fakeChkSum )
 	{
-		I_strncat( fs_referencedIwdPureChecksums, sizeof( fs_referencedIwdPureChecksums ), va( "%i ", fs_fakeChkSum ) );
+		I_strncat( fs_referencedIwdPureChecksumsString, sizeof( fs_referencedIwdPureChecksumsString ), va( "%i ", fs_fakeChkSum ) );
 	}
 
 	checksum ^= numIwds;
-	I_strncat( fs_referencedIwdPureChecksums, sizeof( fs_referencedIwdPureChecksums ), va( "%i ", checksum ) );
+	I_strncat( fs_referencedIwdPureChecksumsString, sizeof( fs_referencedIwdPureChecksumsString ), va( "%i ", checksum ) );
 
-	return fs_referencedIwdPureChecksums;
+	return fs_referencedIwdPureChecksumsString;
 }
 
 void FS_PureServerSetLoadedIwds(const char *paksums, const char *paknames)

@@ -42,16 +42,20 @@ static short ( *_BigShort )( short l );
 static short ( *_LittleShort )( short l );
 static int ( *_BigLong )( int l );
 static int ( *_LittleLong )( int l );
-static int64_t ( *_LittleLong64 )( int64_t l );
-static float ( *_LittleFloat )( float l );
-static int ( *_LittleFloatAsInt )( float l );
+static int64_t ( *s_LittleLong64 )( int64_t l );
+static float ( *s_LittleFloat )( float l );
+static int ( *s_LittleFloatAsInt )( float l );
 
 static va_info_t va_info[NUMTHREADS];
 static jmp_buf g_com_error[NUMTHREADS];
 TraceThreadInfo g_traceThreadInfo[NUMTHREADS];
 
 // two buffers so compares work without stomping on each other
-static char infoValue[2][BIG_INFO_VALUE];
+// retail 0xb64530, 16-aligned
+static ALIGNED(16) char value1[2][BIG_INFO_VALUE];
+
+// Original use unknown; unreferenced (retail 0xb6858c, before va_info).
+int q_unreferenced0;
 
 struct orientation_t
 {
@@ -206,7 +210,7 @@ int BigLong( int l )
 
 int64_t LittleLong64( int64_t l )
 {
-	return _LittleLong64( l );
+	return s_LittleLong64( l );
 }
 
 // the header's inline LittleShort/LittleLong serve the engine; these go through the table
@@ -221,12 +225,12 @@ int LittleLongRuntime( int l )
 }
 float LittleFloat( float l )
 {
-	return _LittleFloat( l );
+	return s_LittleFloat( l );
 }
 
 int LittleFloatAsInt( float l )
 {
-	return _LittleFloatAsInt( l );
+	return s_LittleFloatAsInt( l );
 }
 
 short ShortSwap( short l )
@@ -330,9 +334,9 @@ void Swap_InitLittleEndian()
 	_LittleShort = ShortNoSwap;
 	_BigLong = LongSwap;
 	_LittleLong = LongNoSwap;
-	_LittleLong64 = Long64NoSwap;
-	_LittleFloat = FloatNoSwap;
-	_LittleFloatAsInt = FloatNoSwapAsInt;
+	s_LittleLong64 = Long64NoSwap;
+	s_LittleFloat = FloatNoSwap;
+	s_LittleFloatAsInt = FloatNoSwapAsInt;
 }
 
 void Swap_InitBigEndian()
@@ -341,9 +345,9 @@ void Swap_InitBigEndian()
 	_LittleShort = ShortSwap;
 	_BigLong = LongNoSwap;
 	_LittleLong = LongSwap;
-	_LittleLong64 = Long64Swap;
-	_LittleFloat = FloatSwap;
-	_LittleFloatAsInt = FloatSwapAsInt;
+	s_LittleLong64 = Long64Swap;
+	s_LittleFloat = FloatSwap;
+	s_LittleFloatAsInt = FloatSwapAsInt;
 }
 
 void Swap_Init()
@@ -709,7 +713,7 @@ nextPair:
 	*o = 0;
 	s++;
 
-	dst = infoValue[valueindex];
+	dst = value1[valueindex];
 	o = dst;
 
 	while ( *s != '\\' && *s )

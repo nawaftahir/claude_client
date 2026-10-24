@@ -30,9 +30,11 @@ static unsigned char unusedTable[152] =
 
 dvar_t *dvarHashTable[FILE_HASH_SIZE];
 static float dvarVectorPool[12];
-static unsigned int dvarVectorPoolIndex;
+// Original use unknown; unreferenced (retail 0xb30fb8).
+int dvar_padding;
+static unsigned int dvarVectorIndex;
 static bool isDvarSystemActive;
-static bool isLoadingAutoExec;
+static bool isLoadingAutoExecGlobalFlag;
 
 static const char digitStrings[10][2] = { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" };
 
@@ -40,7 +42,7 @@ void Dvar_AddFlags(dvar_t *dvar, int flags);
 
 void Dvar_SetInAutoExec(bool inAutoExec)
 {
-	isLoadingAutoExec = inAutoExec;
+	isLoadingAutoExecGlobalFlag = inAutoExec;
 }
 
 bool Dvar_IsSystemActive()
@@ -94,11 +96,11 @@ static float *Dvar_AllocVector(unsigned int componentCount)
 {
 	float *vector;
 
-	if ( dvarVectorPoolIndex + componentCount > 12 )
-		dvarVectorPoolIndex = 0;
+	if ( dvarVectorIndex + componentCount > 12 )
+		dvarVectorIndex = 0;
 
-	vector = &dvarVectorPool[dvarVectorPoolIndex];
-	dvarVectorPoolIndex += componentCount;
+	vector = &dvarVectorPool[dvarVectorIndex];
+	dvarVectorIndex += componentCount;
 	return vector;
 }
 
@@ -1748,7 +1750,7 @@ void Dvar_SetCommand(const char *dvarName, const char *string)
 	dvar_t *dvar;
 
 	dvar = Dvar_SetFromStringByNameFromSource(dvarName, string, DVAR_SOURCE_EXTERNAL);
-	if ( dvar && isLoadingAutoExec )
+	if ( dvar && isLoadingAutoExecGlobalFlag )
 	{
 		Dvar_AddFlags(dvar, DVAR_AUTOEXEC);
 		Dvar_UpdateResetValue(dvar, dvar->current);

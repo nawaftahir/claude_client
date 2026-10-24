@@ -8,6 +8,14 @@ const dvar_t *cg_shock_soundWetLevel;
 const dvar_t *cg_tracerLength;
 
 const dvar_t *cg_marks;
+const dvar_t *cg_weaponrightbone;
+const dvar_t *cg_voiceSpriteTime;
+const dvar_t *cg_shock_viewKickFadeTime;
+const dvar_t *cg_shock_mouse_fadeTime;
+const dvar_t *cg_hudDamageIconHeight;
+const dvar_t *cg_hudChatPosition;
+const dvar_t *cg_drawTurretCrosshair;
+const dvar_t *cg_drawSnapshot;
 const dvar_t *cg_hudGrenadePointerPulseMax;
 const dvar_t *cg_shock_mouse_maxyawspeed;
 const dvar_t *cg_shock_volume_weapon;
