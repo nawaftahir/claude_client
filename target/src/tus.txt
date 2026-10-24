@@ -213,7 +213,7 @@ speex/quant_lsp.c /TP
 speex/sb_celp.c /TP
 speex/nb_celp.c /TP
 speex/cb_search.c /TP
-speex/vbr.c /TP
+speex/vbr.c
 speex/lsp_tables_nb.c /TP
 speex/high_lsp_tables.c /TP
 speex/ltp.c /TP

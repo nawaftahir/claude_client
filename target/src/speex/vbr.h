@@ -40,7 +40,6 @@
 
 #define VBR_MEMORY_SIZE 5
 
-extern const float vbr_nb_thresh[9][11];
 extern const float vbr_hb_thresh[5][11];
 extern const float vbr_uhb_thresh[2][11];
 
@@ -59,10 +58,17 @@ typedef struct VBRState {
    int   consec_noise;
 } VBRState;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+extern const float vbr_nb_thresh[9][11];
 void vbr_init(VBRState *vbr);
 
 float vbr_analysis(VBRState *vbr, spx_word16_t *sig, int len, int pitch, float pitch_coef);
 
 void vbr_destroy(VBRState *vbr);
+#ifdef __cplusplus
+}
+#endif
 
 #endif
