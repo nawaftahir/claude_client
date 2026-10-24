@@ -11,7 +11,6 @@ extern keywordHash_t menuParseKeywords[33];
 extern char *va( const char *format, ... );
 
 keywordHash_t *itemParseKeywordHash[512];
-static char string_00f3b9c0[4096];
 static struct
 {
     loadAssets_t loadAssets;
@@ -294,15 +293,16 @@ void PC_SourceError(int handle, char *format, ...)
     int line;
     va_list argptr;
     char filename[128];
+    static char string[4096];
 
     va_start(argptr, format);
-    vsprintf(string_00f3b9c0, format, argptr);
+    vsprintf(string, format, argptr);
     va_end(argptr);
 
     filename[0] = '\0';
     line = 0;
     PC_SourceFileAndLine(handle, filename, &line);
-    Com_Printf("^1Menu load error: %s, line %d: %s\n", filename, line, string_00f3b9c0);
+    Com_Printf("^1Menu load error: %s, line %d: %s\n", filename, line, string);
 }
 
 qboolean PC_Float_Parse(int handle, float *f)

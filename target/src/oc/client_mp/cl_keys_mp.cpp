@@ -10,7 +10,7 @@ qboolean *key_overstrikeMode = &playerKeys[0].key_overstrikeMode;
 qboolean *anykeydown = &playerKeys[0].anykeydown;
 qkey_t *keys = playerKeys[0].keys;
 
-int historyLine = 0;
+int historyLine;
 int nextHistoryLine;
 field_t g_consoleField;
 field_t historyEditLines[32];
@@ -311,7 +311,6 @@ static char *frenchNumberKeysMap[10] = {
 
 #define COMMAND_HISTORY 32
 
-static char tinystr[5];
 static const char *completionString;
 static Bool hasExactMatch;
 static char shortestMatch[1024];
@@ -1063,6 +1062,7 @@ int Key_StringToKeynum(const char *str)
 
 char *Key_KeynumToString(int keynum, qboolean translate)
 {
+    static char tinystr[5];
     keyname_t *name;
     int upperNibble;
     int lowerNibble;

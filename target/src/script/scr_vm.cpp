@@ -122,8 +122,8 @@ void Scr_TraverseScript( char const *pos );
 char g_EndPos = 0;
 static jmp_buf g_script_error[MAX_VM_STACK_DEPTH + 1];
 static int g_script_error_level;
-scrVmGlob_t scrVmGlob __attribute__((aligned(128)));
-scrVmPub_t scrVmPub __attribute__((aligned(128)));
+ALIGNED(128) scrVmGlob_t scrVmGlob;
+ALIGNED(128) scrVmPub_t scrVmPub;
 /*
 ==============
 VM_Resume

@@ -32,7 +32,6 @@ extern const dvar_t *hud_health_pulserate_injured;
 extern const dvar_t *hud_health_pulserate_critical;
 extern const dvar_t *hud_deathQuoteFadeTime;
 static vec4_t color;
-static char szErrorString[1024];
 static vec4_t color_00302d80;   /* duplicate decl removed (C++ redefinition -> C2086) */
 static const dvar_t *hud_fadeout_speed;
 static const dvar_t *hud_enable;
@@ -1592,6 +1591,7 @@ void CG_DrawMantleHint(const rectDef_t *rect, struct Font_s *font, float fontsca
 
 const char *CG_GetTranslatedLocationString(int iLocation)
 {
+    static char szErrorString[1024];
     const char *p;
     const char *localized;
 

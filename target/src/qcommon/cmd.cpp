@@ -14,7 +14,7 @@ static int			cmd_wait;
 cmd_t		cmd_texts[1];
 cmd_t		*cmd_text = cmd_texts;
 // each command buffer sits on a 128-byte boundary
-static byte		cmd_text_buf[MAX_CMD_BUFFER] __attribute__((aligned(128)));
+static ALIGNED(128) byte		cmd_text_buf[MAX_CMD_BUFFER];
 
 typedef struct cmd_function_s
 {
@@ -26,8 +26,8 @@ typedef struct cmd_function_s
 } cmd_function_t;
 
 static int cmd_argc;
-static char *cmd_argv[MAX_STRING_TOKENS] __attribute__((aligned(128)));        // points into cmd_tokenized
-static char cmd_tokenized[BIG_INFO_STRING + MAX_STRING_TOKENS] __attribute__((aligned(128)));         // will have 0 bytes inserted
+static ALIGNED(128) char *cmd_argv[MAX_STRING_TOKENS];        // points into cmd_tokenized
+static ALIGNED(128) char cmd_tokenized[BIG_INFO_STRING + MAX_STRING_TOKENS];         // will have 0 bytes inserted
 static cmd_function_t *cmd_functions;      // possible commands to execute
 
 void Cbuf_Execute( void );
@@ -419,9 +419,10 @@ Cmd_Args
 Returns a single string containing argv(1) to argv(argc()-1)
 ============
 */
+static ALIGNED(128) char cmd_args[MAX_STRING_CHARS];
+
 char *Cmd_Args( int start )
 {
-	static char cmd_args[MAX_STRING_CHARS] __attribute__((aligned(128)));
 	int i;
 
 	cmd_args[0] = 0;

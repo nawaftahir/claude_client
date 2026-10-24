@@ -9,7 +9,7 @@ float voice_current_voicelevel;
 
 int mic_old_reclevel;
 const dvar_t *winvoice_mic_reclevel;
-char old_rec_source[256] = {0};
+char old_rec_source[256];
 int mic_current_reclevel;
 const dvar_t *winvoice_mic_mute;
 const dvar_t *winvoice_mic_scaler;

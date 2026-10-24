@@ -889,7 +889,7 @@ struct server_t
 	char leading[0x5f430];
 	int skelTimeStamp;
 };
-extern server_t sv;
+extern ALIGNED(128) server_t sv;
 
 void *Hunk_AllocInternal( int size );
 XModel *XModelPrecache( const char *name, void *( *Alloc )( int size ), void *( *AllocColl )( int size ) );

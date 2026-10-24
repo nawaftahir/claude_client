@@ -334,7 +334,7 @@ typedef struct ALIGNED(128) scrVmPub_s
 static_assert((sizeof(scrVmPub_t) == 0x4380), "ERROR: scrVmPub_t size is invalid!");
 #endif
 
-extern scrVmPub_t scrVmPub;
+extern ALIGNED(128) scrVmPub_t scrVmPub;
 
 typedef struct scrVmGlob_s
 {
@@ -348,7 +348,7 @@ typedef struct scrVmGlob_s
 static_assert((sizeof(scrVmGlob_t) == 0x201C), "ERROR: scrVmGlob_t size is invalid!");
 #endif
 
-extern scrVmGlob_t scrVmGlob;
+extern ALIGNED(128) scrVmGlob_t scrVmGlob;
 
 #define MAX_XANIMTREE_NUM 128
 

@@ -13,8 +13,6 @@ static char fs_referencedIwdChecksums[BIG_INFO_STRING];
 static char fs_referencedIwdPureChecksums[BIG_INFO_STRING];
 static char fs_unreferenced1[BIG_INFO_STRING];
 static char fs_referencedIwdNames[BIG_INFO_STRING];
-static char fs_shiftStrBuf[MAX_STRING_CHARS];
-static char fs_mapBaseName[MAX_QPATH];
 
 static char** Sys_ConcatenateFileLists( char **list0, char **list1, char **list2 );
 
@@ -192,6 +190,7 @@ void FS_SV_Rename( const char *from, const char *to )
 
 char *FS_ShiftStr( const char *string, int shift )
 {
+	static char fs_shiftStrBuf[MAX_STRING_CHARS];
 	int i, l;
 
 	l = strlen(string);
@@ -1051,6 +1050,7 @@ void FS_PureServerSetReferencedIwds( const char *iwdSums, const char *iwdNames )
 
 char *FS_GetMapBaseName(const char *mapname)
 {
+	static char fs_mapBaseName[MAX_QPATH];
 	int len;
 	int c;
 

@@ -65,7 +65,6 @@ void SND_LoadSoundFile( SoundFile *soundFile );
 extern const dvar_t *snd_touchStreamFilesOnLoad;
 extern dvar_t *fs_copyfiles;
 
-static char com_subtitleReference[MAX_STRING_CHARS];
 
 float Com_GetVolumeModValue( const char *name, const char *sourceFile )
 {
@@ -1372,6 +1371,7 @@ pp_done_10:;
 
 const char *Com_GetSubtitleStringEdReference( const char *text )
 {
+	static char com_subtitleReference[MAX_STRING_CHARS];
 	void *buffer;
 	const char *data;
 	char *token;

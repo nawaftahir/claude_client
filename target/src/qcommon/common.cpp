@@ -46,7 +46,7 @@ qboolean com_errorEntered;
 int com_fixedConsolePosition;
 static qboolean com_fullyInitialized;
 
-char com_errorMessage[MAXPRINTMSG] __attribute__((aligned(128)));
+ALIGNED(128) char com_errorMessage[MAXPRINTMSG];
 
 static dvar_t *ui_errorMessage;
 static dvar_t *ui_errorTitle;
@@ -54,7 +54,7 @@ static dvar_t *ui_errorTitle;
 #define MAX_PUSHED_EVENTS 256
 static int com_pushedEventsHead;
 static int com_pushedEventsTail;
-static sysEvent_t com_pushedEvents[MAX_PUSHED_EVENTS] __attribute__((aligned(128)));
+static ALIGNED(128) sysEvent_t com_pushedEvents[MAX_PUSHED_EVENTS];
 
 static char com_unreferenced3[0x488];
 

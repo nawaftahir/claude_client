@@ -63,7 +63,7 @@ dvar_t *cl_updateavailable;
 dvar_t *cl_updateoldversion;
 clientActive_t clients[1];
 const dvar_t *cl_freelook;
-int cl_connectedToPureServer = 0;
+int cl_connectedToPureServer;
 qboolean scr_initialized;
 
 extern int qport;
@@ -342,7 +342,6 @@ extern Bool g_waitingForServer;
 extern ping_t cl_pinglist[16];
 extern unsigned int frame_msec;
 extern int old_com_frameTime;
-static char szServerIPAddress[128];
 static qboolean recursive;
 static const dvar_t *input_viewSensitivity;
 
@@ -3007,6 +3006,8 @@ void CL_ShowIP_f(void)
 
 const char *CL_GetServerIPAddress(void)
 {
+    static char szServerIPAddress[128];
+
     if (clc.state < CA_CONNECTED) {
         memset(szServerIPAddress, 0, 128);
     } else {

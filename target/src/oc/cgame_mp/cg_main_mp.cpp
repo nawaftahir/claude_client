@@ -445,7 +445,6 @@ extern const dvar_t *cg_centerPrintY;
 extern const dvar_t *cg_drawLagometer;
 extern const dvar_t *cg_weaponleftbone;
 extern const dvar_t *cg_weaponrightbone;
-static char buffer[1024];
 extern cg_t cgArray[1];
 extern weaponInfo_t cg_weaponsArray[CG_MAX_WEAPONS];
 extern itemInfo_t cg_itemsArray[CG_MAX_ITEMS];
@@ -749,6 +748,7 @@ void CG_BoldGameMessage(const char *msg)
 
 const char *CG_Argv(int arg)
 {
+    static char buffer[1024];
     Cmd_ArgvBuffer(arg, (char *)&buffer, 0x400);
     return (const char *)&buffer;
 }

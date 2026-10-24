@@ -207,16 +207,8 @@ extern const dvar_t *ui_browserMod;
 extern const dvar_t *ui_playerProfileCount;
 extern const dvar_t *ui_playerProfileSelected;
 extern const dvar_t *ui_playerProfileNameNew;
-static char errorString[1024];
-static char info[1024];
-static qboolean bypassKeyClear;
-static int numclean;
 static char info_00ecf960[1024];
-static char clientBuff[32];
-static int lastTime;
 /* 3 duplicate `static char info_00ecf960[1024];` removed (same name -> C++ C2086; only one is referenceable) */
-static int numFound;
-static int numTimeOuts;
 static char g_mapname[64];
 static char g_gametype[64];
 static Bool g_ingameMenusLoaded;
@@ -2280,6 +2272,7 @@ static void UI_ClearDisplayedServers(void)
 
 static void __attribute_regparm__(0) UI_BuildServerDisplayList(qboolean force)
 {
+    static int numclean;
     char info_buf[0x400];
     int count, i, clients, ping;
 
@@ -2575,6 +2568,7 @@ static const char *UI_StrContains(const char *str, const char *charset)
 
 static void BM_NOINLINE UI_BuildFindPlayerList(void)
 {
+    static int numFound, numTimeOuts;
     serverStatusInfo_t info;
     char name[0x22];
     char infoString[0x400];
@@ -2751,7 +2745,10 @@ void UI_RefreshServerPings_5310d0(void)
 
 const char *UI_FeederItemText(float feederID, int index, int column, MaterialHandle *handle)
 {
+    static char info[1024];
+    static char clientBuff[32];
     static int lastColumn = -1;
+    static int lastTime;
     int actual;
 
     *handle = 0;
@@ -2902,6 +2899,7 @@ void UI_OverrideCursorPos(itemDef_t *item)
 
 void UI_FeederSelection(float feederID, int index)
 {
+    static char info[1024];
     if (feederID == 4.0f) {
         int actual, map;
 
@@ -3206,6 +3204,7 @@ void UI_Init(void)
 
 void UI_KeyEvent(int key, qboolean down)
 {
+    static qboolean bypassKeyClear;
     menuDef_t *menu;
 
     if (Menu_Count(&uiInfo->uiDC) <= 0)
@@ -3708,6 +3707,7 @@ static void UI_StartServerRefresh(qboolean full)
 
 const char *UI_SafeTranslateString(const char *reference)
 {
+    static char errorString[1024];
     const char *translated;
 
     // 0x15-prefixed strings are already localized

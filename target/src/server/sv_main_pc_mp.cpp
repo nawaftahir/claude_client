@@ -3,7 +3,6 @@
 
 #define SV_OUTPUTBUF_LENGTH ( 16384 - 16 )
 
-static netadr_t masterAdr;
 
 netadr_t *SV_MasterAddress();
 void SV_MasterHeartbeat( const char *hbname );
@@ -20,6 +19,8 @@ SV_MasterAddress
 */
 netadr_t *SV_MasterAddress()
 {
+	static netadr_t masterAdr;
+
 	if ( !masterAdr.type )
 	{
 		Com_Printf( "Resolving %s\n", MASTER_SERVER_NAME );

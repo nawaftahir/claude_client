@@ -2,13 +2,13 @@
 
 #define DOBJ_HANDLE_MAX (2 << 10)
 
-static DObj objBuf[DOBJ_HANDLE_MAX] __attribute__((aligned(128)));
-static bool objAlloced[DOBJ_HANDLE_MAX] __attribute__((aligned(128)));
+static ALIGNED(128) DObj objBuf[DOBJ_HANDLE_MAX];
+static ALIGNED(128) bool objAlloced[DOBJ_HANDLE_MAX];
 static int objFreeCount;
 
 // the maps are entity-indexed, not handle-indexed: the client side carries the
 // extra per-client view slots, the server side is one entry per gentity
-static short clientObjMap[MAX_GENTITIES + 2 * MAX_CLIENTS] __attribute__((aligned(128)));
+static ALIGNED(128) short clientObjMap[MAX_GENTITIES + 2 * MAX_CLIENTS];
 static short serverObjMap[MAX_GENTITIES];
 
 static int com_lastDObjIndex;

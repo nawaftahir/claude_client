@@ -24,7 +24,6 @@ void CG_DrawRotatedPicPhysical(float x, float y, float width, float height, floa
 void CG_DrawRotatedPic(float x, float y, float width, float height, int horzAlign, int vertAlign, float angle, const vec_t *color, MaterialHandle material);
 void CG_DrawRotatedQuadPic(float x, float y, vec2_t *verts, float angle, const vec_t *color, MaterialHandle material);
 
-static vec4_t color;
 extern const dvar_t *cg_hudCompassSpringyPointers;
 extern const vec4_t colorWhite;
 extern FontHandle UI_GetFontHandle(int type, float scale);
@@ -341,6 +340,8 @@ void CG_TileClear(void)
 
 float *CG_FadeColor(int startMsec, int totalMsec, int fadeMsec)
 {
+    static vec4_t color;
+
     if (!startMsec) {
         return NULL;
     }

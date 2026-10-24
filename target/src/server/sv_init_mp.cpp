@@ -2,8 +2,8 @@
 #include "../universal/com_sndalias.h"
 
 // both sit on 128-byte boundaries
-serverStatic_t svs __attribute__((aligned(128)));
-server_t sv __attribute__((aligned(128)));
+ALIGNED(128) serverStatic_t svs;
+ALIGNED(128) server_t sv;
 
 dvar_t *sv_fps;
 dvar_t *sv_timeout;

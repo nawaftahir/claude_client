@@ -259,7 +259,7 @@ static_assert((sizeof(serverStatic_t) == 0xC108), "ERROR: serverStatic_t size is
 #endif
 */
 
-extern serverStatic_t svs;
+extern ALIGNED(128) serverStatic_t svs;
 
 typedef enum
 {
@@ -322,7 +322,7 @@ typedef struct
 static_assert((sizeof(server_t) == 0x5F534), "ERROR: server_t size is invalid!");
 #endif
 
-extern server_t sv;
+extern ALIGNED(128) server_t sv;
 
 #define MAX_SNAPSHOT_ENTITIES	1024
 struct snapshotEntityNumbers_t
