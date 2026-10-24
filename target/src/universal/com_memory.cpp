@@ -8,7 +8,7 @@ static fileData_t *com_hunkData;
 // storage in its original order; the unreferenced blocks keep that layout
 static int g_largeLocalPos;
 static char mem_unreferenced0[0x58] __attribute__((aligned(4)));
-static byte g_largeLocalBuf[0x80000];
+ALIGNED(128) static byte g_largeLocalBuf[0x80000];
 static int mem_unreferenced1;
 
 static hunkUsed_t hunk_low;
