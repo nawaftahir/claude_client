@@ -2,6 +2,8 @@
 
 #define DOBJ_HANDLE_MAX (2 << 10)
 
+// unreferenced; fills retail 0xafe580..0xafe600 after objAlloced
+char unusedDObjStorage[0x80];
 static ALIGNED(128) DObj objBuf[DOBJ_HANDLE_MAX];
 static ALIGNED(128) bool objAlloced[DOBJ_HANDLE_MAX];
 static int objFreeCount;
