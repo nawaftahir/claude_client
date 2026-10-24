@@ -62,12 +62,12 @@ extern float voice_current_scaler;
 extern int g_voice_initialized;
 extern float levelSamples[6];
 extern int sampleCount;
-static int count;
-static Bool recording;
-static Bool playing;
-static recordingSample_t *currentRecordingSample;
+static int count = 0;
+static Bool recording = 0;
+static Bool playing = 0;
+static recordingSample_t *currentRecordingSample = 0;
 
-static short unsigned int *(*s_clientSamples[128])[4];
+static short unsigned int *(*s_clientSamples[64])[4];
 static int s_clientTalkTime[64];
 
 Bool Voice_Init(void);

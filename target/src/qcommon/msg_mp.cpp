@@ -618,7 +618,8 @@ static int msg_hData[256] =
 };
 
 static huffman_t msgHuff;
-static qboolean msgInit;
+static qboolean msgInit = 0;
+int msg_unreferenced;
 
 void MSG_initHuffman();
 

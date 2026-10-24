@@ -10,7 +10,9 @@ extern clientStatic_t cls;
 extern sharedUiInfo_t sharedUiInfo;
 extern qkey_t *keys;
 
-UI_Component_data_t __ZN12UI_Component1gE;
+ALIGNED(16) UI_Component_data_t __ZN12UI_Component1gE;
+// unreferenced storage, size from the retail layout after UI_Component::g
+char uiComponentUnreferenced[0x18];
 #define UI_Component_g __ZN12UI_Component1gE
 extern ALIGNED(128) refexport_t re;
 extern void *imp_com_developer;

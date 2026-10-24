@@ -44,7 +44,7 @@ extern int g_encoder_samplerate;
 extern int g_current_bandwidth_setting;
 extern int g_frame_size;
 extern int g_speex_initialized;
-static void *g_encoder;
+static void *g_encoder = 0;
 static struct SpeexBits encodeBits;
 
 void Encode_SetOptions(int frequency, int quality)

@@ -315,7 +315,7 @@ typedef struct scr_anim_s
 	};
 } scr_anim_t;
 
-typedef struct ALIGNED(128) scrVmPub_s
+typedef struct scrVmPub_s
 {
 	unsigned int *localVars;
 	VariableValue *maxstack;
@@ -331,7 +331,7 @@ typedef struct ALIGNED(128) scrVmPub_s
 	VariableValue stack[MAX_VM_OPERAND_STACK];
 } scrVmPub_t;
 #if defined(__i386__)
-static_assert((sizeof(scrVmPub_t) == 0x4380), "ERROR: scrVmPub_t size is invalid!");
+static_assert((sizeof(scrVmPub_t) == 0x4320), "ERROR: scrVmPub_t size is invalid!");
 #endif
 
 extern ALIGNED(128) scrVmPub_t scrVmPub;

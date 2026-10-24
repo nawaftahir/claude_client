@@ -3,7 +3,7 @@
 #include "common_types.h"
 #include "imports.h"
 #include "headers/PC/cgame_mp/cg_local.h"
-localEntity_t cg_eachClientLocalEntities[1][128];
+ALIGNED(128) localEntity_t cg_eachClientLocalEntities[1][128];
 localEntity_t cg_eachClientActiveLocalEntities[1];
 localEntity_t *cg_localEntities = cg_eachClientLocalEntities[0];
 localEntity_t *cg_activeLocalEntities = cg_eachClientActiveLocalEntities;

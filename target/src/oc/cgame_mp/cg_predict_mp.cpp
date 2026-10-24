@@ -9,7 +9,7 @@ extern float sqrtf(float x);
 
 static pmove_t cg_pmove[1];
 static int cg_numSolidEntities;
-static centity_t *cg_solidEntities[256];
+static ALIGNED(128) centity_t *cg_solidEntities[256];
 static int cg_numTriggerEntities;
 static centity_t *cg_triggerEntities[256];
 

@@ -25,6 +25,8 @@ typedef struct cmd_function_s
 	xcommand_t function;
 } cmd_function_t;
 
+// unreferenced 4 bytes at retail 0xa6ee84; original name unknown
+int cmdUnknown18;
 static int cmd_argc;
 static ALIGNED(128) char *cmd_argv[MAX_STRING_TOKENS];        // points into cmd_tokenized
 static ALIGNED(128) char cmd_tokenized[BIG_INFO_STRING + MAX_STRING_TOKENS];         // will have 0 bytes inserted

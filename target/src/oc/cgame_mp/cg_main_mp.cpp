@@ -172,16 +172,6 @@ const dvar_t *cg_cursorHints;
 const dvar_t *cg_thirdPersonAngle;
 const dvar_t *cg_gun_ofs_f;
 const dvar_t *cg_scoreboardBannerHeight;
-const dvar_t *hud_health_pulserate_injured;
-const dvar_t *hud_health_startpulse_critical;
-const dvar_t *hud_fade_offhand;
-const dvar_t *hud_deathQuoteFadeTime;
-const dvar_t *hud_fade_ammodisplay;
-const dvar_t *hud_health_startpulse_injured;
-const dvar_t *hud_fade_stance;
-const dvar_t *hud_fade_compass;
-const dvar_t *hud_health_pulserate_critical;
-const dvar_t *hud_fade_healthbar;
 extern int bg_iNumWeapons;
 
 extern dvar_t *com_sv_running;

@@ -1,7 +1,7 @@
 #include "../qcommon/qcommon.h"
 #include "script_public.h"
 
-static int currentPos;
+static int currentPos = 0;
 
 void TempMemoryReset();
 char *TempMalloc( int len );

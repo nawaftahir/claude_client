@@ -13,7 +13,7 @@ extern clientConnection_t clientConnections[1];
 extern clientStatic_t cls;
 #define stricmp strcasecmp
 
-extern qboolean scr_initialized;
+qboolean scr_initialized;
 extern int com_errorEntered;
 extern int g_cginit_loading;
 extern Bool updateScreenCalled;

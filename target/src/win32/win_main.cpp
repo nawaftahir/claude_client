@@ -96,7 +96,7 @@ Sys_ArchiveInfo
 ==================
 */
 
-WinVars_t g_wv;
+
 
 static void Sys_ShutdownEvents( void );
 

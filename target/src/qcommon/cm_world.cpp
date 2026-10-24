@@ -4,7 +4,8 @@
 
 #define SECTOR_HEAD 1
 
-static cm_world_t cm_world;
+// retail 0xa55f80
+static ALIGNED(128) cm_world_t cm_world;
 
 static unsigned short CM_AllocWorldSector( vec2_t mins, vec2_t maxs );
 void CM_ClearWorld();

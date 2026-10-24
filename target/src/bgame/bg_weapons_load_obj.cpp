@@ -5,7 +5,7 @@
 static const int unusedConstant = 366;
 
 static int g_playerAnimTypeNamesCount;
-static const char *g_playerAnimTypeNames[32];
+static const char *g_playerAnimTypeNames[64];
 
 static const char *szWeapTypeNames[] =
 {

@@ -4,6 +4,8 @@
 unsigned int FindVariableIndexHash( unsigned int parentId, unsigned int name );
 
 ALIGNED(128) scrVarGlob_t scrVarGlob;
+// unreferenced storage, size from the retail gap before scrVarPub (0xdb0000)
+char scrVarUnreferenced[0x88];
 scrVarPub_t scrVarPub;
 
 static struct scr_classStruct_t scrClassMap[] =

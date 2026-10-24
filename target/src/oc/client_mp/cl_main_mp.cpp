@@ -63,8 +63,6 @@ dvar_t *cl_updateavailable;
 dvar_t *cl_updateoldversion;
 clientActive_t clients[1];
 const dvar_t *cl_freelook;
-int cl_connectedToPureServer;
-qboolean scr_initialized;
 
 extern int qport;
 extern bgs_t *bgs;
@@ -345,12 +343,11 @@ extern Bool g_waitingForServer;
 extern ping_t cl_pinglist[16];
 extern unsigned int frame_msec;
 extern int old_com_frameTime;
-static qboolean recursive;
 static const dvar_t *input_viewSensitivity;
 
-int g_gfxV60DllActive = 0;
 
-void *g_gfxV60AddRefEntity = 0;
+
+
 
 // retail globals, names from CoD1 (SUPPORTED)
 static qboolean autoupdateStarted;
@@ -2708,6 +2705,8 @@ void CL_Init(void)
 
 void CL_Shutdown(void)
 {
+    static qboolean recursive;
+
     Com_Printf("----- CL_Shutdown -----\n");
 
     if (recursive) {

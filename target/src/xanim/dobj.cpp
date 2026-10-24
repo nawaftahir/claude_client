@@ -1,7 +1,7 @@
 #include "../qcommon/qcommon.h"
 #include "../script/script_public.h"
 
-static unsigned int g_empty;
+static unsigned int g_empty = 0;
 
 const char *DObjGetBoneName(const DObj_s *obj, int boneIndex);
 

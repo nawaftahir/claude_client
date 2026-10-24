@@ -3,10 +3,10 @@
 #include "bytematch.h"
 #include "headers/PC/cgame_mp/cg_local.h"
 
-GfxWorldVertex markVerts[1024];
+ALIGNED(128) GfxWorldVertex markVerts[1024];
 
 MarkPoly *cg_freeMarkPolys;
-MarkPoly cg_markPolys[1024];
+ALIGNED(128) MarkPoly cg_markPolys[1024];
 extern FxHelper *theFxHelper;
 
 extern const dvar_t *cg_marks;
@@ -14,9 +14,9 @@ extern const dvar_t *cg_marksLimit;
 
 extern float floorf(float x);
 
-extern MarkPoly cg_markPolys[1024];
+extern ALIGNED(128) MarkPoly cg_markPolys[1024];
 extern MarkPoly *cg_freeMarkPolys;
-extern GfxWorldVertex markVerts[1024];
+extern ALIGNED(128) GfxWorldVertex markVerts[1024];
 
 extern vec_t Vec3NormalizeTo( const vec3_t v, vec3_t out );
 extern void PerpendicularVector( const vec3_t src, vec3_t dst );

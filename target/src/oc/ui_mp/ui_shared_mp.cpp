@@ -293,13 +293,13 @@ static bool Window_IsHorizontal(Window *w)
 }
 
 static rectDef_t rect;
-static qboolean inHandleKey;
+static qboolean inHandleKey = 0;
 static scrollInfo_t scrollInfo;
-static void *captureData;
-static itemDef_t *itemCapture;
-static itemDef_t *g_bindItem;
-static qboolean debugMode;
-static int lastListBoxClickTime;
+static void *captureData = 0;
+static itemDef_t *itemCapture = 0;
+static itemDef_t *g_bindItem = 0;
+static qboolean debugMode = 0;
+static int lastListBoxClickTime = 0;
 
 static void Item_TextField_BeginEdit(itemDef_t *item);
 

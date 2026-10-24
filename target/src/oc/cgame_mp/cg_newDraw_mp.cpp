@@ -21,16 +21,16 @@ extern const dvar_t *cg_hintFadeTime;
 extern dvar_t *loc_warnings;
 extern dvar_t *loc_warningsAsErrors;
 
-extern const dvar_t *hud_fade_ammodisplay;
-extern const dvar_t *hud_fade_healthbar;
-extern const dvar_t *hud_fade_compass;
-extern const dvar_t *hud_fade_stance;
-extern const dvar_t *hud_fade_offhand;
-extern const dvar_t *hud_health_startpulse_injured;
-extern const dvar_t *hud_health_startpulse_critical;
-extern const dvar_t *hud_health_pulserate_injured;
-extern const dvar_t *hud_health_pulserate_critical;
-extern const dvar_t *hud_deathQuoteFadeTime;
+const dvar_t *hud_fade_ammodisplay;
+const dvar_t *hud_fade_healthbar;
+const dvar_t *hud_fade_compass;
+const dvar_t *hud_fade_stance;
+const dvar_t *hud_fade_offhand;
+const dvar_t *hud_health_startpulse_injured;
+const dvar_t *hud_health_startpulse_critical;
+const dvar_t *hud_health_pulserate_injured;
+const dvar_t *hud_health_pulserate_critical;
+const dvar_t *hud_deathQuoteFadeTime;
 static vec4_t color;
 static vec4_t color_00302d80;   /* duplicate decl removed (C++ redefinition -> C2086) */
 static const dvar_t *hud_fadeout_speed;

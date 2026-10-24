@@ -72,7 +72,7 @@ static int yy_n_chars;
 static int yy_did_buffer_switch_on_eof;
 static int yy_last_accepting_state;
 static char *yy_last_accepting_cpos;
-static char ch_buf[YY_BUF_SIZE];
+static char ch_buf[YY_BUF_SIZE + 2];
 char *yytext;
 unsigned int yyleng;
 

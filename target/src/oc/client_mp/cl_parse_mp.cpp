@@ -21,7 +21,7 @@ void CL_ParseWWWDownload(msg_t *msg);
 extern int CL_ClearStaticDownload(void);
 #endif
 
-extern int cl_connectedToPureServer;
+int cl_connectedToPureServer;
 
 /* svc_strings: server-command name table. Migrated from the ILP32 data blob
  * (build/native_gen/data32.c) to a typed C definition so it re-lays-out per

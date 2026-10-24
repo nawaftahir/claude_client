@@ -178,8 +178,9 @@ struct refexport_t {
     void *unknown86_95[10];
     struct XSurface_s * (*XModelReadSurface)(struct XModel *model, int *partBits, const unsigned char **pos, void *(*Alloc)(int));
     struct trXSkin_t * (*LoadXSkins)(struct XModel *model);
-    void *unknown98_102[5];
+    void *unknown98_101[4];
     void (*SyncRenderThread)(void);
+    void *unknown103;
     void (*AbortRenderCommands)(void);
     void (*SyncGpu)(void);
     void *unknown106;

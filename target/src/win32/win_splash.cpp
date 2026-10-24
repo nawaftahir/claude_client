@@ -5,7 +5,7 @@
 #define SPLASH_WIDTH 320
 #define SPLASH_HEIGHT 100
 
-static HWND g_splashWnd;
+static ALIGNED(16) HWND g_splashWnd;
 
 void Sys_CreateSplashWindow( void );
 void Sys_DestroySplashWindow( void );

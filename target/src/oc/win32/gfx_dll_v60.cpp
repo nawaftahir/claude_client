@@ -6,8 +6,8 @@
 
 #    include "PC/client_mp/gfx_dll_v60_map.h"
 
-extern int g_gfxV60DllActive;
-extern void *g_gfxV60AddRefEntity;
+int g_gfxV60DllActive = 0;
+void *g_gfxV60AddRefEntity = 0;
 extern refexport_t *CL_LoadRendererDll(int apiVersion, refimport_t *ri_in);
 extern refimport_t ri;
 
