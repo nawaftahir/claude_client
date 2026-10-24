@@ -9,7 +9,7 @@ static int objFreeCount;
 // the maps are entity-indexed, not handle-indexed: the client side carries the
 // extra per-client view slots, the server side is one entry per gentity
 static ALIGNED(128) short clientObjMap[MAX_GENTITIES + 2 * MAX_CLIENTS];
-static short serverObjMap[MAX_GENTITIES];
+static ALIGNED(128) short serverObjMap[MAX_GENTITIES];
 
 static int com_lastDObjIndex;
 static qboolean g_bDObjInited;
