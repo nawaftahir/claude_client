@@ -12,7 +12,7 @@ qkey_t *keys = playerKeys[0].keys;
 
 int historyLine;
 int nextHistoryLine;
-field_t g_consoleField;
+ALIGNED(128) field_t g_consoleField;
 field_t historyEditLines[32];
 extern const dvar_t *cl_bypassMouseInput;
 extern dvar_t *com_sv_running;
@@ -28,7 +28,7 @@ extern keyname_t keynames[96];
 extern keyname_t keynames_localized[96];
 
 extern clientStatic_t cls;
-extern refexport_t re;
+extern ALIGNED(128) refexport_t re;
 
 extern void ReplaceStringInternal(const char **str, const char *in);
 extern void Cmd_AddCommand(const char *name, void (*func)(void));
@@ -95,7 +95,7 @@ extern qboolean *key_overstrikeMode;
 extern qboolean *anykeydown;
 extern qkey_t *keys;
 extern field_t historyEditLines[32];
-extern field_t g_consoleField;
+extern ALIGNED(128) field_t g_consoleField;
 extern int nextHistoryLine;
 extern int historyLine;
 static keyname_t keynames[96] = {

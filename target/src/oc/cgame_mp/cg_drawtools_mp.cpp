@@ -32,7 +32,7 @@ extern int CL_TextWidth(const char *text, int maxChars, FontHandle font);
 extern int CL_TextHeight(FontHandle font);
 extern void CL_DrawText(const char *text, int maxChars, FontHandle font, float x, float y, int horzAlign, int vertAlign, float xScale, float yScale, const vec_t *color, int style);
 extern void CalcSplitScreenTextOffset(FontHandle font, float *y);
-extern refexport_t re;
+extern ALIGNED(128) refexport_t re;
 extern const char *CL_GetConfigString(int index);
 extern float AngleNormalize360( float angle );
 extern float AngleNormalize180( float angle );

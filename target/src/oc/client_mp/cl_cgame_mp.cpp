@@ -22,7 +22,7 @@ extern dvar_t *com_sv_running;
 
 extern char *getenv(const char *name);
 
-extern refexport_t re;
+extern ALIGNED(128) refexport_t re;
 
 extern void Com_Error(errorParm_t code, const char *fmt, ...);
 extern void Com_Printf(const char *fmt, ...);

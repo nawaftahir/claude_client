@@ -6,7 +6,7 @@
 #include <string.h>
 #include <stdio.h>
 extern int I_stricmp(const char *s0, const char *s1);
-extern weaponInfo_t cg_weaponsArray[];
+extern ALIGNED(128) weaponInfo_t cg_weaponsArray[];
 
 extern const dvar_t *cg_drawHealth;
 extern const dvar_t *cg_hudCompassSize;

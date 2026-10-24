@@ -40,7 +40,7 @@ extern const vec4_t colorRed;
 extern const vec4_t colorWhite;
 extern const vec4_t colorYellow;
 extern clientActive_t clients[1];
-extern cg_t cgArray[1];
+extern ALIGNED(128) cg_t cgArray[1];
 extern cg_t * const cg;
 extern LegacyHacks *legacyHacks;
 extern unsigned char legacyHacksArray[];

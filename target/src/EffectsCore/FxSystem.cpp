@@ -21,7 +21,7 @@ struct refexport_t
 	void *unused27[43];
 	void (*AddPlume)( const float *origin, int score, const float *color, int duration );
 };
-extern refexport_t re;
+extern ALIGNED(128) refexport_t re;
 
 // Only the leading fields are read here.
 struct refdef_s

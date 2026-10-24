@@ -136,8 +136,8 @@ extern void BG_CalculateWeaponPosition_Sway(const struct playerState_s *ps, floa
 extern void BG_CalculateWeaponAngles(weaponState_t *ws, vec_t *angles);
 extern void *Hunk_AllocXAnimPrecache(int size);
 extern void *Hunk_AllocXAnimClient(int size);
-extern itemInfo_t cg_itemsArray[];
-extern weaponInfo_t cg_weaponsArray[];
+extern ALIGNED(128) itemInfo_t cg_itemsArray[];
+extern ALIGNED(128) weaponInfo_t cg_weaponsArray[];
 extern gitem_t bg_itemlist[];
 extern const int bg_numItems;
 static scr_string_t *s_barrelTags[4] = { &scr_const.tag_flash, &scr_const.tag_flash_11, &scr_const.tag_flash_2, &scr_const.tag_flash_22 };

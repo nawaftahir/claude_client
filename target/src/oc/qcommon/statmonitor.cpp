@@ -8,7 +8,7 @@
 
 extern const dvar_t *com_statmon;
 extern clientStatic_t cls;
-extern refexport_t re;
+extern ALIGNED(128) refexport_t re;
 extern int Sys_Milliseconds(void);
 extern void Com_Error(errorParm_t code, const char *fmt, ...);
 

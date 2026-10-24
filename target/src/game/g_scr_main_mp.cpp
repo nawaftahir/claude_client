@@ -7,7 +7,7 @@
 static const float unusedConstant = 0.2f;
 
 
-scr_data_t g_scr_data;
+ALIGNED(128) scr_data_t g_scr_data;
 
 /*
 ===============

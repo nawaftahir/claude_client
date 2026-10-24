@@ -412,7 +412,7 @@ typedef struct
 static_assert((sizeof(XAnimInfo) == 40), "ERROR: XAnimInfo size is invalid!");
 #endif
 
-extern XAnimInfo g_xAnimInfo[];
+extern ALIGNED(128) XAnimInfo g_xAnimInfo[];
 
 struct XAnimNotify_s
 {

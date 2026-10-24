@@ -2,7 +2,7 @@
 #include "g_shared.h"
 #include "../script/script_public.h"
 
-game_hudelem_t g_hudelems[MAX_HUDELEMS_TOTAL];
+ALIGNED(128) game_hudelem_t g_hudelems[MAX_HUDELEMS_TOTAL];
 
 
 static const game_hudelem_field_t g_hudelem_fields[] =

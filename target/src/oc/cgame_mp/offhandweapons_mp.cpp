@@ -3,7 +3,7 @@
 #include "bytematch.h"
 #include "headers/PC/cgame_mp/cg_local.h"
 #include <string.h>
-extern weaponInfo_t cg_weaponsArray[];
+extern ALIGNED(128) weaponInfo_t cg_weaponsArray[];
 extern scr_const_t scr_const;
 
 extern dvar_t *Dvar_RegisterFloat(const char *dvarName, float value, float min, float max, unsigned short flags);

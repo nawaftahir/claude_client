@@ -23,7 +23,7 @@ clientConnection_t clientConnections[1];
 #define clc clientConnections[0]
 Bool g_waitingForServer;
 const dvar_t *cl_avidemo;
-refexport_t re;
+ALIGNED(128) refexport_t re;
 const dvar_t *cl_nodelta;
 const dvar_t *cl_showServerCommands;
 const dvar_t *cl_connectTimeout;
@@ -73,7 +73,7 @@ extern int fs_checksumFeed;
 extern int dvar_modifiedFlags;
 extern int g_console_field_width;
 extern float g_console_char_height;
-extern field_t g_consoleField;
+extern ALIGNED(128) field_t g_consoleField;
 extern LegacyHacks *legacyHacks;
 extern int com_frameTime;
 extern float com_timescaleValue;
@@ -284,7 +284,7 @@ extern char *strchr(const char *, int);
 extern float floorf(float);
 extern int puts(const char *);
 
-extern refexport_t re;
+extern ALIGNED(128) refexport_t re;
 extern struct clientStatic_t cls;
 extern const dvar_t *cl_nodelta;
 extern const dvar_t *cl_noprint;
@@ -475,7 +475,7 @@ extern int CIN_PlayCinematic(const char *name, int x, int y, int w, int h, int b
 extern e_status CIN_RunCinematic(int handle);
 extern void CG_DObjCalcPose(const centity_s *cent, const DObj_s *obj, int *partBits);
 extern const char *CL_GetHudMsgIconMaterialName(int iconIndex);
-extern refexport_t re;
+extern ALIGNED(128) refexport_t re;
 extern void *__stdcall LoadLibraryA(const char *name);
 extern void *__stdcall GetProcAddress(void *mod, const char *proc);
 extern unsigned long __stdcall GetLastError(void);

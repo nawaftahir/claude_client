@@ -8,7 +8,7 @@ extern const dvar_t *snd_bits;
 extern const dvar_t *snd_enableReverb;
 extern const dvar_t *snd_khz;
 extern const dvar_t *snd_stereo;
-extern snd_local_t g_snd;
+extern ALIGNED(128) snd_local_t g_snd;
 
 extern float floorf(float x);
 

@@ -9,7 +9,7 @@ struct pushed_t
 	float deltayaw;
 };
 
-pushed_t pushed[MAX_GENTITIES];
+ALIGNED(128) pushed_t pushed[MAX_GENTITIES];
 static pushed_t *pushed_p;
 
 const char *hintStrings[] =

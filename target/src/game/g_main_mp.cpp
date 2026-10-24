@@ -5,13 +5,13 @@
 #define BUILD_DATE "Oct  6 2005"
 
 
-level_locals_t level;
+ALIGNED(128) level_locals_t level;
 bgs_t level_bgs;
 
 // 64 bytes of storage nothing in the game references
 static char g_unusedStorage[64];
 
-gentity_t g_entities[MAX_GENTITIES];
+ALIGNED(128) gentity_t g_entities[MAX_GENTITIES];
 static gclient_t g_clients[MAX_CLIENTS];
 
 entityHandler_t entityHandlers[] =

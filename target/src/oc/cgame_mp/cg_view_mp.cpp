@@ -84,7 +84,7 @@ extern void MatrixMultiply43( const float in1[4][3], const float in2[4][3], floa
 extern void ConvertQuatToMat( const DObjAnimMat *mat, float axis[3][3] );
 extern int DObjGetBoneIndex( const DObj *obj, unsigned int boneName );
 extern DObjAnimMat *DObjGetRotTransArray( const DObj_s *obj );
-extern weaponInfo_t cg_weaponsArray[];
+extern ALIGNED(128) weaponInfo_t cg_weaponsArray[];
 extern scr_const_t scr_const;
 extern void VectorMA( const vec3_t v, float s, const vec3_t b, vec3_t o );
 extern float crandom( void );

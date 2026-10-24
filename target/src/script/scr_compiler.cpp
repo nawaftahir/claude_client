@@ -219,7 +219,7 @@ void EmitThreadList( sval_u val );
 void EmitInclude( sval_u val );
 void EmitIncludeList( sval_u val );
 void ScriptCompile( sval_u val, unsigned int fileId, unsigned int scriptId );
-extern scrVarGlob_t scrVarGlob;
+extern ALIGNED(128) scrVarGlob_t scrVarGlob;
 unsigned int FindVariableIndexInternal( unsigned int name, unsigned int hash );
 unsigned int GetNewVariableIndexInternal3( unsigned int parentId, unsigned int name, unsigned int index );
 void Scr_CompileStatement( sval_u parseData );

@@ -3,7 +3,7 @@
 
 unsigned int FindVariableIndexHash( unsigned int parentId, unsigned int name );
 
-scrVarGlob_t scrVarGlob;
+ALIGNED(128) scrVarGlob_t scrVarGlob;
 scrVarPub_t scrVarPub;
 
 static struct scr_classStruct_t scrClassMap[] =

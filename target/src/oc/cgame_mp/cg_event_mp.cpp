@@ -4,8 +4,8 @@ void CG_BulletHitEvent(int sourceEntityNum, float *position, float *normal, floa
 #include "imports.h"
 #include "headers/PC/cgame_mp/cg_local.h"
 #include "bytematch.h"
-extern itemInfo_t cg_itemsArray[];
-extern weaponInfo_t cg_weaponsArray[];
+extern ALIGNED(128) itemInfo_t cg_itemsArray[];
+extern ALIGNED(128) weaponInfo_t cg_weaponsArray[];
 extern gitem_t bg_itemlist[];
 extern const int bg_numItems;
 extern const char *eventnames[];

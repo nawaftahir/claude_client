@@ -6,7 +6,7 @@
 #include <strings.h>
 Bool updateScreenCalled = 0;
 extern const vec4_t colorBlack;
-extern refexport_t re;
+extern ALIGNED(128) refexport_t re;
 extern clientActive_t clients[1];
 extern clientConnection_t clientConnections[1];
 #define clc clientConnections[0]

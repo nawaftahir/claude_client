@@ -3,8 +3,8 @@
 #include "bytematch.h"
 #include "headers/PC/cgame_mp/cg_local.h"
 #include <string.h>
-extern itemInfo_t cg_itemsArray[];
-extern weaponInfo_t cg_weaponsArray[];
+extern ALIGNED(128) itemInfo_t cg_itemsArray[];
+extern ALIGNED(128) weaponInfo_t cg_weaponsArray[];
 extern gitem_t bg_itemlist[];
 extern const int bg_numItems;
 extern scr_const_t scr_const;

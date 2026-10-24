@@ -45,7 +45,7 @@ extern XAnim *XAnimGetAnims(const XAnimTree *tree);
 extern bool XAnimIsLooped(const XAnim_s *anim, unsigned int animIndex);
 extern int XAnimGetNumChildren(const struct XAnim_s *anims, unsigned int animIndex);
 extern void XAnimSetTime(XAnimTree *tree, unsigned int animIndex, float time);
-extern XAnimInfo g_xAnimInfo[];
+extern ALIGNED(128) XAnimInfo g_xAnimInfo[];
 
 #define CENT_STRIDE 0x224
 

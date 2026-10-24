@@ -477,7 +477,7 @@ struct refexport_t
 	XSurface *(*XModelReadSurface)( XModel *model, int *partBits, const unsigned char **pos, void *(*Alloc)(int) );
 	trXSkin_t *(*LoadXSkins)( XModel *model );
 };
-extern refexport_t re;
+extern ALIGNED(128) refexport_t re;
 
 // retail 0x48ea60/0x48ea80, unreferenced; names unknown
 XSurface *XModelReadSurface_48ea60(XModel *model, int *partBits, const unsigned char **pos, void *(*Alloc)(int))

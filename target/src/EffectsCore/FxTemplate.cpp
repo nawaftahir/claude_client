@@ -405,7 +405,7 @@ struct refexport_t
 	void *unused0[4];
 	Material *(*RegisterMaterial)( const char *name, int baseImageFlags, int imageTrack );
 };
-extern refexport_t re;
+extern ALIGNED(128) refexport_t re;
 
 void PrimitiveTemplate::Init()
 {

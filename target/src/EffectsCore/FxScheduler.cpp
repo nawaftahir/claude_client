@@ -114,7 +114,7 @@ struct refexport_t
 	void *unused0[70];
 	void (*AddPlume)( const float *origin, int score, const float *color, int duration );
 };
-extern refexport_t re;
+extern ALIGNED(128) refexport_t re;
 
 // Every pooled type is carved from 32 KB blocks of the shared effects arena.
 struct FxMemBlock

@@ -2,7 +2,7 @@
 #include "../script/script_public.h"
 
 extern dvar_t *com_developer;
-XAnimInfo g_xAnimInfo[4096];
+ALIGNED(128) XAnimInfo g_xAnimInfo[4096];
 static unsigned int g_end;
 static XAnimClientNotify g_notifyList[128];
 static int g_notifyListSize = 0;

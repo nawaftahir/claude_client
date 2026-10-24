@@ -5,7 +5,7 @@ extern void Com_Printf(const char *fmt, ...);
 #include "headers/PC/cgame_mp/cg_local.h"
 
 struct lagometer_t lagometer;
-extern weaponInfo_t cg_weaponsArray[];
+extern ALIGNED(128) weaponInfo_t cg_weaponsArray[];
 extern displayContextDef_t cgDC;
 
 extern clientStatic_t cls;
@@ -1028,7 +1028,7 @@ static void CG_CalcCrosshairColor(float alpha, float *color)
     color[3] = alpha * cg_crosshairAlpha->current.value;
 }
 
-extern refexport_t re;
+extern ALIGNED(128) refexport_t re;
 
 void CG_DrawTurretCrossHair(void)
 {

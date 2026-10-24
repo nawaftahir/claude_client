@@ -42,7 +42,7 @@ void Scr_CancelWaittill( unsigned int startLocalId );
 void Scr_TerminateWaittillThread( unsigned int localId, unsigned int startLocalId );
 unsigned int Scr_GetWaittillThreadStackId( unsigned int localId, unsigned int startLocalId );
 bool Scr_IsEndonThread( unsigned int localId );
-extern scrVarGlob_t scrVarGlob;
+extern ALIGNED(128) scrVarGlob_t scrVarGlob;
 unsigned int GetNewVariableIndexInternal2( unsigned int parentId, unsigned int name, unsigned int index );
 unsigned int GetNewVariableIndexInternal3( unsigned int parentId, unsigned int name, unsigned int index );
 unsigned int FindVariableIndexHash( unsigned int parentId, unsigned int name );

@@ -19,7 +19,7 @@ XAnim *Scr_GetAnims( int index );
 void Scr_CheckAnimsDefined( unsigned int names, unsigned int filename );
 void Scr_PrecacheAnimationTree( unsigned int parentNode );
 unsigned int Scr_UsingTreeInternal( const char *filename, unsigned int *index, int user );
-extern scrVarGlob_t scrVarGlob;
+extern ALIGNED(128) scrVarGlob_t scrVarGlob;
 unsigned int FindVariableIndexInternal( unsigned int name, unsigned int hash );
 unsigned int GetNewVariableIndexInternal3( unsigned int parentId, unsigned int name, unsigned int index );
 void Scr_UsingTree( const char *filename, unsigned int sourcePos );
@@ -164,7 +164,7 @@ void Scr_EmitAnimation( char *pos, unsigned int animName, unsigned int sourcePos
 	Scr_EmitAnimationInternal(pos, animName, scrAnimPub.animTreeNames, sourcePos);
 }
 
-extern scrVarGlob_t scrVarGlob;
+extern ALIGNED(128) scrVarGlob_t scrVarGlob;
 extern scrMemTreeGlob_t scrMemTreeGlob;
 void MT_FreeIndex( unsigned int nodeNum, int numBytes );
 unsigned int FindVariableIndexHash( unsigned int parentId, unsigned int name );

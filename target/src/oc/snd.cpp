@@ -1,7 +1,7 @@
 #include "common_types.h"
 #include "imports.h"
 
-snd_local_t g_snd;
+ALIGNED(128) snd_local_t g_snd;
 
 const dvar_t *snd_errorOnMissing;
 const dvar_t *snd_touchStreamFilesOnLoad;
@@ -10,7 +10,7 @@ const dvar_t *snd_bits;
 const dvar_t *snd_stereo;
 static const dvar_t *snd_volume;
 const dvar_t *snd_enableReverb;
-extern struct snd_local_t g_snd;
+extern ALIGNED(128) struct snd_local_t g_snd;
 static const dvar_t *snd_slaveFadeTime;
 static const dvar_t *snd_enable2D;
 static const dvar_t *snd_enable3D;

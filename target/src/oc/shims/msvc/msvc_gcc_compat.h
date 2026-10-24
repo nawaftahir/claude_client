@@ -33,6 +33,9 @@
  *     when they enter the MSVC build. */
 #ifndef __attribute__
 #define __attribute__(x)
+#ifndef ALIGNED
+#define ALIGNED(n) __declspec(align(n))
+#endif
 #endif
 
 /* --- alignof spelling ------------------------------------------------------

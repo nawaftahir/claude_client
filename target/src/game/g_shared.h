@@ -652,7 +652,7 @@ static_assert((sizeof(gentity_t) == 560), "ERROR: gentity_t size is invalid!");
 #endif
 
 #define FOFS( x ) ( (intptr_t)&( ( (gentity_t *)0 )->x ) )
-extern gentity_t g_entities[];
+extern ALIGNED(128) gentity_t g_entities[];
 
 typedef struct
 {
@@ -714,7 +714,7 @@ typedef struct
 static_assert((sizeof(level_locals_t) == 0x3624), "ERROR: level_locals_t size is invalid!");
 #endif
 
-extern level_locals_t level;
+extern ALIGNED(128) level_locals_t level;
 
 enum fieldtype_t
 {
@@ -738,7 +738,7 @@ typedef struct game_hudelem_s
 } game_hudelem_t;
 
 #define HEOFS( x ) ( (intptr_t)&( ( (game_hudelem_t *)0 )->x ) )
-extern game_hudelem_t g_hudelems[];
+extern ALIGNED(128) game_hudelem_t g_hudelems[];
 
 typedef struct game_hudelem_field_s
 {
@@ -817,7 +817,7 @@ typedef struct
 	corpseInfo_t playerCorpseInfo[MAX_PLAYER_CORPSES];
 } scr_data_t;
 
-extern scr_data_t g_scr_data;
+extern ALIGNED(128) scr_data_t g_scr_data;
 
 typedef struct
 {
