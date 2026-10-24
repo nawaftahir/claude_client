@@ -12,7 +12,7 @@ static ALIGNED(128) short clientObjMap[MAX_GENTITIES + 2 * MAX_CLIENTS];
 static ALIGNED(128) short serverObjMap[MAX_GENTITIES];
 
 static int com_lastDObjIndex;
-static qboolean g_bDObjInited;
+static qboolean g_bDObjInited = 0;
 
 void Com_ShutdownDObj(void);
 
