@@ -52,11 +52,13 @@ static dvar_t *ui_errorMessage;
 static dvar_t *ui_errorTitle;
 
 #define MAX_PUSHED_EVENTS 256
+// unreferenced storage, sized from the retail gap before com_errorMessage
+char com_unreferencedEv[0xc8];
 static int com_pushedEventsHead;
 static int com_pushedEventsTail;
 static ALIGNED(128) sysEvent_t com_pushedEvents[MAX_PUSHED_EVENTS];
 
-static char com_unreferenced3[0x488];
+static char com_unreferenced3[0x3c0];
 
 static qboolean com_safemode;
 static int com_unreferenced4;
