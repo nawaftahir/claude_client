@@ -27,7 +27,6 @@ extern void UI_DrawText(const char *text, int maxChars, FontHandle font, float x
 extern void UI_DrawLoadBar(float x, float y, float w, float h, int horzAlign, int vertAlign, const vec_t *color, MaterialHandle material);
 extern void UI_FillRect(float x, float y, float width, float height, int horzAlign, int vertAlign, const vec_t *color);
 
-extern LegacyHacks *legacyHacks;
 
 
 

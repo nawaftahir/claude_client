@@ -689,13 +689,13 @@ static void CG_RegisterDvars(void)
     cg_constantSizeHeadIcons = Dvar_RegisterBool("cg_constantSizeHeadIcons", 0, 0x1080);
     cg_headIconMinScreenRadius = Dvar_RegisterFloat("cg_headIconMinScreenRadius", 0.0199999996f, 0.0f, 1.0f, 0x1001);
     cg_blood = Dvar_RegisterBool("cg_blood", 1, 0x1001);
-    ((LegacyHacks *)::legacyHacks)->cl_serverloadmap[0] = 0;
-    ((LegacyHacks *)::legacyHacks)->cl_serverloadgametype[0] = 0;
-    ((LegacyHacks *)::legacyHacks)->cl_serverloadwaiting = 0;
+    ((LegacyHacks *)legacyHacks)->cl_serverloadmap[0] = 0;
+    ((LegacyHacks *)legacyHacks)->cl_serverloadgametype[0] = 0;
+    ((LegacyHacks *)legacyHacks)->cl_serverloadwaiting = 0;
     cg_weaponleftbone = Dvar_RegisterString("cg_weaponleftbone", "tag_weapon_left", 0x1000);
     cg_weaponrightbone = Dvar_RegisterString("cg_weaponrightbone", "tag_weapon_right", 0x1000);
     ((cgs_t *)cgs)->localServer = com_sv_running->current.enabled;
-    ((LegacyHacks *)::legacyHacks)->cl_stance = 0;
+    ((LegacyHacks *)legacyHacks)->cl_stance = 0;
     IN_LeaveADS();
     (*(unsigned char *)&((cg_t *)cg)->objectiveText[0]) = 0;
     CG_OffhandRegisterDvars();

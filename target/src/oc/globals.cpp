@@ -136,9 +136,6 @@ static void *imp_sv_disableClientConsole;
 static void *imp_sv_paused;
 static void *imp_theFxHelper;
 extern unsigned char legacyHacksArray[];
-#pragma data_seg(".data$zzz")
-LegacyHacks *legacyHacks = (LegacyHacks *)legacyHacksArray;
-#pragma data_seg()
 
 static byte *net_profile_dvar;
 static byte *record_callback_ptr;

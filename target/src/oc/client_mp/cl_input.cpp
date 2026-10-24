@@ -15,7 +15,10 @@ extern clientActive_t clients[1];
 extern clientConnection_t clientConnections[1];
 #define clc clientConnections[0]
 /* dvar globals */
-extern LegacyHacks *legacyHacks;
+#ifndef legacyHacks
+extern struct engineState_t *engineState;
+#define legacyHacks ((LegacyHacks *)engineState)
+#endif
 extern const dvar_t *cl_nodelta;
 extern const dvar_t *cl_packetdup;
 
@@ -680,7 +683,7 @@ void IN_LowerStance(void)
     int val;
     if (kb[25].active || kb[11].active )
         return;
-    statePtr = &((LegacyHacks *)::legacyHacks)->cl_stance;
+    statePtr = &((LegacyHacks *)legacyHacks)->cl_stance;
     val = *statePtr;
     if (val < 1)
         *statePtr = 1;

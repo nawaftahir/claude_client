@@ -5,7 +5,10 @@
 extern const dvar_t *cg_hudDamageIconTime;
 
 extern char *cg_globUI[];
-extern LegacyHacks *legacyHacks;
+#ifndef legacyHacks
+extern struct engineState_t *engineState;
+#define legacyHacks ((LegacyHacks *)engineState)
+#endif
 extern void *imp_cg_hudDamageIconTime;
 
 extern void AngleVectors( const vec3_t angles, vec3_t forward, vec3_t right, vec3_t up );
@@ -161,7 +164,7 @@ void CG_Respawn(void)
     CG_INT(cg, CG_OFF_2CD10) = 0;
 
     {
-        char *uiBase = (char *)::legacyHacks;
+        char *uiBase = (char *)legacyHacks;
         CG_INT(uiBase, 8) = 0;
     }
 

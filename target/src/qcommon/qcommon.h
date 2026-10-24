@@ -595,7 +595,8 @@ struct LegacyHacks
 	int persid;
 };
 
-extern LegacyHacks *legacyHacks;
+extern struct engineState_t *engineState;
+#define legacyHacks ((LegacyHacks *)engineState)
 
 #include "cm_public.h"
 

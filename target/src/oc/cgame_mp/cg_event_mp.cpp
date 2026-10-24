@@ -16,7 +16,10 @@ extern dvar_t *bg_fallDamageMaxHeight;
 extern const dvar_t *cg_nopredict;
 extern const dvar_t *cg_synchronousClients;
 
-extern LegacyHacks *legacyHacks;
+#ifndef legacyHacks
+extern struct engineState_t *engineState;
+#define legacyHacks ((LegacyHacks *)engineState)
+#endif
 
 extern void Com_Printf(const char *msg, ...);
 extern void Com_DPrintf(const char *msg, ...);

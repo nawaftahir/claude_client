@@ -71,7 +71,10 @@ extern int CG_KeyInterceptEvent(int key, qboolean down);
 extern void CL_StopLogoOrCinematic(void);
 extern void CL_Disconnect(void);
 extern const dvar_t *nextdemo;
-extern LegacyHacks *legacyHacks;
+#ifndef legacyHacks
+extern struct engineState_t *engineState;
+#define legacyHacks ((LegacyHacks *)engineState)
+#endif
 int stricmp(const char *str1, const char *str2);
 extern void Dvar_SetString(dvar_t *dvar, const char *value);
 extern int I_strncmp(const char *s0, const char *s1, int n);

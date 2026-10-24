@@ -626,7 +626,10 @@ extern void *imp_inertiaDebug;
 extern void *imp_inertiaMax;
 extern void *imp_infoParms;
 extern void *imp_keys;
-extern LegacyHacks *legacyHacks;
+#ifndef legacyHacks
+extern struct engineState_t *engineState;
+#define legacyHacks ((LegacyHacks *)engineState)
+#endif
 extern void *imp_legacyHacksArray;
 extern void *imp_level;
 extern void *imp_level_bgs;

@@ -320,8 +320,8 @@ void CL_Connect_f(void)
     server = Cmd_Argv(1);
 
     if (((dvar_t *)com_sv_running)->current.enabled && !strcmp(server, "localhost"))
-        ((LegacyHacks *)::legacyHacks)->sv_killserver = 1;
-    legacy = (LegacyHacks *)::legacyHacks;
+        ((LegacyHacks *)legacyHacks)->sv_killserver = 1;
+    legacy = (LegacyHacks *)legacyHacks;
     legacy->cl_serverloadmap[0] = 0;
     legacy->cl_serverloadgametype[0] = 0;
 

@@ -106,9 +106,7 @@ extern unsigned char ColorIndex(unsigned char c);
 extern int atoi(const char *str);
 extern char *strcat(char *dest, const char *src);
 
-static int warnCount;
-static int warnCount_00f13084;
-static char bigConfigString[8192];
+static ALIGNED(128) char bigConfigString[8192];
 extern const vec4_t g_color_table[];
 extern clientActive_t clients[1];
 
@@ -617,6 +615,7 @@ void CL_ShutdownCGame(void)
 
 qboolean CL_DObjCreateSkelForBone(struct DObj_s *obj, int boneIndex, int localClientNum)
 {
+    static int warnCount;
     int timeStamp;
     void *mem;
 
@@ -641,6 +640,7 @@ qboolean CL_DObjCreateSkelForBone(struct DObj_s *obj, int boneIndex, int localCl
 
 qboolean CL_DObjCreateSkelForBones(const struct DObj_s *obj, int *partBits, int localClientNum)
 {
+    static int warnCount_00f13084;
     int timeStamp;
     void *mem;
 
@@ -1117,7 +1117,7 @@ write_new:
 
 void CL_StartLoading(const char *mapname, const char *gametype)
 {
-    char *ptr = (char *)::legacyHacks;
+    char *ptr = (char *)legacyHacks;
     if (*(int *)(ptr + 4) == 0)
         return;
     CL_StartHunkUsers();

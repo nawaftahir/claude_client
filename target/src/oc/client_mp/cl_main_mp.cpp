@@ -74,7 +74,10 @@ extern int dvar_modifiedFlags;
 extern int g_console_field_width;
 extern float g_console_char_height;
 extern ALIGNED(128) field_t g_consoleField;
-extern LegacyHacks *legacyHacks;
+#ifndef legacyHacks
+extern struct engineState_t *engineState;
+#define legacyHacks ((LegacyHacks *)engineState)
+#endif
 extern int com_frameTime;
 extern float com_timescaleValue;
 /* dvar globals */
@@ -600,7 +603,10 @@ extern void Com_ClientDObjClearAllSkel(void);
 extern void CL_ClearMutedList(void);
 extern void Cbuf_Execute(void);
 extern void IN_LeaveADS(void);
-extern LegacyHacks *legacyHacks;
+#ifndef legacyHacks
+extern struct engineState_t *engineState;
+#define legacyHacks ((LegacyHacks *)engineState)
+#endif
 
 // retail 0x40b460, unreferenced; name unknown
 void CL_SetFPUControl_40b460(void)
@@ -1037,7 +1043,7 @@ void CL_ShutdownDemo(void)
 }
 void CL_MapLoading(const char *mapname)
 {
-    if (!((LegacyHacks *)::legacyHacks)->cl_running)
+    if (!((LegacyHacks *)legacyHacks)->cl_running)
         return;
     g_waitingForServer = 0;
     Con_Close();
@@ -1050,8 +1056,8 @@ void CL_MapLoading(const char *mapname)
         memset(::clc.serverMessage, 0, sizeof(::clc.serverMessage));
         memset(&clients->gameState, 0, sizeof(clients->gameState));
         ::clc.lastPacketSentTime = -9999;
-        I_strncpyz(((LegacyHacks *)::legacyHacks)->cl_serverloadmap, mapname, 0x40);
-        ((LegacyHacks *)::legacyHacks)->cl_serverloadwaiting = 0;
+        I_strncpyz(((LegacyHacks *)legacyHacks)->cl_serverloadmap, mapname, 0x40);
+        ((LegacyHacks *)legacyHacks)->cl_serverloadwaiting = 0;
     } else {
         {
             dvar_t *dv = (dvar_t *)nextmap;
@@ -1076,8 +1082,8 @@ void CL_MapLoading(const char *mapname)
         ::clc.qport = ::qport;
         NET_StringToAdr(cls.servername, &::clc.serverAddress);
         CL_CheckForResend();
-        I_strncpyz(((LegacyHacks *)::legacyHacks)->cl_serverloadmap, mapname, 0x40);
-        ((LegacyHacks *)::legacyHacks)->cl_serverloadwaiting = 0;
+        I_strncpyz(((LegacyHacks *)legacyHacks)->cl_serverloadmap, mapname, 0x40);
+        ((LegacyHacks *)legacyHacks)->cl_serverloadwaiting = 0;
     }
 
     SND_FadeAllSounds(0.0f, 0.0f);
@@ -2176,7 +2182,7 @@ void CL_ClearRendererAssets_40ea20(void)
 
 void CL_StartHunkUsers(void)
 {
-    LegacyHacks *hacks = (LegacyHacks *)::legacyHacks;
+    LegacyHacks *hacks = (LegacyHacks *)legacyHacks;
 
     if (!hacks->cl_running)
         return;
@@ -2688,13 +2694,13 @@ void CL_Init(void)
 
     c->active = 1;
 
-    ((byte *)::legacyHacks)[0x5c] = 0;
-    ((byte *)::legacyHacks)[0x9c] = 0;
-    ((byte *)::legacyHacks)[0xdc] = 0;
+    ((byte *)legacyHacks)[0x5c] = 0;
+    ((byte *)legacyHacks)[0x9c] = 0;
+    ((byte *)legacyHacks)[0xdc] = 0;
 
     Cbuf_Execute();
 
-    *(int *)((byte *)::legacyHacks + 4) = 1;
+    *(int *)((byte *)legacyHacks + 4) = 1;
     IN_LeaveADS();
 
     Com_Printf("----- Client Initialization Complete -----\n");
@@ -3023,9 +3029,9 @@ const char *CL_GetServerIPAddress(void)
 void CL_SetupForNewServerMap(const char *pszMapName, const char *pszGametype)
 {
     Com_Printf("Server changing map %s, gametype %s\n", pszMapName, pszGametype);
-    I_strncpyz(((LegacyHacks *)::legacyHacks)->cl_serverloadmap, pszMapName, 0x40);
-    I_strncpyz(((LegacyHacks *)::legacyHacks)->cl_serverloadgametype, pszGametype, 0x40);
-    ((LegacyHacks *)::legacyHacks)->cl_serverloadwaiting = 0;
+    I_strncpyz(((LegacyHacks *)legacyHacks)->cl_serverloadmap, pszMapName, 0x40);
+    I_strncpyz(((LegacyHacks *)legacyHacks)->cl_serverloadgametype, pszGametype, 0x40);
+    ((LegacyHacks *)legacyHacks)->cl_serverloadwaiting = 0;
 
     if (!(com_sv_running)->current.enabled) {
         Dvar_SetInt((dvar_t *)com_expectedHunkUsage, 0);

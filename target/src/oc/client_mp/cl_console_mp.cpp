@@ -109,7 +109,7 @@ extern void CL_DrawText(const char *text, int maxChars, struct Font_s *font, flo
 extern clientStatic_t cls;
 
 static struct ConDrawInputGlob conDrawInputGlob;
-static struct Console con;
+static ALIGNED(128) struct Console con;
 static const dvar_t *con_inputBoxColor;
 static const dvar_t *con_inputHintBoxColor;
 static const dvar_t *con_outputBarColor;
@@ -1663,8 +1663,8 @@ void Con_Bottom(void)
 
 void Con_Close(void)
 {
-    int *legacyHacks = (int *)::legacyHacks;
-    int active = legacyHacks[1];
+    int *hacks = (int *)legacyHacks;
+    int active = hacks[1];
     if (!active)
         return;
 

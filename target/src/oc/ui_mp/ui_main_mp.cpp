@@ -42,7 +42,10 @@ extern const vec4_t colorYellow;
 extern clientActive_t clients[1];
 extern ALIGNED(128) cg_t cgArray[1];
 extern cg_t * const cg;
-extern LegacyHacks *legacyHacks;
+#ifndef legacyHacks
+extern struct engineState_t *engineState;
+#define legacyHacks ((LegacyHacks *)engineState)
+#endif
 extern unsigned char legacyHacksArray[];
 
 /* dvar globals */

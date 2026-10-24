@@ -83,7 +83,10 @@ extern const char *UI_GetMapDisplayNameFromPartialLoadNameMatch(const char *pszM
 #ifdef __cplusplus
 extern "C" {
 #endif
-extern LegacyHacks *legacyHacks;
+#ifndef legacyHacks
+extern struct engineState_t *engineState;
+#define legacyHacks ((LegacyHacks *)engineState)
+#endif
 #ifdef __cplusplus
 }
 #endif
