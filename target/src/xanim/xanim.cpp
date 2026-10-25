@@ -3,9 +3,11 @@
 
 extern dvar_t *com_developer;
 ALIGNED(128) XAnimInfo g_xAnimInfo[4096];
+// unreferenced in retail; filler, name chosen so the linker places it in retail's slot
+int xaUnref7[2];
 static unsigned int g_end = 0;
 static XAnimClientNotify g_notifyList[128];
-static int g_notifyListSize = 0;
+static int g_notifyListSize;
 static bool g_anim_developer;
 
 void XAnimSetNotifyIndex(const XAnimTree_s *tree, XAnimInfo *info, const XAnimEntry *entry);
@@ -55,7 +57,7 @@ void XAnimSetCompleteGoalWeight(XAnimTree_s *tree, unsigned int animIndex, float
 void XAnimCalcParts_unsigned_char_( const XAnimParts_s *parts, const unsigned char *animToModel, float time, float weightScale, DObjAnimMat *rotTransArray, int *ignorePartBits );
 void XAnimCalcParts_unsigned_short_( const XAnimParts_s *parts, const unsigned char *animToModel, float time, float weightScale, DObjAnimMat *rotTransArray, int *ignorePartBits );
 
-static byte xanimUnusedFlag;
+static byte xanimUnusedFlag = 0;
 
 static inline float ShortLerpAsVec(short from, short to, float frac)
 {

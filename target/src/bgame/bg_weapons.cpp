@@ -5,6 +5,8 @@ int BG_WeaponShotCount( int weapIndex );
 qboolean BG_SetPlayerWeaponForSlot( playerState_t *ps, int slot, int weaponIndex );
 
 
+// unreferenced slot at retail 0x182cbc8
+int bg_weapons_unused = 0;
 int bg_iNumWeapons = 0;
 static WeaponDef *bg_weaponDefs[MAX_WEAPONS];
 

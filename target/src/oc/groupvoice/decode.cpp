@@ -4,6 +4,8 @@
 void *g_decoder = NULL;
 
 int g_decode_frame_size;
+// unreferenced in retail (0x20 B before g_decode_frame_size, retail 0x135a254); name chosen for its slot
+int dcUnref23[8];
 
 
 static int g_current_decode_bandwidth_setting = 0x0;

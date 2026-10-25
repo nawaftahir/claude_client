@@ -15,7 +15,7 @@ struct XModelDefaults
 	unsigned short surfName;
 };
 static XModelDefaults xmodelDefaults;
-static int xmodelUnusedValue;
+static int xmodelUnusedValue = 0;
 
 // grouping pins retail fadd order (XModelTraceLine 0x48d430)
 qboolean XModelBad(XModel *model)
@@ -461,3 +461,6 @@ void XModel_RendererSlot87(const void *arg)
 	re.unknown87(arg, xmodel_unk_e23438);
 }
 
+
+// unreferenced in retail, keeps the .bss layout
+int xmodelPad13;

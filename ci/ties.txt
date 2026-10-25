@@ -99,3 +99,5 @@ _$E1
 ?UI_LoadMenus@@YAPAUMenuList@@PBDH@Z
 # pc pair C: real NET_CompareAdr at favorites (no local NI copy) gets inlined by LTCG, retail calls 0x4468b0; size right, +1.8% whole, win back
 ?CL_SetServerInfoByAddress@@YAXUnetadr_t@@PBDH@Z
+# tr4b ScaleTracer viewOrg param (Kisak) + CG_AddPlayerWeapon size: +0.27% whole, this caller shifts; win back
+?CG_AddMovingTracer@@YAXPAUlocalEntity_s@@@Z

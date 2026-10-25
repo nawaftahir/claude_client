@@ -34,6 +34,10 @@ dvar_t *player_breath_gasp_lerp;
 dvar_t *player_breath_snd_lerp;
 dvar_t *player_breath_snd_delay;
 dvar_t *player_toggleBinoculars;
+// unreferenced in retail; filler, name chosen so the linker places it in retail's slot
+int bmUnref21;
+// unreferenced in retail; filler, name chosen so the linker places it in retail's slot
+int bmUnref9[2];
 dvar_t *player_scopeExitOnDamage;
 dvar_t *player_adsExitDelay;
 dvar_t *player_moveThreshhold;

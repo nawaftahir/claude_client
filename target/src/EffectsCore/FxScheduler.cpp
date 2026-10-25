@@ -617,8 +617,8 @@ FxMemMgr<ScheduledEffect> ScheduledEffect::s_memMgr;
 FxScheduler *theFxSchedulers[2];
 FxScheduler *theFxScheduler = NULL;
 FxEffectDef *g_fxDefaultEffect = NULL;
-// Unreferenced storage; original declarations unknown (sized from the layout).
-static int unusedStorage[3];
+// Unreferenced in retail, names only pick the .bss slot.
+int fxSchedPad20, fxSchedPad2, fxSchedPad16, fxSchedPad1;
 
 static void FX_FreeTemplates( const FxEffectDef *fxToPreserve );
 

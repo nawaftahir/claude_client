@@ -23,16 +23,12 @@
 0	CL_ServerStatus_f	drop
 0	SND_Is3DChannelFree	drop
 0	CG_DrawStringExt	drop
-0	CG_DrawPlayerCompass	drop
 0	CG_DrawWeapReticle	drop
 0	CG_AdjustPositionForMover	drop
 0	CG_General	drop
 0	CG_ScriptMover	drop
 0	CG_UpdateShellShock	drop
 0	CG_Madd	drop
-0	CG_WhizbySound	drop
-0	CG_DrawTracer	drop
-0	CG_WeaponRunXModelAnims	drop
 0	CG_Scoreboard_DrawColumnString	drop
 0	CG_Scoreboard_DrawScrollBar	drop
 0	CG_GetHudElemInfo	drop
@@ -41,7 +37,6 @@
 0	G_DebugCircle	drop
 0	CG_ResetEntity	drop
 0	CL_ParseSnapshot	drop
-0	Record_QueueAudioDataForEncoding	drop
 0	UI_Refresh	drop
 0	Menu_SetPrevCursorItem	drop
 0	Item_YesNo_Paint	drop
@@ -313,7 +308,7 @@
 4c7df0	Byte4PackRgba	fix
 4c8a20	CG_KickAngles	fix
 4cc560	CG_SetShellShockParmsFromDvars	fix
-4cd480	CG_StartWeaponXAnim	fix
+4cd480	StartWeaponAnim	fix
 4cd520	CG_PlayADSAnim	fix
 4d3a30	CG_DrawScoreboard_ListBanner	fix
 4d9880	CG_ProcessSnapshots	fix
@@ -555,3 +550,5 @@
 4c20c0	CG_CenterPrint	fix	# dead
 45f980	UI_Component_InitIfStarted_45f980	fix	# dead
 49b900	Particle::SetMaterial	fix	# Particle::SetMaterial
+4c6f30	CG_DObjGetWorldBoneBox_4c6f30	fix
+558ea0	$E1	fix

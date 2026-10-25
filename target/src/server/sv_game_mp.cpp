@@ -10,7 +10,6 @@ qboolean gameInitialized;
 // the cache sits on a 128-byte boundary
 static ALIGNED(128) char g_sv_skel_memory[MAX_GENTITIES * MAX_MODELS];
 static char *g_sv_skel_memory_start;
-static int g_sv_skel_warn_count;
 
 int sv_serverId_value = 0;
 
@@ -521,6 +520,7 @@ SV_AllocSkelMemory
 */
 char* SV_AllocSkelMemory( unsigned int size )
 {
+	static int g_sv_skel_warn_count;
 	char *pos;
 	char *ret;
 

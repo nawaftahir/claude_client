@@ -2382,3 +2382,6 @@ int SND_GetSoundOverlay(snd_overlay_type_t type, snd_overlay_info_t *info, int m
 // retail 0x44cda0, unreferenced; name unknown
 
 
+
+// unreferenced in retail (keeps the .bss layout)
+int sndUnref3;

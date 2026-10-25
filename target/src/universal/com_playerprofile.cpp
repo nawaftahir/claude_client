@@ -3,6 +3,9 @@
 
 const dvar_t *com_playerProfile;
 
+// unreferenced; retail 0xaf8920, original name unknown
+int com_playerProfileData[2];
+
 const dvar_t *ui_playerProfileAlreadyChosen;
 
 extern const dvar_t *com_playerProfile;

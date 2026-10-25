@@ -1125,3 +1125,6 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	// never gets here
 	return 0;
 }
+
+// unreferenced in retail, keeps the .bss layout
+int winMainPad13, winMainPad19, winMainPad22;

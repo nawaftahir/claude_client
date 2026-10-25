@@ -10,6 +10,8 @@
 
 const dvar_t *ui_netSource;
 const dvar_t *ui_bigFont;
+// unreferenced in retail (4 B before ui_extraBigFont, retail 0x17faf74); name chosen for its slot
+int uiUnref11;
 const dvar_t *ui_extraBigFont;
 const dvar_t *ui_smallFont;
 sharedUiInfo_t sharedUiInfo;
@@ -2751,7 +2753,7 @@ const char *UI_FeederItemText(float feederID, int index, int column, MaterialHan
     static char info[1024];
     static char clientBuff[32];
     static int lastColumn = -1;
-    static int lastTime;
+    static int lastTime = 0;
     int actual;
 
     *handle = 0;
@@ -3207,7 +3209,7 @@ void UI_Init(void)
 
 void UI_KeyEvent(int key, qboolean down)
 {
-    static qboolean bypassKeyClear;
+    static qboolean bypassKeyClear = 0;
     menuDef_t *menu;
 
     if (Menu_Count(&uiInfo->uiDC) <= 0)
@@ -3420,7 +3422,7 @@ static void UI_DisplayDownloadInfo(const char *downloadName, float centerPoint, 
     static char etaText[] = "EXE_EST_TIME_LEFT";
     static char xferText[] = "EXE_TRANS_RATE";
     static int tleEstimates[80] = { 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60 };
-    static int tleIndex;
+    static int tleIndex = 0;
     LegacyHacks *legacyBase = legacyHacks;
     int downloadSize = legacyBase->cl_downloadSize;
     int downloadCount = legacyBase->cl_downloadCount;

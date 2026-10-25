@@ -195,6 +195,11 @@ Com_SetErrorMessage
 const char *SEH_LocalizeTextMessage( const char *pszInputBuffer, const char *pszMessageType, msgLocErrType_t errType );
 
 static int com_unreferenced5;
+// unreferenced in retail (0xafaacc, 0xafaad4)
+int com_unreferenced24;
+int com_unreferenced41;
+// unreferenced in retail (4 B after logfile, retail 0xafd50c); name chosen for its slot
+int comUnref19;
 
 
 qboolean UI_SetActiveMenu( int menu );

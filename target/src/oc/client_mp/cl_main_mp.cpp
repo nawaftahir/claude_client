@@ -2455,6 +2455,9 @@ void CL_PlayLogo_f(void)
 {
     clientConnection_t *conn;
     const char *name;
+    double fadein;
+    double duration;
+    double fadeout;
 
     if (Cmd_Argc() != 5) {
         Com_Printf((const char *)"USAGE: logo <image name> <fadein seconds> <full duration seconds> <fadeout seconds>\n");
@@ -2481,9 +2484,12 @@ void CL_PlayLogo_f(void)
     SND_FadeAllSounds(1.0f, 0);
 
     name = Cmd_Argv(1);
-    cls.logo.fadein = I_fround((float)atof(Cmd_Argv(2)) * 1000.0f);
-    cls.logo.duration = I_fround((float)atof(Cmd_Argv(3)) * 1000.0f);
-    cls.logo.fadeout = I_fround((float)atof(Cmd_Argv(4)) * 1000.0f);
+    fadein = atof(Cmd_Argv(2));
+    cls.logo.fadein = I_fround((float)fadein * 1000.0f);
+    duration = atof(Cmd_Argv(3));
+    cls.logo.duration = I_fround((float)duration * 1000.0f);
+    fadeout = atof(Cmd_Argv(4));
+    cls.logo.fadeout = I_fround((float)fadeout * 1000.0f);
     cls.logo.duration += cls.logo.fadein + cls.logo.fadeout;
 
     cls.logo.material[0] = re.RegisterMaterial(va((const char *)"%s1", name), 0x30, 3);
@@ -2705,7 +2711,7 @@ void CL_Init(void)
 
 void CL_Shutdown(void)
 {
-    static qboolean recursive;
+    static int recursive = 0;
 
     Com_Printf("----- CL_Shutdown -----\n");
 

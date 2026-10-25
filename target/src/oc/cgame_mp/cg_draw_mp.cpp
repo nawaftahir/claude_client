@@ -83,7 +83,6 @@ extern float floorf(float x);
 extern int stricmp(const char *s1, const char *s2);
 
 extern struct lagometer_t lagometer;
-static int previous;
 static struct trStatistics_t rendererStats;
 static int fps_previousTimes[32];
 static int fps_index;
@@ -322,6 +321,7 @@ static float CG_DrawSnapshot(float y)
 
 void CG_CalculateFPS(void)
 {
+    static int previous;
     int now;
     int index;
 
@@ -385,7 +385,7 @@ static float CG_DrawFPS(float y)
             int fpsAvg, fpsVar;
 
             CG_ROUND_FPS(fpsAvg, 32000.0f / (float)total);
-            CG_ROUND_FPS(fpsVar, variance);
+            { const double roundEpsilon = 1.0 / 1073741824.0; int result; __asm fld variance __asm fadd roundEpsilon __asm { fistp result } fpsVar = result; }
 
             s = va("%ifps(%i-%i,%i)", fpsAvg, fpsMin, fpsMax, fpsVar);
         }
@@ -1387,6 +1387,12 @@ static void CG_DrawFlashDamage(void)
     }
 }
 
+// com_math.h
+inline float I_fmin(const float x, const float y)
+{
+    return I_fsel(y - x, x, y);
+}
+
 static void CG_DrawDamageDirectionIndicators(void)
 {
     float centerY;
@@ -1445,7 +1451,7 @@ static void CG_DrawDamageDirectionIndicators(void)
         {
             angle = vectoyaw(cg->refdef.viewaxis[0]) - cg->viewDamage[slot].yaw;
             alpha = 2.0f - ((float)t + (float)t) / maxTime;
-            color[3] = alpha - 1.0f >= 0.0f ? 1.0f : alpha;
+            color[3] = I_fmin(1.0f, alpha);
             CG_DrawRotatedQuadPic(centerX, centerY, xy, angle, color, cgs->media.damageMaterial);
         }
     }
@@ -1552,7 +1558,6 @@ static void CG_DrawGrenadeIndicators(void)
     vec3_t grenadeOffset;
     vec4_t color;
     float amplitude;
-    float clamped;
 
     if (!cg->nextSnap)
         return;
@@ -1593,8 +1598,7 @@ static void CG_DrawGrenadeIndicators(void)
         amplitude = (cg_hudGrenadePointerPulseMax->current.value - cg_hudGrenadePointerPulseMin->current.value) * 0.5f;
         color[3] = (float)sin((float)cg->time * cg_hudGrenadePointerPulseFreq->current.value * 0.0062831853f) * amplitude
             + (cg_hudGrenadePointerPulseMin->current.value + amplitude);
-        clamped = color[3] - 1.0f >= 0.0f ? 1.0f : color[3];
-        color[3] = 0.0f - color[3] >= 0.0f ? 0.0f : clamped;
+        color[3] = I_fclamp(color[3], 0.0f, 1.0f);
 
         CG_DrawGrenadePointer(centerX, centerY, grenadeOffset, color);
         CG_DrawGrenadeIcon(centerX, centerY, grenadeOffset, color);

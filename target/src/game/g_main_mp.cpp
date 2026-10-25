@@ -6,7 +6,7 @@
 
 
 ALIGNED(128) level_locals_t level;
-bgs_t level_bgs;
+ALIGNED(16) bgs_t level_bgs;
 
 // 64 bytes of storage nothing in the game references
 static char g_unusedStorage[64];

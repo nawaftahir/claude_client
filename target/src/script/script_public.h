@@ -482,7 +482,7 @@ typedef struct scrParserPub_s
 static_assert((sizeof(scrParserPub_t) == 0x10), "ERROR: scrParserPub_t size is invalid!");
 #endif
 
-extern scrParserPub_t scrParserPub;
+extern ALIGNED(8) scrParserPub_t scrParserPub;
 
 typedef struct scrParserGlob_s
 {

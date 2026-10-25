@@ -8,6 +8,7 @@ int g_encoder_samplerate = 8192;
 
 
 int g_current_bandwidth_setting = 0x0;
+static void *g_encoder = 0;
 int g_frame_size = 0x0;
 static int g_speex_initialized = 0x0;
 
@@ -44,7 +45,6 @@ extern int g_encoder_samplerate;
 extern int g_current_bandwidth_setting;
 extern int g_frame_size;
 extern int g_speex_initialized;
-static void *g_encoder = 0;
 static struct SpeexBits encodeBits;
 
 void Encode_SetOptions(int frequency, int quality)

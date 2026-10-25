@@ -127,3 +127,6 @@ float FX_GetEffectLength( const FxEffectDef *fx )
 	return theFxScheduler->GetEffectLength(fx);
 }
 
+
+// unreferenced in retail, keeps the .bss layout
+int fxExportPad3, fxExportPad13, fxExportPad2, fxExportPad22;

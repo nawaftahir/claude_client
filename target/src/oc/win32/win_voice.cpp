@@ -2,12 +2,12 @@
 #include "imports.h"
 #include "bytematch.h"
 #include <stdio.h>
-int voice_freq = 0;
-int sampleCount = 0;
 
 float voice_current_voicelevel;
 
 int mic_old_reclevel;
+// unreferenced in retail (4 B after mic_old_reclevel, retail 0x1359f14); name chosen for its slot
+int wvUnref15;
 const dvar_t *winvoice_mic_reclevel;
 char old_rec_source[256];
 int mic_current_reclevel;
@@ -16,7 +16,6 @@ const dvar_t *winvoice_mic_scaler;
 float levelSamples[6];
 const dvar_t *winvoice_save_voice;
 
-static int g_voice_initialized = 0x0;
 
 extern dvar_t *Dvar_RegisterBool(const char *dvarName, bool value, unsigned short flags);
 extern dvar_t *Dvar_RegisterFloat(const char *dvarName, float value, float min, float max, unsigned short flags);
@@ -46,7 +45,6 @@ extern int mixerSetMicrophoneMute(bool mute);
 extern int Sys_Milliseconds(void);
 extern int Decode_Sample(char *inData, int inSize, short *outData, int maxOutSize);
 
-extern int voice_freq;
 extern "C" __declspec(dllimport) HWND__ *__stdcall GetDesktopWindow(void);
 extern int g_frame_size;
 
@@ -59,13 +57,13 @@ extern int mic_current_reclevel;
 extern char old_rec_source[256];
 extern float voice_current_voicelevel;
 extern float voice_current_scaler;
-extern int g_voice_initialized;
 extern float levelSamples[6];
-extern int sampleCount;
-static int count = 0;
 static Bool recording = 0;
-static Bool playing = 0;
 static recordingSample_t *currentRecordingSample = 0;
+static int g_voice_initialized = 0x0;
+int voice_freq = 0;
+int sampleCount = 0;
+Bool playing = 0;
 
 static short unsigned int *(*s_clientSamples[64])[4];
 static int s_clientTalkTime[64];
@@ -253,6 +251,7 @@ Bool Voice_IsClientTalking(int clientNum)
 
 Bool Voice_StartRecording(void)
 {
+    static int count = 0;
     if (recording)
         return 1;
     currentRecordingSample = DSOUNDRecord_NewSample();

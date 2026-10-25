@@ -562,5 +562,25 @@ XModelSurfs *XModelReadSurface(XModel *model, const char *name, void *(*Alloc)(i
 	FS_FreeFile(buf);
 	return surfs;
 }
+XModelSurfs *XModelLoadSurface(XModel *model, const char *name, void *(*Alloc)(int), short numsurfs, const char *modelName)
+{
+	XModelSurfs *surfs;
+
+	surfs = XModelSurfsFindData(name);
+
+	if ( surfs )
+		return surfs;
+
+	surfs = XModelReadSurface(model, name, Alloc, numsurfs, modelName);
+
+	if ( !surfs )
+	{
+		Com_Printf("^1ERROR: Cannot find 'xmodelsurfs '%s'.\n", name);
+		return NULL;
+	}
+
+	XModelSurfsSetData(name, surfs, Alloc);
+	return surfs;
+}
 
 // retail 0x48eae0

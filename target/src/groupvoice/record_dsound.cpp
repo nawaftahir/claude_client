@@ -9,6 +9,8 @@ int g_sound_channels = 1;
 int (*current_audioCallback)( audioSample_t * );
 dsound_sample_t *s_recordingSamplePtr;
 dsound_sample_t s_recordingSamples[65];
+// unreferenced slot at retail 0x182cbb4
+int record_dsound_unused = 0;
 bool g_recording_initialized = false;
 bool g_currently_recording = false;
 LPDIRECTSOUNDCAPTURE g_pDSCaptureInstance = NULL;

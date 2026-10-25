@@ -3,7 +3,7 @@
 #   make            build/CoD2MP_s.exe (inside the cod2-msvc71-vs2003 image, see ../toolchain)
 #   make measure    functions matching the original client (needs ../../cod2engineold/binaries)
 
-IMAGE  := cod2-msvc71-vs2003
+IMAGE  := cod2-msvc71-vs2003-ft
 OUT    := build/CoD2MP_s.exe
 REL    := build/release/CoD2MP_s.exe
 ANCHOR ?= ../../cod2engineold/binaries/windows/1.0/CoD2MP_s.exe
@@ -55,7 +55,7 @@ OCFLAGS := /nologo /c /O2 /GL /MT /TP /DNDEBUG /FIstdint.h /FImsvc_c89.h \
 	/FImsvc_gcc_compat.h /FIwin32_compat.h /FIprocess.h /FIfloat.h /I.\\oc\\shims \
 	/I.\\oc\\shims\\msvc /I.\\oc\\shims\\posix /I.\\oc /I.\\oc\\headers /DWIN32 /D_WIN32 /DW32_CLIENT /DCOD2_PATCH_10 \
 	/D_GNU_SOURCE=1 /DWIN32_LEAN_AND_MEAN /DNOMINMAX /Disfinite=_finite /Dvsnprintf=_vsnprintf /Dsnprintf=_snprintf
-LFLAGS := /nologo /LTCG /SAFESEH:NO /FORCE /OPT:NOREF /OPT:NOICF /FIXED:NO /SUBSYSTEM:WINDOWS /MAP:build\\CoD2MP_s.map
+LFLAGS := /nologo /LTCG /SAFESEH:NO /FORCE /OPT:NOREF /OPT:NOICF /FIXED:NO /SUBSYSTEM:WINDOWS /STACK:0x10000,0x1000 /MAP:build\\CoD2MP_s.map
 
 win = $(subst /,\\,$(1))
 # header dependencies from /showIncludes (system headers skipped)
@@ -86,15 +86,15 @@ build/lib/%.lib: src/lib/%.def src/lib/impname.pl
 	@wine /opt/msvc710/Vc7/bin/lib.exe /nologo /machine:x86 /def:$(call win,$<) /out:$(call win,$@) > $@.log 2>&1 || (cat $@.log; false)
 	@perl src/lib/impname.pl $@ 3 >> $@.log
 
-# the retail mss32.lib also carries MSS_auto_cleanup (plain object, not LTCG)
+# the retail mss32.lib (MSS_auto_cleanup + imports) was built with VS .NET 2002 (7.00.9466), local copy in vc70/
 build/lib/mss_auto.obj: src/lib/mss_auto.c
 	@mkdir -p $(dir $@)
-	@cd src && $(CL) /nologo /c /O2 /MT /DNDEBUG /Fo..\\build\\lib\\mss_auto.obj lib\\mss_auto.c > ../$@.log 2>&1 || (cat ../$@.log; false)
+	@cd src && wine ../vc70/cl.exe /nologo /c /O2 /MT /DNDEBUG /Fo..\\build\\lib\\mss_auto.obj lib\\mss_auto.c > ../$@.log 2>&1 || (cat ../$@.log; false)
 
 build/lib/mss32.lib: src/lib/mss32.def build/lib/mss_auto.obj src/lib/impname.pl
-	@wine /opt/msvc710/Vc7/bin/lib.exe /nologo /machine:x86 /def:$(call win,$<) /out:build\\lib\\mss32_imp.lib > $@.log 2>&1 || (cat $@.log; false)
+	@wine vc70/lib.exe /nologo /machine:x86 /def:$(call win,$<) /out:build\\lib\\mss32_imp.lib > $@.log 2>&1 || (cat $@.log; false)
 	@perl src/lib/impname.pl build/lib/mss32_imp.lib 1 >> $@.log
-	@wine /opt/msvc710/Vc7/bin/lib.exe /nologo /out:$(call win,$@) build\\lib\\mss32_imp.lib build\\lib\\mss_auto.obj >> $@.log 2>&1 || (cat $@.log; false)
+	@wine vc70/lib.exe /nologo /out:$(call win,$@) build\\lib\\mss32_imp.lib build\\lib\\mss_auto.obj >> $@.log 2>&1 || (cat $@.log; false)
 
 # icon comes from the local retail exe (host step above); .rsrc is byte-identical to retail
 build/cod2mp.res: src/cod2mp.rc build/cod2mp.ico
@@ -108,8 +108,9 @@ $(REL): $(OBJS) $(IMPLIBS) build/cod2mp.res src/tus.txt Makefile
 	@mkdir -p $(dir $@)
 	@mkdir -p "$$(winepath -u 'c:\builds\crc6_v1\pc\cod2\pc')"
 	@printf '%s\n' $(call win,$(OBJS)) > build/objs.rsp
-	$(LINK) $(subst /FIXED:NO,/FIXED,$(subst build\\CoD2MP_s.map,build\\release\\CoD2MP_s.map,$(LFLAGS))) /DEBUG '/PDB:c:\builds\crc6_v1\pc\cod2\pc\CoD2MP_s.pdb' /OUT:$(call win,$@) @build\\objs.rsp build\\cod2mp.res $(LIBS) > build/release/link.log 2>&1 || { tail -10 build/release/link.log; exit 1; }
+	wineserver -k 2>/dev/null; export FAKETIME='2005-10-07 02:19:36' LD_PRELOAD=$(wildcard /usr/lib/*/faketime/libfaketime.so.1); $(LINK) $(subst /FIXED:NO,/FIXED,$(subst build\\CoD2MP_s.map,build\\release\\CoD2MP_s.map,$(LFLAGS))) /DEBUG '/PDB:c:\builds\crc6_v1\pc\cod2\pc\CoD2MP_s.pdb' /OUT:$(call win,$@) @build\\objs.rsp build\\cod2mp.res $(LIBS) > build/release/link.log 2>&1 || { tail -10 build/release/link.log; exit 1; }
 	@! grep -E 'LNK2001|LNK2019|fatal error' build/release/link.log
+	@perl postlink.pl $@
 	@cp "$$(winepath -u 'c:\builds\crc6_v1\pc\cod2\pc\CoD2MP_s.pdb')" build/release/CoD2MP_s.pdb
 
 endif

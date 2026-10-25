@@ -674,7 +674,6 @@ public:
 
 	static FxMemMgr<Cloud> s_memMgr;
 };
-FxMemMgr<Cloud> Cloud::s_memMgr;
 
 class Line : public Particle
 {
@@ -811,6 +810,7 @@ public:
 	static FxMemMgr<Emitter> s_memMgr;
 };
 FxMemMgr<Emitter> Emitter::s_memMgr;
+FxMemMgr<Cloud> Cloud::s_memMgr;
 
 class FxArchive
 {

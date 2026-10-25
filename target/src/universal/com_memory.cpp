@@ -4,6 +4,7 @@
 
 static fileData_t *com_fileDataHashTable[FILEDATA_HASH_SIZE];
 static fileData_t *com_hunkData;
+dvar_t *com_dedicated;
 
 // storage in its original order; the unreferenced blocks keep that layout
 static int g_largeLocalPos = 0;
@@ -14,7 +15,7 @@ static int mem_unreferenced1;
 static hunkUsed_t hunk_low;
 static hunkUsed_t hunk_high;
 static byte *s_hunkData = 0;
-static byte *s_origHunkData;
+static byte *s_origHunkData = 0;
 static int s_hunkTotal;
 
 void Hunk_Clear( void );

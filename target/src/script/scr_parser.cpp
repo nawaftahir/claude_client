@@ -1,8 +1,8 @@
 #include "../qcommon/qcommon.h"
 #include "script_public.h"
 
-static scrParserGlob_t scrParserGlob;
-scrParserPub_t scrParserPub;
+ALIGNED(8) static scrParserGlob_t scrParserGlob;
+ALIGNED(8) scrParserPub_t scrParserPub;
 
 unsigned int Scr_GetSourceBuffer( const char *codePos );
 

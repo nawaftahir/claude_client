@@ -418,3 +418,7 @@ bool Jump_Check( pmove_t *pm, pml_t *pml )
 	return true;
 }
 
+
+// unreferenced in retail, keeps the .bss layout
+int jumpUnused13;
+int jumpUnused12;

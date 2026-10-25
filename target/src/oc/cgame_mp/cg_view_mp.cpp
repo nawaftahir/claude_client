@@ -357,6 +357,12 @@ static void CG_OffsetFirstPersonView(void)
         cg->refdef.vieworg[2] = floorZ;
 }
 
+// com_math.h
+inline float I_fmax(const float x, const float y)
+{
+    return I_fsel(x - y, x, y);
+}
+
 float CG_GetViewFov(void)
 {
     int weapIndex;
@@ -409,7 +415,7 @@ float CG_GetViewFov(void)
 
     {
         float fovMin = (cg_fovMin)->current.value;
-        fov_x = (fovMin - fov_x >= 0.0f) ? fovMin : fov_x;
+        fov_x = I_fmax(fovMin, fov_x);
     }
 
     return fov_x;

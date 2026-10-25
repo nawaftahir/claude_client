@@ -1164,11 +1164,10 @@ void CG_AddPlayerWeapon(GfxEntity *parent, playerState_t *ps, centity_t *cent, q
 
     if (ps) {
         bViewModel = 1;
-        weaponNum = BG_GetViewmodelWeaponIndex(ps);
     } else {
         bViewModel = 0;
-        weaponNum = ent->weapon;
     }
+    weaponNum = ps ? BG_GetViewmodelWeaponIndex(ps) : ent->weapon;
 
     if (weaponNum <= 0)
         return;
@@ -1933,7 +1932,7 @@ void CG_SpawnTracer(vec_t *pstart, vec_t *pend)
 }
 
 // retail 0x4d1340; Kisak name (SUPPORTED)
-static float CalcTracerFinalScale(float tracerScaleDistRange, float dist, float tracerScale)
+__declspec(noinline) static float CalcTracerFinalScale(float tracerScaleDistRange, float dist, float tracerScale)
 {
     float scale;
 
@@ -1948,10 +1947,9 @@ static float CalcTracerFinalScale(float tracerScaleDistRange, float dist, float 
     return tracerScale;
 }
 
-static float (*const calcScale)(float, float, float) = CalcTracerFinalScale;
 
 // retail 0x4d1390; Kisak name (SUPPORTED)
-static void ScaleTracer(const float *start, const float *finish, float *startWidth, float *finishWidth)
+static void ScaleTracer(const float *start, const float *finish, const float *viewOrg, float *startWidth, float *finishWidth)
 {
     float startDist;
     float finishDist;
@@ -1963,16 +1961,16 @@ static void ScaleTracer(const float *start, const float *finish, float *startWid
     tracerScaleMinDist = cg_tracerScaleMinDist->current.value;
     tracerScaleDistRange = cg_tracerScaleDistRange->current.value;
     if (tracerScale != 1.0f) {
-        startDist = Vec3Distance(start, cg->refdef.vieworg);
-        finishDist = Vec3Distance(finish, cg->refdef.vieworg);
+        startDist = Vec3Distance(start, viewOrg);
+        finishDist = Vec3Distance(finish, viewOrg);
         if (tracerScaleMinDist != 0.0f) {
             startDist = startDist - tracerScaleMinDist;
             finishDist = finishDist - tracerScaleMinDist;
         }
         if (startDist > 0.0f)
-            *startWidth = calcScale(tracerScaleDistRange, startDist, tracerScale) * *startWidth;
+            *startWidth = CalcTracerFinalScale(tracerScaleDistRange, startDist, tracerScale) * *startWidth;
         if (finishDist > 0.0f)
-            *finishWidth = calcScale(tracerScaleDistRange, finishDist, tracerScale) * *finishWidth;
+            *finishWidth = CalcTracerFinalScale(tracerScaleDistRange, finishDist, tracerScale) * *finishWidth;
     }
 }
 
@@ -2003,7 +2001,7 @@ void CG_DrawTracer(vec_t *start, vec_t *finish)
 
     startWidth = cg_tracerWidth->current.value;
     finishWidth = cg_tracerWidth->current.value;
-    ScaleTracer(start, finish, &startWidth, &finishWidth);
+    ScaleTracer(start, finish, cg->refdef.vieworg, &startWidth, &finishWidth);
 
     VectorMA(finish, finishWidth, right, verts[0].xyz);
     verts[0].color.packed = 0xffffffff;

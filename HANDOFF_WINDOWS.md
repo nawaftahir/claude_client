@@ -1,20 +1,36 @@
-# Handoff: client recon (state 10-19 night; Windows session picks up here, then NEXT_SESSION.md)
+# Handoff: client recon (state 10-20 evening; Windows session picks up here, then NEXT_SESSION.md)
 
-## Pick up here (Windows, 10-19 night)
-- Main `claude_client/` = **1,303,591 B = 92.54%**, clean-rebuild verified, RATCHET OK. Same-offset 10.606%.
-  UNCOMMITTED: `lab/wip_gap23.patch` == `git diff -- target/src`. Do not commit below 93% (1,310,076, +6,485); never `git checkout` src.
-- Run git/builds through `wsl.exe -d Ubuntu -- bash <script>`; agent brief template for Windows tools: `lab/w4/prompt_w18_common.txt`.
-  Linux-side briefs from tonight (copy + edit wave/slot/targets): `~/sp/p39_s3.txt`, `p39_s4.txt` (code), `p39_s6.txt` (layout).
-- Slots s3/s4/s6 are synced to 1,302,739-era main; resync before use: `nohup sh lab/rebase.sh sN > ~/sp/rbXX_sN.log 2>&1 &`.
-- Fastest loop (w38, ~22 B/ktok): rescore `python3 ../alldiff.py > ~/sp/scored.txt`, group with `sh lab/classscan.sh ~/sp/scored.txt`, one Opus agent per shared cause, one Sonnet layout agent; gate with `sh lab/gate_w18.sh <abs patch>`; if main and a fresh slot disagree, move `target/build/obj` aside and rebuild (incremental main went stale once).
-- Agents: check `grep -c "unresolved external" build/oclink.log` == 0 before trusting smeasure (a /FORCE link fooled the w39 layout agent).
-- Tonight's wins (10-19 night, +7,560 B from 92.00%): BG_CheckProneValid, PM_Footsteps, CG_PredictPlayerState_Internal, BG_CalculateWeaponPosition_Sway, SND_SetChannelInfo, PM_FootstepEvent, CL_AddDebugLine, CL_AddDebugString, FX_AddCameraShake; layout 8.24 -> 10.61%.
-- Levers (skill top): exact reference text incl. redundant parens; reference helper-call form for vector math; block-local vec3_t; exact header `inline` names (no new symbols); Mac `_this` = C++ method (FxRange::GetVal/SetRange).
-- Best next leads:
-  - nb_decode 0x4e2b50 (3,239 B, 10 lines): vocoder loop 0x4e34c0, `innov` base/index order [eax+ecx-4] never moved (lab/w4/re_re_w38_s4.md).
-  - XAnimLoadFile 0x48bec0 (4,053 B, 4 lines): `imul edx,edi` operand order; decl order dead.
-  - CG_CalcCrosshairPosition (gunYaw stack copy), CG_CheckHudStanceDisplay (one more stanceFadeTime read), FX_AddFxToScene, CG_DrawAdsOverlay, FX_RandomizeRoll, CG_DrawLagometer/CG_DrawDevString (shared CalcScreenPlacementInl).
-  - Layout: libcmt member order (retail pulls stricmp/strnicmp/strlwr/strupr late) unblocks retail fn 0x401ec0, the 0x401f20 copy of Com_SurfaceTypeToName (needs its real source with the real infoParm_t type) and the <RESET>/<FAST> + default.menu strings.
+## Pick up here (10-20 evening)
+- Main `claude_client/` = **1,305,793 B = 92.70%**, RATCHET OK (`target/build/good.json`). Release same-offset 9.629%.
+  UNCOMMITTED: `lab/wip_gap23.patch` == `git diff -- target/src`, on top of commit 78852ab. 93% = 1,310,076 (+4,283).
+  Never `git checkout` src; restore from the patch. Commit only at 93% after a clean rebuild (Nawaf, no Co-Authored-By, no push).
+- Today: libcmt `__CI*` order = retail (+915 real; `lab/ci_t2_cfg.patch`: com_math `tan(float)`, SinSquaredDeg
+  `sin(angle * k)`, Com_EndParseSessionInl as `static __forceinline` in qcommon.h + 2 TU copies). Ties -602 net.
+  CG_DrawLagometer now calls real CL_DrawStretchPic (fake Inl deleted, NET 0). No other bytes today.
+- **Tie pool is the biggest open number.** Today's state: PC_EvaluateTokens 2587, SV_DirectConnect 2322,
+  SV_Netchan_PrintProfileStats 2061, Scr_ParseGameTypeList 572 ON; Pickup_Weapon 1631, SP_worldspawn 458,
+  CG_FireWeapon 550 OFF. Reverting the Com_EndParseSessionInl move swaps the two sets (NET -5,453, tested).
+  Ties follow the NUMBER of emitted fns in early TUs (LESSONS 10-19 w42). Getting all ON = +2,089 to +2,639.
+  Attack: remove our non-retail emitted fns (list: `python3 ../lab/extras.py` in claude_client/target (needs ~/sp/scored46.txt or edit its path); logic =
+  unpaired fn of ours whose matched neighbours sit closer in retail). Known extras: FS_UseSearchPath,
+  FS_ReadFileInl, FS_FreeFileInl (com_files, TU 30), Com_EndParseSessionInl copy (ui_gameinfo_mp),
+  Field_CompleteCommand + 3 more (common), LittleLong copies (net_chan), XAnim_* template copies,
+  FxMemMgr Free/MoveToFront x10, AngleVectorsInl (g_items_mp; real AngleVectors = -1132, keep).
+  Each removal must keep its host matched (LTCG has to inline the real fn like retail). 1 build each, 3 slots.
+- Remaining real bytes: 65 paired unmatched fns (44 KB), all 5+ attempts, mostly sched/regalloc residue.
+  Least-tried: SND_RawSamples 248 (imul dest), speex_bits_pack 176 (block layout), mixerGetRecordLevel 365,
+  CG_DrawGrenadePointer 367 (8 lines), CG_AddMovingTracer 184 (2 lines). Biggest: XAnimLoadFile 4053 (4),
+  sb_encode 3713 (6, speex 1.1.9 PINNED by retail string), nb_decode 3239 (10).
+- Dead today (LESSONS 10-20): CG_DrawPlayerCompass 9 forms (incl. CG_CompassCalcDimensions call, commuted
+  operands, rect->h read first); FX_CalcOriginAndAxis yaw reuse / angle local (norm 12-26 vs 0; retail has one
+  never-referenced slot at esp+0x30 above the FastSinCos pSin home, cause unknown); SL_GetStringOfLen regalloc.
+- Slots s3/s4/s6 = main src minus today's lag patch (s3 also has the Com_EndParseSession revert): rsync before use
+  `rsync -rc --delete --exclude='core.*' claude_client/target/src/ lab/sN/target/src/`, make, cmp.py -> base.json.
+- Tools: gate `sh lab/gate_w18.sh <ABS patch>`; slot measure `sh lab/smeasure.sh sN ['mangled@@' 0xADDR]`;
+  lost/gained `python3 ../../lab/lg.py` (run in a slot target; build/exp.json vs base.json); stack-normalised diff `python3 lab/s6/norm.py diff.txt`.
+- Run git/builds through `wsl.exe -d Ubuntu -- bash <script>`; builds never from the Windows side.
+- Budget: owner is short on usage. No agent wave without a concrete lead found cheaply first; a wave under
+  2 B/ktok gets no follow-up. Report .text %, release same-offset %, tokens vs bytes.
 
 Target: `CoD2MP_s.exe` 1.0. End goal: every function real C/C++, whole exe
 SHA-256 identical to retail, runs like retail. % of `.text` is only the meter.

@@ -6,14 +6,20 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-itemDef_t *g_editItem = NULL;
+static void (*captureFunc)() = 0;
+static void *captureData = 0;
+static itemDef_t *itemCapture = 0;
 qboolean g_waitingForKey = 0;
+qboolean g_editingField = 0x0;
+static itemDef_t *g_bindItem = 0;
+itemDef_t *g_editItem = NULL;
+static qboolean debugMode = 0;
+static int lastListBoxClickTime = 0;
 extern sharedUiInfo_t sharedUiInfo;
 
 extern commandDef_t commandList[29];
 extern bind_t g_bindings[56];
 
-qboolean g_editingField = 0x0;
 
 COD2_ASSERT_FIELD(struct displayContextDef_s, realTime, 0x4);
 COD2_ASSERT_FIELD(struct displayContextDef_s, blurRadiusOut, 0x28);
@@ -153,7 +159,6 @@ extern qboolean g_editingField;
 extern itemDef_t *g_editItem;
 extern int scriptCommandCount;
 void CL_GetAutoUpdate(void);
-static void (*captureFunc)();
 void LerpColor(vec_t *a, vec_t *b, vec_t *c, float t);
 qboolean String_Parse(const char **p, char *out, int len);
 int Menu_ItemsMatchingGroup(menuDef_t *menu, const char *name);
@@ -293,13 +298,7 @@ static bool Window_IsHorizontal(Window *w)
 }
 
 static rectDef_t rect;
-static qboolean inHandleKey = 0;
 static scrollInfo_t scrollInfo;
-static void *captureData = 0;
-static itemDef_t *itemCapture = 0;
-static itemDef_t *g_bindItem = 0;
-static qboolean debugMode = 0;
-static int lastListBoxClickTime = 0;
 
 static void Item_TextField_BeginEdit(itemDef_t *item);
 
@@ -2501,7 +2500,7 @@ itemDef_t *Menu_SetPrevCursorItem(displayContextDef_t *dc, menuDef_t *menu)
     int oldCursor;
 
     wrapped = 0;
-    oldCursor = menu->cursorItem[0];
+    oldCursor = Menu_Getter_5338b0(menu);
     if (menu->cursorItem[0] < 0) {
         menu->cursorItem[0] = menu->itemCount - 1;
         wrapped = 1;
@@ -2530,7 +2529,7 @@ itemDef_t *Menu_SetNextCursorItem(displayContextDef_t *dc, menuDef_t *menu)
     itemDef_t *item;
 
     wrapped = 0;
-    oldCursor = menu->cursorItem[0];
+    oldCursor = Menu_Getter_5338b0(menu);
     if (menu->cursorItem[0] == -1) {
         menu->cursorItem[0] = 0;
         wrapped = 1;
@@ -2658,7 +2657,7 @@ static rectDef_t *Item_CorrectedTextRect(itemDef_t *item)
 
     memset(&rect, 0, sizeof(rect));
     if (item) {
-        textRect = &item->textRect[0];
+        textRect = Item_Getter_5338c0(item);
         rect = *textRect;
         if (rect.w != 0.0f)
             rect.y -= rect.h;
@@ -2701,6 +2700,7 @@ qboolean Menu_CheckOnKey(displayContextDef_t *dc, menuDef_t *menu, int key)
 
 void Menu_HandleKey(displayContextDef_t *dc, menuDef_t *menu, int key, qboolean down)
 {
+    static qboolean inHandleKey = 0;
     itemDef_t *item = NULL;
     int i;
 

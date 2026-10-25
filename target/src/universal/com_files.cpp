@@ -24,7 +24,7 @@ dvar_t *fs_restrict;
 dvar_t *fs_ignoreLocalized;
 
 searchpath_t *fs_searchpaths = NULL;
-static int fs_packFiles;
+static int fs_packFiles = 0;
 int fs_fakeChkSum;
 int fs_checksumFeed;
 fileHandleData_t fsh[MAX_FILE_HANDLES];
@@ -2272,7 +2272,7 @@ static const char* IwdFileLanguage(const char *instr)
 {
 	signed int i;
 	static char Array64[128];
-	static qboolean flip;
+	static qboolean flip = 0;
 
 	flip ^= 1u;
 	if ( strlen(instr) < 10 )
@@ -2345,10 +2345,10 @@ static void FS_AddSearchPath(searchpath_t* search)
 	*pSearch = search;
 }
 
-static qboolean bLanguagesListed;
 
 void FS_AddIwdFilesForGameDirectory(const char *path, const char *dir)
 {
+	static qboolean bLanguagesListed = 0;
 	int i;
 	int j;
 	int langindex;

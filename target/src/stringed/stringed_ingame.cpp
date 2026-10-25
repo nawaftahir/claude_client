@@ -71,7 +71,7 @@ private:
 	char	*Filename_WithoutExt( LPCSTR psFilename );
 };
 
-static CStringEdPackage *TheStringPackage;
+static CStringEdPackage *TheStringPackage = NULL;
 
 void CStringEdPackage::Clear( void )
 {

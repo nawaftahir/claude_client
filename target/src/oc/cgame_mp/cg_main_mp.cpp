@@ -76,7 +76,7 @@ const dvar_t *cg_minicon;
 const dvar_t *cg_drawCrosshairNamesPosX;
 const dvar_t *cg_gun_move_rate;
 const dvar_t *cg_tracerSpeed;
-cgs_t cgsArray[1];
+ALIGNED(128) cgs_t cgsArray[1];
 const dvar_t *cg_shock_screenBlendFadeTime;
 const dvar_t *cg_shock_viewKickPeriod;
 ALIGNED(128) cg_t cgArray[1];
@@ -446,8 +446,8 @@ extern const dvar_t *cg_weaponrightbone;
 extern ALIGNED(128) cg_t cgArray[1];
 extern ALIGNED(128) weaponInfo_t cg_weaponsArray[CG_MAX_WEAPONS];
 extern ALIGNED(128) itemInfo_t cg_itemsArray[CG_MAX_ITEMS];
-static Bool g_ambientStarted;
-static Bool g_mapLoaded;
+static Bool g_ambientStarted = 0;
+static Bool g_mapLoaded = 0;
 /* migrated from the ILP32 data blob to typed C (x64 port Stage 2). */
 static const char *cg_soundRoomTypes[27] = {
     "generic",

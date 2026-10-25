@@ -410,3 +410,21 @@ check that f loses its color nodes.
 3. Validate on a fn where retail and ours both hold a known var in a known register.
 Helpers: `$VC/ra/c2d.py c2.dll VA n` (disasm), `$VC/ra/xref.py c2.dll VA` (call/jmp sites),
 `$VC/ra/out/*.c` (Ghidra decompiles of the 28 assert-site fns), Ghidra copy `$VC/ra/proj`.
+
+## 10-25 lever study (rs_, SND_RestoreStreamChannel)
+
+Driver: /home/nawaf/mlw/ora/rs_rdv.sh (= rdv.sh with src -> mlw/rs_src, a fresh copy of target/src, and
+VC -> /home/nawaf/rgb/vc; lab/s6/.../c2rd.dll is now an empty dir). One TU compile + LTCG link, ~17 s per
+variant, several in parallel. Variants in mlw/var/rs_*.cpp, picks in mlw/ora/out/rs_*.pick.
+- Ordering field = n3 (node +0x0c), ties by n17 (+0x44), as rounds 5/10. Nothing new orders colouring.
+- Retail order (types then blend, rs_t1) = 169 lines; pAlias1 (one node, n3 15, n16 30) pops in phase 1
+  with ONLY ebx free (cost 2601): ebp memFile, esi channel, edi kind03 val=555 (n3 56, n17 268). pAlias0 is
+  split into 3 phase-2 pieces (n3 26/16/14) and takes edi. Not a tie: changing pAlias1's register needs
+  val=555 or pAlias1 itself to lose/gain whole region weight, or pAlias1 to fail phase 1 and be split
+  (retail spills both pointers to [esp+0x10]/[esp+0x14], so retail likely splits pAlias1 too: HYPOTHESIS).
+- Moved only by reference placement: pAlias1 type check before pAlias0's (rs_w2) moves the pAlias0
+  piece n3 26 -> 33 (its refs land in a heavier region), code worse (288 lines). pAlias1 n3 15 and
+  val=555 n3 56 did not move in any of 8 variants: VectorCopy tail, cached offset ptr, rate inlined into
+  the call, a "!= 0" test, "(flags >> 5) & 3", if/else arm swap (210 lines), and the earlier decl/chan/flag tries.
+- Unresolved: what val=555 is (late IL, n17 268; not the tail chaninfo CSE, which the tail edits do not
+  touch). CG_AddPlayerWeapon not reached this session.

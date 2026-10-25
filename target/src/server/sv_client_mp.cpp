@@ -10,7 +10,6 @@
 
 float FX_GetVisibility( const vec3_t start, const vec3_t end );
 
-static int botport = 0;
 
 typedef struct
 {
@@ -2060,6 +2059,7 @@ void SV_ExecuteClientMessage( client_t *cl, msg_t *msg )
 
 gentity_t *SV_AddTestClient()
 {
+	static int botport = 0;
 	char userinfo[MAX_INFO_STRING];
 	netadr_t adr;
 	int num;

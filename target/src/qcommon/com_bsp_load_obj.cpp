@@ -22,6 +22,7 @@ struct comBspGlob_t
 	BspHeader *header;
 	int fileSize;
 	int checksum;
+	int unused; // retail struct is 16 B; 4th field is never referenced
 };
 
 static comBspGlob_t comBspGlob;

@@ -40,6 +40,16 @@ float ScrPlace_RealViewableHeight_449a90(void)
     return SP->realViewableMax[1] - SP->realViewableMin[1];
 }
 
+// com_math.h
+inline float I_fmax(const float x, const float y)
+{
+    return I_fsel(x - y, x, y);
+}
+inline float I_fmin(const float x, const float y)
+{
+    return I_fsel(y - x, x, y);
+}
+
 // retail 0x449aa0; name from KisakCOD (SUPPORTED)
 static void ScrPlace_CalcSafeAreaOffsets(float safeAreaRatioHorz, float safeAreaRatioVert,
                                          float viewportX, float viewportY, float viewportWidth, float viewportHeight,
@@ -56,10 +66,10 @@ static void ScrPlace_CalcSafeAreaOffsets(float safeAreaRatioHorz, float safeArea
     unsafeSize[1] = (1.0f - safeAreaRatioVert) * displayHeight * 0.5f;
     safeMax[0] = displayWidth - unsafeSize[0];
     safeMax[1] = displayHeight - unsafeSize[1];
-    safeLeft = (viewportX - unsafeSize[0] >= 0) ? viewportX : unsafeSize[0];
-    safeTop = (viewportY - unsafeSize[1] >= 0) ? viewportY : unsafeSize[1];
-    clampedRight = (safeMax[0] - (viewportX + viewportWidth) >= 0) ? (viewportX + viewportWidth) : safeMax[0];
-    clampedBottom = (safeMax[1] - (viewportY + viewportHeight) >= 0) ? (viewportY + viewportHeight) : safeMax[1];
+    safeLeft = I_fmax(viewportX, unsafeSize[0]);
+    safeTop = I_fmax(viewportY, unsafeSize[1]);
+    clampedRight = I_fmin(viewportX + viewportWidth, safeMax[0]);
+    clampedBottom = I_fmin(viewportY + viewportHeight, safeMax[1]);
     realViewableMin[0] = safeLeft - viewportX;
     realViewableMin[1] = safeTop - viewportY;
     realViewableMax[0] = clampedRight - viewportX;

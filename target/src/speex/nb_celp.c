@@ -411,9 +411,9 @@ int nb_encode(void *state, void *vin, SpeexBits *bits)
          ol_gain2=ol1;
          if (ol2>ol1)
             ol_gain2=ol2;
-         ol_gain2 = sqrt(2*ol_gain2*(ol1+ol2))*1.3*(1-.5*GAIN_SCALING_1*GAIN_SCALING_1*ol_pitch_coef*ol_pitch_coef);
+         ol_gain2 = sqrt((double)(2*ol_gain2*(ol1+ol2)))*1.3*(1-.5*GAIN_SCALING_1*GAIN_SCALING_1*ol_pitch_coef*ol_pitch_coef);
       
-         ol_gain=SHR(sqrt(1+ol_gain2/st->frameSize),SIG_SHIFT);
+         ol_gain=SHR(sqrt((double)(1+ol_gain2/st->frameSize)),SIG_SHIFT);
 
       } else {
 #endif

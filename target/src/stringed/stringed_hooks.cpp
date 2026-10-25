@@ -1,5 +1,6 @@
 #include "../qcommon/qcommon.h"
 #include "../stringed/stringed_public.h"
+dvar_t *loc_language;dvar_t *loc_forceEnglish;dvar_t *loc_translate;dvar_t *loc_warnings;dvar_t *loc_warningsAsErrors;
 
 int FS_LanguageHasAssets( int iLanguage );
 const char *SE_GetString( const char *psPackageAndStringReference );
@@ -225,7 +226,7 @@ int SEH_GetLocalizedTokenReference( char *token, const char *reference, const ch
 
 const char *SEH_LocalizeTextMessage( const char *pszInputBuffer, const char *pszMessageType, msgLocErrType_t errType )
 {
-	static int iCurrString;
+	static int iCurrString = 0;
 	static char szStrings[2][1024];
 	int i;
 	int outputLen;
@@ -596,3 +597,6 @@ qboolean SEH_GetLanguageIndexForName( const char *language, int *langindex )
 	return qfalse;
 }
 
+
+// unreferenced in retail, keeps the .bss layout
+int hooksPad14;

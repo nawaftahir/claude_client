@@ -1042,24 +1042,20 @@ void OrientationDirToLocal( const orientation_t *orient, const float *dir, float
 void FX_InitTemplates();
 void FX_Print( const char *fmt, ... );
 bool g_rendererExists = true;
-EffectCluster effectClusterArray[1800];
+ALIGNED(128) EffectCluster effectClusterArray[1800];
 EffectCluster *effectClusters = effectClusterArray;
 int effectClusterCount;
 // Original name unknown; unused on the dedicated server.
-int effectClusterUnused;
 int *clusterSort;
 // Original name and type unknown; unused on the dedicated server.
-int effectClusterReserved[24];
-Effect *effectListArrayBolt[1800];
+ALIGNED(128) Effect *effectListArrayBolt[1800];
 // Original name and type unknown; unused on the dedicated server.
-int effectListReserved[24];
-Effect *effectListArrayNonBolt[1800];
+ALIGNED(128) Effect *effectListArrayNonBolt[1800];
 Effect **effectListBolt = effectListArrayBolt;
 Effect **effectListNonBolt = effectListArrayNonBolt;
 int g_effectVisArrayCount;
 // Original name and type unknown; unused on the dedicated server.
-int effectVisReserved[16];
-EffectVisibility g_effectVisArray[1800];
+ALIGNED(128) EffectVisibility g_effectVisArray[1800];
 int effectActiveCountBolt;
 int effectActiveCountNonBolt;
 int effectActiveCount;
@@ -1067,9 +1063,8 @@ int privateEffectActiveCountBolt;
 int privateEffectActiveCountNonBolt;
 int initialEffectActiveCountBolt;
 int initialEffectActiveCountNonBolt;
+int fxUtilPad3; // unreferenced in retail, keeps the .bss layout
 // Original names unknown; unused on the dedicated server.
-int effectCountUnused1;
-int effectCountUnused2;
 int cullEffectCountBolt;
 int cullEffectCountNonBolt;
 int effectBlockSightCount;

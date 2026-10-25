@@ -120,7 +120,7 @@ static inline spx_word16_t spx_cos(spx_word16_t x)
 }
 #define FREQ_SCALE 1.
 #define ANGLE2X(a) (spx_cos(a))
-#define X2ANGLE(x) (acos(x))
+#define X2ANGLE(x) (acos((double)(x)))
 
 #endif
 
@@ -339,7 +339,7 @@ int lpc_to_lsp (spx_coef_t *a,int lpcrdr,spx_lsp_t *freq,int nb,spx_word16_t del
               dd = PSHR16(dd,1);
 #else
            dd=delta*(1-.9*xl*xl);
-           if (fabs(psuml)<.2)
+           if (fabs((double)psuml)<.2)
               dd *= .5;
 #endif
            xr = SUB16(xl, dd);                        	/* interval spacing 	*/

@@ -262,7 +262,7 @@ void CL_SetCGameTime(void);
 
 extern void *s_cmdList;
 
-int g_cginit_loading = 0;
+int g_cginit_loading;
 
 // retail 0x401240, unreferenced; Q3 CL_GetGameState (SUPPORTED)
 void CL_GetGameState(gameState_t *gs)

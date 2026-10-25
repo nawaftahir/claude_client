@@ -57,3 +57,6 @@ int SE_BuildFileList( const char *psStartDir, se_string &strResults )
 	return giFilesFound;
 }
 
+
+// unreferenced in retail, keeps the .bss layout
+int ifacePad23, ifacePad15;

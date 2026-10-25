@@ -353,7 +353,7 @@ typedef struct ALIGNED(8) bgs_s
 static_assert((sizeof(bgs_t) == 0xC6A00), "ERROR: bgs_t size is invalid!");
 #endif
 
-extern bgs_t level_bgs;
+extern ALIGNED(16) bgs_t level_bgs;
 
 // The bgame state the BG_* code reads; game code points it at level_bgs
 // before entering shared code, SV_Shutdown clears it.

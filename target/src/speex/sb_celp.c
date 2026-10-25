@@ -462,7 +462,7 @@ int sb_encode(void *state, void *vin, SpeexBits *bits)
       /*FIXME: Are the two signals (low, high) in sync? */
       e_low = compute_rms(st->x0d, st->frame_size);
       e_high = compute_rms(st->high, st->frame_size);
-      ratio = 2*log((1+e_high)/(1+e_low));
+      ratio = 2*log((double)((1+e_high)/(1+e_low)));
       
       speex_encoder_ctl(st->st_low, SPEEX_GET_RELATIVE_QUALITY, &st->relative_quality);
       if (ratio<-4)
@@ -481,7 +481,7 @@ int sb_encode(void *state, void *vin, SpeexBits *bits)
          {
             int v1;
             float thresh;
-            v1=(int)floor(st->vbr_quality);
+            v1=(int)floor((double)st->vbr_quality);
             if (v1==10)
                thresh = mode->vbr_thresh[modeid][v1];
             else
@@ -680,7 +680,7 @@ int sb_encode(void *state, void *vin, SpeexBits *bits)
          }
 #else
          {
-            int qgc = (int)floor(.5+3.7*(log(gc)+0.15556));
+            int qgc = (int)floor(.5+3.7*(log((double)gc)+0.15556));
             if (qgc<0)
                qgc=0;
             if (qgc>15)

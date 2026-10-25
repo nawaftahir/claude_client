@@ -99,7 +99,7 @@ void CG_DrawScoreboard_Backdrop(float alpha)
     color[1] = 0.0f;
     color[2] = 0.0f;
     color[3] = alpha * 0.8f;
-    UI_DrawHandlePic(120.0f, 22.0f, 400.0f, 430.0f, 0, 0, color, CL_RegisterMaterialNoMip("white", 7));
+    UI_DrawHandlePic(CG_ScoreboardGetter_4d2bf0(), CG_ScoreboardGetter_4d2c00(), CG_ScoreboardGetter_4d2bd0(), CG_ScoreboardGetter_4d2be0(), 0, 0, color, CL_RegisterMaterialNoMip("white", 7));
 }
 
 // retail 0x4d2d10, name unknown
@@ -241,7 +241,7 @@ float CG_DrawScoreboard_Objective(const float *color, float y)
     if (cg->objectiveText[0])
     {
         y += 4.0f;
-        font = UI_GetFontHandle(0, 0.24f);
+        font = UI_GetFontHandle(0, CG_ScoreboardGetter_4d2bb0());
         CG_LocalizeHudElemString(cg->objectiveText, "scoreboard objective info", hudElemString);
 
         textStart = hudElemString;
@@ -259,7 +259,7 @@ float CG_DrawScoreboard_Objective(const float *color, float y)
                     textStart++;
                 else
                     textStart += 2;
-                y += 12.0f;
+                y += CG_ScoreboardGetter_4d2bc0();
                 whiteSpace = NULL;
                 textEnd = textStart;
                 continue;
@@ -269,31 +269,31 @@ float CG_DrawScoreboard_Objective(const float *color, float y)
                 textEnd++;
                 if (!*textEnd)
                 {
-                    UI_DrawText(textStart, textEnd - textStart, font, 129.0f, y + 10.08f, 0, 0, 0.24f, color, 3);
-                    y += 12.0f;
+                    UI_DrawText(textStart, textEnd - textStart, font, 129.0f, y + 10.08f, 0, 0, CG_ScoreboardGetter_4d2bb0(), color, 3);
+                    y += CG_ScoreboardGetter_4d2bc0();
                     break;
                 }
                 if (*textEnd == '\n' || (*textEnd == '\\' && textEnd[1] == 'n'))
                 {
-                    UI_DrawText(textStart, textEnd - textStart, font, 129.0f, y + 10.08f, 0, 0, 0.24f, color, 3);
+                    UI_DrawText(textStart, textEnd - textStart, font, 129.0f, y + 10.08f, 0, 0, CG_ScoreboardGetter_4d2bb0(), color, 3);
                     if (*textEnd == '\n')
                         textStart = textEnd + 1;
                     else
                         textStart = textEnd + 2;
                     whiteSpace = NULL;
-                    y += 12.0f;
+                    y += CG_ScoreboardGetter_4d2bc0();
                     textEnd = textStart;
                     continue;
                 }
-                if ((float)UI_TextWidth(textStart, textEnd - textStart, font, 0.24f) > 374.0f)
+                if ((float)UI_TextWidth(textStart, textEnd - textStart, font, CG_ScoreboardGetter_4d2bb0()) > 374.0f)
                 {
-                    UI_DrawText(textStart, whiteSpace - textStart, font, 129.0f, y + 10.08f, 0, 0, 0.24f, color, 3);
+                    UI_DrawText(textStart, whiteSpace - textStart, font, 129.0f, y + 10.08f, 0, 0, CG_ScoreboardGetter_4d2bb0(), color, 3);
                     if (whiteSpace)
                         textStart = whiteSpace + 1;
                     else
                         textStart = textEnd - 1;
                     whiteSpace = NULL;
-                    y += 12.0f;
+                    y += CG_ScoreboardGetter_4d2bc0();
                     textEnd = textStart;
                     continue;
                 }
@@ -377,7 +377,7 @@ float CG_ScoreboardTotalHeight(int *totalLines)
     }
     for (i = 0; i < cg->numScores; i++)
     {
-        height += 12.0f;
+        height += CG_ScoreboardGetter_4d2bc0();
         ++*totalLines;
     }
     return height;
@@ -514,7 +514,7 @@ float CG_DrawClientScore(const float *color, float y, const score_t *score, floa
     float x;
     int i;
 
-    if (!CG_CheckDrawScoreboardLine(drawLine, y, 12.0f))
+    if (!CG_CheckDrawScoreboardLine(drawLine, y, CG_ScoreboardGetter_4d2bc0()))
         return y;
 
     ci = &cg->bgs.clientinfo[score->client];
@@ -532,7 +532,7 @@ float CG_DrawClientScore(const float *color, float y, const score_t *score, floa
         backColor[1] = color[1];
         backColor[2] = color[2];
         backColor[3] = color[3] * 0.2f;
-        UI_DrawHandlePic(129.0f, y, listWidth, 12.0f, 0, 0, backColor, material);
+        UI_DrawHandlePic(129.0f, y, listWidth, CG_ScoreboardGetter_4d2bc0(), 0, 0, backColor, material);
     }
     else if (highlight)
     {
@@ -541,7 +541,7 @@ float CG_DrawClientScore(const float *color, float y, const score_t *score, floa
         backColor[1] = color[1];
         backColor[2] = color[2];
         backColor[3] = color[3] * 0.15f;
-        UI_DrawHandlePic(129.0f, y, listWidth, 12.0f, 0, 0, backColor, material);
+        UI_DrawHandlePic(129.0f, y, listWidth, CG_ScoreboardGetter_4d2bc0(), 0, 0, backColor, material);
     }
 
     listFont = UI_GetFontHandle(0, 0.22f);
@@ -622,7 +622,7 @@ float CG_DrawClientScore(const float *color, float y, const score_t *score, floa
         textColor[3] = color[3];
         UI_DrawText(string, 0x7fffffff, listFont, x + xAdj, y + 10.08f, 0, 0, scale, textColor, style);
     }
-    return y + 12.0f;
+    return y + CG_ScoreboardGetter_4d2bc0();
 }
 
 float CG_DrawTeamOfClientScore(const float *color, float y, int team, float listWidth, int *drawLine, int *numDrawn)

@@ -370,9 +370,7 @@ float *CG_FadeColor(int startMsec, int totalMsec, int fadeMsec)
 __forceinline void CG_GetColorForHealth(int health, vec4_t hcolor)
 {
     if (health <= 0) {
-        hcolor[0] = 0.0f;
-        hcolor[1] = 0.0f;
-        hcolor[2] = 0.0f;
+        VectorClear(hcolor);
         hcolor[3] = 1.0f;
         return;
     }
