@@ -136,7 +136,9 @@ static qboolean LAN_ReadServerCache(fileHandle_t fileIn)
         return 0;
     if (FS_Read(cls.globalServers, sizeof(cls.globalServers), fileIn) != sizeof(cls.globalServers))
         return 0;
-    return FS_Read(cls.favoriteServers, sizeof(cls.favoriteServers), fileIn) == sizeof(cls.favoriteServers);
+    if (FS_Read(cls.favoriteServers, sizeof(cls.favoriteServers), fileIn) != sizeof(cls.favoriteServers))
+        return 0;
+    return 1;
 }
 
 void LAN_LoadCachedServers(void)

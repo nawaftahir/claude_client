@@ -1193,9 +1193,15 @@ static Bool Script_ExecIfIntsEqual(const char *dvarValue, const char *testValue)
     return atoi(dvarValue) == atoi(testValue) ? 1 : 0;
 }
 
+// com_math.h
+inline float I_fabs(const float value)
+{
+    return fabs(value);
+}
+
 static Bool Script_ExecIfFloatsEqual(const char *dvarValue, const char *testValue)
 {
-    return fabs((float)(atof(dvarValue) - atof(testValue))) < 9.999999747378752e-06f ? 1 : 0;
+    return I_fabs((float)(atof(dvarValue) - atof(testValue))) < 9.999999747378752e-06f ? 1 : 0;
 }
 
 void Script_ExecOnDvarStringValue(displayContextDef_t *dc, itemDef_t *item, const char **args)

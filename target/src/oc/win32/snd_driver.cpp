@@ -1323,7 +1323,7 @@ void SND_RawSamples(int samples, int rate, int width, int s_channels, const byte
         }
     }
 
-    bytes = samples * width * s_channels;
+    bytes = width * samples * s_channels;
     while (bytes) {
         while (milesGlob.raw.bufReady[milesGlob.raw.writeBuf]) {
             SND_Update();

@@ -1008,22 +1008,24 @@ static void ConDrawInput_TextAndOver(const char *str, const vec_t *color)
     conDrawInputGlob.x += (float)re.TextWidth(str, 0, cls.consoleFont);
 }
 
+extern void CL_DrawStretchPicPhysical(float x, float y, float w, float h, float s1, float t1, float s2, float t2, const vec_t *color, MaterialHandle material);
+
 static void ConDraw_Box(float x, float y, float w, float h, const vec_t *color)
 {
     clientStatic_t *cls_ = &cls;
     vec4_t darkColor;
 
-    re.DrawStretchPic(x, y, w, h, 0.0f, 0.0f, 0.0f, 0.0f, color, cls_->whiteMaterial);
+    CL_DrawStretchPicPhysical(x, y, w, h, 0.0f, 0.0f, 0.0f, 0.0f, color, cls_->whiteMaterial);
 
     darkColor[0] = color[0] * 0.5f;
     darkColor[1] = color[1] * 0.5f;
     darkColor[2] = color[2] * 0.5f;
     darkColor[3] = color[3];
 
-    re.DrawStretchPic(x, y, 2.0f, h, 0.0f, 0.0f, 0.0f, 0.0f, darkColor, cls_->whiteMaterial);
-    re.DrawStretchPic(x + w - 2.0f, y, 2.0f, h, 0.0f, 0.0f, 0.0f, 0.0f, darkColor, cls_->whiteMaterial);
-    re.DrawStretchPic(x, y, w, 2.0f, 0.0f, 0.0f, 0.0f, 0.0f, darkColor, cls_->whiteMaterial);
-    re.DrawStretchPic(x, y + h - 2.0f, w, 2.0f, 0.0f, 0.0f, 0.0f, 0.0f, darkColor, cls_->whiteMaterial);
+    CL_DrawStretchPicPhysical(x, y, 2.0f, h, 0.0f, 0.0f, 0.0f, 0.0f, darkColor, cls_->whiteMaterial);
+    CL_DrawStretchPicPhysical(x + w - 2.0f, y, 2.0f, h, 0.0f, 0.0f, 0.0f, 0.0f, darkColor, cls_->whiteMaterial);
+    CL_DrawStretchPicPhysical(x, y, w, 2.0f, 0.0f, 0.0f, 0.0f, 0.0f, darkColor, cls_->whiteMaterial);
+    CL_DrawStretchPicPhysical(x, y + h - 2.0f, w, 2.0f, 0.0f, 0.0f, 0.0f, 0.0f, darkColor, cls_->whiteMaterial);
 }
 
 static void ConDrawInput_Box(int lines, const vec_t *color)

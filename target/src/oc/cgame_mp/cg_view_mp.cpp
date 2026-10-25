@@ -174,7 +174,6 @@ static void CG_OffsetThirdPersonView(void)
     trace_t trace;
     vec3_t focusPoint;
     float focusDist;
-    float distSq;
 
     cg->refdef.vieworg[2] += cg->predictedPlayerState.viewHeightCurrent;
     focusAngles[0] = cg->refdefViewAngles[0];
@@ -220,8 +219,7 @@ static void CG_OffsetThirdPersonView(void)
     focusPoint[0] = focusPoint[0] - cg->refdef.vieworg[0];
     focusPoint[1] = focusPoint[1] - cg->refdef.vieworg[1];
     focusPoint[2] = focusPoint[2] - cg->refdef.vieworg[2];
-    distSq = focusPoint[1] * focusPoint[1] + focusPoint[0] * focusPoint[0];
-    focusDist = (float)sqrt(distSq);
+    focusDist = (float)sqrt(focusPoint[1] * focusPoint[1] + focusPoint[0] * focusPoint[0]);
     if (focusDist < 1.0f)
         focusDist = 1.0f;
     cg->refdefViewAngles[0] = (float)atan2(focusPoint[2], focusDist) * -57.295776f;
@@ -237,6 +235,12 @@ static void CG_StepOffset(void)
         cg->stepTime = cg->time;
     if (timeDelta < 100)
         cg->refdef.vieworg[2] -= (float)(100 - timeDelta) * cg->stepChange * 0.01f;
+}
+
+// com_math.h
+inline float I_fabs(const float value)
+{
+    return fabs(value);
 }
 
 // Name from CoD4; original CoD2 name unknown.
@@ -279,7 +283,7 @@ static void CG_KickAngles(void)
                 cg->kickAngles[i] = cg->kickAngles[i] + kickChange;
                 if (cg->kickAngles[i] == 0.0f) {
                     cg->kickAVel[i] = 0.0f;
-                } else if (fabs(cg->kickAngles[i]) > 10.0f) {
+                } else if (I_fabs(cg->kickAngles[i]) > 10.0f) {
                     cg->kickAngles[i] = cg->kickAngles[i] > 0.0f ? 10.0f : -10.0f;
                     cg->kickAVel[i] = 0.0f;
                 }

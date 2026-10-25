@@ -377,7 +377,7 @@ float CG_ScoreboardTotalHeight(int *totalLines)
     }
     for (i = 0; i < cg->numScores; i++)
     {
-        height += CG_ScoreboardGetter_4d2bc0();
+        height += 12.0f;
         ++*totalLines;
     }
     return height;
@@ -392,7 +392,7 @@ int CG_CheckDrawScoreboardLine(int *drawLine, float y, float lineHeight)
         ++*drawLine;
         return 0;
     }
-    if (y + lineHeight > 432.0f)
+    if (y + lineHeight > CG_ScoreboardGetter_4d2c00() + CG_ScoreboardGetter_4d2be0() - 20.0f)
     {
         cg->scoresOffBottom = 1;
         return 0;

@@ -287,11 +287,7 @@ Bool CG_CheckPlayerForLowAmmo(void)
     int maxAmmo;
 
     ps = &cg->predictedPlayerState;
-    weaponIndex = cg->weaponSelect;
-
-    if (weaponIndex < 0 || weaponIndex >= BG_GetNumWeapons() || !(ps->weapons[weaponIndex >> 5] & (1 << (weaponIndex & 0x1f)))) {
-        weaponIndex = ps->weapon;
-    }
+    weaponIndex = CG_GetDrawWeaponIndex();
 
     if (!weaponIndex) {
         return 0;
@@ -325,11 +321,7 @@ Bool CG_CheckPlayerForLowClip(void)
     int clipSize;
 
     ps = &cg->predictedPlayerState;
-    weaponIndex = cg->weaponSelect;
-
-    if (weaponIndex < 0 || weaponIndex >= BG_GetNumWeapons() || !(ps->weapons[weaponIndex >> 5] & (1 << (weaponIndex & 0x1f)))) {
-        weaponIndex = ps->weapon;
-    }
+    weaponIndex = CG_GetDrawWeaponIndex();
 
     if (!weaponIndex || BG_WeaponIsClipOnly(weaponIndex)) {
         return 0;

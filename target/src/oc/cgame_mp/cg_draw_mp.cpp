@@ -376,16 +376,16 @@ static float CG_DrawFPS(float y)
         if (minTime <= 0)
             minTime = 1;
 
-        CG_ROUND_FPS(fpsMin, 1000.0f / (float)maxTime);
-        CG_ROUND_FPS(fpsMax, 1000.0f / (float)minTime);
+        fpsMin = I_fround(1000.0f / (float)maxTime);
+        fpsMax = I_fround(1000.0f / (float)minTime);
 
         if (cg_drawFPS->current.integer > 2)
             s = va("%1.2fmspf(%i-%i)", (float)total * (1.0f / 32.0f), minTime, maxTime);
         else {
             int fpsAvg, fpsVar;
 
-            CG_ROUND_FPS(fpsAvg, 32000.0f / (float)total);
-            { const double roundEpsilon = 1.0 / 1073741824.0; int result; __asm fld variance __asm fadd roundEpsilon __asm { fistp result } fpsVar = result; }
+            fpsAvg = I_fround(32000.0f / (float)total);
+            fpsVar = I_fround(variance);
 
             s = va("%ifps(%i-%i,%i)", fpsAvg, fpsMin, fpsMax, fpsVar);
         }
@@ -665,14 +665,14 @@ static void CG_DrawLagometer(void)
             v = (float)lagometer.snapshotSamples[i];
             if (v > 0.0f)
             {
-                if (lagometer.snapshotFlags[i] & 1)
-                    color = colorYellow;
-                else
-                    color = colorGreen;
                 vscale = range / 900.0f;
                 v = v * vscale;
                 if (v > range)
                     v = range;
+                if (lagometer.snapshotFlags[i] & 1)
+                    color = colorYellow;
+                else
+                    color = colorGreen;
                 float h = v;
                 float w = 1.0f;
                 float y = ay + ah - v;
@@ -1157,9 +1157,7 @@ static __declspec(noinline) void CG_CalcReticleSpread(const WeaponDef *weapDef, 
 
 static __declspec(noinline) void CG_CalcReticleColor(const float *baseColor, float alpha, float *reticleColor)
 {
-    reticleColor[0] = baseColor[0];
-    reticleColor[1] = baseColor[1];
-    reticleColor[2] = baseColor[2];
+    VectorCopy(baseColor, reticleColor);
     reticleColor[3] = (1.0f - cg->predictedPlayerState.aimSpreadScale * (1.0f / 255.0f)) * cg_crosshairAlpha->current.value * alpha;
     if (reticleColor[3] < cg_crosshairAlphaMin->current.value)
         reticleColor[3] = cg_crosshairAlphaMin->current.value;
@@ -1339,8 +1337,8 @@ void CG_DrawCrosshairNames(void)
         return;
     I_CleanStr(name);
 
-    y = (float)(cg_drawCrosshairNamesPosY->current.integer + 16);
     x = (float)cg_drawCrosshairNamesPosX->current.integer;
+    y = (float)(cg_drawCrosshairNamesPosY->current.integer + 16);
     if (cg->crosshairClientNum == cg->identifyClientNum) {
         textColor[1] = (float)cg->identifyClientHealth * 0.01f;
         if (textColor[1] > 1.0f)
@@ -1364,6 +1362,12 @@ void CG_DrawCrosshairNames(void)
     UI_DrawText(name, 0x7fffffff, UI_GetFontHandle(0, 1.0f / 3.0f), x, y, 0, 0, 1.0f / 3.0f, textColor, 3);
 }
 
+// com_math.h
+inline float I_fabs(const float value)
+{
+    return fabs(value);
+}
+
 static void CG_DrawFlashDamage(void)
 {
     float redFlash;
@@ -1374,7 +1378,7 @@ static void CG_DrawFlashDamage(void)
 
     if (cg->v_dmg_time > cg->time)
     {
-        redFlash = fabsf((float)(cg->v_dmg_time - cg->time) * cg->v_dmg_pitch * 0.002f);
+        redFlash = I_fabs((float)(cg->v_dmg_time - cg->time) * cg->v_dmg_pitch * 0.002f);
         if (redFlash > 5.0f)
             redFlash = 5.0f;
 

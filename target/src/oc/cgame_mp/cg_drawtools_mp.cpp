@@ -6,6 +6,12 @@
 #include <string.h>
 
 extern float fabsf(float x);
+
+// com_math.h
+inline float I_fabs(const float value)
+{
+    return fabs(value);
+}
 extern float sinf(float x);
 extern float cosf(float x);
 extern double atof(const char *s);
@@ -433,8 +439,8 @@ void CG_UpdateCompassOrientation(void)
         }
         float fTimeStep = (float)step * 0.001f;
 
-        if (fabsf(fDiff) < 0.25f) {
-            if (fabsf(cg->compassSpeed) < 1.0f) {
+        if (I_fabs(fDiff) < 0.25f) {
+            if (I_fabs(cg->compassSpeed) < 1.0f) {
                 cg->compassYaw = fTargetYaw;
                 cg->compassSpeed = 0.0f;
                 return;
@@ -504,7 +510,7 @@ void CG_UpdateCompPointerOrientation(void)
     cg->compassLastTime = currentTime;
     float fDiff = AngleSubtract(cg->compPointerYaw, cg->refdefViewAngles[1]);
 
-    if (fabsf(fDiff) > 10.0f) {
+    if (I_fabs(fDiff) > 10.0f) {
         fDiff = CG_FloatIsNegative(fDiff) ? -10.0f : 10.0f;
     }
 
@@ -519,8 +525,8 @@ void CG_UpdateCompPointerOrientation(void)
         }
         float fTimeStep = (float)step * 0.001f;
 
-        if (fabsf(fDiff) < 0.5f) {
-            if (fabsf(cg->compPointerSpeed) < 2.0f) {
+        if (I_fabs(fDiff) < 0.5f) {
+            if (I_fabs(cg->compPointerSpeed) < 2.0f) {
                 cg->compPointerYaw = cg->refdefViewAngles[1];
                 cg->compPointerSpeed = 0.0f;
                 return;
