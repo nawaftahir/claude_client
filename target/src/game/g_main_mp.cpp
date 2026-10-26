@@ -12,6 +12,8 @@ ALIGNED(16) bgs_t level_bgs;
 static char g_unusedStorage[64];
 
 ALIGNED(128) gentity_t g_entities[MAX_GENTITIES];
+// unreferenced in retail; filler, name chosen so the linker places it in retail's slot
+int gU144;
 static gclient_t g_clients[MAX_CLIENTS];
 
 entityHandler_t entityHandlers[] =
