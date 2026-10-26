@@ -11,7 +11,7 @@ extern const dvar_t *cg_gun_move_f;
 extern const dvar_t *cg_gun_move_r;
 extern const dvar_t *cg_gun_move_u;
 extern const dvar_t *cg_gun_ofs_f;
-extern const dvar_t *cg_gun_ofs_r;
+extern const dvar_t *cg_gun_ofs_r_182;
 extern const dvar_t *cg_gun_ofs_u;
 extern const dvar_t *cg_gun_move_rate;
 extern const dvar_t *cg_gun_move_minspeed;
@@ -28,7 +28,7 @@ extern const dvar_t *cg_brass;
 extern const dvar_t *cg_drawGun;
 extern const dvar_t *cg_tracerChance;
 extern const dvar_t *cg_tracerScale;
-extern const dvar_t *cg_tracerScaleDistRange;
+extern const dvar_t *cg_viewsize_85;
 extern const dvar_t *cg_tracerScaleMinDist;
 extern const dvar_t *cg_tracerSpeed;
 extern const dvar_t *cg_tracerWidth;
@@ -894,7 +894,7 @@ void CalculateWeaponPosition_BasePosition_movement(float *origin)
         targetPos[1] = targetPos[1] + weapDef->vDuckedOfs[1];
         targetPos[2] = targetPos[2] + weapDef->vDuckedOfs[2];
         targetPos[0] = targetPos[0] + cg_gun_ofs_f->current.value;
-        targetPos[1] = targetPos[1] + cg_gun_ofs_r->current.value;
+        targetPos[1] = targetPos[1] + cg_gun_ofs_r_182->current.value;
         targetPos[2] = targetPos[2] + cg_gun_ofs_u->current.value;
     }
     else if (cg->predictedPlayerState.viewHeightTarget == 11)
@@ -903,7 +903,7 @@ void CalculateWeaponPosition_BasePosition_movement(float *origin)
         targetPos[1] = targetPos[1] + weapDef->vProneOfs[1];
         targetPos[2] = targetPos[2] + weapDef->vProneOfs[2];
         targetPos[0] = targetPos[0] + cg_gun_ofs_f->current.value;
-        targetPos[1] = targetPos[1] + cg_gun_ofs_r->current.value;
+        targetPos[1] = targetPos[1] + cg_gun_ofs_r_182->current.value;
         targetPos[2] = targetPos[2] + cg_gun_ofs_u->current.value;
     }
     i = 0;
@@ -1959,7 +1959,7 @@ static void ScaleTracer(const float *start, const float *finish, const float *vi
 
     tracerScale = cg_tracerScale->current.value;
     tracerScaleMinDist = cg_tracerScaleMinDist->current.value;
-    tracerScaleDistRange = cg_tracerScaleDistRange->current.value;
+    tracerScaleDistRange = cg_viewsize_85->current.value;
     if (tracerScale != 1.0f) {
         startDist = Vec3Distance(start, viewOrg);
         finishDist = Vec3Distance(finish, viewOrg);

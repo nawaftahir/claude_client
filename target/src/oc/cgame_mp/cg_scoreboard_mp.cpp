@@ -8,7 +8,7 @@ extern const vec4_t colorWhite;
 
 extern const dvar_t *cg_scoreboardBannerHeight;
 
-extern const dvar_t *cg_paused;
+extern const dvar_t *cg_paused_244;
 
 extern MaterialHandle CL_RegisterMaterialNoMip(const char *name, int imageTrack);
 extern const char* Dvar_GetString(const char *dvarName);
@@ -768,7 +768,7 @@ qboolean CG_DrawScoreboard(void)
     float *fadeColor;
     float alpha;
 
-    if (cg_paused->current.integer)
+    if (cg_paused_244->current.integer)
         return 0;
 
     if (cg->showScores)

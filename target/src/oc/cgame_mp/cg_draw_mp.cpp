@@ -16,7 +16,7 @@ extern const dvar_t *cg_hudDamageIconWidth;
 extern const dvar_t *cg_hudGrenadeIconHeight;
 extern const dvar_t *cg_hudGrenadeIconInScope;
 extern const dvar_t *cg_hudGrenadeIconMaxHeight;
-extern const dvar_t *cg_hudGrenadeIconMaxRange;
+extern const dvar_t *cg_hudGrenadeIconMaxRange_197;
 extern const dvar_t *cg_hudGrenadeIconOffset;
 extern const dvar_t *cg_hudGrenadeIconWidth;
 extern const dvar_t *cg_hudGrenadePointerHeight;
@@ -33,7 +33,7 @@ extern const dvar_t *cg_chatHeight;
 extern const dvar_t *cg_chatTime;
 extern const dvar_t *cg_crosshairAlpha;
 extern const dvar_t *cg_crosshairAlphaMin;
-extern const dvar_t *cg_crosshairDynamic;
+extern const dvar_t *cg_crosshairDynamic_192;
 extern const dvar_t *cg_crosshairEnemyColor;
 extern const dvar_t *cg_draw2D;
 extern const dvar_t *cg_drawCrosshair;
@@ -43,7 +43,7 @@ extern const dvar_t *cg_drawCrosshairNamesPosY;
 extern const dvar_t *cg_drawFPS;
 extern const dvar_t *cg_drawGameMessages;
 extern const dvar_t *cg_drawGun;
-extern const dvar_t *cg_drawLagometer;
+extern const dvar_t *cg_drawLagometer_72;
 extern const dvar_t *cg_drawMaterial;
 extern const dvar_t *cg_drawScriptUsage;
 extern const dvar_t *cg_drawSnapshot;
@@ -54,7 +54,7 @@ extern const dvar_t *cg_hudCompassSize;
 extern const dvar_t *cg_hudSayPosition;
 extern const dvar_t *cg_minicon;
 extern const dvar_t *cg_nopredict;
-extern const dvar_t *cg_paused;
+extern const dvar_t *cg_paused_244;
 extern const dvar_t *cg_subtitleCharHeight;
 extern const dvar_t *cg_subtitlePosX;
 extern const dvar_t *cg_subtitlePosY;
@@ -584,7 +584,7 @@ static void CG_DrawLagometer(void)
     float vscale;
     const float *color;
 
-    if (cg_drawLagometer->current.enabled && !cgs->localServer)
+    if (cg_drawLagometer_72->current.enabled && !cgs->localServer)
     {
         UI_DrawHandlePic(-55.0f, -140.0f, 48.0f, 48.0f, 3, 3, 0, cgs->media.lagometerMaterial);
 
@@ -1043,7 +1043,7 @@ void CG_DrawTurretCrossHair(void)
     float w;
     float h;
 
-    if (!cg_drawTurretCrosshair->current.enabled || cg_paused->current.integer)
+    if (!cg_drawTurretCrosshair->current.enabled || cg_paused_244->current.integer)
         return;
 
     weapIndex = cg_entities[cg->predictedPlayerState.viewlocked_entNum].nextState.weapon;
@@ -1075,7 +1075,7 @@ Bool CG_CrosshairDisabled_4c2c40(void)
 
 static bool AllowedToDrawCrosshair(void)
 {
-    if (cg_paused->current.integer)
+    if (cg_paused_244->current.integer)
         return 0;
     if (!cg_drawCrosshair->current.enabled)
         return 0;
@@ -1270,7 +1270,7 @@ void CG_DrawCrosshair(void)
             CG_DrawAdsAimIndicator(weapIndex, weapDef, color, centerX, centerY, transScale);
         }
         if (posLerp != 1.0f || cg_drawGun->current.enabled) {
-            if (!cg_crosshairDynamic->current.enabled) {
+            if (!cg_crosshairDynamic_192->current.enabled) {
                 centerX = 0.0f;
                 centerY = transShift;
             }
@@ -1547,7 +1547,7 @@ static bool CG_ShouldDrawGrenadeIndicator(const entityState_t *es)
         return false;
     }
 
-    maxRange = cg_hudGrenadeIconMaxRange->current.value;
+    maxRange = cg_hudGrenadeIconMaxRange_197->current.value;
     if (offset[2] * offset[2] + (offset[0] * offset[0] + offset[1] * offset[1]) > maxRange * maxRange)
         return false;
     return true;

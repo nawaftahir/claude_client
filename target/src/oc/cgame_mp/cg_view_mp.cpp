@@ -14,7 +14,7 @@ extern const dvar_t *cg_errorDecay;
 extern const dvar_t *cg_fov;
 extern const dvar_t *cg_fovMin;
 extern const dvar_t *cg_fovScale;
-extern const dvar_t *cg_paused;
+extern const dvar_t *cg_paused_244;
 extern const dvar_t *cg_thirdPerson;
 extern const dvar_t *cg_thirdPersonAngle;
 extern const dvar_t *cg_thirdPersonRange;
@@ -791,7 +791,7 @@ inline void Vec3LerpFrom(const vec3_t from, const vec3_t to, float frac, vec3_t 
 static void DumpAnims(void)
 {
     int dumpClient = cg_dumpAnims->current.integer;
-    if (dumpClient >= 0 && cg_paused->current.integer == 0) {
+    if (dumpClient >= 0 && cg_paused_244->current.integer == 0) {
         struct DObj_s *obj = Com_GetClientDObj(dumpClient, 0);
         if (obj != 0) {
             Com_Printf("client:\n");

@@ -17,7 +17,10 @@ struct cm_bsp_lumps_t
 };
 
 static char *cmod_base;
-static byte *cm_lumpData;
+static byte *cm_lumpData_67;
+/* Unreferenced in retail. Names are picked so the linker keeps retail's order here. */
+int cmFill_106;
+int cmFill_290;
 
 static void CM_InitBoxHull( void );
 
@@ -1560,10 +1563,10 @@ int CM_LoadLumpFromFile( int lump, byte **data )
 	}
 
 	FS_SeekInternal(h, header[2 * lump + 3] - BSP_HEADER_SIZE, 0);
-	cm_lumpData = (byte *)Hunk_AllocateTempMemory(len);
-	FS_Read(cm_lumpData, len, h);
+	cm_lumpData_67 = (byte *)Hunk_AllocateTempMemory(len);
+	FS_Read(cm_lumpData_67, len, h);
 	FS_FCloseFile(h);
-	*data = cm_lumpData;
+	*data = cm_lumpData_67;
 
 	return len;
 }
@@ -1571,7 +1574,7 @@ int CM_LoadLumpFromFile( int lump, byte **data )
 // unreferenced; original name unknown
 void CM_FreeLumpData( void )
 {
-	Hunk_FreeTempMemory(cm_lumpData);
+	Hunk_FreeTempMemory(cm_lumpData_67);
 }
 
 

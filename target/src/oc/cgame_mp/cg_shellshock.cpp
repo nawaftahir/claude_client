@@ -5,8 +5,8 @@
 
 extern float floorf(float x);
 
-extern const dvar_t *cg_shock_mouse;
-extern const dvar_t *cg_shock_mouse_fadeTime;
+extern const dvar_t *cg_shock_mouse_309;
+extern const dvar_t *cg_shock_mouse_fadeTime_152;
 extern const dvar_t *cg_shock_mouse_maxpitchspeed;
 extern const dvar_t *cg_shock_mouse_maxyawspeed;
 extern const dvar_t *cg_shock_mouse_sensitivityscale;
@@ -16,7 +16,7 @@ extern const dvar_t *cg_shock_sound;
 extern const dvar_t *cg_shock_soundDryLevel;
 extern const dvar_t *cg_shock_soundFadeInTime;
 extern const dvar_t *cg_shock_soundFadeOutTime;
-extern const dvar_t *cg_shock_soundLoopEndDelay;
+extern const dvar_t *cg_shock_soundLoopEndDelay_370;
 extern const dvar_t *cg_shock_soundLoopFadeTime;
 extern const dvar_t *cg_shock_soundModEndDelay;
 extern const dvar_t *cg_shock_soundRoomType;
@@ -25,7 +25,7 @@ extern const dvar_t *cg_shock_viewKickPeriod;
 extern const dvar_t *cg_shock_viewKickRadius;
 extern const dvar_t *cg_shock_volume_announcer;
 extern const dvar_t *cg_shock_volume_auto;
-extern const dvar_t *cg_shock_volume_auto2d;
+extern const dvar_t *cg_shock_volume_auto2d_320;
 extern const dvar_t *cg_shock_volume_body;
 extern const dvar_t *cg_shock_volume_item;
 extern const dvar_t *cg_shock_volume_local;
@@ -35,7 +35,6 @@ extern const dvar_t *cg_shock_volume_shellshock;
 extern const dvar_t *cg_shock_volume_voice;
 extern const dvar_t *cg_shock_volume_weapon;
 
-extern const dvar_t *cg_shock_viewKickFadeTime;
 
 
 extern vec_t Vec3Normalize( vec3_t v );
@@ -457,7 +456,7 @@ void CG_SetShellShockParmsFromDvars(shellshock_parms_t *parms)
 
     parms->sound.loopFadeTime = float_seconds_to_ms(dvar_get_float(cg_shock_soundLoopFadeTime));
 
-    parms->sound.loopEndDelay = float_seconds_to_ms(dvar_get_float(cg_shock_soundLoopEndDelay));
+    parms->sound.loopEndDelay = float_seconds_to_ms(dvar_get_float(cg_shock_soundLoopEndDelay_370));
 
     strncpy(parms->sound.roomtype, Dvar_EnumToString(dvar_get_ptr(cg_shock_soundRoomType)), 0xf);
     parms->sound.roomtype[15] = 0;
@@ -475,7 +474,7 @@ void CG_SetShellShockParmsFromDvars(shellshock_parms_t *parms)
         val = 1.0f;
     parms->sound.channelvolume[0] = val;
 
-    val = dvar_get_float(cg_shock_volume_auto2d);
+    val = dvar_get_float(cg_shock_volume_auto2d_320);
     if (0.0f <= -val)
         val = 0.0f;
     if (0.0f <= val - 1.0f)
@@ -545,9 +544,9 @@ void CG_SetShellShockParmsFromDvars(shellshock_parms_t *parms)
         val = 1.0f;
     parms->sound.channelvolume[10] = val;
 
-    parms->mouse.use = dvar_get_bool(cg_shock_mouse);
+    parms->mouse.use = dvar_get_bool(cg_shock_mouse_309);
 
-    parms->mouse.fadeTime = float_seconds_to_ms(dvar_get_float(cg_shock_mouse_fadeTime));
+    parms->mouse.fadeTime = float_seconds_to_ms(dvar_get_float(cg_shock_mouse_fadeTime_152));
 
     *(int *)&parms->mouse.maxPitchSpeed = dvar_get_int(cg_shock_mouse_maxpitchspeed);
 
