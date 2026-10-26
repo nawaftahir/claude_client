@@ -35,7 +35,6 @@ extern int Com_sprintf(char *dest, size_t size, const char *format, ...);
 extern void Com_Printf(const char *fmt, ...);
 extern void CL_DrawString(int x, int y, const char *str, int color, int size);
 extern bool NET_SendPacket( netsrc_t sock, int length, const void *data, netadr_t to );
-static int cl_decode_count = 0;
 
 void CL_Netchan_Decode(byte *data, int size);
 void CL_Netchan_TransmitNextFragment(netchan_t *chan);

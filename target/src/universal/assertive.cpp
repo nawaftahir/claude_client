@@ -1,5 +1,6 @@
 #include "../qcommon/qcommon.h"
 
+static int cl_decode_count = 0;
 static bool shouldQuitOnError = false;
 
 static HWND g_hwndGame[4];

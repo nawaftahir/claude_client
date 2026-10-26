@@ -2902,3 +2902,6 @@ const char *GetBspExtension()
 }
 
 
+
+/* Unreferenced in retail (8 bytes after fsh); the name keeps the linker order. */
+int fsFill_37[2];

@@ -3358,3 +3358,6 @@ static void CL_BuildMd5StrFromCDKey(char *md5Str)
 
 // retail inlines Dvar_SetString (dvar.cpp) here
 
+
+/* Unreferenced in retail; the name keeps it first in this file's data. */
+int clFill_248;
