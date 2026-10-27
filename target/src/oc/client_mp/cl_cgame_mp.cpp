@@ -1154,7 +1154,7 @@ void CL_InitCGame(void)
         clientConnection_t *clui = CLUI_STATE;
         clui->state = (connstate_t)(6);
         cl->cgameInitCalled = 1;
-        CG_Init(clui->clientNum, clui->lastExecutedServerCommand, clui->serverMessageSequence);
+        CG_Init(clui->serverMessageSequence, clui->lastExecutedServerCommand, clui->clientNum);
         cl->cgameInitialized = 1;
         clui->state = (connstate_t)(7);
     }

@@ -1095,11 +1095,11 @@ qboolean CL_ReadyToSendPacket(void)
         return 0;
     }
 
-    if (conn->serverAddress.type == NA_LOOPBACK) {
+    if (conn->netchan.remoteAddress.type == NA_LOOPBACK) {
         return 1;
     }
 
-    if (Sys_IsLANAddress(conn->serverAddress)) {
+    if (Sys_IsLANAddress(conn->netchan.remoteAddress)) {
         return 1;
     }
 

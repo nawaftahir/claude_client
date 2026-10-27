@@ -76,7 +76,7 @@ void G_DebugCircleEx( const float *center, float radius, const float *dir, const
 
 	for ( i = 0; i < sizeof(verts) / sizeof(verts[0]); i++ )
 	{
-		G_DebugLine(verts[i], verts[(i + 1) % (sizeof(verts) / sizeof(verts[0]))], color, depthTest, duration);
+		CL_AddDebugLine(verts[i], verts[(i + 1) % (sizeof(verts) / sizeof(verts[0]))], color, depthTest, duration, 0);
 	}
 }
 

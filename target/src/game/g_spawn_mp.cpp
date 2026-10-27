@@ -9,23 +9,6 @@ Scr_ReadOnlyField
 */
 void Scr_ReadOnlyField( gentity_t *self, int offset );
 
-/* retail 0x561168: two unreferenced floats before the entity field table (owner unknown) */
-extern const float g_unk_561168[2];
-const float g_unk_561168[2] = { 50.0f, 0.2f };
-static const game_entity_field_t g_entity_fields[] =
-{
-	{ "classname", FOFS( classname ), F_STRING, Scr_ReadOnlyField },
-	{ "origin", FOFS( r.currentOrigin ), F_VECTOR, Scr_SetOrigin },
-	{ "model", FOFS( model ), F_MODEL, Scr_ReadOnlyField },
-	{ "spawnflags", FOFS( spawnflags ), F_INT, Scr_ReadOnlyField },
-	{ "target", FOFS( target ), F_STRING, NULL },
-	{ "targetname", FOFS( targetname ), F_STRING, NULL },
-	{ "count", FOFS( count ), F_INT, NULL },
-	{ "health", FOFS( health ), F_INT, Scr_SetHealth },
-	{ "dmg", FOFS( dmg ), F_INT, NULL },
-	{ "angles", FOFS( r.currentAngles ), F_VECTOR, Scr_SetAngles },
-	{ NULL, 0, F_INT, NULL } // field terminator
-};
 
 /*
 ==============
@@ -77,32 +60,6 @@ void GScr_SetDynamicEntityField( gentity_t *ent, unsigned int index );
 void G_SpawnEntitiesFromString( void );
 void G_LoadStructs();
 
-spawn_t spawns[] =
-{
-	{ "info_null", SP_info_null },
-	{ "info_notnull", SP_info_notnull },
-	{ "func_group", SP_info_null },
-	{ "trigger_multiple", SP_trigger_multiple },
-	{ "trigger_radius", SP_trigger_radius },
-	{ "trigger_disk", SP_trigger_disk },
-	{ "trigger_hurt", SP_trigger_hurt },
-	{ "trigger_once", SP_trigger_once },
-	{ "light", SP_light },
-	{ "misc_model", SP_misc_model },
-	{ "misc_mg42", SP_turret },
-	{ "misc_turret", SP_turret },
-	{ "corona", SP_corona },
-	{ "trigger_use", trigger_use },
-	{ "trigger_use_touch", trigger_use_touch },
-	{ "trigger_damage", SP_trigger_damage },
-	{ "trigger_lookat", SP_trigger_lookat },
-	{ "script_brushmodel", SP_script_brushmodel },
-	{ "script_model", SP_script_model },
-	{ "script_origin", SP_script_origin },
-	{ "script_struct", G_FreeEntity },
-	{ NULL, NULL },
-};
-#define NUMSPAWNS   ( sizeof( spawns ) / sizeof( spawn_t ) )
 
 /*
 ===============
@@ -163,6 +120,51 @@ void Scr_ReadOnlyField( gentity_t *self, int offset )
 {
 	Scr_Error("Tried to set a read only entity field");
 }
+
+/* retail 0x561168: two unreferenced floats before the entity field table (owner unknown) */
+extern const float g_unk_561168[2];
+const float g_unk_561168[2] = { 50.0f, 0.2f };
+static const game_entity_field_t g_entity_fields[] =
+{
+	{ "classname", FOFS( classname ), F_STRING, Scr_ReadOnlyField },
+	{ "origin", FOFS( r.currentOrigin ), F_VECTOR, Scr_SetOrigin },
+	{ "model", FOFS( model ), F_MODEL, Scr_ReadOnlyField },
+	{ "spawnflags", FOFS( spawnflags ), F_INT, Scr_ReadOnlyField },
+	{ "target", FOFS( target ), F_STRING, NULL },
+	{ "targetname", FOFS( targetname ), F_STRING, NULL },
+	{ "count", FOFS( count ), F_INT, NULL },
+	{ "health", FOFS( health ), F_INT, Scr_SetHealth },
+	{ "dmg", FOFS( dmg ), F_INT, NULL },
+	{ "angles", FOFS( r.currentAngles ), F_VECTOR, Scr_SetAngles },
+	{ NULL, 0, F_INT, NULL } // field terminator
+};
+
+spawn_t spawns[] =
+{
+	{ "info_null", SP_info_null },
+	{ "info_notnull", SP_info_notnull },
+	{ "func_group", SP_info_null },
+	{ "trigger_multiple", SP_trigger_multiple },
+	{ "trigger_radius", SP_trigger_radius },
+	{ "trigger_disk", SP_trigger_disk },
+	{ "trigger_hurt", SP_trigger_hurt },
+	{ "trigger_once", SP_trigger_once },
+	{ "light", SP_light },
+	{ "misc_model", SP_misc_model },
+	{ "misc_mg42", SP_turret },
+	{ "misc_turret", SP_turret },
+	{ "corona", SP_corona },
+	{ "trigger_use", trigger_use },
+	{ "trigger_use_touch", trigger_use_touch },
+	{ "trigger_damage", SP_trigger_damage },
+	{ "trigger_lookat", SP_trigger_lookat },
+	{ "script_brushmodel", SP_script_brushmodel },
+	{ "script_model", SP_script_model },
+	{ "script_origin", SP_script_origin },
+	{ "script_struct", G_FreeEntity },
+	{ NULL, NULL },
+};
+#define NUMSPAWNS   ( sizeof( spawns ) / sizeof( spawn_t ) )
 
 
 /*

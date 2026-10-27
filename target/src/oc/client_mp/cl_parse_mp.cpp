@@ -46,6 +46,7 @@ extern byte cls_ptr[];
 extern clientConnection_t clientConnections[1];
 #define clc clientConnections[0]
 extern dvar_t *com_dedicated;
+extern dvar_t *com_sv_running;
 extern dvar_t *cl_paused;
 extern dvar_t *net_lanauthorize;
 extern byte **cl_packetdelay;
@@ -481,7 +482,7 @@ void CL_SystemInfoChanged(void)
 
     FS_PureServerSetReferencedIwds(s, Info_ValueForKey(systemInfo, "sv_referencedIwdNames"));
 
-    if (!com_dedicated->current.enabled) {
+    if (!com_sv_running->current.enabled) {
 
         s = systemInfo;
         while (s) {

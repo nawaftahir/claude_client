@@ -1810,8 +1810,8 @@ Bool CL_ConnectionlessPacket(netadr_t from, msg_t *msg, int time)
 
         Netchan_Setup(NS_CLIENT1, &clc.netchan, from, ::qport);
         clc.state = CA_CONNECTED;
-        clc.lastPacketSentTime = cls.realtime;
-        clc.lastPacketTime = -9999;
+        clc.lastPacketTime = cls.realtime;
+        clc.lastPacketSentTime = -9999;
         return 1;
     }
 
@@ -1967,11 +1967,11 @@ void CL_CheckTimeout(void)
 {
     if ((!cl_paused->current.integer || !sv_paused->current.integer)
         && clc.state >= CA_CONNECTED && clc.state != CA_CINEMATIC && clc.state != CA_LOGO
-        && cls.realtime - clc.connectTime > cl_timeout->current.value * 1000.0f) {
+        && cls.realtime - clc.lastPacketTime > cl_timeout->current.value * 1000.0f) {
         if (++clients[0].timeoutcount > 5)
             Com_Error(ERR_DROP, "EXE_ERR_SERVER_TIMEOUT");
-    } else if ((clc.state == CA_CONNECTING || clc.state == CA_CHALLENGING) && clc.connectTime > 0
-        && cls.realtime - clc.connectTime > cl_connectTimeout->current.value * 1000.0f) {
+    } else if ((clc.state == CA_CONNECTING || clc.state == CA_CHALLENGING) && clc.lastPacketTime > 0
+        && cls.realtime - clc.lastPacketTime > cl_connectTimeout->current.value * 1000.0f) {
         Com_Error(ERR_DROP, "EXE_ERR_SERVER_TIMEOUT");
     } else {
         clients[0].timeoutcount = 0;
