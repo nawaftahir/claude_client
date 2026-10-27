@@ -191,7 +191,7 @@ static int parseEvent;
 static loadAnim_t *g_pLoadAnims;
 static int *g_piNumLoadAnims;
 
-static char ScriptFileBuffer[100000];
+static char ScriptFileBuffer_73[100000];
 static qboolean bScriptFileLoaded = qfalse;
 
 static animStringItem_t weaponStrings[MAX_WEAPONS];
@@ -1161,11 +1161,11 @@ void BG_AnimParseAnimScript( animScriptData_t *scriptData, loadAnim_t *pLoadAnim
 		if ( len < 0 )
 			Com_Error(ERR_DROP, "\x15" "Couldn't load player animation script %s\n", globalFilename);
 
-		if ( len >= sizeof(ScriptFileBuffer) - 1 )
+		if ( len >= sizeof(ScriptFileBuffer_73) - 1 )
 			Com_Error(ERR_DROP, "\x15" "Couldn't load player animation script %s\n", globalFilename);
 
-		FS_Read(ScriptFileBuffer, len, f);
-		ScriptFileBuffer[len] = 0;
+		FS_Read(ScriptFileBuffer_73, len, f);
+		ScriptFileBuffer_73[len] = 0;
 		FS_FCloseFile(f);
 		bScriptFileLoaded = qtrue;
 	}
@@ -1192,7 +1192,7 @@ void BG_AnimParseAnimScript( animScriptData_t *scriptData, loadAnim_t *pLoadAnim
 	indentLevel = 0;
 	currentScript = NULL;
 
-	text_p = ScriptFileBuffer;
+	text_p = ScriptFileBuffer_73;
 	Com_BeginParseSession( "BG_AnimParseAnimScript" );
 
 	// read in the weapon defines

@@ -27,7 +27,7 @@ extern int strcmp(const char *s1, const char *s2);
 extern char *va( const char *format, ... );
 
 static char *localization;
-static char *localized_strings;
+static char *alocalized_strings;
 static char language_buffer[4096];
 
 language_t Win_InitLocalization(void)
@@ -39,7 +39,7 @@ language_t Win_InitLocalization(void)
     char *p;
 
     localization = 0;
-    localized_strings = 0;
+    alocalized_strings = 0;
 
     fp = FS_FileOpen("localization.txt", "r");
     if (!fp)
@@ -64,7 +64,7 @@ language_t Win_InitLocalization(void)
     for (i = 0; *(p = &localization[i]); i++) {
         if (*p == '\n') {
             localization[i] = '\0';
-            localized_strings = &localization[i + 1];
+            alocalized_strings = &localization[i + 1];
             SEH_GetLanguageIndexForName(localization, &lang);
             break;
         }
@@ -76,7 +76,7 @@ language_t Win_InitLocalization(void)
 void Win_ShutdownLocalization(void)
 {
     localization = 0;
-    localized_strings = 0;
+    alocalized_strings = 0;
 }
 
 // retail 0x461f90, unreferenced; name unknown
@@ -93,7 +93,7 @@ const char *Win_LocalizeRef(const char *ref)
     int match;
 
     Com_BeginParseSession("localization");
-    strings = localized_strings;
+    strings = alocalized_strings;
 
     for (;;) {
         key = Com_Parse(&strings);

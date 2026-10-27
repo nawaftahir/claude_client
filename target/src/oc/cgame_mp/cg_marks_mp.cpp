@@ -5,6 +5,8 @@
 
 ALIGNED(128) GfxWorldVertex markVerts[1024];
 
+int cgm26[5];
+int cgm51[5];
 MarkPoly *cg_freeMarkPolys;
 ALIGNED(128) MarkPoly cg_markPolys[1024];
 extern FxHelper *theFxHelper;

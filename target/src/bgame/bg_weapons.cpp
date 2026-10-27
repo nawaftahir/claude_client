@@ -12,6 +12,7 @@ static WeaponDef *bg_weaponDefs[MAX_WEAPONS];
 
 static WeaponDef *bg_weapAmmoTypes[MAX_WEAPONS];
 static int bg_iNumAmmoTypes;
+int bgFill_22;
 
 static WeaponDef *bg_sharedAmmoCaps[MAX_WEAPONS];
 static int bg_iNumSharedAmmoCaps;
