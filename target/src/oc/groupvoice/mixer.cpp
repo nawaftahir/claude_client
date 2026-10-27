@@ -15,9 +15,10 @@ int mixerGetRecordLevel( const char *source )
 	DWORD i;
 	DWORD connections;
 
-	if ( waveInGetNumDevs() < 1 || mixerGetNumDevs() < 1 )
+	if ( waveInGetNumDevs() < 1 )
 		return -1;
-
+	if ( mixerGetNumDevs() < 1 )
+		return -1;
 	if ( mixerOpen( &hMixer, 0, 0, 0, 0 ) )
 		return -1;
 
