@@ -1367,7 +1367,7 @@ extern dvar_t *g_dropForwardSpeed;
 extern dvar_t *g_dropUpSpeedRand;
 extern dvar_t *g_maxDroppedWeapons;
 extern dvar_t *g_weaponAmmoPools;
-extern dvar_t *g_no_script_spam;
+extern dvar_t *gnP1;
 extern dvar_t *g_motd;
 extern dvar_t *g_banIPs;
 

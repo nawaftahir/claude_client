@@ -3,6 +3,7 @@
 
 ALIGNED(128) snd_local_t g_snd;
 
+int sdF194;
 const dvar_t *snd_errorOnMissing;
 const dvar_t *snd_touchStreamFilesOnLoad;
 const dvar_t *snd_khz;
@@ -2155,7 +2156,7 @@ void SND_Save(MemoryFile *memFile)
     for (i = 1; i < 3; i++)
         MemFile_WriteData(memFile, 0x20, &g_snd.envEffects[i]);
 
-    MemFile_WriteData(memFile, 8, &g_snd.background[1]);
+    MemFile_WriteData(memFile, 8, &g_snd.background[0]);
 
     if (g_snd.Initialized2d) {
         for (i = 0; i < g_snd.max_3D_channels; i++)
@@ -2206,7 +2207,7 @@ void SND_Restore(MemoryFile *memFile)
 
     SND_SetRoomtype(g_snd.effect->roomtype);
 
-    MemFile_ReadData(memFile, 8, &g_snd.background[1]);
+    MemFile_ReadData(memFile, 8, &g_snd.background[0]);
 
     while (SND_Restore3DChannel(memFile))
         ;
@@ -2384,4 +2385,4 @@ int SND_GetSoundOverlay(snd_overlay_type_t type, snd_overlay_info_t *info, int m
 
 
 // unreferenced in retail (keeps the .bss layout)
-int sndUnref3;
+int sdF157;

@@ -642,7 +642,7 @@ void print()
 	int numParams;
 	int i;
 
-	if ( g_no_script_spam->current.boolean )
+	if ( gnP1->current.boolean )
 	{
 		return;
 	}
@@ -662,7 +662,7 @@ println
 */
 void println()
 {
-	if ( g_no_script_spam->current.boolean )
+	if ( gnP1->current.boolean )
 	{
 		return;
 	}

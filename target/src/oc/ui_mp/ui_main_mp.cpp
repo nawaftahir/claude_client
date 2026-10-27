@@ -2864,7 +2864,7 @@ MaterialHandle UI_FeederItemImage(const float feederID, int index)
         index = actual;
         if (index >= 0 && index < sharedUiInfo.mapCount) {
             if (!sharedUiInfo.mapList[index].levelShot)
-                sharedUiInfo.mapList[index].levelShot = CL_RegisterMaterialNoMip(sharedUiInfo.mapList[index].mapLoadName, 3);
+                sharedUiInfo.mapList[index].levelShot = CL_RegisterMaterialNoMip(sharedUiInfo.mapList[index].imageName, 3);
             return sharedUiInfo.mapList[index].levelShot;
         }
     }

@@ -14,6 +14,7 @@ static char g_unusedStorage[64];
 ALIGNED(128) gentity_t g_entities[MAX_GENTITIES];
 // unreferenced in retail; filler, name chosen so the linker places it in retail's slot
 int gU144;
+int gcP46[14];
 static gclient_t g_clients[MAX_CLIENTS];
 
 entityHandler_t entityHandlers[] =
@@ -84,7 +85,7 @@ dvar_t *g_TeamName_Allies;
 dvar_t *g_TeamName_Axis;
 dvar_t *g_TeamColor_Allies;
 dvar_t *g_TeamColor_Axis;
-dvar_t *g_no_script_spam;
+dvar_t *gnP1;
 dvar_t *g_debugLocDamage;
 dvar_t *g_friendlyfireDist;
 dvar_t *g_friendlyNameDist;
@@ -247,7 +248,7 @@ void G_RegisterDvars()
 	g_oldVoting = Dvar_RegisterBool("g_oldVoting", true, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
 	g_voteAbstainWeight = Dvar_RegisterFloat("g_voteAbstainWeight", 0.5, 0, 1.0, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
 
-	g_no_script_spam = Dvar_RegisterBool("g_no_script_spam", false, DVAR_CHANGEABLE_RESET);
+	gnP1 = Dvar_RegisterBool("g_no_script_spam", false, DVAR_CHANGEABLE_RESET);
 	g_debugLocDamage = Dvar_RegisterBool("g_debugLocDamage", false, DVAR_CHEAT | DVAR_CHANGEABLE_RESET);
 
 	g_friendlyfireDist = Dvar_RegisterFloat("g_friendlyfireDist", 256, 0, 15000, DVAR_CHEAT | DVAR_CHANGEABLE_RESET);

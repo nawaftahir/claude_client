@@ -38,7 +38,8 @@ static dvar_t *vid_ypos;
 dvar_t *r_fullscreen;
 WinVars_t g_wv;
 // unreferenced storage, size from the retail layout
-int winWndprocUnreferenced[2];
+int winWndprocUnreferenced;
+int wwP124;
 static dvar_t *r_autopriority;
 
 static UINT MSH_MOUSEWHEEL;

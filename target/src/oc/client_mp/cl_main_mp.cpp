@@ -21,8 +21,8 @@ const dvar_t *cl_allowDownload;
 const dvar_t *cl_showSend;
 clientConnection_t clientConnections[1];
 #define clc clientConnections[0]
-Bool g_waitingForServer;
 const dvar_t *cl_avidemo;
+Bool g_waitingForServer;
 ALIGNED(128) refexport_t re;
 const dvar_t *cl_nodelta;
 const dvar_t *cl_showServerCommands;

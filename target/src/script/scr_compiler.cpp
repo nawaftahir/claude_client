@@ -3580,21 +3580,6 @@ void EmitExpressionFieldObject( sval_u expr, sval_u sourcePos, scr_block_s *bloc
 
 /*
 ============
-ConnectContinueStatements
-============
-*/
-void ConnectContinueStatements()
-{
-	const char *codePos = (char *)TempMalloc(0);
-
-	for ( ContinueStatementInfo *statement = scrCompileGlob.currentContinueStatement; statement; statement = statement->next )
-	{
-		*(intptr_t *)statement->codePos = codePos - statement->nextCodePos;
-	}
-}
-
-/*
-============
 ConnectBreakStatements
 ============
 */
@@ -3604,6 +3589,21 @@ __declspec(noinline) void ConnectBreakStatements()
 	const char *codePos = (char *)TempMalloc(0);
 
 	for ( BreakStatementInfo *statement = scrCompileGlob.currentBreakStatement; statement; statement = statement->next )
+	{
+		*(intptr_t *)statement->codePos = codePos - statement->nextCodePos;
+	}
+}
+
+/*
+============
+ConnectContinueStatements
+============
+*/
+void ConnectContinueStatements()
+{
+	const char *codePos = (char *)TempMalloc(0);
+
+	for ( ContinueStatementInfo *statement = scrCompileGlob.currentContinueStatement; statement; statement = statement->next )
 	{
 		*(intptr_t *)statement->codePos = codePos - statement->nextCodePos;
 	}
