@@ -107,9 +107,10 @@ Bool Encode_Shutdown(void)
     return 1;
 }
 
-int Encode_GetFrameSize(void)
+// retail 0x4b6750 reads the bandwidth setting; unreferenced
+int Encode_GetBandwidthSetting(void)
 {
-    return g_frame_size;
+    return g_current_bandwidth_setting;
 }
 
 int Encode_Sample(short *buffer_in, char *buffer_out, int maxLength)
@@ -128,8 +129,7 @@ int Encode_Sample(short *buffer_in, char *buffer_out, int maxLength)
     return speex_bits_write(&encodeBits, buffer_out, maxLength);
 }
 
-// retail 0x4b67e0, unreferenced twin of Encode_GetFrameSize; name unknown
-int Encode_GetFrameSize_4b67e0(void)
+int Encode_GetFrameSize(void)
 {
     return g_frame_size;
 }

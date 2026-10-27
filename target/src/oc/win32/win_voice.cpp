@@ -47,6 +47,7 @@ extern int Decode_Sample(char *inData, int inSize, short *outData, int maxOutSiz
 
 extern "C" __declspec(dllimport) HWND__ *__stdcall GetDesktopWindow(void);
 extern int g_frame_size;
+extern int g_current_bandwidth_setting;
 
 extern const dvar_t *winvoice_mic_mute;
 extern const dvar_t *winvoice_mic_reclevel;
@@ -59,11 +60,12 @@ extern float voice_current_voicelevel;
 extern float voice_current_scaler;
 extern float levelSamples[6];
 static Bool recording = 0;
+static Bool playing = 0;
 static recordingSample_t *currentRecordingSample = 0;
 static int g_voice_initialized = 0x0;
 int voice_freq = 0;
 int sampleCount = 0;
-Bool playing = 0;
+int playing_unused = 0;
 
 static short unsigned int *(*s_clientSamples[64])[4];
 static int s_clientTalkTime[64];
@@ -104,12 +106,12 @@ Bool Voice_Init(void)
 
     mixerSetMicrophoneMute(*(bool *)&winvoice_mic_mute->current.enabled);
 
-    voice_freq = 0;
+    g_current_bandwidth_setting = 0;
     hwnd = GetDesktopWindow();
     Record_Init(0, 0);
     Sound_Init(hwnd);
-    Encode_Init(voice_freq);
-    Decode_Init(voice_freq);
+    Encode_Init(g_current_bandwidth_setting);
+    Decode_Init(g_current_bandwidth_setting);
 
     g_voice_initialized = 1;
 
