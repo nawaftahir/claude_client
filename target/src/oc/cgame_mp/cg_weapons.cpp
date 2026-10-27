@@ -1873,14 +1873,14 @@ void CG_WhizbySound(vec_t *vStart, vec_t *vEnd)
     Vec3NormalizeTo(delta, dir);
     dist = VEC3_DOT_INLINE(dir, delta);
     VEC3_SUB_INLINE(cg->refdef.vieworg, vStart, viewDelta);
-    viewDist = VEC3_DOT_INLINE(viewDelta, dir);
+    viewDist = VEC3_DOT_INLINE(dir, viewDelta);
     if (viewDist < 64.0f)
         return;
     if (viewDist - -64.0f > dist)
         return;
-    projPos[0] = viewDist * dir[0] + vStart[0];
-    projPos[1] = viewDist * dir[1] + vStart[1];
-    projPos[2] = viewDist * dir[2] + vStart[2];
+    projPos[0] = dir[0] * viewDist + vStart[0];
+    projPos[1] = dir[1] * viewDist + vStart[1];
+    projPos[2] = dir[2] * viewDist + vStart[2];
     VEC3_SUB_INLINE(projPos, cg->refdef.vieworg, delta);
     if (VEC3_LENGTH_INLINE(delta) > 140.0f)
         return;

@@ -271,6 +271,11 @@ const char *XModelGetLodName(const XModel *model, int lod)
 	return model->lodInfo[lod].filename;
 }
 
+int XModelGetContents(const XModel *model)
+{
+	return model->contents;
+}
+
 inline void AxisTransformVector(const vec3_t in, const vec3_t mat[3], vec3_t out)
 {
 	out[0] = in[0] * mat[0][0] + (in[1] * mat[1][0] + in[2] * mat[2][0]);
@@ -283,11 +288,6 @@ inline void AxisTransposeTransformVector(const vec3_t in, const vec3_t mat[3], v
 	out[0] = in[0] * mat[0][0] + in[1] * mat[0][1] + in[2] * mat[0][2];
 	out[1] = in[0] * mat[1][0] + in[1] * mat[1][1] + in[2] * mat[1][2];
 	out[2] = in[0] * mat[2][0] + in[1] * mat[2][1] + in[2] * mat[2][2];
-}
-
-int XModelGetContents(const XModel *model)
-{
-	return model->contents;
 }
 
 int XModelGetCollLod(const XModel *model)
