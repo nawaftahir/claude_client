@@ -1076,6 +1076,9 @@ int Com_EventLoop( void )
 	LargeLocal	bufLarge( MAX_MSGLEN );
 	byte		*bufData = (byte *)bufLarge.GetBuf();
 
+	/* interns this string before the oversize one: retail pool order */
+	const char *evBad = "" "Com_EventLoop: bad event type %i";
+	(void)evBad;
 	MSG_Init( &buf, bufData, MAX_MSGLEN );
 
 	while ( 1 )
