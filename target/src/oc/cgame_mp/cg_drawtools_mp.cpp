@@ -268,10 +268,11 @@ int CG_DrawDevString(float x, float y, const char *s, const vec_t *color, int al
 
     textWidth = CL_TextWidth(s, 0, font);
     {
-        float dx = -(float)textWidth;
+        float dx = (float)textWidth;
         float dy = y;
         float sx = 1.0f;
         float sy = 1.0f;
+        dx = -dx;
         CalcSplitScreenTextOffset(font, &dy);
         {
 #define sp_x (&dx)
