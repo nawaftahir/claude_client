@@ -899,7 +899,6 @@ static void HECmd_SetClock_Internal( scr_entref_t entref, int type, const char *
 	int materialIndex;
 	int width;
 	int height;
-	float seconds;
 
 	hud = HECmd_GetHudElem(entref);
 	numParam = Scr_GetNumParam();
@@ -909,16 +908,20 @@ static void HECmd_SetClock_Internal( scr_entref_t entref, int type, const char *
 		Scr_Error(va("USAGE: <hudelem> %s(time_in_seconds, total_clock_time_in_seconds, shadername[, width, height]);\n", cmdName));
 	}
 
-	seconds = Scr_GetFloat(0) * 1000;
-	FAST_CEIL(iTime, seconds);
+	{
+		float seconds = Scr_GetFloat(0) * 1000;
+		FAST_CEIL(iTime, seconds);
+	}
 
 	if ( iTime <= 0 && type != HE_TYPE_CLOCK_UP )
 	{
 		Scr_ParamError(0, va("time %g should be > 0", iTime * 0.001f));
 	}
 
-	seconds = Scr_GetFloat(1) * 1000;
-	FAST_CEIL(duration, seconds);
+	{
+		float seconds = Scr_GetFloat(1) * 1000;
+		FAST_CEIL(duration, seconds);
+	}
 
 	if ( duration <= 0 )
 	{
