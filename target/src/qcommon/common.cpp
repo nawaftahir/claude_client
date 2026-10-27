@@ -14,7 +14,7 @@ const dvar_t *com_statmon;
 // storage with no remaining references; size from the layout, name unknown
 static char com_unreferenced0[0x16c];
 
-static errorParm_t com_errorType;
+static errorParm_t comFill_44;
 static int com_unreferenced1;
 fileHandle_t logfile;
 
@@ -66,7 +66,7 @@ static int iWeaponInfoSource = 0;
 
 static char		*rd_buffer;
 static size_t	rd_buffersize;
-static void		(*rd_flush)( char *buffer );
+static void		(*comFill_187)( char *buffer );
 
 /*
 ============================================================================
@@ -323,7 +323,7 @@ void Com_BeginRedirect( char *buffer, int buffersize, void (*flush)( char *) )
 		return;
 	rd_buffer = buffer;
 	rd_buffersize = buffersize;
-	rd_flush = flush;
+	comFill_187 = flush;
 
 	*rd_buffer = 0;
 }
@@ -335,14 +335,14 @@ Com_EndRedirect
 */
 void Com_EndRedirect( void )
 {
-	if ( rd_flush )
+	if ( comFill_187 )
 	{
-		rd_flush(rd_buffer);
+		comFill_187(rd_buffer);
 	}
 
 	rd_buffer = NULL;
 	rd_buffersize = 0;
-	rd_flush = NULL;
+	comFill_187 = NULL;
 }
 
 /*
@@ -363,13 +363,13 @@ void Com_PrintMessage( print_msg_type_t channel, const char *msg )
 
 		if ((strlen (msg) + strlen(rd_buffer)) > (rd_buffersize - 1))
 		{
-			rd_flush(rd_buffer);
+			comFill_187(rd_buffer);
 			*rd_buffer = 0;
 		}
 
 		I_strncat(rd_buffer, rd_buffersize, msg);
 		// TTimo nooo .. that would defeat the purpose
-		//rd_flush(rd_buffer);
+		//comFill_187(rd_buffer);
 		//*rd_buffer = 0;
 		return;
 	}
@@ -559,7 +559,7 @@ void Com_SetErrorMessage( const char *errorMessage )
 	ui_errorMessage = Dvar_RegisterString("com_errorMessage", "", DVAR_ROM | DVAR_CHANGEABLE_RESET);
 	ui_errorTitle = Dvar_RegisterString("com_errorTitle", "", DVAR_ROM | DVAR_CHANGEABLE_RESET);
 
-	if ( com_errorType != ERR_SERVERDISCONNECT && !Com_IsNoticeError(errorMessage) )
+	if ( comFill_44 != ERR_SERVERDISCONNECT && !Com_IsNoticeError(errorMessage) )
 	{
 		title = SEH_LocalizeTextMessage("MENU_ERROR", "error message", LOCMSG_NOERR);
 		if ( title )
@@ -616,7 +616,7 @@ void Com_ErrorCleanup( void )
 
 	strcpy(msgBuf, com_errorMessage);
 
-	if ( com_errorType != ERR_DISCONNECT )
+	if ( comFill_44 != ERR_DISCONNECT )
 	{
 		if ( cls.uiStarted )
 			UI_SetActiveMenu(0);
@@ -630,7 +630,7 @@ void Com_ErrorCleanup( void )
 			I_strncpyz(com_errorMessage, localized, sizeof(com_errorMessage));
 	}
 
-	if ( com_errorType != ERR_DISCONNECT )
+	if ( comFill_44 != ERR_DISCONNECT )
 		Scr_Abort();
 
 	SND_ErrorCleanup();
@@ -644,7 +644,7 @@ void Com_ErrorCleanup( void )
 
 	FS_ResetFiles();
 
-	if ( com_errorType == ERR_DROP )
+	if ( comFill_44 == ERR_DROP )
 		Cbuf_Init();
 
 	// if we are getting a solid stream of ERR_DROP, do an ERR_FATAL
@@ -653,7 +653,7 @@ void Com_ErrorCleanup( void )
 	{
 		if ( ++errorCount > 3 )
 		{
-			com_errorType = ERR_FATAL;
+			comFill_44 = ERR_FATAL;
 		}
 	}
 	else
@@ -662,12 +662,12 @@ void Com_ErrorCleanup( void )
 	}
 	lastErrorTime = currentTime;
 
-	if ( com_errorType != ERR_SERVERDISCONNECT && com_errorType != ERR_DROP && com_errorType != ERR_DISCONNECT )
+	if ( comFill_44 != ERR_SERVERDISCONNECT && comFill_44 != ERR_DROP && comFill_44 != ERR_DISCONNECT )
 		Sys_Error("%s", com_errorMessage);
 
 	updateScreenCalled = 0;
 
-	if ( com_errorType == ERR_SERVERDISCONNECT )
+	if ( comFill_44 == ERR_SERVERDISCONNECT )
 	{
 		Com_ShutdownInternal("EXE_DISCONNECTEDFROMOWNLISTENSERVER");
 	}
@@ -675,12 +675,12 @@ void Com_ErrorCleanup( void )
 	{
 		Com_Printf("********************\nERROR: %s\n********************\n", com_errorMessage);
 
-		if ( com_errorType == ERR_DROP && cls.uiStarted && !com_fixedConsolePosition )
+		if ( comFill_44 == ERR_DROP && cls.uiStarted && !com_fixedConsolePosition )
 			CL_ConsoleFixPosition();
 
 		Com_ShutdownInternal(msgBuf);
 
-		if ( com_errorType == ERR_DROP )
+		if ( comFill_44 == ERR_DROP )
 		{
 			if ( QuitOnError() )
 				Com_Quit_f();
@@ -749,7 +749,7 @@ void Com_Error( errorParm_t code, const char *fmt, ... )
 		com_fixedConsolePosition = 0;
 	}
 
-	com_errorType = code;
+	comFill_44 = code;
 	longjmp(*(jmp_buf *)Sys_GetValue(THREAD_VALUE_COM_ERROR), -1);
 }
 
@@ -2555,4 +2555,6 @@ static void Com_SkipConfigureBlankLines( const char **text )
 	while ( *text && **text && ( **text == '\r' || **text == '\n' ) )
 		Com_SkipRestOfLine( text );
 }
-
+int comFill_198;
+int comFill_50;
+int com_errorType;
