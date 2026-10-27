@@ -882,14 +882,8 @@ struct EffectVisibility
 extern EffectVisibility g_effectVisArray[];
 extern int g_effectVisArrayCount;
 
-// Only the field read here: the skeleton frame stamp that invalidates
-// cached bolt orientations. The leading members are server_t's (server.h).
-struct server_t
-{
-	char leading[0x5f430];
-	int skelTimeStamp;
-};
-extern ALIGNED(128) server_t sv;
+// the client skeleton frame stamp; it invalidates cached bolt orientations
+int CL_GetSkelTimeStamp( int localClientNum );
 
 void *Hunk_AllocInternal( int size );
 XModel *XModelPrecache( const char *name, void *( *Alloc )( int size ), void *( *AllocColl )( int size ) );
@@ -959,9 +953,9 @@ const orientation_t *FxBoltFrame::GetOrientation()
 {
 	if ( mBolt.dobjHandle < 0 )
 		return 0;
-	if ( mTime != sv.skelTimeStamp )
+	if ( mTime != CL_GetSkelTimeStamp(0) )
 	{
-		mTime = sv.skelTimeStamp;
+		mTime = CL_GetSkelTimeStamp(0);
 		if ( !FX_GetBoneOrientation( &mBolt, &mOrientation ) )
 		{
 			mBolt.dobjHandle = -1;

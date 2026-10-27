@@ -463,4 +463,4 @@ void XModel_RendererSlot87(const void *arg)
 
 
 // unreferenced in retail, keeps the .bss layout
-int xmodelPad13;
+int xmodelPad1;

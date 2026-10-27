@@ -407,16 +407,16 @@ void CL_CubemapShot_f(void)
 
     CL_ResetSkeletonCache(0);
     for (side = 1; side < 7; side++) {
-        RE_FUNC(re_ptr_195eca8, 0xec, re_int2_func)(size, 1);
-        RE_FUNC(re_ptr_195eca8, 0xa8, re_void_func)();
+        RE_FUNC(re_ptr_195eca8, 0x100, re_int2_func)(size, 1);
+        RE_FUNC(re_ptr_195eca8, 0xbc, re_void_func)();
         CL_ClearScene();
         CG_DrawActiveFrame(clients[0].serverTime, CL_GetDemoType(), (CubemapShot)side, size, 0);
-        RE_FUNC(re_ptr_195eca8, 0xac, re_void_func)();
-        RE_FUNC(re_ptr_195eca8, 0xf0, re_int_func)(side);
+        RE_FUNC(re_ptr_195eca8, 0xc0, re_void_func)();
+        RE_FUNC(re_ptr_195eca8, 0x104, re_int_func)(side);
     }
     if (isLightingShot)
-        RE_FUNC(re_ptr_195eca8, 0xf8, re_floatp_func)(rgb);
+        RE_FUNC(re_ptr_195eca8, 0x10c, re_floatp_func)(rgb);
     for (side = 1; side < 7; side++)
-        RE_FUNC(re_ptr_195eca8, 0xf4, re_write_cubemap_func)(va("env/%s%s.tga", szBaseName, szShotName[side - 1]), side, n0, n1);
+        RE_FUNC(re_ptr_195eca8, 0x108, re_write_cubemap_func)(va("env/%s%s.tga", szBaseName, szShotName[side - 1]), side, n0, n1);
 }
 

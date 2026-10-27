@@ -1257,14 +1257,6 @@ int FX_Init( bool rendererExists )
 	theFxHelper->Init();
 	return 1;
 }
-static inline void FX_SwapNonBolt( int i, int j )
-{
-	Effect *temp;
-
-	temp = effectListNonBolt[i];
-	effectListNonBolt[i] = effectListNonBolt[j];
-	effectListNonBolt[j] = temp;
-}
 static inline void FX_SwapBolt( int i, int j )
 {
 	Effect *temp;
@@ -1272,6 +1264,14 @@ static inline void FX_SwapBolt( int i, int j )
 	temp = effectListBolt[i];
 	effectListBolt[i] = effectListBolt[j];
 	effectListBolt[j] = temp;
+}
+static inline void FX_SwapNonBolt( int i, int j )
+{
+	Effect *temp;
+
+	temp = effectListNonBolt[i];
+	effectListNonBolt[i] = effectListNonBolt[j];
+	effectListNonBolt[j] = temp;
 }
 
 // Original name unknown.
