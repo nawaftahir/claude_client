@@ -4,9 +4,9 @@
 #include <wsipx.h>
 
 static WSADATA winsockdata;
-static qboolean winsockInitialized = qfalse;
 static qboolean usingSocks = qfalse;
 static qboolean networkingEnabled = qfalse;
+static qboolean winsockInitialized = qfalse;
 
 static dvar_t *net_noudp;
 static dvar_t *net_noipx;
