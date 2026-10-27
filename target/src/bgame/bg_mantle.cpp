@@ -11,6 +11,8 @@ static dvar_t *mantle_check_range;
 static dvar_t *mantle_check_radius;
 static dvar_t *mantle_check_angle;
 static dvar_t *mantle_view_yawcap;
+/* Unreferenced in retail; the name puts it in retail's empty slot. */
+int mnFill_211;
 
 enum MantleAnims
 {

@@ -14,7 +14,8 @@ static int window_center_x, window_center_y;
 
 static dvar_t *in_mouse;
 // unreferenced storage, size from the retail layout
-int winInputUnreferenced[2];
+int winInputUnreferenced;
+int wiFill_21;
 
 static qboolean in_appactive;
 

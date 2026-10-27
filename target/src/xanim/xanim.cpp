@@ -5,6 +5,8 @@ extern dvar_t *com_developer;
 ALIGNED(128) XAnimInfo g_xAnimInfo[4096];
 // unreferenced in retail; filler, name chosen so the linker places it in retail's slot
 int xaUnref7[2];
+// unreferenced in retail; the name keeps it first in this file's data
+int xaFill_83;
 static unsigned int g_end = 0;
 static XAnimClientNotify g_notifyList[128];
 static int g_notifyListSize;

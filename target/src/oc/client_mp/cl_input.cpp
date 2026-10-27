@@ -11,6 +11,10 @@ const dvar_t *cl_yawspeed;
 const dvar_t *cl_bypassMouseInput;
 const dvar_t *cl_pitchspeed;
 const dvar_t *cl_anglespeedkey;
+/* Unreferenced in retail; the names place them in retail's empty slots. */
+int clInFill_182;
+int clInFill_22;
+int clInFill_93;
 extern clientActive_t clients[1];
 extern clientConnection_t clientConnections[1];
 #define clc clientConnections[0]

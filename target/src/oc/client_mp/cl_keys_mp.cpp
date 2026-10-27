@@ -316,7 +316,7 @@ static char *frenchNumberKeysMap[10] = {
 
 static const char *completionString;
 static Bool hasExactMatch;
-static char shortestMatch[1024];
+static ALIGNED(128) char shortestMatch[1024];
 static int matchCount;
 
 enum {
