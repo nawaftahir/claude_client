@@ -174,18 +174,6 @@ qboolean CL_ShutdownUI( void );
 void FS_FCloseFile( fileHandle_t f );
 
 
-// errors that end a session without a drop dialog
-const char *noticeErrors[] =
-{
-	"EXE_SERVER_DISCONNECTED",
-	"EXE_DISCONNECTED",
-	"EXE_SERVERISFULL",
-	"XBOXLIVE_SIGNEDOUTOFLIVE",
-	"XBOXLIVE_CANTJOINSESSION",
-	"XBOXLIVE_MPNOTALLOWED",
-	"XBOXLIVE_MUSTLOGIN",
-	""
-};
 
 /*
 =================
@@ -215,8 +203,6 @@ static char *com_consoleLines[MAX_CONSOLE_LINES];
 
 #define CDKEY_REGISTRY_PATH "SOFTWARE\\Activision\\Call of Duty 2"
 
-char cl_cdkey[34] = "                                ";
-char cl_cdkeychecksum[5] = "    ";
 
 qboolean CL_CDKeyValidate( const char *key, const char *checksum );
 
@@ -538,6 +524,22 @@ void Com_SetTimeScale( float timescale )
 	com_codeTimeScale = timescale;
 }
 
+// errors that end a session without a drop dialog
+const char *noticeErrors[] =
+{
+	"EXE_SERVER_DISCONNECTED",
+	"EXE_DISCONNECTED",
+	"EXE_SERVERISFULL",
+	"XBOXLIVE_SIGNEDOUTOFLIVE",
+	"XBOXLIVE_CANTJOINSESSION",
+	"XBOXLIVE_MPNOTALLOWED",
+	"XBOXLIVE_MUSTLOGIN",
+	""
+};
+
+char cl_cdkey[34] = "                                ";
+char cl_cdkeychecksum[5] = "    ";
+
 bool Com_IsNoticeError( const char *msg )
 {
 	int i;
@@ -559,21 +561,21 @@ void Com_SetErrorMessage( const char *errorMessage )
 	ui_errorMessage = Dvar_RegisterString("com_errorMessage", "", DVAR_ROM | DVAR_CHANGEABLE_RESET);
 	ui_errorTitle = Dvar_RegisterString("com_errorTitle", "", DVAR_ROM | DVAR_CHANGEABLE_RESET);
 
-	if ( comFill_44 != ERR_SERVERDISCONNECT && !Com_IsNoticeError(errorMessage) )
-	{
-		title = SEH_LocalizeTextMessage("MENU_ERROR", "error message", LOCMSG_NOERR);
-		if ( title )
-			Dvar_SetString(ui_errorTitle, title);
-		else
-			Dvar_SetString(ui_errorTitle, "MENU_ERROR");
-	}
-	else
+	if ( comFill_44 == ERR_SERVERDISCONNECT || Com_IsNoticeError(errorMessage) )
 	{
 		title = SEH_LocalizeTextMessage("MENU_NOTICE", "error message", LOCMSG_NOERR);
 		if ( title )
 			Dvar_SetString(ui_errorTitle, title);
 		else
 			Dvar_SetString(ui_errorTitle, "MENU_NOTICE");
+	}
+	else
+	{
+		title = SEH_LocalizeTextMessage("MENU_ERROR", "error message", LOCMSG_NOERR);
+		if ( title )
+			Dvar_SetString(ui_errorTitle, title);
+		else
+			Dvar_SetString(ui_errorTitle, "MENU_ERROR");
 	}
 
 	localized = SEH_LocalizeTextMessage(errorMessage, "error message", LOCMSG_NOERR);
