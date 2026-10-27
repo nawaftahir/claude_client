@@ -425,7 +425,7 @@ void CG_Missile(centity_t *cent)
         FxBoltInfo bolt;
 
         bolt.dobjHandle = s1->number;
-        bolt.boneIndex = FX_GetBoneIndex(s1->number, scr_const.tag_flash);
+        bolt.boneIndex = FX_GetBoneIndex(s1->number, scr_const.tag_origin);
         if (bolt.boneIndex >= 0)
             FX_PlayEntityEffect(weapInfo->projTrailEffect, cent->lerpOrigin, 0, &bolt);
 

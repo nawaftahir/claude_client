@@ -138,6 +138,28 @@ void Com_ServerDObjCreate( DObjModel_s *dobjModels, unsigned short numModels, XA
 	}
 }
 
+void Com_SafeClientDObjFree( int handle )
+{
+	int index;
+
+	assert(((unsigned)handle < ((((1<<10) + 512)) + 1)));
+	assert(((unsigned)handle < (sizeof( clientObjMap ) / (sizeof( clientObjMap[0] ) * (sizeof( clientObjMap ) != 4 || sizeof( clientObjMap[0] ) <= 4)))));
+
+	index = clientObjMap[handle];
+
+	if ( !index )
+	{
+		return;
+	}
+
+	clientObjMap[handle] = 0;
+	assert((unsigned)index < ARRAY_COUNT( objAlloced ));
+
+	objAlloced[index] = false;
+	objFreeCount++;
+
+	DObjFree(&objBuf[index]);
+}
 /*
 ==================
 Com_SafeServerDObjFree
@@ -156,28 +178,6 @@ void Com_SafeServerDObjFree( int handle )
 	}
 
 	serverObjMap[handle] = 0;
-	assert((unsigned)index < ARRAY_COUNT( objAlloced ));
-
-	objAlloced[index] = false;
-	objFreeCount++;
-
-	DObjFree(&objBuf[index]);
-}
-void Com_SafeClientDObjFree( int handle )
-{
-	int index;
-
-	assert(((unsigned)handle < ((((1<<10) + 512)) + 1)));
-	assert(((unsigned)handle < (sizeof( clientObjMap ) / (sizeof( clientObjMap[0] ) * (sizeof( clientObjMap ) != 4 || sizeof( clientObjMap[0] ) <= 4)))));
-
-	index = clientObjMap[handle];
-
-	if ( !index )
-	{
-		return;
-	}
-
-	clientObjMap[handle] = 0;
 	assert((unsigned)index < ARRAY_COUNT( objAlloced ));
 
 	objAlloced[index] = false;

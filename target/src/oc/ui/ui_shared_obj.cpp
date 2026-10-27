@@ -328,16 +328,17 @@ qboolean PC_Float_Parse(int handle, float *f)
         *f = token.floatvalue;
     return 1;
 }
-qboolean PC_Int_Parse(int handle, int *i)
+// name unconfirmed; PC_Int_Parse on the current line only
+qboolean PC_Int_ParseLine(int handle, int *i)
 {
     pc_token_t token;
     int negative;
 
-    if (!PC_ReadTokenHandle(handle, &token))
+    if (!PC_ReadLineHandle(handle, &token))
         return 0;
     negative = 0;
     if (token.string[0] == '-') {
-        if (!PC_ReadTokenHandle(handle, &token))
+        if (!PC_ReadLineHandle(handle, &token))
             return 0;
         negative = 1;
     }
@@ -364,17 +365,16 @@ qboolean PC_Color_Parse(int handle, float (*c)[4])
     return 1;
 }
 
-// name unconfirmed; PC_Int_Parse on the current line only
-qboolean PC_Int_ParseLine(int handle, int *i)
+qboolean PC_Int_Parse(int handle, int *i)
 {
     pc_token_t token;
     int negative;
 
-    if (!PC_ReadLineHandle(handle, &token))
+    if (!PC_ReadTokenHandle(handle, &token))
         return 0;
     negative = 0;
     if (token.string[0] == '-') {
-        if (!PC_ReadLineHandle(handle, &token))
+        if (!PC_ReadTokenHandle(handle, &token))
             return 0;
         negative = 1;
     }

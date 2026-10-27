@@ -1544,11 +1544,11 @@ void CL_DownloadsComplete(void)
         I_strncpyz(mapname, Info_ValueForKey(info, "mapname"), sizeof(mapname));
         I_strncpyz(gametype, Info_ValueForKey(info, "g_gametype"), sizeof(gametype));
         UI_SetMap(mapname, gametype);
-        SCR_UpdateScreen();
+        SCR_UpdateScreenInternal();
         CL_ShutdownAll();
         Com_Restart();
         CL_StartHunkUsers();
-        SCR_UpdateScreen();
+        SCR_UpdateScreenInternal();
     } else if (clients->cgameInitialized) {
         return;
     }

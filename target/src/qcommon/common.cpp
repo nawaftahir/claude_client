@@ -1183,12 +1183,12 @@ int Debug_EventLoop( void )
 
 		case SE_CONSOLE:
 			Cbuf_AddText( (char *)ev.evPtr );
-			Z_Free( ev.evPtr );
+			free( ev.evPtr );
 			Cbuf_AddText( "\n" );
 			break;
 
 		case SE_PACKET:
-			Z_Free( ev.evPtr );
+			free( ev.evPtr );
 			break;
 
 		default:

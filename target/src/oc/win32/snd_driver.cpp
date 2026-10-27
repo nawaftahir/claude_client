@@ -1086,7 +1086,7 @@ void SND_SetStreamChannelPlaybackRate(int index, int rate)
 {
     AIL_set_stream_playback_rate(milesGlob.handle_stream[index - 0x20], rate);
 }
-void SND_UpdateStreamChannelReverb(int index)
+void SND_Update2DChannelReverb(int index)
 {
     const snd_alias_t *pAlias = g_snd.chaninfo[index].pAlias0;
     float reverbLevel;
@@ -1098,7 +1098,7 @@ void SND_UpdateStreamChannelReverb(int index)
     } else {
         reverbLevel = 0;
     }
-    AIL_set_stream_reverb_levels(milesGlob.handle_stream[index - 0x20], 1.0f, reverbLevel);
+    AIL_set_sample_reverb_levels(milesGlob.handle_2D[index - 45], 1.0f, reverbLevel);
 }
 void SND_Update3DChannelReverb(int index)
 {
@@ -1114,7 +1114,7 @@ void SND_Update3DChannelReverb(int index)
     }
     AIL_set_3D_sample_effects_level(milesGlob.handle_3D[index], reverbLevel);
 }
-void SND_Update2DChannelReverb(int index)
+void SND_UpdateStreamChannelReverb(int index)
 {
     const snd_alias_t *pAlias = g_snd.chaninfo[index].pAlias0;
     float reverbLevel;
@@ -1126,7 +1126,7 @@ void SND_Update2DChannelReverb(int index)
     } else {
         reverbLevel = 0;
     }
-    AIL_set_sample_reverb_levels(milesGlob.handle_2D[index - 45], 1.0f, reverbLevel);
+    AIL_set_stream_reverb_levels(milesGlob.handle_stream[index - 0x20], 1.0f, reverbLevel);
 }
 int SND_Get2DChannelLength(int index)
 {

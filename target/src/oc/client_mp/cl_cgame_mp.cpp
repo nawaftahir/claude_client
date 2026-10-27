@@ -1372,7 +1372,7 @@ void CL_SetCGameTime(void)
     cl->oldFrameServerTime = cl->snap.serverTime;
 
     if (!clc.demoplaying || !cl_freezeDemo->current.enabled) {
-        cl->serverTime = cls.realtime + cl->serverTimeDelta;
+        cl->serverTime = cl->serverTimeDelta + cls.realtime;
         if (cl->serverTime < cl->oldServerTime)
             cl->serverTime = cl->oldServerTime;
         cl->oldServerTime = cl->serverTime;
