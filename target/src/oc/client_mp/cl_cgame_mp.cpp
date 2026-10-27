@@ -176,7 +176,7 @@ void CL_StartLoading(const char *mapname, const char *gametype);
 void CL_InitCGame(void);
 qboolean CL_GameCommand(void);
 void CL_AdjustTimeDelta(void);
-void CL_SetADS(int ads);
+void CL_SetADS(unsigned char ads);
 void CL_DrawString(int x, int y, const char *pszString, qboolean bShadow, int iCharHeight);
 void CL_ArchiveClientState(MemoryFile *memFile);
 void CL_SetLodOrigin(const refdef_t *fd);
@@ -248,7 +248,7 @@ void CL_StartLoading(const char *mapname, const char *gametype);
 void CL_InitCGame(void);
 qboolean CL_GameCommand(void);
 void CL_AdjustTimeDelta(void);
-void CL_SetADS(int ads);
+void CL_SetADS(unsigned char ads);
 void CL_DrawString(int x, int y, const char *pszString, qboolean bShadow, int iCharHeight);
 void CL_ArchiveClientState(MemoryFile *memFile);
 void CL_SetLodOrigin(const refdef_t *fd);
@@ -1400,10 +1400,10 @@ void CL_SetCGameTime(void)
 }
 
 // retail 0x403170, no callers
-void CL_SetADS(int ads)
+void CL_SetADS(unsigned char ads)
 {
     clientActive_t *cl = CL_LOCAL;
-    cl->usingAds = (unsigned char)ads;
+    cl->usingAds = ads;
 }
 
 void CL_DrawString(int x, int y, const char *pszString, qboolean bShadow, int iCharHeight)
