@@ -1191,9 +1191,8 @@ void CG_AddPlayerWeapon(GfxEntity *parent, playerState_t *ps, centity_t *cent, q
             gun.reType = RT_DOBJ;
             gun.renderFxFlags = 0x8c;
 
-            gun.lighting.origin[0] = ps->origin[0];
-            gun.lighting.origin[1] = ps->origin[1];
-            gun.lighting.origin[2] = ps->origin[2] + ps->viewHeightCurrent;
+            VectorCopy(ps->origin, gun.lighting.origin);
+            gun.lighting.origin[2] += ps->viewHeightCurrent;
             AddLeanToPosition(gun.lighting.origin, ps->viewangles[1],
                               ps->leanf, 16.0f, 20.0f);
 
