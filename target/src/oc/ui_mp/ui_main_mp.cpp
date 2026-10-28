@@ -3086,7 +3086,8 @@ void UI_Init(void)
     Sys_Milliseconds();
     UI_GetGameTypesList();
 
-    ui_netGameType = (const dvar_t *)(Dvar_RegisterInt("ui_netGametype", 0, 0, sharedUiInfo.numGameTypes - 1, 0x1001));
+    for (netGameTypeIdx = 0; netGameTypeIdx < 1; netGameTypeIdx++)
+        ui_netGameType = (const dvar_t *)(Dvar_RegisterInt("ui_netGametype", 0, 0, sharedUiInfo.numGameTypes - 1, 0x1001));
 
     UI_LoadArenas();
 
@@ -3116,88 +3117,18 @@ void UI_Init(void)
 
     {
         dvar_t *dvar;
-        bool mousePitch;
+        int mousePitch;
 
-        // Dvar_GetFloat("m_pitch")
-#define pp_name "m_pitch"
-#define pp_dvar dvar
-#define PP_LABEL ui_init_m_pitch
-#include "../../universal/dvar_find.inl"
-#undef PP_LABEL
-#undef pp_dvar
-#undef pp_name
-        if (!dvar)
-            mousePitch = false;
-        else
-        {
-            if (dvar->type == DVAR_TYPE_FLOAT)
-                mPitch = dvar->current.value;
-            else
-                mPitch = Dvar_StringToFloat(dvar->current.string);
-            mousePitch = mPitch < 0.0f;
-        }
+        mousePitch = Dvar_GetFloat("m_pitch") < 0.0f;
 
-        // Dvar_SetBoolByName("ui_mousePitch", mousePitch)
-#define pp_name "ui_mousePitch"
-#define pp_dvar dvar
-#define PP_LABEL ui_init_mouse_pitch
-#include "../../universal/dvar_find.inl"
-#undef PP_LABEL
-#undef pp_dvar
-#undef pp_name
-        if (dvar) {
-            DvarValue value;
-
-            if (dvar->type == DVAR_TYPE_BOOL)
-                value.enabled = mousePitch;
-            else
-                value.string = mousePitch ? "1" : "0";
-            Dvar_SetVariant(dvar, value, DVAR_SOURCE_INTERNAL);
-        } else {
-            Dvar_RegisterString("ui_mousePitch", mousePitch ? "1" : "0", 0x4000);
-        }
+        Dvar_SetBoolByName("ui_mousePitch", mousePitch);
 
         sharedUiInfo.serverStatus.currentServerCinematic = -1;
         sharedUiInfo.previewMovie = -1;
 
-        // Dvar_SetString(ui_netGameTypeName, ...)
-        {
-            DvarValue value;
-            char stringCopy[1024];
-            const char *string;
+        Dvar_SetString((dvar_t *)ui_netGameTypeName, sharedUiInfo.gameTypes[ui_netGameType->current.integer].gameType);
 
-            netGameTypeIdx = (ui_netGameType)->current.integer;
-            string = sharedUiInfo.gameTypes[netGameTypeIdx].gameType;
-            dvar = (dvar_t *)ui_netGameTypeName;
-            if (dvar->type == DVAR_TYPE_STRING) {
-                I_strncpyz(stringCopy, string, sizeof(stringCopy));
-                value.string = stringCopy;
-            } else {
-                value.integer = Dvar_StringToEnum(&dvar->domain, string);
-            }
-            Dvar_SetVariant(dvar, value, DVAR_SOURCE_INTERNAL);
-        }
-
-        // Dvar_RegisterBool("ui_multiplayer", 1, 0x1040)
-        {
-        DvarValue value;
-        DvarLimits domain;
-
-        value.enabled = 1;
-        domain.integer.min = 0;
-        domain.integer.max = 0;
-#define pp_name "ui_multiplayer"
-#define pp_dvar dvar
-#define PP_LABEL ui_init_multiplayer
-#include "../../universal/dvar_find.inl"
-#undef PP_LABEL
-#undef pp_dvar
-#undef pp_name
-        if (dvar)
-            Dvar_Reregister(dvar, "ui_multiplayer", DVAR_TYPE_BOOL, 0x1040, value, domain);
-        else
-            Dvar_RegisterNew("ui_multiplayer", DVAR_TYPE_BOOL, 0x1040, value, domain);
-        }
+        Dvar_RegisterBool("ui_multiplayer", 1, 0x1040);
     }
 
 #    if COD2_FEATURE_GAMEPAD
