@@ -32,6 +32,7 @@ universal/com_files.cpp
 universal/com_math.cpp
 universal/com_memory.cpp
 universal/com_playerprofile.cpp
+qcommon/com_profilemapload.cpp
 universal/com_shared.cpp
 universal/com_sndalias.cpp
 universal/com_sndalias_load_obj.cpp

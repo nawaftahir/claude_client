@@ -194,10 +194,3 @@ bool Com_DeletePlayerProfile(const char *profileName)
 
 	return true;
 }
-
-// retail 0x42bc80, unreferenced; name unknown
-bool Com_Stub_42bc80(void)
-{
-	return false;
-}
-
