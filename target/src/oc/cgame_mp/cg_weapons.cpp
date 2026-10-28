@@ -1948,7 +1948,7 @@ __declspec(noinline) static float CalcTracerFinalScale(float tracerScaleDistRang
 
 
 // retail 0x4d1390; Kisak name (SUPPORTED)
-static void ScaleTracer(const float *start, const float *finish, const float *viewOrg, float *startWidth, float *finishWidth)
+static void ScaleTracer(const float *start, const float *finish, float *startWidth, float *finishWidth)
 {
     float startDist;
     float finishDist;
@@ -1960,8 +1960,8 @@ static void ScaleTracer(const float *start, const float *finish, const float *vi
     tracerScaleMinDist = cg_tracerScaleMinDist->current.value;
     tracerScaleDistRange = cg_viewsize_85->current.value;
     if (tracerScale != 1.0f) {
-        startDist = Vec3Distance(start, viewOrg);
-        finishDist = Vec3Distance(finish, viewOrg);
+        startDist = Vec3Distance(start, cg->refdef.vieworg);
+        finishDist = Vec3Distance(finish, cg->refdef.vieworg);
         if (tracerScaleMinDist != 0.0f) {
             startDist = startDist - tracerScaleMinDist;
             finishDist = finishDist - tracerScaleMinDist;
@@ -2000,35 +2000,37 @@ void CG_DrawTracer(vec_t *start, vec_t *finish)
 
     startWidth = cg_tracerWidth->current.value;
     finishWidth = cg_tracerWidth->current.value;
-    ScaleTracer(start, finish, cg->refdef.vieworg, &startWidth, &finishWidth);
+    ScaleTracer(start, finish, &startWidth, &finishWidth);
 
-    VectorMA(finish, finishWidth, right, verts[0].xyz);
-    verts[0].color.packed = 0xffffffff;
     verts[0].texCoord[0] = 1.0f;
     verts[0].texCoord[1] = 1.0f;
     verts[0].lmapCoord[0] = 1.0f;
     verts[0].lmapCoord[1] = 1.0f;
+    verts[0].color.packed = 0xffffffff;
+    VectorMA(finish, finishWidth, right, verts[0].xyz);
 
-    VectorMA(finish, -finishWidth, right, verts[1].xyz);
-    verts[1].color.packed = 0xffffffff;
     verts[1].texCoord[0] = 1.0f;
     verts[1].texCoord[1] = 0.0f;
     verts[1].lmapCoord[0] = 1.0f;
     verts[1].lmapCoord[1] = 0.0f;
+    verts[1].color.packed = 0xffffffff;
+    scale = -finishWidth;
+    VectorMA(finish, scale, right, verts[1].xyz);
 
-    VectorMA(start, -startWidth, right, verts[2].xyz);
-    verts[2].color.packed = 0xffffffff;
     verts[2].texCoord[0] = 0.0f;
     verts[2].texCoord[1] = 0.0f;
     verts[2].lmapCoord[0] = 0.0f;
     verts[2].lmapCoord[1] = 0.0f;
+    verts[2].color.packed = 0xffffffff;
+    scale = -startWidth;
+    VectorMA(start, scale, right, verts[2].xyz);
 
-    VectorMA(start, startWidth, right, verts[3].xyz);
-    verts[3].color.packed = 0xffffffff;
     verts[3].texCoord[0] = 0.0f;
     verts[3].texCoord[1] = 1.0f;
     verts[3].lmapCoord[0] = 0.0f;
     verts[3].lmapCoord[1] = 1.0f;
+    verts[3].color.packed = 0xffffffff;
+    VectorMA(start, startWidth, right, verts[3].xyz);
 
     CL_DefaultVertexFrames(4, verts);
     CL_AddPolyToScene(cgs->media.tracerMaterial, 0x1f, 4, verts);
