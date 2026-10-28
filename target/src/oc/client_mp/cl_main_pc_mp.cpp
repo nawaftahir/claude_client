@@ -138,40 +138,44 @@ void CL_SetServerInfoByAddress(netadr_t from, const char *info, int ping)
     int i;
     int low;
     int high;
+    int mid;
     int compare;
 
     Com_PumpMessageLoop();
 
-    for (i = 0; i < 128; i++) {
+    for (i = 0; i < 128; ++i) {
         if (NET_CompareAdr(from, cls.localServers[i].adr))
             CL_SetServerInfo(&cls.localServers[i], info, ping);
     }
 
-    // global servers are sorted by address
-    low = 0;
     high = cls.numglobalservers;
-    while (low < high) {
-        i = (high + low) / 2;
-        compare = NET_CompareAdrSigned(&from, &cls.globalServers[i].adr);
-        if (compare < 0) {
-            high = i;
-        } else if (compare > 0) {
-            low = i + 1;
-        } else {
+    {
+        low = 0;
+        while (low < high) {
+            mid = (low + high) / 2;
+            compare = NET_CompareAdrSigned(&from, &cls.globalServers[mid].adr);
+            if (compare < 0) {
+                high = mid;
+                continue;
+            }
+            if (compare > 0) {
+                low = mid + 1;
+                continue;
+            }
             // back up to the first matching entry
             do {
-                i--;
-            } while (i >= 0 && !NET_CompareAdrSigned(&from, &cls.globalServers[i].adr));
-            i++;
+                mid--;
+            } while (mid >= 0 && !NET_CompareAdrSigned(&from, &cls.globalServers[mid].adr));
+            mid++;
             do {
-                CL_SetServerInfo(&cls.globalServers[i], info, ping);
-                i++;
-            } while (i < cls.numglobalservers && !NET_CompareAdrSigned(&from, &cls.globalServers[i].adr));
+                CL_SetServerInfo(&cls.globalServers[mid], info, ping);
+                mid++;
+            } while (mid < cls.numglobalservers && !NET_CompareAdrSigned(&from, &cls.globalServers[mid].adr));
             break;
         }
     }
 
-    for (i = 0; i < 128; i++) {
+    for (i = 0; i < 128; ++i) {
         if (NET_CompareAdr(from, cls.favoriteServers[i].adr))
             CL_SetServerInfo(&cls.favoriteServers[i], info, ping);
     }
