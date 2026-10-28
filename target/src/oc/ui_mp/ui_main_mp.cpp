@@ -3117,11 +3117,7 @@ void UI_Init(void)
 
     {
         dvar_t *dvar;
-        int mousePitch;
-
-        mousePitch = Dvar_GetFloat("m_pitch") < 0.0f;
-
-        Dvar_SetBoolByName("ui_mousePitch", mousePitch);
+        Dvar_SetBoolByName("ui_mousePitch", Dvar_GetFloat("m_pitch") >= 0.0f ? 0 : 1);
 
         sharedUiInfo.serverStatus.currentServerCinematic = -1;
         sharedUiInfo.previewMovie = -1;
