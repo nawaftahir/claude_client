@@ -2118,13 +2118,13 @@ static __attribute_regparm__(2)
     pAlias1 = SND_RestoreSoundAlias(memFile);
     SND_RestoreChanInfo(&chaninfo, memFile);
     MemFile_ReadData(memFile, sizeof(info), &info);
-    if (!SND_ValidateSoundAliasBlend(pAlias0, pAlias1, 0))
-        return 1;
     type0 = (pAlias0->flags & 0x60) >> 5;
     type1 = (pAlias1->flags & 0x60) >> 5;
     if (type0 != 2 && type0 != 3)
         return 1;
     if (type1 != 2 && type1 != 3)
+        return 1;
+    if (!SND_ValidateSoundAliasBlend(pAlias0, pAlias1, 0))
         return 1;
     if (channel < 0) {
         SND_StartAliasStream(pAlias0, pAlias1, chaninfo.lerp, chaninfo.entnum, info.org, info.basevolume, 1.0f, 0, info.fraction, 0, &channel, (snd_alias_system_t)(1));
