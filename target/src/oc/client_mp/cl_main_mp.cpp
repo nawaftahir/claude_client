@@ -1040,39 +1040,30 @@ void CL_ShutdownDemo(void)
 }
 void CL_MapLoading(const char *mapname)
 {
+    int localClientNum;
+
     if (!((LegacyHacks *)legacyHacks)->cl_running)
         return;
     g_waitingForServer = 0;
-    Con_Close();
-    clients->keyCatchers = 0;
-    clients->displayHUDWithKeycatchUI = 0;
+    for (localClientNum = 0; localClientNum < 1; localClientNum++) {
+        Con_Close();
+        clients[localClientNum].keyCatchers = 0;
+        clients[localClientNum].displayHUDWithKeycatchUI = 0;
+    }
 
     if (::clc.state >= CA_CONNECTED && !I_stricmp(cls.servername, (const char *)"localhost")) {
-        ::clc.state = CA_CONNECTED;
         memset(cls.updateInfoString, 0, sizeof(cls.updateInfoString));
+        ::clc.state = CA_CONNECTED;
         memset(::clc.serverMessage, 0, sizeof(::clc.serverMessage));
         memset(&clients->gameState, 0, sizeof(clients->gameState));
         ::clc.lastPacketSentTime = -9999;
         I_strncpyz(((LegacyHacks *)legacyHacks)->cl_serverloadmap, mapname, 0x40);
         ((LegacyHacks *)legacyHacks)->cl_serverloadwaiting = 0;
     } else {
-        {
-            dvar_t *dv = (dvar_t *)nextmap;
-            DvarValue nv;
-            char stringCopy[1024];
-            if (dv->type == DVAR_TYPE_STRING) {
-                I_strncpyz(stringCopy, "", sizeof(stringCopy));
-                nv.string = stringCopy;
-            } else {
-                nv.integer = Dvar_StringToEnum(&dv->domain, "");
-            }
-            Dvar_SetVariant(dv, nv, DVAR_SOURCE_INTERNAL);
-        }
+        Dvar_SetString((dvar_t *)nextmap, "");
         I_strncpyz(cls.servername, (const char *)"localhost", sizeof(cls.servername));
         CL_Disconnect();
-        {
-#include "../ui_mp/ui_closeall.inl"
-        }
+        UI_CloseAll();
 
         ::clc.state = CA_CHALLENGING;
         ::clc.connectTime = -3000;
