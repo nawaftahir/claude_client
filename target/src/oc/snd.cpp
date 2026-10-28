@@ -2111,7 +2111,7 @@ static __attribute_regparm__(2)
     snd_channel_info_t chaninfo;
     snd_save_stream_t info;
     int rate;
-    int type;
+    int type0, type1;
     pAlias0 = SND_RestoreSoundAlias(memFile);
     if (!pAlias0)
         return 0;
@@ -2120,11 +2120,11 @@ static __attribute_regparm__(2)
     MemFile_ReadData(memFile, sizeof(info), &info);
     if (!SND_ValidateSoundAliasBlend(pAlias0, pAlias1, 0))
         return 1;
-    type = (pAlias0->flags & 0x60) >> 5;
-    if (type != 2 && type != 3)
+    type0 = (pAlias0->flags & 0x60) >> 5;
+    type1 = (pAlias1->flags & 0x60) >> 5;
+    if (type0 != 2 && type0 != 3)
         return 1;
-    type = (pAlias1->flags & 0x60) >> 5;
-    if (type != 2 && type != 3)
+    if (type1 != 2 && type1 != 3)
         return 1;
     if (channel < 0) {
         SND_StartAliasStream(pAlias0, pAlias1, chaninfo.lerp, chaninfo.entnum, info.org, info.basevolume, 1.0f, 0, info.fraction, 0, &channel, (snd_alias_system_t)(1));
