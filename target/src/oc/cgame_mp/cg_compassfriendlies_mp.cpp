@@ -197,9 +197,11 @@ void CG_DrawCompassFriendlies(rectDef_t *rect, MaterialHandle material, vec_t *c
             delta[1] = (float)(((cg->nextSnap->ps.iCompassFriendInfo >> 15) & 0x1ff) * 4 - 1020);
             if (delta[0] != 1024.0f && delta[0] != -1020.0f && delta[1] != 1024.0f && delta[1] != -1020.0f)
             {
-                float playerY = cg->refdef.vieworg[1];
+                vec3_t playerPos;
+
+                VectorCopy(cg->refdef.vieworg, playerPos);
                 cg->compassActors[num].vLastPos[0] = cg->refdef.vieworg[0] + delta[0];
-                cg->compassActors[num].vLastPos[1] = playerY + delta[1];
+                cg->compassActors[num].vLastPos[1] = playerPos[1] + delta[1];
             }
             else
             {
