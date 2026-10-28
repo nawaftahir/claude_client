@@ -125,18 +125,23 @@ static qboolean LAN_ReadServerCache(fileHandle_t fileIn)
         return 0;
     if (version != 1)
         return 0;
-    if (FS_Read(&cls.numglobalservers, sizeof(int), fileIn) != sizeof(int)
-        || (unsigned int)cls.numglobalservers >= MAX_GLOBALSERVERS)
+    if (FS_Read(&cls.numglobalservers, sizeof(int), fileIn) != sizeof(int))
         return 0;
-    if (FS_Read(&cls.numfavoriteservers, sizeof(int), fileIn) != sizeof(int)
-        || (unsigned int)cls.numfavoriteservers >= MAX_FAVORITESERVERS)
+    if ((unsigned int)cls.numglobalservers >= MAX_GLOBALSERVERS)
         return 0;
-    if (FS_Read(&size, sizeof(size), fileIn) != sizeof(size)
-        || size != sizeof(cls.globalServers) + sizeof(cls.favoriteServers))
+    if (FS_Read(&cls.numfavoriteservers, sizeof(int), fileIn) != sizeof(int))
+        return 0;
+    if ((unsigned int)cls.numfavoriteservers >= MAX_FAVORITESERVERS)
+        return 0;
+    if (FS_Read(&size, sizeof(size), fileIn) != sizeof(size))
+        return 0;
+    if (size != sizeof(cls.globalServers) + sizeof(cls.favoriteServers))
         return 0;
     if (FS_Read(cls.globalServers, sizeof(cls.globalServers), fileIn) != sizeof(cls.globalServers))
         return 0;
-    return FS_Read(cls.favoriteServers, sizeof(cls.favoriteServers), fileIn) == sizeof(cls.favoriteServers);
+    if (FS_Read(cls.favoriteServers, sizeof(cls.favoriteServers), fileIn) != sizeof(cls.favoriteServers))
+        return 0;
+    return 1;
 }
 
 void LAN_LoadCachedServers(void)
