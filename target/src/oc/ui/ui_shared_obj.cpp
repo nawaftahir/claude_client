@@ -2138,16 +2138,7 @@ MenuList *UI_LoadMenus(const char *menuFile, int imageTrack)
         token = Com_Parse(&p);
         if (!token || !token[0] || token[0] == '}')
             break;
-        {
-#define pp_s0 (token)
-#define pp_s1 ("}")
-#define pp_r (cmp)
-#include "../../universal/q_shared_stricmp.inl"
-#undef pp_r
-#undef pp_s1
-#undef pp_s0
-        }
-        if (!cmp)
+        if (!I_stricmp(token, "}"))
             break;
         {
 #define pp_s0 (token)
