@@ -947,8 +947,9 @@ static void FX_RandomizeRoll( const PrimitiveTemplate *primTemp, vec3_t ax[3], c
 {
 	if ( primTemp->mSpawnFlags & 0x100 )
 	{
-		RotatePointAroundVector( ax[1], ax[0], axis[1], flrand( 0.0f, 360.0f ) );
-		Vec3Cross( ax[0], ax[1], ax[2] );
+		float *v0 = ax[0];
+		RotatePointAroundVector( ax[1], v0, axis[1], flrand( 0.0f, 360.0f ) );
+		Vec3Cross( v0, ax[1], ax[2] );
 	}
 }
 
