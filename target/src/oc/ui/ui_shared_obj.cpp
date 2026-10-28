@@ -2106,7 +2106,6 @@ MenuList *UI_LoadMenus(const char *menuFile, int imageTrack)
 {
     const char *p;
     const char *token;
-    int cmp;
     fileHandle_t f;
     int len;
 
@@ -2134,27 +2133,10 @@ MenuList *UI_LoadMenus(const char *menuFile, int imageTrack)
     p = menuBuf;
     Com_BeginParseSession(menuFile);
 
-    while (1) {
+    do
         token = Com_Parse(&p);
-        if (!token || !token[0] || token[0] == '}')
-            break;
-        if (!I_stricmp(token, "}"))
-            break;
-        {
-#define pp_s0 (token)
-#define pp_s1 ("loadmenu")
-#define pp_r (cmp)
-#include "../../universal/q_shared_stricmp.inl"
-#undef pp_r
-#undef pp_s1
-#undef pp_s0
-        }
-        if (!cmp) {
-            if (Load_Menu(&p, imageTrack))
-                continue;
-            break;
-        }
-    }
+    while (token && token[0] && token[0] != '}' && I_stricmp(token, "}")
+        && (I_stricmp(token, "loadmenu") || Load_Menu(&p, imageTrack)));
 
     COM_END_PARSE_SESSION_INLINE();
     return &g_load.menuList;
