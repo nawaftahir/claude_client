@@ -1,6 +1,6 @@
 # Handoff: CoD2MP_s.exe 1.0 client, 99.664% -> 100%
 
-Read first: dev/CLAUDE.md (laws), ~/.claude/skills/client-recon/SKILL.md, the last ~100 lines of LESSONS.md
+Read first: CLIENT_KNOWLEDGE.md (everything learned), dev/CLAUDE.md (laws), ~/.claude/skills/client-recon/SKILL.md, the last ~100 lines of LESSONS.md
 (everything dated 10-28 / 10-29 is this push), lab/w200/inl_notes.txt (LTCG inline rule + oracle).
 
 ## State (10-29, commit 6da307a, not pushed past 6243a5c)
