@@ -398,7 +398,7 @@ static inline float FloatFromBits( int l )
 	return FloatIdentity( *(float *)&l );
 }
 int64_t LittleLong64( int64_t l );
-float   LittleFloat( float l );
+float   LittleFloat( int l );
 
 short   BigShort( short l );
 int BigLong( int l );

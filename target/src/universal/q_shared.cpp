@@ -43,7 +43,7 @@ static short ( *_LittleShort )( short l );
 static int ( *_BigLong )( int l );
 static int ( *_LittleLong )( int l );
 static int64_t ( *s_LittleLong64 )( int64_t l );
-static float ( *s_LittleFloat )( float l );
+static float ( *s_LittleFloat )( int l );
 static int ( *s_LittleFloatAsInt )( float l );
 
 static va_info_t va_info[NUMTHREADS];
@@ -223,7 +223,7 @@ int LittleLongRuntime( int l )
 {
 	return _LittleLong( l );
 }
-float LittleFloat( float l )
+float LittleFloat( int l )
 {
 	return s_LittleFloat( l );
 }
@@ -335,7 +335,7 @@ void Swap_InitLittleEndian()
 	_BigLong = LongSwap;
 	_LittleLong = LongNoSwap;
 	s_LittleLong64 = Long64NoSwap;
-	s_LittleFloat = FloatNoSwap;
+	s_LittleFloat = ( float (*)( int ) )FloatNoSwap;
 	s_LittleFloatAsInt = FloatNoSwapAsInt;
 }
 
@@ -346,7 +346,7 @@ void Swap_InitBigEndian()
 	_BigLong = LongNoSwap;
 	_LittleLong = LongSwap;
 	s_LittleLong64 = Long64Swap;
-	s_LittleFloat = FloatSwap;
+	s_LittleFloat = ( float (*)( int ) )FloatSwap;
 	s_LittleFloatAsInt = FloatSwapAsInt;
 }
 

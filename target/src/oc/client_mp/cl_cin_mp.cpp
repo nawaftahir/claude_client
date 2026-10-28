@@ -53,13 +53,11 @@ void CL_PlayCinematic_f(void)
 
 void SCR_DrawCinematic(void)
 {
-    if (CL_handle >= 0 && CL_handle < 16)
-        ROQ_DrawCinematicFromHandle(CL_handle);
+    ROQ_DrawCinematic();
 }
 void SCR_RunCinematic(void)
 {
-    if (CL_handle >= 0 && CL_handle < 16)
-        CIN_RunCinematic(CL_handle);
+    ROQ_RunCinematic();
 }
 
 void SCR_StopCinematic(void)
