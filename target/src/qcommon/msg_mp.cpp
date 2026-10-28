@@ -617,7 +617,7 @@ static int msg_hData[256] =
 	13504,			// 255
 };
 
-static huffman_t msgHuff;
+static __declspec(align(16)) huffman_t msgHuff;
 static qboolean msgInit = 0;
 int msg_unreferenced;
 

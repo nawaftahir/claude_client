@@ -48,7 +48,7 @@ extern cg_t * const cg;
 extern struct engineState_t *engineState;
 #define legacyHacks ((LegacyHacks *)engineState)
 #endif
-extern unsigned char legacyHacksArray[];
+extern __declspec(align(16)) LegacyHacks legacyHacksArray[1];
 
 /* dvar globals */
 extern const dvar_t *cl_voice;

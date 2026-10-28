@@ -534,7 +534,7 @@ qboolean Sys_ScanForCD( void )
 		if ( GetDriveType( drive ) != DRIVE_CDROM )
 			continue;
 
-		sprintf( cddir, "%s%s", drive, "" );
+		sprintf( cddir, "%s%s", drive, Sys_DefaultCDPath() );
 		sprintf( test, "%s\\%s", cddir, "setup\\setup.exe" );
 		f = fopen( test, "r" );
 		if ( f )

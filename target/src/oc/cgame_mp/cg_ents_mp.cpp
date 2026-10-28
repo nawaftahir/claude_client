@@ -769,15 +769,11 @@ qboolean CG_DObjGetWorldBoneBox_4c6f30(const centity_t *cent, struct DObj_s *obj
         return 0;
 
     AnglesToAxis(cent->lerpAngles, ent_axis);
-    ent_axis[3][0] = cent->lerpOrigin[0];
-    ent_axis[3][1] = cent->lerpOrigin[1];
-    ent_axis[3][2] = cent->lerpOrigin[2];
+    VectorCopy(cent->lerpOrigin, ent_axis[3]);
     for (i = 0; i < 24; i++)
     {
         MatrixTransformVector43(verts[i], ent_axis, tmp);
-        verts[i][0] = tmp[0];
-        verts[i][1] = tmp[1];
-        verts[i][2] = tmp[2];
+        VectorCopy(tmp, verts[i]);
     }
     return 1;
 }

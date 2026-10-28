@@ -4636,33 +4636,7 @@ private:
     int reserved[3];
 };
 
-struct LegacyHacks {
-    int cg_norender;
-    int cl_running;
-    int cl_stance;
-    int cl_stanceTemp;
-    int cl_downloadSize;
-    int cl_downloadCount;
-    int cl_downloadTime;
-    char cl_downloadName[64];
-    char cl_serverloadmap[64];
-    char cl_serverloadgametype[64];
-    Bool cl_serverloadwaiting;
-    Bool sv_killserver;
-    char sv_killreason[256];
-    char ui_scriptMenu[256];
-    int ui_scriptMenuIndex;
-    char ui_newScriptMenu[256];
-    int ui_newScriptMenuIndex;
-    char ui_waitingScriptMenu[256];
-    int ui_waitingScriptMenuIndex;
-    Bool ui_waitingScriptMenuNoMouse;
-    Bool ui_scriptMenuAllowResponse;
-    char ui_savegameName[256];
-    char ui_savegameInfo[256];
-    Bool winnt;
-    int persid;
-};
+#include "../../qcommon/legacyhacks.h"
 
 struct LocalDateTime {
     UInt16 highSeconds;

@@ -236,7 +236,7 @@ void CG_DrawCompassFriendlies(rectDef_t *rect, MaterialHandle material, vec_t *c
             {
                 yaw = AngleNormalize360(vectoyaw(cg->compassActors[i].vLastPos) - cg->compPointerYaw);
                 dist = cg_hudCompassMaxRange->current.value;
-                fadedColor[3] = (1.0f - cg_hudObjectiveMinAlpha->current.value) * 0.5f + cg_hudObjectiveMinAlpha->current.value;
+                fadedColor[3] = ((1.0f - cg_hudObjectiveMinAlpha->current.value) * 0.5f) + cg_hudObjectiveMinAlpha->current.value;
             }
             else
             {
@@ -260,7 +260,7 @@ void CG_DrawCompassFriendlies(rectDef_t *rect, MaterialHandle material, vec_t *c
             }
 
             CompassDistToRadius(dist, &radius);
-            FastSinCos(yaw * 0.017453292f, &s, &c);
+            FastSinCos((yaw * 0.017453292f), &s, &c);
             CompassIconSize(&w, &h);
             x = centerX - w * 0.5f - s * radius;
             y = centerY - h * 0.5f - c * radius;
@@ -322,7 +322,7 @@ void CG_DrawCompassFriendlies(rectDef_t *rect, MaterialHandle material, vec_t *c
             dist = cg_hudCompassMaxRange->current.value;
 
         CompassDistToRadius(dist, &radius);
-        FastSinCos(yaw * 0.017453292f, &s, &c);
+        FastSinCos((yaw * 0.017453292f), &s, &c);
         CompassIconSize(&w, &h);
         x = centerX - w * 0.5f - s * radius;
         y = centerY - h * 0.5f - c * radius;

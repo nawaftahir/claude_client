@@ -117,7 +117,7 @@ static void *imp_snd_stereo;
 static void *imp_sv_disableClientConsole;
 static void *imp_sv_paused;
 static void *imp_theFxHelper;
-extern unsigned char legacyHacksArray[];
+extern __declspec(align(16)) LegacyHacks legacyHacksArray[1];
 
 static byte *net_profile_dvar;
 static byte *record_callback_ptr;

@@ -4,8 +4,8 @@
 #define BUILD_NUMBER "crc6_v1"
 #define BUILD_TIME   "Thu Oct 06 2005 07:13:42PM"
 
-// Original name unknown; size from the layout.
-char buildInfo[1024];
+// Mac STABS buf[128]; retail .data ends 128 bytes after this buffer.
+char buildInfo[128];
 
 const char *getBuildNumber( void )
 {

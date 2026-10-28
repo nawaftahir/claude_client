@@ -845,8 +845,7 @@ static void CG_DrawCenterString(void)
     }
 }
 
-// inlined com_math Vec3Dot; a macro so no out-of-line body is kept
-#define Vec3DotCH(a, b) ((a)[0] * (b)[0] + (a)[1] * (b)[1] + (a)[2] * (b)[2])
+extern float DotProduct(const vec3_t a, const vec3_t b);
 static void __attribute_regparm__(2) CG_CalcCrosshairPosition(float *x, float *y)
 {
     vec3_t gunAng;
@@ -860,16 +859,16 @@ static void __attribute_regparm__(2) CG_CalcCrosshairPosition(float *x, float *y
     gunAng[2] = cg->refdefViewAngles[2];
     AngleVectors(gunAng, gunDir, NULL, NULL);
 
-    forward = Vec3DotCH(gunDir, cg->refdef.viewaxis[0]);
+    forward = DotProduct(gunDir, cg->refdef.viewaxis[0]);
     if (forward <= 0.0f || cg->refdef.fov_x <= 0.0f || cg->refdef.fov_y <= 0.0f) {
         *x = 0.0f;
         *y = 0.0f;
         return;
     }
 
-    horiz = Vec3DotCH(gunDir, cg->refdef.viewaxis[1]);
+    horiz = DotProduct(gunDir, cg->refdef.viewaxis[1]);
     *x = horiz / (forward * (float)tan((double)(cg->refdef.fov_x * 0.0087266462f))) * -320.0f;
-    vert = Vec3DotCH(gunDir, cg->refdef.viewaxis[2]);
+    vert = DotProduct(gunDir, cg->refdef.viewaxis[2]);
     *y = vert / (forward * (float)tan((double)(cg->refdef.fov_y * 0.0087266462f))) * -240.0f;
 }
 
