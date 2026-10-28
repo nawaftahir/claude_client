@@ -1047,9 +1047,9 @@ void CL_MapLoading(const char *mapname)
     clients->keyCatchers = 0;
     clients->displayHUDWithKeycatchUI = 0;
 
-    if (::clc.state >= CA_CONNECTED && I_stricmp(cls.servername, (const char *)"localhost") == 0) {
-        memset(cls.updateInfoString, 0, sizeof(cls.updateInfoString));
+    if (::clc.state >= CA_CONNECTED && !I_stricmp(cls.servername, (const char *)"localhost")) {
         ::clc.state = CA_CONNECTED;
+        memset(cls.updateInfoString, 0, sizeof(cls.updateInfoString));
         memset(::clc.serverMessage, 0, sizeof(::clc.serverMessage));
         memset(&clients->gameState, 0, sizeof(clients->gameState));
         ::clc.lastPacketSentTime = -9999;
