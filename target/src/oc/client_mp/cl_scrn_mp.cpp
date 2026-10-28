@@ -324,17 +324,7 @@ void SCR_UpdateScreenInternal(void)
 
 void SCR_UpdateScreen(void)
 {
-    if (updateScreenCalled)
-        return;
-
-    if (::clc.state == 6)
-        Sys_LoadingKeepAlive();
-
-    if (scr_initialized && !com_errorEntered) {
-        updateScreenCalled = 1;
-        SCR_UpdateFrame();
-        updateScreenCalled = 0;
-    }
+    SCR_UpdateScreenInternal();
 }
 
 static void CL_CubemapShotUsage(void)
