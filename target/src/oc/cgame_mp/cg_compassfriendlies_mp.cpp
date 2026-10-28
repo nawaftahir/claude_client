@@ -222,8 +222,6 @@ void CG_DrawCompassFriendlies(rectDef_t *rect, MaterialHandle material, vec_t *c
 
         for (i = 0, actor = cg->compassActors; i < COMPASS_ACTOR_COUNT; i++, actor++)
         {
-            float x, h;
-            float angle;
             int flash;
             MaterialHandle pingMat;
 
@@ -266,7 +264,7 @@ void CG_DrawCompassFriendlies(rectDef_t *rect, MaterialHandle material, vec_t *c
             CompassIconSize(&w, &h);
             x = centerX - w * 0.5f - s * radius;
             y = centerY - h * 0.5f - c * radius;
-            angle = AngleNormalize360(cg->refdefViewAngles[1] - cg->compassActors[i].fLastYaw);
+            yaw = AngleNormalize360(cg->refdefViewAngles[1] - cg->compassActors[i].fLastYaw);
 
             if (actor->pingTime > cg->time)
                 flash = (actor->pingTime - cg->time) % 500 >= 250;
@@ -300,9 +298,9 @@ void CG_DrawCompassFriendlies(rectDef_t *rect, MaterialHandle material, vec_t *c
             else
             {
                 if (!pingMat || fadedColor[3] != 1.0f)
-                    CG_DrawRotatedPic(x, y, w, h, rect->horzAlign, rect->vertAlign, angle, baseColorModdedByComapassFadeOut, cgs->media.friendMaterials[flash]);
+                    CG_DrawRotatedPic(x, y, w, h, rect->horzAlign, rect->vertAlign, yaw, baseColorModdedByComapassFadeOut, cgs->media.friendMaterials[flash]);
                 if (pingMat)
-                    CG_DrawRotatedPic(x, y, w, h, rect->horzAlign, rect->vertAlign, angle, fadedColor, pingMat);
+                    CG_DrawRotatedPic(x, y, w, h, rect->horzAlign, rect->vertAlign, yaw, fadedColor, pingMat);
             }
         }
     }
