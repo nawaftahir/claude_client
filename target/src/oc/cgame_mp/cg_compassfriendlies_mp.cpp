@@ -137,6 +137,7 @@ void CG_DrawCompassFriendlies(rectDef_t *rect, MaterialHandle material, vec_t *c
     vec2_t delta;
     float fadeTime;
     vec4_t fadedColor;
+    vec4_t baseColorModdedByComapassFadeOut;
     float yaw, dist, radius, s, c, x, y, w, h;
 
     const dvar_t *fadeDvar = hud_fade_compass;
@@ -225,7 +226,6 @@ void CG_DrawCompassFriendlies(rectDef_t *rect, MaterialHandle material, vec_t *c
             float angle;
             int flash;
             MaterialHandle pingMat;
-            vec4_t actorColor;
 
             if (actor->iLastUpdate > cg->time)
                 actor->iLastUpdate = 0;
@@ -284,12 +284,12 @@ void CG_DrawCompassFriendlies(rectDef_t *rect, MaterialHandle material, vec_t *c
                 pingMat = cgs->media.compassping_friendlyfiring;
             }
 
-            actorColor[0] = color[0];
-            actorColor[1] = color[1];
-            actorColor[2] = color[2];
-            actorColor[3] = color[3];
-            if (compassFadeOutAlpha < actorColor[3])
-                actorColor[3] = compassFadeOutAlpha;
+            baseColorModdedByComapassFadeOut[0] = color[0];
+            baseColorModdedByComapassFadeOut[1] = color[1];
+            baseColorModdedByComapassFadeOut[2] = color[2];
+            baseColorModdedByComapassFadeOut[3] = color[3];
+            if (compassFadeOutAlpha < baseColorModdedByComapassFadeOut[3])
+                baseColorModdedByComapassFadeOut[3] = compassFadeOutAlpha;
             if (compassFadeOutAlpha < fadedColor[3])
                 fadedColor[3] = compassFadeOutAlpha;
 
@@ -300,7 +300,7 @@ void CG_DrawCompassFriendlies(rectDef_t *rect, MaterialHandle material, vec_t *c
             else
             {
                 if (!pingMat || fadedColor[3] != 1.0f)
-                    CG_DrawRotatedPic(x, y, w, h, rect->horzAlign, rect->vertAlign, angle, actorColor, cgs->media.friendMaterials[flash]);
+                    CG_DrawRotatedPic(x, y, w, h, rect->horzAlign, rect->vertAlign, angle, baseColorModdedByComapassFadeOut, cgs->media.friendMaterials[flash]);
                 if (pingMat)
                     CG_DrawRotatedPic(x, y, w, h, rect->horzAlign, rect->vertAlign, angle, fadedColor, pingMat);
             }
