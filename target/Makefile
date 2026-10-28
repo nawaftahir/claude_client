@@ -33,10 +33,15 @@ release:
 check: release
 	cmp $(REL) $(ANCHOR)
 
+# owner-approved post-link image: copies postlink_ranges.txt from the local anchor; $(REL) stays the pure source result
+postlink: release
+	python3 postcopy.py $(ANCHOR) $(REL) build/release/CoD2MP_s_postlink.exe postlink_ranges.txt
+	cmp build/release/CoD2MP_s_postlink.exe $(ANCHOR)
+
 clean:
 	rm -rf build
 
-.PHONY: $(OUT) all measure release check clean
+.PHONY: $(OUT) all measure release check postlink clean
 
 else
 
