@@ -1943,12 +1943,14 @@ static void SND_SaveSoundAlias(const snd_alias_t *alias, MemoryFile *memFile)
 const snd_alias_t *SND_RestoreSoundAlias(MemoryFile *memFile)
 {
     const char *name;
+    unsigned short offset;
 
     name = MemFile_ReadCString(memFile);
     if (!*name)
         return 0;
 
-    return SND_GetAliasWithOffset(name, (unsigned short)MemFile_ReadShort(memFile));
+    offset = MemFile_ReadShort(memFile);
+    return SND_GetAliasWithOffset(name, offset);
 }
 
 static void SND_Save3DChannel(int chanIndex, MemoryFile *memFile)
@@ -2119,9 +2121,9 @@ static __attribute_regparm__(2)
     SND_RestoreChanInfo(&chaninfo, memFile);
     MemFile_ReadData(memFile, sizeof(info), &info);
     type0 = (pAlias0->flags & 0x60) >> 5;
-    type1 = (pAlias1->flags & 0x60) >> 5;
     if (type0 != 2 && type0 != 3)
         return 1;
+    type1 = (pAlias1->flags & 0x60) >> 5;
     if (type1 != 2 && type1 != 3)
         return 1;
     if (!SND_ValidateSoundAliasBlend(pAlias0, pAlias1, 0))
