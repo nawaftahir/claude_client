@@ -154,8 +154,6 @@ extern qboolean CL_ShutdownUI(void);
 extern void Dvar_SetInt(dvar_t *dvar, int value);
 extern void Dvar_SetBool(dvar_t *dvar, bool value);
 extern void Dvar_SetString(dvar_t *dvar, const char *value);
-extern int Dvar_StringToEnum(const DvarLimits *domain, const char *string);
-extern void Dvar_SetVariant(dvar_t *dvar, DvarValue value, DvarSetSource source);
 extern void UI_SetMap(const char *mapname, const char *gametype);
 extern void SCR_UpdateScreenInternal(void);
 extern void SetScreenScaling(float safeAreaH, float safeAreaV, float vpX, float vpY, float vpW, float vpH);

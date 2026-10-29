@@ -3040,8 +3040,6 @@ int generateHashValue(const char *fname);
 dvar_t *Dvar_FindMalleableVar(const char *dvarName);
 void Dvar_Reregister(dvar_t *dvar, const char *dvarName, unsigned char type, unsigned short flags, DvarValue resetValue, DvarLimits domain);
 dvar_t *Dvar_RegisterNew(const char *dvarName, unsigned char type, unsigned short flags, DvarValue value, DvarLimits domain);
-void Dvar_SetVariant(dvar_t *dvar, DvarValue value, DvarSetSource source);
-int Dvar_StringToEnum(const DvarLimits *domain, const char *string);
 void UI_Init(void)
 {
     MenuList *menuList;
