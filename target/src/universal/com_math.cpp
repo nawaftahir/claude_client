@@ -2115,13 +2115,10 @@ QuatMultiply
 */
 void QuatMultiply( const float *in1, const float *in2, float *out )
 {
-#define pp_in1 in1
-#define pp_in2 in2
-#define pp_out out
-#include "quat_multiply.inl"
-#undef pp_out
-#undef pp_in2
-#undef pp_in1
+	out[0] = in1[0] * in2[3] + in1[3] * in2[0] + in1[2] * in2[1] - in1[1] * in2[2];
+	out[1] = in1[1] * in2[3] - in1[2] * in2[0] + in1[3] * in2[1] + in1[0] * in2[2];
+	out[2] = in1[2] * in2[3] + in1[1] * in2[0] - in1[0] * in2[1] + in1[3] * in2[2];
+	out[3] = in1[3] * in2[3] - in1[0] * in2[0] - in1[1] * in2[1] - in1[2] * in2[2];
 }
 
 /*

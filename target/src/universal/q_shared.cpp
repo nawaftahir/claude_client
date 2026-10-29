@@ -491,11 +491,19 @@ int I_stricmpwild( const char *wild, const char *s )
 	return 0;
 }
 
-char *I_strlwr( char *pp_s )
+char *I_strlwr( char *s )
 {
-#define PP_RETVAL( v ) return v
-#include "q_shared_strlwr.inl"
-#undef PP_RETVAL
+	char *iter;
+
+	for ( iter = s; *iter; iter++ )
+	{
+		if ( I_isupper( *iter ) )
+		{
+			*iter += 'a' - 'A';
+		}
+	}
+
+	return s;
 }
 
 char *I_strupr( char *s )
