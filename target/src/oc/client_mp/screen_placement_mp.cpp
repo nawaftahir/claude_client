@@ -216,7 +216,92 @@ void ScrPlace_Stub_449ed0(void)
 {
 }
 
-void CalcScreenPlacement(float *sp_x, float *sp_y, float *sp_w, float *sp_h, int sp_horzAlign, int sp_vertAlign)
+void CalcScreenPlacement(float *x, float *y, float *w, float *h, int horzAlign, int vertAlign)
 {
-#include "screen_placement.inl"
+    float scaled;
+
+    switch (horzAlign) {
+    case 1:
+        scaled = SP->scaleVirtualToReal[0] * *x;
+        *x = scaled + SP->realViewableMin[0];
+        *w = GetRealWidthFromVirtualWidth(*w);
+        break;
+    case 2:
+        scaled = SP->scaleVirtualToReal[0] * *x;
+        *x = scaled + SP->realViewportSize[0] * 0.5f;
+        *w = GetRealWidthFromVirtualWidth(*w);
+        break;
+    case 7:
+        scaled = SP->scaleVirtualToReal[0] * *x;
+        *x = scaled + (SP->realViewableMax[0] + SP->realViewableMin[0]) * 0.5f;
+        *w = GetRealWidthFromVirtualWidth(*w);
+        break;
+    case 3:
+        scaled = SP->scaleVirtualToReal[0] * *x;
+        *x = scaled + SP->realViewableMax[0];
+        *w = GetRealWidthFromVirtualWidth(*w);
+        break;
+    case 4:
+        *x = SP->scaleVirtualToFull[0] * *x;
+        *w = SP->scaleVirtualToFull[0] * *w;
+        break;
+    case 6:
+        scaled = SP->scaleRealToVirtual[0] * *x;
+        *x = scaled + SP->virtualScreenOffsetX;
+        *w = GetVirtualWidthFromRealWidth(*w);
+        break;
+    case 0:
+        scaled = SP->scaleVirtualToReal[0] * *x;
+        *x = scaled + SP->virtualScreenOffsetX + SP->subScreenLeft;
+        *w = GetRealWidthFromVirtualWidth(*w);
+        break;
+    case 5:
+        break;
+    default:
+        scaled = SP->scaleVirtualToReal[0] * *x;
+        *x = scaled + SP->virtualScreenOffsetX + SP->subScreenLeft;
+        *w = GetRealWidthFromVirtualWidth(*w);
+        break;
+    }
+
+    switch (vertAlign) {
+    case 1:
+        scaled = SP->scaleVirtualToReal[1] * *y;
+        *y = scaled + SP->realViewableMin[1];
+        *h = GetRealHeightFromVirtualHeight(*h);
+        break;
+    case 2:
+        scaled = SP->scaleVirtualToReal[1] * *y;
+        *y = scaled + SP->realViewportSize[1] * 0.5f;
+        *h = GetRealHeightFromVirtualHeight(*h);
+        break;
+    case 7:
+        scaled = SP->scaleVirtualToReal[1] * *y;
+        *y = scaled + (SP->realViewableMax[1] + SP->realViewableMin[1]) * 0.5f;
+        *h = GetRealHeightFromVirtualHeight(*h);
+        break;
+    case 3:
+        scaled = SP->scaleVirtualToReal[1] * *y;
+        *y = scaled + SP->realViewableMax[1];
+        *h = GetRealHeightFromVirtualHeight(*h);
+        break;
+    case 4:
+        *y = SP->scaleVirtualToFull[1] * *y;
+        *h = SP->scaleVirtualToFull[1] * *h;
+        break;
+    case 6:
+        *y = SP->scaleRealToVirtual[1] * *y;
+        *h = GetVirtualHeightFromRealHeight(*h);
+        break;
+    case 0:
+        *y = SP->scaleVirtualToReal[1] * *y;
+        *h = GetRealHeightFromVirtualHeight(*h);
+        break;
+    case 5:
+        break;
+    default:
+        *y = SP->scaleVirtualToReal[1] * *y;
+        *h = GetRealHeightFromVirtualHeight(*h);
+        break;
+    }
 }
