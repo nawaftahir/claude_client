@@ -172,7 +172,7 @@ struct DpvsPlane;
 union DpvsPlaneInfo;
 struct DpvsScene;
 union DvarLimits;
-union DvarValue;
+struct DvarValue;
 struct DxCapsCheckBits;
 struct DxCapsCheckInteger;
 struct DxGlobals;

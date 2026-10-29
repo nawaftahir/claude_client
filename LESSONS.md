@@ -159,3 +159,17 @@ lay: dropping 'static' from static __forceinline helpers in one .cpp is a no-op 
   Sys_ArchiveInfo (Com_SetRecommended, Com_HasConfigureChecksumChanged), GetBestOffhand (CG_DrawOffHandIcon),
   Item_ListBox_HandleKey (Scroll_ListBox_AutoFunc), SND_AnyActiveListeners (SND_StartAliasStream),
   Com_EndParseSession (sound alias loaders). Running two lv.sh at once collides (adl5B lost); lv.sh + gate is fine.
+- 10-30 XAnimSetTime real call in CG_UpdateKillCam (xst, oracle lmv): size 50, c0 10, cnt 0.078 (loop 1.25 x four
+  halvings), r 107 >= 71 -> refused; retail inlines. Source shape equals CoD4 (KisakCOD cg_snapshot_mp.cpp:556).
+  Unresolved; the .inl stand-in stays (bytes already match).
+- 10-30 Dvar_SetFromStringFromSource 169 (alignment; aligndiff.py: the ONLY function in the binary whose and-esp
+  prologue differs). Chain PINNED from the binary: Dvar_StringToColor (8 double stack slots from the inlined
+  I_fround bias, no self-align in either binary) <- Dvar_StringToValue <- Dvar_SetFromStringFromSource; ours
+  hoists the alignment into the last one, retail does not. Compile order (fp_t ordq): StringToColor F21603,
+  StringToValue F32184, SetFromStringFromSource F72364. No byte change from: Dvar_SetVariant/Dvar_StringToEnum
+  static like the server (lk1, kept 2926047), DvarValue as the server's struct-with-anonymous-union (dvs; the only
+  struct/union kind mismatch vs server, kinddiff.py). Next lever: how I_fround (TU_STATIC inline, double bias)
+  reaches StringToColor in retail. Also no gain: CL_GetConfigString &array[] form (gcs1), StartWeaponAnim i=1..20
+  loop (swa1, -119), AdsOverlay else-branch order (aov1 size change, aov2 identical), XAnimSetTime real call (xst).
+- 10-30 tools: lab/w200/sites_all.py (every (callee, caller) call-count difference vs retail: NONE left on main),
+  aligndiff.py, fnqword.py, linkdiff.py (static/inline linkage vs server; noisy on forward decls), kinddiff.py.

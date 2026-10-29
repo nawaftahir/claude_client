@@ -489,7 +489,7 @@ cplane_t *CM_GetPlaneNum(int planeNum);
 void DB_EnumXAssets(enum XAssetType type, void (*func)(union XAssetHeader, void *), void *inData, bool includeOverride);
 void *Sys_GetValue(int valueIndex);
 Bool Sys_ReturnFalse(void);
-void Dvar_ChangeResetValue(struct dvar_s *dvar, union DvarValue value);
+void Dvar_ChangeResetValue(struct dvar_s *dvar, struct DvarValue value);
 bool Dvar_IsAtDefaultValue(struct dvar_s const *);
 char * XModelGetBasePoseOffset(struct XModel const *,unsigned int);
 char ** FS_ListFiles(char const *,char const *,enum FsListBehavior,int *,int);

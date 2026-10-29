@@ -236,7 +236,7 @@ struct DpvsPlane;
 union DpvsPlaneInfo;
 struct DpvsScene;
 union DvarLimits;
-union DvarValue;
+struct DvarValue;
 struct DxCapsCheckBits;
 struct DxCapsCheckInteger;
 struct DxGlobals;
@@ -3239,7 +3239,7 @@ typedef struct DpvsPlane DpvsPlane;
 typedef union DpvsPlaneInfo DpvsPlaneInfo;
 typedef struct DpvsScene DpvsScene;
 typedef union DvarLimits DvarLimits;
-typedef union DvarValue DvarValue;
+typedef struct DvarValue DvarValue;
 typedef struct DxCapsCheckBits DxCapsCheckBits;
 typedef struct DxCapsCheckInteger DxCapsCheckInteger;
 typedef struct DxGlobals DxGlobals;
@@ -5907,13 +5907,15 @@ union DvarLimits {
     struct { vec_t min; vec_t max; } vector;
 };
 
-union DvarValue {
-    Bool enabled;
-    int integer;
-    float value;
-    vec_t *vector;
-    const char *string;
-    byte color[4];
+struct DvarValue {
+    union {
+        Bool enabled;
+        int integer;
+        float value;
+        vec_t *vector;
+        const char *string;
+        byte color[4];
+    };
 };
 
 struct DxCapsCheckBits {
@@ -11446,7 +11448,7 @@ struct dvar_s {
     short unsigned int flags;
     byte type;
     Bool modified;
-    union DvarValue current;
+    struct DvarValue current;
     DvarValue latched;
     DvarValue reset;
     union DvarLimits domain;

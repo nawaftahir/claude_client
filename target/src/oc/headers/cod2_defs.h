@@ -1559,7 +1559,7 @@ typedef union DpvsPlaneInfo DpvsPlaneInfo;
 typedef struct DpvsScene DpvsScene;
 
 typedef union DvarLimits DvarLimits;
-typedef union DvarValue DvarValue;
+typedef struct DvarValue DvarValue;
 
 typedef struct DxCapsCheckBits DxCapsCheckBits;
 typedef struct DxCapsCheckInteger DxCapsCheckInteger;
@@ -4027,13 +4027,15 @@ enum DvarType {
     DVAR_TYPE_COLOR = 8
 };
 
-union DvarValue {
-    bool enabled;
-    int integer;
-    float value;
-    vec_t *vector;
-    const char *string;
-    byte color[4];
+struct DvarValue {
+    union {
+        bool enabled;
+        int integer;
+        float value;
+        vec_t *vector;
+        const char *string;
+        byte color[4];
+    };
 };
 
 struct FxEffectDef {
@@ -7501,7 +7503,7 @@ struct dvar_s {
     short unsigned int flags;
     byte type;
     bool modified;
-    union DvarValue current;
+    struct DvarValue current;
     DvarValue latched;
     DvarValue reset;
     union DvarLimits domain;
