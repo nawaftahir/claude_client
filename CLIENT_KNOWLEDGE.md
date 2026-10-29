@@ -226,6 +226,36 @@ Two paths, chosen by whether the callee is already compiled:
 - FX_CalcOriginAndAxis 86 (slot +4), Item_CorrectedTextRect 54 (data, 1.2), ~100 small functions 1-30 B.
 - speex _speex_bits_pack 29: upstream 1.1.9 text; tail-merge choice only.
 
+## 4b. DO NOT RETRY (verified dead ends; each measured, see LESSONS.md for tags/specs)
+| Idea | Result |
+|---|---|
+| Decompiling 1.2/1.3 clients for 1.0 evidence | hard functions byte-identical, same toolchain: no new info |
+| Compile order / definition order for G_OverrideModel, XAnimGetInfo, XAnimCopyAnimTreeNoNotify (aw1, aw2) | no effect |
+| Compile order for CalcScreenPlacement (leaf, not in a cycle) | always compiles before callers; ruled out |
+| Per-caller inline budget on the cost-model path | does not exist there (only on the uncompiled-callee path) |
+| CalcScreenPlacement as non-static header inline (sp2) | 34 calls vs retail 48; discount still applies; copy moves |
+| CalcScreenPlacement address taken / switch vs if | not address-taken in retail; retail also uses switch jump tables |
+| Real CL_DrawStretchPic calls in the lagometer without solving the nested inline (li1, x8a, x8b) | size change, ALL ~65% |
+| Clearing the register summary with pragma g off / dead calls / TU-wide cl flags (sm_flags.sh) | changes callee code or nothing |
+| FX constructors inline in the class (Mac shape) | PC ctors are out-of-line (code positions); vt2 97% |
+| Removing com_endParseSessionUnderflow and writing the literal at each site (eu1) | string emitted early, .rdata 92.55% |
+| Replacing all 24 Com_EndParseSession stand-ins at once (Codex) | .text +96 B |
+| Com_Parse/Com_EndParseSession real calls in the sound-alias loops (ep_*, es_all) | in-loop sites wrong way round; no source shape fits the count model |
+| FloatSwap shift forms fs1-fs5 | all worse than the byte-pointer form |
+| Sys_IsLANAddress one-if-per-return (la1-la3) | identical bytes or worse |
+| SND_RawSamples index/return forms (rs1-3, rr1-3) | no change |
+| XAnimGetInfo info pointer / return forms (xg1-3) | no gain |
+| CG_InitXAnimTrees per-call anims reads (xt3, xt4) | worse |
+| CG_OffsetFirstPersonView view-height spellings, Q3 origin/angles pointer locals (of1-3) | no change / size change |
+| BG_GetSpeed term order (gs1) | no change |
+| CG_CalcCrosshairPosition halfFov/dot locals (ch3, ch6-ch9), tan float overload | dot spilled or tan first |
+| CG_DrawCrosshairNames clientInfo_t pointer locals (ch7) | -355 |
+| CG_AddPlayerWeapon shapes apw1-18, wp*, ps1/ps2 | RA unmoved |
+| ScaleTracer width param order/locals/function pointer/pragmas (tz1-tz6) | solved instead by non-static inline (1.4b) |
+| CG_DrawTracer dot forms in the no-/GL harness | harness does not reproduce this function (cg addressing differs); use full builds |
+| CG_ConfigStringModified body forms, early return, bool temp | no gain; no evidence for a CG_ConfigString wrapper |
+| Item_CorrectedTextRect / Sys_ScanForCD invented vanished callees | forbidden without evidence (Sys_DefaultCDPath had evidence) |
+
 ## 5. Data and layout
 - .data and .rsrc 100%. .rdata 99.82%: float-pool order (compile order) and the com_endParseSessionUnderflow
   pointer (+4 group, 23 refs; removing it needs the stand-ins gone: writing the literal at each site emits the
