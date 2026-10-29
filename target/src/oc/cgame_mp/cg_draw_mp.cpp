@@ -1828,9 +1828,9 @@ static void CG_ScreenFade(void)
     if (msec <= 0)
     {
         cg->fadeColor1[0] = cg->fadeColor2[0];
-        cg->fadeColor1[3] = cg->fadeColor2[3];
         cg->fadeColor1[1] = cg->fadeColor2[1];
         cg->fadeColor1[2] = cg->fadeColor2[2];
+        cg->fadeColor1[3] = cg->fadeColor2[3];
 
         if (cg->fadeColor2[3] == 0.0f)
         {
