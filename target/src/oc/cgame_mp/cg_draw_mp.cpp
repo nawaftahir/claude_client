@@ -583,6 +583,8 @@ static void CG_DrawLagometer(void)
     float range;
     float vscale;
     const float *color;
+    float x;
+    float y;
 
     if (cg_drawLagometer_72->current.enabled && !cgs->localServer)
     {
@@ -635,7 +637,9 @@ static void CG_DrawLagometer(void)
                 v = v * vscale;
                 if (v > range)
                     v = range;
-                CL_DrawStretchPic(ax + aw - a, ay + ah - v, 1.0f, v, 3, 3, 0.0f, 0.0f, 0.0f, 0.0f, color, cgs->media.whiteMaterial);
+                y = ay + ah - v;
+                x = ax + aw - a;
+                CL_DrawStretchPic(x, y, 1.0f, v, 3, 3, 0.0f, 0.0f, 0.0f, 0.0f, color, cgs->media.whiteMaterial);
             }
             else if (v < 0.0f)
             {
