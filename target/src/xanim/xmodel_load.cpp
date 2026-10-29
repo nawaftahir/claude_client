@@ -502,7 +502,7 @@ bool XModelSurfsSupported()
 }
 
 // retail 0x48eaa0
-static __declspec(noinline) void XModelReadSurfaces(XModel *model, XSurface **out, int *partBits, const unsigned char **pos, void *(*Alloc)(int), int numsurfs)
+static void XModelReadSurfaces(XModel *model, XSurface **out, int *partBits, const unsigned char **pos, void *(*Alloc)(int), int numsurfs)
 {
 	int i;
 

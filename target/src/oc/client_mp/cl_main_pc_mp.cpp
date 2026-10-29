@@ -765,7 +765,7 @@ void CL_Ping_f(void)
     NET_OutOfBandPrint(NS_CLIENT1, to, "getinfo xxx");
 }
 
-__declspec(noinline) serverStatusRequest_t *CL_GetServerStatus(netadr_t from)
+serverStatusRequest_t *CL_GetServerStatus(netadr_t from)
 {
     int i;
     int oldest;

@@ -50,7 +50,7 @@ bool Dvar_IsSystemActive()
 	return isDvarSystemActive;
 }
 
-__declspec(noinline) int generateHashValue(const char *fname)
+int generateHashValue(const char *fname)
 {
 	int i;
 	int hash;

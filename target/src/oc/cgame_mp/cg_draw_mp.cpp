@@ -1082,7 +1082,7 @@ static void CG_DrawReticleCenter(const WeaponDef *weapDef, int weapIndex, const 
     }
 }
 
-static __declspec(noinline) void CG_CalcReticleSpread(const WeaponDef *weapDef, int weapIndex, const float *drawSize, float transScale, float *spread)
+static void CG_CalcReticleSpread(const WeaponDef *weapDef, int weapIndex, const float *drawSize, float transScale, float *spread)
 {
     float minSpread;
     float maxSpread;
@@ -1099,7 +1099,7 @@ static __declspec(noinline) void CG_CalcReticleSpread(const WeaponDef *weapDef, 
     spread[1] = scale - weapDef->fHipReticleSidePos * drawSize[1];
 }
 
-static __declspec(noinline) void CG_CalcReticleColor(const float *baseColor, float alpha, float *reticleColor)
+static void CG_CalcReticleColor(const float *baseColor, float alpha, float *reticleColor)
 {
     VectorCopy(baseColor, reticleColor);
     reticleColor[3] = (1.0f - cg->predictedPlayerState.aimSpreadScale * (1.0f / 255.0f)) * cg_crosshairAlpha->current.value * alpha;
@@ -1107,7 +1107,7 @@ static __declspec(noinline) void CG_CalcReticleColor(const float *baseColor, flo
         reticleColor[3] = cg_crosshairAlphaMin->current.value;
 }
 
-static __declspec(noinline) void CG_CalcReticleImageOffset(const float *drawSize, float *imageTexelOffset)
+static void CG_CalcReticleImageOffset(const float *drawSize, float *imageTexelOffset)
 {
     vec2_t realSize;
     vec2_t screenSize;

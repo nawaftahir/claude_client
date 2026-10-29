@@ -491,7 +491,7 @@ int I_stricmpwild( const char *wild, const char *s )
 	return 0;
 }
 
-__declspec(noinline) char *I_strlwr( char *pp_s )
+char *I_strlwr( char *pp_s )
 {
 #define PP_RETVAL( v ) return v
 #include "q_shared_strlwr.inl"

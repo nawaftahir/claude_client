@@ -223,7 +223,7 @@ static void StartWeaponAnim(int weaponNum, struct XAnimTree_s *tree, int activeA
 
 
 // kisak name; retail 0x4cd480
-static __declspec(noinline) void StartWeaponAnim(int weaponNum, struct XAnimTree_s *tree, int activeAnim)
+static void StartWeaponAnim(int weaponNum, struct XAnimTree_s *tree, int activeAnim)
 {
     int i;
     weaponInfo_t *weapInfo;
