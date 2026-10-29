@@ -190,3 +190,9 @@ lay: dropping 'static' from static __forceinline helpers in one .cpp is a no-op 
   'if (!weapon || class != type) { weapon = GetBestOffhand(); if (!weapon) return; }'.
   Bare '&' inside wsl.exe bash -lc dies with the shell (lost a build and left a gate half-applied): always use the
   tool's background mode.
+- 10-30 vmn1: VM_Notify / VM_Resume / VM_TerminateTime written exactly as the verified server (RemoveObjectVariable,
+  GetNewObjectVariable(GetArray(GetVariable(..)))) with the 4 script noinline marks removed: ALL 47.1%, the same 4
+  sites still inline that retail calls (ClearVariableValue in VM_Resume, GetNewVariableIndexInternal2,
+  RemoveVariable x3, Scr_TerminateThread in VM_Notify). Not a source-shape problem; next: oracle W lines for
+  VM_Notify (cost path vs budget path, compile order inside the script SCC). ConnectBreakStatements: callers and
+  callee equal the server, TempMalloc equal too -> same class (oracle needed).
