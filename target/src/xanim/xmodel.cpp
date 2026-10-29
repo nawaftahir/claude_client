@@ -30,6 +30,7 @@ void XModelSetUnusedValue(int value)
 }
 
 void XModelPartsFree(XModelParts *modelParts)
+static int xmodel_unreferenced[2];	// unreferenced storage, sized from the layout
 {
 	XBoneHierarchy *hierarchy;
 	unsigned short *name;
@@ -447,6 +448,9 @@ struct refexport_t
 extern ALIGNED(128) refexport_t re;
 
 // retail 0xe23438, read only by the wrapper below; name unknown
+
+// Unreferenced storage; original declarations unknown (sized from the layout).
+static char xmodel_unreferenced2[32];
 int xmodel_unk_e23438;
 
 // retail 0x48d8a0, unreferenced; name unknown

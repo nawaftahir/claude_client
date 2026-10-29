@@ -3916,12 +3916,7 @@ int Scr_GetOffset( unsigned int classnum, const char *name )
 	classId = scrClassMap[classnum].id;
 	fieldId = FindVariable( classId, SL_ConvertFromString( name ) );
 
-	if ( fieldId )
-	{
-		return scrVarGlob.variableList[fieldId].u.u.entityOffset;
-	}
-
-	return -1;
+	return fieldId ? scrVarGlob.variableList[fieldId].u.u.entityOffset : -1;
 }
 
 /*

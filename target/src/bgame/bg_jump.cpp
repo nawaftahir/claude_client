@@ -6,6 +6,8 @@ static dvar_t *jump_stepSize;
 static dvar_t *jump_slowdownEnable;
 static dvar_t *jump_ladderPushVel;
 static dvar_t *jump_spreadAdd;
+// Unreferenced storage; original declarations unknown (sized from the layout).
+int jump_unreferenced;
 
 #define JUMP_LAND_SLOWDOWN_TIME 1800
 

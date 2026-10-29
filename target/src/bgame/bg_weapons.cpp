@@ -7,6 +7,7 @@ qboolean BG_SetPlayerWeaponForSlot( playerState_t *ps, int slot, int weaponIndex
 
 // unreferenced slot at retail 0x182cbc8
 int bg_weapons_unused = 0;
+int bg_weapons_unreferenced;	// unreferenced storage, sized from the layout; original name unknown
 int bg_iNumWeapons = 0;
 static WeaponDef *bg_weaponDefs[MAX_WEAPONS];
 
@@ -5105,6 +5106,9 @@ BG_CalculateWeaponPosition_Sway
 #pragma optimize("p", on)
 void BG_CalculateWeaponPosition_Sway( const playerState_t *ps, vec3_t swayViewAngles, vec3_t swayOffset, vec3_t swayAngles, float ssSwayScale, int frametime )
 {
+
+// Unreferenced storage; original declarations unknown (sized from the layout).
+static char bg_weapons_unreferenced2[32];
 	WeaponDef *weapDef;
 	vec3_t deltaAngles;
 	vec3_t deltaOffset;

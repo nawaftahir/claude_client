@@ -58,7 +58,6 @@ extern dvar_t *fx_draw;
 extern dvar_t *fx_cull;
 extern dvar_t *fx_sort;
 extern dvar_t *fx_profile;
-extern dvar_t *fx_visMinTraceDist;
 
 struct FxCurveIterator
 {

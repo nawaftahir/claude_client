@@ -11,7 +11,7 @@
 #define MAX_CHALLENGES  1024
 
 #define MAX_MASTER_SERVERS  5
-#define AUTHORIZE_TIMEOUT 5000
+#define AUTHORIZE_TIMEOUT 7000
 
 #define BAN_LIST_NAME "ban.txt"
 
@@ -81,6 +81,8 @@ typedef struct
 	int firstPing;
 	qboolean connected;
 	int guid;
+	char PBguid[33];
+	char clientPBguid[33];
 } challenge_t;
 
 typedef struct
@@ -148,6 +150,11 @@ typedef struct client_s
 	int				downloadBlockSize[MAX_DOWNLOAD_WINDOW];
 	qboolean		downloadEOF;
 	int				downloadSendTime;
+	char			downloadURL[MAX_OSPATH];
+	qboolean		wwwOk;
+	qboolean		downloadingWWW;
+	qboolean		clientDownloadingWWW;
+	qboolean		wwwFallback;
 	int				deltaMessage;
 	int				nextReliableTime;
 	int				lastPacketTime;
@@ -169,10 +176,12 @@ typedef struct client_s
 	int				voicePacketCount;
 	bool			muteList[MAX_CLIENTS];
 	bool			sendVoice;
+	char			PBguid[33];
+	char			clientPBguid[33];
 } client_t;
 /*
 #if defined(__i386__)
-static_assert((sizeof(client_t) == 0x78F14), "ERROR: client_t size is invalid!");
+static_assert((sizeof(client_t) == 0x79064), "ERROR: client_t size is invalid!");
 #endif
 */
 
@@ -250,12 +259,13 @@ typedef struct
 	challenge_t challenges[MAX_CHALLENGES];
 	netadr_t redirectAddress;
 	netadr_t authorizeAddress;
+	int sv_lastTimeMasterServerCommunicated;
 	netProfileInfo_t *pOOBProf;
 	tempBanSlot_t tempBans[MAX_TEMPBAN_SLOTS];
 } serverStatic_t;
 /*
 #if defined(__i386__)
-static_assert((sizeof(serverStatic_t) == 0xC108), "ERROR: serverStatic_t size is invalid!");
+static_assert((sizeof(serverStatic_t) == 0x1D10C), "ERROR: serverStatic_t size is invalid!");
 #endif
 */
 
@@ -346,6 +356,10 @@ extern int sv_serverId_value;
 
 extern dvar_t *nextmap;
 extern dvar_t *sv_maxclients;
+extern dvar_t *sv_punkbuster;
+extern dvar_t *sv_wwwDownload;
+extern dvar_t *sv_wwwBaseURL;
+extern dvar_t *sv_wwwDlDisconnected;
 
 void SV_Init();
 void SV_PacketEvent( netadr_t from, msg_t *msg );

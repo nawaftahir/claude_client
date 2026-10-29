@@ -1559,6 +1559,7 @@ void ClientCommand( int clientNum )
 {
 	gentity_t *ent;
 	char cmd[MAX_TOKEN_CHARS];
+	char reply[1088]; // size PINNED by the Com_sprintf bound
 
 	ent = &g_entities[clientNum];
 
@@ -1578,12 +1579,6 @@ void ClientCommand( int clientNum )
 	if ( Q_stricmp( cmd, "say_team" ) == 0 )
 	{
 		Cmd_Say_f( ent, SAY_TEAM, qfalse );
-		return;
-	}
-
-	if ( Q_stricmp( cmd, "tell" ) == 0 )
-	{
-		Cmd_Tell_f( ent );
 		return;
 	}
 
@@ -1683,12 +1678,6 @@ void ClientCommand( int clientNum )
 		return;
 	}
 
-	if ( Q_stricmp( cmd, "gc" ) == 0 )
-	{
-		Cmd_GameCommand_f(ent);
-		return;
-	}
-
 	if ( Q_stricmp( cmd, "setviewpos" ) == 0 )
 	{
 		Cmd_SetViewpos_f(ent);
@@ -1707,6 +1696,7 @@ void ClientCommand( int clientNum )
 		return;
 	}
 
-	SV_GameSendServerCommand(clientNum, SV_CMD_CAN_IGNORE, va("%c \"GAME_UNKNOWNCLIENTCOMMAND\x15%s\"", 101, cmd));
+	Com_sprintf(reply, sizeof(reply), "%c \"GAME_UNKNOWNCLIENTCOMMAND\x15%s\"", 101, cmd);
+	SV_GameSendServerCommand(clientNum, SV_CMD_CAN_IGNORE, reply);
 }
 

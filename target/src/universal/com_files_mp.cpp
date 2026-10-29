@@ -617,6 +617,22 @@ qboolean FS_iwIwd(char *iwd, const char *base)
 	return qfalse;
 }
 
+// Name as zk_libcod guesses it. Server-only iwds carry "_svr_" in their name.
+qboolean FS_svrIwd( const char *iwd )
+{
+	char name[64];
+
+	strcpy( name, iwd );
+	I_strlwr( name );
+
+	if ( strstr( name, "_svr_" ) )
+	{
+		return qtrue;
+	}
+
+	return qfalse;
+}
+
 qboolean FS_CompareIwds( char *neededIwds, int len, qboolean dlstring )
 {
 	searchpath_t *sp;
@@ -636,6 +652,9 @@ qboolean FS_CompareIwds( char *neededIwds, int len, qboolean dlstring )
 		haveIwd = qfalse;
 
 		if ( FS_iwIwd((char *)fs_serverReferencedIwdNames[i], BASEGAME) )
+			continue;
+
+		if ( FS_svrIwd(fs_serverReferencedIwdNames[i]) )
 			continue;
 
 		for ( sp = fs_searchpaths; sp; sp = sp->next )

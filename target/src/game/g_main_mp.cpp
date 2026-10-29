@@ -93,6 +93,9 @@ dvar_t *player_meleeRange;
 dvar_t *player_meleeWidth;
 dvar_t *player_meleeHeight;
 dvar_t *g_antilag;
+int g_main_unreferenced[7];	// unreferenced storage, sized from the layout; original name unknown
+
+gclient_t g_clients[MAX_CLIENTS];
 dvar_t *g_oldVoting;
 static dvar_t *g_voteAbstainWeight;
 static dvar_t *g_dumpAnims;
@@ -867,7 +870,7 @@ void G_LogPrintf( const char *fmt, ... )
 	}
 
 	va_start( argptr, fmt );
-	vsprintf( string2, fmt, argptr );
+	vsnprintf( string2, sizeof(string2), fmt, argptr );
 	va_end( argptr );
 
 	sec = level.time / 1000;

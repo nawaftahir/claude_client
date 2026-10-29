@@ -341,11 +341,12 @@ typedef struct scrVmGlob_s
 	VariableValue eval_stack[2];
 	const char *dialog_error_message;
 	int loading;
+	unsigned int unknownTsc;	// rdtsc >> 16, written by Scr_ResetTimeout, never read; original name unknown
 	int starttime;
 	unsigned int localVarsStack[MAX_VM_OPERAND_STACK];
 } scrVmGlob_t;
 #if defined(__i386__)
-static_assert((sizeof(scrVmGlob_t) == 0x201C), "ERROR: scrVmGlob_t size is invalid!");
+static_assert((sizeof(scrVmGlob_t) == 0x2020), "ERROR: scrVmGlob_t size is invalid!");
 #endif
 
 extern ALIGNED(128) scrVmGlob_t scrVmGlob;

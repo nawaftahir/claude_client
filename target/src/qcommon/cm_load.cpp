@@ -65,6 +65,7 @@ CM_InitAllThreadData
 void CM_InitAllThreadData()
 {
 	CM_InitThreadData(THREAD_CONTEXT_MAIN);
+	CM_InitThreadData(THREAD_CONTEXT_DATABASE);
 }
 
 /*

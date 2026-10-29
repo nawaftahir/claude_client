@@ -2009,7 +2009,7 @@ void FX_Print( const char *fmt, ... )
 	char msg[1024];
 
 	va_start(ap, fmt);
-	vsprintf(msg, fmt, ap);
+	vsnprintf(msg, sizeof(msg), fmt, ap);
 	va_end(ap);
 	Com_Printf(msg);
 }

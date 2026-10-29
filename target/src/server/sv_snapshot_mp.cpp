@@ -223,7 +223,7 @@ void SV_WriteSnapshotToClient( client_t *client, msg_t *msg )
 	}
 	else if ( client->netchan.outgoingSequence - client->deltaMessage >= PACKET_BACKUP - 3 )
 	{
-		Com_DPrintf("%s: Delta request from out of date packet.\n", client->name);
+		Com_DPrintf("%s: (writing snapshot) Snapshot delta request from out of date packet.\n", client->name);
 		oldframe = NULL;
 		lastframe = 0;
 	}

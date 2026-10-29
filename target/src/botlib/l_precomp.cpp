@@ -165,7 +165,7 @@ void SourceError(source_t *source, char *str, ...)
 	va_list ap;
 
 	va_start(ap, str);
-	vsprintf(text, str, ap);
+	vsnprintf(text, sizeof(text), str, ap);
 	va_end(ap);
 	Com_Printf("^1Error: file %s, line %d: %s\n", source->scriptstack->filename, source->scriptstack->line, text);
 } //end of the function SourceError
@@ -181,7 +181,7 @@ void SourceWarning(source_t *source, char *str, ...)
 	va_list ap;
 
 	va_start(ap, str);
-	vsprintf(text, str, ap);
+	vsnprintf(text, sizeof(text), str, ap);
 	va_end(ap);
 	Com_Printf("^3Warning: file %s, line %d: %s\n", source->scriptstack->filename, source->scriptstack->line, text);
 } //end of the function ScriptWarning

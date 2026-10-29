@@ -2,6 +2,8 @@
 #include "../script/script_public.h"
 
 extern dvar_t *com_developer;
+// Unreferenced storage; original declarations unknown (sized from the layout).
+char xanim_unreferenced[192];
 ALIGNED(128) XAnimInfo g_xAnimInfo[4096];
 // unreferenced in retail; filler, name chosen so the linker places it in retail's slot
 int xaUnref7[2];

@@ -138,6 +138,16 @@ void Scr_TerminalError( const char *error );
 void Scr_RunCurrentThreads();
 void Scr_ResetTimeout();
 
+// original name unknown
+static inline unsigned int Scr_ReadTsc()
+{
+	unsigned int tsc;
+
+	__asm__ __volatile__ ( "rdtsc" : "=a" (tsc) : "d" (tsc) );
+
+	return tsc;
+}
+
 /*
 ==============
 Scr_IsSystemActive
@@ -601,7 +611,7 @@ unsigned int VM_ExecuteInternal( function_stack_t fs )
 	gThreadCount = 0;
 	g_script_error_level++;
 
-	if ( !sigsetjmp( g_script_error[ g_script_error_level ], 0 ) )
+	if ( !setjmp( g_script_error[ g_script_error_level ] ) )
 	{
 		goto loop;
 loop_dec_top:
@@ -4550,6 +4560,7 @@ void Scr_ObjectError( const char *error )
 SetEntityFieldValue
 ==============
 */
+	scrVmGlob.unknownTsc = Scr_ReadTsc() >> 16;
 bool SetEntityFieldValue( unsigned int classnum, int entnum, int offset, VariableValue *value )
 {
 	assert(!scrVmPub.inparamcount);

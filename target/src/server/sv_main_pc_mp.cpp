@@ -1,7 +1,9 @@
 #include "../qcommon/qcommon.h"
 #include "../qcommon/netchan.h"
 
-#define SV_OUTPUTBUF_LENGTH ( 16384 - 16 )
+void PbServerForceProcess();
+
+#define SV_OUTPUTBUF_LENGTH ( MAX_MSGLEN - 16 )
 
 
 netadr_t *SV_MasterAddress();
@@ -180,8 +182,9 @@ void SVC_RemoteCommand( netadr_t from, msg_t *msg )
 	int remainingLen;
 	int remainingSize;
 	const char *password;
-	char sv_outputbuf[SV_OUTPUTBUF_LENGTH];
 	static int lasttime = 0;
+	LargeLocal sv_outputbufLarge( SV_OUTPUTBUF_LENGTH );
+	char *sv_outputbuf = (char *)sv_outputbufLarge.GetBuf();
 
 	// prevent using rcon as an amplifier and make dictionary attacks impractical
 	time = Com_Milliseconds();
@@ -240,6 +243,11 @@ void SVC_RemoteCommand( netadr_t from, msg_t *msg )
 		{
 			remaining[remainingLen] = 0;
 			SV_Cmd_ExecuteString( remaining );
+
+			if ( !I_strnicmp( remaining, "pb_sv_", 6 ) )
+			{
+				PbServerForceProcess();
+			}
 		}
 	}
 
@@ -257,4 +265,4 @@ void SV_MatchEnd( void )
 
 
 // Unreferenced storage; original declarations unknown (sized from the layout).
-static int unusedStorage;
+static int unusedStorage[3];

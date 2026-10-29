@@ -84,6 +84,3 @@ FxMemBlock *FxMem_FreeItem( void *item, unsigned int itemSize )
 	return block;
 }
 
-
-// Unreferenced storage; original declarations unknown (sized from the layout).
-static int unusedStorage;

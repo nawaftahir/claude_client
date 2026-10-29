@@ -4,6 +4,10 @@
 
 const char *CL_GetUsernameForLocalClient(int controllerIndex);
 
+// 1.2c: file-scope result buffers (Mac 1.3 symbols: info1, info2)
+static char info1[MAX_INFO_STRING];
+static char info2[BIG_INFO_STRING];
+
 void Dvar_ForEach(void (*callback)(const char *dvarName))
 {
 	dvar_t *dvar;
@@ -577,6 +581,62 @@ static void Dvar_Dump_f(void)
 	Com_DvarDump(PMSG_CONSOLE);
 }
 
+// 1.2c: dvar access for the PunkBuster glue (names from the Mac 1.3 client symbols)
+bool Dvar_ValueInDomain(unsigned char type, DvarValue value, DvarLimits domain);
+
+void PBdvar_set(const char *var_name, const char *value)
+{
+	dvar_t *dvar;
+
+	dvar = Dvar_FindVar(var_name);
+
+	if ( !dvar )
+		return;
+
+	Dvar_SetFromStringByName(var_name, value);
+}
+
+int PbDvarWalk(char **name, char **string, int *flags, char **resetString)
+{
+	static dvar_t *var;
+
+	if ( !var )
+		var = sortedDvars;
+	else
+		var = var->next;
+
+	if ( !var )
+		return 0;
+
+	*name = (char *)var->name;
+	*string = (char *)Dvar_DisplayableValue(var);
+	*flags = var->flags;
+	*resetString = (char *)Dvar_DisplayableResetValue(var);
+
+	return 1;
+}
+
+char *PbDvarValidate(char *buf)
+{
+	dvar_t *dvar;
+
+	dvar = sortedDvars;
+	*buf = 0;
+
+	while ( dvar )
+	{
+		if ( !Dvar_ValueInDomain(dvar->type, dvar->current, dvar->domain) )
+		{
+			strcpy(buf, dvar->name);
+			break;
+		}
+
+		dvar = dvar->next;
+	}
+
+	return buf;
+}
+
 void SV_SetConfig(int start, int max, int bit)
 {
 	dvar_t *dvar;
@@ -640,6 +700,9 @@ void Dvar_AddCommands()
 	Cmd_AddCommand("togglep", Dvar_TogglePrint_f);
 	Cmd_AddCommand("set", Dvar_Set_f);
 	Cmd_AddCommand("sets", Dvar_SetS_f);
+
+// Unreferenced storage; original declarations unknown (sized from the layout).
+static char dvar_cmds_unreferenced[96];
 	Cmd_AddCommand("seta", Dvar_SetA_f);
 	Cmd_AddCommand("setfromdvar", Dvar_SetFromDvar_f);
 	Cmd_AddCommand("reset", Dvar_Reset_f);

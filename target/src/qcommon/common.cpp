@@ -61,7 +61,6 @@ static ALIGNED(128) sysEvent_t com_pushedEvents[MAX_PUSHED_EVENTS];
 static char com_unreferenced3[0x3c0];
 
 static qboolean com_safemode = 0;
-static int com_unreferenced4;
 static int iWeaponInfoSource = 0;
 
 static char		*rd_buffer;
@@ -340,12 +339,16 @@ void Com_PrintMessage( print_msg_type_t channel, const char *msg )
 {
 	static qboolean opening_qconsole = qfalse;
 
+	PbCaptureConsoleOutput( (char *)msg, 4096 );
+
 	if ( rd_buffer )
 	{
 		if (channel == PMSG_LOGFILE)
 		{
 			return;
 		}
+
+		Sys_EnterCriticalSection( 5 );
 
 		if ((strlen (msg) + strlen(rd_buffer)) > (rd_buffersize - 1))
 		{
@@ -357,6 +360,7 @@ void Com_PrintMessage( print_msg_type_t channel, const char *msg )
 		// TTimo nooo .. that would defeat the purpose
 		//comFill_187(rd_buffer);
 		//*rd_buffer = 0;
+		Sys_LeaveCriticalSection( 5 );
 		return;
 	}
 
@@ -376,37 +380,44 @@ void Com_PrintMessage( print_msg_type_t channel, const char *msg )
 	}
 
 	// logfile
-	if ( com_logfile && com_logfile->current.integer && FS_Initialized() )
+	if ( com_logfile && com_logfile->current.integer )
 	{
-		// TTimo: only open the qconsole.log if the filesystem is in an initialized state
-		//   also, avoid recursing in the qconsole.log opening (i.e. if fs_debug is on)
-		if ( !logfile && !opening_qconsole)
+		Sys_EnterCriticalSection( 0 );
+
+		if ( FS_Initialized() )
 		{
-			struct tm *newtime;
-			time_t aclock;
+			// TTimo: only open the qconsole.log if the filesystem is in an initialized state
+			//   also, avoid recursing in the qconsole.log opening (i.e. if fs_debug is on)
+			if ( !logfile && !opening_qconsole)
+			{
+				struct tm *newtime;
+				time_t aclock;
 
-			opening_qconsole = qtrue;
+				opening_qconsole = qtrue;
 
-			time( &aclock );
-			newtime = localtime( &aclock );
+				time( &aclock );
+				newtime = localtime( &aclock );
 
 #ifdef DEDICATED
-			logfile = FS_FOpenTextFileWrite( "console_mp_server.log" );
+				logfile = FS_FOpenTextFileWrite( "console_mp_server.log" );
 #else
-			logfile = FS_FOpenTextFileWrite( "console_mp.log" );
+				logfile = FS_FOpenTextFileWrite( "console_mp.log" );
 #endif
-			Com_Printf( "logfile opened on %s\n", asctime( newtime ) );
+				Com_Printf( "logfile opened on %s\n", asctime( newtime ) );
 
-			opening_qconsole = qfalse;
+				opening_qconsole = qfalse;
+			}
+
+			if ( logfile )
+			{
+				FS_Write(msg, strlen(msg), logfile);
+
+				if ( com_logfile->current.integer > 1 )
+					FS_Flush(logfile);
+			}
 		}
 
-		if ( logfile )
-		{
-			FS_Write(msg, strlen(msg), logfile);
-
-			if ( com_logfile->current.integer > 1 )
-				FS_Flush(logfile);
-		}
+		Sys_LeaveCriticalSection( 0 );
 	}
 }
 
@@ -485,6 +496,7 @@ static void Com_ShutdownInternal( const char *finalmsg )
 		clc.demorecording = 0;
 	}
 #endif
+	Sys_LeaveCriticalSection( 2 );
 	SV_Shutdown(finalmsg);
 	Com_Restart();
 }
@@ -705,6 +717,8 @@ void Com_Error( errorParm_t code, const char *fmt, ... )
 {
 	va_list		argptr;
 
+	Sys_EnterCriticalSection( 2 );
+
 	if ( com_errorEntered )
 		Sys_Error("recursive error after: %s", com_errorMessage);
 
@@ -715,7 +729,10 @@ void Com_Error( errorParm_t code, const char *fmt, ... )
 	va_end (argptr);
 	com_errorMessage[sizeof(com_errorMessage) - 1] = 0;
 
-	if ( code == ERR_SCRIPT || code == ERR_LOCALIZATION )
+	if ( code == ERR_DROP )
+	{
+	}
+	else if ( code == ERR_SCRIPT || code == ERR_LOCALIZATION )
 	{
 		if ( !com_fixedConsolePosition )
 		{
@@ -759,7 +776,9 @@ void Com_ErrorAbort( void )
 {
 	int errorEntered;
 
+	Sys_EnterCriticalSection( 2 );
 	errorEntered = com_errorEntered;
+	Sys_LeaveCriticalSection( 2 );
 
 	if ( errorEntered )
 		longjmp(*(jmp_buf *)Sys_GetValue(THREAD_VALUE_COM_ERROR), -1);
@@ -776,6 +795,7 @@ do the apropriate things.
 void Com_Quit_f()
 {
 	Com_Printf("quitting...\n");
+	Sys_EnterCriticalSection( 2 );
 
 	// don't try to shutdown if we are in a recursive error
 	if ( !com_errorEntered )
@@ -1659,6 +1679,9 @@ static bool Com_ParseCpuConfig( const SysInfo *info, const char **text )
 		return false;
 
 	Com_Printf( "configure_mp.csv: using CPU configuration %.0f GHz %i MB\n", best.cpuGHz, best.sysMB );
+
+// Unreferenced storage; original declarations unknown (sized from the layout).
+static char com_unreferenced8[192];
 	Cbuf_AddText( "exec configure_mp.cfg" );
 	Cbuf_Execute();
 	Com_SetConfigureDvars( dvarCount, dvarNames, dvarValues );
@@ -1809,11 +1832,11 @@ void COM_PlayIntroMovies()
 	if ( com_dedicated->current.integer )
 		return;
 
-	if ( com_introPlayed->current.boolean )
-		return;
+	Cbuf_AddText("unskippablecinematic legal\n");
 
-	Cbuf_AddText("cinematic atvi\n");
-	Dvar_SetString(nextmap, "cinematic IW_logo; set nextmap cinematic cod_intro");
+	if ( !com_introPlayed->current.boolean )
+		Dvar_SetString(nextmap, "cinematic atvi; set nextmap \"cinematic IW_logo; set nextmap cinematic cod_intro\"");
+
 	Dvar_SetBool(com_introPlayed, true);
 }
 
@@ -1869,7 +1892,7 @@ Com_ExecStartupConfigs
 */
 void Com_ExecStartupConfigs( const char *configFile )
 {
-	Cbuf_AddText("exec default_mp.cfg\n");
+	Cbuf_AddText(va("exec %s\n", fs_defaultConfigName));
 	Cbuf_AddText("exec language.cfg\n");
 
 	if ( configFile )
@@ -2006,7 +2029,7 @@ Com_Init
 */
 void Com_Init( char* commandLine )
 {
-	if ( !__sigsetjmp(*(jmp_buf*)Sys_GetValue(THREAD_VALUE_COM_ERROR), 0) )
+	if ( !setjmp(*(jmp_buf*)Sys_GetValue(THREAD_VALUE_COM_ERROR)) )
 	{
 		Com_Init_Try_Block_Function(commandLine);
 	}

@@ -45,7 +45,7 @@ static void Z_MallocFailed( int size )
 
 static void *Z_MallocRaw( int size )
 {
-	return malloc( size );
+	return calloc( 1, size );
 }
 
 void *Z_TryMallocInternal( int size )

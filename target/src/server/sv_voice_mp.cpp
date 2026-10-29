@@ -8,6 +8,8 @@ void SV_QueueVoicePacket( int talkerNum, int clientNum, VoicePacket_t *voicePack
 void SV_UserVoice( client_t *cl, msg_t *msg );
 void SV_PreGameUserVoice( client_t *cl, msg_t *msg );
 
+void NET_OutOfBandVoiceData2( netsrc_t sock, netadr_t adr, byte *format, int len );
+
 /*
 ==================
 SV_WriteClientVoiceData
@@ -51,7 +53,7 @@ void SV_SendClientVoiceData( client_t *client )
 		return;
 	}
 
-	NET_OutOfBandVoiceData(NS_SERVER, client->netchan.remoteAddress, msg.data, msg.cursize);
+	NET_OutOfBandVoiceData2(NS_SERVER, client->netchan.remoteAddress, msg.data, msg.cursize);
 	client->voicePacketCount = 0;
 }
 

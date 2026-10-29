@@ -27,6 +27,8 @@ extern FxScheduler *theFxScheduler;
 extern FxScheduler *theFxSchedulers[1];
 
 volatile qboolean fx_camera_valid;
+// Unreferenced storage; original declarations unknown (sized from the layout).
+static int fxexport_unreferenced[2];
 extern int effectActiveCountBolt;
 extern int effectActiveCountNonBolt;
 extern int privateEffectActiveCountBolt;

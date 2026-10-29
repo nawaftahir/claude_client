@@ -1,9 +1,5 @@
-// The ET-derived www-download path (downloadURL, wwwOk, downloadingWWW,
-// clientDownloadingWWW, wwwFallback) is not in the 1.0 Linux dedicated server:
-// dropping those 272 bytes from client_t gives sizeof(client_t) 0x78F14 -- the
-// stride SV_MapRestart indexes with -- and puts netchan.pProf at 0x765F0 and
-// pureAuthentic at 0x6E5B0, both as the target reads them. The code that used
-// those fields is removed here for the same reason.
+// 1.2 restores the ET-derived www-download path (downloadURL, wwwOk, downloadingWWW,
+// clientDownloadingWWW, wwwFallback) that the 1.0 Linux dedicated server dropped.
 #include "../qcommon/qcommon.h"
 #include "../qcommon/netchan.h"
 
@@ -23,7 +19,8 @@ void SV_ExecuteClientCommand( client_t *cl, const char *s, qboolean clientOK );
 // caller-buffer MSG_ReadString form came later.
 extern char *MSG_ReadCommandString( msg_t *msg );
 
-void SV_AuthorizeRequest( netadr_t from, int challenge );
+char *PbAuthClient( char *fromAddr, int cl_pb, char *cl_guid );
+const char *SEH_StringEd_GetString( const char *pszReference );
 void SV_DropClient( client_t *drop, const char *reason );
 void SV_CloseDownload( client_t *cl );
 void SV_WriteDownloadToClient( client_t *cl, msg_t *msg );
@@ -79,6 +76,56 @@ static void SV_UnmutePlayer_f( client_t *cl );
 
 /*
 =================
+SV_UpdateLastTimeMasterServerCommunicated
+=================
+*/
+void SV_UpdateLastTimeMasterServerCommunicated( netadr_t from )
+{
+	if ( !NET_CompareBaseAdr( from, *SV_MasterAddress() ) )
+	{
+		return;
+	}
+
+	svs.sv_lastTimeMasterServerCommunicated = svs.time;
+}
+
+/*
+=================
+SV_AuthorizeRequest
+=================
+*/
+void SV_AuthorizeRequest( netadr_t from, int challenge, const char *PBguid )
+{
+	dvar_t *fs_game;
+	bool allowAnonymous;
+	char gameDir[MAX_STRING_CHARS];
+
+	if ( svs.authorizeAddress.type == NA_BAD )
+	{
+		return;
+	}
+
+	gameDir[0] = '\0';
+	fs_game = Dvar_RegisterString("fs_game", "", DVAR_SERVERINFO | DVAR_SYSTEMINFO | DVAR_INIT | DVAR_CHANGEABLE_RESET);
+	if ( fs_game && fs_game->current.string[0] )
+	{
+		strcpy(gameDir, fs_game->current.string);
+	}
+
+	Com_DPrintf("sending getIpAuthorize for %s\n", NET_AdrToString(from));
+	allowAnonymous = Dvar_GetBool("sv_allowAnonymous");
+	if ( PBguid )
+	{
+		NET_OutOfBandPrint(NS_SERVER, svs.authorizeAddress, va("getIpAuthorize %i %i.%i.%i.%i \"%s\" %i PB \"%s\"", challenge, from.ip[0], from.ip[1], from.ip[2], from.ip[3], gameDir, allowAnonymous, PBguid));
+	}
+	else
+	{
+		NET_OutOfBandPrint(NS_SERVER, svs.authorizeAddress, va("getIpAuthorize %i %i.%i.%i.%i \"%s\" %i", challenge, from.ip[0], from.ip[1], from.ip[2], from.ip[3], gameDir, allowAnonymous));
+	}
+}
+
+/*
+=================
 SV_GetChallenge
 A "getchallenge" OOB command has been received
 Returns a challenge number that can be used
@@ -98,6 +145,7 @@ void SV_GetChallenge( netadr_t from )
 	int oldest;
 	int oldestTime;
 	challenge_t *challenge;
+	const char *guid;
 
 	oldest = 0;
 	oldestTime = 0x7fffffff;
@@ -158,7 +206,7 @@ void SV_GetChallenge( netadr_t from )
 	// if they have been challenging for a long time and we
 	// haven't heard anything from the authoirze server, go ahead and
 	// let them in, assuming the id server is down
-	if ( svs.time - challenge->firstTime > AUTHORIZE_TIMEOUT )
+	if ( svs.time - svs.sv_lastTimeMasterServerCommunicated > 1200000 &&svs.time - challenge->firstTime > AUTHORIZE_TIMEOUT )
 	{
 		netadr_t adr = *SV_MasterAddress();
 
@@ -174,35 +222,14 @@ void SV_GetChallenge( netadr_t from )
 	}
 
 	// otherwise send their ip to the authorize server
-	SV_AuthorizeRequest(from, svs.challenges[i].challenge);
-}
-
-/*
-=================
-SV_AuthorizeRequest
-=================
-*/
-void SV_AuthorizeRequest( netadr_t from, int challenge )
-{
-	dvar_t *fs_game;
-	bool allowAnonymous;
-	char gameDir[MAX_STRING_CHARS];
-
-	if ( svs.authorizeAddress.type == NA_BAD )
+	guid = NULL;
+	if ( SV_Cmd_Argc() == 3 )
 	{
-		return;
+		guid = SV_Cmd_Argv(2);
+		I_strncpyz(svs.challenges[i].clientPBguid, guid, sizeof(svs.challenges[i].clientPBguid));
 	}
 
-	gameDir[0] = '\0';
-	fs_game = Dvar_RegisterString("fs_game", "", DVAR_SERVERINFO | DVAR_SYSTEMINFO | DVAR_INIT | DVAR_CHANGEABLE_RESET);
-	if ( fs_game && fs_game->current.string[0] )
-	{
-		strcpy(gameDir, fs_game->current.string);
-	}
-
-	Com_DPrintf("sending getIpAuthorize for %s\n", NET_AdrToString(from));
-	allowAnonymous = Dvar_GetBool("sv_allowAnonymous");
-	NET_OutOfBandPrint(NS_SERVER, svs.authorizeAddress, va("getIpAuthorize %i %i.%i.%i.%i %s %i", challenge, from.ip[0], from.ip[1], from.ip[2], from.ip[3], gameDir, allowAnonymous));
+	SV_AuthorizeRequest(from, svs.challenges[i].challenge, guid);
 }
 
 /*
@@ -472,6 +499,7 @@ void SV_AuthorizeIpPacket( netadr_t from )
 
 	s = SV_Cmd_Argv( 2 );
 	r = SV_Cmd_Argv( 3 );
+	I_strncpyz( svs.challenges[i].PBguid, Cmd_Argv( 5 ), sizeof( svs.challenges[i].PBguid ) );
 
 	if ( !Q_stricmp( s, "demo" ) )
 	{
@@ -682,6 +710,8 @@ void SV_DirectConnect( netadr_t from )
 			if ( NET_CompareAdr( from, svs.challenges[i].adr ) && challenge == svs.challenges[i].challenge )
 			{
 				guid = svs.challenges[i].guid;
+					I_strncpyz( PBguid, svs.challenges[i].PBguid, sizeof( PBguid ) );
+					I_strncpyz( clientPBguid, svs.challenges[i].clientPBguid, sizeof( clientPBguid ) );
 				break;
 			}
 		}
@@ -721,6 +751,18 @@ void SV_DirectConnect( netadr_t from )
 				return;
 			}
 		}
+	}
+
+	cl_punkbuster = atoi( Info_ValueForKey( userinfo, "cl_punkbuster" ) );
+	PBdenied = PbAuthClient( (char *)( NET_IsLocalAddress( from ) ? "localhost" : NET_AdrToString( from ) ), cl_punkbuster, PBguid );
+
+	if ( PBdenied )
+	{
+		if ( !I_strnicmp( PBdenied, "error\n", 6 ) )
+		{
+			NET_OutOfBandPrint( NS_SERVER, from, PBdenied );
+		}
+		return;
 	}
 
 	// if there is already a slot for this ip, reuse it
@@ -798,6 +840,10 @@ gotnewcl:
 
 	// save the challenge
 	newcl->challenge = challenge;
+	if ( !guid )
+	{
+		Com_Printf( "Connecting player #%i has a zero GUID\n", clientNum );
+	}
 	newcl->guid = guid;
 
 	// save the address
@@ -827,6 +873,9 @@ gotnewcl:
 	newcl->nextSnapshotTime = svs.time;
 	newcl->lastPacketTime = svs.time;
 	newcl->lastConnectTime = svs.time;
+
+	I_strncpyz( newcl->PBguid, PBguid, sizeof( newcl->PBguid ) );
+	I_strncpyz( newcl->clientPBguid, clientPBguid, sizeof( newcl->clientPBguid ) );
 
 	SV_UserinfoChanged( newcl );
 
@@ -890,6 +939,8 @@ or crashing -- SV_FinalCommand() will handle that
 void SV_DropClient( client_t *drop, const char *reason )
 {
 	int i;
+	bool isStringEd;
+	char name[MAX_NAME_LENGTH];
 	challenge_t *challenge;
 
 	assert(drop->state != CS_FREE);
@@ -902,8 +953,9 @@ void SV_DropClient( client_t *drop, const char *reason )
 	assert(drop->state >= CS_ZOMBIE);
 
 	drop->dropReason = NULL;
+	strcpy(name, drop->name);
 	SV_FreeClient(drop);
-	Com_DPrintf("Going to CS_ZOMBIE for %s\n", drop->name);
+	Com_DPrintf("Going to CS_ZOMBIE for %s\n", name);
 	drop->state = CS_ZOMBIE;
 
 	if ( !drop->gentity )
@@ -921,18 +973,29 @@ void SV_DropClient( client_t *drop, const char *reason )
 		}
 	}
 
+	// PunkBuster kick reasons are plain text, not StringEd references
+	isStringEd = SEH_StringEd_GetString(reason) != NULL;
+
 	// tell everyone why they got dropped
 	if ( I_stricmp(reason, "EXE_DISCONNECTED") )
 	{
-		SV_SendServerCommand(NULL, SV_CMD_CAN_IGNORE, "%c \"\x15%s^7 \x14%s\"", 101, drop->name, reason);
+		SV_SendServerCommand(NULL, SV_CMD_CAN_IGNORE, "%c \"\x15%s^7 %s%s\"", 101, name, isStringEd ? "\x14" : "", reason);
 	}
 
 	assert(drop - svs.clients >= 0 && drop - svs.clients < MAX_CLIENTS);
-	Com_Printf("%i:%s %s\n", drop - svs.clients, drop->name, reason);
+	Com_Printf("%i:%s %s\n", drop - svs.clients, name, reason);
 
 	// add the disconnect command
 	SV_SendServerCommand(NULL, SV_CMD_RELIABLE, "%c %d", 74, drop - svs.clients);
-	SV_SendServerCommand(drop, SV_CMD_RELIABLE, "%c \"%s\"", 119, reason);
+
+	if ( !isStringEd )
+	{
+		SV_SendServerCommand(drop, SV_CMD_RELIABLE, "%c \"%s^7 %s\" PB", 119, name, reason);
+	}
+	else
+	{
+		SV_SendServerCommand(drop, SV_CMD_RELIABLE, "%c \"%s\"", 119, reason);
+	}
 
 	// if this was the last client on the server, send a heartbeat
 	// to the master so it is known the server is empty
@@ -972,6 +1035,12 @@ void SV_DelayDropClient( client_t *drop, const char *reason )
 	}
 
 	drop->dropReason = reason;
+}
+
+// Name and signature from the CoD2 Mac 1.3 symbols.
+void PB_DropClient( int clientNum, char *reason )
+{
+	SV_DropClient( svs.clients + clientNum, reason );
 }
 
 void SV_SendClientGameState( client_t *client )
@@ -1214,6 +1283,133 @@ static void SV_BeginDownload_f( client_t *cl )
 
 /*
 ==================
+SV_WWWDownload_f
+==================
+*/
+static void SV_WWWDownload_f( client_t *cl )
+{
+	const char *subcmd;
+
+	subcmd = Cmd_Argv(1);
+
+	// only accept wwwdl commands for clients which we first flagged as wwwdl ourselves
+	if ( !cl->downloadingWWW )
+	{
+		Com_Printf("SV_WWWDownload: unexpected wwwdl '%s' for client '%s'\n", subcmd, cl->name);
+		SV_DropClient(cl, "PC_PATCH_1_1_UNEXPECTEDDOWLOADMESSAGE");
+		return;
+	}
+
+	if ( !I_stricmp( subcmd, "ack" ) )
+	{
+		if ( cl->clientDownloadingWWW )
+			Com_Printf("WARNING: dupe wwwdl ack from client '%s'\n", cl->name);
+
+		cl->clientDownloadingWWW = qtrue;
+		return;
+	}
+
+	if ( !I_stricmp( subcmd, "bbl8r" ) )
+	{
+		SV_DropClient(cl, "PC_PATCH_1_1_DOWNLOADDISCONNECTED");
+		return;
+	}
+
+	// below for messages that only happen during/after download
+	if ( !cl->clientDownloadingWWW )
+	{
+		Com_Printf("SV_WWWDownload: unexpected wwwdl '%s' for client '%s'\n", subcmd, cl->name);
+		SV_DropClient(cl, "PC_PATCH_1_1_UNEXPECTEDDOWLOADMESSAGE");
+		return;
+	}
+
+	if ( !I_stricmp( subcmd, "done" ) )
+	{
+		cl->download = 0;
+		*cl->downloadName = 0;
+		cl->clientDownloadingWWW = qfalse;
+		return;
+	}
+
+	if ( !I_stricmp( subcmd, "fail" ) )
+	{
+		cl->download = 0;
+		*cl->downloadName = 0;
+		cl->clientDownloadingWWW = qfalse;
+		cl->wwwFallback = qtrue;
+		Com_Printf("Client '%s' reported that the http download of '%s' failed, falling back to a server download\n", cl->name, cl->downloadName);
+		SV_SendClientGameState(cl);
+		return;
+	}
+
+	if ( !I_stricmp( subcmd, "chkfail" ) )
+	{
+		Com_Printf("WARNING: client '%s' reports that the redirect download for '%s' had wrong checksum.\n", cl->name, cl->downloadName);
+		Com_Printf("         you should check your download redirect configuration.\n");
+		cl->download = 0;
+		*cl->downloadName = 0;
+		cl->clientDownloadingWWW = qfalse;
+		cl->wwwFallback = qtrue;
+		SV_SendClientGameState(cl);
+		return;
+	}
+
+	Com_Printf("SV_WWWDownload: unknown wwwdl subcommand '%s' for client '%s'\n", subcmd, cl->name);
+	SV_DropClient(cl, "PC_PATCH_1_1_UNEXPECTEDDOWLOADMESSAGE");
+}
+
+/*
+=================
+SV_WWWRedirectClient
+=================
+*/
+qboolean SV_WWWRedirectClient( client_t *cl, msg_t *msg )
+{
+	fileHandle_t handle;
+	int download_flag = 0;
+	int downloadSize;
+
+	downloadSize = FS_SV_FOpenFileRead(cl->downloadName, &handle);
+
+	if ( downloadSize )
+	{
+		FS_FCloseFile(handle); // only the size is needed
+
+		I_strncpyz(cl->downloadURL, va("%s/%s", sv_wwwBaseURL->current.string, cl->downloadName), sizeof(cl->downloadURL));
+		Com_Printf("Redirecting client '%s' to %s\n", cl->name, cl->downloadURL);
+
+		cl->downloadingWWW = qtrue;
+		MSG_WriteByte( msg, svc_download );
+		MSG_WriteShort( msg, -1 ); // block -1 means http download
+		MSG_WriteString( msg, cl->downloadURL );
+		MSG_WriteLong( msg, downloadSize );
+		if ( sv_wwwDlDisconnected->current.boolean )
+		{
+			download_flag |= 1;
+		}
+		MSG_WriteLong( msg, download_flag );
+		*cl->downloadName = 0;
+		return qtrue;
+	}
+
+	// retail passes only the file name for the two %s
+	Com_Printf("ERROR: Client '%s': couldn't extract file size for %s\n", cl->downloadName);
+	return qfalse;
+}
+
+// Original name unknown; the Mac 1.3 build inlines it into SV_WriteDownloadToClient.
+void SV_WriteDownloadErrorToClient( client_t *cl, msg_t *msg, const char *errorMessage )
+{
+	MSG_WriteByte( msg, svc_download );
+	MSG_WriteShort( msg, 0 ); // client is expecting block zero
+	MSG_WriteLong( msg, -1 ); // illegal file size
+	MSG_WriteString( msg, errorMessage );
+
+	*cl->downloadName = 0;
+}
+
+/*
+==================
 SV_WriteDownloadToClient
 Check to see if the client wants a file, open it if needed and start pumping the client
 Fill up msg with data
@@ -1234,48 +1430,65 @@ void SV_WriteDownloadToClient( client_t *cl, msg_t *msg )
 		return; // Nothing being downloaded
 	}
 
+	if ( cl->clientDownloadingWWW )
+	{
+		return; // The client acked and is downloading over http
+	}
+
 	if (!cl->download)
 	{
 		// We open the file here
 
-		Com_Printf( "clientDownload: %d : begining \"%s\"\n", cl - svs.clients, cl->downloadName );
-
-		iwdFile = FS_iwIwd(cl->downloadName, BASEGAME);
-
-		if ( !sv_allowDownload->current.boolean || iwdFile ||
-		        ( cl->downloadSize = FS_SV_FOpenFileRead( cl->downloadName, &cl->download ) ) <= 0 )
+		if ( sv_wwwDownload->current.boolean && cl->wwwOk )
 		{
-			// cannot auto-download file
-			if (iwdFile)
+			if ( !cl->wwwFallback )
 			{
-				Com_Printf("clientDownload: %d : \"%s\" cannot download iwd files\n", cl - svs.clients, cl->downloadName);
-				Com_sprintf(errorMessage, sizeof(errorMessage), "EXE_CANTAUTODLGAMEIWD\x15%s", cl->downloadName);
-			}
-			else if ( !sv_allowDownload->current.boolean )
-			{
-				Com_Printf("clientDownload: %d : \"%s\" download disabled", cl - svs.clients, cl->downloadName);
-				if (sv_pure->current.boolean)
-				{
-					Com_sprintf(errorMessage, sizeof(errorMessage), "EXE_AUTODL_SERVERDISABLED_PURE\x15%s", cl->downloadName);
-				}
-				else
-				{
-					Com_sprintf(errorMessage, sizeof(errorMessage), "EXE_AUTODL_SERVERDISABLED\x15%s", cl->downloadName);
-				}
+				if ( SV_WWWRedirectClient(cl, msg) )
+					return;
 			}
 			else
 			{
-				// NOTE TTimo this is NOT supposed to happen unless bug in our filesystem scheme?
-				//   if the iwd is referenced, it must have been found somewhere in the filesystem
-				Com_Printf("clientDownload: %d : \"%s\" file not found on server\n", cl - svs.clients, cl->downloadName);
-				Com_sprintf(errorMessage, sizeof(errorMessage), "EXE_AUTODL_FILENOTONSERVER\x15%s", cl->downloadName);
+				cl->wwwFallback = qfalse;
 			}
-			MSG_WriteByte( msg, svc_download );
-			MSG_WriteShort( msg, 0 ); // client is expecting block zero
-			MSG_WriteLong( msg, -1 ); // illegal file size
-			MSG_WriteString( msg, errorMessage );
+		}
 
-			*cl->downloadName = 0;
+		cl->downloadingWWW = qfalse;
+
+		if ( !sv_allowDownload->current.boolean )
+		{
+			Com_Printf("clientDownload: %d : \"%s\" download disabled", cl - svs.clients, cl->downloadName);
+			if (sv_pure->current.boolean)
+			{
+				Com_sprintf(errorMessage, sizeof(errorMessage), "EXE_AUTODL_SERVERDISABLED_PURE\x15%s", cl->downloadName);
+			}
+			else
+			{
+				Com_sprintf(errorMessage, sizeof(errorMessage), "EXE_AUTODL_SERVERDISABLED\x15%s", cl->downloadName);
+			}
+			SV_WriteDownloadErrorToClient(cl, msg, errorMessage);
+			return;
+		}
+
+		iwdFile = FS_iwIwd(cl->downloadName, BASEGAME);
+
+		if ( iwdFile )
+		{
+			Com_Printf("clientDownload: %d : \"%s\" cannot download IW iwd files\n", cl - svs.clients, cl->downloadName);
+			Com_sprintf(errorMessage, sizeof(errorMessage), "EXE_CANTAUTODLGAMEPAK\x15%s", cl->downloadName);
+			SV_WriteDownloadErrorToClient(cl, msg, errorMessage);
+			return;
+		}
+
+		Com_Printf( "clientDownload: %d : beginning \"%s\"\n", cl - svs.clients, cl->downloadName );
+
+		cl->downloadSize = FS_SV_FOpenFileRead( cl->downloadName, &cl->download );
+
+		if ( cl->downloadSize <= 0 )
+		{
+			// the iwd is referenced, so this only happens on a filesystem bug
+			Com_Printf("clientDownload: %d : \"%s\" file not found on server\n", cl - svs.clients, cl->downloadName);
+			Com_sprintf(errorMessage, sizeof(errorMessage), "EXE_AUTODL_FILENOTONSERVER\x15%s", cl->downloadName);
+			SV_WriteDownloadErrorToClient(cl, msg, errorMessage);
 			return;
 		}
 
@@ -1637,6 +1850,17 @@ void SV_UserinfoChanged( client_t *cl )
 	if ( cl->rate < 5000 )
 		cl->sendVoice = 0;
 
+	// www download redirect
+	val = Info_ValueForKey (cl->userinfo, "cl_wwwDownload");
+	cl->wwwOk = qfalse;
+	if (*val)
+	{
+		i = atoi(val);
+		if (i)
+		{
+			cl->wwwOk = qtrue;
+		}
+	}
 }
 
 /*
@@ -1710,6 +1934,7 @@ static ucmd_t ucmds[] =
 	{"stopdl",       SV_StopDownload_f,       },
 	{"donedl",       SV_DoneDownload_f,       },
 	{"retransdl",    SV_RetransmitDownload_f, },
+	{"wwwdl",        SV_WWWDownload_f,        },
 	{"muteplayer",   SV_MutePlayer_f,         },
 	{"unmuteplayer", SV_UnmutePlayer_f,       },
 	{NULL, NULL}
@@ -1966,11 +2191,12 @@ void SV_ExecuteClientMessage( client_t *cl, msg_t *msg )
 {
 	int c;
 	msg_t decompressMsg;
-	byte msgBuf[MAX_MSGLEN];
+	LargeLocal msgBufLarge( MAX_MSGLEN );
+	byte *msgBuf = (byte *)msgBufLarge.GetBuf();
 
 	assert(cl - svs.clients >= 0 && cl - svs.clients < MAX_CLIENTS);
 
-	MSG_Init(&decompressMsg, msgBuf, sizeof(msgBuf));
+	MSG_Init(&decompressMsg, msgBuf, MAX_MSGLEN);
 	decompressMsg.cursize = MSG_ReadBitsCompress(&msg->data[msg->readcount], msgBuf, msg->cursize - msg->readcount);
 
 	// if this is a usercmd from a previous gamestate,
@@ -2002,9 +2228,6 @@ void SV_ExecuteClientMessage( client_t *cl, msg_t *msg )
 		{
 			Com_DPrintf( "%s : dropped gamestate, resending\n", cl->name );
 			SV_SendClientGameState( cl );
-
-			if ( net_lanauthorize->current.boolean || !Sys_IsLANAddress(cl->netchan.remoteAddress) )
-				SV_AuthorizeRequest(cl->netchan.remoteAddress, cl->challenge);
 		}
 
 		return;
@@ -2089,7 +2312,7 @@ gentity_t *SV_AddTestClient()
 
 	sprintf(
 	    userinfo,
-	    "connect \"\\cg_predictItems\\1\\cl_anonymous\\0\\color\\4\\head\\default\\model\\multi\\snaps\\20\\rate\\5000\\name\\"
+	    "connect \"\\cg_predictItems\\1\\cl_punkbuster\\0\\cl_anonymous\\0\\color\\4\\head\\default\\model\\multi\\snaps\\20\\rate\\5000\\name\\"
 	    "bot%d\\protocol\\%d\"",
 	    botport,
 	    PROTOCOL_VERSION);

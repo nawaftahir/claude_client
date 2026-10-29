@@ -195,7 +195,7 @@ void ScriptError(script_t *script, char *str, ...)
 	if (script->flags & SCFL_NOERRORS) return;
 
 	va_start(ap, str);
-	vsprintf(text, str, ap);
+	vsnprintf(text, sizeof(text), str, ap);
 	va_end(ap);
 	Com_Printf("^1Error: file %s, line %d: %s\n", script->filename, script->line, text);
 } //end of the function ScriptError
@@ -214,7 +214,7 @@ void ScriptWarning(script_t *script, char *str, ...)
 	if (script->flags & SCFL_NOWARNINGS) return;
 
 	va_start(ap, str);
-	vsprintf(text, str, ap);
+	vsnprintf(text, sizeof(text), str, ap);
 	va_end(ap);
 	Com_Printf("^3Warning: file %s, line %d: %s\n", script->filename, script->line, text);
 } //end of the function ScriptWarning

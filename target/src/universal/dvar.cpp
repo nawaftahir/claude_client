@@ -418,7 +418,9 @@ const char *Dvar_DisplayableValue(const dvar_t *dvar)
 {
 	const char *value;
 
+	Sys_EnterCriticalSection( 4 );
 	value = Dvar_ValueToString(dvar, dvar->current);
+	Sys_LeaveCriticalSection( 4 );
 	return value;
 }
 
@@ -426,7 +428,9 @@ const char *Dvar_DisplayableResetValue(const dvar_t *dvar)
 {
 	const char *value;
 
+	Sys_EnterCriticalSection( 4 );
 	value = Dvar_ValueToString(dvar, dvar->reset);
+	Sys_LeaveCriticalSection( 4 );
 	return value;
 }
 
@@ -434,7 +438,9 @@ const char *Dvar_DisplayableLatchedValue(const dvar_t *dvar)
 {
 	const char *value;
 
+	Sys_EnterCriticalSection( 4 );
 	value = Dvar_ValueToString(dvar, dvar->latched);
+	Sys_LeaveCriticalSection( 4 );
 	return value;
 }
 
@@ -506,7 +512,7 @@ static DvarValue Dvar_ClampValueToDomain(unsigned char type, DvarValue value, co
 	return value;
 }
 
-static bool Dvar_ValueInDomain(unsigned char type, DvarValue value, DvarLimits domain)
+bool Dvar_ValueInDomain(unsigned char type, DvarValue value, DvarLimits domain)
 {
 	switch ( type )
 	{
@@ -811,14 +817,19 @@ dvar_t *Dvar_FindMalleableVar(const char *dvarName)
 	dvar_t *dvar;
 	int hash;
 
+	Sys_EnterCriticalSection( 4 );
 	hash = generateHashValue(dvarName);
 
 	for ( dvar = dvarHashTable[hash]; dvar; dvar = dvar->hashNext )
 	{
 		if ( !I_stricmp(dvarName, dvar->name) )
+		{
+			Sys_LeaveCriticalSection( 4 );
 			return dvar;
+		}
 	}
 
+	Sys_LeaveCriticalSection( 4 );
 	return NULL;
 }
 
@@ -959,7 +970,9 @@ const char *Dvar_GetVariantString(const char *dvarName)
 	if ( !dvar )
 		return "";
 
+	Sys_EnterCriticalSection( 4 );
 	value = Dvar_ValueToString(dvar, dvar->current);
+	Sys_LeaveCriticalSection( 4 );
 	return value;
 }
 
@@ -1197,7 +1210,9 @@ static void Dvar_UpdateRegistration(dvar_t *dvar, const char *dvarName, unsigned
 
 static void Dvar_MakeLatchedValueCurrent(dvar_t *dvar)
 {
+	Sys_EnterCriticalSection( 4 );
 	Dvar_SetVariant(dvar, dvar->latched, DVAR_SOURCE_INTERNAL);
+	Sys_LeaveCriticalSection( 4 );
 }
 
 void Dvar_ClearLatchedValue(dvar_t *dvar)
@@ -1210,6 +1225,7 @@ void Dvar_ClearLatchedValue(dvar_t *dvar)
 
 void Dvar_Reregister(dvar_t *dvar, const char *dvarName, unsigned char type, unsigned short flags, DvarValue resetValue, DvarLimits domain)
 {
+	Sys_EnterCriticalSection( 4 );
 	if ( (dvar->flags ^ flags) & (DVAR_CHANGEABLE_RESET | 0x2000 | DVAR_EXTERNAL) )
 	{
 		Dvar_ReinterpretDvar(dvar, dvarName, type, flags, resetValue, domain);
@@ -1231,6 +1247,7 @@ void Dvar_Reregister(dvar_t *dvar, const char *dvarName, unsigned char type, uns
 
 	if ( dvar->flags & DVAR_LATCH )
 		Dvar_MakeLatchedValueCurrent(dvar);
+	Sys_LeaveCriticalSection( 4 );
 }
 
 dvar_t *Dvar_RegisterNew(const char *dvarName, unsigned char type, unsigned short flags, DvarValue value, DvarLimits domain)
@@ -1239,8 +1256,12 @@ dvar_t *Dvar_RegisterNew(const char *dvarName, unsigned char type, unsigned shor
 	dvar_t **sorted;
 	int hash;
 
+	Sys_EnterCriticalSection( 4 );
 	if ( dvarCount >= MAX_DVARS )
+	{
+		Sys_LeaveCriticalSection( 4 );
 		Com_Error(ERR_FATAL, "Can't create dvar '%s': %i dvars already exist", dvarName, MAX_DVARS);
+	}
 
 	dvar = &dvarPool[dvarCount];
 	dvarCount++;
@@ -1298,6 +1319,7 @@ dvar_t *Dvar_RegisterNew(const char *dvarName, unsigned char type, unsigned shor
 	hash = generateHashValue(dvarName);
 	dvar->hashNext = dvarHashTable[hash];
 	dvarHashTable[hash] = dvar;
+	Sys_LeaveCriticalSection( 4 );
 
 	return dvar;
 }
@@ -1432,7 +1454,9 @@ void Dvar_SetBoolFromSource(dvar_t *dvar, bool value, DvarSetSource source)
 	else
 		newValue.string = value ? "1" : "0";
 
+	Sys_EnterCriticalSection( 4 );
 	Dvar_SetVariant(dvar, newValue, source);
+	Sys_LeaveCriticalSection( 4 );
 }
 
 void Dvar_SetIntFromSource(dvar_t *dvar, int value, DvarSetSource source)
@@ -1450,7 +1474,9 @@ void Dvar_SetIntFromSource(dvar_t *dvar, int value, DvarSetSource source)
 		newValue.string = string;
 	}
 
+	Sys_EnterCriticalSection( 4 );
 	Dvar_SetVariant(dvar, newValue, source);
+	Sys_LeaveCriticalSection( 4 );
 }
 
 void Dvar_SetFloatFromSource(dvar_t *dvar, float value, DvarSetSource source)
@@ -1468,7 +1494,9 @@ void Dvar_SetFloatFromSource(dvar_t *dvar, float value, DvarSetSource source)
 		newValue.string = string;
 	}
 
+	Sys_EnterCriticalSection( 4 );
 	Dvar_SetVariant(dvar, newValue, source);
+	Sys_LeaveCriticalSection( 4 );
 }
 
 // tests the vec4 type, so a vec2 dvar always takes the string path
@@ -1489,7 +1517,9 @@ void Dvar_SetVec2FromSource(dvar_t *dvar, float x, float y, DvarSetSource source
 		newValue.string = string;
 	}
 
+	Sys_EnterCriticalSection( 4 );
 	Dvar_SetVariant(dvar, newValue, source);
+	Sys_LeaveCriticalSection( 4 );
 }
 
 void Dvar_SetVec3FromSource(dvar_t *dvar, float x, float y, float z, DvarSetSource source)
@@ -1509,7 +1539,9 @@ void Dvar_SetVec3FromSource(dvar_t *dvar, float x, float y, float z, DvarSetSour
 		newValue.string = string;
 	}
 
+	Sys_EnterCriticalSection( 4 );
 	Dvar_SetVariant(dvar, newValue, source);
+	Sys_LeaveCriticalSection( 4 );
 }
 
 void Dvar_SetVec4FromSource(dvar_t *dvar, float x, float y, float z, float w, DvarSetSource source)
@@ -1529,7 +1561,9 @@ void Dvar_SetVec4FromSource(dvar_t *dvar, float x, float y, float z, float w, Dv
 		newValue.string = string;
 	}
 
+	Sys_EnterCriticalSection( 4 );
 	Dvar_SetVariant(dvar, newValue, source);
+	Sys_LeaveCriticalSection( 4 );
 }
 
 void Dvar_SetStringFromSource(dvar_t *dvar, const char *string, DvarSetSource source)
@@ -1547,7 +1581,9 @@ void Dvar_SetStringFromSource(dvar_t *dvar, const char *string, DvarSetSource so
 		newValue.integer = Dvar_StringToEnum(&dvar->domain, string);
 	}
 
+	Sys_EnterCriticalSection( 4 );
 	Dvar_SetVariant(dvar, newValue, source);
+	Sys_LeaveCriticalSection( 4 );
 }
 
 void Dvar_SetColorFromSource(dvar_t *dvar, float r, float g, float b, float a, DvarSetSource source)
@@ -1568,7 +1604,9 @@ void Dvar_SetColorFromSource(dvar_t *dvar, float r, float g, float b, float a, D
 		newValue.string = string;
 	}
 
+	Sys_EnterCriticalSection( 4 );
 	Dvar_SetVariant(dvar, newValue, source);
+	Sys_LeaveCriticalSection( 4 );
 }
 
 void Dvar_SetBool(dvar_t *dvar, bool value)
@@ -1616,6 +1654,7 @@ static void Dvar_SetFromStringFromSource(dvar_t *dvar, const char *string, DvarS
 	DvarValue newValue;
 	char buf[1024];
 
+	Sys_EnterCriticalSection( 4 );
 	I_strncpyz(buf, string, sizeof(buf));
 	newValue = Dvar_StringToValue(dvar->type, dvar->domain, buf);
 	if ( dvar->type == DVAR_TYPE_ENUM && newValue.integer == DVAR_INVALID_ENUM_INDEX )
@@ -1626,6 +1665,7 @@ static void Dvar_SetFromStringFromSource(dvar_t *dvar, const char *string, DvarS
 	}
 
 	Dvar_SetVariant(dvar, newValue, source);
+	Sys_LeaveCriticalSection( 4 );
 }
 
 void Dvar_SetFromString(dvar_t *dvar, const char *string)
@@ -1764,18 +1804,22 @@ void Dvar_AddFlags(dvar_t *dvar, int flags)
 
 void Dvar_Reset(dvar_t *dvar, DvarSetSource setSource)
 {
+	Sys_EnterCriticalSection( 4 );
 	Dvar_SetVariant(dvar, dvar->reset, setSource);
+	Sys_LeaveCriticalSection( 4 );
 }
 
 void Dvar_SetCheatsToReset()
 {
 	dvar_t *dvar;
 
+	Sys_EnterCriticalSection( 4 );
 	for ( dvar = sortedDvars; dvar; dvar = dvar->next )
 	{
 		if ( dvar->flags & DVAR_CHEAT )
 			Dvar_SetVariant(dvar, dvar->reset, DVAR_SOURCE_INTERNAL);
 	}
+	Sys_LeaveCriticalSection( 4 );
 }
 
 void Dvar_Init()
@@ -1790,8 +1834,10 @@ void Dvar_ClearServerInfoNoUpdateFlags()
 {
 	dvar_t *dvar;
 
+	Sys_EnterCriticalSection( 4 );
 	for ( dvar = dvarPool; dvar; dvar = dvar->next )
 		dvar->flags &= ~DVAR_SERVERINFO_NOUPDATE;
+	Sys_LeaveCriticalSection( 4 );
 }
 
 __declspec(noinline) bool Dvar_AnyLatchedValues()
@@ -1815,6 +1861,7 @@ int Dvar_SaveDvars(char *buffer, int flags)
 	unsigned int hash;
 	int size;
 
+	Sys_EnterCriticalSection( 4 );
 	size = 0;
 	for ( hash = 0; hash < FILE_HASH_SIZE; hash++ )
 	{
@@ -1834,6 +1881,7 @@ int Dvar_SaveDvars(char *buffer, int flags)
 		}
 	}
 
+	Sys_LeaveCriticalSection( 4 );
 	return size;
 }
 
@@ -1845,6 +1893,7 @@ void Dvar_LoadDvarsFromBuffer(const char *buffer, int size)
 	DvarValue value;
 	dvar_t *dvar;
 
+	Sys_EnterCriticalSection( 4 );
 	for ( i = 0; i < size; )
 	{
 		dvarName = &buffer[i];
@@ -1863,17 +1912,20 @@ void Dvar_LoadDvarsFromBuffer(const char *buffer, int size)
 			Dvar_RegisterString(dvarName, string, DVAR_EXTERNAL);
 		}
 	}
+	Sys_LeaveCriticalSection( 4 );
 }
 
 void Dvar_ResetDvars(int filter, DvarSetSource setSource)
 {
 	dvar_t *dvar;
 
+	Sys_EnterCriticalSection( 4 );
 	for ( dvar = sortedDvars; dvar; dvar = dvar->next )
 	{
 		if ( filter & dvar->flags )
 			Dvar_Reset(dvar, setSource);
 	}
+	Sys_LeaveCriticalSection( 4 );
 }
 
 qboolean Com_SaveDvarsToBuffer(const char **dvarnames, int numDvars, char *buffer, int bufsize)

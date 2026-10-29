@@ -12,6 +12,7 @@ dvar_t *rcon_password;
 dvar_t *sv_privatePassword;
 dvar_t *sv_allowDownload;
 dvar_t *sv_maxclients;
+dvar_t *sv_punkbuster;
 dvar_t *sv_privateClients;
 dvar_t *sv_hostname;
 dvar_t *sv_reconnectlimit;
@@ -43,6 +44,9 @@ dvar_t *sv_referencedIwds;
 dvar_t *sv_referencedIwdNames;
 static dvar_t *sv_allowedClan1;
 static dvar_t *sv_allowedClan2;
+dvar_t *sv_wwwDownload;
+dvar_t *sv_wwwBaseURL;
+dvar_t *sv_wwwDlDisconnected;
 
 extern dvar_t *com_expectedHunkUsage;
 
@@ -72,6 +76,8 @@ void FX_CreateDefaultEffect();
 void Dvar_ClearServerInfoNoUpdateFlags();
 
 bool SV_Loaded();
+void EnablePbSv();
+void DisablePbSv();
 void SV_Shutdown( const char *finalmsg );
 
 void SV_GetConfigstring( int index, char *buffer, int bufferSize );
@@ -418,6 +424,7 @@ void SV_Startup( void )
 		svs.numSnapshotEntities = sv_maxclients->current.integer * 4 * 64;
 		svs.numSnapshotClients = sv_maxclients->current.integer * sv_maxclients->current.integer * 4;
 	}
+	svs.sv_lastTimeMasterServerCommunicated = svs.time;
 	svs.initialized = qtrue;
 
 	Dvar_SetBool( com_sv_running, true );
@@ -909,6 +916,15 @@ void SV_SpawnServer( char *server )
 	SV_Heartbeat_f();
 
 	Com_Printf("-----------------------------------\n");
+
+	if ( Dvar_GetBool("sv_punkbuster") )
+	{
+		EnablePbSv();
+	}
+	else
+	{
+		DisablePbSv();
+	}
 }
 
 /*
@@ -919,6 +935,12 @@ SV_Loaded
 bool SV_Loaded()
 {
 	return sv.state == SS_GAME;
+}
+
+// Name and signature from the CoD2 Mac 1.3 symbols.
+void set_sv_punkbuster( char *value )
+{
+	Dvar_SetBoolByName("sv_punkbuster", I_stricmp(value, "0") != 0);
 }
 
 void SV_Init()
@@ -935,6 +957,7 @@ void SV_Init()
 	sv_privateClients = Dvar_RegisterInt("sv_privateClients", 0, 0, MAX_CLIENTS, DVAR_SERVERINFO | DVAR_CHANGEABLE_RESET);
 	sv_maxclients = Dvar_RegisterInt("sv_maxclients", 20, 1, MAX_CLIENTS, DVAR_ARCHIVE | DVAR_SERVERINFO | DVAR_LATCH | DVAR_CHANGEABLE_RESET);
 	sv_hostname = Dvar_RegisterString("sv_hostname", "CoD2Host", DVAR_ARCHIVE | DVAR_SERVERINFO | DVAR_CHANGEABLE_RESET);
+	sv_punkbuster = Dvar_RegisterBool("sv_punkbuster", false, DVAR_ARCHIVE | DVAR_SERVERINFO | DVAR_INIT | DVAR_CHANGEABLE_RESET);
 
 	sv_maxRate = Dvar_RegisterInt("sv_maxRate", 0, 0, 25000, DVAR_ARCHIVE | DVAR_SERVERINFO | DVAR_CHANGEABLE_RESET);
 	sv_minPing = Dvar_RegisterInt("sv_minPing", 0, 0, 999, DVAR_ARCHIVE | DVAR_SERVERINFO | DVAR_CHANGEABLE_RESET);
@@ -987,6 +1010,10 @@ void SV_Init()
 
 	nextmap = Dvar_RegisterString("nextmap", "", DVAR_CHANGEABLE_RESET);
 	com_expectedHunkUsage = Dvar_RegisterInt("com_expectedHunkUsage", 0, 0, INT_MAX, DVAR_ROM | DVAR_CHANGEABLE_RESET);
+
+	sv_wwwDownload = Dvar_RegisterBool("sv_wwwDownload", false, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
+	sv_wwwBaseURL = Dvar_RegisterString("sv_wwwBaseURL", "", DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
+	sv_wwwDlDisconnected = Dvar_RegisterBool("sv_wwwDlDisconnected", false, DVAR_ARCHIVE | DVAR_CHANGEABLE_RESET);
 }
 
 /*

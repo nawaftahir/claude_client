@@ -1008,7 +1008,7 @@ void CompileError( unsigned int sourcePos, const char *format, ... )
 	char text[MAX_STRING_CHARS];
 
 	va_start( argptr, format );
-	vsprintf( text, format, argptr );
+	vsnprintf( text, sizeof(text), format, argptr );
 	va_end( argptr );
 
 	if ( scrVarPub.evaluate )
@@ -1055,7 +1055,7 @@ void CompileError2( const char *codePos, const char *msg, ... )
 	Com_Printf("******* script compile error *******\n");
 
 	va_start( argptr, msg );
-	vsprintf( text, msg, argptr );
+	vsnprintf( text, sizeof(text), msg, argptr );
 	va_end( argptr );
 
 	Com_Printf("%s: ", text);
@@ -1137,3 +1137,6 @@ error:
 		}
 	}
 }
+
+// Unreferenced storage; original declarations unknown (sized from the layout).
+static char scr_parser_unreferenced[160];

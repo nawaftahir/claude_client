@@ -24,9 +24,15 @@ static languageInfo_t g_languages[MAX_LANGUAGES] =
 	{ "japanese", 0 },
 	{ "chinese", 0 },
 	{ "thai", 0 },
-	{ "leet", 0 }
+	{ "leet", 0 },
+	{ "czech", 0 }
 };
 
+dvar_t *loc_language;
+dvar_t *loc_forceEnglish;
+dvar_t *loc_translate;
+dvar_t *loc_warnings;
+dvar_t *loc_warningsAsErrors;
 static int g_currentAsian;
 
 // Original name and purpose unknown; unreferenced.
@@ -467,7 +473,7 @@ unsigned int SEH_ChineseCharToIndex( unsigned int c )
 {
 	if ( SEH_IsChineseChar(c) )
 	{
-		c -= 0xa1a0;
+		c -= 0x8140;
 		c = ( c >> 8 ) * 95 + ( c & 0xff );
 		return c;
 	}

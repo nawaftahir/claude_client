@@ -38,6 +38,7 @@ int Cmd_Argc( void );
 const char *Cmd_Argv( int arg );
 void Cmd_TokenizeString( const char *text_in );
 void Cmd_ExecuteString( const char *text );
+void PbSvAddEvent( int event, int clientIndex, int dataLen, char *data );
 
 void Cmd_Wait_f( void );
 void Cbuf_Init( void );
@@ -800,6 +801,16 @@ void Cmd_ExecuteString( const char *text )
 			}
 			return;
 		}
+	}
+
+	// PunkBuster: pb_sv_* goes to the PB server, other pb_ commands are dropped
+	if ( !I_strnicmp( text, "pb_", 3 ) )
+	{
+		if ( !I_strnicmp( text + 3, "sv_", 3 ) )
+		{
+			PbSvAddEvent( 14, -1, strlen( text ) + 1, (char *)text );
+		}
+		return;
 	}
 
 	// check dvars

@@ -157,7 +157,7 @@ void Com_ScriptErrorDrop( const char *msg, ... )
 	pi = &parse->parseInfo[parse->parseInfoNum];
 
 	va_start( va, msg );
-	vsprintf( string, msg, va );
+	vsnprintf( string, sizeof( string ), msg, va );
 
 	if ( parse->parseInfoNum )
 	{
@@ -180,7 +180,7 @@ void Com_ScriptWarning( const char *msg, ... )
 	pi = &parse->parseInfo[parse->parseInfoNum];
 
 	va_start( va, msg );
-	vsprintf( string, msg, va );
+	vsnprintf( string, sizeof( string ), msg, va );
 
 	if ( parse->parseInfoNum )
 	{

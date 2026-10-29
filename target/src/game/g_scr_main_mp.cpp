@@ -5733,6 +5733,16 @@ void GScr_SendXboxLiveRanks()
 
 /*
 ===============
+GScr_EndXboxLiveLobby
+===============
+*/
+void GScr_EndXboxLiveLobby()
+{
+	;
+}
+
+/*
+===============
 ScrCmd_Unlink
 ===============
 */
@@ -5967,6 +5977,7 @@ scr_function_t functions[] =
 	{ "matchend", GScr_MatchEnd, qfalse, },
 	{ "setplayerteamrank", GScr_SetPlayerTeamRank, qfalse, },
 	{ "sendranks", GScr_SendXboxLiveRanks, qfalse, },
+	{ "endparty", GScr_EndXboxLiveLobby, qfalse, },
 	{ "setvotestring", GScr_SetVoteString, qfalse, },
 	{ "setvotetime", GScr_SetVoteTime, qfalse, },
 	{ "setvoteyescount", GScr_SetVoteYesCount, qfalse, },

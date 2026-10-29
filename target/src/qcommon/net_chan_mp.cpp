@@ -3,12 +3,6 @@
 
 void CL_Netchan_AddOOBProfilePacket( int iLength );
 
-/* net_chan.c sees a plain prototype, not glibc's builtin-tagged one:
- * the builtin form stages the first argument in a register before the size,
- * which the shipped code does not do. */
-int memcmp( const void *, const void *, unsigned ) throw();
-char *strstr( const char *, const char * ) throw();
-
 #define PACKET_HEADER           10          // two ints and a short
 #define FRAGMENT_BIT    ( 1 << 31 )
 
@@ -599,7 +593,11 @@ qboolean Netchan_Process( netchan_t *chan, msg_t *msg )
 	// read the fragment information
 	if ( fragmented )
 	{
+#if PROTOCOL_VERSION == 118
+		fragmentStart = MSG_ReadLong( msg );
+#else
 		fragmentStart = MSG_ReadShort( msg );
+#endif
 		fragmentLength = MSG_ReadShort( msg );
 	}
 	else
@@ -1053,11 +1051,53 @@ NET_OutOfBandVoiceData
 */
 void NET_OutOfBandVoiceData( netsrc_t sock, netadr_t adr, byte *format, int len )
 {
-	byte string[32768];
+	LargeLocal stringLarge( MAX_MSGLEN + 4 );
+	byte *string = (byte *)stringLarge.GetBuf();
 	byte pad[16];
 	int iLen;
 	int pad2;
 	byte *pString;
+	int pad3;
+
+	if ( len > MAX_MSGLEN )
+	{
+		Com_DPrintf("OOB Packet is %i bytes - too large to send\n", len);
+		return;
+	}
+
+	// set the header
+	string[0] = 0xff;
+	string[1] = 0xff;
+	string[2] = 0xff;
+	string[3] = 0xff;
+
+	memcpy(string + 4, format, len);
+
+	pString = string;
+	iLen = len + 4;
+
+	NET_SendPacket(sock, iLen, pString, adr);
+
+	if ( sock == NS_SERVER )
+		SV_Netchan_AddOOBProfilePacket(iLen);
+}
+
+// Original name unknown. Byte-identical twin of NET_OutOfBandVoiceData, used by SV_SendClientVoiceData.
+void NET_OutOfBandVoiceData2( netsrc_t sock, netadr_t adr, byte *format, int len )
+{
+	LargeLocal stringLarge( MAX_MSGLEN + 4 );
+	byte *string = (byte *)stringLarge.GetBuf();
+	byte pad[16];
+	int iLen;
+	int pad2;
+	byte *pString;
+	int pad3;
+
+	if ( len > MAX_MSGLEN )
+	{
+		Com_DPrintf("OOB Voice Packet is %i bytes - too large to send\n", len);
+		return;
+	}
 
 	// set the header
 	string[0] = 0xff;
@@ -1076,6 +1116,9 @@ void NET_OutOfBandVoiceData( netsrc_t sock, netadr_t adr, byte *format, int len 
 		SV_Netchan_AddOOBProfilePacket(iLen);
 	else
 		CL_Netchan_AddOOBProfilePacket(iLen);
+
+// Unreferenced storage; original declarations unknown (sized from the layout).
+static char net_chan_unreferenced[32];
 }
 
 /*

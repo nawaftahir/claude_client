@@ -23,6 +23,18 @@ void SV_Frame( int msec );
 
 /* --- from src/adopted/server/sv_client_mp.cpp --- */
 
+// Layout from the offsets Pb_Q_client writes (+0x00, +0x21, +0x42, 0x68 bytes); member names unknown.
+struct Pb_Sv_Client_s
+{
+	char name[33];
+	char guid[33];
+	char ip[38];
+};
+
+void PbSvAddEvent( int event, int clientIndex, int dataLen, char *data );
+void PbPassConnectString( char *fromAddr, char *connectString );
+void SV_UpdateLastTimeMasterServerCommunicated( netadr_t from );
+
 /*
 ==================
 SV_Frame
@@ -263,7 +275,7 @@ void SV_SendServerCommand( client_t *cl, int type, const char *fmt, ... )
 	int j;
 
 	va_start( argptr,fmt );
-	vsprintf( message, fmt, argptr );
+	vsnprintf( message, MAX_MSGLEN, fmt, argptr );
 	va_end( argptr );
 
 	if ( cl != NULL )
@@ -354,7 +366,7 @@ the simple info query.
 void SVC_Status( netadr_t from )
 {
 	char player[MAX_INFO_STRING];
-	LargeLocal statusLarge( 0x4000 );
+	LargeLocal statusLarge( MAX_MSGLEN );
 	char *status = (char *)statusLarge.GetBuf();
 	int i;
 	client_t    *cl;
@@ -454,7 +466,7 @@ game complete. Useful for tracking global player stats.
 void SVC_GameCompleteStatus( netadr_t from )
 {
 	char player[1024];
-	LargeLocal statusLarge( 0x4000 );
+	LargeLocal statusLarge( MAX_MSGLEN );
 	char *status;
 	int i;
 	client_t *cl;
@@ -488,7 +500,7 @@ void SVC_GameCompleteStatus( netadr_t from )
 			Com_sprintf(player, sizeof(player), "%i %i \"%s\"\n", G_GetClientScore(cl - svs.clients), cl->ping, cl->name);
 			playerLength = strlen(player);
 
-			if ( statusLength + playerLength >= 0x4000 )
+			if ( statusLength + playerLength >= MAX_MSGLEN )
 			{
 				break;
 			}
@@ -672,6 +684,7 @@ void SVC_Info( netadr_t from )
 
 	Info_SetValueForKey(infostring, "mod", va("%i", serverModded));
 	Info_SetValueForKey(infostring, "voice", va("%i", sv_voice->current.boolean));
+	Info_SetValueForKey(infostring, "pb", va("%i", sv_punkbuster->current.boolean));
 
 	I_strncpyz(infosend, "infoResponse\n", MAX_INFO_STRING);
 	I_strncat(infosend, MAX_INFO_STRING, infostring);
@@ -692,10 +705,47 @@ void SV_ConnectionlessPacket( netadr_t from, msg_t *msg )
 {
 	char    *s;
 	const char    *c;
+	int i;
+	int clientNum;
+	client_t *cl;
+
+	clientNum = -1;
 
 	MSG_BeginReading(msg);
 	MSG_ReadLong(msg);
 	SV_Netchan_AddOOBProfilePacket(msg->cursize);
+
+	if ( !I_strnicmp( (char *)msg->data + 4, "pb_", 3 ) )
+	{
+		for ( i = 0, cl = svs.clients ; i < sv_maxclients->current.integer ; i++, cl++ )
+		{
+			if ( !cl->state )
+			{
+				continue;
+			}
+
+			if ( !NET_CompareBaseAdr( from, cl->netchan.remoteAddress ) )
+			{
+				continue;
+			}
+
+			if ( cl->netchan.remoteAddress.port != from.port )
+			{
+				continue;
+			}
+
+			clientNum = i;
+			break;
+		}
+
+		if ( msg->data[7] != 'C' && msg->data[7] != '1' && msg->data[7] != 'J' )
+		{
+			PbSvAddEvent( 13, clientNum, msg->cursize - 4, (char *)msg->data + 4 );
+		}
+
+		return;
+	}
+
 	s = MSG_ReadStringLine( msg );
 	SV_Cmd_TokenizeString( s );
 	c = SV_Cmd_Argv( 0 );
@@ -705,28 +755,33 @@ void SV_ConnectionlessPacket( netadr_t from, msg_t *msg )
 		Com_Printf("SV packet %s : %s\n", NET_AdrToString(from), c);
 	}
 
-	if ( !Q_stricmp( c, "v" ) )
+	if ( !Q_stricmp( c,"getstatus" ) )
+	{
+		SV_UpdateLastTimeMasterServerCommunicated( from );
+		SVC_Status( from  );
+	}
+	else if ( !Q_stricmp( c, "v" ) )
 	{
 		SV_VoicePacket( from, msg );
 	}
-	else if ( !Q_stricmp( c,"getstatus" ) )
-	{
-		SVC_Status( from  );
-	}
 	else if ( !Q_stricmp( c,"getinfo" ) )
 	{
+		SV_UpdateLastTimeMasterServerCommunicated( from );
 		SVC_Info( from );
 	}
 	else if ( !Q_stricmp( c,"getchallenge" ) )
 	{
+		SV_UpdateLastTimeMasterServerCommunicated( from );
 		SV_GetChallenge( from );
 	}
 	else if ( !Q_stricmp( c,"connect" ) )
 	{
+		PbPassConnectString( (char *)( NET_IsLocalAddress( from ) ? "localhost" : NET_AdrToString( from ) ), (char *)msg->data );
 		SV_DirectConnect( from );
 	}
 	else if ( !Q_stricmp( c,"ipAuthorize" ) )
 	{
+		SV_UpdateLastTimeMasterServerCommunicated( from );
 		SV_AuthorizeIpPacket( from );
 	}
 	else if ( !Q_stricmp( c, "rcon" ) )
@@ -738,6 +793,90 @@ void SV_ConnectionlessPacket( netadr_t from, msg_t *msg )
 		// if a client starts up a local server, we may see some spurious
 		// server disconnect messages when their new server sees our final
 		// sequenced messages to the old client
+	}
+}
+
+int Pb_Q_maxclients()
+{
+	return sv_maxclients->current.integer;
+}
+
+int Pb_Q_client( int clientNum, Pb_Sv_Client_s *c )
+{
+	memset( c, 0, sizeof( *c ) );
+
+	if ( clientNum < 0 || clientNum >= sv_maxclients->current.integer )
+	{
+		return 0;
+	}
+
+	if ( !svs.clients )
+	{
+		return 0;
+	}
+
+	if ( svs.clients[clientNum].state < CS_ACTIVE )
+	{
+		return 0;
+	}
+
+	strcpy( c->name, svs.clients[clientNum].name );
+	strcpy( c->guid, svs.clients[clientNum].PBguid );
+	strcpy( c->ip, NET_AdrToString( svs.clients[clientNum].netchan.remoteAddress ) );
+
+	return 1;
+}
+
+int Pb_Q_stats( int clientNum, char *data )
+{
+	client_t *cl;
+
+	*data = 0;
+
+	if ( clientNum < 0 || clientNum >= sv_maxclients->current.integer )
+	{
+		return 0;
+	}
+
+	if ( !svs.clients )
+	{
+		return 0;
+	}
+
+	cl = &svs.clients[clientNum];
+
+	if ( cl->state < CS_ACTIVE )
+	{
+		return 0;
+	}
+
+	sprintf( data, "ping=%d score=%d", cl->ping, gameInitialized ? G_GetClientScore( cl - svs.clients ) : 0 );
+
+	return 1;
+}
+
+void SV_SendPbPacket( int datalen, char *data, int clientNum )
+{
+	int i;
+
+	if ( svs.initialized != qtrue )
+	{
+		return;
+	}
+
+	for ( i = 0; i < sv_maxclients->current.integer; i++ )
+	{
+		if ( clientNum >= 0 && clientNum != i )
+		{
+			continue;
+		}
+
+		if ( svs.clients[i].state < CS_CONNECTED )
+		{
+			continue;
+		}
+
+		NET_OutOfBandVoiceData( NS_SERVER, svs.clients[i].netchan.remoteAddress, (byte *)data, datalen );
 	}
 }
 
@@ -804,6 +943,7 @@ void SV_PacketEvent( netadr_t from, msg_t *msg )
 
 			if ( cl->messageAcknowledge < 0 )
 			{
+				Com_Printf( "Invalid reliableAcknowledge message from %s - reliableAcknowledge is %i\n", cl->name, cl->reliableAcknowledge );
 				return;
 			}
 
@@ -811,6 +951,7 @@ void SV_PacketEvent( netadr_t from, msg_t *msg )
 
 			if ( cl->reliableSequence - cl->reliableAcknowledge >= MAX_RELIABLE_COMMANDS )
 			{
+				Com_Printf( "Out of range reliableAcknowledge message from %s - cl->reliableSequence is %i, reliableAcknowledge is %i\n", cl->name, cl->reliableSequence, cl->reliableAcknowledge );
 				cl->reliableAcknowledge = cl->reliableSequence;
 				return;
 			}
@@ -860,6 +1001,7 @@ void SV_CalcPings( void )
 		}
 		if ( !cl->gentity )
 		{
+			Com_DPrintf( "Giving %s a 999 ping - not a gentity\n", cl->name );
 			cl->ping = 999;
 			continue;
 		}
@@ -878,6 +1020,7 @@ void SV_CalcPings( void )
 		}
 		if ( !count )
 		{
+			Com_DPrintf( "Giving %s a 999 ping - !count:\n", cl->name );
 			cl->ping = 999;
 		}
 		else
@@ -885,6 +1028,7 @@ void SV_CalcPings( void )
 			cl->ping = total / count;
 			if ( cl->ping > 999 )
 			{
+				Com_DPrintf( "Giving %s a 999 ping - >999 calculated ping:\n", cl->name );
 				cl->ping = 999;
 			}
 		}

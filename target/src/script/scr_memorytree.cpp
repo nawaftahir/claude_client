@@ -1,8 +1,8 @@
 #include "../qcommon/qcommon.h"
 #include "script_public.h"
 
-scrMemTreeGlob_t scrMemTreeGlob;
 scrMemTreePub_t scrMemTreePub;
+scrMemTreeGlob_t scrMemTreeGlob;
 
 int MT_GetSubTreeSize( int nodeNum );
 void MT_DumpTree();

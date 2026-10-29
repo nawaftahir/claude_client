@@ -3686,7 +3686,7 @@ void PM_CheckLadderMove( pmove_t *pm, pml_t *pml )
 		ps->pm_flags &= ~PMF_LADDER_END;
 	}
 
-	if ( ps->pm_time && ps->pm_flags & ( PMF_TIME_SLIDE | PMF_TIME_KNOCKBACK) )
+	if ( ps->pm_time && !( ps->pm_flags & PMF_LADDER ) && ps->pm_flags & ( PMF_TIME_SLIDE | PMF_TIME_KNOCKBACK) )
 	{
 		return;
 	}

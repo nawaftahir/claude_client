@@ -771,6 +771,7 @@ void G_BroadcastVoice( gentity_t *talker, VoicePacket_t *voicePacket )
 {
 	int otherPlayer;
 	gentity_t *ent;
+	gclient_t *client;
 
 	assert(talker);
 	talker->client->lastVoiceTime = level.time;
@@ -778,18 +779,19 @@ void G_BroadcastVoice( gentity_t *talker, VoicePacket_t *voicePacket )
 	for ( otherPlayer = 0; otherPlayer < MAX_CLIENTS; otherPlayer++ )
 	{
 		ent = &g_entities[otherPlayer];
+		client = ent->client;
 
 		if ( !ent->r.inuse )
 		{
 			continue;
 		}
 
-		if ( ent->client == NULL )
+		if ( client == NULL )
 		{
 			continue;
 		}
 
-		if ( !voice_global->current.boolean )
+		if ( client->sess.sessionState != SESS_STATE_INTERMISSION && !voice_global->current.boolean )
 		{
 			if ( !OnSameTeam(talker, ent) )
 			{

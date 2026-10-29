@@ -319,7 +319,7 @@ typedef pthread_t threadid_t;
 typedef pthread_mutex_t mutex_t;
 #endif
 
-#define NUMTHREADS 1   /* 1.0 server keeps one copy of each per-thread block */
+#define NUMTHREADS 2   /* main + database thread (1.2c) */
 #define MAX_VASTRINGS 2
 
 #define THREAD_CONTEXT_MAIN 0

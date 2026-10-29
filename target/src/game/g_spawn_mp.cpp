@@ -15,9 +15,6 @@ void Scr_ReadOnlyField( gentity_t *self, int offset );
 G_GetItemForClassname
 ==============
 */
-// re-declared so gcc does not treat strcmp as a builtin (changes argument staging order)
-int strcmp( const char *, const char * ) throw();
-
 void Scr_SetGenericField( byte *b, int type, int ofs );
 void Scr_GetGenericField( byte *b, int type, int ofs );
 void Scr_AddEntity( gentity_t *ent );

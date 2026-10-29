@@ -1579,4 +1579,4 @@ void CM_FreeLumpData( void )
 
 
 // Unreferenced storage; original declarations unknown (sized from the layout).
-static int unusedStorage[2];
+static int unusedStorage;

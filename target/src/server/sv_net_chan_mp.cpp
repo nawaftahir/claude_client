@@ -190,6 +190,13 @@ void SV_Netchan_PrintProfileStats( int bPrintToConsole )
 	int iTotalMinRecieved = 9999;
 	int iYPos = 80;
 	int iFragmentTotal;
+	int iDropPercent;
+	int iDropped;
+	int iAck;
+	int iLastSent;
+	int iReceived;
+	int iLatest;
+	int j;
 	netProfileInfo_t *pProf;
 	client_t *cl;
 	char szClientName[32];
@@ -315,11 +322,16 @@ void SV_Netchan_PrintProfileStats( int bPrintToConsole )
 		iFragmentTotal = 0;
 	}
 
-	Com_sprintf(szLine, 1024, "              Totals:%6i|%5i|%5i| %3i%%|%6i|%5i|%5i| %3i%%|%6i|%5i|%5i| %3i%%|",
+	iDropPercent = 0;
+	iAck = 0;
+
+	Com_sprintf(szLine, 1024, "              Totals:%6i|%5i|%5i| %3i%%| %3i%%|%2i|%6i|%5i|%5i| %3i%%|%6i|%5i|%5i| %3i%%|",
 		iTotalBPSSent,
 		iTotalMaxSent,
 		iTotalMinSent,
 		iTotalPacketsSent ? 100 * iTotalFragmentsSent / iTotalPacketsSent : 0,
+		iDropPercent,
+		iAck,
 		iTotalBPSRecieved,
 		iTotalMaxRecieved,
 		iTotalMinRecieved,
@@ -353,11 +365,16 @@ void SV_Netchan_PrintProfileStats( int bPrintToConsole )
 			iFragmentTotal = 0;
 		}
 
-		Com_sprintf(szLine, 1024, "  OutOfBand Messages: %5i|%5i|%5i| %3i%%| %5i|%5i|%5i| %3i%%| %5i|%5i|%5i| %3i%%|",
+		iDropPercent = 0;
+		iAck = 0;
+
+		Com_sprintf(szLine, 1024, "  OutOfBand Messages: %5i|%5i|%5i| %3i%%| %3i%%|%2i| %5i|%5i|%5i| %3i%%| %5i|%5i|%5i| %3i%%|",
 			pProf->send.iBytesPerSecond,
 			pProf->send.iLargestPacket,
 			pProf->send.iSmallestPacket,
 			pProf->send.iFragmentPercentage,
+			iDropPercent,
+			iAck,
 			pProf->recieve.iBytesPerSecond,
 			pProf->recieve.iLargestPacket,
 			pProf->recieve.iSmallestPacket,
@@ -379,7 +396,7 @@ void SV_Netchan_PrintProfileStats( int bPrintToConsole )
 	}
 	else
 	{
-		Com_sprintf(szLine, 1024, "  OutOfBand Messages:     0|    0|    0|   - |     0|    0|    0|   - |     0|    0|    0|   - |");
+		Com_sprintf(szLine, 1024, "  OutOfBand Messages:     0|    0|    0|   - |   - |  |     0|    0|    0|   - |     0|    0|    0|   - |");
 
 		if ( bPrintToConsole )
 		{
@@ -414,13 +431,50 @@ void SV_Netchan_PrintProfileStats( int bPrintToConsole )
 				iFragmentTotal = 0;
 			}
 
-			Com_sprintf(szLine, 1024, "#%2i-%16s: %5i|%5i|%5i| %3i%%| %5i|%5i|%5i| %3i%%| %5i|%5i|%5i| %3i%%|",
+			// newest snapshot, then the unacked runs walking forward from it
+			iLastSent = 0;
+			iLatest = 0;
+
+			for ( iLatest = 0; iLatest < PACKET_BACKUP; iLatest++ )
+			{
+				if ( cl->frames[iLatest].messageSent > iLastSent )
+					iLastSent = cl->frames[iLatest].messageSent;
+				else
+					break;
+			}
+
+			iReceived = 0;
+			iDropped = 0;
+			iAck = 0;
+
+			for ( j = 0; j < PACKET_BACKUP; j++ )
+			{
+				if ( cl->frames[( j + iLatest ) & PACKET_MASK].messageAcked <= 0 )
+				{
+					iAck++;
+				}
+				else
+				{
+					iDropped += iAck;
+					iAck = 0;
+					iReceived++;
+				}
+			}
+
+			if ( !iReceived )
+				iDropPercent = 100;
+			else
+				iDropPercent = 100 * iDropped / ( iDropped + iReceived );
+
+			Com_sprintf(szLine, 1024, "#%2i-%16s: %5i|%5i|%5i| %3i%%| %3i%%|%2i| %5i|%5i|%5i| %3i%%| %5i|%5i|%5i| %3i%%|",
 				i,
 				szClientName,
 				pProf->send.iBytesPerSecond,
 				pProf->send.iLargestPacket,
 				pProf->send.iSmallestPacket,
 				pProf->send.iFragmentPercentage,
+				iDropPercent,
+				iAck,
 				pProf->recieve.iBytesPerSecond,
 				pProf->recieve.iLargestPacket,
 				pProf->recieve.iSmallestPacket,

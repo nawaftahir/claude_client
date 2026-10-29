@@ -173,6 +173,8 @@ This is just a convenience function
 for printing vectors
 =============
 */
+static int g_load_utils_unreferenced;	// unreferenced storage, sized from the layout
+
 const char *vtos( const vec3_t v )
 {
 	static int index;

@@ -10,6 +10,7 @@ int I_strlen(const char *s);
 
 int com_fileAccessed;
 int fs_loadStack;
+const char *fs_defaultConfigName;	// original name unknown
 char fs_gamedir[MAX_OSPATH];
 
 dvar_t *fs_debug;
@@ -38,6 +39,14 @@ const char *fs_serverReferencedIwdNames[MAX_IWDFILES];
 
 static char lastValidBase[MAX_OSPATH];
 static char lastValidGame[MAX_OSPATH];
+// unreferenced 1.2 .bss object at 0x84a7640 (<= 0x20 bytes); name, type and size unknown
+int fs_unknown_84a7640;
+
+// 1.2 prefers the localized default config
+#define DEFAULT_LOCALIZE_CONFIG "default_localize_mp.cfg"
+
+void SEH_Init_StringEd();
+void SEH_UpdateLanguageInfo();
 
 #define MAX_FOUND_FILES 0x1000
 
@@ -133,7 +142,12 @@ qboolean FS_UseSearchPathLanguage_420150(const searchpath_t *pSearch)
 		return qfalse;
 	}
 
-	return qtrue;
+	if ( !pSearch->localized || pSearch->language == SEH_GetCurrentLanguage() )
+	{
+		return qtrue;
+	}
+
+	return qfalse;
 }
 
 /*
@@ -1332,7 +1346,7 @@ void FS_Printf( fileHandle_t h, const char *fmt, ... )
 	char msg[MAXPRINTMSG];
 
 	va_start( argptr,fmt );
-	vsprintf( msg, fmt, argptr );
+	vsnprintf( msg, sizeof( msg ), fmt, argptr );
 	va_end( argptr );
 
 	FS_Write( msg, I_strlen( msg ), h );
@@ -2193,6 +2207,17 @@ static void FS_DisplayPath(int bLanguageCull)
 {
 	searchpath_t* s;
 	int i;
+	int language;
+	const char *languageName;
+
+
+			if (s->localized)
+			{
+				Com_Printf("    localized assets game folder for %s\n", SEH_GetLanguageName(s->language));
+			}
+	language = SEH_GetCurrentLanguage();
+	languageName = SEH_GetLanguageName(language);
+	Com_Printf("Current language: %s\n", languageName);
 
 	Com_Printf("Current language: %s\n", SEH_GetLanguageName(SEH_GetCurrentLanguage()));
 
@@ -2218,6 +2243,11 @@ static void FS_DisplayPath(int bLanguageCull)
 		if (s->iwd)
 		{
 			Com_Printf("%s (%i files)\n", s->iwd, s->iwd->numFiles);
+
+			if (s->localized)
+			{
+				Com_Printf("    localized assets iwd file for %s\n", SEH_GetLanguageName(s->language));
+			}
 
 			if (s->localized)
 			{
@@ -2260,7 +2290,7 @@ static void FS_DisplayPath(int bLanguageCull)
 
 void FS_FullPath_f(void)
 {
-	FS_DisplayPath(0);
+	FS_DisplayPath(1);
 }
 
 void FS_Path_f(void)
@@ -2360,6 +2390,8 @@ void FS_AddIwdFilesForGameDirectory(const char *path, const char *dir)
 	const char *language;
 	searchpath_t *search;
 	iwd_t *iwd;
+	int j;
+	static qboolean languagesListed;
 
 	FS_BuildOSPath(path, dir, "", iwdfile);
 	iwdfile[strlen(iwdfile) - 1] = 0;
@@ -2575,9 +2607,13 @@ void FS_ShutdownServerReferencedIwds()
 }
 
 // closemfp is unused
+void SEH_Shutdown_StringEd();
+
 void FS_Shutdown( int closemfp )
 {
 	int i;
+
+	SEH_Shutdown_StringEd();
 
 	SND_StopSounds(SND_STOP_STREAMED);
 	SEH_Shutdown_StringEd();
@@ -2726,15 +2762,24 @@ void FS_InitFilesystem()
 	FS_Startup(BASEGAME);
 	SEH_Init_StringEd();
 	SEH_UpdateLanguageInfo();
+	SEH_Init_StringEd();
+	SEH_UpdateLanguageInfo();
 	FS_SetRestrictions();
 
 	// if we can't find default.cfg, assume that the paths are
 	// busted and error out now, rather than getting an unreadable
 	// graphics screen when the font fails to load
-	if ( FS_ReadFile( DEFAULT_CONFIG, NULL ) <= 0 )
+	if ( FS_ReadFile( DEFAULT_LOCALIZE_CONFIG, NULL ) > 0 )
 	{
-		// TTimo - added some verbosity, 'couldn't load default.cfg' confuses the hell out of users
-		Com_Error( ERR_FATAL, "Couldn't load %s.  Make sure Call of Duty is run from the correct folder.", DEFAULT_CONFIG );
+		fs_defaultConfigName = DEFAULT_LOCALIZE_CONFIG;
+	}
+	else if ( FS_ReadFile( DEFAULT_CONFIG, NULL ) > 0 )
+	{
+		fs_defaultConfigName = DEFAULT_CONFIG;
+	}
+	else
+	{
+		Com_Error( ERR_FATAL, "Couldn't load %s.  Make sure Call of Duty is run from the correct folder.", DEFAULT_LOCALIZE_CONFIG );
 	}
 
 	I_strncpyz(lastValidBase, fs_basepath->current.string, sizeof(lastValidBase));
@@ -2749,12 +2794,14 @@ void FS_Restart(int checksumFeed)
 	FS_Startup(BASEGAME);
 	SEH_Init_StringEd();
 	SEH_UpdateLanguageInfo();
+	SEH_Init_StringEd();
+	SEH_UpdateLanguageInfo();
 	FS_SetRestrictions();
 
 	// if we can't find default.cfg, assume that the paths are
 	// busted and error out now, rather than getting an unreadable
 	// graphics screen when the font fails to load
-	if ( FS_ReadFile( DEFAULT_CONFIG, NULL ) <= 0 )
+	if ( FS_ReadFile( fs_defaultConfigName, NULL ) <= 0 )
 	{
 		// this might happen when connecting to a pure server not using BASEGAME/pak0.pk3
 		// (for instance a TA demo server)
@@ -2770,7 +2817,7 @@ void FS_Restart(int checksumFeed)
 			Com_Error( ERR_DROP, "Invalid game folder\n" );
 		}
 		// TTimo - added some verbosity, 'couldn't load default.cfg' confuses the hell out of users
-		Com_Error( ERR_FATAL, "Couldn't load %s.  Make sure Call of Duty is run from the correct folder.", DEFAULT_CONFIG );
+		Com_Error( ERR_FATAL, "Couldn't load %s.  Make sure Call of Duty is run from the correct folder.", fs_defaultConfigName );
 	}
 
 	// bk010116 - new check before safeMode
