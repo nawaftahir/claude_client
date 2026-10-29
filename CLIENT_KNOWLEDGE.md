@@ -130,7 +130,7 @@ Two paths, chosen by whether the callee is already compiled:
   Con_DrawSay, which are .inl stand-ins in our tree).
 - KEY LEAD: CalcTracerFinalScale (no register summary) and CalcScreenPlacement (no branch summary) are both leaves
   whose per-function LTCG summaries are missing in retail although their code equals ours. CalcTracerFinalScale is
-  SOLVED by non-static "inline" (1.4b); CalcScreenPlacement: test the same (HYPOTHESIS, not built yet). Find what makes c2
+  SOLVED by non-static "inline" (1.4b); CalcScreenPlacement: DISPROVED for it (sp2: header non-static inline, links, but 14 of the 15 constant-align sites still inline: 34 calls vs retail 48; the selectany copy also lands at the first caller TU, 0x401240). Its blocker is the constant-arg discount, which non-static inline does not disable. Find what makes c2
   skip recording summaries for a function (TU property, flag, second pass). Notes: lab/w200/summary_notes.txt.
   Fixing it likely unlocks the tracer pair (~790 B), CG_DrawLagometer (~390 B), the CalcScreenPlacement noinline
   stand-in and maybe the Com_EndParseSession stand-ins.
