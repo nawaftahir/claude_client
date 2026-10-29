@@ -416,7 +416,7 @@ int SND_Stub_44a6a0(void)
     return 0;
 }
 
-static __declspec(noinline) Bool SND_AnyActiveListeners(void)
+static Bool SND_AnyActiveListeners(void)
 {
     int i;
 
@@ -752,19 +752,8 @@ static __attribute_regparm__(3) int SND_StartAliasStream(const snd_alias_t *pAli
     if (!*(unsigned char *)((char *)snd_enableStream + 8))
         return 0;
 
-    switch ((pAlias0->flags & 0x780) >> 7) {
-    case 1:
-    case 2:
-    case 7:
-    case 8:
-    case 9:
-    case 10:
-        break;
-    default:
-        if (!SND_AnyActiveListeners())
-            Com_Error(ERR_DROP, "attempted to play spatialized alias '%s' while there is no active listener. Most likely this means you tried to play a spatialized sound while not in a level.\n", pAlias0->pszAliasName);
-        break;
-    }
+    if (SND_IsAliasChannel3D((pAlias0->flags & 0x780) >> 7) && !SND_AnyActiveListeners())
+        Com_Error(ERR_DROP, "attempted to play spatialized alias '%s' while there is no active listener. Most likely this means you tried to play a spatialized sound while not in a level.\n", pAlias0->pszAliasName);
 
     return SND_StartAliasStreamOnChannel(pAlias0, pAlias1, lerp, entnum, org, volume, pitch, timeshift, fraction, pAlias0->startDelay, treatAsMaster || (pAlias0->flags & 2), channel, system);
 }

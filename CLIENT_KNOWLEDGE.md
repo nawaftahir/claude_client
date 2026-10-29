@@ -191,6 +191,10 @@ Two paths, chosen by whether the callee is already compiled:
 ## 3. Techniques that paid
 | Technique | Example | Gain |
 |---|---|---|
+| Constant args through locals (no constant-arg discount at decision time) | CalcScreenPlacement aligns `horzAlign = 2; vertAlign = 2;` (CoD4 shape) | +387 incl. lagometer, noinline gone |
+| `continue` after the binary-search arms (estimator count 0 for later code) | CL_RefreshKnownGlobalServer (same as CL_SetServerInfoByAddress) | stand-in + noinline gone |
+| A retail "unreferenced; name unknown" out-of-line copy marks a helper the callers inline: call it | Com_ConfigureChecksum (stub at 0x431a50) from Com_SetRecommended / Com_HasConfigureChecksumChanged | 3 noinline stand-ins gone |
+| Replace a hand-inlined helper body with the real call (CoD4 shows it) | CL_DrawText in DevString/Con_DrawSay, I_strlwr x6 | stand-ins gone |
 | int ?: passed to a bool param instead of a bool local | UI_Init `Dvar_SetBoolByName("ui_mousePitch", Dvar_GetFloat("m_pitch") >= 0.0f ? 0 : 1)` | +531, match |
 | One check per if + final `if (...) return 0; return 1;` | LAN_ReadServerCache | +178, match |
 | Q3 return shape | CL_CDKeyValidate | +16, match |

@@ -176,3 +176,17 @@ lay: dropping 'static' from static __forceinline helpers in one .cpp is a no-op 
 - 10-30 TU_STATIC as the server's 'static inline' (tus1, com_math.h + com_files.h): .text +16 KB, ALL 22.88%,
   alignment flips in AddPointToBounds2D/IntersectPlanes/Com_Error/Dvar_* -> DISPROVED; the client's plain 'inline'
   (selectany) is right for PC.
+- 10-30 CG_DrawTracer vertex block: explicit b*s expansion instead of VectorMA (tbs1) and declaration order
+  widths-first (tdo1) give byte-identical output: commutative operand order is not decided by source order or
+  declaration order here. Server VectorMA is s*b (verified).
+- 10-30 stand-in fixes via shapes (PINNED, builds isc/cc1/snd1, sites.py == retail):
+  CL_InitServerInfo: continue after the search arms in CL_RefreshKnownGlobalServer (like CL_SetServerInfoByAddress),
+  real call at the other site, noinline gone (43ac906). FS_FreeFile/Sys_ArchiveInfo/Dvar_AnyLatchedValues: the
+  checksum loop belongs to Com_ConfigureChecksum = the retail 0x431a50 'unreferenced' copy (CoD4 name); calling it
+  from both functions puts the later sites at retail's counts, 3 noinline gone (99e2f42). SND_AnyActiveListeners:
+  CoD4 shape 'if (SND_IsAliasChannel3D(...) && !SND_AnyActiveListeners())' replaces our hand-inlined switch (snd1).
+  GetBestOffhand NOT solved: real call at the first sites inlines the icon site too (gbo1, gbo3); the CoD4 nested
+  equipped/best shape gives retail's call (gbo2) but different branch code (-75 B); retail's code is our current
+  'if (!weapon || class != type) { weapon = GetBestOffhand(); if (!weapon) return; }'.
+  Bare '&' inside wsl.exe bash -lc dies with the shell (lost a build and left a gate half-applied): always use the
+  tool's background mode.
