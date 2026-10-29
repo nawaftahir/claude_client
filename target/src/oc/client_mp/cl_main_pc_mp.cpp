@@ -406,11 +406,20 @@ void CL_SortGlobalServers(void)
 
 static void CL_InitServerInfo(serverInfo_t *server, netadr_t adr)
 {
-#define pp_server (server)
-#define pp_adr (adr)
-#include "cl_init_server_info.inl"
-#undef pp_adr
-#undef pp_server
+    server->adr = adr;
+    server->clients = 0;
+    server->hostName[0] = '\0';
+    server->mapName[0] = '\0';
+    server->maxClients = 0;
+    server->maxPing = 0;
+    server->minPing = 0;
+    server->ping = -1;
+    server->game[0] = '\0';
+    server->gameType[0] = '\0';
+    server->netType = 0;
+    server->allowAnonymous = 0;
+    server->dirty = 1;
+    server->requestCount = 0;
 }
 
 // Original name unknown.
