@@ -973,7 +973,7 @@ void CG_PulseLowHealthOverlay(float healthRatio)
         cg->healthOverlayPulseIndex = 0;
     }
     cg->healthOverlayOldHealth = healthRatio;
-    if (cg->healthOverlayPulseDuration + cg->healthOverlayPulseTime <= cg->time
+    if (cg->healthOverlayPulseTime + cg->healthOverlayPulseDuration <= cg->time
         && (healthRatio < hud_healthOverlay_pulseStart->current.value || cg->healthOverlayHurt)) {
         if (!cg->healthOverlayHurt)
             cg->healthOverlayHurt = 1;
