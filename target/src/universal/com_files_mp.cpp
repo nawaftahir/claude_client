@@ -598,13 +598,7 @@ qboolean FS_iwIwd(char *iwd, const char *base)
 		if ( !FS_FilenameCompare(szFile, va("%s/localized_", base)) )
 		{
 			strcpy(szFile, pszLoc + 10);
-			{
-#define pp_s (szFile)
-#define PP_RETVAL( v )
-#include "q_shared_strlwr.inl"
-#undef PP_RETVAL
-#undef pp_s
-			}
+			I_strlwr(szFile);
 
 			for ( i = 0; i < NUM_IW_IWDS; ++i )
 			{

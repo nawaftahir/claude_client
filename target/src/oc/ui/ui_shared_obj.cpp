@@ -230,13 +230,7 @@ static void UI_ParseMenuMaterial(const char *key, const char *value)
 
     material = (MaterialHandle)CL_RegisterMaterialNoMip(value, 3);
     Com_sprintf(name, 64, (const char *)"$%s", key);
-    {
-#define pp_s (name)
-#define PP_RETVAL( v )
-#include "../../universal/q_shared_strlwr.inl"
-#undef PP_RETVAL
-#undef pp_s
-    }
+    I_strlwr(name);
     CL_Material_Duplicate(material, name);
 }
 
@@ -723,13 +717,7 @@ qboolean MenuParse_background(const char (*item)[4], int handle)
     if (!PC_String_Parse(handle, &temp))
         return 0;
     I_strncpyz(name, temp, 64);
-    {
-#define pp_s (name)
-#define PP_RETVAL( v )
-#include "../../universal/q_shared_strlwr.inl"
-#undef PP_RETVAL
-#undef pp_s
-    }
+    I_strlwr(name);
     (*(void **)&((itemDef_t *)item)->window.background) = CL_RegisterMaterialNoMip(name, ((menuDef_t *)item)->imageTrack);
     return 1;
 }
@@ -1356,13 +1344,7 @@ qboolean ItemParse_background(const char (*item)[4], int handle)
     if (!PC_String_Parse(handle, &temp))
         return 0;
     I_strncpyz(name, temp, 64);
-    {
-#define pp_s (name)
-#define PP_RETVAL( v )
-#include "../../universal/q_shared_strlwr.inl"
-#undef PP_RETVAL
-#undef pp_s
-    }
+    I_strlwr(name);
     (*(void **)&((itemDef_t *)item)->window.background) = CL_RegisterMaterialNoMip(name, ((itemDef_t *)item)->imageTrack);
     return 1;
 }

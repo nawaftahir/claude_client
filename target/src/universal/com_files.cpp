@@ -1685,13 +1685,7 @@ static iwd_t *FS_LoadZipFile( char *zipfile, const char *basename )
 		{
 			fs_headerLongs[fs_numHeaderLongs++] = LittleLong( file_info.crc );
 		}
-		{
-#define pp_s (filename_inzip)
-#define PP_RETVAL( v )
-#include "q_shared_strlwr.inl"
-#undef PP_RETVAL
-#undef pp_s
-		}
+		I_strlwr(filename_inzip);
 		hash = FS_HashFileName( filename_inzip, iwd->hashSize );
 		buildBuffer[i].name = namePtr;
 		strcpy( buildBuffer[i].name, filename_inzip );
