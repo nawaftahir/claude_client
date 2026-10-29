@@ -135,6 +135,19 @@ Two paths, chosen by whether the callee is already compiled:
   Fixing it likely unlocks the tracer pair (~790 B), CG_DrawLagometer (~390 B), the CalcScreenPlacement noinline
   stand-in and maybe the Com_EndParseSession stand-ins.
 
+- CONSTANT-ARG SUMMARY WRITER (PINNED 10-30, lab/w200/summary_notes.txt, ghx/cd1/): the callee info record is
+  [sym+0x99] (0x54 B, FUN_107091b4), built only when c1xx sets bit 0x1000 in sym+0x69. FUN_1077c9b1 (called from
+  FUN_10770532 at 0x1077056b, before the global optimiser) writes info+0x44 list / +0x48 count / +0x4a nodes /
+  +0x1c walked insns; FUN_1077cdd3 walks the blocks. List empty/unused if: sym+0x69 lacks 0x40 (auto-inline
+  candidate) or lacks 2 or has 0x10; > 449 walked IL insns (also sets the 9000 penalty); no branch on an unstored
+  param and no switch on a param; or (caller side, FUN_1078d03c) no argument reaches the call as a folded constant.
+  __declspec(noinline) and #pragma auto_inline(off) clear bit 0x40 (identical records) -> no list, every site calls.
+  CONCLUSION: a callee-only fix cannot give retail's split (the lagometer's nested site NEEDS the discount, the 15
+  cgame sites must NOT get it). Open: those 15 sites may not see folded constants at decision time in retail, or
+  the 4 client sites go through the budget path (needs a call cycle; retail CalcScreenPlacement is a pure leaf).
+- TOOLING TRAP: claude_client/target/vc70/c2.dll is a DIFFERENT compiler build (md5 d04db730). The real 7.1 back end
+  is /opt/msvc710/Vc7/bin/c2.dll in the docker image (md5 8460473c); the Ghidra project holds that one.
+
 ### 1.5 x87 operand roles
 - Commutative op with both operands in memory: c2 numbers memory objects; the LOWER number becomes the memory
   operand, the higher gets fld. Numbering = first reference order in the function (assignment target first).
@@ -256,6 +269,7 @@ Two paths, chosen by whether the callee is already compiled:
 | CG_ConfigStringModified body forms, early return, bool temp | no gain; no evidence for a CG_ConfigString wrapper |
 | Item_CorrectedTextRect / Sys_ScanForCD invented vanished callees | forbidden without evidence (Sys_DefaultCDPath had evidence) |
 | Non-static inline sweep on remaining fns (ni*, 15 helpers) | no change; detector lab/w200/ni_live.py shows NO remaining call site where caller-saved register liveness differs from retail (all 107 fns) |
+| CalcScreenPlacement callee-only shapes (auto_inline(off) cda, locals/const/static/address-taken/flags, cdgen bench) | list still built, or no list and then the lagometer site loses its discount too (cdb 64.9%) |
 
 ## 5. Data and layout
 - .data and .rsrc 100%. .rdata 99.82%: float-pool order (compile order) and the com_endParseSessionUnderflow
