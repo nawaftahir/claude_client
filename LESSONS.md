@@ -196,3 +196,10 @@ lay: dropping 'static' from static __forceinline helpers in one .cpp is a no-op 
   RemoveVariable x3, Scr_TerminateThread in VM_Notify). Not a source-shape problem; next: oracle W lines for
   VM_Notify (cost path vs budget path, compile order inside the script SCC). ConnectBreakStatements: callers and
   callee equal the server, TempMalloc equal too -> same class (oracle needed).
+- 10-30 sa1 (script family = verified server bodies for CopyArray, CopyEntity, Scr_KillThread,
+  GetNewVariableIndexInternal2, Scr_UsingTreeInternal, ScriptCompile + vmn1, script noinline marks removed):
+  ALL 45.3%; RemoveVariable now also inlines in Scr_KillThread. Oracle (fp_t, vmn1 + no noinline): RemoveVariable
+  cost ~85 (size 91, c0 5), VM_Notify site counts 1.56-11.3 -> r 59-75; retail calls at all 4, which needs
+  counts <= ~2 or the budget path (VM_Notify compiled before RemoveVariable: ours F97637 vs F20307). Server shape
+  is not enough; the script noinline marks stay until the compile-order/count cause is found. Tools: srvsub.py
+  (swap a function for its server body, SPEC= extra edits), fpobj.sh (rebuild one fp_t obj for the oracle).
