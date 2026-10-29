@@ -266,3 +266,5 @@ oc/ui_mp/ui_gameinfo_mp.cpp
 oc/ui_mp/ui_gamepad_menu.cpp
 oc/win32/gfx_dll_v60.cpp
 oc/win32/gfx_v60_threads.cpp
+punkbuster/pbsv.cpp
+punkbuster/pbmd5.cpp

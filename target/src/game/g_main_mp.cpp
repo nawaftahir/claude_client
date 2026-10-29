@@ -2,7 +2,7 @@
 #include "g_shared.h"
 
 // build date of the 1.0 release
-#define BUILD_DATE "Oct  6 2005"
+#define BUILD_DATE "May  1 2006"
 
 
 ALIGNED(128) level_locals_t level;
@@ -93,9 +93,6 @@ dvar_t *player_meleeRange;
 dvar_t *player_meleeWidth;
 dvar_t *player_meleeHeight;
 dvar_t *g_antilag;
-int g_main_unreferenced[7];	// unreferenced storage, sized from the layout; original name unknown
-
-gclient_t g_clients[MAX_CLIENTS];
 dvar_t *g_oldVoting;
 static dvar_t *g_voteAbstainWeight;
 static dvar_t *g_dumpAnims;

@@ -92,6 +92,7 @@ void SND_ShutdownChannels( void );
 #define BUILD_DATE "Oct  6 2005"
 
 extern "C" const char *getBuildNumber( void );
+void PbCaptureConsoleOutput( char *msg, int msglen );
 void FxMem_Init( void );
 // empty in the dedicated build
 inline void Com_SyncThreads( void )
@@ -1892,7 +1893,7 @@ Com_ExecStartupConfigs
 */
 void Com_ExecStartupConfigs( const char *configFile )
 {
-	Cbuf_AddText(va("exec %s\n", fs_defaultConfigName));
+	Cbuf_AddText("exec default_mp.cfg\n");
 	Cbuf_AddText("exec language.cfg\n");
 
 	if ( configFile )
