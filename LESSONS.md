@@ -203,3 +203,7 @@ lay: dropping 'static' from static __forceinline helpers in one .cpp is a no-op 
   counts <= ~2 or the budget path (VM_Notify compiled before RemoveVariable: ours F97637 vs F20307). Server shape
   is not enough; the script noinline marks stay until the compile-order/count cause is found. Tools: srvsub.py
   (swap a function for its server body, SPEC= extra edits), fpobj.sh (rebuild one fp_t obj for the oracle).
+- 10-30 Item_ListBox_HandleKey in Scroll_ListBox_AutoFunc (oracle, noinline removed): size 1439, c0 17, c1 1334 =
+  constant-arg discount from the literal (down 1, force 0) args, cnt 0.5, r 66 -> inline; retail calls. Same class
+  as CalcScreenPlacement (constants must not be folded at decision time) but no evidence yet for the original form
+  (CoD4 decompile shows literals). Item_HandleKey site: cnt 0.011, r 842, refused like retail.
