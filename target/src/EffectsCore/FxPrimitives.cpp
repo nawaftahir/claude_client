@@ -450,6 +450,17 @@ struct FxGfxEntity
 	vec3_t endpos;
 };
 
+
+class Light;
+class Particle;
+class OrientedParticle;
+class Cloud;
+class Cylinder;
+class Effect;
+class Tail;
+class Line;
+class Emitter;
+
 class Effect
 {
 public:

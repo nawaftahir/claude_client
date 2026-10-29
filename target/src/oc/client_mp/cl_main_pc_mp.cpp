@@ -136,8 +136,8 @@ void CL_SetServerInfo(serverInfo_t *server, const char *info, int ping);
 void CL_SetServerInfoByAddress(netadr_t from, const char *info, int ping)
 {
     int i;
-    int low;
     int high;
+    int low;
     int mid;
     int compare;
 

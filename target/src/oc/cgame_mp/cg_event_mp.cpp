@@ -225,17 +225,17 @@ static void CG_Obituary(entityState_t *ent)
         iconWidth = 1.4f;
         iconShader = "killiconheadshot";
         break;
-    case 9:
+    case 12:
         iconWidth = 1.4f;
-        iconShader = "killiconcrush";
+        iconShader = "killiconsuicide";
         break;
     case 11:
         iconWidth = 1.4f;
         iconShader = "killiconfalling";
         break;
-    case 12:
+    case 9:
         iconWidth = 1.4f;
-        iconShader = "killiconsuicide";
+        iconShader = "killiconcrush";
         break;
     case 13:
         iconWidth = 1.4f;
