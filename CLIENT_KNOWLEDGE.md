@@ -8,6 +8,9 @@ Sources: LESSONS.md, ~/.claude/skills/client-recon/SKILL.md, lab/w200/{inl_notes
 conv_notes,summary_notes,ra_notes}.txt, lab/w200/codex100_*/.
 
 ## 0. Ground rules that bite
+- LAW 12 (dev/CLAUDE.md): only VERIFIED findings go into this file, each with evidence and a tag (PINNED /
+  SUPPORTED / HYPOTHESIS). Correct or delete disproved claims in place. Before experimenting, check the tried
+  lists in section 4 and skip what was already tried; agent briefs must name them.
 - Real readable C/C++ only. No asm, byte arrays, _emit, invented callees/constants. A probe with a fake
   `if (0) Foo();` proves a mechanism but is never shipped (lab/lg5.patch is the example).
 - Score = whole-file same-offset bytes (shameter "ALL"). It excludes the PE header; see section 7.
