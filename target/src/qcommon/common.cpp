@@ -1392,8 +1392,8 @@ void Com_WriteCDKey( void )
 Com_SetRecommended
 ==================
 */
-// retail 0x431a50, unreferenced; name unknown
-int Com_ConfigureChecksum_431a50( const char *buffer, int size )
+// CoD4 name (KisakCOD com_playerprofile.cpp)
+int Com_ConfigureChecksum( const char *buffer, int size )
 {
 	int checksum;
 	int i;
@@ -1410,20 +1410,15 @@ static bool Com_HasConfigureChecksumChanged( void )
 	void *csv;
 	int filesize;
 	int checksum;
-	int i;
 
 	filesize = FS_ReadFile( "configure_mp.csv", &csv );
 	if ( filesize < 0 )
 		Com_Error( ERR_FATAL, "EXE_ERR_NOT_FOUND" "\x15" "configure_mp.csv" );
 
-	checksum = 0;
-	for ( i = 0; i < filesize; i++ )
-		checksum = checksum * 0x7a69 + ( (char *)csv )[i];
-
+	checksum = Com_ConfigureChecksum( (const char *)csv, filesize );
 	FS_FreeFile( csv );
-	checksum &= 0xfffffff;
 
-	return Sys_HasConfigureChecksumChanged( checksum + 1 );
+	return Sys_HasConfigureChecksumChanged( checksum );
 }
 
 static int Com_GpuStringCompare( const char *wild, const char *s )
@@ -1724,7 +1719,6 @@ void Com_SetRecommended( qboolean restart )
 	int filesize;
 	const char *text;
 	int checksum;
-	int i;
 
 	Com_Printf( "========= autoconfigure\n" );
 
@@ -1760,13 +1754,9 @@ void Com_SetRecommended( qboolean restart )
 	}
 pp_done_21:;
 
-	checksum = 0;
-	for ( i = 0; i < filesize; i++ )
-		checksum = checksum * 0x7a69 + ( (char *)csv )[i];
-
+	checksum = Com_ConfigureChecksum( (const char *)csv, filesize );
 	FS_FreeFile( csv );
-	checksum &= 0xfffffff;
-	Sys_ArchiveInfo( checksum + 1 );
+	Sys_ArchiveInfo( checksum );
 
 	if ( restart && Dvar_AnyLatchedValues() )
 		Cbuf_AddText( "snd_restart\n" );

@@ -1500,7 +1500,7 @@ void FS_ResetFiles()
 	fs_loadStack = 0;
 }
 
-__declspec(noinline) void FS_FreeFile(void* buffer)
+void FS_FreeFile(void* buffer)
 {
 	FS_CheckFileSystemStarted();
 	--fs_loadStack;

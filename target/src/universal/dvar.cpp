@@ -1794,7 +1794,7 @@ void Dvar_ClearServerInfoNoUpdateFlags()
 		dvar->flags &= ~DVAR_SERVERINFO_NOUPDATE;
 }
 
-__declspec(noinline) bool Dvar_AnyLatchedValues()
+bool Dvar_AnyLatchedValues()
 {
 	dvar_t *dvar;
 

@@ -276,7 +276,7 @@ bool Sys_HasInfoChanged( void )
 	return false;
 }
 
-__declspec(noinline) void Sys_ArchiveInfo( int checksum )
+void Sys_ArchiveInfo( int checksum )
 {
 	Sys_RegisterInfoDvars();
 	Dvar_SetFloat( sys_cpuGHz, sys_info.cpuGHz );
