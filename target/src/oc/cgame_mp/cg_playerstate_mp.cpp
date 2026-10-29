@@ -66,7 +66,6 @@ void CG_TransitionPlayerState(playerState_t *ps, playerState_t *ops);
 #define CG_FLOAT(base, off) (*(float *)((char *)(base) + (off)))
 #define CG_PTR(base, off) (*(char **)((char *)(base) + (off)))
 
-#define VectorClear(v) ((v)[0] = (v)[1] = (v)[2] = 0.0f)
 
 void CG_DamageFeedback(int yawByte, int pitchByte, int damage)
 {
