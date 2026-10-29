@@ -216,7 +216,7 @@ void ScrPlace_Stub_449ed0(void)
 {
 }
 
-__declspec(noinline) void CalcScreenPlacement(float *sp_x, float *sp_y, float *sp_w, float *sp_h, int sp_horzAlign, int sp_vertAlign)
+void CalcScreenPlacement(float *sp_x, float *sp_y, float *sp_w, float *sp_h, int sp_horzAlign, int sp_vertAlign)
 {
 #include "screen_placement.inl"
 }

@@ -124,16 +124,18 @@ Two paths, chosen by whether the callee is already compiled:
 - The constant-arg discount (FUN_10797769, decompile lab/w200/ghx/discount_10797769.c) walks a CALLEE-side branch
   summary built when the callee compiles (per node: param index, flag bit 1 = branch depends on the param,
   weights /0xfffe scaled by size); FUN_1079c4f0 checks whether the constant arg eliminates the branch.
-- Retail CalcScreenPlacement (0x449ee0, switch jump tables like ours, not address-taken) behaves as if it has NO
-  such summary: retail calls it at all 48 sites (our 33 variable-align + 15 constant-align) and inlines it only via
-  the budget path (CG_DrawLagometer through CL_DrawStretchPic; CG_DrawDevString, SCR_DrawDemoRecording,
-  Con_DrawSay, which are .inl stand-ins in our tree).
-- KEY LEAD: CalcTracerFinalScale (no register summary) and CalcScreenPlacement (no branch summary) are both leaves
-  whose per-function LTCG summaries are missing in retail although their code equals ours. CalcTracerFinalScale is
-  SOLVED by non-static "inline" (1.4b); CalcScreenPlacement: DISPROVED for it (sp2: header non-static inline, links, but 14 of the 15 constant-align sites still inline: 34 calls vs retail 48; the selectany copy also lands at the first caller TU, 0x401240). Its blocker is the constant-arg discount, which non-static inline does not disable. Find what makes c2
-  skip recording summaries for a function (TU property, flag, second pass). Notes: lab/w200/summary_notes.txt.
-  Fixing it likely unlocks the tracer pair (~790 B), CG_DrawLagometer (~390 B), the CalcScreenPlacement noinline
-  stand-in and maybe the Com_EndParseSession stand-ins.
+- SOLVED 10-30 (PINNED, builds adl2/adl3): CalcScreenPlacement needs NO stand-in. Retail's 15 "constant-align"
+  cgame sites pass the aligns through LOCALS (`int horzAlign, vertAlign; horzAlign = 2; vertAlign = 2;` then
+  pass the locals), the CoD4 shape (KisakCOD cg_draw_reticles.cpp CG_DrawAdsOverlay/CG_DrawReticleSides). A local
+  is not a folded constant when LTCG decides inlining (copy propagation runs later), so no constant-arg discount ->
+  call; the optimiser still folds it to `mov ebx,2; mov edi,ebx` like retail. Applied to CG_DrawAdsOverlay,
+  ReticleSides, ReticleCenter, AdsAimIndicator, TurretCrossHair + noinline removed: CSP call count per function
+  == retail (48), .text vsize == retail, ALL 99.711% (adl2, -1 B; +lagometer lg1/x8b adl3 99.717%, +104).
+  RULE: a site whose retail calls a small helper with constant args that our build inlines -> try the constant
+  through a local first.
+- KEY LEAD (history): CalcTracerFinalScale (no register summary) was SOLVED by non-static "inline" (1.4b); the
+  same idea was DISPROVED for CalcScreenPlacement (sp2: 34 calls vs retail 48), see SOLVED above for its real cause.
+  Com_EndParseSession stand-ins are still open (no args, so not this lever).
 
 - CONSTANT-ARG SUMMARY WRITER (PINNED 10-30, lab/w200/summary_notes.txt, ghx/cd1/): the callee info record is
   [sym+0x99] (0x54 B, FUN_107091b4), built only when c1xx sets bit 0x1000 in sym+0x69. FUN_1077c9b1 (called from
@@ -142,9 +144,7 @@ Two paths, chosen by whether the callee is already compiled:
   candidate) or lacks 2 or has 0x10; > 449 walked IL insns (also sets the 9000 penalty); no branch on an unstored
   param and no switch on a param; or (caller side, FUN_1078d03c) no argument reaches the call as a folded constant.
   __declspec(noinline) and #pragma auto_inline(off) clear bit 0x40 (identical records) -> no list, every site calls.
-  CONCLUSION: a callee-only fix cannot give retail's split (the lagometer's nested site NEEDS the discount, the 15
-  cgame sites must NOT get it). Open: those 15 sites may not see folded constants at decision time in retail, or
-  the 4 client sites go through the budget path (needs a call cycle; retail CalcScreenPlacement is a pure leaf).
+  CONCLUSION: a callee-only fix cannot give retail's split; the caller side does (aligns through locals, SOLVED above).
 - TOOLING TRAP: claude_client/target/vc70/c2.dll is a DIFFERENT compiler build (md5 d04db730). The real 7.1 back end
   is /opt/msvc710/Vc7/bin/c2.dll in the docker image (md5 8460473c); the Ghidra project holds that one.
 

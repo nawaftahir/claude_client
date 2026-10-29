@@ -607,52 +607,14 @@ static void CG_DrawLagometer(void)
             {
                 if (v > range)
                     v = range;
-                float h = v;
-                float w = 1.0f;
-                float y = mid - v;
-                float x = ax + aw - a;
-                {
-#define sp_x (&x)
-#define sp_y (&y)
-#define sp_w (&w)
-#define sp_h (&h)
-#define sp_horzAlign (3)
-#define sp_vertAlign (3)
-#include "../client_mp/screen_placement.inl"
-#undef sp_x
-#undef sp_y
-#undef sp_w
-#undef sp_h
-#undef sp_horzAlign
-#undef sp_vertAlign
-                }
-                CL_DrawStretchPicPhysical(x, y, w, h, 0.0f, 0.0f, 0.0f, 0.0f, colorYellow, cgs->media.whiteMaterial);
+                CL_DrawStretchPic(ax + aw - a, mid - v, 1.0f, v, 3, 3, 0.0f, 0.0f, 0.0f, 0.0f, colorYellow, cgs->media.whiteMaterial);
             }
             else if (v < 0.0f)
             {
                 v = -v;
                 if (v > range)
                     v = range;
-                float h = v;
-                float w = 1.0f;
-                float y = mid;
-                float x = ax + aw - a;
-                {
-#define sp_x (&x)
-#define sp_y (&y)
-#define sp_w (&w)
-#define sp_h (&h)
-#define sp_horzAlign (3)
-#define sp_vertAlign (3)
-#include "../client_mp/screen_placement.inl"
-#undef sp_x
-#undef sp_y
-#undef sp_w
-#undef sp_h
-#undef sp_horzAlign
-#undef sp_vertAlign
-                }
-                CL_DrawStretchPicPhysical(x, y, w, h, 0.0f, 0.0f, 0.0f, 0.0f, colorBlue, cgs->media.whiteMaterial);
+                CL_DrawStretchPic(ax + aw - a, mid, 1.0f, v, 3, 3, 0.0f, 0.0f, 0.0f, 0.0f, colorBlue, cgs->media.whiteMaterial);
             }
         }
 
@@ -665,57 +627,19 @@ static void CG_DrawLagometer(void)
             v = (float)lagometer.snapshotSamples[i];
             if (v > 0.0f)
             {
-                vscale = range / 900.0f;
-                v = v * vscale;
-                if (v > range)
-                    v = range;
                 if (lagometer.snapshotFlags[i] & 1)
                     color = colorYellow;
                 else
                     color = colorGreen;
-                float h = v;
-                float w = 1.0f;
-                float y = ay + ah - v;
-                float x = ax + aw - a;
-                {
-#define sp_x (&x)
-#define sp_y (&y)
-#define sp_w (&w)
-#define sp_h (&h)
-#define sp_horzAlign (3)
-#define sp_vertAlign (3)
-#include "../client_mp/screen_placement.inl"
-#undef sp_x
-#undef sp_y
-#undef sp_w
-#undef sp_h
-#undef sp_horzAlign
-#undef sp_vertAlign
-                }
-                CL_DrawStretchPicPhysical(x, y, w, h, 0.0f, 0.0f, 0.0f, 0.0f, color, cgs->media.whiteMaterial);
+                vscale = range / 900.0f;
+                v = v * vscale;
+                if (v > range)
+                    v = range;
+                CL_DrawStretchPic(ax + aw - a, ay + ah - v, 1.0f, v, 3, 3, 0.0f, 0.0f, 0.0f, 0.0f, color, cgs->media.whiteMaterial);
             }
             else if (v < 0.0f)
             {
-                float h = range;
-                float w = 1.0f;
-                float y = ay + ah - range;
-                float x = ax + aw - a;
-                {
-#define sp_x (&x)
-#define sp_y (&y)
-#define sp_w (&w)
-#define sp_h (&h)
-#define sp_horzAlign (3)
-#define sp_vertAlign (3)
-#include "../client_mp/screen_placement.inl"
-#undef sp_x
-#undef sp_y
-#undef sp_w
-#undef sp_h
-#undef sp_horzAlign
-#undef sp_vertAlign
-                }
-                CL_DrawStretchPicPhysical(x, y, w, h, 0.0f, 0.0f, 0.0f, 0.0f, colorRed, cgs->media.whiteMaterial);
+                CL_DrawStretchPic(ax + aw - a, ay + ah - range, 1.0f, range, 3, 3, 0.0f, 0.0f, 0.0f, 0.0f, colorRed, cgs->media.whiteMaterial);
             }
         }
 
@@ -943,46 +867,50 @@ static void CG_DrawAdsOverlay(const WeaponDef *weapDef, int weapIndex, const flo
     MaterialHandle material;
     vec2_t drawPos;
     vec2_t drawSize;
+    int horzAlign;
+    int vertAlign;
 
     material = cg_weaponsArray[weapIndex].hADSOverlay;
     if (!material)
         return;
 
+    horzAlign = 2;
+    vertAlign = 2;
     drawSize[0] = weapDef->overlayWidth;
     drawSize[1] = weapDef->overlayHeight;
     if (!(drawSize[0] > 320.0f) && !(drawSize[1] > 240.0f)) {
         drawPos[0] = crosshairPos[0] - drawSize[0];
         drawPos[1] = crosshairPos[1] - drawSize[1];
-        CL_DrawStretchPic(drawPos[0], drawPos[1], drawSize[0], drawSize[1], 2, 2,
+        CL_DrawStretchPic(drawPos[0], drawPos[1], drawSize[0], drawSize[1], horzAlign, vertAlign,
                           0.0f, 0.0f, 1.0f, 1.0f, color, material);
 
         drawPos[0] = crosshairPos[0];
         drawPos[1] = crosshairPos[1] - drawSize[1];
-        CL_DrawStretchPic(drawPos[0], drawPos[1], drawSize[0], drawSize[1], 2, 2,
+        CL_DrawStretchPic(drawPos[0], drawPos[1], drawSize[0], drawSize[1], horzAlign, vertAlign,
                           1.0f, 0.0f, 0.0f, 1.0f, color, material);
 
         drawPos[0] = crosshairPos[0] - drawSize[0];
         drawPos[1] = crosshairPos[1];
-        CL_DrawStretchPic(drawPos[0], drawPos[1], drawSize[0], drawSize[1], 2, 2,
+        CL_DrawStretchPic(drawPos[0], drawPos[1], drawSize[0], drawSize[1], horzAlign, vertAlign,
                           0.0f, 1.0f, 1.0f, 0.0f, color, material);
 
         drawPos[0] = crosshairPos[0];
         drawPos[1] = crosshairPos[1];
-        CL_DrawStretchPic(drawPos[0], drawPos[1], drawSize[0], drawSize[1], 2, 2,
+        CL_DrawStretchPic(drawPos[0], drawPos[1], drawSize[0], drawSize[1], horzAlign, vertAlign,
                           1.0f, 1.0f, 0.0f, 0.0f, color, material);
 
         drawPos[0] = crosshairPos[0] - drawSize[0];
         drawPos[1] = crosshairPos[1] - drawSize[1];
-        CalcScreenPlacement(&drawPos[0], &drawPos[1], &drawSize[0], &drawSize[1], 2, 2);
+        CalcScreenPlacement(&drawPos[0], &drawPos[1], &drawSize[0], &drawSize[1], horzAlign, vertAlign);
         CG_DrawFrameOverlay(drawPos[0], drawPos[0] + drawSize[0] * 2.0f,
                             drawPos[1], drawPos[1] + drawSize[1] * 2.0f, color, material);
     } else {
         drawPos[0] = (crosshairPos[0] - drawSize[0] * 0.5f);
         drawPos[1] = crosshairPos[1] - drawSize[1] * 0.5f;
-        CL_DrawStretchPic(drawPos[0], drawPos[1], drawSize[0], drawSize[1], 2, 2,
+        CL_DrawStretchPic(drawPos[0], drawPos[1], drawSize[0], drawSize[1], horzAlign, vertAlign,
                           0.0f, 0.0f, 1.0f, 1.0f, color, material);
 
-        CalcScreenPlacement(&drawPos[0], &drawPos[1], &drawSize[0], &drawSize[1], 2, 2);
+        CalcScreenPlacement(&drawPos[0], &drawPos[1], &drawSize[0], &drawSize[1], horzAlign, vertAlign);
         CG_DrawFrameOverlay(drawPos[0], drawPos[0] + drawSize[0],
                             drawPos[1], drawPos[1] + drawSize[1], color, material);
     }
@@ -1041,6 +969,8 @@ void CG_DrawTurretCrossHair(void)
     float y;
     float w;
     float h;
+    int horzAlign;
+    int vertAlign;
 
     if (!cg_drawTurretCrosshair->current.enabled || cg_paused_244->current.integer)
         return;
@@ -1056,12 +986,14 @@ void CG_DrawTurretCrossHair(void)
 
     CG_CalcCrosshairColor(1.0f, color);
     weapDef = (WeaponDef *)BG_GetWeaponDef(weapIndex);
+    horzAlign = 2;
+    vertAlign = 2;
     size = (float)weapDef->iReticleCenterSize;
     h = size;
     w = size;
     y = size * -0.5f;
     x = y;
-    CalcScreenPlacement(&x, &y, &w, &h, 2, 2);
+    CalcScreenPlacement(&x, &y, &w, &h, horzAlign, vertAlign);
     // retail inlines CL_DrawStretchPicPhysical here
     re.DrawStretchPic(x, y, w, h, 0.0f, 0.0f, 1.0f, 1.0f, color, weapInfo->hReticleCenter);
 }
@@ -1089,12 +1021,16 @@ static void CG_DrawAdsAimIndicator(int weapIndex, const WeaponDef *weapDef, cons
 {
     MaterialHandle material;
     float w;
+    int horzAlign;
+    int vertAlign;
 
     if (!cg_drawGun->current.enabled && !(transScale >= 1.0f)) {
         material = cg_weaponsArray[weapIndex].hReticleCenter;
         if (material) {
+            horzAlign = 2;
+            vertAlign = 2;
             w = 1.5f - transScale; w = w * ((float)weapDef->iReticleCenterSize);
-            CL_DrawStretchPic(centerX - w * 0.5f, centerY - w * 0.5f, w, w, 2, 2, 0.0f, 0.0f, 1.0f, 1.0f, color, material);
+            CL_DrawStretchPic(centerX - w * 0.5f, centerY - w * 0.5f, w, w, horzAlign, vertAlign, 0.0f, 0.0f, 1.0f, 1.0f, color, material);
         }
     }
 }
@@ -1126,14 +1062,18 @@ static void CG_DrawReticleCenter(const WeaponDef *weapDef, int weapIndex, const 
 {
     MaterialHandle material;
     float drawSize;
+    int horzAlign;
+    int vertAlign;
 
     material = cg_weaponsArray[weapIndex].hReticleCenter;
     if (material) {
+        horzAlign = 2;
+        vertAlign = 2;
         drawSize = (float)weapDef->iReticleCenterSize;
         if (weapDef->weapType == WEAPTYPE_GRENADE && cg->predictedPlayerState.grenadeTimeLeft && weapDef->bCookOffHold)
             drawSize = (float)(cg->predictedPlayerState.grenadeTimeLeft % 1000) * 0.01f + drawSize;
         drawSize = drawSize * transScale;
-        CL_DrawStretchPic(centerX - drawSize * 0.5f, centerY - drawSize * 0.5f, drawSize, drawSize, 2, 2,
+        CL_DrawStretchPic(centerX - drawSize * 0.5f, centerY - drawSize * 0.5f, drawSize, drawSize, horzAlign, vertAlign,
                           0.0f, 0.0f, 1.0f, 1.0f, color, material);
     }
 }
@@ -1192,11 +1132,15 @@ static void CG_DrawReticleSides(const WeaponDef *weapDef, int weapIndex, const f
     vec2_t imageTexelOffset;
     vec2_t imageSize;
     float reticleAlpha;
+    int horzAlign;
+    int vertAlign;
 
     material = cg_weaponsArray[weapIndex].hReticleSide;
     if (!material)
         return;
 
+    horzAlign = 2;
+    vertAlign = 2;
     reticleAlpha = CG_DrawWeapReticle();
     CG_CalcReticleColor(baseColor, reticleAlpha, reticleColor);
     drawSize[0] = (float)weapDef->iReticleSideSize * transScale;
@@ -1208,19 +1152,19 @@ static void CG_DrawReticleSides(const WeaponDef *weapDef, int weapIndex, const f
 
     drawPos[0] = centerX - drawSize[0] * 0.5f;
     drawPos[1] = centerY - drawSize[1] - spread[1] - imageTexelOffset[1];
-    CG_DrawRotatedPic(drawPos[0], drawPos[1], drawSize[0], drawSize[1], 2, 2, 0.0f, reticleColor, material);
+    CG_DrawRotatedPic(drawPos[0], drawPos[1], drawSize[0], drawSize[1], horzAlign, vertAlign, 0.0f, reticleColor, material);
 
     drawPos[0] = centerX + spread[0];
     drawPos[1] = centerY - drawSize[1] * 0.5f;
-    CG_DrawRotatedPic(drawPos[0], drawPos[1], drawSize[0], drawSize[1], 2, 2, 90.0f, reticleColor, material);
+    CG_DrawRotatedPic(drawPos[0], drawPos[1], drawSize[0], drawSize[1], horzAlign, vertAlign, 90.0f, reticleColor, material);
 
     drawPos[0] = centerX - drawSize[0] * 0.5f - imageTexelOffset[0];
     drawPos[1] = centerY + spread[1];
-    CG_DrawRotatedPic(drawPos[0], drawPos[1], drawSize[0], drawSize[1], 2, 2, 180.0f, reticleColor, material);
+    CG_DrawRotatedPic(drawPos[0], drawPos[1], drawSize[0], drawSize[1], horzAlign, vertAlign, 180.0f, reticleColor, material);
 
     drawPos[0] = centerX - drawSize[0] - spread[0] - imageTexelOffset[0];
     drawPos[1] = centerY - drawSize[1] * 0.5f - imageTexelOffset[1];
-    CG_DrawRotatedPic(drawPos[0], drawPos[1], drawSize[0], drawSize[1], 2, 2, 270.0f, reticleColor, material);
+    CG_DrawRotatedPic(drawPos[0], drawPos[1], drawSize[0], drawSize[1], horzAlign, vertAlign, 270.0f, reticleColor, material);
 }
 
 void CG_DrawCrosshair(void)
