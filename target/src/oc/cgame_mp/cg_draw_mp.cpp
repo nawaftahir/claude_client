@@ -2418,11 +2418,11 @@ void CG_DrawActive(void)
     if (cg->shellshock.sensitivity != 0.0f)
         sensitivity = cg->shellshock.sensitivity * cg->zoomSensitivity;
 
-    ka = cg->kickAngles;
     oa = cg->offsetAngles;
-    angles[0] = ka[0] + oa[0];
-    angles[1] = ka[1] + oa[1];
-    angles[2] = ka[2] + oa[2];
+    ka = cg->kickAngles;
+    angles[0] = oa[0] + ka[0];
+    angles[1] = oa[1] + ka[1];
+    angles[2] = oa[2] + ka[2];
 
     CL_SetUserCmdAimValues(angles);
 
