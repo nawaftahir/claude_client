@@ -1,4 +1,4 @@
-# CoD2MP_s.exe 1.0: everything learned (state 10-29, 99.711%)
+# CoD2MP_s.exe 1.0: everything learned (state 10-30, 99.734%)
 
 Companion to HANDOFF_100.md (state + commands). This file is the knowledge: how the compiler decides, what
 paid, what did not, and a dossier per remaining function. Read it fully before changing source.
@@ -218,9 +218,8 @@ Two paths, chosen by whether the callee is already compiled:
   the gun-block memset, bViewModel only in [esp+0x10]). Tried apw1-18, wp*, ps1/ps2 (opencod2 playerState alias).
 - CG_ConfigStringModified 411: retail schedules the configstring base `add` after `cmp esi,7` (lea). No
   CG_ConfigString wrapper exists in the tree (Q3 has one; not added without evidence).
-- CG_DrawLagometer 393: lg1.py = retail statement order. CalcScreenPlacement is a __declspec(noinline) stand-in;
-  without it (lgo_ni.py) + lg1 + by-value CL_DrawStretchPic in both snapshot sites (x8b) the function has 6 diff
-  lines, but 15 constant-align sites elsewhere inline that retail calls (ALL 62.6%). Blocked on 1.4c.
+- CG_DrawLagometer: MATCHED 10-30 (35f3db2; see 1.4c SOLVED): real CL_DrawStretchPic calls in all 4 bars, lg1
+  statement order, snapshot bar 'y = ay + ah - v; x = ax + aw - a;' locals (y first).
 - CG_CalcCrosshairPosition 392: evaluation order (retail stores the tan argument, keeps the dot on the FPU stack,
   then calls tan). ch1 (inline dots) is closest but changes size.
 - Com_ProcessSoundAliasFileLocalization 268 and the Com_EndParseSession stand-ins: with all 24 stand-ins real and
@@ -281,10 +280,15 @@ Two paths, chosen by whether the callee is already compiled:
   three cgArray x87 pairs.
 
 ## 6. Stand-ins still in the tree (must become real calls/code before release)
-- ~36 `.inl` includes: q_parse_endsession (24 sites), screen_placement (cg_draw x4, drawtools, console, scrn),
-  q_shared_strlwr, q_parse_online/skipline, scr_* variable helpers, cl_keyevent, cl_init_server_info,
-  xanim_settime, quat_multiply, q_shared_strnicmp; COM_PARSE_INLINE macro (7).
-- __declspec(noinline) stand-ins: CalcScreenPlacement, Com_EndParseSession, CalcTracerFinalScale.
+- `.inl` includes (10-30): q_parse_endsession (24 sites), q_parse_online/skipline (sound-alias loaders + 1 in
+  cg_effects_load_obj), scr_* variable helpers (VM_Notify group), cl_keyevent, cl_init_server_info,
+  xanim_settime, q_shared_strnicmp; COM_PARSE_INLINE macro (7). Gone 10-30: screen_placement, q_shared_strlwr,
+  quat_multiply.
+- __declspec(noinline) still load-bearing (10-30 sweep nis, per-site list in LESSONS 10-30): Com_EndParseSession,
+  CL_InitServerInfo, ClearVariableValue, RemoveVariable, GetNewVariableIndexInternal2, Scr_TerminateThread,
+  ConnectBreakStatements, Dvar_AnyLatchedValues, FS_FreeFile, Sys_ArchiveInfo, GetBestOffhand,
+  Item_ListBox_HandleKey, SND_AnyActiveListeners. Gone: CalcScreenPlacement, CalcTracerFinalScale,
+  G_FindConfigstringIndex and 8 that changed nothing.
 - UI_Init's one-trip `for (netGameTypeIdx ...)` around Dvar_RegisterInt; EvalPrimitiveExpression `goto evalFloat`;
   G_MODEL_NAME_INLINE macro; XModelCalcBasePose pragma; CG_Respawn offset macros (CG_INT/CG_FLOAT).
 - Removed: q_shared_stricmp.inl, ui_closeall.inl, Dvar_RegisterVariant __forceinline.

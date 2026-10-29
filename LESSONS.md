@@ -139,3 +139,23 @@ lay: dropping 'static' from static __forceinline helpers in one .cpp is a no-op 
 - 10-29 PAID +550 (99.711%): CalcTracerFinalScale as non-static inline (selectany COMDAT -> callers distrust its register summary, PINNED on bench + build) + CG_DrawTracer dots with a scalar f0 and inline (finish[1] - start[1]) / (finish[2] - start[2]) terms (x87 block rule) -> ScaleTracer and CG_AddMovingTracer full matches, CG_DrawTracer 684 B, 58 diff lines.
 - 10-29 DISPROVED: CalcScreenPlacement as a header non-static inline (lab/w200/spmk.py -> sp2.patch): links, but 34 calls vs retail 48 (constant-align sites still inline; discount still applies) and the kept copy moves to 0x401240. Do not retry.
 - 10-30 PINNED (oracle, CalcScreenPlacement noinline removed, lab/w200/noop.py + lmv.sh): compile order in ours CalcScreenPlacement F10420 < CL_DrawStretchPic F13115 < CG_DrawAdsOverlay F16486 < CG_DrawLagometer F55154. In CG_DrawAdsOverlay the 5 CSP sites nested in the inlined, already-compiled CL_DrawStretchPic (size 32, it keeps its own CSP call: param aligns, no discount) are RE-DECIDED in the caller with folded constants: c0 31, c1 431, count 1.0, cost ~6 -> inline; the 2 direct literal sites c0 25, c1 431, cost ~12 -> inline. So nested sites of a compiled callee are reconsidered with the caller constants; retail keeps calls at all 7. Lagometer (3,3) cost ~2. Open: what makes retail not fold the aligns at these sites, or not reconsider nested sites.
+- 10-30 CalcScreenPlacement SOLVED (PINNED, builds adl/adl2/adl3/adl4/adl5A, commits 11bf12d 35f3db2): retail's 15
+  constant-align cgame sites pass the aligns through locals (horzAlign = 2; vertAlign = 2;), the CoD4 shape
+  (KisakCOD cg_draw_reticles.cpp). LTCG sees no folded constant at decision time -> no discount -> call; the
+  optimiser folds the local later (retail mov ebx,2; mov edi,ebx). adl: AdsOverlay alone -> its 7 calls == retail.
+  adl2: all 5 functions -> per-function CSP call counts == retail (48), .text vsize == retail, noinline gone.
+  Lagometer real calls (frame loop + snapshot loop CL_DrawStretchPic, .inl stand-ins gone) + snapshot bar
+  'y = ay + ah - v; x = ax + aw - a;' (y first) -> CG_DrawLagometer full match. ALL 99.711 -> 99.734%.
+  x first instead (adl5B) not measured (parallel lv.sh run collided). Lesson: check CoD4 (KisakCOD) for locals
+  feeding constant args before attacking the inliner.
+- 10-30 stand-in sweep (PINNED, builds nis/ni8/lw1/lw2/cdt2/isi; tools lab/w200/sites.py = per (callee, caller) call
+  counts vs retail, inlconv.py = .inl block -> call). All noinline removed (nis): 8 marks change nothing (dropped,
+  6db5545). Real I_strlwr at its 6 .inl sites: all inline like retail, and G_FindConfigstringIndex then needs no
+  noinline (3bed9e2). CL_DrawText real calls in DevString/Con_DrawSay, real CSP call in SCR_DrawDemoRecording
+  (0301dbe). Still load-bearing: CL_InitServerInfo (oracle: size 87, c0 5, inline at both sites; retail calls in
+  CL_RefreshKnownGlobalServer cnt 5.0 r 52, inlines in CL_ServersResponsePacket cnt 1.25 r 67 -> cost model gives
+  no split; unresolved), ClearVariableValue/RemoveVariable/GetNewVariableIndexInternal2/Scr_TerminateThread
+  (VM_Notify, VM_Resume), ConnectBreakStatements (EmitSwitchStatement), Dvar_AnyLatchedValues/FS_FreeFile/
+  Sys_ArchiveInfo (Com_SetRecommended, Com_HasConfigureChecksumChanged), GetBestOffhand (CG_DrawOffHandIcon),
+  Item_ListBox_HandleKey (Scroll_ListBox_AutoFunc), SND_AnyActiveListeners (SND_StartAliasStream),
+  Com_EndParseSession (sound alias loaders). Running two lv.sh at once collides (adl5B lost); lv.sh + gate is fine.
