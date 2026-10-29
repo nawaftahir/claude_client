@@ -173,3 +173,6 @@ lay: dropping 'static' from static __forceinline helpers in one .cpp is a no-op 
   loop (swa1, -119), AdsOverlay else-branch order (aov1 size change, aov2 identical), XAnimSetTime real call (xst).
 - 10-30 tools: lab/w200/sites_all.py (every (callee, caller) call-count difference vs retail: NONE left on main),
   aligndiff.py, fnqword.py, linkdiff.py (static/inline linkage vs server; noisy on forward decls), kinddiff.py.
+- 10-30 TU_STATIC as the server's 'static inline' (tus1, com_math.h + com_files.h): .text +16 KB, ALL 22.88%,
+  alignment flips in AddPointToBounds2D/IntersectPlanes/Com_Error/Dvar_* -> DISPROVED; the client's plain 'inline'
+  (selectany) is right for PC.
