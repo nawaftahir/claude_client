@@ -154,21 +154,7 @@ void SCR_DrawDemoRecording(void)
     y = 479.0f;
     w = scale;
     h = w;
-    {
-#define sp_x (&x)
-#define sp_y (&y)
-#define sp_w (&w)
-#define sp_h (&h)
-#define sp_horzAlign (1)
-#define sp_vertAlign (1)
-#include "screen_placement.inl"
-#undef sp_x
-#undef sp_y
-#undef sp_w
-#undef sp_h
-#undef sp_horzAlign
-#undef sp_vertAlign
-    }
+    CalcScreenPlacement(&x, &y, &w, &h, 1, 1);
     re.DrawText(string, 0x7fffffff, cls.consoleFont, x, y, w, h, color, 0);
 }
 

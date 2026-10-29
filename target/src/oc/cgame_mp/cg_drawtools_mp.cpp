@@ -269,27 +269,8 @@ int CG_DrawDevString(float x, float y, const char *s, const vec_t *color, int al
     textWidth = CL_TextWidth(s, 0, font);
     {
         float dx = (float)textWidth;
-        float dy = y;
-        float sx = 1.0f;
-        float sy = 1.0f;
         dx = -dx;
-        CalcSplitScreenTextOffset(font, &dy);
-        {
-#define sp_x (&dx)
-#define sp_y (&dy)
-#define sp_w (&sx)
-#define sp_h (&sy)
-#define sp_horzAlign (3)
-#define sp_vertAlign (1)
-#include "../client_mp/screen_placement.inl"
-#undef sp_x
-#undef sp_y
-#undef sp_w
-#undef sp_h
-#undef sp_horzAlign
-#undef sp_vertAlign
-        }
-        re.DrawText(s, 0x7fffffff, font, dx, dy, sx, sy, color, style);
+        CL_DrawText(s, 0x7fffffff, font, dx, y, 3, 1, 1.0f, 1.0f, color, style);
     }
     return height;
 }

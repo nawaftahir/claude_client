@@ -1492,31 +1492,7 @@ void Con_DrawSay(int y)
     x = (int)hudSayPosition->current.vector[0];
 
     fontHeight = re.TextHeight(font);
-    {
-        float textX, textScaleX, textScaleY;
-        float textY = (float)y + (float)fontHeight * normalizedScale;
-
-        CalcSplitScreenTextOffset(font, &textY);
-        textX = (float)x;
-        textScaleX = normalizedScale;
-        textScaleY = normalizedScale;
-        {
-#define sp_x (&textX)
-#define sp_y (&textY)
-#define sp_w (&textScaleX)
-#define sp_h (&textScaleY)
-#define sp_horzAlign (1)
-#define sp_vertAlign (1)
-#include "screen_placement.inl"
-#undef sp_x
-#undef sp_y
-#undef sp_w
-#undef sp_h
-#undef sp_horzAlign
-#undef sp_vertAlign
-        }
-        re.DrawText(string, 0x7fffffff, font, textX, textY, textScaleX, textScaleY, (const float *)((void *)&colorWhite), 3);
-    }
+    CL_DrawText(string, 0x7fffffff, font, (float)x, (float)y + (float)fontHeight * normalizedScale, 1, 1, normalizedScale, normalizedScale, colorWhite, 3);
 
     x += (int)((float)re.TextWidth(string, 0, font) * normalizedScale);
     Field_Draw((field_t *)chatField, x, y, 1, 1);
