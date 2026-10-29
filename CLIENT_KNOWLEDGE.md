@@ -255,6 +255,7 @@ Two paths, chosen by whether the callee is already compiled:
 | CG_DrawTracer dot forms in the no-/GL harness | harness does not reproduce this function (cg addressing differs); use full builds |
 | CG_ConfigStringModified body forms, early return, bool temp | no gain; no evidence for a CG_ConfigString wrapper |
 | Item_CorrectedTextRect / Sys_ScanForCD invented vanished callees | forbidden without evidence (Sys_DefaultCDPath had evidence) |
+| Non-static inline sweep on remaining fns (ni*, 15 helpers) | no change; detector lab/w200/ni_live.py shows NO remaining call site where caller-saved register liveness differs from retail (all 107 fns) |
 
 ## 5. Data and layout
 - .data and .rsrc 100%. .rdata 99.82%: float-pool order (compile order) and the com_endParseSessionUnderflow
@@ -286,5 +287,5 @@ Two paths, chosen by whether the callee is already compiled:
 try.sh, mk.py, ~/lv.sh, ../m3_fx.sh, slotonly.py, framecmp.py, addrdelta.py, bsspairs.py, vtrefs.py, srvcmp.py,
 srvport.py, lmv.sh + lmsum.py (inline oracle), es_all.sh, es_sites.py, lgo_sp.sh, lgo_run.sh, lgo_try.sh, rf_*.py,
 reach.py, emu3.py, sa_dis.py, sa_fsz.py, sa_up/sa_down/sa_cnt.py, cslot/pk/*, hvp.py, cave_cv.s + patch_cv.py,
-ghx/ (Ghidra project + Dec.java), /home/nawaf/x8/x8h.py, /home/nawaf/mlw/ora/cv/ (LTCG convention bench),
+ghx/ (Ghidra project + Dec.java), ni_live.py (per-call eax/ecx/edx liveness, retail vs ours), /home/nawaf/x8/x8h.py, /home/nawaf/mlw/ora/cv/ (LTCG convention bench),
 claude_client/stabs.py, fdiff.py, shameter.py.
