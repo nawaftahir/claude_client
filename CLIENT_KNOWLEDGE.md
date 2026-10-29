@@ -129,8 +129,9 @@ x87_notes,ra_notes}.txt, lab/w200/codex100_*/.
   (s23 mini harness, lab/w200/hvp.py VARS.py; /home/nawaf/mlw/ora/tiny/run.sh for `cl /O2 /FAs`).
 
 - x87 BLOCK RULE (10-29, lab/w200/x87_rule.txt): a value computed in the SAME basic block as its fmul/fadd is
-  consumed (it takes the fld side, the other operand is the memory operand: retail ); a named
-  local assigned before any block boundary is a variable kept on the FPU stack (ours ). A constant-folded switch(3) counts as a boundary. Numbering still decides within one block.
+  consumed (it takes the fld side, the other operand is the memory operand: retail "fsub [a]; fmul [scale]"); a
+  named local assigned before any block boundary is a variable kept on the FPU stack (ours "fld [scale];
+  fmul st(1) ... fstp st(0)"). A constant-folded switch(3) counts as a boundary. Numbering still decides within one block.
   CG_DrawLagometer: only by-value CL_DrawStretchPic(x, y, w, h, 3, 3, ...) reproduces retail's snapshot site (args
   evaluated right to left, x assigned last in the inlined body's first block), but LTCG then refuses the nested
   CalcScreenPlacement inline (fn 928 -> 903 B). Next: make that nested inline happen (site counts, 1.1).
