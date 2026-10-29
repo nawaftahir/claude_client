@@ -404,7 +404,7 @@ void CL_SortGlobalServers(void)
     qsort(cls->globalServers, count, sizeof(serverInfo_t), CL_CompareAdrSigned);
 }
 
-static __declspec(noinline) void CL_InitServerInfo(serverInfo_t *server, netadr_t adr)
+static void CL_InitServerInfo(serverInfo_t *server, netadr_t adr)
 {
 #define pp_server (server)
 #define pp_adr (adr)
@@ -428,18 +428,20 @@ static int CL_RefreshKnownGlobalServer(netadr_t adr)
         cmp = NET_CompareAdrSigned(&adr, &cls.globalServers[mid].adr);
         if (cmp < 0) {
             high = mid;
-        } else if (cmp > 0) {
-            low = mid + 1;
-        } else {
-            while (--mid >= 0 && !NET_CompareAdrSigned(&adr, &cls.globalServers[mid].adr))
-                ;
-            mid++;
-            do {
-                CL_InitServerInfo(&cls.globalServers[mid], adr);
-                mid++;
-            } while (mid < cls.numglobalservers && !NET_CompareAdrSigned(&adr, &cls.globalServers[mid].adr));
-            return 1;
+            continue;
         }
+        if (cmp > 0) {
+            low = mid + 1;
+            continue;
+        }
+        while (--mid >= 0 && !NET_CompareAdrSigned(&adr, &cls.globalServers[mid].adr))
+            ;
+        mid++;
+        do {
+            CL_InitServerInfo(&cls.globalServers[mid], adr);
+            mid++;
+        } while (mid < cls.numglobalservers && !NET_CompareAdrSigned(&adr, &cls.globalServers[mid].adr));
+        return 1;
     }
     return 0;
 }
@@ -510,11 +512,7 @@ void CL_ServersResponsePacket(netadr_t from, msg_t *msg)
         if (!CL_RefreshKnownGlobalServer(adr)) {
             server = &cls.globalServers[count];
             count++;
-#define pp_server (server)
-#define pp_adr (adr)
-#include "cl_init_server_info.inl"
-#undef pp_adr
-#undef pp_server
+            CL_InitServerInfo(server, adr);
         }
     }
 
