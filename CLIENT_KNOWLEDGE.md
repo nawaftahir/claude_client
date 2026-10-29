@@ -128,6 +128,16 @@ x87_notes,ra_notes}.txt, lab/w200/codex100_*/.
 - x87 roles reproduce in a fast NON-/GL compile of the TU alone: use it to brute-force before full builds
   (s23 mini harness, lab/w200/hvp.py VARS.py; /home/nawaf/mlw/ora/tiny/run.sh for `cl /O2 /FAs`).
 
+- x87 BLOCK RULE (10-29, lab/w200/x87_rule.txt): a value computed in the SAME basic block as its fmul/fadd is
+  consumed (it takes the fld side, the other operand is the memory operand: retail ); a named
+  local assigned before any block boundary is a variable kept on the FPU stack (ours ). A constant-folded switch(3) counts as a boundary. Numbering still decides within one block.
+  CG_DrawLagometer: only by-value CL_DrawStretchPic(x, y, w, h, 3, 3, ...) reproduces retail's snapshot site (args
+  evaluated right to left, x assigned last in the inlined body's first block), but LTCG then refuses the nested
+  CalcScreenPlacement inline (fn 928 -> 903 B). Next: make that nested inline happen (site counts, 1.1).
+  CG_CalcViewValues: retail's inlined BG_GetSpeed copy uses memory operands while its standalone copy is CSE'd like
+  ours (different IL, cross-TU). CG_CalcCrosshairPosition: evaluation order, not roles. CG_DrawTracer: shifted by one
+  extra prologue push (ebx). Fast harness: /home/nawaf/x8/x8h.py SPEC.py (16 variants of a real TU, no /GL, ~3 s).
+
 ### 1.6 Stack alignment
 - A direct call to a self-aligning function (`and esp,-8`) from a function with LTCG-local callers makes that
   function 8-aligned (frame +8, `push ecx`/`and esp,-8` in callers, lost tail jmps). Retail avoids it when the
