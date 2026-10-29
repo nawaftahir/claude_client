@@ -1931,7 +1931,7 @@ void CG_SpawnTracer(vec_t *pstart, vec_t *pend)
 }
 
 // retail 0x4d1340; Kisak name (SUPPORTED)
-__declspec(noinline) static float CalcTracerFinalScale(float tracerScaleDistRange, float dist, float tracerScale)
+inline float CalcTracerFinalScale(float tracerScaleDistRange, float dist, float tracerScale)
 {
     float scale;
 
@@ -1984,12 +1984,10 @@ void CG_DrawTracer(vec_t *start, vec_t *finish)
     float finishWidth;
     GfxWorldVertex verts[4];
 
-    forward[0] = finish[0] - start[0];
-    forward[1] = finish[1] - start[1];
-    forward[2] = finish[2] - start[2];
+    float f0 = finish[0] - start[0];
 
-    line[0] = forward[0] * cg->refdef.viewaxis[1][0] + forward[1] * cg->refdef.viewaxis[1][1] + forward[2] * cg->refdef.viewaxis[1][2];
-    line[1] = forward[0] * cg->refdef.viewaxis[2][0] + forward[1] * cg->refdef.viewaxis[2][1] + forward[2] * cg->refdef.viewaxis[2][2];
+    line[0] = f0 * cg->refdef.viewaxis[1][0] + (finish[1] - start[1]) * cg->refdef.viewaxis[1][1] + (finish[2] - start[2]) * cg->refdef.viewaxis[1][2];
+    line[1] = f0 * cg->refdef.viewaxis[2][0] + (finish[1] - start[1]) * cg->refdef.viewaxis[2][1] + (finish[2] - start[2]) * cg->refdef.viewaxis[2][2];
 
     VectorScale(cg->refdef.viewaxis[1], line[1], right);
     scale = -line[0];

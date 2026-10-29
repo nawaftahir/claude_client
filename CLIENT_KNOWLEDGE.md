@@ -1,4 +1,4 @@
-# CoD2MP_s.exe 1.0: everything learned (state 10-29, 99.679%)
+# CoD2MP_s.exe 1.0: everything learned (state 10-29, 99.711%)
 
 Companion to HANDOFF_100.md (state + commands). This file is the knowledge: how the compiler decides, what
 paid, what did not, and a dossier per remaining function. Read it fully before changing source.
@@ -113,6 +113,12 @@ Two paths, chosen by whether the callee is already compiled:
   both width pointers become esi/edi register params. Retail behaves as if CalcTracerFinalScale has NO valid
   summary (esi/edi hold tracerScale/range, startWidth in ebx, finishWidth from the stack in ebp), although the
   callee is byte-identical, a pure leaf, no intrinsics, not address-taken.
+- CAUSE PINNED 10-29 (bench /home/nawaf/mlw/ora/cv sm*.c + full build dt_mix_scalar, ALL 1694929): a NON-STATIC
+   function becomes a selectany COMDAT; callers treat a call to it as clobbering eax/ecx/edx although its
+  record keeps a valid summary (08/7e).  and plain extern noinline keep the trusted summary.
+  Fix landed:  (noinline stand-in gone) -> ScaleTracer and
+  CG_AddMovingTracer full matches. Rule: a small helper whose callers look like retail distrusts it is probably a
+  header-style non-static  in the original.
 
 ### 1.4c LTCG callee CONSTANT-ARG summary + the key lead (10-29)
 - The constant-arg discount (FUN_10797769, decompile lab/w200/ghx/discount_10797769.c) walks a CALLEE-side branch
@@ -123,7 +129,8 @@ Two paths, chosen by whether the callee is already compiled:
   the budget path (CG_DrawLagometer through CL_DrawStretchPic; CG_DrawDevString, SCR_DrawDemoRecording,
   Con_DrawSay, which are .inl stand-ins in our tree).
 - KEY LEAD: CalcTracerFinalScale (no register summary) and CalcScreenPlacement (no branch summary) are both leaves
-  whose per-function LTCG summaries are missing in retail although their code equals ours. Find what makes c2
+  whose per-function LTCG summaries are missing in retail although their code equals ours. CalcTracerFinalScale is
+  SOLVED by non-static  (1.4b); CalcScreenPlacement: test the same (HYPOTHESIS, not built yet). Find what makes c2
   skip recording summaries for a function (TU property, flag, second pass). Notes: lab/w200/summary_notes.txt.
   Fixing it likely unlocks the tracer pair (~790 B), CG_DrawLagometer (~390 B), the CalcScreenPlacement noinline
   stand-in and maybe the Com_EndParseSession stand-ins.
