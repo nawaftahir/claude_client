@@ -98,6 +98,23 @@ x87_notes,ra_notes}.txt, lab/w200/codex100_*/.
   startWidth in ebx; ours gets both width pointers in esi/edi. Codex showed the callee's register-preservation
   summary (CalcTracerFinalScale) drives it.
 
+### 1.4b LTCG callee register summary (decoded 10-29, lab/w200/conv_notes.txt)
+- After a function compiles, c2 stores in its record: +0x21 bit 0x08 = summary valid, +0xc3 = mask of registers it
+  never touches (eax 1, ecx 2, edx 4, esi 8, edi 0x10, ebx 0x20, ebp 0x40). Hook 0x107724f6 (compile start).
+- A later-compiled caller may keep values in eax/ecx/edx across a call when the callee's mask leaves them free.
+- Summary valid only if the function is compiled with /Og AND every callee in its call list already has a valid
+  summary. Cleared by: #pragma optimize(g, off) on it (changes its code), a live call to a not-yet-compiled fn.
+  NOT cleared by: noinline, static/extern, extern C, dllexport, address taken, definition order, second caller,
+  /Oy-, pragmas a/w/p/s/t, inlined helpers.
+- ScaleTracer: ours sees CalcTracerFinalScale mask 7e (touches only eax) -> keeps tracerScale/range in ecx/edx, both
+  width pointers become esi/edi register params. Retail treats the call as clobbering eax/ecx/edx -> esi/edi hold
+  tracerScale/range, startWidth in ebx, finishWidth from the stack in ebp. Retail CalcTracerFinalScale (byte-identical,
+  pure leaf, no intrinsics) therefore had NO valid summary; cause still unknown (no vanished call found).
+- G_OverrideModel / XAnimGetInfo / XAnimCopyAnimTreeNoNotify / CL_MouseEvent are NOT this mechanism (their callees
+  have no summary in ours either): their eax-vs-stack param follows the function's own register allocation.
+- Tools: lab/w200/cave_cv.s + patch_cv.py (record dump cave), /home/nawaf/mlw/ora/cv/ (10 s LTCG test bench, v0 = ours,
+  v1/v7 = retail convention).
+
 ### 1.5 x87 operand roles
 - For fadd/fmul with both operands in memory, c2 numbers memory objects; the LOWER number becomes the memory
   operand, the higher gets fld. Scalars/globals: number = first reference order in the function (an assignment
