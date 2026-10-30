@@ -108,16 +108,6 @@ void Com_Printf(const char *fmt, ...);
 void Com_Error(errorParm_t code, const char *fmt, ...);
 ParseThreadInfo *Com_GetParseThreadInfo();
 
-#define COM_END_PARSE_SESSION_INLINE() \
-	{ \
-			    ParseThreadInfo *parse_CEPS; \
-			    parse_CEPS = Com_GetParseThreadInfo(); \
-			    if (parse_CEPS->parseInfoNum == 0) \
-			    { \
-			        Com_Error(ERR_FATAL, "\x15" "Com_EndParseSession: session underflow"); \
-			    } \
-			    parse_CEPS->parseInfoNum--; \
-	}
 void Menu_SetCursorItem(menuDef_t *menu, int cursorItem);
 static bool Menu_New(int handle, int imageTrack);
 qboolean Item_Parse(int handle, const char (*item)[4]);
@@ -262,7 +252,7 @@ void UI_MapLoadInfo(const char *filename)
 
         tokenLen = strlen(token) + 1;
         if (tokenLen >= 256) {
-            COM_END_PARSE_SESSION_INLINE();
+            Com_EndParseSession();
             Com_Error( (errorParm_t)(1), (const char *)"key '%s' is %i > %i characters long", key, tokenLen - 1, 255);
         }
 
@@ -270,7 +260,7 @@ void UI_MapLoadInfo(const char *filename)
 
         value = Com_ParseOnLine(&parse);
         if (!value[0]) {
-            COM_END_PARSE_SESSION_INLINE();
+            Com_EndParseSession();
             Com_Error( (errorParm_t)(1), (const char *)"key '%s' missing value in '%s'\n", key, filename);
             break;
         }
@@ -278,7 +268,7 @@ void UI_MapLoadInfo(const char *filename)
         UI_ParseMenuMaterial(key, value);
     }
 
-    COM_END_PARSE_SESSION_INLINE();
+    Com_EndParseSession();
     FS_FreeFile(loadfile);
 }
 
@@ -2120,7 +2110,7 @@ MenuList *UI_LoadMenus(const char *menuFile, int imageTrack)
     while (token && token[0] && token[0] != '}' && I_stricmp(token, "}")
         && (I_stricmp(token, "loadmenu") || Load_Menu(&p, imageTrack)));
 
-    COM_END_PARSE_SESSION_INLINE();
+    Com_EndParseSession();
     return &g_load.menuList;
 }
 

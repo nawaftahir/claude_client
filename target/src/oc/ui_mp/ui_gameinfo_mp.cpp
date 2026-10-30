@@ -12,16 +12,6 @@ extern void Com_EndParseSession(void);
 ParseThreadInfo *Com_GetParseThreadInfo();
 void Com_Error(errorParm_t code, const char *fmt, ...);
 
-#define COM_END_PARSE_SESSION_INLINE() \
-	{ \
-			    ParseThreadInfo *parse_CEPS; \
-			    parse_CEPS = Com_GetParseThreadInfo(); \
-			    if (parse_CEPS->parseInfoNum == 0) \
-			    { \
-			        Com_Error(ERR_FATAL, "\x15" "Com_EndParseSession: session underflow"); \
-			    } \
-			    parse_CEPS->parseInfoNum--; \
-	}
 extern char *va( const char *format, ... );
 extern void *UI_Alloc(int size, int align);
 extern int FS_GetFileList(const char *path, const char *extension, FsListBehavior behavior, char *listBuf, int bufSize);
@@ -174,7 +164,7 @@ void UI_LoadArenas(void)
                         sharedUiInfo.mapList[sharedUiInfo.mapCount].typeBits |= 1 << j;
                 }
             }
-            COM_END_PARSE_SESSION_INLINE();
+            Com_EndParseSession();
         } else {
             sharedUiInfo.mapList[sharedUiInfo.mapCount].typeBits = -1;
         }

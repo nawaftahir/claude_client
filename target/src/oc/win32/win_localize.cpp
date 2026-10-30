@@ -12,16 +12,6 @@ extern void Com_EndParseSession(void);
 ParseThreadInfo *Com_GetParseThreadInfo();
 void Com_Error(errorParm_t code, const char *fmt, ...);
 
-#define COM_END_PARSE_SESSION_INLINE() \
-	{ \
-			    ParseThreadInfo *parse_CEPS; \
-			    parse_CEPS = Com_GetParseThreadInfo(); \
-			    if (parse_CEPS->parseInfoNum == 0) \
-			    { \
-			        Com_Error(ERR_FATAL, "\x15" "Com_EndParseSession: session underflow"); \
-			    } \
-			    parse_CEPS->parseInfoNum--; \
-	}
 extern char *Com_Parse( const char *( *data_p ) );
 extern int strcmp(const char *s1, const char *s2);
 extern char *va( const char *format, ... );
@@ -107,12 +97,12 @@ const char *Win_LocalizeRef(const char *ref)
             break;
 
         if (match) {
-            COM_END_PARSE_SESSION_INLINE();
+            Com_EndParseSession();
             return va("%s", value);
         }
     }
 
-    COM_END_PARSE_SESSION_INLINE();
+    Com_EndParseSession();
     return va("%s", ref);
 }
 
