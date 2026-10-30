@@ -392,29 +392,32 @@ qboolean Sys_IsLANAddress( netadr_t adr )
 {
 	int i;
 
-	if ( adr.type == NA_LOOPBACK || adr.type == NA_BOT || adr.type == NA_IPX )
+	if ( adr.type == NA_LOOPBACK )
+		return qtrue;
+
+	if ( adr.type == NA_BOT )
+		return qtrue;
+
+	if ( adr.type == NA_IPX )
 		return qtrue;
 
 	if ( adr.type != NA_IP )
 		return qfalse;
 
-	if ( adr.ip[0] == 10 || adr.ip[0] == 127 )
+	if ( adr.ip[0] == 10 )
 		return qtrue;
 
-	if ( adr.ip[0] == 169 )
-	{
-		if ( adr.ip[1] == 254 )
-			return qtrue;
-	}
-	else if ( adr.ip[0] == 172 )
-	{
-		if ( ( adr.ip[1] & 0xf0 ) == 16 )
-			return qtrue;
-	}
-	else if ( adr.ip[0] == 192 && adr.ip[1] == 168 )
-	{
+	if ( adr.ip[0] == 127 )
 		return qtrue;
-	}
+
+	if ( adr.ip[0] == 169 && adr.ip[1] == 254 )
+		return qtrue;
+
+	if ( adr.ip[0] == 172 && ( adr.ip[1] & 0xf0 ) == 16 )
+		return qtrue;
+
+	if ( adr.ip[0] == 192 && adr.ip[1] == 168 )
+		return qtrue;
 
 	// Class C
 	for ( i = 0; i < numIP; i++ )

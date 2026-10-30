@@ -1505,8 +1505,12 @@ void Com_ProcessSoundAliasFileLocalization( const char *sourceFile, const char *
 	data = buffer;
 	columnCount = 0;
 	localizedCount = 0;
-	while ( data )
+	for ( ;; )
 	{
+		if ( !data )
+		{
+			break;
+		}
 		if ( *data == '\r' )
 		{
 			while ( *data == '\r' )
