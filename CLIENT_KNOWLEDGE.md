@@ -1,4 +1,4 @@
-# CoD2MP_s.exe 1.0: everything learned (state 10-30, 99.770%)
+# CoD2MP_s.exe 1.0: everything learned (state 10-30, 99.867%)
 
 Companion to HANDOFF_100.md (state + commands). This file is the knowledge: how the compiler decides, what
 paid, what did not, and a dossier per remaining function. Read it fully before changing source.
