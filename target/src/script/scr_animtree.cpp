@@ -721,17 +721,7 @@ unsigned int Scr_UsingTreeInternal( const char *filename, unsigned int *index, i
 		}
 	}
 
-	unsigned int gvi_site;
-	{
-#define pp_parentId (fileId)
-#define pp_name (ANIMTREE_NAMES)
-#define pp_result gvi_site
-#include "scr_get_variable_index.inl"
-#undef pp_result
-#undef pp_name
-#undef pp_parentId
-	}
-	names = GetArray( scrVarGlob.variableList[ gvi_site ].hash.id );
+	names = GetArray(GetVariable(fileId, ANIMTREE_NAMES));
 	SL_RemoveRefToString(filenameId);
 
 	return names;

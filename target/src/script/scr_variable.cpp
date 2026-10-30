@@ -2237,17 +2237,7 @@ void CopyArray( unsigned int parentId, unsigned int newParentId )
 		entryValue = &scrVarGlob.variableList[id];
 		type = entryValue->w.type & VAR_MASK;
 
-		unsigned int gvi_site;
-		{
-#define pp_parentId (newParentId)
-#define pp_name (entryValue->w.name >> VAR_NAME_BITS)
-#define pp_result gvi_site
-#include "scr_get_variable_index.inl"
-#undef pp_result
-#undef pp_name
-#undef pp_parentId
-		}
-		newValue = &scrVarGlob.variableList[ gvi_site ].hash.id;
+		newValue = &scrVarGlob.variableList[ GetVariableIndexInternal( newParentId, entryValue->w.name >> VAR_NAME_BITS ) ].hash.id;
 		newEntryValue = &scrVarGlob.variableList[ *newValue ];
 
 		newEntryValue->w.type |= type;
@@ -4454,17 +4444,7 @@ void CopyEntity( unsigned int parentId, unsigned int newParentId )
 		}
 
 		assert(!FindVariableIndexHash( newParentId, name ));
-		unsigned int gvi_site;
-		{
-#define pp_parentId (newParentId)
-#define pp_name (name)
-#define pp_result gvi_site
-#include "scr_get_variable_index.inl"
-#undef pp_result
-#undef pp_name
-#undef pp_parentId
-		}
-		newEntryValue = &scrVarGlob.variableList[scrVarGlob.variableList[gvi_site].hash.id];
+		newEntryValue = &scrVarGlob.variableList[GetVariable(newParentId, name)];
 
 		assert((newEntryValue->w.status & VAR_STAT_MASK) != VAR_STAT_FREE && (newEntryValue->w.status & VAR_STAT_MASK) != VAR_STAT_EXTERNAL);
 		assert((newEntryValue->w.type & VAR_MASK) == VAR_UNDEFINED);

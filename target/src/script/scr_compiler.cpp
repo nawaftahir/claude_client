@@ -6017,17 +6017,7 @@ void ScriptCompile( sval_u val, unsigned int fileId, unsigned int scriptId )
 			}
 
 			name = GetVariableName(k);
-			unsigned int gvi_site;
-			{
-#define pp_parentId (fileId)
-#define pp_name (name)
-#define pp_result gvi_site
-#include "scr_get_variable_index.inl"
-#undef pp_result
-#undef pp_name
-#undef pp_parentId
-			}
-			toThreadCountId = GetObjectA( scrVarGlob.variableList[ gvi_site ].hash.id );
+			toThreadCountId = GetObjectA( GetVariable( fileId, name ) );
 
 			includeThreadId = SpecifyThreadPosition( toThreadCountId, name, precachescript->sourcePos, VAR_INCLUDE_CODEPOS );
 
