@@ -796,11 +796,25 @@ unsigned int GetNewVariableIndexInternal3( unsigned int parentId, unsigned int n
 GetNewVariableIndexInternal2
 ==============
 */
-unsigned int GetNewVariableIndexInternal2( unsigned int i2_parentId, unsigned int i2_name, unsigned int i2_index )
+unsigned int GetNewVariableIndexInternal2( unsigned int parentId, unsigned int name, unsigned int index )
 {
-#define PP_RETVAL( v ) return v
-#include "scr_new_variable_index2.inl"
-#undef PP_RETVAL
+	VariableValueInternal *entry;
+	VariableValueInternal *siblingEntry;
+	unsigned short siblingId;
+	VariableValueInternal *siblingValue;
+	VariableValueInternal *parentValue;
+
+	index = GetNewVariableIndexInternal3(parentId, name, index);
+	parentValue = &scrVarGlob.variableList[parentId];
+	siblingId = parentValue->nextSibling;
+	siblingValue = &scrVarGlob.variableList[siblingId];
+	entry = &scrVarGlob.variableList[index];
+	siblingEntry = &scrVarGlob.variableList[entry->hash.id];
+	siblingEntry->nextSibling = siblingId;
+	siblingValue->hash.u.prevSibling = index;
+	entry->hash.u.prevSibling = parentValue->v.next;
+	parentValue->nextSibling = index;
+	return index;
 }
 
 /*
