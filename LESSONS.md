@@ -278,3 +278,9 @@ lay: dropping 'static' from static __forceinline helpers in one .cpp is a no-op 
   only here, G_RunMissile_Destabilize, InfinitePerspectiveMatrix. CG_DrawCrosshairNames: local codegen scratch
   rotation (eax/ecx/edx), colour picks equal retail; Mac locals chx20/21 42, target ci pointer chx22 68.
   Console ConDrawInput_DetailedCmdMatch y/fontHeight swaps in the inlined helpers (cdi1 a/b/c): no gain.
+- 10-30 agent (no landing): FX_CalcOriginAndAxis is code-identical with stack offsets masked; retail statement order
+  is height*cosPitch first, one radius*sinPitch temp for dir[1]/dir[0] (PINNED from FastSinCos pCos=edx slot); specs
+  with that order (lab/w200/xrf_fx.py FX=a/b/c) are 0 masked lines but frame 0x4c vs retail 0x54 (retail keeps an
+  unused bottom dword + 4 scalar slots) -> worse in bytes until that slot is explained. CG_InitXAnimTrees: retail is
+  the only fn in the binary that spills a hoisted field address (hoistscan8.py); 13 shapes 35-67 lines, an explicit
+  &anims->size local gets folded back. SND_RawSamples: imul operand order only; 10 shapes no change.
