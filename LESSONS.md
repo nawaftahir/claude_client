@@ -238,3 +238,10 @@ lay: dropping 'static' from static __forceinline helpers in one .cpp is a no-op 
   site == retail (esn1/esn3); Com_LoadSoundAliasFile keeps its stand-ins (its first error ES cnt 0.0586 called, retail
   inlines; real SkipRestOfLine/ParseOnLine there are refused, esn2). Pointer removal (esn4): the literal then lands in
   com_sndalias_load_obj's string block (from LoadSoundAliasFile's .inl), .rdata 92.55% -> needs that function solved first.
+- 10-30 PAID (+116, 40e0fdb): the rect static (Item_CorrectedTextRect) needed one more call level. Genuine vanished callee:
+  Item_Getter_5338c0 indexes the per-local-client textRect array with the unreferenced cl_main stub CL_Zero_40b4d0()
+  (retail body xor eax,eax; ret, 0 callers). Fixes rect, fs_mapBaseName, MSG_Read* buffers, cddir shifts (address-only
+  183 -> 67 B). Doing it in all seven UI getters is worse (-157): only the textRect getter has it.
+  Lead: retail's other unnamed constant stubs with 0 callers (lab/w200/tinyfn.py) are candidates for the remaining
+  depth/placement items (Key_Zero_40b450, CL_True_40b610, SND_Stub_44a6a0, CG_Stub_4c0160, GScr_Stub, G_Unused,
+  Sys_ReturnFalse_45f960/970, CL_IsRenderingSplitScreen).
