@@ -285,13 +285,14 @@ extern const char *Dvar_GetVariantString(const char *dvarName);
 extern int inHandleKey;
 
 // unreferenced field getters, kept by /OPT:NOREF
+extern int CL_Zero_40b4d0(void);
 int Window_Getter_533860(Window *w) { return w->offsetTime[0]; }
 UiRectangle *Window_Getter_533870(Window *w) { return &w->rectClient[0]; }
 UiRectangle *Window_Getter_533880(Window *w) { return &w->rectEffects0[0]; }
 UiRectangle *Window_Getter_533890(Window *w) { return &w->rectEffects1[0]; }
 int Window_Getter_5338a0(Window *w) { return w->staticFlags; }
 int Menu_Getter_5338b0(menuDef_t *menu) { return menu->cursorItem[0]; }
-UiRectangle *Item_Getter_5338c0(itemDef_t *item) { return &item->textRect[0]; }
+UiRectangle *Item_Getter_5338c0(itemDef_t *item) { return &item->textRect[CL_Zero_40b4d0()]; }
 static bool Window_IsHorizontal(Window *w)
 {
     return ((unsigned int)w->staticFlags >> 21) & 1;
