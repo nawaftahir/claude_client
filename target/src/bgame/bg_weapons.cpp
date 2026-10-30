@@ -4154,9 +4154,11 @@ PM_Weapon
 */
 void PM_Weapon( pmove_t *pm, pml_t *pml )
 {
-	static const int unused = 40;	// unreferenced
+	static const int unused = 40;
 	qboolean delayedAction;
 	playerState_t *ps;
+
+	(void)unused;
 
 	assert(pm);
 	ps = pm->ps;
