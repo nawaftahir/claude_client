@@ -290,3 +290,15 @@ lay: dropping 'static' from static __forceinline helpers in one .cpp is a no-op 
   'cs = a; if (!a) cs = b; return cs;', so the server does not pin the cs local; MSVC folds the re-test into cs, the
   ternary gives retail's load-test-copy. XAnimGetInfo/XAnimCopyAnimTreeNoNotify: the client-matching form gx_r5.py
   (re-read g_xAnimInfo->next at the test and index) changes the server at those reads -> real conflict, not landed.
+- 10-31 PAID round (agents, all gated): (void)unused in PM_Weapon emits the 0x28 const at retail's slot (+191; server
+  SHA-identical; within one object .rdata items follow reverse definition order of their functions). Sys_IsLANAddress
+  (+153): split type tests (LOOPBACK/BOT/IPX) and split 10/127 tests -> retail's separate return tails (tiny clone
+  fp_t6/tiny/lan.py). Com_ProcessSoundAliasFileLocalization (+268): 'for ( ;; ) { if ( !data ) { break; } ...'
+  instead of 'while ( data )' (GCC -O0 identical, MSVC gives f an esi piece). Alignment pass located (c2 0x1070cd11,
+  simulator fp_t3/aln/sim.py): levels bottom-up, first-visited level-7 node aligns, edge order = first prototype
+  declaration order in the caller's TU; ui_main_mp externs before its static prototypes fixed
+  Dvar_SetFromStringFromSource (+169). G_Debug* compiled at the end of cg_drawtools_mp (retail .text/.rdata order)
+  + empty_1 at the link end (+53 net, sign/edges table fixed). Whole exe 1,434 differing bytes.
+- 10-31 not landed (measured): XAnimGetInfo/CopyNoNotify client form needs global re-reads the server lacks (likely
+  different revisions); crosshair yaw store under /Op never forwards; FX_CalcOriginAndAxis needs a cylinder-live
+  value in slot group E_B; CG_InitXAnimTrees hoist from register pressure, no evidence for a helper.
