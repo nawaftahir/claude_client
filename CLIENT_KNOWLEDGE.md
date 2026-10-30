@@ -1,4 +1,4 @@
-# CoD2MP_s.exe 1.0: everything learned (state 10-30, 99.734%)
+# CoD2MP_s.exe 1.0: everything learned (state 10-30, 99.770%)
 
 Companion to HANDOFF_100.md (state + commands). This file is the knowledge: how the compiler decides, what
 paid, what did not, and a dossier per remaining function. Read it fully before changing source.
@@ -53,9 +53,11 @@ Two paths, chosen by whether the callee is already compiled:
 - Site count (PINNED 10-30, estimator 0x1078095b, inl_notes.txt "FREQUENCY ESTIMATOR"): each out-edge gets an
   equal share of its block's flow (if-arms halve); a loop header sends 10x its entry flow. NATURAL loops (do/while,
   while(1)/for(;;) with no increment) pre-assign every exit edge an equal share of the entry flow, so code after the
-  loop is back at the entry count. `for (i = 0; ; i++)` (increment block laid out before the body) builds a loop
-  flagged non-natural ([loop+0x4c] bit 0): no exit shares, so in-loop error arms stay hot and code after the loop
-  keeps x5. A site's count is its block count = sum of in-edges, so a call in the header block itself shows the
+  loop is back at the entry count. Any `for` with an increment (`for (i = 0; ; i++)`, `for (; c; i++)`; the
+  increment block is laid out before the body) builds a loop flagged non-natural ([loop+0x4c] bit 0), and the flag
+  spreads to every enclosing loop: no exit shares, so in-loop error arms stay hot and code after the loop keeps x5.
+  A dead block jumping to a loop top (the implicit loop-back after a final `break;`) merges that loop into its
+  parent and can zero a whole region. A site's count is its block count = sum of in-edges, so a call in the header block itself shows the
   raw entry+back-edge flow (Falloff loop-top Com_Parse 0.2549). Counts are computed ONCE per caller before any
   inline (no recount); nested sites = own count in the callee * outer/1e8 only when outer > 1e8.
 - A callee with cost >= 71 can never inline at a site with count <= 1e8 (r >= cost): if retail inlines it, look
@@ -291,7 +293,7 @@ Two paths, chosen by whether the callee is already compiled:
 - `.inl` includes (10-30 evening): q_parse_endsession only in Com_LoadSoundAliasFile (3 sites; it also keeps the
   com_endParseSessionUnderflow pointer alive), q_parse_online/skipline (Com_LoadSoundAliasFile + subtitle fn +
   cg_effects_load_obj), scr_* variable helpers (VM_Notify group), cl_keyevent, xanim_settime, q_shared_strnicmp
-  (BG_ParseCommands); COM_PARSE_INLINE macro (1, Com_LoadSoundAliasFile). Gone 10-30: screen_placement,
+  (BG_ParseCommands); COM_PARSE_INLINE macro (1, Com_LoadSoundAliasFile). Gone 10-30: scr_get_variable_index, screen_placement,
   q_shared_strlwr, quat_multiply, cl_init_server_info, 21 of 24 q_parse_endsession sites, 6 of 7 COM_PARSE_INLINE.
 - __declspec(noinline) still load-bearing: ClearVariableValue, RemoveVariable, GetNewVariableIndexInternal2,
   Scr_TerminateThread, ConnectBreakStatements, GetBestOffhand, Item_ListBox_HandleKey. Gone 10-30:
