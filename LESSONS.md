@@ -269,3 +269,12 @@ lay: dropping 'static' from static __forceinline helpers in one .cpp is a no-op 
   CG_DrawTracer: '= 0.0f' inits on startWidth/finishWidth (HYPOTHESIS spelling, no source shows them; inferred from
   the x87 rule: the lower-numbered value, by first reference, becomes the memory operand) + vertex 0 VectorMA before
   its constants (Q3 CG_Tracer order). Tools: /home/nawaf/x8t7 (DrawTracer harness), x8t7/tiny/cx.py (CSM clone).
+- 10-30 agent: CG_CalcCrosshairPosition chx2 (dots inside the divides, no horiz/vert locals = Mac STABS locals
+  gunAng/gunDir/dot; float tan overload) 38 -> 20 oracle lines, same size, but release bytes -12 (the remaining yaw
+  copy shifts what follows): NOT landed; keep as the first half. Remaining cause: retail forwards cg->gunYaw into the
+  inlined FastSinCos; ours stores it to gunAng[1]. AngleVectors comes from com_math.cpp '#pragma optimize(p, on)'
+  so the caller is /Op after inlining; under /Op a global stored into a user array element is never forwarded;
+  inline by-value parameter substitution does forward (diagnostic chx_d9 reproduces retail's head). Retail __CItan
+  only here, G_RunMissile_Destabilize, InfinitePerspectiveMatrix. CG_DrawCrosshairNames: local codegen scratch
+  rotation (eax/ecx/edx), colour picks equal retail; Mac locals chx20/21 42, target ci pointer chx22 68.
+  Console ConDrawInput_DetailedCmdMatch y/fontHeight swaps in the inlined helpers (cdi1 a/b/c): no gain.
