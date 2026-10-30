@@ -392,9 +392,9 @@ static void CG_ConfigStringModified(void)
             CG_SetShellShockParmsFromDvars(&cgs->shellshockParms[num - 0x48e]);
         }
     } else if (num >= 0x17 && num < 0x1f) {
-        CL_RegisterMaterialNoMip(str, 7);
+        CL_RegisterMaterialNoMip(CL_GetConfigString(num), 7);
     } else if (num >= 0x1f && num < 0x2e) {
-        CL_RegisterMaterial(str, 7);
+        CL_RegisterMaterial(CL_GetConfigString(num), 7);
     } else if (num >= 0x61e && num < 0x69e) {
         CG_RegisterConfigMaterial(num);
     } else if (num == 11) {

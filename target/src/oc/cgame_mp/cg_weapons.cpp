@@ -1970,8 +1970,8 @@ void CG_DrawTracer(vec_t *start, vec_t *finish)
     vec3_t right;
     vec3_t line;
     float scale;
-    float startWidth;
-    float finishWidth;
+    float startWidth = 0.0f;
+    float finishWidth = 0.0f;
     GfxWorldVertex verts[4];
 
     float f0 = finish[0] - start[0];
@@ -1990,12 +1990,12 @@ void CG_DrawTracer(vec_t *start, vec_t *finish)
     finishWidth = cg_tracerWidth->current.value;
     ScaleTracer(start, finish, &startWidth, &finishWidth);
 
+    VectorMA(finish, finishWidth, right, verts[0].xyz);
     verts[0].texCoord[0] = 1.0f;
     verts[0].texCoord[1] = 1.0f;
     verts[0].lmapCoord[0] = 1.0f;
     verts[0].lmapCoord[1] = 1.0f;
     verts[0].color.packed = 0xffffffff;
-    VectorMA(finish, finishWidth, right, verts[0].xyz);
 
     verts[1].texCoord[0] = 1.0f;
     verts[1].texCoord[1] = 0.0f;
