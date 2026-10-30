@@ -302,3 +302,8 @@ lay: dropping 'static' from static __forceinline helpers in one .cpp is a no-op 
 - 10-31 not landed (measured): XAnimGetInfo/CopyNoNotify client form needs global re-reads the server lacks (likely
   different revisions); crosshair yaw store under /Op never forwards; FX_CalcOriginAndAxis needs a cylinder-live
   value in slot group E_B; CG_InitXAnimTrees hoist from register pressure, no evidence for a helper.
+- 10-31b PAID: FloatSwap = server two-union shape with an int member and 'dat1.i = *(int *)&f' (server SHA identical,
+  +14). Parked: speex bits.c as C (sme_sp1.py) gives _speex_bits_pack +29 in the release build but the gate link
+  loses a 16 B tie (numbering class); all speex as C + upstream nb_celp.c (sme_sp3.py) fixes nb_decode but costs
+  ~23 B in ties. CG_DrawCursorhint moves only with a (double) sum (no evidence). AxisTransformVector needs a scalar
+  normal copy in XModelTraceLine that breaks the server. CL_MouseEvent: dy must outrank two mouseIndex load temps.
