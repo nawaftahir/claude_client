@@ -245,3 +245,10 @@ lay: dropping 'static' from static __forceinline helpers in one .cpp is a no-op 
   Lead: retail's other unnamed constant stubs with 0 callers (lab/w200/tinyfn.py) are candidates for the remaining
   depth/placement items (Key_Zero_40b450, CL_True_40b610, SND_Stub_44a6a0, CG_Stub_4c0160, GScr_Stub, G_Unused,
   Sys_ReturnFalse_45f960/970, CL_IsRenderingSplitScreen).
+- 10-30 PAID (c132034, d55063a): PDB GUID pinned through guidpin.c (LD_PRELOAD shim answering Wine UuidCreate's 16-byte
+  /dev/urandom read with GUIDPIN); six empty unknown/empty_N.cpp TUs make Rich id 100 = 271. Header now differs only by
+  the (28,9466)/(25,9466) entry order (4 B; follows first mss reference in LTCG output order, i.e. compile order).
+- 10-30 PINNED (relink lab ~/rl.sh, lab/w200/tuspos.py + fdelta.py): some register/stack-slot ties depend on how many
+  objects precede a function's TU in link order. Empties before TU index 58 (k = 0..6): SV_DirectConnect good at
+  1,2,3,5,6; SV_ArchiveSnapshot good at 0,1; DSound_UpdateSample (160) good at 4..6; Scr_ParseGameTypeList (228) at 6;
+  SP_worldspawn (231, 51 B) good at 0..3. Constraints conflict; chosen: 1 empty first, 5 last (+4).
