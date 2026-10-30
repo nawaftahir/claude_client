@@ -153,7 +153,7 @@ void EmitArrayPrimitiveExpressionRef( sval_u expr, sval_u sourcePos, scr_block_s
 void Scr_CalcLocalVarsArrayPrimitiveExpressionRef( sval_u expr, scr_block_s *block );
 void EmitPrimitiveExpressionFieldObject( sval_u expr, sval_u sourcePos, scr_block_s *block );
 void EmitExpressionFieldObject( sval_u expr, sval_u sourcePos, scr_block_s *block );
-__declspec(noinline) void ConnectBreakStatements();
+void ConnectBreakStatements();
 void ConnectContinueStatements();
 bool IsUndefinedPrimitiveExpression( sval_u expr );
 int IsUndefinedExpression( sval_u expr );
@@ -3583,7 +3583,7 @@ void EmitExpressionFieldObject( sval_u expr, sval_u sourcePos, scr_block_s *bloc
 ConnectBreakStatements
 ============
 */
-__declspec(noinline) void ConnectBreakStatements()
+void ConnectBreakStatements()
 {
 	assert(!scrCompilePub.value_count);
 	const char *codePos = (char *)TempMalloc(0);
@@ -5155,10 +5155,14 @@ void EmitSwitchStatement( sval_u expr, sval_u stmtlist, sval_u sourcePos, bool l
 	*(intptr_t *)pos1 = scrCompileGlob.codePos - (byte *)nextPos1;
 	pos3 = TempMallocAlignStrict(0);
 
-	for ( num = 0, caseStatement = scrCompileGlob.currentCaseStatement; caseStatement; caseStatement = caseStatement->next, num++ )
+	num = 0;
+	caseStatement = scrCompileGlob.currentCaseStatement;
+	while ( caseStatement )
 	{
 		EmitInteger(caseStatement->name);
 		EmitCodepos(caseStatement->codePos);
+		caseStatement = caseStatement->next;
+		num++;
 	}
 
 	*(unsigned short *)pos2 = num;
@@ -5169,13 +5173,15 @@ void EmitSwitchStatement( sval_u expr, sval_u stmtlist, sval_u sourcePos, bool l
 	{
 		if ( *(intptr_t *)pos3 == *((intptr_t *)pos3 + 2) )
 		{
-			for ( caseStatement = scrCompileGlob.currentCaseStatement; caseStatement; caseStatement = caseStatement->next )
+			caseStatement = scrCompileGlob.currentCaseStatement;
+			while ( caseStatement )
 			{
 				if ( caseStatement->name == *(intptr_t *)pos3 )
 				{
 					CompileError(caseStatement->sourcePos, "duplicate case expression");
 					return;
 				}
+				caseStatement = caseStatement->next;
 			}
 		}
 
