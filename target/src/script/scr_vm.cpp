@@ -241,18 +241,6 @@ static __forceinline unsigned __int64 Sys_Rdtsc()
 {
 	__asm rdtsc
 }
-#define GET_VARIABLE_I2NI_INLINE(res, a_parentId, a_name) \
-	{ \
-		unsigned int parentId_ = (a_parentId); \
-		unsigned int name_ = (a_name); \
-		unsigned int hash_ = ( name_ + parentId_ ) % ( VARIABLELIST_CHILD_SIZE - 1 ) + 1; \
-		unsigned int newIndex_ = FindVariableIndexInternal( name_, hash_ ); \
-		if ( !newIndex_ ) \
-		{ \
-			newIndex_ = GetNewVariableIndexInternal2( parentId_, name_, hash_ ); \
-		} \
-		(res) = scrVarGlob.variableList[ newIndex_ ].hash.id; \
-	}
 /*
 ==============
 Scr_GetLocalVarAtIndex

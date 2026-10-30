@@ -358,18 +358,6 @@ char *Com_ParseExt( const char **data_p, qboolean allowLineBreaks );
 ParseThreadInfo *Com_GetParseThreadInfo();
 
 // Com_Parse as retail inlines it at some sites (no out-of-line copy)
-#define COM_PARSE_INLINE(token, data_p) \
-	{ \
-		ParseThreadInfo *parse_ = Com_GetParseThreadInfo(); \
-		parseInfo_t *pi_ = &parse_->parseInfo[parse_->parseInfoNum]; \
-		if ( pi_->ungetToken ) \
-		{ \
-			pi_->ungetToken = false; \
-			*(data_p) = pi_->backup_text; \
-			pi_->lines = pi_->backup_lines; \
-		} \
-		(token) = Com_ParseExt( (data_p), qtrue ); \
-	}
 // forceinline body lives in q_parse.cpp
 void Com_ParseReturnToMark( const char *( *text ), com_parse_mark_t *mark );
 int Com_Compress( char *data_p );
