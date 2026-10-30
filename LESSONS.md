@@ -232,3 +232,9 @@ lay: dropping 'static' from static __forceinline helpers in one .cpp is a no-op 
 - 10-30 Sys_IsLANAddress switch(adr.ip[0]) (lan1): jump table, 367 B. No. Retail = if-chain whose shared return-1 block sits right after the 127 test and whose 169/172/192 arms keep separate mov eax,1/pop ebx/ret tails (ours cross-jumps them).
 - 10-30 CG_CalcCrosshairPosition head: retail fld [cg->gunYaw] directly into the inlined AngleVectors (yaw never stored), pitch via a stack copy; ours stores both via int moves. No change from: CoD4 gunYaw local (chy1, PDB-named in KisakCOD), VectorSet(gunAng, pitch, yaw, roll) with a local inline VectorSet (chy2).
 - 10-30 ret-count scan (lab/w200/retdiff.py, every fn, our map bounds): ONLY Sys_IsLANAddress differs (retail 6 rets, ours 4). SND_RawSamples/CL_MouseEvent extra ret was a diff-window artifact; CL_MouseEvent is dy in eax (retail) vs edx (ours), an LTCG register-convention choice. No systematic tail-merge cause.
+- 10-30 PAID (source, 0 B, 8f98194): agent-decoded frequency estimator -> Com_EndParseSession real calls at 21 sites
+  (noinline gone), sound-alias Com_Parse real calls, Falloff/ModGroups loops 'X = 0; for (;;) { ...; X++; }' (a
+  'for (X = 0; ; X++)' loop is flagged non-natural and skips the loop-exit shares). Every ES/Com_Parse/Com_ParseExt
+  site == retail (esn1/esn3); Com_LoadSoundAliasFile keeps its stand-ins (its first error ES cnt 0.0586 called, retail
+  inlines; real SkipRestOfLine/ParseOnLine there are refused, esn2). Pointer removal (esn4): the literal then lands in
+  com_sndalias_load_obj's string block (from LoadSoundAliasFile's .inl), .rdata 92.55% -> needs that function solved first.
