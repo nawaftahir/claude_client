@@ -257,3 +257,9 @@ lay: dropping 'static' from static __forceinline helpers in one .cpp is a no-op 
   local and if / else if / else (gives the weaponNum piece n16 > 0, so it takes edi). The server rebuild with that
   helper shape is SHA-identical (GCC 3.3.4 -O0 cannot tell the two apart): server-equal source is a constraint, not
   a single fixed spelling. Toolchain image cod2engine-linux-2005 is now built locally for such checks.
+- 10-30 agent (no gain, measured): Com_ProcessSoundAliasFileLocalization: f's large piece n3 104, n16 0 (one point
+  short; a piece needs n16 > 0); the literal does not compete for esi (sal_d1) nor does the '\n' write (sal_d2); server
+  copy token-identical, -O0 pins order/decls. Sys_IsLANAddress: our c2 cross-jumps the 172/192 return tails into 169's
+  and moves return-true to the end, retail keeps them; 7 shapes (mac/ptr/ipblk/or1/or2/sw, /Zi) 17-43 lines. Matched
+  fns keep identical jcc;ret tails unmerged, so the trigger is local; next: probe c2's tail-merge site. Notes in
+  lab/w200/inl_notes.txt 'SoundAlias/LAN RA (agent 10-30 night)'.
