@@ -4768,12 +4768,7 @@ void Scr_AddFieldsForFile( const char *filename )
 		*targetPos = 0;
 	}
 
-	{
-#define PP_RETURN goto pp_done_1
-#include "../universal/q_parse_endsession.inl"
-#undef PP_RETURN
-	}
-pp_done_1:;
+	Com_EndParseSession();
 	Hunk_ClearTempMemoryHighInternal();
 }
 

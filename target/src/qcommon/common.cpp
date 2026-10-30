@@ -1747,12 +1747,7 @@ void Com_SetRecommended( qboolean restart )
 	if ( !Com_ParseGpuConfig( &text, &info ) )
 		Com_Error( ERR_FATAL, "\x15" "configure_mp.csv: " "\x14" "EXE_ERR_COULDNT_CONFIGURE" "\x15" " \"%s\"\n", info.gpuDescription );
 
-	{
-#define PP_RETURN goto pp_done_21
-#include "../universal/q_parse_endsession.inl"
-#undef PP_RETURN
-	}
-pp_done_21:;
+	Com_EndParseSession();
 
 	checksum = Com_ConfigureChecksum( (const char *)csv, filesize );
 	FS_FreeFile( csv );

@@ -59,12 +59,7 @@ void AnimTreeCompileError( const char *msg )
 {
 	const char *pos = Com_GetLastTokenPos();
 
-	{
-#define PP_RETURN goto pp_done_2
-#include "../universal/q_parse_endsession.inl"
-#undef PP_RETURN
-	}
-pp_done_2:;
+	Com_EndParseSession();
 	CompileError(pos - scrAnimGlob.start, "%s", msg);
 }
 
@@ -435,12 +430,7 @@ void Scr_AnimTreeParse( const char *pos, unsigned int parentNode, unsigned int n
 		AnimTreeCompileError("bad token");
 	}
 
-	{
-#define PP_RETURN goto pp_done_3
-#include "../universal/q_parse_endsession.inl"
-#undef PP_RETURN
-	}
-pp_done_3:;
+	Com_EndParseSession();
 }
 
 /*

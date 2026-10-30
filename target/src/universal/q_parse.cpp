@@ -60,7 +60,7 @@ void Com_BeginParseSession( const char *filename )
 
 extern const char *const com_endParseSessionUnderflow = "\x15" "Com_EndParseSession: session underflow";
 
-__declspec(noinline) void Com_EndParseSession( void )
+void Com_EndParseSession( void )
 {
 #define PP_RETURN return
 #include "q_parse_endsession.inl"

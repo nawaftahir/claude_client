@@ -1528,12 +1528,7 @@ void BG_AnimParseAnimScript( animScriptData_t *scriptData, loadAnim_t *pLoadAnim
 	}
 
 	globalFilename = NULL;
-	{
-#define PP_RETURN goto pp_done_17
-#include "../universal/q_parse_endsession.inl"
-#undef PP_RETURN
-	}
-pp_done_17:;
+	Com_EndParseSession();
 }
 
 /*
