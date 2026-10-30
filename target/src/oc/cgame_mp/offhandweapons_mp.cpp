@@ -63,19 +63,15 @@ void CG_OffhandRegisterDvars(void)
     hud_flash_period_offhand = Dvar_RegisterFloat("hud_flash_period_offhand", 0.5f, 0.0f, 30.0f, 0x1001);
 }
 
-#define GET_BEST_OFFHAND(dst, offhandClass) \
-    do { \
-        (dst) = BG_GetFirstAvailableOffhand(&cg->predictedPlayerState, offhandClass); \
-        if (!(dst)) \
-            (dst) = BG_GetFirstEquippedOffhand(&cg->predictedPlayerState, offhandClass); \
-    } while (0)
 
 // retail 0x4d1cc0, called from one site only
-static __declspec(noinline) int GetBestOffhand(int offhandClass)
+static int GetBestOffhand(int offhandClass)
 {
     int newOffhand;
 
-    GET_BEST_OFFHAND(newOffhand, offhandClass);
+    newOffhand = BG_GetFirstAvailableOffhand(&cg->predictedPlayerState, offhandClass);
+    if (!newOffhand)
+        newOffhand = BG_GetFirstEquippedOffhand(&cg->predictedPlayerState, offhandClass);
     return newOffhand;
 }
 
@@ -96,7 +92,7 @@ void CG_DrawOffHandIcon(rectDef_s *rect, float scale, vec_t *color, MaterialHand
     {
         int best;
 
-        GET_BEST_OFFHAND(best, weaponType);
+        best = GetBestOffhand(weaponType);
         if (!best)
             return;
     }
@@ -110,7 +106,9 @@ void CG_DrawOffHandIcon(rectDef_s *rect, float scale, vec_t *color, MaterialHand
     *(int *)&drawColor[2] = *(int *)&color[2];
 
     weapon = cg->equippedOffHand;
-    if (!weapon || BG_GetWeaponDef(weapon)->offhandClass != weaponType) {
+    if (weapon && BG_GetWeaponDef(weapon)->offhandClass != weaponType)
+        weapon = 0;
+    if (!weapon) {
         weapon = GetBestOffhand(weaponType);
         if (!weapon)
             return;
@@ -164,7 +162,7 @@ void CG_DrawOffHandHighlight(rectDef_s *rect, float scale, vec_t *color, Materia
     {
         int best;
 
-        GET_BEST_OFFHAND(best, weaponType);
+        best = GetBestOffhand(weaponType);
         if (!best)
             return;
     }
@@ -203,7 +201,7 @@ void CG_DrawOffHandAmmo(rectDef_s *rect, struct Font_s *font, float scale, vec_t
     {
         int best;
 
-        GET_BEST_OFFHAND(best, weaponType);
+        best = GetBestOffhand(weaponType);
         if (!best)
             return;
     }
