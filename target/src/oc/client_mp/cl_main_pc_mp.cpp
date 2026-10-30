@@ -148,9 +148,9 @@ void CL_SetServerInfoByAddress(netadr_t from, const char *info, int ping)
             CL_SetServerInfo(&cls.localServers[i], info, ping);
     }
 
+    low = 0;
     high = cls.numglobalservers;
     {
-        low = 0;
         while (low < high) {
             mid = (low + high) / 2;
             compare = NET_CompareAdrSigned(&from, &cls.globalServers[mid].adr);

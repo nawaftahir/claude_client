@@ -6,9 +6,12 @@
 node1_
 ==============
 */
-sval_u node1_( sval_u val1 )
+sval_u node1_( int val1 )
 {
-	return val1;
+	sval_u result;
+
+	result.intValue = val1;
+	return result;
 }
 
 /*

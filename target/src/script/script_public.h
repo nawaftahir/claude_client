@@ -1296,7 +1296,7 @@ extern "C"
 {
 sval_u node0( int type );
 sval_u node1( int type, sval_u val1 );
-sval_u node1_( sval_u val1 );
+sval_u node1_( int val1 );
 sval_u node2( int type, sval_u val1, sval_u val2 );
 sval_u node2_( sval_u val1, sval_u val2 );
 sval_u node3( int type, sval_u val1, sval_u val2, sval_u val3 );
