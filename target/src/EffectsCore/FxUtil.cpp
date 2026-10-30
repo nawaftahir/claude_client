@@ -58,6 +58,7 @@ extern dvar_t *fx_draw;
 extern dvar_t *fx_cull;
 extern dvar_t *fx_sort;
 extern dvar_t *fx_profile;
+extern const dvar_t *fx_debug;
 extern dvar_t *fx_visMinTraceDist;
 
 struct FxCurveIterator
@@ -1866,7 +1867,7 @@ void FX_DrawAll()
 		for ( i = 0; i < visibleEffectCountNonBolt; i++ )
 			visibleEffectsNonBolt[i].fx->Draw();
 	}
-	if ( fx_profile->current.boolean )
+	if ( fx_debug->current.boolean )
 	{
 		FX_Print("Active    FX: %i\n", effectActiveCount);
 		FX_Print("Drawn     FX: %i\n", visibleEffectCountNonBolt);
