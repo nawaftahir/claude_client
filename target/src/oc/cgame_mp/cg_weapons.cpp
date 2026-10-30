@@ -1859,6 +1859,11 @@ void CG_FireWeapon(centity_t *cent, int event, int barrel)
 	}
 #define VEC3_DOT_INLINE(a, b) ((a)[0] * (b)[0] + (a)[1] * (b)[1] + (a)[2] * (b)[2])
 #define VEC3_LENGTH_INLINE(v) (sqrtf((v)[2] * (v)[2] + ((v)[1] * (v)[1] + (v)[0] * (v)[0])))
+extern void VectorSubtract(const vec3_t a, const vec3_t b, vec3_t c);
+extern float DotProduct(const vec3_t a, const vec3_t b);
+extern void VectorMA(const vec3_t va, float scale, const vec3_t vb, vec3_t vc);
+extern float VectorLength(const vec3_t v);
+
 void CG_WhizbySound(vec_t *vStart, vec_t *vEnd)
 {
     vec3_t viewDelta;
@@ -1868,24 +1873,20 @@ void CG_WhizbySound(vec_t *vStart, vec_t *vEnd)
     float dist;
     float viewDist;
 
-    VEC3_SUB_INLINE(vEnd, vStart, delta);
+    VectorSubtract(vEnd, vStart, delta);
     Vec3NormalizeTo(delta, dir);
-    dist = VEC3_DOT_INLINE(dir, delta);
-    VEC3_SUB_INLINE(cg->refdef.vieworg, vStart, viewDelta);
-    viewDist = VEC3_DOT_INLINE(dir, viewDelta);
+    dist = DotProduct(dir, delta);
+    VectorSubtract(cg->refdef.vieworg, vStart, viewDelta);
+    viewDist = DotProduct(dir, viewDelta);
     if (viewDist < 64.0f)
         return;
     if (viewDist - -64.0f > dist)
         return;
-    projPos[0] = dir[0] * viewDist + vStart[0];
-    projPos[1] = dir[1] * viewDist + vStart[1];
-    projPos[2] = dir[2] * viewDist + vStart[2];
-    VEC3_SUB_INLINE(projPos, cg->refdef.vieworg, delta);
-    if (VEC3_LENGTH_INLINE(delta) > 140.0f)
+    VectorMA(vStart, viewDist, dir, projPos);
+    VectorSubtract(projPos, cg->refdef.vieworg, delta);
+    if (VectorLength(delta) > 140.0f)
         return;
-    projPos[0] = projPos[0] - dir[0] * 16.0f;
-    projPos[1] = projPos[1] - dir[1] * 16.0f;
-    projPos[2] = projPos[2] - dir[2] * 16.0f;
+    VectorMA(projPos, -16.0f, dir, projPos);
     CG_PlaySoundAlias(0x3fe, projPos, cgs->media.bulletWhizby);
 }
 
