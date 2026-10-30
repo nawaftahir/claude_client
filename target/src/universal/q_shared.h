@@ -395,7 +395,14 @@ __inline int LittleLong( int l )   /* little-endian host: identity */
 // float from its raw little-endian bits
 static inline float FloatFromBits( int l )
 {
-	return FloatIdentity( *(float *)&l );
+	union
+	{
+		int i;
+		float f;
+	} dat;
+
+	dat.i = l;
+	return FloatIdentity( dat.f );
 }
 int64_t LittleLong64( int64_t l );
 float   LittleFloat( int l );
