@@ -901,7 +901,6 @@ qboolean BG_ParseConditions( const char **text_pp, animScriptItem_t *scriptItem 
 }
 void BG_ParseCommands( const char **input, animScriptItem_t *scriptItem, animScriptData_t *scriptData )
 {
-	int soundCmp;
 	char    *token;
 	// TTimo gcc: might be used uninitialized
 	animScriptCommand_t *command = NULL;
@@ -1000,10 +999,9 @@ void BG_ParseCommands( const char **input, animScriptItem_t *scriptItem, animScr
 					}
 				}
 			}
-			do
+			for ( bCommandFound = qfalse; ; bCommandFound = qfalse )
 			{
 				// check for a duration for this animation instance
-				bCommandFound = qfalse;
 				token = Com_ParseOnLine( input );
 				if ( token && token[0] )
 				{
@@ -1061,8 +1059,11 @@ pp_line_5:;
 				{
 					Com_UngetToken( );
 				}
+				if ( !bCommandFound )
+				{
+					break;
+				}
 			}
-			while ( bCommandFound );
 			if ( command->bodyPart[partIndex] != ANIM_BP_BOTH && partIndex++ < 1 )
 			{
 				continue;   // allow parsing of another bodypart
@@ -1083,16 +1084,7 @@ pp_line_5:;
 				break;
 			}
 
-			{
-				const char *s1 = token;
-				const char *s0 = "sound";
-				int n = 0x7FFFFFFF;
-#define PP_RETVAL( v ) { soundCmp = v; goto pp_sound_cmp; }
-#include "../universal/q_shared_strnicmp.inl"
-#undef PP_RETVAL
-			}
-pp_sound_cmp:
-			if ( !soundCmp )
+			if ( !Q_stricmp( token, "sound" ) )
 			{
 				token = Com_ParseOnLine( input );
 				if ( !token || !token[0] )

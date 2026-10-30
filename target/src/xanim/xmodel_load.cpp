@@ -48,14 +48,12 @@ void XModelCalcBasePose(XModelParts *modelParts)
 	quatTrans = &modelParts->skel.Mat;
 	numRootBones = modelParts->numRootBones;
 
-	while ( numRootBones )
+	for ( ; numRootBones; --numRootBones, ++quatTrans )
 	{
 		VectorClear(quatTrans->quat);
 		quatTrans->quat[3] = 1.0f;
 		VectorClear(quatTrans->trans);
 		quatTrans->transWeight = 2.0f;
-		--numRootBones;
-		++quatTrans;
 	}
 
 	numRootBones = numBones - modelParts->numRootBones;
@@ -67,26 +65,9 @@ void XModelCalcBasePose(XModelParts *modelParts)
 		tempQuat[2] = (float)quats[2] * 0.000030518509f;
 		tempQuat[3] = (float)quats[3] * 0.000030518509f;
 
-		{
-			const float *in2 = (quatTrans - *parentList)->quat;
-			float *out = quatTrans->quat;
-
-			out[0] = tempQuat[0]*in2[3] + tempQuat[2]*in2[1] - tempQuat[1]*in2[2] + tempQuat[3]*in2[0];
-			out[1] = tempQuat[1]*in2[3] - tempQuat[2]*in2[0] + tempQuat[3]*in2[1] + tempQuat[0]*in2[2];
-			out[2] = tempQuat[2]*in2[3] + tempQuat[1]*in2[0] - tempQuat[0]*in2[1] + tempQuat[3]*in2[2];
-			out[3] = tempQuat[3]*in2[3] - tempQuat[0]*in2[0] - tempQuat[1]*in2[1] - tempQuat[2]*in2[2];
-		}
+		QuatMultiply(tempQuat, (quatTrans - *parentList)->quat, quatTrans->quat);
 		DObjCalcTransWeight(quatTrans);
-		{
-			const DObjAnimMat *parentMat = quatTrans - *parentList;
-			float axis[3][3];
-			float *out = quatTrans->trans;
-
-			ConvertQuatToMat(parentMat, axis);
-			out[0] = trans[2] * axis[2][0] + trans[1] * axis[1][0] + trans[0] * axis[0][0] + parentMat->trans[0];
-			out[1] = trans[2] * axis[2][1] + trans[1] * axis[1][1] + trans[0] * axis[0][1] + parentMat->trans[1];
-			out[2] = trans[2] * axis[2][2] + trans[1] * axis[1][2] + trans[0] * axis[0][2] + parentMat->trans[2];
-		}
+		MatrixTransformVectorQuatTrans(trans, quatTrans - *parentList, quatTrans->trans);
 
 		--numRootBones;
 		quats += 4;
