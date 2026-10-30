@@ -252,3 +252,8 @@ lay: dropping 'static' from static __forceinline helpers in one .cpp is a no-op 
   objects precede a function's TU in link order. Empties before TU index 58 (k = 0..6): SV_DirectConnect good at
   1,2,3,5,6; SV_ArchiveSnapshot good at 0,1; DSound_UpdateSample (160) good at 4..6; Scr_ParseGameTypeList (228) at 6;
   SP_worldspawn (231, 51 B) good at 0..3. Constraints conflict; chosen: 1 empty first, 5 last (+4).
+- 10-30 PAID (+591, 2b8137d, agent): CG_AddPlayerWeapon full match. weapInfo->viewModelDObj in the gun block (stops
+  the weaponNum*0x1b4 CSE so weapInfo outranks the parent->axis temp) + BG_GetViewmodelWeaponIndex with one weapIndex
+  local and if / else if / else (gives the weaponNum piece n16 > 0, so it takes edi). The server rebuild with that
+  helper shape is SHA-identical (GCC 3.3.4 -O0 cannot tell the two apart): server-equal source is a constraint, not
+  a single fixed spelling. Toolchain image cod2engine-linux-2005 is now built locally for such checks.
