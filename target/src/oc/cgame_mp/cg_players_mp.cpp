@@ -204,14 +204,7 @@ void CG_PlayerSprites(centity_t *cent)
     XAnimSetGoalWeight(pAnimTree, (anim), (weight), rate > 0.0f ? 1.0f / rate : 0.0f, 1.0f, 0, 0, 0); \
 } while (0)
 
-#define VEC3_COPY_INLINE(a_a, a_out) \
-	{ \
-			const vec_t * a_VC = (a_a); \
-			vec_t * out_VC = (a_out); \
-			    out_VC[0] = a_VC[0]; \
-			    out_VC[1] = a_VC[1]; \
-			    out_VC[2] = a_VC[2]; \
-	}
+extern void VectorCopy(const vec3_t in, vec3_t out);
 
 static void CG_PlayerTurretPositionAndBlend(centity_t *cent)
 {
@@ -366,7 +359,7 @@ static void CG_PlayerTurretPositionAndBlend(centity_t *cent)
     YawToAxis(RotationToYaw(rot) + localYaw, axis);
     MatrixMultiply43(axis, turretAxis, out);
     AxisToAngles(out, cent->lerpAngles);
-    VEC3_COPY_INLINE(out[3], cent->lerpOrigin);
+    VectorCopy(out[3], cent->lerpOrigin);
 
 
 

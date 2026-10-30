@@ -1848,17 +1848,6 @@ void CG_FireWeapon(centity_t *cent, int event, int barrel)
         CG_EjectWeaponBrass(ent, event);
 }
 
-#define VEC3_SUB_INLINE(a_a, a_b, a_out) \
-	{ \
-			const vec_t * a_VS = (a_a); \
-			const vec_t * b_VS = (a_b); \
-			vec_t * out_VS = (a_out); \
-			    out_VS[0] = a_VS[0] - b_VS[0]; \
-			    out_VS[1] = a_VS[1] - b_VS[1]; \
-			    out_VS[2] = a_VS[2] - b_VS[2]; \
-	}
-#define VEC3_DOT_INLINE(a, b) ((a)[0] * (b)[0] + (a)[1] * (b)[1] + (a)[2] * (b)[2])
-#define VEC3_LENGTH_INLINE(v) (sqrtf((v)[2] * (v)[2] + ((v)[1] * (v)[1] + (v)[0] * (v)[0])))
 extern void VectorSubtract(const vec3_t a, const vec3_t b, vec3_t c);
 extern float DotProduct(const vec3_t a, const vec3_t b);
 extern void VectorMA(const vec3_t va, float scale, const vec3_t vb, vec3_t vc);
@@ -1911,7 +1900,7 @@ void CG_SpawnTracer(vec_t *pstart, vec_t *pend)
     end[1] = pend[1];
     end[2] = pend[2];
 
-    VEC3_SUB_INLINE(end, start, dir);
+    VectorSubtract(end, start, dir);
 
     dist = Vec3Normalize(dir);
     le = CG_AllocLocalEntity();
