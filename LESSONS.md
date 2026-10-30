@@ -229,3 +229,6 @@ lay: dropping 'static' from static __forceinline helpers in one .cpp is a no-op 
   inlines FindVariable/GetObjectType/... into VM_Notify). RemoveVariable is a SPLIT decision in retail: inlined in
   VM_Resume/VM_TerminateTime/Scr_KillThread (our scr_remove_variable.inl copies), called at 22 sites (noinline).
   All remaining noinline/.inl stand-ins are split decisions; the cause sits in counts/compile order, not in the callee.
+- 10-30 Sys_IsLANAddress switch(adr.ip[0]) (lan1): jump table, 367 B. No. Retail = if-chain whose shared return-1 block sits right after the 127 test and whose 169/172/192 arms keep separate mov eax,1/pop ebx/ret tails (ours cross-jumps them).
+- 10-30 CG_CalcCrosshairPosition head: retail fld [cg->gunYaw] directly into the inlined AngleVectors (yaw never stored), pitch via a stack copy; ours stores both via int moves. No change from: CoD4 gunYaw local (chy1, PDB-named in KisakCOD), VectorSet(gunAng, pitch, yaw, roll) with a local inline VectorSet (chy2).
+- 10-30 ret-count scan (lab/w200/retdiff.py, every fn, our map bounds): ONLY Sys_IsLANAddress differs (retail 6 rets, ours 4). SND_RawSamples/CL_MouseEvent extra ret was a diff-window artifact; CL_MouseEvent is dy in eax (retail) vs edx (ours), an LTCG register-convention choice. No systematic tail-merge cause.
