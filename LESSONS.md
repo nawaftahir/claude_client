@@ -263,3 +263,9 @@ lay: dropping 'static' from static __forceinline helpers in one .cpp is a no-op 
   and moves return-true to the end, retail keeps them; 7 shapes (mac/ptr/ipblk/or1/or2/sw, /Zi) 17-43 lines. Matched
   fns keep identical jcc;ret tails unmerged, so the trigger is local; next: probe c2's tail-merge site. Notes in
   lab/w200/inl_notes.txt 'SoundAlias/LAN RA (agent 10-30 night)'.
+- 10-30 PAID (+651, agent): CG_ConfigStringModified: the status/head-icon arms call CL_GetConfigString(num) again
+  (opencod1 CoD1 shape, SUPPORTED); a repeated getter makes the top value a shared CSE that lowers to lea, which is
+  flags-free, so the cmp schedules first (retail). add vs lea is chosen at lowering, not by a scheduler rewrite.
+  CG_DrawTracer: '= 0.0f' inits on startWidth/finishWidth (HYPOTHESIS spelling, no source shows them; inferred from
+  the x87 rule: the lower-numbered value, by first reference, becomes the memory operand) + vertex 0 VectorMA before
+  its constants (Q3 CG_Tracer order). Tools: /home/nawaf/x8t7 (DrawTracer harness), x8t7/tiny/cx.py (CSM clone).
