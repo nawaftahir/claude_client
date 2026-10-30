@@ -1201,7 +1201,7 @@ void CG_AddPlayerWeapon(GfxEntity *parent, playerState_t *ps, centity_t *cent, q
             gun.origin[2] = parent->origin[2];
             AxisCopy(parent->axis, gun.axis);
 
-            model.obj = (&cg_weaponsArray[weaponNum])->viewModelDObj;
+            model.obj = weapInfo->viewModelDObj;
             skinEnt = R_AddRefEntityToScene(&gun, model, 0);
 #if COD2_TRACE
             {

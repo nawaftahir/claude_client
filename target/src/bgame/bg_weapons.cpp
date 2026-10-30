@@ -852,14 +852,24 @@ BG_GetViewmodelWeaponIndex
 */
 int BG_GetViewmodelWeaponIndex( const playerState_t *ps )
 {
+	int weapIndex;
+
 	assert(ps);
 
 	if ( ps->pm_flags & PMF_BINOCULARS )
 	{
-		return BG_GetBinocularWeaponIndex();
+		weapIndex = BG_GetBinocularWeaponIndex();
+	}
+	else if ( ps->pm_flags & PMF_FRAG )
+	{
+		weapIndex = ps->offHandIndex;
+	}
+	else
+	{
+		weapIndex = ps->weapon;
 	}
 
-	return ( ps->pm_flags & PMF_FRAG ) ? ps->offHandIndex : ps->weapon;
+	return weapIndex;
 }
 
 int BG_GetFirstAvailableOffhand( const playerState_t *ps, int offhandSlot )
