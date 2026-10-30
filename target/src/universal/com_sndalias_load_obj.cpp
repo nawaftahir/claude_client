@@ -629,23 +629,16 @@ void Com_LoadSoundAliasFile( const char *loadspec, const char *loadspecCurGame, 
 	Com_SetCSV(qtrue);
 	data = buffer;
 	columnCount = 0;
-	while ( 1 )
+	for ( ;; )
 	{
-		COM_PARSE_INLINE(token, &data);
+		token = Com_Parse(&data);
 		if ( !data )
 		{
 			break;
 		}
 		if ( !*token || *token == '#' )
 		{
-			{
-#define pp_data (&data)
-#define PP_RETURN goto pp_done_1
-#include "q_parse_skipline.inl"
-#undef PP_RETURN
-#undef pp_data
-			}
-pp_done_1:;
+			Com_SkipRestOfLine(&data);
 			continue;
 		}
 		if ( !columnCount )
@@ -675,29 +668,16 @@ pp_done_1:;
 				{
 					break;
 				}
-				if ( data && *data != '\n' )
+				if ( !data || *data == '\n' )
 				{
-					{
-#define pp_data_p (&data)
-#define PP_RETVAL( v ) { token = v; goto pp_line_1; }
-#include "q_parse_online.inl"
-#undef PP_RETVAL
-#undef pp_data_p
-					}
-pp_line_1:;
-					continue;
+					break;
 				}
-				break;
+				token = Com_ParseOnLine(&data);
 			}
 			if ( !hasName || !hasFile )
 			{
 				Com_Printf("^1ERROR: Sound alias file %s: missing 'name' and/or 'file' columns\n", sourceFile);
-				{
-#define PP_RETURN goto pp_done_4
-#include "q_parse_endsession.inl"
-#undef PP_RETURN
-				}
-pp_done_4:;
+				Com_EndParseSession();
 				return;
 			}
 		}
@@ -716,24 +696,12 @@ pp_done_4:;
 				{
 					break;
 				}
-				{
-#define pp_data_p (&data)
-#define PP_RETVAL( v ) { token = v; goto pp_line_2; }
-#include "q_parse_online.inl"
-#undef PP_RETVAL
-#undef pp_data_p
-				}
-pp_line_2:;
+				token = Com_ParseOnLine(&data);
 			}
 			if ( !fieldSet[SA_NAME] || !fieldSet[SA_FILE] )
 			{
 				Com_Printf("^1ERROR: Sound alias file %s: alias entry missing name and/or file\n", sourceFile);
-				{
-#define PP_RETURN goto pp_done_5
-#include "q_parse_endsession.inl"
-#undef PP_RETURN
-				}
-pp_done_5:;
+				Com_EndParseSession();
 				return;
 			}
 			if ( alias.keep && !alias.error && Com_ValidateSoundAlias(&alias) )
@@ -741,21 +709,9 @@ pp_done_5:;
 				Com_AddBuildSoundAlias(&alias);
 			}
 		}
-		{
-#define pp_data (&data)
-#define PP_RETURN goto pp_done_2
-#include "q_parse_skipline.inl"
-#undef PP_RETURN
-#undef pp_data
-		}
-pp_done_2:;
+		Com_SkipRestOfLine(&data);
 	}
-	{
-#define PP_RETURN goto pp_done_6
-#include "q_parse_endsession.inl"
-#undef PP_RETURN
-	}
-pp_done_6:;
+	Com_EndParseSession();
 }
 
 int AliasNameCompare( snd_alias_build_t *alias0, snd_alias_build_t *alias1 )

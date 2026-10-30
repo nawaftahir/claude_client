@@ -58,13 +58,18 @@ void Com_BeginParseSession( const char *filename )
 	I_strncpyz( pi->parseFile, filename, sizeof( pi->parseFile ) );
 }
 
-extern const char *const com_endParseSessionUnderflow = "\x15" "Com_EndParseSession: session underflow";
-
 void Com_EndParseSession( void )
 {
-#define PP_RETURN return
-#include "q_parse_endsession.inl"
-#undef PP_RETURN
+	ParseThreadInfo *parse;
+
+	parse = Com_GetParseThreadInfo();
+
+	if ( parse->parseInfoNum == 0 )
+	{
+		Com_Error( ERR_FATAL, "\x15" "Com_EndParseSession: session underflow" );
+	}
+
+	parse->parseInfoNum--;
 }
 
 
