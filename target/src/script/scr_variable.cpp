@@ -1257,13 +1257,7 @@ void Scr_KillThread( unsigned int parentId )
 
 			VM_CancelNotify(GetVariableValueAddress(FindObjectVariable(selfNameId, nameIndex))->pointerValue, nameIndex);
 			Scr_KillEndonThread(nameIndex);
-			{
-#define pp_parentId (selfNameId)
-#define pp_name (nameIndex + SL_MAX_STRING_INDEX)
-#include "scr_remove_variable.inl"
-#undef pp_name
-#undef pp_parentId
-			}
+			RemoveVariable(selfNameId, nameIndex + SL_MAX_STRING_INDEX);
 		}
 
 		assert(!GetArraySize(selfNameId));
