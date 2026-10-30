@@ -304,7 +304,14 @@ float FloatSwap( float f )
 }
 float FloatNoSwap( float f )
 {
-	return FloatIdentity( f );
+	union
+	{
+		float f;
+		int i;
+	} dat;
+
+	dat.i = *(int *)&f;
+	return dat.f;
 }
 int FloatSwapAsInt( float f )
 {
