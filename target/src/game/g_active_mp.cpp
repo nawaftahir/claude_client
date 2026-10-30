@@ -1400,13 +1400,6 @@ void G_PlayerController( gentity_t *self, int *partBits )
 	BG_Player_DoControllers(Com_GetServerDObj(self->s.number), &self->s, partBits, ci, level.frameTime);
 }
 
-#define G_MODEL_NAME_INLINE(res, a_index) \
-	{ \
-			int index_GMN = (a_index); \
-		const char *cs_GMN = sv.configstrings[CS_MODELS + index_GMN]; \
-		res = cs_GMN ? cs_GMN : ""; \
-	}
-
 /*
 ==================
 G_UpdateClientInfo
@@ -1428,9 +1421,7 @@ qboolean G_UpdateClientInfo( gentity_t *ent )
 	ci = &level_bgs.clientinfo[clientNum];
 	bChanged = qfalse;
 
-	const char * inl_gmn1;
-	G_MODEL_NAME_INLINE(inl_gmn1, ent->model);
-	modelName = inl_gmn1;
+	modelName = G_ModelName(ent->model);
 	client->sess.cs.modelindex = ent->model;
 
 	if ( strcmp(ci->model, modelName) )
@@ -1451,9 +1442,7 @@ qboolean G_UpdateClientInfo( gentity_t *ent )
 		}
 		else
 		{
-			const char * inl_gmn2;
-			G_MODEL_NAME_INLINE(inl_gmn2, ent->attachModelNames[i]);
-			modelName = inl_gmn2;
+			modelName = G_ModelName(ent->attachModelNames[i]);
 			client->sess.cs.attachModelIndex[i] = ent->attachModelNames[i];
 
 			if ( strcmp(ci->attachModelNames[i], modelName) )
