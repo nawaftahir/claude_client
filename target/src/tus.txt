@@ -1,6 +1,8 @@
 # translation units in link order (client 1.0 order where measured), then extra cl flags
 # not yet placed in the client
 # client layer (draft, opencod2)
+# unknown/empty_N.cpp: retail links 6 more /GL objects (Rich); positions from link-order tie flips (LESSONS 10-30)
+unknown/empty_1.cpp
 universal/assertive.cpp
 qcommon/buildnumber.c
 oc/client_mp/cl_cgame_mp.cpp
@@ -266,3 +268,8 @@ oc/ui_mp/ui_gameinfo_mp.cpp
 oc/ui_mp/ui_gamepad_menu.cpp
 oc/win32/gfx_dll_v60.cpp
 oc/win32/gfx_v60_threads.cpp
+unknown/empty_2.cpp
+unknown/empty_3.cpp
+unknown/empty_4.cpp
+unknown/empty_5.cpp
+unknown/empty_6.cpp
