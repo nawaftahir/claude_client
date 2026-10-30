@@ -2044,8 +2044,7 @@ void CL_RunOncePerClientFrame(int msec)
         if (clc.state == 8 || cl_forceavidemo->current.enabled) {
             Cbuf_ExecuteText(0, "screenshot silent\n");
         }
-        float timescale = com_timescaleValue;
-        msec = (int)(1000.0f / (float)cl_avidemo->current.integer * timescale);
+        msec = (int)(com_timescaleValue * (1000.0f / cl_avidemo->current.integer));
         if (msec == 0)
             msec = 1;
     }
