@@ -2115,10 +2115,21 @@ unsigned int GetNewObjectVariableReverse( unsigned int parentId, unsigned int id
 RemoveVariable
 ==============
 */
-// retail never inlines RemoveVariable
-void RemoveVariable( unsigned int pp_parentId, unsigned int pp_name )
+void RemoveVariable( unsigned int parentId, unsigned int name )
 {
-#include "scr_remove_variable.inl"
+	VariableValueInternal *entryValue;
+	unsigned int index;
+	unsigned int id;
+
+	assert((scrVarGlob.variableList[parentId].w.status & VAR_STAT_MASK) != VAR_STAT_FREE);
+	index = FindVariableIndexHash(parentId, name);
+	entryValue = &scrVarGlob.variableList[index];
+
+	id = entryValue->hash.id;
+	assert(id);
+
+	MakeVariableExternal(entryValue, &scrVarGlob.variableList[parentId]);
+	FreeValue(id);
 }
 
 /*
