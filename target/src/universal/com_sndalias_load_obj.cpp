@@ -1281,28 +1281,14 @@ qboolean Com_SubtitleReferenceExists( const char *reference )
 		}
 		if ( !strcmp(token, "REFERENCE") )
 		{
-			{
-#define pp_data_p (&data)
-#define PP_RETVAL( v ) { token = v; goto pp_line_3; }
-#include "q_parse_online.inl"
-#undef PP_RETVAL
-#undef pp_data_p
-			}
-pp_line_3:;
+			token = Com_ParseOnLine(&data);
 			if ( !I_stricmp(reference + 9, token) )
 			{
 				found = qtrue;
 				break;
 			}
 		}
-		{
-#define pp_data (&data)
-#define PP_RETURN goto pp_done_3
-#include "q_parse_skipline.inl"
-#undef PP_RETURN
-#undef pp_data
-		}
-pp_done_3:;
+		Com_SkipRestOfLine(&data);
 	}
 	Com_EndParseSession();
 	FS_FreeFile(buffer);
