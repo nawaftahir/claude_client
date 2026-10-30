@@ -224,3 +224,8 @@ lay: dropping 'static' from static __forceinline helpers in one .cpp is a no-op 
   QuatMultiply's args through locals leaves c0 at 10 (copy-propagated). Our hand-expanded term order differs from
   QuatMultiply's source order (tuned for /Op emission). Open: what makes retail's site r < 71 (count >= ~15 or 4 more
   arg savings).
+- 10-30 ruled out for the script split decisions: '#pragma inline_depth(1)' before VM_Notify (vmd1, oracle: every
+  decision unchanged); a TU-wide /Ob1 for scr_variable.cpp (server marks none of its functions inline, yet retail
+  inlines FindVariable/GetObjectType/... into VM_Notify). RemoveVariable is a SPLIT decision in retail: inlined in
+  VM_Resume/VM_TerminateTime/Scr_KillThread (our scr_remove_variable.inl copies), called at 22 sites (noinline).
+  All remaining noinline/.inl stand-ins are split decisions; the cause sits in counts/compile order, not in the callee.
