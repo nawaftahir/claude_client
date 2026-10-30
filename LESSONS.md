@@ -207,3 +207,20 @@ lay: dropping 'static' from static __forceinline helpers in one .cpp is a no-op 
   constant-arg discount from the literal (down 1, force 0) args, cnt 0.5, r 66 -> inline; retail calls. Same class
   as CalcScreenPlacement (constants must not be folded at decision time) but no evidence yet for the original form
   (CoD4 decompile shows literals). Item_HandleKey site: cnt 0.011, r 842, refused like retail.
+- 10-30 CG_ConfigStringModified: per-branch CL_GetConfigString(num) instead of one str (csm1): no hoisting, code
+  grows to 639 B (-563k ALL). Disproved; the lea-after-cmp placement is not from CSE/hoisting.
+- 10-30 CG_AddPlayerWeapon: BG_GetViewmodelWeaponIndex is INLINED in both retail and main (sites.py); the older
+  note that the if/else shape 'inlines it where retail calls' is obsolete. Oracle (rebuilt, fp_t objs resynced to
+  main 10-30): accepted in both shapes (size 35, c0 3, cnt 0.5, r 36). WSL restart 10:20 wiped /tmp/orcy: oracle
+  now lives in ~/orcy/vc (lab/w200/mkoracle.sh), lmv.sh refuses a stale ordq.txt, fp_t/build/obj synced from
+  claude_client/target/build/obj (old set kept as obj_1028).
+- 10-30 apwA (if/else assigning bViewModel and weaponNum together): CG_AddPlayerWeapon 758 B vs 776 (size change, ALL 68.1%). No.
+- 10-30 fw1 (CG_FireWeapon checks through ent->weapon, Q3 form): 542 vs 550 B, size change. No.
+- 10-30 Rich (28,9466)/(25,9466) order: mss32.lib member order does not matter (ms0 vs ms2 identical); first mss reference order in the LTCG output decides (MSS_auto_cleanup only in snd_driver.cpp). Whole Rich block also needs the 6 missing LTCG C++ objects (id 100: 271 vs 265) since the XOR key covers all entries.
+- 10-30 XModelCalcBasePose (179 B; ours hand-expands QuatMultiply + MatrixTransformVectorQuatTrans under #pragma
+  optimize p): server form (real calls) + /Op as a TU flag on xmodel_load (xcb1) or also com_math (xcb2): identical,
+  605 B vs 712, ALL 41.6%. Oracle (xcb_a): QuatMultiply size 124, c0 10, cnt 9.0, r 73 -> refused by 2 (retail inlines);
+  MatrixTransformVectorQuatTrans (header inline) r 68 inlined; ConvertQuatToMat r 114 called (= retail). Passing
+  QuatMultiply's args through locals leaves c0 at 10 (copy-propagated). Our hand-expanded term order differs from
+  QuatMultiply's source order (tuned for /Op emission). Open: what makes retail's site r < 71 (count >= ~15 or 4 more
+  arg savings).
