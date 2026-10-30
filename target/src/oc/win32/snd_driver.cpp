@@ -1416,9 +1416,9 @@ MssSound *SND_LoadFromBuffer(void *buffer, const char *realname, MssSound *sound
 }
 
 // retail 0x4b4890, unreferenced; name unknown
-MssSound *SND_LoadFromSound_4b4890(MssSound **sound, const char *realname)
+void SND_LoadFromSound_4b4890(MssSound **sound, const char *realname)
 {
-    return SND_LoadFromBuffer((*sound)->data, realname, *sound);
+    SND_LoadFromBuffer((*sound)->data, realname, *sound);
 }
 
 void SND_LoadSoundFile(SoundFile *soundFile)
