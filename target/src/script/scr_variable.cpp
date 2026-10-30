@@ -163,7 +163,7 @@ void SetVariableValue( unsigned int id, VariableValue *value );
 void SetNewVariableValue( unsigned int id, VariableValue *value );
 VariableUnion *GetVariableValueAddress( unsigned int id );
 void SetVariableEntityFieldValue( unsigned int entId, unsigned int fieldName, VariableValue *value );
-__declspec(noinline) void ClearVariableValue( unsigned int id );
+void ClearVariableValue( unsigned int id );
 void SetVariableFieldValue( unsigned int id, VariableValue *value );
 VariableValue Scr_EvalVariable( unsigned int id );
 unsigned int Scr_EvalVariableObject( unsigned int id );
@@ -796,7 +796,7 @@ unsigned int GetNewVariableIndexInternal3( unsigned int parentId, unsigned int n
 GetNewVariableIndexInternal2
 ==============
 */
-__declspec(noinline) unsigned int GetNewVariableIndexInternal2( unsigned int i2_parentId, unsigned int i2_name, unsigned int i2_index )
+unsigned int GetNewVariableIndexInternal2( unsigned int i2_parentId, unsigned int i2_name, unsigned int i2_index )
 {
 #define PP_RETVAL( v ) return v
 #include "scr_new_variable_index2.inl"
@@ -2122,7 +2122,7 @@ RemoveVariable
 ==============
 */
 // retail never inlines RemoveVariable
-__declspec(noinline) void RemoveVariable( unsigned int pp_parentId, unsigned int pp_name )
+void RemoveVariable( unsigned int pp_parentId, unsigned int pp_name )
 {
 #include "scr_remove_variable.inl"
 }
@@ -2383,7 +2383,7 @@ void SetVariableEntityFieldValue( unsigned int entId, unsigned int fieldName, Va
 ClearVariableValue
 ==============
 */
-__declspec(noinline) void ClearVariableValue( unsigned int id )
+void ClearVariableValue( unsigned int id )
 {
 	VariableValueInternal *entryValue;
 
