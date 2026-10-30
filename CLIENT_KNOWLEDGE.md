@@ -290,15 +290,19 @@ Two paths, chosen by whether the callee is already compiled:
   three cgArray x87 pairs.
 
 ## 6. Stand-ins still in the tree (must become real calls/code before release)
-- `.inl` includes (10-30 evening): q_parse_endsession only in Com_LoadSoundAliasFile (3 sites; it also keeps the
-  com_endParseSessionUnderflow pointer alive), q_parse_online/skipline (Com_LoadSoundAliasFile + subtitle fn +
-  cg_effects_load_obj), scr_* variable helpers (VM_Notify group), cl_keyevent, xanim_settime, q_shared_strnicmp
-  (BG_ParseCommands); COM_PARSE_INLINE macro (1, Com_LoadSoundAliasFile). Gone 10-30: scr_get_variable_index, screen_placement,
-  q_shared_strlwr, quat_multiply, cl_init_server_info, 21 of 24 q_parse_endsession sites, 6 of 7 COM_PARSE_INLINE.
-- __declspec(noinline) still load-bearing: ClearVariableValue, RemoveVariable, GetNewVariableIndexInternal2,
-  Scr_TerminateThread, ConnectBreakStatements, GetBestOffhand, Item_ListBox_HandleKey. Gone 10-30:
-  CalcScreenPlacement, CalcTracerFinalScale, G_FindConfigstringIndex, CL_InitServerInfo, FS_FreeFile,
-  Sys_ArchiveInfo, Dvar_AnyLatchedValues, SND_AnyActiveListeners, Com_EndParseSession, 8 that changed nothing.
+- Left (10-30 night, measured): q_parse_online.inl at 2 sites (CG_ParseImpactEffects 2nd Com_ParseOnLine, cnt 0.586
+  needs > 0.764 while the last SkipRestOfLine must stay a call; BG_ParseCommands 'duration' site, cnt 0.708 needs
+  > 1.09), cl_keyevent.inl (Key_ClearStates, cost 97 needs cnt > 5.1), xanim_settime.inl (CG_UpdateKillCam),
+  G_MODEL_NAME_INLINE (g_active_mp x2, g_utils_mp), ANGLE_VECTORS_INLINE (FinishSpawningItem, cnt 0.125 r 74 with the
+  server shape), noinline GetBestOffhand / Item_ListBox_HandleKey, AxisTransformVector parens (XModelTraceLine copy).
+- Gone 10-30: every q_parse_endsession/skipline site, COM_END_PARSE_SESSION_INLINE x3, FS_FREE_FILE_INLINE,
+  ITEM_CAN_FOCUS_INLINE, the five AnimTreeParseInternal script macros, VEC3_* macros, COM_PARSE_INLINE,
+  GET_VARIABLE_I2NI_INLINE, scr_get_variable_index / scr_remove_variable / scr_new_variable_index2 /
+  scr_get_new_variable_index / q_shared_strnicmp / dvar_find / q_parse_skipline .inl (bodies folded into their own
+  functions), noinline on ClearVariableValue, RemoveVariable, GNVII2, Scr_TerminateThread, ConnectBreakStatements,
+  CalcScreenPlacement, CalcTracerFinalScale, G_FindConfigstringIndex, CL_InitServerInfo, FS_FreeFile and others.
+- oc/ files hand-expanded com_math helpers ('not visible in this TU'): extern declarations of the real helpers let
+  LTCG inline them and they match retail (SND_SetChannelInfo, CG_WhizbySound: PINNED by full builds).
 - These are split inline decisions; the cause is the site count from the frequency estimator (inl_notes.txt
   'FREQUENCY ESTIMATOR (agent 10-30)'): loop shape decides counts (a `for (X = 0; ; X++)` loop is flagged non-natural
   and skips the loop-exit shares; `X = 0; for (;;) { ...; X++; }` is natural).
