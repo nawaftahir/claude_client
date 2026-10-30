@@ -50,10 +50,14 @@ Two paths, chosen by whether the callee is already compiled:
   running budget, 1000 minus what it already inlined (V line p4). Refuse if [0x10882b5c] > 35000, or if
   p4 < callee IL size [callee+0x6d] and that IL size > 40. Otherwise inline the raw IL.
   WRONG (old claim): "uncompiled callee = always raw-body inline".
-- Site count: if-arms halve; a loop header is 10x its entry; code after a loop keeps x5; each loop-exit edge
-  passed takes an equal share of the exit flow; `continue` cutting all exits -> 0. Nested sites inside an
-  inlined callee take the outer site's count (floor 1e8). Counts depend on the function's state at decision time
-  (a real Com_Parse call at a loop top gets the pre-loop count; the macro-expanded body gets the loop-header count).
+- Site count (PINNED 10-30, estimator 0x1078095b, inl_notes.txt "FREQUENCY ESTIMATOR"): each out-edge gets an
+  equal share of its block's flow (if-arms halve); a loop header sends 10x its entry flow. NATURAL loops (do/while,
+  while(1)/for(;;) with no increment) pre-assign every exit edge an equal share of the entry flow, so code after the
+  loop is back at the entry count. `for (i = 0; ; i++)` (increment block laid out before the body) builds a loop
+  flagged non-natural ([loop+0x4c] bit 0): no exit shares, so in-loop error arms stay hot and code after the loop
+  keeps x5. A site's count is its block count = sum of in-edges, so a call in the header block itself shows the
+  raw entry+back-edge flow (Falloff loop-top Com_Parse 0.2549). Counts are computed ONCE per caller before any
+  inline (no recount); nested sites = own count in the callee * outer/1e8 only when outer > 1e8.
 - A callee with cost >= 71 can never inline at a site with count <= 1e8 (r >= cost): if retail inlines it, look
   for a loop around the site (or the budget path).
 - PAID: UI_LoadMenus (Kisak do/while, 5 exits -> both I_stricmp inline, match); CL_MapLoading (CoD4 one-trip
@@ -284,15 +288,18 @@ Two paths, chosen by whether the callee is already compiled:
   three cgArray x87 pairs.
 
 ## 6. Stand-ins still in the tree (must become real calls/code before release)
-- `.inl` includes (10-30): q_parse_endsession (24 sites), q_parse_online/skipline (sound-alias loaders + 1 in
-  cg_effects_load_obj), scr_* variable helpers (VM_Notify group), cl_keyevent, cl_init_server_info,
-  xanim_settime, q_shared_strnicmp; COM_PARSE_INLINE macro (7). Gone 10-30: screen_placement, q_shared_strlwr,
-  quat_multiply.
-- __declspec(noinline) still load-bearing (10-30 sweep nis, per-site list in LESSONS 10-30): Com_EndParseSession,
-  CL_InitServerInfo, ClearVariableValue, RemoveVariable, GetNewVariableIndexInternal2, Scr_TerminateThread,
-  ConnectBreakStatements, Dvar_AnyLatchedValues, FS_FreeFile, Sys_ArchiveInfo, GetBestOffhand,
-  Item_ListBox_HandleKey, SND_AnyActiveListeners. Gone: CalcScreenPlacement, CalcTracerFinalScale,
-  G_FindConfigstringIndex and 8 that changed nothing.
+- `.inl` includes (10-30 evening): q_parse_endsession only in Com_LoadSoundAliasFile (3 sites; it also keeps the
+  com_endParseSessionUnderflow pointer alive), q_parse_online/skipline (Com_LoadSoundAliasFile + subtitle fn +
+  cg_effects_load_obj), scr_* variable helpers (VM_Notify group), cl_keyevent, xanim_settime, q_shared_strnicmp
+  (BG_ParseCommands); COM_PARSE_INLINE macro (1, Com_LoadSoundAliasFile). Gone 10-30: screen_placement,
+  q_shared_strlwr, quat_multiply, cl_init_server_info, 21 of 24 q_parse_endsession sites, 6 of 7 COM_PARSE_INLINE.
+- __declspec(noinline) still load-bearing: ClearVariableValue, RemoveVariable, GetNewVariableIndexInternal2,
+  Scr_TerminateThread, ConnectBreakStatements, GetBestOffhand, Item_ListBox_HandleKey. Gone 10-30:
+  CalcScreenPlacement, CalcTracerFinalScale, G_FindConfigstringIndex, CL_InitServerInfo, FS_FreeFile,
+  Sys_ArchiveInfo, Dvar_AnyLatchedValues, SND_AnyActiveListeners, Com_EndParseSession, 8 that changed nothing.
+- These are split inline decisions; the cause is the site count from the frequency estimator (inl_notes.txt
+  'FREQUENCY ESTIMATOR (agent 10-30)'): loop shape decides counts (a `for (X = 0; ; X++)` loop is flagged non-natural
+  and skips the loop-exit shares; `X = 0; for (;;) { ...; X++; }` is natural).
 - UI_Init's one-trip `for (netGameTypeIdx ...)` around Dvar_RegisterInt; EvalPrimitiveExpression `goto evalFloat`;
   G_MODEL_NAME_INLINE macro; XModelCalcBasePose pragma; CG_Respawn offset macros (CG_INT/CG_FLOAT).
 - Removed: q_shared_stricmp.inl, ui_closeall.inl, Dvar_RegisterVariant __forceinline.
