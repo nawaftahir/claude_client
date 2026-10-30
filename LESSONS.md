@@ -284,3 +284,9 @@ lay: dropping 'static' from static __forceinline helpers in one .cpp is a no-op 
   unused bottom dword + 4 scalar slots) -> worse in bytes until that slot is explained. CG_InitXAnimTrees: retail is
   the only fn in the binary that spills a hoisted field address (hoistscan8.py); 13 shapes 35-67 lines, an explicit
   &anims->size local gets folded back. SND_RawSamples: imul operand order only; 10 shapes no change.
+- 10-30 PAID (+213, agent, server SHA-identical via srvcheck): G_RegisterWeapon full match; G_MODEL_NAME_INLINE gone.
+  SV_GetConfigstringConst as 'return sv.configstrings[index] ? sv.configstrings[index] : "";' + real G_ModelName in
+  G_OverrideModel / G_UpdateClientInfo. GCC 3.3.4 -O0 compiles 'return a ? a : b;' (side-effect-free a) exactly like
+  'cs = a; if (!a) cs = b; return cs;', so the server does not pin the cs local; MSVC folds the re-test into cs, the
+  ternary gives retail's load-test-copy. XAnimGetInfo/XAnimCopyAnimTreeNoNotify: the client-matching form gx_r5.py
+  (re-read g_xAnimInfo->next at the test and index) changes the server at those reads -> real conflict, not landed.
