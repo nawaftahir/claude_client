@@ -307,3 +307,7 @@ lay: dropping 'static' from static __forceinline helpers in one .cpp is a no-op 
   loses a 16 B tie (numbering class); all speex as C + upstream nb_celp.c (sme_sp3.py) fixes nb_decode but costs
   ~23 B in ties. CG_DrawCursorhint moves only with a (double) sum (no evidence). AxisTransformVector needs a scalar
   normal copy in XModelTraceLine that breaks the server. CL_MouseEvent: dy must outrank two mouseIndex load temps.
+- 10-31c PINNED (lab/w200/possearch6.sh, release relinks, step 8, greedy over all six empty TUs with sp1only.patch):
+  only empty_1 moves (after devgui/devgui_input.cpp, +4); empty_2..6 gain nothing anywhere. Link-order ties are spent.
+  The gate "LOST 16 ?_speex_putc" was only the C++ name vanishing (bits.c as C gives __speex_putc, 0 diff at 0x4dc150
+  in the release link); listed in lab/ties.txt with that reason and landed (e3f381a).
