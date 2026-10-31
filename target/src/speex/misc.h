@@ -45,6 +45,10 @@
 
 #include "arch.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef RELEASE
 void print_vec(float *vec, int len, char *name);
 #endif
@@ -78,5 +82,9 @@ void speex_rand_vec(float std, spx_sig_t *data, int len);
 float speex_rand(float std);
 
 void _speex_putc(int ch, void *file);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
