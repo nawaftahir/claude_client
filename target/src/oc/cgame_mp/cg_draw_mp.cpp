@@ -1278,7 +1278,8 @@ void CG_DrawCrosshairNames(void)
         && cg->bgs.clientinfo[cg->crosshairClientNum].team != cg->bgs.clientinfo[clientNum].team)
         return;
 
-    name = (char *)va("%s", cg->bgs.clientinfo[cg->crosshairClientNum].name);
+    name = cg->bgs.clientinfo[cg->crosshairClientNum].name;
+    name = (char *)va("%s", name);
     if (!name)
         return;
     if (!name[0])

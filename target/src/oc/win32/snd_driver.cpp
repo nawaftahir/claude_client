@@ -1310,7 +1310,8 @@ void SND_DriverPostUpdate(void)
 
 void SND_RawSamples(int samples, int rate, int width, int s_channels, const byte *data)
 {
-    int bytes, copy;
+    int bytes;
+    int copy = milesGlob.raw.bufSize;
 
     if (!g_snd.Initialized2d) {
         return;
