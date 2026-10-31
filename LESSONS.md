@@ -311,3 +311,7 @@ lay: dropping 'static' from static __forceinline helpers in one .cpp is a no-op 
   only empty_1 moves (after devgui/devgui_input.cpp, +4); empty_2..6 gain nothing anywhere. Link-order ties are spent.
   The gate "LOST 16 ?_speex_putc" was only the C++ name vanishing (bits.c as C gives __speex_putc, 0 diff at 0x4dc150
   in the release link); listed in lab/ties.txt with that reason and landed (e3f381a).
+- 10-31d DECISION (owner delegated): XAnimGetInfo uses the client spelling (gx_r5: re-read g_xAnimInfo->next at the test
+  and index, CoD2rev form) in the client tree only; cod2engine/archive/lnxded-1.0 keeps the server-equal local. PINNED
+  (gx clone, both compilers) that no single spelling gives both binaries, so client 1.0 and server 1.0 were built from
+  different revisions of this function. +184 release bytes (XAnimGetInfo and XAnimCopyAnimTreeNoNotify both 0).

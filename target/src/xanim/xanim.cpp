@@ -2569,13 +2569,13 @@ XAnimInfo* XAnimGetInfo(XAnimTree_s *tree, unsigned int infoIndex)
 
 	next = g_xAnimInfo->next;
 
-	if ( !next )
+	if ( !g_xAnimInfo->next )
 	{
 		Com_Error(ERR_DROP, "\x15" "exceeded maximum number of anim info");
 		return NULL;
 	}
 
-	newHead = g_xAnimInfo[next].next;
+	newHead = g_xAnimInfo[g_xAnimInfo->next].next;
 	g_xAnimInfo->next = newHead;
 	g_xAnimInfo[newHead].prev = 0;
 	tree->infoArray[infoIndex] = next;
