@@ -315,3 +315,6 @@ lay: dropping 'static' from static __forceinline helpers in one .cpp is a no-op 
   and index, CoD2rev form) in the client tree only; cod2engine/archive/lnxded-1.0 keeps the server-equal local. PINNED
   (gx clone, both compilers) that no single spelling gives both binaries, so client 1.0 and server 1.0 were built from
   different revisions of this function. +184 release bytes (XAnimGetInfo and XAnimCopyAnimTreeNoNotify both 0).
+- 10-31e PAID +32 (same rule as 10-31d): XModelTraceLine copies tri->plane into results->normal as three plain statements
+  (client tree only) with the plain server AxisTransformVector body; the server archive keeps VectorCopy. Evidence:
+  inl_notes "AxisTransformVector / XModelTraceLine" (every VectorCopy form numbers p2,p0,p1; server -O0 needs the call).

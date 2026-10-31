@@ -278,9 +278,9 @@ int XModelGetContents(const XModel *model)
 
 inline void AxisTransformVector(const vec3_t in, const vec3_t mat[3], vec3_t out)
 {
-	out[0] = in[0] * mat[0][0] + (in[1] * mat[1][0] + in[2] * mat[2][0]);
-	out[1] = in[0] * mat[0][1] + (in[1] * mat[1][1] + in[2] * mat[2][1]);
-	out[2] = in[0] * mat[0][2] + (in[1] * mat[1][2] + in[2] * mat[2][2]);
+	out[0] = in[0] * mat[0][0] + in[1] * mat[1][0] + in[2] * mat[2][0];
+	out[1] = in[0] * mat[0][1] + in[1] * mat[1][1] + in[2] * mat[2][1];
+	out[2] = in[0] * mat[0][2] + in[1] * mat[1][2] + in[2] * mat[2][2];
 }
 
 inline void AxisTransposeTransformVector(const vec3_t in, const vec3_t mat[3], vec3_t out)
@@ -415,7 +415,9 @@ int XModelTraceLine(const XModel *model, trace_t *results, DObjAnimMat *pose, co
 			results->fraction = fraction;
 			results->surfaceFlags = surf->surfFlags;
 			results->contents = surf->contents;
-			VectorCopy(tri->plane, results->normal);
+			results->normal[0] = tri->plane[0];
+			results->normal[1] = tri->plane[1];
+			results->normal[2] = tri->plane[2];
 		}
 	}
 
