@@ -882,8 +882,13 @@ void CL_KeyMove(usercmd_t *cmd)
 
 void CL_MouseEvent(int dx, int dy)
 {
-    if ((clients->keyCatchers & 8) && !cl_bypassMouseInput->current.enabled) {
-        UI_MouseEvent(dx, dy);
+    if (clients->keyCatchers & 8) {
+        if (cl_bypassMouseInput->current.enabled) {
+            clients->mouseDx[clients->mouseIndex] += dx;
+            clients->mouseDy[clients->mouseIndex] += dy;
+        } else {
+            UI_MouseEvent(dx, dy);
+        }
     } else {
         clients->mouseDx[clients->mouseIndex] += dx;
         clients->mouseDy[clients->mouseIndex] += dy;

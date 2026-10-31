@@ -1,4 +1,4 @@
-# CoD2MP_s.exe 1.0: everything learned (state 10-30, 99.867%)
+# CoD2MP_s.exe 1.0: everything learned (state 10-31, 99.948% sections)
 
 Companion to HANDOFF_100.md (state + commands). This file is the knowledge: how the compiler decides, what
 paid, what did not, and a dossier per remaining function. Read it fully before changing source.
@@ -324,3 +324,12 @@ srvport.py, lmv.sh + lmsum.py (inline oracle), es_all.sh, es_sites.py, lgo_sp.sh
 reach.py, emu3.py, sa_dis.py, sa_fsz.py, sa_up/sa_down/sa_cnt.py, cslot/pk/*, hvp.py, cave_cv.s + patch_cv.py,
 ghx/ (Ghidra project + Dec.java), ni_live.py (per-call eax/ecx/edx liveness, retail vs ours), /home/nawaf/x8/x8h.py, /home/nawaf/mlw/ora/cv/ (LTCG convention bench),
 claude_client/stabs.py, fdiff.py, shameter.py.
+
+## 10-31 landed (LESSONS 10-31c..i)
+- Client-only revisions (server archive untouched, clone-proven no shared spelling): XAnimGetInfo re-read (+184),
+  XModelTraceLine plain normal copy (+32).
+- CG_DrawCrosshairNames name reuse, SND_RawSamples dead copy init (HYPOTHESIS spelling, +220); CL_MouseEvent duplicated
+  add arms under nested UI/bypass tests (+53, HYPOTHESIS spelling, CoD1 nests the same way).
+- STAND-IN: CG_CalcViewValues passes &cgArray[0].predictedPlayerState to BG_GetSpeed (same object as cg; a compile-time
+  constant address gives the unshared loads of retail, +13). Left 4 lines: add order v0*v0 + v1*v1.
+- CG_CalcCrosshairPosition: no spelling can work (c2 /Op gates, LESSONS 10-31g); needs the real retail shape.

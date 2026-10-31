@@ -329,3 +329,12 @@ lay: dropping 'static' from static __forceinline helpers in one .cpp is a no-op 
   definition dropped from the dataflow sets under /Op). Neither looks at volatile, alias class, base or address-taken,
   so no spelling of gunAng[1] = cg->gunYaw can forward. Only a real by-value formal does (propagated before gate Y).
   Retail shape (HYPOTHESIS): yaw arrived as a param/by-value formal; no helper confirmed. Stop re-spelling the store.
+- 10-31h PAID +66 (agent sm2, inl_notes "Small RA items (agent 10-31 night)"): CL_MouseEvent sm2_me1 (duplicate add arms
+  give dx/dy a third region so dy outranks the mouseIndex temps; c2 merges the copies). CG_CalcViewValues sm2_cv5
+  stand-in (&cgArray[0] address). Pinned, not landed: EvalPrimitiveExpression gap is the x87 order inside each inlined
+  EvalFloat, not the tail merge; CG_DrawAdsOverlay/GrenadePointer are x87-vs-int ordering ties.
+- 10-31i PINNED, NOT LANDED (agent hs2, inl_notes "Hoist/Slots round 2 (agent 10-31 night)"): CG_InitXAnimTrees 67 -> 0
+  only with hs2_xa.py XA=pn: a second global read 'animsSize = &cg->bgs.generic_human.tree.anims->size' (not folded,
+  spills to [esp+0x10] like retail) but it needs the XAnimCreateTree body hand-inlined in both loops; Mac 1.3 calls
+  XAnimCreateTree, so rejected (contradicts evidence). Clue: retail sees the size address as a separate pointer value.
+  FX_CalcOriginAndAxis: Mac cylinder forms (FX=bc/bw) identical to base, 172.

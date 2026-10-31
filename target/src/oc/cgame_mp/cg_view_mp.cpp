@@ -680,7 +680,7 @@ static void CG_CalcViewValues(void)
     }
 
     cg->fBobCycle = BG_GetBobCycle(&cg->predictedPlayerState);
-    cg->xyspeed = BG_GetSpeed(&cg->predictedPlayerState, cg->time);
+    cg->xyspeed = BG_GetSpeed(&cgArray[0].predictedPlayerState, cg->time);
 
     cg->refdef.vieworg[0] = cg->predictedPlayerState.origin[0];
     cg->refdef.vieworg[1] = cg->predictedPlayerState.origin[1];
