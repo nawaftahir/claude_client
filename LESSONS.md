@@ -318,3 +318,14 @@ lay: dropping 'static' from static __forceinline helpers in one .cpp is a no-op 
 - 10-31e PAID +32 (same rule as 10-31d): XModelTraceLine copies tri->plane into results->normal as three plain statements
   (client tree only) with the plain server AxisTransformVector body; the server archive keeps VectorCopy. Evidence:
   inl_notes "AxisTransformVector / XModelTraceLine" (every VectorCopy form numbers p2,p0,p1; server -O0 needs the call).
+- 10-31f PAID +220 (388db1c, agent rnm, notes inl_notes "CrosshairNames / RawSamples (agent 10-31 late)"):
+  CG_DrawCrosshairNames reuses the name pointer for the va result (Mac STABS: one pointer); local code generator hands
+  scratch regs out in IL order, a user variable takes no turn. SND_RawSamples: imul destination follows first field
+  reference order (like x87); 'int copy = milesGlob.raw.bufSize;' dead init flips it (mechanism PINNED, spelling
+  HYPOTHESIS: no reference shows where retail's early bufSize reference sits).
+- 10-31g PINNED (agent cxh, c2 hooks, inl_notes "Crosshair /Op forwarding hook (agent 10-31 late)"): /Op is global
+  0x108a9204, set per function and by the inliner flag merge (0x1078dbd7). Two reads block yaw forwarding: 0x107f3877
+  (float mem->mem copy tuple 0x263 lowered to an int copy under /Op) and 0x1071083e -> 0x1077f087 (every float object's
+  definition dropped from the dataflow sets under /Op). Neither looks at volatile, alias class, base or address-taken,
+  so no spelling of gunAng[1] = cg->gunYaw can forward. Only a real by-value formal does (propagated before gate Y).
+  Retail shape (HYPOTHESIS): yaw arrived as a param/by-value formal; no helper confirmed. Stop re-spelling the store.
